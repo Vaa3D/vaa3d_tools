@@ -12,6 +12,8 @@
 #include "basic_surf_objs.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "neuron_sim_scores.h"
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(autoCropping, autoCropping);
@@ -46,6 +48,14 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
                                    int offset);
 
 
+template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
+                                   T* data1d,
+                                   NeuronTree nt,
+                                   QString imgname,
+                                   V3DLONG *in_sz,
+                                   int Wx,
+                                   int Wy,
+                                   int Wz);
 
 void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -465,6 +475,78 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         if (data1d) {delete []data1d; data1d=0;}
         return true;
 	}
+    else if(func_name == tr("TrainingSetGeneration_bkg"))
+    {
+        cout<<"Welcome to auto background cropping plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+        QString  imagename =  infiles[0];
+        int k=0;
+
+        QString SWCfileName = paras.empty() ? "" : paras[k]; if(SWCfileName == "NULL") SWCfileName = ""; k++;
+        if(SWCfileName.isEmpty())
+        {
+            cerr<<"Need a SWC file"<<endl;
+            return false;
+        }
+
+        int Wx = (paras.size() >= k+1) ? atoi(paras[k]) : 50; k++;
+        int Wy = (paras.size() >= k+1) ? atoi(paras[k]) : 50; k++;
+        int Wz = (paras.size() >= k+1) ? atoi(paras[k]) : 25;  k++;
+
+
+        cout<<"inimg_file = "<<imagename.toStdString().c_str()<<endl;
+        cout<<"outimg_file = "<<SWCfileName.toStdString().c_str()<<endl;
+        cout<<"Wx = "<<Wx<<endl;
+        cout<<"Wy = "<<Wy<<endl;
+        cout<<"Wz = "<<Wz<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, imagename.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<imagename.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        //flip the image
+        if(1)
+        {
+            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
+
+            for (int j=0;j<hsz1;j++)
+                for (int i=0;i<in_sz[0];i++)
+                {
+                    unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
+                    data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
+                    data1d[j*in_sz[0] + i] = tmpv;
+                }
+        }
+
+
+        QString outputfolder = imagename + QString("_x%1_y%2_z%3_bkg/").arg(Wx).arg(Wy).arg(Wz);
+        QDir().mkdir(outputfolder);
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+
+        switch (datatype)
+        {
+        case 1: cropping3D_bkg(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz); break;
+        default:
+            v3d_msg("This plugin only supports 8bit datatype for now.");
+            if (data1d) {delete []data1d; data1d=0;}
+            return false;
+        }
+
+        v3d_msg(QString("Save all cropped files to %1 folder!").arg(outputfolder),0);
+        if (data1d) {delete []data1d; data1d=0;}
+        return true;
+    }
 	else if (func_name == tr("help"))
 	{
         {
@@ -602,6 +684,116 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
             if(im_cropped) {delete []im_cropped; im_cropped = 0;}
         }
     }
+    return;
+
+}
+
+template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
+                                   T* data1d,
+                                   NeuronTree nt,
+                                   QString outputfolder,
+                                   V3DLONG *in_sz,
+                                   int Wx,
+                                   int Wy,
+                                   int Wz)
+{
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG sc = in_sz[3];
+
+    for(V3DLONG ii = 0; ii < nt.listNeuron.size(); ii++)
+    {
+        nt.listNeuron[ii].z = 1;
+        nt.listNeuron[ii].r = nt.listNeuron[ii].r*1.5;
+
+    }
+
+    double x_min,x_max,y_min,y_max,z_min,z_max;
+    x_min=x_max=y_min=y_max=z_min=z_max=0;
+    V3DLONG sx,sy,sz;
+
+    BoundNeuronCoordinates(nt,x_min,x_max,y_min,y_max,z_min,z_max);
+    sx=x_max;
+    sy=y_max;
+    sz=1;
+    unsigned char* data1d_mask = 0;
+    V3DLONG stacksz = sx*sy*sz*sc;
+
+    data1d_mask = new unsigned char [stacksz];
+    memset(data1d_mask,0,stacksz*sizeof(unsigned char));
+    ComputemaskImage(nt, data1d_mask, sx, sy, sz);
+
+    unsigned char *pData = new unsigned char[N*M*P];
+    memset(pData,0,N*M*P*sizeof(unsigned char));
+
+    for (V3DLONG k1 = 0; k1 < sz; k1++){
+        for(V3DLONG j1 = 0; j1 < sy; j1++){
+            for(V3DLONG i1 = 0; i1 < sx; i1++){
+                pData[k1 * N*M + j1*N + i1] = data1d_mask[k1*sx*sy + j1*sx +i1];
+            }
+        }
+    }
+
+    for (int i=0;i<nt.listNeuron.size();i++)
+    {
+
+        V3DLONG tmpx = rand()%(N-1);
+        V3DLONG tmpy = rand()%(M-1);
+        V3DLONG tmpz = 1;
+
+        V3DLONG xb = tmpx-1-Wx;
+        V3DLONG xe = tmpx-1+Wx;
+        V3DLONG yb = tmpy-1-Wy;
+        V3DLONG ye = tmpy-1+Wy;
+
+        while(pData[tmpx*N+tmpy]!=0 || xb<0 || xe>=N-1 || yb<0 || ye>=M-1)
+        {
+            tmpx = rand()%(N-1);
+            tmpy = rand()%(M-1);
+            xb = tmpx-1-Wx;
+            xe = tmpx-1+Wx;
+            yb = tmpy-1-Wy;
+            ye = tmpy-1+Wy;
+        }
+
+        V3DLONG zb = 0;
+        V3DLONG ze = 1;
+
+
+        QString outimg_file = outputfolder + QString("x%1_y%2_z%3_bkg.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+
+        V3DLONG im_cropped_sz[4];
+        im_cropped_sz[0] = xe - xb + 1;
+        im_cropped_sz[1] = ye - yb + 1;
+        im_cropped_sz[2] = ze - zb + 1;
+        im_cropped_sz[3] = sc;
+
+        unsigned char *im_cropped = 0;
+        V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+        try {im_cropped = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+        V3DLONG j = 0;
+        for(V3DLONG iz = zb; iz <= ze; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = yb; iy <= ye; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = xb; ix <= xe; ix++)
+                {
+                    im_cropped[j] = 255 - data1d[offsetk + offsetj + ix];
+                    j++;
+                }
+            }
+        }
+        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
+        if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+    }
+
+    if(data1d_mask) {delete []data1d_mask; data1d_mask = 0;}
+    if(pData) {delete []pData; pData = 0;}
+
     return;
 
 }
