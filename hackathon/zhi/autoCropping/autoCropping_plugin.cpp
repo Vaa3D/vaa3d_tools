@@ -747,7 +747,7 @@ template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
         V3DLONG yb = tmpy-1-Wy;
         V3DLONG ye = tmpy-1+Wy;
 
-        while(pData[tmpx*N+tmpy]!=0 || xb<0 || xe>=N-1 || yb<0 || ye>=M-1)
+        while(pData[tmpy*N+tmpx]!=0 || xb<0 || xe>=N-1 || yb<0 || ye>=M-1)
         {
             tmpx = rand()%(N-1);
             tmpy = rand()%(M-1);
@@ -758,8 +758,7 @@ template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
         }
 
         V3DLONG zb = 0;
-        V3DLONG ze = 1;
-
+        V3DLONG ze = 0;
 
         QString outimg_file = outputfolder + QString("x%1_y%2_z%3_bkg.tif").arg(tmpx).arg(tmpy).arg(tmpz);
 
@@ -768,7 +767,6 @@ template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
         im_cropped_sz[1] = ye - yb + 1;
         im_cropped_sz[2] = ze - zb + 1;
         im_cropped_sz[3] = sc;
-
         unsigned char *im_cropped = 0;
         V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
         try {im_cropped = new unsigned char [pagesz];}
@@ -783,6 +781,7 @@ template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
                 for(V3DLONG ix = xb; ix <= xe; ix++)
                 {
                     im_cropped[j] = 255 - data1d[offsetk + offsetj + ix];
+                    V3DLONG test_num = offsetk + offsetj + ix;
                     j++;
                 }
             }
