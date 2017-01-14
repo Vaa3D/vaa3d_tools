@@ -17,6 +17,7 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("find")
+        <<tr("find_all")
         <<tr("about");
 }
 
@@ -32,6 +33,9 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     if (menu_name == tr("find"))
     {
         SpecDialog(callback,parent);
+    }else if(menu_name == tr("find_all"))
+    {
+        SpecDialog_all(callback,parent);
     }
 	else
 	{
