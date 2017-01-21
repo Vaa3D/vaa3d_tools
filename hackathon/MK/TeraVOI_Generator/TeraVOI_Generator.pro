@@ -11,8 +11,7 @@ HEADERS	+= TeraVOI_Generator_plugin.h \
         ../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h \
     VOI_func.h
 
-SOURCES	+= TeraVOI_Generator_plugin.cpp \
-    voi_func.cpp
+SOURCES	+= TeraVOI_Generator_plugin.cpp 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp \
         VOI_func.cpp \
         ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
