@@ -77,7 +77,7 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         int zRadius = (zLength + 1)/2;
         //////////////////////////// END of [Volume of interest size specification]
 
-        ////////////////////////// Aqcure node coords, collect and crop images, form 3D cubes, save files to the output folder
+        ////////////////////////// Acquire node coords, collect and crop images, form 3D cubes, save files to the output folder
         QList<NeuronSWC> list = InputSWC.listNeuron;
 
         Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
@@ -99,20 +99,19 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         }
         int n_slice = vim.tilesList.size();
 
-        unsigned char* ImgPtr = 0;
-        V3DLONG in_sz[3];
+        unsigned char* ImgPtr;
+        V3DLONG in_sz[4];
         int datatype;
         if (!simple_loadimage_wrapper(callback,const_cast<char *>(vim.tilesList.at(0).fn_image.c_str()), ImgPtr, in_sz, datatype))
         {
-            fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
-            return;
+            //fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
+            //return;
         }
+        if(ImgPtr) {delete []ImgPtr;}
 
-        V3DLONG img_demen[3];
-        img_demen[0] = in_sz[0];
-        img_demen[1] = in_sz[1];
-        img_demen[2] = n_slice;  // => Get images demention information
-        //cout << sz[0] << "\n" << sz[1] << "\n" << sz[2] << "\n" << endl;
+        xLength = in_sz[0];
+        yLength = in_sz[1];
+        zLength = n_slice;  // => Get images demention information
 
         int x_coord, y_coord, z_coord;
         int xlb, xhb, ylb, yhb, zlb, zhb;
@@ -122,21 +121,21 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             y_coord = int(InputSWC.listNeuron.at(ii).y);
             z_coord = int(InputSWC.listNeuron.at(ii).z);
             if (x_coord - xRadius - 1 <= 0) xlb = 0;
-            else if (x_coord + xRadius - 1 >= img_demen[0]) xhb = img_demen[0] - 1;
+            else if (x_coord + xRadius - 1 >= xLength) xhb = xLength - 1;
             else
             {
                 xlb = x_coord - xRadius - 1;
                 xhb = x_coord + xRadius + 1;
             }
             if (y_coord - yRadius - 1 <= 0) ylb = 0;
-            else if (y_coord + yRadius - 1 >= img_demen[1]) yhb = img_demen[1] - 1;
+            else if (y_coord + yRadius - 1 >= yLength) yhb = yLength - 1;
             else
             {
                 ylb = y_coord - yRadius - 1;
                 yhb = y_coord + yRadius + 1;
             }
             if (z_coord - zRadius - 1 <= 0) zlb = 0;
-            else if (z_coord + zRadius - 1 >= img_demen[2]) zhb = img_demen[2] - 1;
+            else if (z_coord + zRadius - 1 >= zLength) zhb = zLength - 1;
             else
             {
                 zlb = z_coord - zRadius - 1;
@@ -146,31 +145,40 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             QString outimg_fileSWC = outputfolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
             writeSWC_file(outimg_fileSWC, prunnedTree); // Save cropped neuron tree in separate SWC files.
 
-            unsigned char* VOIPtr;
-            V3DLONG VOIsz = (xhb-xlb+1) * (yhb-ylb+1) * (zhb-zlb+1);
-            V3DLONG VOIxyz[4];
+            V3DLONG VOIxyz[3];
             VOIxyz[0] = xhb-xlb+1;
             VOIxyz[1] = yhb-ylb+1;
             VOIxyz[2] = zhb-zlb+1;
-            VOIxyz[3] = 1;
-            try {VOIPtr = new unsigned char [VOIsz];}
-            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return;}
-            Piling2Dimages(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, xLength, yLength, zLength);
+            int VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
+            unsigned char* VOIPtr = new unsigned char [VOIsz];
+            for (int zi=zlb; zi<=zhb; zi++)
+            {
+                unsigned char* ImgPtr;
+                int datatype;
+                V3DLONG in_sz[4];
+                if (!simple_loadimage_wrapper(callback,const_cast<char *>(vim.tilesList.at(zi).fn_image.c_str()), ImgPtr, in_sz, datatype))
+                {
+                    //fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(zi).fn_image.c_str());
+                    //return;
+                }
+
+                Align2Dimages(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, z_coord, xLength, yLength, zLength);
+
+                if(ImgPtr) {delete []ImgPtr; ImgPtr = 0;}
+            }
             ImagePixelType pixeltype;
             switch (datatype)
             {
-            case 1: pixeltype = V3D_UINT8; break;
-            case 2: pixeltype = V3D_UINT16; break;
-            case 4: pixeltype = V3D_FLOAT32;break;
-            default: v3d_msg("Invalid data type. Do nothing."); return;
+                case 1: pixeltype = V3D_UINT8; break;
+                case 2: pixeltype = V3D_UINT16; break;
+                case 4: pixeltype = V3D_FLOAT32;break;
+                default: v3d_msg("Invalid data type. Do nothing."); return;
             }
-
-            //Image4DSimple * new4DImage = new Image4DSimple();
-            //new4DImage->setData((unsigned char *)VOIPtr, (xhb-xlb+1), (yhb-ylb+1), (zhb-zlb+1), -1, pixeltype);
             QString outimg_file = outputfolder + QString("/x%1_y%2_z%3.tif").arg(x_coord).arg(y_coord).arg(z_coord);
             string filename = outimg_file.toStdString();
             const char* filenameptr = filename.c_str();
             simple_saveimage_wrapper(callback, filenameptr, VOIPtr, VOIxyz, 1);
+            if(VOIPtr) {delete []VOIPtr; VOIPtr = 0;}
 
             QString outimg_file_linker = outputfolder + QString("/x%1_y%2_z%3.ano").arg(x_coord).arg(y_coord).arg(z_coord);
             QFile qf_anofile(outimg_file_linker);
