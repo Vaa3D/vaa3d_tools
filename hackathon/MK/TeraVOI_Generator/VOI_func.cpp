@@ -75,17 +75,18 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     return myList;
 }
 
-void Align2Dimages(unsigned char* InputImagePtr, unsigned char* OutputImagePtr,
-                    int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int z_coord,
-                    int x_Length, int y_Length, int z_Length)
+void Align2Dimages(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+                    int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int z_slice,
+                    int imgX, int imgY, int imgZ)
 {
-    int ROIsz = (xhb-xlb+1) * (yhb-ylb+1);
-    int OutputArrayi = ROIsz * (z_coord - zlb);
+    V3DLONG ROIsz = (xhb-xlb+1) * (yhb-ylb+1);
+    V3DLONG OutputArrayi = ROIsz * (z_slice - zlb);
+    cout << ROIsz << " " << OutputArrayi << endl;
     for(V3DLONG yi=ylb; yi<=yhb; yi++)
     {
         for(V3DLONG xi=xlb; xi<=xhb; xi++)
         {
-            OutputImagePtr[OutputArrayi] = InputImagePtr[x_Length*(yi-1) + xi];
+            OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*(yi-1) + xi];
             OutputArrayi++;
         }
     }
