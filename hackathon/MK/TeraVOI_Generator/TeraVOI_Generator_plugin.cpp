@@ -235,8 +235,9 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     }
     else
     {
-        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-            "Developed by MK, 2017-1-20"));
+        v3d_msg(tr("This plugin is for the purpose of generating 3D cubes out of Tera-images corresponding to the node coordinators provided in the SWC file. "
+                   "Now it's in its beta version and curretnly only takes 2D image series. Users are expected to specify the location of images, select SWC file, and then specify the size of VOI accordingly."
+            "\n    Developed by MK, 2017-1-20"));
     }
 }
 
