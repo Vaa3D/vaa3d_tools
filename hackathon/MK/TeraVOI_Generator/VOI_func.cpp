@@ -81,7 +81,7 @@ void Align2Dimages(unsigned char InputImagePtr[], unsigned char OutputImagePtr[]
 {
     V3DLONG ROIsz = (xhb-xlb+1) * (yhb-ylb+1);
     V3DLONG OutputArrayi = ROIsz * (z_slice - zlb);
-    cout << ROIsz << " " << OutputArrayi << endl;
+    //cout << ROIsz << " " << OutputArrayi << endl;
     for(V3DLONG yi=ylb; yi<=yhb; yi++)
     {
         for(V3DLONG xi=xlb; xi<=xhb; xi++)

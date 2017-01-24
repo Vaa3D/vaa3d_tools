@@ -108,75 +108,76 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
             return;
         }
-        cout << sizeof(ImgPtr) << endl;
         if(ImgPtr) {delete []ImgPtr; ImgPtr = 0;}
-
-
         int imgX = in_sz[0];
         int imgY = in_sz[1];
         int imgZ = n_slice;  // => Get images demention information
         int channel = in_sz[3];
         //cout << imgX << " " << imgY << " " << imgZ << endl;
 
+        //cout << list.size() << endl;
         int x_coord, y_coord, z_coord;
         int xlb, xhb, ylb, yhb, zlb, zhb;
+        int xcheck = 0; int ycheck = 0; int zcheck = 0;
         for (int ii=0; ii<list.size(); ii++)
         {
             x_coord = int(InputSWC.listNeuron.at(ii).x);
             y_coord = int(InputSWC.listNeuron.at(ii).y);
             z_coord = int(InputSWC.listNeuron.at(ii).z);
 
-            if (x_coord - xRadius - 1 <= 0)
+            if (x_coord - xRadius <= 0)
             {
                 xlb = 0;
-                xhb = x_coord + xRadius + 1;
+                xhb = x_coord + xRadius;
             }
-            else if (x_coord + xRadius - 1 >= imgX)
+            else if (x_coord + xRadius >= imgX)
             {
-                xlb = x_coord - xRadius - 1;
+                xlb = x_coord - xRadius;
                 xhb = imgX - 1;
             }
             else
             {
-                xlb = x_coord - xRadius - 1;
-                xhb = x_coord + xRadius + 1;
+                xlb = x_coord - xRadius;
+                xhb = x_coord + xRadius;
             }
 
-            if (y_coord - yRadius - 1 <= 0)
+            if (y_coord - yRadius <= 0)
             {
                 ylb = 0;
-                yhb = y_coord + yRadius + 1;
+                yhb = y_coord + yRadius;
             }
-            else if (y_coord + yRadius - 1 >= imgY)
+            else if (y_coord + yRadius >= imgY)
             {
-                ylb = y_coord - yRadius - 1;
+                ylb = y_coord - yRadius;
                 yhb = imgY - 1;
             }
             else
             {
-                ylb = y_coord - yRadius - 1;
-                yhb = y_coord + yRadius + 1;
+                ylb = y_coord - yRadius;
+                yhb = y_coord + yRadius;
             }
 
-            if (z_coord - zRadius - 1 <= 0)
+            if (z_coord - zRadius <= 0)
             {
                 zlb = 0;
-                zhb = z_coord + zRadius + 1;
+                zhb = z_coord + zRadius;
             }
-            else if (z_coord + zRadius - 1 >= imgZ)
+            else if (z_coord + zRadius >= imgZ)
             {
-                zlb = z_coord - zRadius - 1;
+                zlb = z_coord - zRadius;
                 zhb = imgZ - 1;
             }
             else
             {
-                zlb = z_coord - zRadius - 1;
-                zhb = z_coord + zRadius + 1;
+                zlb = z_coord - zRadius;
+                zhb = z_coord + zRadius;
             }
-            //cout << zlb << " " << zhb << endl;
+
             NeuronTree prunnedTree = cropSWCfile3D(InputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
             QString outimg_fileSWC = outputfolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
             writeSWC_file(outimg_fileSWC, prunnedTree); // Save cropped neuron tree in separate SWC files.
+
+
 
             V3DLONG VOIxyz[4];
             VOIxyz[0] = xhb-xlb+1;
@@ -184,8 +185,15 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             VOIxyz[2] = zhb-zlb+1;
             VOIxyz[3] = channel;
             V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
-            //cout << VOIxyz[0] << " " << VOIxyz[1] << " " << VOIxyz[2] << " " << VOIsz << "\n" << endl;
-            //cout << xlb << " " << xhb << endl;
+            if (VOIxyz[0]<=0) xcheck++;
+            if (VOIxyz[1]<=0) ycheck++;
+            if (VOIxyz[2]<=0) zcheck++;
+            //if (x_coord == 407 && y_coord == 327 && z_coord == 46)
+            //{
+            //    cout << xlb << " " << xhb << " " << ylb << " " << yhb << " " << zlb << " " << zhb << endl;
+            //    cout << VOIxyz[0] << " " << VOIxyz[1] << " " << VOIxyz[2] << " " << VOIsz << "\n" << endl;
+            //}
+
 
             unsigned char* VOIPtr = new unsigned char [VOIsz];
             for (int zi=zlb; zi<=zhb; zi++)
@@ -227,6 +235,7 @@ void TeraVOI_Generator::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             QTextStream out(&qf_anofile);
             out << "RAWIMG= " << filenameptr << endl;
             out << "SWCFILE= " << outimg_fileSWC.toStdString().c_str()<< endl;
+
         }
         //QString FinishMsg = QString("All fiels are saved in ") + outputfolder;
         //v3d_msg(FinishMsg);
