@@ -14,6 +14,8 @@
 #include "neuron_sim_scores.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 
+#include <classification.h>
+#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(autoCropping, autoCropping);
@@ -23,6 +25,7 @@ QStringList autoCropping::menulist() const
 	return QStringList() 
         //<<tr("Crop")
         <<tr("TrainingSetGeneration")
+        <<tr("Predict")
         <<tr("Help");
 }
 
@@ -309,6 +312,69 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         v3d_msg(QString("Save all cropped files to %1 folder!").arg(outputfolder));
 
     }
+    else if (menu_name == tr("Predict"))
+    {
+        string model_file = "/local1/work/caffe/models/bvlc_reference_caffenet/deploy.prototxt";
+        string trained_file = "/local1/work/caffe/models/bvlc_reference_caffenet/caffenet_train_iter_2nd_450000.caffemodel";
+        string mean_file = "/local1/work/caffe/data/ilsvrc12/imagenet_mean.binaryproto";
+        string label_file = "/local1/work/caffe/data/ilsvrc12/synset_IVSCC.txt";
+        Classifier classifier(model_file, trained_file, mean_file, label_file);
+
+
+        QString m_InputfolderName = 0;
+        m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all images "),
+                                              QDir::currentPath(),
+                                              QFileDialog::ShowDirsOnly);
+        if(m_InputfolderName == 0)
+            return;
+
+        QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
+
+        Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+        V3DLONG count=0;
+        foreach (QString img_str, imgList)
+        {
+            V3DLONG offset[3];
+            offset[0]=0; offset[1]=0; offset[2]=0;
+
+            indexed_t<V3DLONG, REAL> idx_t(offset);
+
+            idx_t.n = count;
+            idx_t.ref_n = 0; // init with default values
+            idx_t.fn_image = img_str.toStdString();
+            idx_t.score = 0;
+
+            vim.tilesList.push_back(idx_t);
+            count++;
+        }
+
+        int NTILES  = vim.tilesList.size();
+        std::vector<cv::Mat> imgs;
+        for (V3DLONG i = 0; i <NTILES; i++)
+        {
+            cv::Mat img = cv::imread(vim.tilesList.at(i).fn_image.c_str());
+            imgs.push_back(img);
+        }
+        std::vector<std::vector<Prediction> > all_predictions = classifier.Classify(imgs);
+        V3DLONG p_num = 0;
+        V3DLONG n_num = 0;
+
+        /* Print the top N predictions. */
+        for (size_t i = 0; i < all_predictions.size(); ++i)
+        {
+            std::vector<Prediction>& predictions = all_predictions[i];
+            Prediction p = predictions[0];
+            if(p.first == "0") n_num++;
+            if(p.first == "1") p_num++;
+        }
+
+        double p_rate = 100*p_num/(p_num+n_num);
+        double n_rate = 100*n_num/(p_num+n_num);
+        printf("Positive rate is %.2f, and negative rate is %.2f\n",p_rate,n_rate);
+        imgs.clear();
+
+    }
     else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
@@ -442,18 +508,22 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         }
 
         //flip the image
-//        if(1)
-//        {
-//            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
+        if(1)
+        {
+            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
 
-//            for (int j=0;j<hsz1;j++)
-//                for (int i=0;i<in_sz[0];i++)
-//                {
-//                    unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
-//                    data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
-//                    data1d[j*in_sz[0] + i] = tmpv;
-//                }
-//        }
+            for (k=0;k<in_sz[2];k++)
+            {
+                V3DLONG offsetk = k*in_sz[1]*in_sz[0];
+                for (int j=0;j<hsz1;j++)
+                    for (int i=0;i<in_sz[0];i++)
+                    {
+                        unsigned char tmpv = data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i];
+                        data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i] = data1d[offsetk+j*in_sz[0] + i];
+                        data1d[offsetk+j*in_sz[0] + i] = tmpv;
+                    }
+            }
+        }
 
 
         QString outputfolder = imagename + QString("_x%1_y%2_z%3/").arg(Wx).arg(Wy).arg(Wz);
@@ -519,13 +589,17 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         {
             V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
 
-            for (int j=0;j<hsz1;j++)
-                for (int i=0;i<in_sz[0];i++)
-                {
-                    unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
-                    data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
-                    data1d[j*in_sz[0] + i] = tmpv;
-                }
+            for (k=0;k<in_sz[2];k++)
+            {
+                V3DLONG offsetk = k*in_sz[1]*in_sz[0];
+                for (int j=0;j<hsz1;j++)
+                    for (int i=0;i<in_sz[0];i++)
+                    {
+                        unsigned char tmpv = data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i];
+                        data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i] = data1d[offsetk+j*in_sz[0] + i];
+                        data1d[offsetk+j*in_sz[0] + i] = tmpv;
+                    }
+            }
         }
 
 
@@ -704,7 +778,7 @@ template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
 
     for(V3DLONG ii = 0; ii < nt.listNeuron.size(); ii++)
     {
-        nt.listNeuron[ii].z = 1;
+      //  nt.listNeuron[ii].z = 1;
         nt.listNeuron[ii].r = nt.listNeuron[ii].r*1.5;
 
     }
@@ -780,7 +854,7 @@ template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = xb; ix <= xe; ix++)
                 {
-                    im_cropped[j] = 255 - data1d[offsetk + offsetj + ix];
+                    im_cropped[j] = data1d[offsetk + offsetj + ix];
                     V3DLONG test_num = offsetk + offsetj + ix;
                     j++;
                 }
