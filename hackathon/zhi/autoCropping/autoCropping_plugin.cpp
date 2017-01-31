@@ -13,8 +13,12 @@
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "neuron_sim_scores.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 
 using namespace std;
+using namespace iim;
+
 Q_EXPORT_PLUGIN2(autoCropping, autoCropping);
  
 QStringList autoCropping::menulist() const
@@ -22,6 +26,7 @@ QStringList autoCropping::menulist() const
 	return QStringList() 
         //<<tr("Crop")
         <<tr("TrainingSetGeneration")
+        <<tr("TrainingSetGeneration(terafly format)")
         <<tr("Help");
 }
 
@@ -36,16 +41,16 @@ QStringList autoCropping::funclist() const
 NeuronTree cropSWCfile(NeuronTree nt, int xb, int xe, int yb, int ye, int type);
 NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type);
 
-template <class T> void cropping3D(V3DPluginCallback2 &callback,
-                                   T* data1d,
-                                   NeuronTree nt,
-                                   QString imgname,
-                                   V3DLONG *in_sz,
-                                   int Wx,
-                                   int Wy,
-                                   int Wz,
-                                   int type,
-                                   int offset);
+void cropping3D(V3DPluginCallback2 &callback,
+                Image4DSimple* p4DImage,
+                NeuronTree nt,
+                QString imgname,
+                V3DLONG *in_sz,
+                int Wx,
+                int Wy,
+                int Wz,
+                int type,
+                int offset);
 
 
 template <class T> void cropping3D_bkg(V3DPluginCallback2 &callback,
@@ -296,18 +301,84 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         NeuronTree nt = readSWC_file(SWCfileName);
         ImagePixelType pixeltype = p4DImage->getDatatype();
-
-        switch (pixeltype)
+        if(pixeltype ==V3D_UINT8)
         {
-        case V3D_UINT8: cropping3D(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz,type,0); break;
-        default:
+            cropping3D(callback,p4DImage, nt, outputfolder, in_sz, Wx, Wy, Wz,type,0);
+        }else
+        {
             v3d_msg("This plugin only supports 8bit datatype for now.");
             if (data1d) {delete []data1d; data1d=0;}
             return;
         }
-
         v3d_msg(QString("Save all cropped files to %1 folder!").arg(outputfolder));
 
+    }else if (menu_name == tr("TrainingSetGeneration(terafly format)"))
+    {
+        QString imagename;
+        imagename = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+                                                    "");
+
+        if(imagename.isEmpty())
+            return;
+        VirtualVolume* data1d = VirtualVolume::instance(imagename.toStdString().c_str());
+
+        V3DLONG N = data1d->getDIM_H();
+        V3DLONG M = data1d->getDIM_V();
+        V3DLONG P = data1d->getDIM_D();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = 1;
+
+        bool ok1, ok2, ok3;
+        unsigned int Wx=1, Wy=1, Wz=1;
+
+        Wx = QInputDialog::getInteger(parent, "Window X ",
+                                      "Enter radius (window size is 2*radius+1):",
+                                      50, 1, N, 1, &ok1);
+
+        if(ok1)
+        {
+            Wy = QInputDialog::getInteger(parent, "Window Y",
+                                          "Enter radius (window size is 2*radius+1):",
+                                          50, 1, M, 1, &ok2);
+        }
+        else
+            return;
+
+        if(ok2)
+        {
+            Wz = QInputDialog::getInteger(parent, "Window Z",
+                                          "Enter radius (window size is 2*radius+1):",
+                                          25, 1, P, 1, &ok3);
+        }
+        else
+            return;
+
+
+        QString SWCfileName;
+        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(SWCfileName.isEmpty())
+            return;
+
+        bool ok;
+        int type = QInputDialog::getInteger(parent, "Please specify the node type to be cropped (-1 for all types)","type:",-1,-1,256,1,&ok);
+        if (!ok)
+            return;
+
+        QString outputfolder = imagename + QString("_x%1_y%2_z%3/").arg(Wx).arg(Wy).arg(Wz);
+        QDir().mkdir(outputfolder);
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        Image4DSimple* p4DImage = new Image4DSimple;
+        p4DImage->setFileName(imagename.toStdString().c_str());
+        cropping3D(callback,p4DImage, nt, outputfolder, in_sz, Wx, Wy, Wz,type,0);
+
+        v3d_msg(QString("Save all cropped files to %1 folder!").arg(outputfolder));
     }
     else
 	{
@@ -442,22 +513,22 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         }
 
         //flip the image
-        if(1)
-        {
-            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
+//        if(1)
+//        {
+//            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
 
-            for (k=0;k<in_sz[2];k++)
-            {
-                V3DLONG offsetk = k*in_sz[1]*in_sz[0];
-                for (int j=0;j<hsz1;j++)
-                    for (int i=0;i<in_sz[0];i++)
-                    {
-                        unsigned char tmpv = data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i];
-                        data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i] = data1d[offsetk+j*in_sz[0] + i];
-                        data1d[offsetk+j*in_sz[0] + i] = tmpv;
-                    }
-            }
-        }
+//            for (k=0;k<in_sz[2];k++)
+//            {
+//                V3DLONG offsetk = k*in_sz[1]*in_sz[0];
+//                for (int j=0;j<hsz1;j++)
+//                    for (int i=0;i<in_sz[0];i++)
+//                    {
+//                        unsigned char tmpv = data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i];
+//                        data1d[offsetk+(in_sz[1]-j-1)*in_sz[0] + i] = data1d[offsetk+j*in_sz[0] + i];
+//                        data1d[offsetk+j*in_sz[0] + i] = tmpv;
+//                    }
+//            }
+//        }
 
 
         QString outputfolder = imagename + QString("_x%1_y%2_z%3/").arg(Wx).arg(Wy).arg(Wz);
@@ -465,12 +536,15 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
         QDir().mkdir(outputfolder);
 
         NeuronTree nt = readSWC_file(SWCfileName);
+        Image4DSimple* p4DImage = new Image4DSimple;
+        p4DImage->setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
 
-        switch (datatype)
+        if(datatype == 1)
         {
-        case 1: cropping3D(callback,data1d, nt, outputfolder, in_sz, Wx, Wy, Wz,type,offset); break;
-        default:
-            v3d_msg("This plugin only supports 8bit datatype for now.");
+            cropping3D(callback,p4DImage, nt, outputfolder, in_sz, Wx, Wy, Wz,type,offset);
+        }else
+        {
+            v3d_msg("This plugin only supports 8bit datatype for now.",0);
             if (data1d) {delete []data1d; data1d=0;}
             return false;
         }
@@ -578,16 +652,17 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
 	return true;
 }
 
-template <class T> void cropping3D(V3DPluginCallback2 &callback,
-                                   T* data1d,
-                                   NeuronTree nt,
-                                   QString outputfolder,
-                                   V3DLONG *in_sz,
-                                   int Wx,
-                                   int Wy,
-                                   int Wz,
-                                   int type,
-                                   int offset)
+
+void cropping3D(V3DPluginCallback2 &callback,
+                Image4DSimple* p4DImage,
+                NeuronTree nt,
+                QString outputfolder,
+                V3DLONG *in_sz,
+                int Wx,
+                int Wy,
+                int Wz,
+                int type,
+                int offset)
 {
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -660,23 +735,31 @@ template <class T> void cropping3D(V3DPluginCallback2 &callback,
 
 
             unsigned char *im_cropped = 0;
-            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
-            try {im_cropped = new unsigned char [pagesz];}
-            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
-            V3DLONG j = 0;
-            for(V3DLONG iz = zb; iz <= ze; iz++)
+            if(p4DImage->getDatatype())
             {
-                V3DLONG offsetk = iz*M*N;
-                for(V3DLONG iy = yb; iy <= ye; iy++)
+                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                try {im_cropped = new unsigned char [pagesz];}
+                catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+                V3DLONG j = 0;
+                for(V3DLONG iz = zb; iz <= ze; iz++)
                 {
-                    V3DLONG offsetj = iy*N;
-                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    V3DLONG offsetk = iz*M*N;
+                    for(V3DLONG iy = yb; iy <= ye; iy++)
                     {
-                         im_cropped[j] = data1d[offsetk + offsetj + ix];
-                         j++;
+                        V3DLONG offsetj = iy*N;
+                        for(V3DLONG ix = xb; ix <= xe; ix++)
+                        {
+                             im_cropped[j] = p4DImage->getRawData()[offsetk + offsetj + ix];
+                             j++;
+                        }
                     }
                 }
+            }else
+            {
+                VirtualVolume* data1d = VirtualVolume::instance(p4DImage->getFileName());
+                im_cropped = data1d->loadSubvolume_to_UINT8(yb,ye+1,xb,xe+1,zb,ze+1);
             }
+
             simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
             QFile qf_anofile(outimg_file_linker);
             if(!qf_anofile.open(QIODevice::WriteOnly))
