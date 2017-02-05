@@ -92,3 +92,20 @@ void Align2Dimages(unsigned char InputImagePtr[], unsigned char OutputImagePtr[]
     }
 }
 
+void Crop3D(unsigned short InputImagePtr[], unsigned short OutputImagePtr[],
+                    int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int z_slice,
+                    int imgX, int imgY, int imgZ)
+{
+    V3DLONG ROIsz = (xhb-xlb+1) * (yhb-ylb+1);
+    V3DLONG OutputArrayi = ROIsz * (z_slice - zlb);
+    //cout << ROIsz << " " << OutputArrayi << endl;
+    for(V3DLONG yi=ylb; yi<=yhb; yi++)
+    {
+        for(V3DLONG xi=xlb; xi<=xhb; xi++)
+        {
+            OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*imgY*(z_slice-1) + imgX*(yi-1) + xi];
+            OutputArrayi++;
+        }
+    }
+}
+
