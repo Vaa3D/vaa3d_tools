@@ -25,12 +25,11 @@ class Classifier {
 public:
     Classifier(const string& model_file,
                const string& trained_file,
-               const string& mean_file,
-               const string& label_file);
-    std::vector<std::vector<Prediction> > Classify(const std::vector<cv::Mat>& imgs, int N = 2);
+               const string& mean_file);
+    std::vector<std::vector<float> > Predict(const std::vector<cv::Mat>& imgs);
+
 private:
     void SetMean(const string& mean_file);
-    std::vector<std::vector<float> > Predict(const std::vector<cv::Mat>& imgs);
     void WrapInputLayer(std::vector<cv::Mat>* input_channels, int n);
     void Preprocess(const cv::Mat& img,
                     std::vector<cv::Mat>* input_channels);
@@ -39,11 +38,7 @@ private:
     cv::Size input_geometry_;
     int num_channels_;
     cv::Mat mean_;
-    std::vector<string> labels_;
 };
-
-static bool PairCompare(const std::pair<float, int>& lhs,
-                        const std::pair<float, int>& rhs);
 
 QStringList importSeriesFileList_addnumbersort(const QString & curFilePath);
 

@@ -15,8 +15,7 @@
 
 Classifier::Classifier(const string& model_file,
                        const string& trained_file,
-                       const string& mean_file,
-                       const string& label_file) {
+                       const string& mean_file) {
 
     /* Load the network. */
     net_.reset(new Net<float>(model_file, TEST));
@@ -31,49 +30,8 @@ Classifier::Classifier(const string& model_file,
     /* Load the binaryproto mean file. */
     SetMean(mean_file);
     /* Load labels. */
-    std::ifstream labels(label_file.c_str());
-    CHECK(labels) << "Unable to open labels file " << label_file;
-    string line;
-    while (std::getline(labels, line))
-        labels_.push_back(string(line));
-    Blob<float>* output_layer = net_->output_blobs()[0];
-    CHECK_EQ(labels_.size(), output_layer->channels())
-            << "Number of labels is different from the output layer dimension.";
 }
 
-
-static bool PairCompare(const std::pair<float, int>& lhs,
-                        const std::pair<float, int>& rhs) {
-    return lhs.first > rhs.first;
-}
-/* Return the indices of the top N values of vector v. */
-static std::vector<int> Argmax(const std::vector<float>& v, int N) {
-    std::vector<std::pair<float, int> > pairs;
-    for (size_t i = 0; i < v.size(); ++i)
-        pairs.push_back(std::make_pair(v[i], i));
-    std::partial_sort(pairs.begin(), pairs.begin() + N, pairs.end(), PairCompare);
-    std::vector<int> result;
-    for (int i = 0; i < N; ++i)
-        result.push_back(pairs[i].second);
-    return result;
-}
-/* Return the top N predictions. */
-std::vector<std::vector<Prediction> > Classifier::Classify(const std::vector<cv::Mat>& imgs, int N) {
-    std::vector<std::vector<float> > outputs = Predict(imgs);
-    std::vector<std::vector<Prediction> > all_predictions;
-    for (int j = 0; j < outputs.size(); ++j) {
-        std::vector<float> output = outputs[j];
-        N = std::min<int>(labels_.size(), N);
-        std::vector<int> maxN = Argmax(output, N);
-        std::vector<Prediction> predictions;
-        for (int i = 0; i < N; ++i) {
-            int idx = maxN[i];
-            predictions.push_back(std::make_pair(labels_[idx], output[idx]));
-        }
-        all_predictions.push_back(predictions);
-    }
-    return all_predictions;
-}
 /* Load the mean file in binaryproto format. */
 void Classifier::SetMean(const string& mean_file) {
     BlobProto blob_proto;
@@ -95,10 +53,13 @@ void Classifier::SetMean(const string& mean_file) {
     /* Merge the separate channels into a single image. */
     cv::Mat mean;
     cv::merge(channels, mean);
-    /* Compute the global mean pixel value and create a mean image
-* filled with this value. */
-    cv::Scalar channel_mean = cv::mean(mean);
-    mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
+    mean_ = mean;
+//    cv::imwrite("/local4/Data/IVSCC_test/comparison/Caffe_testing_3nd/train/test_cpp/mean.tif",mean_);
+//    /* Compute the global mean pixel value and create a mean image
+//* filled with this value. */
+//    cv::Scalar channel_mean = cv::mean(mean);
+//    mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
+//   // cv::imwrite("/local4/Data/IVSCC_test/comparison/Caffe_testing_3nd/train/test_cpp/mean.tif",mean_);
 }
 std::vector<std::vector<float> > Classifier::Predict(const std::vector<cv::Mat>& imgs) {
     Blob<float>* input_layer = net_->input_blobs()[0];
@@ -185,7 +146,8 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     // get the image files namelist in the directory
     QStringList imgSuffix;
     imgSuffix<<"*.tif"<<"*.raw"<<"*.v3draw"<<"*.lsm"
-            <<"*.TIF"<<"*.RAW"<<"*.V3DRAW"<<"*.LSM";
+            <<"*.TIF"<<"*.RAW"<<"*.V3DRAW"<<"*.LSM"
+           <<"*.jpg"<<"*.JPG";
 
     QDir dir(curFilePath);
     if (!dir.exists())

@@ -27,6 +27,7 @@ QStringList autoCropping::menulist() const
         //<<tr("Crop")
         <<tr("TrainingSetGeneration")
         <<tr("TrainingSetGeneration(terafly format)")
+        <<tr("TestingSetGeneration")
         <<tr("Help");
 }
 
@@ -379,6 +380,99 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         cropping3D(callback,p4DImage, nt, outputfolder, in_sz, Wx, Wy, Wz,type,0);
 
         v3d_msg(QString("Save all cropped files to %1 folder!").arg(outputfolder));
+    }
+    else if (menu_name == tr("TestingSetGeneration"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imagename = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        QList <ImageMarker> marklist;
+        QString markerpath =  imagename + QString(".marker");
+
+        int Ws = 10, Wx = 30, Wy = 30;
+
+        QString outputfolder = imagename + QString("_%1/").arg(Ws);
+        QDir().mkdir(outputfolder);
+
+        for(V3DLONG iy = Ws; iy < M; iy = iy+Ws)
+        {
+            for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                V3DLONG xe = ix-1+Wx; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = iy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                V3DLONG ye = iy-1+Wy; if(ye>=M-1) ye = M-1;
+
+                QString outimg_file = outputfolder + QString("bkg_bkg_x%1_y%2.tif").arg(ix).arg(iy);
+                if(!QFile(outimg_file).exists())
+                {
+                    ImageMarker S;
+                    S.x = ix;
+                    S.y = iy;
+                    S.z = 1;
+                    marklist.append(S);
+
+                }
+
+
+//                V3DLONG im_cropped_sz[4];
+//                im_cropped_sz[0] = xe - xb + 1;
+//                im_cropped_sz[1] = ye - yb + 1;
+//                im_cropped_sz[2] = 1;
+//                im_cropped_sz[3] = sc;
+//                unsigned char *im_cropped = 0;
+
+//                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+//                try {im_cropped = new unsigned char [pagesz];}
+//                catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+//                V3DLONG j = 0;
+//                for(V3DLONG iz = 0; iz <= 0; iz++)
+//                {
+//                    V3DLONG offsetk = iz*M*N;
+//                    for(V3DLONG iy = yb; iy <= ye; iy++)
+//                    {
+//                        V3DLONG offsetj = iy*N;
+//                        for(V3DLONG ix = xb; ix <= xe; ix++)
+//                        {
+//                             im_cropped[j] = data1d[offsetk + offsetj + ix];
+//                             j++;
+//                        }
+//                    }
+//                }
+
+//                simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
+
+//                if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+
+            }
+        }
+
+       writeMarker_file(markerpath.toStdString().c_str(),marklist);
+
+        v3d_msg("Done!");
     }
     else
 	{

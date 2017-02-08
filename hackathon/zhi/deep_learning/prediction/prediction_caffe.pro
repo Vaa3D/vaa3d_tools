@@ -37,6 +37,8 @@ HEADERS	+= classification.h
 SOURCES	+= prediction_caffe_plugin.cpp
 SOURCES	+= classification.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
+
 
 TARGET	= $$qtLibraryTarget(prediction_caffe)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/prediction_caffe/
