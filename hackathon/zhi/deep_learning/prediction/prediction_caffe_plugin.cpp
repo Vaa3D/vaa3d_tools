@@ -18,7 +18,7 @@ QStringList prediction_caffe::menulist() const
 {
 	return QStringList() 
         <<tr("Prediction")
-        <<tr("Quality_Assess(2D)")
+        <<tr("Quality_Assess")
 		<<tr("about");
 }
 
@@ -180,7 +180,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
             V3DLONG im_cropped_sz[4];
             im_cropped_sz[0] = xe - xb + 1;
             im_cropped_sz[1] = ye - yb + 1;
-            im_cropped_sz[2] = ze - zb + 1;
+            im_cropped_sz[2] = 1;
             im_cropped_sz[3] = sc;
 
             unsigned char *im_cropped = 0;
@@ -188,20 +188,24 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
             V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
             try {im_cropped = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
-            V3DLONG j = 0;
+            memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
             for(V3DLONG iz = zb; iz <= ze; iz++)
             {
                 V3DLONG offsetk = iz*M*N;
+                V3DLONG j = 0;
                 for(V3DLONG iy = yb; iy <= ye; iy++)
                 {
                     V3DLONG offsetj = iy*N;
                     for(V3DLONG ix = xb; ix <= xe; ix++)
                     {
-                         im_cropped[j] = data1d[offsetk + offsetj + ix];
-                         j++;
+                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                            im_cropped[j] = data1d[offsetk + offsetj + ix];
+                        j++;
                     }
                 }
             }
+
             cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
             imgs.push_back(img);
         }
@@ -210,7 +214,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         double p_num = 0;
         double n_num = 0;
         QList <ImageMarker> marklist;
-        QString markerpath =  imagename + QString("_fp.marker");
+        QString markerpath =  SWCfileName + QString("_fp.marker");
         for (V3DLONG j=0;j<nt.listNeuron.size();j++)
         {
             std::vector<float> output = outputs[j];
