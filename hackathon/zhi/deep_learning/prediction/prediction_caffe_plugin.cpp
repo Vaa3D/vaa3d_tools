@@ -19,6 +19,7 @@ QStringList prediction_caffe::menulist() const
 	return QStringList() 
         <<tr("Prediction")
         <<tr("Quality_Assess")
+        <<tr("Detection")
 		<<tr("about");
 }
 
@@ -237,7 +238,113 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         imgs.clear();
 
     }
-	else
+    else if (menu_name == tr("Detection"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imagename = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        string model_file = "/local4/Data/IVSCC_test/comparison/Caffe_testing_3nd/train_package_4th/deploy.prototxt";
+        string trained_file = "/local4/Data/IVSCC_test/comparison/Caffe_testing_3nd/train_package_4th/caffenet_train_iter_270000.caffemodel";
+        string mean_file = "/local4/Data/IVSCC_test/comparison/Caffe_testing_3nd/train_package_4th/imagenet_mean.binaryproto";
+
+        Classifier classifier(model_file, trained_file, mean_file);
+        std::vector<cv::Mat> imgs;
+        int Ws = 30, Wx = 30, Wy = 30;
+        for(V3DLONG iy = Ws; iy < M; iy = iy+Ws)
+        {
+            for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                V3DLONG xe = ix-1+Wx; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = iy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                V3DLONG ye = iy-1+Wy; if(ye>=M-1) ye = M-1;
+//                V3DLONG zb = iz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+//                V3DLONG ze = iz-1+Wz; if(ze>=P-1) ze = P-1;
+                V3DLONG zb = 0,ze = 0;
+
+
+                V3DLONG im_cropped_sz[4];
+                im_cropped_sz[0] = xe - xb + 1;
+                im_cropped_sz[1] = ye - yb + 1;
+                im_cropped_sz[2] = 1;
+                im_cropped_sz[3] = sc;
+
+                unsigned char *im_cropped = 0;
+
+                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                try {im_cropped = new unsigned char [pagesz];}
+                catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+                memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+                for(V3DLONG iz = zb; iz <= ze; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    V3DLONG j = 0;
+                    for(V3DLONG iy = yb; iy <= ye; iy++)
+                    {
+                        V3DLONG offsetj = iy*N;
+                        for(V3DLONG ix = xb; ix <= xe; ix++)
+                        {
+                            if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                                im_cropped[j] = data1d[offsetk + offsetj + ix];
+                            j++;
+                        }
+                    }
+                }
+                cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+                imgs.push_back(img);
+            }
+        }
+
+        std::vector<std::vector<float> > outputs = classifier.Predict(imgs);
+        QList <ImageMarker> marklist;
+        QString markerpath =  imagename + QString("_%1.marker").arg(Ws);
+
+        V3DLONG d = 0;
+        for(V3DLONG iy = Ws; iy < M; iy = iy+Ws)
+        {
+            for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
+            {
+                std::vector<float> output = outputs[d];
+                if(output.at(1) > output.at(0))
+                {
+                    ImageMarker S;
+                    S.x = ix;
+                    S.y = iy;
+                    S.z = 1;
+                    marklist.append(S);
+                }
+                d++;
+            }
+        }
+
+        writeMarker_file(markerpath.toStdString().c_str(),marklist);
+        imgs.clear();
+    }
+    else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 			"Developed by Zhi Zhou, 2017-1-31"));
