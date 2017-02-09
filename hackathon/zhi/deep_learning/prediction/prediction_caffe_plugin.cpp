@@ -288,9 +288,9 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         std::vector<std::vector<float> > outputs;
         for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
         {
-            for(V3DLONG iy = 0; iy < M; iy = iy+Sxy)
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
             {
-                for(V3DLONG ix = 0; ix < N; ix = ix+Sxy)
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
                 {
 
                     V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
@@ -359,9 +359,9 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         V3DLONG d = 0;
         for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
         {
-            for(V3DLONG iy = 0; iy < M; iy = iy+Sxy)
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
             {
-                for(V3DLONG ix = 0; ix < N; ix = ix+Sxy)
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
                 {
                     std::vector<float> output = outputs_overall[d];
                     if(output.at(1) > output.at(0))
