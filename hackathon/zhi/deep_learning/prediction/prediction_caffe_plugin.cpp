@@ -272,17 +272,25 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         Classifier classifier(model_file, trained_file, mean_file);
         std::vector<cv::Mat> imgs;
-        int Sxy = 30, Wx = 30, Wy = 30, Wz = 15;
+
+        bool ok;
+        int Sxy =  QInputDialog::getInteger(parent, "Sample rate",
+                                              "Enter sample step size:",
+                                              30, 1, N, 1, &ok);
+        if(!ok)
+            return;
+
+        int Wx = 30, Wy = 30, Wz = 15;
         int Sz = (int)Sxy/3;
 
         V3DLONG num_patches = 0;
         std::vector<std::vector<float> > outputs_overall;
         std::vector<std::vector<float> > outputs;
-        for(V3DLONG iz = Sz; iz < P; iz = iz+Sz)
+        for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
         {
-            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+            for(V3DLONG iy = 0; iy < M; iy = iy+Sxy)
             {
-                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+                for(V3DLONG ix = 0; ix < N; ix = ix+Sxy)
                 {
 
                     V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
@@ -292,7 +300,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                     V3DLONG zb = iz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
                     V3DLONG ze = iz-1+Wz; if(ze>=P-1) ze = P-1;
 
-
+                  //  v3d_msg(QString("%1,%2,%3,%4,%5,%6").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze));
                     V3DLONG im_cropped_sz[4];
                     im_cropped_sz[0] = xe - xb + 1;
                     im_cropped_sz[1] = ye - yb + 1;
@@ -323,18 +331,18 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                     }
                     cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
                     imgs.push_back(img);
-                }
 
-                if(num_patches >=5000)
-                {
-                    outputs = classifier.Predict(imgs);
-                    for(V3DLONG d = 0; d<outputs.size();d++)
-                        outputs_overall.push_back(outputs[d]);
-                    outputs.clear();
-                    imgs.clear();
-                    num_patches = 0;
-                }else
-                    num_patches++;
+                    if(num_patches >=5000)
+                    {
+                        outputs = classifier.Predict(imgs);
+                        for(V3DLONG d = 0; d<outputs.size();d++)
+                            outputs_overall.push_back(outputs[d]);
+                        outputs.clear();
+                        imgs.clear();
+                        num_patches = 0;
+                    }else
+                        num_patches++;
+                }
             }
         }
 
@@ -346,14 +354,14 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         }
 
         QList <ImageMarker> marklist;
-        QString markerpath =  imagename + QString("_%1_%2.marker").arg(Sxy).arg(Sz);
+        QString markerpath =  imagename + QString("_%1.marker").arg(Sxy);
 
         V3DLONG d = 0;
-        for(V3DLONG iz = Sz; iz < P; iz = iz+Sz)
+        for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
         {
-            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+            for(V3DLONG iy = 0; iy < M; iy = iy+Sxy)
             {
-                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+                for(V3DLONG ix = 0; ix < N; ix = ix+Sxy)
                 {
                     std::vector<float> output = outputs_overall[d];
                     if(output.at(1) > output.at(0))
