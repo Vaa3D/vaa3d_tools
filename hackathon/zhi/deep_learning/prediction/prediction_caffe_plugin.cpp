@@ -272,11 +272,15 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         Classifier classifier(model_file, trained_file, mean_file);
         std::vector<cv::Mat> imgs;
-        int Ws = 30, Wx = 30, Wy = 30;
+        int Ws = 10, Wx = 30, Wy = 30;
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
         for(V3DLONG iy = Ws; iy < M; iy = iy+Ws)
         {
             for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
             {
+
                 V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
                 V3DLONG xe = ix-1+Wx; if(xe>=N-1) xe = N-1;
                 V3DLONG yb = iy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
@@ -317,9 +321,26 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
                 imgs.push_back(img);
             }
+
+            if(num_patches >=5000)
+            {
+                outputs = classifier.Predict(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
         }
 
-        std::vector<std::vector<float> > outputs = classifier.Predict(imgs);
+        if(imgs.size()>0)
+        {
+            outputs = classifier.Predict(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
         QList <ImageMarker> marklist;
         QString markerpath =  imagename + QString("_%1.marker").arg(Ws);
 
@@ -328,7 +349,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         {
             for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
             {
-                std::vector<float> output = outputs[d];
+                std::vector<float> output = outputs_overall[d];
                 if(output.at(1) > output.at(0))
                 {
                     ImageMarker S;
@@ -342,6 +363,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         }
 
         writeMarker_file(markerpath.toStdString().c_str(),marklist);
+        outputs_overall.clear();
         imgs.clear();
     }
     else

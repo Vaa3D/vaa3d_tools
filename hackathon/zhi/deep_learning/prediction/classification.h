@@ -27,17 +27,23 @@ public:
                const string& trained_file,
                const string& mean_file);
     std::vector<std::vector<float> > Predict(const std::vector<cv::Mat>& imgs);
+    std::vector< float > PredictBatch(const vector< cv::Mat > imgs);
 
 private:
     void SetMean(const string& mean_file);
     void WrapInputLayer(std::vector<cv::Mat>* input_channels, int n);
     void Preprocess(const cv::Mat& img,
                     std::vector<cv::Mat>* input_channels);
+    void WrapBatchInputLayer(std::vector<std::vector<cv::Mat> > *input_batch);
+    void PreprocessBatch(const vector<cv::Mat> imgs,
+                                          std::vector< std::vector<cv::Mat> >* input_batch);
+
 private:
     shared_ptr<Net<float> > net_;
     cv::Size input_geometry_;
     int num_channels_;
     cv::Mat mean_;
+    int batch_size_ ;
 };
 
 QStringList importSeriesFileList_addnumbersort(const QString & curFilePath);
