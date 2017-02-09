@@ -7,6 +7,18 @@ INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/common_lib/include
 INCLUDEPATH	+= $$VAA3DPATH/neuron_editing
 
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+}
+
+win32 {
+    contains(QMAKE_HOST.arch, x86_64) {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    } else {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibtiff
+    }
+}
+
 HEADERS	+= autoCropping_plugin.h
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
 SOURCES	+= autoCropping_plugin.cpp
