@@ -27,6 +27,8 @@ QStringList prediction_caffe::funclist() const
 {
 	return QStringList()
         <<tr("Prediction")
+        <<tr("Quality_Assess")
+        <<tr("Detection")
 		<<tr("help");
 }
 
@@ -293,12 +295,12 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
                 {
 
-                    V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
-                    V3DLONG xe = ix-1+Wx; if(xe>=N-1) xe = N-1;
-                    V3DLONG yb = iy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
-                    V3DLONG ye = iy-1+Wy; if(ye>=M-1) ye = M-1;
-                    V3DLONG zb = iz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
-                    V3DLONG ze = iz-1+Wz; if(ze>=P-1) ze = P-1;
+                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
 
                   //  v3d_msg(QString("%1,%2,%3,%4,%5,%6").arg(xb).arg(xe).arg(yb).arg(ye).arg(zb).arg(ze));
                     V3DLONG im_cropped_sz[4];
@@ -495,13 +497,312 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         imgs.clear();
         return true;
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("Quality_Assess"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        cout<<"Welcome to Caffe quality assessment plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        int k=0;
+
+        QString SWCfileName = paras.empty() ? "" : paras[k]; if(SWCfileName == "NULL") SWCfileName = ""; k++;
+        if(SWCfileName.isEmpty())
+        {
+            cerr<<"Need a swc file"<<endl;
+            return false;
+        }
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"inswc_file = "<<SWCfileName.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG sc = in_sz[3];
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        unsigned int Wx=30, Wy=30, Wz=15;
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+        std::vector<cv::Mat> imgs;
+
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = nt.listNeuron.at(i).y;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
+
+            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+            V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
+            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+            V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
+            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+            V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
+
+            V3DLONG im_cropped_sz[4];
+            im_cropped_sz[0] = xe - xb + 1;
+            im_cropped_sz[1] = ye - yb + 1;
+            im_cropped_sz[2] = 1;
+            im_cropped_sz[3] = sc;
+
+            unsigned char *im_cropped = 0;
+
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            try {im_cropped = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
+            memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+            for(V3DLONG iz = zb; iz <= ze; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                V3DLONG j = 0;
+                for(V3DLONG iy = yb; iy <= ye; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    {
+                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                            im_cropped[j] = data1d[offsetk + offsetj + ix];
+                        j++;
+                    }
+                }
+            }
+
+            cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+            imgs.push_back(img);
+        }
+
+        std::vector<std::vector<float> > outputs = classifier.Predict(imgs);
+        double p_num = 0;
+        double n_num = 0;
+        QList <ImageMarker> marklist;
+        QString markerpath =  SWCfileName + QString("_fp.marker");
+        for (V3DLONG j=0;j<nt.listNeuron.size();j++)
+        {
+            std::vector<float> output = outputs[j];
+            if(output.at(0) > output.at(1))
+            {
+                ImageMarker S;
+                S.x = nt.listNeuron.at(j).x;
+                S.y = nt.listNeuron.at(j).y;
+                S.z = nt.listNeuron.at(j).z;
+                marklist.append(S);
+                n_num++;
+            }
+            else
+                p_num++;
+
+        }
+        writeMarker_file(markerpath.toStdString().c_str(),marklist);
+        cout<<"\positive rate: "<<p_num/outputs.size()<<" and negative rate: "<<n_num/outputs.size()<<endl;
+        imgs.clear();
+        if(data1d) {delete []data1d; data1d = 0;}
+        return true;
+    }else if (func_name == tr("Detection"))
+    {
+        cout<<"Welcome to Caffe signal detection plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);
+
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+        std::vector<cv::Mat> imgs;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG sc = in_sz[3];
+
+        int Wx = 30, Wy = 30, Wz = 15;
+        int Sz = (int)Sxy/3;
+
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+        for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
+        {
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+            {
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+                {
+
+                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+
+                    V3DLONG im_cropped_sz[4];
+                    im_cropped_sz[0] = xe - xb + 1;
+                    im_cropped_sz[1] = ye - yb + 1;
+                    im_cropped_sz[2] = 1;
+                    im_cropped_sz[3] = sc;
+
+                    unsigned char *im_cropped = 0;
+
+                    V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                    try {im_cropped = new unsigned char [pagesz];}
+                    catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
+                    memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                if(data1d[offsetk + offsetj + iix] >= im_cropped[j])
+                                    im_cropped[j] = data1d[offsetk + offsetj + iix];
+                                j++;
+                            }
+                        }
+                    }
+                    cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+                    imgs.push_back(img);
+
+                    if(num_patches >=5000)
+                    {
+                        outputs = classifier.Predict(imgs);
+                        for(V3DLONG d = 0; d<outputs.size();d++)
+                            outputs_overall.push_back(outputs[d]);
+                        outputs.clear();
+                        imgs.clear();
+                        num_patches = 0;
+                    }else
+                        num_patches++;
+                }
+            }
+        }
+
+        if(imgs.size()>0)
+        {
+            outputs = classifier.Predict(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
+        QList <ImageMarker> marklist;
+        QString markerpath =  inimg_file + QString("_%1.marker").arg(Sxy);
+
+        V3DLONG d = 0;
+        for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
+        {
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+            {
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+                {
+                    std::vector<float> output = outputs_overall[d];
+                    if(output.at(1) > output.at(0))
+                    {
+                        ImageMarker S;
+                        S.x = ix;
+                        S.y = iy;
+                        S.z = iz;
+                        marklist.append(S);
+                    }
+                    d++;
+                }
+            }
+        }
+        writeMarker_file(markerpath.toStdString().c_str(),marklist);
+        outputs_overall.clear();
+        imgs.clear();
+        if(data1d) {delete []data1d; data1d = 0;}
+        return true;
+    }
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        cout<<"Usage : v3d -x prediction_caffe -f Prediction -i <inimg_folder> -p <model_file> <trained_file> <mean_file>"<<endl;
+        cout<<endl;
+        cout<<"Usage : v3d -x prediction_caffe -f Quality_Assess -i <inimg_file> -p <inswc_file> <model_file> <trained_file> <mean_file>"<<endl;
+        cout<<endl;
+        cout<<"Usage : v3d -x prediction_caffe -f Detection -i <inimg_file> -p <model_file> <trained_file> <mean_file> <sample_size>"<<endl;
+        cout<<endl;
+        return true;
 	}
 	else return false;
 
