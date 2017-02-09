@@ -272,66 +272,70 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         Classifier classifier(model_file, trained_file, mean_file);
         std::vector<cv::Mat> imgs;
-        int Ws = 10, Wx = 30, Wy = 30;
+        int Sxy = 30, Wx = 30, Wy = 30, Wz = 15;
+        int Sz = (int)Sxy/3;
+
         V3DLONG num_patches = 0;
         std::vector<std::vector<float> > outputs_overall;
         std::vector<std::vector<float> > outputs;
-        for(V3DLONG iy = Ws; iy < M; iy = iy+Ws)
+        for(V3DLONG iz = Sz; iz < P; iz = iz+Sz)
         {
-            for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
             {
-
-                V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
-                V3DLONG xe = ix-1+Wx; if(xe>=N-1) xe = N-1;
-                V3DLONG yb = iy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
-                V3DLONG ye = iy-1+Wy; if(ye>=M-1) ye = M-1;
-//                V3DLONG zb = iz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
-//                V3DLONG ze = iz-1+Wz; if(ze>=P-1) ze = P-1;
-                V3DLONG zb = 0,ze = 0;
-
-
-                V3DLONG im_cropped_sz[4];
-                im_cropped_sz[0] = xe - xb + 1;
-                im_cropped_sz[1] = ye - yb + 1;
-                im_cropped_sz[2] = 1;
-                im_cropped_sz[3] = sc;
-
-                unsigned char *im_cropped = 0;
-
-                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
-                try {im_cropped = new unsigned char [pagesz];}
-                catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
-                memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
-
-                for(V3DLONG iz = zb; iz <= ze; iz++)
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
                 {
-                    V3DLONG offsetk = iz*M*N;
-                    V3DLONG j = 0;
-                    for(V3DLONG iy = yb; iy <= ye; iy++)
+
+                    V3DLONG xb = ix-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                    V3DLONG xe = ix-1+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                    V3DLONG ye = iy-1+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+                    V3DLONG ze = iz-1+Wz; if(ze>=P-1) ze = P-1;
+
+
+                    V3DLONG im_cropped_sz[4];
+                    im_cropped_sz[0] = xe - xb + 1;
+                    im_cropped_sz[1] = ye - yb + 1;
+                    im_cropped_sz[2] = 1;
+                    im_cropped_sz[3] = sc;
+
+                    unsigned char *im_cropped = 0;
+
+                    V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                    try {im_cropped = new unsigned char [pagesz];}
+                    catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+                    memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
                     {
-                        V3DLONG offsetj = iy*N;
-                        for(V3DLONG ix = xb; ix <= xe; ix++)
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
                         {
-                            if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
-                                im_cropped[j] = data1d[offsetk + offsetj + ix];
-                            j++;
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                if(data1d[offsetk + offsetj + iix] >= im_cropped[j])
+                                    im_cropped[j] = data1d[offsetk + offsetj + iix];
+                                j++;
+                            }
                         }
                     }
+                    cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+                    imgs.push_back(img);
                 }
-                cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
-                imgs.push_back(img);
-            }
 
-            if(num_patches >=5000)
-            {
-                outputs = classifier.Predict(imgs);
-                for(V3DLONG d = 0; d<outputs.size();d++)
-                    outputs_overall.push_back(outputs[d]);
-                outputs.clear();
-                imgs.clear();
-                num_patches = 0;
-            }else
-                num_patches++;
+                if(num_patches >=5000)
+                {
+                    outputs = classifier.Predict(imgs);
+                    for(V3DLONG d = 0; d<outputs.size();d++)
+                        outputs_overall.push_back(outputs[d]);
+                    outputs.clear();
+                    imgs.clear();
+                    num_patches = 0;
+                }else
+                    num_patches++;
+            }
         }
 
         if(imgs.size()>0)
@@ -342,23 +346,26 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         }
 
         QList <ImageMarker> marklist;
-        QString markerpath =  imagename + QString("_%1.marker").arg(Ws);
+        QString markerpath =  imagename + QString("_%1_%2.marker").arg(Sxy).arg(Sz);
 
         V3DLONG d = 0;
-        for(V3DLONG iy = Ws; iy < M; iy = iy+Ws)
+        for(V3DLONG iz = Sz; iz < P; iz = iz+Sz)
         {
-            for(V3DLONG ix = Ws; ix < N; ix = ix+Ws)
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
             {
-                std::vector<float> output = outputs_overall[d];
-                if(output.at(1) > output.at(0))
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
                 {
-                    ImageMarker S;
-                    S.x = ix;
-                    S.y = iy;
-                    S.z = 1;
-                    marklist.append(S);
+                    std::vector<float> output = outputs_overall[d];
+                    if(output.at(1) > output.at(0))
+                    {
+                        ImageMarker S;
+                        S.x = ix;
+                        S.y = iy;
+                        S.z = iz;
+                        marklist.append(S);
+                    }
+                    d++;
                 }
-                d++;
             }
         }
 
