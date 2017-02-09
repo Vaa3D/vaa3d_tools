@@ -13,9 +13,9 @@ macx{
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
-    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$VAA3DPATH/common_lib/winlib64 -llibtiff
     } else {
-    LIBS     += -L$$V3DMAINPATH/common_lib/winlib -llibtiff
+    LIBS     += -L$$VAA3DPATH/common_lib/winlib -llibtiff
     }
 }
 
