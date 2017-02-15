@@ -9,6 +9,9 @@
 
 #include <classification.h>
 #include "../../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+#include "../../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
+
 
 
 using namespace std;
@@ -29,6 +32,7 @@ QStringList prediction_caffe::funclist() const
         <<tr("Prediction")
         <<tr("Quality_Assess")
         <<tr("Detection")
+        <<tr("Prediction_type")
 		<<tr("help");
 }
 
@@ -558,6 +562,14 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG sc = in_sz[3];
 
         NeuronTree nt = readSWC_file(SWCfileName);
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            nt.listNeuron[i].y = M - nt.listNeuron[i].y -1;
+
+        }
+
+        SWCfileName =  inimg_file + ".swc";
+        writeSWC_file(SWCfileName,nt);
         unsigned int Wx=30, Wy=30, Wz=15;
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         std::vector<cv::Mat> imgs;
@@ -794,7 +806,157 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         if(data1d) {delete []data1d; data1d = 0;}
         return true;
     }
-	else if (func_name == tr("help"))
+    else if(func_name == tr("Prediction_type"))
+    {
+        cout<<"Welcome to Caffe signal detection plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+        QString  inswc_file =  infiles[0];
+        int k=0;
+
+        QString marker_file = paras.empty() ? "" : paras[k]; if(marker_file == "NULL") marker_file = ""; k++;
+        if(marker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"marker_file = "<<marker_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt = readSWC_file(inswc_file);
+        QList <ImageMarker> marklist =  readMarker_file(marker_file);
+
+        double apical_total = 0,  apical_fn = 0, dendrite_total = 0, dendrite_fn = 0;
+        double axon_total = 0,axon_fn = 0;
+
+        NeuronTree nt_prunned;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+        NeuronSWC S;
+
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            bool flag = false;
+            if(nt.listNeuron.at(i).type == 2)
+                axon_total++;
+            else if (nt.listNeuron.at(i).type == 3)
+                dendrite_total++;
+            else if (nt.listNeuron.at(i).type == 4)
+                apical_total++;
+            for(V3DLONG j=0; j<marklist.size();j++)
+            {
+                if(nt.listNeuron.at(i).x ==marklist.at(j).x && nt.listNeuron.at(i).y == marklist.at(j).y && nt.listNeuron.at(i).z ==marklist.at(j).z)
+                {
+                    if(nt.listNeuron.at(i).type == 2)
+                        axon_fn++;
+                    else if (nt.listNeuron.at(i).type == 3)
+                        dendrite_fn++;
+                    else if (nt.listNeuron.at(i).type == 4)
+                        apical_fn++;
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag)
+            {
+                NeuronSWC curr = nt.listNeuron.at(i);
+                S.n 	= curr.n;
+                S.type 	= curr.type;
+                S.x 	= curr.x;
+                S.y 	= curr.y;
+                S.z 	= curr.z;
+                S.r 	= curr.r;
+                S.pn 	= curr.pn;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+            }
+        }
+
+        nt_prunned.n = -1;
+        nt_prunned.on = true;
+        nt_prunned.listNeuron = listNeuron;
+        nt_prunned.hashNeuron = hashNeuron;
+
+        cout<<"\axon_total: "<<axon_total<<" ,axon_fn: "<<axon_fn<<endl;
+        cout<<"dendrite_total: "<<dendrite_total<<" ,dendrite_fn: "<<dendrite_fn<<endl;
+        cout<<"apical_total: "<<apical_total<<" ,apical_fn: "<<apical_fn<<endl;
+
+        NeuronTree nt_prunned_sort = SortSWC_pipeline(nt_prunned.listNeuron,VOID, 0);
+        QList<NeuronSWC> newNeuron_connected;
+        double angthr=cos((180-60)/180*M_PI);
+        QString  swc_processed = inswc_file + "_processed.swc";
+
+        connectall(&nt_prunned_sort, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
+
+        if(!export_list2file(newNeuron_connected, swc_processed,inswc_file)){
+            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
+        }
+
+
+        NeuronTree nt_connected = readSWC_file(swc_processed);
+        NeuronTree nt_prunned_sort_rs = resample(nt_connected, 10);
+
+        double apical_fn_updated = 0, dendrite_fn_updated = 0, axon_fn_updated = 0;
+
+        QList <ImageMarker> marklist_process;
+        for(V3DLONG i=0; i<marklist.size();i++)
+        {
+            bool flag = false;
+            for (V3DLONG j=0;j<nt_prunned_sort_rs.listNeuron.size();j++)
+            {
+                NeuronSWC curr = nt_prunned_sort_rs.listNeuron.at(j);
+                double dis = sqrt(pow2(curr.x - marklist.at(i).x) + pow2(curr.y - marklist.at(i).y) + pow2(curr.z - marklist.at(i).z));
+                if(dis < 10.0)
+                {
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag)
+            {
+                for (V3DLONG j=0;j<nt.listNeuron.size();j++)
+                {
+                    if(nt.listNeuron.at(j).x ==marklist.at(i).x && nt.listNeuron.at(j).y == marklist.at(i).y && nt.listNeuron.at(j).z ==marklist.at(i).z)
+                    {
+                        if(nt.listNeuron.at(j).type == 2)
+                            axon_fn_updated++;
+                        else if (nt.listNeuron.at(j).type == 3)
+                            dendrite_fn_updated++;
+                        else if (nt.listNeuron.at(j).type == 4)
+                            apical_fn_updated++;
+                        break;
+                    }
+                }
+                marklist_process.push_back(marklist.at(i));
+            }
+        }
+
+        QString marker_file_process = marker_file + "_processed.marker";
+        writeMarker_file(marker_file_process,marklist_process);
+
+        if(!outfiles.empty())
+        {
+            QString  outputfile =  outfiles[0];
+            QFile saveTextFile;
+            saveTextFile.setFileName(outputfile);
+            if (!saveTextFile.isOpen()){
+                if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                    qDebug()<<"unable to save file!";
+                    return false;}     }
+            QTextStream outputStream;
+            outputStream.setDevice(&saveTextFile);
+            outputStream<< axon_total<<"\t"<< axon_fn<<"\t"<< axon_fn_updated<<"\t"<<dendrite_total<<"\t"<< dendrite_fn<<"\t"<< dendrite_fn_updated<<"\t"<<apical_total<<"\t"<< apical_fn<<"\t"<< apical_fn_updated<<"\n";
+            saveTextFile.close();
+        }
+
+    }
+    else if (func_name == tr("help"))
 	{
         cout<<"Usage : v3d -x prediction_caffe -f Prediction -i <inimg_folder> -p <model_file> <trained_file> <mean_file>"<<endl;
         cout<<endl;

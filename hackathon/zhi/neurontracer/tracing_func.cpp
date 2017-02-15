@@ -3668,7 +3668,7 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
     NeuronTree nt_resampled = resample(nt, 10);
     QList<NeuronSWC> neuron_sorted;
 
-    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 10))
+    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 80))  //was 10
     {
         v3d_msg("fail to call swc sorting function.",0);
         return nt_result;
