@@ -562,11 +562,11 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG sc = in_sz[3];
 
         NeuronTree nt = readSWC_file(SWCfileName);
-        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
-        {
-            nt.listNeuron[i].y = M - nt.listNeuron[i].y -1;
+//        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+//        {
+//            nt.listNeuron[i].y = M - nt.listNeuron[i].y -1;
 
-        }
+//        }
 
         SWCfileName =  inimg_file + ".swc";
         writeSWC_file(SWCfileName,nt);
@@ -851,7 +851,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 apical_total++;
             for(V3DLONG j=0; j<marklist.size();j++)
             {
-                if(nt.listNeuron.at(i).x ==marklist.at(j).x && nt.listNeuron.at(i).y == marklist.at(j).y && nt.listNeuron.at(i).z ==marklist.at(j).z)
+                double dis = sqrt(pow2(nt.listNeuron.at(i).x - marklist.at(j).x) + pow2(nt.listNeuron.at(i).y - marklist.at(j).y) + pow2(nt.listNeuron.at(i).z - marklist.at(j).z));
+                if(dis < 1.0)
                 {
                     if(nt.listNeuron.at(i).type == 2)
                         axon_fn++;
@@ -888,72 +889,88 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"apical_total: "<<apical_total<<" ,apical_fn: "<<apical_fn<<endl;
 
         NeuronTree nt_prunned_sort = SortSWC_pipeline(nt_prunned.listNeuron,VOID, 0);
-        QList<NeuronSWC> newNeuron_connected;
-        double angthr=cos((180-60)/180*M_PI);
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt_prunned_sort.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt_prunned_sort.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt_prunned_sort.hashNeuron.value(par)].push_back(i);
+        }
+
+        for (V3DLONG i=nt_prunned_sort.listNeuron.size()-1;i>=0;i--)
+        {
+            if(nt_prunned_sort.listNeuron[i].pn < 0 && childs[i].size()==0)
+                nt_prunned_sort.listNeuron.removeAt(i);
+        }
+
+//        QList<NeuronSWC> newNeuron_connected;
+//        double angthr=cos((180-60)/180*M_PI);
         QString  swc_processed = inswc_file + "_processed.swc";
 
-        connectall(&nt_prunned_sort, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
+//        connectall(&nt_prunned_sort, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
 
-        if(!export_list2file(newNeuron_connected, swc_processed,inswc_file)){
+        if(!export_list2file(nt_prunned_sort.listNeuron, swc_processed,inswc_file)){
             qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
         }
 
 
-        NeuronTree nt_connected = readSWC_file(swc_processed);
-        NeuronTree nt_prunned_sort_rs = resample(nt_connected, 10);
+//        NeuronTree nt_connected = readSWC_file(swc_processed);
+//        NeuronTree nt_prunned_sort_rs = resample(nt_connected, 10);
 
-        double apical_fn_updated = 0, dendrite_fn_updated = 0, axon_fn_updated = 0;
+//        double apical_fn_updated = 0, dendrite_fn_updated = 0, axon_fn_updated = 0;
 
-        QList <ImageMarker> marklist_process;
-        for(V3DLONG i=0; i<marklist.size();i++)
-        {
-            bool flag = false;
-            for (V3DLONG j=0;j<nt_prunned_sort_rs.listNeuron.size();j++)
-            {
-                NeuronSWC curr = nt_prunned_sort_rs.listNeuron.at(j);
-                double dis = sqrt(pow2(curr.x - marklist.at(i).x) + pow2(curr.y - marklist.at(i).y) + pow2(curr.z - marklist.at(i).z));
-                if(dis < 10.0)
-                {
-                    flag = true;
-                    break;
-                }
-            }
-            if(!flag)
-            {
-                for (V3DLONG j=0;j<nt.listNeuron.size();j++)
-                {
-                    if(nt.listNeuron.at(j).x ==marklist.at(i).x && nt.listNeuron.at(j).y == marklist.at(i).y && nt.listNeuron.at(j).z ==marklist.at(i).z)
-                    {
-                        if(nt.listNeuron.at(j).type == 2)
-                            axon_fn_updated++;
-                        else if (nt.listNeuron.at(j).type == 3)
-                            dendrite_fn_updated++;
-                        else if (nt.listNeuron.at(j).type == 4)
-                            apical_fn_updated++;
-                        break;
-                    }
-                }
-                marklist_process.push_back(marklist.at(i));
-            }
-        }
+//        QList <ImageMarker> marklist_process;
+//        for(V3DLONG i=0; i<marklist.size();i++)
+//        {
+//            bool flag = false;
+//            for (V3DLONG j=0;j<nt_prunned_sort_rs.listNeuron.size();j++)
+//            {
+//                NeuronSWC curr = nt_prunned_sort_rs.listNeuron.at(j);
+//                double dis = sqrt(pow2(curr.x - marklist.at(i).x) + pow2(curr.y - marklist.at(i).y) + pow2(curr.z - marklist.at(i).z));
+//                if(dis < 10.0)
+//                {
+//                    flag = true;
+//                    break;
+//                }
+//            }
+//            if(!flag)
+//            {
+//                for (V3DLONG j=0;j<nt.listNeuron.size();j++)
+//                {
+//                    if(nt.listNeuron.at(j).x ==marklist.at(i).x && nt.listNeuron.at(j).y == marklist.at(i).y && nt.listNeuron.at(j).z ==marklist.at(i).z)
+//                    {
+//                        if(nt.listNeuron.at(j).type == 2)
+//                            axon_fn_updated++;
+//                        else if (nt.listNeuron.at(j).type == 3)
+//                            dendrite_fn_updated++;
+//                        else if (nt.listNeuron.at(j).type == 4)
+//                            apical_fn_updated++;
+//                        break;
+//                    }
+//                }
+//                marklist_process.push_back(marklist.at(i));
+//            }
+//        }
 
-        QString marker_file_process = marker_file + "_processed.marker";
-        writeMarker_file(marker_file_process,marklist_process);
+//        QString marker_file_process = marker_file + "_processed.marker";
+//        writeMarker_file(marker_file_process,marklist_process);
 
-        if(!outfiles.empty())
-        {
-            QString  outputfile =  outfiles[0];
-            QFile saveTextFile;
-            saveTextFile.setFileName(outputfile);
-            if (!saveTextFile.isOpen()){
-                if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
-                    qDebug()<<"unable to save file!";
-                    return false;}     }
-            QTextStream outputStream;
-            outputStream.setDevice(&saveTextFile);
-            outputStream<< axon_total<<"\t"<< axon_fn<<"\t"<< axon_fn_updated<<"\t"<<dendrite_total<<"\t"<< dendrite_fn<<"\t"<< dendrite_fn_updated<<"\t"<<apical_total<<"\t"<< apical_fn<<"\t"<< apical_fn_updated<<"\n";
-            saveTextFile.close();
-        }
+//        if(!outfiles.empty())
+//        {
+//            QString  outputfile =  outfiles[0];
+//            QFile saveTextFile;
+//            saveTextFile.setFileName(outputfile);
+//            if (!saveTextFile.isOpen()){
+//                if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+//                    qDebug()<<"unable to save file!";
+//                    return false;}     }
+//            QTextStream outputStream;
+//            outputStream.setDevice(&saveTextFile);
+//            outputStream<< axon_total<<"\t"<< axon_fn<<"\t"<< axon_fn_updated<<"\t"<<dendrite_total<<"\t"<< dendrite_fn<<"\t"<< dendrite_fn_updated<<"\t"<<apical_total<<"\t"<< apical_fn<<"\t"<< apical_fn_updated<<"\n";
+//            saveTextFile.close();
+//        }
 
     }
     else if (func_name == tr("help"))

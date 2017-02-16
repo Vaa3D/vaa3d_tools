@@ -72,6 +72,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
 bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
+NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
 
 #endif
 
