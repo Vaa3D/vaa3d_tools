@@ -96,6 +96,8 @@ QStringList IVSCC_radius_estimation::menulist() const
         <<tr("neuron_radius_current_window")
         <<tr("neuron_radius_selected_folder")
         <<tr("neuron_radius_interpolation")
+        <<tr("swc_3D_to_2D")
+        <<tr("swc_2D_to_3D_radius")
 		<<tr("about");
 }
 
@@ -385,6 +387,115 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 
         writeMarker_file(MarkerfileName, bifur_marker);
         writeMarker_file(AllmarkerfileName, all_bifur_marker);
+
+    }
+    else if(menu_name == tr("swc_3D_to_2D"))
+    {
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
+            return;
+
+        QString fileOpenName = openDlg->file_name;
+
+        if(fileOpenName.isEmpty())
+            return;
+        NeuronTree nt_result;
+        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+        {
+            nt_result = openDlg->nt;
+
+        }
+
+        for(V3DLONG i =0; i<nt_result.listNeuron.size();i++)
+        {
+            nt_result.listNeuron[i].z = 0;
+        }
+
+        QString fileDefaultName = fileOpenName+QString("_2D.swc");
+        //write new SWC to file
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                fileDefaultName,
+                QObject::tr("Supported file (*.swc)"
+                    ";;Neuron structure	(*.swc)"
+                    ));
+        writeSWC_file(fileSaveName,nt_result);
+
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt_result.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt_result.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt_result.hashNeuron.value(par)].push_back(i);
+        }
+        QList<NeuronSWC> list = nt_result.listNeuron;
+        QList<ImageMarker> all_bifur_marker;
+
+
+        for (int i=0;i<list.size();i++)
+        {
+            ImageMarker t;
+            if ((childs[i].size()>1 || childs[i].size() ==0) && nt_result.listNeuron.at(i).type != 1 && nt_result.listNeuron.at(i).type != 2)
+            {
+                t.x = nt_result.listNeuron.at(i).x;
+                t.y = nt_result.listNeuron.at(i).y;
+                t.z = 1;
+                all_bifur_marker.append(t);
+            }
+        }
+
+        QString AllmarkerfileName = fileSaveName+QString("_all.marker");
+        writeMarker_file(AllmarkerfileName, all_bifur_marker);
+
+    }
+    else if(menu_name == tr("swc_2D_to_3D_radius"))
+    {
+        v3d_msg("Please select the 3D swc file.");
+        OpenSWCDialog * openDlg1 = new OpenSWCDialog(0, &callback);
+        if (!openDlg1->exec())
+            return;
+
+        QString fileOpenName3D = openDlg1->file_name;
+
+        if(fileOpenName3D.isEmpty())
+            return;
+        NeuronTree nt_3D;
+        if (fileOpenName3D.toUpper().endsWith(".SWC") || fileOpenName3D.toUpper().endsWith(".ESWC"))
+        {
+            nt_3D = openDlg1->nt;
+        }
+
+        v3d_msg("Please select the 2D swc file.");
+        OpenSWCDialog * openDlg2 = new OpenSWCDialog(0, &callback);
+        if (!openDlg2->exec())
+            return;
+
+        QString fileOpenName2D = openDlg2->file_name;
+
+        if(fileOpenName2D.isEmpty())
+            return;
+
+        NeuronTree nt_2D;
+        if (fileOpenName2D.toUpper().endsWith(".SWC") || fileOpenName2D.toUpper().endsWith(".ESWC"))
+        {
+            nt_2D = openDlg2->nt;
+        }
+
+        for(V3DLONG i =0; i<nt_3D.listNeuron.size();i++)
+        {
+            nt_3D.listNeuron[i].r = nt_2D.listNeuron[i].r;
+        }
+
+        QString fileDefaultName = fileOpenName3D+QString("_assembled.swc");
+        //write new SWC to file
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                fileDefaultName,
+                QObject::tr("Supported file (*.swc)"
+                    ";;Neuron structure	(*.swc)"
+                    ));
+        writeSWC_file(fileSaveName,nt_3D);
 
     }
 	else
