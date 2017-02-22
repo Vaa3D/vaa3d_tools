@@ -568,8 +568,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
 //        }
 
-        SWCfileName =  inimg_file + ".swc";
-        writeSWC_file(SWCfileName,nt);
+//        SWCfileName =  inimg_file + ".swc";
+//        writeSWC_file(SWCfileName,nt);
         unsigned int Wx=30, Wy=30, Wz=15;
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         std::vector<cv::Mat> imgs;

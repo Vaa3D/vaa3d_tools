@@ -29,12 +29,12 @@ QStringList neurontracer::menulist() const
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")
-       <<tr("trace_NeuroGPSTree")
-      <<tr("trace_Advantra")
-     <<tr("trace_TReMAP")
-    <<tr("trace_MST")
-   <<tr("trace_NeuronChaser")
-  <<tr("trace_Rivulet2")
+       <<tr("trace_MST")
+      <<tr("trace_NeuroGPSTree")
+     <<tr("trace_Rivulet2")
+    <<tr("trace_TReMAP")
+ //     <<tr("trace_Advantra")
+//   <<tr("trace_NeuronChaser")
  <<tr("about");
 }
 
@@ -47,7 +47,7 @@ QStringList neurontracer::funclist() const
          <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")
        <<tr("trace_NeuroGPSTree")
-      <<tr("trace_Advantra")
+//      <<tr("trace_Advantra")
      <<tr("trace_TReMAP")
     <<tr("trace_MST")
    <<tr("trace_NeuronChaser")

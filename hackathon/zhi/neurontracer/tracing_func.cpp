@@ -2566,28 +2566,28 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 
-#if  defined(Q_OS_LINUX)
-    QString cmd_DL = QString("%1/vaa3d -x prediction_caffe -f Quality_Assess -i %2 -p %3 /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/deploy.prototxt /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/caffenet_train_iter_390000.caffemodel /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/imagenet_mean.binaryproto").
-            arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(swcNEUTUBE.toStdString().c_str());
-    system(qPrintable(cmd_DL));
-#else
-    v3d_msg("The OS is not Linux or Mac. Do nothing.");
-    return;
-#endif
+//#if  defined(Q_OS_LINUX)
+//    QString cmd_DL = QString("%1/vaa3d -x prediction_caffe -f Quality_Assess -i %2 -p %3 /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/deploy.prototxt /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/caffenet_train_iter_390000.caffemodel /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/imagenet_mean.binaryproto").
+//            arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(swcNEUTUBE.toStdString().c_str());
+//    system(qPrintable(cmd_DL));
+//#else
+//    v3d_msg("The OS is not Linux or Mac. Do nothing.");
+//    return;
+//#endif
 
-    QString fp_marker = imageSaveString + (".swc_fp.marker");
-    QList <ImageMarker> fp_marklist =  readMarker_file(fp_marker);
-    NeuronTree nt_neutube_DL = DL_eliminate_swc(nt_neutube,fp_marklist);
-    QString swcDL = imageSaveString + ("_DL.swc");
-    QList<NeuronSWC> nt_neutube_DL_sorted;
-    if (!SortSWC(nt_neutube_DL.listNeuron, nt_neutube_DL_sorted,VOID, 0))
-    {
-        v3d_msg("fail to call swc sorting function.",0);
-        return false;
-    }
+//    QString fp_marker = imageSaveString + (".swc_fp.marker");
+//    QList <ImageMarker> fp_marklist =  readMarker_file(fp_marker);
+//    NeuronTree nt_neutube_DL = DL_eliminate_swc(nt_neutube,fp_marklist);
+//    QString swcDL = imageSaveString + ("_DL.swc");
+//    QList<NeuronSWC> nt_neutube_DL_sorted;
+//    if (!SortSWC(nt_neutube_DL.listNeuron, nt_neutube_DL_sorted,VOID, 0))
+//    {
+//        v3d_msg("fail to call swc sorting function.",0);
+//        return false;
+//    }
 
-    export_list2file(nt_neutube_DL_sorted, swcDL,swcDL);
-    nt_neutube_DL = readSWC_file(swcDL);
+//    export_list2file(nt_neutube_DL_sorted, swcDL,swcDL);
+//    nt_neutube_DL = readSWC_file(swcDL);
 
 
 //    QVector<QVector<V3DLONG> > children;
@@ -2612,7 +2612,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     ifstream ifs_swcString(swcString.toStdString().c_str());
     if(!ifs_swcString)
     {
-        nt = sort_eliminate_swc(nt_neutube_DL,inputRootList,total4DImage);
+      //  nt = sort_eliminate_swc(nt_neutube_DL,inputRootList,total4DImage);
+        nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
         export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
 
     }else
@@ -2623,7 +2624,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             return true;
         else
         {
-            nt = sort_eliminate_swc(nt_neutube_DL,inputRootList_pruned,total4DImage);
+           // nt = sort_eliminate_swc(nt_neutube_DL,inputRootList_pruned,total4DImage);
+            nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
             combine_list2file(nt.listNeuron, swcString);
 
         }
@@ -3708,7 +3710,7 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
     NeuronTree nt_resampled = resample(nt, 10);
     QList<NeuronSWC> neuron_sorted;
 
-    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 40))  //was 10
+    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 10))  //was 10
     {
         v3d_msg("fail to call swc sorting function.",0);
         return nt_result;
