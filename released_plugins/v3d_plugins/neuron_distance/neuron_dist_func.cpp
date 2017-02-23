@@ -40,25 +40,22 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to neuron_dist_io"<<endl;
-    if(input.size() != 1)
-	{
-		cerr<<"unrecognized parameter"<<endl;
-		return true;
-	}
+    vector<char*> * inlist = (vector<char*>*)(input.at(0).p);
+    if (inlist->size()!=2)
+    {
+        cerr<<"plese specify only 2 input neurons for distance computing"<<endl;
+        return false;
+    }
 
-	vector<char*> * inlist = (vector<char*>*)(input.at(0).p);
-	if (inlist->size()!=2)
-	{
-		cerr<<"plese specify only 2 input neurons for distance computing"<<endl;
-		return false;
-	}
-
+    vector<char*> inparas;
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    double  d_thres = (inparas.size() >= 1) ? atof(inparas[0]) : 2;
     bool bmenu = 0;
 	QString name_nt1(inlist->at(0));
 	QString name_nt2(inlist->at(1));
 	NeuronTree nt1 = readSWC_file(name_nt1);
 	NeuronTree nt2 = readSWC_file(name_nt2);
-    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu);
+    NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2,bmenu,d_thres);
 
 	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
     cout<<"entire-structure-average (from neuron 1 to 2) = "<<tmp_score.dist_12_allnodes <<endl;
@@ -234,7 +231,7 @@ int neuron_dist_mask(V3DPluginCallback2 &callback, QWidget *parent)
 void printHelp()
 {
 	cout<<"\nNeuron Distance: compute the distance between two neurons. distance is defined as the average distance among all nearest point pairs. 2012-05-04 by Yinan Wan"<<endl;
-    cout<<"Usage: v3d -x neuron_distance -f neuron_distance -i <input_filename1> <input_filename2> -o <output_file>"<<endl;
+    cout<<"Usage: v3d -x neuron_distance -f neuron_distance -i <input_filename1> <input_filename2> -p <dist_thres> -o <output_file>"<<endl;
 	cout<<"Parameters:"<<endl;
 	cout<<"\t-i <input_filename1> <input_filename2>: input neuron structure file (*.swc *.eswc)"<<endl;
 	cout<<"Distance result will be printed on the screen\n"<<endl;
