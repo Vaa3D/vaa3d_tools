@@ -55,6 +55,12 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     return myList;
 }
 
+template <class T> T pow2(T a)
+{
+    return a*a;
+
+}
+
 NeuronTree interpolate_radius(NeuronTree input);
 
 void interpolate_path(Segment * seg)
@@ -483,10 +489,43 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
             nt_2D = openDlg2->nt;
         }
 
-        for(V3DLONG i =0; i<nt_3D.listNeuron.size();i++)
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt_3D.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+        for (V3DLONG i=0;i<neuronNum;i++)
         {
-            nt_3D.listNeuron[i].r = nt_2D.listNeuron[i].r;
+            V3DLONG par = nt_3D.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt_3D.hashNeuron.value(par)].push_back(i);
         }
+
+        QList<NeuronSWC> list = nt_3D.listNeuron;
+        QList<NeuronSWC> list2 = nt_2D.listNeuron;
+        for (int i=0;i<list.size();i++)
+        {
+            if ((childs[i].size()>1 || childs[i].size() ==0) && nt_3D.listNeuron.at(i).type != 1 && nt_3D.listNeuron.at(i).type != 2)
+            {
+                double min_dis = 10000;
+                int min_ID;
+                for(V3DLONG j=0; j<list2.size();j++)
+                {
+                    double dis = sqrt(pow2(list.at(i).x - list2.at(j).x) + pow2(list.at(i).y - list2.at(j).y));
+                    if(dis < min_dis)
+                    {
+                        min_dis = dis;
+                        min_ID = j;
+
+                    }
+                }
+                nt_3D.listNeuron[i].r = nt_2D.listNeuron[min_ID].r;
+            }
+        }
+
+//        for(V3DLONG i =0; i<nt_3D.listNeuron.size();i++)
+//        {
+//            nt_3D.listNeuron[i].r = nt_2D.listNeuron[i].r;
+//        }
 
         QString fileDefaultName = fileOpenName3D+QString("_assembled.swc");
         //write new SWC to file
