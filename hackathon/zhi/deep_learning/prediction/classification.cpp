@@ -13,6 +13,14 @@
 #include <vector>
 #include "../../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 
+
+template <class T> T pow2(T a)
+{
+    return a*a;
+
+}
+
+
 Classifier::Classifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file) {
@@ -240,4 +248,48 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     foreach (QString qs, myList)  qDebug() << qs;
 
     return myList;
+}
+
+NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
+{
+    NeuronTree nt_prunned;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    NeuronSWC S;
+
+    for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+    {
+        bool flag = false;
+        for(V3DLONG j=0; j<marklist.size();j++)
+        {
+            double dis = sqrt(pow2(nt.listNeuron.at(i).x - marklist.at(j).x) + pow2(nt.listNeuron.at(i).y - marklist.at(j).y) + pow2(nt.listNeuron.at(i).z - marklist.at(j).z));
+            if(dis < 1.0)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+        {
+            NeuronSWC curr = nt.listNeuron.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+
+    nt_prunned.n = -1;
+    nt_prunned.on = true;
+    nt_prunned.listNeuron = listNeuron;
+    nt_prunned.hashNeuron = hashNeuron;
+
+    return nt_prunned;
 }

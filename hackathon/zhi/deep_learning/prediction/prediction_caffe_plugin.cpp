@@ -33,6 +33,7 @@ QStringList prediction_caffe::funclist() const
         <<tr("Quality_Assess")
         <<tr("Detection")
         <<tr("Prediction_type")
+        <<tr("Noise_removal")
 		<<tr("help");
 }
 
@@ -956,6 +957,170 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             saveTextFile.close();
         }
 
+    }
+    else if(func_name == tr("Noise_removal"))
+    {
+        cout<<"Welcome to Caffe noise removal plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        int k=0;
+
+        QString SWCfileName = paras.empty() ? "" : paras[k]; if(SWCfileName == "NULL") SWCfileName = ""; k++;
+        if(SWCfileName.isEmpty())
+        {
+            cerr<<"Need a swc file"<<endl;
+            return false;
+        }
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        QString  outswc_file =  SWCfileName + "_pruned.swc";
+        if(!outfiles.empty())   outswc_file =  outfiles[0];
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"inswc_file = "<<SWCfileName.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG sc = in_sz[3];
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        unsigned int Wx=30, Wy=30, Wz=15;
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+        std::vector<cv::Mat> imgs;
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = nt.listNeuron.at(i).y;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
+
+            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+            V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
+            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+            V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
+            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+            V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
+
+            V3DLONG im_cropped_sz[4];
+            im_cropped_sz[0] = xe - xb + 1;
+            im_cropped_sz[1] = ye - yb + 1;
+            im_cropped_sz[2] = 1;
+            im_cropped_sz[3] = sc;
+
+            unsigned char *im_cropped = 0;
+
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            try {im_cropped = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
+            memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+            for(V3DLONG iz = zb; iz <= ze; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                V3DLONG j = 0;
+                for(V3DLONG iy = yb; iy <= ye; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    {
+                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                            im_cropped[j] = data1d[offsetk + offsetj + ix];
+                        j++;
+                    }
+                }
+            }
+
+            cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+            imgs.push_back(img);
+
+            if(num_patches >=10000)
+            {
+                outputs = classifier.Predict(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
+        }
+
+        if(imgs.size()>0)
+        {
+            outputs = classifier.Predict(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
+ //       std::vector<std::vector<float> > outputs = classifier.Predict(imgs);
+        double p_num = 0;
+        double n_num = 0;
+        QList <ImageMarker> marklist;
+        for (V3DLONG j=0;j<nt.listNeuron.size();j++)
+        {
+            std::vector<float> output = outputs_overall[j];
+            if(output.at(0) > output.at(1))
+            {
+                ImageMarker S;
+                S.x = nt.listNeuron.at(j).x;
+                S.y = nt.listNeuron.at(j).y;
+                S.z = nt.listNeuron.at(j).z;
+                marklist.append(S);
+                n_num++;
+            }
+            else
+                p_num++;
+        }
+
+        NeuronTree nt_pruned = DL_eliminate_swc(nt,marklist);
+        NeuronTree nt_prunned_sort = SortSWC_pipeline(nt_pruned.listNeuron,VOID, 10);
+
+        writeSWC_file(outswc_file, nt_prunned_sort);
+        outputs_overall.clear();
+        imgs.clear();
+        if(data1d) {delete []data1d; data1d = 0;}
+        return true;
     }
     else if (func_name == tr("help"))
 	{
