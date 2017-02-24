@@ -953,7 +953,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     return false;}     }
             QTextStream outputStream;
             outputStream.setDevice(&saveTextFile);
-            outputStream<< axon_total<<"\t"<< axon_fn<<"\t"<< axon_fn_updated<<"\t"<<dendrite_total<<"\t"<< dendrite_fn<<"\t"<< dendrite_fn_updated<<"\t"<<apical_total<<"\t"<< apical_fn<<"\t"<< apical_fn_updated<<"\n";
+            outputStream<< inswc_file.toStdString().c_str()<<"\t"<<axon_total<<"\t"<< axon_fn<<"\t"<< axon_fn_updated<<"\t"<<dendrite_total<<"\t"<< dendrite_fn<<"\t"<< dendrite_fn_updated<<"\t"<<apical_total<<"\t"<< apical_fn<<"\t"<< apical_fn_updated<<"\n";
             saveTextFile.close();
         }
 
