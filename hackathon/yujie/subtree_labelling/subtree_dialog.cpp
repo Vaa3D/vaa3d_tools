@@ -14,6 +14,7 @@
 subtree_dialog::subtree_dialog(V3DPluginCallback2 *cb)
 {
     callback=cb;
+    qDebug()<<"in subtree labelling";
 }
 
 bool subtree_dialog::get_swc_marker()
@@ -61,6 +62,9 @@ bool subtree_dialog::get_swc_marker()
             else
             {
                 nt->listNeuron[ii].type=nt->listNeuron[ii].seg_id=nt->listNeuron[ii].level=0;
+                QList<float> tmp_float;
+                tmp_float=nt->listNeuron[ii].fea_val;
+                fea_floats.append(tmp_float);
                 nt->listNeuron[ii].fea_val.clear();
                 nt->listNeuron[ii].fea_val.append(0); //store dendrite id
                 nt->listNeuron[ii].fea_val.append(0); //store distance to node
@@ -136,6 +140,9 @@ bool subtree_dialog::get_swc_marker()
             else //initialize
             {
                 nt->listNeuron[ii].type=nt->listNeuron[ii].seg_id=nt->listNeuron[ii].level=0;
+                QList<float> tmp_float;
+                tmp_float=nt->listNeuron[ii].fea_val;
+                fea_floats.append(tmp_float);
                 nt->listNeuron[ii].fea_val.clear();
                 nt->listNeuron[ii].fea_val.append(0); //store dendrite id
                 nt->listNeuron[ii].fea_val.append(0); //store distance to node
@@ -151,7 +158,11 @@ bool subtree_dialog::get_swc_marker()
 //            return false;
 //        }
     }
-    qDebug()<<"swc set: nt size:"<<nt->listNeuron.size();
+//    qDebug()<<"swc set: nt size:"<<nt->listNeuron.size();
+//    for (V3DLONG i=0;i<fea_floats.size();i++)
+//    {
+//        qDebug()<<"fea_floats: first:"<<fea_floats[i].at(0)<<" last:"<<fea_floats[i].back();
+//    }
     return true;
 }
 
@@ -348,7 +359,7 @@ int subtree_dialog::calc_nearest_node_around_marker()
     z=LList_in.at(mid).z-1;
     float min_dis=1e16;
     float dis;
-    int close_node;
+    int close_node=0;
     for (int i=0;i<nt->listNeuron.size();i++)
     {
         dis=(nt->listNeuron.at(i).x-x)*(nt->listNeuron.at(i).x-x)+
@@ -360,6 +371,7 @@ int subtree_dialog::calc_nearest_node_around_marker()
             close_node=i;
         }
     }
+    qDebug()<<"nearest node is: "<<close_node;
     return close_node;
 }
 
@@ -607,6 +619,10 @@ void subtree_dialog::define_sort_id_for_trees()
         for (int j=0;j<LList_in.size();j++)
         {
             QString tmp;
+            tmp=QString::fromStdString(LList_in[j].comments);
+            int tmp_type=tmp.toInt();
+            if(tmp_type<=0) //if the type is not set, not consider this node
+                continue;
             tmp=QString::fromStdString(LList_in[j].name);
             int close_node=tmp.toInt();
             if (mask[close_node]==all_trees[i].tree_id)
@@ -646,7 +662,7 @@ void subtree_dialog::define_sort_id_for_trees()
             }
 
         }
-        //qDebug()<<"tree:"<<i+1<<"# of markers:"<<all_trees[i].belong_markers.size()<<"sort_node:"<<all_trees[i].sort_node;
+        qDebug()<<"tree:"<<i+1<<"# of markers:"<<all_trees[i].belong_markers.size()<<"sort_node:"<<all_trees[i].sort_node;
     }
 }
 
@@ -723,12 +739,19 @@ void subtree_dialog::run()
     sort_all_trees();
     build_new_parent_LUT_after_sort();
     subtree_define();
+    for (V3DLONG ii=0; ii<nt->listNeuron.size(); ii++)
+    {
+        nt->listNeuron[ii].fea_val.append(fea_floats.at(ii));
+        float new_seg=nt->listNeuron[ii].fea_val.at(0)*10000+nt->listNeuron[ii].level*100+
+                nt->listNeuron[ii].seg_id;
+        nt->listNeuron[ii].seg_id=new_seg;
+    }
 }
 
 
 void subtree_dialog::subtree_define()
 {
-    qDebug()<<"in subtree defined";
+    //qDebug()<<"in subtree defined";
     for (int i=0;i<all_trees.size();i++)
     {
         tree this_tree=all_trees[i];
@@ -740,17 +763,21 @@ void subtree_dialog::subtree_define()
             //qDebug()<<"number of markers on this tree:"<<this_tree.belong_markers.size()<<":"<<j;
             QString type=QString::fromStdString(LList_in[this_tree.belong_markers[j]].comments);
             int seg_type=type.toInt();
+            //qDebug()<<"type:"<<seg_type;
             QString node=QString::fromStdString(LList_in[this_tree.belong_markers[j]].name);
             int node_id=node.toInt();
-
-            if (seg_type==1)
+            qDebug()<<"node id"<<node_id;
+            if (seg_type==1) //if this is soma
             {
                 nt->listNeuron[node_id].type=1;
                 continue;
             }
+            else if (seg_type==0)
+                continue;
             else
             {
-                label_single_tree(seg_type,this_tree.tree_id,node_id);
+                //label_single_tree(seg_type,this_tree.tree_id,node_id);
+                label_single_tree(seg_type,j+1,node_id);
             }
         }
     }
@@ -763,13 +790,22 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
     qDebug()<<"label single tree";
     vector<int> seeds;
     V3DLONG seg_id=1;
-    V3DLONG level=1;
+    V3DLONG parent_tmp=nt->listNeuron[marker_id].parent;
+    V3DLONG level=nt->listNeuron[parent_tmp].level;
+    if (level<1)
+        level=1;
+
     nt->listNeuron[marker_id].fea_val[0]=(float)tree_id;
     nt->listNeuron[marker_id].type=type;
     nt->listNeuron[marker_id].seg_id=seg_id;
     nt->listNeuron[marker_id].level=level;
     seeds.push_back(marker_id);
     //qDebug()<<"first seeds set:"<<seeds.size();
+    //we also need to maintain a hashtable for how many segments have appeared for each level.
+    //Otherwise, 20201 will be assigned to half of the branches of the level 2.
+    map<V3DLONG,int> segmentMap; //maintains the seg id for each level
+    segmentMap[level]=seg_id;
+
     int sid=0;
     V3DLONG parent;
     while (sid<seeds.size())
@@ -801,7 +837,7 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
             float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
             nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
             seeds.push_back(child_node);
-
+                //qDebug()<<"one child__parent:"<<parent<<" type:"<<nt->listNeuron[child_node].type<<endl;
 //            qDebug()<<"one child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)<<
 //                       "child:"<<nt->listNeuron[child_node].type<<" seg id:"
 //                       <<nt->listNeuron[child_node].seg_id<<" level:"<<nt->listNeuron[child_node].level;
@@ -814,13 +850,23 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
                 nt->listNeuron[child_node].type=nt->listNeuron.at(parent).type;
                 nt->listNeuron[child_node].fea_val[0]=(nt->listNeuron.at(parent).fea_val.at(0));
                 nt->listNeuron[child_node].level=nt->listNeuron.at(parent).level+1;
-                nt->listNeuron[child_node].seg_id=i+1;
+                if(segmentMap.find(nt->listNeuron[child_node].level) == segmentMap.end()) //if level info is not in
+                {
+                    segmentMap[nt->listNeuron[child_node].level]=i+1;
+                    nt->listNeuron[child_node].seg_id=i+1;
+                }
+                else   //we already used some seg_id in this level
+                {
+                    int used_id=segmentMap[nt->listNeuron[child_node].level];
+                    segmentMap[nt->listNeuron[child_node].level]++;
+                    nt->listNeuron[child_node].seg_id = used_id+1;
+                }
                 V3DLONG c_x=nt->listNeuron[child_node].x;
                 V3DLONG c_y=nt->listNeuron[child_node].y;
                 V3DLONG c_z=nt->listNeuron[child_node].z;
                 float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
                 nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
-
+                    //qDebug()<<"2+child__parent:"<<parent<<"  type:"<<nt->listNeuron[parent_LUT[parent][i]].type<<endl;
 //                qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)
 //                           << " child "<<i << ":"<<nt->listNeuron[parent_LUT[parent][i]].type<< " seg id:"
 //                           <<nt->listNeuron[parent_LUT[parent][i]].seg_id<<" level:"<<nt->listNeuron[parent_LUT[parent][i]].level;
@@ -836,12 +882,24 @@ void subtree_dialog::label_single_tree(int type, int tree_id, int marker_id)
                 nt->listNeuron[child_node].type=nt->listNeuron.at(parent).type;
                 nt->listNeuron[child_node].fea_val[0]=(nt->listNeuron.at(parent).fea_val.at(0));
                 nt->listNeuron[child_node].level=nt->listNeuron.at(parent).level;
-                nt->listNeuron[child_node].seg_id=i+1;
+                if(segmentMap.find(nt->listNeuron[child_node].level) == segmentMap.end()) //if level info is not in
+                {
+                    segmentMap[nt->listNeuron[child_node].level]=i+1;
+                    nt->listNeuron[child_node].seg_id=i+1;
+                }
+                else   //we already used some seg_id in this level
+                {
+                    int used_id=segmentMap[nt->listNeuron[child_node].level];
+                    segmentMap[nt->listNeuron[child_node].level]++;
+                    nt->listNeuron[child_node].seg_id = used_id+1;
+                }
+
                 V3DLONG c_x=nt->listNeuron[child_node].x;
                 V3DLONG c_y=nt->listNeuron[child_node].y;
                 V3DLONG c_z=nt->listNeuron[child_node].z;
                 float distance=(c_x-p_x)*(c_x-p_x)+(c_y-p_y)*(c_y-p_y)+(c_z-p_z)*(c_z-p_z);
                 nt->listNeuron[child_node].fea_val[1]=(sqrt(distance)+p_dis);
+                //qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron[parent_LUT[parent][i]].type;
 
 //                qDebug()<<"2+child__parent:"<<parent<<"fea value:"<< nt->listNeuron.at(parent).fea_val.at(0)
 //                           << " child "<<i << ":"<<nt->listNeuron[parent_LUT[parent][i]].type<< " seg id:"

@@ -21,11 +21,13 @@ private:
     bool check_button();
     bool load_image();
     bool load_swc();
-    bool save_project();
+    //bool save_project();
     int maybe_proofread();
 
     //for is detection
     void create_is();
+    void get_para_is();
+    int maybe_proofread_is();
 
 public slots:
     bool get_image_name();
@@ -45,12 +47,13 @@ private:
     LandmarkList LList_in;
     QString input_image_name,input_swc_name,folder_output;
     bool eswc_flag;
-    unsigned char *image1Dc_in;
+    unsigned char *image1Dc_in,*mask;
     int intype;
     V3DLONG sz_img[4];
     NeuronTree neuron,checked_neuron;
     parameters all_para;
-
+    is_parameters all_para_is;
+    vector<GOI> voxel_group;
     vector<GOV> label_group;
 
 };

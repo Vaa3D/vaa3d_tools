@@ -10,41 +10,55 @@
 using namespace std;
 
 struct is_parameters{
-    int red_bgthr; //background threshold
-    int green_bgthr;
+    int spine_bgthr; //background spine
+    int is_bgthr;
     int max_dis;
     int min_voxel;
+    int spine_channel;
+    int is_channel;
     int halfwindowsize;
 };
+
 
 struct GOI{
     vector<V3DLONG> voxel;
     int label_id;
     int nearest_node;
     bool on_dendrite;
+    GOI(){label_id=-1;nearest_node=-1; on_dendrite=false;}
+
+    GOI(vector<V3DLONG> _group, int _nearest_node,int _id,bool _ondendrite)
+    {
+        voxel=_group;
+        nearest_node=_nearest_node;
+        label_id=_id;
+        on_dendrite=_ondendrite;
+    }
     GOI(vector<V3DLONG> one_group,int id)
     {
         voxel=one_group;
         nearest_node=-1;
-        on_dendrite=false;
         label_id=id;
+        on_dendrite=false;
     }
 };
 
-
+//typedef vector<GOI *> GIS;
 
 class is_analysis_fun : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit is_analysis_fun(V3DPluginCallback2 *cb,QStringList name_list);
+    explicit is_analysis_fun(V3DPluginCallback2 *cb,QStringList name_list, QVector<int> para_list);
     void run();
-    void create_proofread_panel();
+    inline LandmarkList getLList() {return LList_out;}
+    inline vector<GOI> getVoxelGroup() {return voxel_groups;}
+
 private:
     V3DPluginCallback2 * callback;
     V3DLONG sz_img[4],mask_sz[4],sz[4];
-    NeuronTree nt;
+    NeuronTree nt,nt_copy;
     unsigned char * p_img1D, *mask,*image_trun;
     //unsigned char ***ppp_img3D;
     int type_img;
@@ -57,7 +71,7 @@ private:
     QPlainTextEdit *edit_box;
     int x_start,y_start,z_start,x_end,y_end,z_end;
     v3dhandle main_win,curwin;
-    QString basedir,swc_name,image_name,csv_out_name;
+    QString basedir,swc_name,image_name,csv_out_name,eswc_out_name;
 
 private:
     void obtain_mask();
@@ -65,20 +79,10 @@ private:
     void stat_generate();
     void visualize_image();
 
-    void set_trunc_image(); //not used
-    void adjust_LList_to_imagetrun(); //not used
-    void open_main_win();
-    void open_cur_win();  //not used
-    bool check_cur_win();   //not used
-    bool csv_generate();
-    int finish_implement();
+    //bool eswc_generate(); not used
 
 public slots:
-    void marker_doubleclicked(); //not used
-    void reject_marker();
-    void set_on_spine();
-    void set_on_dendrite();
-    void finish_dialog();
+
 
 public:
     bool pushImageData(unsigned char * data1Dc_in, V3DLONG new_sz_img[4])

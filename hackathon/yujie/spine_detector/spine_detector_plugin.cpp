@@ -8,8 +8,13 @@
 #include "learning.h"
 #include "file_io_dialog.h"
 #include "manual_proofread_dialog.h"
-#include "spine_detector_dialog.h"
+#include "manual_proof_is.h"
+//#include "spine_detector_dialog.h"
+#include "combiner.h"
 
+static file_io_dialog *file_dialog = 0;
+static manual_proof_is *dialog=0;
+static manual_proofread_dialog *proof_dialog=0;
 
 using namespace std;
 Q_EXPORT_PLUGIN2(spine_detector, spine_detector);
@@ -25,7 +30,9 @@ QStringList spine_detector::menulist() const
 //        <<tr("learning_test")
         <<tr("SpineDetector_NewProject")
         <<tr("SpineDetector_ExistingProject")
-        <<tr("IS_Quantifier")
+        <<tr("IS_Quantifier_NewProject")
+        <<tr("IS_Quantifier_ExistingProject")
+        <<tr("Combiner")
         <<tr("about");
 }
 
@@ -42,8 +49,8 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     if (menu_name == tr("spine_detector"))
 	{
 
-        spine_detector_dialog *dialog=new spine_detector_dialog(&callback);
-        dialog->exec();
+//        spine_detector_dialog *dialog=new spine_detector_dialog(&callback);
+//        dialog->exec();
 	}
     else if (menu_name==tr("spine_detector_1"))
     {
@@ -63,48 +70,58 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
        spine_obj->write_spine_center_profile();
        spine_obj->saveResult();
     }
-    else if(menu_name==tr("learning_test"))
-    {
-        QString image_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\svm_training\\training1.v3draw";
-        QString out_name="learning_result.v3draw";
-        QString marker_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\svm_training\\training1.marker";
-        learning * learning_obj=new learning(&callback,image_name.toAscii(),marker_name.toAscii(),out_name.toAscii());
-        learning_obj->loadData();
-        learning_obj->loadmarker();
-        learning_obj->wavelet_start();
-        qDebug()<<"the end....";
-    }
-    else if(menu_name==tr("spine_detector_1.0 (proofread by spine)"))
-    {
-        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,0);
-        manual_dialog->show();
-    }
+//    else if(menu_name==tr("learning_test"))
+//    {
+//        QString image_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\svm_training\\training1.v3draw";
+//        QString out_name="learning_result.v3draw";
+//        QString marker_name="C:\\Users\\Jade\\Documents\\V3d\\spine_dec_test_data\\svm_training\\training1.marker";
+//        learning * learning_obj=new learning(&callback,image_name.toAscii(),marker_name.toAscii(),out_name.toAscii());
+//        learning_obj->loadData();
+//        learning_obj->loadmarker();
+//        learning_obj->wavelet_start();
+//        qDebug()<<"the end....";
+//    }
+//    else if(menu_name==tr("spine_detector_1.0 (proofread by spine)"))
+//    {
+//        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,0);
+//        manual_dialog->show();
+//    }
 
-    else if (menu_name==tr("spine_detector_1.1 (proofread by segment)"))
-    {
-        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,1);
-        manual_dialog->show();
-    }
-    else if (menu_name==tr("spine_detector_2.0 (for big images)"))
-    {
-        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
-        manual_dialog->show();
-    }
+//    else if (menu_name==tr("spine_detector_1.1 (proofread by segment)"))
+//    {
+//        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback,1);
+//        manual_dialog->show();
+//    }
+//    else if (menu_name==tr("spine_detector_2.0 (for big images)"))
+//    {
+//        manual_correct_dialog *manual_dialog=new manual_correct_dialog(&callback);
+//        manual_dialog->show();
+//    }
     else if (menu_name==tr("SpineDetector_NewProject"))
     {
-        file_io_dialog *file_dialog= new file_io_dialog(&callback,1);
+        file_dialog= new file_io_dialog(&callback,1);
         file_dialog->show();
     }
 
     else if (menu_name==tr("SpineDetector_ExistingProject"))
     {
-        manual_proofread_dialog *proof_dialog=new manual_proofread_dialog(&callback,true);
+        proof_dialog=new manual_proofread_dialog(&callback,true);
         proof_dialog->show();
     }
-    else if (menu_name==tr("IS_Quantifier"))
+    else if (menu_name==tr("IS_Quantifier_NewProject"))
     {
-        file_io_dialog *dialog=new file_io_dialog(&callback,2);
+        file_dialog=new file_io_dialog(&callback,2);
+        file_dialog->show();
+    }
+    else if (menu_name==tr("IS_Quantifier_ExistingProject"))
+    {
+        dialog=new manual_proof_is(&callback,true);
         dialog->show();
+    }
+    else if (menu_name==tr("Combiner"))
+    {
+        combiner *this_comb = new combiner(&callback);
+        this_comb->show();
     }
     else
         v3d_msg(tr("This tool is designed for spine morphology reconstructions. "
