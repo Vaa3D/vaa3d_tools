@@ -19,3 +19,6 @@ SOURCES += ../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.c
 
 TARGET	= $$qtLibraryTarget(Tip_marker_finder)
 DESTDIR	= $$VAA3DPATH/bin/plugins/Tip_marker_finder/
+
+
+FORMS += TipMarkerFinderUI.ui

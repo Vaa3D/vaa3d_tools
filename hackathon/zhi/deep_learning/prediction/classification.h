@@ -47,6 +47,8 @@ private:
 };
 
 QStringList importSeriesFileList_addnumbersort(const QString & curFilePath);
+NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
+
 
 #endif
 
