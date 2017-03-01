@@ -1113,10 +1113,11 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 p_num++;
         }
 
-        NeuronTree nt_pruned = DL_eliminate_swc(nt,marklist);
-        NeuronTree nt_prunned_sort = SortSWC_pipeline(nt_pruned.listNeuron,VOID, 10);
+        NeuronTree nt_DL = DL_eliminate_swc(nt,marklist);
+        NeuronTree nt_DL_sort = SortSWC_pipeline(nt_DL.listNeuron,VOID, 10);
+        NeuronTree nt_DL_sort_pruned = remove_swc(nt_DL_sort,50);
 
-        writeSWC_file(outswc_file, nt_prunned_sort);
+        writeSWC_file(outswc_file, nt_DL_sort_pruned);
         outputs_overall.clear();
         imgs.clear();
         if(data1d) {delete []data1d; data1d = 0;}

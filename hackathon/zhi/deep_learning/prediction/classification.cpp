@@ -293,3 +293,62 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
 
     return nt_prunned;
 }
+
+NeuronTree remove_swc(NeuronTree nt,double length)
+{
+    QList<NeuronSWC> list = nt.listNeuron;
+    V3DLONG *flag = new V3DLONG[list.size()];
+    V3DLONG counter = 0;
+    V3DLONG root_ID = 0;
+    for (V3DLONG i=1;i<list.size();i++)
+    {
+        if(list.at(i).parent > 0)
+        {
+            counter++;
+        }else
+        {
+            for(V3DLONG j=root_ID; j<=root_ID+counter;j++)
+            {
+               if(counter <= length)
+                   flag[j] = -1;
+               else
+                   flag[j] = 1;
+            }
+            counter = 0;
+            root_ID = i;
+        }
+    }
+
+    NeuronTree nt_kept;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+
+    //set node
+
+    NeuronSWC S;
+    for (int i=0;i<list.size();i++)
+    {
+        if(flag[i] == 1)
+        {
+             NeuronSWC curr = list.at(i);
+             S.n 	= curr.n;
+             S.type 	= curr.type;
+             S.x 	= curr.x;
+             S.y 	= curr.y;
+             S.z 	= curr.z;
+             S.r 	= curr.r;
+             S.pn 	= curr.pn;
+             listNeuron.append(S);
+             hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+
+   }
+    nt_kept.n = -1;
+    nt_kept.on = true;
+    nt_kept.listNeuron = listNeuron;
+    nt_kept.hashNeuron = hashNeuron;
+    return nt_kept;
+
+}
