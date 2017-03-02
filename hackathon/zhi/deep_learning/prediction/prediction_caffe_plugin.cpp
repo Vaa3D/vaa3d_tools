@@ -11,7 +11,7 @@
 #include "../../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
-
+#include "../../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 
 
 using namespace std;
@@ -34,6 +34,7 @@ QStringList prediction_caffe::funclist() const
         <<tr("Detection")
         <<tr("Prediction_type")
         <<tr("Noise_removal")
+        <<tr("3D_Axon_detection")
 		<<tr("help");
 }
 
@@ -1115,13 +1116,168 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         NeuronTree nt_DL = DL_eliminate_swc(nt,marklist);
         NeuronTree nt_DL_sort = SortSWC_pipeline(nt_DL.listNeuron,VOID, 10);
+        writeSWC_file(outswc_file, nt_DL_sort);
+
+        QString outswc_file_pruned = outswc_file + "_final.swc";
+
         NeuronTree nt_DL_sort_pruned = remove_swc(nt_DL_sort,50);
 
-        writeSWC_file(outswc_file, nt_DL_sort_pruned);
+        writeSWC_file(outswc_file_pruned, nt_DL_sort_pruned);
         outputs_overall.clear();
         imgs.clear();
         if(data1d) {delete []data1d; data1d = 0;}
         return true;
+    }
+    else if(func_name == tr("3D_Axon_detection"))
+    {
+        cout<<"Welcome to Caffe 3D axon detection plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);
+
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+
+        V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
+        unsigned char *data1d_mip=0;
+        try {data1d_mip = new unsigned char [pagesz_mip];}
+        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                int max_mip = 0;
+                for(V3DLONG iz = 0; iz < P; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    if(data1d[offsetk + offsetj + ix] >= max_mip)
+                    {
+                        data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                        max_mip = data1d[offsetk + offsetj + ix];
+                    }
+                }
+            }
+        }
+
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+        std::vector<std::vector<float> > detection_results = batch_detection(data1d_mip,classifier,N,M,1,Sxy);
+
+        mean_shift_fun fun_obj;
+        LandmarkList marklist_2D;
+        //QString markerpath =  inimg_file + QString("_2D.marker");
+        V3DLONG d = 0;
+        for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+        {
+            for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+            {
+                std::vector<float> output = detection_results[d];
+                if(output.at(1) > output.at(0))
+                {
+                    LocationSimple S;
+                    S.x = ix;
+                    S.y = iy;
+                    S.z = 0;
+                    marklist_2D.push_back(S);
+                }
+                d++;
+            }
+        }
+        detection_results.clear();
+
+        //mean shift
+        LandmarkList marklist_2D_shifted;
+        vector<V3DLONG> poss_landmark;
+        vector<float> mass_center;
+        double windowradius = 15;
+
+        V3DLONG sz_img[4];
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            marklist_2D_shifted.append(tmp);
+        }
+
+        QList <ImageMarker> marklist_3D;
+        QString markerpath =  inimg_file + QString("_3D_final.marker");
+        ImageMarker S;
+
+        for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shifted.at(i).x;
+            V3DLONG iy = marklist_2D_shifted.at(i).y;
+            double I_max = 0;
+            V3DLONG iz;
+            for(V3DLONG j = 0; j < P; j++)
+            {
+                if(data1d[j*M*N + iy*N + ix] >= I_max)
+                {
+                    I_max = data1d[j*M*N + iy*N + ix];
+                    iz = j;
+                }
+
+            }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            S.color.r = 255;
+            S.color.g = 0;
+            S.color.b = 0;
+            marklist_3D.append(S);
+        }
+        QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
+        writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
+
     }
     else if (func_name == tr("help"))
 	{

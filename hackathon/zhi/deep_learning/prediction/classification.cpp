@@ -350,5 +350,169 @@ NeuronTree remove_swc(NeuronTree nt,double length)
     nt_kept.listNeuron = listNeuron;
     nt_kept.hashNeuron = hashNeuron;
     return nt_kept;
+}
 
+std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classifier classifier, int N, int M, int P, int Sxy)
+{
+    std::vector<cv::Mat> imgs;
+    int Wx = 30, Wy = 30, Wz = 15;
+    int Sz = (int)Sxy/3;
+
+    V3DLONG num_patches = 0;
+    std::vector<std::vector<float> > outputs_overall;
+    std::vector<std::vector<float> > outputs;
+    for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
+    {
+        for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+        {
+            for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+            {
+
+                V3DLONG xb = ix-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = iy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                V3DLONG zb = iz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+                V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+
+                V3DLONG im_cropped_sz[4];
+                im_cropped_sz[0] = xe - xb + 1;
+                im_cropped_sz[1] = ye - yb + 1;
+                im_cropped_sz[2] = 1;
+                im_cropped_sz[3] = 1;
+
+                unsigned char *im_cropped = 0;
+
+                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                try {im_cropped = new unsigned char [pagesz];}
+                catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return outputs_overall;}
+                memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+                for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                {
+                    V3DLONG offsetk = iiz*M*N;
+                    V3DLONG j = 0;
+                    for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                    {
+                        V3DLONG offsetj = iiy*N;
+                        for(V3DLONG iix = xb; iix <= xe; iix++)
+                        {
+                            if(data1d[offsetk + offsetj + iix] >= im_cropped[j])
+                                im_cropped[j] = data1d[offsetk + offsetj + iix];
+                            j++;
+                        }
+                    }
+                }
+                cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+                imgs.push_back(img);
+
+                if(num_patches >=5000)
+                {
+                    outputs = classifier.Predict(imgs);
+                    for(V3DLONG d = 0; d<outputs.size();d++)
+                        outputs_overall.push_back(outputs[d]);
+                    outputs.clear();
+                    imgs.clear();
+                    num_patches = 0;
+                }else
+                    num_patches++;
+            }
+        }
+    }
+
+    if(imgs.size()>0)
+    {
+        outputs = classifier.Predict(imgs);
+        for(V3DLONG d = 0; d<outputs.size();d++)
+            outputs_overall.push_back(outputs[d]);
+    }
+
+   return outputs_overall;
+   imgs.clear();
+}
+
+QList <ImageMarker> batch_deletion(unsigned char * & data1d,Classifier classifier, QList <ImageMarker> input_markerlist, int N, int M, int P)
+{
+    QList <ImageMarker> output_marklist;
+    unsigned int Wx=30, Wy=30, Wz=15;
+    std::vector<cv::Mat> imgs;
+    V3DLONG num_patches = 0;
+    std::vector<std::vector<float> > outputs_overall;
+    std::vector<std::vector<float> > outputs;
+    for (V3DLONG i=0;i<input_markerlist.size();i++)
+    {
+        V3DLONG tmpx = input_markerlist.at(i).x;
+        V3DLONG tmpy = input_markerlist.at(i).y;
+        V3DLONG tmpz = input_markerlist.at(i).z;
+
+        V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+        V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
+        V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+        V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
+        V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+        V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
+
+        V3DLONG im_cropped_sz[4];
+        im_cropped_sz[0] = xe - xb + 1;
+        im_cropped_sz[1] = ye - yb + 1;
+        im_cropped_sz[2] = 1;
+        im_cropped_sz[3] = 1;
+
+        unsigned char *im_cropped = 0;
+
+        V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+        try {im_cropped = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return output_marklist;}
+        memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+        for(V3DLONG iz = zb; iz <= ze; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            V3DLONG j = 0;
+            for(V3DLONG iy = yb; iy <= ye; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = xb; ix <= xe; ix++)
+                {
+                    if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                        im_cropped[j] = data1d[offsetk + offsetj + ix];
+                    j++;
+                }
+            }
+        }
+
+        cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+        imgs.push_back(img);
+
+        if(num_patches >=10000)
+        {
+            outputs = classifier.Predict(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+            outputs.clear();
+            imgs.clear();
+            num_patches = 0;
+        }else
+            num_patches++;
+    }
+
+    if(imgs.size()>0)
+    {
+        outputs = classifier.Predict(imgs);
+        for(V3DLONG d = 0; d<outputs.size();d++)
+            outputs_overall.push_back(outputs[d]);
+    }
+
+    for (V3DLONG j=0;j<input_markerlist.size();j++)
+    {
+        std::vector<float> output = outputs_overall[j];
+        if(output.at(0) < output.at(1))
+        {
+            output_marklist.push_back(input_markerlist.at(j));
+        }
+    }
+    imgs.clear();
+    outputs_overall.clear();
+    outputs.clear();
+    return output_marklist;
 }

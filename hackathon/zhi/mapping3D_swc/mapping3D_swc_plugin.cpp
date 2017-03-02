@@ -7,9 +7,9 @@
 #include <vector>
 #include "mapping3D_swc_plugin.h"
 #include "openSWCDialog.h"
-#include "../neurontracing_mip/my_surf_objs.h"
-#include "../neurontracing_mip/smooth_curve.h"
-#include "../neurontracing_mip/fastmarching_linker.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/my_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/smooth_curve.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/fastmarching_linker.h"
 
 #include "../APP2_large_scale/readRawfile_func.h"
 
@@ -21,6 +21,7 @@ QStringList mapping3D_swc::menulist() const
 {
 	return QStringList() 
 		<<tr("mapping")
+        <<tr("mapping_markers")
 		<<tr("about");
 }
 
@@ -244,9 +245,69 @@ void mapping3D_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 //                outswc.clear();
 //            }
 //        }
+    else if (menu_name == tr("mapping_markers"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
 
+        Image4DSimple* p4DImage = callback.getImage(curwin);
 
-	else
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        unsigned char* data1d = p4DImage->getRawData();
+
+        V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+        QString image_name = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        LandmarkList listLandmarks = callback.getLandmark(curwin);
+        int marknum = listLandmarks.count();
+        if(marknum ==0)
+        {
+            v3d_msg("No markers in the current image, please double check.");
+            return;
+        }
+
+        QList <ImageMarker> marklist;
+        QString markerpath =  image_name + QString("_3D.marker");
+        ImageMarker S;
+
+        for(V3DLONG i = 0; i < listLandmarks.size(); i++)
+        {
+            V3DLONG ix = listLandmarks.at(i).x;
+            V3DLONG iy = listLandmarks.at(i).y;
+            double I_max = 0;
+            V3DLONG iz;
+            for(V3DLONG j = 0; j < P; j++)
+            {
+                if(data1d[j*M*N + iy*N + ix] >= I_max)
+                {
+                    I_max = data1d[j*M*N + iy*N + ix];
+                    iz = j;
+                }
+
+            }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            marklist.append(S);
+        }
+        writeMarker_file(markerpath.toStdString().c_str(),marklist);
+
+    }
+    else
 	{
         v3d_msg(tr("This is a plugin to map 2D tracing back to 3D locations based on 3D image content..."
 			"Developed by Zhi Zhou, 2015-6-25"));

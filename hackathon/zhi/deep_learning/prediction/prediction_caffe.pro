@@ -33,12 +33,14 @@ LIBS += -lglog -lgflags -lprotobuf -lboost_system -lboost_thread -llmdb -lleveld
 
 HEADERS	+= prediction_caffe_plugin.h
 HEADERS	+= classification.h
+HEADERS += ../../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+
 
 SOURCES	+= prediction_caffe_plugin.cpp
 SOURCES	+= classification.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
-
+SOURCES += ../../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 
 TARGET	= $$qtLibraryTarget(prediction_caffe)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/prediction_caffe/
