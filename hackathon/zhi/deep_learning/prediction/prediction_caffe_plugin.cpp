@@ -1251,6 +1251,9 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         QList <ImageMarker> marklist_3D;
         QString markerpath =  inimg_file + QString("_3D_final.marker");
         ImageMarker S;
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+
 
         for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
         {
@@ -1274,10 +1277,30 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             S.color.g = 0;
             S.color.b = 0;
             marklist_3D.append(S);
+
+            NeuronSWC n;
+            n.x = ix-1;
+            n.y = iy-1;
+            n.z = iz-1;
+            n.n = i;
+            n.type = 2;
+            n.r = 1;
+            n.pn = -1; //so the first one will be root
+            listNeuron << n;
         }
         QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
         writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
 
+        NeuronTree nt_sorted = SortSWC_pipeline(nt.listNeuron,VOID, 40);
+        QList<NeuronSWC> newNeuron_connected;
+        double angthr=cos((60-60)/180*M_PI);
+        QString  swc_processed = inimg_file + "_axon_3D.swc";
+
+        connectall(&nt_sorted, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
+
+        if(!export_list2file(newNeuron_connected, swc_processed,swc_processed)){
+            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
+        }
     }
     else if (func_name == tr("help"))
 	{

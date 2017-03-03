@@ -34,7 +34,7 @@ void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
         n.n = i;
         n.type = 2;
         n.r = 1;
-        n.pn = i-1; //so the first one will be root
+        n.pn = -1; //so the first one will be root
         listNeuron << n;
     }
     
