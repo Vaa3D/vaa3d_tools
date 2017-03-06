@@ -12,9 +12,13 @@
 #include "../../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 #include "../../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
+#include "../../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 
 
 using namespace std;
+using namespace iim;
+
+
 Q_EXPORT_PLUGIN2(prediction_caffe, prediction_caffe);
  
 QStringList prediction_caffe::menulist() const
@@ -549,29 +553,28 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
 
         unsigned char * data1d = 0;
-        V3DLONG in_sz[4];
-
-        int datatype;
-        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        V3DLONG N,M,P;
+        if(inimg_file.endsWith(".raw",Qt::CaseSensitive) || inimg_file.endsWith(".v3draw",Qt::CaseSensitive))
         {
-            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
-            return false;
+            V3DLONG in_sz[4];
+            int datatype;
+            if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+            {
+                cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+                return false;
+            }
+            N = in_sz[0];
+            M = in_sz[1];
+            P = in_sz[2];
+        }else
+        {
+            VirtualVolume* aVolume = VirtualVolume::instance(inimg_file.toStdString().c_str());
+            N = aVolume->getDIM_H();
+            M = aVolume->getDIM_V();
+            P = aVolume->getDIM_D();
         }
 
-        V3DLONG N = in_sz[0];
-        V3DLONG M = in_sz[1];
-        V3DLONG P = in_sz[2];
-        V3DLONG sc = in_sz[3];
-
         NeuronTree nt = readSWC_file(SWCfileName);
-//        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
-//        {
-//            nt.listNeuron[i].y = M - nt.listNeuron[i].y -1;
-
-//        }
-
-//        SWCfileName =  inimg_file + ".swc";
-//        writeSWC_file(SWCfileName,nt);
         unsigned int Wx=30, Wy=30, Wz=15;
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         std::vector<cv::Mat> imgs;
@@ -589,33 +592,54 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
             V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
 
+            unsigned char *im_cropped = 0;
             V3DLONG im_cropped_sz[4];
             im_cropped_sz[0] = xe - xb + 1;
             im_cropped_sz[1] = ye - yb + 1;
             im_cropped_sz[2] = 1;
-            im_cropped_sz[3] = sc;
-
-            unsigned char *im_cropped = 0;
-
-            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2];
             try {im_cropped = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
             memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
 
-            for(V3DLONG iz = zb; iz <= ze; iz++)
+            if(inimg_file.endsWith(".raw",Qt::CaseSensitive) || inimg_file.endsWith(".v3draw",Qt::CaseSensitive))
             {
-                V3DLONG offsetk = iz*M*N;
-                V3DLONG j = 0;
-                for(V3DLONG iy = yb; iy <= ye; iy++)
+                for(V3DLONG iz = zb; iz <= ze; iz++)
                 {
-                    V3DLONG offsetj = iy*N;
-                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    V3DLONG offsetk = iz*M*N;
+                    V3DLONG j = 0;
+                    for(V3DLONG iy = yb; iy <= ye; iy++)
                     {
-                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
-                            im_cropped[j] = data1d[offsetk + offsetj + ix];
-                        j++;
+                        V3DLONG offsetj = iy*N;
+                        for(V3DLONG ix = xb; ix <= xe; ix++)
+                        {
+                            if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                                im_cropped[j] = data1d[offsetk + offsetj + ix];
+                            j++;
+                        }
                     }
                 }
+            }else
+            {
+                unsigned char *im_cropped_3D = 0;
+                VirtualVolume* aVolume = VirtualVolume::instance(inimg_file.toStdString().c_str());
+                im_cropped_3D = aVolume->loadSubvolume_to_UINT8(yb,ye+1,xb,xe+1,zb,ze+1);
+                for(V3DLONG iz = 0; iz <= ze-zb; iz++)
+                {
+                    V3DLONG offsetk = iz*im_cropped_sz[0]*im_cropped_sz[1];
+                    V3DLONG j = 0;
+                    for(V3DLONG iy = 0; iy <= ye -yb; iy++)
+                    {
+                        V3DLONG offsetj = iy*im_cropped_sz[0];
+                        for(V3DLONG ix = 0; ix <= xe-xb; ix++)
+                        {
+                            if(im_cropped_3D[offsetk + offsetj + ix] >= im_cropped[j])
+                                im_cropped[j] = im_cropped_3D[offsetk + offsetj + ix];
+                            j++;
+                        }
+                    }
+                }
+                if(im_cropped_3D) {delete []im_cropped_3D; im_cropped_3D=0;}
             }
 
             cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
