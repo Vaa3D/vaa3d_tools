@@ -763,6 +763,8 @@ void cropping3D(V3DPluginCallback2 &callback,
     V3DLONG P = in_sz[2];
     V3DLONG sc = in_sz[3];
 
+    VirtualVolume* data1d;
+
     for (int i=0;i<nt.listNeuron.size();i++)
     {
         if(type == -1 || nt.listNeuron.at(i).type == type)
@@ -850,7 +852,7 @@ void cropping3D(V3DPluginCallback2 &callback,
                 }
             }else
             {
-                VirtualVolume* data1d = VirtualVolume::instance(p4DImage->getFileName());
+                data1d = VirtualVolume::instance(p4DImage->getFileName());
                 im_cropped = data1d->loadSubvolume_to_UINT8(yb,ye+1,xb,xe+1,zb,ze+1);
             }
 
@@ -867,6 +869,8 @@ void cropping3D(V3DPluginCallback2 &callback,
             out << "SWCFILE= " << outimg_file_swc.toStdString().c_str()<< endl;
 
             if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+            if(data1d) {delete data1d; data1d = 0;}
+
         }
     }
     return;
