@@ -55,7 +55,8 @@ QT_END_NAMESPACE
 
 
 
-//! [0]
+/*! \brief vaa3d plugin that creates a new instance of S2UI
+ */
 class S2Plugin : public QObject, public V3DPluginInterface2_1
 {
     Q_OBJECT
@@ -71,9 +72,8 @@ public:
 
     bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
-//PLAN: this plugin will just instantiate a new s2UI
 
 };
-//! [0]
+
 
 #endif

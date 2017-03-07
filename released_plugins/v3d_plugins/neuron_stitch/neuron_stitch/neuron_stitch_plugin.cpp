@@ -9,6 +9,7 @@
 #include "neuron_stitch_func.h"
 #include "neuron_match_clique.h"
 #include "neuron_geometry_dialog.h"
+#include "neuron_stitch/neuron_match_gmhash.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
 #include <fstream>
@@ -214,6 +215,10 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
     else if (func_name == tr("tmp_test"))
     {
         doperformancetest(input, output, callback);
+    }
+    else if (func_name == tr("gmhash_test"))
+    {
+        dogmhashtest(input, output, callback);
     }
 	else if (func_name == tr("help"))
 	{
@@ -683,6 +688,115 @@ void neuron_stitch::doperformancetest(const V3DPluginArgList & input, V3DPluginA
     matchfunc.spineAngThr = _spineAngThr;
     matchfunc.spineRadiusThr = _spineRadiusThr;
     matchfunc.output_parameter(fname_output+"_param.txt");
+
+    qDebug()<<"testing finished";
+}
+
+
+//temporary function for paper writting purpose
+void neuron_stitch::dogmhashtest(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    cout<<"==== neuron stack auto stitcher ===="<<endl;
+    if(infiles.size()!=2 || outfiles.size()!=1 || inparas.size()!=1)
+    {
+        qDebug("ERROR: please set input and output!");
+        qDebug()<<"v3d -x neuron_stitch -f gmhash_test -i nt_lower.swc nt_upper.swc -p nt_upper_truth.swc -o output";
+        return;
+    }
+
+    //load neurons
+    QString fname_nt0 = ((vector<char*> *)(input.at(0).p))->at(0);
+    QString fname_nt1 = ((vector<char*> *)(input.at(0).p))->at(1);
+    QString fname_nt1_truth = ((vector<char*> *)(input.at(1).p))->at(0);
+    QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
+    NeuronTree* nt0 = new NeuronTree();
+    if (fname_nt0.toUpper().endsWith(".SWC") || fname_nt0.toUpper().endsWith(".ESWC")){
+        *nt0 = readSWC_file(fname_nt0);
+    }
+    if(nt0->listNeuron.size()<=0){
+        qDebug()<<"failed to read SWC file: "<<fname_nt0;
+        return;
+    }
+    NeuronTree* nt1 = new NeuronTree();
+    if (fname_nt1.toUpper().endsWith(".SWC") || fname_nt1.toUpper().endsWith(".ESWC")){
+        *nt1 = readSWC_file(fname_nt1);
+    }
+    if(nt1->listNeuron.size()<=0){
+        qDebug()<<"failed to read SWC file: "<<fname_nt1;
+        return;
+    }
+    NeuronTree* nt1_truth = new NeuronTree();
+    if (fname_nt1_truth.toUpper().endsWith(".SWC") || fname_nt1_truth.toUpper().endsWith(".ESWC")){
+        *nt1_truth = readSWC_file(fname_nt1_truth);
+    }
+    if(nt1_truth->listNeuron.size()<=0){
+        qDebug()<<"failed to read SWC file: "<<fname_nt1_truth;
+        return;
+    }
+
+    double _spanCand = 20;
+    int _direction = 2;
+    double _pmatchThr = 100;
+    double _zscale = 2;
+
+    QString fname_out=fname_output+"_testlog.txt";
+    ofstream fp;
+    fp.open(fname_out.toStdString().c_str());
+
+    for(int pmatchthr=20; pmatchthr<=300; pmatchthr+=20){
+        NeuronTree nt0_run;
+        backupNeuron(*nt0, nt0_run);
+        NeuronTree nt1_run;
+        backupNeuron(*nt1, nt1_run);
+        neuron_match_gmhash matchfunc(&nt0_run,&nt1_run);
+
+        matchfunc.hashbin=pmatchthr;
+        matchfunc.pmatchThr=pmatchthr;
+        matchfunc.zscale=_zscale;
+        matchfunc.spanCand=_spanCand;
+        matchfunc.direction=_direction;
+
+        double wall0 = get_wall_time();
+        double cpu0  = get_cpu_time();
+        //init clique and candidate
+        matchfunc.init();
+
+        //global match
+        matchfunc.globalmatch();
+        //  Stop timers
+        double wall1 = get_wall_time();
+        double cpu1  = get_cpu_time();
+
+        double tmpnum[11];
+        matchfunc.examineMatchingResult(tmpnum, nt1_truth);
+
+        qDebug()<<"cojoc: "<<wall1-wall0<<":"<<cpu1-cpu0<<":"<<(int)tmpnum[0]<<":"<<(int)tmpnum[1]<<":"<<(int)tmpnum[2]<<":"<<(int)tmpnum[3]<<":"<<(int)tmpnum[4]<<":"<<(int)tmpnum[5]<<":"
+               <<(int)tmpnum[6]<<":"<<(int)tmpnum[7]<<":"<<(int)tmpnum[8]<<":"<<tmpnum[9]<<":"<<tmpnum[10];
+        //output
+        matchfunc.output(fname_output);
+        fp<<pmatchthr<<"\t";
+        fp<<pmatchthr<<"\t";
+        fp<<pmatchthr<<"\t";
+        fp<<pmatchthr<<"\t";
+        fp<<wall1-wall0<<"\t";
+        fp<<cpu1-cpu0<<"\t";
+        fp<<(int)tmpnum[0]<<"\t";
+        fp<<(int)tmpnum[1]<<"\t";
+        fp<<(int)tmpnum[2]<<"\t";
+        fp<<(int)tmpnum[3]<<"\t";
+        fp<<(int)tmpnum[4]<<"\t";
+        fp<<(int)tmpnum[5]<<"\t";
+        fp<<(int)tmpnum[6]<<"\t";
+        fp<<(int)tmpnum[7]<<"\t";
+        fp<<(int)tmpnum[8]<<"\t";
+        fp<<tmpnum[9]<<"\t";
+        fp<<tmpnum[10]<<endl;
+    }
 
     qDebug()<<"testing finished";
 }

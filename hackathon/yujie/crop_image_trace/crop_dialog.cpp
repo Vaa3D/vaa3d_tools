@@ -11,14 +11,15 @@ crop_dialog::crop_dialog(V3DPluginCallback2 *cb)
     image1Dc_in=0;
 }
 
-crop_dialog::~crop_dialog()
+/*
+crop_dialog:: ~crop_dialog()
 {
     if (image1Dc_in!=0)
     {
         delete[] image1Dc_in;
         image1Dc_in=0;
     }
-}
+}*/
 
 void crop_dialog::getData()
 {

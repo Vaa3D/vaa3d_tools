@@ -21,3 +21,6 @@ SOURCES	+= $$VAA3D_DIR/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(swc2maskBRL)
 DESTDIR	= $$VAA3D_DIR/bin/plugins/neuron_utilities/swc_to_maskimage_BRL/
+
+OTHER_FILES += \
+    general.txt

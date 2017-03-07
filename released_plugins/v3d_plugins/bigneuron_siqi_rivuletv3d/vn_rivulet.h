@@ -2,148 +2,92 @@
 #ifndef __VN_RIVULET_H__
 #define __VN_RIVULET_H__
 
+struct PARA_RIVULET {
+  unsigned char threshold;
+  V3DLONG channel=1;
+  bool quality;
+  bool prune;
 
-struct PARA_RIVULET
-{
-    unsigned char threshold;
-    unsigned char length;
-    unsigned char gap; 
-    unsigned char dumpbranch; 
-    unsigned char connectrate; 
-    double percentage;
-    double sigmavalue;
-    // double alpha_one_value;
-    // double alpha_two_value;
-    V3DLONG channel;
+  QString inimg_file, inmarker_file, outswc_file;
 
-    
-    QString inimg_file, inmarker_file, outswc_file;
-    
-    PARA_RIVULET() 
+  PARA_RIVULET() {
+    threshold = 0;
+    inimg_file = "";
+    inmarker_file = "";
+    outswc_file = "";
+    quality=0;
+    prune=0;
+  }
+
+  bool rivulet_dialog() {
+    // fetch parameters from dialog
     {
-        threshold = 10;
-        length = 8;
-        gap = 15; 
-        dumpbranch = 0; 
-        connectrate = 1.5; 
-        percentage = 0.98;
-        sigmavalue = 3;
-        // alpha_one_value = 0.5;
-        // alpha_two_value = 1;
+      // set update the dialog
+      QDialog *dialog = new QDialog();
+      dialog->setWindowTitle("Rivulet2 -- Auto 3D Single Neuron Tracing");
+      QGridLayout *layout = new QGridLayout();
 
-        inimg_file = "";
-        inmarker_file = "";
-        outswc_file = "";
+      QSpinBox *channel_spinbox = new QSpinBox();
+      channel_spinbox->setRange(1, 3);
+      channel_spinbox->setValue(1);
+
+      QSpinBox *bkgthresh_spinbox = new QSpinBox();
+      bkgthresh_spinbox->setRange(0, 255);
+      bkgthresh_spinbox->setValue(10);
+
+      bkgthresh_spinbox->setRange(0, 255);
+      bkgthresh_spinbox->setValue(10);
+
+      QCheckBox * quality_checker = new QCheckBox();
+      quality_checker->setChecked(false);
+
+      QCheckBox * prune_checker = new QCheckBox();
+      prune_checker->setChecked(false);
+
+      // layout->addWidget(new QLabel("color channel"), 0, 0);
+      // layout->addWidget(channel_spinbox, 0, 1, 1, 5);
+      const char* helper = "HINTS:\n"
+                           "The background threshold is needed to segment the image.\n"
+                           "Tick quality for better tracing quality with slightly longer running time (worth it though).\n"
+                           "Tick prune to remove the short and unconnected branches.\n";
+      layout->addWidget(new QLabel(helper), 0, 0, 1, 8);
+      layout->addWidget(new QLabel("background:"), 1, 0);
+      layout->addWidget(bkgthresh_spinbox, 1, 1, 1, 1);
+      layout->addWidget(new QLabel("quality:"), 1, 3);
+      layout->addWidget(quality_checker, 1, 4, 1, 1);
+      layout->addWidget(new QLabel("prune:"), 1, 6);
+      layout->addWidget(prune_checker, 1, 7, 1, 1);
+
+      QHBoxLayout *hbox3 = new QHBoxLayout();
+      QPushButton *ok = new QPushButton(" ok ");
+      ok->setDefault(true);
+      QPushButton *cancel = new QPushButton("cancel");
+      cancel->setDefault(false);
+      hbox3->addWidget(ok);
+      hbox3->addWidget(cancel);
+
+      layout->addLayout(hbox3, 9, 0, 1, 6);
+      dialog->setLayout(layout);
+      QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+      QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+      // Run the dialog
+
+      if (dialog->exec() != QDialog::Accepted)
+        return false;
+
+      // Get the dialog return values
+      threshold = bkgthresh_spinbox->value();
+      quality = quality_checker->isChecked();
+
+      if (dialog) {
+        delete dialog;
+        dialog = 0;
+      }
     }
-    
-    bool rivulet_dialog()
-    {
-        // fetch parameters from dialog
-        {
-            //set update the dialog
-            QDialog * dialog = new QDialog();
-            dialog->setWindowTitle("Rivulet -- Neuron Tracing");
-            QGridLayout * layout = new QGridLayout();
 
-            
-            QSpinBox * channel_spinbox = new QSpinBox();
-            channel_spinbox->setRange(1,3);
-            channel_spinbox->setValue(1);
-
-            QSpinBox * bkgthresh_spinbox = new QSpinBox();
-            bkgthresh_spinbox->setRange(-1, 255);
-            bkgthresh_spinbox->setValue(10);
-
-            QSpinBox * length_spinbox = new QSpinBox();
-            bkgthresh_spinbox->setRange(1, 40);
-            bkgthresh_spinbox->setValue(8);
-
-            QSpinBox * gap_spinbox = new QSpinBox();
-            gap_spinbox->setRange(0,100);
-            gap_spinbox->setValue(15);
-
-            QCheckBox * dump_checker = new QCheckBox();
-            dump_checker->setChecked(false);
-
-            QSpinBox * connectrate_spinbox = new QSpinBox();
-            connectrate_spinbox->setRange(1, 6);
-            connectrate_spinbox->setValue(2.0);
-
-            QDoubleSpinBox * percentage_spinbox = new QDoubleSpinBox();
-            percentage_spinbox->setRange(0.0, 3.0);
-            percentage_spinbox->setValue(0.98);
-
-            QDoubleSpinBox * sigma = new QDoubleSpinBox();
-            sigma->setRange(1.0, 6.0);
-            sigma->setValue(0);
-
-            // QDoubleSpinBox * length = new QIntegerSpinBox();
-            // alpha_one->setRange(0.0, 3.0);
-            // alpha_one->setValue(0.5);
-
-            // QDoubleSpinBox * alpha_two = new QDoubleSpinBox();
-            // alpha_two->setRange(0.0, 3.0);
-            // alpha_two->setValue(1);
-
-            layout->addWidget(new QLabel("color channel"),0,0);
-            layout->addWidget(channel_spinbox, 0,1,1,5);
-            layout->addWidget(new QLabel("background"),1,0);
-            layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
-            layout->addWidget(new QLabel("length"),2,0);
-            layout->addWidget(length_spinbox, 2,1,1,5);
-            layout->addWidget(new QLabel("gap allowed"),3,0);
-            layout->addWidget(gap_spinbox, 3,1,1,5);
-            layout->addWidget(new QLabel("dump unconnected branches"),4,0);
-            layout->addWidget(dump_checker, 4,1,1,5);
-            layout->addWidget(new QLabel("connectrate"),5,0);
-            layout->addWidget(connectrate_spinbox, 5,1,1,5);
-            layout->addWidget(new QLabel("percentage_spinbox"),6,0);
-            layout->addWidget(percentage_spinbox, 6,1,1,5);
-            layout->addWidget(new QLabel("vesselness sigma"),7,0);
-            layout->addWidget(sigma, 7,1,1,5);
-            // layout->addWidget(new QLabel("vesselness alpha one"),7,0);
-            // layout->addWidget(alpha_one, 7,1,1,5);
-            // layout->addWidget(new QLabel("vesselness alpha two"),8,0);
-            // layout->addWidget(alpha_two, 8,1,1,5);
-            
-            QHBoxLayout * hbox3 = new QHBoxLayout();
-            QPushButton * ok = new QPushButton(" ok ");
-            ok->setDefault(true);
-            QPushButton * cancel = new QPushButton("cancel");
-            hbox3->addWidget(cancel);
-            hbox3->addWidget(ok);
-            
-            layout->addLayout(hbox3,9,0,1,6);
-            dialog->setLayout(layout);
-            QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
-            QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
-            
-            //run the dialog
-            
-            if(dialog->exec() != QDialog::Accepted)
-                return false;
-            
-            //get the dialog return values
-            channel = channel_spinbox->value() - 1;
-            threshold = bkgthresh_spinbox->value();
-            gap = gap_spinbox->value();
-            length = length_spinbox->value();
-            dumpbranch = dump_checker->isChecked();
-            connectrate = connectrate_spinbox->value();
-            percentage = percentage_spinbox->value();
-            sigmavalue = sigma->value();
-            // alpha_one_value = alpha_one->value();
-            // alpha_two_value = alpha_two->value();
-
-          
-            if (dialog) {delete dialog; dialog=0;}
-        }
-        
-        return true;
-    }
-    
+    return true;
+  }
 };
 
-
 #endif
-

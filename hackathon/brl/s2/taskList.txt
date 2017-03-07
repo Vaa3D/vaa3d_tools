@@ -1,3 +1,336 @@
+12/8  tried qApp->processEvents() to fix GUI problem... of course it's not a good idea inside a mutex.
+another related idea is to monitor current time between tiles somehow to see how good/bad it's doing.  i could make a pretty cool monitor showing how processing time is distributed across threads, how microscope time is being used, etc.
+
+... but really what I need to do is figure out which bit of code is causing the slowdown.  likely spots:
+1. search for duplicate tiles.  this was running through hundreds of tiles.  my .getLocation() method is called more than necessary.
+2. drawing to graphicsScene.  this could be done in another thread or at least with another signal/slot
+3. searching for similar-named tiles.  this is going through 16 files for each tile. the search list gets larger and larger (it was probably 4-5k files to search through by the end.  clearly that's bad to do 16 times for each tile!) maybe shorten the list by
+searching for the extension 1 time for each tile. the resulting list which should be a few hundred could be searched for the exact xy combo.
+
+unfortunately there's no way to change the mutex- I need it to avoid the possibility of a tile coming back with a bunch of new locations and having another tile come back during the middle of appending the first new locations to the relevant lists.
+If that happened, the second incoming tile would think that a bunch of stuff that will be scanned (from the first tile, headed to allROIList) isnt' queued and will double-up the locations in allROIList.
+
+the only way around this is to make my own list object that has the mutex on itself during append events and has it's own built-in 'isDuplicate' method .  with No mutex, you're relying on the isDuplicate() and append() methods to be evaluated in the correct order
+as tiles come in.
+
+
+
+12/7
+
+NEXT:  for big scans, I'm losing GUI responsiveness and its costing me imaging time.  I think this is because of the frequent use of making the tile map (and related stuff) in the loadMIP method. unfortunately, this can't be put into a separate thread until I find another
+way to label text onto an image.  openCV? is there an imageMagic way to do this?  or other basic image processing lib I can use?
+
+critical addition today:  we added diagonal next tiles for fixed window S2, which kills 2 bugs with 1 stone:
+1. newly-revealed bug where segments entirely within the overlap region, but going from one side to an adjecent side will be counted as 'already scanned', killing the trace.
+2. neutube (and likely other base tracers) in ability to trace segments crossing the very corner of a tile.
+
+
+
+
+issues below fixed 12/6:
+1. was addressed by Zhi
+2. was addressed by adding new flag file (.swcX)  that is used to determine if a tile has been traced yet.
+3. was addressed by Zhi
+
+
+
+12/5
+key bugfix since below:  isDuplicate was incorrectly identifying tiles with existing tiles on 2 opposite sides or on any three sides as already scanned due to tile overlap.  this is fixed.
+
+the remaining problems are:
+1. corner-of-tile cases.  even with 10% overlap, you still will have one tile that will miss-trace with youtube.  if you start with 2 seeds from the corner, it's OK because the other tile should have more of the segment. Sent question to ZZ about this.
+2. rare dropping of tips/markers. I had a few examples today of tiles with incoming markers written correctly but incorrect (0) outputs.  this may be from some kind of race condition on the .swc file or conflict induced by rapid piling on ofter mutex lock is released
+or when initial tile tracing is done.   there really is a race condition or timing-dependent problem in StackAnalyzer.  Basically, if someone is waiting on a tile, they can get the .swc file at stackAnalyzer_L1544 which is BEFORE the current analysis is done (i.e. no
+segments have been sorted)  this isn't really 'done'- among other things, it could explain the sorting problems and it may result in weird tile ordering.  it makes the most sense for the newly scanned tiles to be the parent of other newly scanned tiles, not to have
+waiting tiles suddenly swoop in and become driving segments.  it's not really a computational problem- it's more of an ease-of-use thing where you rightfully expect the branch that caused a tile to be initiated to further cause the next child tiles to be initiated with priority
+over the tiles that were waiting for that tile to appear.
+
+3. .swc sorting results producing funny .swc files with duplicate branches or nodes.  This may actually explain some s2scan errors too if the sorted .swc files are wrong in some way. in particular
+some cases when you get given a legitimate seed and end with nothing.  what happenns if two seeds start on the same branch?
+
+
+
+
+11/30 fixed the incomingTileStatus in handleNewLocations().  this fixes the MIP problem but still doesn't solve all of the retracing cases.  It seems like it's mostly a problem in dense areas.
+
+what happens if 2 tiles are waiting for a tile's SWC file?
+
+
+11/29
+there is still some case where tiles arent getting added to scanData.txt. I think it's possible for the tile to be 'waited for' but have all of the tips then spoken for, resulting in
+zero tips coming back to handleNewLocations, so the tileStatus isn't changed from -1 to 1.
+There needs to be another check around L1875 in S2UI to update the tileStatus even if the length of the tiplist is zero.  not clear how to do this yet. tileStatus is set based on
+the fileInfoList, which is based on the coordinates.  I suppose that couldbe done before the length of the landmarklist is checked?
+
+also add signal and slot to check how many things are in the s2monitor...
+then 3. below.
+
+
+11/21/2016
+1. work on documentation using doxygen blocks in header files
+2. doublecheck endgame stuff with final stacks that could get sent around with -1 status and therefore miss the loadMIP call.
+3. more endgame stuff with call to new method that does some kind of metacheck on the tiles, who's running analysis (?) and a spot
+to even check on structure, etc.  this should also have the power to load new locations in future versions.
+
+
+
+
+
+current problem:
+1.I'm ending up with multiple nearly-simultaneous returns from stackAnalyzer threads to s2UI, even for basic one-tile-at-a-time scenarios.
+
+>>>>>DO THIS NOWWWWWW  >>>>>
+2.handleNewLocations will run loadMIP for tiles that have already been imaged and traced, which is very bad for my scanList queueing!!!!!
+
+
+
+I need a way to keep track of how many times a tile has been run through the system.  the logical way is to increment tileStatus each time it goes around the loop WITH DATA.
+but this might not actually increment since it's from multiple threads.  e.g. these cases tonight where there are 2x or 4x stackAnalyzer calls on something that has just been scanned.
+
+
+I corrected a couple spots in the calls to SATrace stuff where multiple calls could be generated if the trace thread number was incremented while it was being evaluated;
+
+
+
+
+
+
+That was likely due in part to missed numbers (rounding to integer), although I'm not totally sure. there was no obvious miss-location information
+
+
+CURRENT PROBLEM:
+tile location on secondary wait-for-.swc files is incorrect, resulting in incoming D.marker files that are incorrectly located?!
+1. make sure the offset back and forth are consistently handled
+2. make sure the tile location gets moved when the retraced file is accessed... [[[I bet it's not]]]
+
+3.  the last scan is weird- tile 14 is correctly re-incorporated (yay) but doesn't generate new tips to be scanned.
+
+This is because of (2).  tile 7 actually got doublechecked when it shouldn't have, right when tile 14 got finished.
+so the tip locations generated by the reincorporation of 14 were put back in the tile location of 7 because
+that's where they originated?
+
+because it never modifies the tileLocation when it comes back?  or what?
+
+first place to check is handleNewLocation
+
+
+
+
+
+what i did:  check .swc status in s2ui then go right back to stackanalyzer.
+
+
+
+
+
+
+
+
+NEW PLAN:
+
+1. eliminate all the checking of .v3draw and .swc files as flow control within SA::startTracing.  It doesnt belong there.
+2. instead, use isDuplicate input (currently bool, should be int) to control action of starTracing
+3. use the flow from s2ui to Stackanalyzer and back as the loop to check for .swc status with tileStatus = -1.  The checking of the .swc file will be done in
+stackanalyzer- whenever a tileStatus = -1 signal comes in, (tileStatus needs to be kept track of...) check for the .swc file, if it's not there, wait and then check again.
+
+CRITICAL:   3. relies on there being a single sequence of events for each tile that can lead it from tileStatus = -1 to tileStatus = 1 without generating any changes to the lists, etc
+
+
+
+whew!  so finally got the not-ready-yet locations to flow through successfully, but flow through they do and clog up the whole system
+2 possibilities:
+1. keep track of times
+2. modify loadDuplicate to behave differently for these locations
+3. make new Queue to handle exactly this kind of
+
+ALSO
+the multithreaded endgame isnt really all tied up.  problem with residual tiles that are being waited for or analysis that's still running.
+NOTE: this is due to the tiles in the ether not being contained in either the scanlist or the tilelist
+ALSO
+
+what if a tile location is off by an integer due to some stupid rounding shit?
+
+
+
+OK, solution time!
+1. race condition where s2UI thinks tile 'isDuplicate' because of allROI and scanList data, but .swc doesnt actually exist yet
+2. make .marker file name change when 'isDuplicate'
+
+
+
+
+
+
+the fundamental problem is that for a child of a duplicate tile that is already scanned you don't know what to call the full filename (e.g. you scan tile 0, and then tile 1 to its right.  then you may be prompted to
+go back into tile 0, which has already been scanned. if the .swc file exists, you check that .swc file in tile 0.  then what?  you may be prompted to check again in tile 1.
+
+tile 1 is already scanned, but tile 0 doesn't know the full filename of the .swc file for tile 1, and it uses the filename from the last real .v3draw file which is propagated through the locationSimple struct.
+
+the solution to this is to check for the existance of an .swc file with the same tile coordinates, ignoring the intervening filename info which is acquisition specific.
+that way, when you come back around to tile 1, you can check for its existance without paying attention to the full filename of the last real .v3draw file.
+
+
+
+
+
+
+DONEDONEDONE.  for future versions, this can
+
+TileInfo readout:  append current tile info to a file in loadMIP. this should include
+1. tile filename
+2. tile location in pixels
+3. tile size in pixels
+4. tile times 0-3
+5. optical zoom
+6. current mode
+
+file should be initiated at the beginning of the s2scan, and should contain
+
+1. current time
+2. git hash
+3. scan save directory (to validate location)
+
+
+
+TUESDAY:
+figure out conditions of waitingforlast etc under multithreading.
+how can we be sure the scan is over?  allroilocations is empty AND there are no more pending analyses
+
+NOW:
+
+Add time data to tileInfo.
+just use time::whatever() to put current clock time into the tileInfo when:
+
+0. target is chosen from overview [multiple targets share this starting time]
+1. tile is added to queue  << S2UI::handleNewLocation
+2. tile is sent to microscope
+3. tile is returned from microscope
+4. tile is sent to analysis
+5. tile is returned from analysis :  this is made more difficult if there are recurrent returns of tiles.
+
+
+
+
+progress so far 10/14
+1. have s2monitor and s2scandata classes sketched out
+2. s2scandata can write images of scans updated for each added tile
+
+
+next
+
+3. should just write the same filename for each scan, updating continuously
+
+
+4. should add tile number in different color DONE
+
+
+
+5. should link tile number to rows in a summary file with
+a. tile number
+b. actual path to .v3draw file
+c. time for imaging
+d. time for analysis
+
+
+
+
+and other updates to UI:
+single color for each s2scan, same color for tiles and text numbers DONE
+can I get a rollover to spit back the tile filename?  DONE
+
+
+
+
+
+
+
+
+
+Things are working OK now with Zhi's added code to try to avoid rescanning areas where we already have reconstructions.
+
+biggest task today is to get a legitimate logging system working that can
+
+
+
+1. maintain relevant information for each tile in a centralized location
+2. maintain global information and current statistics
+3. constantly write info to a file that can be easily interpretted by external programs
+
+specifics:
+0. Global info
+pixel size, acquisition info? (no, just use .xml file)
+s2 plugin application start time
+?compile-time repo commit hash [added, doesn't know when hash has actually changed]
+
+1. s2scan info
+start time, tile info (see below) for each tile [there is actually sequential numbers for this now]
+ongoing, updated at defined reference times like right after each stack collection.
+nTiles in queue to image
+nTiles in analysis
+nTiles
+
+final versions of ongoing (above)
+
+
+2. Tile Info:
+tile area (pixels)
+tile location (pixels)
+
+
+
+
+
+-----------
+
+
+
+keep everything by modifying flag and distance in stackAnalyzer L335...
+
+
+
+
+fudge.  I tried 1.2 below with 4 threads for tracing, but of course they're truly asynchronous and converge back into one node that's trying
+to run a  FIFO list based on scan order.  if a tile comes back faster because it's more sparse or whatever, the result is garbage because
+my code expects it to be the tile last picked from the list!
+
+need to revise this scheme to instead have a growing list of tiles and when the data is sent over to stackAnalyzer, add the index of that list to
+some field in the location struct.
+
+
+
+
+NEXT:
+1.  get more cores involved in tracing.  either 1) figure out how to spawn, connect, run and destroy a stackAnalyzer for each image or
+2.) hand-code N = 3? threads for this purpose.
+
+improve timing documentation and online metaAnalysis
+1. add a simple clock for each s2scan.  this is like 2 calls to qt.time and recording the data in a new txt file
+2. add a simple clock for each tile.  this will be more tricky, but relatively straightforward. up to 100s of tiles, so each s2 scan can have a summary
+file that includes this stuff, I think.  relevant data: start signal time, analysis start time, analysis finish time.  the hangup here is that
+everything needs to be asynchronous and previously I just relied on serial ordering to try to sort things out.  It should be done with a hash of somekind
+or even just a unique identifier generated for each tile (good idea)
+3. other tile info?  area, nVoxels, npixXY, some filename info...
+
+
+FINALLY FIXED Monday 9AM
+
+TO DO ON MONDAY:
+
+void S2UI::updateROIPlot(QString ignore){
+    //roiRect.moveLeft(roiXEdit->text().toFloat());
+    //roiRect.setY(roiYEdit->text().toFloat());
+    //qDebug()<<"y="<<roiYEdit->text().toFloat();
+    roiGS->removeItem(newRect);
+    float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0-uiS2ParameterMap[5].getCurrentValue();
+    float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+uiS2ParameterMap[6].getCurrentValue();
+    newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat());
+    //newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
+
+
+    //this value for x and y stage is correct (i.e. it moves to the right location in the sample as the microscope galvo or stage changes.
+    //however, the x position of the overview tile location is mirrored in x about the stage x = 0 axis.  this error propagates into subsequent locations some of the time!
+
+}
 
  grabbed a bunch of notes/comments from the s2ui.cpp
 

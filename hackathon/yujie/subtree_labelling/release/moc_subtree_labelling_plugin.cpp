@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'subtree_labelling_plugin.h'
 **
-** Created: Thu Jun 25 22:48:56 2015
+** Created: Sat Feb 27 16:05:43 2016
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.2)
 **
 ** WARNING! All changes made in this file will be lost!

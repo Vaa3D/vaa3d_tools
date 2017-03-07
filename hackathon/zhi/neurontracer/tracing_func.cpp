@@ -12,6 +12,8 @@
 #include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 #include "../../../released_plugins/v3d_plugins/neuron_image_profiling/profile_swc.h"
+#include "../../../v3d_main/jba/c++/convert_type2uint8.h"
+
 
 
 #if  defined(Q_OS_LINUX)
@@ -25,6 +27,8 @@ template <class T> T pow2(T a)
     return a*a;
 
 }
+
+QString getAppPath();
 
 using namespace std;
 using namespace iim;
@@ -1243,7 +1247,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
     else
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+       // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
         finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
     }
 
@@ -2110,6 +2115,18 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
     else if(P.method ==5)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
+    else if(P.method ==6)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuroGPSTree");
+    else if(P.method ==7)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Advantra");
+    else if(P.method ==8)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_TReMAP");
+    else if(P.method ==9)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MST");
+    else if(P.method ==10)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronChaser");
+    else if(P.method ==11)
+       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Rivulet2");
 
     if(!tmpfolder.isEmpty())
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
@@ -2180,6 +2197,9 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         tmpstr =  qPrintable( qtstr.setNum(P.seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
+    }else if(P.method ==6)
+    {
+        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NeuroGPSTree")); infostring.push_back(tmpstr);
     }
 
     tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
@@ -2204,28 +2224,71 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     QString saveDirString;
     QString finaloutputswc;
+    QString finaloutputswc_left;
 
     if(P.method ==3)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
         finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_neutube_adp_left.swc");
     }
     else if (P.method ==4)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
         finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_snake_adp_left.swc");
+
     }
     else if (P.method ==5)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
         finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_most_adp_left.swc");
+
     }
     else if (P.method ==2)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
-    }
+        finaloutputswc_left = P.inimg_file + ("_nc_app2_combined_left.swc");
 
+    }
+    else if (P.method ==6)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuroGPSTree");
+        finaloutputswc = P.inimg_file + ("_nc_NeuroGPSTree_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_NeuroGPSTree_adp_left.swc");
+    }
+    else if (P.method ==7)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Advantra");
+        finaloutputswc = P.inimg_file + ("_nc_Advantra_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_Advantra_adp_left.swc");
+    }
+    else if (P.method ==8)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_TReMAP");
+        finaloutputswc = P.inimg_file + ("_nc_TReMAP_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_TReMAP_adp_left.swc");
+    }
+    else if (P.method ==9)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MST");
+        finaloutputswc = P.inimg_file + ("_nc_MST_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_MST_adp_left.swc");
+    }
+    else if (P.method ==10)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuronChaser");
+        finaloutputswc = P.inimg_file + ("_nc_NeuronChaser_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_NeuronChaser_adp_left.swc");
+    }
+    else if (P.method ==11)
+    {
+        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Rivulet2");
+        finaloutputswc = P.inimg_file + ("_nc_Rivulet2_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_Rivulet2_adp_left.swc");
+    }
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,end_x,end_y;
@@ -2240,13 +2303,6 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     QString imagechecking = saveDirString;
 
     imagechecking.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
-//    ifstream ifs_check(imagechecking.toStdString().c_str());
-//    if(ifs_check)
-//    {
-//        printf("scanned before");
-//        return true;
-//    }
-
     if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || end_x <= 0 || end_y <= 0 )
     {
         printf("hit the boundary");
@@ -2303,6 +2359,17 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 return false;
             }
 
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
+        {
+            V3DLONG *in_zz = 0;
+            int datatype;
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,0,
+                               end_x,end_y,P.in_sz[2]))
+            {
+                printf("can not load the region");
+                if(total1dData) {delete []total1dData; total1dData = 0;}
+                return false;
+            }
         }else
         {
             V3DLONG *in_zz = 0;
@@ -2335,16 +2402,14 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     scanDataFileString.append("/").append("scanData.txt");
 
     if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+    {
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc_left.toStdString().c_str())));
+
+    }
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
-
-    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
-    vector<MyMarker*> finalswc;
-
-    if(ifs_swc)
-       finalswc = readSWC_file(finaloutputswc.toStdString());
 
     ifstream ifs_image(imageSaveString.toStdString().c_str());
     if(!ifs_image)
@@ -2375,8 +2440,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         arg_input.push_back(fileName_string);
         arg.p = (void *) & arg_input; input<< arg;
 
-        char* char_swcout =  new char[swcString.length() + 1];strcpy(char_swcout, swcString.toStdString().c_str());
-        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+//        char* char_swcout =  new char[swcNEUTUBE.length() + 1];strcpy(char_swcout, swcNEUTUBE.toStdString().c_str());
+//        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
 
         arg.type = "random";
         std::vector<char*> arg_para;
@@ -2417,18 +2482,66 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
             full_plugin_name = "mostVesselTracer";
             func_name =  "MOST_trace";
+        }else if(P.method ==6)
+        {
+            arg_para.push_back("1");
+            arg_para.push_back("1");
+            arg_para.push_back("1");
+            arg_para.push_back("30");
+            full_plugin_name = "NeuroGPSTreeOld";
+            func_name =  "tracing_func";
+        }else if(P.method ==7)
+        {
+            full_plugin_name = "region_neuron2";
+            func_name =  "trace_advantra";
+        }else if(P.method ==8)
+        {
+            arg_para.push_back("0");
+            arg_para.push_back("1");
+            arg_para.push_back("20");
+            full_plugin_name = "TReMap";
+            func_name =  "trace_mip";
+        }else if(P.method ==9)
+        {
+            full_plugin_name = "MST_tracing";
+            func_name =  "trace_mst";
+        }else if(P.method ==10)
+        {
+            full_plugin_name = "region_neuron2";
+            func_name =  "trace_neuronchaser";
+        }else if(P.method ==11)
+        {
+            arg_para.push_back("1");
+            arg_para.push_back("30");
+            full_plugin_name = "Rivulet";
+            func_name =  "tracing_func";
         }
 
-        arg.p = (void *) & arg_para; input << arg;
-
-        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        if(P.method ==8)
         {
+        #if  defined(Q_OS_LINUX)
+            QString cmd_tremap = QString("%1/vaa3d -x TReMap -f trace_mip -i %2 -p 0 1 20").arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str());
+            system(qPrintable(cmd_tremap));
+        #elif defined(Q_OS_MAC)
+            QString cmd_tremap = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x TReMap -f trace_mip -i %2 -p 0 1 20").arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str());
+            system(qPrintable(cmd_tremap));
+        #else
+            v3d_msg("The OS is not Linux or Mac. Do nothing.");
+            return;
+        #endif
 
-            printf("Can not find the tracing plugin!\n");
-            return false;
+        }else
+        {
+            arg.p = (void *) & arg_para; input << arg;
+
+            if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+            {
+
+                printf("Can not find the tracing plugin!\n");
+                return false;
+            }
         }
     }
-
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
@@ -2438,15 +2551,68 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
     else if (P.method ==5)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
+    else if (P.method ==6)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
+    else if (P.method ==7)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_Advantra.swc");
+    else if (P.method ==8)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_XY_3D_TreMap.swc");
+    else if (P.method ==9)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MST_Tracing.swc");
+    else if (P.method ==10)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_NeuronChaser.swc");
+    else if (P.method ==11)
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw.r2.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 
+//#if  defined(Q_OS_LINUX)
+//    QString cmd_DL = QString("%1/vaa3d -x prediction_caffe -f Quality_Assess -i %2 -p %3 /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/deploy.prototxt /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/caffenet_train_iter_390000.caffemodel /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/imagenet_mean.binaryproto").
+//            arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(swcNEUTUBE.toStdString().c_str());
+//    system(qPrintable(cmd_DL));
+//#else
+//    v3d_msg("The OS is not Linux or Mac. Do nothing.");
+//    return;
+//#endif
+
+//    QString fp_marker = imageSaveString + (".swc_fp.marker");
+//    QList <ImageMarker> fp_marklist =  readMarker_file(fp_marker);
+//    NeuronTree nt_neutube_DL = DL_eliminate_swc(nt_neutube,fp_marklist);
+//    QString swcDL = imageSaveString + ("_DL.swc");
+//    QList<NeuronSWC> nt_neutube_DL_sorted;
+//    if (!SortSWC(nt_neutube_DL.listNeuron, nt_neutube_DL_sorted,VOID, 0))
+//    {
+//        v3d_msg("fail to call swc sorting function.",0);
+//        return false;
+//    }
+
+//    export_list2file(nt_neutube_DL_sorted, swcDL,swcDL);
+//    nt_neutube_DL = readSWC_file(swcDL);
+
+
+//    QVector<QVector<V3DLONG> > children;
+//    V3DLONG neuronNum = nt_neutube_DL.listNeuron.size();
+//    children = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//    for (V3DLONG i=0;i<neuronNum;i++)
+//    {
+//        V3DLONG par = nt_neutube_DL.listNeuron[i].pn;
+//        if (par<0) continue;
+//        children[nt_neutube_DL.hashNeuron.value(par)].push_back(i);
+//    }
+
+//    for (V3DLONG i=nt_neutube_DL.listNeuron.size()-1;i>=0;i--)
+//    {
+//        if(nt_neutube_DL.listNeuron[i].pn < 0 && children[i].size()==0)
+//            nt_neutube_DL.listNeuron.removeAt(i);
+//    }
+
     NeuronTree nt;
     //nt = nt_neutube;
-    combine_list2file(nt.listNeuron, swcString);
+    //combine_list2file(nt.listNeuron, swcString);
     ifstream ifs_swcString(swcString.toStdString().c_str());
     if(!ifs_swcString)
     {
+      //  nt = sort_eliminate_swc(nt_neutube_DL,inputRootList,total4DImage);
         nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
         export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
 
@@ -2458,6 +2624,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             return true;
         else
         {
+           // nt = sort_eliminate_swc(nt_neutube_DL,inputRootList_pruned,total4DImage);
             nt = sort_eliminate_swc(nt_neutube,inputRootList_pruned,total4DImage);
             combine_list2file(nt.listNeuron, swcString);
 
@@ -2533,10 +2700,13 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     }
 
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
+    vector<MyMarker*> finalswc;
 
     if(ifs_swc)
     {
+        finalswc = readSWC_file(finaloutputswc.toStdString());
         for(V3DLONG i = 0; i < tileswc_file.size(); i++)
         {
             tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
@@ -2558,6 +2728,101 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
     }
 
+
+//    NeuronTree finalswc;
+//    NeuronTree finalswc_left;
+//    vector<QList<NeuronSWC> > nt_list;
+//    vector<QList<NeuronSWC> > nt_list_left;
+
+//    if(ifs_swc)
+//    {
+//       finalswc = readSWC_file(finaloutputswc);
+//       nt_list.push_back(finalswc.listNeuron);
+//       finalswc_left = readSWC_file(finaloutputswc_left);
+//       nt_list_left.push_back(finalswc_left.listNeuron);
+//    }
+
+
+//    NeuronTree nt_traced = readSWC_file(swcString);
+//    NeuronTree nt_left = neuron_sub(nt_neutube, nt_traced);
+
+//    if(ifs_swc)
+//    {
+//        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+//        {
+//            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+//            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+//            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+//            nt.listNeuron[i].type = 3;
+//        }
+//        nt_list.push_back(nt.listNeuron);
+//        QList<NeuronSWC> finalswc_updated;
+//        if (combine_linker(nt_list, finalswc_updated))
+//        {
+//            export_list2file(finalswc_updated, finaloutputswc,finaloutputswc);
+//        }
+
+//        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+//        {
+//            NeuronSWC curr = nt_left.listNeuron.at(i);
+//            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+//            {
+//                nt_left.listNeuron[i].type = 1;
+//            }else
+//                nt_left.listNeuron[i].type = 2;
+
+//            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+//            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+//            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+//        }
+
+//        if(!ifs_image)
+//        {
+//            QList<NeuronSWC> nt_left_sorted;
+//            if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+//                nt_list_left.push_back(nt_left_sorted);
+
+//            QList<NeuronSWC> finalswc_left_updated_added;
+//            if (combine_linker(nt_list_left, finalswc_left_updated_added))
+//            {
+//                export_list2file(finalswc_left_updated_added, finaloutputswc_left,finaloutputswc_left);
+//            }
+//        }else
+//        {
+//            NeuronTree finalswc_left_updated_minus = neuron_sub(finalswc_left, nt);
+//            export_list2file(finalswc_left_updated_minus.listNeuron, finaloutputswc_left,finaloutputswc_left);
+//        }
+//    }
+//    else
+//    {
+//        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+//        {
+//            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+//            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+//            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+//            nt.listNeuron[i].type = 3;
+//        }
+//        export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
+
+//        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+//        {
+//            NeuronSWC curr = nt_left.listNeuron.at(i);
+//            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+//            {
+//                nt_left.listNeuron[i].type = 1;
+//            }else
+//                nt_left.listNeuron[i].type = 2;
+
+//            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+//            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+//            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+//        }
+//        QList<NeuronSWC> nt_left_sorted;
+//        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+//            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+//    }
+
+
     total4DImage->deleteRawDataAndSetPointerToNull();
     return true;
 }
@@ -2567,26 +2832,33 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     QString saveDirString;
     QString finaloutputswc;
+    QString finaloutputswc_left;
 
     if(P.method ==3)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
         finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_neutube_adp_left.swc");
     }
     else if (P.method ==4)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
         finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_snake_adp_left.swc");
     }
     else if (P.method ==5)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
         finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_most_adp_left.swc");
+
     }
     else if (P.method ==2)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
+        finaloutputswc_left = P.inimg_file + ("_nc_app2_combined_left.swc");
+
     }
 
     QString imageSaveString = saveDirString;
@@ -2656,12 +2928,6 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 return false;
             }
 
-//            for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2];i++)
-//            {
-//                if(total1dData[i] < 100)  total1dData[i] =0;
-//            }
-
-
         }else
         {
             V3DLONG *in_zz = 0;
@@ -2694,7 +2960,10 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     scanDataFileString.append("/").append("scanData.txt");
 
     if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+    {
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
+        system(qPrintable(QString("rm -rf %1").arg(finaloutputswc_left.toStdString().c_str())));
+    }
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
@@ -2712,12 +2981,6 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
-    vector<MyMarker*> finalswc;
-
-    if(ifs_swc)
-       finalswc = readSWC_file(finaloutputswc.toStdString());
 
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -2798,6 +3061,19 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(nt_neutube.listNeuron.size() ==0)
         return true;
 
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
+    NeuronTree finalswc;
+    NeuronTree finalswc_left;
+    vector<QList<NeuronSWC> > nt_list;
+    vector<QList<NeuronSWC> > nt_list_left;
+
+    if(ifs_swc)
+    {
+       finalswc = readSWC_file(finaloutputswc);
+       finalswc_left = readSWC_file(finaloutputswc_left);
+    }
+
+
     NeuronTree nt;
     ifstream ifs_swcString(swcString.toStdString().c_str());
     if(!ifs_swcString)
@@ -2824,11 +3100,12 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     LandmarkList tip_up ;
     LandmarkList tip_down;
     QList<NeuronSWC> list = nt.listNeuron;
+    LandmarkList tip_visited;
     for (V3DLONG i=0;i<list.size();i++)
     {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
-            bool check_tip = false;
+            bool check_tip = false, check_visited= false;
 
             if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
             {
@@ -2836,17 +3113,31 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 newTip.y = curr.y + total4DImage->getOriginY();
                 newTip.z = curr.z + total4DImage->getOriginZ();
                 newTip.radius = curr.r;
-                for(V3DLONG j = 0; j < finalswc.size(); j++ )
+                for(V3DLONG j = 0; j < finalswc.listNeuron.size(); j++ )
                 {
-                    double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
+                    double dis = sqrt(pow2(newTip.x - finalswc.listNeuron.at(j).x) + pow2(newTip.y - finalswc.listNeuron.at(j).y) + pow2(newTip.z - finalswc.listNeuron.at(j).z));
                     if(dis < 10)
                     {
                         check_tip = true;
                         break;
                     }
                 }
+
+                if(!check_tip)
+                {
+                    for(V3DLONG j = 0; j < finalswc_left.listNeuron.size(); j++ )
+                    {
+                        double dis = sqrt(pow2(newTip.x - finalswc_left.listNeuron.at(j).x) + pow2(newTip.y - finalswc_left.listNeuron.at(j).y) + pow2(newTip.z - finalswc_left.listNeuron.at(j).z));
+                        if(dis < 10)
+                        {
+                            check_visited = true;
+                            tip_visited.push_back(newTip);
+                            break;
+                        }
+                    }
+                }
             }
-            if(check_tip) continue;
+            if(check_tip || check_visited) continue;
             if( curr.x < 0.05* total4DImage->getXDim())
             {
                 tip_left.push_back(newTip);
@@ -2891,31 +3182,113 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
 
 
-    vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
+  //  vector<MyMarker*> tileswc_file = readSWC_file(swcString.toStdString());
+    NeuronTree nt_traced = readSWC_file(swcString);
+    NeuronTree nt_left = neuron_sub(nt_neutube, nt_traced);
 
     if(ifs_swc)
     {
-        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        nt_list.push_back(finalswc.listNeuron);
+        NeuronTree nt_visited;
+        NeuronTree finalswc_left_nonvisited;
+        if(tip_visited.size()>0)
         {
-            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
-            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
-            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
-
-            finalswc.push_back(tileswc_file[i]);
+            nt_visited = sort_eliminate_swc(finalswc_left,tip_visited,total4DImage);
         }
-        saveSWC_file(finaloutputswc.toStdString().c_str(), finalswc);
+        if(nt_visited.listNeuron.size()>0)
+        {
+            finalswc_left_nonvisited = neuron_sub(finalswc_left,nt_visited);
+            nt_list_left.push_back(finalswc_left_nonvisited.listNeuron);
+        }else
+            nt_list_left.push_back(finalswc_left.listNeuron);
+
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+            nt.listNeuron[i].type = 3;
+        }
+        nt_list.push_back(nt.listNeuron);
+        QList<NeuronSWC> finalswc_updated;
+        if (combine_linker(nt_list, finalswc_updated))
+        {
+            export_list2file(finalswc_updated, finaloutputswc,finaloutputswc);
+        }
+
+        if(nt_left.listNeuron.size()>0)
+        {
+            v3d_msg("check1",0);
+            for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+            {
+                NeuronSWC curr = nt_left.listNeuron.at(i);
+                if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+                {
+                    nt_left.listNeuron[i].type = 1;
+                }else
+                    nt_left.listNeuron[i].type = 2;
+
+                nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+                nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+                nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+            }
+
+            NeuronTree nt_left_left = neuron_sub(nt_left, finalswc);
+            v3d_msg("check2",0);
+
+            if(nt_left_left.listNeuron.size()>0)
+            {
+                QList<NeuronSWC> nt_left_sorted;
+                if(SortSWC(nt_left_left.listNeuron, nt_left_sorted,VOID, 0))
+                    nt_list_left.push_back(nt_left_sorted);
+                v3d_msg("check3",0);
+
+
+                QList<NeuronSWC> finalswc_left_updated_added;
+                if (combine_linker(nt_list_left, finalswc_left_updated_added))
+                {
+                    QList<NeuronSWC> finalswc_left_updated_added_sorted;
+                    v3d_msg("check4",0);
+
+                    if(SortSWC(finalswc_left_updated_added, finalswc_left_updated_added_sorted,VOID, 10))
+                        export_list2file(finalswc_left_updated_added_sorted, finaloutputswc_left,finaloutputswc_left);
+                }
+            }
+        }else if(nt_visited.listNeuron.size()>0)
+        {
+            export_list2file(finalswc_left_nonvisited.listNeuron, finaloutputswc_left,finaloutputswc_left);
+        }
+
     }
     else
     {
-        for(V3DLONG i = 0; i < tileswc_file.size(); i++)
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
         {
-            tileswc_file[i]->x = tileswc_file[i]->x + total4DImage->getOriginX();
-            tileswc_file[i]->y = tileswc_file[i]->y + total4DImage->getOriginY();
-            tileswc_file[i]->z = tileswc_file[i]->z + total4DImage->getOriginZ();
+            nt.listNeuron[i].x = nt.listNeuron[i].x + total4DImage->getOriginX();
+            nt.listNeuron[i].y = nt.listNeuron[i].y + total4DImage->getOriginY();
+            nt.listNeuron[i].z = nt.listNeuron[i].z + total4DImage->getOriginZ();
+            nt.listNeuron[i].type = 3;
         }
-        saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
-    }
+        export_list2file(nt.listNeuron, finaloutputswc,finaloutputswc);
 
+        for(V3DLONG i = 0; i < nt_left.listNeuron.size(); i++)
+        {
+            NeuronSWC curr = nt_left.listNeuron.at(i);
+            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim())
+            {
+                nt_left.listNeuron[i].type = 1;
+            }else
+                nt_left.listNeuron[i].type = 2;
+
+            nt_left.listNeuron[i].x = curr.x + total4DImage->getOriginX();
+            nt_left.listNeuron[i].y = curr.y + total4DImage->getOriginY();
+            nt_left.listNeuron[i].z = curr.z + total4DImage->getOriginZ();
+        }
+
+        QList<NeuronSWC> nt_left_sorted;
+        if(SortSWC(nt_left.listNeuron, nt_left_sorted,VOID, 0))
+            export_list2file(nt_left_sorted, finaloutputswc_left,finaloutputswc_left);
+    }
 
 //    QString marker_name = imageSaveString + ".marker";
 //    QList<ImageMarker> seedsToSave;
@@ -3337,7 +3710,7 @@ NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSi
     NeuronTree nt_resampled = resample(nt, 10);
     QList<NeuronSWC> neuron_sorted;
 
-    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 10))
+    if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 10))  //was 10
     {
         v3d_msg("fail to call swc sorting function.",0);
         return nt_result;
@@ -4225,7 +4598,7 @@ QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction)
    return groupTips;
 }
 
-bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & pVImg_UINT8,V3DLONG startx, V3DLONG starty, V3DLONG startz,
+bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & pVImg_TC,V3DLONG startx, V3DLONG starty, V3DLONG startz,
                      V3DLONG endx, V3DLONG endy, V3DLONG endz)
 {
 
@@ -4252,8 +4625,12 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
     V3DLONG z_e = endz + vim.min_vim[2];
     printf("%d, %d, ,%d, %d, %d, %d\n\n\n\n\n",x_s, y_s, z_s, x_e,y_e,z_e);
 
+    ImagePixelType datatype;
     bool flag_init = true;
-   // unsigned char *pVImg_UINT8 = NULL;
+
+    unsigned char *pVImg_UINT8 = NULL;
+    unsigned short *pVImg_UINT16 = NULL;
+    float *pVImg_FLOAT32 = NULL;
 
     QString curFilePath = QFileInfo(tcfile).path();
     curFilePath.append("/");
@@ -4261,6 +4638,8 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
     for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
     {
         int check_lu = 0,check_ru = 0,check_ld = 0,check_rd = 0;
+        int check_lu2 = 0,check_ru2 = 0,check_ld2 = 0,check_rd2 = 0;
+
 
         int check1 = (x_s >=  vim.lut[ii].start_pos[0] && x_s <= vim.lut[ii].end_pos[0])?  1 : 0;
         int check2 = (x_e >=  vim.lut[ii].start_pos[0] && x_e <= vim.lut[ii].end_pos[0])?  1 : 0;
@@ -4272,33 +4651,22 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
         if(check1*check4) check_ld = 1;
         if(check2*check4) check_rd = 1;
 
+        int check5 = (vim.lut[ii].start_pos[0] >= x_s && vim.lut[ii].start_pos[0] <= x_e)?  1 : 0;
+        int check6 = (vim.lut[ii].end_pos[0] >= x_s && vim.lut[ii].end_pos[0] <= x_e)?  1 : 0;
+        int check7 = (vim.lut[ii].start_pos[1] >= y_s && vim.lut[ii].start_pos[1] <= y_e)?  1 : 0;
+        int check8 = (vim.lut[ii].end_pos[1] >= y_s && vim.lut[ii].end_pos[1] <= y_e)?  1 : 0;
 
-//        // init
-//        lut_ss.reset();
-//        lut_se.reset();
-//        lut_es.reset();
-//        lut_ee.reset();
+        if(check1*check3) check_lu = 1;
+        if(check2*check3) check_ru = 1;
+        if(check1*check4) check_ld = 1;
+        if(check2*check4) check_rd = 1;
 
-//        //
-//        if(x_s < vim.lut[ii].start_pos[0]) lut_ss[1] = 1; // r  0 l
-//        if(y_s < vim.lut[ii].start_pos[1]) lut_ss[0] = 1; // d  0 u
-//       // if(z_s < vim.lut[ii].start_pos[2]) lut_ss[2] = 1; // b  0 f
+        if(check5*check7) check_lu2 = 1;
+        if(check6*check7) check_ru2 = 1;
+        if(check5*check8) check_ld2 = 1;
+        if(check6*check8) check_rd2 = 1;
 
-//        if(x_e < vim.lut[ii].start_pos[0]) lut_se[1] = 1; // r  0 l
-//        if(y_e < vim.lut[ii].start_pos[1]) lut_se[0] = 1; // d  0 u
-//      //  if(z_e < vim.lut[ii].start_pos[2]) lut_se[2] = 1; // b  0 f
-
-//        if(x_s < vim.lut[ii].end_pos[0]) lut_es[1] = 1; // r  0 l
-//        if(y_s < vim.lut[ii].end_pos[1]) lut_es[0] = 1; // d  0 u
-//      //  if(z_s < vim.lut[ii].end_pos[2]) lut_es[2] = 1; // b  0 f
-
-//        if(x_e < vim.lut[ii].end_pos[0]) lut_ee[1] = 1; // r  0 l
-//        if(y_e < vim.lut[ii].end_pos[1]) lut_ee[0] = 1; // d  0 u
-//      //  if(z_e < vim.lut[ii].end_pos[2]) lut_ee[2] = 1; // b  0 f
-
-//        // copy data
-//        if( (!lut_ss.any() && lut_ee.any()) || (lut_es.any() && !lut_ee.any()) || (lut_ss.any() && !lut_se.any()) )
-        if(check_lu || check_ru || check_ld || check_rd)
+        if(check_lu || check_ru || check_ld || check_rd || check_lu2 || check_ru2 || check_ld2 || check_rd2)
         {
             //
             cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;
@@ -4314,9 +4682,20 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
             qDebug()<<"testing..."<<curFilePath<< fn.c_str();
 
+            if(!simple_loadimage_wrapper(callback, fn.c_str(), relative1d, sz_relative, datatype_relative))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                continue;
+            }
+            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
+
 
             if(flag_init)
             {
+                if(datatype_relative == V3D_UINT8)
+                {
+                    datatype = V3D_UINT8;
+
                     try
                     {
                         pVImg_UINT8 = new unsigned char [pagesz_vim];
@@ -4332,14 +4711,51 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
                     flag_init = false;
 
-            }
+                }
+                else if(datatype_relative == V3D_UINT16)
+                {
+                    datatype = V3D_UINT16;
 
-            if(!simple_loadimage_wrapper(callback, fn.c_str(), relative1d, sz_relative, datatype_relative))
-            {
-                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
-                continue;
+                    try
+                    {
+                        pVImg_UINT16 = new unsigned short [pagesz_vim];
+                    }
+                    catch (...)
+                    {
+                        printf("Fail to allocate memory.\n");
+                        return false;
+                    }
+
+                    // init
+                    memset(pVImg_UINT16, 0, pagesz_vim*sizeof(unsigned short));
+
+                    flag_init = false;
+                }
+                else if(datatype_relative == V3D_FLOAT32)
+                {
+                    datatype = V3D_FLOAT32;
+
+                    try
+                    {
+                        pVImg_FLOAT32 = new float [pagesz_vim];
+                    }
+                    catch (...)
+                    {
+                        printf("Fail to allocate memory.\n");
+                        return false;
+                    }
+
+                    // init
+                    memset(pVImg_FLOAT32, 0, pagesz_vim*sizeof(float));
+
+                    flag_init = false;
+                }
+                else
+                {
+                    printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                    return false;
+                }
             }
-            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
 
             //
             V3DLONG tile2vi_xs = vim.lut[ii].start_pos[0]-vim.min_vim[0];
@@ -4367,16 +4783,64 @@ bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3
 
             //
             cout << x_start << " " << x_end << " " << y_start << " " << y_end << " " << z_start << " " << z_end << endl;
-            region_groupfusing<unsigned char>(pVImg_UINT8, vim, relative1d,
+            try
+            {
+                pVImg_TC = new unsigned char [pagesz_vim];
+            }
+            catch (...)
+            {
+                printf("Fail to allocate memory.\n");
+                return false;
+            }
+            double min,max;
+            if(datatype == V3D_UINT8)
+            {
+                region_groupfusing<unsigned char>(pVImg_UINT8, vim, relative1d,
                                                   vx, vy, vz, vc, rx, ry, rz, rc,
                                                   tile2vi_zs, tile2vi_ys, tile2vi_xs,
-                                                  z_start, z_end, y_start, y_end, x_start, x_end, start);
+                                                  z_start, z_end, y_start, y_end, x_start, x_end, start);            }
+            else if(datatype == V3D_UINT16)
+            {
+                region_groupfusing<unsigned short>(pVImg_UINT16, vim, relative1d,
+                                                   vx, vy, vz, vc, rx, ry, rz, rc,
+                                                   tile2vi_zs, tile2vi_ys, tile2vi_xs,
+                                                   z_start, z_end, y_start, y_end, x_start, x_end, start);
+            }
+            else if(datatype == V3D_FLOAT32)
+            {
+                region_groupfusing<float>(pVImg_FLOAT32, vim, relative1d,
+                                          vx, vy, vz, vc, rx, ry, rz, rc,
+                                          tile2vi_zs, tile2vi_ys, tile2vi_xs,
+                                          z_start, z_end, y_start, y_end, x_start, x_end, start);            }
+            else
+            {
+                printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                return false;
+            }
+
 
             //de-alloc
             if(relative1d) {delete []relative1d; relative1d=0;}
         }
 
     }
+
+    double min,max;
+    if(datatype == V3D_UINT8)
+    {
+        memcpy(pVImg_TC, pVImg_UINT8, pagesz_vim);
+    }else if(datatype == V3D_UINT16)
+    {
+        rescale_to_0_255_and_copy(pVImg_UINT16,pagesz_vim,min,max,pVImg_TC);
+    }else if(datatype == V3D_FLOAT32)
+    {
+        rescale_to_0_255_and_copy(pVImg_FLOAT32,pagesz_vim,min,max,pVImg_TC);
+    }
+
+    if(pVImg_UINT8) {delete []pVImg_UINT8; pVImg_UINT8=0;}
+    if(pVImg_UINT16) {delete []pVImg_UINT16; pVImg_UINT16 =0;}
+    if(pVImg_FLOAT32) {delete []pVImg_FLOAT32; pVImg_FLOAT32 =0;}
+
     return true;
 }
 
@@ -4690,4 +5154,115 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     saveSWC_file(swcString.toStdString().c_str(), inputswc);
     system(qPrintable(QString("rm %1").arg(swcNEUTUBE.toStdString().c_str())));
     system(qPrintable(QString("rm %1").arg(imageSaveString.toStdString().c_str())));
+}
+
+NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt)
+{
+    V3DLONG neuronNum = nt_total.listNeuron.size();
+    NeuronTree nt_left;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    //set node
+    NeuronSWC S;
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        NeuronSWC curr = nt_total.listNeuron.at(i);
+        S.n 	= curr.n;
+        S.type 	= curr.type;
+        S.x 	= curr.x;
+        S.y 	= curr.y;
+        S.z 	= curr.z;
+        S.r 	= curr.r;
+        S.pn 	= curr.pn;
+        bool flag = false;
+        for(V3DLONG j=0;j<nt.listNeuron.size();j++)
+        {
+            double dis = sqrt(pow2(nt.listNeuron[j].x - curr.x) + pow2(nt.listNeuron[j].y - curr.y) + pow2(nt.listNeuron[j].z - curr.z));
+            if(dis < 5)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+        {
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+    nt_left.n = -1;
+    nt_left.on = true;
+    nt_left.listNeuron = listNeuron;
+    nt_left.hashNeuron = hashNeuron;
+    return nt_left;
+}
+
+QString getAppPath()
+{
+    QString v3dAppPath("~/Work/v3d_external/v3d");
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    v3dAppPath = testPluginsDir.absolutePath();
+    return v3dAppPath;
+}
+
+
+NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
+{
+    NeuronTree nt_prunned;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    NeuronSWC S;
+
+    for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+    {
+        bool flag = false;
+        for(V3DLONG j=0; j<marklist.size();j++)
+        {
+            double dis = sqrt(pow2(nt.listNeuron.at(i).x - marklist.at(j).x) + pow2(nt.listNeuron.at(i).y - marklist.at(j).y) + pow2(nt.listNeuron.at(i).z - marklist.at(j).z));
+            if(dis < 1.0)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+        {
+            NeuronSWC curr = nt.listNeuron.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+
+    nt_prunned.n = -1;
+    nt_prunned.on = true;
+    nt_prunned.listNeuron = listNeuron;
+    nt_prunned.hashNeuron = hashNeuron;
+
+    return nt_prunned;
 }

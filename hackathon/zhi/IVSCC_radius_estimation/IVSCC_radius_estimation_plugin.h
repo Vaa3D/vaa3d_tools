@@ -55,6 +55,9 @@ class radiusEstimationDialog : public QDialog
             bkg_thresh_box->setMinimum(0);
             bkg_thresh_box->setMaximum(255);
             bkg_thresh_box->setValue(5);
+            winX_box = new QLineEdit("1000");
+            winY_box = new QLineEdit("1000");
+
 
             stop_thresh_box = new QDoubleSpinBox();
             stop_thresh_box->setMinimum(0);
@@ -70,16 +73,20 @@ class radiusEstimationDialog : public QDialog
             layout->addWidget(pPushButton_openFileDlg,0, 4, 1, 2);
             layout->addWidget(new QLabel("Background Threshold (soma area)"), 1, 0, 1, 1);
             layout->addWidget(bkg_thresh_box, 1, 1, 1, 5);
-            layout->addWidget(new QLabel("Background Threshold (other areas)"), 2, 0, 1, 1);
-            layout->addWidget(stop_thresh_box, 2, 1, 1, 5);
-            layout->addWidget(new QLabel("Out swc path"), 3, 0, 1, 1);
-            layout->addWidget(outswc_box, 3, 1, 1, 5);
-            layout->addWidget(is2d_checker, 4, 0, 1, 6);
+            layout->addWidget(new QLabel("The size of soma area (X****Y)"), 2, 0, 1, 1);
+            layout->addWidget(winX_box, 2, 1, 1, 2);
+            layout->addWidget(new QLabel("******"), 2, 3, 1, 1);
+             layout->addWidget(winY_box, 2, 4, 1, 2);
+            layout->addWidget(new QLabel("Background Threshold (other areas)"), 3, 0, 1, 1);
+            layout->addWidget(stop_thresh_box, 3, 1, 1, 5);
+            layout->addWidget(new QLabel("Out swc path"), 4, 0, 1, 1);
+            layout->addWidget(outswc_box, 4, 1, 1, 5);
+            layout->addWidget(is2d_checker, 5, 0, 1, 6);
             QPushButton * ok = new QPushButton("Ok");
             QPushButton * cancel = new QPushButton("Cancel");
             ok->setDefault(true);
-            layout->addWidget(ok, 6, 0, 1, 3);
-            layout->addWidget(cancel, 6, 3, 1, 3);
+            layout->addWidget(ok, 7, 0, 1, 3);
+            layout->addWidget(cancel, 7, 3, 1, 3);
             this->setLayout(layout);
             connect(ok, SIGNAL(clicked()), this, SLOT(_slot_start()));
             connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
@@ -102,6 +109,8 @@ class radiusEstimationDialog : public QDialog
             is_2d = is2d_checker->isChecked();
             bkg_thresh = atof(bkg_thresh_box->text().toStdString().c_str());
             stop_thresh = atof(stop_thresh_box->text().toStdString().c_str());
+            winX_size = atof(winX_box->text().toStdString().c_str());
+            winY_size = atof(winY_box->text().toStdString().c_str());
         }
         void _slots_openFileDlg()
         {
@@ -129,12 +138,18 @@ class radiusEstimationDialog : public QDialog
         QCheckBox * is2d_checker;
         QPushButton *pPushButton_openFileDlg;
         Image4DSimple* image;
+        QLineEdit * winX_box;
+        QLineEdit * winY_box;
+
 
         string inswc_file;
         string outswc_file;
         bool is_2d;
         double bkg_thresh;
         double stop_thresh;
+        double winX_size;
+        double winY_size;
+
     };
 
 class radiusEstimationFolderDialog : public QDialog

@@ -850,7 +850,7 @@ class neurontracer_neutube_raw : public QDialog
 
             layout->addLayout(hbox2,8,0,8,6);
             setLayout(layout);
-            setWindowTitle(QString("UltraTracer_neutube"));
+            setWindowTitle(QString("UltraTracer"));
 
 
             connect(ok, SIGNAL(clicked()), this, SLOT(accept()));

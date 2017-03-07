@@ -81,6 +81,7 @@ QStringList IVSCC_process_swc::funclist() const
         <<tr("process")
         <<tr("process_v2")
         <<tr("process_remove_artifacts")
+        <<tr("process_soma_correction")
 		<<tr("help");
 }
 
@@ -556,6 +557,167 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         nt_prunned.hashNeuron = hashNeuron;
 
         writeSWC_file(outswc_file,nt_prunned);
+
+    }else if (func_name == tr("process_soma_correction"))
+    {
+        cout<<"Welcome to IVSCC soma correction processing plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString inswc_file =  infiles[0];
+        QString inmarker_file = infiles[1];
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+
+        QString in3Draw_file = infiles[2];
+        if(in3Draw_file.isEmpty())
+        {
+            cerr<<"Need a 3D raw file"<<endl;
+            return false;
+        }
+
+        QString  outswc_file =  outfiles[0];
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"inmarker_file = "<<inmarker_file.toStdString().c_str()<<endl;
+        cout<<"in3Draw_file = "<<in3Draw_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        vector<MyMarker> center_inmarkers;
+        center_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(in3Draw_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+        if(datald) {delete []datald; datald = 0;}
+        unsigned char * cropped_image = 0;
+        if (!loadRawRegion(const_cast<char *>(in3Draw_file.toStdString().c_str()), cropped_image, in_zz, in_sz,datatype,center_inmarkers[0].x-200,center_inmarkers[0].y-200,0,center_inmarkers[0].x+200,center_inmarkers[0].y+200,in_zz[2]))
+        {
+            return false;
+        }
+
+        QString soma3DRegion;
+        soma3DRegion = in3Draw_file + "_cropped_soma.raw";
+        simple_saveimage_wrapper(callback, soma3DRegion.toLatin1().data(),(unsigned char *)cropped_image, in_sz, datatype);
+        if(cropped_image) {delete []cropped_image; cropped_image = 0;}
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
+
+        QString full_plugin_name;
+        QString func_name;
+
+        arg.type = "random";std::vector<char*> arg_input;
+        std:: string fileName_Qstring(soma3DRegion.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input.push_back(fileName_string);
+        arg.p = (void *) & arg_input; input<< arg;
+
+//        char* char_swcout =  new char[swcString.length() + 1];strcpy(char_swcout, swcString.toStdString().c_str());
+//        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+        arg.type = "random";
+        std::vector<char*> arg_para;
+        arg_para.push_back("1");
+        arg_para.push_back("1");
+        full_plugin_name = "neuTube";
+        func_name =  "neutube_trace";
+
+        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        {
+
+            printf("Can not find the tracing plugin!\n");
+            return false;
+        }
+
+        QString somaswc_file = soma3DRegion + "_neutube.swc";
+        NeuronTree nt = readSWC_file(somaswc_file);
+        NeuronTree nt_swc = readSWC_file(inswc_file);
+
+        QVector<QVector<V3DLONG> > childs;
+
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>());
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        NeuronTree nt_corrected;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        NeuronSWC S1;
+        S1.n 	= 1;
+        S1.type 	= 1;
+        S1.x 	= center_inmarkers[0].x;
+        S1.y 	= center_inmarkers[0].y;
+        S1.z 	= center_inmarkers[0].z;
+        S1.r 	= nt_swc.listNeuron.at(0).r;
+        S1.pn 	= -1;
+        listNeuron.append(S1);
+        hashNeuron.insert(S1.n, listNeuron.size()-1);
+
+        //set node
+        NeuronSWC S;
+        for (int i=0;i<list.size();i++)
+        {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n+1;
+            S.type 	= 3;
+            S.x 	= curr.x + center_inmarkers[0].x - 200;
+            S.y 	= curr.y + center_inmarkers[0].y - 200;
+            S.z 	= curr.z;
+            S.r 	= 2;
+            S.pn    = curr.pn;
+            if(S.pn>0) S.pn = curr.pn+1;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+       }
+        nt_corrected.n = -1;
+        nt_corrected.on = true;
+        nt_corrected.listNeuron = listNeuron;
+        nt_corrected.hashNeuron = hashNeuron;
+
+        NeuronTree nt_corrected_final = SortSWC_pipeline(nt_corrected.listNeuron, 1, 150,true);
+        V3DLONG soma_size = nt_corrected_final.listNeuron.size();
+
+        for (int i=0;i<nt_swc.listNeuron.size();i++)
+        {
+            NeuronSWC curr = nt_swc.listNeuron.at(i);
+            if(!(curr.x>center_inmarkers[0].x-200 && curr.x<center_inmarkers[0].x+200 && curr.y > center_inmarkers[0].y-200 && curr.y<center_inmarkers[0].y+200))
+            {
+                S.n 	= curr.n+soma_size;
+                S.type 	= curr.type;
+                S.x 	= curr.x;
+                S.y 	= curr.y;
+                S.z 	= curr.z;
+                S.r 	= curr.r;
+                S.pn    = curr.pn;
+                if(S.pn>0) S.pn = curr.pn+soma_size;
+                nt_corrected_final.listNeuron.append(S);
+                nt_corrected_final.hashNeuron.insert(S.n, nt_corrected_final.listNeuron.size()-1);
+            }
+        }
+
+        NeuronTree nt_corrected_final_sorted = SortSWC_pipeline(nt_corrected_final.listNeuron, 1, 20);
+
+        writeSWC_file(outswc_file,nt_corrected_final_sorted);
 
     }
     else if (func_name == tr("help"))

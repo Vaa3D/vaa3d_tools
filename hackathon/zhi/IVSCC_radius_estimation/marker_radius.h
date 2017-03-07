@@ -263,3 +263,46 @@ template<class T> double markerRadiusXY(T* &inimg1d, V3DLONG * sz, MyMarker & ma
 	*/
 }
 #endif
+
+template<class T> double markerRadius_XY_IVSCC(T* &inimg1d, V3DLONG * sz, MyMarker & marker, double thresh, double thresh_stop,double min_r,double max_r)
+{
+    //printf("markerRadius_hanchuan   XY 2D\n");
+
+    long sz0 = sz[0];
+    long sz01 = sz[0] * sz[1];
+    if (max_r > sz[1]/2) max_r = sz[1]/2;
+
+    double total_num, background_num;
+    double ir;
+    for (ir=min_r; ir<=max_r; ir++)
+    {
+        total_num = background_num = 0;
+
+        double dz, dy, dx;
+        double zlower = 0, zupper = 0;
+        for (dz= zlower; dz <= zupper; ++dz)
+            for (dy= -ir; dy <= +ir; ++dy)
+                for (dx= -ir; dx <= +ir; ++dx)
+                {
+                    total_num++;
+
+                    double r = sqrt(dx*dx + dy*dy + dz*dz);
+                    if (r>ir-1 && r<=ir)
+                    {
+                        V3DLONG i = marker.x+dx;   if (i<0 || i>=sz[0]) goto end1;
+                        V3DLONG j = marker.y+dy;   if (j<0 || j>=sz[1]) goto end1;
+                        V3DLONG k = marker.z+dz;   if (k<0 || k>=sz[2]) goto end1;
+
+                        if (inimg1d[k * sz01 + j * sz0 + i] <= thresh)
+                        {
+                            background_num++;
+
+                            if ((background_num/total_num) > thresh_stop) goto end1; //change 0.01 to 0.001 on 100104
+                        }
+                    }
+                }
+    }
+end1:
+    return ir;
+
+}

@@ -21,10 +21,9 @@ public:
     void create();
     void create_proofread_panel_by_spine();
     void create_proofread_panel_by_segment(bool exist_proj);
-    void run_interface_with_auto(int ret, NeuronTree auto_neuron, bool eswc_tmp_flag,
-        LandmarkList LList, vector<GOV> label_group_in, unsigned char *image1Dc, V3DLONG sz_img_in[4],
-        int bg_thr, int max_dis, int channel, QString in_swc_name, QString in_image_name, QString folder_output);
-
+    void run_interface_with_auto(int ret,NeuronTree auto_neuron,bool eswc_tmp_flag,
+        LandmarkList LList,vector<GOV> label_group_in,unsigned char *image1Dc,V3DLONG sz_img_in[4],
+        int bg_thr,int max_dis,int channel,QString in_swc_name,QString in_image_name,QString folder_output);
 private:
     //share by both views
     bool readProjFile();

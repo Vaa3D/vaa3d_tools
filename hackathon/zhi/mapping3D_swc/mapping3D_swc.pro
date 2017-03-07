@@ -13,7 +13,7 @@ HEADERS += openSWCDialog.h
 
 SOURCES	+= mapping3D_swc_plugin.cpp
 SOURCES += openSWCDialog.cpp
-SOURCES += ../neurontracing_mip/my_surf_objs.cpp
+SOURCES += ../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/my_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp
 SOURCES      +=	$$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
 SOURCES      +=	$$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp

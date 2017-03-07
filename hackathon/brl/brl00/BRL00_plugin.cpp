@@ -81,7 +81,7 @@ void brl00::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidg
         arg.type = "random";std::vector<char*> args;
         char channel = '0' + c;
         args.push_back("3");args.push_back("3");args.push_back("3");args.push_back(&channel); args.push_back("1.0"); arg.p = (void *) & args; input << arg;
-        arg.type = "random";std::vector<char*> args2;args2.push_back("/Users/brl/dump/gfImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+        arg.type = "random";std::vector<char*> args2;args2.push_back("/local1/dump/gfImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
         QString full_plugin_name = "gaussian";
         QString func_name = "gf";

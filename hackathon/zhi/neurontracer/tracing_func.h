@@ -61,7 +61,7 @@ bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
 
 void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
 void processSmartScan_3D(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
-NeuronTree pruneswc(NeuronTree nt, double length);
+NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt);
 
 bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & img,
                     V3DLONG startx, V3DLONG starty, V3DLONG startz, V3DLONG endx, V3DLONG endy, V3DLONG endz);
@@ -72,6 +72,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
 bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
 
+NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
 
 #endif
 

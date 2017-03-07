@@ -3,6 +3,7 @@
 #include <QString>
 #include <QStringList>
 #include <QDebug>
+#include <QDateTime>
 #include <v3d_interface.h>
 
 class TileInfo
@@ -15,7 +16,7 @@ public:
     void setPixelLocation(LocationSimple loc);
     void setStageLocation(LocationSimple loc);
     void setGalvoLocation(LocationSimple loc);
-
+    void setScanIndex(long sIndex);
     LocationSimple getPixelLocation() const;
     LocationSimple getStageLocation() const;
     LocationSimple getGalvoLocation() const;
@@ -25,9 +26,14 @@ public:
     float getTileZoom() const;
     int getTilePixelsX() const;
     int getTilePixelsY() const;
+    void setFileString(QString inputString);
+    QString getFileString() const;
     bool resOK;
-
-
+    int setTimeStamp(QDateTime timeNow);
+    QList<float> getElapsedTimes() const;
+    QStringList getTimeStrings() const;
+    QList<QDateTime> getTileTimes() const;
+    long getScanIndex() const;
 private:
     LocationSimple pixelLocation;
     LocationSimple stageLocation;
@@ -37,6 +43,11 @@ private:
     float tileZoom;
     float zoomPixelsProduct;
     bool zoomSet;
+    QString tilev3drawFileString;
+    int timeStampCategory;
+    QList<QDateTime> tileTimes;
+    QList<float> elapsedTimes;
+    long scanIndex;
 
 };
 

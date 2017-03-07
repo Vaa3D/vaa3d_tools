@@ -421,15 +421,15 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
         center_float[1]=total_y/sum_v;
         center_float[2]=total_z/sum_v;
 
-        if (total_x<1e-5||total_y<1e-5||total_z<1e-5) //a very dark marker.
-        {
+//        if (total_x<1e-5||total_y<1e-5||total_z<1e-5) //a very dark marker.
+//        {
 
-            v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move",0);
-            center_float[0]=x;
-            center_float[1]=y;
-            center_float[2]=z;
-            return center_float;
-        }
+//            v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move",0);
+//            center_float[0]=x;
+//            center_float[1]=y;
+//            center_float[2]=z;
+//            return center_float;
+//        }
 
         V3DLONG prev_ind=xyz2pos((int)(x+0.5),(int)(y+0.5),(int)(z+0.5),y_offset,z_offset);
         V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),

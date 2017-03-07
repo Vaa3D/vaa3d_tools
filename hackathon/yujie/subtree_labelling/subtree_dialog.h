@@ -60,6 +60,7 @@ private:
    QDialog *mydialog2;
    map<int,int> mask;
    vector<tree> all_trees;
+   QList<QList<float> > fea_floats;
 };
 
 #endif // SUBTREE_DIALOG_H

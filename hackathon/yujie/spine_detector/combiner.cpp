@@ -334,10 +334,10 @@ bool combiner::load_swc()
         p_cur->fea_val.clear();
         for (int i=0;i<7;i++) //first 5 for spine, last 2 for IS
         {
-            p_cur->fea_val.push_back(-1);
+            p_cur->fea_val.push_back(-1.0);
         }
      }
-    //qDebug()<<"finished reading"<<neuron.listNeuron.size();
+
     return true;
 }
 
@@ -412,12 +412,13 @@ bool combiner::load_is_csv(QString filename)
         if (curline[0]=='#') continue;
         QStringList qsl = QString(curline).trimmed().split(",");
         int qsl_count=qsl.size();
-        if (qsl_count!=4)   {skip_line_num++; continue;}
+        if (qsl_count!=7)   {skip_line_num++; continue;}
         isunit S;
         S.id=k;
         S.volume = qsl[1].toInt();
-        S.nearest_node = qsl[2].toInt();
-        S.on_dendrite=(bool)qsl[3].toInt();
+        S.nearest_node = qsl[5].toInt();
+        S.on_dendrite=(bool)qsl[6].toInt();
+
         if (nodegroup_map.find(S.nearest_node)==nodegroup_map.end()) //this node has not existed
         {
             node_info new_node;
@@ -493,12 +494,14 @@ bool combiner::eswc_generate()
     {
 //        qDebug()<<"key:"<<iter_map.key()<<" spine:"<<iter_map.value().spine_lut.size()<<
 //                  " IS:"<<iter_map.value().is_lut.size();
-        int node_id = iter_map.key();
+        int node_name = iter_map.key();
+        int node_id=neuron.hashNeuron.value(node_name);
         QVector<spineunit> spine_vec = iter_map.value().spine_lut;
         QVector<isunit> is_vec = iter_map.value().is_lut;
-
-        //qDebug()<<"key:"<<iter_map.key()<<"spine:"<<spine_vec.size()<<" is:"<<is_vec.size();
-
+//        if (node_id==0)
+//            qDebug()<<"node id 0, key:"<<iter_map.key()<<"spine:"<<spine_vec.size()<<" is:"<<is_vec.size();
+//        if (node_id==1)
+//            qDebug()<<"node id 1, key:"<<iter_map.key()<<"spine:"<<spine_vec.size()<<" is:"<<is_vec.size();
         //needs to first check if the node_id goes beyond the swc
         //if true, then the swc and the table is not the right match
         if (node_id>neuron.listNeuron.size())
@@ -517,6 +520,8 @@ bool combiner::eswc_generate()
             neuron.listNeuron[node_id].fea_val[2] = (float)first_spine.min_dis;
             neuron.listNeuron[node_id].fea_val[3] = (float)first_spine.center_dis;
             neuron.listNeuron[node_id].fea_val[4] = (float)first_spine.head_width;
+            neuron.listNeuron[node_id].fea_val[5] = -1;
+            neuron.listNeuron[node_id].fea_val[6] = -1;
             //pop out this spine
             spine_vec.pop_front();
         }
@@ -542,7 +547,7 @@ bool combiner::eswc_generate()
             S.parent = neuron.listNeuron[node_id].parent;
             S.fea_val.clear();
             for (int jj=0;jj<7;jj++)
-                S.fea_val.push_back(-1);
+                S.fea_val.push_back(-1.0);
             if (!spine_vec.isEmpty())
             {
                 S.fea_val[0] = (float)spine_vec.front().volume;

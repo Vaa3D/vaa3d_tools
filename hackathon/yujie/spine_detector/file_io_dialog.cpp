@@ -1,7 +1,9 @@
 #include "file_io_dialog.h"
 #include "common.h"
 #include "manual_proofread_dialog.h"
+#include "manual_proof_is.h"
 #define WINTITLE "SpineDetector_Automatic"
+#define WINTITLE_IS "ISQuantifier_Automatic"
 
 file_io_dialog::file_io_dialog(V3DPluginCallback2 *cb, int code)
 {
@@ -165,7 +167,6 @@ void file_io_dialog::run()
         manual_proofread_dialog *dialog=new manual_proofread_dialog(callback,false);
         dialog->run_interface_with_auto(ret,neuron,eswc_flag,LList_in,label_group,image1Dc_in,sz_img
          ,all_para.bgthr,all_para.max_dis,sel_channel,input_swc_name,input_image_name,folder_output);
-
 
     }
     else if (ret==4)
@@ -351,7 +352,7 @@ bool file_io_dialog::load_image()
 
 bool file_io_dialog::load_swc()
 {
-    eswc_flag=true;
+    eswc_flag=false;
     input_swc_name=edit_swc->text();
     //load swc
     NeuronSWC *p_cur=0;
@@ -367,28 +368,28 @@ bool file_io_dialog::load_swc()
         }
      }
 
-    if (input_swc_name.contains(".eswc"))
-    {
-        V3DLONG sum_level=0;
-        bool possible_eswc=true;
-        for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
-        {
-            p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
-//            qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
-//            qDebug()<<" level:"<<neuron.listNeuron[ii].level;
-//            qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0]<<"size:"<<neuron.listNeuron[ii].fea_val.size();
-            sum_level+=p_cur->level;
-            if (p_cur->fea_val.size()<2)
-            {
-                v3d_msg("No additional node info is provided. The csv output will onlly"
-                " produce the basic spine info.");
-                possible_eswc=false;
-                break;
-            }
-        }
-        if (possible_eswc && sum_level!=0)  //this is a eswc file
-            eswc_flag=true;
-    }
+//    if (input_swc_name.contains(".eswc"))
+//    {
+//        V3DLONG sum_level=0;
+//        bool possible_eswc=true;
+//        for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
+//        {
+//            p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
+////            qDebug()<<"I:"<<ii<<"seg_id:"<<neuron.listNeuron[ii].seg_id;//<<":"<<neuron.listNeuron[ii].fea_val.size();
+////            qDebug()<<" level:"<<neuron.listNeuron[ii].level;
+////            qDebug()<<"fea1:"<<neuron.listNeuron[ii].fea_val[0]<<"size:"<<neuron.listNeuron[ii].fea_val.size();
+//            sum_level+=p_cur->level;
+//            if (p_cur->fea_val.size()<2)
+//            {
+////                v3d_msg("No additional node info is provided. The csv output will onlly"
+////                " produce the basic spine info.");
+//                possible_eswc=false;
+//                break;
+//            }
+//        }
+//        if (possible_eswc && sum_level!=0)  //this is a eswc file
+//            eswc_flag=true;
+//    }
 
     qDebug()<<"finished reading"<<neuron.listNeuron.size();
     return true;
@@ -406,19 +407,6 @@ void file_io_dialog::get_para()
     all_para.dst_max_pixel=2000;
 }
 
-bool file_io_dialog::save_project()
-{
-    QString output_label_name="auto_label.v3draw";
-    QString output_marker_name="auto.marker";
-    QString output_csv_name="auto.csv";
-    if (!save_project_results(callback,sz_img,label_group,folder_output,input_swc_name,input_image_name,eswc_flag,neuron,
-                                 LList_in,sel_channel,all_para.bgthr,all_para.max_dis,0,0,output_label_name,
-                              output_marker_name,output_csv_name))
-    {
-        return false;
-    }
-    return true;
-}
 
 
 int file_io_dialog::maybe_proofread()
@@ -444,38 +432,43 @@ int file_io_dialog::maybe_proofread()
     {
         return 2; //invoke manual proofread
     }
-//    else if (mybox.clickedButton() == save_do_later) {
-//        if (!save_project())
-//        {
-//            v3d_msg("Errors with saving the data");
-//            return 4;
-//        }
-//        QString info="The spine project profile is saved at "+ edit_csv->text();
-//        QMessageBox::information(0,"spine_detector",info,QMessageBox::Ok);
-
-//        //prepare image
-//        V3DLONG size_page=sz_img[0]*sz_img[1]*sz_img[2];
-//        unsigned char *image_input = new unsigned char[size_page*3];
-//        memset(image_input,0,size_page*3);
-//        memcpy(image_input,image1Dc_in,size_page);
-//        for(int i=0; i<label_group.size(); i++)
-//        {
-//            for (int j=0; j<label_group[i].size(); j++)
-//                image_input[label_group[i][j]->pos+size_page] = 255;
-//        }
-//        Image4DSimple image4d;
-//        image4d.setData(image_input,sz_img[0],sz_img[1],sz_img[2],3,V3D_UINT8);
-//        v3dhandle new_win=callback->newImageWindow(WINTITLE);
-//        callback->setImage(new_win,&image4d);
-//        callback->setLandmark(new_win,LList_in);
-//        callback->open3DWindow(new_win);
-//        callback->pushObjectIn3DWindow(new_win);
-//        return 3;
-//    }
     else if (mybox.clickedButton()==exit_button)
     {
         return 4;
     }
+}
+
+void file_io_dialog::get_para_is()
+{
+    //obtain all para
+    all_para_is.spine_bgthr =spin_bg_thr->value();
+    all_para_is.is_bgthr = spin_bg_thr2->value();
+    all_para_is.is_channel = channel_is_menu->currentIndex();
+    all_para_is.spine_channel = channel_menu->currentIndex();
+    all_para_is.min_voxel =spin_min_pixel->value();
+    all_para_is.max_dis= spin_max_dis->value();
+}
+
+int file_io_dialog::maybe_proofread_is()
+{
+    qDebug()<<"in maybe proofread dialog for IS!";
+    QMessageBox mybox;
+    mybox.setWindowTitle(WINTITLE_IS);
+    mybox.setText("IS automatic detection completes");
+    QString info="Would you like to start proofreading of IS?";
+    mybox.setText(info);
+    QPushButton *seg_view=mybox.addButton(tr("Proofread by segment"),QMessageBox::ActionRole);
+    QPushButton *exit_button=mybox.addButton(tr("Exit without saving"),QMessageBox::ActionRole);
+
+    mybox.setDefaultButton(seg_view);
+    mybox.exec();
+    if (mybox.clickedButton() == seg_view) {
+        return 1;  //invoke manual proofread....
+    }else if (mybox.clickedButton()==exit_button)
+    {
+        return 2; //exit
+    }
+
 }
 
 void file_io_dialog::create_is()
@@ -597,9 +590,27 @@ void file_io_dialog::run_is()
         v3d_msg("Loading swc error");
         return;
     }
+    get_para_is();
     if (!is_detect_invoke())
     {
         v3d_msg("IS detection error");
+        return;
+    }
+    int ret=maybe_proofread_is();
+    if (ret==1)
+    {
+       //proofread for seg
+        //invoke manual proof_is and run interface with auto
+        qDebug()<<"ret ==1";
+        manual_proof_is *dialog=new manual_proof_is(callback,false);
+        qDebug()<<"ret==2";
+        dialog->run_interface_with_auto(ret,neuron,eswc_flag,LList_in,voxel_group,image1Dc_in,sz_img,all_para_is.spine_bgthr,all_para_is.is_bgthr,all_para_is.max_dis
+                              ,all_para_is.min_voxel,all_para_is.spine_channel,all_para_is.is_channel,input_swc_name,input_image_name,folder_output);
+
+     }
+    else if (ret==2)
+    {
+        qDebug()<<"discard or error";
         return;
     }
     qDebug()<<"run is finished";
@@ -610,12 +621,18 @@ bool file_io_dialog::is_detect_invoke()
 {
     QStringList name_list;
     name_list<<input_image_name<<input_swc_name<<folder_output;
-    is_analysis_fun* is_obj = new is_analysis_fun(callback,name_list);
+    QVector<int> param;
+    param.push_back(spin_bg_thr->value());
+    param.push_back(spin_bg_thr2->value());
+    param.push_back(spin_min_pixel->value());
+    param.push_back(spin_max_dis->value());
+    is_analysis_fun* is_obj = new is_analysis_fun(callback,name_list,param);
     qDebug()<<"name list size:"<<name_list.size();
     if (!is_obj->pushImageData(image1Dc_in,sz_img))
         return false;
     is_obj->pushSWCData(neuron);
     is_obj->run();
-    is_obj->show();
+    voxel_group = is_obj->getVoxelGroup();
+    LList_in = is_obj->getLList();
     return true;
 }

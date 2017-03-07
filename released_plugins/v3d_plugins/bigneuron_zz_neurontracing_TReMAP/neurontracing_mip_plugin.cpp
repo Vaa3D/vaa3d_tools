@@ -444,10 +444,10 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     QString output_image_name = tmpfolder +"/region.raw";
 
     #if  defined(Q_OS_LINUX)
-        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 200").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str());
+        QString cmd_region = QString("%1/vaa3d -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 400").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str());
         system(qPrintable(cmd_region));
     #elif defined(Q_OS_MAC)
-        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 200").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str());
+        QString cmd_region = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x regiongrow -f rg -i %2 -o %3 -p 1 0 1 400").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(output_image_name.toStdString().c_str());
         system(qPrintable(cmd_region));
     #else
         v3d_msg("The OS is not Linux or Mac. Do nothing.");
@@ -543,9 +543,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
        v3d_msg(QString("x is %1 and y is %2").arg(tmpx).arg(tmpy));
        return;
 
-       if(image_mip) {delete []image_mip; image_mip = 0;}
-       if(image_region) {delete []image_region; image_region = 0;}
-
        ImageMarker S;
        QList <ImageMarker> marklist;
        S.x = tmpx;
@@ -567,7 +564,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
        QString APP2_image_name = tmpfolder + "/group_one.raw";
        simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)image_region_one, in_sz, V3D_UINT8);
        if(image_region_one) {delete []image_region_one; image_region_one = 0;}
-
        QString APP2_swc =  APP2_image_name + QString("_group_%1.swc").arg(group_type);
 
 
@@ -639,7 +635,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                seg_list.push_back(seg);
            }
        }
-
        vector<MyMarker*> outswc;
 
        for (V3DLONG i=0;i<seg_list.size();i++)
@@ -755,6 +750,11 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 //       outswc_final.clear();
     }
 
+   if(image_mip) {delete []image_mip; image_mip = 0;}
+   if(image_region) {delete []image_region; image_region = 0;}
+   if(groupArray) {delete []groupArray; groupArray = 0;}
+   if(groupIndex) {delete []groupIndex; groupIndex = 0;}
+
    QString swc_2D,final_swc;
    switch (Para.mip_plane)
    {
@@ -766,6 +766,8 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    }
 
    saveSWC_file(final_swc.toStdString(), outswc_final);
+   outswc_final.clear();
+
 
    // system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
@@ -796,6 +798,12 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 
    vector<MyMarker*> temp_out_swc = readSWC_file(final_swc.toStdString());
    saveSWC_file_TreMap(final_swc.toStdString(), temp_out_swc);
+   temp_out_swc.clear();
+   if(!bmenu)
+   {
+       if(data1d) {delete []data1d; data1d = 0;}
+   }
+
 
    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()),bmenu);
 
