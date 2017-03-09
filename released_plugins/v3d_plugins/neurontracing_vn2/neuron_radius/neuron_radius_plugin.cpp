@@ -206,7 +206,6 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
 	if (func_name == tr("neuron_radius"))
 	{
 		if(infiles.size() != 2 && infiles.size() != 3)
@@ -232,6 +231,7 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		unsigned char * inimg1d = 0; 
         V3DLONG in_sz[4];
 		int datatype;
+        cout << "*********************!!!!!!!!!!!!!!!!"<<endl;
         if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
 		vector<MyMarker*> inswc = readSWC_file(inswc_file);
 		if(inswc.empty()) return false;
