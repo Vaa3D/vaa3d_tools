@@ -6,7 +6,9 @@
 #include "v3d_message.h"
 #include "blastneuron_bjut_plugin.h"
 #include "blastneuron_bjut_func.h"
-
+#include "overlap/overlap_gold.h"
+#include "overlap/pre_overlap.h"
+#include "prune_alignment.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(blastneuron_bjut, blastneuron_bjutPlugin);
  
@@ -25,6 +27,8 @@ QStringList blastneuron_bjutPlugin::funclist() const
         <<tr("pre-process")
         <<tr("apply_blastneuron")
         <<tr("prune_alignment")
+        <<tr("pre_overlap")
+        <<tr("overlap_gold")
 		<<tr("help");
 }
 
@@ -67,17 +71,29 @@ bool blastneuron_bjutPlugin::dofunc(const QString & func_name, const V3DPluginAr
     {
         return (prune_alignment(input, output));
     }
+    else if (func_name == tr("overlap_gold"))
+    {
+        return(overlap_gold(input,output,callback));
+    }
+    else if (func_name == tr("pre_overlap"))
+    {
+        return(pre_overlap(input,output,callback));
+    }
     else
     {
         printf("\nBlastneuron_bjut Plugin: local alignent of 3D neuron morphologies. Includes pre-processing and post-processing. \n\n");
         printf("Functions:\n");
         printf("pre_process              do resample an sort function,where -p is resample step.\n");
-        printf("apply_blastneuron   do local_alignment function.-p do not work yet.\n");
-        printf("prune_alignment      prune the connection between two far aligned points,-p is distance threshold.\n\n");
+        printf("apply_blastneuron   do local_alignment function.\n");
+        printf("prune_alignment      prune the connection between two far aligned points,-p is distance threshold.\n");
+        printf("pre_overlap               if use method_mean, need do this first.\n");
+        printf("overlap_gold             find overlap from local alignment results, p1 is method, p2 is dist_para, p3 is meth_para, p4 is prune short tree pare.");
         printf("Example:\n");
         printf("vaa3d -x blastneuron_bjut -f pre_process -i input.swc goldstandard.swc -o result.swc -p 1\n");
-        printf("vaa3d -x blastneuron_bjut -f pre_process -i input1.swc input2.swc -o result.swc -p 1\n");
+        printf("vaa3d -x blastneuron_bjut -f apply_blastneuron -i input1.swc input2.swc -o result.swc \n");
         printf("vaa3d -x blastneuron_bjut -f prune_alignment -i input.swc -o result.swc -p 20\n");
+        printf("vaa3d -x blastneuron_bjut -f pre_overlap -i input.swc raw_img -o result.swc\n");
+        printf("vaa3d -x blastneuron_bjut -f overlap_gold -i 'swcfolder'  'rawimg' -o result.swc -p 0 3 6 3");
         return true;
     }
 }

@@ -5,7 +5,7 @@
  */
 
 #include<iostream>
-#include "blastneuron_bjut_func.h"
+#include "prune_alignment.h"
 using namespace std;
 
 bool export_prune_alignment(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
@@ -27,7 +27,6 @@ bool export_prune_alignment(QList<NeuronSWC> & lN, QString fileSaveName, QString
     cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
     return true;
 }
-
 
 bool prune_alignment(const V3DPluginArgList & input, V3DPluginArgList & output)
 {

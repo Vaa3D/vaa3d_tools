@@ -11,20 +11,6 @@ bool blastneuron_main(const V3DPluginArgList & input, V3DPluginArgList & output)
     vector<char*>* outlist = NULL;
     vector<char*>* paralist = NULL;
 
-    // asume here is one para, actually it's not!
-    if(input.size() != 2)
-    {
-        printf("Please specify parameter set.\n");
-        return false;
-    }
-    paralist = (vector<char*>*)(input.at(1).p);
-
-    if (paralist->size()!=1)
-    {
-        printf("Please specify only one parametre.\n");
-        return false;
-    }
-    double prune_thres = atof(paralist->at(0));
     string name_neuron1 = (QString(inlist->at(0))).toStdString();
     string name_neuron2 = (QString(inlist->at(1))).toStdString();
     string name_result;
