@@ -355,8 +355,8 @@ NeuronTree remove_swc(NeuronTree nt,double length)
 std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classifier classifier, int N, int M, int P, int Sxy)
 {
     std::vector<cv::Mat> imgs;
-    int Wx = 30, Wy = 30, Wz = 15;
-    int Sz = (int)Sxy/3;
+    int Wx = 15, Wy = 15, Wz = 15;
+    int Sz = (int)Sxy;
 
     V3DLONG num_patches = 0;
     std::vector<std::vector<float> > outputs_overall;

@@ -1258,7 +1258,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         LandmarkList marklist_2D_shifted;
         vector<V3DLONG> poss_landmark;
         vector<float> mass_center;
-        double windowradius = 15;
+        double windowradius = 10;
 
         V3DLONG sz_img[4];
         sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
@@ -1315,16 +1315,16 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
         writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
 
-        NeuronTree nt_sorted = SortSWC_pipeline(nt.listNeuron,VOID, 40);
-        QList<NeuronSWC> newNeuron_connected;
-        double angthr=cos((60-60)/180*M_PI);
-        QString  swc_processed = inimg_file + "_axon_3D.swc";
+//        NeuronTree nt_sorted = SortSWC_pipeline(nt.listNeuron,VOID, 40);
+//        QList<NeuronSWC> newNeuron_connected;
+//        double angthr=cos((60-60)/180*M_PI);
+//        QString  swc_processed = inimg_file + "_axon_3D.swc";
 
-        connectall(&nt_sorted, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
+//        connectall(&nt_sorted, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
 
-        if(!export_list2file(newNeuron_connected, swc_processed,swc_processed)){
-            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
-        }
+//        if(!export_list2file(newNeuron_connected, swc_processed,swc_processed)){
+//            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
+//        }
     }
     else if (func_name == tr("help"))
 	{
