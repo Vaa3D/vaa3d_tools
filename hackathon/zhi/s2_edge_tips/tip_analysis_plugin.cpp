@@ -21,7 +21,7 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("analysis")
-		<<tr("about");
+        <<tr("generate_subimage");
 }
 
 QStringList TestPlugin::funclist() const
@@ -32,6 +32,8 @@ QStringList TestPlugin::funclist() const
 }
 
 void analysisSmartScan(QString fileWithData);
+void subGeneration(V3DPluginCallback2 &callback,QString fileWithData);
+
 bool export_list2file(vector<MyMarker*> & outmarkers, QString fileSaveName, QString fileOpenName)
 {
     QFile file(fileSaveName);
@@ -91,9 +93,17 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             return;
         analysisSmartScan(fileOpenName);
 	}
-	else if (menu_name == tr("menu2"))
+    else if (menu_name == tr("generate_subimage"))
 	{
-		v3d_msg("To be implemented.");
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+                "",
+                QObject::tr("Supported file (*.txt *.TXT)"
+                    ));
+        if(fileOpenName.isEmpty())
+            return;
+        subGeneration(callback,fileOpenName);
+
 	}
 	else
 	{
@@ -239,4 +249,125 @@ void analysisSmartScan(QString fileWithData)
     writeMarker_file(edgeMarkerFileName, edge_tips_markers);
     export_list2file(nt_sort_prune_sort.listNeuron, fileSaveName,fileSaveName);
     v3d_msg(QString("edge (%1) to tip (%2) ratio is %3,").arg(edge_num).arg(tips_marker.size()).arg((double)ratio));
+}
+
+
+void subGeneration(V3DPluginCallback2 &callback,QString fileWithData)
+{
+    ifstream ifs(fileWithData.toLatin1());
+    string info_swc;
+    QString folderpath = QFileInfo(fileWithData).absolutePath();
+    QDir().mkdir(folderpath+"/subimages");
+    string swcfilename;
+    int offsetX, offsetY,sizeX, sizeY;
+    int offsetX_min = 10000000,offsetY_min = 10000000,offsetX_max = -10000000,offsetY_max =-10000000;
+    int origin_x,origin_y;
+
+    int d = 1;
+    QString outputSubfolder;
+    V3DLONG in_sz[4];
+    QString allImagePath;
+
+    while(ifs && getline(ifs, info_swc))
+    {
+        outputSubfolder = folderpath + QString("/subimages/%1/").arg(d);
+        QDir().mkdir(outputSubfolder);
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> swcfilename >> sizeX >> sizeY;
+        if(offsetX < offsetX_min) offsetX_min = offsetX;
+        if(offsetY < offsetY_min) offsetY_min = offsetY;
+        if(offsetX > offsetX_max) offsetX_max = offsetX;
+        if(offsetY > offsetY_max) offsetY_max = offsetY;
+        if(d==1)
+        {
+            origin_x = offsetX;
+            origin_y = offsetY;
+        }
+
+        QString firstImagepath = folderpath + "/" +   QFileInfo(QString::fromStdString(swcfilename)).baseName().append(".v3draw");
+        unsigned char * data1d = 0;
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, firstImagepath.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<firstImagepath.toStdString()<<" error!"<<endl;
+            return;
+        }
+        if(data1d) {delete []data1d; data1d=0;}
+
+        QString tc_name = outputSubfolder + QString("/%1.tc").arg(d);
+        ofstream myfile;
+        myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+
+        myfile << "# thumbnail file \n";
+        myfile << "NULL \n\n";
+        myfile << "# tiles \n";
+        myfile << d << " \n\n";
+        myfile << "# dimensions (XYZC) \n";
+        myfile << in_sz[0] + offsetX_max - offsetX_min << " " << in_sz[1] + offsetY_max - offsetY_min << " " << in_sz[2] << " " << 1 << " ";
+        myfile << "\n\n";
+        myfile << "# origin (XYZ) \n";
+        myfile << "0.000000 0.000000 0.000000 \n\n";
+        myfile << "# resolution (XYZ) \n";
+        myfile << "1.000000 1.000000 1.000000 \n\n";
+        myfile << "# image coordinates look up table \n";
+
+        QString imagename= QFileInfo(QString::fromStdString(swcfilename)).completeBaseName() + ".v3draw";
+
+        if(d==1)
+            allImagePath.append(QString("../../%1").arg(imagename));
+        else
+            allImagePath.append(QString("\n../../%1").arg(imagename));
+        allImagePath.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(offsetX - origin_x).arg(offsetY- origin_y).arg(sizeX-1 + offsetX - origin_x).arg(sizeY-1 + offsetY - origin_y).arg(in_sz[2]-1));
+        myfile << allImagePath.toStdString();
+        myfile << "\n";
+        myfile.flush();
+        myfile.close();
+        d++;
+    }
+    ifs.close();
+
+
+    for(V3DLONG j = 1; j < d; j++)
+    {
+        ifstream ifs(fileWithData.toLatin1());
+        string info_swc;
+        vector<MyMarker*> outswc,inputswc;
+        int dd = 1;
+        while(ifs && getline(ifs, info_swc) && (dd<=j))
+        {
+            std::istringstream iss(info_swc);
+            iss >> offsetX >> offsetY >> swcfilename >> sizeX >> sizeY;
+            if(offsetX < offsetX_min) offsetX_min = offsetX;
+            if(offsetY < offsetY_min) offsetY_min = offsetY;
+            if(offsetX > offsetX_max) offsetX_max = offsetX;
+            if(offsetY > offsetY_max) offsetY_max = offsetY;
+            if(d==1)
+            {
+                origin_x = offsetX;
+                origin_y = offsetY;
+            }
+
+            QString swcfilepath = folderpath + '/' + QFileInfo(QString::fromStdString(swcfilename)).completeBaseName() + ".swc";
+
+            inputswc = readSWC_file(swcfilepath.toStdString());
+            for(V3DLONG i = 0; i < inputswc.size(); i++)
+            {
+                inputswc[i]->x = inputswc[i]->x + offsetX;
+                inputswc[i]->y = inputswc[i]->y + offsetY;
+                outswc.push_back(inputswc[i]);
+            }
+           dd++;
+        }
+        ifs.close();
+
+        for(V3DLONG i = 0; i < outswc.size(); i++)
+        {
+            outswc[i]->x = outswc[i]->x - offsetX_min;
+            outswc[i]->y = outswc[i]->y - offsetY_min;
+        }
+        outputSubfolder = folderpath + QString("/subimages/%1/").arg(dd);
+        QString fileSaveName = outputSubfolder + QString("%1.swc").arg(j);
+        saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+    }
+
 }
