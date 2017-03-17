@@ -37,6 +37,7 @@ QStringList autoCropping::funclist() const
 	return QStringList()
         <<tr("TrainingSetGeneration")
         <<tr("TrainingSetGeneration_bkg")
+        <<tr("TrainingSetGeneration_pair")
 		<<tr("help");
 }
 
@@ -488,7 +489,7 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         NeuronTree nt = readSWC_file(SWCfileName);
 
-        QString  outputfile = "/local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/siamese_network/test.txt";
+        QString  outputfile = "/local4/Data/IVSCC_test/new_testing/tmp_NEUTUBE_v1/APP3/test_full.txt";
         QFile saveTextFile;
         saveTextFile.setFileName(outputfile);
         if (!saveTextFile.isOpen()){
@@ -498,46 +499,70 @@ void autoCropping::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         QTextStream outputStream;
         outputStream.setDevice(&saveTextFile);
         V3DLONG postive_num = 0;
-        QString imagepath = "/local4/Data/IVSCC_test/comparison/3D_training_patches_mip/471077468_3D.raw_x30_y30_z15/471077468_3D.raw_x30_y30_z15_";
+        QString imagepath = "/local4/Data/IVSCC_test/new_testing/tmp_NEUTUBE_v1/APP3/two/472599722_3D.raw_crop2.v3draw_x30_y30_z15/";
 
-
-        for (int i=1;i<nt.listNeuron.size();i++)
+        for (int i=0;i<nt.listNeuron.size()-1;i++)
         {
-            if(nt.listNeuron.at(i).parent > 0)
+            for (int j=i+1;j<nt.listNeuron.size();j++)
             {
-                QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg((int)nt.listNeuron.at(i).x).arg((int)nt.listNeuron.at(i).y).arg((int)nt.listNeuron.at(i).z);
-                QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg((int)nt.listNeuron.at(i-1).x).arg((int)nt.listNeuron.at(i-1).y).arg((int)nt.listNeuron.at(i-1).z);
-                if(QFile(pair1_name).exists() && QFile(pair2_name).exists())
-                {
-                    QString full_pair = QString("%1 %2 1").arg(pair1_name).arg(pair2_name);
-                    if(postive_num<=800) outputStream<< full_pair<<"\n";
-                    postive_num++;
-                }
+                V3DLONG x1 = nt.listNeuron.at(i).x;
+                V3DLONG y1 = nt.listNeuron.at(i).y;
+                V3DLONG z1 = nt.listNeuron.at(i).z;
+                V3DLONG x2 = nt.listNeuron.at(j).x;
+                V3DLONG y2 = nt.listNeuron.at(j).y;
+                V3DLONG z2 = nt.listNeuron.at(j).z;
+             //   double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+             //   if(dis<=80)
+             //   {
+                    QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x1).arg(y1).arg(z1);
+                    QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x2).arg(y2).arg(z2);
+                    QString full_pair = QString("%1 %2").arg(pair1_name).arg(pair2_name);
+                    outputStream<< full_pair<<"\n";
 
+             //   }
             }
+
+
         }
 
-        V3DLONG nagative_num = 0;
-        while(nagative_num < 800)
-        {
-            V3DLONG ID1 = rand()%(nt.listNeuron.size()-1);
-            V3DLONG ID2 = rand()%(nt.listNeuron.size()-1);
-            V3DLONG x1 = nt.listNeuron.at(ID1).x;
-            V3DLONG y1 = nt.listNeuron.at(ID1).y;
-            V3DLONG z1 = nt.listNeuron.at(ID1).z;
-            V3DLONG x2 = nt.listNeuron.at(ID2).x;
-            V3DLONG y2 = nt.listNeuron.at(ID2).y;
-            V3DLONG z2 = nt.listNeuron.at(ID2).z;
-            double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
-            if(dis > 80)
-            {
-                QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x1).arg(y1).arg(z1);
-                QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x2).arg(y2).arg(z2);
-                QString full_pair = QString("%1 %2 0").arg(pair1_name).arg(pair2_name);
-                outputStream<< full_pair<<"\n";
-                nagative_num++;
-            }
-        }
+
+//        for (int i=1;i<nt.listNeuron.size();i++)
+//        {
+//            if(nt.listNeuron.at(i).parent > 0)
+//            {
+//                QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg((int)nt.listNeuron.at(i).x).arg((int)nt.listNeuron.at(i).y).arg((int)nt.listNeuron.at(i).z);
+//                QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg((int)nt.listNeuron.at(i-1).x).arg((int)nt.listNeuron.at(i-1).y).arg((int)nt.listNeuron.at(i-1).z);
+//                if(QFile(pair1_name).exists() && QFile(pair2_name).exists())
+//                {
+//                    QString full_pair = QString("%1 %2 1").arg(pair1_name).arg(pair2_name);
+//                    if(postive_num<=800) outputStream<< full_pair<<"\n";
+//                    postive_num++;
+//                }
+
+//            }
+//        }
+
+////        V3DLONG nagative_num = 0;
+//        while(nagative_num < 800)
+//        {
+//            V3DLONG ID1 = rand()%(nt.listNeuron.size()-1);
+//            V3DLONG ID2 = rand()%(nt.listNeuron.size()-1);
+//            V3DLONG x1 = nt.listNeuron.at(ID1).x;
+//            V3DLONG y1 = nt.listNeuron.at(ID1).y;
+//            V3DLONG z1 = nt.listNeuron.at(ID1).z;
+//            V3DLONG x2 = nt.listNeuron.at(ID2).x;
+//            V3DLONG y2 = nt.listNeuron.at(ID2).y;
+//            V3DLONG z2 = nt.listNeuron.at(ID2).z;
+//            double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+//            if(dis > 80)
+//            {
+//                QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x1).arg(y1).arg(z1);
+//                QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x2).arg(y2).arg(z2);
+//                QString full_pair = QString("%1 %2 0").arg(pair1_name).arg(pair2_name);
+//                outputStream<< full_pair<<"\n";
+//                nagative_num++;
+//            }
+//        }
 
 
         saveTextFile.close();
@@ -790,6 +815,91 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         v3d_msg(QString("Save all cropped files to %1 folder!").arg(outputfolder),0);
         if (data1d) {delete []data1d; data1d=0;}
+        return true;
+    }else if (func_name == tr("TrainingSetGeneration_pair"))
+    {
+        cout<<"Welcome to auto cropping plugin"<<endl;
+//        if(infiles.empty())
+//        {
+//            cerr<<"Need input image"<<endl;
+//            return false;
+//        }
+        QString  imagename =  infiles[0];
+        int k=0;
+
+        QString SWCfileName = paras.empty() ? "" : paras[k]; if(SWCfileName == "NULL") SWCfileName = ""; k++;
+        if(SWCfileName.isEmpty())
+        {
+            cerr<<"Need a SWC file"<<endl;
+            return false;
+        }
+
+        int Wx = (paras.size() >= k+1) ? atoi(paras[k]) : 50; k++;
+        int Wy = (paras.size() >= k+1) ? atoi(paras[k]) : 50; k++;
+        int Wz = (paras.size() >= k+1) ? atoi(paras[k]) : 25;  k++;
+        int offset = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        int type = (paras.size() >= k+1) ? atoi(paras[k]) : -1;  k++;
+
+        cout<<"inimg_file = "<<imagename.toStdString().c_str()<<endl;
+        cout<<"outimg_file = "<<SWCfileName.toStdString().c_str()<<endl;
+        cout<<"Wx = "<<Wx<<endl;
+        cout<<"Wy = "<<Wy<<endl;
+        cout<<"Wz = "<<Wz<<endl;
+        cout<<"Flag = "<<offset<<endl;
+        cout<<"Type = "<<type<<endl;
+
+        QString imagepath = QString("/local4/Data/IVSCC_test/comparison/3D_training_patches_mip/%1_3D.raw_x30_y30_z15/%2_3D.raw_x30_y30_z15_").arg(imagename).arg(imagename);
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        QString  outputfile = "/local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/siamese_network/train_full.txt";
+        QFile saveTextFile;
+        saveTextFile.setFileName(outputfile);
+        if (!saveTextFile.isOpen()){
+            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                qDebug()<<"unable to save file!";
+                return false;}     }
+        QTextStream outputStream;
+        outputStream.setDevice(&saveTextFile);
+        V3DLONG postive_num = 0;
+
+        for (int i=1;i<nt.listNeuron.size();i++)
+        {
+            if(nt.listNeuron.at(i).parent > 0)
+            {
+                QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg((int)nt.listNeuron.at(i).x).arg((int)nt.listNeuron.at(i).y).arg((int)nt.listNeuron.at(i).z);
+                QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg((int)nt.listNeuron.at(i-1).x).arg((int)nt.listNeuron.at(i-1).y).arg((int)nt.listNeuron.at(i-1).z);
+                if(QFile(pair1_name).exists() && QFile(pair2_name).exists())
+                {
+                    QString full_pair = QString("%1 %2 1").arg(pair1_name).arg(pair2_name);
+                    if(postive_num > 800) outputStream<< full_pair<<"\n";
+                        postive_num++;
+                }
+
+            }
+        }
+
+        V3DLONG nagative_num = 0;
+        while(nagative_num < postive_num - 800)
+        {
+            V3DLONG ID1 = rand()%(nt.listNeuron.size()-1);
+            V3DLONG ID2 = rand()%(nt.listNeuron.size()-1);
+            V3DLONG x1 = nt.listNeuron.at(ID1).x;
+            V3DLONG y1 = nt.listNeuron.at(ID1).y;
+            V3DLONG z1 = nt.listNeuron.at(ID1).z;
+            V3DLONG x2 = nt.listNeuron.at(ID2).x;
+            V3DLONG y2 = nt.listNeuron.at(ID2).y;
+            V3DLONG z2 = nt.listNeuron.at(ID2).z;
+            double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+            if(dis > 80)
+            {
+                QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x1).arg(y1).arg(z1);
+                QString pair2_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x2).arg(y2).arg(z2);
+                QString full_pair = QString("%1 %2 0").arg(pair1_name).arg(pair2_name);
+                outputStream<< full_pair<<"\n";
+                nagative_num++;
+            }
+        }
+
         return true;
     }
 	else if (func_name == tr("help"))
