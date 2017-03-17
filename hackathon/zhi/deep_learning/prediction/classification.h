@@ -29,6 +29,9 @@ public:
     std::vector<std::vector<float> > Predict(const std::vector<cv::Mat>& imgs);
     std::vector< float > PredictBatch(const vector< cv::Mat > imgs);
 
+    std::vector<std::vector<float> > extractFeature_siamese(const std::vector<cv::Mat>& imgs);
+
+
 private:
     void SetMean(const string& mean_file);
     void WrapInputLayer(std::vector<cv::Mat>* input_channels, int n);

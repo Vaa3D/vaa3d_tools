@@ -37,7 +37,7 @@ Classifier::Classifier(const string& model_file,
             << "Input layer should have 1 or 3 channels.";
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
     /* Load the binaryproto mean file. */
-    SetMean(mean_file);
+    if(!mean_file.empty()) SetMean(mean_file);
     /* Load labels. */
 }
 
@@ -92,6 +92,31 @@ std::vector<std::vector<float> > Classifier::Predict(const std::vector<cv::Mat>&
     }
     return outputs;
 }
+
+std::vector<std::vector<float> > Classifier::extractFeature_siamese(const std::vector<cv::Mat>& imgs) {
+    Blob<float>* input_layer = net_->input_blobs()[0];
+    input_layer->Reshape(imgs.size(), num_channels_,
+                         input_geometry_.height, input_geometry_.width);
+    /* Forward dimension change to all layers. */
+    net_->Reshape();
+    for (int i = 0; i < imgs.size(); ++i) {
+        std::vector<cv::Mat> input_channels;
+        WrapInputLayer(&input_channels, i);
+        Preprocess(imgs[i], &input_channels);
+    }
+    net_->Forward();
+
+    std::vector<std::vector<float> > outputs;
+    Blob<float>* output_layer = net_->output_blobs()[0];
+    for (int i = 0; i < output_layer->num(); ++i) {
+        const float* begin = output_layer->cpu_data() + i * output_layer->channels();
+        const float* end = begin + output_layer->channels();
+        /* Copy the output layer to a std::vector */
+        outputs.push_back(std::vector<float>(begin, end));
+    }
+    return outputs;
+
+}
 /* Wrap the input layer of the network in separate cv::Mat objects
 * (one per channel). This way we save one memcpy operation and we
 * don't need to rely on cudaMemcpy2D. The last preprocessing
@@ -134,7 +159,10 @@ void Classifier::Preprocess(const cv::Mat& img,
     else
         sample_resized.convertTo(sample_float, CV_32FC1);
     cv::Mat sample_normalized;
-    cv::subtract(sample_float, mean_, sample_normalized);
+    if(!mean_.empty())
+        cv::subtract(sample_float, mean_, sample_normalized);
+    else
+        sample_normalized = sample_float * 0.00390625;
     /* This operation will write the separate BGR planes directly to the
 * input layer of the network because it is wrapped by the cv::Mat
 * objects in input_channels. */
