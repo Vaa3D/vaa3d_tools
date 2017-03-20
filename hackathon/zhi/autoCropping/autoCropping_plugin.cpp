@@ -889,7 +889,7 @@ bool autoCropping::dofunc(const QString & func_name, const V3DPluginArgList & in
             V3DLONG x2 = nt.listNeuron.at(ID2).x;
             V3DLONG y2 = nt.listNeuron.at(ID2).y;
             V3DLONG z2 = nt.listNeuron.at(ID2).z;
-            double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+            double dis = sqrt(double(pow2(x1-x2)) + double(pow2(y1-y2)) + double(pow2(z1-z2)));
             if(dis > 80)
             {
                 QString pair1_name = imagepath + QString("x%1_y%2_z%3.tif").arg(x1).arg(y1).arg(z1);
