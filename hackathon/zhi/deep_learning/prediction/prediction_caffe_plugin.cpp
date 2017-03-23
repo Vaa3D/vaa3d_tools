@@ -474,7 +474,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         NeuronTree nt = readSWC_file(SWCfileName);
         string model_file = "/local1/work/caffe/examples/siamese/mnist_siamese.prototxt";
-        string trained_file = "/local1/work/caffe/examples/siamese/mnist_siamese_200_iter_450000.caffemodel";
+        string trained_file = "/local1/work/caffe/examples/siamese/full_siamese_iter_450000.caffemodel";
         Classifier classifier(model_file, trained_file,"");
         std::vector<cv::Mat> imgs;
         for (V3DLONG i=0;i<nt.listNeuron.size();i++)
@@ -546,8 +546,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                         std::vector<float> v1 = outputs[i];
                         std::vector<float> v2 = outputs[j];
                         Vedge = vectorDistance(v1, v2);
-                    }
-                    if(dis>40)
+                    }else
                         Vedge = dis;
                     add_edge(i, j, LastVoted(i, Weight(Vedge)), *&g);
                 }
@@ -589,23 +588,23 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         marker_MST.hashNeuron = hashNeuron;
 
 
-//        for (int i=1;i<marker_MST.listNeuron.size()-1;i++)
-//        {
-//            if(marker_MST.listNeuron.at(i).parent>0)
-//            {
-//                V3DLONG x1 = marker_MST.listNeuron.at(i).x;
-//                V3DLONG y1 = marker_MST.listNeuron.at(i).y;
-//                V3DLONG z1 = marker_MST.listNeuron.at(i).z;
-//                V3DLONG x2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent).x;
-//                V3DLONG y2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent).y;
-//                V3DLONG z2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent).z;
-//                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
-//                if(dis>40)
-//                    marker_MST.listNeuron[i].parent = -1;
-//            }
-//        }
+        for (int i=1;i<marker_MST.listNeuron.size()-1;i++)
+        {
+            if(marker_MST.listNeuron.at(i).parent>0)
+            {
+                V3DLONG x1 = marker_MST.listNeuron.at(i).x;
+                V3DLONG y1 = marker_MST.listNeuron.at(i).y;
+                V3DLONG z1 = marker_MST.listNeuron.at(i).z;
+                V3DLONG x2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).x;
+                V3DLONG y2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).y;
+                V3DLONG z2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).z;
+                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+                if(dis>80)
+                    marker_MST.listNeuron[i].parent = -1;
+            }
+        }
 
-        QString outfilename = SWCfileName + "_connected.swc";
+        QString outfilename = SWCfileName + "_connected_30.swc";
         if (outfilename.startsWith("http", Qt::CaseInsensitive))
         {
             QFileInfo ii(outfilename);
