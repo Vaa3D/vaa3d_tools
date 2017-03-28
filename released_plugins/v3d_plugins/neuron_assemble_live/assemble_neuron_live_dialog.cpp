@@ -1,5 +1,6 @@
 #include "assemble_neuron_live_dialog.h"
 #include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 
 
 #include <map>
@@ -100,8 +101,8 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     connect(list_edge, SIGNAL(currentRowChanged(int)), this, SLOT(highlightEdge()));
 
     //radius annotation
-    if(p_img4d)
-    {
+    //if(p_img4d)
+    //{
         QDialog * dialog_radius = new QDialog(tab);
         QGridLayout * layout_radius = new QGridLayout();
         list_marker = new QListWidget();
@@ -111,7 +112,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
         dialog_radius->setLayout(layout_radius);
         tab->addTab(dialog_radius,tr("radius"));
         connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));
-    }
+    //}
 
     layout->addWidget(tab,4,0,1,4);
 
@@ -1010,6 +1011,15 @@ void assemble_neuron_live_dialog::syncMarker()
 
 void assemble_neuron_live_dialog::syncMarkerOnly()
 {
+    if(!dataTerafly)
+    {
+        terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+                                                           "");
+        if(!terafly_folder.isEmpty())
+            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
+
+    }
+
     LandmarkList * mList = getMarkerList();
     V3dR_MainWindow * mainwin_roi = 0;
     QList <V3dR_MainWindow *> tmpwinlist = callback->getListAll3DViewers();
@@ -1750,15 +1760,23 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
         callback->update_3DViewer(mainwin_roi);
     }else{
         qDebug()<<"===========ROI============= init data";
+        Image4DSimple * tmp_image = new Image4DSimple();
+        unsigned char * p_img;
         V3DLONG winsize[4];
         winsize[0]=x_max-x_min;
         winsize[1]=y_max-y_min;
         winsize[2]=z_max-z_min;
         winsize[3]=1;
-        //image
-        Image4DSimple * tmp_image = new Image4DSimple();
-        unsigned char * p_img = new unsigned char[winsize[0]*winsize[1]*winsize[2]*winsize[3]];
-        memset(p_img,0,winsize[0]*winsize[1]*winsize[2]*winsize[3]);
+
+        if(!dataTerafly)
+        {
+            //image
+            p_img = new unsigned char[winsize[0]*winsize[1]*winsize[2]*winsize[3]];
+            memset(p_img,0,winsize[0]*winsize[1]*winsize[2]*winsize[3]);
+        }else
+        {
+            p_img = dataTerafly->loadSubvolume_to_UINT8(y_min,y_max,x_min,x_max,z_min,z_max);
+        }
         tmp_image->setFileName(WINNAME_ASSEM);
         tmp_image->setData(p_img, winsize[0], winsize[1], winsize[2], winsize[3], (ImagePixelType)1);
         //neuron SWC

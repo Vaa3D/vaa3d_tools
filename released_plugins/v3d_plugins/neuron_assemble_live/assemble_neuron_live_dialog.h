@@ -5,10 +5,13 @@
 #include <QtGui>
 #include "v3d_interface.h"
 #include <map>
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+
 
 #define WINNAME_ASSEM "assemble_swc_file"
 
 using namespace std;
+using namespace iim;
 
 typedef struct NOI{
     V3DLONG n; //the id of noi, match with the n variable of node
@@ -42,7 +45,7 @@ private:
     V3DLONG noffset;
     Image4DSimple * p_img4d;
 
-    QString winname_main, winname_3d, winname_roi;
+    QString winname_main, winname_3d, winname_roi,terafly_folder;
     
     QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
         *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly;
@@ -51,6 +54,7 @@ private:
     QComboBox * cb_color;
     QCheckBox * check_loop, * check_zoomin;
     QSpinBox * spin_zoomin;
+    VirtualVolume* dataTerafly;
 
 signals:
     

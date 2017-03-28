@@ -14,7 +14,7 @@ public:
     QList<V3dR_MainWindow *> _3DViewerTreeList_window;
     QList<V3dR_MainWindow *> _3DViewerList;
     QList<NeuronTree>  ntList;
-	QString file_name;
+    QString file_name;
     Image4DSimple * p_img4d;
 
 	OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * callback);
