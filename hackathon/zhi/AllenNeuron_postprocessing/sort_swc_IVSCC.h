@@ -357,9 +357,7 @@ NeuronTree pruneswc(NeuronTree nt, double length)
 
     for (int i=0;i<list.size();i++)
     {
-        if(i>0 && getParent(i,nt) == 1000000000)
-            break;
-        if (childs[i].size()==0)
+        if (childs[i].size()==0 && list.at(i).parent >=0)
         {
             int index_tip = 0;
             int parent_tip = getParent(i,nt);
@@ -384,7 +382,8 @@ NeuronTree pruneswc(NeuronTree nt, double length)
                }
             }
 
-        }
+        }else if (childs[i].size()==0 && list.at(i).parent < 0)
+            flag[i] = -1;
 
     }
 

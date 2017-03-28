@@ -43,7 +43,8 @@ QStringList prediction_caffe::menulist() const
         <<tr("Quality_Assess")
         <<tr("Detection")
         <<tr("Feature_Extraction")
-		<<tr("about");
+        <<tr("Connection")
+        <<tr("about");
 }
 
 QStringList prediction_caffe::funclist() const
@@ -541,13 +542,10 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 if (!edgeq.second && i!=j)
                 {
                     double Vedge;
-                    if(dis<=80)
-                    {
-                        std::vector<float> v1 = outputs[i];
-                        std::vector<float> v2 = outputs[j];
-                        Vedge = vectorDistance(v1, v2);
-                    }else
-                        Vedge = dis;
+                    std::vector<float> v1 = outputs[i];
+                    std::vector<float> v2 = outputs[j];
+                    Vedge = vectorDistance(v1, v2)*dis;
+
                     add_edge(i, j, LastVoted(i, Weight(Vedge)), *&g);
                 }
             }
@@ -598,13 +596,13 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 V3DLONG x2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).x;
                 V3DLONG y2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).y;
                 V3DLONG z2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).z;
-                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
-                if(dis>80)
+                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + 4*pow2(z1-z2));
+                if(dis>60)
                     marker_MST.listNeuron[i].parent = -1;
             }
         }
 
-        QString outfilename = SWCfileName + "_connected_30.swc";
+        QString outfilename = SWCfileName + "_connected_60_z.swc";
         if (outfilename.startsWith("http", Qt::CaseInsensitive))
         {
             QFileInfo ii(outfilename);
@@ -613,6 +611,49 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         writeSWC_file(outfilename,marker_MST);
         v3d_msg(QString("The output file is [%1]").arg(outfilename));
         return;
+    }else if (menu_name == tr("Connection"))
+    {
+        QString SWCfileName;
+        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                                                   "",
+                                                   QObject::tr("Supported file (*.swc *.eswc)"
+                                                               ";;Neuron structure	(*.swc)"
+                                                               ";;Extended neuron structure (*.eswc)"
+                                                               ));
+        if(SWCfileName.isEmpty())
+            return;
+        double disTh, angTh;
+        bool ok1, ok2;
+
+        disTh = QInputDialog::getDouble(parent, "Distance ",
+                                        "Distance:",
+                                        120.0, 1.0, 200.0, 1.0, &ok1);
+
+        if(ok1)
+        {
+            angTh = QInputDialog::getDouble(parent, "Angle",
+                                          "Angle:",
+                                            120.0, 1.0, 180.0, 1.0, &ok2);
+        }
+        else
+            return;
+
+        if(!ok2)
+            return;
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        NeuronTree nt_pruned = pruneswc(nt, 2);
+        NeuronTree nt_pruned_rs = resample(nt_pruned, 10);
+
+
+        QString outfilename = SWCfileName + "_connected_tips.swc";
+
+        QList<NeuronSWC> newNeuron;
+        connect_swc(nt_pruned_rs,newNeuron,disTh,angTh);
+        export_list2file(newNeuron, outfilename, SWCfileName);
+
+
+
     }
     else
 	{

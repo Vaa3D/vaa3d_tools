@@ -166,7 +166,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                 for (int i=0;i<list.size();i++)
                 {
-                    if (childs[i].size()==0)
+                    if (childs[i].size()==0 && list.at(i).parent >=0)
                     {
                         int index_tip = 0;
                         int parent_tip = getParent(i,nt);
@@ -191,7 +191,8 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                            }
                         }
 
-                    }
+                    }else if (childs[i].size()==0 && list.at(i).parent < 0)
+                        flag[i] = -1;
 
                 }
 
