@@ -8,14 +8,14 @@ INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 
 
 macx{
-    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
 }
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
-    LIBS     += -L$$VAA3DPATH/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
     } else {
-    LIBS     += -L$$VAA3DPATH/common_lib/winlib -llibtiff
+    LIBS     += -L$$VAA3DPATH/v3d_main/common_lib/winlib -llibtiff
     }
 }
 
