@@ -1520,7 +1520,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         LandmarkList marklist_2D_shifted;
         vector<V3DLONG> poss_landmark;
         vector<float> mass_center;
-        double windowradius = 10;
+        double windowradius = Sxy+5;
 
         V3DLONG sz_img[4];
         sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;

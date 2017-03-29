@@ -19,6 +19,7 @@ assemble_neuron_live_dialog::assemble_neuron_live_dialog(V3DPluginCallback2 * cb
 
     noffset=0;
     coffset=0;
+    if(dataTerafly) dataTerafly = 0;
     if(ntList.size()>0){
         initNeuron(ntList);
     }else{
@@ -1015,11 +1016,14 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
     {
         terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
                                                            "");
-        if(!terafly_folder.isEmpty())
-            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
-
+        if(terafly_folder.isEmpty())
+            return;
+        else
+            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());       
     }
 
+    if(!dataTerafly)
+        return;
     LandmarkList * mList = getMarkerList();
     V3dR_MainWindow * mainwin_roi = 0;
     QList <V3dR_MainWindow *> tmpwinlist = callback->getListAll3DViewers();
