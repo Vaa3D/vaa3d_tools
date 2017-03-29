@@ -1766,6 +1766,15 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
         qDebug()<<"===========ROI============= init data";
         Image4DSimple * tmp_image = new Image4DSimple();
         unsigned char * p_img;
+        if(dataTerafly)
+        {
+            x_min=MAX(x_min,0);
+            y_min=MAX(y_min,0);
+            z_min=MAX(z_min,0);
+            x_max=MIN(x_max,dataTerafly->getDIM_H());
+            y_max=MIN(y_max,dataTerafly->getDIM_V());
+            z_max=MIN(z_max,dataTerafly->getDIM_D());
+        }
         V3DLONG winsize[4];
         winsize[0]=x_max-x_min;
         winsize[1]=y_max-y_min;
