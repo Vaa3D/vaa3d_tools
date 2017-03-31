@@ -1496,7 +1496,10 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         mean_shift_fun fun_obj;
         LandmarkList marklist_2D;
-        //QString markerpath =  inimg_file + QString("_2D.marker");
+        QList <ImageMarker> marklist_2D_saved;
+        ImageMarker S_2D;
+
+        QString markerpath2D =  inimg_file + QString("_2D.marker");
         V3DLONG d = 0;
         for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
         {
@@ -1508,16 +1511,29 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     LocationSimple S;
                     S.x = ix;
                     S.y = iy;
-                    S.z = 0;
+                    S.z = 1;
                     marklist_2D.push_back(S);
+
+                    S_2D.x = ix;
+                    S_2D.y = iy;
+                    S_2D.z = 1;
+                    S_2D.color.r = 255;
+                    S_2D.color.g = 0;
+                    S_2D.color.b = 0;
+                    marklist_2D_saved.append(S_2D);
                 }
                 d++;
             }
         }
         detection_results.clear();
 
+        writeMarker_file(markerpath2D.toStdString().c_str(),marklist_2D_saved);
+
+
         //mean shift
         LandmarkList marklist_2D_shifted;
+        QList <ImageMarker> marklist_2D_shifted_saved;
+
         vector<V3DLONG> poss_landmark;
         vector<float> mass_center;
         double windowradius = Sxy+5;
@@ -1532,7 +1548,19 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
             marklist_2D_shifted.append(tmp);
+
+            S_2D.x = tmp.x;
+            S_2D.y = tmp.y;
+            S_2D.z = tmp.z;
+            S_2D.color.r = 255;
+            S_2D.color.g = 0;
+            S_2D.color.b = 0;
+            marklist_2D_shifted_saved.append(S_2D);
         }
+
+        QString markerpath2Dshifted =  inimg_file + QString("_2D_shifted.marker");
+        writeMarker_file(markerpath2Dshifted.toStdString().c_str(),marklist_2D_shifted_saved);
+
 
         QList <ImageMarker> marklist_3D;
         QString markerpath =  inimg_file + QString("_3D_final.marker");

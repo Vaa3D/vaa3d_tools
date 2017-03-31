@@ -361,6 +361,11 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
     V3DLONG z_offset=sz_image[0]*sz_image[1];
     V3DLONG page_size=sz_image[0]*sz_image[1]*sz_image[2];
 
+    V3DLONG N = sz_image[0];
+    V3DLONG M = sz_image[0];
+    V3DLONG P = sz_image[0];
+
+
     V3DLONG pos;
     vector<V3DLONG> coord;
 
@@ -393,33 +398,128 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
 
         testCount=testCount1=0;
 
-        for(V3DLONG dx=MAX(x+0.5-windowradius,0); dx<=MIN(sz_image[0]-1,x+0.5+windowradius); dx++){
-            for(V3DLONG dy=MAX(y+0.5-windowradius,0); dy<=MIN(sz_image[1]-1,y+0.5+windowradius); dy++){
-                for(V3DLONG dz=MAX(z+0.5-windowradius,0); dz<=MIN(sz_image[2]-1,z+0.5+windowradius); dz++){
-                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
-                    double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
-                         +(dz-z)*(dz-z);
-                    double distance=sqrt(tmp);
-                    if (distance>windowradius) continue;
-                    v_color=data1Dc_float[pos+page_size*channel];
+//        for(V3DLONG dx=MAX(x+0.5-windowradius,0); dx<=MIN(sz_image[0]-1,x+0.5+windowradius); dx++){
+//            for(V3DLONG dy=MAX(y+0.5-windowradius,0); dy<=MIN(sz_image[1]-1,y+0.5+windowradius); dy++){
+//                for(V3DLONG dz=MAX(z+0.5-windowradius,0); dz<=MIN(sz_image[2]-1,z+0.5+windowradius); dz++){
+//                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+//                    double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
+//                         +(dz-z)*(dz-z);
+//                    double distance=sqrt(tmp);
+//                    if (distance>windowradius) continue;
+//                    v_color=data1Dc_float[pos+page_size*channel];
 
-                    total_x=v_color*(float)dx+total_x;
-                    total_y=v_color*(float)dy+total_y;
-                    total_z=v_color*(float)dz+total_z;
-                    sum_v=sum_v+v_color;
+//                    total_x=v_color*(float)dx+total_x;
+//                    total_y=v_color*(float)dy+total_y;
+//                    total_z=v_color*(float)dz+total_z;
+//                    sum_v=sum_v+v_color;
 
-                    testCount++;
-                    if(v_color>100)
-                        testCount1++;
-                 }
-             }
-         }
-        //qDebug()<<"windowradius:"<<windowradius;
-        //qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
+//                    testCount++;
+//                    if(v_color>100)
+//                        testCount1++;
+//                 }
+//             }
+//         }
 
-        center_float[0]=total_x/sum_v;
-        center_float[1]=total_y/sum_v;
-        center_float[2]=total_z/sum_v;
+
+        V3DLONG xb = MAX(x+0.5-windowradius,0);
+        V3DLONG xe = MIN(sz_image[0]-1,x+0.5+windowradius);
+        V3DLONG yb = MAX(y+0.5-windowradius,0);
+        V3DLONG ye = MIN(sz_image[1]-1,y+0.5+windowradius);
+        V3DLONG zb = MAX(z+0.5-windowradius,0);
+        V3DLONG ze = MIN(sz_image[2]-1,z+0.5+windowradius);
+
+        V3DLONG i,j,k;
+        double w;
+
+        //first get the average value
+        double x2, y2, z2;
+        double rx2 = double(windowradius+1)*(windowradius+1);
+        double ry2 = rx2, rz2 = rx2;
+        double tmpd;
+        double xm=0,ym=0,zm=0, s=0, mv=0, n=0;
+
+        s = 0; n = 0;
+        for(k=zb; k<=ze; k++)
+        {
+            V3DLONG offsetkl = k*M*N;
+            z2 = k-z; z2*=z2;
+            for(j=yb; j<=ye; j++)
+            {
+                V3DLONG offsetjl = j*N;
+                y2 = j-y; y2*=y2;
+                tmpd = y2/ry2 + z2/rz2;
+                if (tmpd>1.0)
+                    continue;
+
+                for(i=xb; i<=xe; i++)
+                {
+                    x2 = i-x; x2*=x2;
+                    if (x2/rx2 + tmpd > 1.0)
+                        continue;
+
+                    s += double(data1Dc_float[offsetkl + offsetjl + i]);
+                    n = n+1;
+                }
+            }
+        }
+        if (n!=0)
+            mv = s/n;
+        else
+            mv = 0;
+
+        //now get the center of mass
+        s = 0; n=0;
+        for(k=zb; k<=ze; k++)
+        {
+            V3DLONG offsetkl = k*M*N;
+            z2 = k-z; z2*=z2;
+            for(j=yb; j<=ye; j++)
+            {
+                V3DLONG offsetjl = j*N;
+                y2 = j-y; y2*=y2;
+                tmpd = y2/ry2 + z2/rz2;
+                if (tmpd>1.0)
+                    continue;
+
+                for(i=xb; i<=xe; i++)
+                {
+                    x2 = i-x; x2*=x2;
+                    if (x2/rx2 + tmpd > 1.0)
+                        continue;
+
+                    w = double(data1Dc_float[offsetkl + offsetjl + i]) - mv;
+                    if (w>0)
+                    {
+                    xm += w*i;
+                    ym += w*j;
+                    zm += w*k;
+                    s += w;
+                    n = n+1;
+                    }
+                }
+            }
+        }
+
+        if(n>0)
+        {
+            xm /= s; ym /=s; zm /=s;
+        }
+        else
+        {
+            xm = x; ym=y; zm=z;
+        }
+
+        center_float[0]=xm;
+        center_float[1]=ym;
+        center_float[2]=zm;
+
+//        qDebug()<<"windowradius:"<<windowradius;
+//        qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
+
+//        center_float[0]=total_x/sum_v;
+//        center_float[1]=total_y/sum_v;
+//        center_float[2]=total_z/sum_v;
+//        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];
 
 //        if (total_x<1e-5||total_y<1e-5||total_z<1e-5) //a very dark marker.
 //        {
@@ -450,8 +550,8 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
                     +(center_float[2]-z)*(center_float[2]-z);
         center_dis=sqrt(tmp_1);
 
-        //qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
-        //qDebug()<<"center distance:"<<center_dis;
+//        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
+//        qDebug()<<"center distance:"<<center_dis;
         x=center_float[0]; y=center_float[1]; z=center_float[2];
     }
 

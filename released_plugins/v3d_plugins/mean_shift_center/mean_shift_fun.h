@@ -69,7 +69,7 @@ public:
         for(V3DLONG i=0; i<page_size*sz_img[3]; i++){
             data1Dc_float[i] = (float)(data1Dc_in[i]);
         }
-        normalizeEachChannelTo255<float>(data1Dc_float, sz_img);
+      //  normalizeEachChannelTo255<float>(data1Dc_float, sz_img);
 
     }
 };
