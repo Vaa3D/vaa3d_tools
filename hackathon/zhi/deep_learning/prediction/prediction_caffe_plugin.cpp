@@ -478,6 +478,11 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         string trained_file = "/local1/work/caffe/examples/siamese/full_siamese_iter_450000.caffemodel";
         Classifier classifier(model_file, trained_file,"");
         std::vector<cv::Mat> imgs;
+
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+
         for (V3DLONG i=0;i<nt.listNeuron.size();i++)
         {
             V3DLONG tmpx = nt.listNeuron.at(i).x;
@@ -522,9 +527,28 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
             cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
             imgs.push_back(img);
+
+            if(num_patches >=5000)
+            {
+                outputs = classifier.extractFeature_siamese(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
+
         }
 
-        std::vector<std::vector<float> > outputs = classifier.extractFeature_siamese(imgs);
+        if(imgs.size()>0)
+        {
+            outputs = classifier.extractFeature_siamese(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
+//        std::vector<std::vector<float> > outputs = classifier.extractFeature_siamese(imgs);
         UndirectedGraph g(nt.listNeuron.size());
         for (int i=0;i<nt.listNeuron.size()-1;i++)
         {
@@ -542,8 +566,8 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 if (!edgeq.second && i!=j)
                 {
                     double Vedge;
-                    std::vector<float> v1 = outputs[i];
-                    std::vector<float> v2 = outputs[j];
+                    std::vector<float> v1 = outputs_overall[i];
+                    std::vector<float> v2 = outputs_overall[j];
                     Vedge = vectorDistance(v1, v2)*dis;
 
                     add_edge(i, j, LastVoted(i, Weight(Vedge)), *&g);
