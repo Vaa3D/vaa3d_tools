@@ -1525,7 +1525,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         std::vector<std::vector<float> > detection_results;
         LandmarkList marklist_2D;
-        QList <ImageMarker> marklist_2D_saved;
+//        QList <ImageMarker> marklist_2D_saved;
         ImageMarker S_2D;
         QString markerpath2D =  inimg_file + QString("_2D.marker");
 
@@ -1585,60 +1585,30 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                             S.z = 1;
                             marklist_2D.push_back(S);
 
-                            S_2D.x = iix;
-                            S_2D.y = iiy;
-                            S_2D.z = 1;
-                            S_2D.color.r = 255;
-                            S_2D.color.g = 0;
-                            S_2D.color.b = 0;
-                            marklist_2D_saved.append(S_2D);
+//                            S_2D.x = iix;
+//                            S_2D.y = iiy;
+//                            S_2D.z = 1;
+//                            S_2D.color.r = 255;
+//                            S_2D.color.g = 0;
+//                            S_2D.color.b = 0;
+//                            marklist_2D_saved.append(S_2D);
                         }
                         d++;
                     }
                 }
 
+
+
+
             }
         }
-
-        writeMarker_file(markerpath2D.toStdString().c_str(),marklist_2D_saved);
-        mean_shift_fun fun_obj;
-//        LandmarkList marklist_2D;
-//        QList <ImageMarker> marklist_2D_saved;
-//        ImageMarker S_2D;
-
-//        QString markerpath2D =  inimg_file + QString("_2D.marker");
-//        V3DLONG d = 0;
-//        for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
-//        {
-//            for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
-//            {
-//                std::vector<float> output = detection_results[d];
-//                if(output.at(1) > output.at(0))
-//                {
-//                    LocationSimple S;
-//                    S.x = ix;
-//                    S.y = iy;
-//                    S.z = 1;
-//                    marklist_2D.push_back(S);
-
-//                    S_2D.x = ix;
-//                    S_2D.y = iy;
-//                    S_2D.z = 1;
-//                    S_2D.color.r = 255;
-//                    S_2D.color.g = 0;
-//                    S_2D.color.b = 0;
-//                    marklist_2D_saved.append(S_2D);
-//                }
-//                d++;
-//            }
-//        }
-//        detection_results.clear();
 
 //        writeMarker_file(markerpath2D.toStdString().c_str(),marklist_2D_saved);
 
         //mean shift
+        mean_shift_fun fun_obj;
         LandmarkList marklist_2D_shifted;
-        QList <ImageMarker> marklist_2D_shifted_saved;
+//        QList <ImageMarker> marklist_2D_shifted_saved;
 
         vector<V3DLONG> poss_landmark;
         vector<float> mass_center;
@@ -1655,21 +1625,21 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
             marklist_2D_shifted.append(tmp);
 
-            S_2D.x = tmp.x;
-            S_2D.y = tmp.y;
-            S_2D.z = tmp.z;
-            S_2D.color.r = 255;
-            S_2D.color.g = 0;
-            S_2D.color.b = 0;
-            marklist_2D_shifted_saved.append(S_2D);
+//            S_2D.x = tmp.x;
+//            S_2D.y = tmp.y;
+//            S_2D.z = tmp.z;
+//            S_2D.color.r = 255;
+//            S_2D.color.g = 0;
+//            S_2D.color.b = 0;
+//            marklist_2D_shifted_saved.append(S_2D);
         }
 
-        QString markerpath2Dshifted =  inimg_file + QString("_2D_shifted.marker");
-        writeMarker_file(markerpath2Dshifted.toStdString().c_str(),marklist_2D_shifted_saved);
+//        QString markerpath2Dshifted =  inimg_file + QString("_2D_shifted.marker");
+//        writeMarker_file(markerpath2Dshifted.toStdString().c_str(),marklist_2D_shifted_saved);
 
 
         QList <ImageMarker> marklist_3D;
-        QString markerpath =  inimg_file + QString("_3D_final.marker");
+//        QString markerpath =  inimg_file + QString("_3D_final.marker");
         ImageMarker S;
         NeuronTree nt;
         QList <NeuronSWC> & listNeuron = nt.listNeuron;
@@ -1697,25 +1667,34 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             S.color.g = 0;
             S.color.b = 0;
             marklist_3D.append(S);
+        }
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+        QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
+
+        for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+        {
+            V3DLONG ix = marklist_3D_pruned.at(i).x;
+            V3DLONG iy = marklist_3D_pruned.at(i).y;
+            V3DLONG iz = marklist_3D_pruned.at(i).z;
 
             NeuronSWC n;
             n.x = ix-1;
             n.y = iy-1;
             n.z = iz-1;
-            n.n = i;
+            n.n = i+1;
             n.type = 2;
             n.r = 1;
             n.pn = -1; //so the first one will be root
             listNeuron << n;
         }
-        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
-        QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
-        writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
+
+        QString  swc_processed = inimg_file + "_axon_3D.swc";
+        writeSWC_file(swc_processed,nt);
+//        writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
 
 //        NeuronTree nt_sorted = SortSWC_pipeline(nt.listNeuron,VOID, 40);
 //        QList<NeuronSWC> newNeuron_connected;
 //        double angthr=cos((60-60)/180*M_PI);
-//        QString  swc_processed = inimg_file + "_axon_3D.swc";
 
 //        connectall(&nt_sorted, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
 
