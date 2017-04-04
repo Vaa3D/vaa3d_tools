@@ -18,6 +18,11 @@
 #include "../../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 #include "../../../xiaoxiaol/consensus_skeleton_2/mst_boost_prim.h"
 
+#if  defined(Q_OS_LINUX)
+    #include <omp.h>
+#endif
+
+
 
 using namespace std;
 using namespace iim;
@@ -621,7 +626,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 V3DLONG y2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).y;
                 V3DLONG z2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).z;
                 double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + 4*pow2(z1-z2));
-                if(dis>60)
+                if(dis>80)
                     marker_MST.listNeuron[i].parent = -1;
             }
         }
@@ -1470,7 +1475,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             return false;
         }
 
-        int Sxy = paras.empty() ? 10 : atoi(paras[k]);
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
+        int Ws = paras.empty() ? 512 : atoi(paras[k]);
 
 
         cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
@@ -1478,6 +1484,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
         cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
         cout<<"sample_size = "<<Sxy<<endl;
+        cout<<"image_size = "<<Ws<<endl;
+
 
         unsigned char * data1d = 0;
         V3DLONG in_sz[4];
@@ -1515,44 +1523,118 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             }
         }
 
-        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
-        std::vector<std::vector<float> > detection_results = batch_detection(data1d_mip,classifier,N,M,1,Sxy);
-
-        mean_shift_fun fun_obj;
+        std::vector<std::vector<float> > detection_results;
         LandmarkList marklist_2D;
         QList <ImageMarker> marklist_2D_saved;
         ImageMarker S_2D;
-
         QString markerpath2D =  inimg_file + QString("_2D.marker");
-        V3DLONG d = 0;
-        for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
-        {
-            for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
-            {
-                std::vector<float> output = detection_results[d];
-                if(output.at(1) > output.at(0))
-                {
-                    LocationSimple S;
-                    S.x = ix;
-                    S.y = iy;
-                    S.z = 1;
-                    marklist_2D.push_back(S);
 
-                    S_2D.x = ix;
-                    S_2D.y = iy;
-                    S_2D.z = 1;
-                    S_2D.color.r = 255;
-                    S_2D.color.g = 0;
-                    S_2D.color.b = 0;
-                    marklist_2D_saved.append(S_2D);
+
+        unsigned int numOfThreads = 8; // default value for number of theads
+#if  defined(Q_OS_LINUX)
+
+        omp_set_num_threads(numOfThreads);
+
+#pragma omp parallel for
+
+#endif
+
+        for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+        {
+#if  defined(Q_OS_LINUX)
+
+            V3DLONG yb = iy;
+            V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+            printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+#pragma omp parallel for
+#endif
+            for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix;
+                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+                unsigned char *blockarea=0;
+                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+
+                blockarea = new unsigned char [blockpagesz];
+                V3DLONG i = 0;
+                for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                {
+                    V3DLONG offsetj = iiy*N;
+                    for(V3DLONG iix = xb; iix < xe+1; iix++)
+                    {
+
+                        blockarea[i] = data1d_mip[offsetj + iix];
+                        i++;
+                    }
                 }
-                d++;
+                Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+                V3DLONG d = 0;
+                for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                {
+                    for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                    {
+                        std::vector<float> output = detection_results[d];
+                        if(output.at(1) > output.at(0))
+                        {
+                            LocationSimple S;
+                            S.x = iix;
+                            S.y = iiy;
+                            S.z = 1;
+                            marklist_2D.push_back(S);
+
+                            S_2D.x = iix;
+                            S_2D.y = iiy;
+                            S_2D.z = 1;
+                            S_2D.color.r = 255;
+                            S_2D.color.g = 0;
+                            S_2D.color.b = 0;
+                            marklist_2D_saved.append(S_2D);
+                        }
+                        d++;
+                    }
+                }
+
             }
         }
-        detection_results.clear();
 
         writeMarker_file(markerpath2D.toStdString().c_str(),marklist_2D_saved);
+        mean_shift_fun fun_obj;
+//        LandmarkList marklist_2D;
+//        QList <ImageMarker> marklist_2D_saved;
+//        ImageMarker S_2D;
 
+//        QString markerpath2D =  inimg_file + QString("_2D.marker");
+//        V3DLONG d = 0;
+//        for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+//        {
+//            for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+//            {
+//                std::vector<float> output = detection_results[d];
+//                if(output.at(1) > output.at(0))
+//                {
+//                    LocationSimple S;
+//                    S.x = ix;
+//                    S.y = iy;
+//                    S.z = 1;
+//                    marklist_2D.push_back(S);
+
+//                    S_2D.x = ix;
+//                    S_2D.y = iy;
+//                    S_2D.z = 1;
+//                    S_2D.color.r = 255;
+//                    S_2D.color.g = 0;
+//                    S_2D.color.b = 0;
+//                    marklist_2D_saved.append(S_2D);
+//                }
+//                d++;
+//            }
+//        }
+//        detection_results.clear();
+
+//        writeMarker_file(markerpath2D.toStdString().c_str(),marklist_2D_saved);
 
         //mean shift
         LandmarkList marklist_2D_shifted;
@@ -1626,6 +1708,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             n.pn = -1; //so the first one will be root
             listNeuron << n;
         }
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
         writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
 
@@ -1639,6 +1722,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //        if(!export_list2file(newNeuron_connected, swc_processed,swc_processed)){
 //            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
 //        }
+        return true;
     }
     else if (func_name == tr("help"))
 	{

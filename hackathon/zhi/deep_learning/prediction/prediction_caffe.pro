@@ -12,6 +12,20 @@ INCLUDEPATH	+= /local1/work/caffe/.build_release/src
 LIBS += -L/local1/work/caffe/build/lib
 LIBS += -lcaffe
 
+macx{
+    LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+}
+
+unix:!macx {
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -fopenmp
+    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+
+}
+
+
+
 # cuda
 INCLUDEPATH += /usr/local/cuda/include
 LIBS += -L/usr/local/cuda/lib64
