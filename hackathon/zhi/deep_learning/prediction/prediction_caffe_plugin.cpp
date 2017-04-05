@@ -61,6 +61,7 @@ QStringList prediction_caffe::funclist() const
         <<tr("Prediction_type")
         <<tr("Noise_removal")
         <<tr("3D_Axon_detection")
+        <<tr("3D_Axon_detection_subRegion")
 		<<tr("help");
 }
 
@@ -760,18 +761,39 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         int NTILES  = vim.tilesList.size();
         std::vector<cv::Mat> imgs;
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+
         for (V3DLONG i = 0; i <NTILES; i++)
         {
             cv::Mat img = cv::imread(vim.tilesList.at(i).fn_image.c_str(),-1);
             imgs.push_back(img);
+
+            if(num_patches >=5000)
+            {
+                outputs = classifier.Predict(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
         }
-        std::vector<std::vector<float> > outputs = classifier.Predict(imgs);
+
+        if(imgs.size()>0)
+        {
+            outputs = classifier.Predict(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
 
         double p_num = 0;
         double n_num = 0;
-        for (int j = 0; j < outputs.size(); j++)
+        for (int j = 0; j < outputs_overall.size(); j++)
         {
-            std::vector<float> output = outputs[j];
+            std::vector<float> output = outputs_overall[j];
             if(output.at(0) > output.at(1))
                 n_num++;
             else
@@ -779,7 +801,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         }
 
-        cout<<"\positive rate: "<<p_num/outputs.size()<<" and negative rate: "<<n_num/outputs.size()<<endl;
+        cout<<"\positive rate: "<<p_num/outputs_overall.size()<<" and negative rate: "<<n_num/outputs_overall.size()<<endl;
 
         if(!outfiles.empty())
         {
@@ -1525,10 +1547,6 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         std::vector<std::vector<float> > detection_results;
         LandmarkList marklist_2D;
-//        QList <ImageMarker> marklist_2D_saved;
-        ImageMarker S_2D;
-        QString markerpath2D =  inimg_file + QString("_2D.marker");
-
 
         unsigned int numOfThreads = 8; // default value for number of theads
 #if  defined(Q_OS_LINUX)
@@ -1584,32 +1602,18 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                             S.y = iiy;
                             S.z = 1;
                             marklist_2D.push_back(S);
-
-//                            S_2D.x = iix;
-//                            S_2D.y = iiy;
-//                            S_2D.z = 1;
-//                            S_2D.color.r = 255;
-//                            S_2D.color.g = 0;
-//                            S_2D.color.b = 0;
-//                            marklist_2D_saved.append(S_2D);
                         }
                         d++;
                     }
                 }
-
-
-
+                if(blockarea) {delete []blockarea; blockarea =0;}
 
             }
         }
 
-//        writeMarker_file(markerpath2D.toStdString().c_str(),marklist_2D_saved);
-
         //mean shift
         mean_shift_fun fun_obj;
         LandmarkList marklist_2D_shifted;
-//        QList <ImageMarker> marklist_2D_shifted_saved;
-
         vector<V3DLONG> poss_landmark;
         vector<float> mass_center;
         double windowradius = Sxy+5;
@@ -1625,21 +1629,9 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
             marklist_2D_shifted.append(tmp);
 
-//            S_2D.x = tmp.x;
-//            S_2D.y = tmp.y;
-//            S_2D.z = tmp.z;
-//            S_2D.color.r = 255;
-//            S_2D.color.g = 0;
-//            S_2D.color.b = 0;
-//            marklist_2D_shifted_saved.append(S_2D);
         }
 
-//        QString markerpath2Dshifted =  inimg_file + QString("_2D_shifted.marker");
-//        writeMarker_file(markerpath2Dshifted.toStdString().c_str(),marklist_2D_shifted_saved);
-
-
         QList <ImageMarker> marklist_3D;
-//        QString markerpath =  inimg_file + QString("_3D_final.marker");
         ImageMarker S;
         NeuronTree nt;
         QList <NeuronSWC> & listNeuron = nt.listNeuron;
@@ -1701,6 +1693,250 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //        if(!export_list2file(newNeuron_connected, swc_processed,swc_processed)){
 //            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
 //        }
+        return true;
+    } else if(func_name == tr("3D_Axon_detection_subRegion"))
+    {
+        cout<<"Welcome to Caffe 3D axon detection plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
+        int Ws = paras.empty() ? 512 : atoi(paras[k]);k++;
+        int Wz = paras.empty() ? 100 : atoi(paras[k]);
+
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+        cout<<"image_size = "<<Ws<<endl;
+        cout<<"z_step = "<<Wz<<endl;
+
+
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+
+        QList <ImageMarker> marklist_3D_final;
+        unsigned int numOfThreads = 8; // default value for number of theads
+#if  defined(Q_OS_LINUX)
+
+        omp_set_num_threads(numOfThreads);
+
+#pragma omp parallel for
+
+#endif
+        for(V3DLONG iz = 0; iz < P; iz = iz + Wz)
+        {
+            V3DLONG zb = iz;
+            V3DLONG ze = iz+Wz-1; if(ze>=P-1) ze = P-1;
+
+#if  defined(Q_OS_LINUX)
+
+#pragma omp parallel for
+#endif
+
+            for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+            {
+                V3DLONG yb = iy;
+                V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+#if  defined(Q_OS_LINUX)
+
+#pragma omp parallel for
+#endif
+
+                for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+                {
+                    V3DLONG xb = ix;
+                    V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+                    unsigned char *blockarea=0;
+                    V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+                    blockarea = new unsigned char [blockpagesz];
+                    for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                    {
+                        V3DLONG offsetj = iiy*N;
+                        for(V3DLONG iix = xb; iix < xe+1; iix++)
+                        {
+                            int max_mip = 0;
+                            for(V3DLONG iiz = zb; iiz < ze+1; iiz++)
+                            {
+                                V3DLONG offsetk = iiz*M*N;
+                                if(data1d[offsetk + offsetj + iix] >= max_mip)
+                                {
+                                    blockarea[(iiy-yb)*(xe-xb+1) + (iix-xb)] = data1d[offsetk + offsetj + iix];
+                                    max_mip = data1d[offsetk + offsetj + iix];
+                                }
+                            }
+                        }
+                    }
+
+                    std::vector<std::vector<float> > detection_results;
+                    LandmarkList marklist_2D;
+                    Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+                    detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+                    V3DLONG d = 0;
+                    for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                    {
+                        for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                        {
+                            std::vector<float> output = detection_results[d];
+                            if(output.at(1) > output.at(0))
+                            {
+                                LocationSimple S;
+                                S.x = iix-xb;
+                                S.y = iiy-yb;
+                                S.z = 1;
+                                marklist_2D.push_back(S);
+                            }
+                            d++;
+                        }
+                    }
+
+                    //mean shift
+                    mean_shift_fun fun_obj;
+                    LandmarkList marklist_2D_shifted;
+                    vector<V3DLONG> poss_landmark;
+                    vector<float> mass_center;
+                    double windowradius = Sxy+5;
+
+                    V3DLONG sz_img[4];
+                    sz_img[0] = xe-xb+1; sz_img[1] = ye-yb+1; sz_img[2] = 1; sz_img[3] = 1;
+                    fun_obj.pushNewData<unsigned char>((unsigned char*)blockarea, sz_img);
+                    poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+                    for (V3DLONG j=0;j<poss_landmark.size();j++)
+                    {
+                        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+                        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+                        marklist_2D_shifted.append(tmp);
+                    }
+
+
+                    QList <ImageMarker> marklist_3D;
+                    ImageMarker S;
+
+                    unsigned char *blockarea_3D=0;
+                    V3DLONG blockpagesz_3D = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
+                    blockarea_3D = new unsigned char [blockpagesz_3D];
+                    V3DLONG i = 0;
+                    for(V3DLONG iiz = zb; iiz < ze+1; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix < xe+1; iix++)
+                            {
+                                blockarea_3D[i] = data1d[offsetk + offsetj + iix];
+                                i++;
+                            }
+                        }
+                    }
+
+                    for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+                    {
+                        V3DLONG ix_2D = marklist_2D_shifted.at(i).x;
+                        V3DLONG iy_2D = marklist_2D_shifted.at(i).y;
+                        double I_max = 0;
+                        V3DLONG iz_2D;
+                        for(V3DLONG j = 0; j < ze-zb+1; j++)
+                        {
+                            if(blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D] >= I_max)
+                            {
+                                I_max = blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+                                iz_2D = j;
+                            }
+
+                        }
+                        S.x = ix_2D;
+                        S.y = iy_2D;
+                        S.z = iz_2D;
+                        S.color.r = 255;
+                        S.color.g = 0;
+                        S.color.b = 0;
+                        marklist_3D.append(S);
+                    }
+
+                    QList <ImageMarker> marklist_3D_pruned = batch_deletion(blockarea_3D,classifier,marklist_3D,xe-xb+1,ye-yb+1,ze-zb+1);
+                    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+                    {
+                        S.x  = marklist_3D_pruned.at(i).x + xb;
+                        S.y  = marklist_3D_pruned.at(i).y + yb;
+                        S.z  = marklist_3D_pruned.at(i).z + zb;
+                        marklist_3D_final.push_back(S);
+                    }
+
+                    if(blockarea) {delete []blockarea; blockarea =0;}
+                    if(blockarea_3D) {delete []blockarea_3D; blockarea_3D = 0;}
+
+                }
+
+            }
+        }
+
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+
+        for(V3DLONG i = 0; i < marklist_3D_final.size(); i++)
+        {
+            V3DLONG ix = marklist_3D_final.at(i).x;
+            V3DLONG iy = marklist_3D_final.at(i).y;
+            V3DLONG iz = marklist_3D_final.at(i).z;
+
+            NeuronSWC n;
+            n.x = ix-1;
+            n.y = iy-1;
+            n.z = iz-1;
+            n.n = i+1;
+            n.type = 2;
+            n.r = 1;
+            n.pn = -1; //so the first one will be root
+            listNeuron << n;
+        }
+
+        QString  swc_processed = inimg_file + QString("_axon_3D_Z%1.swc").arg(Wz);
+        writeSWC_file(swc_processed,nt);
         return true;
     }
     else if (func_name == tr("help"))
