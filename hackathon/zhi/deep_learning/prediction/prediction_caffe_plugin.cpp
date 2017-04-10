@@ -40,29 +40,31 @@ double vectorDistance(std::vector<float> v1, std::vector<float> v2)
 }
 
 Q_EXPORT_PLUGIN2(prediction_caffe, prediction_caffe);
- 
+
 QStringList prediction_caffe::menulist() const
 {
-	return QStringList() 
-        <<tr("Prediction")
-        <<tr("Quality_Assess")
-        <<tr("Detection")
-        <<tr("Feature_Extraction")
+    return QStringList()
+            <<tr("Prediction")
+           <<tr("Quality_Assess")
+          <<tr("Detection")
+         <<tr("Feature_Extraction")
         <<tr("Connection")
-        <<tr("about");
+       <<tr("about");
 }
 
 QStringList prediction_caffe::funclist() const
 {
-	return QStringList()
-        <<tr("Prediction")
-        <<tr("Quality_Assess")
-        <<tr("Detection")
-        <<tr("Prediction_type")
+    return QStringList()
+            <<tr("Prediction")
+           <<tr("Quality_Assess")
+          <<tr("Detection")
+         <<tr("Prediction_type")
         <<tr("Noise_removal")
-        <<tr("3D_Axon_detection")
-        <<tr("3D_Axon_detection_subRegion")
-		<<tr("help");
+       <<tr("3D_Axon_detection")
+      <<tr("3D_Axon_detection_subRegion")
+     <<tr("Feature_Extraction")
+    <<tr("Connection")
+    <<tr("help");
 }
 
 void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -1937,6 +1939,215 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         QString  swc_processed = inimg_file + QString("_axon_3D_Z%1.swc").arg(Wz);
         writeSWC_file(swc_processed,nt);
+        return true;
+    }
+    else if(func_name == tr("Feature_Extraction"))
+    {
+        cout<<"Welcome to Caffe feature extraction plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        int k=0;
+
+        QString swc_file = paras.empty() ? "" : paras[k]; if(swc_file == "NULL") swc_file = ""; k++;
+        if(swc_file.isEmpty())
+        {
+            cerr<<"Need a swc_file"<<endl;
+            return false;
+        }
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"swc_file = "<<swc_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+
+        int Wx = 60, Wy = 60, Wz = 5;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG sc = in_sz[3];
+        NeuronTree nt = readSWC_file(swc_file);
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(),"");
+        std::vector<cv::Mat> imgs;
+
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = nt.listNeuron.at(i).y;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
+
+            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+            V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
+            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+            V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
+            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+            V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
+
+            V3DLONG im_cropped_sz[4];
+            im_cropped_sz[0] = xe - xb + 1;
+            im_cropped_sz[1] = ye - yb + 1;
+            im_cropped_sz[2] = 1;
+            im_cropped_sz[3] = sc;
+
+            unsigned char *im_cropped = 0;
+
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            try {im_cropped = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
+            memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+            for(V3DLONG iz = zb; iz <= ze; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                V3DLONG j = 0;
+                for(V3DLONG iy = yb; iy <= ye; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    {
+                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                            im_cropped[j] = data1d[offsetk + offsetj + ix];
+                        j++;
+                    }
+                }
+            }
+
+            cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+            imgs.push_back(img);
+
+            if(num_patches >=5000)
+            {
+                outputs = classifier.extractFeature_siamese(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
+
+        }
+
+        if(imgs.size()>0)
+        {
+            outputs = classifier.extractFeature_siamese(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
+        UndirectedGraph g(nt.listNeuron.size());
+        for (int i=0;i<nt.listNeuron.size()-1;i++)
+        {
+            for (int j=i+1;j<nt.listNeuron.size();j++)
+            {
+                V3DLONG x1 = nt.listNeuron.at(i).x;
+                V3DLONG y1 = nt.listNeuron.at(i).y;
+                V3DLONG z1 = nt.listNeuron.at(i).z;
+                V3DLONG x2 = nt.listNeuron.at(j).x;
+                V3DLONG y2 = nt.listNeuron.at(j).y;
+                V3DLONG z2 = nt.listNeuron.at(j).z;
+                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+
+                EdgeQuery edgeq = edge(i, j, *&g);
+                if (!edgeq.second && i!=j)
+                {
+                    double Vedge;
+                    std::vector<float> v1 = outputs_overall[i];
+                    std::vector<float> v2 = outputs_overall[j];
+                    Vedge = vectorDistance(v1, v2)*dis;
+
+                    add_edge(i, j, LastVoted(i, Weight(Vedge)), *&g);
+                }
+            }
+        }
+
+        vector < graph_traits < UndirectedGraph >::vertex_descriptor > p(num_vertices(*&g));
+        prim_minimum_spanning_tree(*&g, &p[0]);
+
+        NeuronTree marker_MST;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        for (std::size_t i = 0; i != p.size(); ++i)
+        {
+            NeuronSWC S;
+            int pn;
+            if(p[i] == i)
+                pn = -1;
+            else
+                pn = p[i] + 1;
+
+            S.n 	= i+1;
+            S.type 	= 7;
+            S.x 	= nt.listNeuron.at(i).x;
+            S.y 	= nt.listNeuron.at(i).y;
+            S.z 	= nt.listNeuron.at(i).z;;
+            S.r 	= 1;
+            S.pn 	= pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+
+        marker_MST.n = -1;
+        marker_MST.on = true;
+        marker_MST.listNeuron = listNeuron;
+        marker_MST.hashNeuron = hashNeuron;
+
+
+        for (int i=1;i<marker_MST.listNeuron.size()-1;i++)
+        {
+            if(marker_MST.listNeuron.at(i).parent>0)
+            {
+                V3DLONG x1 = marker_MST.listNeuron.at(i).x;
+                V3DLONG y1 = marker_MST.listNeuron.at(i).y;
+                V3DLONG z1 = marker_MST.listNeuron.at(i).z;
+                V3DLONG x2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).x;
+                V3DLONG y2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).y;
+                V3DLONG z2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).z;
+                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + 4*pow2(z1-z2));
+                if(dis>80)
+                    marker_MST.listNeuron[i].parent = -1;
+            }
+        }
+
+        QString outfilename = swc_file + "_connected_60_z.swc";
+        writeSWC_file(outfilename,marker_MST);
+        v3d_msg(QString("The output file is [%1]").arg(outfilename),0);
         return true;
     }
     else if (func_name == tr("help"))
