@@ -26,9 +26,13 @@ using namespace std;
 #define VOID 1000000000
 #endif
 
+
+//#define PI 3.14159265359
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
+
 #ifndef MAX_DOUBLE
 #define MAX_DOUBLE 1.79768e+308        //actual: 1.79769e+308
 #endif
@@ -1000,6 +1004,235 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
             //parent
             if(nt->listNeuron.at(oid).pn>=0){
                 V3DLONG opid = nt->hashNeuron.value(nt->listNeuron.at(oid).pn);
+                if(newid.at(opid)<0){
+                    pqueue.enqueue(opid);
+                    newpn[opid]=newid[oid];
+                    newid[opid]=curid++;
+                }
+            }
+            //child
+            V3DLONG tmpid=pList.indexOf(oid);
+            while(tmpid>=0){
+                if(newid.at(tmpid)<0){
+                    pqueue.enqueue(tmpid);
+                    newpn[tmpid]=newid[oid];
+                    newid[tmpid]=curid++;
+                }
+                tmpid=pList.indexOf(oid,tmpid+1);
+            }
+            //new-neighbor
+            if(connectPairs.contains(oid)){
+                for(V3DLONG j=0; j<connectPairs[oid].size(); j++){
+                    V3DLONG onid=connectPairs[oid].at(j);
+                    if(newid.at(onid)<0){
+                        pqueue.enqueue(onid);
+                        newpn[onid]=newid[oid];
+                        newid[onid]=curid++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double angThr)
+{
+    //rescale neurons
+    QList<XYZ> scaledXYZ;
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        XYZ S;
+        S.x = nt.listNeuron.at(i).x*1;
+        S.y = nt.listNeuron.at(i).y*1;
+        S.z = nt.listNeuron.at(i).z*4;
+        scaledXYZ.append(S);
+    }
+
+    qDebug()<<"search for components and tips";
+    //initialize tree components and get all tips
+    QList<V3DLONG> cand;
+    QList<XYZ> canddir;
+    QVector<int> childNum(nt.listNeuron.size(), 0);
+    QVector<int> connNum(nt.listNeuron.size(), 0);
+    QList<V3DLONG> components;
+    QList<V3DLONG> pList;
+    V3DLONG curid=0;
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn<0){
+            connNum[i]--; //root that only have 1 child will also be a dead end
+            components.append(curid); curid++;
+            pList.append(-1);
+        }else{
+            V3DLONG pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            childNum[pid]++;
+            connNum[pid]++;
+            components.append(-1);
+            pList.append(pid);
+        }
+    }
+
+    qDebug()<<"components searching";
+    //connected component
+    for(V3DLONG cid=0; cid<curid; cid++){
+        QStack<V3DLONG> pstack;
+        V3DLONG chid;
+        //recursively search for child and mark them as the same component
+        pstack.push(components.indexOf(cid));
+        while(!pstack.isEmpty()){
+            V3DLONG pid=pstack.pop();
+            chid = -1;
+            chid = pList.indexOf(pid,chid+1);
+            while(chid>=0){
+                pstack.push(chid);
+                components[chid]=cid;
+                chid=pList.indexOf(pid,chid+1);
+            }
+        }
+    }
+
+    qDebug()<<"tips searching";
+    vector< pair<int,int> > tip_pair;
+    //get tips
+    for(V3DLONG i=0; i<childNum.size(); i++){
+        if(connNum.at(i)<1){
+            cand.append(i);
+            //get direction
+            V3DLONG id=i;
+            V3DLONG sid;
+            if(childNum[id]==1){ //single child root
+                sid = pList.indexOf(id);
+            }else{ //tips
+                sid = pList[id];
+            }
+            tip_pair.push_back(std::make_pair(id,sid));
+        }
+    }
+
+    qDebug()<<connNum.size()<<":"<<childNum.size()<<":"<<cand.size();
+
+    qDebug()<<"match tips";
+
+    //match tips
+    multimap<double, QVector<V3DLONG> > connMap;
+    for(V3DLONG tid=0; tid<cand.size(); tid++){
+        V3DLONG tidx=cand.at(tid);
+        V3DLONG mvid=-1, mtid=-1;
+        for(V3DLONG cid=0; cid<curid; cid++){
+            if(cid==components.at(cand[tid])) continue;
+            double mvdis=disThr, mtdis=disThr;
+            V3DLONG id=components.indexOf(cid);
+            while(id>=0){
+
+                double dis=NTDIS(scaledXYZ.at(tidx),scaledXYZ.at(id));
+                if(dis<mvdis){
+                    mvdis=dis;
+                    mvid=id;
+                }
+                if(dis<mtdis){
+                    if(connNum.at(id)<1){//tips
+                        V3DLONG tmpid=cand.indexOf(id);
+                        double local_ang1 = angle(nt.listNeuron.at(tip_pair[tid].first),nt.listNeuron.at(tip_pair[tid].second),nt.listNeuron.at(tip_pair[tmpid].first));
+                        double local_ang2 = angle(nt.listNeuron.at(tip_pair[tmpid].first),nt.listNeuron.at(tip_pair[tmpid].second),nt.listNeuron.at(tip_pair[tid].first));
+                        if(local_ang1 >= angThr && local_ang2 >= angThr){
+                            mtdis=dis;
+                            mtid=id;
+                        }
+                    }
+                }
+                id=components.indexOf(cid, id+1);
+            }
+
+            if(mtid>=0){
+                QVector<V3DLONG> tmp;
+                tmp.append(tidx); tmp.append(mtid);
+                connMap.insert(pair<double, QVector<V3DLONG> >(mtdis,tmp));
+            }
+        }
+    }
+
+    qDebug()<<"connecting tips";
+    //find the best solution for connecting tips
+    QMap<V3DLONG, QVector<V3DLONG> > connectPairs;
+    for(multimap<double, QVector<V3DLONG> >::iterator iter=connMap.begin(); iter!=connMap.end(); iter++){
+        if(components.at(iter->second.at(0))==components.at(iter->second.at(1))) //already connected
+            continue;
+        if(connectPairs.contains(iter->second.at(0))){
+            connectPairs[iter->second.at(0)].append(iter->second.at(1));
+        }else{
+            QVector<V3DLONG> tmp; tmp.append(iter->second.at(1));
+            connectPairs.insert(iter->second.at(0),tmp);
+        }
+        if(connectPairs.contains(iter->second.at(1))){
+            connectPairs[iter->second.at(1)].append(iter->second.at(0));
+        }else{
+            QVector<V3DLONG> tmp; tmp.append(iter->second.at(0));
+            connectPairs.insert(iter->second.at(1),tmp);
+        }
+        V3DLONG cid_0=components.at(iter->second.at(0));
+        V3DLONG cid_1=components.at(iter->second.at(1));
+        V3DLONG tmpid=components.indexOf(cid_1);
+        while(tmpid>=0){
+            components[tmpid]=cid_0;
+            tmpid=components.indexOf(cid_1,tmpid+1);
+        }
+    }
+
+    qDebug()<<"reconstruct neuron tree";
+    //reconstruct tree
+    QVector<V3DLONG> newid(nt.listNeuron.size(), -1);
+    QVector<V3DLONG> newpn(nt.listNeuron.size(), -1); //id starts from 1, -1: not touched, 0: touched but overlap with parent
+    curid=1;
+    int rootID = -1;
+    int rootidx=nt.hashNeuron.value(rootID);
+    if(nt.listNeuron[rootidx].n != rootID)
+        rootidx=-1;
+    QVector<V3DLONG> prinode;
+    if(rootidx!=-1){
+        prinode.push_back(rootidx);
+    }
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron[i].parent==-1){
+            prinode.push_back(i);
+        }
+    }
+    V3DLONG i=0;
+    V3DLONG priIdx=0;
+    while(1){
+        if(priIdx<prinode.size()){
+            i=prinode[priIdx];
+            priIdx++;
+        }else if(priIdx==prinode.size()){
+            i=0;
+            priIdx++;
+        }else{
+            i++;
+            if(i>=nt.listNeuron.size())
+                break;
+        }
+        if(newid[i]>0) continue;
+        QQueue<V3DLONG> pqueue; pqueue.clear();
+        pqueue.enqueue(i);
+        newid[i]=curid++;
+        while(!pqueue.isEmpty()){
+            //add current node to the listNeuron
+            V3DLONG oid=pqueue.dequeue();
+
+            if(newid[oid]>0){
+                NeuronSWC tmpNeuron;
+                tmpNeuron.n = newid[oid];
+                tmpNeuron.x = nt.listNeuron.at(oid).x;
+                tmpNeuron.y = nt.listNeuron.at(oid).y;
+                tmpNeuron.z = nt.listNeuron.at(oid).z;
+                tmpNeuron.type = nt.listNeuron.at(oid).type;
+                tmpNeuron.r = nt.listNeuron.at(oid).r;
+                tmpNeuron.fea_val = nt.listNeuron.at(oid).fea_val;
+                tmpNeuron.pn = newpn.at(oid);
+                newNeuron.append(tmpNeuron);
+            }
+
+            //add current node's children/parent/new-neighbor to the stack
+            //parent
+            if(nt.listNeuron.at(oid).pn>=0){
+                V3DLONG opid = nt.hashNeuron.value(nt.listNeuron.at(oid).pn);
                 if(newid.at(opid)<0){
                     pqueue.enqueue(opid);
                     newpn[opid]=newid[oid];

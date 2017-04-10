@@ -13,6 +13,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../APP2_large_scale/readRawfile_func.h"
+#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 
 
 
@@ -77,13 +78,14 @@ QStringList IVSCC_process_swc::menulist() const
 
 QStringList IVSCC_process_swc::funclist() const
 {
-	return QStringList()
-        <<tr("process")
-        <<tr("process_v2")
-        <<tr("process_remove_artifacts")
-        <<tr("process_soma_correction")
+    return QStringList()
+            <<tr("process")
+           <<tr("process_v2")
+          <<tr("process_remove_artifacts")
+         <<tr("process_soma_correction")
         <<tr("merge_two_swc")
-		<<tr("help");
+       <<tr("connect_two_swc")
+      <<tr("help");
 }
 
 void IVSCC_process_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -850,6 +852,62 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
         QString outswc_file2 = inswc_file2 + "_processed.swc";
         writeSWC_file(outswc_file2,nt2);
+    }
+    else if (func_name == tr("connect_two_swc"))
+    {
+        cout<<"Welcome to IVSCC swc connect plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need two input swc files"<<endl;
+            return false;
+        }
+
+        QString  inswc_file1 =  infiles[0];
+        QString  inswc_file2 =  infiles[1];
+        if(inswc_file2.isEmpty())
+        {
+            cerr<<"Need two input swc files"<<endl;
+            return false;
+        }
+
+        int k=0;
+        double disTh = paras.empty() ? 120 : atof(paras[k]);k++;
+        double angTh = paras.empty() ? 120 : atof(paras[k]);
+
+        QString  outswc_file =  outfiles[0];
+
+        cout<<"inswc_file1 = "<<inswc_file1.toStdString().c_str()<<endl;
+        cout<<"inswc_file2 = "<<inswc_file2.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+
+        NeuronTree nt1 = readSWC_file(inswc_file1);
+        NeuronTree nt2 = readSWC_file(inswc_file2);
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+
+        for(V3DLONG i=0; i <nt1.listNeuron.size(); i++)
+        {
+            nt1.listNeuron[i].type = 3;
+            listNeuron << nt1.listNeuron[i];
+        }
+
+        for(V3DLONG i=0; i <nt2.listNeuron.size(); i++)
+        {
+            nt2.listNeuron[i].n += nt1.listNeuron.at(nt1.listNeuron.size()-1).n+1;
+            if(nt2.listNeuron[i].parent>0)
+                nt2.listNeuron[i].parent += nt1.listNeuron.at(nt1.listNeuron.size()-1).n+1;
+            nt2.listNeuron[i].type = 2;
+            listNeuron << nt2.listNeuron[i];
+        }
+
+        NeuronTree nt_sort = SortSWC_pipeline(nt.listNeuron,VOID, 0);
+        NeuronTree nt_pruned = pruneswc(nt_sort, 2);
+        writeSWC_file(outswc_file,nt_pruned);
+        NeuronTree nt_pruned_rs = resample(nt_pruned, 10);
+        QList<NeuronSWC> newNeuron;
+        connect_swc(nt_pruned_rs,newNeuron,disTh,angTh);
+        export_list2file(newNeuron, outswc_file, outswc_file);
 
 
     }

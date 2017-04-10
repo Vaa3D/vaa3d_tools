@@ -54,7 +54,7 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
 NeuronTree remove_swc(NeuronTree nt,double length);
 std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classifier classifier, int N, int M, int P, int Sxy);
 QList <ImageMarker> batch_deletion(unsigned char * & data1d,Classifier classifier, QList <ImageMarker> input_marker, int N, int M, int P);
-void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double angThr);
+//void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double angThr);
 
 #endif
 
