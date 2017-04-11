@@ -72,6 +72,15 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         if (fileOpenName.isEmpty())
             return;
 
+        unsigned int Vsize;
+        bool ok1;
+
+        Vsize = QInputDialog::getInteger(parent, "Volume size ",
+                                      "Enter volume size:",
+                                      50, 1, 1000, 1, &ok1);
+        if(!ok1)
+            return;
+
         NeuronTree nt = readSWC_file(fileOpenName);
         QList<CellAPO> file_inmarkers;
         for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
@@ -84,7 +93,7 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             t.color.g=0;
             t.color.b=0;
 
-            t.volsize = 50;
+            t.volsize = Vsize;
             file_inmarkers.push_back(t);
         }
 
