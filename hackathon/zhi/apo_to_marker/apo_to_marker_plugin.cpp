@@ -13,6 +13,7 @@ QStringList apo_to_marker::menulist() const
 {
 	return QStringList() 
         <<tr("save apo to marker format")
+        <<tr("save swc file to apo format")
 		<<tr("about");
 }
 
@@ -60,11 +61,50 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             v3d_msg(QString("Marker file is save as %1").arg(fileSaveName.toStdString().c_str()));
         }
 
-	}
+    }
+    else if (menu_name == tr("save swc file to apo format"))
+    {
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                                                    "",
+                                                    QObject::tr("Supported file (*.swc *.SWC)"
+                                                        ));
+        if (fileOpenName.isEmpty())
+            return;
+
+        NeuronTree nt = readSWC_file(fileOpenName);
+        QList<CellAPO> file_inmarkers;
+        for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
+        {
+            CellAPO t;
+            t.x = nt.listNeuron.at(i).x+1;
+            t.y = nt.listNeuron.at(i).y+1;
+            t.z = nt.listNeuron.at(i).z+1;
+            t.color.r=255;
+            t.color.g=0;
+            t.color.b=0;
+
+            t.volsize = 50;
+            file_inmarkers.push_back(t);
+        }
+
+        QString fileDefaultName = fileOpenName + ".apo";
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                            fileDefaultName,
+                                                            QObject::tr("Supported file (*.apo)"));
+        if (fileSaveName.isEmpty())
+            return;
+        else
+        {
+            writeAPO_file(fileSaveName,file_inmarkers);
+            v3d_msg(QString("Point Cloud file is save as %1").arg(fileSaveName.toStdString().c_str()));
+        }
+
+    }
 	else
 	{
         v3d_msg(tr("This is a plugin to convert apo file to marker file,"
-			"Developed by YourName, 2016-5-16"));
+            "Developed by Zhi Zhou, 2016-5-16"));
 	}
 }
 
