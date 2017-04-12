@@ -463,8 +463,9 @@ std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classi
             outputs_overall.push_back(outputs[d]);
     }
 
-   return outputs_overall;
    imgs.clear();
+   outputs.clear();
+   return outputs_overall;
 }
 
 QList <ImageMarker> batch_deletion(unsigned char * & data1d,Classifier classifier, QList <ImageMarker> input_markerlist, int N, int M, int P)

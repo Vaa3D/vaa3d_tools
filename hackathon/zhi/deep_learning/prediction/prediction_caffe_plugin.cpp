@@ -1547,6 +1547,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             }
         }
 
+        if(data1d) {delete []data1d; data1d = 0;}
+
         std::vector<std::vector<float> > detection_results;
         LandmarkList marklist_2D;
 
@@ -1638,6 +1640,11 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         NeuronTree nt;
         QList <NeuronSWC> & listNeuron = nt.listNeuron;
 
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
 
         for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
         {
@@ -1664,7 +1671,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         }
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
-
+        if(data1d) {delete []data1d; data1d = 0;}
         for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
         {
             V3DLONG ix = marklist_3D_pruned.at(i).x;
@@ -1684,17 +1691,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         QString  swc_processed = inimg_file + "_axon_3D.swc";
         writeSWC_file(swc_processed,nt);
-//        writeMarker_file(markerpath.toStdString().c_str(),marklist_3D_pruned);
 
-//        NeuronTree nt_sorted = SortSWC_pipeline(nt.listNeuron,VOID, 40);
-//        QList<NeuronSWC> newNeuron_connected;
-//        double angthr=cos((60-60)/180*M_PI);
-
-//        connectall(&nt_sorted, newNeuron_connected, 1, 1, 1, angthr, 100, 1, false, -1);
-
-//        if(!export_list2file(newNeuron_connected, swc_processed,swc_processed)){
-//            qDebug()<<"error: Cannot open file "<<swc_processed<<" for writing!"<<endl;
-//        }
         return true;
     } else if(func_name == tr("3D_Axon_detection_subRegion"))
     {
