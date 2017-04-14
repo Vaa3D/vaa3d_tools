@@ -500,6 +500,11 @@ void S2UI::updateLocalRemote(bool state){
         myController.hostLineEdit->setText(QString("10.128.48.53"));
         myPosMon.hostLineEdit->setText(QString("10.128.48.53"));
         localDataDirectory = QDir("testData");
+
+        if (!settings.contains("s2_topDir")|| !settings.contains("s2_dataDir")){
+            v3d_msg("S2 directories have not been configured. You will next be prompted for a local directory to save s2 scans and for a path to the microscope image data");
+        }
+
         if (!settings.contains("s2_topDir")){
             topDirStr = QFileDialog::getExistingDirectory(this, tr("Choose save directory..."),
                                                           "/",
@@ -659,7 +664,7 @@ QGroupBox *S2UI::createTracingParameters(){
         TileInfo ti0 = tileSizeChoices->at(i);
         tileSizeCB->addItem(QString::number(ti0.getTileZoom()));
     }
-    tileSizeCB->setCurrentIndex(2);
+    tileSizeCB->setCurrentIndex(6);
     QLabel * tileSizeCBLabel = new QLabel(tr("smartScan Zoom: "));
 
 
@@ -718,11 +723,11 @@ QGroupBox *S2UI::createTracingParameters(){
     stackZStepSizeLabel = new QLabel(tr("z stack step size = 1.0 um"));
 
     stageOnlyCB = new QCheckBox;
-    stageOnlyCB->setChecked(false);
+    stageOnlyCB->setChecked(true);
     stageOnlyCB->setText("stage-only S2scan");
 
     multiThreadTracingCB = new QCheckBox;
-    multiThreadTracingCB->setChecked(false);
+    multiThreadTracingCB->setChecked(true);
     multiThreadTracingCB->setText("multiThread tracing");
 
     searchPixelRadiusSB = new QSpinBox;
@@ -800,7 +805,7 @@ QGroupBox *S2UI::createConfigPanel(){
     resetDirPB->setText(tr("set Local Save Directory"));
 
     localDataDir = new QLabel(tr(""));
-    localDataDirLabel = new QLabel(tr("path to data : "));
+    localDataDirLabel = new QLabel(tr("local path to data : "));
 
     setLocalPathToData = new QPushButton;
     setLocalPathToData->setText(tr("set local path to data"));
