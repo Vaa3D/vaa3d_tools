@@ -2055,8 +2055,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 num_patches = 0;
             }else
                 num_patches++;
-
         }
+        if(data1d) {delete []data1d; data1d = 0;}
 
         if(imgs.size()>0)
         {
