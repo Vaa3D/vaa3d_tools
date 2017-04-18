@@ -3332,10 +3332,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
     }
 
-
-
     QString imageSaveString = saveDirString;
-
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     start_x = (tileLocation.x < 0)?  0 : tileLocation.x;
     start_y = (tileLocation.y < 0)?  0 : tileLocation.y;
@@ -3344,7 +3341,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     end_x = tileLocation.x+tileLocation.ev_pc1;
     end_y = tileLocation.y+tileLocation.ev_pc2;
     end_z = tileLocation.z+tileLocation.ev_pc3;
-
 
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
@@ -3358,6 +3354,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
+    VirtualVolume* aVolume =0;
 
     if(P.image)
     {
@@ -3405,13 +3402,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
-
-//            for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2];i++)
-//            {
-//                if(total1dData[i] < 100)  total1dData[i] =0;
-//            }
-
-
         }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
@@ -3430,7 +3420,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
             total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
         }
     }
@@ -3545,7 +3535,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         return false;
     }
 
-
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
     if(P.method ==3 || P.method ==2)
@@ -3631,7 +3620,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             {
                 tip_in.push_back(newTip);
             }
-
     }
 
     if(tip_left.size()>0)
@@ -3698,8 +3686,8 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         saveSWC_file(finaloutputswc.toStdString().c_str(), tileswc_file);
     }
 
-
     total4DImage->deleteRawDataAndSetPointerToNull();
+    if(aVolume) {delete aVolume; aVolume = 0;}
     return true;
 }
 
@@ -4937,7 +4925,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         return false;
     }
 
-    unsigned int numOfThreads = 1; // default value for number of theads
+    unsigned int numOfThreads = 8; // default value for number of theads
 
 #if  defined(Q_OS_LINUX)
 
@@ -4967,8 +4955,11 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
             for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
             {
-                v3d_msg(QString("x_%1,y_%2,z_%3").arg(ix).arg(iy).arg(iz),0);
-                //all_tracing_grid(callback,P,ix,iy,iz);
+                QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+                QString swcString = saveDirString;
+                swcString.append("/x_").append(QString::number(ix)).append("_y_").append(QString::number(iy)).append("_z_").append(QString::number(iz)).append(".swc");
+                if(!QFileInfo(swcString).exists())
+                    all_tracing_grid(callback,P,ix,iy,iz);
             }
         }
     }
@@ -5001,7 +4992,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
-
+    VirtualVolume* aVolume;
     if(P.image)
     {
         in_sz = new V3DLONG[4];
@@ -5066,12 +5057,11 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
             total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
         }
 
     }
-
 
     V3DLONG mysz[4];
     mysz[0] = in_sz[0];
@@ -5083,6 +5073,8 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
 
     if(total1dData) {delete []total1dData; total1dData = 0;}
+    if(in_sz) {delete []in_sz; in_sz =0;}
+    if(aVolume) {delete aVolume; aVolume = 0;}
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
@@ -5147,7 +5139,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
     {
-
         printf("Can not find the tracing plugin!\n");
         return false;
     }
