@@ -4937,7 +4937,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         return false;
     }
 
-    unsigned int numOfThreads = 8; // default value for number of theads
+    unsigned int numOfThreads = 1; // default value for number of theads
 
 #if  defined(Q_OS_LINUX)
 
@@ -4967,7 +4967,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
             for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
             {
-                v3d_msg(QString("x_%1,y_%1,z_%1").arg(ix).arg(iy).arg(iz),0);
+                v3d_msg(QString("x_%1,y_%2,z_%3").arg(ix).arg(iy).arg(iz),0);
                 //all_tracing_grid(callback,P,ix,iy,iz);
             }
         }
