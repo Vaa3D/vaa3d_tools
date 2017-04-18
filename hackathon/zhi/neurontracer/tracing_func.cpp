@@ -4967,7 +4967,8 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
             for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
             {
-                all_tracing_grid(callback,P,ix,iy,iz);
+                v3d_msg(QString("x_%1,y_%1,z_%1").arg(ix).arg(iy).arg(iz),0);
+                //all_tracing_grid(callback,P,ix,iy,iz);
             }
         }
     }
@@ -5080,6 +5081,8 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z).append(".v3draw"));
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+
+    if(total1dData) {delete []total1dData; total1dData = 0;}
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
