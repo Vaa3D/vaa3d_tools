@@ -86,7 +86,8 @@ QStringList IVSCC_process_swc::funclist() const
         <<tr("process_soma_correction_v2")
        <<tr("merge_two_swc")
       <<tr("connect_two_swc")
-     <<tr("help");
+     <<tr("split_swc")
+    <<tr("help");
 }
 
 void IVSCC_process_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -993,6 +994,116 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         QList<NeuronSWC> newNeuron;
         connect_swc(nt_pruned_rs,newNeuron,disTh,angTh);
         export_list2file(newNeuron, outswc_file, outswc_file);
+    }
+    else if (func_name == tr("split_swc"))
+    {
+        cout<<"Welcome to IVSCC swc connect plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need one input swc files"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        QString  outswc_file =  inswc_file + "_high.swc";
+        QString  outapo_file =  inswc_file + "_low.apo";
+
+//        if(outswc_file.isEmpty())
+//        {
+//            cerr<<"Need one output swc files"<<endl;
+//            return false;
+//        }
+
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+        cout<<"outapo_file = "<<outapo_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt = readSWC_file(inswc_file);
+//        nt = SortSWC_pipeline(nt.listNeuron,1000000000, 0);
+
+        V3DLONG end_ID = 0,start_ID = 0;
+        for (V3DLONG i = 1; i<nt.listNeuron.size(); i++)
+        {
+            if(nt.listNeuron.at(i).parent <= 0)
+            {
+                NeuronTree sub_nt = nt;
+                sub_nt.listNeuron.erase(sub_nt.listNeuron.begin()+i,sub_nt.listNeuron.end());
+                if(end_ID > 0)
+                {
+                    sub_nt.listNeuron.erase(sub_nt.listNeuron.begin(),sub_nt.listNeuron.begin()+ end_ID);
+                    start_ID = end_ID;
+                }
+                end_ID = i;
+
+                NeuronTree sub_nt_sort = SortSWC_pipeline(sub_nt.listNeuron,1000000000, 0);
+                bool flag = false;
+                for(V3DLONG ii = 0; ii <sub_nt_sort.listNeuron.size();ii++)
+                {
+                    if(sub_nt_sort.listNeuron[ii].type == 3)
+                    {
+                        flag = true;
+                    }
+
+                }
+                if(flag || sub_nt_sort.listNeuron.size()>10)
+                {
+                    for(V3DLONG d = start_ID; d < i; d++)
+                        nt.listNeuron[d].comment = "keep";
+                }
+
+
+            }
+        }
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        NeuronTree nt_prunned;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        //set node
+
+        NeuronSWC S;
+        QList<CellAPO> file_inmarkers;
+
+        for (int i=0;i<list.size();i++)
+        {
+            if(list.at(i).comment == "keep")
+            {
+                 NeuronSWC curr = list.at(i);
+                 S.n 	= curr.n;
+                 S.type 	= curr.type;
+                 S.x 	= curr.x;
+                 S.y 	= curr.y;
+                 S.z 	= curr.z;
+                 S.r 	= curr.r;
+                 S.pn 	= curr.pn;
+                 listNeuron.append(S);
+                 hashNeuron.insert(S.n, listNeuron.size()-1);
+            }else
+            {
+                CellAPO t;
+                t.x = nt.listNeuron.at(i).x+1;
+                t.y = nt.listNeuron.at(i).y+1;
+                t.z = nt.listNeuron.at(i).z+1;
+                t.color.r=0;
+                t.color.g=255;
+                t.color.b=0;
+
+                t.volsize = 100;
+                file_inmarkers.push_back(t);
+
+            }
+
+       }
+        nt_prunned.n = -1;
+        nt_prunned.on = true;
+        nt_prunned.listNeuron = listNeuron;
+        nt_prunned.hashNeuron = hashNeuron;
+
+        writeSWC_file(outswc_file,nt_prunned);
+        writeAPO_file(outapo_file,file_inmarkers);
 
 
     }

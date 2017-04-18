@@ -2065,6 +2065,10 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 outputs_overall.push_back(outputs[d]);
         }
 
+        imgs.clear();
+
+        cerr<<"MST generating ..."<<endl;
+
         UndirectedGraph g(nt.listNeuron.size());
         for (int i=0;i<nt.listNeuron.size()-1;i++)
         {

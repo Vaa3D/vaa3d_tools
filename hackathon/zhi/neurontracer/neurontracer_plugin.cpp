@@ -598,9 +598,13 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
             P.markerfilename = inmarker_file;
 
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+        P.grid_trace = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.method = 3;
-        crawler_raw_all(callback,parent,P,bmenu);
+        if(P.grid_trace)
+            grid_raw_all(callback,parent,P,bmenu);
+        else
+            crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (func_name == tr("trace_MOST"))
     {

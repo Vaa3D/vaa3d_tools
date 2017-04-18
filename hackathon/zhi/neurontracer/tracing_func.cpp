@@ -4943,7 +4943,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
     omp_set_num_threads(numOfThreads);
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
 #endif
 
@@ -4953,19 +4953,29 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
         printf("number of threads for iy = %d\n", omp_get_num_threads());
 
-        #pragma omp parallel for
+#pragma omp parallel for
 #endif
 
         for(V3DLONG iy = (int)P.listLandmarks[0].y; iy<= (int)P.listLandmarks[1].y; iy += P.block_size)
         {
-            all_tracing_grid(callback,P,ix,iy);
+#if  defined(Q_OS_LINUX)
+
+            printf("number of threads for iz = %d\n", omp_get_num_threads());
+
+#pragma omp parallel for
+#endif
+
+            for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
+            {
+                all_tracing_grid(callback,P,ix,iy,iz);
+            }
         }
     }
 
     return true;
 }
 
-bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy)
+bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy, V3DLONG iz)
 {
     QString saveDirString;
     if(P.method ==3)
@@ -4979,11 +4989,14 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     QString imageSaveString = saveDirString;
 
-    V3DLONG start_x,start_y,end_x,end_y;
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     start_x = ix;
     start_y = iy;
-    end_x = ix + P.block_size;
-    end_y = iy + P.block_size;
+    start_z = iz;
+    end_x = ix + P.block_size; if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
+    end_y = iy + P.block_size; if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+    end_z = iz + P.block_size; if(end_z > P.in_sz[2]) end_z = P.in_sz[2];
+
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
@@ -4993,7 +5006,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
         in_sz = new V3DLONG[4];
         in_sz[0] = end_x - start_x;
         in_sz[1] = end_y - start_y;
-        in_sz[2] = P.in_sz[2];
+        in_sz[2] = end_z - start_z;
         V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
         try {total1dData = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
@@ -5018,7 +5031,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
             in_sz = new V3DLONG[4];
             in_sz[0] = end_x - start_x;
             in_sz[1] = end_y - start_y;
-            in_sz[2] = P.in_sz[2];
+            in_sz[2] = end_z - start_z;
 
             Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
@@ -5028,7 +5041,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
                 return false;
             }
 
-            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,0,end_x-1,end_y-1,P.in_sz[2]-1))
+            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,end_z,end_x-1,end_y-1,end_z-1))
             {
                 printf("can not load the region");
                 if(total1dData) {delete []total1dData; total1dData = 0;}
@@ -5038,8 +5051,8 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
         {
             V3DLONG *in_zz = 0;
             int datatype;
-            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,0,
-                               end_x,end_y,P.in_sz[2]))
+            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,start_x,
+                               end_x,end_y,end_z))
             {
                 printf("can not load the region");
                 if(total1dData) {delete []total1dData; total1dData = 0;}
@@ -5050,10 +5063,10 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
             in_sz = new V3DLONG[4];
             in_sz[0] = end_x - start_x;
             in_sz[1] = end_y - start_y;
-            in_sz[2] = P.in_sz[2];
+            in_sz[2] = end_z - start_z;
 
             VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
+            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
         }
 
     }
@@ -5065,11 +5078,11 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     mysz[2] = in_sz[2];
     mysz[3] = 1;
 
-    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y).append(".v3draw"));
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z).append(".v3draw"));
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
 
     QString swcString = saveDirString;
-    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".swc");
+    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
 
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -5138,11 +5151,11 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     QString swcNEUTUBE = saveDirString;
     if(P.method ==3 || P.method ==2)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
     else if (P.method ==4)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
     else if (P.method ==5)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
+        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
 
     vector<MyMarker*> inputswc;
     inputswc = readSWC_file(swcNEUTUBE.toStdString());;
@@ -5150,6 +5163,8 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     {
         inputswc[d]->x = inputswc[d]->x + start_x;
         inputswc[d]->y = inputswc[d]->y + start_y;
+        inputswc[d]->z = inputswc[d]->z + start_z;
+
     }
     saveSWC_file(swcString.toStdString().c_str(), inputswc);
     system(qPrintable(QString("rm %1").arg(swcNEUTUBE.toStdString().c_str())));
