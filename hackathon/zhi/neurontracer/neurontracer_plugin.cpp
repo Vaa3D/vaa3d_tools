@@ -23,8 +23,8 @@ Q_EXPORT_PLUGIN2(neurontracer, neurontracer);
  
 QStringList neurontracer::menulist() const
 {
-	return QStringList() 
-             <<tr("trace_APP2")
+    return QStringList()
+            <<tr("trace_APP2")
            <<tr("trace_APP1")
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
@@ -33,9 +33,11 @@ QStringList neurontracer::menulist() const
       <<tr("trace_NeuroGPSTree")
      <<tr("trace_Rivulet2")
     <<tr("trace_TReMAP")
- //     <<tr("trace_Advantra")
-//   <<tr("trace_NeuronChaser")
- <<tr("about");
+   <<tr("generate_final_result(3D)")
+
+      //     <<tr("trace_Advantra")
+      //   <<tr("trace_NeuronChaser")
+    <<tr("about");
 }
 
 QStringList neurontracer::funclist() const
@@ -522,7 +524,20 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.method = 11;
         crawler_raw_all(callback,parent,P,bmenu);
     }
-	else
+    else if (menu_name == tr("generate_final_result(3D)"))
+    {
+        QString txtfilenName = QFileDialog::getOpenFileName(0, QObject::tr("Open TXT File"),
+                                                        "",
+                                                        QObject::tr("Supported file (*.txt *.TXT)"));
+        if(txtfilenName.isEmpty())
+            return;
+
+        list<string> infostring;
+        processSmartScan_3D(callback,infostring,txtfilenName);
+        v3d_msg("Done!");
+
+    }
+    else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 			"Developed by Zhi Zhou, 2016-2-16"));

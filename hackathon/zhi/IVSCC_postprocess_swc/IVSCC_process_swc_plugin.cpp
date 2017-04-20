@@ -1045,7 +1045,7 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                     }
 
                 }
-                if(flag || sub_nt_sort.listNeuron.size()>10)
+                if(flag)
                 {
                     for(V3DLONG d = start_ID; d < i; d++)
                         nt.listNeuron[d].comment = "keep";
