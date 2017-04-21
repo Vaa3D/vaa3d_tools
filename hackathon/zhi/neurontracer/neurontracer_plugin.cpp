@@ -584,7 +584,8 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
-        P.tracing_3D = false;
+        P.tracing_3D = true;
+        P.tracing_comb = false;
         P.method = 2;
         crawler_raw_app(callback,parent,P,bmenu);
 	}

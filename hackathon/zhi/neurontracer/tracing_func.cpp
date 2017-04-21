@@ -1289,6 +1289,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
+    VirtualVolume* aVolume;
 
     if(P.image)
     {
@@ -1355,7 +1356,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
             total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
 
         }
@@ -1438,6 +1439,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+
+    if(in_sz) {delete []in_sz; in_sz =0;}
+    if(aVolume) {delete aVolume; aVolume = 0;}
 
     //v3d_msg(QString("%1,%2,%3,%4,%5").arg(start_x_updated).arg(end_x_updated).arg(start_y_updated).arg(end_y_updated).arg(tileLocation.ev_pc3));
 
