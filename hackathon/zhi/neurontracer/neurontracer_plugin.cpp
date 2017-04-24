@@ -617,6 +617,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.grid_trace = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.method = 3;
+        P.tracing_3D = true;
         if(P.grid_trace)
             grid_raw_all(callback,parent,P,bmenu);
         else

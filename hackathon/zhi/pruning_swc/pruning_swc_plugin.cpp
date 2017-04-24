@@ -12,6 +12,10 @@
 #include <iostream>
 #include "my_surf_objs.h"
 #include "../IVSCC_sort_swc/openSWCDialog.h"
+#include "../../../released_plugins/v3d_plugins/global_neuron_feature/compute.h"
+#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+
+
 
 
 template <class T> T local_max(T a, T b)
@@ -30,50 +34,50 @@ using namespace std;
 
 Q_EXPORT_PLUGIN2(pruning_swc, pruning_swc);
 
-bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
-{
-    QFile file(fileSaveName);
-    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
-        return false;
-    QTextStream myfile(&file);
+//bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
+//{
+//    QFile file(fileSaveName);
+//    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+//        return false;
+//    QTextStream myfile(&file);
 
-    QFile qf(fileOpenName);
-    if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-#ifndef DISABLE_V3D_MSG
-        v3d_msg(QString("open file [%1] failed!").arg(fileOpenName));
-#endif
-        return false;
-    }
-    QString info;
-    while (! qf.atEnd())
-    {
-        char _buf[1000], *buf;
-        qf.readLine(_buf, sizeof(_buf));
-        for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
+//    QFile qf(fileOpenName);
+//    if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
+//    {
+//#ifndef DISABLE_V3D_MSG
+//        v3d_msg(QString("open file [%1] failed!").arg(fileOpenName));
+//#endif
+//        return false;
+//    }
+//    QString info;
+//    while (! qf.atEnd())
+//    {
+//        char _buf[1000], *buf;
+//        qf.readLine(_buf, sizeof(_buf));
+//        for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
 
-        if (buf[0]=='\0')	continue;
-        if (buf[0]=='#')
-        {
-           info = buf;
-           myfile<< info.remove('\n') <<endl;
-        }
+//        if (buf[0]=='\0')	continue;
+//        if (buf[0]=='#')
+//        {
+//           info = buf;
+//           myfile<< info.remove('\n') <<endl;
+//        }
 
-    }
+//    }
 
-    for (V3DLONG i=0;i<lN.size();i++)
-        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
+//    for (V3DLONG i=0;i<lN.size();i++)
+//        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
 
-    file.close();
-    cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
-    return true;
-};
+//    file.close();
+//    cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
+//    return true;
+//};
 
-template <class T> T pow2(T a)
-{
-    return a*a;
+//template <class T> T pow2(T a)
+//{
+//    return a*a;
 
-}
+//}
 
 
 QStringList importSWCFileList_addnumbersort(const QString & curFilePath)
@@ -113,6 +117,7 @@ QStringList pruning_swc::menulist() const
 
       //  <<tr("pruning_group")
       //  <<tr("aligning")
+        <<tr("calculate_soma")
 		<<tr("about");
 }
 
@@ -881,6 +886,112 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
             }
         }
        }
+    else if (menu_name == tr("calculate_soma"))
+    {
+        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
+                                                                      QDir::currentPath(),
+                                                                      QFileDialog::ShowDirsOnly);
+
+        QStringList swcList = importSWCFileList_addnumbersort(m_InputfolderName);
+//        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+//        if (!openDlg->exec())
+//            return;
+
+//        QString fileOpenName = openDlg->file_name;
+//        NeuronTree nt_original;
+//        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+//        {
+//            nt_original = openDlg->nt;
+//        }
+
+        V3DLONG soma_number = 0;
+        for(V3DLONG d = 0; d < swcList.size(); d++)
+        {
+            QString curPathSWC = swcList.at(d);
+            NeuronTree nt_original = readSWC_file(curPathSWC);
+            if(nt_original.listNeuron.size()<=0)
+                continue;
+            for(V3DLONG i = nt_original.listNeuron.size()-1; i>=0;i--)
+            {
+                if(nt_original.listNeuron.at(i).radius < 6)
+                    nt_original.listNeuron.removeAt(i);
+            }
+            if(nt_original.listNeuron.size()<=0)
+                continue;
+
+            NeuronTree nt_sort = SortSWC_pipeline(nt_original.listNeuron,VOID, 20);
+            if(nt_sort.listNeuron.size()<=0)
+                continue;
+            NeuronTree nt = pruneswc(nt_sort, 2);
+
+            if(nt.listNeuron.size()<=0)
+                continue;
+
+            V3DLONG end_ID = 0,start_ID = 0;
+            for (V3DLONG i = 1; i<nt.listNeuron.size(); i++)
+            {
+                if(nt.listNeuron.at(i).parent <= 0)
+                {
+                    NeuronTree sub_nt = nt;
+                    sub_nt.listNeuron.erase(sub_nt.listNeuron.begin()+i,sub_nt.listNeuron.end());
+                    if(end_ID > 0)
+                    {
+                        sub_nt.listNeuron.erase(sub_nt.listNeuron.begin(),sub_nt.listNeuron.begin()+ end_ID);
+                        start_ID = end_ID;
+                    }
+                    end_ID = i;
+
+                    NeuronTree sub_nt_sort = SortSWC_pipeline(sub_nt.listNeuron,1000000000, 0);
+                    double * features = new double[22];
+                    computeFeature(sub_nt_sort,features);
+                    if(features[12]<40000)
+                    {
+                        for(V3DLONG dd = start_ID; dd < i; dd++)
+                            nt.listNeuron[dd].type = 0;
+                    }
+                    if(features) {delete []features; features=0;}
+                }
+            }
+
+            QList<NeuronSWC> list = nt.listNeuron;
+            NeuronTree nt_prunned;
+            QList <NeuronSWC> listNeuron;
+            QHash <int, int>  hashNeuron;
+            listNeuron.clear();
+            hashNeuron.clear();
+
+            //set node
+
+            NeuronSWC S;
+            for (int i=0;i<list.size();i++)
+            {
+                if(list.at(i).type != 0)
+                {
+                     NeuronSWC curr = list.at(i);
+                     S.n 	= curr.n;
+                     S.type 	= curr.type;
+                     S.x 	= curr.x;
+                     S.y 	= curr.y;
+                     S.z 	= curr.z;
+                     S.r 	= curr.r;
+                     S.pn 	= curr.pn;
+                     listNeuron.append(S);
+                     hashNeuron.insert(S.n, listNeuron.size()-1);
+                }
+
+           }
+            nt_prunned.n = -1;
+            nt_prunned.on = true;
+            nt_prunned.listNeuron = listNeuron;
+            nt_prunned.hashNeuron = hashNeuron;
+            QString outswc_file = curPathSWC + "_soma.swc";
+            writeSWC_file(outswc_file,nt_prunned);
+        }
+
+
+
+
+    }
     else
 	{
         v3d_msg(tr("This is a plugin to prun the swc file. "
