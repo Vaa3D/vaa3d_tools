@@ -301,7 +301,12 @@ bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                 }
             }
         }
+        if(select_result.size() != 0) {
         select_result[0].n = 1;
+        }
+        else{
+        cout<<"No overlap point was found"<<endl;
+        return false;}
         for (int i = 0; i < select_result.size(); i++)
         {
             select_result[i].pn = -1;
@@ -418,7 +423,12 @@ bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                 }
             }
         }
+        if(select_result.size() != 0) {
         select_result[0].n = 1;
+        }
+        else{
+        cout<<"No overlap point was found"<<endl;
+        return false;}
         for (int i = 0; i < select_result.size(); i++)
         {
             select_result[i].pn = -1;
@@ -497,7 +507,12 @@ bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                 }
             }
         }
+        if(select_result.size() != 0) {
         select_result[0].n = 1;
+        }
+        else{
+        cout<<"No overlap point was found"<<endl;
+        return false;}
         for (int i = 0; i < select_result.size(); i++)
         {
             select_result[i].pn = -1;
