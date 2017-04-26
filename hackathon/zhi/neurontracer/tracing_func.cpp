@@ -4929,7 +4929,7 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         return false;
     }
 
-    unsigned int numOfThreads = 8; // default value for number of theads
+    unsigned int numOfThreads = 16; // default value for number of theads
 
 #if  defined(Q_OS_LINUX)
 
@@ -4939,7 +4939,8 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
 #endif
 
-    for(V3DLONG ix = (int)P.listLandmarks[0].x; ix<= (int)P.listLandmarks[1].x; ix += P.block_size)
+    //for(V3DLONG ix = (int)P.listLandmarks[0].x; ix<= (int)P.listLandmarks[1].x; ix += P.block_size)
+    for(V3DLONG ix = 0; ix < P.in_sz[0]; ix += P.block_size)
     {
 #if  defined(Q_OS_LINUX)
 
@@ -4948,7 +4949,8 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 #pragma omp parallel for
 #endif
 
-        for(V3DLONG iy = (int)P.listLandmarks[0].y; iy<= (int)P.listLandmarks[1].y; iy += P.block_size)
+       // for(V3DLONG iy = (int)P.listLandmarks[0].y; iy<= (int)P.listLandmarks[1].y; iy += P.block_size)
+        for(V3DLONG iy = 0; iy < P.in_sz[1]; iy += P.block_size)
         {
 #if  defined(Q_OS_LINUX)
 
@@ -4957,12 +4959,10 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 #pragma omp parallel for
 #endif
 
-            for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
+         //   for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
+            for(V3DLONG iz = 0; iz< P.in_sz[2]; iz += P.block_size)
             {
-                QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-                QString swcString = saveDirString;
-                swcString.append("/x_").append(QString::number(ix)).append("_y_").append(QString::number(iy)).append("_z_").append(QString::number(iz)).append(".swc");
-                if(!QFileInfo(swcString).exists())
+
                     all_tracing_grid(callback,P,ix,iy,iz);
             }
         }
@@ -5072,6 +5072,22 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     mysz[1] = in_sz[1];
     mysz[2] = in_sz[2];
     mysz[3] = 1;
+
+    double PixelSum = 0;
+    for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
+    {
+        double PixelVaule = total1dData[i];
+        PixelSum = PixelSum + PixelVaule;
+    }
+
+    double PixelMean = PixelSum/(in_sz[0]*in_sz[1]*in_sz[2]);
+    if(PixelMean < 10)
+    {
+        if(total1dData) {delete []total1dData; total1dData = 0;}
+        if(in_sz) {delete []in_sz; in_sz =0;}
+        if(aVolume) {delete aVolume; aVolume = 0;}
+        return true;
+    }
 
     imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z).append(".v3draw"));
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);

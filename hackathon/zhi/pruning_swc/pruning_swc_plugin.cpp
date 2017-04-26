@@ -126,7 +126,8 @@ QStringList pruning_swc::funclist() const
     return QStringList()
         <<tr("pruning_nc")
         <<tr("caculate_distance")
-       <<tr("rotation")
+        <<tr("rotation")
+        <<tr("generate_soma_marker")
 		<<tr("help");
 }
 
@@ -1389,7 +1390,41 @@ bool pruning_swc::dofunc(const QString & func_name, const V3DPluginArgList & inp
             v3d_msg("fail to write the output swc file.");
             return false;
         }
-    }else if (func_name == tr("caculate_density"))
+    }
+    else if (func_name == tr("generate_soma_marker"))
+    {
+        cout<<"Welcome to generate_soma_marker plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc file"<<endl;
+            return false;
+        }
+
+        QString  inswc_file =  infiles[0];
+        QString  outswc_file;
+        if(!outfiles.empty())
+            outswc_file = outfiles[0];
+        else
+            outswc_file = inswc_file + ".marker";
+
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"outmarker_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt;
+        nt = readSWC_file(inswc_file);
+        QList<ImageMarker> soma_marker;
+        ImageMarker t;
+        if(nt.listNeuron.at(0).type == 1)
+        {
+            t.x = nt.listNeuron.at(0).x - 1 ;
+            t.y = nt.listNeuron.at(0).y - 1;
+            t.z = nt.listNeuron.at(0).z - 1;
+            soma_marker.append(t);
+        }
+        writeMarker_file(outswc_file, soma_marker);
+
+    }
+    else if (func_name == tr("caculate_density"))
     {
         cout<<"Welcome to swc density plugin"<<endl;
         if(infiles.empty())

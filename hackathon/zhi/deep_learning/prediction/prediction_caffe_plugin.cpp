@@ -1499,9 +1499,15 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             return false;
         }
 
-        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
-        int Ws = paras.empty() ? 512 : atoi(paras[k]);
+        int Sxy = (paras.size() >= k+1) ? atoi(paras[k]):10;k++;
+        int Ws = (paras.size() >= k+1) ? atoi(paras[k]):512;k++;
 
+        QString mip_file = (paras.size() >= k+1) ? paras[k]:""; if(mip_file == "NULL") mip_file = "";
+        bool mip_flag = false;
+        if(!mip_file.isEmpty())
+        {
+            mip_flag = true;
+        }
 
         cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
         cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
@@ -1509,45 +1515,57 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
         cout<<"sample_size = "<<Sxy<<endl;
         cout<<"image_size = "<<Ws<<endl;
-
+        cout<<"mip_file = "<<mip_flag<<endl;
 
         unsigned char * data1d = 0;
         V3DLONG in_sz[4];
-
-        int datatype;
-        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
-        {
-            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
-            return false;
-        }
-
-        V3DLONG N = in_sz[0];
-        V3DLONG M = in_sz[1];
-        V3DLONG P = in_sz[2];
-
-        V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
         unsigned char *data1d_mip=0;
-        try {data1d_mip = new unsigned char [pagesz_mip];}
-        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-        for(V3DLONG iy = 0; iy < M; iy++)
+        int datatype;
+        V3DLONG N,M,P;
+        if(mip_flag)
         {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = 0; ix < N; ix++)
+            V3DLONG in_mip_sz[4];
+            if(!simple_loadimage_wrapper(callback, mip_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
             {
-                int max_mip = 0;
-                for(V3DLONG iz = 0; iz < P; iz++)
+                cerr<<"load image "<<mip_file.toStdString().c_str()<<" error!"<<endl;
+                return false;
+            }
+            N = in_mip_sz[0];
+            M = in_mip_sz[1];
+        }else
+        {
+            if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+            {
+                cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+                return false;
+            }
+
+            N = in_sz[0];
+            M = in_sz[1];
+            P = in_sz[2];
+
+            V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
+            try {data1d_mip = new unsigned char [pagesz_mip];}
+            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                    V3DLONG offsetk = iz*M*N;
-                    if(data1d[offsetk + offsetj + ix] >= max_mip)
+                    int max_mip = 0;
+                    for(V3DLONG iz = 0; iz < P; iz++)
                     {
-                        data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
-                        max_mip = data1d[offsetk + offsetj + ix];
+                        V3DLONG offsetk = iz*M*N;
+                        if(data1d[offsetk + offsetj + ix] >= max_mip)
+                        {
+                            data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            max_mip = data1d[offsetk + offsetj + ix];
+                        }
                     }
                 }
             }
+            if(data1d) {delete []data1d; data1d = 0;}
         }
-
-        if(data1d) {delete []data1d; data1d = 0;}
 
         std::vector<std::vector<float> > detection_results;
         LandmarkList marklist_2D;
@@ -1615,6 +1633,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             }
         }
 
+        cerr<<"mean shifting ..."<<endl;
+
         //mean shift
         mean_shift_fun fun_obj;
         LandmarkList marklist_2D_shifted;
@@ -1646,6 +1666,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             return false;
         }
 
+        if(mip_flag)    P = in_sz[2];
+
         for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
         {
             V3DLONG ix = marklist_2D_shifted.at(i).x;
@@ -1669,6 +1691,9 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             S.color.b = 0;
             marklist_3D.append(S);
         }
+
+        cerr<<"Deleting false detection ..."<<endl;
+
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
         if(data1d) {delete []data1d; data1d = 0;}
@@ -2083,7 +2108,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
 
                 EdgeQuery edgeq = edge(i, j, *&g);
-                if (!edgeq.second && i!=j)
+                if (!edgeq.second && i!=j && dis <=1000)
                 {
                     double Vedge;
                     std::vector<float> v1 = outputs_overall[i];
