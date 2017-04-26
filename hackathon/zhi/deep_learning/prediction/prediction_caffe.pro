@@ -56,6 +56,12 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += ../../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 
+SOURCES += $$VAA3DPATH/basic_c_fun/mg_utilities.cpp
+SOURCES += $$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
+SOURCES += $$VAA3DPATH/basic_c_fun/stackutil.cpp
+SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
+
+
 INCLUDEPATH += ../../../../released_plugins/v3d_plugins/terastitcher/include
 INCLUDEPATH += ../../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
 INCLUDEPATH += ../../../../released_plugins/v3d_plugins/terastitcher/src/core/tinyxml
