@@ -1365,7 +1365,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG sc = in_sz[3];
 
         NeuronTree nt = readSWC_file(SWCfileName);
-        unsigned int Wx=30, Wy=30, Wz=15;
+        unsigned int Wx=5, Wy=5, Wz=3;
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
         std::vector<cv::Mat> imgs;
         V3DLONG num_patches = 0;
@@ -2182,7 +2182,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             listNeuron << n;
         }
 
-        QString  swc_processed = inimg_file + QString("_axon_3D_new.swc");
+        QString  swc_processed = inimg_file + QString("_axon_3D.swc");
         writeSWC_file(swc_processed,nt);
         return true;
     }

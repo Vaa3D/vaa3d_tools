@@ -89,7 +89,7 @@ std::vector<std::vector<float> > Classifier::Predict(const std::vector<cv::Mat>&
         WrapInputLayer(&input_channels, i);
         Preprocess(imgs[i], &input_channels);
     }
-    net_->ForwardPrefilled();
+    net_->Forward();
     std::vector<std::vector<float> > outputs;
     Blob<float>* output_layer = net_->output_blobs()[0];
     for (int i = 0; i < output_layer->num(); ++i) {

@@ -988,9 +988,9 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         }
 
         NeuronTree nt_sort = SortSWC_pipeline(nt.listNeuron,VOID, 0);
-        NeuronTree nt_pruned = pruneswc(nt_sort, 2);
-        writeSWC_file(outswc_file,nt_pruned);
-        NeuronTree nt_pruned_rs = resample(nt_pruned, 10);
+//        NeuronTree nt_pruned = pruneswc(nt_sort, 2);
+//        writeSWC_file(outswc_file,nt_pruned);
+        NeuronTree nt_pruned_rs = resample(nt_sort, 10);
         QList<NeuronSWC> newNeuron;
         connect_swc(nt_pruned_rs,newNeuron,disTh,angTh);
         export_list2file(newNeuron, outswc_file, outswc_file);
@@ -1005,8 +1005,8 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         }
 
         QString  inswc_file =  infiles[0];
-        QString  outswc_file =  inswc_file + "_high.swc";
-        QString  outapo_file =  inswc_file + "_low.apo";
+        QString  outswc_file =  inswc_file + "_connected.swc";
+        QString  outapo_file =  inswc_file + "_not_connected.swc";
 
 //        if(outswc_file.isEmpty())
 //        {
@@ -1069,32 +1069,35 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
         for (int i=0;i<list.size();i++)
         {
-            if(list.at(i).comment == "keep")
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            if(list.at(i).comment == "keep" || i ==0)
             {
-                 NeuronSWC curr = list.at(i);
-                 S.n 	= curr.n;
-                 S.type 	= curr.type;
-                 S.x 	= curr.x;
-                 S.y 	= curr.y;
-                 S.z 	= curr.z;
-                 S.r 	= curr.r;
-                 S.pn 	= curr.pn;
-                 listNeuron.append(S);
-                 hashNeuron.insert(S.n, listNeuron.size()-1);
+                S.type 	= 3;
+
             }else
             {
-                CellAPO t;
-                t.x = nt.listNeuron.at(i).x+1;
-                t.y = nt.listNeuron.at(i).y+1;
-                t.z = nt.listNeuron.at(i).z+1;
-                t.color.r=0;
-                t.color.g=255;
-                t.color.b=0;
+                S.type 	= 6;
 
-                t.volsize = 100;
-                file_inmarkers.push_back(t);
+//                CellAPO t;
+//                t.x = nt.listNeuron.at(i).x+1;
+//                t.y = nt.listNeuron.at(i).y+1;
+//                t.z = nt.listNeuron.at(i).z+1;
+//                t.color.r=0;
+//                t.color.g=255;
+//                t.color.b=0;
+
+//                t.volsize = 100;
+//                file_inmarkers.push_back(t);
 
             }
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
 
        }
         nt_prunned.n = -1;
@@ -1102,8 +1105,45 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
         nt_prunned.listNeuron = listNeuron;
         nt_prunned.hashNeuron = hashNeuron;
 
+        NeuronTree nt_no_connection;
+//        QList <NeuronSWC> listNeuron;
+//        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        //set node
+
+//        NeuronSWC S;
+//        QList<CellAPO> file_inmarkers;
+
+        for (int i=0;i<list.size();i++)
+        {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            if(list.at(i).comment == "keep" || i ==0)
+            {
+                S.type 	= 3;
+                S.pn 	= curr.pn;
+            }else
+            {
+                S.type 	= 6;
+                S.pn 	= -1;
+            }
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+
+       }
+        nt_no_connection.n = -1;
+        nt_no_connection.on = true;
+        nt_no_connection.listNeuron = listNeuron;
+        nt_no_connection.hashNeuron = hashNeuron;
+
         writeSWC_file(outswc_file,nt_prunned);
-        writeAPO_file(outapo_file,file_inmarkers);
+        writeSWC_file(outapo_file,nt_no_connection);
 
 
     }
