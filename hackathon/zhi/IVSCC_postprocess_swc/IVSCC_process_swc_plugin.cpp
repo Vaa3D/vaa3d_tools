@@ -87,6 +87,7 @@ QStringList IVSCC_process_swc::funclist() const
        <<tr("merge_two_swc")
       <<tr("connect_two_swc")
      <<tr("split_swc")
+    <<tr("extract_high_swc")
     <<tr("help");
 }
 
@@ -862,7 +863,7 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
                         double y_jj = nt2.listNeuron[jj].y;
                         double z_jj = nt2.listNeuron[jj].z;
                         double dis = sqrt(pow2(x_ii-x_jj) + pow2(y_ii-y_jj) + pow2(z_ii-z_jj));
-                        if(dis < 2.0)
+                        if(dis < 5.0)
                         {
                             flag = true;
                             break;
@@ -1144,7 +1145,118 @@ bool IVSCC_process_swc::dofunc(const QString & func_name, const V3DPluginArgList
 
         writeSWC_file(outswc_file,nt_prunned);
         writeSWC_file(outapo_file,nt_no_connection);
+    }
+    else if (func_name == tr("extract_high_swc"))
+    {
+        cout<<"Welcome to IVSCC swc connect plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need one input swc files"<<endl;
+            return false;
+        }
 
+        QString  inswc_file =  infiles[0];
+        QString  outswc_file =  inswc_file + "_high_more.swc";
+
+
+        cout<<"inswc_file = "<<inswc_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+
+        NeuronTree nt = readSWC_file(inswc_file);
+
+        V3DLONG end_ID = 0,start_ID = 0;
+        for (V3DLONG i = 1; i<nt.listNeuron.size(); i++)
+        {
+            if(nt.listNeuron.at(i).parent <= 0)
+            {
+                NeuronTree sub_nt = nt;
+                sub_nt.listNeuron.erase(sub_nt.listNeuron.begin()+i,sub_nt.listNeuron.end());
+                if(end_ID > 0)
+                {
+                    sub_nt.listNeuron.erase(sub_nt.listNeuron.begin(),sub_nt.listNeuron.begin()+ end_ID);
+                    start_ID = end_ID;
+                }
+                end_ID = i;
+
+                NeuronTree sub_nt_sort = SortSWC_pipeline(sub_nt.listNeuron,1000000000, 0);
+                double max_distance = 0;
+                double total_length = 0;
+                double max_x = 0;
+                double max_y = 0;
+                V3DLONG d = 0;
+                bool flag = false;
+                for(V3DLONG ii = 0; ii <sub_nt_sort.listNeuron.size();ii++)
+                {
+                    if(sub_nt_sort.listNeuron[ii].type == 3)
+                    {
+                        flag = true;
+                        break;
+                    }else
+                    {
+                        double x_ii = sub_nt_sort.listNeuron[ii].x;
+                        double y_ii = sub_nt_sort.listNeuron[ii].y;
+                        d++;
+                        int parent = getParent(ii,sub_nt_sort);
+                        if (parent==1000000000) continue;
+                        total_length += dist2D(sub_nt_sort.listNeuron.at(ii),sub_nt_sort.listNeuron.at(parent));
+                        for(V3DLONG jj = ii+1; jj <sub_nt.listNeuron.size();jj++)
+                        {
+                            double x_jj = sub_nt_sort.listNeuron[jj].x;
+                            double y_jj = sub_nt_sort.listNeuron[jj].y;
+                            if(sqrt(pow2(x_ii - x_jj) + pow2(y_ii - y_jj)) > max_distance)
+                                max_distance = sqrt(pow2(x_ii - x_jj) + pow2(y_ii - y_jj));
+                            if(fabs(x_ii - x_jj) > max_x) max_x = fabs(x_ii - x_jj);
+                            if(fabs(y_ii - y_jj) > max_y) max_y = fabs(y_ii - y_jj);
+                        }
+
+                    }
+
+                }
+
+                double ratio_check = (total_length-max_distance)/max_distance;
+
+                if(flag || (total_length > 300 && ratio_check < 0.4))
+                {
+                    for(V3DLONG d = start_ID; d < i; d++)
+                        nt.listNeuron[d].comment = "keep";
+                }
+
+
+            }
+        }
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        NeuronTree nt_prunned;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        //set node
+
+        NeuronSWC S;
+        for (int i=0;i<list.size();i++)
+        {
+            if(list.at(i).comment == "keep" || i ==0)
+            {
+                NeuronSWC curr = list.at(i);
+                S.n 	= curr.n;
+                S.x 	= curr.x;
+                S.y 	= curr.y;
+                S.z 	= curr.z;
+                S.r 	= curr.r;
+                S.pn 	= curr.pn;
+                S.type 	= 3;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+
+            }
+       }
+        nt_prunned.n = -1;
+        nt_prunned.on = true;
+        nt_prunned.listNeuron = listNeuron;
+        nt_prunned.hashNeuron = hashNeuron;
+        writeSWC_file(outswc_file,nt_prunned);
 
     }
     else if (func_name == tr("help"))
