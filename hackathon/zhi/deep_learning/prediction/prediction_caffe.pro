@@ -60,6 +60,7 @@ SOURCES += $$VAA3DPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/stackutil.cpp
 SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
+SOURCES	+= ../../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp
 
 
 INCLUDEPATH += ../../../../released_plugins/v3d_plugins/terastitcher/include

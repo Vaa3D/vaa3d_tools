@@ -18,6 +18,7 @@
 #include "../../../xiaoxiaol/consensus_skeleton_2/mst_boost_prim.h"
 #include "../../APP2_large_scale/readRawfile_func.h"
 
+#include "../../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
@@ -38,6 +39,36 @@ double vectorDistance(std::vector<float> v1, std::vector<float> v2)
       ret += dist * dist;
   }
   return ret > 0.0 ? sqrt(ret) : 0.0;
+}
+
+QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    if (method_code ==1)
+        imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
+    else if (method_code ==2)
+        imgSuffix<<"*.marker";
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
 }
 
 Q_EXPORT_PLUGIN2(prediction_caffe, prediction_caffe);
@@ -2007,6 +2038,9 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"sample_size = "<<Sxy<<endl;
         cout<<"image_size = "<<Ws<<endl;
 
+        QString outputfolder = inimg_file + "_finished/";
+        QDir().mkdir(outputfolder);
+
         unsigned char * datald = 0;
         V3DLONG *in_zz = 0;
         V3DLONG *in_sz = 0;
@@ -2020,7 +2054,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG M = in_zz[1];
         V3DLONG P = in_zz[2];
 
-        QList <ImageMarker> marklist_3D_final;
+//        QList <ImageMarker> marklist_3D_final;
         unsigned int numOfThreads = 8; // default value for number of theads
 #if  defined(Q_OS_LINUX)
 
@@ -2033,7 +2067,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
         {
             V3DLONG yb = iy;
-            V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+            V3DLONG ye = yb+Ws-1; if(ye>=M-1) ye = M-1;
 
 #if  defined(Q_OS_LINUX)
             printf("number of threads for iy = %d\n", omp_get_num_threads());
@@ -2044,8 +2078,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
             {
                 V3DLONG xb = ix;
-                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
-
+                V3DLONG xe = xb+Ws-1; if(xe>=N-1) xe = N-1;
 
                 unsigned char *blockarea_3D=0;
                 V3DLONG *in_sub_sz = 0;
@@ -2118,7 +2151,6 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     marklist_2D_shifted.append(tmp);
                 }
 
-
                 QList <ImageMarker> marklist_3D;
                 ImageMarker S;
 
@@ -2147,43 +2179,85 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 }
 
                 QList <ImageMarker> marklist_3D_pruned = batch_deletion(blockarea_3D,classifier,marklist_3D,xe-xb+1,ye-yb+1,P);
-                for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+                if(marklist_3D_pruned.size()>0)
                 {
-                    S.x  = marklist_3D_pruned.at(i).x + xb;
-                    S.y  = marklist_3D_pruned.at(i).y + yb;
-                    S.z  = marklist_3D_pruned.at(i).z;
-                    marklist_3D_final.push_back(S);
-                }
+//                    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+//                    {
+//                        S.x  = marklist_3D_pruned.at(i).x + xb;
+//                        S.y  = marklist_3D_pruned.at(i).y + yb;
+//                        S.z  = marklist_3D_pruned.at(i).z;
+//                        marklist_3D_final.push_back(S);
+//                    }
 
+                    QString  swc_segs = outputfolder + QString("x_%1_y_%2.swc").arg(xb).arg(yb);
+                    NeuronTree nt;
+                    QList <NeuronSWC> & listNeuron = nt.listNeuron;
+                    writeSWC_file(swc_segs,nt);
+                    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+                    {
+                        V3DLONG ix = marklist_3D_pruned.at(i).x + xb;
+                        V3DLONG iy = marklist_3D_pruned.at(i).y + yb;
+                        V3DLONG iz = marklist_3D_pruned.at(i).z;
+
+                        NeuronSWC n;
+                        n.x = ix-1;
+                        n.y = iy-1;
+                        n.z = iz-1;
+                        n.n = i+1;
+                        n.type = 2;
+                        n.r = 1;
+                        n.pn = -1; //so the first one will be root
+                        listNeuron << n;
+                    }
+                    writeSWC_file(swc_segs,nt);
+                }
                 if(blockarea) {delete []blockarea; blockarea =0;}
                 if(blockarea_3D) {delete []blockarea_3D; blockarea_3D = 0;}
-
             }
 
         }
 
-        NeuronTree nt;
-        QList <NeuronSWC> & listNeuron = nt.listNeuron;
-
-        for(V3DLONG i = 0; i < marklist_3D_final.size(); i++)
+        QStringList swcList = importFileList_addnumbersort(outputfolder, 1);
+        vector<MyMarker*> outswc;
+        for(V3DLONG i = 0; i < swcList.size(); i++)
         {
-            V3DLONG ix = marklist_3D_final.at(i).x;
-            V3DLONG iy = marklist_3D_final.at(i).y;
-            V3DLONG iz = marklist_3D_final.at(i).z;
 
-            NeuronSWC n;
-            n.x = ix-1;
-            n.y = iy-1;
-            n.z = iz-1;
-            n.n = i+1;
-            n.type = 2;
-            n.r = 1;
-            n.pn = -1; //so the first one will be root
-            listNeuron << n;
+            QString curPathSWC = swcList.at(i);
+
+            vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
+
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                outswc.push_back(inputswc[d]);
+            }
+            QDir().remove(curPathSWC);
+
         }
-
         QString  swc_processed = inimg_file + QString("_axon_3D.swc");
-        writeSWC_file(swc_processed,nt);
+        saveSWC_file(swc_processed.toStdString().c_str(), outswc);
+        QDir().rmdir(outputfolder);
+
+//        NeuronTree nt;
+//        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+
+//        for(V3DLONG i = 0; i < marklist_3D_final.size(); i++)
+//        {
+//            V3DLONG ix = marklist_3D_final.at(i).x;
+//            V3DLONG iy = marklist_3D_final.at(i).y;
+//            V3DLONG iz = marklist_3D_final.at(i).z;
+
+//            NeuronSWC n;
+//            n.x = ix-1;
+//            n.y = iy-1;
+//            n.z = iz-1;
+//            n.n = i+1;
+//            n.type = 2;
+//            n.r = 1;
+//            n.pn = -1; //so the first one will be root
+//            listNeuron << n;
+//        }
+
+//        writeSWC_file(swc_processed,nt);
         return true;
     }
     else if(func_name == tr("Feature_Extraction"))

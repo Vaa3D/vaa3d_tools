@@ -390,13 +390,13 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
     }
     //qDebug()<<"v_Prev:"<<v_prev;
     int testCount=0;
-    int testCount1=0;
+//    int testCount1=0;
 
-    while (center_dis>=0.5)
+    while (center_dis>=0.5 && testCount<50)
     {
         total_x=total_y=total_z=sum_v=0;
-
-        testCount=testCount1=0;
+        testCount++;
+     //   testCount=testCount1=0;
 
 //        for(V3DLONG dx=MAX(x+0.5-windowradius,0); dx<=MIN(sz_image[0]-1,x+0.5+windowradius); dx++){
 //            for(V3DLONG dy=MAX(y+0.5-windowradius,0); dy<=MIN(sz_image[1]-1,y+0.5+windowradius); dy++){
