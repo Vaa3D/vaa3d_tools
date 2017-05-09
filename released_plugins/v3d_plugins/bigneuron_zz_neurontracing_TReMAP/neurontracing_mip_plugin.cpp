@@ -333,7 +333,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                 for(V3DLONG iz = 0; iz < P; iz++)
                 {
                     V3DLONG offsetk = iz*M*N;
-                    for(V3DLONG iy = 0; iy < N; iy++)
+                    for(V3DLONG iy = 0; iy < M; iy++)
                     {
                         V3DLONG offsetj = iy*N;
                         int max_mip = 0;
