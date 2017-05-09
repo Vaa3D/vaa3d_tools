@@ -97,6 +97,7 @@ QStringList prediction_caffe::funclist() const
      <<tr("3D_Axon_detection_raw")
     <<tr("Feature_Extraction")
     <<tr("Connection")
+    <<tr("swc_extraction")
     <<tr("help");
 }
 
@@ -2471,6 +2472,63 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         QString outfilename = swc_file + "_connected_60_z.swc";
         writeSWC_file(outfilename,marker_MST);
         v3d_msg(QString("The output file is [%1]").arg(outfilename),0);
+        return true;
+    }
+    else if(func_name == tr("swc_extraction"))
+    {
+        cout<<"Welcome to swc extraction plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        QString ImageName =  infiles[0];
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+        int datatype;
+        if (!loadRawRegion(const_cast<char *>(ImageName.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+        if(datald) {delete []datald; datald = 0;}
+        V3DLONG M = in_zz[1];
+
+        QString SWCfileName = ImageName +".swc";
+        QString  outswc_file =  SWCfileName + "_training.swc";
+
+        QString Patchfolder = "/local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train/signal/"+ QFileInfo(ImageName).fileName()+ "_x30_y30_z15/";
+        NeuronTree nt = readSWC_file(SWCfileName);
+        NeuronTree nt_prunned;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        V3DLONG d = 0;
+        for (int i=0;i<nt.listNeuron.size();i++)
+        {
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = M - nt.listNeuron.at(i).y - 1;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
+            QString filePath = Patchfolder + QFileInfo(ImageName).fileName()+ QString("_x30_y30_z15_x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+            if(QFileInfo(filePath).exists())
+            {
+                listNeuron.append(nt.listNeuron.at(i));
+                hashNeuron.insert(nt.listNeuron.at(i).n, listNeuron.size()-1);
+            }
+        }
+
+        nt_prunned.n = -1;
+        nt_prunned.on = true;
+        nt_prunned.listNeuron = listNeuron;
+        nt_prunned.hashNeuron = hashNeuron;
+
+        NeuronTree nt_prunned_sort = SortSWC_pipeline(nt_prunned.listNeuron,VOID, VOID);
+
+        writeSWC_file(outswc_file,nt_prunned_sort);
+
+
         return true;
     }
     else if (func_name == tr("help"))
