@@ -176,7 +176,7 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                 {
                     if(data1d[offsetk + offsetj + ix] >= max_mip)
                     {
-                        image_mip[iz*N + iy] = data1d[offsetk + offsetj + ix];
+                        image_mip[iz*M + iy] = data1d[offsetk + offsetj + ix];
                         max_mip = data1d[offsetk + offsetj + ix];
                     }
                 }

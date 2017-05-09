@@ -341,7 +341,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                         {
                             if(data1d[offsetk + offsetj + ix] >= max_mip)
                             {
-                                image_mip[iz*N + iy] = data1d[offsetk + offsetj + ix];
+                                image_mip[iz*M + iy] = data1d[offsetk + offsetj + ix];
                                 max_mip = data1d[offsetk + offsetj + ix];
                             }
                         }
