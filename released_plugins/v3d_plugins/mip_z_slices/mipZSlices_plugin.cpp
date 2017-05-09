@@ -142,41 +142,23 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	}
     else if (func_name == tr("mip_xslices"))
     {
-        if (infiles.size()<1 || inparas.size()<1 || output.size()<1 )
+        unsigned char * data1d = 0;
+        int datatype;
+        V3DLONG in_sz[4];
+
+        if (!simple_loadimage_wrapper(callback, infiles.at(0), data1d, in_sz, datatype))
         {
-            v3d_msg("No input image or no parameters or no output image is specified.");
+            v3d_msg("Fail to load image");
             return false;
         }
-
-        Image4DSimple *inimg = callback.loadImage(infiles.at(0));
-        if(!inimg || !inimg->valid())
-        {
-            v3d_msg("Fail to load the specified input image.", 0);
-            return false;
-        }
-
-        V3DLONG startnum, increment, endnum;
-        QString paratext = inparas.at(0);
-        if (!paratext.isEmpty())
-        {
-            if (!parseFormatString(paratext, startnum, increment, endnum, inimg->getZDim()))
-            {
-                v3d_msg("The format of the string is not valid. Do nothing.");
-                return false;
-            }
-        }
-        else
-            return false;
-
-        unsigned char* data1d =  inimg->getRawData();
-        V3DLONG N = inimg->getXDim();
-        V3DLONG M = inimg->getYDim();
-        V3DLONG P = inimg->getZDim();
-        V3DLONG C = inimg->getCDim();
-        V3DLONG mip_sz[3];
-        mip_sz[0] = N;
-        mip_sz[1] = 1;
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG mip_sz[4];
+        mip_sz[0] = 1;
+        mip_sz[1] = M;
         mip_sz[2] = P;
+        mip_sz[3] = 1;
 
         V3DLONG pagesz_mip = mip_sz[0]*mip_sz[1]*mip_sz[2];
         unsigned char *image_mip=0;
@@ -186,25 +168,21 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         for(V3DLONG iz = 0; iz < P; iz++)
         {
             V3DLONG offsetk = iz*M*N;
-            for(V3DLONG ix = 0; ix < N; ix++)
+            for(V3DLONG iy = 0; iy < N; iy++)
             {
+                V3DLONG offsetj = iy*N;
                 int max_mip = 0;
-                for(V3DLONG iy = 0; iy < M; iy++)
+                for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                    V3DLONG offsetj = iy*N;
                     if(data1d[offsetk + offsetj + ix] >= max_mip)
                     {
-                        image_mip[iz*N + ix] = data1d[offsetk + offsetj + ix];
+                        image_mip[iz*N + iy] = data1d[offsetk + offsetj + ix];
                         max_mip = data1d[offsetk + offsetj + ix];
                     }
                 }
             }
         }
-
-        simple_saveimage_wrapper(callback, outfiles.at(0), (unsigned char *)image_mip, mip_sz, inimg->getDatatype());
-
-
-        if (inimg) {delete inimg; inimg=0;}
+        simple_saveimage_wrapper(callback, outfiles.at(0), (unsigned char *)image_mip, mip_sz, datatype);
     }
 	else if (func_name == tr("help"))
 	{
