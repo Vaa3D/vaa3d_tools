@@ -391,7 +391,7 @@ NeuronTree remove_swc(NeuronTree nt,double length)
 std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classifier classifier, int N, int M, int P, int Sxy)
 {
     std::vector<cv::Mat> imgs;
-    int Wx = 30, Wy = 30, Wz = 15;
+    int Wx = 30, Wy = 30, Wz = 1;
     int Sz = (int)Sxy;
 
     V3DLONG num_patches = 0;
@@ -545,6 +545,7 @@ QList <ImageMarker> batch_deletion(unsigned char * & data1d,Classifier classifie
         std::vector<float> output = outputs_overall[j];
         if(output.at(0) < output.at(1))
         {
+            input_markerlist[j].radius = output.at(1);
             output_marklist.push_back(input_markerlist.at(j));
         }
     }

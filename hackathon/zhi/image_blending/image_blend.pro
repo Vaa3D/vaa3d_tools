@@ -21,6 +21,7 @@ HEADERS += $$V3DMAINPATH/basic_c_fun/basic_memory.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/mg_utilities.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
+HEADERS	+= $$V3DMAINPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
 
 HEADERS	+= image_blend_plugin.h
 SOURCES	+= image_blend_plugin.cpp
@@ -30,6 +31,9 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
+SOURCES	+= $$V3DMAINPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
+SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/v3d/colormap.cpp
 
 
 TARGET	= $$qtLibraryTarget(blend_two_images)

@@ -12,10 +12,55 @@
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 #include "../plugin_loader/v3d_plugin_loader.h"
 #include "/local1/work/v3d_external/v3d_main/basic_c_fun/stackutil.h"
-
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+#include "basic_surf_objs.h"
+#include "/local1/work/v3d_external/v3d_main/v3d/colormap.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(image_blend, image_blend);
+
+template <class T>
+void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d)
+{
+    V3DLONG i, j,k,n,count;
+    double t, temp;
+
+    V3DLONG mCount = iImageHeight * iImageWidth;
+    for (i=0; i<iImageLayer; i++)
+    {
+        for (j=0; j<iImageHeight; j++)
+        {
+            for (k=0; k<iImageWidth; k++)
+            {
+                V3DLONG curpos = i * mCount + j*iImageWidth + k;
+                V3DLONG curpos1 = i* mCount + j*iImageWidth;
+                V3DLONG curpos2 = j* iImageWidth + k;
+                temp = 0;
+                count = 0;
+                for(n =1 ; n <= d  ;n++)
+                {
+                    if (k>h*n) {temp += apsInput[curpos1 + k-(h*n)]; count++;}
+                    if (k+(h*n)< iImageWidth) { temp += apsInput[curpos1 + k+(h*n)]; count++;}
+                    if (j>h*n) {temp += apsInput[i* mCount + (j-(h*n))*iImageWidth + k]; count++;}//
+                    if (j+(h*n)<iImageHeight) {temp += apsInput[i* mCount + (j+(h*n))*iImageWidth + k]; count++;}//
+                    if (i>(h*n)) {temp += apsInput[(i-(h*n))* mCount + curpos2]; count++;}//
+                    if (i+(h*n)< iImageLayer) {temp += apsInput[(i+(h*n))* mCount + j* iImageWidth + k ]; count++;}
+                }
+                t =  apsInput[curpos]-temp/(count);
+                aspOutput[curpos]= (t > 0)? t : 0;
+            }
+        }
+    }
+}
+
+template <class T> void median_filter(T* data1d,
+                                      V3DLONG *in_sz,
+                                      unsigned int Wx,
+                                      unsigned int Wy,
+                                      unsigned int Wz,
+                                      unsigned int c,
+                                      T* &outimg);
+
  
 QStringList image_blend::menulist() const
 {
@@ -29,6 +74,7 @@ QStringList image_blend::funclist() const
 		<<tr("image_blend")
         <<tr("image_modulate")
         <<tr("image_align")
+        <<tr("xy_yz_combine")
 		<<tr("help");
 }
 
@@ -466,9 +512,180 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if (image1) {delete []image1; image1=0;}
       //  if (image2) {delete []image2; image2=0;}
         if (data_blended) {delete []data_blended; data_blended=0;}
+    }
+    else if (func_name == tr("xy_yz_combine"))
+    {
+
+        if (output.size() != 1) return false;
+        char * inimg_file_xy = ((vector<char*> *)(input.at(0).p))->at(0);
+        char * inimg_file_yz = ((vector<char*> *)(input.at(1).p))->at(0);
+        char * inswc_file = ((vector<char*> *)(input.at(1).p))->at(1);
+
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        unsigned char * image_xy = 0;
+        V3DLONG in_sz_xy[4];
+        int datatype_xy;
+        if(!simple_loadimage_wrapper(callback, inimg_file_xy, image_xy, in_sz_xy, datatype_xy))
+        {
+            if (image_xy) {delete []image_xy; image_xy=0;}
+            return false;
+        }
+        V3DLONG pagesz_xy = in_sz_xy[0]*in_sz_xy[1]*in_sz_xy[2]*in_sz_xy[3];
+        unsigned char* image_xy_apa = 0;
+        image_xy_apa = new unsigned char [pagesz_xy];
+        BinaryProcess(image_xy, image_xy_apa,in_sz_xy[0],in_sz_xy[1], in_sz_xy[2], 5, 3);
+        double min,max;
+        unsigned char* image_xy_apa_scaled = 0;
+        image_xy_apa_scaled = new unsigned char [pagesz_xy];
+        rescale_to_0_255_and_copy(image_xy_apa,pagesz_xy,min,max,image_xy_apa_scaled);
+        for(V3DLONG i = 0; i <pagesz_xy; i++)
+        {
+            if(image_xy_apa_scaled[i] <=5)
+                image_xy_apa_scaled[i] = 0;
+        }
+
+        unsigned char* image_xy_apa_scaled_filtered = 0;
+        median_filter(image_xy_apa_scaled, in_sz_xy, 3, 3, 3, 1,(unsigned char* &)image_xy_apa_scaled_filtered);
+
+        ColorMap *pc = new ColorMap(colorPseudoMaskColor, 256);
+        int clen = pc->len;
 
 
+        unsigned char * image_yz = 0;
+        V3DLONG in_sz_yz[4];
+        int datatype_yz;
+        if(!simple_loadimage_wrapper(callback, inimg_file_yz, image_yz, in_sz_yz, datatype_yz))
+        {
+            if (image_yz) {delete []image_yz; image_yz=0;}
+            return false;
+        }
+        V3DLONG pagesz_yz = in_sz_yz[0]*in_sz_yz[1]*in_sz_yz[2]*in_sz_yz[3];
+        unsigned char* image_yz_apa = 0;
+        image_yz_apa = new unsigned char [pagesz_yz];
+        BinaryProcess(image_yz, image_yz_apa,in_sz_yz[0],in_sz_yz[1], in_sz_yz[2], 5, 3);
 
+        unsigned char* image_yz_apa_scaled = 0;
+        image_yz_apa_scaled = new unsigned char [pagesz_yz];
+        rescale_to_0_255_and_copy(image_yz_apa,pagesz_yz,min,max,image_yz_apa_scaled);
+
+        for(V3DLONG i = 0; i <pagesz_yz; i++)
+        {
+            if(image_yz_apa_scaled[i] <=5)
+                image_yz_apa_scaled[i] = 0;
+        }
+
+        unsigned char* image_yz_apa_scaled_filtered = 0;
+        median_filter(image_yz_apa_scaled, in_sz_yz, 3, 3, 3, 1,(unsigned char* &)image_yz_apa_scaled_filtered);
+
+        unsigned char* image_yz_apa_scaled_4D = 0;
+        image_yz_apa_scaled_4D = new unsigned char [pagesz_yz*3];
+        for(V3DLONG i = 0; i<pagesz_yz;i++)
+        {
+            V3DLONG ind = image_yz_apa_scaled_filtered[i];
+            if (ind>=clen) ind = ind % clen;
+            image_yz_apa_scaled_4D[i] = 0;//pc->map2d[ind][0];
+            image_yz_apa_scaled_4D[pagesz_yz+i] = pc->map2d[ind][1];
+            image_yz_apa_scaled_4D[2*pagesz_yz+i] = pc->map2d[ind][2];
+
+        }
+
+        unsigned char * image_xy_yz = 0;
+        V3DLONG in_sz_xy_yz[4];
+        in_sz_xy_yz[0] = in_sz_xy[0] + in_sz_yz[2];
+        in_sz_xy_yz[1] = in_sz_xy[1];
+        in_sz_xy_yz[2] = 1;
+        in_sz_xy_yz[3] = 3;
+        V3DLONG pagesz_xy_yz = in_sz_xy_yz[0]*in_sz_xy_yz[1]*in_sz_xy_yz[2]*in_sz_xy_yz[3];
+        V3DLONG pagesz_xy_yz_one = in_sz_xy_yz[0]*in_sz_xy_yz[1]*in_sz_xy_yz[2];
+
+        image_xy_yz = new unsigned char [pagesz_xy_yz];
+        for(V3DLONG i = 0; i < pagesz_xy_yz; i++)
+            image_xy_yz[i] = 0;
+        for(V3DLONG iy = 0; iy < in_sz_xy[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz_xy_yz[0];
+            V3DLONG offsetj_old = iy*in_sz_xy[0];
+            for(V3DLONG ix = 0; ix < in_sz_xy[0]; ix++)
+            {
+                V3DLONG ind = image_xy_apa_scaled_filtered[offsetj_old + ix];
+                if (ind>=clen) ind = ind % clen;
+                image_xy_yz[offsetj + ix]= 0;//pc->map2d[ind][0];
+                image_xy_yz[pagesz_xy_yz_one+offsetj + ix] = pc->map2d[ind][1];
+                image_xy_yz[pagesz_xy_yz_one*2+offsetj + ix] = pc->map2d[ind][2];
+            }
+        }
+
+        NeuronTree nt = readSWC_file(inswc_file);
+        for(V3DLONG ii = 0; ii < nt.listNeuron.size(); ii++)
+        {
+            nt.listNeuron[ii].z = 1;
+            nt.listNeuron[ii].r = 2;
+        }
+
+        unsigned char* data1d_mask = 0;
+        data1d_mask = new unsigned char [pagesz_xy];
+        memset(data1d_mask,0,pagesz_xy*sizeof(unsigned char));
+        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2]);
+
+        for(V3DLONG iy = 0; iy < in_sz_xy[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz_xy_yz[0];
+            V3DLONG offsetj_old = iy*in_sz_xy[0];
+            for(V3DLONG ix = 0; ix < in_sz_xy[0]; ix++)
+            {
+                if(data1d_mask[offsetj_old + ix] > 0)
+                {
+                    image_xy_yz[offsetj + ix]= data1d_mask[offsetj_old + ix];
+                    image_xy_yz[pagesz_xy_yz_one+offsetj + ix] = 0;//data1d_mask[offsetj_old + ix];
+                    image_xy_yz[pagesz_xy_yz_one*2+offsetj + ix] = 0;//data1d_mask[offsetj_old + ix];
+                }
+            }
+        }
+
+
+        for(V3DLONG iy = 0; iy < in_sz_xy_yz[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz_xy_yz[0];
+            for(V3DLONG ix = in_sz_xy[0]; ix < in_sz_xy_yz[0]; ix++)
+            {
+                   V3DLONG offsetz_old = (ix - in_sz_xy[0])*in_sz_xy[1];
+                   V3DLONG ind = image_yz_apa_scaled_filtered[offsetz_old + iy];
+                   if (ind>=clen) ind = ind % clen;
+                   image_xy_yz[offsetj + ix]= 0;//pc->map2d[ind][0];
+                   image_xy_yz[pagesz_xy_yz_one+offsetj + ix] = pc->map2d[ind][1];
+                   image_xy_yz[pagesz_xy_yz_one*2+offsetj + ix] = pc->map2d[ind][2];
+            }
+        }
+
+        NeuronTree nt2 = readSWC_file(inswc_file);
+        for(V3DLONG ii = 0; ii < nt2.listNeuron.size(); ii++)
+        {
+            nt2.listNeuron[ii].x = 1;
+            nt2.listNeuron[ii].r = 2;
+
+        }
+
+        unsigned char* data1d_mask2 = 0;
+        data1d_mask2 = new unsigned char [pagesz_yz];
+        memset(data1d_mask2,0,pagesz_yz*sizeof(unsigned char));
+        ComputemaskImage(nt2, data1d_mask2, in_sz_yz[0], in_sz_yz[1], in_sz_yz[2]);
+
+        for(V3DLONG iy = 0; iy < in_sz_xy_yz[1]; iy++)
+        {
+            V3DLONG offsetj = iy*in_sz_xy_yz[0];
+            for(V3DLONG ix = in_sz_xy[0]; ix < in_sz_xy_yz[0]; ix++)
+            {
+                V3DLONG offsetz_old = (ix - in_sz_xy[0])*in_sz_xy[1];
+                if(data1d_mask2[offsetz_old + iy] > 0)
+                {
+                    image_xy_yz[offsetj + ix]= data1d_mask2[offsetz_old + iy];
+                    image_xy_yz[pagesz_xy_yz_one+offsetj + ix] = 0;//data1d_mask2[offsetz_old + iy];
+                    image_xy_yz[pagesz_xy_yz_one*2+offsetj + ix] =0;// data1d_mask2[offsetz_old + iy];
+                }
+            }
+        }
+
+        simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)image_xy_yz, in_sz_xy_yz, 1);
     }
     else if (func_name == tr("help"))
 	{
@@ -487,3 +704,97 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
 }
 
 
+template <class T> void median_filter(T* data1d,
+                                      V3DLONG *in_sz,
+                                      unsigned int Wx,
+                                      unsigned int Wy,
+                                      unsigned int Wz,
+                                      unsigned int c,
+                                      T* &outimg)
+{
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG sc = in_sz[3];
+    V3DLONG pagesz = N*M*P;
+
+    T *arr,tmp;
+    int ii,jj;
+    int size = (2*Wx+1)*(2*Wy+1)*(2*Wz+1);
+    arr = new T[size];
+
+    //filtering
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    //declare temporary pointer
+    T *pImage = new T [pagesz];
+    if (!pImage)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pImage[i] = 0;
+    }
+
+    //Median Filtering
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+         printf("\r median filter : %d %% completed ", ((iz + 1)*100) / P);fflush(stdout);
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+
+                V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
+                V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
+                V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
+                V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+                ii = 0;
+
+                for(V3DLONG k=zb; k<=ze; k++)
+                {
+                    V3DLONG offsetkl = k*M*N;
+                    for(V3DLONG j=yb; j<=ye; j++)
+                    {
+                        V3DLONG offsetjl = j*N;
+                        for(V3DLONG i=xb; i<=xe; i++)
+                        {
+                            T dataval = data1d[ offsetc + offsetkl + offsetjl + i];
+                            arr[ii] = dataval;
+                            if (ii>0)
+                            {
+                                jj = ii;
+                                while(jj > 0 && arr[jj-1]>arr[jj])
+                                {
+                                    tmp = arr[jj];
+                                    arr[jj] = arr[jj-1];
+                                    arr[jj-1] = tmp;
+                                    jj--;
+                                }
+                            }
+                            ii++;
+                        }
+                    }
+                }
+
+
+                //set value
+                V3DLONG index_pim = offsetk + offsetj + ix;
+                pImage[index_pim] = arr[int(0.5*ii)+1];
+            }
+        }
+    }
+printf("\n");
+
+    outimg = pImage;
+    delete [] arr;
+
+}

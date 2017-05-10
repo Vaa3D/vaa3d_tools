@@ -81,6 +81,7 @@ QStringList prediction_caffe::menulist() const
           <<tr("Detection")
          <<tr("Feature_Extraction")
         <<tr("Connection")
+       <<tr("Local_Maximum")
        <<tr("about");
 }
 
@@ -718,8 +719,93 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         connect_swc(nt_pruned_rs,newNeuron,disTh,angTh);
         export_list2file(newNeuron, outfilename, SWCfileName);
 
+    }
+    else if  (menu_name == tr("Local_Maximum"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
 
+        Image4DSimple* p4DImage = callback.getImage(curwin);
 
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imagename = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+        QString SWCfileName;
+        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                                                   "",
+                                                   QObject::tr("Supported file (*.swc *.eswc)"
+                                                               ";;Neuron structure	(*.swc)"
+                                                               ";;Extended neuron structure (*.eswc)"
+                                                               ));
+        if(SWCfileName.isEmpty())
+            return;
+        NeuronTree nt = readSWC_file(SWCfileName);
+        QList <ImageMarker> marklist_3D;
+        ImageMarker S;
+
+        for(int i = 0; i <nt.listNeuron.size();i++)
+        {
+            V3DLONG ix = nt.listNeuron.at(i).x;
+            V3DLONG iy = nt.listNeuron.at(i).y;
+            double I_max = 0;
+            double I_sum = 0;
+            V3DLONG iz;
+            for(V3DLONG j = 0; j < P; j++)
+            {
+                I_sum += data1d[j*M*N + iy*N + ix];
+                if(data1d[j*M*N + iy*N + ix] >= I_max)
+                {
+                    I_max = data1d[j*M*N + iy*N + ix];
+                    iz = j;
+                }
+
+            }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            S.color.r = 255;
+            S.color.g = 0;
+            S.color.b = 0;
+            marklist_3D.append(S);
+
+            double I_mean = I_sum/P;
+            int valid_j = iz;
+            for(V3DLONG j = 1; j < P-1; j++)
+            {
+                double I_current = data1d[j*M*N + iy*N + ix];
+                double I_before = data1d[(j-1)*M*N + iy*N + ix];
+                double I_after = data1d[(j+1)*M*N + iy*N + ix];
+                if(I_current > I_before && I_current > I_after && abs(j-iz) >30 && abs(j-valid_j) >30 && I_current > I_mean*1.1)
+                {
+                    S.x = ix-1;
+                    S.y = iy-1;
+                    S.z = j-1;
+                    S.color.r = 255;
+                    S.color.g = 0;
+                    S.color.b = 0;
+                    marklist_3D.append(S);
+                    valid_j = j;
+                }
+            }
+        }
+        writeMarker_file("/opt/zhi/Desktop/test.marker",marklist_3D);
     }
     else
 	{
@@ -2160,9 +2246,11 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     V3DLONG ix_2D = marklist_2D_shifted.at(i).x;
                     V3DLONG iy_2D = marklist_2D_shifted.at(i).y;
                     double I_max = 0;
+                    double I_sum = 0;
                     V3DLONG iz_2D;
                     for(V3DLONG j = 0; j < P; j++)
                     {
+                        I_sum += blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
                         if(blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D] >= I_max)
                         {
                             I_max = blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
@@ -2177,6 +2265,26 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     S.color.g = 0;
                     S.color.b = 0;
                     marklist_3D.append(S);
+
+                    double I_mean = I_sum/P;
+                    int valid_j = iz_2D;
+                    for(V3DLONG j = 1; j < P-1; j++)
+                    {
+                        double I_current = blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+                        double I_before = blockarea_3D[(j-1)*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+                        double I_after = blockarea_3D[(j+1)*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+                        if(I_current > I_before && I_current > I_after && j != iz_2D && abs(j-valid_j) >30 && I_current > I_mean*1.2)
+                        {
+                            S.x = ix_2D;
+                            S.y = iy_2D;
+                            S.z = j;
+                            S.color.r = 255;
+                            S.color.g = 0;
+                            S.color.b = 0;
+                            marklist_3D.append(S);
+                            valid_j = j;
+                        }
+                    }
                 }
 
                 QList <ImageMarker> marklist_3D_pruned = batch_deletion(blockarea_3D,classifier,marklist_3D,xe-xb+1,ye-yb+1,P);
@@ -2196,19 +2304,22 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     writeSWC_file(swc_segs,nt);
                     for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
                     {
-                        V3DLONG ix = marklist_3D_pruned.at(i).x + xb;
-                        V3DLONG iy = marklist_3D_pruned.at(i).y + yb;
-                        V3DLONG iz = marklist_3D_pruned.at(i).z;
+                        if(marklist_3D_pruned.at(i).radius >0.995)
+                        {
+                            V3DLONG ix = marklist_3D_pruned.at(i).x + xb;
+                            V3DLONG iy = marklist_3D_pruned.at(i).y + yb;
+                            V3DLONG iz = marklist_3D_pruned.at(i).z;
 
-                        NeuronSWC n;
-                        n.x = ix-1;
-                        n.y = iy-1;
-                        n.z = iz-1;
-                        n.n = i+1;
-                        n.type = 2;
-                        n.r = 1;
-                        n.pn = -1; //so the first one will be root
-                        listNeuron << n;
+                            NeuronSWC n;
+                            n.x = ix-1;
+                            n.y = iy-1;
+                            n.z = iz-1;
+                            n.n = i+1;
+                            n.type = 2;
+                            n.r = marklist_3D_pruned.at(i).radius;
+                            n.pn = -1; //so the first one will be root
+                            listNeuron << n;
+                        }
                     }
                     writeSWC_file(swc_segs,nt);
                 }
@@ -2234,7 +2345,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             QDir().remove(curPathSWC);
 
         }
-        QString  swc_processed = inimg_file + QString("_axon_3D.swc");
+        QString  swc_processed = inimg_file + QString("_axon_3D_new.swc");
         saveSWC_file(swc_processed.toStdString().c_str(), outswc);
         QDir().rmdir(outputfolder);
 
