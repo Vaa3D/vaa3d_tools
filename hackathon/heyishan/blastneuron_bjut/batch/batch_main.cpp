@@ -55,7 +55,6 @@ bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     QString result_folder;
     QString result_temp;
     QString v3d;
-    int mk_consensus=0;
 
     if(inlist->size()==4)
     {
@@ -64,14 +63,7 @@ bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
         raw_img = inlist->at(2);
         consensus_file=inlist->at(3);
     }
-    else if (inlist->size()==3)
-    {
-        printf("Lack of consensus file, and generate it.\n");
-        neuron_folder_path = inlist->at(0);
-        raw_img = inlist->at(1);
-        mk_consensus=1;
-    }
-    else {printf("Wrong input.\n");return false;}
+    else {printf("Wrong input in batch_main.\n");return false;}
 
     paralist=(vector<char*>*)(input.at(1).p);
 
@@ -88,18 +80,13 @@ bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     // read files from a folder
     QStringList swcList = importFileList_addnumbersort(QString(neuron_folder_path));
     vector<NeuronTree> nt_list;
-    for(V3DLONG i = 3; i < swcList.size(); i++)     // the first two are not files
+    for(V3DLONG i = 2; i < swcList.size(); i++)     // the first two are not files
     {
         QString curPathSWC = swcList.at(i);
         NeuronTree temp = readSWC_file(curPathSWC);
         nt_list.push_back(temp);
     }
 
-    // generate consensus file
-    if (mk_consensus==1)
-    {
-        cout<<"This part unfinished."<<endl;
-    }
     // conver eswc to swc   -- the function will generate a swc file beside the eswc file
     if (consensus_file.toUpper().endsWith(".ESWC"))
     {
