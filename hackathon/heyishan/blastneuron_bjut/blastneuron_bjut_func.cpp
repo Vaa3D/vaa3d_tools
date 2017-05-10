@@ -16,7 +16,3 @@ bool pre_process_func(const V3DPluginArgList & input, V3DPluginArgList & output)
     return 1;
  }
 
-void printHelp()
-{
-    cout<<"This is printHelp"<<endl;
-}

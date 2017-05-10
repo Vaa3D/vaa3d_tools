@@ -9,6 +9,7 @@
 #include "overlap/overlap_gold.h"
 #include "overlap/pre_overlap.h"
 #include "prune_alignment.h"
+#include "batch/batch_main.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(blastneuron_bjut, blastneuron_bjutPlugin);
  
@@ -29,6 +30,7 @@ QStringList blastneuron_bjutPlugin::funclist() const
         <<tr("prune_alignment")
         <<tr("pre_overlap")
         <<tr("overlap_gold")
+        <<tr("batch_main")
 		<<tr("help");
 }
 
@@ -78,6 +80,10 @@ bool blastneuron_bjutPlugin::dofunc(const QString & func_name, const V3DPluginAr
     else if (func_name == tr("pre_overlap"))
     {
         return(pre_overlap(input,output,callback));
+    }
+    else if (func_name==tr("batch_main"))
+    {
+        return((batch_main(input,output,callback)));
     }
     else
     {

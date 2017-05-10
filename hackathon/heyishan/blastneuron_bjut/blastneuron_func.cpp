@@ -1,5 +1,5 @@
 #include "blastneuron_bjut_func.h"
-#include "dynamic.h"
+#include "local_alignment.h"
 #include <cstring>
 using namespace std;
 

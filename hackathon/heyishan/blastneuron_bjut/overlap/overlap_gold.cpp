@@ -222,7 +222,7 @@ bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         printf("Please specify four parameters");
         return false;
     }
-    V3DLONG method = atof(paralist->at(0));     // 0 stand for standard method; 1 stand for using mean method.
+    V3DLONG method = atof(paralist->at(0));
     double dist_para  = atof(paralist->at(1));
     double meth_para = atof(paralist->at(2));
     double prune_thres = atof(paralist->at(3));

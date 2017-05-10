@@ -28,6 +28,21 @@ bool export_prune_alignment(QList<NeuronSWC> & lN, QString fileSaveName, QString
     return true;
 }
 
+QList<NeuronSWC> prune_long_alignment(QList<NeuronSWC> &neuron,double thres)
+{
+    QList<NeuronSWC> result;
+    V3DLONG siz = neuron.size();
+    double dist;
+    for(V3DLONG i=0; i<siz-1;i=i+2)
+    {
+        dist = sqrt((neuron[i].x-neuron[i+1].x)*(neuron[i].x-neuron[i+1].x)
+                +(neuron[i].y-neuron[i+1].y)*(neuron[i].y-neuron[i+1].y)
+                +(neuron[i].z-neuron[i+1].z)*(neuron[i].z-neuron[i+1].z));
+        if(dist>=0 && dist <=thres){result.push_back(neuron[i]);result.push_back(neuron[i+1]);}
+    }
+    return result;
+}
+
 bool prune_alignment(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"----------This is prune_alignment process----------"<<endl;
@@ -69,15 +84,7 @@ bool prune_alignment(const V3DPluginArgList & input, V3DPluginArgList & output)
     if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         nt = readSWC_file(fileOpenName);
     neuron = nt.listNeuron;
-    V3DLONG siz = neuron.size();
-    double dist;
-    for(V3DLONG i=0; i<siz-1;i=i+2)
-    {
-        dist = sqrt((neuron[i].x-neuron[i+1].x)*(neuron[i].x-neuron[i+1].x)
-                +(neuron[i].y-neuron[i+1].y)*(neuron[i].y-neuron[i+1].y)
-                +(neuron[i].z-neuron[i+1].z)*(neuron[i].z-neuron[i+1].z));
-        if(dist>=0 && dist <=thres){result.push_back(neuron[i]);result.push_back(neuron[i+1]);}
-    }
+    result=prune_long_alignment(neuron,thres);
 
     if(!export_prune_alignment(result, fileSaveName, fileOpenName))
     {

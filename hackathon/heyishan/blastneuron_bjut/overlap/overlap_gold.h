@@ -7,7 +7,7 @@
 #include"v3d_message.h"
 #include<QtGui>
 bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
-bool export_neuronList2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName);
+bool export_neuronList2file(QList<NeuronSWC> & lN, QString fileSaveName);
 bool evaluate_radius(vector<MyMarker*> & inswc, QString raw_img, V3DPluginCallback2 &callback);
 bool prune_short_tree(vector<MyMarker*> & inswc, vector<MyMarker*> & outswc, double prune_thres);
 QStringList importFileList_addnumbersort(const QString & curFilePath);

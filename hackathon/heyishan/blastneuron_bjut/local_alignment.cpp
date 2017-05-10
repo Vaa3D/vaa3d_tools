@@ -1,7 +1,5 @@
-#ifndef DYNAMIC_H
-#define DYNAMIC_H
-#include "neuron_tree_align.h"
-#include<time.h>
+#include"local_alignment.h"
+
 using namespace std;
 template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2, vector<double> & w, vector<pair<int, int> > & result)
 {
@@ -9,6 +7,7 @@ template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2,
     map<SetIndexPair, vector<pair<int, int> > >  results;
     clock_t time_start, time_end;
     time_start = clock();
+    double time_limit = 30.0;
     int nrows = tree1.size();
     int ncols = tree2.size();
     map<T*, long> ind_map1, ind_map2;
@@ -20,10 +19,11 @@ template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2,
         int child_num1 = node1->child_list.size();
         time_end = clock();
         double run_time = (double)(time_end - time_start) / CLOCKS_PER_SEC;
-        if(run_time>=120.0) return 0;
+
+        if(run_time>=time_limit) return 0;
         for(long ind2 = 0; ind2 < tree2.size(); ind2++)
         {
-           if(run_time>=120.0) return 0;
+           if(run_time>=time_limit) return 0;
             T * node2 = tree2[ind2];
             int child_num2 = node2->child_list.size();
 
@@ -255,7 +255,10 @@ bool neuron_mapping_dynamic(vector<MyMarker*> &inswc1, vector<MyMarker*> & inswc
             cout<<"weight calculation done"<<endl;
             vector<pair<int, int> > cur_result;
 
-            double score = neuron_tree_align(tree1, tree2, weights, cur_result);
+            // set initial score=0 2017.5.7 by hys
+            // double score=neuron_tree_align(tree1, tree2, weights, cur_result);
+            double score = 0;
+            score=neuron_tree_align(tree1, tree2, weights, cur_result);
             if(score == 0)
             {
                 printf("neuron_tree_align time out.\n");
@@ -360,5 +363,3 @@ void convert_matchmap_2swc(vector<map<MyMarker*, MyMarker*> > & inmap, vector<My
         color += color_interval;
     }
 }
-
-#endif // DYNAMIC_H
