@@ -10,7 +10,6 @@
 bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool GreaterSort (QList<NeuronSWC> a, QList<NeuronSWC> b);
 char* num2str(int i);
-char* num2str(double i);
 
 QString getAppPath();
 #endif // BATCH_MAIN_H

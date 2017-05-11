@@ -22,16 +22,6 @@ char*num2str(int i)
     strcpy(str,num.c_str());
     return str;
 }
-//char*  num2str(double i)
-//{
-//    char* str = new char[5];
-//    char buf[10];
-//    string num;
-//    sprintf(buf, "%d", i);
-//    num = buf;
-//    strcpy(str,num.c_str());
-//    return str;
-//}
 
 bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
@@ -170,7 +160,7 @@ bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
            QFile::remove(alignment_result);
        }
     }
-
+    vector<NeuronTree>().swap(nt_list);  // release Mermory
 
     // old local alignment and prune alignment
     int BLOCK=1;
@@ -246,6 +236,8 @@ bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
         QString p_align_out = select_folder + "/select_" + QString::fromStdString(num_i) + ".swc";
         export_neuronList2file(p_align_list[i],p_align_out);
     }
+    vector<QList<NeuronSWC> >().swap(p_align_list);  // release Mermory
+
     // overlap with consensus
     {
         method = 2;
