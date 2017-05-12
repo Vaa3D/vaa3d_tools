@@ -8,8 +8,10 @@
 #include "cropped3DImageSeries_plugin.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
+#include "../terastitcher/src/core/imagemanager/VirtualVolume.h"
 
 using namespace std;
+using namespace iim;
 
 QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
 {
@@ -50,7 +52,8 @@ QStringList cropped3DImageSeries::menulist() const
 	return QStringList() 
         <<tr("crop a 3D stack from image series")
         <<tr("crop a 3D stack from a 3D image(v3draw/raw format)")
-		<<tr("about");
+        <<tr("crop a 3D stack from a 3D image(terafly format)")
+        <<tr("about");
 }
 
 QStringList cropped3DImageSeries::funclist() const
@@ -257,8 +260,41 @@ void cropped3DImageSeries::domenu(const QString &menu_name, V3DPluginCallback2 &
         callback.setImage(newwin, new4DImage);
         callback.setImageName(newwin, "Cropped 3D image");
         callback.updateImageWindow(newwin);
+        return;
+    }
+    else if (menu_name == tr("crop a 3D stack from a 3D image(terafly format)"))
+    {
+        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including the highest terafly images "),
+                                                                      QDir::currentPath(),
+                                                                      QFileDialog::ShowDirsOnly);
+        VirtualVolume* data1d = VirtualVolume::instance(m_InputfolderName.toStdString().c_str());
+        V3DLONG in_zz[4];
+        in_zz[0] = data1d->getDIM_H();
+        in_zz[1] = data1d->getDIM_V();
+        in_zz[2] = data1d->getDIM_D();
+        in_zz[3] = data1d->getDIM_C();
 
+        CropRegionNavigateDialog dialog(parent, in_zz);
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+        dialog.update();
 
+        unsigned char * cropped_image = 0;
+        cropped_image = data1d->loadSubvolume_to_UINT8(dialog.ys,dialog.ye+1,dialog.xs,dialog.xe+1,dialog.zs,dialog.ze+1);
+        V3DLONG in_sz[4];
+
+        in_sz[0] = dialog.xe - dialog.xs + 1;
+        in_sz[1] = dialog.ye - dialog.ys + 1;
+        in_sz[2] = dialog.ze - dialog.zs + 1;
+        in_sz[3] = data1d->getDIM_C();
+
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
+        memcpy(new4DImage->getRawData(), (unsigned char *)cropped_image, new4DImage->getTotalBytes());
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "Cropped 3D image");
+        callback.updateImageWindow(newwin);
         return;
     }
     else
