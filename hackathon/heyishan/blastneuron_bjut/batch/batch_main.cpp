@@ -157,7 +157,7 @@ bool batch_main(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
                QList<NeuronSWC> pruned_alignment=prune_long_alignment(align_temp.listNeuron,prune_alignment_thres);
                p_align_list.push_back(pruned_alignment);
            }
-           QFile::remove(alignment_result);
+           //QFile::remove(alignment_result);
        }
     }
     vector<NeuronTree>().swap(nt_list);  // release Mermory

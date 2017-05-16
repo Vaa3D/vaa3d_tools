@@ -30,7 +30,8 @@ template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2,
             SetIndexPair sip;
             sip.ind1 = ind1;
             sip.ind2 = ind2;
-
+            //cout<<"ind1="<<ind1<<"  ind2="<<ind2<<"    child_num1="<<child_num1<<"    child_num2="<<child_num2<<endl;
+            //cout<<"results.size="<<results.size()<<endl;
             // compare all the subset align
             for(long set1 = 0; set1 < (1ll<<child_num1); set1++)
             {

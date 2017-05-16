@@ -1,6 +1,7 @@
 #include "blastneuron_bjut_func.h"
 #include "local_alignment.h"
 #include <cstring>
+#include"overlap/overlap_gold.h"
 using namespace std;
 
 bool blastneuron_main(const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -14,6 +15,7 @@ bool blastneuron_main(const V3DPluginArgList & input, V3DPluginArgList & output)
     string name_neuron1 = (QString(inlist->at(0))).toStdString();
     string name_neuron2 = (QString(inlist->at(1))).toStdString();
     string name_result;
+    QString name_consensus = QString(inlist->at(1));
     if (output.size()==0)
     {
         printf("No outputfile specified.\n");
@@ -25,11 +27,17 @@ bool blastneuron_main(const V3DPluginArgList & input, V3DPluginArgList & output)
         name_result = (QString(outlist->at(0)).toStdString());
     }
 
+    // this is for consensus.eswc
+    NeuronTree consensus_nt;
+    consensus_nt=readSWC_file(name_consensus);
+    QString temp_result = name_consensus + "_temp.swc";
+
     vector<MyMarker *> neuron1, neuron2;
     neuron1 = readSWC_file(name_neuron1);
-    neuron2 = readSWC_file(name_neuron2);
-    vector<map<MyMarker*, MyMarker*> > map_result;
+    //neuron2 = readSWC_file(name_neuron2);
+    neuron2 = nt2mm(consensus_nt.listNeuron,temp_result);
 
+    vector<map<MyMarker*, MyMarker*> > map_result;
     if (!neuron_mapping_dynamic(neuron1, neuron2, map_result))
     {
         printf("error in neuron_mapping\n");
