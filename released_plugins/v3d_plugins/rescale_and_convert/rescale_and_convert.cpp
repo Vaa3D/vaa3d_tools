@@ -31,6 +31,7 @@ QStringList RescaleConvertPlugin::menulist() const
     return QStringList() 
     << tr("Rescale all channels' intensity to [0,255] with 1% saturation") 
     << tr("Rescale only one channel")
+    << tr("Rescale all channels' intensity by shifting number of bits")
     << tr("About");
 }
 
@@ -40,6 +41,60 @@ void RescaleConvertPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &
 	{
 		processImage(callback,parent, menu_name);
 	}
+    else if  (menu_name == tr("Rescale all channels' intensity by shifting number of bits"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            v3d_msg("You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+        if (!p4DImage)
+        {
+            v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        bool ok;
+        int bitnumber = QInputDialog::getInteger(parent, "Shifted Bit Number",
+                                     "Enter shifted number:",
+                                     3, 1, 8, 1, &ok);
+
+        if (!ok)
+            return;
+
+        unsigned char* data1d = p4DImage->getRawData();
+        V3DLONG in_sz[4];
+        in_sz[0] = p4DImage->getXDim();
+        in_sz[1] = p4DImage->getYDim();
+        in_sz[2] = p4DImage->getZDim();
+        in_sz[3] = p4DImage->getCDim();
+
+        V3DLONG tunits =  in_sz[0]* in_sz[1]* in_sz[2]* in_sz[3];
+        unsigned char * total1dData_8bit = 0;
+        try
+        {
+            total1dData_8bit = new unsigned char [tunits];
+        }
+        catch (...)
+        {
+            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+            return;
+        }
+        for (V3DLONG i=0;i<tunits;i++)
+        {
+            total1dData_8bit[i] = data1d[i] >> bitnumber << bitnumber;
+        }
+
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)total1dData_8bit, in_sz[0], in_sz[1], in_sz[2], in_sz[3], p4DImage->getDatatype());
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "Rescaled result");
+        callback.updateImageWindow(newwin);
+    }
     else if (menu_name == tr("About"))
     {
          v3d_msg("This plugin is developed by Hanchuan Peng as a simple example for rescaling an image (1% saturation) and convert to 8bit data.");
@@ -60,17 +115,17 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
 	{
 		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
 		return;
-	}
+    }
     
     double apercent = 0.01;
     unsigned char* data1d = p4DImage->getRawData();
     
     V3DLONG sc = p4DImage->getCDim();
     
-	//input
+    //input
     bool b_res;
-	bool ok1;
-	V3DLONG c=-1;
+    bool ok1;
+    V3DLONG c=-1;
     
     if (menu_name==QString("Rescale all channels' intensity to [0,255] with 1% saturation"))
         c = -1;
@@ -87,9 +142,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     }
     
     V3DLONG in_sz[4];
-    in_sz[0] = p4DImage->getXDim(); 
-    in_sz[1] = p4DImage->getYDim(); 
-    in_sz[2] = p4DImage->getZDim(); 
+    in_sz[0] = p4DImage->getXDim();
+    in_sz[1] = p4DImage->getYDim();
+    in_sz[2] = p4DImage->getZDim();
     in_sz[3] = p4DImage->getCDim();
     
     //
@@ -101,14 +156,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     {
         switch(p4DImage->getDatatype())
         {
-            case V3D_UINT8: 
-                b_res = rc(data1d, in_sz, k, apercent); 
+            case V3D_UINT8:
+                b_res = rc(data1d, in_sz, k, apercent);
                 break;
-            case V3D_UINT16: 
-                b_res = rc((unsigned short int *)data1d, in_sz, k, apercent); 
+            case V3D_UINT16:
+                b_res = rc((unsigned short int *)data1d, in_sz, k, apercent);
                 break;
-            case V3D_FLOAT32: 
-                b_res = rc((float *)data1d, in_sz, k, apercent); 
+            case V3D_FLOAT32:
+                b_res = rc((float *)data1d, in_sz, k, apercent);
                 break;
             default: b_res = false; v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); return;
         }
@@ -116,7 +171,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     
     //display. there is no need to set the data, as it directly operate on the original data
     bool b_updateMinMax = true;
-    callback.updateImageWindow(curwin, b_updateMinMax); 
+    callback.updateImageWindow(curwin, b_updateMinMax);
 }
 
 
@@ -176,15 +231,15 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
 
     double apercent = 0.01;
 
-	bool b_res=false;
+    bool b_res=false;
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     V3DLONG cb, ce, k;
     
-	int datatype;
+    int datatype;
     if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
-        cerr<<"load image "<<inimg_file<<" error!"<<endl; 
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
     }
     
@@ -218,7 +273,7 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
             goto Label_exit;
         data1d = (unsigned char *)tmpimg;
         b_res = simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 1);
-    } 
+    }
     else
         b_res = simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, datatype);
     

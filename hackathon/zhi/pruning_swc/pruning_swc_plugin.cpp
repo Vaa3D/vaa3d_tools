@@ -115,7 +115,7 @@ QStringList pruning_swc::menulist() const
       //   <<tr("caculate_distance")
      //      <<tr("rotation")
 
-      //  <<tr("pruning_group")
+        <<tr("pruning_group")
       //  <<tr("aligning")
         <<tr("calculate_soma")
 		<<tr("about");
@@ -609,9 +609,11 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
         for(int i = 0; i < swcList.size(); i++)
         {
-            NeuronTree nt;
+            NeuronTree nt1;
             QString curPathSWC = swcList.at(i);
-            nt = readSWC_file(curPathSWC);
+            nt1 = readSWC_file(curPathSWC);
+
+            NeuronTree nt = SortSWC_pipeline(nt1.listNeuron,VOID, 0);
 
             QVector<QVector<V3DLONG> > childs;
 
@@ -678,10 +680,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                {
                     NeuronSWC curr = list.at(i);
                     S.n 	= curr.n;
-                    if(i ==0)
-                         S.type = 1;
-                    else
-                        S.type 	= 3;
+                    S.type  = curr.type;
                     S.x 	= curr.x;
                     S.y 	= curr.y;
                     S.z 	= curr.z;
@@ -702,47 +701,47 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
            QString fileDefaultName = curPathSWC+QString("_prunned.swc");
            export_list2file(nt_prunned.listNeuron,fileDefaultName,curPathSWC);
 
-           nt = nt_prunned;
-           neuronNum = nt.listNeuron.size();
-           childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-           for (V3DLONG i=0;i<neuronNum;i++)
-           {
-               V3DLONG par = nt.listNeuron[i].pn;
-               if (par<0) continue;
-               childs[nt.hashNeuron.value(par)].push_back(i);
-           }
+//           nt = nt_prunned;
+//           neuronNum = nt.listNeuron.size();
+//           childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//           for (V3DLONG i=0;i<neuronNum;i++)
+//           {
+//               V3DLONG par = nt.listNeuron[i].pn;
+//               if (par<0) continue;
+//               childs[nt.hashNeuron.value(par)].push_back(i);
+//           }
 
-           vector<MyMarker*> final_out_swc = readSWC_file(fileDefaultName.toStdString());
-           vector<MyMarker*> final_out_swc_updated;
-           final_out_swc_updated.push_back(final_out_swc[0]);
+//           vector<MyMarker*> final_out_swc = readSWC_file(fileDefaultName.toStdString());
+//           vector<MyMarker*> final_out_swc_updated;
+//           final_out_swc_updated.push_back(final_out_swc[0]);
 
 
-           for(int j = 1; j < final_out_swc.size(); j++)
-           {
-               int flag_prun = 0;
-               int par_x = final_out_swc[j]->parent->x;
-               int par_y = final_out_swc[j]->parent->y;
-               int par_z = final_out_swc[j]->parent->z;
-               int par_r = final_out_swc[j]->parent->radius;
+//           for(int j = 1; j < final_out_swc.size(); j++)
+//           {
+//               int flag_prun = 0;
+//               int par_x = final_out_swc[j]->parent->x;
+//               int par_y = final_out_swc[j]->parent->y;
+//               int par_z = final_out_swc[j]->parent->z;
+//               int par_r = final_out_swc[j]->parent->radius;
 
-               int dis_prun = sqrt(pow2(final_out_swc[j]->x - par_x) + pow2(final_out_swc[j]->y - par_y) + pow2(final_out_swc[j]->z - par_z));
-               if( (final_out_swc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
-               {
-                   if(childs[j].size() > 0)
-                   {
-                       for(int jj = 0; jj < childs[j].size(); jj++)
-                       final_out_swc[childs[j].at(jj)]->parent = final_out_swc[j]->parent;
-                   }
-                   flag_prun = 1;
-               }
+//               int dis_prun = sqrt(pow2(final_out_swc[j]->x - par_x) + pow2(final_out_swc[j]->y - par_y) + pow2(final_out_swc[j]->z - par_z));
+//               if( (final_out_swc[j]->radius + par_r - dis_prun)/dis_prun > 0.3)
+//               {
+//                   if(childs[j].size() > 0)
+//                   {
+//                       for(int jj = 0; jj < childs[j].size(); jj++)
+//                       final_out_swc[childs[j].at(jj)]->parent = final_out_swc[j]->parent;
+//                   }
+//                   flag_prun = 1;
+//               }
 
-               if(flag_prun == 0)
-               {
-                  final_out_swc_updated.push_back(final_out_swc[j]);
-               }
-           }
+//               if(flag_prun == 0)
+//               {
+//                  final_out_swc_updated.push_back(final_out_swc[j]);
+//               }
+//           }
 
-           saveSWC_file(fileDefaultName.toStdString(), final_out_swc_updated);
+//           saveSWC_file(fileDefaultName.toStdString(), final_out_swc_updated);
 
         }
 
