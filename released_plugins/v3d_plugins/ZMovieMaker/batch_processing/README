@@ -1,10 +1,11 @@
 This is the instruction used to batch generate movies from swc files using ZMovieMaker and Movie_Converter plugins.
 
-1. sh gen_zmovie_ano_scripts.sh <swc file path> <anchor file path> <output folder path> <output linker file path>
+1. sh gen_zmovie_ano_scripts.sh <swc file path> <anchor file path> <output folder path> <output linker file path>  <image file path>
 <swc file path>:  the input swc file
 <anchor file path>: the anchor file path
 <output folder path>: the output folder which is used to save all movie frames
 <output linker file path>: the linker file path
+<image file path>: the input image file
 
 “batch_ano.sh” is one example to generate movie frames for all swc files under “uint8_dTdc2MARCM-F000249_seg001.lsm_c_3.tif” folder, and save all movie frames under “movie” folder. All linker files are saved under “linker_files” folder.
 
