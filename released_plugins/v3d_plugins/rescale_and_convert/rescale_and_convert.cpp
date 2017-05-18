@@ -181,6 +181,7 @@ QStringList RescaleConvertPlugin::funclist() const
 	return QStringList()
     <<tr("rescale")
     <<tr("rescale_and_convert_to_8bit")
+    <<tr("rescale_shift_bits")
     <<tr("help");
 }
 
@@ -196,11 +197,52 @@ bool RescaleConvertPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
         bool b_convert2uint8 = true;
         return processImage(callback, input, output, b_convert2uint8);
 	}
+    else if (func_name == tr("rescale_shift_bits"))
+    {
+        if(input.size() < 1 || output.size() != 1)
+            return false;
+
+        V3DLONG bitnumber = 3;
+        if (input.size()>=2)
+        {
+            vector<char*> paras = *(vector<char*> *)(input.at(1).p);
+            if(paras.size() >= 1) bitnumber = atoi(paras.at(0));
+        }
+
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        cout<<"number of shifted bits = "<<bitnumber<<endl;
+        cout<<"inimg_file = "<<inimg_file<<endl;
+        cout<<"outimg_file = "<<outimg_file<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG tunits =  in_sz[0]* in_sz[1]* in_sz[2]* in_sz[3];
+        for (V3DLONG i=0;i<tunits;i++)
+        {
+            data1d[i] = data1d[i] >> bitnumber << bitnumber;
+        }
+
+        simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, datatype);
+        if (data1d) {delete []data1d; data1d=0;}
+        return true;
+
+    }
 	else if(func_name == tr("help"))
 	{
 		cout<<"Usage 1: vaa3d -x rescale_and_convert -f rescale -i <inimg_file> -o <outimg_file> -p <channel>"<<endl;
-		cout<<"Usage 2: vaa3d -x rescale_and_convert_to_8bit -f rescale -i <inimg_file> -o <outimg_file> -p <channel>"<<endl;
+        cout<<"Usage 2: vaa3d -x rescale_and_convert -f rescale_and_convert_to_8bit -i <inimg_file> -o <outimg_file> -p <channel>"<<endl;
+        cout<<"Usage 2: vaa3d -x rescale_and_convert -f rescale_shift_bits -i <inimg_file> -o <outimg_file> -p <shifted_bits> "<<endl;
 		cout<<"channel                  the input channel value, default -1 (all channels) and start from 0 (first channel)"<<endl;
+        cout<<"shifted_bits             number of shited bits, default 3 and start from 1 to 8"<<endl;
 		cout<<"This plugin is developed by Hanchuan Peng as a simple example for rescaling an image (1% saturation) and convert to 8bit data."<<endl;
 		cout<<endl;
 		return true;
