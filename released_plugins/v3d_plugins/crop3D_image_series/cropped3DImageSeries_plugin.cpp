@@ -608,7 +608,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 
         return true;
 	}
-	else if (func_name == tr("markerCube_apoWhole"))
+	/*else if (func_name == tr("markerCube_apoWhole"))
 	{
 		QDir dir("Y:/10soma_volumes/3large/");
 		QFileInfoList files = dir.entryInfoList();
@@ -672,7 +672,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		}
 
 		return true;
-	}
+	}*/
     else if (func_name == tr("help"))
     {
         cout<<"Usage : v3d -x dllname -f crop3d_imageseries -i <inimg_folder> -o <outimg_file> -p <xs> <xe> <ys> <ye> <zs> <ze> <ch>"<<endl;
