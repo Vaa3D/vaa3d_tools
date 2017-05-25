@@ -118,7 +118,8 @@ QStringList pruning_swc::menulist() const
         <<tr("pruning_group")
       //  <<tr("aligning")
         <<tr("calculate_soma")
-		<<tr("about");
+        <<tr("pruning_crosssection")
+        <<tr("about");
 }
 
 QStringList pruning_swc::funclist() const
@@ -248,7 +249,6 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                    v3d_msg("fail to write the output swc file.");
                    return;
                }
-
 
     }else if (menu_name == tr("caculate_distance"))
     {
@@ -988,7 +988,137 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
             writeSWC_file(outswc_file,nt_prunned);
         }
 
+    } else if (menu_name == tr("pruning_crosssection"))
+    {
+                QString fileOpenName;
+                fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+                        "",
+                        QObject::tr("Supported file (*.swc *.eswc)"
+                            ";;Neuron structure	(*.swc)"
+                            ";;Extended neuron structure (*.eswc)"
+                            ));
+                if(fileOpenName.isEmpty())
+                    return;
+                NeuronTree nt;
+                if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+                {
+                     nt = readSWC_file(fileOpenName);
+                }
 
+                QVector<QVector<V3DLONG> > childs;
+
+
+                V3DLONG neuronNum = nt.listNeuron.size();
+                childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+                V3DLONG *flag = new V3DLONG[neuronNum];
+
+                for (V3DLONG i=0;i<neuronNum;i++)
+                {
+                    flag[i] = 1;
+
+                    V3DLONG par = nt.listNeuron[i].pn;
+                    if (par<0) continue;
+                    childs[nt.hashNeuron.value(par)].push_back(i);
+                }
+
+                QList<NeuronSWC> list = nt.listNeuron;
+                QList<int> branch_IDs;
+                for (int i=0;i<list.size();i++)
+                {
+                    if (childs[i].size()>1)
+                    {
+                        branch_IDs.push_back(i);
+                    }
+                }
+
+                for(int i = 0; i< branch_IDs.size(); i++)
+                {
+                    double x_i = list.at(branch_IDs.at(i)).x;
+                    double y_i = list.at(branch_IDs.at(i)).y;
+                    double z_i = list.at(branch_IDs.at(i)).z;
+
+                    for(int j = i+1; j< branch_IDs.size(); j++)
+                    {
+                        double x_j = list.at(branch_IDs.at(j)).x;
+                        double y_j = list.at(branch_IDs.at(j)).y;
+                        double z_j = list.at(branch_IDs.at(j)).z;
+                        double dis = sqrt(pow2(x_i -x_j ) + pow2(y_i - y_j) + pow2(z_i - z_j));
+                        if(dis<=10)
+                        {
+                            QList<int> iIDs;
+                            iIDs.push_back(branch_IDs.at(i));
+                            iIDs.push_back(branch_IDs.at(j));
+                            while(iIDs.size()>0)
+                            {
+                                int pn = iIDs.at(0);
+                                for(int d = 0; d < childs[pn].size();d++)
+                                {
+                                    if(list.at(branch_IDs.at(i)).type != list.at(childs[pn].at(d)).type)
+                                    {
+                                        flag[childs[pn].at(d)] = 0;
+                                        iIDs.push_back(childs[pn].at(d));
+                                    }
+                                }
+                                iIDs.removeAt(0);
+
+                            }
+//                            for(int d = 0; d < childs[branch_IDs.at(j)].size();d++)
+//                            {
+//                                if(list.at(branch_IDs.at(j)).type != list.at(childs[branch_IDs.at(j)].at(d)).type)
+//                                    flag[childs[branch_IDs.at(j)].at(d)] = 0;
+//                            }
+
+
+                        }
+                    }
+                }
+
+               //NeutronTree structure
+               NeuronTree nt_prunned;
+               QList <NeuronSWC> listNeuron;
+               QHash <int, int>  hashNeuron;
+               listNeuron.clear();
+               hashNeuron.clear();
+
+               //set node
+
+               NeuronSWC S;
+               for (int i=0;i<list.size();i++)
+               {
+                   if(flag[i] == 1)
+                   {
+                        NeuronSWC curr = list.at(i);
+                        S.n 	= curr.n;
+                        S.type 	= curr.type;
+                        S.x 	= curr.x;
+                        S.y 	= curr.y;
+                        S.z 	= curr.z;
+                        S.r 	= curr.r;
+                        S.pn 	= curr.pn;
+                        listNeuron.append(S);
+                        hashNeuron.insert(S.n, listNeuron.size()-1);
+                   }
+
+              }
+               nt_prunned.n = -1;
+               nt_prunned.on = true;
+               nt_prunned.listNeuron = listNeuron;
+               nt_prunned.hashNeuron = hashNeuron;
+
+               if(flag) {delete[] flag; flag = 0;}
+
+               QString fileDefaultName = fileOpenName+QString("_pruned.swc");
+               //write new SWC to file
+               QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                       fileDefaultName,
+                       QObject::tr("Supported file (*.swc)"
+                           ";;Neuron structure	(*.swc)"
+                           ));
+               if (!export_list2file(nt_prunned.listNeuron,fileSaveName,fileOpenName))
+               {
+                   v3d_msg("fail to write the output swc file.");
+                   return;
+               }
 
 
     }

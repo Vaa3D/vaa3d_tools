@@ -1537,6 +1537,13 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         soma_tile = false;
                         num_tips = 0;
                         proc_app2(callback, p2, versionStr);
+//                        if(ifs_swc)
+//                        {
+//                            NeuronTree nt_app2 = readSWC_file(poutswc_file);
+//                            NeuronTree nt_app2_pruned = pruning_cross_swc(nt_app2);
+//                            writeSWC_file(poutswc_file,nt_app2_pruned);
+//                        }
+
                         inputswc = readSWC_file(poutswc_file.toStdString());
                         for(V3DLONG d = 0; d < inputswc.size(); d++)
                         {
@@ -1546,7 +1553,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                                 num_tips++;
                             }
 
-                            if(ifs_swc && inputswc[d]->radius >= 10)
+                            if(ifs_swc && inputswc[d]->radius >= 8)
                             {
                                 soma_tile = true;
                             }
@@ -1567,7 +1574,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         inputswc = readSWC_file(poutswc_file.toStdString());
                         for(V3DLONG d = 0; d < inputswc.size(); d++)
                         {
-                            if(ifs_swc && inputswc[d]->radius >= 10)
+                            if(ifs_swc && inputswc[d]->radius >= 8)
                             {
                                 soma_tile = true;
                                 break;
@@ -5751,4 +5758,103 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
     nt_prunned.hashNeuron = hashNeuron;
 
     return nt_prunned;
+}
+
+NeuronTree pruning_cross_swc(NeuronTree nt)
+{
+
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    V3DLONG *flag = new V3DLONG[neuronNum];
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 1;
+
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<NeuronSWC> list = nt.listNeuron;
+    QList<int> branch_IDs;
+    for (int i=0;i<list.size();i++)
+    {
+        if (childs[i].size()>1)
+        {
+            branch_IDs.push_back(i);
+        }
+    }
+
+    for(int i = 0; i< branch_IDs.size(); i++)
+    {
+        double x_i = list.at(branch_IDs.at(i)).x;
+        double y_i = list.at(branch_IDs.at(i)).y;
+        double z_i = list.at(branch_IDs.at(i)).z;
+
+        for(int j = i+1; j< branch_IDs.size(); j++)
+        {
+            double x_j = list.at(branch_IDs.at(j)).x;
+            double y_j = list.at(branch_IDs.at(j)).y;
+            double z_j = list.at(branch_IDs.at(j)).z;
+            double dis = sqrt(pow2(x_i -x_j ) + pow2(y_i - y_j) + pow2(z_i - z_j));
+            if(dis<=10)
+            {
+                QList<int> iIDs;
+                iIDs.push_back(branch_IDs.at(i));
+                iIDs.push_back(branch_IDs.at(j));
+                while(iIDs.size()>0)
+                {
+                    int pn = iIDs.at(0);
+                    for(int d = 0; d < childs[pn].size();d++)
+                    {
+                        if(list.at(branch_IDs.at(i)).type != list.at(childs[pn].at(d)).type)
+                        {
+                            flag[childs[pn].at(d)] = 0;
+                            iIDs.push_back(childs[pn].at(d));
+                        }
+                    }
+                    iIDs.removeAt(0);
+
+                }
+
+            }
+        }
+    }
+
+   //NeutronTree structure
+   NeuronTree nt_prunned;
+   QList <NeuronSWC> listNeuron;
+   QHash <int, int>  hashNeuron;
+   listNeuron.clear();
+   hashNeuron.clear();
+
+   //set node
+
+   NeuronSWC S;
+   for (int i=0;i<list.size();i++)
+   {
+       if(flag[i] == 1)
+       {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+       }
+
+  }
+   nt_prunned.n = -1;
+   nt_prunned.on = true;
+   nt_prunned.listNeuron = listNeuron;
+   nt_prunned.hashNeuron = hashNeuron;
+
+   if(flag) {delete[] flag; flag = 0;}
+   return nt_prunned;
 }
