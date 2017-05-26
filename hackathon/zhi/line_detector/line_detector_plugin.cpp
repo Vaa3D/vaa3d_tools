@@ -14,11 +14,14 @@
 #include "stackutil.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/gd.h"
 #include "hang/topology_analysis.h"
+#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 
 
 Q_EXPORT_PLUGIN2(line_detector, line_detector);
 
 using namespace std;
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 struct input_PARA
 {
@@ -107,9 +110,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
+    v3dhandle curwin;
     if(bmenu)
     {
-        v3dhandle curwin = callback.currentImageWindow();
+        curwin = callback.currentImageWindow();
         if (!curwin)
         {
             QMessageBox::information(0, "", "You don't have any image open in the main window.");
@@ -166,7 +170,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         in_sz[2] = P;
         in_sz[3] = sc;
 
-
         PARA.inimg_file = p4DImage->getFileName();
     }
     else
@@ -196,10 +199,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     NeuronTree nt;
 
     double weight_xy_z=1.0;
-    bool b_mergeCloseBranches = false;
+    bool b_mergeCloseBranches = true;
     bool b_usedshortestpathonly = false;
     bool b_postTrim = false;
-    bool b_pruneArtifactBranches = true;
+    bool b_pruneArtifactBranches = false;
     int ds_step = 0;
 
     CurveTracePara trace_para;
@@ -224,6 +227,16 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     end_y = (p0.y + PARA.win_size > M)?  M-1 : p0.y + PARA.win_size;
     end_z = (p0.z + PARA.win_size > P)?  P-1 : p0.z + PARA.win_size;
 
+    NeuronTree nt_original = callback.getSWC(curwin);
+    V3DLONG stacksz = N*M*P*sc;
+    unsigned char* data1d_mask = 0;
+    data1d_mask = new unsigned char [stacksz];
+
+    memset(data1d_mask,0,stacksz*sizeof(unsigned char));
+
+    if(nt_original.listNeuron.size()>0)
+        ComputemaskImage(nt_original, data1d_mask, N, M, P);
+
     unsigned char *localarea=0;
     V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
     localarea = new unsigned char [blockpagesz];
@@ -237,7 +250,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             for(V3DLONG ix = start_x; ix < end_x+1; ix++)
             {
 
-                localarea[d] = data1d[offsetk + offsetj + ix];
+                if(data1d_mask[offsetk + offsetj + ix] == 0)
+                    localarea[d] = data1d[offsetk + offsetj + ix];
+                else
+                    localarea[d] = 1;
                 d++;
             }
         }
@@ -259,9 +275,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     p0.y -= start_y;
     p0.z -= start_z;
 
-    double min_score = INF;
     LocationSimple tmpp;
-    QString fname_tmp;
     for(V3DLONG ix = 0; ix <=2; ix++)
     {
         tmpp.x = (2-ix)*start_x/2 + ix*end_x/2 - start_x;
@@ -275,80 +289,138 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 {
                     pp.push_back(tmpp);
 
-                    nt = v3dneuron_GD_tracing(p4d, sz_tracing,
-                                              p0, pp,
-                                              trace_para, weight_xy_z);
-
-                    QString swc_name = PARA.inimg_file + "_line_detector.swc";
-                    nt.name = "line_detector";
-                    writeSWC_file(swc_name.toStdString().c_str(),nt);
-                    vector<MyMarker*> swc_file = readSWC_file(swc_name.toStdString());
-                    map<MyMarker*, double> score_map;
-                    topology_analysis_perturb_intense(localarea, swc_file, score_map, 1, sz_tracing[0], sz_tracing[1], sz_tracing[2],1);
-                    double seg_score = score_map[swc_file[0]] * 120 +19;;
-                    if(seg_score <= min_score)
-                    {
-                        min_score = seg_score;;
-                        fname_tmp =  PARA.inimg_file +"_scored.swc";
-                        for(V3DLONG i = 0; i<swc_file.size(); i++){
-                            MyMarker * marker = swc_file[i];
-                            double tmp = score_map[marker] * 120 +19;
-                            marker->type = tmp > 255 ? 255 : tmp;
-                        }
-                         saveSWC_file(fname_tmp.toStdString(), swc_file);
-                    }
-                    pp.clear();
                 }
             }
         }
     }
 
-    vector<MyMarker*> seg_min_score = readSWC_file(fname_tmp.toStdString());
-    map<MyMarker*, double> score_map;
-    topology_analysis_perturb_intense(localarea, seg_min_score, score_map, 1, sz_tracing[0], sz_tracing[1], sz_tracing[2],0);
+    nt = v3dneuron_GD_tracing(p4d, sz_tracing,
+                              p0, pp,
+                              trace_para, weight_xy_z);
 
-    double score_min = 0;
-    double score_std = 0;
-    for(V3DLONG i = 0; i<seg_min_score.size(); i++){
-        MyMarker * marker = seg_min_score[i];
-        double tmp = score_map[marker] * 120 +19;
-        score_min += tmp/seg_min_score.size();
+
+    QString swc_name = PARA.inimg_file + QString("_x_%1_y_%2_z_%3_line_detector.swc").arg(PARA.listLandmarks.at(0).x).arg(PARA.listLandmarks.at(0).y).arg(PARA.listLandmarks.at(0).z);
+    nt.name = "line_detector";
+    QList<NeuronSWC> neuron_sorted;
+    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, VOID))  //was 10
+    {
+        v3d_msg("fail to call swc sorting function.");
+    }
+    export_list2file(neuron_sorted, swc_name,swc_name);
+    if(neuron_sorted.size() <=0)
+    {
+        v3d_msg("cannot find any path based on the given marker.");
+        return;
+    }
+    nt = readSWC_file(swc_name);
+    QList<NeuronSWC> list = nt.listNeuron;
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    V3DLONG *flag = new V3DLONG[neuronNum];
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 0;
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
-//    for(V3DLONG i = 0; i<seg_min_score.size(); i++){
-//        MyMarker * marker = seg_min_score[i];
-//        double tmp = score_map[marker] * 120 +19;
-//        score_std += pow(tmp-score_min,2)/seg_min_score.size();
-//    }
-
-    printf("mean is %.2f, std is %.2f\n\n\n",score_min,sqrt(score_std));
-
-    for(V3DLONG i = 0; i<seg_min_score.size(); i++){
-        MyMarker * marker = seg_min_score[i];
-        double tmp = score_map[marker] * 120 +19;
-        if(tmp > score_min)
-            marker->type = 0;
-        else
-            marker->type = tmp;
-        marker->x += start_x;
-        marker->y += start_y;
-        marker->z += start_z;
+    double seg_mean_max = 0;
+    double seg_mean;
+    int seg_tip_id;
+    for (int i=0;i<list.size();i++)
+    {
+        if (childs[i].size()==0)
+        {
+            double intensity_seg = 0;
+            int seg_num = 0;
+            int index_i = i;
+            while(index_i != 1000000000)
+            {
+                V3DLONG ix = list[index_i].x;
+                V3DLONG iy = list[index_i].y;
+                V3DLONG iz = list[index_i].z;
+                intensity_seg += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix];
+                v3d_msg(QString("intensity is %1, id is %2").arg(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix]).arg(index_i),0);
+                seg_num++;
+                index_i = getParent(index_i,nt);
+            }
+            if(intensity_seg >= seg_mean_max && seg_num > 10)
+            {
+                seg_mean_max = intensity_seg;
+                seg_tip_id = i;
+                seg_mean = intensity_seg/seg_num;
+            }
+        }
     }
-     saveSWC_file(fname_tmp.toStdString(), seg_min_score);
 
-    //Output
-//    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
-//    {
-//        nt.listNeuron[i].x += start_x;
-//        nt.listNeuron[i].y += start_y;
-//        nt.listNeuron[i].z += start_z;
-//    }
+    printf("mean is %.2f\n",seg_mean);
+    bool ending_tip = false;
+    while(seg_tip_id != 1000000000)
+    {
+        V3DLONG ix = list[seg_tip_id].x;
+        V3DLONG iy = list[seg_tip_id].y;
+        V3DLONG iz = list[seg_tip_id].z;
+        printf("intensit is %d,id is %d\n",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix],seg_tip_id);
+        if(!ending_tip)
+        {
 
+            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix] >= seg_mean)
+            {
+                flag[seg_tip_id] = 1;
+                ending_tip = true;
+                PARA.listLandmarks[0].x = ix + 1 + start_x;
+                PARA.listLandmarks[0].y = iy + 1 + start_y;
+                PARA.listLandmarks[0].z = iz + 1 + start_z;
+            }
+        }else
+            flag[seg_tip_id] = 1;
 
+        seg_tip_id = getParent(seg_tip_id,nt);
 
+    }
+
+    NeuronSWC S;
+    V3DLONG nt_length = nt_original.listNeuron.size();
+    for (int i=0;i<list.size();i++)
+    {
+        if(flag[i] == 1)
+        {
+             NeuronSWC curr = list.at(i);
+             S.n 	= curr.n + nt_length;
+             S.type 	= 3;
+             S.x 	= curr.x + start_x;
+             S.y 	= curr.y + start_y;
+             S.z 	= curr.z + start_z;
+             S.r 	= curr.r;
+             S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + nt_length;
+             nt_original.listNeuron.append(S);
+             nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
+        }
+
+   }
+
+    callback.setLandmark(curwin,PARA.listLandmarks);
+    nt_original.color.r = 0;
+    nt_original.color.g = 0;
+    nt_original.color.b = 0;
+    nt_original.color.a = 0;
+
+    callback.setSWC(curwin,nt_original);
+    callback.open3DWindow(curwin);
+    callback.getView3DControl(curwin)->updateWithTriView();
+    if(flag) {delete[] flag; flag = 0;}
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
 
+    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
+    {
+        nt.listNeuron[i].x += start_x;
+        nt.listNeuron[i].y += start_y;
+        nt.listNeuron[i].z += start_z;
+    }
+    writeSWC_file(swc_name,nt);
 
     if(!bmenu)
     {

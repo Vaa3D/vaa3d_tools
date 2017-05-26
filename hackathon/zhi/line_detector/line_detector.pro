@@ -77,6 +77,10 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_smarttracing/hang
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_smarttracing/hang/simple_c.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_smarttracing/hang/my_surf_objs.cpp
 
+#mask generation
+HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
+SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
+
 
 macx{
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
