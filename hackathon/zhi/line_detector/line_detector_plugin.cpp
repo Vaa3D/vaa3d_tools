@@ -199,20 +199,15 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     NeuronTree nt;
 
     double weight_xy_z=1.0;
-    bool b_mergeCloseBranches = true;
-    bool b_usedshortestpathonly = false;
-    bool b_postTrim = false;
-    bool b_pruneArtifactBranches = false;
-    int ds_step = 0;
-
     CurveTracePara trace_para;
     trace_para.channo = 0;
-    trace_para.sp_graph_resolution_step = ds_step;
-    trace_para.b_deformcurve = b_usedshortestpathonly;
-    trace_para.b_postMergeClosebyBranches = b_mergeCloseBranches;
+    trace_para.sp_graph_resolution_step = 0;
+    trace_para.b_postMergeClosebyBranches = true;
     trace_para.b_3dcurve_width_from_xyonly = true;
-    trace_para.b_post_trimming = b_postTrim;
-    trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches;
+    trace_para.b_post_trimming = true;
+    trace_para.b_pruneArtifactBranches = true;
+    trace_para.sp_num_end_nodes = 2;
+    trace_para.b_deformcurve = false;
 
     p0.x = PARA.listLandmarks.at(0).x-1;
     p0.y = PARA.listLandmarks.at(0).y-1;
@@ -301,8 +296,18 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     QString swc_name = PARA.inimg_file + QString("_x_%1_y_%2_z_%3_line_detector.swc").arg(PARA.listLandmarks.at(0).x).arg(PARA.listLandmarks.at(0).y).arg(PARA.listLandmarks.at(0).z);
     nt.name = "line_detector";
+    for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+    {
+        V3DLONG pn_ID = nt.listNeuron[i].pn-1;
+        if(pn_ID <0)
+            continue;
+        if((fabs(nt.listNeuron[pn_ID].x-nt.listNeuron[0].x)+fabs(nt.listNeuron[pn_ID].y-nt.listNeuron[0].y) + abs(nt.listNeuron[pn_ID].z-nt.listNeuron[0].z))< 1e-3)
+        {
+                nt.listNeuron[i].pn = 1;
+        }
+    }
     QList<NeuronSWC> neuron_sorted;
-    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, VOID))  //was 10
+    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))  //was 10
     {
         v3d_msg("fail to call swc sorting function.");
     }
@@ -325,6 +330,55 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
+
+    /*vector<QList<NeuronSWC> > nt_list;
+    V3DLONG seg_max = 0;
+    for (int i=0;i<list.size();i++)
+    {
+        QList<NeuronSWC> nt_seg;
+        if (childs[i].size()==0)
+        {
+            int index_i = i;          
+            while(index_i != 1000000000)
+            {
+                nt_seg.push_front(list.at(index_i));
+                index_i = getParent(index_i,nt);
+            }
+            nt_list.push_back(nt_seg);
+            if(nt_seg.size() > seg_max)
+                seg_max = nt_seg.size();
+            nt_seg.clear();
+        }
+    }
+
+    for (int i =0; i<nt_list.size();i++)
+    {
+        QList<NeuronSWC> nt_seg = nt_list.at(i);
+        double seg_intensity = 0;
+        for(int j = 0; j < seg_max; j++)
+        {
+            if(j < nt_seg.size())
+            {
+                V3DLONG  ix = nt_seg[j].x;
+                V3DLONG  iy = nt_seg[j].y;
+                V3DLONG  iz = nt_seg[j].z;
+                seg_intensity += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix];
+                printf("%.2f\t",seg_intensity/(j+1));
+                nt_seg[j].x += start_x;
+                nt_seg[j].y += start_y;
+                nt_seg[j].z += start_z;
+                nt_seg[j].r = (seg_intensity/(j+1))/j;
+
+            }
+            else
+                printf("%.2f\t",seg_intensity/nt_seg.size());
+
+        }
+        QString swc_seg = swc_name + QString("%1.swc").arg(i);
+        export_list2file(nt_seg, swc_seg,swc_name);
+        printf("\n");
+
+    }*/
 
     double seg_mean_max = 0;
     double seg_mean;
@@ -354,7 +408,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             }
         }
     }
-
     printf("mean is %.2f\n",seg_mean);
     bool ending_tip = false;
     while(seg_tip_id != 1000000000)
@@ -365,7 +418,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         printf("intensit is %d,id is %d\n",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix],seg_tip_id);
         if(!ending_tip)
         {
-
             if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix] >= seg_mean)
             {
                 flag[seg_tip_id] = 1;
@@ -376,9 +428,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             }
         }else
             flag[seg_tip_id] = 1;
-
         seg_tip_id = getParent(seg_tip_id,nt);
-
     }
 
     NeuronSWC S;
