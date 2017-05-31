@@ -135,13 +135,14 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             return;
         }
 
-        bool ok;
-        PARA.win_size = QInputDialog::getInteger(parent, "Window size",
-                                                 "Enter radius (window size is 2*radius+1):",
-                                                 32, 1, 512, 1, &ok);
-        if (!ok)
-            return;
+//        bool ok;
+//        PARA.win_size = QInputDialog::getInteger(parent, "Window size",
+//                                                 "Enter radius (window size is 2*radius+1):",
+//                                                 32, 1, 512, 1, &ok);
+//        if (!ok)
+//            return;
 
+        PARA.win_size = 32;
         data1d = p4DImage->getRawData();
         N = p4DImage->getXDim();
         M = p4DImage->getYDim();
