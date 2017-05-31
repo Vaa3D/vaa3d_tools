@@ -36,7 +36,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 QStringList line_detector::menulist() const
 {
 	return QStringList() 
-		<<tr("tracing_menu")
+        <<tr("GD Curveline")
 		<<tr("about");
 }
 
@@ -49,7 +49,7 @@ QStringList line_detector::funclist() const
 
 void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("tracing_menu"))
+    if (menu_name == tr("GD Curveline"))
 	{
         bool bmenu = true;
         input_PARA PARA;
