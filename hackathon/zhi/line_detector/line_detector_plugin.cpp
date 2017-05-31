@@ -210,9 +210,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     trace_para.sp_num_end_nodes = 2;
     trace_para.b_deformcurve = false;
 
-    p0.x = PARA.listLandmarks.at(0).x-1;
-    p0.y = PARA.listLandmarks.at(0).y-1;
-    p0.z = PARA.listLandmarks.at(0).z-1;
+    p0.x = PARA.listLandmarks.at(0).x;
+    p0.y = PARA.listLandmarks.at(0).y;
+    p0.z = PARA.listLandmarks.at(0).z;
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     start_x = (p0.x - PARA.win_size < 0)?  0 : p0.x - PARA.win_size;
@@ -308,7 +308,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
     }
     QList<NeuronSWC> neuron_sorted;
-    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))  //was 10
+    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))
     {
         v3d_msg("fail to call swc sorting function.");
     }
@@ -319,20 +319,20 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         return;
     }
     nt = readSWC_file(swc_name);
+    QFile file (swc_name);
+    file.remove();
     QList<NeuronSWC> list = nt.listNeuron;
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    V3DLONG *flag = new V3DLONG[neuronNum];
     for (V3DLONG i=0;i<neuronNum;i++)
     {
-        flag[i] = 0;
         V3DLONG par = nt.listNeuron[i].pn;
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
-    /*vector<QList<NeuronSWC> > nt_list;
+    vector<QList<NeuronSWC> > nt_list;
     V3DLONG seg_max = 0;
     for (int i=0;i<list.size();i++)
     {
@@ -352,105 +352,108 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
     }
 
+    double seg_mean_max = 0;
+    int seg_tip_id;
+
     for (int i =0; i<nt_list.size();i++)
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         double seg_intensity = 0;
-        for(int j = 0; j < seg_max; j++)
+        for(int j = 0; j < nt_seg.size(); j++)
         {
-            if(j < nt_seg.size())
-            {
-                V3DLONG  ix = nt_seg[j].x;
-                V3DLONG  iy = nt_seg[j].y;
-                V3DLONG  iz = nt_seg[j].z;
-                seg_intensity += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix];
-                printf("%.2f\t",seg_intensity/(j+1));
-                nt_seg[j].x += start_x;
-                nt_seg[j].y += start_y;
-                nt_seg[j].z += start_z;
-                nt_seg[j].r = (seg_intensity/(j+1))/j;
-
-            }
-            else
-                printf("%.2f\t",seg_intensity/nt_seg.size());
-
+            V3DLONG  ix = nt_seg[j].x;
+            V3DLONG  iy = nt_seg[j].y;
+            V3DLONG  iz = nt_seg[j].z;
+            seg_intensity += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
+           // printf("%.2f\t",seg_intensity/(j+1));
+//            nt_seg[j].x += start_x;
+//            nt_seg[j].y += start_y;
+//            nt_seg[j].z += start_z;
+//            nt_seg[j].r = (seg_intensity/(j+1))/j;
         }
-        QString swc_seg = swc_name + QString("%1.swc").arg(i);
-        export_list2file(nt_seg, swc_seg,swc_name);
-        printf("\n");
-
-    }*/
-
-    double seg_mean_max = 0;
-    double seg_mean;
-    int seg_tip_id;
-    for (int i=0;i<list.size();i++)
-    {
-        if (childs[i].size()==0)
+        if(seg_intensity/nt_seg.size() >= seg_mean_max)
         {
-            double intensity_seg = 0;
-            int seg_num = 0;
-            int index_i = i;
-            while(index_i != 1000000000)
-            {
-                V3DLONG ix = list[index_i].x;
-                V3DLONG iy = list[index_i].y;
-                V3DLONG iz = list[index_i].z;
-                intensity_seg += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix];
-                v3d_msg(QString("intensity is %1, id is %2").arg(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix]).arg(index_i),0);
-                seg_num++;
-                index_i = getParent(index_i,nt);
-            }
-            if(intensity_seg >= seg_mean_max && seg_num > 10)
-            {
-                seg_mean_max = intensity_seg;
-                seg_tip_id = i;
-                seg_mean = intensity_seg/seg_num;
-            }
+            seg_mean_max = seg_intensity/nt_seg.size();
+            seg_tip_id = i;
         }
+//        QString swc_seg = swc_name + QString("%1.swc").arg(i);
+//        export_list2file(nt_seg, swc_seg,swc_name);
+//        printf("\n");
     }
-    printf("mean is %.2f\n",seg_mean);
-    bool ending_tip = false;
-    while(seg_tip_id != 1000000000)
+
+    QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
+    for(int i =0; i<nt_selected.size();i++)
     {
-        V3DLONG ix = list[seg_tip_id].x;
-        V3DLONG iy = list[seg_tip_id].y;
-        V3DLONG iz = list[seg_tip_id].z;
-        printf("intensit is %d,id is %d\n",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix],seg_tip_id);
+        V3DLONG  ix = nt_selected[i].x;
+        V3DLONG  iy = nt_selected[i].y;
+        V3DLONG  iz = nt_selected[i].z;
+        printf("%d\t",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix]);
+    }
+    double std = 0;
+    double *arr,tmp;
+    arr = new double[nt_selected.size()];
+    int ii,jj;
+    ii = 0;
+    for(int i =0; i <nt_selected.size();i++)
+    {
+        NeuronSWC curr = nt_selected.at(i);
+        V3DLONG ix = curr.x;
+        V3DLONG iy = curr.y;
+        V3DLONG iz = curr.z;
+        double PixelVaule = localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
+        arr[ii] = PixelVaule;
+        if (ii>0)
+        {
+            jj = ii;
+            while(jj > 0 && arr[jj-1]>arr[jj])
+            {
+                tmp = arr[jj];
+                arr[jj] = arr[jj-1];
+                arr[jj-1] = tmp;
+                jj--;
+            }
+        }
+        ii++;
+        std += pow(PixelVaule-seg_mean_max,2);
+    }
+    std = std/nt_selected.size();
+    printf("mean is %.2f, std is %.2f\n\n\n",seg_mean_max,sqrt(std));
+
+    bool ending_tip = false;
+    for(int i = nt_selected.size()-1; i >= 0; i--)
+    {
+        NeuronSWC curr = nt_selected.at(i);
+        V3DLONG ix = curr.x;
+        V3DLONG iy = curr.y;
+        V3DLONG iz = curr.z;
         if(!ending_tip)
         {
-            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[1] + ix] >= seg_mean)
+            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max +0.3*sqrt(std))
             {
-                flag[seg_tip_id] = 1;
                 ending_tip = true;
-                PARA.listLandmarks[0].x = ix + 1 + start_x;
-                PARA.listLandmarks[0].y = iy + 1 + start_y;
-                PARA.listLandmarks[0].z = iz + 1 + start_z;
-            }
-        }else
-            flag[seg_tip_id] = 1;
-        seg_tip_id = getParent(seg_tip_id,nt);
+                PARA.listLandmarks[0].x = ix + start_x +1;
+                PARA.listLandmarks[0].y = iy + start_y +1;
+                PARA.listLandmarks[0].z = iz + start_z +1;
+            }else
+                nt_selected.removeAt(i);
+        }
     }
 
     NeuronSWC S;
     V3DLONG nt_length = nt_original.listNeuron.size();
-    for (int i=0;i<list.size();i++)
+    for (int i=0;i<nt_selected.size();i++)
     {
-        if(flag[i] == 1)
-        {
-             NeuronSWC curr = list.at(i);
-             S.n 	= curr.n + nt_length;
-             S.type 	= 3;
-             S.x 	= curr.x + start_x;
-             S.y 	= curr.y + start_y;
-             S.z 	= curr.z + start_z;
-             S.r 	= curr.r;
-             S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + nt_length;
-             nt_original.listNeuron.append(S);
-             nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
-        }
-
-   }
+        NeuronSWC curr = nt_selected.at(i);
+        S.n 	= curr.n + nt_length;
+        S.type 	= 3;
+        S.x 	= curr.x + start_x;
+        S.y 	= curr.y + start_y;
+        S.z 	= curr.z + start_z;
+        S.r 	= curr.r;
+        S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + nt_length;
+        nt_original.listNeuron.append(S);
+        nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
+    }
 
     callback.setLandmark(curwin,PARA.listLandmarks);
     nt_original.color.r = 0;
@@ -461,17 +464,16 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     callback.setSWC(curwin,nt_original);
     callback.open3DWindow(curwin);
     callback.getView3DControl(curwin)->updateWithTriView();
-    if(flag) {delete[] flag; flag = 0;}
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
 
-    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
-    {
-        nt.listNeuron[i].x += start_x;
-        nt.listNeuron[i].y += start_y;
-        nt.listNeuron[i].z += start_z;
-    }
-    writeSWC_file(swc_name,nt);
+//    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
+//    {
+//        nt.listNeuron[i].x += start_x;
+//        nt.listNeuron[i].y += start_y;
+//        nt.listNeuron[i].z += start_z;
+//    }
+//    writeSWC_file(swc_name,nt);
 
     if(!bmenu)
     {
