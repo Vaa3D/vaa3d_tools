@@ -220,9 +220,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     start_y = (p0.y - PARA.win_size < 0)?  0 : p0.y - PARA.win_size;
     start_z = (p0.z - PARA.win_size < 0)?  0 : p0.z - PARA.win_size;
 
-    end_x = (p0.x + PARA.win_size > N)?  N-1 : p0.x + PARA.win_size;
-    end_y = (p0.y + PARA.win_size > M)?  M-1 : p0.y + PARA.win_size;
-    end_z = (p0.z + PARA.win_size > P)?  P-1 : p0.z + PARA.win_size;
+    end_x = (p0.x + PARA.win_size > N-1)?  N-1 : p0.x + PARA.win_size;
+    end_y = (p0.y + PARA.win_size > M-1)?  M-1 : p0.y + PARA.win_size;
+    end_z = (p0.z + PARA.win_size > P-1)?  P-1 : p0.z + PARA.win_size;
 
     NeuronTree nt_original = callback.getSWC(curwin);
     V3DLONG stacksz = N*M*P*sc;
@@ -246,7 +246,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             V3DLONG offsetj = iy*N;
             for(V3DLONG ix = start_x; ix < end_x+1; ix++)
             {
-
                 if(data1d_mask[offsetk + offsetj + ix] == 0)
                     localarea[d] = data1d[offsetk + offsetj + ix];
                 else
