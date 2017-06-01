@@ -277,7 +277,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
     {
         fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-        //bug: clean memory!!!
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
         return -1;
     }
     p0.x -= start_x;
@@ -338,14 +339,16 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))
     {
         v3d_msg("fail to call swc sorting function.");
-        //bug: need to clean memory!!!!
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
         return -1;
     }
     export_list2file(neuron_sorted, swc_name,swc_name);
     if(neuron_sorted.size() <=0)
     {
         v3d_msg("cannot find any path based on the given marker.");
-        //bug: need to clean memory!!!!
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
         return -1;
     }
     nt = readSWC_file(swc_name);
