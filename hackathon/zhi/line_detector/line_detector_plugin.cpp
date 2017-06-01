@@ -200,13 +200,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     double weight_xy_z=1.0;
     CurveTracePara trace_para;
     trace_para.channo = 0;
-    trace_para.sp_graph_resolution_step = 0;
+    trace_para.sp_graph_background = 0;
     trace_para.b_postMergeClosebyBranches = false;
     trace_para.b_3dcurve_width_from_xyonly = true;
-    trace_para.b_post_trimming = false;
     trace_para.b_pruneArtifactBranches = false;
     trace_para.sp_num_end_nodes = 2;
     trace_para.b_deformcurve = false;
+    trace_para.sp_graph_resolution_step = 1;
 
     int markSize = PARA.listLandmarks.size();
     p0.x = PARA.listLandmarks.at(markSize-1).x;
@@ -250,6 +250,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
     }
 
+    if(data1d_mask) {delete []data1d_mask; data1d_mask=0;}
     V3DLONG sz_tracing[4];
     sz_tracing[0] = end_x-start_x+1;
     sz_tracing[1] = end_y-start_y+1;
@@ -267,24 +268,38 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     p0.z -= start_z;
 
     LocationSimple tmpp;
+    vector<MyMarker> file_inmarkers;
+
     for(V3DLONG ix = 0; ix <=2; ix++)
     {
         tmpp.x = (2-ix)*start_x/2 + ix*end_x/2 - start_x;
+        if(tmpp.x < 0) tmpp.x = 0;
+        if(tmpp.x > sz_tracing[0]-1) tmpp.x = sz_tracing[0]-1;
         for(V3DLONG iy = 0; iy <=2; iy++)
         {
             tmpp.y = (2-iy)*start_y/2 + iy*end_y/2 - start_y;
+            if(tmpp.y < 0) tmpp.y = 0;
+            if(tmpp.y > sz_tracing[1]-1) tmpp.y = sz_tracing[1]-1;
             for(V3DLONG iz = 0; iz <=2; iz++)
             {
                 tmpp.z = (2-iz)*start_z/2 + iz*end_z/2 - start_z;
+                if(tmpp.z < 0) tmpp.z = 0;
+                if(tmpp.z > sz_tracing[2]-1) tmpp.z = sz_tracing[2]-1;
+                MyMarker t;
                 if(!(ix==1 && iy ==1 && iz==1))
                 {
+                    t.x = tmpp.x;
+                    t.y = tmpp.y;
+                    t.z = tmpp.z;
+                    file_inmarkers.push_back(t);
                     pp.push_back(tmpp);
-
                 }
             }
         }
     }
 
+//    simple_saveimage_wrapper(callback, "/opt/zhi/Desktop/test.v3draw",(unsigned char *)localarea, sz_tracing, 1);
+//    saveMarker_file("/opt/zhi/Desktop/test.marker",file_inmarkers);
     nt = v3dneuron_GD_tracing(p4d, sz_tracing,
                               p0, pp,
                               trace_para, weight_xy_z);
@@ -415,6 +430,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     printf("mean is %.2f, std is %.2f\n\n\n",seg_mean_max,sqrt(std));
 
     bool ending_tip = false;
+    bool b_boundary = false;
     for(int i = nt_selected.size()-1; i >= 0; i--)
     {
         NeuronSWC curr = nt_selected.at(i);
@@ -431,7 +447,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 newmarker.y = iy + start_y +1;
                 newmarker.z = iz + start_z +1;
                 PARA.listLandmarks.removeAt(markSize-1);
-                PARA.listLandmarks.push_back(newmarker);
+                if(newmarker.x <= N*0.05 || newmarker.x >= N*0.95 || newmarker.y <= M*0.05 || newmarker.y >= M*0.95 || newmarker.z <= P*0.05 || newmarker.z >= P*0.95)
+                {
+                    b_boundary = true;
+                }else
+                    PARA.listLandmarks.push_back(newmarker);
                 break;
             }
             else
@@ -475,6 +495,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //    }
 //    writeSWC_file(swc_name,nt);
 
+    if(b_boundary)
+    {
+        v3d_msg("Hits the boundary!");
+    }
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
