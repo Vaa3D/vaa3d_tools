@@ -31,20 +31,25 @@ struct input_PARA
     int win_size;
 };
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+//return -1: wrong running parameters, etc.
+//return 0: exit normally
+//return 1: exit when hit bounadry
+int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
  
 QStringList line_detector::menulist() const
 {
 	return QStringList() 
         <<tr("GD Curveline")
-		<<tr("about");
+        <<tr("GD Curveline infinite")
+        <<tr("about");
 }
 
 QStringList line_detector::funclist() const
 {
 	return QStringList()
         <<tr("GD_curveline")
-		<<tr("help");
+        <<tr("GD_Curveline_infinite")
+        <<tr("help");
 }
 
 void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -55,7 +60,18 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         input_PARA PARA;
         reconstruction_func(callback,parent,PARA,bmenu);
 	}
-	else
+    else if (menu_name == tr("GD Curveline infinite"))
+    {
+        bool bmenu = true;
+        input_PARA PARA;
+        for (;;)
+        {
+            int res = reconstruction_func(callback,parent,PARA,bmenu);
+            if (res!=0)
+                break;
+        }
+    }
+    else
 	{
         v3d_msg(tr("A small curvelinear structure detector based on GD, 2017-5-25"));
 	}
@@ -103,7 +119,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 	return true;
 }
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
@@ -115,7 +131,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (!curwin)
         {
             QMessageBox::information(0, "", "You don't have any image open in the main window.");
-            return;
+            return -1;
         }
 
         Image4DSimple* p4DImage = callback.getImage(curwin);
@@ -123,14 +139,14 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (!p4DImage)
         {
             QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-            return;
+            return -1;
         }
 
         PARA.listLandmarks = callback.getLandmark(curwin);
         if(PARA.listLandmarks.count() ==0)
         {
             QMessageBox::information(0, "", "No markers in the current image, please select a marker.");
-            return;
+            return -1;
         }
 
 //        bool ok;
@@ -162,7 +178,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         }
 
         if(!ok1)
-            return;
+            return -1;
 
         in_sz[0] = N;
         in_sz[1] = M;
@@ -177,12 +193,12 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
-            return;
+            return -1;
         }
         if(PARA.channel < 1 || PARA.channel > in_sz[3])
         {
             fprintf (stderr, "Invalid channel number. \n");
-            return;
+            return -1;
         }
         N = in_sz[0];
         M = in_sz[1];
@@ -261,7 +277,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
     {
         fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-        return;
+        //bug: clean memory!!!
+        return -1;
     }
     p0.x -= start_x;
     p0.y -= start_y;
@@ -321,12 +338,15 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))
     {
         v3d_msg("fail to call swc sorting function.");
+        //bug: need to clean memory!!!!
+        return -1;
     }
     export_list2file(neuron_sorted, swc_name,swc_name);
     if(neuron_sorted.size() <=0)
     {
         v3d_msg("cannot find any path based on the given marker.");
-        return;
+        //bug: need to clean memory!!!!
+        return -1;
     }
     nt = readSWC_file(swc_name);
     QFile file (swc_name);
@@ -400,7 +420,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         printf("%d\t",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix]);
     }
     double std = 0;
-    double *arr,tmp;
+    double *arr=0,tmp;
     arr = new double[nt_selected.size()];
     int ii,jj;
     ii = 0;
@@ -428,6 +448,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
     std = std/nt_selected.size();
     printf("mean is %.2f, std is %.2f\n\n\n",seg_mean_max,sqrt(std));
+    if (arr) {delete []arr; arr=0;}
 
     bool ending_tip = false;
     bool b_boundary = false;
@@ -495,10 +516,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //    }
 //    writeSWC_file(swc_name,nt);
 
-    if(b_boundary)
-    {
-        v3d_msg("Hits the boundary!");
-    }
     if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
@@ -506,5 +523,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
  //   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
-    return;
+    if (b_boundary)
+        v3d_msg("Hits the boundary!",0);
+
+    return (b_boundary) ? 1 : 0;
 }
