@@ -229,8 +229,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     memset(data1d_mask,0,stacksz*sizeof(unsigned char));
 
+    double margin=2;//by PHC 20170531
     if(nt_original.listNeuron.size()>0)
-        ComputemaskImage(nt_original, data1d_mask, N, M, P);
+        ComputemaskImage(nt_original, data1d_mask, N, M, P, margin);
 
     unsigned char *localarea=0;
     V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);

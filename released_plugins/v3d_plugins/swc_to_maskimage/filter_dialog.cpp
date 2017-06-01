@@ -165,7 +165,7 @@ void filter_dialog::swc_filter_image()
     V3DLONG stacksz = sx*sy*sz;
     pImMask = new unsigned char [stacksz];
     memset(pImMask,0,stacksz*sizeof(unsigned char));
-    ComputemaskImage(neuron, pImMask, sx, sy, sz);
+    ComputemaskImage(neuron, pImMask, sx, sy, sz, 0);
     unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
     memset(image_filter,0,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
 
@@ -247,7 +247,7 @@ void BoundNeuronCoordinates(NeuronTree & neuron, double & output_xmin,double & o
     return;
 }
 
-void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz)
+void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz, double margin)
 {
     NeuronSWC *p_cur = 0;
     //create a LUT
@@ -264,7 +264,7 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         xs = p_cur->x;
         ys = p_cur->y;
         zs = p_cur->z;
-        rs = p_cur->r;
+        rs = p_cur->r+margin;//margin added by PHC 20170531
 
         double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
 
