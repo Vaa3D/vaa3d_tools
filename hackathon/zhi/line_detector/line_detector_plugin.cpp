@@ -210,9 +210,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     trace_para.sp_num_end_nodes = 2;
     trace_para.b_deformcurve = false;
 
-    p0.x = PARA.listLandmarks.at(0).x;
-    p0.y = PARA.listLandmarks.at(0).y;
-    p0.z = PARA.listLandmarks.at(0).z;
+    int markSize = PARA.listLandmarks.size();
+    p0.x = PARA.listLandmarks.at(markSize-1).x;
+    p0.y = PARA.listLandmarks.at(markSize-1).y;
+    p0.z = PARA.listLandmarks.at(markSize-1).z;
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     start_x = (p0.x - PARA.win_size < 0)?  0 : p0.x - PARA.win_size;
@@ -431,9 +432,13 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max +0.3*sqrt(std))
             {
                 ending_tip = true;
-                PARA.listLandmarks[0].x = ix + start_x +1;
-                PARA.listLandmarks[0].y = iy + start_y +1;
-                PARA.listLandmarks[0].z = iz + start_z +1;
+                LocationSimple newmarker;
+                newmarker.x = ix + start_x +1;
+                newmarker.y = iy + start_y +1;
+                newmarker.z = iz + start_z +1;
+                PARA.listLandmarks.removeAt(markSize-1);
+                PARA.listLandmarks.push_back(newmarker);
+                break;
             }else
                 nt_selected.removeAt(i);
         }
