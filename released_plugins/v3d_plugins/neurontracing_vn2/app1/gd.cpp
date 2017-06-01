@@ -64,6 +64,7 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 
 using namespace boost;
 
+
 #include "../../v3d_main/graph/dijk.h"
 
 #include "../../v3d_main/v3d/compute_win_pca.h"
@@ -1682,7 +1683,7 @@ char* bgl_shortest_path(Edge *edge_array, V3DLONG n_edges, Weight *weights, V3DL
 	for (V3DLONG j=0; j<n_edges; ++j)
 	{
 		edge_descriptor e; bool inserted;
-		tie(e, inserted) = add_edge(edge_array[j].first, edge_array[j].second, g);		weightmap[e] = weights[j];
+		boost::tuples::tie(e, inserted) = add_edge(edge_array[j].first, edge_array[j].second, g);		weightmap[e] = weights[j]; // Need to specify namespace for Visual Studio to avoid confusion with std library. MK 2017 June
 	}
 
     printf("num_vertices(g)=%ld  num_edges(g)=%ld \n", num_vertices(g), num_edges(g));
@@ -1716,7 +1717,7 @@ char* bgl_shortest_path(Edge *edge_array, V3DLONG n_edges, Weight *weights, V3DL
 //	std::cout << "distances and parents:" << std::endl;
 	graph_traits < graph_t >::vertex_iterator vi, vend;
 	V3DLONG i=0;
-	for (tie(vi, vend) = vertices(g), i=0;
+	for (boost::tuples::tie(vi, vend) = vertices(g), i=0; // Need to specify namespace for Visual Studio to avoid confusion with std library. MK 2017 June
 		i<n_nodes && vi != vend;
 		++vi, i++)
 	{
