@@ -43,7 +43,7 @@ QStringList line_detector::menulist() const
 QStringList line_detector::funclist() const
 {
 	return QStringList()
-		<<tr("tracing_func")
+        <<tr("GD_curveline")
 		<<tr("help");
 }
 
@@ -54,18 +54,16 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         bool bmenu = true;
         input_PARA PARA;
         reconstruction_func(callback,parent,PARA,bmenu);
-
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2017-5-25"));
+        v3d_msg(tr("A small curvelinear structure detector based on GD, 2017-5-25"));
 	}
 }
 
 bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("tracing_func"))
+    if (func_name == tr("GD_curveline"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -93,7 +91,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
 
 		printf("**** Usage of line_detector tracing **** \n");
-		printf("vaa3d -x line_detector -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x line_detector -f GD_curveline -i <inimg_file> -p <channel> <other parameters>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
 
@@ -203,10 +201,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     CurveTracePara trace_para;
     trace_para.channo = 0;
     trace_para.sp_graph_resolution_step = 0;
-    trace_para.b_postMergeClosebyBranches = true;
+    trace_para.b_postMergeClosebyBranches = false;
     trace_para.b_3dcurve_width_from_xyonly = true;
-    trace_para.b_post_trimming = true;
-    trace_para.b_pruneArtifactBranches = true;
+    trace_para.b_post_trimming = false;
+    trace_para.b_pruneArtifactBranches = false;
     trace_para.sp_num_end_nodes = 2;
     trace_para.b_deformcurve = false;
 
@@ -401,8 +399,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         V3DLONG ix = curr.x;
         V3DLONG iy = curr.y;
         V3DLONG iz = curr.z;
-        double PixelVaule = localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
-        arr[ii] = PixelVaule;
+        double PX = localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
+        arr[ii] = PX;
         if (ii>0)
         {
             jj = ii;
@@ -415,7 +413,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
             }
         }
         ii++;
-        std += pow(PixelVaule-seg_mean_max,2);
+        std += pow(PX-seg_mean_max,2);
     }
     std = std/nt_selected.size();
     printf("mean is %.2f, std is %.2f\n\n\n",seg_mean_max,sqrt(std));
@@ -439,7 +437,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
                 PARA.listLandmarks.removeAt(markSize-1);
                 PARA.listLandmarks.push_back(newmarker);
                 break;
-            }else
+            }
+            else
                 nt_selected.removeAt(i);
         }
     }
