@@ -237,19 +237,15 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
     localarea = new unsigned char [blockpagesz];
     V3DLONG d = 0;
-    for(V3DLONG iz = start_z; iz < end_z + 1; iz++)
+    for(V3DLONG iz = start_z; iz <= end_z; iz++)
     {
         V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = start_y; iy < end_y+1; iy++)
+        for(V3DLONG iy = start_y; iy <= end_y; iy++)
         {
             V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = start_x; ix < end_x+1; ix++)
+            for(V3DLONG ix = start_x; ix <= end_x; ix++)
             {
-                if(data1d_mask[offsetk + offsetj + ix] == 0)
-                    localarea[d] = data1d[offsetk + offsetj + ix];
-                else
-                    localarea[d] = 1;
-                d++;
+                localarea[d++] = (data1d_mask[offsetk + offsetj + ix] == 0) ? data1d[offsetk + offsetj + ix] : 1;
             }
         }
     }
