@@ -506,9 +506,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     callback.updateImageWindow(curwin);
     callback.pushObjectIn3DWindow(curwin); //by PHC 170601
 
-    //callback.open3DWindow(curwin);
-    //callback.getView3DControl(curwin)->updateWithTriView();
-
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
 
