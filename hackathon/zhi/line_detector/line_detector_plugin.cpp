@@ -503,6 +503,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     nt_original.color.a = 0;
 
     callback.setSWC(curwin,nt_original);
+    callback.updateImageWindow(curwin);
     callback.pushObjectIn3DWindow(curwin); //by PHC 170601
 
     //callback.open3DWindow(curwin);
