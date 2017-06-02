@@ -29,6 +29,7 @@ struct input_PARA
     V3DLONG channel;
     LandmarkList listLandmarks;
     int win_size;
+    NeuronTree nt;
 };
 
 //return -1: wrong running parameters, etc.
@@ -79,7 +80,7 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    if (func_name == tr("GD_curveline"))
+    if (func_name == tr("GD_Curveline_infinite"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -97,9 +98,28 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         else
             PARA.inimg_file = infiles[0];
         int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        vector<MyMarker> file_inmarkers;
+        if(!inmarker_file.isEmpty())
+            file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+
+        LocationSimple t;
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            t.x = file_inmarkers[i].x-1;
+            t.y = file_inmarkers[i].y-1;
+            t.z = file_inmarkers[i].z-1;
+            PARA.listLandmarks.push_back(t);
+        }
+        PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        reconstruction_func(callback,parent,PARA,bmenu);
-	}
+        for (;;)
+        {
+            int res = reconstruction_func(callback,parent,PARA,bmenu);
+            if (res!=0)
+                break;
+        }
+    }
     else if (func_name == tr("help"))
     {
 
@@ -207,7 +227,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         c = PARA.channel;
     }
 
-
     //GD_tracing
     LocationSimple p0;
     vector<LocationSimple> pp;
@@ -238,7 +257,13 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     end_y = (p0.y + PARA.win_size > M-1)?  M-1 : p0.y + PARA.win_size;
     end_z = (p0.z + PARA.win_size > P-1)?  P-1 : p0.z + PARA.win_size;
 
-    NeuronTree nt_original = callback.getSWC(curwin);
+    NeuronTree nt_original;
+    if(bmenu)
+    {
+        nt_original = callback.getSWC(curwin);
+    }
+    else
+        nt_original = PARA.nt;
     V3DLONG stacksz = N*M*P*sc;
     unsigned char* data1d_mask = 0;
     data1d_mask = new unsigned char [stacksz];
@@ -485,29 +510,41 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
     NeuronSWC S;
     V3DLONG nt_length = nt_original.listNeuron.size();
+    V3DLONG index;
+    if(nt_length>0)
+        index = nt_original.listNeuron.at(nt_length-1).n;
+    else
+        index = 0;
     for (int i=0;i<nt_selected.size();i++)
     {
         NeuronSWC curr = nt_selected.at(i);
-        S.n 	= curr.n + nt_length;
+        S.n 	= curr.n + index;
         S.type 	= 3;
         S.x 	= curr.x + start_x;
         S.y 	= curr.y + start_y;
         S.z 	= curr.z + start_z;
         S.r 	= curr.r;
-        S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + nt_length;
+        S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
         nt_original.listNeuron.append(S);
         nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
     }
 
-    callback.setLandmark(curwin,PARA.listLandmarks);
-    nt_original.color.r = 0;
-    nt_original.color.g = 0;
-    nt_original.color.b = 0;
-    nt_original.color.a = 0;
+    if(bmenu)
+    {
+        callback.setLandmark(curwin,PARA.listLandmarks);
+        nt_original.color.r = 0;
+        nt_original.color.g = 0;
+        nt_original.color.b = 0;
+        nt_original.color.a = 0;
 
-    callback.setSWC(curwin,nt_original);
-    callback.updateImageWindow(curwin);
-    callback.pushObjectIn3DWindow(curwin); //by PHC 170601
+        callback.setSWC(curwin,nt_original);
+        callback.updateImageWindow(curwin);
+        callback.pushObjectIn3DWindow(curwin); //by PHC 170601
+    }
+    else
+    {
+        PARA.nt = nt_original;
+    }
 
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
@@ -530,6 +567,15 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
     if (b_boundary)
         v3d_msg("Hits the boundary!",0);
+
+    if (b_boundary && PARA.listLandmarks.size()==0)
+    {
+        if(!bmenu)
+        {
+            QString output = PARA.inimg_file + "_GD_curveline.swc";
+            writeSWC_file(output,PARA.nt);
+        }
+    }
 
     return (b_boundary && PARA.listLandmarks.size()==0) ? 1 : 0;
 }
