@@ -531,5 +531,5 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if (b_boundary)
         v3d_msg("Hits the boundary!",0);
 
-    return (b_boundary) ? 1 : 0;
+    return (b_boundary && PARA.listLandmarks.size()==0) ? 1 : 0;
 }
