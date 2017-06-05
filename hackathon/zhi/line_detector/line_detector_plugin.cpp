@@ -30,6 +30,8 @@ struct input_PARA
     LandmarkList listLandmarks;
     int win_size;
     NeuronTree nt;
+    QString outswc_file;
+
 };
 
 //return -1: wrong running parameters, etc.
@@ -86,8 +88,10 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         input_PARA PARA;
 
         vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
         vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
         if(infiles.empty())
@@ -97,6 +101,8 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
         else
             PARA.inimg_file = infiles[0];
+
+        PARA.outswc_file = outfiles[0];        outfiles.empty() ? "" : outfiles[0];
         int k=0;
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         vector<MyMarker> file_inmarkers;
@@ -572,8 +578,17 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     {
         if(!bmenu)
         {
-            QString output = PARA.inimg_file + "_GD_curveline.swc";
-            writeSWC_file(output,PARA.nt);
+            QString output;
+            if(PARA.outswc_file != "NULL")
+                output = PARA.outswc_file;
+            else
+                output = PARA.inimg_file + "_GD_curveline.swc";
+            QList<NeuronSWC> neuron_output;
+            if (!SortSWC(PARA.nt.listNeuron, neuron_output,VOID, VOID))
+            {
+                return -1;
+            }
+            export_list2file(neuron_output, output,swc_name);
         }
     }
 
