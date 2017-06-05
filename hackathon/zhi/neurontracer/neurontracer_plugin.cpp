@@ -49,12 +49,12 @@ QStringList neurontracer::funclist() const
          <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")
        <<tr("trace_NeuroGPSTree")
-//      <<tr("trace_Advantra")
-     <<tr("trace_TReMAP")
-    <<tr("trace_MST")
-   <<tr("trace_NeuronChaser")
-  <<tr("trace_Rivulet2")
- <<tr("help");
+      <<tr("trace_TReMAP")
+     <<tr("trace_MST")
+    <<tr("trace_NeuronChaser")
+    <<tr("trace_Rivulet2")
+    <<tr("trace_GD_curveline")
+    <<tr("help");
 }
 
 void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -654,9 +654,32 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.method = 5;
         crawler_raw_all(callback,parent,P,bmenu);
     }
-    else if (func_name == tr("trace_SNAKE"))
+    else if (func_name == tr("trace_GD_curveline"))
     {
-        v3d_msg("To be implemented.");
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        P.image = 0;
+        int k=0;
+
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }else
+            P.markerfilename = inmarker_file;
+
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+        P.tracing_3D = true;
+        P.tracing_comb = false;
+        P.method = 12;
+        crawler_raw_app(callback,parent,P,bmenu);
     }
 	else if (func_name == tr("help"))
 	{

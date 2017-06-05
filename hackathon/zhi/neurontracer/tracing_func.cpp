@@ -244,8 +244,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {
         if(P.method == 1)
             tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
-        else
+        else if (P.method == 2)
             tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        else
+            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
     if(!tmpfolder.isEmpty())
@@ -327,7 +329,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
-    }else
+    }else (P.method==2)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -1248,16 +1250,17 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
         finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
     }
-    else
+    else if(P.method == 2)
     {
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
-
-
-  //  v3d_msg(QString("root is (%1,%2,%3").arg(tileLocation.x).arg(tileLocation.y).arg(tileLocation.z));
-
+    else
+    {
+        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+    }
 
     QString imageSaveString = saveDirString;
 
@@ -1451,149 +1454,211 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(in_sz) {delete []in_sz; in_sz =0;}
     if(aVolume) {delete aVolume; aVolume = 0;}
 
-    //v3d_msg(QString("%1,%2,%3,%4,%5").arg(start_x_updated).arg(end_x_updated).arg(start_y_updated).arg(end_y_updated).arg(tileLocation.ev_pc3));
-
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
 
     if(ifs_swc)
        finalswc = readSWC_file(finaloutputswc.toStdString());
 
-    if(P.method == 1)
-        qDebug()<<"starting app1";
-    else
-        qDebug()<<"starting app2";
-    qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
-
     vector<MyMarker*> tileswc_file;
 
-    if(inputRootList.size() <1)
+
+    if(P.method == 1 || P.method == 2)
     {
         if(P.method == 1)
+            qDebug()<<"starting app1";
+        else
+            qDebug()<<"starting app2";
+        qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+
+        if(inputRootList.size() <1)
         {
-            p1.outswc_file =swcString;
-            proc_app1(callback, p1, versionStr);
+            if(P.method == 1)
+            {
+                p1.outswc_file =swcString;
+                proc_app1(callback, p1, versionStr);
+            }
+            else
+            {
+                p2.outswc_file =swcString;
+                proc_app2(callback, p2, versionStr);
+            }
         }
         else
         {
-            p2.outswc_file =swcString;
-            proc_app2(callback, p2, versionStr);
+            for(int i = 0; i < inputRootList.size(); i++)
+            {
+                QString poutswc_file = swcString + (QString::number(i)) + (".swc");
+                if(P.method == 1)
+                    p1.outswc_file =poutswc_file;
+                else
+                    p2.outswc_file =poutswc_file;
+
+                bool flag = false;
+                LocationSimple RootNewLocation;
+                RootNewLocation.x = inputRootList.at(i).x - total4DImage->getOriginX();
+                RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
+                RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
+
+                const float dd = 0.5;
+
+                if(RootNewLocation.x<-dd || RootNewLocation.x>total4DImage->getXDim()-1+dd || RootNewLocation.y<-dd || RootNewLocation.y>total4DImage->getYDim()-1+dd || RootNewLocation.z<-dd || RootNewLocation.z>total4DImage->getZDim()-1+dd)
+                    continue;
+
+                if(tileswc_file.size()>0)
+                {
+                    for(V3DLONG dd = 0; dd < tileswc_file.size();dd++)
+                    {
+                        double dis = sqrt(pow2(RootNewLocation.x - tileswc_file.at(dd)->x) + pow2(RootNewLocation.y - tileswc_file.at(dd)->y) + pow2(RootNewLocation.z - tileswc_file.at(dd)->z));
+                        if(dis < 10.0)
+                        {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+
+                if(!flag)
+                {
+                    vector<MyMarker*> inputswc;
+                    bool soma_tile;
+                    if(P.method == 1)
+                    {
+
+                        p1.landmarks.push_back(RootNewLocation);
+                        proc_app1(callback, p1, versionStr);
+                        p1.landmarks.clear();
+                    }else
+                    {
+
+                        v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
+                        V3DLONG num_tips = 100;
+                        p2.bkg_thresh = -1;//P.bkg_thresh;
+                        p2.landmarks.push_back(RootNewLocation);
+
+                        do
+                        {
+                            soma_tile = false;
+                            num_tips = 0;
+                            proc_app2(callback, p2, versionStr);
+    //                        if(ifs_swc)
+    //                        {
+    //                            NeuronTree nt_app2 = readSWC_file(poutswc_file);
+    //                            NeuronTree nt_app2_pruned = pruning_cross_swc(nt_app2);
+    //                            writeSWC_file(poutswc_file,nt_app2_pruned);
+    //                        }
+
+                            inputswc = readSWC_file(poutswc_file.toStdString());
+                            for(V3DLONG d = 0; d < inputswc.size(); d++)
+                            {
+                                if( inputswc[d]->x < 0.05*  total4DImage->getXDim() || inputswc[d]->x > 0.95 *  total4DImage->getXDim() || inputswc[d]->y < 0.05 * total4DImage->getYDim() || inputswc[d]->y > 0.95* total4DImage->getYDim()
+                                        || inputswc[d]->z < 0.05*  total4DImage->getZDim() || inputswc[d]->z > 0.95 *  total4DImage->getZDim())
+                                {
+                                    num_tips++;
+                                }
+
+                                if(ifs_swc && inputswc[d]->radius >= 8)
+                                {
+                                    soma_tile = true;
+                                }
+
+                            }
+                            if (num_tips>=50)
+                                p2.bkg_thresh +=2;
+                            else
+                                break;
+                        } while (1);
+
+                        while(0 && inputswc.size()<=0) //by PHC 20170523
+                        {
+                            soma_tile = false;
+                            num_tips = 0;
+                            p2.bkg_thresh -=2;
+                            proc_app2(callback, p2, versionStr);
+                            inputswc = readSWC_file(poutswc_file.toStdString());
+                            for(V3DLONG d = 0; d < inputswc.size(); d++)
+                            {
+                                if(ifs_swc && inputswc[d]->radius >= 8)
+                                {
+                                    soma_tile = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        p2.landmarks.clear();
+                    }
+
+                    for(V3DLONG d = 0; d < inputswc.size(); d++)
+                    {
+                        if(soma_tile)   inputswc[d]->type = 0;
+                        tileswc_file.push_back(inputswc[d]);
+                    }
+                }
+            }
+            saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
+            nt = readSWC_file(swcString);
         }
     }
     else
     {
-        for(int i = 0; i < inputRootList.size(); i++)
+        QString marker_name = imageSaveString + ".marker";
+        QList<ImageMarker> seedsToSave;
+        ImageMarker outputMarker;
+        if(inputRootList.size() <1)
         {
-            QString poutswc_file = swcString + (QString::number(i)) + (".swc");
-            if(P.method == 1)
-                p1.outswc_file =poutswc_file;
-            else
-                p2.outswc_file =poutswc_file;
-
-            bool flag = false;
-            LocationSimple RootNewLocation;
-            RootNewLocation.x = inputRootList.at(i).x - total4DImage->getOriginX();
-            RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
-            RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
-
-            const float dd = 0.5;
-
-            if(RootNewLocation.x<-dd || RootNewLocation.x>total4DImage->getXDim()-1+dd || RootNewLocation.y<-dd || RootNewLocation.y>total4DImage->getYDim()-1+dd || RootNewLocation.z<-dd || RootNewLocation.z>total4DImage->getZDim()-1+dd)
-                continue;
-
-            if(tileswc_file.size()>0)
+            outputMarker.x = P.in_sz[0]/2 + 1;
+            outputMarker.y = P.in_sz[1]/2 + 1;
+            outputMarker.z = P.in_sz[2]/2 + 1;
+            seedsToSave.append(outputMarker);
+        }
+        else
+        {
+            for(V3DLONG i = 0; i<inputRootList.size();i++)
             {
-                for(V3DLONG dd = 0; dd < tileswc_file.size();dd++)
-                {
-                    double dis = sqrt(pow2(RootNewLocation.x - tileswc_file.at(dd)->x) + pow2(RootNewLocation.y - tileswc_file.at(dd)->y) + pow2(RootNewLocation.z - tileswc_file.at(dd)->z));
-                    if(dis < 10.0)
-                    {
-                        flag = true;
-                        break;
-                    }
-                }
-            }
-
-            if(!flag)
-            {
-                vector<MyMarker*> inputswc;
-                bool soma_tile;
-                if(P.method == 1)
-                {
-
-                    p1.landmarks.push_back(RootNewLocation);
-                    proc_app1(callback, p1, versionStr);
-                    p1.landmarks.clear();
-                }else
-                {
-
-                    v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
-                    V3DLONG num_tips = 100;
-                    p2.bkg_thresh = -1;//P.bkg_thresh;
-                    p2.landmarks.push_back(RootNewLocation);
-
-                    do
-                    {
-                        soma_tile = false;
-                        num_tips = 0;
-                        proc_app2(callback, p2, versionStr);
-//                        if(ifs_swc)
-//                        {
-//                            NeuronTree nt_app2 = readSWC_file(poutswc_file);
-//                            NeuronTree nt_app2_pruned = pruning_cross_swc(nt_app2);
-//                            writeSWC_file(poutswc_file,nt_app2_pruned);
-//                        }
-
-                        inputswc = readSWC_file(poutswc_file.toStdString());
-                        for(V3DLONG d = 0; d < inputswc.size(); d++)
-                        {
-                            if( inputswc[d]->x < 0.05*  total4DImage->getXDim() || inputswc[d]->x > 0.95 *  total4DImage->getXDim() || inputswc[d]->y < 0.05 * total4DImage->getYDim() || inputswc[d]->y > 0.95* total4DImage->getYDim()
-                                    || inputswc[d]->z < 0.05*  total4DImage->getZDim() || inputswc[d]->z > 0.95 *  total4DImage->getZDim())
-                            {
-                                num_tips++;
-                            }
-
-                            if(ifs_swc && inputswc[d]->radius >= 8)
-                            {
-                                soma_tile = true;
-                            }
-
-                        }
-                        if (num_tips>=50)
-                            p2.bkg_thresh +=2;
-                        else
-                            break;
-                    } while (1);
-
-                    while(0 && inputswc.size()<=0) //by PHC 20170523
-                    {
-                        soma_tile = false;
-                        num_tips = 0;
-                        p2.bkg_thresh -=2;
-                        proc_app2(callback, p2, versionStr);
-                        inputswc = readSWC_file(poutswc_file.toStdString());
-                        for(V3DLONG d = 0; d < inputswc.size(); d++)
-                        {
-                            if(ifs_swc && inputswc[d]->radius >= 8)
-                            {
-                                soma_tile = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    p2.landmarks.clear();
-                }
-
-                for(V3DLONG d = 0; d < inputswc.size(); d++)
-                {
-                    if(soma_tile)   inputswc[d]->type = 0;
-                    tileswc_file.push_back(inputswc[d]);
-                }
+                ImageMarker outputMarker;
+                outputMarker.x = inputRootList.at(i).x - total4DImage->getOriginX() + 1;
+                outputMarker.y = inputRootList.at(i).y - total4DImage->getOriginY() + 1;
+                outputMarker.z = inputRootList.at(i).z - total4DImage->getOriginZ() + 1;
+                seedsToSave.append(outputMarker);
             }
         }
-        saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
-        nt = readSWC_file(swcString);
+        writeMarker_file(marker_name, seedsToSave);
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
+
+        QString full_plugin_name;
+        QString func_name;
+
+        arg.type = "random";std::vector<char*> arg_input;
+        std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input.push_back(fileName_string);
+        arg.p = (void *) & arg_input; input<< arg;
+
+        char* char_swcout =  new char[swcString.length() + 1];strcpy(char_swcout, swcString.toStdString().c_str());
+        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(char_swcout); arg.p = (void *) & arg_output; output<< arg;
+
+        arg.type = "random";
+        std::vector<char*> arg_para;
+        arg_para.push_back(marker_name.toStdString().c_str());
+        arg_para.push_back("32");
+        full_plugin_name = "line_detector";
+        func_name =  "GD_Curveline_infinite";
+
+        arg.p = (void *) & arg_para; input << arg;
+
+        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        {
+
+            printf("Can not find the tracing plugin!\n");
+            return false;
+        }
+
+        QString swcGD = saveDirString;
+        swcGD.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_GD_curveline.swc");
+        nt = readSWC_file(swcGD);
     }
 
     QVector<QVector<V3DLONG> > childs;
@@ -1719,6 +1784,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         for(int i = 0; i < group_tips_in.size();i++)
             ada_win_finding_3D(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
     }
+
+    if(P.method == 12)
+        tileswc_file = readSWC_file(swcString.toStdString());
 
     if(ifs_swc)
     {
