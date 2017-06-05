@@ -112,9 +112,9 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         LocationSimple t;
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
-            t.x = file_inmarkers[i].x-1;
-            t.y = file_inmarkers[i].y-1;
-            t.z = file_inmarkers[i].z-1;
+            t.x = file_inmarkers[i].x;
+            t.y = file_inmarkers[i].y;
+            t.z = file_inmarkers[i].z;
             PARA.listLandmarks.push_back(t);
         }
         PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;

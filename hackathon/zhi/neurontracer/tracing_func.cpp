@@ -224,12 +224,25 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     inputRootList.push_back(tileLocation);
     allTipsList.push_back(inputRootList);
 
-    tileLocation.x = tileLocation.x -int(P.block_size/2);
-    tileLocation.y = tileLocation.y -int(P.block_size/2);
-    if(P.tracing_3D)
-        tileLocation.z = tileLocation.z -int(P.block_size/2);
-    else
-        tileLocation.z = 0;
+    if(P.method ==12)
+    {
+        tileLocation.x = tileLocation.x -int(P.block_size/2);
+        tileLocation.y = tileLocation.y - 3;
+        if(P.tracing_3D)
+            tileLocation.z = tileLocation.z -int(P.block_size/2);
+        else
+            tileLocation.z = 0;
+    }
+    else{
+
+        tileLocation.x = tileLocation.x -int(P.block_size/2);
+        tileLocation.y = tileLocation.y -int(P.block_size/2);
+        if(P.tracing_3D)
+            tileLocation.z = tileLocation.z -int(P.block_size/2);
+        else
+            tileLocation.z = 0;
+    }
+
     tileLocation.ev_pc1 = P.block_size;
     tileLocation.ev_pc2 = P.block_size;
     tileLocation.ev_pc3 = P.block_size;
@@ -329,7 +342,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
-    }else (P.method==2)
+    }else if(P.method==2)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -1607,9 +1620,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         ImageMarker outputMarker;
         if(inputRootList.size() <1)
         {
-            outputMarker.x = P.in_sz[0]/2 + 1;
-            outputMarker.y = P.in_sz[1]/2 + 1;
-            outputMarker.z = P.in_sz[2]/2 + 1;
+            outputMarker.x = int(P.in_sz[0]/2) + 1;
+            outputMarker.y = 2;
+            outputMarker.z = int(P.in_sz[2]/2) + 1;
             seedsToSave.append(outputMarker);
         }
         else
@@ -1642,23 +1655,43 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
         arg.type = "random";
         std::vector<char*> arg_para;
-        arg_para.push_back(marker_name.toStdString().c_str());
-        arg_para.push_back("32");
+        char* char_marker =  new char[marker_name.length() + 1];strcpy(char_marker, marker_name.toStdString().c_str());
+        arg_para.push_back(char_marker);
+
+        string S_seed_win = boost::lexical_cast<string>(P.seed_win);
+        char* C_seed_win = new char[S_seed_win.length() + 1];
+        strcpy(C_seed_win,S_seed_win.c_str());
+        arg_para.push_back(C_seed_win);
+
         full_plugin_name = "line_detector";
         func_name =  "GD_Curveline_infinite";
 
         arg.p = (void *) & arg_para; input << arg;
-
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
         {
-
             printf("Can not find the tracing plugin!\n");
             return false;
         }
 
-        QString swcGD = saveDirString;
-        swcGD.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_GD_curveline.swc");
-        nt = readSWC_file(swcGD);
+        nt = readSWC_file(swcString);
+        if(nt.listNeuron.size() < 50)
+        {
+            ImageMarker additionalMarker;
+            additionalMarker.x = seedsToSave.at(0).x+1;
+            additionalMarker.y = seedsToSave.at(0).y;
+            additionalMarker.z = seedsToSave.at(0).z;
+
+            seedsToSave.append(additionalMarker);
+            writeMarker_file(marker_name, seedsToSave);
+            if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+            {
+                printf("Can not find the tracing plugin!\n");
+                return false;
+            }
+
+            nt = readSWC_file(swcString);
+        }
+
     }
 
     QVector<QVector<V3DLONG> > childs;
@@ -1681,8 +1714,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
-//        if (childs[i].size()==0)
-//        {
+        if (childs[i].size()==0 || P.method != 12)
+        {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
             bool check_tip = false;
@@ -1742,8 +1775,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             {
                 tip_in.push_back(newTip);
             }
-
-      //  }
+        }
     }
 
     if(tip_left.size()>0)
