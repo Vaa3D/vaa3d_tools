@@ -69,6 +69,7 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         input_PARA PARA;
         for (;;)
         {
+            printf("\n\n~~~~~~~~~ Enter again @@@@@@@@@@@@@@@@@@@\n\n");
             int res = reconstruction_func(callback,parent,PARA,bmenu);
             if (res!=0)
                 break;
@@ -348,6 +349,34 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 }
             }
         }
+    }
+
+
+    //170606 add favorite direction, by PHC
+#define NMINNODENUM 10
+    if (nt_original.listNeuron.size()<=NMINNODENUM) //ensure there are at least 10 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
+    {
+        printf("\n\nset trace_para facorite direction to false==============\n\n");
+
+        trace_para.b_use_favorite_direction = false;
+    }
+    else
+    {
+        printf("\n\nset trace_para facorite direction to true!!!!!!!!!!!!!!!!\n\n");
+
+        trace_para.b_use_favorite_direction = true;
+
+        NeuronSWC curr;
+        V3DLONG nt_length = nt_original.listNeuron.size();
+        V3DLONG index;
+        if(nt_length>1)
+        {
+            trace_para.favorite_direction[0] = (nt_original.listNeuron.at(nt_length-1).x - nt_original.listNeuron.at(nt_length-NMINNODENUM).x);
+            trace_para.favorite_direction[1] = (nt_original.listNeuron.at(nt_length-1).y - nt_original.listNeuron.at(nt_length-NMINNODENUM).y);
+            trace_para.favorite_direction[2] = (nt_original.listNeuron.at(nt_length-1).z - nt_original.listNeuron.at(nt_length-NMINNODENUM).z);
+        }
+
+        printf("dd = %d %5.3f %5.3f %5.3f \n", nt_length, trace_para.favorite_direction[0], trace_para.favorite_direction[1], trace_para.favorite_direction[2]);
     }
 
 //    simple_saveimage_wrapper(callback, "/opt/zhi/Desktop/test.v3draw",(unsigned char *)localarea, sz_tracing, 1);
