@@ -261,7 +261,14 @@ V_NeuronSWC_list trace_one_pt_to_N_points_shortestdist(unsigned char ****p4d, V3
 	sp_para.smooth_winsize = trace_para.sp_smoothing_win_sz;
 	sp_para.imgTH = trace_para.imgTH;
     sp_para.visible_thresh = trace_para.visible_thresh;
+
+    //170606
+    sp_para.b_use_favorite_direction = trace_para.b_use_favorite_direction;
+    for (int myii=0; myii<3; myii++)
+        sp_para.favorite_direction[myii] = trace_para.favorite_direction[myii];
     
+    //
+
     mmUnit.clear();
 	int chano = trace_para.channo;
 	if (chano>=sz[3]) chano=sz[3]-1; if (chano<0) chano=0; 
@@ -306,7 +313,7 @@ V_NeuronSWC_list trace_one_pt_to_N_points_shortestdist(unsigned char ****p4d, V3
 											  sp_para);
 
 		}
-		else
+        else //note that this has NOT been updated yet to include the favorite direction , by PHC 20170606
 		{
 #ifdef __USE_HIERARCHICAL_PRUNING__
             
@@ -322,7 +329,7 @@ V_NeuronSWC_list trace_one_pt_to_N_points_shortestdist(unsigned char ****p4d, V3
 #endif
 		}
 	}
-	else
+    else //note that this has NOT been updated yet to include the favorite direction , by PHC 20170606
 	{
 		V3DLONG *chans = new V3DLONG [sz[3]];
 		for(V3DLONG tmpi=0; tmpi<sz[3]; tmpi++) chans[tmpi]=tmpi; //use all channels (since the data of channels_to_use have actually been copied here)

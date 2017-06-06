@@ -1086,6 +1086,32 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
 					edge_array.push_back( e );
 
 					Weight w =	edge_weight_func(it, va,vb, 255); 
+
+                    //now try to use favorite direction if literally specified. by PHC 20170606
+                    if (para.b_use_favorite_direction)
+                    {
+                        double x_mid = (X_I(ii) + X_I(ii1))/2.0;
+                        double y_mid = (Y_I(ii) + Y_I(ii1))/2.0;
+                        double z_mid = (Z_I(ii) + Z_I(ii1))/2.0;
+
+                        double d_startpt_2_mid[3]; //the direction vector from the starting pt to the mid-pt of the two current ends of an edge
+                        d_startpt_2_mid[0] = x_mid - x0;
+                        d_startpt_2_mid[1] = y_mid - y0;
+                        d_startpt_2_mid[2] = z_mid - z0;
+
+                        double vpq=0,vpp=0,vqq=0;
+                        for (int di=0;di<3;di++)
+                        {
+                            vpq += d_startpt_2_mid[di]*para.favorite_direction[di];
+                            vpp += d_startpt_2_mid[di]*d_startpt_2_mid[di];
+                            vqq += para.favorite_direction[di]*para.favorite_direction[di];
+                        }
+
+                        if (vqq>1e-6) //if vqq is too small then the initial favorite direction is deemed to be invalid
+                            w *= (vpq/(sqrt(vpp)*sqrt(vqq))+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
+                        //also in the furture we may not need to divide sqrt(vqq) because it is constant, and this should also avoid the extra-exception when vqq=0
+                    }
+
 					weights.push_back( w );
 					//=========================================================================================
 

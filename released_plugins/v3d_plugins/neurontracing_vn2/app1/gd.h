@@ -36,6 +36,7 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 //101219: update the deformable curve part
 //101221: renamed as gd.h
 //110115: add rearrange_and_remove_labeled_deletion_nodes_mmUnit()
+//170606: add a favorite direction to trace
 
 #ifndef __NEURON_TRACING_H__
 #define __NEURON_TRACING_H__
@@ -72,6 +73,9 @@ struct ParaShortestPath
 	double imgTH;
 	double visible_thresh;
 
+    bool b_use_favorite_direction; //add by PHC 170606
+    double favorite_direction[3];
+
 	ParaShortestPath()
 	{
 		node_step = 3; //should be >=1
@@ -81,6 +85,9 @@ struct ParaShortestPath
 		background_select = 1;
 		imgTH = 0; //do not tracing image background
         visible_thresh = 30;
+
+        b_use_favorite_direction = false;
+        favorite_direction[0] = favorite_direction[1] = favorite_direction[2] = 0;
 	}
 };
 
