@@ -1108,7 +1108,11 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
                         }
 
                         if (vqq>1e-6) //if vqq is too small then the initial favorite direction is deemed to be invalid
-                            w *= (vpq/(sqrt(vpp)*sqrt(vqq))+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
+                        {
+                            double w_direction = (vpq/(sqrt(vpp)*sqrt(vqq))+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
+                            w *= w_direction;
+                            printf("wd=%5.3f ", w_direction);
+                        }
                         //also in the furture we may not need to divide sqrt(vqq) because it is constant, and this should also avoid the extra-exception when vqq=0
                     }
 
