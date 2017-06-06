@@ -9,10 +9,10 @@
 #include "tracing_func.h"
 
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
-#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../istitch/y_imglib.h"
+#include "../neurontracing_vn2/app2/my_surf_objs.h"
 
-#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "../terastitcher/src/core/imagemanager/VirtualVolume.h"
 
 
 using namespace std;
