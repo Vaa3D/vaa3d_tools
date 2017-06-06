@@ -369,9 +369,9 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         V3DLONG nt_length = PARA.nt_last.size();
         if(nt_length>1)
         {
-            trace_para.favorite_direction[0] = (PARA.nt_last.at(nt_length-1).x - PARA.nt_last.at(0).x);
-            trace_para.favorite_direction[1] = (PARA.nt_last.at(nt_length-1).y - PARA.nt_last.at(0).y);
-            trace_para.favorite_direction[2] = (PARA.nt_last.at(nt_length-1).z - PARA.nt_last.at(0).z);
+            trace_para.favorite_direction[0] = -((PARA.nt_last.at(nt_length-1).x - PARA.nt_last.at(0).x));
+            trace_para.favorite_direction[1] = -((PARA.nt_last.at(nt_length-1).y - PARA.nt_last.at(0).y));
+            trace_para.favorite_direction[2] = -((PARA.nt_last.at(nt_length-1).z - PARA.nt_last.at(0).z));
         }
 
         printf("dd = %d %5.3f %5.3f %5.3f \n", nt_length, trace_para.favorite_direction[0], trace_para.favorite_direction[1], trace_para.favorite_direction[2]);
