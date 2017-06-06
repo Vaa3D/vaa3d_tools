@@ -31,6 +31,7 @@ struct input_PARA
     int win_size = 0;
     NeuronTree nt;
     QString outswc_file;
+    QList<NeuronSWC> nt_last;
 
 };
 
@@ -353,8 +354,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
 
     //170606 add favorite direction, by PHC
-#define NMINNODENUM 10
-    if (nt_original.listNeuron.size()<=NMINNODENUM) //ensure there are at least 10 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
+    if (PARA.nt_last.size()<=1) //ensure there are at least 2 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
     {
         printf("\n\nset trace_para facorite direction to false==============\n\n");
 
@@ -366,14 +366,12 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
         trace_para.b_use_favorite_direction = true;
 
-        NeuronSWC curr;
-        V3DLONG nt_length = nt_original.listNeuron.size();
-        V3DLONG index;
+        V3DLONG nt_length = PARA.nt_last.size();
         if(nt_length>1)
         {
-            trace_para.favorite_direction[0] = (nt_original.listNeuron.at(nt_length-1).x - nt_original.listNeuron.at(nt_length-NMINNODENUM).x);
-            trace_para.favorite_direction[1] = (nt_original.listNeuron.at(nt_length-1).y - nt_original.listNeuron.at(nt_length-NMINNODENUM).y);
-            trace_para.favorite_direction[2] = (nt_original.listNeuron.at(nt_length-1).z - nt_original.listNeuron.at(nt_length-NMINNODENUM).z);
+            trace_para.favorite_direction[0] = (PARA.nt_last.at(nt_length-1).x - PARA.nt_last.at(0).x);
+            trace_para.favorite_direction[1] = (PARA.nt_last.at(nt_length-1).y - PARA.nt_last.at(0).y);
+            trace_para.favorite_direction[2] = (PARA.nt_last.at(nt_length-1).z - PARA.nt_last.at(0).z);
         }
 
         printf("dd = %d %5.3f %5.3f %5.3f \n", nt_length, trace_para.favorite_direction[0], trace_para.favorite_direction[1], trace_para.favorite_direction[2]);
@@ -566,6 +564,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         nt_original.listNeuron.append(S);
         nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
     }
+
+    PARA.nt_last = nt_selected;
 
     if(bmenu)
     {
