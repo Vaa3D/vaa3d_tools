@@ -689,7 +689,7 @@ x = xmin+(x)*xstep; 	y = ymin+(y)*ystep; 			z = zmin+(z)*zstep; \
 			break;
 		case 2:
 			printf("mst_shortest_path() \n");
-			s_error = phc_shortest_path(&edge_array[0], num_edges, &weights[0], num_nodes,	start_nodeind, &plist[0]);
+            s_error = mst_shortest_path(&edge_array[0], num_edges, &weights[0], num_nodes,	start_nodeind, &plist[0]);
 			break;
 	}
 	if (s_error)
@@ -1132,7 +1132,7 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
 			break;
 		case 2:
 			printf("mst_shortest_path() \n");
-			s_error = phc_shortest_path(&edge_array[0], num_edges, &weights[0], num_nodes,	start_nodeind, &plist[0]);
+            s_error = mst_shortest_path(&edge_array[0], num_edges, &weights[0], num_nodes,	start_nodeind, &plist[0]);
 			break;
 	}
 	if (s_error)
@@ -1494,7 +1494,7 @@ char* find_shortest_path_graphpointset(V3DLONG n_all_nodes,
 			break;
 		case 2:
 			printf("mst_shortest_path() \n");
-			s_error = phc_shortest_path(&edge_array[0], num_edges, &weights[0], num_nodes,	start_nodeind, &plist[0]);
+            s_error = mst_shortest_path(&edge_array[0], num_edges, &weights[0], num_nodes,	start_nodeind, &plist[0]);
 			break;
 	}
 	if (s_error)
