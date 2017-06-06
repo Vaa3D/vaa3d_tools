@@ -42,7 +42,7 @@ void saveToanoPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	{
         generatorAno43Dviewer(callback,parent);
 	}
-    if (menu_name == tr("1_click_timestamp_save"))
+    else if (menu_name == tr("1_click_timestamp_save"))
     {
         generatorAno43Dviewer_timestamp(callback,parent);
     }
