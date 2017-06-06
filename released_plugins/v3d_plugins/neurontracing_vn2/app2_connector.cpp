@@ -351,6 +351,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             case V3D_UINT16:  //this is no longer needed, as the data type has been converted above
                 fastmarching_dt_XY((short int*)indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
                 break;
+        default:
+            v3d_msg("Unsupported data type");
+            break;
         }
         
         V3DLONG sz0 = in_sz[0];
