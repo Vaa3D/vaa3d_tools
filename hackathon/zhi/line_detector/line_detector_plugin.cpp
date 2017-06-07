@@ -387,7 +387,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 vqq += trace_para.favorite_direction[di]*trace_para.favorite_direction[di];
             }
 
-            if (vpq/(sqrt(vpp)*sqrt(vqq))<0.7) //0.5 is 45 degree
+            if (vpq/(sqrt(vpp)*sqrt(vqq))<0.5) //0.5 is 45 degree
             {
                 trace_para.b_use_favorite_direction = false;
             }
