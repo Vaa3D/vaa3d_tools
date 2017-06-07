@@ -260,13 +260,13 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     p0.z = PARA.listLandmarks.at(markSize-1).z;
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
-    start_x = (p0.x - PARA.win_size < 0)?  0 : p0.x - PARA.win_size;
-    start_y = (p0.y - PARA.win_size < 0)?  0 : p0.y - PARA.win_size;
-    start_z = (p0.z - PARA.win_size < 0)?  0 : p0.z - PARA.win_size;
+    start_x = (p0.x - PARA.win_size < 0)?  0 : (p0.x - PARA.win_size);
+    start_y = (p0.y - PARA.win_size < 0)?  0 : (p0.y - PARA.win_size);
+    start_z = (p0.z - PARA.win_size < 0)?  0 : (p0.z - PARA.win_size);
 
-    end_x = (p0.x + PARA.win_size > N-1)?  N-1 : p0.x + PARA.win_size;
-    end_y = (p0.y + PARA.win_size > M-1)?  M-1 : p0.y + PARA.win_size;
-    end_z = (p0.z + PARA.win_size > P-1)?  P-1 : p0.z + PARA.win_size;
+    end_x = (p0.x + PARA.win_size >= N-1)?  (N-1) : (p0.x + PARA.win_size);
+    end_y = (p0.y + PARA.win_size >= M-1)?  (M-1) : (p0.y + PARA.win_size);
+    end_z = (p0.z + PARA.win_size >= P-1)?  (P-1) : (p0.z + PARA.win_size);
 
     NeuronTree nt_original;
     if(bmenu)
