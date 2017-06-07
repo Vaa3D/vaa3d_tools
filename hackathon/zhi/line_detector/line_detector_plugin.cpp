@@ -298,6 +298,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             for(V3DLONG ix = start_x; ix <= end_x; ix++)
             {
                 localarea[d++] = (data1d_mask[offsetk + offsetj + ix] == 0) ? data1d[offsetk + offsetj + ix] : 1;
+//                localarea[d++] = data1d[offsetk + offsetj + ix]; //disable the masking and copy the data as is // by PHC 20170607
             }
         }
     }
@@ -354,7 +355,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
 
     //170606 add favorite direction, by PHC
-    if (PARA.nt_last.size()<=1) //ensure there are at least 2 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
+    if (PARA.nt_last.size()<=10) //ensure there are at least 2 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
     {
         printf("\n\nset trace_para facorite direction to false==============\n\n");
 
@@ -367,12 +368,32 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         trace_para.b_use_favorite_direction = true;
 
         V3DLONG nt_length = PARA.nt_last.size();
-        if(nt_length>1)
+        if(nt_length>10)
         {
             trace_para.favorite_direction[0] = ((PARA.nt_last.at(nt_length-1).x - PARA.nt_last.at(0).x));
             trace_para.favorite_direction[1] = ((PARA.nt_last.at(nt_length-1).y - PARA.nt_last.at(0).y));
             trace_para.favorite_direction[2] = ((PARA.nt_last.at(nt_length-1).z - PARA.nt_last.at(0).z));
+
+            double halfway_direction[3];
+            halfway_direction[0] = ((PARA.nt_last.at(nt_length-1).x - PARA.nt_last.at(nt_length/2).x));
+            halfway_direction[1] = ((PARA.nt_last.at(nt_length-1).y - PARA.nt_last.at(nt_length/2).y));
+            halfway_direction[2] = ((PARA.nt_last.at(nt_length-1).z - PARA.nt_last.at(nt_length/2).z));
+
+            double vpq=0,vpp=0,vqq=0;
+            for (int di=0;di<3;di++)
+            {
+                vpq += halfway_direction[di]*trace_para.favorite_direction[di];
+                vpp += halfway_direction[di]*halfway_direction[di];
+                vqq += trace_para.favorite_direction[di]*trace_para.favorite_direction[di];
+            }
+
+            if (vpq/(sqrt(vpp)*sqrt(vqq))<0.7) //0.5 is 45 degree
+            {
+                trace_para.b_use_favorite_direction = false;
+            }
         }
+
+
 
         printf("dd = %d %5.3f %5.3f %5.3f \n", nt_length, trace_para.favorite_direction[0], trace_para.favorite_direction[1], trace_para.favorite_direction[2]);
     }
@@ -412,7 +433,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         if(p4d) {delete []p4d; p4d = 0;}
         return -1;
     }
-    nt = readSWC_file(swc_name);
+    nt = readSWC_file(swc_name);  //why you want to do this? PHC noted 170607
     QFile file (swc_name);
     file.remove();
     QList<NeuronSWC> list = nt.listNeuron;
@@ -449,6 +470,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     double seg_mean_max = 0;
     int seg_tip_id;
 
+    v3d_msg(QString("").setNum(nt_list.size()).prepend("The number of segments right now = "), 0);
     for (int i =0; i<nt_list.size();i++)
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
@@ -481,7 +503,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         V3DLONG  ix = nt_selected[i].x;
         V3DLONG  iy = nt_selected[i].y;
         V3DLONG  iz = nt_selected[i].z;
-        printf("%d\t",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix]);
+        printf("selected seg info: %d\t",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix]);
     }
     double std = 0;
     double *arr=0,tmp;
@@ -567,6 +589,18 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
     PARA.nt_last = nt_selected;
 
+    if (0)
+    {
+        printf("last dd = %d %5.3f %5.3f %5.3f \n", nt_selected.size(),
+               nt_selected.at(nt_selected.size()-1).x - nt_selected.at(0).x,
+               nt_selected.at(nt_selected.size()-1).y - nt_selected.at(0).y,
+               nt_selected.at(nt_selected.size()-1).z - nt_selected.at(0).z);
+        v3d_msg("press to continue");
+    }
+
+
+
+
     if(bmenu)
     {
         callback.setLandmark(curwin,PARA.listLandmarks);
@@ -587,14 +621,17 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
 
-
-//    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
-//    {
-//        nt.listNeuron[i].x += start_x;
-//        nt.listNeuron[i].y += start_y;
-//        nt.listNeuron[i].z += start_z;
-//    }
-//    writeSWC_file(swc_name,nt);
+bool phcdebug=true;
+    if (phcdebug)
+    {
+    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
+    {
+        nt.listNeuron[i].x += start_x;
+        nt.listNeuron[i].y += start_y;
+        nt.listNeuron[i].z += start_z;
+    }
+    writeSWC_file(swc_name,nt);
+}
 
     if(!bmenu)
     {
