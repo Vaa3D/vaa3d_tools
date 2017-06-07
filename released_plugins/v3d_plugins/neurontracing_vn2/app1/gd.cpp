@@ -1090,9 +1090,9 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
                     //now try to use favorite direction if literally specified. by PHC 20170606
                     if (para.b_use_favorite_direction)
                     {
-                        double x_mid = (X_I(ii) + X_I(ii1))/2.0;
-                        double y_mid = (Y_I(ii) + Y_I(ii1))/2.0;
-                        double z_mid = (Z_I(ii) + Z_I(ii1))/2.0;
+                        double x_mid = (double(X_I(ii)) + X_I(ii1))/2.0;
+                        double y_mid = (double(Y_I(jj)) + Y_I(jj1))/2.0;
+                        double z_mid = (double(Z_I(kk)) + Z_I(kk1))/2.0;
 
                         double d_startpt_2_mid[3]; //the direction vector from the starting pt to the mid-pt of the two current ends of an edge
                         d_startpt_2_mid[0] = x_mid - x0;
@@ -1109,7 +1109,7 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
 
                         if (vqq>1e-6) //if vqq is too small then the initial favorite direction is deemed to be invalid
                         {
-                            double w_direction = (vpq/(sqrt(vpp)*sqrt(vqq))+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
+                            double w_direction = 1 - (vpq/(sqrt(vpp)*sqrt(vqq))+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
                             w *= w_direction;
                             printf("wd=%5.3f ", w_direction);
                         }
