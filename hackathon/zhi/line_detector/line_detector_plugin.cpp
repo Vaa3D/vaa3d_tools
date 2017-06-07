@@ -621,7 +621,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
 
-bool phcdebug=true;
+bool phcdebug=false;
     if (phcdebug)
     {
     for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
