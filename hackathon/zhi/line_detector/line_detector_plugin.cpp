@@ -22,7 +22,9 @@ Q_EXPORT_PLUGIN2(line_detector, line_detector);
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
-
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
+#define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
 struct input_PARA
 {
     QString inimg_file;
@@ -255,9 +257,9 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     trace_para.sp_graph_resolution_step = 1;
 
     int markSize = PARA.listLandmarks.size();
-    p0.x = PARA.listLandmarks.at(markSize-1).x;
-    p0.y = PARA.listLandmarks.at(markSize-1).y;
-    p0.z = PARA.listLandmarks.at(markSize-1).z;
+    p0.x = PARA.listLandmarks.at(markSize-1).x-1;
+    p0.y = PARA.listLandmarks.at(markSize-1).y-1;
+    p0.z = PARA.listLandmarks.at(markSize-1).z-1;
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     start_x = (p0.x - PARA.win_size < 0)?  0 : (p0.x - PARA.win_size);
@@ -469,34 +471,54 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
     double seg_mean_max = 0;
     int seg_tip_id;
+    int break_id;
 
     v3d_msg(QString("").setNum(nt_list.size()).prepend("The number of segments right now = "), 0);
     for (int i =0; i<nt_list.size();i++)
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         double seg_intensity = 0;
+        double angle_min =INF;
+
         for(int j = 0; j < nt_seg.size(); j++)
         {
             V3DLONG  ix = nt_seg[j].x;
             V3DLONG  iy = nt_seg[j].y;
             V3DLONG  iz = nt_seg[j].z;
             seg_intensity += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
-           // printf("%.2f\t",seg_intensity/(j+1));
-//            nt_seg[j].x += start_x;
-//            nt_seg[j].y += start_y;
-//            nt_seg[j].z += start_z;
-//            nt_seg[j].r = (seg_intensity/(j+1))/j;
+            printf("%d\t",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix]);
+            if(j>0 && j < nt_seg.size()-1)
+            {
+                double angle_j = angle(nt_seg[j],nt_seg[j-1],nt_seg[j+1]);
+                printf("%.2f\n",angle_j);
+
+    //            nt_seg[j].x += start_x;
+    //            nt_seg[j].y += start_y;
+    //            nt_seg[j].z += start_z;
+    //            nt_seg[j].r = (seg_intensity/(j+1))/j;
+
+                if(angle_j < angle_min)
+                {
+                    angle_min = angle_j;
+                    break_id = j;
+                }
+            }
         }
+
         if(seg_intensity/nt_seg.size() >= seg_mean_max)
         {
             seg_mean_max = seg_intensity/nt_seg.size();
             seg_tip_id = i;
         }
+//        V3DLONG length_seg = nt_seg.size();
+//        for(d = length_seg -1; d >= break_id;d--)
+//            nt_seg.removeAt(d);
 //        QString swc_seg = swc_name + QString("%1.swc").arg(i);
 //        export_list2file(nt_seg, swc_seg,swc_name);
-//        printf("\n");
+        printf("\n");
     }
 
+//    v3d_msg(QString("id is %1").arg(seg_tip_id));
     QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
     for(int i =0; i<nt_selected.size();i++)
     {
@@ -550,9 +572,9 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             {
                 ending_tip = true;
                 LocationSimple newmarker;
-                newmarker.x = ix + start_x +1;
-                newmarker.y = iy + start_y +1;
-                newmarker.z = iz + start_z +1;
+                newmarker.x = curr.x + start_x +1;
+                newmarker.y = curr.y + start_y +1;
+                newmarker.z = curr.z + start_z +1;
                 PARA.listLandmarks.removeAt(markSize-1);
                 if(newmarker.x <= N*0.05 || newmarker.x >= N*0.95 || newmarker.y <= M*0.05 || newmarker.y >= M*0.95 || newmarker.z <= P*0.05 || newmarker.z >= P*0.95)
                 {
