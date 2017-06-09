@@ -342,19 +342,18 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 tmpp.z = (2-iz)*start_z/2 + iz*end_z/2 - start_z;
                 if(tmpp.z < 0) tmpp.z = 0;
                 if(tmpp.z > sz_tracing[2]-1) tmpp.z = sz_tracing[2]-1;
-                MyMarker t;
                 if(!(ix==1 && iy ==1 && iz==1))
                 {
-                    t.x = tmpp.x;
-                    t.y = tmpp.y;
-                    t.z = tmpp.z;
+                    MyMarker t;
+                    t.x = tmpp.x+start_x;
+                    t.y = tmpp.y+start_y;
+                    t.z = tmpp.z+start_z;
                     file_inmarkers.push_back(t);
                     pp.push_back(tmpp);
                 }
             }
         }
     }
-
 
     //170606 add favorite direction, by PHC
     if (PARA.nt_last.size()<=10) //ensure there are at least 2 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
@@ -389,7 +388,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 vqq += trace_para.favorite_direction[di]*trace_para.favorite_direction[di];
             }
 
-            if (vpq/(sqrt(vpp)*sqrt(vqq))<0.5) //0.5 is 45 degree
+            if (vpq/(sqrt(vpp)*sqrt(vqq))<=0.5) //0.5 is 45 degree
             {
                 trace_para.b_use_favorite_direction = false;
             }
@@ -471,55 +470,57 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
     double seg_mean_max = 0;
     int seg_tip_id;
-    int break_id;
+    int break_id_optimal;
+
 
     v3d_msg(QString("").setNum(nt_list.size()).prepend("The number of segments right now = "), 0);
     for (int i =0; i<nt_list.size();i++)
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         double seg_intensity = 0;
-        double angle_min =INF;
+        int break_id = nt_seg.size();
+        printf("\nid %d\n",i);
+        int angle_size = 5;
+        for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
+        {
+            double angle_j = angle(nt_seg[j],nt_seg[j-angle_size],nt_seg[j+angle_size]);
+       //     printf("%.2f\n",angle_j);
+            if(angle_j < 100)
+            {
+                break_id = j;
+                break;
+            }
+        }
 
-        for(int j = 0; j < nt_seg.size(); j++)
+        for(int j = 0; j < break_id; j++)
         {
             V3DLONG  ix = nt_seg[j].x;
             V3DLONG  iy = nt_seg[j].y;
             V3DLONG  iz = nt_seg[j].z;
             seg_intensity += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
-            printf("%d\t",localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix]);
-            if(j>0 && j < nt_seg.size()-1)
-            {
-                double angle_j = angle(nt_seg[j],nt_seg[j-1],nt_seg[j+1]);
-                printf("%.2f\n",angle_j);
-
-    //            nt_seg[j].x += start_x;
-    //            nt_seg[j].y += start_y;
-    //            nt_seg[j].z += start_z;
-    //            nt_seg[j].r = (seg_intensity/(j+1))/j;
-
-                if(angle_j < angle_min)
-                {
-                    angle_min = angle_j;
-                    break_id = j;
-                }
-            }
         }
 
-        if(seg_intensity/nt_seg.size() >= seg_mean_max)
+        if(seg_intensity/break_id >= seg_mean_max && break_id > 10)
         {
-            seg_mean_max = seg_intensity/nt_seg.size();
+            seg_mean_max = seg_intensity/break_id;
             seg_tip_id = i;
+            break_id_optimal = break_id;
         }
-//        V3DLONG length_seg = nt_seg.size();
-//        for(d = length_seg -1; d >= break_id;d--)
-//            nt_seg.removeAt(d);
-//        QString swc_seg = swc_name + QString("%1.swc").arg(i);
-//        export_list2file(nt_seg, swc_seg,swc_name);
-        printf("\n");
+   //     printf("\n");
     }
+
+//    QString swc_seg = swc_name + QString("%1.swc").arg(seg_tip_id);
+//    QList<NeuronSWC> nt_seg = nt_list.at(seg_tip_id);
+//    for(d = nt_seg.size() -1; d >= break_id_optimal;d--)
+//        nt_seg[d].type = 1;
+//    export_list2file(nt_seg, swc_seg,swc_name);
 
 //    v3d_msg(QString("id is %1").arg(seg_tip_id));
     QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
+    V3DLONG length_seg = nt_selected.size();
+    for(d = length_seg -1; d >= break_id_optimal;d--)
+        nt_selected.removeAt(d);
+
     for(int i =0; i<nt_selected.size();i++)
     {
         V3DLONG  ix = nt_selected[i].x;
@@ -576,7 +577,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 newmarker.y = curr.y + start_y +1;
                 newmarker.z = curr.z + start_z +1;
                 PARA.listLandmarks.removeAt(markSize-1);
-                if(newmarker.x <= N*0.05 || newmarker.x >= N*0.95 || newmarker.y <= M*0.05 || newmarker.y >= M*0.95 || newmarker.z <= P*0.05 || newmarker.z >= P*0.95)
+                if(newmarker.x <= N*0.02 || newmarker.x >= N*0.98 || newmarker.y <= M*0.02 || newmarker.y >= M*0.98 || newmarker.z <= P*0.02 || newmarker.z >= P*0.98)
                 {
                     b_boundary = true;
                 }else
