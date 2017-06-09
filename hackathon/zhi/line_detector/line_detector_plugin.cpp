@@ -473,16 +473,16 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         int break_id = nt_seg.size();
 //        printf("\nid %d\n",i);
-        int angle_size = 10;
+        int angle_size = 5;
         for(int j = 0; j < nt_seg.size()-angle_size; j++)
         {
             double angle_j = 180;
-            if(j < angle_size && PARA.nt_last.size() > 15)
+            if(j < angle_size && PARA.nt_last.size() > 0 && nt_original.listNeuron.size()>angle_size)
             {
                 NeuronSWC S;
-                S.x =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].x - start_x;
-                S.y =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].y - start_y;
-                S.z =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].z - start_z;
+                S.x =  nt_original.listNeuron[nt_original.listNeuron.size()-1-angle_size+j].x - start_x;
+                S.y =  nt_original.listNeuron[nt_original.listNeuron.size()-1-angle_size+j].y - start_y;
+                S.z =  nt_original.listNeuron[nt_original.listNeuron.size()-1-angle_size+j].z - start_z;
                 angle_j = angle(nt_seg[j], S, nt_seg[j+angle_size]);
             }
             else if( j > angle_size)
@@ -527,8 +527,12 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 //    v3d_msg(QString("id is %1").arg(seg_tip_id));
     QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
     V3DLONG length_seg = nt_selected.size();
+
+    double std_cof = (break_id_optimal==length_seg) ? 0.5 : 0;
+
     for(d = length_seg -1; d >= break_id_optimal;d--)
         nt_selected.removeAt(d);
+
 
     for(int i =0; i<nt_selected.size();i++)
     {
@@ -578,7 +582,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         V3DLONG iz = curr.z;
         if(!ending_tip)
         {
-            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max + 0.3*std) //the 0.5 is a tricky choice, need optimization later, by PHC 170608
+            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max + std_cof*std) //the 0.5 is a tricky choice, need optimization later, by PHC 170608
             {
                 ending_tip = true;
                 LocationSimple newmarker;
