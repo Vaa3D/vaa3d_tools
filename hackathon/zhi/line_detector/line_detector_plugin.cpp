@@ -406,13 +406,15 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         V3DLONG pn_ID = nt.listNeuron[i].pn-1;
         if(pn_ID <0)
             continue;
-        if((fabs(nt.listNeuron[pn_ID].x-nt.listNeuron[0].x)+fabs(nt.listNeuron[pn_ID].y-nt.listNeuron[0].y) + abs(nt.listNeuron[pn_ID].z-nt.listNeuron[0].z))< 1e-3)
+        if((fabs(nt.listNeuron[pn_ID].x-nt.listNeuron[0].x) +
+            fabs(nt.listNeuron[pn_ID].y-nt.listNeuron[0].y) +
+            fabs(nt.listNeuron[pn_ID].z-nt.listNeuron[0].z)) < 1e-3)
         {
                 nt.listNeuron[i].pn = 1;
         }
     }
     QList<NeuronSWC> neuron_sorted;
-    if (!SortSWC(nt.listNeuron, neuron_sorted,VOID, 0))
+    if (!SortSWC(nt.listNeuron, neuron_sorted, VOID, 0))
     {
         v3d_msg("fail to call swc sorting function.");
         if(localarea) {delete []localarea; localarea = 0;}
@@ -526,7 +528,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     arr = new double[nt_selected.size()];
     int ii,jj;
     ii = 0;
-    for(int i =0; i <nt_selected.size();i++)
+    for(int i=0; i <nt_selected.size();i++)
     {
         NeuronSWC curr = nt_selected.at(i);
         V3DLONG ix = curr.x;
@@ -548,8 +550,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         ii++;
         std += pow(PX-seg_mean_max,2);
     }
-    std = std/nt_selected.size();
-    printf("mean is %.2f, std is %.2f\n\n\n",seg_mean_max,sqrt(std));
+    std = sqrt(std/nt_selected.size());
+    printf("mean is %.2f, std is %.2f\n\n\n",seg_mean_max, std);
     if (arr) {delete []arr; arr=0;}
 
     bool ending_tip = false;
@@ -562,7 +564,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         V3DLONG iz = curr.z;
         if(!ending_tip)
         {
-            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max +0.3*sqrt(std))
+            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max + 0.5*std) //the 0.5 is a tricky choice, need optimization later, by PHC 170608
             {
                 ending_tip = true;
                 LocationSimple newmarker;
@@ -570,10 +572,15 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 newmarker.y = curr.y + start_y +1;
                 newmarker.z = curr.z + start_z +1;
                 PARA.listLandmarks.removeAt(markSize-1);
-                if(newmarker.x <= N*0.02 || newmarker.x >= N*0.98 || newmarker.y <= M*0.02 || newmarker.y >= M*0.98 || newmarker.z <= P*0.02 || newmarker.z >= P*0.98)
+
+                double boundary_margin_ratio=0.02;
+                if(newmarker.x <= N*boundary_margin_ratio || newmarker.x >= N*(1-boundary_margin_ratio) ||
+                        newmarker.y <= M*boundary_margin_ratio || newmarker.y >= M*(1-boundary_margin_ratio) ||
+                        newmarker.z <= P*boundary_margin_ratio || newmarker.z >= P*(1-boundary_margin_ratio))
                 {
                     b_boundary = true;
-                }else
+                }
+                else
                     PARA.listLandmarks.push_back(newmarker);
                 break;
             }
@@ -637,17 +644,17 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if(localarea) {delete []localarea; localarea = 0;}
     if(p4d) {delete []p4d; p4d = 0;}
 
-bool phcdebug=false;
+    bool phcdebug=false;
     if (phcdebug)
     {
-    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
-    {
-        nt.listNeuron[i].x += start_x;
-        nt.listNeuron[i].y += start_y;
-        nt.listNeuron[i].z += start_z;
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++ )
+        {
+            nt.listNeuron[i].x += start_x;
+            nt.listNeuron[i].y += start_y;
+            nt.listNeuron[i].z += start_z;
+        }
+        writeSWC_file(swc_name,nt);
     }
-    writeSWC_file(swc_name,nt);
-}
 
     if(!bmenu)
     {
@@ -657,7 +664,7 @@ bool phcdebug=false;
  //   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     if (b_boundary)
-        v3d_msg("Hits the boundary!",0);
+        v3d_msg("Hit the boundary!",0);
 
     if (b_boundary && PARA.listLandmarks.size()==0)
     {
