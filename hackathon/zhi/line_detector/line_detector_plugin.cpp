@@ -605,6 +605,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         index = nt_original.listNeuron.at(nt_length-1).n;
     else
         index = 0;
+
+    PARA.nt_last.clear();
     for (int i=0;i<nt_selected.size();i++)
     {
         NeuronSWC curr = nt_selected.at(i);
@@ -618,7 +620,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         nt_original.listNeuron.append(S);
         nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
 
-        PARA.nt_last.push_back(S); //use global coordinates
+        if(!b_boundary) PARA.nt_last.push_back(S); //use global coordinates
     }
 
 //    PARA.nt_last = nt_selected;
@@ -631,9 +633,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                nt_selected.at(nt_selected.size()-1).z - nt_selected.at(0).z);
         v3d_msg("press to continue");
     }
-
-
-
 
     if(bmenu)
     {
