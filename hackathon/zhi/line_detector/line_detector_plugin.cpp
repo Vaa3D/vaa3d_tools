@@ -472,21 +472,22 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     for (int i =0; i<nt_list.size();i++)
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
-        double seg_intensity = 0;
         int break_id = nt_seg.size();
         printf("\nid %d\n",i);
+
         int angle_size = 5;
         for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
         {
-            double angle_j = angle(nt_seg[j],nt_seg[j-angle_size],nt_seg[j+angle_size]);
+            double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
        //     printf("%.2f\n",angle_j);
-            if(angle_j < 100)
+            if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
             {
                 break_id = j;
                 break;
             }
         }
 
+        double seg_intensity = 0;
         for(int j = 0; j < break_id; j++)
         {
             V3DLONG  ix = nt_seg[j].x;
