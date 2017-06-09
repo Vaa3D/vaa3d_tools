@@ -117,9 +117,9 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         LocationSimple t;
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
-            t.x = file_inmarkers[i].x;
-            t.y = file_inmarkers[i].y;
-            t.z = file_inmarkers[i].z;
+            t.x = file_inmarkers[i].x+1;
+            t.y = file_inmarkers[i].y+1;
+            t.z = file_inmarkers[i].z+1;
             PARA.listLandmarks.push_back(t);
         }
         PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;
@@ -477,7 +477,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         for(int j = 0; j < nt_seg.size()-angle_size; j++)
         {
             double angle_j = 180;
-            if(j < angle_size && PARA.nt_last.size() > 5)
+            if(j < angle_size && PARA.nt_last.size() > 20)
             {
                 NeuronSWC S;
                 S.x =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].x - start_x;
