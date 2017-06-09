@@ -430,8 +430,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         return -1;
     }
     nt = readSWC_file(swc_name);  //why you want to do this? PHC noted 170607
-    QFile file (swc_name);
-    file.remove();
+    QFile file (swc_name);file.remove();
     QList<NeuronSWC> list = nt.listNeuron;
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
@@ -473,13 +472,23 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         int break_id = nt_seg.size();
-        printf("\nid %d\n",i);
-
+//        printf("\nid %d\n",i);
         int angle_size = 5;
-        for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
+        for(int j = 0; j < nt_seg.size()-angle_size; j++)
         {
-            double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
-       //     printf("%.2f\n",angle_j);
+            double angle_j = 180;
+            if(j < angle_size && PARA.nt_last.size() > 5)
+            {
+                NeuronSWC S;
+                S.x =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].x - start_x;
+                S.y =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].y - start_y;
+                S.z =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].z - start_z;
+                angle_j = angle(nt_seg[j], S, nt_seg[j+angle_size]);
+            }
+            else if( j > angle_size)
+                angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
+
+           // printf("(%.2f,%d)\n",angle_j,j);
             if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
             {
                 break_id = j;
@@ -505,12 +514,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
    //     printf("\n");
     }
 
-//    QString swc_seg = swc_name + QString("%1.swc").arg(seg_tip_id);
+//    QString swc_seg = swc_name + QString("%1_%2.swc").arg(seg_tip_id);
 //    QList<NeuronSWC> nt_seg = nt_list.at(seg_tip_id);
 //    for(d = nt_seg.size() -1; d >= break_id_optimal;d--)
 //        nt_seg[d].type = 1;
 //    export_list2file(nt_seg, swc_seg,swc_name);
-
 //    v3d_msg(QString("id is %1").arg(seg_tip_id));
     QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
     V3DLONG length_seg = nt_selected.size();
@@ -565,7 +573,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         V3DLONG iz = curr.z;
         if(!ending_tip)
         {
-            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max + 0.5*std) //the 0.5 is a tricky choice, need optimization later, by PHC 170608
+            if(localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix] >= seg_mean_max + 0.3*std) //the 0.5 is a tricky choice, need optimization later, by PHC 170608
             {
                 ending_tip = true;
                 LocationSimple newmarker;
@@ -609,9 +617,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
         nt_original.listNeuron.append(S);
         nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
+
+        PARA.nt_last.push_back(S); //use global coordinates
     }
 
-    PARA.nt_last = nt_selected;
+//    PARA.nt_last = nt_selected;
 
     if (0)
     {
