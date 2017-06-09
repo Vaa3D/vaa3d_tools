@@ -473,11 +473,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         int break_id = nt_seg.size();
 //        printf("\nid %d\n",i);
-        int angle_size = 5;
+        int angle_size = 10;
         for(int j = 0; j < nt_seg.size()-angle_size; j++)
         {
             double angle_j = 180;
-            if(j < angle_size && PARA.nt_last.size() > 20)
+            if(j < angle_size && PARA.nt_last.size() > 15)
             {
                 NeuronSWC S;
                 S.x =  PARA.nt_last[PARA.nt_last.size()-1-angle_size+j].x - start_x;
@@ -511,6 +511,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             seg_tip_id = i;
             break_id_optimal = break_id;
         }
+
+//        QString swc_seg = swc_name + QString("%1.swc").arg(i);
+//        for(d = nt_seg.size() -1; d >= break_id;d--)
+//            nt_seg[d].type = 1;
+//        export_list2file(nt_seg, swc_seg,swc_name);
    //     printf("\n");
     }
 
