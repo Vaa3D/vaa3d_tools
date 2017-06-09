@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "basic_surf_objs.h"
+#include "volimg_proc.h"
 
 #include "line_detector_plugin.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
@@ -358,13 +359,13 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     //170606 add favorite direction, by PHC
     if (PARA.nt_last.size()<=10) //ensure there are at least 2 nodes in the existing swc so that we can calculate a relatively meaningful directional vector
     {
-        printf("\n\nset trace_para facorite direction to false==============\n\n");
+        v3d_msg("\n\nset trace_para facorite direction to false==============\n\n",0);
 
         trace_para.b_use_favorite_direction = false;
     }
     else
     {
-        printf("\n\nset trace_para facorite direction to true!!!!!!!!!!!!!!!!\n\n");
+        v3d_msg("\n\nset trace_para facorite direction to true!!!!!!!!!!!!!!!!\n\n",0);
 
         trace_para.b_use_favorite_direction = true;
 
@@ -380,21 +381,13 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             halfway_direction[1] = ((PARA.nt_last.at(nt_length-1).y - PARA.nt_last.at(nt_length/2).y));
             halfway_direction[2] = ((PARA.nt_last.at(nt_length-1).z - PARA.nt_last.at(nt_length/2).z));
 
-            double vpq=0,vpp=0,vqq=0;
-            for (int di=0;di<3;di++)
-            {
-                vpq += halfway_direction[di]*trace_para.favorite_direction[di];
-                vpp += halfway_direction[di]*halfway_direction[di];
-                vqq += trace_para.favorite_direction[di]*trace_para.favorite_direction[di];
-            }
-
-            if (vpq/(sqrt(vpp)*sqrt(vqq))<=0.5) //0.5 is 45 degree
+            double cangle = cosangle_two_vectors(trace_para.favorite_direction, halfway_direction);
+            if (cangle!=-2 && cangle <=0.5) //0.5 is 45 degree. do not get confused, -2 is a special return value to indicate status of cosangle_two_vectors()
             {
                 trace_para.b_use_favorite_direction = false;
+                v3d_msg("Detected non-colinear case, reset trace_para facorite direction = false true!!!!!!!!!!!!!!!!\n\n",0);
             }
         }
-
-
 
         printf("dd = %d %5.3f %5.3f %5.3f \n", nt_length, trace_para.favorite_direction[0], trace_para.favorite_direction[1], trace_para.favorite_direction[2]);
     }

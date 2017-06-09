@@ -69,6 +69,7 @@ using namespace boost;
 
 #include "../../v3d_main/v3d/compute_win_pca.h"
 
+#include "volimg_proc.h"
 
 // 090529: std::cout => printf => qDebug for non-delayed displaying debug text
 //#include <QtCore>
@@ -1099,19 +1100,17 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
                         d_startpt_2_mid[1] = y_mid - y0;
                         d_startpt_2_mid[2] = z_mid - z0;
 
-                        double vpq=0,vpp=0,vqq=0;
-                        for (int di=0;di<3;di++)
-                        {
-                            vpq += d_startpt_2_mid[di]*para.favorite_direction[di];
-                            vpp += d_startpt_2_mid[di]*d_startpt_2_mid[di];
-                            vqq += para.favorite_direction[di]*para.favorite_direction[di];
-                        }
+                        double cangle = cosangle_two_vectors(para.favorite_direction, d_startpt_2_mid);
 
-//                        if (vqq>1e-6) //if vqq is too small then the initial favorite direction is deemed to be invalid
+                        if (cangle != -2) //-2 is a special return value indicating the status of cosangle_two_vectors()
                         {
-                            double w_direction = 1 - (vpq/(sqrt(vpp)*sqrt(vqq))+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
+                            double w_direction = 1 - (cangle+1.0)/2.0; //add 1.0 to force 0 degree angle to be max, 180 degree angle to be minimal; divide 2.0 to make sure w will not be too big
                             if (w_direction>0.35) w += 100;
                             //printf("wd=%5.3f x_mid=%5.3f y_mid=%5.3f z_mid=%5.3f x0=%5.3f y0=%5.3f z0=%5.3f vpq=%5.3f vpp=%5.3f vqq=%5.3f \n", w_direction, x_mid, y_mid, z_mid, x0, y0, z0, vpq, vpp, vqq);
+                        }
+                        else
+                        {
+                            //do nothing here.
                         }
                         //also in the furture we may not need to divide sqrt(vqq) because it is constant, and this should also avoid the extra-exception when vqq=0
                     }
