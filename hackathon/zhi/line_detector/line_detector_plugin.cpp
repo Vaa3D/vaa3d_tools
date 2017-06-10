@@ -31,11 +31,12 @@ struct input_PARA
     QString inimg_file;
     V3DLONG channel;
     LandmarkList listLandmarks;
-    int win_size = 0;
+    int win_size;
     NeuronTree nt;
     QString outswc_file;
     QList<NeuronSWC> nt_last;
 
+    input_PARA() {win_size=0; channel=0;}
 };
 
 //return -1: wrong running parameters, etc.
@@ -183,14 +184,13 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         if(PARA.win_size ==0)
         {
             bool ok;
-            PARA.win_size = QInputDialog::getInteger(parent, "Window size",
+            PARA.win_size = QInputDialog::getInteger(parent, "Window radius",
                                                      "Enter radius (window size is 2*radius+1):",
-                                                     32, 1, 512, 1, &ok);
+                                                     32, 16, 512, 1, &ok);
             if (!ok)
                 return -1;
         }
 
- //       PARA.win_size = 32;
         data1d = p4DImage->getRawData();
         N = p4DImage->getXDim();
         M = p4DImage->getYDim();
