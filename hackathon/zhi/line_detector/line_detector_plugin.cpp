@@ -607,6 +607,34 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         }
     }
 
+    double overall_mean, overall_std;
+    mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+    printf("overall mean is %.2f, std is %.2f\n",overall_mean, overall_std);
+    double curve_mean = 0, curve_std = 0;
+    for (int i=0;i<nt_selected.size();i++)
+    {
+        NeuronSWC curr = nt_selected.at(i);
+        curve_mean += data1d[((int)curr.z + start_z)*N*M+ ((int)curr.y + start_y)*N + ((int)curr.x + start_x)];
+    }
+    curve_mean = curve_mean/nt_selected.size();
+
+    for (int i=0;i<nt_selected.size();i++)
+    {
+        NeuronSWC curr = nt_selected.at(i);
+        double PX =  data1d[((int)curr.z + start_z)*N*M+ ((int)curr.y + start_y)*N + ((int)curr.x + start_x)];;
+        curve_std += pow(PX-curve_mean,2);
+    }
+    curve_std = sqrt(curve_std/nt_selected.size());
+    printf("curve mean is %.2f, std is %.2f\n\n\n",curve_mean, curve_std);
+
+    if(fabs(overall_mean-curve_mean) < (overall_std+curve_std)/2)
+    {
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
+
+        return -1;
+    }
+
     NeuronSWC S;
     V3DLONG nt_length = nt_original.listNeuron.size();
     V3DLONG index;
@@ -675,11 +703,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         writeSWC_file(swc_name,nt);
     }
 
-    if(!bmenu)
-    {
-        if(data1d) {delete []data1d; data1d = 0;}
-    }
-
  //   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     if (b_boundary)
@@ -695,12 +718,28 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             else
                 output = PARA.inimg_file + "_GD_curveline.swc";
             QList<NeuronSWC> neuron_output;
-            if (!SortSWC(PARA.nt.listNeuron, neuron_output,VOID, VOID))
+            if (!SortSWC(PARA.nt.listNeuron, neuron_output,1, VOID))
             {
                 return -1;
             }
             export_list2file(neuron_output, output,swc_name);
+
+//            vector<MyMarker *> ntmarkers = readSWC_file(output.toStdString());
+//            map<MyMarker*, double> score_map;
+//            topology_analysis_perturb_intense(data1d, ntmarkers, score_map, 1, N, M, P, 0);
+//            for(V3DLONG i = 0; i<ntmarkers.size(); i++){
+//                MyMarker * marker = ntmarkers[i];
+//                double tmp = score_map[marker] * 120 +19;
+//                marker->type = tmp > 255 ? 255 : tmp;
+//            }
+//            QString fname_tmp = output+"_scored.swc";
+//            saveSWC_file(fname_tmp.toStdString(), ntmarkers);
         }
+    }
+
+    if(!bmenu)
+    {
+        if(data1d) {delete []data1d; data1d = 0;}
     }
 
     return (b_boundary && PARA.listLandmarks.size()==0) ? 1 : 0;
