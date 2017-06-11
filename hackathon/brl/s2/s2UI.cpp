@@ -20,7 +20,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
     qRegisterMetaType<unsigned short int>("unsignedShortInt");
     qRegisterMetaType<TileInfo>("TileInfo");
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     versionString =QString("%1").arg(GIT_CURRENT_SHA1);
+#endif
+
     qDebug()<<"S2 git repo hash at build time = "<<versionString;
     fileString =QString("");
     lastFile = QString("");
@@ -1636,7 +1639,10 @@ void S2UI::startingSmartScan(){
 
     QTextStream summaryTextStream;
     summaryTextStream.setDevice(&summaryTextFile);
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
+#endif
+
     summaryTextStream<<"s2Scan start time: "<<";"<< QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
     summaryTextStream<<"s2Scan Save Directory: "<<";"<< saveDir.absolutePath()<<"\n";
 
