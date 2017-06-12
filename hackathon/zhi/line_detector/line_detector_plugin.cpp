@@ -627,17 +627,14 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     curve_std = sqrt(curve_std/nt_selected.size());
     printf("curve mean is %.2f, std is %.2f\n\n\n",curve_mean, curve_std);
 
+    bool b_darkSegment = false;
     if(fabs(overall_mean-curve_mean) < (overall_std+curve_std)/2)
     {
-        if(localarea) {delete []localarea; localarea = 0;}
-        if(p4d) {delete []p4d; p4d = 0;}
+        nt_selected.clear();
         PARA.listLandmarks.removeAt(markSize-1);
-        if(bmenu)
-        {
-            callback.setLandmark(curwin,PARA.listLandmarks);
-            callback.pushObjectIn3DWindow(curwin);
-        }
-        return -1;
+        b_darkSegment = true;
+        v3d_msg("Dark segment!",0);
+
     }
 
     NeuronSWC S;
@@ -713,7 +710,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if (b_boundary)
         v3d_msg("Hit the boundary!",0);
 
-    if (b_boundary && PARA.listLandmarks.size()==0)
+    if ((b_boundary || b_darkSegment) && PARA.listLandmarks.size()==0)
     {
         if(!bmenu)
         {
@@ -747,5 +744,5 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         if(data1d) {delete []data1d; data1d = 0;}
     }
 
-    return (b_boundary && PARA.listLandmarks.size()==0) ? 1 : 0;
+    return ((b_boundary || b_darkSegment) && PARA.listLandmarks.size()==0) ? 1 : 0;
 }
