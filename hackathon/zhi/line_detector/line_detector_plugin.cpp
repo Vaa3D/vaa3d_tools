@@ -631,7 +631,12 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     {
         if(localarea) {delete []localarea; localarea = 0;}
         if(p4d) {delete []p4d; p4d = 0;}
-
+        PARA.listLandmarks.removeAt(markSize-1);
+        if(bmenu)
+        {
+            callback.setLandmark(curwin,PARA.listLandmarks);
+            callback.pushObjectIn3DWindow(curwin);
+        }
         return -1;
     }
 
