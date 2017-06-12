@@ -272,12 +272,12 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     end_z = (p0.z + PARA.win_size >= P-1)?  (P-1) : (p0.z + PARA.win_size);
 
     NeuronTree nt_original;
-    if(bmenu)
-    {
-        nt_original = callback.getSWC(curwin);
-    }
-    else
-        nt_original = PARA.nt;
+//    if(bmenu)
+//    {
+//        nt_original = callback.getSWC(curwin);
+//    }
+//    else
+    nt_original = PARA.nt;
     V3DLONG stacksz = N*M*P*sc;
     unsigned char* data1d_mask = 0;
     data1d_mask = new unsigned char [stacksz];
@@ -673,6 +673,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         v3d_msg("press to continue");
     }
 
+    PARA.nt = nt_original;
     if(bmenu)
     {
         callback.setLandmark(curwin,PARA.listLandmarks);
@@ -684,10 +685,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         callback.setSWC(curwin,nt_original);
         callback.updateImageWindow(curwin);
         callback.pushObjectIn3DWindow(curwin); //by PHC 170601
-    }
-    else
-    {
-        PARA.nt = nt_original;
     }
 
     if(localarea) {delete []localarea; localarea = 0;}
