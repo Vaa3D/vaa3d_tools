@@ -10,7 +10,7 @@
 	4) to be added ...
 
 ==to build==
-1. copy all the files and folders from here to repspective places in vaa3d_external project.
+1. copy all the files and folders from here to corresponding places in vaa3d_external project.
 2. add the files into the VS project if they are not in it yet.
 3. configure the VS project as shown in the screenshots.
 4. build and run.
