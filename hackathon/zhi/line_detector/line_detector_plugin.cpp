@@ -32,6 +32,7 @@ struct input_PARA
     V3DLONG channel;
     LandmarkList listLandmarks;
     int win_size;
+    int angle_size;
     NeuronTree nt;
     QString outswc_file;
     QList<NeuronSWC> nt_last;
@@ -108,7 +109,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         else
             PARA.inimg_file = infiles[0];
 
-        PARA.outswc_file = outfiles[0];        outfiles.empty() ? "" : outfiles[0];
+        PARA.outswc_file = outfiles.empty() ? "" : outfiles[0];
         int k=0;
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         vector<MyMarker> file_inmarkers;
@@ -124,6 +125,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             PARA.listLandmarks.push_back(t);
         }
         PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;
+        PARA.angle_size = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         for (;;)
         {
@@ -131,18 +133,43 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             if (res!=0)
                 break;
         }
+
+        QString output;
+        if(PARA.outswc_file != "NULL")
+            output = PARA.outswc_file;
+        else
+            output = PARA.inimg_file + "_GD_curveline.swc";
+        QList<NeuronSWC> neuron_output;
+        if(PARA.nt.listNeuron.size()>0)
+        {
+            if (!SortSWC(PARA.nt.listNeuron, neuron_output,1, VOID))
+            {
+                return -1;
+            }
+        }
+        export_list2file(neuron_output, output,output);
+
+        //            vector<MyMarker *> ntmarkers = readSWC_file(output.toStdString());
+        //            map<MyMarker*, double> score_map;
+        //            topology_analysis_perturb_intense(data1d, ntmarkers, score_map, 1, N, M, P, 0);
+        //            for(V3DLONG i = 0; i<ntmarkers.size(); i++){
+        //                MyMarker * marker = ntmarkers[i];
+        //                double tmp = score_map[marker] * 120 +19;
+        //                marker->type = tmp > 255 ? 255 : tmp;
+        //            }
+        //            QString fname_tmp = output+"_scored.swc";
+        //            saveSWC_file(fname_tmp.toStdString(), ntmarkers);
     }
     else if (func_name == tr("help"))
     {
 
-        ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
-
-
 		printf("**** Usage of line_detector tracing **** \n");
-        printf("vaa3d -x line_detector -f GD_curveline -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x line_detector -f GD_Curveline_infinite -i <inimg_file> -p <marker_file> <win_size> <angle_size> <channel> -o <outswc_file>\n");
         printf("inimg_file       The input image\n");
+        printf("marker_file      Starting location\n");
+        printf("win_size         Window size for GD tracing (default 32).\n");
+        printf("angle_size       Window size for angle calculation (default 5).\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 	}
@@ -220,6 +247,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         in_sz[3] = sc;
 
         PARA.inimg_file = p4DImage->getFileName();
+        PARA.angle_size = 5;
     }
     else
     {
@@ -464,7 +492,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         QList<NeuronSWC> nt_seg = nt_list.at(i);
         int break_id = nt_seg.size();
 //        printf("\nid %d\n",i);
-        int angle_size = 5;
+        int angle_size = PARA.angle_size;
         for(int j = 0; j < nt_seg.size()-angle_size; j++)
         {
             double angle_j = 180;
@@ -502,6 +530,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             seg_tip_id = i;
             break_id_optimal = break_id;
         }
+
+//        QString swc_seg = swc_name + QString("%1.swc").arg(i);
+//        for(d = nt_seg.size() -1; d >= break_id;d--)
+//            nt_seg[d].type = 1;
+//        export_list2file(nt_seg, swc_seg,swc_name);
     }
 //    QString swc_seg = swc_name + QString("%1.swc").arg(seg_tip_id);
 //    QList<NeuronSWC> nt_seg = nt_list.at(seg_tip_id);
@@ -698,38 +731,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 
     if (b_boundary)
         v3d_msg("Hit the boundary!",0);
-
-    if ((b_boundary || b_darkSegment) && PARA.listLandmarks.size()==0)
-    {
-        if(!bmenu)
-        {
-            QString output;
-            if(PARA.outswc_file != "NULL")
-                output = PARA.outswc_file;
-            else
-                output = PARA.inimg_file + "_GD_curveline.swc";
-            QList<NeuronSWC> neuron_output;
-            if(PARA.nt.listNeuron.size()>0)
-            {
-                if (!SortSWC(PARA.nt.listNeuron, neuron_output,1, VOID))
-                {
-                    return -1;
-                }
-            }
-            export_list2file(neuron_output, output,swc_name);
-
-//            vector<MyMarker *> ntmarkers = readSWC_file(output.toStdString());
-//            map<MyMarker*, double> score_map;
-//            topology_analysis_perturb_intense(data1d, ntmarkers, score_map, 1, N, M, P, 0);
-//            for(V3DLONG i = 0; i<ntmarkers.size(); i++){
-//                MyMarker * marker = ntmarkers[i];
-//                double tmp = score_map[marker] * 120 +19;
-//                marker->type = tmp > 255 ? 255 : tmp;
-//            }
-//            QString fname_tmp = output+"_scored.swc";
-//            saveSWC_file(fname_tmp.toStdString(), ntmarkers);
-        }
-    }
 
     if(!bmenu)
     {
