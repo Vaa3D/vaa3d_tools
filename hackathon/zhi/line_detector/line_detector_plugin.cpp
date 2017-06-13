@@ -271,22 +271,13 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     end_y = (p0.y + PARA.win_size >= M-1)?  (M-1) : (p0.y + PARA.win_size);
     end_z = (p0.z + PARA.win_size >= P-1)?  (P-1) : (p0.z + PARA.win_size);
 
-    NeuronTree nt_original;
-//    if(bmenu)
-//    {
-//        nt_original = callback.getSWC(curwin);
-//    }
-//    else
-    nt_original = PARA.nt;
     V3DLONG stacksz = N*M*P*sc;
     unsigned char* data1d_mask = 0;
     data1d_mask = new unsigned char [stacksz];
-
     memset(data1d_mask,0,stacksz*sizeof(unsigned char));
-
     double margin=2;//by PHC 20170531
-    if(nt_original.listNeuron.size()>0)
-        ComputemaskImage(nt_original, data1d_mask, N, M, P, margin);
+    if (PARA.nt.listNeuron.size() > 0)
+        ComputemaskImage(PARA.nt, data1d_mask, N, M, P, margin);
 
     unsigned char *localarea=0;
     V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
@@ -466,8 +457,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     int seg_tip_id;
     int break_id_optimal;
 
-
     v3d_msg(QString("").setNum(nt_list.size()).prepend("The number of segments right now = "), 0);
+    NeuronTree nt_original = PARA.nt;
     for (int i =0; i<nt_list.size();i++)
     {
         QList<NeuronSWC> nt_seg = nt_list.at(i);
@@ -488,7 +479,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             else if( j > angle_size)
                 angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
 
-           // printf("(%.2f,%d)\n",angle_j,j);
+//            printf("(%.2f,%d)\n",angle_j,j);
             if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
             {
                 break_id = j;
@@ -505,26 +496,31 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             seg_intensity += localarea[iz*sz_tracing[0]*sz_tracing[1]+ iy *sz_tracing[0] + ix];
         }
 
-        if(seg_intensity/break_id >= seg_mean_max && break_id > 10)
+        if(seg_intensity/break_id >= seg_mean_max && break_id > 5)
         {
             seg_mean_max = seg_intensity/break_id;
             seg_tip_id = i;
             break_id_optimal = break_id;
         }
-
-//        QString swc_seg = swc_name + QString("%1.swc").arg(i);
-//        for(d = nt_seg.size() -1; d >= break_id;d--)
-//            nt_seg[d].type = 1;
-//        export_list2file(nt_seg, swc_seg,swc_name);
-   //     printf("\n");
     }
-
-//    QString swc_seg = swc_name + QString("%1_%2.swc").arg(seg_tip_id);
+//    QString swc_seg = swc_name + QString("%1.swc").arg(seg_tip_id);
 //    QList<NeuronSWC> nt_seg = nt_list.at(seg_tip_id);
 //    for(d = nt_seg.size() -1; d >= break_id_optimal;d--)
 //        nt_seg[d].type = 1;
 //    export_list2file(nt_seg, swc_seg,swc_name);
 //    v3d_msg(QString("id is %1").arg(seg_tip_id));
+    if(seg_mean_max ==0)
+    {
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
+        PARA.listLandmarks.removeAt(markSize-1);
+        if(bmenu)
+        {
+            callback.setLandmark(curwin,PARA.listLandmarks);
+            callback.pushObjectIn3DWindow(curwin);
+        }
+        return(PARA.listLandmarks.size()==0)? 1 : 0;
+    }
     QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
     V3DLONG length_seg = nt_selected.size();
 
@@ -634,7 +630,6 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         PARA.listLandmarks.removeAt(markSize-1);
         b_darkSegment = true;
         v3d_msg("Dark segment!",0);
-
     }
 
     NeuronSWC S;
@@ -657,12 +652,9 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         S.r 	= curr.r;
         S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
         nt_original.listNeuron.append(S);
-        nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
-
+        nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);    
         if(!b_boundary) PARA.nt_last.push_back(S); //use global coordinates
     }
-
-//    PARA.nt_last = nt_selected;
 
     if (0)
     {
@@ -717,9 +709,12 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
             else
                 output = PARA.inimg_file + "_GD_curveline.swc";
             QList<NeuronSWC> neuron_output;
-            if (!SortSWC(PARA.nt.listNeuron, neuron_output,1, VOID))
+            if(PARA.nt.listNeuron.size()>0)
             {
-                return -1;
+                if (!SortSWC(PARA.nt.listNeuron, neuron_output,1, VOID))
+                {
+                    return -1;
+                }
             }
             export_list2file(neuron_output, output,swc_name);
 
