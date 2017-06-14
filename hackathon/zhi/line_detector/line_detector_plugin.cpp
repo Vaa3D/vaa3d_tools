@@ -34,6 +34,7 @@ struct input_PARA
     int win_size;
     int angle_size;
     NeuronTree nt;
+    NeuronTree nt_input;
     QString outswc_file;
     QList<NeuronSWC> nt_last;
 
@@ -127,6 +128,10 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;
         PARA.angle_size = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+
+        QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";
+        if(!inneuron_file.isEmpty())
+            PARA.nt_input = readSWC_file(inneuron_file);
         for (;;)
         {
             int res = reconstruction_func(callback,parent,PARA,bmenu);
@@ -135,7 +140,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
 
         QString output;
-        if(PARA.outswc_file != "NULL")
+        if(PARA.outswc_file != "")
             output = PARA.outswc_file;
         else
             output = PARA.inimg_file + "_GD_curveline.swc";
@@ -164,7 +169,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
     {
 
 		printf("**** Usage of line_detector tracing **** \n");
-        printf("vaa3d -x line_detector -f GD_Curveline_infinite -i <inimg_file> -p <marker_file> <win_size> <angle_size> <channel> -o <outswc_file>\n");
+        printf("vaa3d -x line_detector -f GD_Curveline_infinite -i <inimg_file> -p <marker_file> <win_size> <angle_size> <channel> <inputswc_file> -o <outswc_file>\n");
         printf("inimg_file       The input image\n");
         printf("marker_file      Starting location\n");
         printf("win_size         Window size for GD tracing (default 32).\n");
@@ -306,6 +311,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     double margin=2;//by PHC 20170531
     if (PARA.nt.listNeuron.size() > 0)
         ComputemaskImage(PARA.nt, data1d_mask, N, M, P, margin);
+    else if (PARA.nt_input.listNeuron.size() > 0)
+        ComputemaskImage(PARA.nt_input, data1d_mask, N, M, P, margin);
 
     unsigned char *localarea=0;
     V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
