@@ -221,27 +221,16 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.z = P.listLandmarks[0].z;
 
     LandmarkList inputRootList;
-    inputRootList.push_back(tileLocation);
+    if(P.method !=12 )inputRootList.push_back(tileLocation);
+
     allTipsList.push_back(inputRootList);
 
-    if(P.method ==12)
-    {
-        tileLocation.x = tileLocation.x -int(P.block_size/2);
-        tileLocation.y = tileLocation.y - 3;
-        if(P.tracing_3D)
-            tileLocation.z = tileLocation.z -int(P.block_size/2);
-        else
-            tileLocation.z = 0;
-    }
-    else{
-
-        tileLocation.x = tileLocation.x -int(P.block_size/2);
-        tileLocation.y = tileLocation.y -int(P.block_size/2);
-        if(P.tracing_3D)
-            tileLocation.z = tileLocation.z -int(P.block_size/2);
-        else
-            tileLocation.z = 0;
-    }
+    tileLocation.x = tileLocation.x -int(P.block_size/2);
+    tileLocation.y = tileLocation.y -int(P.block_size/2);
+    if(P.tracing_3D)
+        tileLocation.z = tileLocation.z -int(P.block_size/2);
+    else
+        tileLocation.z = 0;
 
     tileLocation.ev_pc1 = P.block_size;
     tileLocation.ev_pc2 = P.block_size;
@@ -1474,8 +1463,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
        finalswc = readSWC_file(finaloutputswc.toStdString());
 
     vector<MyMarker*> tileswc_file;
-
-
     if(P.method == 1 || P.method == 2)
     {
         if(P.method == 1)
@@ -1616,14 +1603,23 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else
     {
         QString marker_name = imageSaveString + ".marker";
+        QString inputswc_name = marker_name + ".swc";
         QList<ImageMarker> seedsToSave;
         ImageMarker outputMarker;
         if(inputRootList.size() <1)
         {
-            outputMarker.x = int(P.in_sz[0]/2) + 1;
-            outputMarker.y = 2;
-            outputMarker.z = int(P.in_sz[2]/2) + 1;
+            outputMarker.x = int(total4DImage->getXDim()/2) + 1;
+            outputMarker.y = int(total4DImage->getYDim()/2) + 1;
+            outputMarker.z = int(total4DImage->getZDim()/2) + 1;
             seedsToSave.append(outputMarker);
+            NeuronTree input_nt = readSWC_file(P.swcfilename);
+            for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
+            {
+                input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
+                input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
+                input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
+            }
+            writeSWC_file(inputswc_name,input_nt);
         }
         else
         {
@@ -1662,7 +1658,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         char* C_seed_win = new char[S_seed_win.length() + 1];
         strcpy(C_seed_win,S_seed_win.c_str());
         arg_para.push_back(C_seed_win);
+        arg_para.push_back("5");
+        arg_para.push_back("1");
 
+        if(inputRootList.size() <1)
+        {
+            char* char_inputswc =  new char[inputswc_name.length() + 1];strcpy(char_inputswc, inputswc_name.toStdString().c_str());
+            arg_para.push_back(char_inputswc);
+        }
         full_plugin_name = "line_detector";
         func_name =  "GD_Curveline_infinite";
 

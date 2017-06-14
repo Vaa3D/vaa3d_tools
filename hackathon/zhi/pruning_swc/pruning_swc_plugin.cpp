@@ -613,7 +613,10 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
             QString curPathSWC = swcList.at(i);
             nt1 = readSWC_file(curPathSWC);
 
-            NeuronTree nt = SortSWC_pipeline(nt1.listNeuron,VOID, 0);
+            NeuronTree nt1_sorted = SortSWC_pipeline(nt1.listNeuron,VOID, VOID);
+            NeuronTree nt_pruned = pruneswc(nt1_sorted, 5);
+            NeuronTree nt = SortSWC_pipeline(nt_pruned.listNeuron,VOID, VOID);
+
 
             QVector<QVector<V3DLONG> > childs;
 
@@ -634,7 +637,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
             QList<NeuronSWC> list = nt.listNeuron;
             for (int i=0;i<list.size();i++)
             {
-                if (childs[i].size()==0)
+                if (childs[i].size()==0 && list.at(i).type !=0)
                 {
                     int index_tip = 0;
                     int parent_tip = getParent(i,nt);
@@ -646,22 +649,68 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                         if(parent_tip == 1000000000)
                             break;
                     }
-                    if(index_tip < length)
-                    {
-                        flag[i] = -1;
+//                    if(index_tip < length)
+//                    {
+//                        flag[i] = -1;
 
-                        int parent_tip = getParent(i,nt);
-                        while(childs[parent_tip].size()<2)
+//                        int parent_tip = getParent(i,nt);
+//                        while(childs[parent_tip].size()<2)
+//                        {
+//                            flag[parent_tip] = -1;
+//                            parent_tip = getParent(parent_tip,nt);
+//                            if(parent_tip == 1000000000)
+//                                break;
+//                        }
+//                    }
+                    if(index_tip>length)
+                    {
+                        QList<ImageMarker> tip_marker;
+                        ImageMarker t;
+                        t.x = list.at(i).x+1;
+                        t.y = list.at(i).y+1;
+                        t.z = list.at(i).z+1;
+                        tip_marker.append(t);
+                        QString markername = curPathSWC + QString("_x%1_y%2_z%3.marker").arg(t.x).arg(t.y).arg(t.z);
+                        writeMarker_file(markername, tip_marker);
+                        tip_marker.clear();
+
+
+                        NeuronTree nt_prunned;
+                        QList <NeuronSWC> listNeuron;
+                        QHash <int, int>  hashNeuron;
+                        listNeuron.clear();
+                        hashNeuron.clear();
+
+                        //set node
+                        int currentID = i;
+                        NeuronSWC S;
+                        for (int d=0;d<10;d++)
                         {
-                            flag[parent_tip] = -1;
-                            parent_tip = getParent(parent_tip,nt);
-                            if(parent_tip == 1000000000)
+                            NeuronSWC curr = list.at(currentID);
+                            S.n 	= curr.n;
+                            S.type  = curr.type;
+                            S.x 	= curr.x;
+                            S.y 	= curr.y;
+                            S.z 	= curr.z;
+                            S.r 	= curr.r;
+                            S.pn 	= curr.pn;
+                            listNeuron.append(S);
+                            hashNeuron.insert(S.n, listNeuron.size()-1);
+                            currentID = getParent(currentID,nt);
+                            if(currentID== 1000000000)
                                 break;
-                        }
+
+                       }
+                        nt_prunned.n = -1;
+                        nt_prunned.on = true;
+                        nt_prunned.listNeuron = listNeuron;
+                        nt_prunned.hashNeuron = hashNeuron;
+
+                        QString fileDefaultName = curPathSWC + QString("_x%1_y%2_z%3.marker.swc").arg(t.x).arg(t.y).arg(t.z);
+                        export_list2file(nt_prunned.listNeuron,fileDefaultName,curPathSWC);
                     }
 
                 }
-
             }
 
            //NeutronTree structure

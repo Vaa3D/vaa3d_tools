@@ -36,7 +36,7 @@ struct TRACE_LS_PARA
 
     Image4DSimple* image;
     LandmarkList listLandmarks;
-    QString tcfilename,inimg_file,rawfilename,markerfilename;
+    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename;
 };
 
 
