@@ -175,6 +175,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         printf("win_size         Window size for GD tracing (default 32).\n");
         printf("angle_size       Window size for angle calculation (default 5).\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("inputswc_file    Input swc file to guide the tracing direction.\n");
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 	}
