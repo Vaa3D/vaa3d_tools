@@ -663,9 +663,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     }
     curve_std = sqrt(curve_std/nt_selected.size());
     printf("curve mean is %.2f, std is %.2f\n\n\n",curve_mean, curve_std);
-
     bool b_darkSegment = false;
-    if(fabs(overall_mean-curve_mean) < (overall_std+curve_std)/2)
+    if(nt_selected.size() ==0 || fabs(overall_mean-curve_mean) < (overall_std+curve_std)/2)
     {
         nt_selected.clear();
         PARA.listLandmarks.removeAt(markSize-1);
