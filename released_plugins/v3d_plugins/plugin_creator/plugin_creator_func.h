@@ -10,6 +10,7 @@
 
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent);
 int create_plugin_neuronrec(V3DPluginCallback2 &callback, QWidget *parent);
+int create_plugin_neuronML(V3DPluginCallback2 &callback, QWidget *parent);
 int create_demo1(V3DPluginCallback2 &callback, QWidget *parent);
 int create_demo2(V3DPluginCallback2 &callback, QWidget *parent);
 

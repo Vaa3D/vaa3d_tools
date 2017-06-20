@@ -89,6 +89,31 @@ void create_plugin_neuronrec_pro(PluginTemplate & pt)
     ofs<<"DESTDIR\t= $$VAA3DPATH/bin/plugins/bigneuronhackathon/"<<pt.PLUGIN_NAME<<"/"<<endl;
     ofs.close();
 }
+
+void create_plugin_neuronML_pro(PluginTemplate & pt)
+{
+    cout<<"create "<<pt.PRO_FILE<<" ... "<<endl;
+    ofstream ofs(pt.PRO_FILE.c_str());
+    ofs<<""<<endl;
+    ofs<<"TEMPLATE\t= lib"<<endl;
+    ofs<<"CONFIG\t+= qt plugin warn_off"<<endl;
+    ofs<<"#CONFIG\t+= x86_64"<<endl;
+    ofs<<"VAA3DPATH = "<<pt.VAA3D_PATH<<endl;
+    ofs<<"INCLUDEPATH\t+= $$VAA3DPATH/v3d_main/basic_c_fun"<<endl;
+    ofs<<"INCLUDEPATH\t+= $$VAA3DPATH/v3d_main/common_lib/include"<<endl;
+    ofs<<endl;
+    ofs<<"HEADERS\t+= "<<pt.PLUGIN_HEADER<<endl;
+    if(pt.PLUGIN_GUI != "") ofs<<"HEADERS\t+= "<<pt.PLUGIN_GUI<<endl;
+    ofs<<"SOURCES\t+= "<<pt.PLUGIN_CPP<<endl;
+    ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp"<<endl;
+    ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp"<<endl;
+    ofs<<""<<endl;
+
+    ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
+    ofs<<"DESTDIR\t= $$VAA3DPATH/bin/plugins/"<<pt.PLUGIN_NAME<<"/"<<endl;
+    ofs.close();
+}
+
 void create_plugin_cpp(PluginTemplate & pt)
 {
 	cout<<"create "<<pt.PLUGIN_CPP<<" ... "<<endl;
@@ -272,11 +297,121 @@ void create_plugin_neuronrec_cpp(PluginTemplate & pt)
         templatefile.close();
 
     }
-
-
     ofs.close();
+}
 
+void create_plugin_neuronML_cpp(PluginTemplate & pt)
+{
+    cout<<"create "<<pt.PLUGIN_CPP<<" ... "<<endl;
+    ofstream ofs(pt.PLUGIN_CPP.c_str());
+    ofs<<"/* "<<pt.PLUGIN_CPP<<endl;
+    ofs<<" * "<<pt.PLUGIN_DESCRIPTION<<endl;
+    ofs<<" * "<<pt.PLUGIN_DATE<<" : by "<<pt.PLUGIN_AUTHOR<<endl;
+    ofs<<" */"<<endl;
+    ofs<<" "<<endl;
+    string line;
+    string template_path = pt.VAA3D_PATH + "/../vaa3d_tools/released_plugins/v3d_plugins/plugin_creator/neuronML_template.cpp";
+    ifstream templatefile (template_path.c_str());
+    if (templatefile.is_open())
+    {
+        for(int d = 0; d< 4; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
 
+        ofs<<"#include \""<<pt.PLUGIN_HEADER<<"\""<<endl;
+        ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
+
+        for(int d = 4;d< 16; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        ofs<<" "<<endl;
+        ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::menulist() const"<<endl;
+        ofs<<"{"<<endl;
+        ofs<<"\treturn QStringList() "<<endl;
+        for(int i = 0; i < pt.MENUS.size(); i++) ofs<<"\t\t<<tr(\""<<pt.MENUS[i]<<"\")"<<endl;
+        ofs<<"\t\t<<tr(\"about\");"<<endl;
+        ofs<<"}"<<endl;
+        ofs<<""<<endl;
+        ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::funclist() const"<<endl;
+        ofs<<"{"<<endl;
+        ofs<<"\treturn QStringList()";
+        for(int i = 0; i < pt.FUNCS.size(); i++) ofs<<endl<<"\t\t<<tr(\""<<pt.FUNCS[i]<<"\")";
+        ofs<<";"<<endl;
+        ofs<<"}"<<endl;
+        ofs<<""<<endl;
+        ofs<<"void "<<pt.PLUGIN_CLASS<<"::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)"<<endl;
+        ofs<<"{"<<endl;
+        ofs<<"\tif (menu_name == tr(\""<<pt.MENUS[0]<<"\"))"<<endl;
+        ofs<<"\t{"<<endl;
+        for(int d = 16;d< 20; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+        ofs<<"\t}"<<endl;
+        for(int i = 1; i < pt.MENUS.size(); i++)
+        {
+            ofs<<"\telse if (menu_name == tr(\""<<pt.MENUS[i]<<"\"))"<<endl;
+            ofs<<"\t{"<<endl;
+            ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
+            ofs<<"\t}"<<endl;
+        }
+        ofs<<"\telse"<<endl;
+        ofs<<"\t{"<<endl;
+        ofs<<"\t\tv3d_msg(tr(\""<<pt.PLUGIN_DESCRIPTION<<". \"\n\t\t\t\"Developed by "<<pt.PLUGIN_AUTHOR<<", "<<pt.PLUGIN_DATE<<"\"));"<<endl;
+        ofs<<"\t}"<<endl;
+        ofs<<"}"<<endl;
+        ofs<<""<<endl;
+
+        ofs<<"bool "<<pt.PLUGIN_CLASS<<"::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)"<<endl;
+        ofs<<"{"<<endl;
+        ofs<<"\tif (func_name == tr(\""<<pt.FUNCS[0]<<"\"))"<<endl;
+        ofs<<"\t{"<<endl;
+        for(int d = 20;d< 55; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+        ofs<<"\t}"<<endl;
+        for(int i = 1; i < pt.FUNCS.size()-1; i++)
+        {
+            ofs<<"\telse if (func_name == tr(\""<<pt.FUNCS[i]<<"\"))"<<endl;
+            ofs<<"\t{"<<endl;
+            ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
+            ofs<<"\t}"<<endl;
+        }
+        for(int d = 37;d< 43; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+        ofs<<"\t\tprintf(\"**** Usage of " << pt.PLUGIN_NAME <<" tracing **** \\n\");\n";
+        ofs<<"\t\tprintf(\"vaa3d -x " << pt.PLUGIN_NAME <<" -f " << pt.FUNCS[0] << " -i <inimg_file> -p <channel> <swc_file> <marker_file> <other parameters>\\n\");\n";
+
+        for(int d = 43;d< 143; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+        ofs<<"\tQString swc_name = PARA.inimg_file + \"_" << pt.PLUGIN_NAME <<".swc\";\n";
+        ofs<<"\tnt_output.name = \"" << pt.PLUGIN_NAME <<"\";\n";
+        ofs<<"\tQString marker_name = PARA.inimg_file + \"_" << pt.PLUGIN_NAME <<".marker\";\n";
+
+        for(int d = 143;d< 170; d++)
+        {
+            getline (templatefile,line);
+            ofs<<line<<endl;
+        }
+
+        templatefile.close();
+
+    }
+    ofs.close();
 }
 void create_plugin_header(PluginTemplate & pt)  // PLUGIN_HEADER
 {
@@ -448,6 +583,13 @@ void create_plugin_neuronrec_all(PluginTemplate & pt)
     create_plugin_header(pt);
     create_plugin_neuronrec_cpp(pt);
     create_plugin_neuronrec_pro(pt);
+}
+
+void create_plugin_neuronML_all(PluginTemplate & pt)
+{
+    create_plugin_header(pt);
+    create_plugin_neuronML_cpp(pt);
+    create_plugin_neuronML_pro(pt);
 }
 
 bool get_next_string(string &val, istream &is)

@@ -16,6 +16,7 @@ QStringList PluginCreatorPlugin::menulist() const
 	return QStringList()
 		<<tr("create plugin")
         <<tr("create plugin for neuron reconstruction")
+        <<tr("create plugin for neuron machine learning")
 //		<<tr("produce simplest plugin")
 //		<<tr("domenu usage demo")
 //		<<tr("load image and swc demo")
@@ -31,6 +32,10 @@ void PluginCreatorPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
     else if(menu_name == tr("create plugin for neuron reconstruction"))
     {
         create_plugin_neuronrec(callback,parent);
+    }
+    else if(menu_name == tr("create plugin for neuron machine learning"))
+    {
+        create_plugin_neuronML(callback,parent);
     }
 	else if(menu_name == tr("produce simplest plugin"))
 	{
