@@ -1,0 +1,18 @@
+Instruction
+
+1.processing for single neuron:
+#example: /<Absolute_path>/motif_for_singleNeuron.sh <P1> <P2> <P3> <P4> <P5>
+P1:v3dPATH=/home/hys/v3d_external/bin
+P2:neuron_folder=/home/hys/Desktop/reconstructions_folder
+P3:imgPATH
+P4:consensus_file
+P5:result_folder
+
+2.batch processing for all neuron:
+#example: /<Absolute_path>/batch_for_all.sh <P1> <P2> <P3> <P4> <P5> <P6>
+P1:v3dPATH
+P2:image_folder
+P3:reconstruction_folder
+P4:consensus_file
+P5:result_folder
+P6:script_path

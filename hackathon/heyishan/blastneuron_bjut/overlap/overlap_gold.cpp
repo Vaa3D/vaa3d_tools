@@ -267,7 +267,7 @@ bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         {
             QList<NeuronSWC> neuron1 = nt_list_subj[i].listNeuron;
             int m; // each line in neuron1
-            cout << "neuron1.size = " <<neuron1.size() <<endl;
+            //cout << "neuron1.size = " <<neuron1.size() <<endl;
             for(m = 0; m < neuron1.size(); m++)
             {
                 int m_count = 1;
@@ -287,7 +287,6 @@ bool overlap_gold(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                         }
                     }
                 }
-                //cout << "m_count = " <<m_count << "    meth para = "<< meth_para<<endl;
                 if(m_count >= meth_para)
                 {
                     int exist_flag = 0;

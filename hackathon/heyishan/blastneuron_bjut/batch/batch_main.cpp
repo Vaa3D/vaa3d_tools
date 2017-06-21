@@ -1,6 +1,6 @@
 /* batch_main.cpp
  * This is batch program for applying blastneuron_bjut
- * 2017-03-01 : by Yishan He
+ * 2017-05-015 : by Yishan He
  */
 #include "batch_main.h"
 #include "overlap/overlap_gold.h"
