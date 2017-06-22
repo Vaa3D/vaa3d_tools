@@ -303,12 +303,13 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
   cout<<"test : I printed the step after the image is binarized"<<endl;
-  Image3<unsigned char>* timg = this->bimg->autocrop();
-  if (this->bimg){
-    delete this->bimg;
-    this->bimg = 0;
-  }
-  this->bimg = timg;
+  if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+  // Image3<unsigned char>* timg = this->bimg->autocrop();
+  // if (this->bimg){
+  //   delete this->bimg;
+  //   this->bimg = 0;
+  // }
+  // this->bimg = timg;
 
   this->prep();
   SWC *swc = new SWC();
@@ -356,7 +357,9 @@ void R2Tracer::prep() {
   // Find the source point
   long max_dt_idx = dt->max_idx_1d();
   long max_dt = dt->get_1d(max_dt_idx);
+  cout<<"max_dt_idx: "<<(int) max_dt_idx<<endl;
   Point<float> max_dt_point(max_dt_idx, this->bimg->get_dims());
+  cout<<"test : Centroid x "<<max_dt_point.x<<"Centroid y "<<max_dt_point.y<<"Centroid z "<<max_dt_point.z<<endl;
   this->soma = new Soma(max_dt_point, max_dt * 2);
 
   if(!this->silent) cout<<"Step Three: Somatic Mask Making Time Spent is ";

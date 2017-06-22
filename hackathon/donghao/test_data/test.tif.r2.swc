@@ -1,0 +1,4 @@
+#name r2
+#comment 
+##n,type,x,y,z,radius,parent
+1 1 30.000 30.000 30.000 3.000 3

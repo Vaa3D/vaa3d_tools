@@ -222,6 +222,10 @@ void Soma::make_mask(Image3<unsigned char> *bimg) {
         (bimg->get_1d(i) > 0 && p.dist(this->centroid) < 1.5 * this->radius)
             ? 1
             : 0;
+    // if (bimg->get_1d(i) > 0 && p.dist(this->centroid) < 1.5 * this->radius)
+    // {
+    //   cout<<"print value"<<p.x<<endl;
+    // }
   }
 
   this->mask = new Image3<unsigned char>(mask1d, bimg->get_dims());

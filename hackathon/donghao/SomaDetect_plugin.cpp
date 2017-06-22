@@ -225,6 +225,29 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   //   PARA.outswc_file = PARA.inimg_file + ".r2.swc";
   // }
   // save_swc(swc, PARA.outswc_file);
+  PARA.outswc_file = PARA.inimg_file + ".somapoint.swc";
+  cout<<PARA.outswc_file.toStdString().c_str()<<endl;
+  NeuronTree nt;
+  QList<NeuronSWC> listNeuron;
+  QHash<int, int> hashNeuron;
+  listNeuron.clear();
+  hashNeuron.clear();
+  NeuronSWC S;
+  S.n = 1;
+  S.type = 1;
+  S.x = 30;
+  S.y = 30;
+  S.z = 30;
+  S.r = floor(3);
+  S.pn = 3;
+  listNeuron.append(S);
+  hashNeuron.insert(S.n, listNeuron.size() - 1);
+  nt.n = -1;
+  nt.on = true;
+  nt.listNeuron = listNeuron;
+  nt.hashNeuron = hashNeuron;
+  nt.name = "r2";
+  writeSWC_file(PARA.outswc_file.toStdString().c_str(), nt);
 
   // Clean up
   if (in_sz3) {
