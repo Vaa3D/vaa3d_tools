@@ -33,22 +33,14 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     if (menu_name == tr("find"))
     {
 		TipMarkerFinderUI* inputForm = new TipMarkerFinderUI(0, &callback, 1);
-		QStringList inputInfo;
-		if (inputForm->exec()) inputInfo = inputForm->inputs; 
-		qDebug() << inputInfo;
-
-		TipProcessor(inputInfo, 1);
-		
+		int done = inputForm->exec();
+		return;
     }
 	else if(menu_name == tr("find_all"))
     {
 		TipMarkerFinderUI* inputForm = new TipMarkerFinderUI(0, &callback, 2);
-		QStringList inputInfo;
-		if (inputForm->exec()) inputInfo = inputForm->inputs; 
-		qDebug() << inputInfo;
-
-		TipProcessor(inputInfo, 2);
-        //SpecDialog_all(callback,parent);
+		int done = inputForm->exec();
+		return;
     }
 	else
 	{
