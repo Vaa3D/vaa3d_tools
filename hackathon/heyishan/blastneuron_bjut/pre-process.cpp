@@ -15,6 +15,7 @@ bool sort_with_standard(QList<NeuronSWC>  & neuron1, QList<NeuronSWC> & neuron2,
     V3DLONG siz = neuron1.size();
     V3DLONG root_id = 1;
     double dist;
+    if (siz==0) return false;
     double min_dist = sqrt((neuron1[0].x-neuron2[0].x)*(neuron1[0].x-neuron2[0].x)
          +(neuron1[0].y-neuron2[0].y)*(neuron1[0].y-neuron2[0].y)
          +(neuron1[0].z-neuron2[0].z)*(neuron1[0].z-neuron2[0].z));

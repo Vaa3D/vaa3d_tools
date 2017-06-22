@@ -10,6 +10,7 @@ cut_PARA=$6
 
 alias v3d='$v3dPATH/vaa3d'
 shortname=${tfilename%_*}
+shortname=${tfilename%.*}
 echo "shortname in local_lignment = "$shortname
 inswc1="$result_folder/resample_sort/$neuron_name/$tfilename"
 inswc2="$consensus_swc"

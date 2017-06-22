@@ -7,10 +7,8 @@ neuron_folder=$2
 imgPATH=$3
 consensus_in=$4
 result_folder=$5
-pre_process_time=30
-local_alignment_time=30
+local_alignment_time=300
 overlap_time=300
-resample_PARA=3
 cut_PARA=20
 prune_THRES=3
 fileNUM=10
@@ -26,43 +24,28 @@ if [ "$consensus_in" = "0" ]; then
 	echo "generate consensus"
 	del_flag=0
 	v3d -x consensus_swc -f consensus_swc -i $neuron_folder/*.swc -o $result_folder/consensus_file/${neuron_name}_consensus.swc -p 6 5
-	consensus_swc="$result_folder/consensus_file/${neuron_name}_consensus.swc"
+	consensus_unsorted="$result_folder/consensus_file/${neuron_name}_consensus.swc"
 elif [ -f "$consensus_in" ];then
-	extension=${consensus_in##*.}
-	if [ "$extension" = "swc" ]; then
-		consensus_swc=$consensus_in
-	elif [ "$extension" = "eswc" ]; then
-		v3d -x eswc_converter -f eswc_to_swc -i ${consensus_in} -o $result_folder/consensus_file/${neuron_name}_consensus.swc
-		consensus_swc="$result_folder/consensus_file/${neuron_name}_consensus.swc"
-	else
-		echo "wrong consensus input"
-		exit 0
-	fi
+	# convert and sort consensus.eswc
+	consensus_unsorted=$result_folder/consensus_file/${neuron_name}_consensus.swc
+	v3d -x eswc_converter -f eswc_to_swc -i ${consensus_in} -o $result_folder/consensus_file/${neuron_name}_consensus.swc
+	consensus_swc="$result_folder/consensus_file/${neuron_name}_consensus_sorted.swc"
+v3d -x sort_neuron_swc -f sort_swc -i ${consensus_unsorted} -o ${consensus_swc} -p 10000 1
 else
 	echo "wrong consensus input"
 	exit 0
 fi
 
-# sort swc
-consensus_sorted="$result_folder/consensus_file/${neuron_name}_consensus_sorted.swc"
-v3d -x sort_neuron_swc -f sort_swc -i ${consensus_swc} -o ${consensus_sorted} -p 1000 1
 # pre_process
 mkdir $result_folder/resample_sort
 mkdir $result_folder/resample_sort/$neuron_name
 
-if [ "$consensus_sorted" != "0" ]; then
-	cd $neuron_folder
-	for filename in `ls *.swc`
-		do
-		echo "filename = "$filename
-		timeout $pre_process_time $scriptPATH/resample_sort.sh $v3dPATH $neuron_folder $neuron_name $filename $consensus_sorted $resample_PARA $result_folder
-		done
-
-# if consensus doesn't exist
-elif [ "$consensus_sorted" = "0" ]; then
-	echo "You need create a consensus."
+if [ "$consensus_swc" != "0" ]; then
+	outfolder="$result_folder/resample_sort/$neuron_name"
+	echo "neuron_folder=" $neuron_folder
+	v3d -x blastneuron_bjut -f batch_preprocess -i ${neuron_folder} ${consensus_swc} -o ${outfolder}
 else
-	echo "You need a consensus_swc as the forth input"
+	echo "consensus_swc doen't exist"
 fi
 
 # lcoal_alignment and prune_alignment
@@ -73,7 +56,7 @@ mkdir $result_folder/prune_alignment/$neuron_name
 cd $result_folder/resample_sort/$neuron_name
 for tfilename in `ls *.swc`
 	do
-	timeout $local_alignment_time $scriptPATH/local_alignment.sh $v3dPATH $result_folder $neuron_name $tfilename $consensus_sorted $cut_PARA
+	timeout $local_alignment_time $scriptPATH/local_alignment.sh $v3dPATH $result_folder $neuron_name $tfilename $consensus_swc $cut_PARA
 	done
 
 # select files by files' size
