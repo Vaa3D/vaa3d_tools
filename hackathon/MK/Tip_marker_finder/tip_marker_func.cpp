@@ -51,6 +51,11 @@ bool TipMarkerFinderUI::okClicked()
 	inputs << ui->lineEdit_3->text();
 	inputs << ui->lineEdit_4->text();
 
+	QString test = inputs[1];
+	if (test.isEmpty()) TipProcessor(inputs, 2);
+	else TipProcessor(inputs, 1);
+	qDebug() << inputs;
+
 	accept();
 	return true;
 }
