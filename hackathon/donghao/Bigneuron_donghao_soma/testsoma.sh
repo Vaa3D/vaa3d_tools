@@ -19,4 +19,4 @@ make -j8;
 echo "Build Finish"
 
 echo "vaa3d -x Rivulet -f tracing_func -i <inimg_file> -p <channel> <threshold>"
-$vaa3d -x SomaDetect -f tracing_func -i $TESTIMG -o $TESTIMG.r2.swc -p 1 8 0 1;
+$vaa3d -x SomaDetect -f tracing_func -i $TESTIMG -o $TESTIMG.r2.somapoint.swc -p 1 10 0 1;

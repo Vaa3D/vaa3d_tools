@@ -215,15 +215,19 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   SWC *swc = tracer->trace(img, PARA.threshold);
   // The initial somatic point : somapt
   SWCNode ini_soma_pt;
-  somapt = swc->get_node(0);
+  ini_soma_pt = swc->get_node(0);
   CropRegion soma_bounding_box;
-  soma_bounding_box.xmin =  - ini_soma_pt.radius;
-  soma_bounding_box.xmax =  + ini_soma_pt.radius;
-  soma_bounding_box.ymin =  - ini_soma_pt.radius;
-  soma_bounding_box.ymax =  + ini_soma_pt.radius;
-  soma_bounding_box.zmin =  - ini_soma_pt.radius;
-  soma_bounding_box.zmax =  + ini_soma_pt.radius;
-  cout<<"the minumum x value of "<<soma_bounding_box.xmin<<endl;
+  float scale_box = 1.5;
+  soma_bounding_box.xmin = ini_soma_pt.p.x - ini_soma_pt.radius * scale_box;
+  soma_bounding_box.xmax = ini_soma_pt.p.x + ini_soma_pt.radius * scale_box;
+  soma_bounding_box.ymin = ini_soma_pt.p.y - ini_soma_pt.radius * scale_box;
+  soma_bounding_box.ymax = ini_soma_pt.p.y + ini_soma_pt.radius * scale_box;
+  soma_bounding_box.zmin = ini_soma_pt.p.z - ini_soma_pt.radius * scale_box;
+  soma_bounding_box.zmax = ini_soma_pt.p.z + ini_soma_pt.radius * scale_box;
+  cout<<"ini spt x: "<<ini_soma_pt.p.x<<" ini spt y: "<<ini_soma_pt.p.y<<" ini spt z: "<<ini_soma_pt.p.z<<endl;
+  cout<<"xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
+  cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
+  cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
   cout<<"the radius of the somapt is "<<ini_soma_pt.radius<<endl;
 //  SWCNode =
 //  int radius = (int) ;
