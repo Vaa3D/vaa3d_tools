@@ -33,13 +33,17 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     if (menu_name == tr("find"))
     {
 		TipMarkerFinderUI* inputForm = new TipMarkerFinderUI(0, &callback, 1);
-		int done = inputForm->exec();
+		inputForm->exec();
+		inputForm->~TipMarkerFinderUI(); // Needs to force freeing up memory for Win7..? (Win10 doesn't need this.)
+
 		return;
     }
 	else if(menu_name == tr("find_all"))
     {
 		TipMarkerFinderUI* inputForm = new TipMarkerFinderUI(0, &callback, 2);
-		int done = inputForm->exec();
+		inputForm->exec();
+		inputForm->~TipMarkerFinderUI();
+
 		return;
     }
 	else

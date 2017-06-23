@@ -21,7 +21,6 @@ public:
 	V3DPluginCallback2* callback;
     TipMarkerFinderUI(QWidget* parent, V3DPluginCallback2* callback, int menu);
 	QStringList inputs;
-	
     ~TipMarkerFinderUI();
 
 public slots:
@@ -30,6 +29,8 @@ public slots:
 
 private:
     Ui::TipMarkerFinderUI* ui;
+	QString SWCfileName;
+
 };
 
 #endif // TIP_MARKER_FUNC_H

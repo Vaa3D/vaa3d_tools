@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>537</width>
-    <height>273</height>
+    <width>551</width>
+    <height>281</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -179,34 +179,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>pushButton</sender>
-   <signal>clicked()</signal>
-   <receiver>TipMarkerFinderUI</receiver>
-   <slot>filePath()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>470</x>
-     <y>66</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>628</x>
-     <y>77</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
    <receiver>TipMarkerFinderUI</receiver>
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>416</x>
-     <y>269</y>
+     <x>385</x>
+     <y>248</y>
     </hint>
     <hint type="destinationlabel">
-     <x>417</x>
-     <y>363</y>
+     <x>189</x>
+     <y>228</y>
     </hint>
    </hints>
   </connection>
@@ -217,12 +201,28 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>495</x>
-     <y>247</y>
+     <x>459</x>
+     <y>245</y>
     </hint>
     <hint type="destinationlabel">
-     <x>443</x>
-     <y>109</y>
+     <x>277</x>
+     <y>240</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>TipMarkerFinderUI</receiver>
+   <slot>filePath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>482</x>
+     <y>64</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>582</x>
+     <y>70</y>
     </hint>
    </hints>
   </connection>
