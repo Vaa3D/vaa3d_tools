@@ -579,6 +579,7 @@ class R2Tracer {
   ~R2Tracer();
   void reset();
   SWC *trace(Image3<unsigned char> *img, float threshold);
+  SWC *scentre();
   void set_prune(bool p){
     this->is_prune = p;
   };

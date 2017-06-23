@@ -303,7 +303,7 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
   cout<<"test : I printed the step after the image is binarized"<<endl;
-  if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+  if(!this->silent) cout<<"Totally Rivulet2 took -- "<< (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
   // Image3<unsigned char>* timg = this->bimg->autocrop();
   // if (this->bimg){
   //   delete this->bimg;
@@ -311,8 +311,9 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   // }
   // this->bimg = timg;
 
-  this->prep();
-  SWC *swc = new SWC();
+  // this->prep();
+
+  SWC *swc = this->scentre();
   // SWC *swc = this->iterative_backtrack();
 
   // if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
@@ -340,6 +341,93 @@ void show_progress(float perc, long completed, long total) {
   std::cout << "|\t" << completed << "/" << total << "\r";
   std::cout.flush();
 }
+
+SWC *R2Tracer::scentre() {
+  // // Fast marching distance transform proposed in APP2
+  cout<<"Function scentre is been called"<<endl;
+  if (!this->silent) cout << "Step Two : Boundary Distance Transform Time Spent is ";
+  long *dims = this->bimg->get_dims();
+  float *bdist1d = NULL;
+  int start_time = -1;
+  start_time = clock();
+  fastmarching_dt(this->bimg->get_data1d_ptr(), bdist1d, dims[0], dims[1],
+                  dims[2], 2, 0);
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+
+  Image3<float> *dt = new Image3<float>(bdist1d, this->bimg->get_dims());
+
+  // Find the source point
+  long max_dt_idx = dt->max_idx_1d();
+  long max_dt = dt->get_1d(max_dt_idx);
+  cout<<"max_dt_idx: "<<(int) max_dt_idx<<endl;
+  Point<float> max_dt_point(max_dt_idx, this->bimg->get_dims());
+  cout<<"test : Centroid x "<<max_dt_point.x<<"Centroid y "<<max_dt_point.y<<"Centroid z "<<max_dt_point.z<<endl;
+  this->soma = new Soma(max_dt_point, max_dt * 2);
+
+  if(!this->silent) cout<<"Step Three: Somatic Mask Making Time Spent is ";
+  start_time = clock();
+  this->soma->make_mask(this->bimg);
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+
+  // Make Speed Image dt**4 if bimg>0
+  // if (!this->silent) cout << "(3/6) == Making Speed Image...";
+  start_time = clock();
+  Image3<double> *speed = this->makespeed(dt);
+  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+
+
+  // Marching on the Speed Image
+  int *sp = this->soma->centroid.toint().make_array();
+  cout<<"test: The initial centroid, "<<"x: "<<sp[0]<<"y: "<<sp[1]<<"z: "<<sp[2]<<endl;
+
+  SWC *swc = new SWC();
+  cout<<"test: scentre is running"<<endl;
+  SWCNode soma_node(0, 1, max_dt_point, (int) max_dt, -1);
+  swc->add_node(soma_node);
+  // SWCNode(int id, int type, Point<float> p, int radius, int pid)
+
+
+  // if (!this->silent){
+  //   cout << "(4/6) == Multi-Stencils Fastmarching ";
+  //   if (this->quality){
+  //     cout << "with high quality...";
+  //   }
+  //   else{
+  //     cout << "with low quality...";
+  //   }
+  //   cout.flush();   
+  // }
+  // start_time = clock();
+  // double *t_ptr = msfm(speed->get_data1d_ptr(), dims, sp, this->quality, this->quality,
+  //                                      false); // Original Timemap
+  // if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+
+  // this->t = new Image3<double>(t_ptr, this->bimg->get_dims());
+  // this->tt = this->t->make_copy();
+
+  // // Get the gradient of the Time-crossing map
+  // if(!this->silent) cout <<  "(5/6) == Making Gradients of Time Crossing Map...";
+  // start_time = clock();
+  // this->make_gradient();
+  // if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+
+  if (dt) {
+    delete dt;
+    dt = NULL;
+  }
+
+  if (speed) {
+    delete speed;
+    speed = NULL;
+  }
+
+  if (sp) {
+    delete[] sp;
+    sp = NULL;
+  }
+  return swc;
+}
+
 
 void R2Tracer::prep() {
   // // Fast marching distance transform proposed in APP2

@@ -65,10 +65,10 @@ void RivuletPlugin::domenu(const QString &menu_name,
     PARA.quality = p.quality;
 
     reconstruction_func(callback, parent, PARA, bmenu);
-    v3d_msg(tr("Rivulet2 finished. You can now drag the result to vaa3d."));
+    v3d_msg(tr("Soma detection prototype is completed. The soma swc file containing one single point is generated."));
 
   } else if (menu_name == tr("about")){
-    v3d_msg(tr("Soma Detection algorithm for Hackathon Nanjing. You can also find the matlab package at https://github.com/RivuletStudio/rivuletpy and the python3 package at https://github.com/lsqshr/rivuletpy"));
+    v3d_msg(tr("Soma Detection algorithm for Hackathon Nanjing by USYD team. You can also find the matlab package at https://github.com/RivuletStudio/Rivulet-Neuron-Tracing-Toolbox and the python3 package at https://github.com/lsqshr/rivuletpy"));
   }
 }
 
@@ -213,6 +213,21 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   tracer->set_prune(PARA.prune);
   cout<<"test : The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
   SWC *swc = tracer->trace(img, PARA.threshold);
+  // The initial somatic point : somapt
+  SWCNode ini_soma_pt;
+  somapt = swc->get_node(0);
+  CropRegion soma_bounding_box;
+  soma_bounding_box.xmin =  - ini_soma_pt.radius;
+  soma_bounding_box.xmax =  + ini_soma_pt.radius;
+  soma_bounding_box.ymin =  - ini_soma_pt.radius;
+  soma_bounding_box.ymax =  + ini_soma_pt.radius;
+  soma_bounding_box.zmin =  - ini_soma_pt.radius;
+  soma_bounding_box.zmax =  + ini_soma_pt.radius;
+  cout<<"the minumum x value of "<<soma_bounding_box.xmin<<endl;
+  cout<<"the radius of the somapt is "<<ini_soma_pt.radius<<endl;
+//  SWCNode =
+//  int radius = (int) ;
+//  SomaBoundingBox.xmin =
   cout << "====== END ======" << endl;
 
   if (tracer) {
@@ -221,33 +236,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   }
 
   // 
-  // if(PARA.outswc_file.isEmpty()){
-  //   PARA.outswc_file = PARA.inimg_file + ".r2.swc";
-  // }
-  // save_swc(swc, PARA.outswc_file);
-  PARA.outswc_file = PARA.inimg_file + ".somapoint.swc";
-  cout<<PARA.outswc_file.toStdString().c_str()<<endl;
-  NeuronTree nt;
-  QList<NeuronSWC> listNeuron;
-  QHash<int, int> hashNeuron;
-  listNeuron.clear();
-  hashNeuron.clear();
-  NeuronSWC S;
-  S.n = 1;
-  S.type = 1;
-  S.x = 30;
-  S.y = 30;
-  S.z = 30;
-  S.r = floor(3);
-  S.pn = 3;
-  listNeuron.append(S);
-  hashNeuron.insert(S.n, listNeuron.size() - 1);
-  nt.n = -1;
-  nt.on = true;
-  nt.listNeuron = listNeuron;
-  nt.hashNeuron = hashNeuron;
-  nt.name = "r2";
-  writeSWC_file(PARA.outswc_file.toStdString().c_str(), nt);
+  if(PARA.outswc_file.isEmpty()){
+    PARA.outswc_file = PARA.inimg_file + ".somapoint.swc";
+  }
+  save_swc(swc, PARA.outswc_file);
 
   // Clean up
   if (in_sz3) {
