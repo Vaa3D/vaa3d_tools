@@ -302,9 +302,9 @@ void R2Tracer::erase(Branch &branch) {
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
-  cout<<"test : I printed the step after the image is binarized"<<endl;
-  if(!this->silent) cout<<"Totally Rivulet2 took -- "<< (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
-  // Image3<unsigned char>* timg = this->bimg->autocrop();
+  //cout<<"test : I printed the step after the image is binarized"<<endl;
+  if(!this->silent) cout<<"Step One : Binarization took -- "<< (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+//  Image3<unsigned char>* timg = this->bimg->autocrop();
   // if (this->bimg){
   //   delete this->bimg;
   //   this->bimg = 0;
@@ -314,6 +314,32 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   // this->prep();
 
   SWC *swc = this->scentre();
+  // The initial somatic point : somapt
+  SWCNode ini_soma_pt;
+  ini_soma_pt = swc->get_node(0);
+  CropRegion soma_bounding_box;
+  float scale_box = 1.5;
+  long *dims = this->bimg->get_dims();
+  soma_bounding_box.xmin = ini_soma_pt.p.x - ini_soma_pt.radius * scale_box;
+  soma_bounding_box.xmax = ini_soma_pt.p.x + ini_soma_pt.radius * scale_box;
+  soma_bounding_box.ymin = ini_soma_pt.p.y - ini_soma_pt.radius * scale_box;
+  soma_bounding_box.ymax = ini_soma_pt.p.y + ini_soma_pt.radius * scale_box;
+  soma_bounding_box.zmin = ini_soma_pt.p.z - ini_soma_pt.radius * scale_box;
+  soma_bounding_box.zmax = ini_soma_pt.p.z + ini_soma_pt.radius * scale_box;
+  cout<<"ini spt x: "<<ini_soma_pt.p.x<<" ini spt y: "<<ini_soma_pt.p.y<<" ini spt z: "<<ini_soma_pt.p.z<<endl;
+  cout<<"xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
+  cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
+  cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
+  cout<<"the radius of the somapt is "<<ini_soma_pt.radius<<endl;
+  soma_bounding_box.xmin = max2(0, soma_bounding_box.xmin);
+  soma_bounding_box.xmax = min2(dims[0], soma_bounding_box.xmax);
+  soma_bounding_box.ymin = max2(0, soma_bounding_box.ymin);
+  soma_bounding_box.ymax = min2(dims[1], soma_bounding_box.ymax);
+  soma_bounding_box.zmin = max2(0, soma_bounding_box.zmin);
+  soma_bounding_box.zmax = min2(dims[2], soma_bounding_box.zmax);
+  cout<<"xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
+  cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
+  cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
   // SWC *swc = this->iterative_backtrack();
 
   // if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
@@ -378,7 +404,7 @@ SWC *R2Tracer::scentre() {
 
   // Marching on the Speed Image
   int *sp = this->soma->centroid.toint().make_array();
-  cout<<"test: The initial centroid, "<<"x: "<<sp[0]<<"y: "<<sp[1]<<"z: "<<sp[2]<<endl;
+  //cout<<"test: The initial centroid, "<<"x: "<<sp[0]<<" y: "<<sp[1]<<" z: "<<sp[2]<<endl;
 
   SWC *swc = new SWC();
   cout<<"test: scentre is running"<<endl;

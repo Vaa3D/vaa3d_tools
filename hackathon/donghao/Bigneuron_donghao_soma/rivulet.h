@@ -260,6 +260,45 @@ class Image3 {
     return dilated;
   }
 
+  // Crop this image according to the input region definition
+  // The original image will be over-written
+  // (To be done) : To get the original image back, call this->restore_crop()
+  Image3<T>* manualcrop(CropRegion crop_region){
+    std::vector<Point<long> > pts;
+    Point<long> p;
+    for (p.x = 0; p.x < this->dims[0]; ++p.x)
+      for (p.y = 0; p.y < this->dims[1]; ++p.y)
+        for (p.z = 0; p.z < this->dims[2]; ++p.z) {
+          if (this->get(p) > 0){
+            pts.push_back(p);
+          }
+        }
+
+    // Make the cropped image data
+    long crop_dims[3];
+    crop_dims[0] = crop_region.xmax - crop_region.xmin + 1;
+    crop_dims[1] = crop_region.ymax - crop_region.ymin + 1;
+    crop_dims[2] = crop_region.zmax - crop_region.zmin + 1;
+    long nvox = crop_dims[0] * crop_dims[1] * crop_dims[2];
+    T* croped_data = new T[nvox];
+
+    // Copy the data to the cropped image
+    Point<long> p_crop;
+    for (p.x = crop_region.xmin, p_crop.x = 0; p.x < crop_region.xmax;
+         ++p.x, ++p_crop.x)
+      for (p.y = crop_region.ymin, p_crop.y = 0; p.y < crop_region.ymax;
+           ++p.y, ++p_crop.y)
+        for (p.z = crop_region.zmin, p_crop.z = 0; p.z < crop_region.zmax;
+             ++p.z, ++p_crop.z) {
+          croped_data[p_crop.make_linear_idx(crop_dims)] = this->get(p);
+        }
+
+    Image3<T>* cropped_image = new Image3<T>(croped_data, crop_dims);
+    cropped_image->set_crop_region(crop_region);
+    return cropped_image;
+  }
+
+
   // Crop this image to keep only the region > 0
   // The original image will be over-written
   // To get the original image back, call this->restore_crop()
