@@ -302,6 +302,7 @@ void R2Tracer::erase(Branch &branch) {
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
+  img->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/testxx.tif", false);
   //cout<<"test : I printed the step after the image is binarized"<<endl;
   if(!this->silent) cout<<"Step One : Binarization took -- "<< (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 //  Image3<unsigned char>* timg = this->bimg->autocrop();
@@ -326,20 +327,21 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   soma_bounding_box.ymax = ini_soma_pt.p.y + ini_soma_pt.radius * scale_box;
   soma_bounding_box.zmin = ini_soma_pt.p.z - ini_soma_pt.radius * scale_box;
   soma_bounding_box.zmax = ini_soma_pt.p.z + ini_soma_pt.radius * scale_box;
-  cout<<"ini spt x: "<<ini_soma_pt.p.x<<" ini spt y: "<<ini_soma_pt.p.y<<" ini spt z: "<<ini_soma_pt.p.z<<endl;
-  cout<<"xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
-  cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
-  cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
-  cout<<"the radius of the somapt is "<<ini_soma_pt.radius<<endl;
+  cout<<"test: ini spt x: "<<ini_soma_pt.p.x<<" ini spt y: "<<ini_soma_pt.p.y<<" ini spt z: "<<ini_soma_pt.p.z<<endl;
+  cout<<"test: xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
+  cout<<"test: ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
+  cout<<"test: zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
+  cout<<"test: the radius of the somapt is "<<ini_soma_pt.radius<<endl;
   soma_bounding_box.xmin = max2(0, soma_bounding_box.xmin);
   soma_bounding_box.xmax = min2(dims[0], soma_bounding_box.xmax);
   soma_bounding_box.ymin = max2(0, soma_bounding_box.ymin);
   soma_bounding_box.ymax = min2(dims[1], soma_bounding_box.ymax);
   soma_bounding_box.zmin = max2(0, soma_bounding_box.zmin);
   soma_bounding_box.zmax = min2(dims[2], soma_bounding_box.zmax);
-  cout<<"xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
-  cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
-  cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
+  cout<<"test: xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
+  cout<<"test: ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
+  cout<<"test: zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
+  cout<<"test: dims[0] "<<dims[0]<<", dims[1] "<<dims[1]<<", dims[2] "<<dims[2]<<endl;
   // SWC *swc = this->iterative_backtrack();
 
   // if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
