@@ -229,6 +229,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
   cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
   cout<<"the radius of the somapt is "<<ini_soma_pt.radius<<endl;
+  soma_bounding_box.xmin = min2(0, soma_bounding_box.xmin);
+  cout<<"soma_bounding_box.xmin "<<soma_bounding_box.xmin<<endl;
 //  SWCNode =
 //  int radius = (int) ;
 //  SomaBoundingBox.xmin =
