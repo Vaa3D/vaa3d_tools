@@ -35,14 +35,12 @@ TipMarkerFinderUI::~TipMarkerFinderUI()
 
 void TipMarkerFinderUI::filePath()
 {
-	QString SWCfileName;
 	SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the SWC file to look into"),
                                                "", QObject::tr("Supported file (*.swc *.eswc)"
                                                ";;Neuron structure	(*.swc)"
                                                ";;Extended neuron structure (*.eswc)"));
-	ui->lineEdit->setText(SWCfileName);
 
-	return;
+	ui->lineEdit->setText(SWCfileName);
 }
 
 bool TipMarkerFinderUI::okClicked()
@@ -52,11 +50,13 @@ bool TipMarkerFinderUI::okClicked()
 	inputs << ui->lineEdit_4->text();
 
 	QString test = inputs[1];
-	if (test.isEmpty()) TipProcessor(inputs, 2);
-	else TipProcessor(inputs, 1);
+	bool done;
+	if (test.isEmpty()) done = TipProcessor(inputs, 2);
+	else done = TipProcessor(inputs, 1);
 	qDebug() << inputs;
-
+	
 	accept();
+	
 	return true;
 }
 
