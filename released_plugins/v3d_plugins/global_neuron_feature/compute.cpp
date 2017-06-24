@@ -25,7 +25,16 @@ void computeFeature(const NeuronTree & nt, double * features)
 	Pd_ratio=0, Contraction=0, Max_Eux=0, Max_Path=0, BifA_local=0, BifA_remote=0, Soma_surface=0, Fragmentation=0;
 	rootidx=0;
 
+	//for debug
+	printf( "%s  \n", "compute Feature");
+
 	V3DLONG neuronNum = nt.listNeuron.size();
+
+	//printf( "%s \n", "nt.list");
+
+	//for(int i=1;i<neuronNum;i++)
+		//printf( "%f  \n", nt.listNeuron[i].r);
+
 	childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
 	for (V3DLONG i=0;i<neuronNum;i++)
 	{
@@ -55,6 +64,10 @@ void computeFeature(const NeuronTree & nt, double * features)
 	N_node = list.size();
 	N_stem = childs[rootidx].size();
 	Soma_surface = 4*PI*(list.at(rootidx).r)*(list.at(rootidx).r);
+
+	printf( "%s : %d \n", "N_node", N_node);
+	printf( "%s : %f \n", "Soma_surface", Soma_surface);
+	printf( "%s : %d \n", "N_stem", N_stem);
 
 	computeLinear(nt);
 	computeTree(nt);
@@ -104,6 +117,12 @@ void computeFeature(const NeuronTree & nt, double * features)
 	features[20] = BifA_remote;
 	//feature # 21: Hausdorr Dimension 
 	features[21] = Hausdorff;		//Hausdorff program crash when running on complex neuron data, we don't use it
+
+	printf( "%s : %f \n", "f0", features[0]);
+	printf( "%s : %f \n", "f1", features[1]);
+	printf( "%s : %f \n", "f2", features[2]);
+
+
 }
 
 

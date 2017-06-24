@@ -1,0 +1,86 @@
+﻿Build started 2017/6/24 11:19:08.
+     1>Project "C:\Users\yswantfly\Documents\GitHub\vaa3d_tools\released_plugins\v3d_plugins\blastneuron_plugin\blastneuron.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "debug\blastneuron.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       CustomBuild:
+         MOC blastneuron_plugin.h
+         Qt: Untested Windows version 6.2 detected!
+       ClCompile:
+         D:\VS2010\VC\bin\CL.exe /c /Ic:\Qt\qt4.7.2\include\QtCore /Ic:\Qt\qt4.7.2\include\QtGui /Ic:\Qt\qt4.7.2\include /I..\..\..\..\v3d_external\v3d_main\basic_c_fun /I..\..\..\..\v3d_external\v3d_main\jba\newmat11 /I..\..\..\..\v3d_external\v3d_main\common_lib\include /Ic:\gnuwin32\include /I. /Ic:\Qt\qt4.7.2\include\ActiveQt /Idebug /I"c:\Qt\qt4.7.2\mkspecs\win32-msvc2010" /Zi /nologo /W0 /WX- /Od /Oy- /D _WINDOWS /D UNICODE /D WIN32 /D QT_LARGEFILE_SUPPORT /D QT_DLL /D QT_PLUGIN /D QT_GUI_LIB /D QT_CORE_LIB /D QT_HAVE_MMX /D QT_HAVE_3DNOW /D QT_HAVE_SSE /D QT_HAVE_MMXEXT /D QT_HAVE_SSE2 /D QT_THREAD_SUPPORT /D _WINDLL /Gm- /EHsc /MDd /GS- /fp:precise /Zc:wchar_t /Zc:forScope /GR /Fo"debug\\" /Fd".\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt pre_processing\align_axis.cpp ..\..\..\..\v3d_external\v3d_main\basic_c_fun\basic_surf_objs.cpp global_cmp\batch_compute_main.cpp blastneuron_plugin.cpp global_cmp\compute_gmi.cpp global_cmp\compute_morph.cpp global_cmp\global_retrieve_main.cpp pointcloud_match\inverse_projection_main.cpp tree_matching\local_alignment_main.cpp tree_matching\my_surf_objs.cpp global_cmp\neuron_retrieve.cpp tree_matching\neuron_tree_align.cpp pre_processing\pca1.cpp global_cmp\pre_process.cpp pre_processing\pre_processing_main.cpp pre_processing\prune_short_branch.cpp pointcloud_match\q_pointcloud_match.cpp pointcloud_match\q_pointcloud_match_basic.cpp pointcloud_match\q_pointcloud_match_initialmatch.cpp pointcloud_match\q_pointcloud_match_refinematch_affine.cpp pointcloud_match\q_pointcloud_match_refinematch_manifold.cpp pre_processing\resampling.cpp tree_matching\seg_weight.cpp tree_matching\swc_utils.cpp ..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.cpp debug\moc_blastneuron_plugin.cpp -Zm200 
+         align_axis.cpp
+         basic_surf_objs.cpp
+         batch_compute_main.cpp
+         blastneuron_plugin.cpp
+         compute_gmi.cpp
+         compute_morph.cpp
+         global_retrieve_main.cpp
+         inverse_projection_main.cpp
+         local_alignment_main.cpp
+         my_surf_objs.cpp
+         neuron_retrieve.cpp
+         neuron_tree_align.cpp
+         pca1.cpp
+         pre_process.cpp
+         pre_processing_main.cpp
+         prune_short_branch.cpp
+         q_pointcloud_match.cpp
+         q_pointcloud_match_basic.cpp
+         q_pointcloud_match_initialmatch.cpp
+     1>D:\VS2010\VC\include\vector(2140): warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
+                 D:\VS2010\VC\include\vector(2126) : see reference to function template instantiation 'void std::vector<_Ty,_Ax>::_BConstruct<_Iter>(_Iter,_Iter,std::_Int_iterator_tag)' being compiled
+                 with
+                 [
+                     _Ty=bool,
+                     _Ax=std::allocator<bool>,
+                     _Iter=int
+                 ]
+                 pointcloud_match\q_pointcloud_match_initialmatch.cpp(401) : see reference to function template instantiation 'std::vector<_Ty,_Ax>::vector<int>(_Iter,_Iter)' being compiled
+                 with
+                 [
+                     _Ty=bool,
+                     _Ax=std::allocator<bool>,
+                     _Iter=int
+                 ]
+         q_pointcloud_match_refinematch_affine.cpp
+         Generating Code...
+         Compiling...
+         q_pointcloud_match_refinematch_manifold.cpp
+         resampling.cpp
+         seg_weight.cpp
+         swc_utils.cpp
+         v3d_message.cpp
+         moc_blastneuron_plugin.cpp
+         Generating Code...
+       Link:
+         D:\VS2010\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\..\..\..\v3d_external\bin\plugins\neuron_utilities\blastneuron\blastneurond.dll" /NOLOGO /LIBPATH:c:\Qt\qt4.7.2\lib /LIBPATH:../../../../v3d_external/v3d_main/common_lib/winlib64 ../../../../v3d_external/v3d_main/common_lib/winlib64\libnewmat.lib c:\Qt\qt4.7.2\lib\QtGuid4.lib c:\Qt\qt4.7.2\lib\QtCored4.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"debug\blastneurond.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\yswantfly\Documents\GitHub\v3d_external\bin\plugins\neuron_utilities\blastneuron\blastneurond.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X86 /DLL debug\align_axis.obj
+         debug\basic_surf_objs.obj
+         debug\batch_compute_main.obj
+         debug\blastneuron_plugin.obj
+         debug\compute_gmi.obj
+         debug\compute_morph.obj
+         debug\global_retrieve_main.obj
+         debug\inverse_projection_main.obj
+         debug\local_alignment_main.obj
+         debug\my_surf_objs.obj
+         debug\neuron_retrieve.obj
+         debug\neuron_tree_align.obj
+         debug\pca1.obj
+         debug\pre_process.obj
+         debug\pre_processing_main.obj
+         debug\prune_short_branch.obj
+         debug\q_pointcloud_match.obj
+         debug\q_pointcloud_match_basic.obj
+         debug\q_pointcloud_match_initialmatch.obj
+         debug\q_pointcloud_match_refinematch_affine.obj
+         debug\q_pointcloud_match_refinematch_manifold.obj
+         debug\resampling.obj
+         debug\seg_weight.obj
+         debug\swc_utils.obj
+         debug\v3d_message.obj
+         debug\moc_blastneuron_plugin.obj
+     1>QtCored4.lib(QtCored4.dll) : fatal error LNK1112: module machine type 'x64' conflicts with target machine type 'X86'
+     1>Done Building Project "C:\Users\yswantfly\Documents\GitHub\vaa3d_tools\released_plugins\v3d_plugins\blastneuron_plugin\blastneuron.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:37.03

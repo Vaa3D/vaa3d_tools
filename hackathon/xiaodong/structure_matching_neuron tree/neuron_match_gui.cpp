@@ -1,4 +1,4 @@
-#include "neuron_dist_gui.h"
+#include "neuron_match_gui.h"
 
 SelectNeuronDlg::SelectNeuronDlg(QWidget * parent) : QDialog(parent)
 {
@@ -13,9 +13,14 @@ SelectNeuronDlg::SelectNeuronDlg(QWidget * parent) : QDialog(parent)
 	push_button_ok->setDefault(true);
 	QPushButton *push_button_cancel = new QPushButton("Cancel");
 
-	connect(push_button_openFile1, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg1()));
-	connect(push_button_openFile2, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg2()));
-	connect(push_button_ok,        SIGNAL(clicked()), this, SLOT(_slots_runPlugin()));
+	connect(push_button_openFile1, SIGNAL(clicked()), this, SLOT(SelectNeuronDlg::_slots_openFileDlg1()));
+	//connect(push_button_openFile2, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg2()));
+	//connect(push_button_ok,        SIGNAL(clicked()), this, SLOT(_slots_runPlugin()));
+	//connect(push_button_cancel,    SIGNAL(clicked()), this, SLOT(reject()));
+
+	//connect(push_button_openFile1, SIGNAL(clicked()), this, SLOT(reject()));
+	connect(push_button_openFile2, SIGNAL(clicked()), this, SLOT(reject()));
+	connect(push_button_ok,        SIGNAL(clicked()), this, SLOT(reject()));
 	connect(push_button_cancel,    SIGNAL(clicked()), this, SLOT(reject()));
 
 	QGridLayout *layout_openFile = new QGridLayout();
@@ -39,6 +44,7 @@ SelectNeuronDlg::SelectNeuronDlg(QWidget * parent) : QDialog(parent)
 
 void SelectNeuronDlg::_slots_openFileDlg1()
 {
+	printf("aaaaaaaaaaaaaaa");
 	name_nt1 = QFileDialog::getOpenFileName(this, QObject::tr("Open Neuron 1"), "", QObject::tr("Neuron Structure files (*.swc *.eswc)"));
 	line_edit1->setText(name_nt1);
 }
@@ -55,3 +61,12 @@ void SelectNeuronDlg::_slots_runPlugin()
 	nt2 = readSWC_file(line_edit2->text());
 	accept();
 }
+
+void SelectNeuronDlg::test()
+{
+	printf("aaaaaaaaaaaaaaa");
+
+}
+
+
+
