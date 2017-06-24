@@ -8,7 +8,9 @@
 
 #include "batch_compute_main.h"
 #include "basic_surf_objs.h"
+#if !defined(Q_OS_WIN32)
 #include <unistd.h>
+#endif
 #include "pre_process.h"
 #include "compute_morph.h"
 #include "compute_gmi.h"
@@ -16,6 +18,7 @@
 #include <vector>
 #if defined(Q_OS_WIN32)
 #include "getopt_tool.h"
+#include <io.h>
 #endif
 
 using namespace std;

@@ -9,11 +9,15 @@
 
 #include "global_retrieve_main.h"
 #include "basic_surf_objs.h"
+#if !defined(Q_OS_WIN32)
 #include <unistd.h>
+#endif
+
 #include <QtGlobal>
 #include <vector>
 #if defined(Q_OS_WIN32)
 #include "getopt_tool.h"
+#include <io.h>
 #endif
 using namespace std;
 

@@ -2,10 +2,13 @@
 #include <cstring>
 using namespace std;
 
-
+#if !defined(Q_OS_WIN32)
 #include <unistd.h>
+#endif
+
 #if defined(Q_OS_WIN32)
 #include "getopt_tool.h"
+#include <io.h>
 #endif
 
 int local_alignment_main(const V3DPluginArgList & input, V3DPluginArgList & output)
