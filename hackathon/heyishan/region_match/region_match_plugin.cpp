@@ -225,7 +225,11 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         float phi;
         phi=data1d[i];
     }
-    match_swc(PARA.nt,PARA.mk);
+
+    vector<NeuronTree> s_forest;
+    NeuronTree s_mk;
+    match_swc(PARA.nt,PARA.mk,s_mk,s_forest);
+
     //Output
     NeuronTree nt_output;
     //QList<NeuronSWC> marker_output;
