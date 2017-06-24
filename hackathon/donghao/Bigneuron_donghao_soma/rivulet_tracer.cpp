@@ -345,7 +345,7 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   // SWC *swc = this->iterative_backtrack();
   Image3<unsigned char>* somaimg;
   somaimg = img->manualcrop(soma_bounding_box);
-  somaimg->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/soma.tif", false);
+  somaimg->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/somaxxx.tif", false);
   // if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
   // if(this->is_prune){
   //   swc->prune();
