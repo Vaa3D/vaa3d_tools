@@ -213,27 +213,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   tracer->set_prune(PARA.prune);
   cout<<"test : The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
   SWC *swc = tracer->trace(img, PARA.threshold);
-  // The initial somatic point : somapt
-  SWCNode ini_soma_pt;
-  ini_soma_pt = swc->get_node(0);
-  CropRegion soma_bounding_box;
-  float scale_box = 1.5;
-  soma_bounding_box.xmin = ini_soma_pt.p.x - ini_soma_pt.radius * scale_box;
-  soma_bounding_box.xmax = ini_soma_pt.p.x + ini_soma_pt.radius * scale_box;
-  soma_bounding_box.ymin = ini_soma_pt.p.y - ini_soma_pt.radius * scale_box;
-  soma_bounding_box.ymax = ini_soma_pt.p.y + ini_soma_pt.radius * scale_box;
-  soma_bounding_box.zmin = ini_soma_pt.p.z - ini_soma_pt.radius * scale_box;
-  soma_bounding_box.zmax = ini_soma_pt.p.z + ini_soma_pt.radius * scale_box;
-  cout<<"ini spt x: "<<ini_soma_pt.p.x<<" ini spt y: "<<ini_soma_pt.p.y<<" ini spt z: "<<ini_soma_pt.p.z<<endl;
-  cout<<"xmin "<<soma_bounding_box.xmin<<" "<<"xmax "<<soma_bounding_box.xmax<<endl;
-  cout<<"ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
-  cout<<"zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
-  cout<<"the radius of the somapt is "<<ini_soma_pt.radius<<endl;
-  soma_bounding_box.xmin = min2(0, soma_bounding_box.xmin);
-  cout<<"soma_bounding_box.xmin "<<soma_bounding_box.xmin<<endl;
-//  SWCNode =
-//  int radius = (int) ;
-//  SomaBoundingBox.xmin =
+
   cout << "====== END ======" << endl;
 
   if (tracer) {
