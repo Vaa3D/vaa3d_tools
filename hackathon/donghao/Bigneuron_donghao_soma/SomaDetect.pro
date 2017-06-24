@@ -1,8 +1,10 @@
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
-QMAKE_CXXFLAGS += -std=c++0x
 
+mac{
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+}
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
@@ -10,6 +12,7 @@ LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 
 unix:!macx {
     QMAKE_CXXFLAGS  += -std=c++11
+    QMAKE_CXXFLAGS += -std=c++0x
 }
 
 # From V3D Main

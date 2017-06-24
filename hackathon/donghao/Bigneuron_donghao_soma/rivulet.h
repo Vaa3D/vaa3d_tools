@@ -599,7 +599,7 @@ class R2Tracer {
   bool silent = false;
   float coverage = 0.;
   double *grad = NULL;
-  static constexpr float target_coverage = 0.98;
+  float target_coverage = 0.98;
   bool quality = false;
 
   void prep();  // Distance Transform and MSFM
