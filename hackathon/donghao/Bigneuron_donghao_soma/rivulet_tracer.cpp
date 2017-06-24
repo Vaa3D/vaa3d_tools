@@ -302,7 +302,7 @@ void R2Tracer::erase(Branch &branch) {
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
-  img->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/testxx.tif", false);
+//  this->bimg->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/testxx.tif", false);
   //cout<<"test : I printed the step after the image is binarized"<<endl;
   if(!this->silent) cout<<"Step One : Binarization took -- "<< (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 //  Image3<unsigned char>* timg = this->bimg->autocrop();
@@ -319,7 +319,7 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   SWCNode ini_soma_pt;
   ini_soma_pt = swc->get_node(0);
   CropRegion soma_bounding_box;
-  float scale_box = 1.5;
+  float scale_box = 3;
   long *dims = this->bimg->get_dims();
   soma_bounding_box.xmin = ini_soma_pt.p.x - ini_soma_pt.radius * scale_box;
   soma_bounding_box.xmax = ini_soma_pt.p.x + ini_soma_pt.radius * scale_box;
@@ -343,7 +343,9 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   cout<<"test: zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
   cout<<"test: dims[0] "<<dims[0]<<", dims[1] "<<dims[1]<<", dims[2] "<<dims[2]<<endl;
   // SWC *swc = this->iterative_backtrack();
-
+  Image3<unsigned char>* somaimg;
+  somaimg = img->manualcrop(soma_bounding_box);
+  somaimg->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/soma.tif", false);
   // if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
   // if(this->is_prune){
   //   swc->prune();
@@ -351,6 +353,7 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
 
   // swc->pad(this->bimg->get_crop_region()); // Pad the swc back
   // return swc;
+  this->soma_img = somaimg;
   return swc;
 }
 

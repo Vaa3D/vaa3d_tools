@@ -25,6 +25,7 @@ using namespace rivulet;
 struct input_PARA {
   QString inimg_file;
   QString outswc_file;
+  QString outsomaimg_file;
   V3DLONG channel;
   unsigned char threshold;
   bool quality;
@@ -213,6 +214,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   tracer->set_prune(PARA.prune);
   cout<<"test : The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
   SWC *swc = tracer->trace(img, PARA.threshold);
+  cout<<"test: ...."<<endl;
+
 
   cout << "====== END ======" << endl;
 
@@ -226,7 +229,11 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
     PARA.outswc_file = PARA.inimg_file + ".somapoint.swc";
   }
   save_swc(swc, PARA.outswc_file);
-
+  PARA.outsomaimg_file = PARA.inimg_file + ".somaimg.tif";
+  QByteArray ba = PARA.outsomaimg_file.toLatin1();
+  const char *c_str2 = ba.data();
+//  cout<<"The output path is "<<PARA.outsomaimg_file<<endl;
+//  tracer->soma_img->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/somaxxx.tif");
   // Clean up
   if (in_sz3) {
     delete[] in_sz3;
