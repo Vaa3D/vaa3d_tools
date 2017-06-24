@@ -230,8 +230,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   }
   save_swc(swc, PARA.outswc_file);
   PARA.outsomaimg_file = PARA.inimg_file + ".somaimg.tif";
-  QByteArray ba = PARA.outsomaimg_file.toLatin1();
-  const char *c_str2 = ba.data();
+//  QByteArray ba = PARA.outsomaimg_file.toLatin1();
+//  char* c_str2 = ba.data();
+//  cout<<"The output path is "<<c_str2<<endl;
+  tracer->soma_img->save(PARA.outsomaimg_file.toStdString().c_str());
 //  cout<<"The output path is "<<PARA.outsomaimg_file<<endl;
 //  tracer->soma_img->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/somaxxx.tif");
   // Clean up
