@@ -599,7 +599,7 @@ class R2Tracer {
   bool silent = false;
   float coverage = 0.;
   double *grad = NULL;
-  static constexpr float target_coverage = 0.98;
+  float target_coverage = 0.98;
   bool quality = false;
 
   void prep();  // Distance Transform and MSFM
@@ -619,6 +619,7 @@ class R2Tracer {
   void reset();
   SWC *trace(Image3<unsigned char> *img, float threshold);
   SWC *scentre();
+  Image3<unsigned char> *soma_img = NULL;
   void set_prune(bool p){
     this->is_prune = p;
   };

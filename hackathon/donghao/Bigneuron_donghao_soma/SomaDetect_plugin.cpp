@@ -25,6 +25,7 @@ using namespace rivulet;
 struct input_PARA {
   QString inimg_file;
   QString outswc_file;
+  QString outsomaimg_file;
   V3DLONG channel;
   unsigned char threshold;
   bool quality;
@@ -213,21 +214,19 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   tracer->set_prune(PARA.prune);
   cout<<"test : The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
   SWC *swc = tracer->trace(img, PARA.threshold);
-
+  cout<<"test: ...."<<endl;
   cout << "====== END ======" << endl;
-
-  if (tracer) {
-    delete tracer;
-    tracer = NULL; 
-  }
-
-  // 
   if(PARA.outswc_file.isEmpty()){
     PARA.outswc_file = PARA.inimg_file + ".somapoint.swc";
   }
   save_swc(swc, PARA.outswc_file);
-
+  PARA.outsomaimg_file = PARA.inimg_file + ".somaimg.tif";
+  tracer->soma_img->save((char *)PARA.outsomaimg_file.toStdString().c_str());
   // Clean up
+  if (tracer) {
+    delete tracer;
+    tracer = NULL;
+  }
   if (in_sz3) {
     delete[] in_sz3;
     in_sz3 = NULL;
