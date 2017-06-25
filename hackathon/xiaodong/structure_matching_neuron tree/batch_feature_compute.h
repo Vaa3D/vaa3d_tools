@@ -1,8 +1,8 @@
-#ifndef __BATCH_COMPUTE_H__
-#define __BATHC_COMPUTE_H__
+#ifndef __BATCH_FEATURE_COMPUTE_H__
+#define __BATCH_FEATURE_COMPUTE_H__
 #include "compute_gmi.h"
 #include "compute_morph.h"
-bool batch_compute(vector<NeuronTree> nt_list, QList<double*> & feature_list, int method_code)
+bool batch_feature_compute(vector<NeuronTree> nt_list, QList<double*> & feature_list, int method_code)
 {
 	V3DLONG VSIZE = 0;
 	switch (method_code)

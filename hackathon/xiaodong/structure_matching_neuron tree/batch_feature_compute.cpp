@@ -1,6 +1,6 @@
-//main function to pre-process the neurons and compute features in batch
-//by Yinan Wan
-//2012-03-14
+// function of computing neuron tree features in batch
+//by Xiaodong Yue
+//2017-06-24
 
 #ifdef DISABLE_V3D_MSG
 	#define DISABLE_V3D_MSG

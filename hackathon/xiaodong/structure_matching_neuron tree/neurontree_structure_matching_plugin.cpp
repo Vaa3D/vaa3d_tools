@@ -3,7 +3,7 @@
  * 2017-6-23 : by Xiaodong Yue
  */
  
-#define FNUM 22
+//#define FNUM 22
 
 #include <vector>
 #include <v3d_interface.h>
@@ -15,8 +15,8 @@
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include "../swc_to_maskimage/filter_dialog.h"
 #include "sort_swc.h"
-#include "compute.h"
-#include "global_neuron_feature.h"
+#include "tree_retrieve.h"
+//#include "global_neuron_feature.h"
 
 #include "neurontree_structure_matching_plugin.h"
 Q_EXPORT_PLUGIN2(neurontree_structure_matching, NeurontreeStructureMatching);
@@ -49,115 +49,85 @@ QStringList NeurontreeStructureMatching::funclist() const
 
 void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
+	
 	if (menu_name == tr("neurontree structure matching"))
 	{
-        //bool bmenu = true;
-        //input_PARA PARA;
-        //ml_func(callback,parent,PARA,bmenu);
-
-		// QOBJECT bug
-		//SelectNeuronDlg * selectDlg = new SelectNeuronDlg(parent);
-	    //selectDlg->exec();
-
-	    //build up target neuron tree nt1 from swc file
-		QString fileOpenName;
-		fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open target neuron tree"),
+	    
+		//
+		QString fileOpenName_target;
+		fileOpenName_target = QFileDialog::getOpenFileName(0, QObject::tr("Open target neuron tree"),
 			"",
 			QObject::tr("Supported file (*.swc *.eswc)"
 			";;Neuron structure	(*.swc)"
 			";;Extended neuron structure (*.eswc)"
 			));
-		if(fileOpenName.isEmpty())
+		if(fileOpenName_target.isEmpty())
 			return;
 
-		//
-		NeuronTree nt1;
-		if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+		//build up target neuron tree nt1 from swc file
+		NeuronTree nt_target;
+		if (fileOpenName_target.toUpper().endsWith(".SWC") || fileOpenName_target.toUpper().endsWith(".ESWC"))
 		{
-			nt1 = readSWC_file(fileOpenName);
+			nt_target = readSWC_file(fileOpenName_target);
 		}
 
+		//
+		QString fileOpenName_search;
+		fileOpenName_search = QFileDialog::getOpenFileName(0, QObject::tr("Open searching neuron tree"),
+			"",
+			QObject::tr("Supported file (*.swc *.eswc)"
+			";;Neuron structure	(*.swc)"
+			";;Extended neuron structure (*.eswc)"
+			));
+		if(fileOpenName_search.isEmpty())
+			return;
+		//
+		
 		//build up searching neuron tree nt2 from swc file
-		fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open searching neuron tree"),
-			"",
-			QObject::tr("Supported file (*.swc *.eswc)"
-			";;Neuron structure	(*.swc)"
-			";;Extended neuron structure (*.eswc)"
-			));
-		if(fileOpenName.isEmpty())
-			return;
-		//
-		NeuronTree nt2;
-		if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+		NeuronTree nt_search;
+		if (fileOpenName_search.toUpper().endsWith(".SWC") || fileOpenName_search.toUpper().endsWith(".ESWC"))
 		{
-			nt2 = readSWC_file(fileOpenName);
+			nt_search = readSWC_file(fileOpenName_search);
 		}
+		QString filepath = tr("F:\\mouse brain neuron data\\subtrees\\");
+		int window_size = nt_target.listNeuron.size();
+		int step = window_size/2;
+		QList<NeuronTree> nt_list;
+		GetSubTreesSWC(nt_search, window_size, step, filepath, nt_list);
+		//find similar trees
+		vector<V3DLONG>	retrieved_id;
+		tree_retrieval( nt_target, nt_list, retrieved_id);
 
-		FindSimilarStructures( nt1, nt2);
-
-
-		//NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2),1);
-		//NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(& nt1, & nt2,1);
-		////QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
-		//QString message = QString("entire-structure-average:from neuron 1 to 2 = %1\n").arg(tmp_score.dist_12_allnodes);
-		//message += QString("entire-structure-average:from neuron 2 to 1 = %1\n").arg(tmp_score.dist_21_allnodes);
-		//message += QString("average of bi-directional entire-structure-averages = %1\n").arg(tmp_score.dist_allnodes);
-		//message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
-		//message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
-
-		//v3d_msg(message);
-
-
-
-		/*
-		//load swc file
-		QString fileOpenName;
-		fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-			"",
-			QObject::tr("Supported file (*.swc *.eswc)"
-			";;Neuron structure	(*.swc)"
-			";;Extended neuron structure (*.eswc)"
-			));
-		if(fileOpenName.isEmpty())
-			return;
-
-		//build up a neuron tree
-		NeuronTree nt;
-		if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+		//update neural file, for co-debug
+		for(int k=0; k< retrieved_id.size();k++)
 		{
-			nt = readSWC_file(fileOpenName);
-		}
-		*/
+			printf("%s %d \n","retrieved_id:",retrieved_id[k]);
+			//
+			int index_nt= retrieved_id[k];
+			QString filename = tr("F:\\mouse brain neuron data\\subtrees\\subnttree_");
+			QString index_subtree = QString::number(index_nt);
+			filename = filename + index_subtree;
+			filename = filename + tr(".swc");
+			NeuronTree nt_index = readSWC_file(filename);
+			//get position
+			QString beginend = nt_index.comment;
+			QStringList splitted = beginend.split(",");
+			int begin = splitted[0].toInt();
+			int end = splitted[1].toInt();
+			//for debug
+			printf("%s %d %s %d \n",tr("positin:"), begin, tr(","),end);
 
-		/* for debug
-		QList<NeuronSWC> & list = nt.listNeuron;
-	
-		printf( "%d \n", list.size());
-		for(int i=0;i< list.size();i++) 
-			printf( "%f", list[i].r);
-		*/
+			for(int j=begin; j<=end; j++)
+			{
+				nt_search.listNeuron[j].type = 50; //change the node type in the finded tree
+			}
+			
+		}//end for k
+		//save the updated swc file of searching tree
+		QString updatefilepath = tr("F:\\mouse brain neuron data\\subtrees\\updated_vr_neuron.swc");
+		writeSWC_file(updatefilepath,nt_search);
+		//global_retrieve_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 		
-		/*
-		//generate global features of neuron tree
-		double * features = new double[FNUM];
-		QString featureName[FNUM]=
-		{"N_node", "Soma_surface", "N_stem", "N_bifs", "N_branch", "N_tips", "Width", "Height", "Depth","Average Diameter","Diameter,Length",
-		"Surface","Volume", "Max_Eux", "Max_Path", "Max_Order", "Contraction", "Fragmentation", "Pd_ratio", "BifA_local", "BifA_remote", "Hausdorff"};
-
-		computeFeature(nt, features);
-
-		
-		//for debug
-		for(int i=0;i<FNUM;i++) 
-			printf( "%s %d  %f \n", "features",i,features[i]);
-		
-		
-		if (!features) {
-			delete []features; 
-			features = NULL;
-		}
-		*/
-
 	}
 	else
 	{
@@ -333,7 +303,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     return;
 }
 
-bool NeurontreeStructureMatching::FindSimilarStructures(NeuronTree & nt_target, NeuronTree & nt_search)
+bool NeurontreeStructureMatching::FindSimilarStructures(const NeuronTree & nt_target, const NeuronTree & nt_search)
 {
 	//
 	QList <NeuronSWC> listneu_target; 
@@ -358,31 +328,37 @@ bool NeurontreeStructureMatching::FindSimilarStructures(NeuronTree & nt_target, 
 	//
 	QList <NeuronSWC> listneu_cur;
 	QList <NeuronSWC> listneu_cursort;
+	QString name_nt_base = tr("./subnttree_");
 	
 	//matching process
 	//for debug
-	QString featureName[FNUM]=
-		{"N_node", "Soma_surface", "N_stem", "N_bifs", "N_branch", "N_tips", "Width", "Height", "Depth","Average Diameter","Diameter,Length",
-		"Surface","Volume", "Max_Eux", "Max_Path", "Max_Order", "Contraction", "Fragmentation", "Pd_ratio", "BifA_local", "BifA_remote", "Hausdorff"};
+	//QString featureName[FNUM]=
+		//{"N_node", "Soma_surface", "N_stem", "N_bifs", "N_branch", "N_tips", "Width", "Height", "Depth","Average Diameter","Diameter,Length",
+		//"Surface","Volume", "Max_Eux", "Max_Path", "Max_Order", "Contraction", "Fragmentation", "Pd_ratio", "BifA_local", "BifA_remote", "Hausdorff"};
 	
 	//get feature of target neuron
-	double * feat_target = new double[FNUM];
-	computeFeature(nt_target, feat_target);
+	//double * feat_target = new double[FNUM];
+	//computeFeature(nt_target, feat_target);
 	
 	//for ( int cur = 0; cur < numneu_search; cur += step )
+	int num_subtree=0;
 	for ( int cur = 0; cur < numneu_search; cur += step )
 	{
+		//construct a subtree in the window
 		listneu_cur = listneu_search.mid(cur,window_size);
 		SortSWC(listneu_cur, listneu_cursort, VOID, VOID);
-		//
+		
 		NeuronTree nt_cur;
 		nt_cur.listNeuron = listneu_cursort;
 		nt_cur.linemode = 1;
 		//
-		double * feat_search = new double[FNUM];
-		computeFeature(nt_search, feat_search);
-
-
+		//double * feat_search = new double[FNUM];
+		//computeFeature(nt_search, feat_search);
+		num_subtree++;
+		QString n = QString::number(num_subtree, 'g',6);
+		QString name_nt_cur = name_nt_base + n + tr(".swc"); 
+		
+		writeSWC_file(name_nt_cur,nt_cur);
 
 
 		//spatical feature test
@@ -396,18 +372,88 @@ bool NeurontreeStructureMatching::FindSimilarStructures(NeuronTree & nt_target, 
 
 		v3d_msg(message);
 	    */
-		if (!feat_search) {
+		/*if (!feat_search) {
 			delete [] feat_search; 
 			feat_search = NULL;
-		}
+		}*/
 
 	}//end for
 	
-	if (!feat_target) {
-			delete [] feat_target; 
-			feat_target = NULL;}
-	
+	//if (!feat_target) {
+	//		delete [] feat_target; 
+	//		feat_target = NULL;}
+	//
 	return true;
+}
+
+bool NeurontreeStructureMatching::GetSubTreesSWC(const NeuronTree & nt, int window_size, int step, const QString & filepath, QList<NeuronTree> & nt_list)
+{
+	//
+	QList <NeuronSWC> listneu;	
+	listneu = nt.listNeuron;
+
+	int numneu = listneu.size();
+
+	//for debug
+	printf("%s : %d\n", "neuron number of target structure:", numneu);
+	printf("%s : %d\n", "window size:", window_size);
+	printf("%s : %d\n", "step:", step);
+	//
+	QList <NeuronSWC> listneu_cur;
+	QList <NeuronSWC> listneu_cursort;
+	//QString name_nt_base = tr("F:\mouse brain neuron data\subtrees\");
+	QString name_nt_base = filepath + tr("subnttree_");
+	
+	//for ( int cur = 0; cur < numneu_search; cur += step )
+	int num_subtree=0;
+	int cur = 0;
+	for ( cur = 0; cur < (numneu - window_size) ; cur += step )
+	{
+		//construct a subtree in the window
+		listneu_cur.clear();
+		listneu_cursort.clear();
+		listneu_cur = listneu.mid(cur,window_size);
+		SortSWC(listneu_cur, listneu_cursort, VOID, VOID);
+		
+		NeuronTree nt_cur;
+		nt_cur.listNeuron = listneu_cursort;
+		nt_cur.linemode = 1;
+		int pos = cur + window_size-1;
+		QString cmtofcur;
+		cmtofcur = QString::number(cur);
+		cmtofcur = cmtofcur + tr(",");
+		cmtofcur = cmtofcur + QString::number(pos); 
+		nt_cur.comment = cmtofcur;
+		nt_list.append(nt_cur);
+		//
+		num_subtree++;
+		QString n = QString::number(num_subtree, 'g',6);
+		QString name_nt_cur = name_nt_base + n + tr(".swc"); 
+		//
+		writeSWC_file(name_nt_cur,nt_cur);
+
+	}//end for
+
+	//for last subtree
+	NeuronTree nt_cur;
+	nt_cur.listNeuron = listneu_cursort;
+	nt_cur.linemode = 1;
+	int pos = numneu - 1;
+	QString cmtofcur;
+	cmtofcur = QString::number(cur);
+	cmtofcur = cmtofcur + tr(",");
+	cmtofcur = cmtofcur + QString::number(pos); //still exceeding problem
+	nt_cur.comment = cmtofcur;
+	nt_list.append(nt_cur);
+	//
+	num_subtree++;
+	QString n = QString::number(num_subtree, 'g',6);
+	QString name_nt_cur = name_nt_base + n + tr(".swc"); 
+	//
+	writeSWC_file(name_nt_cur,nt_cur);
+
+	return true;
+
 }
 
 

@@ -1,14 +1,29 @@
-//main function for neuron comparison
-//a test function to automatically retrieve similar neurons, without pre-specified number
-//by Yinan Wan
-//2012-03-14
+//retrieve similar neurons, without pre-specified number
+//by Xiaodong Yue
+//2017-06-24
 
 #ifdef DISABLE_V3D_MSG
 	#define DISABLE_V3D_MSG
 #endif
 
-#include "global_retrieve_main.h"
+#define FEATSNUM 21
+
+//#include <Qtcore>
+#include <QtGui>
+#include <v3d_interface.h>
+#include <iostream>
+#include <QString>
+
+#include <vector>
+#include <v3d_interface.h>
+#include "v3d_message.h"
 #include "basic_surf_objs.h"
+#include "neuron_dist_func.h"
+
+#include "tree_retrieve.h"
+#include "basic_surf_objs.h"
+#include "neuron_retrieve.h"
+#include "qglobal.h"
 #if !defined(Q_OS_WIN32)
 #include <unistd.h>
 #endif
@@ -23,6 +38,180 @@ using namespace std;
 
 
 
+int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_list, vector<V3DLONG> & retrieved_id)
+{
+
+	printf("neuron tree retrieve \n");
+	//
+	int num_tree = nt_list.size();
+	QList<double*> morph_list, gmi_list;
+
+	for (int i=0;i < num_tree; i++)
+	{
+		printf("%s, %d of %d\n","neuron tree",i, num_tree);
+		NeuronTree nt = nt_list[i];
+		double * feats_morph = NULL;
+		double * feats_gmi = NULL;
+		try 
+		{
+			feats_morph = new double[FEATSNUM];
+			feats_gmi = new double[FEATSNUM];
+		}
+		catch (...)
+		{
+			if (!feats_morph)  {delete []feats_morph; feats_morph=NULL;}
+			return false;
+			if (!feats_gmi)  {delete []feats_gmi; feats_gmi=NULL;}
+			return false;
+		}
+		computeFeature(nt, feats_morph);
+		computeGMI(nt, feats_gmi);
+
+		morph_list.append(feats_morph);
+		gmi_list.append(feats_gmi);
+	}//end for
+
+	vector<vector<V3DLONG> > retrieved_all;
+	vector<V3DLONG> retrieved_tmp;
+	
+	//norm type 1,2, feature type 1,2
+
+	vector<int> feature_codes, norm_codes;
+
+	QString q_norm = "1,2,4";
+
+	if (q_norm==NULL)
+	{
+		feature_codes.push_back(1); feature_codes.push_back(2);
+		norm_codes.push_back(1); norm_codes.push_back(2);
+	}
+	QStringList splitted = q_norm.split(",");
+	if (splitted.contains("1")) feature_codes.push_back(1);
+	if (splitted.contains("2")) feature_codes.push_back(2);
+	if (splitted.contains("3")) norm_codes.push_back(1);
+	if (splitted.contains("4")) norm_codes.push_back(2);
+
+	if (feature_codes.empty() || norm_codes.empty())
+	{
+		fprintf(stderr, "the norm codes you specified is not supported.\n");
+		return 1;
+	}
+
+	int num_candy = 5;
+	for  (int i=0;i<feature_codes.size();i++)
+	{
+		for (int j=0;j<norm_codes.size();j++)
+		{
+			vector<V3DLONG> retrieved_tmp;
+			if (feature_codes[i]==1) 
+			{
+				if (!neuron_retrieve(nt_query, morph_list, retrieved_tmp,num_candy, feature_codes[i], norm_codes[j]))
+				{
+					fprintf(stderr,"Error in neuron_retrieval.\n");
+					return 1;
+				}
+			}
+			else if (feature_codes[i]==2)
+			{
+				if (!neuron_retrieve(nt_query, gmi_list, retrieved_tmp, num_candy, feature_codes[i], norm_codes[j]))
+				{
+					fprintf(stderr,"Error in neuron_retrieval.\n");
+					return 1;
+				}
+			}
+
+			retrieved_all.push_back(retrieved_tmp);
+		}//end for j norm_codes
+
+	}//end for i feature_codes
+
+
+	////for morph features
+	//if (!neuron_retrieve(nt_query, morph_list, retrieved_tmp, num_tree, 1, 1))
+	//{
+	//	fprintf(stderr,"Error in neuron_retrieval.\n");
+	//	return 1;
+	//}
+
+	//printf("%s %d","retrieved_tmp:",retrieved_tmp.size());
+	//for(int j=0; j<retrieved_tmp.size();j++)
+	//{
+	//	printf("%d %s", retrieved_tmp[j], "\n");
+	//}
+
+	////for gmi features
+	//if (!neuron_retrieve(nt_query, gmi_list, retrieved_tmp, num_tree, 2, 1))
+	//{
+	//	fprintf(stderr,"Error in neuron_retrieval.\n");
+	//	return 1;
+	//}
+
+	//retrieved_all.push_back(retrieved_tmp);
+
+
+	//vector<V3DLONG>	retrieved_id;
+	int rej_thres = 3;//if top 5 candidates of both method have no intersection, consider this query does not have matched neuron
+	int retrieved_num = 3;
+
+	if (!compute_intersect(retrieved_all, retrieved_id, retrieved_num, rej_thres))
+	{
+		printf("No similar neurons exist in the database.\n");
+	}
+	printf("%s %d","retrieved_number: \n",retrieved_id.size());
+	
+	for(int k=0; k<retrieved_id.size();k++)
+	{
+		printf("%s %d \n","retrieved_id:",retrieved_id[k]);
+	}
+
+	
+	/*
+	//output file
+	QString outfile;
+	outfile = "F:\\mouse brain neuron data\\subtrees\\retrieved.ano";
+	//if (dfile_result==NULL)
+	//	outfileName = qs_query + QString("_retrieved.ano");
+
+	FILE * fp = fopen(outfile.toLatin1(), "wt");
+	if (!fp)
+	{
+		v3d_msg("Could not open the file to save the neuron.");
+		return false;
+	}
+    
+	if (fp==NULL)
+	{
+		fprintf(stderr,"ERROR: %s: failed to open file to write!\n",outfile);
+		return false;
+	}
+	fprintf(fp,"#database:          %s\n", "");
+	fprintf(fp,"#query neuron:      %s\n","");
+	fprintf(fp,"#num of candidates: %d\n", retrieved_all.size());
+	for (int i=0;i<retrieved_all.size();i++)
+	{
+		for(int j=0; j<retrieved_tmp.size();j++)
+		{
+		    fprintf(fp, "%d", retrieved_all[i][j]);
+		}
+		fprintf(fp,"\n");
+	}
+	printf("Linker file %s has been successfully generated.\n", outfile);
+	fclose(fp);
+	*/
+
+	//collect memory of feature vectors
+	for(int i=0;i<num_tree;i++)
+	{
+		if (morph_list[i]) {delete []morph_list[i]; morph_list[i]=NULL;}
+		if (gmi_list[i]) {delete []gmi_list[i]; gmi_list[i]=NULL;}
+	}
+
+	return 0;
+}
+
+
+
+/*
 int global_retrieve_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
@@ -260,6 +449,7 @@ int global_retrieve_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	return 0;
 }
 
+//
 void printHelp_global_retrieve()
 {
 	printf("\nBlastNeuron Plugin - Neuron Comparison: given a query neuron, retrieve certain number of candidates from a database. by Yinan Wan.\n\n");
@@ -276,3 +466,5 @@ void printHelp_global_retrieve()
 	printf("\t #h                            print this message.\n\n");
 	printf("Example: vaa3d -x blastneuron -f global_retrieve -p \"#d myfeaturebase.nfb #q query.swc #n 10 #o result.ano #m 1,2,4\"\n\n");
 }
+
+*/
