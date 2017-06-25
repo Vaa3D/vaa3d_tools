@@ -26,7 +26,8 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
-	bool FindSimilarStructures(NeuronTree & nt1,NeuronTree & nt2);
+	bool FindSimilarStructures(const NeuronTree & nt1, const NeuronTree & nt2);
+	bool GetSubTreesSWC(const NeuronTree & nt, int window_size, int step, const QString & filepath, QList<NeuronTree> & nt_list);
 
 };
 

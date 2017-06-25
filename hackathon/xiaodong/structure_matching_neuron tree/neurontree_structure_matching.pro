@@ -18,7 +18,7 @@ INCLUDEPATH += $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/blastneur
 
 
 HEADERS	+= neurontree_structure_matching_plugin.h
-HEADERS	+= $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/global_neuron_feature/compute.h
+# HEADERS += $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/global_neuron_feature/compute.h
 HEADERS	+= ./batch_feature_compute.h
 HEADERS	+= ./tree_retrieve.h
 
