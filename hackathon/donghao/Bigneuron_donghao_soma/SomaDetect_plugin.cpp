@@ -26,6 +26,7 @@ struct input_PARA {
   QString inimg_file;
   QString outswc_file;
   QString outsomaimg_file;
+  QString outsomaimg_whole_file;
   V3DLONG channel;
   unsigned char threshold;
   bool quality;
@@ -222,6 +223,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   save_swc(swc, PARA.outswc_file);
   PARA.outsomaimg_file = PARA.inimg_file + ".somaimg.tif";
   tracer->soma_img->save((char *)PARA.outsomaimg_file.toStdString().c_str());
+  PARA.outsomaimg_whole_file = PARA.inimg_file + ".somaimgwhole.tif";
+  tracer->soma_img_whole->save((char *)PARA.outsomaimg_whole_file.toStdString().c_str());
   // Clean up
   if (tracer) {
     delete tracer;

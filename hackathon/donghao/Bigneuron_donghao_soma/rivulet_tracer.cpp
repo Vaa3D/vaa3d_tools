@@ -308,7 +308,7 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   SWCNode ini_soma_pt;
   ini_soma_pt = swc->get_node(0);
   CropRegion soma_bounding_box;
-  float scale_box = 3;
+  float scale_box = 2.5;
   long *dims = this->bimg->get_dims();
   soma_bounding_box.xmin = ini_soma_pt.p.x - ini_soma_pt.radius * scale_box;
   soma_bounding_box.xmax = ini_soma_pt.p.x + ini_soma_pt.radius * scale_box;
@@ -331,15 +331,15 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   cout<<"test: ymin "<<soma_bounding_box.ymin<<" "<<"ymax "<<soma_bounding_box.ymax<<endl;
   cout<<"test: zmin "<<soma_bounding_box.zmin<<" "<<"zmax "<<soma_bounding_box.zmax<<endl;
   cout<<"test: dims[0] "<<dims[0]<<", dims[1] "<<dims[1]<<", dims[2] "<<dims[2]<<endl;
-  // SWC *swc = this->iterative_backtrack();
+  //crop soma region into a tif image
   Image3<unsigned char>* somaimg;
   somaimg = img->manualcrop(soma_bounding_box);
   this->soma_img = somaimg;
-//  long ne[2][2][2] = {{{1, 2},{1, 2}},{{1, 2},{1, 2}}, {{1, 2},{1, 2}},{{1, 2},{1, 2}}};
-//  long (*a)[3][3];
-//  a = new long[3][3][3];
-//  a[3][3][3] = 10;
-//  cout<<"One Element of Three Dimensional Matrix is "<<a[0][0][2]<<endl;
+
+  Image3<unsigned char>* somaimgwhole;
+  somaimgwhole = img->region_threshold(soma_bounding_box);
+  this->soma_img_whole = somaimgwhole;
+
   int a1[3][3][3] = {
                 {
                {1, 0, 0},
@@ -493,6 +493,7 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
                {0, 1, 0}
                 }
              };
+
   cout<<"a1[0][0][0] = "<<a1[0][0][0]<<"\n";
   cout<<"a1[0][2][1] = "<<a1[0][2][1]<<"\n";
   cout<<"a1[2][2][1] = "<<a1[2][2][1]<<"\n";
@@ -634,35 +635,9 @@ void R2Tracer::prep() {
   Image3<double> *speed = this->makespeed(dt);
   if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
-
   // Marching on the Speed Image
   int *sp = this->soma->centroid.toint().make_array();
   cout<<"test: The initial centroid, "<<"x: "<<sp[0]<<"y: "<<sp[1]<<"z: "<<sp[2]<<endl;
-
-
-  // if (!this->silent){
-  //   cout << "(4/6) == Multi-Stencils Fastmarching ";
-  //   if (this->quality){
-  //     cout << "with high quality...";
-  //   }
-  //   else{
-  //     cout << "with low quality...";
-  //   }
-  //   cout.flush();   
-  // }
-  // start_time = clock();
-  // double *t_ptr = msfm(speed->get_data1d_ptr(), dims, sp, this->quality, this->quality,
-  //                                      false); // Original Timemap
-  // if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
-
-  // this->t = new Image3<double>(t_ptr, this->bimg->get_dims());
-  // this->tt = this->t->make_copy();
-
-  // // Get the gradient of the Time-crossing map
-  // if(!this->silent) cout <<  "(5/6) == Making Gradients of Time Crossing Map...";
-  // start_time = clock();
-  // this->make_gradient();
-  // if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
   if (dt) {
     delete dt;

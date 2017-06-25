@@ -298,6 +298,40 @@ class Image3 {
     return cropped_image;
   }
 
+  Image3<unsigned char> *region_threshold(CropRegion crop_region) {
+    cout<<"test : region threshold has been tested"<<endl;
+    std::vector<Point<long> > pts;
+    Point<long> p;
+    for (p.x = 0; p.x < this->dims[0]; ++p.x)
+        for (p.y = 0; p.y < this->dims[1]; ++p.y)
+            for (p.z = 0; p.z < this->dims[2]; ++p.z) {
+                pts.push_back(p);
+      }
+    long crop_dims[3];
+    crop_dims[0] = this->dims[0];
+    crop_dims[1] = this->dims[1];
+    crop_dims[2] = this->dims[2];
+    cout<<"test: crop_dims[0]"<<crop_dims[0]<<"crop_dims[1]"<<crop_dims[1]<<"crop_dims[2]"<<crop_dims[2]<<endl;
+    long nvox = crop_dims[0] * crop_dims[1] * crop_dims[2];
+    T* croped_data = new T[nvox];
+    Point<long> p_crop;
+    for (p.x = 0, p_crop.x = 0; p.x < crop_dims[0];
+         ++p.x, ++p_crop.x)
+      for (p.y = 0, p_crop.y = 0; p.y < crop_dims[1];
+           ++p.y, ++p_crop.y)
+        for (p.z = 0, p_crop.z = 0; p.z < crop_dims[2];
+             ++p.z, ++p_crop.z) {
+            if ((p.x > crop_region.xmin) & (p.x < crop_region.xmax) & (p.y > crop_region.ymin) & (p.y < crop_region.ymax) & (p.z > crop_region.zmin) & (p.z < crop_region.zmax))
+            {
+                croped_data[p_crop.make_linear_idx(crop_dims)] = this->get(p);
+            }
+            else
+                croped_data[p_crop.make_linear_idx(crop_dims)] = 0;
+        }
+    Image3<T>* cropped_image = new Image3<T>(croped_data, crop_dims);
+    cropped_image->set_crop_region(crop_region);
+    return cropped_image;
+  }
 
   // Crop this image to keep only the region > 0
   // The original image will be over-written
@@ -620,6 +654,7 @@ class R2Tracer {
   SWC *trace(Image3<unsigned char> *img, float threshold);
   SWC *scentre();
   Image3<unsigned char> *soma_img = NULL;
+  Image3<unsigned char> *soma_img_whole= NULL;
   void set_prune(bool p){
     this->is_prune = p;
   };
