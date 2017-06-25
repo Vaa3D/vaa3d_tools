@@ -8,6 +8,6 @@
 
 using namespace std;
 
-void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk);
+void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk, V3DPluginCallback2 &callback);
 
 #endif // MAKE_CONSENSUS_H

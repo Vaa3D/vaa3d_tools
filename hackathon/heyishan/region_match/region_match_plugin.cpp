@@ -123,22 +123,21 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         PARA.nt_search = readSWC_file("original_vr_neuron.swc");
         PARA.nt_pattern = readSWC_file("areaofinterest.swc");
 
-        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
-        //match_swc(PARA.nt_search,mk,s_mk,s_forest);
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+        match_swc(PARA.nt_search,mk,s_mk,s_forest);
+        //substructure_retrieve(s_mk,
+        //calculate_morph(PARA.nt_search,s_forest,s_mk,);
 
     }
     else
     {
-        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
-        //match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+        match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
     }
-
-    //main neuron machine learning code
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
 
-    //Output
     //main neuron machine learning code
     QList <NeuronSWC> list_pattern = PARA.nt_pattern.listNeuron;
     QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
