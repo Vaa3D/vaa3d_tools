@@ -298,7 +298,7 @@ class Image3 {
     return cropped_image;
   }
 
-  Image3<unsigned char> *region_threshold(CropRegion crop_region) {
+  Image3<unsigned char> *region_threshold(CropRegion crop_region, float threshold) {
     cout<<"test : region threshold has been tested"<<endl;
     std::vector<Point<long> > pts;
     Point<long> p;
@@ -323,9 +323,9 @@ class Image3 {
              ++p.z, ++p_crop.z) {
             if ((p.x > crop_region.xmin) & (p.x < crop_region.xmax) & (p.y > crop_region.ymin) & (p.y < crop_region.ymax) & (p.z > crop_region.zmin) & (p.z < crop_region.zmax))
             {
-                if (this->get(p) > 2)
+                if (this->get(p) > threshold)
                 {
-                    croped_data[p_crop.make_linear_idx(crop_dims)] = 50;
+                    croped_data[p_crop.make_linear_idx(crop_dims)] = 200;
                 }
                 else
                 {
