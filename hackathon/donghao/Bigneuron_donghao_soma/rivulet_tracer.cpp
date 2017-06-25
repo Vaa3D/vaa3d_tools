@@ -338,28 +338,39 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
 
   Image3<unsigned char>* somaimgwhole;
   somaimgwhole = img->region_threshold(soma_bounding_box, threshold);
-  this->soma_img_whole = somaimgwhole;
+//  this->soma_img_whole = somaimgwhole;
+
+
   cout<<"test: "<<"before the binarization"<<endl;
 //  this->soma_img_whole = this->soma_img_whole->binarize(3);
   cout<<"test: after the binarization"<<endl;
 
   int a1[3][3][3] = {
                 {
-               {1, 0, 0},
-               {0, 1, 0},
-               {0, 0, 1}
+               {1, 1, 1},
+               {1, 1, 1},
+               {1, 1, 1}
                 },
                 {
-               {1, 0, 0},
-               {0, 1, 0},
-               {0, 0, 1}
+               {1, 1, 1},
+               {1, 1, 1},
+               {1, 1, 1}
                 },
                 {
-               {1, 0, 0},
-               {0, 1, 0},
-               {0, 0, 1}
+               {1, 1, 1},
+               {1, 1, 1},
+               {1, 1, 1}
                 }
              };
+  Image3<unsigned char>* somaimgwhole2;
+  somaimgwhole2 = somaimg->snake_dilated(a1);
+  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
+  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
+  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
+  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
+  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
+  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
+  this->soma_img_whole = somaimgwhole2;
   int a2[3][3][3] = {
                 {
                {0, 1, 0},

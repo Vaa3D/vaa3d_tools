@@ -260,6 +260,44 @@ class Image3 {
     return dilated;
   }
 
+  // The border is also skiped.
+
+  Image3<unsigned char> *snake_dilated(int (&kernel)[3][3][3]) {
+    Point<long> p;
+    Point<long> p2;
+    Image3<unsigned char> *dilated = new Image3<unsigned char>(this->dims);
+
+    for (p.x = 1; p.x < this->dims[0] - 1; ++p.x)
+      for (p.y = 1; p.y < this->dims[1] - 1; ++p.y)
+        for (p.z = 1; p.z < this->dims[2] - 1; ++p.z) {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        p2 = p;
+                        p2.x = p2.x -2 + i;
+                        p2.y = p2.y -2 + j;
+                        p2.z = p2.z -2 + k;
+                        if ((kernel[i][j][k] == 1) & (this->get(p2)>10))
+                        {
+                            dilated->set(p, 200);
+//                            cout<<p2.x<<p2.y<<endl;
+                        }
+                        if ((this->get(p)>10))
+                        {
+                            dilated->set(p, 200);
+                        }
+
+                    }
+                }
+            }
+        }
+    return dilated;
+  }
+
+
   // Crop this image according to the input region definition
   // The original image will be over-written
   // (To be done) : To get the original image back, call this->restore_crop()
