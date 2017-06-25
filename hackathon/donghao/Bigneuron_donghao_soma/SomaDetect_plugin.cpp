@@ -215,29 +215,18 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   cout<<"test : The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
   SWC *swc = tracer->trace(img, PARA.threshold);
   cout<<"test: ...."<<endl;
-
-
   cout << "====== END ======" << endl;
-
-
-
-  // 
   if(PARA.outswc_file.isEmpty()){
     PARA.outswc_file = PARA.inimg_file + ".somapoint.swc";
   }
   save_swc(swc, PARA.outswc_file);
   PARA.outsomaimg_file = PARA.inimg_file + ".somaimg.tif";
-//  QByteArray ba = PARA.outsomaimg_file.toLatin1();
-//  char* c_str2 = ba.data();
-//  cout<<"The output path is "<<c_str2<<endl;
   tracer->soma_img->save((char *)PARA.outsomaimg_file.toStdString().c_str());
-//  cout<<"The output path is "<<PARA.outsomaimg_file<<endl;
-//  tracer->soma_img->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/somaxxx.tif");
+  // Clean up
   if (tracer) {
     delete tracer;
     tracer = NULL;
   }
-  // Clean up
   if (in_sz3) {
     delete[] in_sz3;
     in_sz3 = NULL;

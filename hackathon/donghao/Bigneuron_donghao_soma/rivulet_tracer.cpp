@@ -302,18 +302,7 @@ void R2Tracer::erase(Branch &branch) {
 SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int start_time = clock();
   this->bimg = img->binarize(threshold);
-//  this->bimg->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/testxx.tif", false);
-  //cout<<"test : I printed the step after the image is binarized"<<endl;
   if(!this->silent) cout<<"Step One : Binarization took -- "<< (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
-//  Image3<unsigned char>* timg = this->bimg->autocrop();
-  // if (this->bimg){
-  //   delete this->bimg;
-  //   this->bimg = 0;
-  // }
-  // this->bimg = timg;
-
-  // this->prep();
-
   SWC *swc = this->scentre();
   // The initial somatic point : somapt
   SWCNode ini_soma_pt;
@@ -345,15 +334,136 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   // SWC *swc = this->iterative_backtrack();
   Image3<unsigned char>* somaimg;
   somaimg = img->manualcrop(soma_bounding_box);
-  somaimg->save("/home/donghao/Desktop/vaa3d/vaa3d_tools/hackathon/donghao/Bigneuron_donghao_soma/test_data/somaxxx.tif", false);
-  // if(!this->silent) cout <<endl<<endl<< "Totally Rivulet2 took -- " << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
-  // if(this->is_prune){
-  //   swc->prune();
-  // }
-
-  // swc->pad(this->bimg->get_crop_region()); // Pad the swc back
-  // return swc;
   this->soma_img = somaimg;
+//  long ne[2][2][2] = {{{1, 2},{1, 2}},{{1, 2},{1, 2}}, {{1, 2},{1, 2}},{{1, 2},{1, 2}}};
+//  long (*a)[3][3];
+//  a = new long[3][3][3];
+//  a[3][3][3] = 10;
+//  cout<<"One Element of Three Dimensional Matrix is "<<a[0][0][2]<<endl;
+  int a1[3][3][3] = {
+                {
+               {1, 0, 0},
+               {0, 1, 0},
+               {0, 0, 1}
+                },
+                {
+               {1, 0, 0},
+               {0, 1, 0},
+               {0, 0, 1}
+                },
+                {
+               {1, 0, 0},
+               {0, 1, 0},
+               {0, 0, 1}
+                }
+             };
+  int a2[3][3][3] = {
+                {
+               {0, 1, 0},
+               {0, 1, 0},
+               {0, 1, 0}
+                },
+                {
+               {0, 1, 0},
+               {0, 1, 0},
+               {0, 1, 0}
+                },
+                {
+               {0, 1, 0},
+               {0, 1, 0},
+               {0, 1, 0}
+                }
+             };
+  int a3[3][3][3] = {
+                {
+               {0, 0, 1},
+               {0, 1, 0},
+               {1, 0, 0}
+                },
+                {
+               {0, 0, 1},
+               {0, 1, 0},
+               {1, 0, 0}
+                },
+                {
+               {0, 0, 1},
+               {0, 1, 0},
+               {1, 0, 0}
+                }
+             };
+  int a4[3][3][3] = {
+                {
+               {1, 1, 1},
+               {0, 0, 0},
+               {0, 0, 0}
+                },
+                {
+               {0, 0, 0},
+               {1, 1, 1},
+               {0, 0, 0}
+                },
+                {
+               {0, 0, 0},
+               {0, 0, 0},
+               {1, 1, 1}
+                }
+             };
+  int a5[3][3][3] = {
+                {
+               {0, 0, 0},
+               {0, 0, 0},
+               {1, 1, 1}
+                },
+                {
+               {0, 0, 0},
+               {1, 1, 1},
+               {0, 0, 0}
+                },
+                {
+               {1, 1, 1},
+               {0, 0, 0},
+               {0, 0, 0}
+                }
+             };
+  int a6[3][3][3] = {
+                {
+               {0, 0, 0},
+               {0, 0, 0},
+               {1, 1, 1}
+                },
+                {
+               {0, 0, 0},
+               {1, 1, 1},
+               {0, 0, 0}
+                },
+                {
+               {1, 1, 1},
+               {0, 0, 0},
+               {0, 0, 0}
+                }
+             };
+  int a7[3][3][3] = {
+                {
+               {0, 0, 0},
+               {0, 0, 0},
+               {1, 1, 1}
+                },
+                {
+               {0, 0, 0},
+               {1, 1, 1},
+               {0, 0, 0}
+                },
+                {
+               {1, 1, 1},
+               {0, 0, 0},
+               {0, 0, 0}
+                }
+             };
+
+
+  cout<<"a1[0][0][0] = "<<a1[0][0][0]<<"\n";
+  cout<<"a1[0][2][1] = "<<a1[0][2][1]<<"\n";
+  cout<<"a1[2][2][1] = "<<a1[2][2][1]<<"\n";
   return swc;
 }
 
