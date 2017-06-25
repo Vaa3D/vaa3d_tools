@@ -339,6 +339,9 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   Image3<unsigned char>* somaimgwhole;
   somaimgwhole = img->region_threshold(soma_bounding_box);
   this->soma_img_whole = somaimgwhole;
+  cout<<"test: "<<"before the binarization"<<endl;
+//  this->soma_img_whole = this->soma_img_whole->binarize(3);
+  cout<<"test: after the binarization"<<endl;
 
   int a1[3][3][3] = {
                 {

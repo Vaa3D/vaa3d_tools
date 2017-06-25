@@ -323,7 +323,14 @@ class Image3 {
              ++p.z, ++p_crop.z) {
             if ((p.x > crop_region.xmin) & (p.x < crop_region.xmax) & (p.y > crop_region.ymin) & (p.y < crop_region.ymax) & (p.z > crop_region.zmin) & (p.z < crop_region.zmax))
             {
-                croped_data[p_crop.make_linear_idx(crop_dims)] = this->get(p);
+                if (this->get(p) > 2)
+                {
+                    croped_data[p_crop.make_linear_idx(crop_dims)] = 50;
+                }
+                else
+                {
+                    croped_data[p_crop.make_linear_idx(crop_dims)] = 0;
+                }
             }
             else
                 croped_data[p_crop.make_linear_idx(crop_dims)] = 0;
@@ -459,6 +466,16 @@ class Image3 {
     unsigned char *vox = new unsigned char[this->nvox];
     for (int i = 0; i < this->nvox; i++) {
       vox[i] = (unsigned char) ((float) this->data1d[i]) > threshold ? 1 : 0;
+    }
+
+    Image3<unsigned char> *bimg = new Image3<unsigned char>(vox, this->dims);
+    return bimg;
+  }
+
+  Image3<unsigned char> *bi_mask(float threshold) {
+    unsigned char *vox = new unsigned char[this->nvox];
+    for (int i = 0; i < this->nvox; i++) {
+      vox[i] = (unsigned char) ((float) this->data1d[i]) > threshold ? 50 : 0;
     }
 
     Image3<unsigned char> *bimg = new Image3<unsigned char>(vox, this->dims);
