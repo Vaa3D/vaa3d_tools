@@ -42,8 +42,34 @@ vector<V3DLONG> getTargetNode(NeuronTree & nt, V3DLONG t_num)
     }
     return target_node_list;
 }
-
-void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw)
+vector<V3DLONG> get_parent_child(V3DLONG id,NeuronTree &nt, vector<vector<V3DLONG> > & childs_nt,int SEMI)
+{
+    vector<V3DLONG> points;
+    V3DLONG id1=id;
+    V3DLONG id2=id;
+    cout<<"id1="<<id1<<endl;
+    cout<<int(getParent(id1,nt))<<endl;
+    for(int i=SEMI; i<0;i++)
+    {
+        if(int(getParent(id1,nt))>1000000)break;
+        int cur_pid=getParent(id1,nt);
+        points.push_back(cur_pid);
+        id1=cur_pid;SEMI-=1;
+    }
+    for(int i=0;i<childs_nt[id2].size();i++)
+    {
+        V3DLONG cur_child = childs_nt[id2][i];
+        for(int j=0;j<childs_nt[cur_child].size();j++)
+        {
+            V3DLONG cur_child2 = childs_nt[cur_child][j];
+            points.push_back(cur_child2);
+        }
+        points.push_back(cur_child);
+    }
+    points.push_back(id);
+    return points;
+}
+void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s_mk, vector<NeuronTree> &s_forest)
 {
     if(nt_raw.listNeuron.size()==0 || mk_raw.listNeuron.size()==0)
     {
@@ -135,7 +161,6 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw)
     cout<<"find max_branches node and their parent-child set"<<endl;
     vector<V3DLONG> max_branches_node_list;
     QList<NeuronSWC> candidates;
-    set<V3DLONG> candidates_set;
     vector<vector<V3DLONG> > childs_mk;
     V3DLONG max_branches_mk=0;
     V3DLONG nt_size=nt.listNeuron.size();
@@ -160,25 +185,32 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw)
     for(V3DLONG i=0;i<max_branches_node_list.size();i++)    //Need to find real candidates
     {
         V3DLONG id = max_branches_node_list[i];
-        //candidates=get_parent_child(id,mk,SENI);
-        //V3DLONG pid = getParent(id,mk);
-       // candidates.push_back(max_branches_node_list[i]);
+        vector<V3DLONG> points;
+        points=get_parent_child(id,mk, childs_mk,SENI);
+        for(int j=0;j<points.size();j++)
+        {
+            candidates.push_back(mk.listNeuron[points[j]]);
+        }
+    }
+    for(int i=0;i<candidates.size();i++)
+    {
         double temp_dist;
-        temp_dist=dist(c_point,mk.listNeuron[id]);
+        temp_dist=dist(c_point,candidates[i]);
         max_dist=max(max_dist,temp_dist);
     }
+    cout<<"candidates="<<candidates.size()<<endl;
     S_length=max_dist;
-    NeuronTree mk_scube;
     for(V3DLONG i=0;i<mk.listNeuron.size();i++)
     {
-        if (dist(mk.listNeuron[i],c_point)<max_dist) mk_scube.listNeuron.push_back(mk.listNeuron[i]);
+        if (dist(mk.listNeuron[i],c_point)<S_length) s_mk.listNeuron.push_back(mk.listNeuron[i]);
     }
-    mk_scube.hashNeuron.clear();
-    for(V3DLONG i=0; i<mk_scube.listNeuron.size();i++){mk_scube.hashNeuron.insert(mk_scube.listNeuron[i].n, i);}
+    NeuronTree s_mk_sorted;
+    if(!SortSWC(s_mk.listNeuron,s_mk_sorted.listNeuron,VOID,0)){cout<<"sort failed"<<endl;}
+    s_mk_sorted.hashNeuron.clear();
+    for(V3DLONG i=0; i<s_mk_sorted.listNeuron.size();i++){s_mk_sorted.hashNeuron.insert(s_mk_sorted.listNeuron[i].n, i);}
 
     // get small cubes in whole nt
     cout<<"get small cubes in whole nt"<<endl;
-    vector<NeuronTree> nt_scubes;
     int SEARCH_STEP = 2;
     for(V3DLONG i=0;i<nt.listNeuron.size() - SEARCH_STEP; i+=SEARCH_STEP)
     {
@@ -187,14 +219,16 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw)
         for(V3DLONG j=0; j<nt.listNeuron.size();j++)
         {
             NeuronSWC point2=nt.listNeuron[j];
-            if(dist(point1,point2) <= max_dist) cube.listNeuron.push_back(point2);
+            if(dist(point1,point2) <= S_length) cube.listNeuron.push_back(point2);
         }
-        cube.hashNeuron.clear();
-        for(V3DLONG j=0; j<cube.listNeuron.size();j++){cube.hashNeuron.insert(cube.listNeuron[j].n, j);}
-        nt_scubes.push_back(cube);
+        NeuronTree cube_sorted;
+        if(!SortSWC(cube.listNeuron,cube_sorted.listNeuron,VOID,0)){cout<<"sort failed."<<endl;}
+        cube_sorted.hashNeuron.clear();
+        for(V3DLONG j=0; j<cube_sorted.listNeuron.size();j++){cube_sorted.hashNeuron.insert(cube_sorted.listNeuron[j].n, j);}
+        s_forest.push_back(cube_sorted);
     }
     cout<<"nt_size"<<nt.listNeuron.size()<<endl;
-    cout<<"nt_scubes="<<nt_scubes.size()<<endl;
+    cout<<"s_forest="<<s_forest.size()<<endl;
 
     /*
     // calculate the small and large cube's lenght of side
@@ -241,9 +275,12 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw)
         //result.push_back(T4);
     }
     */
-    QString result_name="/home/hys/Desktop/ml_neuron/data/cube1.swc";
-    QList<NeuronSWC> result=nt_scubes[10].listNeuron;
+    QString result_name="/home/hys/Desktop/ml_neuron/data/s_mk_sorted.swc";
+    QList<NeuronSWC> result=s_mk_sorted.listNeuron;
     export_list2file(result,result_name,result_name);
+    QString cube1_name="/home/hys/Desktop/ml_neuron/data/cube1.swc";
+    QList<NeuronSWC> cube1=s_forest[1].listNeuron;
+    export_list2file(cube1,cube1_name,cube1_name);
 
     return;
 }
