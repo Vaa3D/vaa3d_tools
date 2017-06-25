@@ -69,7 +69,7 @@ vector<V3DLONG> get_parent_child(V3DLONG id,NeuronTree &nt, vector<vector<V3DLON
     points.push_back(id);
     return points;
 }
-void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s_mk, vector<NeuronTree> &s_forest)
+void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, vector<NeuronTree> &s_forest)
 {
     if(nt_raw.listNeuron.size()==0 || mk_raw.listNeuron.size()==0)
     {
@@ -77,30 +77,26 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s
         return;
     }
 
-    // resample nt_raw ; resample and sort mk_raw
-    NeuronTree nt,mk;
-    double resample_step=2;
-    nt = resample(nt_raw,resample_step);
-
-    NeuronTree mk_resample = resample(mk_raw,1);
-    V3DLONG mk_root_id=mk_resample.listNeuron[0].n;
-    cout<<"mk_root_id="<<mk_root_id<<endl;
-    if(!SortSWC(mk_resample.listNeuron,mk.listNeuron,mk_root_id,0))
+    // resample and sort mk_raw
+    NeuronTree nt= nt_raw;
+    NeuronTree mk;
+    double resample_step=1;
+    NeuronTree mk_resample=resample(mk_raw,resample_step);
+    if(!SortSWC(mk_resample.listNeuron,mk.listNeuron,VOID,0))
     {
         cout<<"sort failed"<<endl;
         return;
     }
     mk.hashNeuron.clear();
-    nt.hashNeuron.clear();
     for(V3DLONG i=0; i<mk.listNeuron.size();i++){mk.hashNeuron.insert(mk.listNeuron[i].n, i);}
-    for(V3DLONG i=0; i<nt.listNeuron.size();i++){nt.hashNeuron.insert(nt.listNeuron[i].n, i);}
+    // nt.hashNeuron.clear();
+    //for(V3DLONG i=0; i<nt.listNeuron.size();i++){nt.hashNeuron.insert(nt.listNeuron[i].n, i);}
     // temp save
     QString resample_name="/home/hys/Desktop/ml_neuron/data/mk_resample.swc";
     QString sort_name="/home/hys/Desktop/ml_neuron/data/mk_sort.swc";
     export_list2file(mk_resample.listNeuron,resample_name,resample_name);
     export_list2file(mk.listNeuron,sort_name,sort_name);
-    QString nt_name="/home/hys/Desktop/ml_neuron/data/nt_resample.swc";
-    export_list2file(nt.listNeuron,nt_name,nt_name);
+
 //    nt=nt_raw;
 //    mk=mk_resample;
 
@@ -179,7 +175,6 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s
     // get small cube
     cout<<"get small cube"<<endl;
     double S_length=VOID;
-    double L_length=0;
     int SENI=2;
     double max_dist=0;
     for(V3DLONG i=0;i<max_branches_node_list.size();i++)    //Need to find real candidates
@@ -205,9 +200,14 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s
         if (dist(mk.listNeuron[i],c_point)<S_length) s_mk.listNeuron.push_back(mk.listNeuron[i]);
     }
     NeuronTree s_mk_sorted;
-    if(!SortSWC(s_mk.listNeuron,s_mk_sorted.listNeuron,VOID,0)){cout<<"sort failed"<<endl;}
-    s_mk_sorted.hashNeuron.clear();
-    for(V3DLONG i=0; i<s_mk_sorted.listNeuron.size();i++){s_mk_sorted.hashNeuron.insert(s_mk_sorted.listNeuron[i].n, i);}
+    if(s_mk.listNeuron.size()!=0)
+    {
+        V3DLONG sort_id=s_mk.listNeuron[0].n;
+        if(!SortSWC(s_mk.listNeuron,s_mk_sorted.listNeuron,sort_id,0)){cout<<"sort failed"<<endl;}
+        s_mk_sorted.hashNeuron.clear();
+        for(V3DLONG i=0; i<s_mk_sorted.listNeuron.size();i++){s_mk_sorted.hashNeuron.insert(s_mk_sorted.listNeuron[i].n, i);}
+    }
+    else {cout<<"small template is empty"<<endl;return;}
 
     // get small cubes in whole nt
     cout<<"get small cubes in whole nt"<<endl;
@@ -222,62 +222,22 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s
             if(dist(point1,point2) <= S_length) cube.listNeuron.push_back(point2);
         }
         NeuronTree cube_sorted;
-        if(!SortSWC(cube.listNeuron,cube_sorted.listNeuron,VOID,0)){cout<<"sort failed."<<endl;}
-        cube_sorted.hashNeuron.clear();
-        for(V3DLONG j=0; j<cube_sorted.listNeuron.size();j++){cube_sorted.hashNeuron.insert(cube_sorted.listNeuron[j].n, j);}
+
+        if(cube.listNeuron.size()!=0)
+        {
+            V3DLONG sort_id=cube.listNeuron[0].n;
+            if(!SortSWC(cube.listNeuron,cube_sorted.listNeuron,sort_id,0)){cout<<"sort failed"<<endl;}
+            cube_sorted.hashNeuron.clear();
+            for(V3DLONG i=0; i<cube_sorted.listNeuron.size();i++){cube_sorted.hashNeuron.insert(cube_sorted.listNeuron[i].n, i);}
+        }
+        else {cout<<"cube is empty"<<endl;}
         s_forest.push_back(cube_sorted);
     }
     cout<<"nt_size"<<nt.listNeuron.size()<<endl;
     cout<<"s_forest="<<s_forest.size()<<endl;
 
-    /*
-    // calculate the small and large cube's lenght of side
-    double S_length, L_length;
-    S_length=VOID;
-    L_length=0;
-    for(V3DLONG i=0;i<childs_mk.size();i++)
-    {
-        if(childs_mk[i].size()==0)
-        {
-            NeuronSWC S=mk.listNeuron[i];
-            double distance=dist(S,S);  //Need to find the point which has most branches.
-            S_length=min(S_length,distance);
-            L_length=max(L_length,distance);
-        }
-    }
-    */
-
-    /*
-    // get substructure in the cube
-    QList<NeuronSWC> result;
-    for(V3DLONG i=0; i<target_node_list.size(); i++)
-    {
-        QList<NeuronSWC> cube;
-        NeuronSWC T = nt.listNeuron[target_node_list[i]]; //whether to plus one.
-        NeuronSWC T2 = nt.listNeuron[target_node_list[i]+1];
-       NeuronSWC T3 = nt.listNeuron[target_node_list[i]+2];
-       if(i!=0){
-       NeuronSWC T4 = nt.listNeuron[target_node_list[i]-1];
-       result.push_back(T4);
-       }
-        for(V3DLONG j=0; j<nt.listNeuron.size();j++)
-        {
-            NeuronSWC S=nt.listNeuron[j];
-            double distance=dist(S,T);
-            if(distance<=Width)
-            {
-                cube.push_back(S);
-            }
-        }
-        result.push_back(T);
-        result.push_back(T2);
-        result.push_back(T3);
-        //result.push_back(T4);
-    }
-    */
-    QString result_name="/home/hys/Desktop/ml_neuron/data/s_mk_sorted.swc";
-    QList<NeuronSWC> result=s_mk_sorted.listNeuron;
-    export_list2file(result,result_name,result_name);
+    QString s_mk_sorted_name="/home/hys/Desktop/ml_neuron/data/s_mk_sorted.swc";
+    export_list2file(s_mk_sorted.listNeuron,s_mk_sorted_name,s_mk_sorted_name);
     QString cube1_name="/home/hys/Desktop/ml_neuron/data/cube1.swc";
     QList<NeuronSWC> cube1=s_forest[1].listNeuron;
     export_list2file(cube1,cube1_name,cube1_name);

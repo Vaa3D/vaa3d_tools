@@ -19,8 +19,6 @@ struct input_PARA
     QString inimg_file;
     V3DLONG channel;
     NeuronTree nt;
-    //LandmarkList listLandmarks;
-    //QList<NeuronSWC> listSwcNode;
     NeuronTree mk;
 };
 
@@ -87,30 +85,6 @@ bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & in
             //file_inmarkers=readSWC_file(inmarker_file).listNeuron;
             PARA.mk=readSWC_file(inmarker_file);
 
-//        NeuronSWC t;
-//        for(int i = 0; i < file_inmarkers.size(); i++)
-//        {
-//            t.x = file_inmarkers[i].x;
-//            t.y = file_inmarkers[i].y;
-//            t.z = file_inmarkers[i].z;
-//            t.r = file_inmarkers[i].r;
-//            PARA.mk.listNeuron.push_back(t);
-//        }
-
-//        QList<ImageMarker> file_inmarkers;
-//        if(!inmarker_file.isEmpty())
-//            file_inmarkers = readMarker_file(inmarker_file);
-
-//        LocationSimple t;
-//        for(int i = 0; i < file_inmarkers.size(); i++)
-//        {
-//            t.x = file_inmarkers[i].x+1;
-//            t.y = file_inmarkers[i].y+1;
-//            t.z = file_inmarkers[i].z+1;
-//            PARA.listLandmarks.push_back(t);
-//        }
-
-
         ml_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
@@ -148,51 +122,13 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
             QMessageBox::information(0, "", "You don't have any image open in the main window.");
             return;
         }
-
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-
-        if (!p4DImage)
-        {
-            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-            return;
-        }
-
-
-        data1d = p4DImage->getRawData();
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        sc = p4DImage->getCDim();
-
-        bool ok1;
-
-        if(sc==1)
-        {
-            c=1;
-            ok1=true;
-        }
-        else
-        {
-            c = QInputDialog::getInteger(parent, "Channel",
-                                             "Enter channel NO:",
-                                             1, 1, sc, 1, &ok1);
-        }
-
-        if(!ok1)
-            return;
-
-        //PARA.listLandmarks = callback.getLandmark(curwin);
         PARA.mk = callback.getSWC(curwin);
         PARA.nt = callback.getSWC(curwin);
+        //PARA.inimg_file = p4DImage->getFileName();
+        vector<NeuronTree> s_forest;
+        NeuronTree s_mk;
+        match_swc(PARA.nt,PARA.mk,s_mk,s_forest);
 
-
-        in_sz[0] = N;
-        in_sz[1] = M;
-        in_sz[2] = P;
-        in_sz[3] = sc;
-
-
-        PARA.inimg_file = p4DImage->getFileName();
     }
     else
     {
@@ -218,13 +154,6 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
-    V3DLONG total_sz=N*M*P;
-    cout<<"N ="<<N<<"      M ="<<M<<"     P="<<P<<"     sc="<<sc<<"     c="<<c<<"       total_sz="<<total_sz<<endl;
-    for (int i =0;i<=total_sz;i++)
-    {
-        float phi;
-        phi=data1d[i];
-    }
 
     vector<NeuronTree> s_forest;
     NeuronTree s_mk;
