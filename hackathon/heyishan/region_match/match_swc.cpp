@@ -69,7 +69,7 @@ vector<V3DLONG> get_parent_child(V3DLONG id,NeuronTree &nt, vector<vector<V3DLON
     points.push_back(id);
     return points;
 }
-void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree s_mk, vector<NeuronTree> s_forest)
+void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree &s_mk, vector<NeuronTree> &s_forest)
 {
     if(nt_raw.listNeuron.size()==0 || mk_raw.listNeuron.size()==0)
     {
@@ -204,8 +204,10 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree s_
     {
         if (dist(mk.listNeuron[i],c_point)<S_length) s_mk.listNeuron.push_back(mk.listNeuron[i]);
     }
-    s_mk.hashNeuron.clear();
-    for(V3DLONG i=0; i<s_mk.listNeuron.size();i++){s_mk.hashNeuron.insert(s_mk.listNeuron[i].n, i);}
+    NeuronTree s_mk_sorted;
+    if(!SortSWC(s_mk.listNeuron,s_mk_sorted.listNeuron,VOID,0)){cout<<"sort failed"<<endl;}
+    s_mk_sorted.hashNeuron.clear();
+    for(V3DLONG i=0; i<s_mk_sorted.listNeuron.size();i++){s_mk_sorted.hashNeuron.insert(s_mk_sorted.listNeuron[i].n, i);}
 
     // get small cubes in whole nt
     cout<<"get small cubes in whole nt"<<endl;
@@ -219,9 +221,11 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree s_
             NeuronSWC point2=nt.listNeuron[j];
             if(dist(point1,point2) <= S_length) cube.listNeuron.push_back(point2);
         }
-        cube.hashNeuron.clear();
-        for(V3DLONG j=0; j<cube.listNeuron.size();j++){cube.hashNeuron.insert(cube.listNeuron[j].n, j);}
-        s_forest.push_back(cube);
+        NeuronTree cube_sorted;
+        if(!SortSWC(cube.listNeuron,cube_sorted.listNeuron,VOID,0)){cout<<"sort failed."<<endl;}
+        cube_sorted.hashNeuron.clear();
+        for(V3DLONG j=0; j<cube_sorted.listNeuron.size();j++){cube_sorted.hashNeuron.insert(cube_sorted.listNeuron[j].n, j);}
+        s_forest.push_back(cube_sorted);
     }
     cout<<"nt_size"<<nt.listNeuron.size()<<endl;
     cout<<"s_forest="<<s_forest.size()<<endl;
@@ -271,9 +275,12 @@ void match_swc(const NeuronTree &nt_raw, const NeuronTree &mk_raw, NeuronTree s_
         //result.push_back(T4);
     }
     */
-    QString result_name="/home/hys/Desktop/ml_neuron/data/cube1.swc";
-    QList<NeuronSWC> result=s_mk.listNeuron;
+    QString result_name="/home/hys/Desktop/ml_neuron/data/s_mk_sorted.swc";
+    QList<NeuronSWC> result=s_mk_sorted.listNeuron;
     export_list2file(result,result_name,result_name);
+    QString cube1_name="/home/hys/Desktop/ml_neuron/data/cube1.swc";
+    QList<NeuronSWC> cube1=s_forest[1].listNeuron;
+    export_list2file(cube1,cube1_name,cube1_name);
 
     return;
 }
