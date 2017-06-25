@@ -36,9 +36,13 @@ vector<V3DLONG> getTargetNode(NeuronTree & nt, V3DLONG t_num)
     for(V3DLONG i=0;i<siz;i++)
     {
         V3DLONG b_num=0;
-        if(nt.listNeuron[i].pn<0) b_num=childs_nt[i].size();
-        else b_num=childs_nt[i].size()+1;
-        if(b_num == t_num) target_node_list.push_back(i);
+        if(nt.listNeuron[i].pn<0)
+        {
+            b_num=childs_nt[i].size();
+        }
+        else{ b_num=childs_nt[i].size()+1;}
+        if(b_num == t_num) {target_node_list.push_back(i);
+        }
     }
     return target_node_list;
 }
@@ -47,14 +51,12 @@ vector<V3DLONG> get_parent_child(V3DLONG id,NeuronTree &nt, vector<vector<V3DLON
     vector<V3DLONG> points;
     V3DLONG id1=id;
     V3DLONG id2=id;
-    cout<<"id1="<<id1<<endl;
-    cout<<int(getParent(id1,nt))<<endl;
-    for(int i=SEMI; i<0;i++)
+    for(int i=SEMI; i>0;i--)
     {
         if(int(getParent(id1,nt))>1000000)break;
         int cur_pid=getParent(id1,nt);
         points.push_back(cur_pid);
-        id1=cur_pid;SEMI-=1;
+        id1=cur_pid;
     }
     for(int i=0;i<childs_nt[id2].size();i++)
     {
@@ -170,6 +172,7 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, vector<
         if(mk.listNeuron[i].pn<0){max_branches_mk=max(max_branches_mk,childs_mk[i].size() );}
         else{max_branches_mk=max(max_branches_mk,childs_mk[i].size()+1);}
     }
+    cout<<"max_branches="<<max_branches_mk<<endl;
     max_branches_node_list =  getTargetNode(mk,max_branches_mk);
 
     // get small cube

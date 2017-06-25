@@ -10,6 +10,7 @@
 #include "region_match_plugin.h"
 
 #include "match_swc.h"
+#include "make_consensus.h"
 Q_EXPORT_PLUGIN2(region_match, region_match);
 
 using namespace std;
@@ -18,8 +19,8 @@ struct input_PARA
 {
     QString inimg_file;
     V3DLONG channel;
-    NeuronTree nt;
-    NeuronTree mk;
+    NeuronTree nt_search;
+    NeuronTree nt_pattern;
 };
 
 void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -28,20 +29,20 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 QStringList region_match::menulist() const
 {
 	return QStringList() 
-		<<tr("matching_menu")
+        <<tr("tracing_func")
 		<<tr("about");
 }
 
 QStringList region_match::funclist() const
 {
 	return QStringList()
-		<<tr("matching_func")
+        <<tr("tracing_func")
 		<<tr("help");
 }
 
 void region_match::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("matching_menu"))
+    if (menu_name == tr("tracing_func"))
 	{
         bool bmenu = true;
         input_PARA PARA;
@@ -57,7 +58,7 @@ void region_match::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("matching_func"))
+    if (func_name == tr("tracing_func"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -78,12 +79,12 @@ bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & in
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";k++;
         if(!inneuron_file.isEmpty())
-            PARA.nt = readSWC_file(inneuron_file);
+            PARA.nt_search = readSWC_file(inneuron_file);
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         //QList<NeuronSWC> file_inmarkers;
         if(!inmarker_file.isEmpty())
             //file_inmarkers=readSWC_file(inmarker_file).listNeuron;
-            PARA.mk=readSWC_file(inmarker_file);
+            PARA.nt_pattern=readSWC_file(inmarker_file);
 
         ml_func(callback,parent,PARA,bmenu);
 	}
@@ -114,40 +115,22 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
+    vector<NeuronTree> s_forest;
+    NeuronTree s_mk;
+    NeuronTree mk;
     if(bmenu)
     {
-        v3dhandle curwin = callback.currentImageWindow();
-        if (!curwin)
-        {
-            QMessageBox::information(0, "", "You don't have any image open in the main window.");
-            return;
-        }
-        PARA.mk = callback.getSWC(curwin);
-        PARA.nt = callback.getSWC(curwin);
-        //PARA.inimg_file = p4DImage->getFileName();
-        vector<NeuronTree> s_forest;
-        NeuronTree s_mk;
-        match_swc(PARA.nt,PARA.mk,s_mk,s_forest);
+        PARA.nt_search = readSWC_file("original_vr_neuron.swc");
+        PARA.nt_pattern = readSWC_file("areaofinterest.swc");
+
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
+        //match_swc(PARA.nt_search,mk,s_mk,s_forest);
 
     }
     else
     {
-        int datatype = 0;
-        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
-            return;
-        }
-        if(PARA.channel < 1 || PARA.channel > in_sz[3])
-        {
-            fprintf (stderr, "Invalid channel number. \n");
-            return;
-        }
-        N = in_sz[0];
-        M = in_sz[1];
-        P = in_sz[2];
-        sc = in_sz[3];
-        c = PARA.channel;
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
+        //match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
     }
 
     //main neuron machine learning code
@@ -155,21 +138,21 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
 
-    vector<NeuronTree> s_forest;
-    NeuronTree s_mk;
-    match_swc(PARA.nt,PARA.mk,s_mk,s_forest);
+    //Output
+    //main neuron machine learning code
+    QList <NeuronSWC> list_pattern = PARA.nt_pattern.listNeuron;
+    QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
+
+    if(list_pattern.size()!=0 || list_search.size()!=0)
+    {
+        for(V3DLONG i = 0; i < list_search.size(); i++)
+        {
+            PARA.nt_search.listNeuron[i].type += 1;
+        }
+    }
 
     //Output
-    NeuronTree nt_output;
-    //QList<NeuronSWC> marker_output;
-    //QList<ImageMarker> marker_output;
-
-	QString swc_name = PARA.inimg_file + "_region_match.swc";
-	nt_output.name = "region_match";
-    //QString marker_name = PARA.inimg_file + "_region_match.marker";
-    //writeSWC_file(swc_name.toStdString().c_str(),nt_output);
-    //writeMarker_file(marker_name,marker_output);
-
+    writeSWC_file("updated_vr_neuron.swc",PARA.nt_search);
 
     if(!bmenu)
     {
