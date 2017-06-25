@@ -10,6 +10,7 @@
 #include "region_match_plugin.h"
 
 #include "match_swc.h"
+#include "make_consensus.h"
 Q_EXPORT_PLUGIN2(region_match, region_match);
 
 using namespace std;
@@ -18,10 +19,8 @@ struct input_PARA
 {
     QString inimg_file;
     V3DLONG channel;
-    NeuronTree nt;
-    //LandmarkList listLandmarks;
-    //QList<NeuronSWC> listSwcNode;
-    NeuronTree mk;
+    NeuronTree nt_search;
+    NeuronTree nt_pattern;
 };
 
 void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -30,20 +29,20 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 QStringList region_match::menulist() const
 {
 	return QStringList() 
-		<<tr("matching_menu")
+        <<tr("tracing_func")
 		<<tr("about");
 }
 
 QStringList region_match::funclist() const
 {
 	return QStringList()
-		<<tr("matching_func")
+        <<tr("tracing_func")
 		<<tr("help");
 }
 
 void region_match::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("matching_menu"))
+    if (menu_name == tr("tracing_func"))
 	{
         bool bmenu = true;
         input_PARA PARA;
@@ -59,7 +58,7 @@ void region_match::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("matching_func"))
+    if (func_name == tr("tracing_func"))
 	{
         bool bmenu = false;
         input_PARA PARA;
@@ -80,36 +79,12 @@ bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & in
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";k++;
         if(!inneuron_file.isEmpty())
-            PARA.nt = readSWC_file(inneuron_file);
+            PARA.nt_search = readSWC_file(inneuron_file);
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         //QList<NeuronSWC> file_inmarkers;
         if(!inmarker_file.isEmpty())
             //file_inmarkers=readSWC_file(inmarker_file).listNeuron;
-            PARA.mk=readSWC_file(inmarker_file);
-
-//        NeuronSWC t;
-//        for(int i = 0; i < file_inmarkers.size(); i++)
-//        {
-//            t.x = file_inmarkers[i].x;
-//            t.y = file_inmarkers[i].y;
-//            t.z = file_inmarkers[i].z;
-//            t.r = file_inmarkers[i].r;
-//            PARA.mk.listNeuron.push_back(t);
-//        }
-
-//        QList<ImageMarker> file_inmarkers;
-//        if(!inmarker_file.isEmpty())
-//            file_inmarkers = readMarker_file(inmarker_file);
-
-//        LocationSimple t;
-//        for(int i = 0; i < file_inmarkers.size(); i++)
-//        {
-//            t.x = file_inmarkers[i].x+1;
-//            t.y = file_inmarkers[i].y+1;
-//            t.z = file_inmarkers[i].z+1;
-//            PARA.listLandmarks.push_back(t);
-//        }
-
+            PARA.nt_pattern=readSWC_file(inmarker_file);
 
         ml_func(callback,parent,PARA,bmenu);
 	}
@@ -140,107 +115,44 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
+    vector<NeuronTree> s_forest;
+    NeuronTree s_mk;
+    NeuronTree mk;
     if(bmenu)
     {
-        v3dhandle curwin = callback.currentImageWindow();
-        if (!curwin)
-        {
-            QMessageBox::information(0, "", "You don't have any image open in the main window.");
-            return;
-        }
+        PARA.nt_search = readSWC_file("original_vr_neuron.swc");
+        PARA.nt_pattern = readSWC_file("areaofinterest.swc");
 
-        Image4DSimple* p4DImage = callback.getImage(curwin);
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
+        //match_swc(PARA.nt_search,mk,s_mk,s_forest);
 
-        if (!p4DImage)
-        {
-            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-            return;
-        }
-
-
-        data1d = p4DImage->getRawData();
-        N = p4DImage->getXDim();
-        M = p4DImage->getYDim();
-        P = p4DImage->getZDim();
-        sc = p4DImage->getCDim();
-
-        bool ok1;
-
-        if(sc==1)
-        {
-            c=1;
-            ok1=true;
-        }
-        else
-        {
-            c = QInputDialog::getInteger(parent, "Channel",
-                                             "Enter channel NO:",
-                                             1, 1, sc, 1, &ok1);
-        }
-
-        if(!ok1)
-            return;
-
-        //PARA.listLandmarks = callback.getLandmark(curwin);
-        PARA.mk = callback.getSWC(curwin);
-        PARA.nt = callback.getSWC(curwin);
-
-
-        in_sz[0] = N;
-        in_sz[1] = M;
-        in_sz[2] = P;
-        in_sz[3] = sc;
-
-
-        PARA.inimg_file = p4DImage->getFileName();
     }
     else
     {
-        int datatype = 0;
-        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
-            return;
-        }
-        if(PARA.channel < 1 || PARA.channel > in_sz[3])
-        {
-            fprintf (stderr, "Invalid channel number. \n");
-            return;
-        }
-        N = in_sz[0];
-        M = in_sz[1];
-        P = in_sz[2];
-        sc = in_sz[3];
-        c = PARA.channel;
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
+        //match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
     }
 
     //main neuron machine learning code
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
-    V3DLONG total_sz=N*M*P;
-    cout<<"N ="<<N<<"      M ="<<M<<"     P="<<P<<"     sc="<<sc<<"     c="<<c<<"       total_sz="<<total_sz<<endl;
-    for (int i =0;i<=total_sz;i++)
-    {
-        float phi;
-        phi=data1d[i];
-    }
-
-    vector<NeuronTree> s_forest;
-    NeuronTree s_mk;
-    match_swc(PARA.nt,PARA.mk,s_mk,s_forest);
 
     //Output
-    NeuronTree nt_output;
-    //QList<NeuronSWC> marker_output;
-    //QList<ImageMarker> marker_output;
+    //main neuron machine learning code
+    QList <NeuronSWC> list_pattern = PARA.nt_pattern.listNeuron;
+    QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
 
-	QString swc_name = PARA.inimg_file + "_region_match.swc";
-	nt_output.name = "region_match";
-    //QString marker_name = PARA.inimg_file + "_region_match.marker";
-    //writeSWC_file(swc_name.toStdString().c_str(),nt_output);
-    //writeMarker_file(marker_name,marker_output);
+    if(list_pattern.size()!=0 || list_search.size()!=0)
+    {
+        for(V3DLONG i = 0; i < list_search.size(); i++)
+        {
+            PARA.nt_search.listNeuron[i].type += 1;
+        }
+    }
 
+    //Output
+    writeSWC_file("updated_vr_neuron.swc",PARA.nt_search);
 
     if(!bmenu)
     {
