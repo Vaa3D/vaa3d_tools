@@ -131,9 +131,9 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
        //QString files_name="./temp1/*.swc";
        QString consensus_result = "./temp2/consensus.swc";
        arg.type = "random";vector<char*> arg_input_consensus;
-       for(int i=0;i<file_list.size();i++)
+       for(int i=0;i<file_list_bn.size();i++)
        {
-           QString files_name = file_list[i];
+           QString files_name = file_list_bn[i];
            string fileName_Qstring(files_name.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
            arg_input_consensus.push_back(fileName_string);
        }
