@@ -3,7 +3,7 @@
 
 #include "basic_surf_objs.h"
 #include <math.h>
-#include <vector>
+
 using namespace std;
 
 bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3DLONG>  & result, V3DLONG cand, int method_code, int norm_code);

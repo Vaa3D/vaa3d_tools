@@ -101,6 +101,7 @@ int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_lis
 	}
 
 	int num_candy = nt_list.size();
+	printf("Tag 2: the number of candidates: %d \n", num_candy);
 	for  (int i=0;i<feature_codes.size();i++)
 	{
 		for (int j=0;j<norm_codes.size();j++)

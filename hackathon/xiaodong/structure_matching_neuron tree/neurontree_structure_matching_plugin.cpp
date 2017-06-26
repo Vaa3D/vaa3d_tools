@@ -333,7 +333,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 				
 				for(int j=begin; j<=end; j++)
 				{
-					nt_search.listNeuron[j].type = 0; //change the node type in the finded tree
+					nt_search.listNeuron[j].type = 2; //change the node color in the finded tree
 				}
 				//save the matching subtree
 				nt_index.comment = tr("");
@@ -804,7 +804,7 @@ bool NeurontreeStructureMatching::GetSubTreesSWC(const NeuronTree & nt, int wind
 	int numneu = listneu.size();
 
 	//for debug
-	printf("%s : %d\n", "neuron number of target structure:", numneu);
+	printf("%s : %d\n", "neuron number of searching tree:", numneu);
 	printf("%s : %d\n", "window size:", window_size);
 	printf("%s : %d\n", "step:", step);
 	//
