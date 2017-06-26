@@ -113,7 +113,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
        arg.p = (void*) & arg_input_bn; input_bn<< arg;
        arg.type="random";vector<char*> arg_bn_para; arg_bn_para.push_back(fileName_string);arg.p = (void *) & arg_bn_para; input_bn << arg;
 
-       QString plugin_name_bn = "blastneuron/libblastneuron"; //Need change
+       QString plugin_name_bn = "blastneuron"; //libblastneuron"; //Need change
        QString func_name_bn = "pre_processing";
        callback.callPluginFunc(plugin_name_bn,func_name_bn,input_bn,output_bn);
        arg_input_bn.clear();
@@ -123,7 +123,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
     // call consensus
    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0\n"<<endl;
 
-
+       if(file_list_bn.size()==0) return;
 //       V3DPluginArgItem arg2;
        V3DPluginArgList input_consensus;
        V3DPluginArgList output_consensus;
