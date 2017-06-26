@@ -261,7 +261,7 @@ class Image3 {
   }
 
   // The border is also skiped.
-
+  // The iterative dilation is completed.
   Image3<unsigned char> *snake_dilated(int (&kernel)[3][3][3]) {
     Point<long> p;
     Point<long> p2;
@@ -280,10 +280,10 @@ class Image3 {
                         p2.x = p2.x -2 + i;
                         p2.y = p2.y -2 + j;
                         p2.z = p2.z -2 + k;
-                        if ((kernel[i][j][k] == 1) & (this->get(p2)>10))
+                        if ((kernel[i][j][k] == 1) & (this->get(p2)==200))
                         {
                             dilated->set(p, 200);
-//                            cout<<p2.x<<p2.y<<endl;
+                            cout<<p2.x<<p2.y<<endl;
                         }
                         if ((this->get(p)>10))
                         {
