@@ -14,31 +14,33 @@ double Pd_ratio=0, Contraction=0, Max_Eux=0, Max_Path=0, BifA_local=0, BifA_remo
 int rootidx=0;
 
 #define D(A,B) sqrt((A-B)*(A-B))
+
 QVector<QVector<V3DLONG> > childs;
 
 
 
-bool get_feature(NeuronTree v_nt,NeuronTree nt,QList<double*> m_morph_list, QList<double*> m_gmi_list,QList<double* > v_morph_list,QList<double* > v_gmi_list)
+bool get_feature(vector<NeuronTree> &v_nt,NeuronTree &nt,vector<V3DLONG> &num_sortd)
 {
-    cout<<"************enter into match_little_pattern********************************"<<endl;
+    cout<<"************enter into get_feature*******************************"<<endl;
 
     double * m_feature_morph = new double[21];
 
     double * m_feature_gmi = new double[14];
+    QList<double*> v_morph_list;
+    QList<double* > v_gmi_list;
+
+    double max_a;
+    double min_a;
 
 
     computeFeature(nt,m_feature_morph);
     computeGMI(nt, m_feature_gmi);
-//    cout<<"before m_morph_list"<<endl;
-//    m_morph_list.append(m_feature_morph);//model_feature_morph
-//    cout<<"after m_morph_list"<<endl;
-//    m_gmi_list.append(m_feature_gmi);//model_feature_gmi
 
 
+    V3DLONG v_nt_size = v_nt.size();
 
 
-
-    for(V3DLONG i=0;i<m_morph_list.size();i++)
+    for(V3DLONG i=0;i<v_nt_size;i++)
     {
         for(V3DLONG i = 0;i < 21;i++)
         {
@@ -48,101 +50,158 @@ bool get_feature(NeuronTree v_nt,NeuronTree nt,QList<double*> m_morph_list, QLis
 
 
     cout<<"*************compute_v_feature*********************************"<<endl;
-    //V3DLONG v_nt_size = v_nt.size();
 
 
-    V3DLONG v_nt_size = 1;
-//    cout<<"v_nt_size ="<<v_nt_size<<endl;
+
+
+    cout<<"v_nt_size ="<<v_nt_size<<endl;
     for(V3DLONG i = 0;i < v_nt_size;i++)
     {
         cout<<"i="<<i<<endl;
         double * v_feature_morph = new double[21];
         double * v_feature_gmi = new double[14];
 
-//        cout<<"v_nt.size="<<v_nt.size();
-        //computeFeature(v_nt[i],v_feature_morph);
-        computeFeature(v_nt,v_feature_morph);
+        computeFeature(v_nt[i],v_feature_morph);
+
+
 
         for(V3DLONG i = 0;i < 21;i++)
         {
             cout<<"v_feature["<<i<<"]= "<<v_feature_morph[i]<<endl;
         }
-        cout<<"*************compute_gmi*********************************"<<endl;
-        //computeGMI(v_nt[i], v_feature_gmi);
-            computeGMI(v_nt, v_feature_gmi);
-     //   cout<<v_nt[0].listNeuron
+
+        computeGMI(v_nt[i], v_feature_gmi);
 
 
-//                NeuronTree m;
-//                NeuronSWC t;
-//                for(int i = 0; i < v_nt[0].listNeuron.size(); i++)
-//                {
-//                    t.n = v_nt[0].listNeuron[i].n;
-//                    t.type = v_nt[0].listNeuron[i].type;
-//                    t.x = v_nt[0].listNeuron[i].x;
-//                    t.y = v_nt[0].listNeuron[i].y;
-//                    t.z = v_nt[0].listNeuron[i].z;
-//                    t.r = v_nt[0].listNeuron[i].r;
-//                    t.pn = v_nt[0].listNeuron[i].pn;
-//                    m.listNeuron.append(t);
-//                }
-//                 QString swc_name = "/home/lxf/Desktop/1_test.swc";
-//                writeSWC_file(swc_name.toStdString().c_str(),m);
-
-
-        cout<<"before v append"<<endl;
         v_morph_list.append(v_feature_morph);//v_feature_morph
-        cout<<"after v append"<<endl;
-        v_gmi_list.append(v_feature_gmi);//mv_feature_gmi
-        cout<<"append : m_morph_list step one"<<endl;
-        m_morph_list.append(m_feature_morph);//model_feature_morph
-        cout<<"after m_morph_list"<<endl;
-        m_gmi_list.append(m_feature_gmi);//model_feature_gmi
+
+        v_gmi_list.append(v_feature_gmi);//v_feature_gmi
     }
 
-    V3DLONG forest_morph_size = v_morph_list.size();
-    V3DLONG forest_gmi_size = v_gmi_list.size();
-    V3DLONG sum_morph_inner = 0;
-    V3DLONG sum_morph_outer = 0;
-    V3DLONG sum_gmi_inner = 0;
-    V3DLONG sum_gmi_outer = 0;
 
-    for(V3DLONG i = 0; i < forest_morph_size; i++)
+    double sum_morph_inner;
+    double sum_gmi_inner;
+
+    double sorted_all[35];
+/*
+    struct ALLL
     {
-        for(V3DLONG j = 0; j < 21; j++)
-        {
-//           cout<<"where is the bug"<<endl;
-           cout<<"v_morph_list[0][j] = "<<v_morph_list[0][j]<<endl;
-           cout<<"m_morph_list[0][j] = "<<m_morph_list[0][j]<<endl;
-//            cout<<"i = "<<i<<endl;
-//            cout<<"j = "<<j<<endl;
-            sum_morph_inner = sum_morph_inner + D(v_morph_list[i][j],m_morph_list[0][j]);
-//            cout<<"sum_morph_inner = "<<sum_morph_inner<<endl;
-//            cout<<"D1 ="<<D(v_morph_list[i][j],m_morph_list[0][j])<<endl;
-        }
-        sum_morph_outer = sum_morph_outer +sum_morph_inner;
-//        cout<<"sum_morph_outer = "<<sum_morph_outer<<endl;
-    }
+      //  V3DLONG n[35];
+        double all[35];
 
-    for(V3DLONG i = 0; i < forest_gmi_size; i++)
+
+    }all_my;      */
+   // vector<ALLL> ALL(v_nt_size,0);
+
+
+   for(V3DLONG i = 0; i < v_nt_size; i++)
+   {
+
+       sum_morph_inner = 0;
+       sum_gmi_inner = 0;
+/***********************************morph begin********************************/
+      for(V3DLONG j = 0; j < 21; j++)
+       {
+
+           cout<<"v_morph_list[i][j] = "<<v_morph_list[i][j]<<endl;
+           cout<<"model_feature_morph = "<<m_feature_morph[j]<<endl;
+
+           sum_morph_inner = sum_morph_inner + D(v_morph_list[i][j],m_feature_morph[j]);
+          // cout<<
+       }
+
+
+/**********************************morph done gmi begin****************************/
+      for(V3DLONG j = 0; j < 14; j++)
+      {
+          sum_gmi_inner = sum_gmi_inner + D(v_gmi_list[i][j],m_feature_gmi[j]);
+      }
+
+   // seq_g[i] = sum_morph_inner;
+    sorted_all[i]=sum_morph_inner+sum_gmi_inner;
+    cout<<"sorted_all[i] = "<<sorted_all[i]<<endl;
+
+  }
+
+
+
+   double* arr=sorted_all;
+
+
+
+
+
+
+/***************************************regular*****************************************/
+
+    max_a=find_biggest_f(v_nt_size,arr);
+    min_a=find_shortest_f(v_nt_size,arr);
+    cout<<"max_a="<<max_a<<endl;
+
+
+
+    map<int,double> all_my;
+  //
+
+    for(V3DLONG i=0;i<v_nt_size;i++)
     {
-        for(V3DLONG j = 0; j < 14; j++)
-        {
-            sum_gmi_inner = sum_gmi_inner + D(v_gmi_list[i][j],m_gmi_list[0][j]);
-//            cout<<"D2 = "<<D(v_gmi_list[i][j],m_gmi_list[0][j])<<endl;
-//            cout<<"sum_gmi_inner = "<<sum_gmi_inner<<endl;
+        cout<<"i =      "<<i<<endl;
+        cout<<"map.size="<<all_my.size();
+        sorted_all[i]=sorted_all[i]/(max_a-min_a);
+        all_my.insert(map<int,double>::value_type(i,sorted_all[i]));
+        cout<<"map.size="<<all_my.size()<<endl;
+    }
+
+    double sorted_all_final[v_nt_size];
 
 
-        }
-        sum_gmi_outer = sum_gmi_outer +sum_gmi_inner;
-//        cout<<"sum_gmi_outer = "<<sum_gmi_outer<<endl;
+    seq_sorted(v_nt_size,arr);
+    for(V3DLONG i=0;i<v_nt_size;i++,arr++)
+    {
+        cout<<"arr ="<<*arr<<endl;
+
+
+        sorted_all_final[i]=*arr;
+        cout<<sorted_all_final[i]<<endl;
     }
 
 
+    for(V3DLONG i=0;i<v_nt_size;i++,arr++)
+    {
+        cout<<"i_in="<<i<<endl;
+        for(map<int,double>::iterator iter = all_my.begin();iter!=all_my.end();++iter)
+        {
+            cout<<"++++++++++++++++++"<<endl;
+            if(*arr = iter->first)
+            {
+                num_sortd.push_back(iter->second);
+                cout<<"iter->second= "<<iter->second<<endl;
+            }
+        }
+    }
+
+
+cout<<"%%%%%%%%%%%%%%%%%%%%5"<<endl;
 
 
 
 
+
+/*
+    for(V3DLONG i=0;i<v_nt_size;i++,arr++)
+    {
+        for(V3DLONG j=0;j<v_nt_size;j++)
+        {
+            //if(sorted_all_final[i]=all_my.all[j])
+            if(*arr=all_my.mapped_type)
+            {
+                num_sortd.push_back(all_my.n[j]);
+                cout<<"all_my.n = "<<all_my.n[j]<<endl;
+            }
+        }
+    }
+
+*/
 
     return 0;
 }
@@ -150,8 +209,52 @@ bool get_feature(NeuronTree v_nt,NeuronTree nt,QList<double*> m_morph_list, QLis
 
 
 
+double seq_sorted(V3DLONG v_nt_size,double *seq)
+{
+    V3DLONG temp,i,j;
 
 
+
+    for (i = 0; i < v_nt_size-1; i++)
+    {
+         for (j = 0; j < v_nt_size-1-i; j++)
+          if (seq[j] > seq[j+1])
+          {
+                temp = seq[j];
+                seq[j] = seq[j+1];
+                seq[j+1] = temp;
+          }
+    }
+    //return seq;
+}
+
+
+
+double find_biggest_f(V3DLONG v_nt_size,double* seq)
+{
+    int max_b= 0;
+    for(int i=0;i<v_nt_size;i++)
+    {
+        if(seq[i]>max_b)
+        {
+            max_b = seq[i];
+        }
+    }
+    return max_b;
+}
+
+double find_shortest_f(V3DLONG v_nt_size,double* seq)
+{
+    int min_s= 0;
+    for(int i=0;i<v_nt_size;i++)
+    {
+        if(seq[i]<min_s)
+        {
+            min_s = seq[i];
+        }
+    }
+    return min_s;
+}
 
 
 
@@ -486,13 +589,13 @@ void computeFeature(const NeuronTree & nt, double * features)
     N_node=0, N_stem=0, N_bifs=0, N_branch=0, N_tips=0, Max_Order=0;
     Pd_ratio=0, Contraction=0, Max_Eux=0, Max_Path=0, BifA_local=0, BifA_remote=0, Soma_surface=0, Fragmentation=0;
     rootidx=0;
-    cout<<"*************into 1********************************"<<endl;
+ //   cout<<"*************into 1********************************"<<endl;
 
     V3DLONG neuronNum = nt.listNeuron.size();
 
-    cout<<"num="<<neuronNum<<endl;
+//    cout<<"num="<<neuronNum<<endl;
 
-    cout<<"*************into 2********************************"<<endl;
+//    cout<<"*************into 2********************************"<<endl;
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
   //  childs.clear();
     for (V3DLONG i=0;i<neuronNum;i++)
@@ -517,11 +620,11 @@ void computeFeature(const NeuronTree & nt, double * features)
         if (list.at(i).pn==-1){
             //compute the first tree in the forest
             rootidx = i;
-            cout<<"rootidx = "<<rootidx<<endl;
+  //          cout<<"rootidx = "<<rootidx<<endl;
             break;
         }
     }
-    cout<<"*************into 3********************************"<<endl;
+ //   cout<<"*************into 3********************************"<<endl;
     if (rootidx==VOID){
         cerr<<"the input neuron tree does not have a root, please check your data"<<endl;
         return;
@@ -530,13 +633,13 @@ void computeFeature(const NeuronTree & nt, double * features)
 
     N_node = list.size();
     N_stem = childs[rootidx].size();
-    cout<<"n_stem = "<<childs[rootidx].size()<<endl;
+  //  cout<<"n_stem = "<<childs[rootidx].size()<<endl;
     Soma_surface = 4*PI*(list.at(rootidx).r)*(list.at(rootidx).r);
-    cout<<"*************into 4*******************************"<<endl;
+ //   cout<<"*************into 4*******************************"<<endl;
     computeLinear(nt);
-    cout<<"*************into 5********************************"<<endl;
+ //   cout<<"*************into 5********************************"<<endl;
     computeTree(nt);
-    cout<<"*************into 6********************************"<<endl;
+ //   cout<<"*************into 6********************************"<<endl;
 //	Hausdorff = computeHausdorff(list,LUT);
 
     //feature # 0: Number of Nodes
