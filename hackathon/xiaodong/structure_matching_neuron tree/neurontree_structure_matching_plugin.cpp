@@ -517,7 +517,7 @@ bool NeurontreeStructureMatching::dofunc(const QString & func_name, const V3DPlu
 				int begin = splitted[0].toInt();
 				int end = splitted[1].toInt();
 				//for debug
-				printf("%s %d %s %d \n",tr("positin:"), begin, tr(","),end);
+                printf("positin: %d , %d \n", begin,end);
 
 				for(int j=begin; j<=end; j++)
 				{

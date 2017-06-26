@@ -69,7 +69,7 @@ unix {
 }
 
 TARGET = $$qtLibraryTarget(neurontree_structure_matching)
-DESTDIR	= $$VAA3DPATH/bin/plugins/vr_neuron_search/vr_nmotif_0/
+DESTDIR	= $$VAA3DPATH/bin/plugins/vr_neuron_search/vr_nmotif_shu/
 
 # TARGET = $$qtLibraryTarget(neurontree_structure_matching)
 # DESTDIR = $$VAA3DPATH/bin/plugins/neurontree_structure_matching/
