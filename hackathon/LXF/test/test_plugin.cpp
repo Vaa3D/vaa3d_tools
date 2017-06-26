@@ -88,15 +88,15 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-        if(infiles.empty())
-        {
-            fprintf (stderr, "Need input image. \n");
-            return false;
-        }
-        else
-            PARA.inimg_file = infiles[0];
+//        if(infiles.empty())
+//        {
+//            fprintf (stderr, "Need input image. \n");
+//            return false;
+//        }
+//        else
+//            PARA.inimg_file = infiles[0];
         int k=0;
-        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+//        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";k++;
         if(!inneuron_file.isEmpty())
             PARA.nt = readSWC_file(inneuron_file);
@@ -104,9 +104,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     //    name_list.append(inneuron_file);
         printf("****************************readSWC_1_done************************************");
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
-        NeuronTree file_inmarkers;
+//        NeuronTree file_inmarkers;
         if(!inmarker_file.isEmpty())
-            file_inmarkers = readSWC_file(inmarker_file);
+            PARA.listLandmarks = readSWC_file(inmarker_file);
 
 
 
@@ -118,17 +118,17 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         printf("****************************readSWC_2_done************************************");
 
-        NeuronSWC t;
-        for(int i = 0; i < file_inmarkers.listNeuron.size(); i++)
-        {
-            t.n = file_inmarkers.listNeuron[i].n;
-            t.x = file_inmarkers.listNeuron[i].x;
-            t.y = file_inmarkers.listNeuron[i].y;
-            t.z = file_inmarkers.listNeuron[i].z;
-            t.r = file_inmarkers.listNeuron[i].r;
-            t.pn = file_inmarkers.listNeuron[i].pn;
-            PARA.listLandmarks.listNeuron.append(t);
-        }
+//        NeuronSWC t;
+//        for(int i = 0; i < file_inmarkers.listNeuron.size(); i++)
+//        {
+//            t.n = file_inmarkers.listNeuron[i].n;
+//            t.x = file_inmarkers.listNeuron[i].x;
+//            t.y = file_inmarkers.listNeuron[i].y;
+//            t.z = file_inmarkers.listNeuron[i].z;
+//            t.r = file_inmarkers.listNeuron[i].r;
+//            t.pn = file_inmarkers.listNeuron[i].pn;
+//            PARA.listLandmarks.listNeuron.append(t);
+//        }
 
         ml_func(callback,parent,PARA,bmenu);
 	}
@@ -212,26 +212,26 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     }
     else
     {
-        int datatype = 0;
-        printf("****************************this is 2************************************");
-        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
-        {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
-            return;
-        }
-        printf("****************************this is 3************************************");
-        if(PARA.channel < 1 || PARA.channel > in_sz[3])
-        {
-            fprintf (stderr, "Invalid channel number. \n");
-            return;
-        }
-        printf("****************************this is 4************************************");
+//        int datatype = 0;
+//        printf("****************************this is 2************************************");
+//        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+//        {
+//            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+//            return;
+//        }
+//        printf("****************************this is 3************************************");
+//        if(PARA.channel < 1 || PARA.channel > in_sz[3])
+//        {
+//            fprintf (stderr, "Invalid channel number. \n");
+//            return;
+//        }
+//        printf("****************************this is 4************************************");
 
-        N = in_sz[0];
-        M = in_sz[1];
-        P = in_sz[2];
-        sc = in_sz[3];
-        c = PARA.channel;
+//        N = in_sz[0];
+//        M = in_sz[1];
+//        P = in_sz[2];
+//        sc = in_sz[3];
+//        c = PARA.channel;
 
     }
     //main neuron machine learning code
