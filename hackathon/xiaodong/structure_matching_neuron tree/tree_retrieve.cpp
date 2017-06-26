@@ -151,7 +151,7 @@ int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_lis
 
 	//vector<V3DLONG>	retrieved_id;
 	int rej_thres = 3;//if top 5 candidates of both method have no intersection, consider this query does not have matched neuron
-	int retrieved_num = 3;
+	int retrieved_num = 1;
 
 	if (!compute_intersect(retrieved_all, retrieved_id, retrieved_num, rej_thres))
 	{

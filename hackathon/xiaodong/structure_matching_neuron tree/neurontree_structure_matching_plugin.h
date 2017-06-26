@@ -11,6 +11,16 @@
 
 #include <iostream>
 #include <global_neuron_feature.h>
+//
+typedef struct 
+{
+    double x_min;
+	double x_max;
+	double y_min;
+	double y_max;
+	double z_min;
+	double z_max;
+}CubeBox;
 
 class NeurontreeStructureMatching : public QObject, public V3DPluginInterface2_1
 {
@@ -30,6 +40,12 @@ public:
 	bool GetSubTreesSWC(const NeuronTree & nt, int window_size, int step, const QString & filepath, QList<NeuronTree> & nt_list);
 
 };
+
+//extern functions
+bool SeperateNeuronTreesSWC(const QString & filepath, QList<NeuronTree> & nt_list);
+bool GetNeuronTreeFromCubeBox(const QList<CubeBox> & list_box, const NeuronTree & nt_ori, QList<NeuronTree> & list_nt);
+
+
 
 #endif
 
