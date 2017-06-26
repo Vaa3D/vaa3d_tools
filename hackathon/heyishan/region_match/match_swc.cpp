@@ -198,7 +198,7 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
     }
     cout<<"max_dist="<<max_dist;
     cout<<"candidates="<<candidates.size()<<endl;
-    double ADD_LENGTH=2;
+    double ADD_LENGTH=4;
     S_length=max_dist+ADD_LENGTH;
     for(V3DLONG i=0;i<mk.listNeuron.size();i++)
     {
@@ -253,9 +253,9 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
 
     QString s_mk_sorted_name="./temp/s_mk_sorted.swc";
     export_list2file(s_mk_sorted.listNeuron,s_mk_sorted_name,s_mk_sorted_name);
-    QString cube1_name="./temp/cube1.swc";
-    QList<NeuronSWC> cube1=s_forest[1].listNeuron;
-    export_list2file(cube1,cube1_name,cube1_name);
+//    QString cube1_name="./temp/cube1.swc";
+//    QList<NeuronSWC> cube1=s_forest[1].listNeuron;
+//    export_list2file(cube1,cube1_name,cube1_name);
 
     return;
 }
