@@ -1,5 +1,7 @@
+#include "region_match_plugin.h"
 #include "make_consensus.h"
-
+#include "neuron_utilities/sort_swc.h"
+#include <stdio.h>
 #define VOID 1000000000
 #define min(a,b) (a)<(b)?(a):(b)
 #define max(a,b) (a)>(b)?(a):(b)
@@ -14,7 +16,7 @@ struct Boundary
     double maxz;
 };
 
-void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk)
+void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk, V3DPluginCallback2 &callback)
 {
     V3DLONG pattern_size = pattern.listNeuron.size();
     V3DLONG nt_size = nt.listNeuron.size();
@@ -74,5 +76,82 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
            }
        }
    }
+   vector<QString> file_list;
+   vector<QString> file_list_bn;
+   for(int i=0; i<trees.size();i++)
+   {
+       NeuronTree sorted_tree;
+       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) return;
+       char buf[10];
+       string num_i;
+       sprintf(buf, "%d", i+1);
+       num_i = buf;
+       QString savename = "./temp1/pattern_" + QString::fromStdString(num_i) + ".swc";
+       QString savename_bn = "./temp2/pattern_" + QString::fromStdString(num_i) + ".swc";
+       file_list.push_back(savename);
+       file_list_bn.push_back(savename_bn);
+       writeSWC_file(savename,sorted_tree);
+   }
+
+   V3DPluginArgItem arg;
+   V3DPluginArgList input_bn;
+   V3DPluginArgList output_bn;
+
+   // call blastneuron for pre_processing
+   for(int i=0; i<trees.size();i++)
+   {
+      input_bn.clear();
+       QString tree_file=file_list[i];
+       QString out_file=file_list_bn[i];
+       QString para_nt="#i "+tree_file +" #o "+ out_file +" #l 1 #s 1 #t 2 #r 0";
+       cout<<para_nt.toStdString().c_str()<<endl;
+
+       arg.type="random";vector<char*> arg_input_bn;
+       string fileName_Qstring(para_nt.toStdString());char* fileName_string = new char[fileName_Qstring.length() +1]; strcpy(fileName_string, fileName_Qstring.c_str());
+
+       arg_input_bn.push_back(fileName_string);
+
+       arg.p = (void*) & arg_input_bn; input_bn<< arg;
+       arg.type="random";vector<char*> arg_bn_para; arg_bn_para.push_back(fileName_string);arg.p = (void *) & arg_bn_para; input_bn << arg;
+
+       QString plugin_name_bn = "blastneuron/libblastneuron"; //Need change
+       QString func_name_bn = "pre_processing";
+       callback.callPluginFunc(plugin_name_bn,func_name_bn,input_bn,output_bn);
+       arg_input_bn.clear();
+
+   }
+
+    // call consensus
+   cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0\n"<<endl;
+
+
+//       V3DPluginArgItem arg2;
+       V3DPluginArgList input_consensus;
+       V3DPluginArgList output_consensus;
+       //QString files_name="./temp1/*.swc";
+       QString consensus_result = "./temp2/consensus.swc";
+       arg.type = "random";vector<char*> arg_input_consensus;
+       for(int i=0;i<file_list_bn.size();i++)
+       {
+           QString files_name = file_list_bn[i];
+           string fileName_Qstring(files_name.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+           arg_input_consensus.push_back(fileName_string);
+       }
+       arg.p = (void *) & arg_input_consensus;
+       input_consensus<< arg;
+
+       arg.type = "random";vector<char*> arg_consensus_para; arg_consensus_para.push_back("3");arg_consensus_para.push_back("5");arg_consensus_para.push_back("0");
+       arg.p = (void *) & arg_consensus_para; input_consensus << arg;
+
+       arg.type = "random";vector<char*> arg_output;
+       string fileName_Qstring2(consensus_result.toStdString());char* fileName_string2 =  new char[fileName_Qstring2.length() + 1]; strcpy(fileName_string2, fileName_Qstring2.c_str());
+       arg_output.push_back(fileName_string2); arg.p = (void *) & arg_output; output_consensus<< arg;
+
+       QString full_plugin_name_consensus = "consensus_swc";
+       QString func_name_consensus = "consensus_swc";
+       callback.callPluginFunc(full_plugin_name_consensus,func_name_consensus,input_consensus,output_consensus);
+
+       mk = readSWC_file(consensus_result);
+
 
 }

@@ -1,4 +1,4 @@
-//pre_processing_main.cpp
+﻿//pre_processing_main.cpp
 //main function for pre processing (blastneron)
 //by Yinan Wan
 //2012-06-02
@@ -46,11 +46,11 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 		return false;
 	}
 	
-	
-	char * paras = paralist->at(0);
-	int argc = 1;
-	enum {kArgMax = 64};
-	char *argv[kArgMax];
+
+    char * paras = paralist->at(0);
+    int argc = 1;
+    enum {kArgMax = 64};
+    char *argv[kArgMax];
 	
 	//parsing parameters
 	if (paras)
@@ -62,11 +62,11 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 				paras[i] = '-';
 		}
 
-		char* pch = strtok(paras, " ");
+        char* pch = strtok(paras, " ");
 		while (pch && argc<kArgMax)
-		{
-			argv[argc++] = pch;
-			pch = strtok(NULL, " ");
+        {
+            argv[argc++] = pch;
+            pch = strtok(NULL, " ");
 		}
 	}
 	else
@@ -87,10 +87,10 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
     static char optstring[]="i:o:l:s:t:r:";
 	extern char * optarg;
 	extern int optind, opterr;
-		
-	while ((c = getopt(argc, argv, optstring))!=-1)
-	{
-		switch (c)
+    optind = 1;
+    while ((c = getopt(argc, argv, optstring))!=-1)
+    {
+        switch (c)
 		{
 			case 'h':
 				printHelp_pre_processing();
@@ -165,7 +165,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	}
 
 
-	QString qs_input(dfile_input);
+    QString qs_input(dfile_input);
 	NeuronTree nt = readSWC_file(qs_input);
 	QString outfileName = QString(dfile_result);
 	if (dfile_result==NULL)

@@ -68,15 +68,15 @@ bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & in
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-        if(infiles.empty())
-        {
-            fprintf (stderr, "Need input image. \n");
-            return false;
-        }
-        else
-            PARA.inimg_file = infiles[0];
+//        if(infiles.empty())
+//        {
+//            fprintf (stderr, "Need input image. \n");
+//            return false;
+//        }
+//        else
+//            PARA.inimg_file = infiles[0];
         int k=0;
-        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+//        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";k++;
         if(!inneuron_file.isEmpty())
             PARA.nt_search = readSWC_file(inneuron_file);
@@ -85,7 +85,6 @@ bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & in
         if(!inmarker_file.isEmpty())
             //file_inmarkers=readSWC_file(inmarker_file).listNeuron;
             PARA.nt_pattern=readSWC_file(inmarker_file);
-
         ml_func(callback,parent,PARA,bmenu);
 	}
     else if (func_name == tr("help"))
@@ -123,22 +122,21 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         PARA.nt_search = readSWC_file("original_vr_neuron.swc");
         PARA.nt_pattern = readSWC_file("areaofinterest.swc");
 
-        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
-        //match_swc(PARA.nt_search,mk,s_mk,s_forest);
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+        match_swc(PARA.nt_search,mk,s_mk,s_forest);
+        //substructure_retrieve(s_mk,
+        //calculate_morph(PARA.nt_search,s_forest,s_mk,);
 
     }
     else
     {
-        make_consensus(PARA.nt_search,PARA.nt_pattern,mk);
-        //match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
+        make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+        match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
     }
-
-    //main neuron machine learning code
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
 
-    //Output
     //main neuron machine learning code
     QList <NeuronSWC> list_pattern = PARA.nt_pattern.listNeuron;
     QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
