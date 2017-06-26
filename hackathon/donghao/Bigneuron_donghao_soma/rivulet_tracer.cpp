@@ -333,18 +333,6 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   cout<<"test: dims[0] "<<dims[0]<<", dims[1] "<<dims[1]<<", dims[2] "<<dims[2]<<endl;
   //crop soma region into a tif image
   Image3<unsigned char>* somaimg;
-  somaimg = img->manualcrop(soma_bounding_box);
-  this->soma_img = somaimg;
-
-  Image3<unsigned char>* somaimgwhole;
-  somaimgwhole = img->region_threshold(soma_bounding_box, threshold);
-//  this->soma_img_whole = somaimgwhole;
-
-
-  cout<<"test: "<<"before the binarization"<<endl;
-//  this->soma_img_whole = this->soma_img_whole->binarize(3);
-  cout<<"test: after the binarization"<<endl;
-
   int a1[3][3][3] = {
                 {
                {1, 1, 1},
@@ -362,15 +350,6 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
                {1, 1, 1}
                 }
              };
-  Image3<unsigned char>* somaimgwhole2;
-  somaimgwhole2 = somaimg->snake_dilated(a1);
-  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
-  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
-  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
-  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
-  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
-  somaimgwhole2 = somaimgwhole2->snake_dilated(a1);
-  this->soma_img_whole = somaimgwhole2;
   int a2[3][3][3] = {
                 {
                {0, 1, 0},
@@ -507,6 +486,26 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
                {0, 1, 0}
                 }
              };
+  somaimg = img->manualcrop(soma_bounding_box);
+  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a1);
+  this->soma_img = somaimg;
+
+  Image3<unsigned char>* somaimgwhole;
+  somaimgwhole = img->region_threshold(soma_bounding_box, threshold);
+//  this->soma_img_whole = somaimgwhole;
+
+
+  cout<<"test: "<<"before the binarization"<<endl;
+//  this->soma_img_whole = this->soma_img_whole->binarize(3);
+  cout<<"test: after the binarization"<<endl;
+
+  this->soma_img_whole = somaimgwhole;
+
 
   cout<<"a1[0][0][0] = "<<a1[0][0][0]<<"\n";
   cout<<"a1[0][2][1] = "<<a1[0][2][1]<<"\n";
