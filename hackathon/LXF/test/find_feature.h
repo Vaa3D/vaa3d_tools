@@ -33,8 +33,10 @@ bool compute_intersect(vector<V3DLONG> l1, vector<V3DLONG> l2, vector<V3DLONG> &
 bool read_matrix(const char* file_name, QList<double*> & matrix, V3DLONG line, V3DLONG width);
 bool loadFeatureFile(QString file_name, QList<double*>&  morph_list, QList<double*> & gmi_list, QStringList & nameList);
 bool match_little_pattern(vector<NeuronTree> v_nt,NeuronTree nt,vector<V3DLONG> &num_out,QList<double*> m_morph_list, QList<double*> m_gmi_list,QList<double* > v_morph_list,QList<double* > v_gmi_list);
-bool get_feature(NeuronTree v_nt,NeuronTree nt,QList<double*> m_morph_list, QList<double*> m_gmi_list,QList<double*> v_morph_list,QList<double*> v_gmi_list);
-
+bool get_feature(vector<NeuronTree> &v_nt,NeuronTree &nt,vector<V3DLONG> &num_sorted);
+double seq_sorted(V3DLONG v_nt_size,double *seq);
+double find_biggest_f(V3DLONG v_nt_size,double *seq);
+double find_shortest_f(V3DLONG v_nt_size,double *seq);
 
 
 #endif // FIND_FEATURE_H

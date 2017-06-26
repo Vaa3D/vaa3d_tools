@@ -10,8 +10,10 @@
 #include "region_match_plugin.h"
 
 #include "match_swc.h"
+#include "get_substructure.h"
 #include "make_consensus.h"
 #include "neuron_utilities/sort_swc.h"
+
 Q_EXPORT_PLUGIN2(region_match, region_match);
 
 using namespace std;
@@ -119,8 +121,9 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     NeuronTree s_mk;
     NeuronTree mk;
     vector<vector<V3DLONG> > p_to_cube;
+    vector<V3DLONG> selected_cube;
     vector<V3DLONG> num_sorted;
-    for(int i=0;i<2;i++) num_sorted.push_back(i);
+    //for(int i=0;i<2;i++) num_sorted.push_back(i);
     if(bmenu)
     {
         PARA.nt_search = readSWC_file("original_vr_neuron.swc");
@@ -136,10 +139,12 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
 
-
+    NeuronTree s_mk_sorted;
     make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
-    match_swc(PARA.nt_search,mk,s_mk,s_forest,p_to_cube);
-
+    match_swc(PARA.nt_search,mk,s_mk,s_mk_sorted,s_forest,p_to_cube);
+    get_substructure(s_mk_sorted,s_forest,selected_cube);
+    num_sorted=selected_cube;
+    cout<<"num_sorted.size="<<num_sorted.size()<<endl;
     cout<<p_to_cube.size()<<endl;
     vector<V3DLONG> result_points;
     for(int i=0; i<num_sorted.size();i++)
@@ -166,18 +171,6 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         list_search[id].type =2;
     }
     export_list2file(list_search,"updated_vr_neuron.swc","updated_vr_neuron.swc");
-
-
-//    if(list_pattern.size()!=0 || list_search.size()!=0)
-//    {
-//        for(V3DLONG i = 0; i < list_search.size(); i++)
-//        {
-//            PARA.nt_search.listNeuron[i].type += 1;
-//        }
-//    }
-
-//    //Output
-//    writeSWC_file("updated_vr_neuron.swc",PARA.nt_search);
 
 //    if(!bmenu)
 //    {

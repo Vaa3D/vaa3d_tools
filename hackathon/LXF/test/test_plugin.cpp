@@ -253,15 +253,20 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 
    // double* m_feature_morph,m_feature_gmi;
 
-
-    QList<double*> v_morph_list,v_gmi_list,m_morph_list,m_gmi_list;
+    vector<V3DLONG> num_sorted;
+  //  QList<double*> v_morph_list,v_gmi_list,m_morph_list,m_gmi_list;
      cout<<"******************This is match*********************"<<endl;
    // match_little_pattern(s_forest,s_mk,retrieved_all,R);
     // s_forest.push_back(PARA.listLandmarks);
    // match_little_pattern(s_forest,PARA.listLandmarks,num_out,m_feature_morph,m_feature_gmi,v_morph_list,v_gmi_list);
  s_forest.push_back(PARA.nt);
  //match_little_pattern(s_forest,PARA.listLandmarks,num_out,m_morph_list,m_gmi_list,v_morph_list,v_gmi_list);
- get_feature(PARA.nt,PARA.listLandmarks,m_morph_list,m_gmi_list,v_morph_list,v_gmi_list);
+ get_feature(s_forest,PARA.listLandmarks,num_sorted);
+ for(V3DLONG i=0;i<s_forest.size();i++)
+ {
+     cout<<"i="<<i<<endl;
+     cout<<"num_sorted="<<num_sorted[i]<<endl;
+ }
 
 //cout<<"size = "<<v_morph_list.size();
 
