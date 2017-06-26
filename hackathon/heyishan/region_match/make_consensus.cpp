@@ -86,8 +86,8 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
        string num_i;
        sprintf(buf, "%d", i+1);
        num_i = buf;
-       QString savename = "./temp1/pattern_" + QString::fromStdString(num_i) + ".swc";
-       QString savename_bn = "./temp2/pattern_" + QString::fromStdString(num_i) + ".swc";
+       QString savename = "./temp/pattern_" + QString::fromStdString(num_i) + ".swc";
+       QString savename_bn = "./temp/pattern_bn_" + QString::fromStdString(num_i) + ".swc";
        file_list.push_back(savename);
        file_list_bn.push_back(savename_bn);
        writeSWC_file(savename,sorted_tree);
@@ -128,8 +128,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
 //       V3DPluginArgItem arg2;
        V3DPluginArgList input_consensus;
        V3DPluginArgList output_consensus;
-       //QString files_name="./temp1/*.swc";
-       QString consensus_result = "./temp2/consensus.swc";
+       QString consensus_result = "./temp/consensus.swc";
        arg.type = "random";vector<char*> arg_input_consensus;
        for(int i=0;i<file_list_bn.size();i++)
        {
