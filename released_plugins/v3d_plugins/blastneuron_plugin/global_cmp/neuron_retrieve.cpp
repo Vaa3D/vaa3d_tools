@@ -28,7 +28,16 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 
 	//pre-process the query neuron
     double prune_size = 2.0;
-    NeuronTree query_preprocessed = pre_process(query, step_size,prune_size);
+	NeuronTree query_preprocessed;
+	//if the query tree is small, no preprocess, //modified by Xiaodong Yue, 2017.06.26
+    if(query.listNeuron.size()>20)
+	{
+		query_preprocessed = pre_process(query, step_size,prune_size);
+	}
+	else
+	{
+		query_preprocessed = query;
+	}
 	
 	double *qf;
 	int *sbj;
@@ -51,10 +60,12 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 	if (method_code==1)
 	{
 		computeFeature(query_preprocessed, qf);
+		printf("tag 4: computeFeature finished! \n");
 	}
 	else if (method_code==2)
 	{
 		computeGMI(query_preprocessed, qf);
+		printf("tag 4: computeGMI finished! \n");
 	}
 
 	printf("(2) normalization.\n");
@@ -103,6 +114,8 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 	if (sbj) {delete []sbj; sbj=NULL;}
 	if (score) {delete[]score; score=NULL;}
 	
+	printf("tag 4: neuron retrieve finished! \n");
+
 	return true;
 }
 
@@ -187,8 +200,40 @@ bool print_result(vector<V3DLONG> result, const char* file_name, QStringList nam
 	return true;
 }
 
-bool compute_intersect(vector< vector<V3DLONG> > & list, vector<V3DLONG> & result, int number, int rej_thres)
+bool compute_intersect(vector<vector<V3DLONG>> & list, vector<V3DLONG> & result, int number, int rej_thres)
 {
+	result.clear();
+	V3DLONG stratNum = list.size();
+	V3DLONG neuronNum = list[0].size();
+	printf("Tag5: neuronNum: %d \n", neuronNum);
+	double * rank_sum = new double[neuronNum];
+
+	for (V3DLONG i=0;i<neuronNum;i++)
+		rank_sum[i] = 0;
+	for (V3DLONG i=0;i<neuronNum;i++)
+		for (V3DLONG j=0;j<stratNum;j++)
+		{
+			int ind = list[j][i];
+			printf("Tag5: ind of rank_sum: %d \n", ind);
+			rank_sum[ind] += i;
+		}
+	
+	int * idx = new int[number];
+	double * score = new double[number];
+	for (V3DLONG i=0;i<neuronNum;i++)
+		rank_sum[i] = -rank_sum[i];
+	pick_max_n(idx, rank_sum, number, neuronNum, score);
+
+	for (int i=0;i<number;i++)
+		result.push_back(idx[i]);
+	if (rank_sum) {delete []rank_sum; rank_sum=NULL;}
+	if (idx) {delete []idx; idx=NULL;}
+	if (score) {delete []score; score=NULL;}
+	return true;
+
+
+
+	/*
 	result.clear();
 	V3DLONG stratNum = list.size();
 	V3DLONG neuronNum = list[0].size();
@@ -197,13 +242,18 @@ bool compute_intersect(vector< vector<V3DLONG> > & list, vector<V3DLONG> & resul
 		rank_sum[i] = 0;
 	for (V3DLONG i=0;i<neuronNum;i++)
 		for (V3DLONG j=0;j<stratNum;j++)
-			rank_sum[list[j][i]] += i;
+		{
+			int ind = list[j][i];
+			printf("Tag5: ind of rank_sum: %d \n", ind);
+			rank_sum[ind] += i;
+		}
 	
 	int * idx = new int[number];
 	double * score = new double[number];
 	for (V3DLONG i=0;i<neuronNum;i++)
 		rank_sum[i] = -rank_sum[i];
 	pick_max_n(idx, rank_sum, number, neuronNum, score);
+	*/
 /*	for (V3DLONG siz=1;siz<=l1.size();siz++)
 	{
 		result.clear();
@@ -220,11 +270,13 @@ bool compute_intersect(vector< vector<V3DLONG> > & list, vector<V3DLONG> & resul
 			}
 		}
 	}*/
+	/*
 	for (int i=0;i<number;i++)
 		result.push_back(idx[i]);
 	if (rank_sum) {delete []rank_sum; rank_sum=NULL;}
 	if (idx) {delete []idx; idx=NULL;}
 	if (score) {delete []score; score=NULL;}
+	*/
 	return true;
 }
 bool compute_intersect(vector<V3DLONG> l1, vector<V3DLONG> l2, vector<V3DLONG> & result, double thres)
