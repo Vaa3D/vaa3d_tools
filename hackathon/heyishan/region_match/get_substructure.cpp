@@ -36,9 +36,9 @@ void get_substructure(const NeuronTree &s_mk, const vector<NeuronTree>&s_forest,
     vector<int> feature_codes, norm_codes;
     vector<vector<V3DLONG> > retrieved_all;
     feature_codes.push_back(1);
-    //feature_codes.push_back(2);
+    feature_codes.push_back(2);
     norm_codes.push_back(1);
-    norm_codes.push_back(2);
+    //norm_codes.push_back(2);
     for  (int i=0;i<feature_codes.size();i++)
     {
         for (int j=0;j<norm_codes.size();j++)

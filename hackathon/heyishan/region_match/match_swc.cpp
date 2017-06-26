@@ -95,8 +95,8 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
     // temp save
     QString resample_name="mk_resample.swc";
     QString sort_name="mk_sort.swc";
-    export_list2file(mk_resample.listNeuron,resample_name,resample_name);
-    export_list2file(mk.listNeuron,sort_name,sort_name);
+    //export_list2file(mk_resample.listNeuron,resample_name,resample_name);
+    //export_list2file(mk.listNeuron,sort_name,sort_name);
 
 //    nt=nt_raw;
 //    mk=mk_resample;
