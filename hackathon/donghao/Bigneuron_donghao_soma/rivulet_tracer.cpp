@@ -496,23 +496,40 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   somaimg = somaimg->snake_dilated(a7);
   somaimg = somaimg->snake_dilated(a8);
   somaimg = somaimg->snake_dilated(a9);
+  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a2);
+  somaimg = somaimg->snake_dilated(a3);
+  somaimg = somaimg->snake_dilated(a4);
+  somaimg = somaimg->snake_dilated(a5);
+  somaimg = somaimg->snake_dilated(a6);
+  somaimg = somaimg->snake_dilated(a7);
+  somaimg = somaimg->snake_dilated(a8);
+  somaimg = somaimg->snake_dilated(a9);
+//  somaimg = somaimg->snake_eroded(a1);
+//  somaimg = somaimg->snake_eroded(a2);
+//  somaimg = somaimg->snake_eroded(a3);
+//  somaimg = somaimg->snake_eroded(a4);
+//  somaimg = somaimg->snake_eroded(a5);
+//  somaimg = somaimg->snake_eroded(a6);
+//  somaimg = somaimg->snake_eroded(a7);
+//  somaimg = somaimg->snake_eroded(a8);
+//  somaimg = somaimg->snake_eroded(a9);
   this->soma_img = somaimg;
-
+  bool check_value = true;
+  bool check_value2 = false;
+  bool check_value3;
+  check_value3 = check_value & check_value2;
+  cout<<"test: check_value3 is "<<check_value3<<endl;
   Image3<unsigned char>* somaimgwhole;
   somaimgwhole = img->region_threshold(soma_bounding_box, threshold);
-//  this->soma_img_whole = somaimgwhole;
-
-
   cout<<"test: "<<"before the binarization"<<endl;
-//  this->soma_img_whole = this->soma_img_whole->binarize(3);
   cout<<"test: after the binarization"<<endl;
-
+  cout<<"test: The maximum value of the somaimg "<<(int) somaimg->max()<<endl;
+  cout<<"test: The sum value of the somaimg is "<<somaimg->sum()<<endl;
   this->soma_img_whole = somaimgwhole;
-
-
-  cout<<"a1[0][0][0] = "<<a1[0][0][0]<<"\n";
-  cout<<"a1[0][2][1] = "<<a1[0][2][1]<<"\n";
-  cout<<"a1[2][2][1] = "<<a1[2][2][1]<<"\n";
+  cout<<"test: a1[0][0][0] = "<<a1[0][0][0]<<"\n";
+  cout<<"test: a1[0][2][1] = "<<a1[0][2][1]<<"\n";
+  cout<<"test: a1[2][2][1] = "<<a1[2][2][1]<<"\n";
   return swc;
 }
 
@@ -534,7 +551,7 @@ void show_progress(float perc, long completed, long total) {
 
 SWC *R2Tracer::scentre() {
   // // Fast marching distance transform proposed in APP2
-  cout<<"Function scentre is been called"<<endl;
+  cout<<"test: Function scentre is been called"<<endl;
   if (!this->silent) cout << "Step Two : Boundary Distance Transform Time Spent is ";
   long *dims = this->bimg->get_dims();
   float *bdist1d = NULL;
@@ -549,12 +566,12 @@ SWC *R2Tracer::scentre() {
   // Find the source point
   long max_dt_idx = dt->max_idx_1d();
   long max_dt = dt->get_1d(max_dt_idx);
-  cout<<"max_dt_idx: "<<(int) max_dt_idx<<endl;
+  cout<<"test: max_dt_idx: "<<(int) max_dt_idx<<endl;
   Point<float> max_dt_point(max_dt_idx, this->bimg->get_dims());
-  cout<<"test : Centroid x "<<max_dt_point.x<<"Centroid y "<<max_dt_point.y<<"Centroid z "<<max_dt_point.z<<endl;
+  cout<<"test: Centroid x "<<max_dt_point.x<<", Centroid y "<<max_dt_point.y<<", Centroid z "<<max_dt_point.z<<endl;
   this->soma = new Soma(max_dt_point, max_dt * 2);
 
-  if(!this->silent) cout<<"Step Three: Somatic Mask Making Time Spent is ";
+  if(!this->silent) cout<<"Step Three : Somatic Mask Making Time Spent is ";
   start_time = clock();
   this->soma->make_mask(this->bimg);
   if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
@@ -563,7 +580,7 @@ SWC *R2Tracer::scentre() {
   // if (!this->silent) cout << "(3/6) == Making Speed Image...";
   start_time = clock();
   Image3<double> *speed = this->makespeed(dt);
-  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
+//  if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
 
 
   // Marching on the Speed Image
@@ -640,7 +657,7 @@ void R2Tracer::prep() {
   cout<<"test : Centroid x "<<max_dt_point.x<<"Centroid y "<<max_dt_point.y<<"Centroid z "<<max_dt_point.z<<endl;
   this->soma = new Soma(max_dt_point, max_dt * 2);
 
-  if(!this->silent) cout<<"Step Three: Somatic Mask Making Time Spent is ";
+  if(!this->silent) cout<<"Step Three : Somatic Mask Making Time Spent is ";
   start_time = clock();
   this->soma->make_mask(this->bimg);
   if(!this->silent) cout << (clock()-start_time) / double(CLOCKS_PER_SEC) <<"s"<<endl;
