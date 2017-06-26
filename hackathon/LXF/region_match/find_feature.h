@@ -27,10 +27,16 @@ void computeTree(const NeuronTree & nt);
 
 
 bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3DLONG>  & result, V3DLONG cand, int method_code, int norm_code);
-bool print_result(vector<V3DLONG> result, const char* file_name, QStringList name_list, const char* database_name, const char* query_name);
+bool print_result(vector<V3DLONG> result,const char* database_name, const char* query_name,vector<NeuronTree> &result_out,vector<V3DLONG> &num_out);
 bool compute_intersect(vector<vector<V3DLONG> > & l1,  vector<V3DLONG> & result, int thres, int rej_thres);
 bool compute_intersect(vector<V3DLONG> l1, vector<V3DLONG> l2, vector<V3DLONG> & result, double thres);
 bool read_matrix(const char* file_name, QList<double*> & matrix, V3DLONG line, V3DLONG width);
 bool loadFeatureFile(QString file_name, QList<double*>&  morph_list, QList<double*> & gmi_list, QStringList & nameList);
+bool match_little_pattern(vector<NeuronTree> v_nt,NeuronTree nt,vector<V3DLONG> &num_out,QList<double*> m_morph_list, QList<double*> m_gmi_list,QList<double* > v_morph_list,QList<double* > v_gmi_list);
+bool get_feature(vector<NeuronTree> &v_nt,NeuronTree &nt,vector<int> &num_sorted);
+double seq_sorted(V3DLONG v_nt_size,double *seq);
+double find_biggest_f(V3DLONG v_nt_size,double *seq);
+double find_shortest_f(V3DLONG v_nt_size,double *seq);
+
 
 #endif // FIND_FEATURE_H

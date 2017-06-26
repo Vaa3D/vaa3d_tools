@@ -261,7 +261,7 @@ class Image3 {
   }
 
   // The border is also skiped.
-
+  // The iterative snake dilation is completed.
   Image3<unsigned char> *snake_dilated(int (&kernel)[3][3][3]) {
     Point<long> p;
     Point<long> p2;
@@ -280,7 +280,7 @@ class Image3 {
                         p2.x = p2.x -2 + i;
                         p2.y = p2.y -2 + j;
                         p2.z = p2.z -2 + k;
-                        if ((kernel[i][j][k] == 1) & (this->get(p2)>10))
+                        if ((kernel[i][j][k] == 1) & (this->get(p2)==200))
                         {
                             dilated->set(p, 200);
 //                            cout<<p2.x<<p2.y<<endl;
@@ -295,6 +295,42 @@ class Image3 {
             }
         }
     return dilated;
+  }
+
+  // The border is also skiped.
+  // The iterative snake erosin is under construction.
+  Image3<unsigned char> *snake_eroded(int (&kernel)[3][3][3]) {
+    Point<long> p;
+    Point<long> p2;
+    Image3<unsigned char> *eroded = new Image3<unsigned char>(this->dims);
+    bool check = false;
+    for (p.x = 1; p.x < this->dims[0] - 1; ++p.x)
+      for (p.y = 1; p.y < this->dims[1] - 1; ++p.y)
+        for (p.z = 1; p.z < this->dims[2] - 1; ++p.z) {
+            check = true;
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        p2 = p;
+                        p2.x = p2.x -2 + i;
+                        p2.y = p2.y -2 + j;
+                        p2.z = p2.z -2 + k;
+                        if((kernel[i][j][k] == 1) && (this->get(p2) != 200))
+                        {
+                            check = false;
+                        }
+                    }
+                }
+            }
+            if (check)
+            {
+                eroded->set(p, 200);
+            }
+        }
+    return eroded;
   }
 
 
@@ -337,7 +373,7 @@ class Image3 {
   }
 
   Image3<unsigned char> *region_threshold(CropRegion crop_region, float threshold) {
-    cout<<"test : region threshold has been tested"<<endl;
+    cout<<"test: region threshold has been tested"<<endl;
     std::vector<Point<long> > pts;
     Point<long> p;
     for (p.x = 0; p.x < this->dims[0]; ++p.x)
@@ -349,7 +385,7 @@ class Image3 {
     crop_dims[0] = this->dims[0];
     crop_dims[1] = this->dims[1];
     crop_dims[2] = this->dims[2];
-    cout<<"test: crop_dims[0]"<<crop_dims[0]<<"crop_dims[1]"<<crop_dims[1]<<"crop_dims[2]"<<crop_dims[2]<<endl;
+    cout<<"test: crop_dims[0]: "<<crop_dims[0]<<", crop_dims[1]: "<<crop_dims[1]<<", crop_dims[2]: "<<crop_dims[2]<<endl;
     long nvox = crop_dims[0] * crop_dims[1] * crop_dims[2];
     T* croped_data = new T[nvox];
     Point<long> p_crop;
@@ -530,8 +566,10 @@ class Image3 {
 
   long sum() {
     long s = 0;
+    cout<<"test: the number of voxels is "<<this->nvox<<endl;
     for (int i = 0; i < this->nvox; i++) {
       s += (long)this->data1d[i];
+//      cout<<"test: individual value :"<<this->data1d[i]<<endl;
     }
 
     return s;

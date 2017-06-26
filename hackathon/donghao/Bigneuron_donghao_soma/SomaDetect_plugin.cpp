@@ -213,7 +213,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
   R2Tracer *tracer = new R2Tracer();
   tracer->set_quality(PARA.quality);
   tracer->set_prune(PARA.prune);
-  cout<<"test : The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
+  cout<<"test: The threshold value for soma detection is "<<(int) PARA.threshold<<endl;
   SWC *swc = tracer->trace(img, PARA.threshold);
   cout<<"test: ...."<<endl;
   cout << "====== END ======" << endl;
@@ -276,14 +276,13 @@ void save_swc(SWC *swc, QString fname) {
 }
 
 void show_logo(){
-  // cout<<"\n\n\n";
-//   cout<<"8888888b.  d8b                   888          888           .d8888b.  \n"
-// "888   Y88b Y8P                   888          888          d88P  Y88b \n"
-// "888    888                       888          888                 888 \n"
-// "888   d88P 888 888  888 888  888 888  .d88b.  888888            .d88P \n"
-// "8888888P\"  888 888  888 888  888 888 d8P  Y8b 888           .od888P\"  \n"
-// "888 T88b   888 Y88  88P 888  888 888 88888888 888          d88P\"      \n"
-// "888  T88b  888  Y8bd8P  Y88b 888 888 Y8b.     Y88b.        888\"       \n"
-// "888   T88b 888   Y88P    \"Y88888 888  \"Y8888   \"Y888       888888888  \n\n\n\n";
-  cout<<"Soma Detection"<<endl;
+cout<<"    ________  ________  _____ ______   ________     "<<endl;
+cout<<"   |\\   ____\\|\\   __  \\|\\   _ \\  _   \\|\\   __  \\    "<<endl;
+cout<<"   \\ \\  \\___|\\ \\  \\|\\  \\ \\  \\\__\\ \\  \\ \\  \\|\\  \\   "<<endl;
+cout<<"    \\ \\_____  \\ \\  \\\\  \\ \\  \\|__| \\  \\ \\   __  \\  "<<endl;
+cout<<"     \\|____|\\  \\ \\  \\\\  \\ \\  \\    \\ \\  \\ \\  \\ \\  \\ "<<endl;
+cout<<"       ____\\_\\  \\ \\_______\\ \\__\\    \\ \\__\\ \\__\\ \\__\\ "<<endl;
+cout<<"      |\\_________\\|_______|\\|__|     \\|__|\\|__|\\|__| "<<endl;
+cout<<"      \\|_________|                                    "<<endl;
+cout<<"Soma Detection"<<endl;
 }
