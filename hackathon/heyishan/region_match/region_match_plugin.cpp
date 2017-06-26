@@ -11,6 +11,7 @@
 
 #include "match_swc.h"
 #include "make_consensus.h"
+#include "neuron_utilities/sort_swc.h"
 Q_EXPORT_PLUGIN2(region_match, region_match);
 
 using namespace std;
@@ -111,51 +112,77 @@ bool region_match::dofunc(const QString & func_name, const V3DPluginArgList & in
 
 void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
-    unsigned char* data1d = 0;
-    V3DLONG N,M,P,sc,c;
-    V3DLONG in_sz[4];
+//    unsigned char* data1d = 0;
+//    V3DLONG N,M,P,sc,c;
+//    V3DLONG in_sz[4];
     vector<NeuronTree> s_forest;
     NeuronTree s_mk;
     NeuronTree mk;
+    vector<vector<V3DLONG> > p_to_cube;
+    vector<V3DLONG> num_sorted;
+    for(int i=0;i<2;i++) num_sorted.push_back(i);
     if(bmenu)
     {
         PARA.nt_search = readSWC_file("original_vr_neuron.swc");
         PARA.nt_pattern = readSWC_file("areaofinterest.swc");
-
-        make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
-        match_swc(PARA.nt_search,mk,s_mk,s_forest);
         //substructure_retrieve(s_mk,
         //calculate_morph(PARA.nt_search,s_forest,s_mk,);
-
     }
     else
     {
-        make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
-        match_swc(PARA.nt_search,PARA.nt_pattern,s_mk,s_forest);
+        cout<<"In to dofunc."<<endl;
     }
 
     //// THIS IS WHERE THE DEVELOPERS SHOULD ADD THEIR OWN NEURON MACHINE LEARNING CODE
     cout<<"******************This is main function*********************"<<endl;
 
-    //main neuron machine learning code
-    QList <NeuronSWC> list_pattern = PARA.nt_pattern.listNeuron;
-    QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
 
-    if(list_pattern.size()!=0 || list_search.size()!=0)
+    make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+    match_swc(PARA.nt_search,mk,s_mk,s_forest,p_to_cube);
+
+    cout<<p_to_cube.size()<<endl;
+    vector<V3DLONG> result_points;
+    for(int i=0; i<num_sorted.size();i++)
     {
-        for(V3DLONG i = 0; i < list_search.size(); i++)
+        cout<<"num_sorted_size="<<num_sorted.size()<<endl;
+        V3DLONG id_cube=num_sorted[i];
+        cout<<"id_cube="<<id_cube<<endl;
+        vector<V3DLONG> ps_cube=p_to_cube[id_cube];
+        cout<<"ps_cube_size="<<ps_cube.size()<<endl;
+        for(int j=0;j<ps_cube.size();j++)
         {
-            PARA.nt_search.listNeuron[i].type += 1;
+            result_points.push_back(ps_cube[j]);
         }
     }
+    cout<<"result_points.size="<<result_points.size()<<endl;
+    vector<V3DLONG> result_points_set = result_points; // Could be better
 
-    //Output
-    writeSWC_file("updated_vr_neuron.swc",PARA.nt_search);
+    //QList <NeuronSWC> list_pattern = PARA.nt_pattern.listNeuron;
+    QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
 
-    if(!bmenu)
+    for(V3DLONG i =0; i<result_points_set.size();i++)
     {
-        if(data1d) {delete []data1d; data1d = 0;}
+        V3DLONG id=result_points_set[i];
+        list_search[id].type =2;
     }
+    export_list2file(list_search,"updated_vr_neuron.swc","updated_vr_neuron.swc");
+
+
+//    if(list_pattern.size()!=0 || list_search.size()!=0)
+//    {
+//        for(V3DLONG i = 0; i < list_search.size(); i++)
+//        {
+//            PARA.nt_search.listNeuron[i].type += 1;
+//        }
+//    }
+
+//    //Output
+//    writeSWC_file("updated_vr_neuron.swc",PARA.nt_search);
+
+//    if(!bmenu)
+//    {
+//        if(data1d) {delete []data1d; data1d = 0;}
+//    }
 
     //if(nt_output.listNeuron.size()>0) v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
     //if(marker_output.size()>0) v3d_msg(QString("Now you can drag and drop the generated marker fle [%1] into Vaa3D.").arg(marker_name.toStdString().c_str()),bmenu);
