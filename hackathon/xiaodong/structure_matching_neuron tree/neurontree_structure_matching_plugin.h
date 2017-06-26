@@ -38,6 +38,7 @@ public:
 
 	bool FindSimilarStructures(const NeuronTree & nt1, const NeuronTree & nt2);
 	bool GetSubTreesSWC(const NeuronTree & nt, int window_size, int step, const QString & filepath, QList<NeuronTree> & nt_list);
+	bool ReadSubTreesSWC(const QString & filepath, QList<NeuronTree> & nt_list);
 
 };
 
