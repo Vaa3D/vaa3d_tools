@@ -32,7 +32,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 QStringList region_match::menulist() const
 {
 	return QStringList() 
-        <<tr("tracing_func")
+        <<tr("tracing_menu")
 		<<tr("about");
 }
 
@@ -45,7 +45,7 @@ QStringList region_match::funclist() const
 
 void region_match::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("tracing_func"))
+    if (menu_name == tr("tracing_menu"))
 	{
         bool bmenu = true;
         input_PARA PARA;
