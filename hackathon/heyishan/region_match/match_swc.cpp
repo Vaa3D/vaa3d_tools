@@ -71,7 +71,7 @@ vector<V3DLONG> get_parent_child(V3DLONG id,NeuronTree &nt, vector<vector<V3DLON
     points.push_back(id);
     return points;
 }
-void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, vector<NeuronTree> &s_forest,vector<vector<V3DLONG> > &p_to_cube)
+void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronTree &s_mk_sorted,vector<NeuronTree> &s_forest,vector<vector<V3DLONG> > &p_to_cube)
 {
     if(nt_raw.listNeuron.size()==0 || mk_raw.listNeuron.size()==0)
     {
@@ -93,8 +93,8 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, vector<
     for(V3DLONG i=0; i<mk.listNeuron.size();i++){mk.hashNeuron.insert(mk.listNeuron[i].n, i);}
 
     // temp save
-    QString resample_name="/home/hys/Desktop/ml_neuron/data/mk_resample.swc";
-    QString sort_name="/home/hys/Desktop/ml_neuron/data/mk_sort.swc";
+    QString resample_name="./temp/mk_resample.swc";
+    QString sort_name="./temp/mk_sort.swc";
     export_list2file(mk_resample.listNeuron,resample_name,resample_name);
     export_list2file(mk.listNeuron,sort_name,sort_name);
 
@@ -204,7 +204,7 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, vector<
     {
         if (dist(mk.listNeuron[i],c_point)<S_length) s_mk.listNeuron.push_back(mk.listNeuron[i]);
     }
-    NeuronTree s_mk_sorted;
+
     if(s_mk.listNeuron.size()!=0)
     {
         V3DLONG sort_id=s_mk.listNeuron[0].n;
@@ -247,14 +247,13 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, vector<
         else {cout<<"cube is empty"<<endl;}
         s_forest.push_back(cube_sorted);
         p_to_cube.push_back(points);
-        cout<<"each points size = "<<points.size()<<endl;
     }
     cout<<"nt_size"<<nt.listNeuron.size()<<endl;
     cout<<"s_forest="<<s_forest.size()<<endl;
 
-    QString s_mk_sorted_name="/home/hys/Desktop/ml_neuron/data/s_mk_sorted.swc";
+    QString s_mk_sorted_name="./temp/s_mk_sorted.swc";
     export_list2file(s_mk_sorted.listNeuron,s_mk_sorted_name,s_mk_sorted_name);
-    QString cube1_name="/home/hys/Desktop/ml_neuron/data/cube1.swc";
+    QString cube1_name="./temp/cube1.swc";
     QList<NeuronSWC> cube1=s_forest[1].listNeuron;
     export_list2file(cube1,cube1_name,cube1_name);
 

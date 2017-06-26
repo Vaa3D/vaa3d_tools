@@ -71,7 +71,6 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
            if(curr.x>b.minx && curr.y>b.miny && curr.z>b.minz &&curr.x<b.maxx && curr.y<b.maxy&&curr.z<b.maxz)
            {
                trees[j].listNeuron.push_back(curr);
-               cout<<j<<endl;
                break;
            }
        }
