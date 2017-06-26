@@ -61,11 +61,6 @@ void get_substructure(const NeuronTree &s_mk, const vector<NeuronTree>&s_forest,
                 }
             }
             retrieved_all.push_back(retrieved_tmp);
-            for(int m=0;m<20;m++)
-            {
-                cout<<retrieved_tmp[m]<<"       ";
-            }
-            v3d_msg("1");
         }
 
     }
