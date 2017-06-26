@@ -335,19 +335,19 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   Image3<unsigned char>* somaimg;
   int a1[3][3][3] = {
                 {
-               {1, 1, 1},
-               {1, 1, 1},
-               {1, 1, 1}
+               {1, 0, 0},
+               {0, 1, 0},
+               {0, 0, 1}
                 },
                 {
-               {1, 1, 1},
-               {1, 1, 1},
-               {1, 1, 1}
+               {1, 0, 0},
+               {0, 1, 0},
+               {0, 0, 1}
                 },
                 {
-               {1, 1, 1},
-               {1, 1, 1},
-               {1, 1, 1}
+               {1, 0, 0},
+               {0, 1, 0},
+               {0, 0, 1}
                 }
              };
   int a2[3][3][3] = {
@@ -404,8 +404,8 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
   int a5[3][3][3] = {
                 {
                {0, 0, 0},
-               {0, 0, 0},
-               {1, 1, 1}
+               {1, 1, 1},
+               {0, 0, 0}
                 },
                 {
                {0, 0, 0},
@@ -413,8 +413,8 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
                {0, 0, 0}
                 },
                 {
-               {1, 1, 1},
                {0, 0, 0},
+               {1, 1, 1},
                {0, 0, 0}
                 }
              };
@@ -488,11 +488,14 @@ SWC *R2Tracer::trace(Image3<unsigned char> *img, float threshold) {
              };
   somaimg = img->manualcrop(soma_bounding_box);
   somaimg = somaimg->snake_dilated(a1);
-  somaimg = somaimg->snake_dilated(a1);
-  somaimg = somaimg->snake_dilated(a1);
-  somaimg = somaimg->snake_dilated(a1);
-  somaimg = somaimg->snake_dilated(a1);
-  somaimg = somaimg->snake_dilated(a1);
+  somaimg = somaimg->snake_dilated(a2);
+  somaimg = somaimg->snake_dilated(a3);
+  somaimg = somaimg->snake_dilated(a4);
+  somaimg = somaimg->snake_dilated(a5);
+  somaimg = somaimg->snake_dilated(a6);
+  somaimg = somaimg->snake_dilated(a7);
+  somaimg = somaimg->snake_dilated(a8);
+  somaimg = somaimg->snake_dilated(a9);
   this->soma_img = somaimg;
 
   Image3<unsigned char>* somaimgwhole;
