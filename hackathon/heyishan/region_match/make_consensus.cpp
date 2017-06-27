@@ -16,7 +16,7 @@ struct Boundary
     double maxz;
 };
 
-void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk, V3DPluginCallback2 &callback)
+bool make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk, V3DPluginCallback2 &callback)
 {
     V3DLONG pattern_size = pattern.listNeuron.size();
     V3DLONG nt_size = nt.listNeuron.size();
@@ -25,7 +25,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
     if(pattern_size==0 || nt_size==0)
     {
         cout<<"no input"<<endl;
-        return;
+        return false;
     }
     cout<<"size="<<pattern_size<<endl;
     Boundary temp;
@@ -80,7 +80,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
    for(int i=0; i<trees.size();i++)
    {
        NeuronTree sorted_tree;
-       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) return;
+       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) return false;
        char buf[10];
        string num_i;
        sprintf(buf, "%d", i+1);
@@ -123,7 +123,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
     // call consensus
    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0\n"<<endl;
 
-       if(file_list_bn.size()==0) return;
+       if(file_list_bn.size()==0) return false;
 //       V3DPluginArgItem arg2;
        V3DPluginArgList input_consensus;
        V3DPluginArgList output_consensus;
@@ -151,5 +151,5 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
 
        mk = readSWC_file(consensus_result);
 
-
+        return true;
 }
