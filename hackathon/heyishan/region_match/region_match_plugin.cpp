@@ -140,7 +140,12 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     cout<<"******************This is main function*********************"<<endl;
 
     NeuronTree s_mk_sorted;
-    make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+    if(!make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback))
+    {
+        cout<<"consensus failed ";
+        return;
+    }
+
     match_swc(PARA.nt_search,mk,s_mk,s_mk_sorted,s_forest,p_to_cube);
     get_substructure(s_mk_sorted,s_forest,selected_cube);
     num_sorted=selected_cube;
