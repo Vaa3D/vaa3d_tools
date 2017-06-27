@@ -41,7 +41,7 @@ public:
 	bool ReadSubTreesSWC(const QString & filepath, QList<NeuronTree> & nt_list);
 
 };
-
+ 
 //extern functions
 bool SeperateNeuronTreesSWC(const QString & filepath, QList<NeuronTree> & nt_list);
 bool GetNeuronTreeFromCubeBox(const QList<CubeBox> & list_box, const NeuronTree & nt_ori, QList<NeuronTree> & list_nt);

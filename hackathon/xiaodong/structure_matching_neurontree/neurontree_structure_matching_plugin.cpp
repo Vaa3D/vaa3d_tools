@@ -13,7 +13,7 @@
 #include "neuron_dist_func.h"
 #include "neuron_match_gui.h"
 #include "neuron_sim_scores.h"
-#include "customary_structs/vaa3d_neurontoolbox_para.h"
+#include "customary_structs/vaa3d_neurontoolbox_para.h" 
 #include "../swc_to_maskimage/filter_dialog.h"
 #include "sort_swc.h"
 #include "tree_retrieve.h"
@@ -76,7 +76,7 @@ bool SeperateNeuronTreesSWC(const QString & filepath, QList<NeuronTree> & nt_lis
 
 	return true;
 }
-
+ 
 //function for getting neuron trees in the defined bounding boxes, Xiaodong Yue, 2017.06.25
 bool GetNeuronTreeFromCubeBox(const QList<CubeBox> & list_box, const NeuronTree & nt_ori, QList<NeuronTree> & list_nt)
 {
