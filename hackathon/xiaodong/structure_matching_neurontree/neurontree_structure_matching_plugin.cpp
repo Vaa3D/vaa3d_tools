@@ -124,7 +124,7 @@ bool GetNeuronTreeFromCubeBox(const QList<CubeBox> & list_box, const NeuronTree 
 void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	//define the thresholds
-	int thd_nt_target = 5; //smallest size of the target tree
+	int thd_nt_target = 1; //smallest size of the target tree
 	double step_ratio = 0.25; //step for subtree searching
 
 	
@@ -271,7 +271,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 			nt_target = nt_list_target[p]; 
 
 			//check the target neuron tree, filter out the small tree
-			if(nt_target.listNeuron.size() < thd_nt_target)
+			if(nt_target.listNeuron.size() <= thd_nt_target)
 			{
 				v3d_msg(tr("There are not enough neurons in the surrounding box!"));
 				return;
@@ -310,6 +310,10 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 			printf("window size = %d \n", window_size);
 
 			int step = window_size * step_ratio;
+			if(step < 1) 
+				step = 1;
+
+
 			printf("%s %d \n","step = ", step);
 			//
 			
