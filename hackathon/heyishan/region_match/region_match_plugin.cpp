@@ -173,7 +173,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     for(V3DLONG i =0; i<result_points_set.size();i++)
     {
         V3DLONG id=result_points_set[i];
-        list_search[id].type =2;
+        list_search[id].type =7;
     }
     export_list2file(list_search,"updated_vr_neuron.swc","updated_vr_neuron.swc");
 

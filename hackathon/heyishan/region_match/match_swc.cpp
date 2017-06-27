@@ -216,7 +216,7 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
 
     // get small cubes in whole nt
     cout<<"get small cubes in whole nt"<<endl;
-    int SEARCH_STEP = 2;
+    int SEARCH_STEP = 6;
     cout<<"S_length="<<S_length<<endl;
     for(V3DLONG i=0;i<nt.listNeuron.size() - SEARCH_STEP; i+=SEARCH_STEP)
     {

@@ -80,7 +80,7 @@ bool make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
    for(int i=0; i<trees.size();i++)
    {
        NeuronTree sorted_tree;
-       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) return false;
+       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) {cout<<"sort wrong"<<endl;return false;}
        char buf[10];
        string num_i;
        sprintf(buf, "%d", i+1);
@@ -123,7 +123,7 @@ bool make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
     // call consensus
    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0\n"<<endl;
 
-       if(file_list_bn.size()==0) return false;
+       if(file_list_bn.size()==0) {cout<<"no list_bn file"<<endl;return false;}
 //       V3DPluginArgItem arg2;
        V3DPluginArgList input_consensus;
        V3DPluginArgList output_consensus;
