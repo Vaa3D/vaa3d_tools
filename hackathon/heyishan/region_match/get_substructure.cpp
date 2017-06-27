@@ -30,7 +30,7 @@ void get_substructure(const NeuronTree &s_mk, const vector<NeuronTree>&s_forest,
     // blastneuron: global_retrieve
     cout<<"blastneuron: global_retrieve"<<endl;
     NeuronTree query =s_mk;
-    int retrieved_num = 10;// number
+    int retrieved_num = 20;// number
     double thres = 0.1;
     V3DLONG neuronNum=s_forest.size();
     vector<int> feature_codes, norm_codes;
