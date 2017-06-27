@@ -360,7 +360,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 				
 				for(int j=begin; j<=end; j++)
 				{
-					nt_search.listNeuron[j].type = 2; //change the node color in the finded tree
+					nt_search.listNeuron[j].type = 4; //change the node color in the finded tree
 				}
 				//save the matching subtree
 				nt_index.comment = tr("");
