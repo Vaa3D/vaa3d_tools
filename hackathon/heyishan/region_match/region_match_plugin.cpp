@@ -32,7 +32,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 QStringList region_match::menulist() const
 {
 	return QStringList() 
-        <<tr("tracing_func")
+        <<tr("tracing_menu")
 		<<tr("about");
 }
 
@@ -45,7 +45,7 @@ QStringList region_match::funclist() const
 
 void region_match::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("tracing_func"))
+    if (menu_name == tr("tracing_menu"))
 	{
         bool bmenu = true;
         input_PARA PARA;
@@ -140,7 +140,12 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     cout<<"******************This is main function*********************"<<endl;
 
     NeuronTree s_mk_sorted;
-    make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback);
+    if(!make_consensus(PARA.nt_search,PARA.nt_pattern,mk,callback))
+    {
+        cout<<"consensus failed ";
+        return;
+    }
+
     match_swc(PARA.nt_search,mk,s_mk,s_mk_sorted,s_forest,p_to_cube);
     get_substructure(s_mk_sorted,s_forest,selected_cube);
     num_sorted=selected_cube;
@@ -168,7 +173,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     for(V3DLONG i =0; i<result_points_set.size();i++)
     {
         V3DLONG id=result_points_set[i];
-        list_search[id].type =2;
+        list_search[id].type =7;
     }
     export_list2file(list_search,"updated_vr_neuron.swc","updated_vr_neuron.swc");
 

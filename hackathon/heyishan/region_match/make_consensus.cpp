@@ -16,7 +16,7 @@ struct Boundary
     double maxz;
 };
 
-void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk, V3DPluginCallback2 &callback)
+bool make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk, V3DPluginCallback2 &callback)
 {
     V3DLONG pattern_size = pattern.listNeuron.size();
     V3DLONG nt_size = nt.listNeuron.size();
@@ -25,7 +25,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
     if(pattern_size==0 || nt_size==0)
     {
         cout<<"no input"<<endl;
-        return;
+        return false;
     }
     cout<<"size="<<pattern_size<<endl;
     Boundary temp;
@@ -80,13 +80,13 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
    for(int i=0; i<trees.size();i++)
    {
        NeuronTree sorted_tree;
-       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) return;
+       if(!SortSWC(trees[i].listNeuron,sorted_tree.listNeuron,VOID,3)) {cout<<"sort wrong"<<endl;return false;}
        char buf[10];
        string num_i;
        sprintf(buf, "%d", i+1);
        num_i = buf;
-       QString savename = "./temp/pattern_" + QString::fromStdString(num_i) + ".swc";
-       QString savename_bn = "./temp/pattern_bn_" + QString::fromStdString(num_i) + ".swc";
+       QString savename = "pattern_" + QString::fromStdString(num_i) + ".swc";
+       QString savename_bn = "pattern_bn_" + QString::fromStdString(num_i) + ".swc";
        file_list.push_back(savename);
        file_list_bn.push_back(savename_bn);
        writeSWC_file(savename,sorted_tree);
@@ -113,7 +113,7 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
        arg.p = (void*) & arg_input_bn; input_bn<< arg;
        arg.type="random";vector<char*> arg_bn_para; arg_bn_para.push_back(fileName_string);arg.p = (void *) & arg_bn_para; input_bn << arg;
 
-       QString plugin_name_bn = "blastneuron/libblastneuron"; //Need change
+       QString plugin_name_bn = "blastneuron"; //libblastneuron"; //Need change
        QString func_name_bn = "pre_processing";
        callback.callPluginFunc(plugin_name_bn,func_name_bn,input_bn,output_bn);
        arg_input_bn.clear();
@@ -123,11 +123,11 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
     // call consensus
    cout<<"Example: v3d -x consensus_swc -f consensus_swc -i myfolder/*.swc -o consensus.eswc -p 3 5 0\n"<<endl;
 
-
+       if(file_list_bn.size()==0) {cout<<"no list_bn file"<<endl;return false;}
 //       V3DPluginArgItem arg2;
        V3DPluginArgList input_consensus;
        V3DPluginArgList output_consensus;
-       QString consensus_result = "./temp/consensus.swc";
+       QString consensus_result = "consensus.swc";
        arg.type = "random";vector<char*> arg_input_consensus;
        for(int i=0;i<file_list_bn.size();i++)
        {
@@ -151,5 +151,5 @@ void make_consensus(const NeuronTree & nt, NeuronTree & pattern, NeuronTree & mk
 
        mk = readSWC_file(consensus_result);
 
-
+        return true;
 }

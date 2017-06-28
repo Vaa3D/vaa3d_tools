@@ -340,6 +340,7 @@ void pick_max_n(int* idx, double* sim, int n, int siz, double* sim_max)
             idx[offset] = i;
         }
     }
+    //cout<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5";
     //delete sim_max;
     //sim_max = NULL;
 }

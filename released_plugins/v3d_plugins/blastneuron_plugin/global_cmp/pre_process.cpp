@@ -20,6 +20,7 @@ NeuronTree pre_process(NeuronTree nt, double step_size, double prune_size)
 
 	printf("Aligning PCA axis\n");
     result = align_axis(resampled);
+	printf("finish Aligning PCA axis\n");
 
 	return result;
 }

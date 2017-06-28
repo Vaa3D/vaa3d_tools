@@ -93,10 +93,10 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
     for(V3DLONG i=0; i<mk.listNeuron.size();i++){mk.hashNeuron.insert(mk.listNeuron[i].n, i);}
 
     // temp save
-    QString resample_name="./temp/mk_resample.swc";
-    QString sort_name="./temp/mk_sort.swc";
-    export_list2file(mk_resample.listNeuron,resample_name,resample_name);
-    export_list2file(mk.listNeuron,sort_name,sort_name);
+    QString resample_name="mk_resample.swc";
+    QString sort_name="mk_sort.swc";
+    //export_list2file(mk_resample.listNeuron,resample_name,resample_name);
+    //export_list2file(mk.listNeuron,sort_name,sort_name);
 
 //    nt=nt_raw;
 //    mk=mk_resample;
@@ -216,7 +216,7 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
 
     // get small cubes in whole nt
     cout<<"get small cubes in whole nt"<<endl;
-    int SEARCH_STEP = 2;
+    int SEARCH_STEP = 6;
     cout<<"S_length="<<S_length<<endl;
     for(V3DLONG i=0;i<nt.listNeuron.size() - SEARCH_STEP; i+=SEARCH_STEP)
     {
@@ -251,7 +251,7 @@ void match_swc(NeuronTree &nt_raw, NeuronTree &mk_raw, NeuronTree &s_mk, NeuronT
     cout<<"nt_size"<<nt.listNeuron.size()<<endl;
     cout<<"s_forest="<<s_forest.size()<<endl;
 
-    QString s_mk_sorted_name="./temp/s_mk_sorted.swc";
+    QString s_mk_sorted_name="s_mk_sorted.swc";
     export_list2file(s_mk_sorted.listNeuron,s_mk_sorted_name,s_mk_sorted_name);
 //    QString cube1_name="./temp/cube1.swc";
 //    QList<NeuronSWC> cube1=s_forest[1].listNeuron;
