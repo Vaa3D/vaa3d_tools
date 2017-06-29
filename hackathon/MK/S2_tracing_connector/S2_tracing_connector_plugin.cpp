@@ -57,15 +57,28 @@ bool S2Connector::dofunc(const QString & func_name, const V3DPluginArgList & inp
 		QString inputFolder = infiles[0];
 		QString outputFile = outfiles[0];
 		
-		//qDebug() << inputFolder;
+		qDebug() << "  iputFolder: " << inputFolder;
+		qDebug() << "  outputFile: " << outputFile;
 
 		bool combine;
 		combine = generatorcombined4FilesInDir(input, output);
-		QString connectCommand = "C:\\Vaa3D_2010_Qt472\\v3d_external\\bin\\vaa3d_msvc.exe /x neuron_connector /f connect_neuron_SWC /i ";
-		connectCommand = connectCommand + outputFile + " /o " + inputFolder + "\\combined_connected.swc /p 60 10 1 1 1 1 true -1";
+		
+		QString connectCommand;
+		if (strcmp(inparas[0], "windows") == 0) 
+		{
+			connectCommand = "vaa3d_msvc.exe /x neuron_connector /f connect_neuron_SWC /i ";
+			connectCommand = connectCommand + outputFile + " /o " + inputFolder + "\\combined_connected.swc /p 60 10 1 1 1 1 true -1";
+		}
+		else if (strcmp(inparas[0], "linux") == 0) 
+		{
+			connectCommand = "vaa3d -x neuron_connector -f connect_neuron_SWC -i ";
+			connectCommand = connectCommand + outputFile + " -o " + inputFolder + "/combined_connected.swc -p 60 10 1 1 1 1 true -1";
+		}
 		string c_command = connectCommand.toStdString().c_str();
 		const char* command = c_command.c_str();
-		cout << command << endl;
+		//cout << command << endl;
+		//cout << inparas[0] << endl;
+		
 		system(command);
 
 		return true;
