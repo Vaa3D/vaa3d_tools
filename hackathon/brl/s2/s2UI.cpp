@@ -1,9 +1,16 @@
 #include "v3d_message.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <iostream>
+#include <unistd.h>
+#include <fstream>
 #include <QWidget>
 #include <QDialogButtonBox>
 #include <QtGui>
 #include <QtNetwork>
-#include <stdlib.h>
 #include <QThread>
 #include <QDateTime>
 #include <QBitArray>
@@ -12,7 +19,12 @@
 #include "stackAnalyzer.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 #include <QMutex>
-
+#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include <QList>
+#include <QString>
+#include "basic_surf_objs.h"
+using namespace iim;
+using namespace std;
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
     qRegisterMetaType<LandmarkList>("LandmarkList");
@@ -20,10 +32,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
     qRegisterMetaType<unsigned short int>("unsignedShortInt");
     qRegisterMetaType<TileInfo>("TileInfo");
-#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     versionString =QString("%1").arg(GIT_CURRENT_SHA1);
-#endif
-
     qDebug()<<"S2 git repo hash at build time = "<<versionString;
     fileString =QString("");
     lastFile = QString("");
@@ -46,7 +55,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myStackAnalyzer0 = new StackAnalyzer(callback);
     myStackAnalyzer1 = new StackAnalyzer(callback);
     myStackAnalyzer2 = new StackAnalyzer(callback);
-
+    //myStackAnalyzer3 = new StackAnalyzer(callback);
 
     myTileInfoMonitor = new TileInfoMonitor();
 
@@ -73,7 +82,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     rhTabs->addTab(myNotes, "status and notes");
 
 
-    createTargetList();
+   // createTargetList();
     zoomPixelsProduct = 2048.0; //13.0*256;
     currentTileInfo = TileInfo(zoomPixelsProduct);
 
@@ -84,6 +93,7 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     lhTabs->addTab(createTracingParameters(),"tracing");
     lhTabs->addTab(createROIControls(),"ROI Controls");
     lhTabs->addTab(createConfigPanel(),"Configure");
+    lhTabs->addTab(createSimulator(),"Simulator");
 
 
 
@@ -158,7 +168,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     resetDir = false;
     smartScanStatus = 0;
     gridScanStatus = 0;
-    allTargetStatus = 0;
+    allTargetStatus = 0;    QLineEdit *roiXEdit;
+    QLineEdit *roiYEdit;
+    QLineEdit *roiZEdit;
+    QLineEdit *roiXWEdit ;
     zoomStateOK = true;
     setLayout(mainLayout);
     setWindowTitle(tr("smartScope2 Interface"));
@@ -189,6 +202,8 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(localRemoteCB, SIGNAL(clicked(bool)), this, SLOT(updateLocalRemote(bool)));
 
     connect(resetDirPB, SIGNAL(clicked()), this, SLOT(resetDirectory()));
+    connect(tracePB, SIGNAL(clicked()), this, SLOT(traceData()));
+
     connect(setLocalPathToData, SIGNAL(clicked()), this, SLOT(resetDataDir()));
     connect(overlapSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateOverlap(int)));
 
@@ -366,7 +381,7 @@ void S2UI::hookUpSignalsAndSlots(){
 
 }
 
-
+/*
 void S2UI::createTargetList(){
 
     //  myTargetTable.show();
@@ -374,6 +389,7 @@ void S2UI::createTargetList(){
 
 }
 
+*/
 
 void S2UI::initializeROISizes(){
     tileSizeChoices = new QList<TileInfo>;
@@ -413,7 +429,7 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
     roiRect = QRectF(-250, -250, 500, 500);
-    //roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    //roiGS->addRect(roiRect,QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,50,50);
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
     roiGV->adjustSize();
@@ -486,6 +502,340 @@ void S2UI::resetDataDir(){
     localDataDir->setText(localDataString);
 
 }
+
+void S2UI::traceData(){
+   // This function aims to simulate how the s2 works in an actual already accquired data of TeraFly format.
+   // It needs the user to select the input TeraFly data as well as a marker file which specify the soma coordinates.
+   // The current version is only a prototypical demo which may subject to further revisions.
+   // S2 connector plug-in is required for this function.
+
+   // The first part of this function reads in the input image file for tracing as well as the marker file of soma coordinates
+   // Open a window for the user to select input image file
+   QString m_InputfolderName = QFileDialog::getExistingDirectory(this, QObject::tr("Choose the directory of the input images"),QDir::currentPath(), QFileDialog::ShowDirsOnly);
+   if (m_InputfolderName.isEmpty())
+               return;
+
+   // load the input image file
+   VirtualVolume* data1d = VirtualVolume::instance(m_InputfolderName.toStdString().c_str());
+   V3DLONG in_zz[4];
+   in_zz[0] = data1d->getDIM_H();
+   in_zz[1] = data1d->getDIM_V();
+   in_zz[2] = data1d->getDIM_D();
+   in_zz[3] = data1d->getDIM_C();
+  //qDebug() << in_zz[0];
+  // qDebug() << in_zz[1];
+  // qDebug() << in_zz[2];
+  // qDebug() << in_zz[3];
+
+   // Open a window for the user to select input the marker file of soma coordinates
+   QString fileOpenName;
+   fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),"", QObject::tr("Supported file (*.marker *.MARKER)"));
+   if (fileOpenName.isEmpty())
+               return;
+   // obtain timestamp
+   struct timeval tp;
+   gettimeofday(&tp, NULL);
+   int timestamp=tp.tv_sec;
+   //QDebug() << timestamp;
+   //v3d_msg("check");
+
+   char create_output_folder[255] = {0};
+   sprintf(create_output_folder, "mkdir -p s2_simulator_results_%d", timestamp);
+   system(create_output_folder);
+   char cd_output_folder[255] = {0};
+   sprintf(cd_output_folder, "./s2_simulator_results_%d", timestamp);
+   chdir(cd_output_folder);
+   system("mkdir -p swc");
+   system("mkdir -p cube");
+
+   // Suppose a simple case, only one point is provided in this marker
+   QList<ImageMarker> initial_markerList;
+   initial_markerList = readMarker_file(fileOpenName);
+
+   // implement a "queue" using a QList
+   QList<ImageMarker> myqueue;
+
+   // append the intial marker first, the new coordinates will be appended in the loop later
+   myqueue.append(initial_markerList.at(0));
+
+   int count=0;
+   int i=0;
+   int x=0;
+
+   // obtain the input parameters values from the edit boxes
+   float thrs=thrsEdit->text().toFloat();
+   float overlap=overlapEdit->text().toFloat();
+   int background=int(round(backgroundEdit->text().toFloat()));
+   if (thrs<0)
+   {thrs=0.1;
+    v3d_msg("Boundary threshold cannot be smaller than 0. Default value of 0.1 is used instead.");
+   }
+   if (thrs>1)
+   {thrs=0.1;
+    v3d_msg("Boundary threshold cannot be larger than 1. Default value of 0.1 is used instead.");
+   }
+   if (overlap<0)
+   {overlap=0.05;
+    v3d_msg("Overlap cannot be smaller than 0. Default value of 0.05 is used instead.");
+   }
+   if (overlap>1)
+   {overlap=0.05;
+    v3d_msg("Overlap cannot be larger than 1. Default value of 0.05 is used instead.");
+   }
+   if (background<0)
+   {background=35;
+    v3d_msg("Background value cannot be smaller than 0. Default value of 35 is used instead.");
+   }
+   if (background>100)
+   {background=35;
+    v3d_msg("Background value cannot be larger than 100. Default value of 35 is used instead.");
+   }
+   qDebug() << thrs;
+   qDebug() << overlap;
+   qDebug() << background;
+   //v3d_msg("check");
+   int tileStatus=0;
+
+   char new_coor_marker_filename[255] = {0};
+   char boundary_marker_filename[255] = {0};
+   char swc_filename[255] = {0};
+   char cube_filename[255] = {0};
+   system("mkdir -p swc");
+   system("mkdir -p cube");
+
+   // keep a list of the coordinates of the cubes which have already been traced
+   QList<ImageMarker> alreadytracedcube_markerList;
+
+   // The second part of this function traces neighboring cubes (if tract presents in the boundary) in a breadth-first manner
+   while (myqueue.size()>0)
+   { //count=count+1;
+       // For debug purpose only
+       for(i=0;i<myqueue.size();i++){
+           printf("iter %d, x= %d , y= %d\n", count, myqueue.at(i).x, myqueue.at(i).y);
+
+       }
+
+
+    //qDebug() << markerList.at(0).x;
+   float xcenter = myqueue.at(0).x;
+   float ycenter = myqueue.at(0).y;
+
+   // record the cubes which have already been traced
+   alreadytracedcube_markerList.append(myqueue.at(0));
+
+   //float zcenter = initial_markerList.at(0).z;
+   float cubeSideLength = in_zz[2];
+  // qDebug() << xcenter;
+  // qDebug() << ycenter;
+   //qDebug() << zcenter;
+   float x_start=xcenter-cubeSideLength/2;
+   float x_end=xcenter+cubeSideLength/2;
+   float y_start=ycenter-cubeSideLength/2;
+   float y_end=ycenter+cubeSideLength/2;
+   if (x_start<0)
+       x_start=0;
+   if (y_start<0)
+       y_start=0;
+
+   if (x_end>in_zz[0])
+       x_end=in_zz[0];
+   if (y_end>in_zz[1])
+       y_end=in_zz[1];
+
+   // crop the image
+   unsigned char * cropped_image = 0;
+   // qDebug() << y_start;
+   // qDebug() << y_end;
+   // qDebug() << x_start;
+   // qDebug() << x_end;
+   // qDebug() << in_zz[2];
+   cropped_image = data1d->loadSubvolume_to_UINT8(y_start, y_end,
+                                                  x_start, x_end,
+                                                  0, in_zz[2]);
+
+   V3DLONG in_sz[4];
+   in_sz[0] = y_end-y_start;
+   in_sz[1] = x_end-x_start;
+   in_sz[2] = cubeSideLength;
+   in_sz[3] = data1d->getDIM_C();
+
+   sprintf(cube_filename, "./cube/%d_cube.v3draw", count);
+   printf("cube %d",count);
+   QString saveName = cube_filename;
+   const char* fileName = saveName.toAscii();
+   simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
+   //v3d_msg("Cropping complete.");
+
+   if( access( cube_filename, R_OK ) == -1 )
+   {myqueue.removeFirst();
+       count=count+1;
+    continue;
+   }
+
+   Image4DSimple * pNewImage = cb->loadImage(cube_filename);
+   Image4DSimple * total4DImage_mip;
+   LandmarkList seedList;
+   LocationSimple tileLocation;
+   tileLocation.x = 0;
+   tileLocation.y = 0;
+   seedList.clear();
+   bool isSoma = loadScanNumber==0;
+   //bool isAdaptive = false;
+   bool useGSDT = true;
+   bool interrupt = true;
+
+   sprintf(swc_filename, "./swc/%d.swc", count);
+   printf("swc %d",count);
+
+   QString swcString= swc_filename;
+   QString tileSaveString="file2.swc";
+
+
+   // use APP2 for tracing
+   myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
+
+   // convert swc coordinates to world coordinates
+   NeuronTree myswc;
+   myswc=readSWC_file(swc_filename);
+   QList<NeuronSWC> newSWC;
+   for(i=0;i<myswc.listNeuron.size();i++)
+   {
+       NeuronSWC singleNeuron;
+       singleNeuron.type = 2;  //myswc.listNeuron.at(i).type;
+       singleNeuron.n = myswc.listNeuron.at(i).n;
+       singleNeuron.x = myswc.listNeuron.at(i).x+x_start;
+       singleNeuron.y = myswc.listNeuron.at(i).y+y_start;
+       singleNeuron.z = myswc.listNeuron.at(i).z;
+       singleNeuron.parent = myswc.listNeuron.at(i).parent;
+       newSWC.append(singleNeuron);
+  }
+   NeuronTree saveSWC;
+   saveSWC.listNeuron = newSWC;
+   writeSWC_file(swc_filename, saveSWC);
+
+   // read in the marker of boundary vertices
+   QList<ImageMarker> boundary_markerList;
+
+   sprintf(boundary_marker_filename, "./swc/%d.swcfinal.marker", count);
+
+   if( access( boundary_marker_filename, R_OK ) == -1 )
+   {myqueue.removeFirst();
+       count=count+1;
+    continue;
+   }
+   boundary_markerList = readMarker_file(boundary_marker_filename);
+   QList<ImageMarker> neighbor_cube_markerList;
+   ImageMarker new_center_coor;
+   new_center_coor.x=0;
+   new_center_coor.y=0;
+
+   // determine which neighboring cubes should be traced in the next iteration (8 possible candidates each time)
+   for (i=0;i<boundary_markerList.size();i++)
+   {if((boundary_markerList.at(i).x< cubeSideLength*thrs) &&
+       (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
+           new_center_coor.x=xcenter-cubeSideLength;
+           new_center_coor.y=ycenter-cubeSideLength;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+     }
+     else if((boundary_markerList.at(i).x>cubeSideLength*thrs) &&
+             (boundary_markerList.at(i).x< cubeSideLength*(1-thrs)) &&
+             (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
+           new_center_coor.x=xcenter;
+           new_center_coor.y=ycenter-cubeSideLength;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+       }
+        else if((boundary_markerList.at(i).x> cubeSideLength*(1-thrs)) &&
+                (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
+           new_center_coor.x=xcenter+cubeSideLength;
+           new_center_coor.y=ycenter-cubeSideLength;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+        }
+     else if((boundary_markerList.at(i).x>cubeSideLength*(1-thrs)) &&
+             (boundary_markerList.at(i).y< cubeSideLength*(1-thrs)) &&
+             (boundary_markerList.at(i).y> cubeSideLength*thrs)) {
+           new_center_coor.x=xcenter+cubeSideLength;
+           new_center_coor.y=ycenter;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+     }
+     else if((boundary_markerList.at(i).x> cubeSideLength*(1-thrs)) &&
+             (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
+           new_center_coor.x=xcenter+cubeSideLength;
+           new_center_coor.y=ycenter+cubeSideLength;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+     }
+     else if((boundary_markerList.at(i).x>cubeSideLength*thrs) &&
+             (boundary_markerList.at(i).x< cubeSideLength*(1-thrs)) &&
+             (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
+             new_center_coor.x=xcenter;
+             new_center_coor.y=ycenter+cubeSideLength;
+             if(!neighbor_cube_markerList.contains(new_center_coor))
+             {
+                 neighbor_cube_markerList.append(new_center_coor);
+             }
+     }
+     else if((boundary_markerList.at(i).x<cubeSideLength*thrs) &&
+             (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
+           new_center_coor.x=xcenter-cubeSideLength;
+           new_center_coor.y=ycenter+cubeSideLength;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+     }
+        else {
+           new_center_coor.x=xcenter-cubeSideLength;
+           new_center_coor.y=ycenter;
+           if(!neighbor_cube_markerList.contains(new_center_coor))
+           {
+               neighbor_cube_markerList.append(new_center_coor);
+           }
+        }
+   }
+
+   if(neighbor_cube_markerList.size()<1)
+   {myqueue.removeFirst();
+       count=count+1;
+    continue;
+   }
+
+   printf("marker %d",count);
+   sprintf(new_coor_marker_filename, "./cube/%d.marker", count);
+   writeMarker_file(new_coor_marker_filename, neighbor_cube_markerList);
+
+   // add the targeted cubes into the queue for next iteration of cropping and tracing
+   for(i=0;i<neighbor_cube_markerList.size();i++){
+       if((!alreadytracedcube_markerList.contains(neighbor_cube_markerList.at(i))) && (!myqueue.contains(neighbor_cube_markerList.at(i))))
+       {myqueue.append(neighbor_cube_markerList.at(i));
+        }
+   }
+
+   // remove the current finished cube from the queue
+   myqueue.removeFirst();
+
+   count=count+1;
+}
+   // combine swc files of the cubes into a single swc file
+   system("vaa3d -x S2_tracing_connector -f combineSWC -i ./swc -o ./swc/combined.swc -p linux");
+   system("cp ./swc/combined_connected.swc .");
+   v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
+   return;
+}
+
 void S2UI::updateLocalRemote(bool state){
     isLocal = state;
     status(QString("isLocal ").append(QString::number(isLocal)));
@@ -956,7 +1306,40 @@ QGroupBox *S2UI::createROIControls(){
     return gROIBox;
 }
 
+QGroupBox *S2UI::createSimulator(){
+    QGroupBox *gSimulator = new QGroupBox(tr("&Simulator"));
+    gSimulator->setCheckable(true);
+    gSimulator->setChecked(true);
 
+    QLabel *thrsLabel = new QLabel(tr("Boundary threshold ="));
+    thrsEdit = new QLineEdit("0.1");
+    thrsLabel->setBuddy(thrsEdit);
+    thrsEdit->setObjectName("thrsX");
+
+    QLabel *overlapLabel = new QLabel(tr("Overlap ="));
+    overlapEdit = new QLineEdit("0.05");
+    overlapLabel->setBuddy(overlapEdit);
+    overlapEdit->setObjectName("overlapX");
+
+    QLabel *backgroundLabel = new QLabel(tr("Background ="));
+    backgroundEdit = new QLineEdit("35");
+    backgroundLabel->setBuddy(backgroundEdit);
+    backgroundEdit->setObjectName("backgroundX");
+
+    tracePB = new QPushButton(tr("select data to trace"));
+
+    QGridLayout *glROI = new QGridLayout;
+
+    glROI->addWidget(tracePB, 5, 0, 1,2);
+    glROI->addWidget(thrsLabel,1, 0);
+    glROI->addWidget(thrsEdit, 1, 1);
+    glROI->addWidget(overlapLabel, 2, 0);
+    glROI->addWidget(overlapEdit, 2, 1);
+    glROI->addWidget(backgroundLabel, 3, 0);
+    glROI->addWidget(backgroundEdit, 3, 1);
+    gSimulator->setLayout(glROI);
+    return gSimulator;
+}
 
 void S2UI::startS2()
 {
@@ -975,7 +1358,7 @@ void S2UI::startScan()
     QTimer::singleShot(0, &myController, SLOT(startScan()));
     float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
     float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
-    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+    roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
 }
 
@@ -1639,10 +2022,7 @@ void S2UI::startingSmartScan(){
 
     QTextStream summaryTextStream;
     summaryTextStream.setDevice(&summaryTextFile);
-#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
-#endif
-
     summaryTextStream<<"s2Scan start time: "<<";"<< QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
     summaryTextStream<<"s2Scan Save Directory: "<<";"<< saveDir.absolutePath()<<"\n";
 
@@ -1773,7 +2153,7 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
                 allTipsList->append(newTipsList.value(i));
                 // add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
                 // keeping track of a bunch of ROIs.
-                QPen myPen =  QPen::QPen(makeQColorFromIndex(10, colorIndex), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+                QPen myPen =  QPen(makeQColorFromIndex(10, colorIndex), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
                 roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
                         ((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
             }else{
@@ -2650,8 +3030,8 @@ void S2UI::overviewHandler(){
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*( allOverviewStageLocations.last().getPixelLocation().y- allOverviewStageLocations.last().getPixelLocation().ev_pc2/2.0),
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc1,
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc2,
-                       QPen::QPen(Qt::magenta, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
-        //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+                       QPen(Qt::magenta, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+        //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
         // set up 3-plane z stack here?
         waitingForFile = 0;
@@ -2736,7 +3116,7 @@ void S2UI::updateFileString(QString inputString){
 void S2UI::clearROIPlot(){
     roiGS->clear();
     roiRect = QRectF(-400, -400, 800, 800);
-    // roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    // roiGS->addRect(roiRect,QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,10,10);
 }
 

@@ -695,7 +695,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     qDebug()<<"swcString= "<<swcString;
     qDebug()<<"imageSaveString= "<<imageSaveString;
-
+    //TEST
+   // imageSaveString = latestString;
 
     QFileInfo imInfo(imageSaveString);
 
@@ -880,6 +881,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
         simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
     }else{ // image file IS readable:
+        //START HERE (more or less...)
 
         unsigned char* data1d = 0;
         total4DImage->deleteRawDataAndSetPointerToNull();
@@ -942,6 +944,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
 void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma, LocationSimple tileLocation, QString tileSaveString,int tileStatus)
 {
+    //v3d_msg("test!");
     QList<LandmarkList> newTipsList;
     LandmarkList newTargetList;
 
@@ -1017,6 +1020,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
         markerSaveString = swcString;
         if (tileStatus==1) markerSaveString.append("D");
         markerSaveString.append(".marker");
+        //v3d_msg("test0!");
         writeMarker_file(markerSaveString, seedsToSave);
 
         // are ZERO markers here with no coordinates? or do they come back to stackAnalyzer from s2UI??
@@ -1055,6 +1059,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
             }
         }
         saveSWC_file(swcString.toStdString().c_str(), tileswc_file,infostring);
+       // v3d_msg("test!");
     }
 
     NeuronTree nt;
@@ -1175,7 +1180,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
 
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
+    //emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
 
 
 }
@@ -2727,4 +2732,11 @@ NeuronTree StackAnalyzer::neuron_sub(NeuronTree nt_total, NeuronTree nt)
     return nt_left;
 }
 
+/*
+QList<ImageMarker> StackAnalyzer::find_new_coor(QList<LandmarkList> *initial_marker, QList<LandmarkList> *output_marker)
+{
 
+
+
+}
+*/

@@ -42,6 +42,7 @@ public:
     StackAnalyzer *myStackAnalyzer0;
     StackAnalyzer *myStackAnalyzer1;
     StackAnalyzer *myStackAnalyzer2;
+    StackAnalyzer *myStackAnalyzer3;
 
     EventLogger* myEventLogger;
     TileInfoMonitor* myTileInfoMonitor;
@@ -73,6 +74,8 @@ public slots:
      * where the 'final' status is determined.
      */
     void combinedSmartScan(QString);
+    void selectData();
+    void traceData();
 
 signals:
     void startPM();
@@ -127,6 +130,10 @@ signals:
      * to allow for a simple run() method or similar. Instead the current version updates each StackAnalyzer continuously from the GUI
      * as needed and sends these signals (with lots of critical info) when it's time to analyze a new tile.
      */
+
+    void callAPP2Tracing(Image4DSimple*,  Image4DSimple*, QString, float, int, bool, LandmarkList, bool, bool, LocationSimple, QString, int);
+
+
     void callSATrace(QString,float,int,bool,LandmarkList,LocationSimple,QString,bool,bool,bool,int, int);
     /*! \brief call StackAnalyzer::startTracing() method in a particular thread [ , 0, 1, 2]
      *
@@ -159,7 +166,7 @@ signals:
 
     /*! \brief send tile and tip info to TileInfoMonitor to wait until tile tracing is finished
      *
-     * critical component of re-tracing and pre-tracing flow control.
+     * critical component of re-tracing and pre-tracing flow myStackAnalyzer3control.
      */
     void waitForDuplicate(TileInfo, LandmarkList, int , int, int, QString);
     void loadLatestSig(QString);
@@ -269,6 +276,7 @@ private slots:
     void updateZoomHandler();
     void resetDirectory();
     void resetDataDir();
+
     void collectZoomStack();
     void updateZoomPixelsProduct(int ignore);
     void initializeROISizes();
@@ -333,6 +341,7 @@ private:
     QGroupBox *createS2Monitors();
     QGroupBox *createTracingParameters();
     QGroupBox *createConfigPanel();
+    QGroupBox *createSimulator();
 
 
 
@@ -406,7 +415,8 @@ private:
     QPushButton *loadScanPushButton;
     QPushButton *startPosMonButton;
     QPushButton *startSmartScanPB;
-    QPushButton *centerGalvosPB ;
+    QPushButton *centerGalvosPB;
+    QPushButton *tracePB ;
     QPushButton * startStackAnalyzerPB;
     QPushButton *roiClearPB;
     QPushButton *runSAStuff;
@@ -416,6 +426,12 @@ private:
     QLineEdit *roiXWEdit ;
     QLineEdit *roiYWEdit ;
     QLineEdit *roiZWEdit;
+
+    QLineEdit *thrsEdit;
+    QLineEdit *overlapEdit;
+    QLineEdit *backgroundEdit;
+
+
     QSpinBox *overlapSpinBox;
     QLabel *overlapSBLabel;
     QSpinBox *zoomSpinBox;
