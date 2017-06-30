@@ -200,7 +200,7 @@ bool print_result(vector<V3DLONG> result, const char* file_name, QStringList nam
 	return true;
 }
 
-bool compute_intersect(vector<vector<V3DLONG>> & list, vector<V3DLONG> & result, int number, int rej_thres)
+bool compute_intersect(vector<vector<V3DLONG> > & list, vector<V3DLONG> & result, int number, int rej_thres)
 {
 	result.clear();
 	V3DLONG stratNum = list.size();
