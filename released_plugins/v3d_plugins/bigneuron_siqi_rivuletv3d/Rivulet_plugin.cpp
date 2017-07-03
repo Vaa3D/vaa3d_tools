@@ -113,7 +113,7 @@ bool RivuletPlugin::dofunc(const QString &func_name,
   } else if (func_name == tr("help")) {
     printf("====== Usage of Rivulet tracing ====== \n");
     printf(
-        "vaa3d -x Rivulet -f tracing_func -i your_image.v3draw [-o out.swc] -p "
+        "vaa3d -x Rivulet2 -f tracing_func -i your_image.v3draw [-o out.swc] -p "
         "channel threshold quality prune\n");
     printf("channel\tData channel for tracing. Start from 1 (default 1).\n");
     printf("threshold\tThe background threshold for segmentation (default 0).\n");
