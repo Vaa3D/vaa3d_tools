@@ -2,29 +2,44 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <time.h>
 #include <iostream>
-#include <unistd.h>
 #include <fstream>
 #include <QWidget>
 #include <QDialogButtonBox>
 #include <QtGui>
 #include <QtNetwork>
+#include <stdlib.h>
 #include <QThread>
 #include <QDateTime>
 #include <QBitArray>
 #include "s2Controller.h"
 #include "s2UI.h"
 #include "stackAnalyzer.h"
-#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
+#include "vn_app2.h"
 #include <QMutex>
-#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include <cstring>
+#include "VirtualVolume.h"
 #include <QList>
 #include <QString>
 #include "basic_surf_objs.h"
+#include <QDir>
+#include "Tiff3DMngr.h"
+#include <qregexp.h>
+#include "s2_preprocessor.h"
+
 using namespace iim;
 using namespace std;
+
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
+#if defined (Q_OS_WIN32)
+#include <io.h>
+#endif
+
 S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 {
     qRegisterMetaType<LandmarkList>("LandmarkList");
@@ -32,7 +47,10 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     qRegisterMetaType<QList<LandmarkList> >("QList<LandmarkList>");
     qRegisterMetaType<unsigned short int>("unsignedShortInt");
     qRegisterMetaType<TileInfo>("TileInfo");
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     versionString =QString("%1").arg(GIT_CURRENT_SHA1);
+#endif
+
     qDebug()<<"S2 git repo hash at build time = "<<versionString;
     fileString =QString("");
     lastFile = QString("");
@@ -55,7 +73,8 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
     myStackAnalyzer0 = new StackAnalyzer(callback);
     myStackAnalyzer1 = new StackAnalyzer(callback);
     myStackAnalyzer2 = new StackAnalyzer(callback);
-    //myStackAnalyzer3 = new StackAnalyzer(callback);
+    myStackAnalyzer3 = new StackAnalyzer(callback);
+
 
     myTileInfoMonitor = new TileInfoMonitor();
 
@@ -429,7 +448,7 @@ QGroupBox *S2UI::createROIMonitor(){
     roiGV->setObjectName("roiGV");
     roiGV->setScene(roiGS);
     roiRect = QRectF(-250, -250, 500, 500);
-    //roiGS->addRect(roiRect,QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    //roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,50,50);
     //roiGV->setViewportUpdateMode(QGraphicsView::FullViewportUpdate)  ;
     roiGV->adjustSize();
@@ -504,6 +523,7 @@ void S2UI::resetDataDir(){
 }
 
 void S2UI::traceData(){
+    
    // This function aims to simulate how the s2 works in an actual already accquired data of TeraFly format.
    // It needs the user to select the input TeraFly data as well as a marker file which specify the soma coordinates.
    // The current version is only a prototypical demo which may subject to further revisions.
@@ -533,11 +553,10 @@ void S2UI::traceData(){
    if (fileOpenName.isEmpty())
                return;
    // obtain timestamp
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    struct timeval tp;
    gettimeofday(&tp, NULL);
    int timestamp=tp.tv_sec;
-   //QDebug() << timestamp;
-   //v3d_msg("check");
 
    char create_output_folder[255] = {0};
    sprintf(create_output_folder, "mkdir -p s2_simulator_results_%d", timestamp);
@@ -547,6 +566,35 @@ void S2UI::traceData(){
    chdir(cd_output_folder);
    system("mkdir -p swc");
    system("mkdir -p cube");
+#endif
+   //QDebug() << timestamp;
+   //v3d_msg("check");
+
+#if defined (Q_OS_WIN32)
+	struct tm* newTime;
+    time_t szClock;
+    time( &szClock );
+    newTime = localtime(&szClock);
+	string str = asctime(newTime);
+	for (int i=0; i<str.length(); ++i)
+	{
+		if (str[i] == ' ') str[i] = '_';
+		if (str[i] == ':') str[i] = '-';
+	}
+
+	QDir currDir;
+	QString saveDir = currDir.currentPath();
+	QString outputFolder = saveDir + "/s2_simulator_results/";
+	QString qstr = QString::fromStdString(str);
+	qstr.remove(QRegExp("[\\n\\t\\r]"));
+	outputFolder = outputFolder + qstr;
+	//qDebug() << outputFolder;
+
+	QString swcOutput = outputFolder + "/swc/";
+	QString cubeOutput = outputFolder + "/cube/";
+	currDir.mkpath(swcOutput);
+	currDir.mkpath(cubeOutput);
+#endif
 
    // Suppose a simple case, only one point is provided in this marker
    QList<ImageMarker> initial_markerList;
@@ -600,8 +648,10 @@ void S2UI::traceData(){
    char boundary_marker_filename[255] = {0};
    char swc_filename[255] = {0};
    char cube_filename[255] = {0};
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    system("mkdir -p swc");
    system("mkdir -p cube");
+#endif
 
    // keep a list of the coordinates of the cubes which have already been traced
    QList<ImageMarker> alreadytracedcube_markerList;
@@ -611,7 +661,7 @@ void S2UI::traceData(){
    { //count=count+1;
        // For debug purpose only
        for(i=0;i<myqueue.size();i++){
-           printf("iter %d, x= %d , y= %d\n", count, myqueue.at(i).x, myqueue.at(i).y);
+           printf("iter %d, x= %f , y= %f\n", count, myqueue.at(i).x, myqueue.at(i).y);
 
        }
 
@@ -658,7 +708,8 @@ void S2UI::traceData(){
    in_sz[1] = x_end-x_start;
    in_sz[2] = cubeSideLength;
    in_sz[3] = data1d->getDIM_C();
-
+   
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    sprintf(cube_filename, "./cube/%d_cube.v3draw", count);
    printf("cube %d",count);
    QString saveName = cube_filename;
@@ -666,11 +717,30 @@ void S2UI::traceData(){
    simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
    //v3d_msg("Cropping complete.");
 
-   if( access( cube_filename, R_OK ) == -1 )
+    if( access( cube_filename, R_OK ) == -1 )
    {myqueue.removeFirst();
        count=count+1;
     continue;
    }
+#endif
+
+#if defined (Q_OS_WIN32)
+	QString cubeLabel = QString::number(count);
+	cubeOutput = cubeOutput + cubeLabel + "_cube.v3draw";
+	const char* temp = cubeOutput.toStdString().c_str();
+	strcpy(cube_filename, temp);
+   printf("cube %d",count);
+   QString saveName = cube_filename;
+   const char* fileName = saveName.toAscii();
+   simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
+   //v3d_msg("Cropping complete.");
+
+    if( access( cube_filename, 4 ) == -1 )
+   {myqueue.removeFirst();
+       count=count+1;
+    continue;
+   }
+#endif
 
    Image4DSimple * pNewImage = cb->loadImage(cube_filename);
    Image4DSimple * total4DImage_mip;
@@ -684,14 +754,30 @@ void S2UI::traceData(){
    bool useGSDT = true;
    bool interrupt = true;
 
-   sprintf(swc_filename, "./swc/%d.swc", count);
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
+   QString currDir = QDir().currentPath();
+   QString SWClabel = QString::number(count);
+   currDir = currDir + "/swc/" + SWClabel + ".swc";
+   const char* temp2 = currDir.toStdString().c_str();
+   strcpy(swc_filename, temp2);
+   QString swcString = swc_filename;
    printf("swc %d",count);
+#endif
 
-   QString swcString= swc_filename;
+#if defined(Q_OS_WIN32)
+   QString SWClabel = QString::number(count);
+   QString swcFilename = swc_filename;
+   swcFilename = swcOutput + SWClabel + ".swc";
+   const char* temp1 = swcFilename.toStdString().c_str();
+   strcpy(swc_filename, temp);
+   QString swcString= swcFilename;
+   cout << "swc " << count << endl;
+#endif
+
    QString tileSaveString="file2.swc";
 
-
    // use APP2 for tracing
+   bool s2Mode = true;
    myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
 
    // convert swc coordinates to world coordinates
@@ -716,13 +802,29 @@ void S2UI::traceData(){
    // read in the marker of boundary vertices
    QList<ImageMarker> boundary_markerList;
 
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    sprintf(boundary_marker_filename, "./swc/%d.swcfinal.marker", count);
-
    if( access( boundary_marker_filename, R_OK ) == -1 )
    {myqueue.removeFirst();
        count=count+1;
     continue;
    }
+#endif
+
+#if defined (Q_OS_WIN32)
+   QString Markerlabel = QString::number(count);
+   QString boundary_marker_filename = boundary_marker_filename;
+   boundary_marker_filename = outputFolder + "/swc/" + Markerlabel + "_swcfinal.marker";
+   const char* boundary_fileName = boundary_marker_filename.toAscii();
+   
+   if( access( boundary_fileName, 4 ) == -1 )
+   {myqueue.removeFirst();
+       count=count+1;
+    continue;
+   }
+#endif
+
+   
    boundary_markerList = readMarker_file(boundary_marker_filename);
    QList<ImageMarker> neighbor_cube_markerList;
    ImageMarker new_center_coor;
@@ -814,7 +916,18 @@ void S2UI::traceData(){
    }
 
    printf("marker %d",count);
+
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    sprintf(new_coor_marker_filename, "./cube/%d.marker", count);
+#endif
+
+#if defined (Q_OS_WIN32)
+   QString newCoorMarkerlabel = QString::number(count);
+   QString newCoor_marker_filename = newCoor_marker_filename;
+   newCoor_marker_filename = outputFolder + "/cube/" + newCoorMarkerlabel + ".marker";
+   const char* new_coor_marker_fileName = newCoor_marker_filename.toAscii();
+#endif
+
    writeMarker_file(new_coor_marker_filename, neighbor_cube_markerList);
 
    // add the targeted cubes into the queue for next iteration of cropping and tracing
@@ -830,9 +943,16 @@ void S2UI::traceData(){
    count=count+1;
 }
    // combine swc files of the cubes into a single swc file
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    system("vaa3d -x S2_tracing_connector -f combineSWC -i ./swc -o ./swc/combined.swc -p linux");
    system("cp ./swc/combined_connected.swc .");
+#endif
+
+#if defined (Q_OS_WIN32)
+   system("vaa3d_msvc.exe /x S2_tracing_connector /f combineSWC /i swc /o swc\\combined.swc /p windows");
    v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
+#endif
+
    return;
 }
 
@@ -2022,7 +2142,10 @@ void S2UI::startingSmartScan(){
 
     QTextStream summaryTextStream;
     summaryTextStream.setDevice(&summaryTextFile);
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
     summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
+#endif
+
     summaryTextStream<<"s2Scan start time: "<<";"<< QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
     summaryTextStream<<"s2Scan Save Directory: "<<";"<< saveDir.absolutePath()<<"\n";
 
@@ -3031,7 +3154,7 @@ void S2UI::overviewHandler(){
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc1,
                        (overviewMicronsPerPixel/overViewPixelToScanPixel)*allOverviewStageLocations.last().getPixelLocation().ev_pc2,
                        QPen(Qt::magenta, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
-        //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
+        //   roiGS->addRect(allOverviewStageLocations.last().getStageLocation().x-roiXWEdit->text().toFloat()/2.0,allOverviewStageLocations.last().getStageLocation().y-roiXWEdit->text().toFloat()/2.0,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen::QPen(Qt::black, 1, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
 
         // set up 3-plane z stack here?
         waitingForFile = 0;
@@ -3116,7 +3239,7 @@ void S2UI::updateFileString(QString inputString){
 void S2UI::clearROIPlot(){
     roiGS->clear();
     roiRect = QRectF(-400, -400, 800, 800);
-    // roiGS->addRect(roiRect,QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
+    // roiGS->addRect(roiRect,QPen::QPen(Qt::gray, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin), QBrush::QBrush(Qt::gray));
     newRect = roiGS->addRect(0,0,10,10);
 }
 

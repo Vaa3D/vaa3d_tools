@@ -964,6 +964,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     p.b_brightfiled = 0;
     p.b_menu = interrupt; //if set to be "true", v3d_msg window will show up.
 
+
     p.p4dImage = total4DImage;
     p.xc0 = p.yc0 = p.zc0 = 0;
     p.xc1 = p.p4dImage->getXDim()-1;

@@ -20,6 +20,7 @@ struct PARA_APP2: public PARA_VN
     int b_resample;
     int b_intensity;
     int b_brightfiled;
+    bool s2Mode;
 
     bool b_menu;
 
