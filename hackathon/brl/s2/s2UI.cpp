@@ -769,7 +769,7 @@ void S2UI::traceData(){
    QString swcFilename = swc_filename;
    swcFilename = swcOutput + SWClabel + ".swc";
    const char* temp1 = swcFilename.toStdString().c_str();
-   strcpy(swc_filename, temp);
+   strcpy(swc_filename, temp1);
    QString swcString= swcFilename;
    cout << "swc " << count << endl;
 #endif
@@ -795,10 +795,11 @@ void S2UI::traceData(){
        singleNeuron.parent = myswc.listNeuron.at(i).parent;
        newSWC.append(singleNeuron);
   }
+   
    NeuronTree saveSWC;
    saveSWC.listNeuron = newSWC;
    writeSWC_file(swc_filename, saveSWC);
-
+   
    // read in the marker of boundary vertices
    QList<ImageMarker> boundary_markerList;
 
@@ -813,11 +814,10 @@ void S2UI::traceData(){
 
 #if defined (Q_OS_WIN32)
    QString Markerlabel = QString::number(count);
-   QString boundary_marker_filename = boundary_marker_filename;
-   boundary_marker_filename = outputFolder + "/swc/" + Markerlabel + "_swcfinal.marker";
-   const char* boundary_fileName = boundary_marker_filename.toAscii();
-   
-   if( access( boundary_fileName, 4 ) == -1 )
+   QString boundary_markerName = swcOutput + Markerlabel + ".swcfinal.marker";
+   const char* tempBoundaryMarker = boundary_markerName.toStdString().c_str();
+   strcpy (boundary_marker_filename, tempBoundaryMarker);
+   if( access( boundary_marker_filename, 4 ) == -1 )
    {myqueue.removeFirst();
        count=count+1;
     continue;
@@ -830,7 +830,7 @@ void S2UI::traceData(){
    ImageMarker new_center_coor;
    new_center_coor.x=0;
    new_center_coor.y=0;
-
+   
    // determine which neighboring cubes should be traced in the next iteration (8 possible candidates each time)
    for (i=0;i<boundary_markerList.size();i++)
    {if((boundary_markerList.at(i).x< cubeSideLength*thrs) &&
@@ -923,9 +923,9 @@ void S2UI::traceData(){
 
 #if defined (Q_OS_WIN32)
    QString newCoorMarkerlabel = QString::number(count);
-   QString newCoor_marker_filename = newCoor_marker_filename;
-   newCoor_marker_filename = outputFolder + "/cube/" + newCoorMarkerlabel + ".marker";
-   const char* new_coor_marker_fileName = newCoor_marker_filename.toAscii();
+   QString newCoor_marker_filename = cubeOutput + newCoorMarkerlabel + ".marker";
+   const char* new_coor_marker_fileName = newCoor_marker_filename.toStdString().c_str();
+   strcpy(new_coor_marker_filename, new_coor_marker_fileName);
 #endif
 
    writeMarker_file(new_coor_marker_filename, neighbor_cube_markerList);
@@ -949,7 +949,12 @@ void S2UI::traceData(){
 #endif
 
 #if defined (Q_OS_WIN32)
-   system("vaa3d_msvc.exe /x S2_tracing_connector /f combineSWC /i swc /o swc\\combined.swc /p windows");
+   char* command;
+   QString preCommand = "vaa3d_msvc.exe /x S2_tracing_connector /f combineSWC /i " + swcOutput + " /o " + swcOutput + "combined.swc /p windows";
+   const char* CpreCommand = preCommand.toStdString().c_str();
+   strcpy(command, CpreCommand);
+   //cout << command << endl;
+   system(command);
    v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
 #endif
 
