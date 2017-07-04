@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "s2Controller.h"
 #include "v3d_message.h"
-#include <s2UI.h>
+#include "s2UI.h"
 
 
 S2Parameter::S2Parameter():

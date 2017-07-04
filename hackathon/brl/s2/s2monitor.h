@@ -12,7 +12,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QList>
-#include <tileInfo.h>
+#include "tileInfo.h"
 #include <QImage>
 #include <QMutex>
 

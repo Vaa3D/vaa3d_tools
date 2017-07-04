@@ -74,7 +74,7 @@ public slots:
      * where the 'final' status is determined.
      */
     void combinedSmartScan(QString);
-    void selectData();
+    //void selectData();
     void traceData();
 
 signals:

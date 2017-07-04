@@ -26,7 +26,7 @@
 #include <QDir>
 #include "Tiff3DMngr.h"
 #include <qregexp.h>
-#include "s2_preprocessor.h"
+
 
 using namespace iim;
 using namespace std;

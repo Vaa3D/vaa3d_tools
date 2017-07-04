@@ -77,7 +77,7 @@ FORMS += \
 
 OTHER_FILES += \
     taskList.txt
-DEFINES += GIT_CURRENT_SHA1="\\\"$(shell git rev-parse HEAD)\\\""
+#DEFINES += GIT_CURRENT_SHA1="\\\"$(shell git rev-parse HEAD)\\\""
 
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/terastitcher/include
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
@@ -183,6 +183,10 @@ SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
 SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
 
 
+unix {
+DEFINES += GIT_CURRENT_SHA1="\\\"$(shell git rev-parse HEAD)\\\""
+}
 
-
-
+win32 {
+    INCLUDEPATH     += $$VAA3D_DIR/v3d_main/common_lib/winlib64
+}
