@@ -7,9 +7,15 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 
 HEADERS	+= pattern_search_plugin.h \
-    sort_swc.h
+    sort_swc.h \
+    pattern_analysis.h \
+    get_subtrees.h \
+    trees_retrieve.h
 SOURCES	+= pattern_search_plugin.cpp \
-    sort_swc.cpp
+    sort_swc.cpp \
+    pattern_analysis.cpp \
+    get_subtrees.cpp \
+    trees_retrieve.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
