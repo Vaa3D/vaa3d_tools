@@ -11,10 +11,10 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <Eigen/Core>
-#include <ngtypes/basetypes.h>
-#include <ngtypes/volume.h>
-#include <ngtypes/soma.h>
-#include <ngtypes/tree.h>
+#include "ngtypes/basetypes.h"
+#include "ngtypes/volume.h"
+#include "ngtypes/soma.h"
+#include "ngtypes/tree.h"
 typedef unsigned char UChar;
 class BinarySettingsDockWidget;
 class NeuroGLWidget;

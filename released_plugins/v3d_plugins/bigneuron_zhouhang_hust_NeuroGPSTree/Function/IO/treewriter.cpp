@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <QString>
 
+#ifdef _WIN32
+#include <iterator>
+#endif
+
 TreeWriter::TreeWriter()
 {
     identifyName = std::string("TreeWriter");
