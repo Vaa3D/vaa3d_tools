@@ -546,7 +546,7 @@ void S2UI::traceData(){
   // qDebug() << in_zz[1];
   // qDebug() << in_zz[2];
   // qDebug() << in_zz[3];
-
+    V3DLONG cubeSideLength = in_zz[2];
    // Open a window for the user to select input the marker file of soma coordinates
    QString fileOpenName;
    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),"", QObject::tr("Supported file (*.marker *.MARKER)"));
@@ -601,11 +601,22 @@ void S2UI::traceData(){
    initial_markerList = readMarker_file(fileOpenName);
 
    // implement a "queue" using a QList
-   QList<ImageMarker> myqueue;
+   //QList<ImageMarker> myqueue;
+   //LandmarkList myqueue;
+   //QList<LandmarkList> TipsList_queue;
 
    // append the intial marker first, the new coordinates will be appended in the loop later
-   myqueue.append(initial_markerList.at(0));
-
+   //myqueue.append(initial_markerList.at(0));
+   LocationSimple initialTarget;
+   initialTarget.x = initial_markerList.at(0).x-0.5*cubeSideLength;
+   initialTarget.y = initial_markerList.at(0).y-0.5*cubeSideLength;
+   initialTarget.z = 0;
+printf("%f", initialTarget.size);
+   //QDebug() << initialTarget.y;
+   //QDebug() << initialTarget.z;
+   v3d_msg("test2");
+   myStackAnalyzer3->allTargetList.append(initialTarget);
+   v3d_msg("test");
    int count=0;
    int i=0;
    int x=0;
@@ -644,9 +655,10 @@ void S2UI::traceData(){
    //v3d_msg("check");
    int tileStatus=0;
 
-   char new_coor_marker_filename[255] = {0};
-   char boundary_marker_filename[255] = {0};
+   //char new_coor_marker_filename[255] = {0};
+   //char boundary_marker_filename[255] = {0};
    char swc_filename[255] = {0};
+   //char swc_filename_global[255] = {0};
    char cube_filename[255] = {0};
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    system("mkdir -p swc");
@@ -654,39 +666,42 @@ void S2UI::traceData(){
 #endif
 
    // keep a list of the coordinates of the cubes which have already been traced
-   QList<ImageMarker> alreadytracedcube_markerList;
+   LandmarkList alreadytracedcube_markerList;
+   //QList<ImageMarker> alreadytracedcube_markerList;
+
+   float x_start,x_end,y_start,y_end;
 
    // The second part of this function traces neighboring cubes (if tract presents in the boundary) in a breadth-first manner
-   while (myqueue.size()>0)
+   while (myStackAnalyzer3->allTargetList.size()>0)
    { //count=count+1;
        // For debug purpose only
-       for(i=0;i<myqueue.size();i++){
-           printf("iter %d, x= %f , y= %f\n", count, myqueue.at(i).x, myqueue.at(i).y);
+       //for(i=0;i<myqueue.size();i++){
+       //    printf("iter %d, x= %f , y= %f\n", count, myqueue.at(i).x, myqueue.at(i).y);
 
-       }
+       //}
 
+     //cubeSideLength = in_zz[2];
+     x_start= myStackAnalyzer3->allTargetList.at(0).x;
+     x_end=x_start+cubeSideLength;
+     y_start= myStackAnalyzer3->allTargetList.at(0).y;
+     y_end=y_start+cubeSideLength;
+     alreadytracedcube_markerList.push_back(myStackAnalyzer3->allTargetList.at(0));
 
-    //qDebug() << markerList.at(0).x;
-   float xcenter = myqueue.at(0).x;
-   float ycenter = myqueue.at(0).y;
-
-   // record the cubes which have already been traced
-   alreadytracedcube_markerList.append(myqueue.at(0));
-
-   //float zcenter = initial_markerList.at(0).z;
-   float cubeSideLength = in_zz[2];
-  // qDebug() << xcenter;
-  // qDebug() << ycenter;
-   //qDebug() << zcenter;
-   float x_start=xcenter-cubeSideLength/2;
-   float x_end=xcenter+cubeSideLength/2;
-   float y_start=ycenter-cubeSideLength/2;
-   float y_end=ycenter+cubeSideLength/2;
    if (x_start<0)
        x_start=0;
    if (y_start<0)
        y_start=0;
 
+   if(x_start>in_zz[0])
+      {myStackAnalyzer3->allTargetList.removeFirst();
+       count=count+1;
+       continue;
+      }
+   if(y_start>in_zz[1])
+      {myStackAnalyzer3->allTargetList.removeFirst();
+       count=count+1;
+       continue;
+      }
    if (x_end>in_zz[0])
        x_end=in_zz[0];
    if (y_end>in_zz[1])
@@ -717,9 +732,9 @@ void S2UI::traceData(){
    simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
    //v3d_msg("Cropping complete.");
 
-    if( access( cube_filename, R_OK ) == -1 )
-   {myqueue.removeFirst();
-       count=count+1;
+   if( access( cube_filename, R_OK ) == -1 )
+   {myStackAnalyzer3->allTargetList.removeFirst();
+    count=count+1;
     continue;
    }
 #endif
@@ -736,19 +751,31 @@ void S2UI::traceData(){
    //v3d_msg("Cropping complete.");
 
     if( access( cube_filename, 4 ) == -1 )
-   {myqueue.removeFirst();
+   {myStackAnalyzer3->allTargetList.removeFirst();
        count=count+1;
     continue;
    }
 #endif
 
+   // prepare the inputs for APP2Tracing
    Image4DSimple * pNewImage = cb->loadImage(cube_filename);
+   pNewImage->setOriginX(x_start);
+   pNewImage->setOriginY(y_start);
    Image4DSimple * total4DImage_mip;
    LandmarkList seedList;
    LocationSimple tileLocation;
-   tileLocation.x = 0;
-   tileLocation.y = 0;
-   seedList.clear();
+
+   if (count==0)
+   {  tileLocation.x = x_start;
+       tileLocation.y = y_start;
+       seedList.clear();}
+   else
+   {   tileLocation = myStackAnalyzer3->allTargetList.at(0);
+       seedList = myStackAnalyzer3->allTipsList.at(0);
+
+
+      }
+
    bool isSoma = loadScanNumber==0;
    //bool isAdaptive = false;
    bool useGSDT = true;
@@ -757,11 +784,12 @@ void S2UI::traceData(){
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    QString currDir = QDir().currentPath();
    QString SWClabel = QString::number(count);
-   currDir = currDir + "/swc/" + SWClabel + ".swc";
+   currDir = currDir + "/swc/" + SWClabel;
    const char* temp2 = currDir.toStdString().c_str();
    strcpy(swc_filename, temp2);
    QString swcString = swc_filename;
    printf("swc %d",count);
+   //sprintf(swc_filename_global, "./swc/%d_global.swc", count);
 #endif
 
 #if defined(Q_OS_WIN32)
@@ -777,9 +805,27 @@ void S2UI::traceData(){
    QString tileSaveString="file2.swc";
 
    // use APP2 for tracing
-   bool s2Mode = true;
+   //bool s2Mode = true;
+
+
    myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
 
+   // remove the cubes that havee already been processed
+    myStackAnalyzer3->allTargetList.removeAt(0);
+   myStackAnalyzer3->allTipsList.removeAt(0);
+
+/*
+   // add outputs to the queue
+   for (i=0;i<newTargetList.size();i++)
+   {myqueue.push_back(newTargetList[i]);
+    TipsList_queue.push_back(newTipsList.at(i));
+   }
+*/
+
+   //newTipsList=readLandmarkList("newTipsList.landmarklist");
+   //newTargetList=readLandmarkList("newTargetList.landmarklist");
+
+/*
    // convert swc coordinates to world coordinates
    NeuronTree myswc;
    myswc=readSWC_file(swc_filename);
@@ -798,8 +844,10 @@ void S2UI::traceData(){
    
    NeuronTree saveSWC;
    saveSWC.listNeuron = newSWC;
-   writeSWC_file(swc_filename, saveSWC);
-   
+   writeSWC_file(swc_filename_global, saveSWC);
+*/
+
+ /*
    // read in the marker of boundary vertices
    QList<ImageMarker> boundary_markerList;
 
@@ -936,12 +984,15 @@ void S2UI::traceData(){
        {myqueue.append(neighbor_cube_markerList.at(i));
         }
    }
+*/
 
    // remove the current finished cube from the queue
-   myqueue.removeFirst();
-
+   //myqueue.removeFirst();
+  //TipsList_queue.removeFirst();
    count=count+1;
 }
+
+/*
    // combine swc files of the cubes into a single swc file
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    system("vaa3d -x S2_tracing_connector -f combineSWC -i ./swc -o ./swc/combined.swc -p linux");
@@ -957,6 +1008,7 @@ void S2UI::traceData(){
    system(command);
    v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
 #endif
+*/
 
    return;
 }

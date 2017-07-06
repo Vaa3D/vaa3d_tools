@@ -7,12 +7,16 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QMutex>
+
+
+
 class StackAnalyzer : public QObject
 {
     Q_OBJECT
 public:
     StackAnalyzer(V3DPluginCallback2 &callback);
-
+    QList<LandmarkList> allTipsList;
+    LandmarkList allTargetList;
 
 signals:
     void analysisDone(QList<LandmarkList> newTipsList, LandmarkList newTargets, Image4DSimple* total4DImage_mip, double tileIndex, QString tileSaveString, int tileStatus);
@@ -64,6 +68,9 @@ private:
     int globalMaxBlockSize;
     int globalMinBlockSize;
     double radius;
+
+
+
     template <class T> void gaussian_filter(T* data1d,
                          V3DLONG *in_sz,
                          unsigned int Wx,

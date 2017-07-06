@@ -1163,13 +1163,20 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
 
     }
 
+
+
+
+
     QList<ImageMarker> tipsToSave;
     QString markerSaveString2;
     markerSaveString2 = swcString;
     if (tileStatus==1) markerSaveString2.append("D");
     markerSaveString2.append("final.marker");
     for (int i =0; i<newTipsList.length(); i++){
+        allTargetList.push_back(newTargetList.at(i));
         LandmarkList iList = newTipsList[i];
+        allTipsList.push_back(iList);
+
         for (int j = 0; j<iList.length();j++){
             ImageMarker markerIJ;
             markerIJ.x = iList[j].x;
@@ -1181,8 +1188,8 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
 
     }
     writeMarker_file(markerSaveString2, tipsToSave);
-    //emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
 
+    //emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
 
 }
 
@@ -1195,8 +1202,8 @@ void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSi
     if(ifs_swc)
         finalswc = readSWC_file(finaloutputswc.toStdString());
 
-    QList<LandmarkList> newTipsList;
-    LandmarkList newTargetList;
+   QList<LandmarkList> newTipsList;
+   LandmarkList newTargetList;
 
     PARA_APP2 p;
     p.is_gsdt = useGSDT;
