@@ -1149,7 +1149,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
         {
             newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
             newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
-            newTargetList[i].z =(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
+            newTargetList[i].z =0; //(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
             newTargetList[i].ev_pc1 = tileLocation.ev_pc1;
             newTargetList[i].ev_pc2= tileLocation.ev_pc2;
             newTargetList[i].ave = tileLocation.ave;
@@ -1173,14 +1173,16 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     if (tileStatus==1) markerSaveString2.append("D");
     markerSaveString2.append("final.marker");
     for (int i =0; i<newTipsList.length(); i++){
-        allTargetList.push_back(newTargetList.at(i));
         LandmarkList iList = newTipsList[i];
-        allTipsList.push_back(iList);
-
+        if(!allTargetList.contains(newTargetList.at(i)))
+        {
+            allTargetList.push_back(newTargetList.at(i));
+            allTipsList.push_back(iList);
+        }
         for (int j = 0; j<iList.length();j++){
             ImageMarker markerIJ;
-            markerIJ.x = iList[j].x;
-            markerIJ.y = iList[j].y;
+            markerIJ.x = iList[j].x-p.p4dImage->getOriginX();
+            markerIJ.y = iList[j].y-p.p4dImage->getOriginY();
             markerIJ.z = iList[j].z;
 
             tipsToSave.append(markerIJ);
