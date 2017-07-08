@@ -10,7 +10,7 @@
 #include "pattern_search_plugin.h"
 #include "pattern_analysis.h"
 #include "get_subtrees.h"
-#include "sort_swc.h"
+#include "trees_retrieve.h"
 
 Q_EXPORT_PLUGIN2(pattern_search, pattern_search);
 
@@ -98,17 +98,15 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
 
     int boundary_length;
     NeuronTree pt_consensus;
-    if(!pattern_analysis(PARA.nt_search,PARA.nt_pattern,pt_consensus,boundary_length))
+    if(!pattern_analysis(PARA.nt_search,PARA.nt_pattern,pt_consensus,boundary_length,callback))
     {
         cout<<"something wrong is in pattern_analysis"<<endl;
     }
     vector<NeuronTree> sub_trees;
     vector<vector<V3DLONG> > p_to_tree;
     get_subtrees(PARA.nt_search,sub_trees,boundary_length,p_to_tree);
-    double step_radio= 0.25;
-    int search_step = boundary_length * step_radio;
     vector<V3DLONG> selected_trees;
-    trees_retrieve(sub_trees,pt_consensus,selected_trees,search_step);
+    trees_retrieve(sub_trees,pt_consensus,selected_trees);
 
     //Output
     cout<<"selected_tree_size="<<selected_trees.size()<<endl;
@@ -128,16 +126,14 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     cout<<"result_points.size="<<result_points.size()<<endl;
     vector<V3DLONG> result_points_set = result_points; // Could be better
 
-    //QList <NeuronSWC> list_pattern = PARA.nt_boundary.listNeuron;
-    QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
-
+    //QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
+    NeuronTree list_search = PARA.nt_search;
     for(V3DLONG i =0; i<result_points_set.size();i++)
     {
         V3DLONG id=result_points_set[i];
-        list_search[id].type =7;    // type=7 means the color is green
+        list_search.listNeuron[id].type =7;    // type=7 means the color is green
     }
-    export_list2file(list_search,"updated_vr_neuron.swc","updated_vr_neuron.swc");
-
+    writeSWC_file("updated_vr_neuron.swc",list_search);
     return;
 }
 
