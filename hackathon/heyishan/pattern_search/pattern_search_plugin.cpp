@@ -115,9 +115,9 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     for(int i=0; i<selected_trees.size();i++)
     {
         V3DLONG id_tree=selected_trees[i];
-        cout<<"id_tree="<<id_tree<<endl;
+        //cout<<"id_tree="<<id_tree<<endl;
         vector<V3DLONG> ps_tree=p_to_tree[id_tree];
-        cout<<"ps_tree_size="<<ps_tree.size()<<endl;
+        //cout<<"ps_tree_size="<<ps_tree.size()<<endl;
         for(int j=0;j<ps_tree.size();j++)
         {
             result_points.push_back(ps_tree[j]);

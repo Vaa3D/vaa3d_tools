@@ -7,9 +7,9 @@ bool trees_retrieve(vector<NeuronTree> & sub_trees, const NeuronTree & pt_consen
     cout<<"blastneuron: batch_compute"<<endl;
     QList<double*> morph_list, gmi_list;
     for(V3DLONG i=0;i<sub_trees.size();i++)
+    //for(V3DLONG i=0;i<10;i++)
     {
         NeuronTree tmp=sub_trees[i];
-        //cout<<"sub_trees[i].size="<<sub_trees[i].listNeuron.size()<<endl;
         double * feature_morph = new double[21];
         double * feature_gmi = new double[14];
         computeFeature(tmp, feature_morph);
@@ -17,19 +17,19 @@ bool trees_retrieve(vector<NeuronTree> & sub_trees, const NeuronTree & pt_consen
         morph_list.append(feature_morph);
         gmi_list.append(feature_gmi);
     }
-
+    cout<<morph_list.size()<<"   "<<gmi_list.size()<<endl;
     // blastneuron: global_retrieve
     cout<<"blastneuron: global_retrieve"<<endl;
     NeuronTree query =pt_consensus;
-    int retrieved_num = 20;// number
+    int retrieved_num = 10;// number
     double thres = 0.1;
     V3DLONG neuronNum=sub_trees.size();
     vector<int> feature_codes, norm_codes;
     vector<vector<V3DLONG> > retrieved_all;
     feature_codes.push_back(1);
-    feature_codes.push_back(2);
+    //feature_codes.push_back(2);
     norm_codes.push_back(1);
-    //norm_codes.push_back(2);
+    norm_codes.push_back(2);
     for  (int i=0;i<feature_codes.size();i++)
     {
         for (int j=0;j<norm_codes.size();j++)

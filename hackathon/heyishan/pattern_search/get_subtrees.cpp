@@ -9,7 +9,7 @@
 #ifndef VOID
 #define VOID 1000000000
 #endif
-bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int boundary_length, vector<vector<V3DLONG> >p_to_tree)
+bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int boundary_length, vector<vector<V3DLONG> >&p_to_tree)
 {
     if(nt.listNeuron.size()==0)
     {
@@ -33,7 +33,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
     }
 
     // get small trees in whole nt
-//    boundary_length=8;
+    //boundary_length=8;
     cout<<"length = "<<boundary_length<<endl;
 //    for(V3DLONG i=0; i<30-search_step; i+=search_step)
     for(V3DLONG i=0; i<nt.listNeuron.size() - search_step; i+=search_step)

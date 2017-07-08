@@ -91,11 +91,6 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,NeuronTre
        V3DLONG tol_len = 0;
        if(v_area[i].listNeuron.size()<=1) {cout<<"the number of points within this boundary isn't more than 1"<<endl; continue;}
        NeuronTree area_sorted;
-//        if(!SortSWC(v_area[i].listNeuron,area_sorted.listNeuron,VOID,VOID))
-//        {
-//            cout<<"sort failed"<<endl;
-//            return false;
-//        }
         V3DLONG root_id=v_area[i].listNeuron[0].n;
         area_sorted = sort(v_area[i], root_id,VOID);
 //        area_sorted = sort(v_area[i], VOID, VOID);
@@ -128,7 +123,6 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,NeuronTre
                 if(k==j) state[k]=ALIVE;
                 else    state[k]=FAR;
             }
-            //StackElem * first_elem = new StackElem(j,0);
             StackElem first_elem(j,0);
             TreeStack.push(first_elem);
             while (!TreeStack.isEmpty())
@@ -168,7 +162,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,NeuronTre
                         tol_len+=cur_elem.len;
                         continue;
                     }
-                    else cout<<"This is first point"<<endl;
+                    else endPointNum+=1;
                 }
             }//while
             TreeStack.clear();
