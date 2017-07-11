@@ -427,7 +427,7 @@ private:
     QLineEdit *roiYWEdit ;
     QLineEdit *roiZWEdit;
 
-    QLineEdit *thrsEdit;
+    QLineEdit *sizeEdit;
     QLineEdit *overlapEdit;
     QLineEdit *backgroundEdit;
 

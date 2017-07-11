@@ -295,6 +295,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
     connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
     connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
+    connect(myStackAnalyzer3, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
 
     connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
@@ -546,7 +547,7 @@ void S2UI::traceData(){
   // qDebug() << in_zz[1];
   // qDebug() << in_zz[2];
   // qDebug() << in_zz[3];
-   float cubeSideLength = in_zz[2];
+
    // Open a window for the user to select input the marker file of soma coordinates
    QString fileOpenName;
    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),"", QObject::tr("Supported file (*.marker *.MARKER)"));
@@ -598,8 +599,6 @@ void S2UI::traceData(){
 #endif
 
 
-
-
    // Suppose a simple case, only one point is provided in this marker
    QList<ImageMarker> initial_markerList;
    initial_markerList = readMarker_file(fileOpenName);
@@ -611,17 +610,14 @@ void S2UI::traceData(){
 
    // append the intial marker first, the new coordinates will be appended in the loop later
    //myqueue.append(initial_markerList.at(0));
-   LocationSimple initialTarget;
-   initialTarget.x = initial_markerList.at(0).x-0.5*cubeSideLength;
-   initialTarget.y = initial_markerList.at(0).y-0.5*cubeSideLength;
-   initialTarget.z = 0;
+
    //LandmarkList firstip;
   // firstip.append(initialTarget);
   //printf("%f", initialTarget.size);
    //QDebug() << initialTarget.y;
    //QDebug() << initialTarget.z;
    //v3d_msg("test2");
-   myStackAnalyzer3->allTargetList.append(initialTarget);
+
    //myStackAnalyzer3->allTipsList.append(firstip);
 
    //v3d_msg("test");
@@ -630,16 +626,19 @@ void S2UI::traceData(){
    int x=0;
 
    // obtain the input parameters values from the edit boxes
-   float thrs=thrsEdit->text().toFloat();
+   float cubeSideLength=sizeEdit->text().toFloat();
    float overlap=overlapEdit->text().toFloat();
    int background=int(round(backgroundEdit->text().toFloat()));
-   if (thrs<0)
-   {thrs=0.1;
-    v3d_msg("Boundary threshold cannot be smaller than 0. Default value of 0.1 is used instead.");
+   if (cubeSideLength<0)
+   {cubeSideLength=50;
+    v3d_msg("Tile size cannot be smaller than 0. Default value of 50 is used instead.");
    }
-   if (thrs>1)
-   {thrs=0.1;
-    v3d_msg("Boundary threshold cannot be larger than 1. Default value of 0.1 is used instead.");
+   if ((cubeSideLength>in_zz[0]) || (cubeSideLength>in_zz[1]))
+   {if (in_zz[0]>=in_zz[1])
+           cubeSideLength=in_zz[0];
+       else
+           cubeSideLength=in_zz[1];
+    v3d_msg("Tile size cannot be larger than the input image size. The image size is used instead.");
    }
    if (overlap<0)
    {overlap=0.05;
@@ -657,9 +656,17 @@ void S2UI::traceData(){
    {background=35;
     v3d_msg("Background value cannot be larger than 100. Default value of 35 is used instead.");
    }
-   qDebug() << thrs;
+   qDebug() << cubeSideLength;
    qDebug() << overlap;
    qDebug() << background;
+
+   LocationSimple initialTarget;
+   initialTarget.x = initial_markerList.at(0).x-0.5*cubeSideLength;
+   initialTarget.y = initial_markerList.at(0).y-0.5*cubeSideLength;
+   initialTarget.z = 0;
+   myStackAnalyzer3->allTargetList.append(initialTarget);
+
+
    //v3d_msg("check");
    int tileStatus=0;
 
@@ -746,18 +753,18 @@ void S2UI::traceData(){
 
    // crop the image
    unsigned char * cropped_image = 0;
-   // qDebug() << y_start;
-   // qDebug() << y_end;
-   // qDebug() << x_start;
-   // qDebug() << x_end;
-   // qDebug() << in_zz[2];
+   qDebug() << y_start;
+   qDebug() << y_end;
+   qDebug() << x_start;
+   qDebug() << x_end;
+   qDebug() << in_zz[2];
    cropped_image = data1d->loadSubvolume_to_UINT8(y_start, y_end,
                                                   x_start, x_end,
                                                   0, in_zz[2]);
 
    V3DLONG in_sz[4];
-   in_sz[0] = y_end-y_start;
-   in_sz[1] = x_end-x_start;
+   in_sz[1] = y_end-y_start;
+   in_sz[0] = x_end-x_start;
    in_sz[2] = cubeSideLength;
    in_sz[3] = data1d->getDIM_C();
    
@@ -1544,10 +1551,10 @@ QGroupBox *S2UI::createSimulator(){
     gSimulator->setCheckable(true);
     gSimulator->setChecked(true);
 
-    QLabel *thrsLabel = new QLabel(tr("Boundary threshold ="));
-    thrsEdit = new QLineEdit("0.1");
-    thrsLabel->setBuddy(thrsEdit);
-    thrsEdit->setObjectName("thrsX");
+    QLabel *sizeLabel = new QLabel(tr("Tile size ="));
+    sizeEdit = new QLineEdit("50");
+    sizeLabel->setBuddy(sizeEdit);
+    sizeEdit->setObjectName("sizeX");
 
     QLabel *overlapLabel = new QLabel(tr("Overlap ="));
     overlapEdit = new QLineEdit("0.05");
@@ -1564,8 +1571,8 @@ QGroupBox *S2UI::createSimulator(){
     QGridLayout *glROI = new QGridLayout;
 
     glROI->addWidget(tracePB, 5, 0, 1,2);
-    glROI->addWidget(thrsLabel,1, 0);
-    glROI->addWidget(thrsEdit, 1, 1);
+    glROI->addWidget(sizeLabel,1, 0);
+    glROI->addWidget(sizeEdit, 1, 1);
     glROI->addWidget(overlapLabel, 2, 0);
     glROI->addWidget(overlapEdit, 2, 1);
     glROI->addWidget(backgroundLabel, 3, 0);
