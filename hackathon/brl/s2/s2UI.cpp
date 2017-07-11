@@ -623,7 +623,6 @@ void S2UI::traceData(){
    //v3d_msg("test");
    int count=0;
    int i=0;
-   int x=0;
 
    // obtain the input parameters values from the edit boxes
    float cubeSideLength=sizeEdit->text().toFloat();
@@ -661,8 +660,8 @@ void S2UI::traceData(){
    qDebug() << background;
 
    LocationSimple initialTarget;
-   initialTarget.x = initial_markerList.at(0).x-0.5*cubeSideLength;
-   initialTarget.y = initial_markerList.at(0).y-0.5*cubeSideLength;
+   initialTarget.x =floor(initial_markerList.at(0).x-0.5*cubeSideLength);
+   initialTarget.y =floor(initial_markerList.at(0).y-0.5*cubeSideLength);
    initialTarget.z = 0;
    myStackAnalyzer3->allTargetList.append(initialTarget);
 
@@ -765,7 +764,7 @@ void S2UI::traceData(){
    V3DLONG in_sz[4];
    in_sz[1] = y_end-y_start;
    in_sz[0] = x_end-x_start;
-   in_sz[2] = cubeSideLength;
+   in_sz[2] = in_zz[2];
    in_sz[3] = data1d->getDIM_C();
    
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
