@@ -663,6 +663,9 @@ void S2UI::traceData(){
    initialTarget.x =floor(initial_markerList.at(0).x-0.5*cubeSideLength);
    initialTarget.y =floor(initial_markerList.at(0).y-0.5*cubeSideLength);
    initialTarget.z = 0;
+   initialTarget.ev_pc1 = cubeSideLength;
+   initialTarget.ev_pc2 = cubeSideLength;
+
    myStackAnalyzer3->allTargetList.append(initialTarget);
 
 

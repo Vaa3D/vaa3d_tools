@@ -1113,7 +1113,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     if(tip_left.size()>0)
     {
         newTipsList.push_back(tip_left);
-        newTarget.x = -floor((1.0-overlap)*p.p4dImage->getXDim());
+        newTarget.x = -floor((1.0-overlap)*tileLocation.ev_pc1);
         newTarget.y = 0;
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
@@ -1121,7 +1121,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     if(tip_right.size()>0)
     {
         newTipsList.push_back(tip_right);
-        newTarget.x = floor((1.0-overlap)*p.p4dImage->getXDim());
+        newTarget.x = floor((1.0-overlap)*tileLocation.ev_pc1);
         newTarget.y = 0;
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
@@ -1130,7 +1130,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     {
         newTipsList.push_back(tip_up);
         newTarget.x = 0;
-        newTarget.y = -floor((1.0-overlap)*p.p4dImage->getYDim());
+        newTarget.y = -floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
@@ -1138,7 +1138,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     {
         newTipsList.push_back(tip_down);
         newTarget.x = 0;
-        newTarget.y = floor((1.0-overlap)*p.p4dImage->getYDim());
+        newTarget.y = floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
@@ -1147,8 +1147,8 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     {
         for (int i = 0; i<newTargetList.length(); i++)
         {
-            newTargetList[i].x = newTargetList[i].x+p.p4dImage->getOriginX();
-            newTargetList[i].y= newTargetList[i].y+p.p4dImage->getOriginY();
+            newTargetList[i].x = newTargetList[i].x + tileLocation.x;
+            newTargetList[i].y = newTargetList[i].y + tileLocation.y;
             newTargetList[i].z =0; //(1.0-overlap)*newTargetList[i].z+p.p4dImage->getOriginZ();
             newTargetList[i].ev_pc1 = tileLocation.ev_pc1;
             newTargetList[i].ev_pc2= tileLocation.ev_pc2;
