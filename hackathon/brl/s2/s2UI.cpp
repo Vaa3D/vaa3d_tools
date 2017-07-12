@@ -295,7 +295,7 @@ void S2UI::hookUpSignalsAndSlots(){
     connect(myStackAnalyzer0, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
     connect(myStackAnalyzer1, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
     connect(myStackAnalyzer2, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
-    connect(myStackAnalyzer3, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleNewLocation(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
+    connect(myStackAnalyzer3, SIGNAL(analysisDone(QList<LandmarkList>, LandmarkList,Image4DSimple*, double, QString, int)), this, SLOT(handleGlobalVariables(QList<LandmarkList>,LandmarkList, Image4DSimple*, double, QString, int)));
 
     connect(myStackAnalyzer ,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
     connect(myStackAnalyzer0,SIGNAL(loadingDone(Image4DSimple*)),this,SLOT(loadingDone(Image4DSimple*)));
@@ -523,6 +523,22 @@ void S2UI::resetDataDir(){
 
 }
 
+void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex, QString tileSaveString, int tileStatus){
+    int i=0;
+    for (i =0; i<newTipsList.length(); i++){
+        LandmarkList iList = newTipsList[i];
+        if(!allTargetList.contains(newLandmarks.at(i)))
+        {
+            allTargetList.push_back(newLandmarks.at(i));
+            myallTipsList.push_back(iList);
+        }
+
+    }
+
+
+
+}
+
 void S2UI::traceData(){
     
    // This function aims to simulate how the s2 works in an actual already accquired data of TeraFly format.
@@ -666,7 +682,7 @@ void S2UI::traceData(){
    initialTarget.ev_pc1 = cubeSideLength;
    initialTarget.ev_pc2 = cubeSideLength;
 
-   myStackAnalyzer3->allTargetList.append(initialTarget);
+   allTargetList.append(initialTarget);
 
 
    //v3d_msg("check");
@@ -708,7 +724,7 @@ void S2UI::traceData(){
    outputStream.setDevice(&saveTextFile);
 
    // The second part of this function traces neighboring cubes (if tract presents in the boundary) in a breadth-first manner
-   while (myStackAnalyzer3->allTargetList.size()>0)
+   while (allTargetList.size()>0)
    { //count=count+1;
        // For debug purpose only
        //for(i=0;i<myqueue.size();i++){
@@ -716,18 +732,18 @@ void S2UI::traceData(){
 
        //}
 
-       if(alreadytracedcube_markerList.contains(myStackAnalyzer3->allTargetList.at(0)))
+       if(alreadytracedcube_markerList.contains(allTargetList.at(0)))
        {
-           myStackAnalyzer3->allTargetList.removeFirst();
-           myStackAnalyzer3->allTipsList.removeFirst();
+           allTargetList.removeFirst();
+           myallTipsList.removeFirst();
            count=count+1;
            continue;
        }
      //v3d_msg("test");
      //cubeSideLength = in_zz[2];
-     x_start= myStackAnalyzer3->allTargetList.at(0).x;
+     x_start= allTargetList.at(0).x;
      x_end=x_start+cubeSideLength;
-     y_start= myStackAnalyzer3->allTargetList.at(0).y;
+     y_start= allTargetList.at(0).y;
      y_end=y_start+cubeSideLength;
 
 
@@ -737,14 +753,14 @@ void S2UI::traceData(){
        y_start=0;
 
    if(x_start>in_zz[0])
-      {myStackAnalyzer3->allTargetList.removeFirst();
-       myStackAnalyzer3->allTipsList.removeFirst();
+      {allTargetList.removeFirst();
+       myallTipsList.removeFirst();
        count=count+1;
        continue;
       }
    if(y_start>in_zz[1])
-      {myStackAnalyzer3->allTargetList.removeFirst();
-       myStackAnalyzer3->allTipsList.removeFirst();
+      {allTargetList.removeFirst();
+       myallTipsList.removeFirst();
        count=count+1;
        continue;
       }
@@ -779,8 +795,8 @@ void S2UI::traceData(){
    //v3d_msg("Cropping complete.");
 
    if( access( cube_filename, R_OK ) == -1 )
-   {myStackAnalyzer3->allTargetList.removeFirst();
-    myStackAnalyzer3->allTipsList.removeFirst();
+   {allTargetList.removeFirst();
+    myallTipsList.removeFirst();
     count=count+1;
     continue;
    }
@@ -798,8 +814,8 @@ void S2UI::traceData(){
    //v3d_msg("Cropping complete.");
 
     if( access( cube_filename, 4 ) == -1 )
-   {myStackAnalyzer3->allTargetList.removeFirst();
-    myStackAnalyzer3->allTipsList.removeFirst();
+   {allTargetList.removeFirst();
+    myallTipsList.removeFirst();
        count=count+1;
     continue;
    }
@@ -814,9 +830,9 @@ void S2UI::traceData(){
    Image4DSimple * total4DImage_mip;
    LandmarkList seedList;
    LocationSimple tileLocation;
-   tileLocation = myStackAnalyzer3->allTargetList.at(0);
+   tileLocation = allTargetList.at(0);
    if (count>0)
-   { seedList = myStackAnalyzer3->allTipsList.at(0);
+   { seedList = myallTipsList.at(0);
    }
    else
    {seedList.clear();}
@@ -868,11 +884,11 @@ outputStream<< (int) x_print<<" "<< (int) y_print<<" "<<swcString<<" "<< (int) t
 
 
    // remove the cubes that havee already been processed
-   alreadytracedcube_markerList.push_back(myStackAnalyzer3->allTargetList.at(0));
-    myStackAnalyzer3->allTargetList.removeAt(0);
+   alreadytracedcube_markerList.push_back(allTargetList.at(0));
+    allTargetList.removeAt(0);
    if (count>0)
    {
-    myStackAnalyzer3->allTipsList.removeFirst();}
+    myallTipsList.removeFirst();}
 
    count=count+1;
 
@@ -1059,6 +1075,8 @@ saveTextFile.close();
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    system("vaa3d -x S2_tracing_connector -f combineSWC -i ./swc_global -o ./swc_global/combined.swc -p linux");
    system("cp ./swc_global/combined_connected.swc .");
+
+   system("cd ..");
    v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
 #endif
 

@@ -46,6 +46,9 @@ public:
 
     EventLogger* myEventLogger;
     TileInfoMonitor* myTileInfoMonitor;
+    QList<LandmarkList> myallTipsList;
+    LandmarkList allTargetList;
+
 public slots:
     /*! \brief update posMon status
      *
@@ -76,6 +79,7 @@ public slots:
     void combinedSmartScan(QString);
     //void selectData();
     void traceData();
+    void handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
 
 signals:
     void startPM();

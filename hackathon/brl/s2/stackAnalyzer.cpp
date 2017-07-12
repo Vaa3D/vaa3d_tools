@@ -1174,11 +1174,6 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     markerSaveString2.append("final.marker");
     for (int i =0; i<newTipsList.length(); i++){
         LandmarkList iList = newTipsList[i];
-        if(!allTargetList.contains(newTargetList.at(i)))
-        {
-            allTargetList.push_back(newTargetList.at(i));
-            allTipsList.push_back(iList);
-        }
         for (int j = 0; j<iList.length();j++){
             ImageMarker markerIJ;
             markerIJ.x = iList[j].x-p.p4dImage->getOriginX();
@@ -1191,7 +1186,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     }
     writeMarker_file(markerSaveString2, tipsToSave);
 
-    //emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
 
 }
 
