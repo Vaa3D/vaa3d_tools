@@ -26,7 +26,7 @@
 #include <QDir>
 #include "Tiff3DMngr.h"
 #include <qregexp.h>
-
+#include <math.h>
 
 using namespace iim;
 using namespace std;
@@ -527,7 +527,7 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
     int i=0;
     for (i =0; i<newTipsList.length(); i++){
         LandmarkList iList = newTipsList[i];
-        if(!allTargetList.contains(newLandmarks.at(i)))
+        if(sqrt(pow((allTargetList.at(0).x-newLandmarks.at(i).x),2)+pow((allTargetList.at(0).y-newLandmarks.at(i).y),2))>1)
         {
             allTargetList.push_back(newLandmarks.at(i));
             myallTipsList.push_back(iList);
@@ -733,10 +733,12 @@ void S2UI::traceData(){
        //}
 
        if(alreadytracedcube_markerList.contains(allTargetList.at(0)))
-       {
+       {  //v3d_msg("This cube has already been traced");
+           qDebug() << allTargetList.size();
            allTargetList.removeFirst();
            myallTipsList.removeFirst();
            count=count+1;
+           qDebug() << allTargetList.size();
            continue;
        }
      //v3d_msg("test");
@@ -768,6 +770,18 @@ void S2UI::traceData(){
        x_end=in_zz[0];
    if (y_end>in_zz[1])
        y_end=in_zz[1];
+   if (x_end<0)
+   {allTargetList.removeFirst();
+       myallTipsList.removeFirst();
+       count=count+1;
+       continue;
+   }
+   if (y_end<0)
+   {allTargetList.removeFirst();
+       myallTipsList.removeFirst();
+       count=count+1;
+       continue;
+   }
 
    // crop the image
    unsigned char * cropped_image = 0;
