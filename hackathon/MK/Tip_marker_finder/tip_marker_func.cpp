@@ -90,10 +90,12 @@ bool TipProcessor(QStringList input, int menu)
 				{
 					t.x = nt.listNeuron.at(i).x;
 					t.y = nt.listNeuron.at(i).y;
-					t.z = nt.listNeuron.at(i).z;
+					t.z = top;
 					t.type = nt.listNeuron.at(i).type;
+					t.name = QString::number(30);
+					t.comment = QString::number(1);
 					bifur_marker.append(t);
-					cout << nt.listNeuron.at(i).type << endl;
+					//cout << nt.listNeuron.at(i).type << endl;
 				}
 
 				if (childs[i].size() == 0)
@@ -107,8 +109,9 @@ bool TipProcessor(QStringList input, int menu)
 							t.y = nt.listNeuron.at(i).y;
 							t.z = nt.listNeuron.at(i).z;
 							t.type = nt.listNeuron.at(i).type;
+							t.name = QString::number(10);
 							bifur_marker.append(t);
-							cout << nt.listNeuron.at(i).type << endl;
+							//cout << nt.listNeuron.at(i).type << endl;
 						}
 					}
 				}
@@ -127,8 +130,10 @@ bool TipProcessor(QStringList input, int menu)
 					t.y = nt.listNeuron.at(i).y;
 					t.z = nt.listNeuron.at(i).z;
 					t.type = nt.listNeuron.at(i).type;
+					t.name = QString::number(30);
+					t.comment = QString::number(1);
 					bifur_marker.append(t);
-					cout << nt.listNeuron.at(i).type << endl;
+					//cout << nt.listNeuron.at(i).type << endl;
 				}
 
 				if (childs[i].size() == 0)
@@ -137,6 +142,7 @@ bool TipProcessor(QStringList input, int menu)
 					t.y = nt.listNeuron.at(i).y;
 					t.z = nt.listNeuron.at(i).z;
 					t.type = nt.listNeuron.at(i).type;
+					t.name = QString::number(10);
 					bifur_marker.append(t);
 				}
 			}
