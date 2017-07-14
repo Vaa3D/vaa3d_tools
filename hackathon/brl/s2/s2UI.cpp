@@ -675,6 +675,11 @@ void S2UI::traceData(){
    qDebug() << overlap;
    qDebug() << background;
 
+   LocationSimple initialSeed;
+   initialSeed.x=floor(initial_markerList.at(0).x);
+   initialSeed.y=floor(initial_markerList.at(0).y);
+   initialSeed.z=floor(0.5*in_zz[2]);
+
    LocationSimple initialTarget;
    initialTarget.x =floor(initial_markerList.at(0).x-0.5*cubeSideLength);
    initialTarget.y =floor(initial_markerList.at(0).y-0.5*cubeSideLength);
@@ -801,7 +806,8 @@ void S2UI::traceData(){
    in_sz[3] = data1d->getDIM_C();
    
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   sprintf(cube_filename, "./swc/x_%d_y_%d_cube.v3draw", int(x_start),int(y_start));
+   //sprintf(cube_filename, "./swc/x_%d_y_%d_cube.v3draw", int(x_start),int(y_start));
+   sprintf(cube_filename, "./swc/x_%d_y_%d_Ch2.v3draw", int(x_start),int(y_start));
    //printf("cube %d",count);
    QString saveName = cube_filename;
    const char* fileName = saveName.toAscii();
@@ -861,7 +867,10 @@ void S2UI::traceData(){
    QString SWClabelcount = QString::number(count);
    QString SWClabelX = QString::number(int(x_start));
    QString SWClabelY = QString::number(int(y_start));
-   currDir = currDir + "/swc/" + SWClabelcount+"_x_"+SWClabelX+"_y_"+SWClabelY+".swc";
+   QString currDir2 = currDir + "/swc";
+   //currDir = currDir + "/swc/" + SWClabelcount+"_x_"+SWClabelX+"_y_"+SWClabelY+"_Ch2.swc";
+
+   currDir = currDir + "/swc/x_"+SWClabelX+"_y_"+SWClabelY+"_Ch2.swc";
    const char* temp2 = currDir.toStdString().c_str();
    strcpy(swc_filename, temp2);
    QString swcString = swc_filename;
@@ -884,8 +893,34 @@ void S2UI::traceData(){
    // use APP2 for tracing
    //bool s2Mode = true;
 
+   if (tracingMethodComboC->currentIndex()==0){
+    //APP2
+           myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
+
+
+
+       }
+       if (tracingMethodComboC->currentIndex()==1){
+     //MOST
+           //v3d_msg(currDir2);
+           if (count==0)
+           {  seedList.append(initialSeed);
+
+
+           }
+
+           myStackAnalyzer3->SubtractiveTracing('\0',cube_filename, pNewImage, total4DImage_mip, swcString, overlap, background,interrupt, seedList, tileLocation, currDir2,useGSDT, isSoma, 0, tileStatus);
+       }
+       if (tracingMethodComboC->currentIndex()==2){
+      // NeuTube
+           myStackAnalyzer3->SubtractiveTracing('\0',cube_filename, pNewImage, total4DImage_mip, swcString, overlap, background,interrupt, seedList, tileLocation, currDir2,useGSDT, isSoma, 1, tileStatus);
+
+       }
+
+
+
+
      // v3d_msg("test");
-   myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
   // v3d_msg("test1");
 
 
@@ -1581,9 +1616,18 @@ QGroupBox *S2UI::createROIControls(){
 }
 
 QGroupBox *S2UI::createSimulator(){
-    QGroupBox *gSimulator = new QGroupBox(tr("&Simulator"));
-    gSimulator->setCheckable(true);
-    gSimulator->setChecked(true);
+   QGroupBox *gSimulator = new QGroupBox(tr("&Simulator"));
+   // gSimulator->setCheckable(true);
+   // gSimulator->setChecked(true);
+
+    tracingMethodComboC = new QComboBox;
+    tracingMethodComboC->addItem("APP2");
+    tracingMethodComboC->addItem("MOST");
+    tracingMethodComboC->addItem("NeuTube");
+    tracingMethodComboC->setCurrentIndex(0);
+    //methodChoice = 2;
+    QLabel * tracingMethodComboCLabel = new QLabel(tr("Tracing Method: "));
+    tracingMethodComboCLabel->setAlignment(Qt::AlignRight);
 
     QLabel *sizeLabel = new QLabel(tr("Tile size ="));
     sizeEdit = new QLineEdit("50");
@@ -1603,6 +1647,10 @@ QGroupBox *S2UI::createSimulator(){
     tracePB = new QPushButton(tr("select data to trace"));
 
     QGridLayout *glROI = new QGridLayout;
+
+
+    glROI->addWidget(tracingMethodComboCLabel,4,0);
+    glROI->addWidget(tracingMethodComboC, 4, 1);
 
     glROI->addWidget(tracePB, 5, 0, 1,2);
     glROI->addWidget(sizeLabel,1, 0);

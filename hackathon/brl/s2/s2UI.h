@@ -401,6 +401,7 @@ private:
     QList<TileInfo> *tileSizeChoices;
 
     QComboBox *tracingMethodComboB;
+     QComboBox *tracingMethodComboC;
     QComboBox *channelChoiceComboB;
     QCheckBox *addBoundingBoxScan;
     QLabel *addBoundingBoxScanLabel;

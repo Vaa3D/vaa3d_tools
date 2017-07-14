@@ -618,7 +618,7 @@ LandmarkList StackAnalyzer::eliminate_seed(NeuronTree nt,LandmarkList inputRootL
     LandmarkList inputRootList_pruned;
     V3DLONG neuronNum = nt.listNeuron.size();
 
-
+    qDebug() << inputRootList.size();
     for(V3DLONG i = 0; i<inputRootList.size();i++)
     {
         int marker_x = inputRootList.at(i).x - total4DImage->getOriginX();
@@ -642,6 +642,8 @@ LandmarkList StackAnalyzer::eliminate_seed(NeuronTree nt,LandmarkList inputRootL
             inputRootList_pruned.push_back(inputRootList.at(i));
 
     }
+    qDebug() << inputRootList_pruned.size();
+
     return inputRootList_pruned;
 }
 
@@ -1582,7 +1584,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
         return;
     }
-
+    //v3d_msg("07 13");
     if(!alreadyBeenTraced)
     {
         nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
@@ -1592,6 +1594,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
         sAMutex.lock();
         NeuronTree nt_tile = readSWC_file(swcString);
         LandmarkList inputRootList_pruned = eliminate_seed(nt_tile,inputRootList,total4DImage);
+        //v3d_msg("07 13");
         if(inputRootList_pruned.size()<1)
         {
             sAMutex.unlock();
