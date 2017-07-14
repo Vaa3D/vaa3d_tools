@@ -2,6 +2,7 @@
 #include "pattern_analysis.h"
 #include <qstack.h>
 #include <stdlib.h>
+#include <math.h>
 #include "my_sort.h"
 #ifndef getParent(n,nt)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
@@ -9,6 +10,7 @@
 #ifndef VOID
 #define VOID 1000000000
 #endif
+#define mhd(a) (fabs(a.x)+fabs(a.y)+fabs(a.z))
 bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int boundary_length, vector<vector<V3DLONG> >&p_to_tree)
 {
     if(nt.listNeuron.size()==0)
@@ -16,11 +18,11 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
         cout<<"Neuron Tree is empty"<<endl;
         return false;
     }
-    double step_radio= 0.2;
+    double step_radio= 0.4;
     int search_step = boundary_length * step_radio;
-    if(search_step<1)   search_step=1;
+    //search_step=1;
+    if(search_step<2)   search_step=2;
     cout<<"search_step="<<search_step<<endl;
-
     // get each node's children
     V3DLONG nt_size = nt.listNeuron.size();
     QVector<QVector<V3DLONG> > childs;
@@ -33,18 +35,19 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
     }
 
     // get small trees in whole nt
-    //boundary_length=8;
     cout<<"length = "<<boundary_length<<endl;
-//    for(V3DLONG i=0; i<30-search_step; i+=search_step)
     for(V3DLONG i=0; i<nt.listNeuron.size() - search_step; i+=search_step)
     {
         NeuronTree s_tree;
         vector<V3DLONG> points;
+        double dist0; V3DLONG ind0;
         s_tree.listNeuron.clear();
         s_tree.hashNeuron.clear();
         points.clear();
         NeuronSWC cur_point = nt.listNeuron[i];
         s_tree.listNeuron.push_back(cur_point);
+        dist0=mhd(cur_point);
+        ind0=i;
         points.push_back(i);
         // using stack marching put points into s_tree and points(vector)
         QStack<StackElem> TreeStack;
@@ -75,6 +78,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
                         points.push_back(elem.id);
                         NeuronSWC p=nt.listNeuron[elem.id];
                         s_tree.listNeuron.push_back(p);
+                        if(dist0>mhd(p)) {dist0=mhd(p);ind0=elem.id;}
                         state[c]=ALIVE;
                     }
                 }
@@ -87,6 +91,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
                     points.push_back(elem.id);
                     NeuronSWC p=nt.listNeuron[elem.id];
                     s_tree.listNeuron.push_back(p);
+                    if(dist0>mhd(p)) {dist0=mhd(p);ind0=elem.id;}
                     state[cur_elem_pn]=ALIVE;
                 }
             }//else
@@ -97,13 +102,12 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
         s_tree_sorted.hashNeuron.clear();
         if(s_tree.listNeuron.size()!=0)
         {
-            V3DLONG root_id=s_tree.listNeuron[0].n;
+            V3DLONG root_id = nt.listNeuron[ind0].n;
             s_tree_sorted = sort(s_tree, root_id,VOID);
         }
 
         p_to_tree.push_back(points);
         sub_trees.push_back(s_tree_sorted);
-        //cout<<"points = "<<points.size()<<endl;
         TreeStack.clear();
         if(state){delete [] state;state=0;}
     }//end i

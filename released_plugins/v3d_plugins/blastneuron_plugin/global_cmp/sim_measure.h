@@ -2,7 +2,7 @@
 #define SIM_MEASURE_H
 
 #define VOID -1000000000
-
+#include <qlist.h>
 #include <boost/math/distributions/students_t.hpp>
 #include <math.h>
 #include <iostream>
@@ -292,6 +292,24 @@ bool retrieve_dist(double *qf, QList<double*> & featureList, int sbjnum, int * s
 	double *sim=NULL;
 	sim = new double[neuronNum];
 
+    // do normalization  //295-311 Add by Yishan He 2017.7.12
+    QList<double> min_feature;
+    QList<double> max_feature;
+    cout<<"feature size"<<featureList.size()<<endl;
+    for(int i=0;i<fnum;i++)
+    {
+        double min_f=-VOID;
+        double max_f=VOID;
+        for(int j=0;j<neuronNum;j++)
+        {
+            double * cur_n = featureList.at(j);
+            if(min_f>cur_n[i]) min_f=cur_n[i];
+            if(max_f<cur_n[i]) max_f=cur_n[i];
+        }
+        min_feature.push_back(min_f);
+        max_feature.push_back(max_f);
+    }
+
 	for (int i=0;i<neuronNum;i++)
 	{
 		sim[i] = 0;
@@ -299,7 +317,12 @@ bool retrieve_dist(double *qf, QList<double*> & featureList, int sbjnum, int * s
 		for (int j=0;j<fnum;j++)
 		{
 			if (curr[j]==curr[j])
-				sim[i] += (curr[j]-qf[j]) * (curr[j]-qf[j]);
+                //sim[i] += (curr[j]-qf[j]) * (curr[j]-qf[j]);
+            {   // using normalized value replaced above one, modified by Yishan He 2017.7.12
+                double df=max_feature[j]-min_feature[j];
+                if(df==0) df=1;
+                sim[i] += ((curr[j]-min_feature[j])/df - (qf[j]-min_feature[j])/df) * ((curr[j]-min_feature[j])/df - (qf[j]-min_feature[j])/df) ;
+            }
 		}
 		sim[i] = -sqrt(sim[i]);
 	}

@@ -30,15 +30,15 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
     double prune_size = 2.0;
 	NeuronTree query_preprocessed;
 	//if the query tree is small, no preprocess, //modified by Xiaodong Yue, 2017.06.26
-    if(query.listNeuron.size()>20)
-	{
-		query_preprocessed = pre_process(query, step_size,prune_size);
-	}
-	else
-	{
-		query_preprocessed = query;
-	}
-	
+    if(query.listNeuron.size()>10)
+    {
+        query_preprocessed = pre_process(query, step_size,prune_size);
+    }
+    else
+    {
+        query_preprocessed = query;
+    }
+
 	double *qf;
 	int *sbj;
 	double* score;
@@ -61,6 +61,7 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 	{
 		computeFeature(query_preprocessed, qf);
 		printf("tag 4: computeFeature finished! \n");
+        qf[19]=0;qf[20]=0; //set last two features as 0 // Added by Yishan He 2017.7.14
 	}
 	else if (method_code==2)
 	{
@@ -214,10 +215,9 @@ bool compute_intersect(vector<vector<V3DLONG> > & list, vector<V3DLONG> & result
 		for (V3DLONG j=0;j<stratNum;j++)
 		{
 			int ind = list[j][i];
-			printf("Tag5: ind of rank_sum: %d \n", ind);
+            //printf("Tag5: ind of rank_sum: %d \n", ind);
 			rank_sum[ind] += i;
 		}
-	
 	int * idx = new int[number];
 	double * score = new double[number];
 	for (V3DLONG i=0;i<neuronNum;i++)
