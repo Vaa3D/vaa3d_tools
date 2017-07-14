@@ -61,4 +61,4 @@ unix {
 }
 
 TARGET	= $$qtLibraryTarget(pattern_search)
-DESTDIR	= $$VAA3DPATH/bin/plugins/pattern_search/
+DESTDIR	= $$VAA3DPATH/bin/plugins/vr_neuron_search/vr_nmotif_bjut/

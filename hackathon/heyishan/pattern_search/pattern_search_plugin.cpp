@@ -96,41 +96,53 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     }
     cout<< "******************Welcome To Pattern Search*********************"<<endl;
 
-    int boundary_length;
-    NeuronTree pt_consensus;
-    if(!pattern_analysis(PARA.nt_search,PARA.nt_pattern,pt_consensus,boundary_length,callback))
+    vector<int> pt_lens;
+    vector<NeuronTree> pt_list;
+    vector<V3DLONG> result_points;
+    if(!pattern_analysis(PARA.nt_search,PARA.nt_pattern,pt_list,pt_lens,callback))
     {
         cout<<"something wrong is in pattern_analysis"<<endl;
+        return;
     }
-    vector<NeuronTree> sub_trees;
-    vector<vector<V3DLONG> > p_to_tree;
-    get_subtrees(PARA.nt_search,sub_trees,boundary_length,p_to_tree);
-    vector<V3DLONG> selected_trees;
-    trees_retrieve(sub_trees,pt_consensus,selected_trees);
-
-    //Output
-    cout<<"selected_tree_size="<<selected_trees.size()<<endl;
-    cout<<p_to_tree.size()<<endl;
-    vector<V3DLONG> result_points;
-    for(int i=0; i<selected_trees.size();i++)
+    if(pt_list.size()!=pt_lens.size()) {cout<<"list size is not equal to lens size."<<endl; return;}
+    for(int v=0;v<pt_list.size();v++)
     {
-        V3DLONG id_tree=selected_trees[i];
-        //cout<<"id_tree="<<id_tree<<endl;
-        vector<V3DLONG> ps_tree=p_to_tree[id_tree];
-        //cout<<"ps_tree_size="<<ps_tree.size()<<endl;
-        for(int j=0;j<ps_tree.size();j++)
+        NeuronTree pt = pt_list[v];
+        int area_len = pt_lens[v];
+        vector<NeuronTree> sub_trees;
+        vector<vector<V3DLONG> > p_to_tree;
+        get_subtrees(PARA.nt_search,sub_trees,area_len,p_to_tree);
+        vector<V3DLONG> selected_trees;
+        trees_retrieve(sub_trees,pt,selected_trees);
+
+        cout<<"selected_tree_size="<<selected_trees.size()<<endl;
+        cout<<p_to_tree.size()<<endl;
+
+        for(int i=0; i<selected_trees.size();i++)
         {
-            result_points.push_back(ps_tree[j]);
+            V3DLONG id_tree=selected_trees[i];
+            vector<V3DLONG> ps_tree=p_to_tree[id_tree];
+            for(int j=0;j<ps_tree.size();j++)
+            {
+                result_points.push_back(ps_tree[j]);
+            }
         }
+        // for test
+//        for(int i=0;i<selected_trees.size();i++)
+//        {
+//            cout<<selected_trees[i]<<":"<<PARA.nt_search.listNeuron[selected_trees[i]].n<<endl;
+//        }
+        sub_trees.clear();
+        p_to_tree.clear();
+        selected_trees.clear();
     }
+    //Output
     cout<<"result_points.size="<<result_points.size()<<endl;
-    vector<V3DLONG> result_points_set = result_points; // Could be better
-
-    //QList <NeuronSWC> list_search = PARA.nt_search.listNeuron;
     NeuronTree list_search = PARA.nt_search;
-    for(V3DLONG i =0; i<result_points_set.size();i++)
+
+    for(V3DLONG i =0; i<result_points.size();i++)
     {
-        V3DLONG id=result_points_set[i];
+        V3DLONG id=result_points[i];
         list_search.listNeuron[id].type =7;    // type=7 means the color is green
     }
     writeSWC_file("updated_vr_neuron.swc",list_search);

@@ -4,6 +4,9 @@
 #include "v3d_message.h"
 #include "basic_surf_objs.h"
 #include <v3d_interface.h>
+#include <vector>
+
+using namespace std;
 
 enum{ALIVE=1, FAR=0};
 
@@ -23,6 +26,6 @@ struct StackElem
     }
 };
 
-bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,NeuronTree & consensus, int & boundary_length,V3DPluginCallback2 &callback);
+bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<int> & pt_lens,V3DPluginCallback2 &callback);
 
 #endif // PATTERN_ANALYSIS_H

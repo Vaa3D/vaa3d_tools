@@ -16,7 +16,7 @@ bool prune_branch(NeuronTree nt, NeuronTree & result, double prune_size)
 	}
 	
 	double diameter = calculate_diameter(nt, branches);
-	printf("diameter=%.3f\n",diameter);
+    //printf("diameter=%.3f\n",diameter);
 	
     if (prune_size  == -1 ){
         double thres = 0.05;
