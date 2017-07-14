@@ -1735,7 +1735,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     if(tip_left.size()>0)
     {
         newTipsList.push_back(tip_left);
-        newTarget.x = -floor((1.0-overlap)*total4DImage->getXDim());
+        newTarget.x = -floor((1.0-overlap)*tileLocation.ev_pc1);
         newTarget.y = 0;
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
@@ -1743,7 +1743,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     if(tip_right.size()>0)
     {
         newTipsList.push_back(tip_right);
-        newTarget.x = floor((1.0-overlap)*total4DImage->getXDim());
+        newTarget.x = floor((1.0-overlap)*tileLocation.ev_pc1);
         newTarget.y = 0;
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
@@ -1752,7 +1752,7 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         newTipsList.push_back(tip_up);
         newTarget.x = 0;
-        newTarget.y = -floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.y = -floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
@@ -1760,39 +1760,39 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         newTipsList.push_back(tip_down);
         newTarget.x = 0;
-        newTarget.y = floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.y = floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
     if(tip_left_up.size()>0)
     {
         newTipsList.push_back(tip_left_up);
-        newTarget.x = -floor((1.0-overlap)*total4DImage->getXDim());
-        newTarget.y = -floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.x = -floor((1.0-overlap)*tileLocation.ev_pc1);
+        newTarget.y = -floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
     if(tip_right_up.size()>0)
     {
         newTipsList.push_back(tip_right_up);
-        newTarget.x = floor((1.0-overlap)*total4DImage->getXDim());
-        newTarget.y = -floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.x = floor((1.0-overlap)*tileLocation.ev_pc1);
+        newTarget.y = -floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
     if(tip_left_down.size()>0)
     {
         newTipsList.push_back(tip_left_down);
-        newTarget.x = -floor((1.0-overlap)*total4DImage->getXDim());
-        newTarget.y = floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.x = -floor((1.0-overlap)*tileLocation.ev_pc1);
+        newTarget.y = floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
     if(tip_right_down.size()>0)
     {
         newTipsList.push_back(tip_right_down);
-        newTarget.x = floor((1.0-overlap)*total4DImage->getXDim());
-        newTarget.y = floor((1.0-overlap)*total4DImage->getYDim());
+        newTarget.x = floor((1.0-overlap)*tileLocation.ev_pc1);
+        newTarget.y = floor((1.0-overlap)*tileLocation.ev_pc2);
         newTarget.z = 0;
         newTargetList.push_back(newTarget);
     }
@@ -1802,9 +1802,9 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         for (int i = 0; i<newTargetList.length(); i++)
         {
-            newTargetList[i].x = newTargetList[i].x+total4DImage->getOriginX();
-            newTargetList[i].y = newTargetList[i].y+total4DImage->getOriginY();
-            newTargetList[i].z = newTargetList[i].z+total4DImage->getOriginZ();
+            newTargetList[i].x = newTargetList[i].x+tileLocation.x;
+            newTargetList[i].y = newTargetList[i].y+tileLocation.y;
+            newTargetList[i].z = 0;//newTargetList[i].z+tileLocation.z;
             newTargetList[i].ev_pc1 = tileLocation.ev_pc1;
             newTargetList[i].ev_pc2 = tileLocation.ev_pc2;
             newTargetList[i].mcenter = tileLocation.mcenter;

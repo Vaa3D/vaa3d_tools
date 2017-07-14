@@ -857,6 +857,7 @@ void S2UI::traceData(){
    else
    {seedList.clear();}
 
+   loadScanNumber = count;
    bool isSoma = loadScanNumber==0;
    //bool isAdaptive = false;
    bool useGSDT = true;
