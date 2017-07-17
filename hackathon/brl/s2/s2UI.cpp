@@ -540,7 +540,6 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 }
 
 void S2UI::traceData(){
-    
    // This function aims to simulate how the s2 works in an actual already accquired data of TeraFly format.
    // It needs the user to select the input TeraFly data as well as a marker file which specify the soma coordinates.
    // The current version is only a prototypical demo which may subject to further revisions.
@@ -568,7 +567,8 @@ void S2UI::traceData(){
    QString fileOpenName;
    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),"", QObject::tr("Supported file (*.marker *.MARKER)"));
    if (fileOpenName.isEmpty())
-               return;
+      return;
+
    // obtain timestamp
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
    struct timeval tp;
@@ -585,8 +585,7 @@ void S2UI::traceData(){
    //system("mkdir -p cube");
    system("mkdir -p swc_global");
 #endif
-   //QDebug() << timestamp;
-   //v3d_msg("check");
+
 
 #if defined (Q_OS_WIN32)
 	struct tm* newTime;
@@ -619,24 +618,6 @@ void S2UI::traceData(){
    QList<ImageMarker> initial_markerList;
    initial_markerList = readMarker_file(fileOpenName);
 
-   // implement a "queue" using a QList
-   //QList<ImageMarker> myqueue;
-   //LandmarkList myqueue;
-   //QList<LandmarkList> TipsList_queue;
-
-   // append the intial marker first, the new coordinates will be appended in the loop later
-   //myqueue.append(initial_markerList.at(0));
-
-   //LandmarkList firstip;
-  // firstip.append(initialTarget);
-  //printf("%f", initialTarget.size);
-   //QDebug() << initialTarget.y;
-   //QDebug() << initialTarget.z;
-   //v3d_msg("test2");
-
-   //myStackAnalyzer3->allTipsList.append(firstip);
-
-   //v3d_msg("test");
    int count=0;
    int i=0;
 
@@ -689,54 +670,31 @@ void S2UI::traceData(){
 
    allTargetList.append(initialTarget);
 
-
-   //v3d_msg("check");
    int tileStatus=0;
-
-   //char new_coor_marker_filename[255] = {0};
-   //char boundary_marker_filename[255] = {0};
    char swc_filename[255] = {0};
    char swc_filename_global[255] = {0};
    char cube_filename[255] = {0};
-//#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-//   system("mkdir -p swc");
-//   system("mkdir -p cube");
-//#endif
+   char cube_MIP_filename[255] = {0};
 
    // keep a list of the coordinates of the cubes which have already been traced
    LandmarkList alreadytracedcube_markerList;
    alreadytracedcube_markerList.clear();
-   //QList<ImageMarker> alreadytracedcube_markerList;
    float x_start,x_end,y_start,y_end;
 
-  // QDir currDir;
-  // QString saveDir = currDir.currentPath();
-  // QString timelabel = QString::number(timestamp);
-   //QString outputFolder = saveDir + "/s2_simulator_results"+timelabel+'/';
-  // QString scanDataFileString;
-   //scanDataFileString=outputFolder;
-   //scanDataFileString.append("/").append("scanData.txt");
-   //qDebug()<<scanDataFileString;
    QFile saveTextFile;
    saveTextFile.setFileName("scanData.txt");// add currentScanFile
    if (!saveTextFile.isOpen()){
        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
            qDebug()<<"unable to save file!";
-   //        total4DImage_mip->deleteRawDataAndSetPointerToNull();
-    //       emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,imageSaveString, tileStatus);
-          return;}     }
+           return;}     }
    QTextStream outputStream;
    outputStream.setDevice(&saveTextFile);
 
+
+
    // The second part of this function traces neighboring cubes (if tract presents in the boundary) in a breadth-first manner
    while (allTargetList.size()>0)
-   { //count=count+1;
-       // For debug purpose only
-       //for(i=0;i<myqueue.size();i++){
-       //    printf("iter %d, x= %f , y= %f\n", count, myqueue.at(i).x, myqueue.at(i).y);
-
-       //}
-
+   {
        if(alreadytracedcube_markerList.contains(allTargetList.at(0)))
        {  //v3d_msg("This cube has already been traced");
            qDebug() << allTargetList.size();
@@ -746,8 +704,6 @@ void S2UI::traceData(){
            qDebug() << allTargetList.size();
            continue;
        }
-     //v3d_msg("test");
-     //cubeSideLength = in_zz[2];
      x_start= allTargetList.at(0).x;
      x_end=x_start+cubeSideLength;
      y_start= allTargetList.at(0).y;
@@ -806,13 +762,10 @@ void S2UI::traceData(){
    in_sz[3] = data1d->getDIM_C();
    
 #if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   //sprintf(cube_filename, "./swc/x_%d_y_%d_cube.v3draw", int(x_start),int(y_start));
    sprintf(cube_filename, "./swc/x_%d_y_%d_Ch2.v3draw", int(x_start),int(y_start));
-   //printf("cube %d",count);
    QString saveName = cube_filename;
    const char* fileName = saveName.toAscii();
    simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
-   //v3d_msg("Cropping complete.");
 
    if( access( cube_filename, R_OK ) == -1 )
    {allTargetList.removeFirst();
@@ -820,6 +773,42 @@ void S2UI::traceData(){
     count=count+1;
     continue;
    }
+
+   // Calculate MIP of the cropped image
+   V3DLONG N = in_sz[0];
+   V3DLONG M = in_sz[1];
+   V3DLONG P = in_sz[2];
+   V3DLONG mip_sz[4];
+   mip_sz[0] = 1;
+   mip_sz[1] = M;
+   mip_sz[2] = P;
+   mip_sz[3] = 1;
+
+   V3DLONG pagesz_mip = mip_sz[0]*mip_sz[1]*mip_sz[2];
+   unsigned char *image_mip=0;
+   image_mip = new unsigned char [pagesz_mip];
+
+   for(V3DLONG iz = 0; iz < P; iz++)
+   {
+       V3DLONG offsetk = iz*M*N;
+       for(V3DLONG iy = 0; iy < M; iy++)
+       {
+           V3DLONG offsetj = iy*N;
+           int max_mip = 0;
+           for(V3DLONG ix = 0; ix < N; ix++)
+           {
+               if(cropped_image[offsetk + offsetj + ix] >= max_mip)
+               {
+                   image_mip[iz*M + iy] = cropped_image[offsetk + offsetj + ix];
+                   max_mip = cropped_image[offsetk + offsetj + ix];
+               }
+           }
+       }
+   }
+   sprintf(cube_MIP_filename, "./swc/x_%d_y_%d_MIP_Ch2.v3draw", int(x_start),int(y_start));
+   QString saveMIPName = cube_MIP_filename;
+   const char* MIPfileName = saveMIPName.toAscii();
+   simple_saveimage_wrapper(*cb, MIPfileName, (unsigned char *)image_mip, mip_sz, 1);
 #endif
 
 #if defined (Q_OS_WIN32)
@@ -869,8 +858,6 @@ void S2UI::traceData(){
    QString SWClabelX = QString::number(int(x_start));
    QString SWClabelY = QString::number(int(y_start));
    QString currDir2 = currDir + "/swc";
-   //currDir = currDir + "/swc/" + SWClabelcount+"_x_"+SWClabelX+"_y_"+SWClabelY+"_Ch2.swc";
-
    currDir = currDir + "/swc/x_"+SWClabelX+"_y_"+SWClabelY+"_Ch2.swc";
    const char* temp2 = currDir.toStdString().c_str();
    strcpy(swc_filename, temp2);
@@ -891,47 +878,39 @@ void S2UI::traceData(){
 
    QString tileSaveString="file2.swc";
 
-   // use APP2 for tracing
-   //bool s2Mode = true;
-
+   // use different tracing algorithm based on the input selection
    if (tracingMethodComboC->currentIndex()==0){
     //APP2
+       //if (count==0)
+       //{  seedList.append(initialSeed);
+
+       //}
            myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
-
-
 
        }
        if (tracingMethodComboC->currentIndex()==1){
      //MOST
-           //v3d_msg(currDir2);
            if (count==0)
            {  seedList.append(initialSeed);
 
-
            }
-
            myStackAnalyzer3->SubtractiveTracing('\0',cube_filename, pNewImage, total4DImage_mip, swcString, overlap, background,interrupt, seedList, tileLocation, currDir2,useGSDT, isSoma, 0, tileStatus);
        }
        if (tracingMethodComboC->currentIndex()==2){
       // NeuTube
+           if (count==0)
+           {  seedList.append(initialSeed);
+
+           }
            myStackAnalyzer3->SubtractiveTracing('\0',cube_filename, pNewImage, total4DImage_mip, swcString, overlap, background,interrupt, seedList, tileLocation, currDir2,useGSDT, isSoma, 1, tileStatus);
 
        }
-
-
-
-
-     // v3d_msg("test");
-  // v3d_msg("test1");
-
 
    int x_print=int(x_start);
    int y_print=int(y_start);
    int tilesize=int(cubeSideLength);
 
 outputStream<< (int) x_print<<" "<< (int) y_print<<" "<<swcString<<" "<< (int) tilesize<<" "<< (int) tilesize<<" "<< 0<<" "<< 0<<"\n";
-
-
 
    // remove the cubes that havee already been processed
    alreadytracedcube_markerList.push_back(allTargetList.at(0));
@@ -941,18 +920,6 @@ outputStream<< (int) x_print<<" "<< (int) y_print<<" "<<swcString<<" "<< (int) t
     myallTipsList.removeFirst();}
 
    count=count+1;
-
-/*
-   // add outputs to the queue
-   for (i=0;i<newTargetList.size();i++)
-   {myqueue.push_back(newTargetList[i]);
-    TipsList_queue.push_back(newTipsList.at(i));
-   }
-*/
-
-   //newTipsList=readLandmarkList("newTipsList.landmarklist");
-   //newTargetList=readLandmarkList("newTargetList.landmarklist");
-
 
    // convert swc coordinates to world coordinates
    NeuronTree myswc;
@@ -973,151 +940,6 @@ outputStream<< (int) x_print<<" "<< (int) y_print<<" "<<swcString<<" "<< (int) t
    NeuronTree saveSWC;
    saveSWC.listNeuron = newSWC;
    writeSWC_file(swc_filename_global, saveSWC);
-
-
- /*
-   // read in the marker of boundary vertices
-   QList<ImageMarker> boundary_markerList;
-
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   sprintf(boundary_marker_filename, "./swc/%d.swcfinal.marker", count);
-   if( access( boundary_marker_filename, R_OK ) == -1 )
-   {myqueue.removeFirst();
-       count=count+1;
-    continue;
-   }
-#endif
-
-#if defined (Q_OS_WIN32)
-   QString Markerlabel = QString::number(count);
-   QString boundary_markerName = swcOutput + Markerlabel + ".swcfinal.marker";
-   const char* tempBoundaryMarker = boundary_markerName.toStdString().c_str();
-   strcpy (boundary_marker_filename, tempBoundaryMarker);
-   if( access( boundary_marker_filename, 4 ) == -1 )
-   {myqueue.removeFirst();
-       count=count+1;
-    continue;
-   }
-#endif
-
-   
-   boundary_markerList = readMarker_file(boundary_marker_filename);
-   QList<ImageMarker> neighbor_cube_markerList;
-   ImageMarker new_center_coor;
-   new_center_coor.x=0;
-   new_center_coor.y=0;
-   
-   // determine which neighboring cubes should be traced in the next iteration (8 possible candidates each time)
-   for (i=0;i<boundary_markerList.size();i++)
-   {if((boundary_markerList.at(i).x< cubeSideLength*thrs) &&
-       (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
-           new_center_coor.x=xcenter-cubeSideLength;
-           new_center_coor.y=ycenter-cubeSideLength;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-     }
-     else if((boundary_markerList.at(i).x>cubeSideLength*thrs) &&
-             (boundary_markerList.at(i).x< cubeSideLength*(1-thrs)) &&
-             (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
-           new_center_coor.x=xcenter;
-           new_center_coor.y=ycenter-cubeSideLength;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-       }
-        else if((boundary_markerList.at(i).x> cubeSideLength*(1-thrs)) &&
-                (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
-           new_center_coor.x=xcenter+cubeSideLength;
-           new_center_coor.y=ycenter-cubeSideLength;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-        }
-     else if((boundary_markerList.at(i).x>cubeSideLength*(1-thrs)) &&
-             (boundary_markerList.at(i).y< cubeSideLength*(1-thrs)) &&
-             (boundary_markerList.at(i).y> cubeSideLength*thrs)) {
-           new_center_coor.x=xcenter+cubeSideLength;
-           new_center_coor.y=ycenter;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-     }
-     else if((boundary_markerList.at(i).x> cubeSideLength*(1-thrs)) &&
-             (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
-           new_center_coor.x=xcenter+cubeSideLength;
-           new_center_coor.y=ycenter+cubeSideLength;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-     }
-     else if((boundary_markerList.at(i).x>cubeSideLength*thrs) &&
-             (boundary_markerList.at(i).x< cubeSideLength*(1-thrs)) &&
-             (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
-             new_center_coor.x=xcenter;
-             new_center_coor.y=ycenter+cubeSideLength;
-             if(!neighbor_cube_markerList.contains(new_center_coor))
-             {
-                 neighbor_cube_markerList.append(new_center_coor);
-             }
-     }
-     else if((boundary_markerList.at(i).x<cubeSideLength*thrs) &&
-             (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
-           new_center_coor.x=xcenter-cubeSideLength;
-           new_center_coor.y=ycenter+cubeSideLength;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-     }
-        else {
-           new_center_coor.x=xcenter-cubeSideLength;
-           new_center_coor.y=ycenter;
-           if(!neighbor_cube_markerList.contains(new_center_coor))
-           {
-               neighbor_cube_markerList.append(new_center_coor);
-           }
-        }
-   }
-
-   if(neighbor_cube_markerList.size()<1)
-   {myqueue.removeFirst();
-       count=count+1;
-    continue;
-   }
-
-   printf("marker %d",count);
-
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   sprintf(new_coor_marker_filename, "./cube/%d.marker", count);
-#endif
-
-#if defined (Q_OS_WIN32)
-   QString newCoorMarkerlabel = QString::number(count);
-   QString newCoor_marker_filename = cubeOutput + newCoorMarkerlabel + ".marker";
-   const char* new_coor_marker_fileName = newCoor_marker_filename.toStdString().c_str();
-   strcpy(new_coor_marker_filename, new_coor_marker_fileName);
-#endif
-
-   writeMarker_file(new_coor_marker_filename, neighbor_cube_markerList);
-
-   // add the targeted cubes into the queue for next iteration of cropping and tracing
-   for(i=0;i<neighbor_cube_markerList.size();i++){
-       if((!alreadytracedcube_markerList.contains(neighbor_cube_markerList.at(i))) && (!myqueue.contains(neighbor_cube_markerList.at(i))))
-       {myqueue.append(neighbor_cube_markerList.at(i));
-        }
-   }
-*/
-
-   // remove the current finished cube from the queue
-   //myqueue.removeFirst();
-  //TipsList_queue.removeFirst();
-
 }
 saveTextFile.close();
 
@@ -1129,7 +951,6 @@ saveTextFile.close();
    system("cd ..");
    v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
 #endif
-
 
    /*
 #if defined (Q_OS_WIN32)
@@ -1145,6 +966,7 @@ saveTextFile.close();
 
    return;
 }
+
 
 void S2UI::updateLocalRemote(bool state){
     isLocal = state;
