@@ -946,7 +946,6 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
 void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, bool useGSDT, bool isSoma, LocationSimple tileLocation, QString tileSaveString,int tileStatus)
 {
-    //v3d_msg("test!");
     QList<LandmarkList> newTipsList;
     LandmarkList newTargetList;
 
@@ -1023,7 +1022,6 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
         markerSaveString = swcString;
         if (tileStatus==1) markerSaveString.append("D");
         markerSaveString.append(".marker");
-        //v3d_msg("test0!");
         writeMarker_file(markerSaveString, seedsToSave);
 
         // are ZERO markers here with no coordinates? or do they come back to stackAnalyzer from s2UI??
@@ -1062,7 +1060,6 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
             }
         }
         saveSWC_file(swcString.toStdString().c_str(), tileswc_file,infostring);
-       // v3d_msg("test!");
     }
 
     NeuronTree nt;

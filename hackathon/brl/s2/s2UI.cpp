@@ -535,7 +535,51 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 
     }
 
+    // display MIP image
+    if ((!mip==0)||(mip->getTotalBytes()==0)){
+        scaleintensity(mip,0,0,8000,double(0),double(255));
+        scale_img_and_convert28bit(mip, 0, 255) ;
+        QImage myMIP;
+        int x = mip->getXDim();
+        int y = mip->getYDim();
+        V3DLONG total  =0;
+        Image4DProxy<Image4DSimple> mipProx(mip);
+        myMIP = QImage(x, y, QImage::Format_RGB888);
+        for (V3DLONG i=0; i<x; i++){
+            for (V3DLONG j=0; j<y;j++){
+                myMIP.setPixel(i,j,mipProx.value8bit_at(i,j,0,0)+mipProx.value8bit_at(i,j,0,0)*256);
+                total++;
+            }
+        }
 
+
+        QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
+        float xPixMicrons = allTargetList.at(0).x;
+        float yPixMicrons = allTargetList.at(0).y;
+        mipPixmap->setScale(uiS2ParameterMap[8].getCurrentValue());
+        mipPixmap->setPos(xPixMicrons, yPixMicrons);
+        mipPixmap->setOffset(-x/2.0,-y/2.0 );
+
+        //    mipPixmap->setPos((xPix-((float) x )/2.0)*uiS2ParameterMap[8].getCurrentValue(),
+        //          (yPix-((float) x )/2.0)*uiS2ParameterMap[9].getCurrentValue());
+        //mipPixmap->acceptHoverEvents();
+        //mipPixmap->setToolTip(scanList.value(imageNumber).getFileString());
+
+
+
+        roiGS->addItem(mipPixmap);
+        v3d_msg("07 19");
+        //QGraphicsTextItem* sequenceNumberText;
+
+        //sequenceNumberText = new QGraphicsTextItem;
+        //sequenceNumberText->setPos(xPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(x/2.0),yPixMicrons-uiS2ParameterMap[8].getCurrentValue()*(y/2.0) );
+        //sequenceNumberText->setPlainText(QString::number(imageNumber));
+        //sequenceNumberText->setTextWidth(100);
+        //sequenceNumberText->setDefaultTextColor(makeQColorFromIndex(10,colorIndex));
+        //sequenceNumberText->setZValue(1000);
+        //sequenceNumberText->setScale(0.8);
+        //roiGS->addItem(sequenceNumberText);
+    }
 
 }
 
@@ -806,9 +850,7 @@ void S2UI::traceData(){
        }
    }
    sprintf(cube_MIP_filename, "./swc/x_%d_y_%d_MIP_Ch2.v3draw", int(x_start),int(y_start));
-   QString saveMIPName = cube_MIP_filename;
-   const char* MIPfileName = saveMIPName.toAscii();
-   simple_saveimage_wrapper(*cb, MIPfileName, (unsigned char *)image_mip, mip_sz, 1);
+   simple_saveimage_wrapper(*cb, cube_MIP_filename, (unsigned char *)image_mip, mip_sz, 1);
 #endif
 
 #if defined (Q_OS_WIN32)
@@ -836,7 +878,7 @@ void S2UI::traceData(){
    pNewImage->setOriginY(y_start);
    pNewImage->setOriginZ(0);
 
-   Image4DSimple * total4DImage_mip;
+   Image4DSimple * total4DImage_mip = cb->loadImage(cube_MIP_filename);
    LandmarkList seedList;
    LocationSimple tileLocation;
    tileLocation = allTargetList.at(0);
@@ -881,10 +923,10 @@ void S2UI::traceData(){
    // use different tracing algorithm based on the input selection
    if (tracingMethodComboC->currentIndex()==0){
     //APP2
-       //if (count==0)
-       //{  seedList.append(initialSeed);
+     //  if (count==0)
+      // {  seedList.append(initialSeed);
 
-       //}
+      // }
            myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
 
        }
