@@ -2091,7 +2091,14 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             cerr<<"Need input image file"<<endl;
             return false;
         }
+        if(outfiles.empty())
+        {
+            cerr<<"Need output swc file"<<endl;
+            return false;
+        }
         QString  inimg_file =  infiles[0];
+        QString  outswc_file =  outfiles[0];
+
         int k=0;
 
         QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
@@ -2119,13 +2126,14 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         int Ws = paras.empty() ? 512 : atoi(paras[k]);k++;
 
         cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
         cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
         cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
         cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
         cout<<"sample_size = "<<Sxy<<endl;
         cout<<"image_size = "<<Ws<<endl;
 
-        QString outputfolder = inimg_file + "_finished/";
+        QString outputfolder = outswc_file + "_finished/";
         QDir().mkdir(outputfolder);
 
         unsigned char * datald = 0;
@@ -2345,7 +2353,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             QDir().remove(curPathSWC);
 
         }
-        QString  swc_processed = inimg_file + QString("_axon_3D_new.swc");
+        QString  swc_processed = outswc_file;// + QString("_axon_3D_new.swc");
         saveSWC_file(swc_processed.toStdString().c_str(), outswc);
         QDir().rmdir(outputfolder);
 

@@ -126,7 +126,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             PARA.listLandmarks.push_back(t);
         }
         PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;
-        PARA.angle_size = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
+        PARA.angle_size = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
 
         QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";
@@ -253,7 +253,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         in_sz[3] = sc;
 
         PARA.inimg_file = p4DImage->getFileName();
-        PARA.angle_size = 5;
+        PARA.angle_size = 10;
     }
     else
     {
@@ -290,6 +290,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     trace_para.sp_num_end_nodes = 2;
     trace_para.b_deformcurve = false;
     trace_para.sp_graph_resolution_step = 1;
+    trace_para.b_estRadii = false;
 
     int markSize = PARA.listLandmarks.size();
     p0.x = PARA.listLandmarks.at(markSize-1).x-1;
