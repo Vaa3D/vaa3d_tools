@@ -64,11 +64,16 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		if (swc_circle == "y") this->circle = true;
 		else if (swc_circle == "n")	this->circle = false;
 		
-		this->inputSWC = readSWC_file(inputSWCfile);
-		QList<NeuronSWC> nodeList = inputSWC.listNeuron;
+		this->inputSWCTree = readSWC_file(inputSWCfile);
+		QList<NeuronSWC> nodeList = inputSWCTree.listNeuron;
 		QList<ImageMarker> somas = readMarker_file(inputSomas);
-		this->childsTable = childIndexTable(inputSWC);
+		this->childsTable = childIndexTable(inputSWCTree);
 		vector<long int> somaIDs;
+		for (size_t i=0; i<nodeList.size(); ++i)
+		{
+			this->locLabel[inputSWCTree.hashNeuron.value(nodeList.at(i).n)] = false;
+		}
+		//cout << locLabel.size() << endl;
 		for (QList<ImageMarker>::iterator it=somas.begin(); it!=somas.end(); ++it)
 		{
 			for (QList<NeuronSWC>::iterator nodeIt=nodeList.begin(); nodeIt!=nodeList.end(); ++nodeIt)
@@ -82,21 +87,37 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		
 		long int wishedID, excludedID;
-		QList< QList<NeuronSWC> > paths;
 		for (size_t i=0; i<somaIDs.size()-1; ++i)
 		{
 			wishedID = somaIDs[i];
 			for (size_t j=i+1; j<somaIDs.size(); ++j)
 			{
 				excludedID = somaIDs[j];
-				findPath(childsTable, inputSWC, wishedID, excludedID, paths);
+				findPath(childsTable, inputSWCTree, wishedID, excludedID, paths);
 				NeuronTree newTree1;
 				newTree1.listNeuron = paths.at(0);
-				QString filename = QString::number(wishedID) + "_" + QString::number(excludedID) + ".swc";
-				writeSWC_file(filename, newTree1);
-				paths.clear();
+				//QString filename = QString::number(wishedID) + "_" + QString::number(excludedID) + ".swc";
+				//writeSWC_file(filename, newTree1);
+
+				NeuronSWC wishedSoma = nodeList.at(inputSWCTree.hashNeuron.value(wishedID));
+				NeuronSWC excludedSoma = nodeList.at(inputSWCTree.hashNeuron.value(excludedID));
+				breakPathMorph(this->inputSWCTree, paths[0], this->childsTable, wishedSoma, excludedSoma);
+				//paths.clear();
 			}
 		}
+		somaPathTree(this->somaPath, this->locLabel, paths, inputSWCTree);
+		NeuronTree pathTree;
+		pathTree.listNeuron = this->somaPath;
+		QString pathTreeFileName = "somasTree.swc";
+		writeSWC_file(pathTreeFileName, pathTree);
+		buildSomaTree();
+
+		breakSomaPathMorph();
+
+		NeuronTree newTree;
+		newTree.listNeuron = this->extractedNeuron;
+		QString extractedFileName = "soma" + QString::number(wishedID) + ".swc";
+		writeSWC_file(extractedFileName, newTree);
 	}
 	else if (func_name == tr("func2"))
 	{
