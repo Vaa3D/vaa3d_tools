@@ -1,5 +1,5 @@
-#ifndef _TREE_RETRIEVE_H__
-#define	 _TREE_RETRIEVE_H__
+#ifndef _TREE_SEARCH_H__
+#define	 _TREE_SEARCH_H__
 
 #include <QtGlobal>
 #include <vector>

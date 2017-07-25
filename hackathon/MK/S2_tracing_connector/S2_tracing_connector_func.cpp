@@ -40,78 +40,43 @@ bool generatorcombined4FilesInDir(const V3DPluginArgList & input, V3DPluginArgLi
     cout<<"Welcome to combine file generator"<<endl;
     if (input.size() < 1) return false;
 
-	int method_code = 1;
-    if (input.size()>=2)
-    {
-        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-        if(paras.size() >= 1) method_code = atoi(paras.at(0));
-    }
-
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * out_file = ((vector<char*> *)(input.at(1).p))->at(0);
     cout<<"inimg_file = "<<inimg_file<<endl;
 
     vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
     vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+    
     QString combined_file;
+    combined_file = outfiles[0];
 
-
-    if(method_code == 1)
+    
+    if(!outfiles.empty())
     {
-        if(!outfiles.empty())
-        {
-            combined_file = outfiles[0];
-            cout<<"combined_file = "<<combined_file.toStdString().c_str()<<endl;
-        }
-        else
-            combined_file = QString(inimg_file) + "combined.swc";
-
-
-        QStringList swcList = importFileList_addnumbersort(QString(inimg_file), method_code);
-
-        vector<MyMarker*> outswc;
-        for(V3DLONG i = 0; i < swcList.size(); i++)
-        {
-
-            QString curPathSWC = swcList.at(i);
-
-            vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
-
-            for(V3DLONG d = 0; d < inputswc.size(); d++)
-            {
-                outswc.push_back(inputswc[d]);
-            }
-
-        }
-        saveSWC_file(combined_file.toStdString().c_str(), outswc);
-
+        combined_file = outfiles[0];
+        cout<<"combined_file = "<<combined_file.toStdString().c_str()<<endl;
     }
-    else if (method_code == 2)
+    else
+        combined_file = QString(inimg_file) + "combined.swc";
+
+    int method_code = 1;
+    QStringList swcList = importFileList_addnumbersort(QString(inimg_file), method_code);
+
+    vector<MyMarker*> outswc;
+    for(V3DLONG i = 0; i < swcList.size(); i++)
     {
-        if(!outfiles.empty())
+        QString curPathSWC = swcList.at(i);
+
+        vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
+
+        for(V3DLONG d = 0; d < inputswc.size(); d++)
         {
-            combined_file = outfiles[0];
-            cout<<"combined_file = "<<combined_file.toStdString().c_str()<<endl;
+            outswc.push_back(inputswc[d]);
         }
-        else
-            combined_file = QString(inimg_file) + "combined.marker";
-
-        QStringList markerList = importFileList_addnumbersort(QString(inimg_file), method_code);
-
-        QList <ImageMarker> outmarker;
-        for(V3DLONG i = 0; i < markerList.size(); i++)
-        {
-
-            QString curPathMarker = markerList.at(i);
-            QList <ImageMarker> inputmarker = readMarker_file(curPathMarker);;
-
-            for(V3DLONG d = 0; d < inputmarker.size(); d++)
-            {
-                outmarker.push_back(inputmarker.at(d));
-            }
-
-        }
-        writeMarker_file(combined_file,outmarker);
     }
+    
+    saveSWC_file(combined_file.toStdString().c_str(), outswc);    
+    
     return true;
 }
 

@@ -20,45 +20,45 @@ using namespace std;
 
 QStringList S2Plugin::menulist() const
 {
-    return QStringList()
-            << tr("start smartScope2")
-            << tr("about");
+	return QStringList()
+			<< tr("start smartScope2")
+			<< tr("about");
 }
 
 void S2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if(menu_name == "start smartScope2")
-    {
+	if(menu_name == "start smartScope2")
+	{
 
-        S2UI myS2( callback, parent);
-        myS2.setFont(QFont("Helvetica",10));
-        myS2.show();
-        myS2.exec();
+		S2UI myS2( callback, parent);
+		myS2.setFont(QFont("Helvetica",10));
+		myS2.show();
+		myS2.exec();
 	}
-    else if(menu_name == "about")
-    {
-        QMessageBox::information(0, "smartScope 2 Plugin", \
-                                 QObject::tr("contact: brianl@alleninstitute.org"));
-    }
+	else if(menu_name == "about")
+	{
+		QMessageBox::information(0, "smartScope 2 Plugin", \
+								 QObject::tr("contact: brianl@alleninstitute.org"));
+	}
 }
 
 QStringList S2Plugin::funclist() const
 {
-    return QStringList()
-            << tr("start smartScope 2")
-            << tr("help");
+	return QStringList()
+			<< tr("start smartScope 2")
+			<< tr("help");
 }
 
 bool S2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if(func_name == "smartScope2")
-    {
-    }
-    else if(func_name == "help")
-    {
-        cout<<"help?";    
+	if(func_name == "smartScope2")
+	{
 	}
-    return false;
+	else if(func_name == "help")
+	{
+		cout<<"help?";    
+	}
+	return false;
 }
 
 

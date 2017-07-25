@@ -16,7 +16,7 @@
 #include "customary_structs/vaa3d_neurontoolbox_para.h" 
 #include "../swc_to_maskimage/filter_dialog.h"
 #include "sort_swc.h"
-#include "tree_retrieve.h"
+#include "tree_search.h"
 //#include "global_neuron_feature.h"
 
 #include "neurontree_structure_matching_plugin.h"

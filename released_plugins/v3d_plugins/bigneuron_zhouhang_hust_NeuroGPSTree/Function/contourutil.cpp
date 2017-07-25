@@ -6,7 +6,12 @@
 #include <numeric>
 #include <deque>
 #include <Eigen/Geometry>
-#include "Function/volumealgo.h"
+#include "volumealgo.h"
+
+#ifdef _WIN32
+#include <iterator>
+#endif
+
 using namespace std;
 
 /*计算表面积和体积*/

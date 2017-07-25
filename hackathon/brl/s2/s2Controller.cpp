@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "s2Controller.h"
 #include "v3d_message.h"
-#include <s2UI.h>
+#include "s2UI.h"
 
 
 S2Parameter::S2Parameter():
@@ -176,13 +176,13 @@ void S2Controller::initializeParameters(){
     s2ParameterMap.insert(2, S2Parameter("galvoYVolts", "-gts currentScanCenter YAxis")) ;
     s2ParameterMap.insert(3, S2Parameter("piezoZ", "-gmp Z 1")) ;
     s2ParameterMap.insert(4, S2Parameter("stepperZ", "-gmp Z 0")) ;
-    s2ParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ;
-    s2ParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ;
-    s2ParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions",0.0, "", "list"));
-    s2ParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis"));
-    s2ParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis"));
-    s2ParameterMap.insert(10,S2Parameter("pixelsPerLine", "-gts pixelsPerLine"));
-    s2ParameterMap.insert(11, S2Parameter("linesPerFrame","-gts linesPerFrame"));
+    s2ParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ; // changing
+    s2ParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ; // changing
+    s2ParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions",0.0, "", "list")); // changing
+    s2ParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis")); // fixed as 1
+    s2ParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis")); // fixed as 1
+    s2ParameterMap.insert(10,S2Parameter("pixelsPerLine", "-gts pixelsPerLine")); // changing
+    s2ParameterMap.insert(11, S2Parameter("linesPerFrame","-gts linesPerFrame")); // changing
     s2ParameterMap.insert(12,S2Parameter("opticalZoom", "-gts opticalZoom"));
     s2ParameterMap.insert(13,S2Parameter("micronROISizeX", "", 0.0, "", "floatderived"));
     s2ParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0, "", "floatderived"));

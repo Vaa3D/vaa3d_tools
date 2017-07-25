@@ -4,7 +4,7 @@
 S2ScanData::S2ScanData(){
     s2ScanImage = QImage(1,1,QImage::Format_RGB888);
     s2ScanImage.setPixel(0,0,0);
-#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
     currentRepoHash = GIT_CURRENT_SHA1;
 #endif
 }

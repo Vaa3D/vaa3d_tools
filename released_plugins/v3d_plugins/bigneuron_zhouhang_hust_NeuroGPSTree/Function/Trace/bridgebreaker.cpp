@@ -604,7 +604,7 @@ void BridgeBreaker::CalcRayBurstOnePtRadWet(const Vec3d &curvePt, const Volume<u
 	sphereRayWet.SetSize(raySlice.size(), Theta, Phi);
 	const double a = 360.0 / (double)Theta;
 	const double b = 180.0 / (double)Phi;
-	const double PI_180 = M_PI / 180.0;
+	const double PI_180 = 3.14159265358979323846 / 180.0;
 
 	//double prev_Density(0.0);
 	double rayNodeDense(0.0), rayNodeWet(0.0);

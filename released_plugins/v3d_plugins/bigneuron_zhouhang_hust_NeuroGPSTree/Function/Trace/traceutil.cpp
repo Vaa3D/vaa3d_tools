@@ -4,7 +4,11 @@
 #include <deque>
 #include <algorithm>
 #include <numeric>
-#include "Function/volumealgo.h"
+#include "../volumealgo.h"
+
+#ifdef _WIN32
+#include <iterator>
+#endif
 
 void TraceUtil::GetGradientVectorFlowForTrace(const Volume<double> &sphereRayWet, Volume<double> &smoothRay)
 {

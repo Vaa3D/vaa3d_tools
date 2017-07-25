@@ -29,7 +29,11 @@
 #include "../volumealgo.h"
 #include "../contourutil.h"
 #include "traceutil.h"
-#include "Function/Trace/WeakSWCFilter.h"
+#include "WeakSWCFilter.h"
+
+#ifdef _WIN32
+#include <iterator>
+#endif
 
 #define M_E        2.71828182845904523536
 #define M_PI       3.14159265358979323846

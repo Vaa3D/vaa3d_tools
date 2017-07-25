@@ -15,7 +15,9 @@
 #include <utility>
 #include <Eigen/LU>
 #include <iostream>
+
 #ifdef _WIN32
+#include <iterator>
 #include <ctime>
 #else
 #include <sys/time.h>

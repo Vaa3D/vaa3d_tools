@@ -102,8 +102,10 @@ QStringList IVSCC_radius_estimation::menulist() const
         <<tr("neuron_radius_current_window")
         <<tr("neuron_radius_selected_folder")
         <<tr("neuron_radius_interpolation")
-        <<tr("swc_3D_to_2D")
-        <<tr("swc_2D_to_3D_radius")
+        <<tr("neuron_radius_interpolation_updated")
+
+      //  <<tr("swc_3D_to_2D")
+      //  <<tr("swc_2D_to_3D_radius")
 		<<tr("about");
 }
 
@@ -393,6 +395,76 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 
         writeMarker_file(MarkerfileName, bifur_marker);
         writeMarker_file(AllmarkerfileName, all_bifur_marker);
+
+    } else if(menu_name == tr("neuron_radius_interpolation_updated"))
+    {
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
+            return;
+
+        QString fileOpenName = openDlg->file_name;
+
+        if(fileOpenName.isEmpty())
+            return;
+        NeuronTree nt;
+        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+        {
+            nt = openDlg->nt;
+
+        }
+
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        V3DLONG *flag = new V3DLONG[neuronNum];
+
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            flag[i] = 1;
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        int root_ID = -1;
+        int max_ID = -1;
+        for (int i=0;i<list.size();i++)
+        {
+            if(list.at(i).parent == 1)
+                flag[i] = -1;
+
+            if(list.at(i).type != 2 && childs.at(i).size() == 0)
+            {
+                int path_length = 0;
+                int currnt_ID = i;
+                while(flag[currnt_ID] != -1)
+                {
+                    path_length++;
+                    currnt_ID = list.at(currnt_ID).parent-1;
+                }
+
+                int ending_ID = currnt_ID;
+                currnt_ID = i;
+                int d = 0;
+                while(flag[currnt_ID] != -1)
+                {
+                    nt.listNeuron[currnt_ID].radius = 2.0 + d*(list[ending_ID].radius-2.0)/(path_length);
+                    flag[currnt_ID] = -1;
+                    currnt_ID = list.at(currnt_ID).parent-1;
+                    d++;
+                }
+            }
+        }
+
+        QString fileDefaultName = fileOpenName+QString("_interpolated.swc");
+        //write new SWC to file
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                fileDefaultName,
+                QObject::tr("Supported file (*.swc)"
+                    ";;Neuron structure	(*.swc)"
+                    ));
+        writeSWC_file(fileSaveName,nt);
 
     }
     else if(menu_name == tr("swc_3D_to_2D"))

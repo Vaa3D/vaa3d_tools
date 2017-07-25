@@ -1,16 +1,13 @@
 //last change: by Hanchuan Peng. 2012-12-30, 2013-06-05
 
 #include "vn_app2.h"
-
 #include "fastmarching_tree.h"
 #include "fastmarching_dt.h"
 #include "hierarchy_prune.h"
 #include "marker_radius.h"
 #include "basic_surf_objs.h"
 #include "swc_convert.h"
-
 #include "vn_imgpreprocess.h"
-
 #include "volimg_proc.h"
 
 bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<string> & infostring)
@@ -630,7 +627,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         saveSWC_file(outswc_file.toStdString(), outswc, infostring);
-       // printf("swcsize is %d\n\n\n\n",outswc.size());
+        printf("swcsize is %d\n\n\n\n",outswc.size());
 
         if(outswc.size()>1)
         {
@@ -644,16 +641,15 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
             arg.type = "random";std::vector<char*> arg_input_resample;
             std:: string fileName_Qstring(outswc_file.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+            
             arg_input_resample.push_back(fileName_string);
             arg.p = (void *) & arg_input_resample; input_resample<< arg;
             arg.type = "random";std::vector<char*> arg_resample_para; arg_resample_para.push_back("10");arg.p = (void *) & arg_resample_para; input_resample << arg;
             arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
-
             QString full_plugin_name_resample = "resample_swc";
             QString func_name_resample = "resample_swc";
             if(p.b_resample)
                 callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
-
             arg.type = "random";std::vector<char*> arg_input_sort;
             arg_input_sort.push_back(fileName_string);
             arg.p = (void *) & arg_input_sort; input_sort<< arg;
@@ -661,12 +657,12 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             QString full_plugin_name_sort = "sort_neuron_swc";
             QString func_name_sort = "sort_swc";
             callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
-
+            
             vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
             saveSWC_file_app2(outswc_file.toStdString(), temp_out_swc, infostring);
         }
-        v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
-                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
+        //v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
+        //                ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), p.b_menu);
         
         if (0) //by PHC 120909
         {

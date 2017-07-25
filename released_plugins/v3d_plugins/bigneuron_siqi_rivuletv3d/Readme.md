@@ -10,9 +10,9 @@ It was tested among 2000+ 3D neuron images stacks. For most of the images, it sh
 If you find the code/plugin helpful for your research, please cite the following papers:
 Citations:
 
-1. Siqi Liu, Donghao Zhang, Dagan Feng, Hanchuan Peng, Weidong Cai, Automate 3D Neuron Tracing with Precise Branch Erasing and Confidence Controlled Back-Tracking*, to be submitted
+1. Siqi Liu, Donghao Zhang, Dagan Feng, Hanchuan Peng, Weidong Cai, Automate 3D Neuron Tracing with Precise Branch Erasing and Confidence Controlled Back-Tracking*, bioarxiv
 
-1. Siqi Liu, Donghao Zhang, Dagan Feng, Hanchuan Peng, Weidong Cai, Rivulet2: Fully Automatic Neuron Tracing with SSM enhanced distance transform and confidence controlled Gradient Back-tracking, Underreview for ISBI2017
+1. Siqi Liu, Donghao Zhang, Dagan Feng, Hanchuan Peng, Weidong Cai, Rivulet2: A Robust Tool for Large-Scale Single Neuron Morphological Reconstruction, to be submitted
 
 1. Siqi Liu, Donghao Zhang, Sidong Liu, Dagan Feng, Hanchuan Peng, Weidong Cai, Rivulet: 3D Neuron Morphology Tracing with Iterative Back-Tracking*, Neuroinformatics, 2016.
 

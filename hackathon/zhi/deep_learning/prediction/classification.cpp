@@ -46,6 +46,7 @@ Classifier::Classifier(const string& model_file,
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
     /* Load the binaryproto mean file. */
     if(!mean_file.empty()) SetMean(mean_file);
+    Caffe::set_mode(Caffe::CPU);
     /* Load labels. */
 }
 

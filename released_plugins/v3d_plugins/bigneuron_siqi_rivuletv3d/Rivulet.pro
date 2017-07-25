@@ -55,4 +55,4 @@ LIBS         += -lpthread
 LIBS         += -lv3dfftw3f -lv3dfftw3f_threads
 
 TARGET	= $$qtLibraryTarget(Rivulet)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/Rivulet/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/Rivulet2/

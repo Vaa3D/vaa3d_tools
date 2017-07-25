@@ -20,7 +20,7 @@
 #include "basic_surf_objs.h"
 #include "neuron_dist_func.h"
 
-#include "tree_retrieve.h"
+#include "tree_search.h"
 #include "basic_surf_objs.h"
 #include "neuron_retrieve.h"
 #include "qglobal.h"

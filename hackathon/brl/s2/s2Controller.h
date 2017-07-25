@@ -29,27 +29,27 @@ QT_END_NAMESPACE
 class S2Parameter
 {
 public:
-    S2Parameter();//defined with initialization list
+	S2Parameter();//defined with initialization list
 
-    S2Parameter(QString parameterN,
-                QString sendS,
-                float currentV=0.0,
-                QString currentS="",
-                QString expectedT="float");
+	S2Parameter(QString parameterN,
+				QString sendS,
+				float currentV=0.0,
+				QString currentS="",
+				QString expectedT="float");
 
-    QString getSendString();
-    void setCurrentString(QString inputString);
-    QString getCurrentString();
-    void setCurrentValue(float value);
-    float getCurrentValue();
-    QString getParameterName();
-    QString getExpectedType();
+	QString getSendString();
+	void setCurrentString(QString inputString);
+	QString getCurrentString();
+	void setCurrentValue(float value);
+	float getCurrentValue();
+	QString getParameterName();
+	QString getExpectedType();
 private:
-    QString parameterName;
-    QString sendString;
-    QString expectedType;
-    float currentValue;
-    QString currentString;
+	QString parameterName;
+	QString sendString;
+	QString expectedType;
+	float currentValue;
+	QString currentString;
 };
 
 
@@ -70,93 +70,100 @@ private:
  * S2UI::newMessage()
  * S2UI::posMonListener()
  */
+
+enum opMode {offline, online};
+
 class S2Controller : public QWidget
 {
-    Q_OBJECT
+	Q_OBJECT
+
+	friend class scopeSimulator;
 
 public:
-    S2Controller(QWidget *parent = 0);
-    bool okToSend;
-    QString stringMessage;
-    QString message;
-    QString displayMessage;
-    QMap<int, S2Parameter> s2ParameterMap;
-    QLineEdit *hostLineEdit;
-    bool inPosMonMode;
-    bool cancelPosMon;
+	S2Controller(QWidget *parent = 0);
+	bool okToSend;
+	QString stringMessage;
+	QString message;
+	QString displayMessage;
+	QMap<int, S2Parameter> s2ParameterMap;
+	QLineEdit *hostLineEdit;
+	bool inPosMonMode;
+	bool cancelPosMon;
+	opMode mode;
+
 public slots:
-    void sendCommand();
-    bool cleanAndSend(QString);
-    bool sendAndReceive(QString);
-    void initializeParameters();
-    void initializeS2();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
-    //             /* some parameters will be stored in a separate class described below
-    //                */
-    void initROI(LocationSimple);//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
-    void initROIwithStage(LocationSimple, float xStage, float yStage);
-    void startPosMon();
-    void stopPosMon();
-    bool getPosMon();
-    void startScan();
-    void closeEvent(QCloseEvent *event);
-    void centerGalvos();
-    void startZStack();
-    void overviewSetup();
-    void stackSetup();
-    void stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame);
-    void cancelQueueSlot();
-    void addToQueue(QString cString);
+	void sendCommand();
+	bool cleanAndSend(QString);
+	bool sendAndReceive(QString);
+	void initializeParameters();
+	void initializeS2();//    [set up microscope. Ideal version would include transferring all microscope parameters into internal attributes within Vaa3D.  Minimal version would just load a fixed configuration from an .xml file.
+	//             /* some parameters will be stored in a separate class described below
+	//                */
+	void initROI(LocationSimple);//    set up the microscope with appropriate parameters for small 3D ROI.  This could be done with a single .xml file from a saved configuration or through setting parameters from Vaa3D.
+	void initROIwithStage(LocationSimple, float xStage, float yStage);
+	void startPosMon();
+	void stopPosMon();
+	bool getPosMon();
+	void startScan();
+	void closeEvent(QCloseEvent *event);
+	void centerGalvos();
+	void startZStack();
+	void overviewSetup();
+	void stackSetup();
+	void stackSetup(float zsize, float zoom, int pixelsPerLine, int linesPerFrame);
+	void cancelQueueSlot();
+	void addToQueue(QString cString);
 signals:
-    void messageIsComplete();
-    void newMessage(QString message);
-    void newBroadcast(QString message);
-    void newPosMonIndex();
-    void pmStatus(bool inPosMonMode);
-    void newS2Parameter( QMap<int, S2Parameter> parameterMap);
+	void messageIsComplete();
+	void newMessage(QString message);
+	void newBroadcast(QString message);
+	void newPosMonIndex();
+	void pmStatus(bool inPosMonMode);
+	void newS2Parameter( QMap<int, S2Parameter> parameterMap);
 	void statusSig(QString statusMessage);
 private slots:
-    void checkForMessage();
-    void processMessage();
-    void messageHandler(QString messageH);
-    void displayError(QAbstractSocket::SocketError socketError);
-    void enablesendCommandButton();
-    void sessionOpened();
-    void sendX();
-    void cleanUp();
-    void initConnection(); //[initialize connection to PV over TCP/IP]
-    void posMon();
-    void posMonListener(QString messageL);
-    void overviewHandler();
-    void commandQueueMonitor();
-    void tryToSend();
+	void checkForMessage();
+	void processMessage();
+	void messageHandler(QString messageH);
+	void displayError(QAbstractSocket::SocketError socketError);
+	void enablesendCommandButton();
+	void sessionOpened();
+	void sendX();
+	void cleanUp();
+	void initConnection(); //[initialize connection to PV over TCP/IP]
+	void posMon();
+	void posMonListener(QString messageL);
+	void overviewHandler();
+	void commandQueueMonitor();
+	void tryToSend();
 private:
-    void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
-    void connectToS2();
-    QLabel *hostLabel;
-    QLabel *portLabel;
-    QLabel *cmdLabel;
+	void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
+	void connectToS2();
+	QLabel *hostLabel;
+	QLabel *portLabel;
+	QLabel *cmdLabel;
 
-    QLineEdit *portLineEdit;
-    QLineEdit *cmdLineEdit;
-    QLabel *statusLabel;
-    QPushButton *sendCommandButton;
-    QPushButton *quitButton;
-    QPushButton *connectButton;
-    QPushButton *getReplyButton;
-    QGroupBox *buttonBox;
+	QLineEdit *portLineEdit;
+	QLineEdit *cmdLineEdit;
+	QLabel *statusLabel;
+	QPushButton *sendCommandButton;
+	QPushButton *quitButton;
+	QPushButton *connectButton;
+	QPushButton *getReplyButton;
+	QGroupBox *buttonBox;
 
-    QTcpSocket *tcpSocket;
-    QString totalMessage;
-    QString currentMessage;
-    QStringList commandQueue;
-    QString commandToSend;
-    quint16 blockSize;
-    int ii;
-    int maxParams;//temp!
-    QNetworkSession *networkSession;
+	QTcpSocket *tcpSocket;
+	QString totalMessage;
+	QString currentMessage;
+	QStringList commandQueue;
+	QString commandToSend;
+	quint16 blockSize;
+	int ii;
+	int maxParams;//temp!
+	QNetworkSession *networkSession;
 	void status(QString statusM);
-    bool cancelQueue;
-    bool newCommandToSend;
+	bool cancelQueue;
+	bool newCommandToSend;
 };
 
 

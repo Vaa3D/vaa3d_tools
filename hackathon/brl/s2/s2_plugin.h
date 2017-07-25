@@ -62,7 +62,7 @@ class S2Plugin : public QObject, public V3DPluginInterface2_1
     Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
 public:
-    float getPluginVersion() const {return 0.1f;}
+    float getPluginVersion() const {return 0.2f;}
 
     QStringList menulist() const;
 

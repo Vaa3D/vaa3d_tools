@@ -1658,7 +1658,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         char* C_seed_win = new char[S_seed_win.length() + 1];
         strcpy(C_seed_win,S_seed_win.c_str());
         arg_para.push_back(C_seed_win);
-        arg_para.push_back("5");
+        arg_para.push_back("10");
         arg_para.push_back("1");
 
         if(inputRootList.size() <1)

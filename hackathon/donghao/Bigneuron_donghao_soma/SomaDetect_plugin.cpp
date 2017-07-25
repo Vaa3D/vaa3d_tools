@@ -39,7 +39,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent,
                          input_PARA &PARA, bool bmenu);
 
 QStringList RivuletPlugin::menulist() const {
-  return QStringList() << tr("tracing") << tr("about");
+  return QStringList() << tr("detect") << tr("about");
 }
 
 QStringList RivuletPlugin::funclist() const {
@@ -49,7 +49,7 @@ QStringList RivuletPlugin::funclist() const {
 void RivuletPlugin::domenu(const QString &menu_name,
                            V3DPluginCallback2 &callback, QWidget *parent) {
   cout<<"in domenu"<<endl;
-  if (menu_name == tr("tracing")) {
+  if (menu_name == tr("detect")) {
     bool bmenu = true;
     input_PARA PARA;
 

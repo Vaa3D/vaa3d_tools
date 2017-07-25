@@ -11,7 +11,7 @@
 #include <map>
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "my_surf_objs.h"
-#include "../neurontracing_mip/smooth_curve.h"
+#include "../../../released_plugins/v3d_plugins/bigneuron_zz_neurontracing_TReMAP/smooth_curve.h"
 #include "../../../released_plugins/v3d_plugins/neuron_radius/hierarchy_prune.h"
 
 
@@ -136,6 +136,7 @@ QStringList eliminate_swc::funclist() const
 {
 	return QStringList()
         <<tr("smooth_swc")
+        <<tr("combine_swc")
 		<<tr("help");
 }
 
@@ -523,7 +524,48 @@ bool eliminate_swc::dofunc(const QString & func_name, const V3DPluginArgList & i
         for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 
         return true;
-	}
+    }else if (func_name == tr("combine_swc"))
+    {
+        vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+        vector<char*>* outlist = NULL;
+        QString targetname = QString(inlist->at(0));
+        outlist = (vector<char*>*)(output.at(0).p);
+        QString subjectname = QString(outlist->at(0));
+
+        NeuronTree nt_target = readSWC_file(targetname);
+        NeuronTree nt_subject = readSWC_file(subjectname);
+
+        NeuronTree result = nt_subject;
+        V3DLONG target_size = nt_target.listNeuron.size();
+        for(V3DLONG i = 0; i < result.listNeuron.size();i++)
+        {
+           NeuronSWC S = result.listNeuron[i];
+           int flag_prun = 0;
+           for(int jj = 0; jj < target_size;jj++)
+           {
+               NeuronSWC S2 = nt_target.listNeuron[jj];
+               int dis_prun = sqrt(pow(S.x - S2.x,2) + pow(S.y - S2.y,2) + pow(S.z-S2.z,2));
+               if( dis_prun < 10)
+               {
+                   flag_prun = 1;
+                   break;
+               }
+
+           }
+           if(flag_prun == 0)
+           {
+               // S.parent = -1;//S.parent + target_size;
+               // S.n = S.n + target_size;
+               S.parent = -1;
+               S.n = S.n + target_size;
+               nt_target.listNeuron.push_back(S);
+           }
+
+        }
+
+        QString fileDefaultName = targetname+QString("_combined.swc");
+        export_list2file(nt_target.listNeuron,fileDefaultName,fileDefaultName);
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
@@ -769,15 +811,15 @@ void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG target_size = nt_target.listNeuron.size();
     for(V3DLONG i = 0; i < result.listNeuron.size();i++)
     {
-        //V3DLONG target_size = nt_target.listNeuron.size();
+      //  V3DLONG target_size = nt_target.listNeuron.size();
 
         NeuronSWC S = result.listNeuron[i];
-        if(S.parent >0) S.parent = S.parent + target_size;
-        S.n = S.n + target_size;
-        nt_target.listNeuron.push_back(S);
+//        if(S.parent >0) S.parent = S.parent + target_size;
+//        S.n = S.n + target_size;
+//        nt_target.listNeuron.push_back(S);
 
-     /*   int flag_prun = 0;
-        for(int jj = 0; jj < nt_target.listNeuron.size();jj++)
+        int flag_prun = 0;
+        for(int jj = 0; jj < target_size;jj++)
         {
              NeuronSWC S2 = nt_target.listNeuron[jj];
             int dis_prun = sqrt(pow(S.x - S2.x,2) + pow(S.y - S2.y,2) + pow(S.z-S2.z,2));
@@ -795,7 +837,7 @@ void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent)
             S.parent = -1;
             S.n = S.n + target_size;
             nt_target.listNeuron.push_back(S);
-        }*/
+        }
 
     }
 

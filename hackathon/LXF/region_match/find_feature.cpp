@@ -6,6 +6,7 @@
 #include <QHash>
 #include "match_swc.h"
 #include "define.h"
+//#include <cmath>
 
 using namespace std;
 
@@ -214,18 +215,18 @@ bool get_feature(vector<NeuronTree> &v_nt,NeuronTree &nt,vector<int> &num_sortd)
 
     for(V3DLONG i=0;i<v_nt_size;i++,arr++)
     {
-        cout<<"i_in="<<i<<endl;
+      //  cout<<"i_in="<<i<<endl;
         for(map<int,double>::iterator iter = all_my.begin();iter!=all_my.end();iter++)
         {
-             cout << iter->first << "=" << iter->second << endl;
+           //  cout << iter->first << "=" << iter->second << endl;
           //  cout<<"++++++++++++++++++"<<endl;
             if(*arr = iter->second)
             {
-                cout<<"*arr = "<<*arr<<endl;
-                cout<<"iter-> second = "<<iter->second<<endl;
+         //       cout<<"*arr = "<<*arr<<endl;
+         //       cout<<"iter-> second = "<<iter- >second<<endl;
                 num_sortd.push_back(iter->first);
               //  cout << iter->first << "=" << iter->second << endl;
-                cout<<"num_sorted.size = "<<num_sortd.size()<<endl;
+          //      cout<<"num_sorted.size = "<<num_sortd.size()<<endl;
              //   cout<<"iter->second= "<<iter->second<<endl;
             }
         }
@@ -268,8 +269,9 @@ double seq_sorted(V3DLONG v_nt_size,double *seq)
 
     for (i = 0; i < v_nt_size-1; i++)
     {
-            if(seq[i]=NULL)
+            if(isnan(seq[i]))
             {
+               // cout<<"this is nan."<<endl;
                 seq[i]=0;
             }
          for (j = 0; j < v_nt_size-1-i; j++)
@@ -670,7 +672,7 @@ void computeFeature(const NeuronTree & nt, double * features)
     //find the root
     rootidx = VOID;
     QList<NeuronSWC> list = nt.listNeuron;
-    cout<<"list = "<<list.size()<<endl;
+  //  cout<<"list = "<<list.size()<<endl;
     for (int i=0;i<list.size();i++)
     {
         if (list.at(i).pn==-1){

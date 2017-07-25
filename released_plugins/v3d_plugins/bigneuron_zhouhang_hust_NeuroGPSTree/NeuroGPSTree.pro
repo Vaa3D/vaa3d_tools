@@ -10,7 +10,15 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH	+= ./eigen3.2.2
+
+win32 {
+INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include/eigen_3_3_4
+LIBS += $$VAA3DPATH/v3d_main/common_lib/src_packages/Pre-built.2/lib/pthreadVC2.lib
+}
+
+unix {
 LIBS            += -lpthread  #-lgomp
+}
 
 #QMAKE_CXXFLAGS  += -std=c++11
 

@@ -68,7 +68,7 @@ void RivuletPlugin::domenu(const QString &menu_name,
     v3d_msg(tr("Rivulet2 finished. You can now drag the result to vaa3d."));
 
   } else if (menu_name == tr("about")){
-    v3d_msg(tr("Rivulet2 tracing algorithm for 3D neuron tracing. \nDeveloped by Siqi Liu, Donghao Zhang, Uni.Sydney, AU, 2016\nCitations:\n*[1] *Siqi Liu, Donghao Zhang, Hanchuan Peng, Weidong Cai, Automate 3D Neuron Tracing with Precise Branch Erasing and Confidence Controlled Back-Tracking*, to be submitted\n[2] Rivulet2: Fully Automatic Neuron Tracing with SSM enhanced distance transform and confidence controlled Gradient Back-tracking, Underreview for ISBI2017\n[3] Rivulet: 3D Neuron Morphology Tracing with Iterative Back-Tracking*, Neuroinformatics, 2016.\n [4] Donghao Zhang, Siqi Liu, Sidong Liu, Dagan Feng, Hanchuan Peng, Weidong Cai, *Reconstruction of 3D Neuron Morphology using Rivulet Back-Tracking*, The IEEE International Symposium on Biomedical Imaging: From Nano to Macro (ISBI 2016), pp598-601, 2016.\nYou can also find the python3 rivuletpy package at https://github.com/lsqshr/rivuletpy"));
+    v3d_msg(tr("Rivulet2 tracing algorithm for 3D neuron tracing. \nDeveloped by Siqi Liu, Donghao Zhang, Uni.Sydney, AU, 2016\nCitations:\n*[1] *Siqi Liu, Donghao Zhang, Hanchuan Peng, Weidong Cai, Automate 3D Neuron Tracing with Precise Branch Erasing and Confidence Controlled Back-Tracking*, bioarxiv\n*[2]Rivulet2: A Robust Tool for Large-Scale Single Neuron Morphological Reconstruction, to be submitted\n[3] Rivulet: 3D Neuron Morphology Tracing with Iterative Back-Tracking*, Neuroinformatics, 2016.\n[4] Donghao Zhang, Siqi Liu, Sidong Liu, Dagan Feng, Hanchuan Peng, Weidong Cai, *Reconstruction of 3D Neuron Morphology using Rivulet Back-Tracking*, The IEEE International Symposium on Biomedical Imaging: From Nano to Macro (ISBI 2016), pp598-601, 2016.\nYou can also find the python3 rivuletpy package at https://github.com/lsqshr/rivuletpy"));
   }
 }
 
@@ -113,7 +113,7 @@ bool RivuletPlugin::dofunc(const QString &func_name,
   } else if (func_name == tr("help")) {
     printf("====== Usage of Rivulet tracing ====== \n");
     printf(
-        "vaa3d -x Rivulet -f tracing_func -i your_image.v3draw [-o out.swc] -p "
+        "vaa3d -x Rivulet2 -f tracing_func -i your_image.v3draw [-o out.swc] -p "
         "channel threshold quality prune\n");
     printf("channel\tData channel for tracing. Start from 1 (default 1).\n");
     printf("threshold\tThe background threshold for segmentation (default 0).\n");
