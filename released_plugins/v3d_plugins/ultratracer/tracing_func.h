@@ -25,6 +25,7 @@ struct TRACE_LS_PARA
     int tracing_3D;
     int tracing_comb;
     int grid_trace;
+    int global_name;
 
     V3DLONG in_sz[3];
 
@@ -78,6 +79,7 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,Land
 NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
 NeuronTree pruning_cross_swc(NeuronTree nt);
 
+bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P);
 
 #endif
 

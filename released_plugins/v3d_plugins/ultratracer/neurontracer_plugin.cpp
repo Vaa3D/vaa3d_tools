@@ -589,9 +589,43 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.method = 2;
         crawler_raw_app(callback,parent,P,bmenu);
 	}
-    else if (func_name == tr("trace_APP1"))
+    else if (func_name == tr("trace_APP2_GD"))
 	{
-		v3d_msg("To be implemented.");
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        P.image = 0;
+        int k=0;
+
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }else
+            P.markerfilename = inmarker_file;
+
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
+        P.tracing_3D = true;
+        P.tracing_comb = false;
+        P.global_name = true;
+        P.method = 2;
+        crawler_raw_app(callback,parent,P,bmenu);
+        extract_tips(callback,parent,P);
+
 	}
     else if (func_name == tr("trace_NEUTUBE"))
     {

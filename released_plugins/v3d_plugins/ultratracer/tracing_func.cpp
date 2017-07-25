@@ -142,6 +142,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     QElapsedTimer timer1;
     timer1.start();
 
+    P.listLandmarks.clear();
+
     QString fileOpenName = P.inimg_file;
     if(P.image)
     {
@@ -796,10 +798,14 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     else
     {
 
-     //   saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        //   saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
         finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
     }
+
+
+    if(P.global_name)
+        finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
 
     QString imageSaveString = saveDirString;
 
@@ -820,7 +826,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
-    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
 //    ifstream ifs(scanDataFileString.toLatin1());
 //    int offsetX, offsetY,sizeX,sizeY;
@@ -1264,6 +1270,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
+    if(P.global_name)
+        finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
+
     QString imageSaveString = saveDirString;
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
@@ -1292,7 +1301,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
-    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
 
     unsigned char * total1dData = 0;
@@ -4607,7 +4616,11 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
 {
 
     QString saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-    QString finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_combo_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+    QString finaloutputswc;
+    if(P.global_name)
+        finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
+    else
+        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_combo_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
 
     QString imageSaveString = saveDirString;
 
@@ -4730,7 +4743,7 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
 
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
-    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
 
 
@@ -5861,6 +5874,73 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
     nt_prunned.hashNeuron = hashNeuron;
 
     return nt_prunned;
+}
+
+bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P)
+{
+    QString finaloutputswc = P.inimg_file+ "_nc_APP2_GD.swc";
+    NeuronTree nt_APP2 = readSWC_file(finaloutputswc);
+    QList<NeuronSWC> neuronAPP2_sorted;
+    if (!SortSWC(nt_APP2.listNeuron, neuronAPP2_sorted,VOID, 10))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+    }
+    export_list2file(neuronAPP2_sorted, finaloutputswc,finaloutputswc);;
+    NeuronTree nt = readSWC_file(finaloutputswc);
+
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+    QList<NeuronSWC> list = nt.listNeuron;
+    QString tips_folder = QFileInfo(P.inimg_file).path()+ QString("/tips");
+    system(qPrintable(QString("mkdir %1").arg(tips_folder.toStdString().c_str())));
+    QList<ImageMarker> tipMarkerList;
+
+    for (V3DLONG i=0;i<list.size();i++)
+    {
+        if (childs[i].size()==0)
+        {
+            tipMarkerList.clear();
+            NeuronSWC curr = list.at(i);
+            QString tip_marker_name =  tips_folder+QString("/x_%1_y_%2_z_%3.marker").arg(curr.x).arg(curr.y).arg(curr.z);
+            QString tip_swc_name =  tips_folder+QString("/x_%1_y_%2_z_%3.swc").arg(curr.x).arg(curr.y).arg(curr.z);;
+            ImageMarker tipMarker;
+            tipMarker.x = curr.x + 1;
+            tipMarker.y = curr.y + 1;
+            tipMarker.z = curr.z + 1;
+            tipMarkerList.append(tipMarker);
+            writeMarker_file(tip_marker_name, tipMarkerList);
+
+            NeuronTree nt_tps;
+            QList <NeuronSWC> & listNeuron = nt_tps.listNeuron;
+            listNeuron << curr;
+            int count = 0;
+            int parent_tip = getParent(i,nt);
+            while(list.at(parent_tip).pn > 0 && count < 10)
+            {
+                listNeuron << list.at(parent_tip);
+                parent_tip = getParent(parent_tip,nt);
+                count++;
+            }
+            writeSWC_file(tip_swc_name,nt_tps);
+            listNeuron.clear();
+
+            //call GD
+            P.markerfilename = tip_marker_name;
+            P.seed_win = 32;
+            P.swcfilename = tip_swc_name;
+            P.method = 12;
+            crawler_raw_app(callback,parent,P,0);
+        }
+    }
+
+
 }
 
 NeuronTree pruning_cross_swc(NeuronTree nt)
