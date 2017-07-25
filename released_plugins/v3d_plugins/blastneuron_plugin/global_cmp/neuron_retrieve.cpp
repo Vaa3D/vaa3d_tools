@@ -60,12 +60,12 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 	if (method_code==1)
 	{
 		computeFeature(query_preprocessed, qf);
-		printf("tag 4: computeFeature finished! \n");
+		//printf("tag 4: computeFeature finished! \n");
 	}
 	else if (method_code==2)
 	{
 		computeGMI(query_preprocessed, qf);
-		printf("tag 4: computeGMI finished! \n");
+		//printf("tag 4: computeGMI finished! \n");
 	}
 
 	printf("(2) normalization.\n");
@@ -114,7 +114,7 @@ bool neuron_retrieve(NeuronTree query, QList<double*> & feature_list, vector<V3D
 	if (sbj) {delete []sbj; sbj=NULL;}
 	if (score) {delete[]score; score=NULL;}
 	
-	printf("tag 4: neuron retrieve finished! \n");
+	//printf("tag 4: neuron retrieve finished! \n");
 
 	return true;
 }
@@ -205,7 +205,7 @@ bool compute_intersect(vector<vector<V3DLONG>> & list, vector<V3DLONG> & result,
 	result.clear();
 	V3DLONG stratNum = list.size();
 	V3DLONG neuronNum = list[0].size();
-	printf("Tag5: neuronNum: %d \n", neuronNum);
+	//printf("Tag5: neuronNum: %d \n", neuronNum);
 	double * rank_sum = new double[neuronNum];
 
 	for (V3DLONG i=0;i<neuronNum;i++)
@@ -214,7 +214,7 @@ bool compute_intersect(vector<vector<V3DLONG>> & list, vector<V3DLONG> & result,
 		for (V3DLONG j=0;j<stratNum;j++)
 		{
 			int ind = list[j][i];
-			printf("Tag5: ind of rank_sum: %d \n", ind);
+			//printf("Tag5: ind of rank_sum: %d \n", ind);
 			rank_sum[ind] += i;
 		}
 	

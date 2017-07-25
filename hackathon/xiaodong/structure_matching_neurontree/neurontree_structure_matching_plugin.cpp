@@ -126,6 +126,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 	//define the thresholds
 	int thd_nt_target = 1; //smallest size of the target tree
 	double step_ratio = 0.25; //step for subtree searching
+	int num_simstructs = 5; //number of the similar trees
 
 	
 	if (menu_name == tr("tracing_menu"))
@@ -185,7 +186,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 		QList<NeuronTree> list_nt_roi;
 		SeperateNeuronTreesSWC(fileOpenName_roi, list_nt_roi);
 
-		printf("%s: %d \n", "number of roi", list_nt_roi.size());
+		//printf("%s: %d \n", "number of roi", list_nt_roi.size());
 		
 		//get the boxes of ROI
 		int num_box = list_nt_roi.size();
@@ -203,10 +204,11 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 			for(int j=0; j <list_nt_roi[i].listNeuron.size();j++)
 			{
 				NeuronSWC ns = list_nt_roi[i].listNeuron[j];
-
+				/*
 				printf("%s: %f ", "ns_x", ns.x);
 				printf("%s: %f ", "ns_y", ns.y);
 				printf("%s: %f \n", "ns_z", ns.z);
+				*/
 				if( ns.x < xmin )
 				{
 					xmin = ns.x;
@@ -242,6 +244,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 		}//for i boxes
 
 		//for debug
+		/*
 		printf("%s: %d \n", "number of box", list_box.size() );
 		for(int d=0; d<list_box.size();d++)
 		{
@@ -249,18 +252,19 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 			printf("%s %d: %s %f %s %f \n", "box", d, "ymin", list_box[d].y_min, "ymax", list_box[d].y_max);
 			printf("%s %d: %s %f %s %f \n", "box", d, "zmin", list_box[d].z_min, "zmax", list_box[d].z_max);		
 		}
+		*/
 		//
 		QList<NeuronTree> nt_list_target;
 		nt_list_target.clear();
 		GetNeuronTreeFromCubeBox(list_box, nt_search, nt_list_target);
 		
-		//for debug
+		/*for debug
 		printf("number of target trees: %d \n", nt_list_target.size() );
 		for(int t=0; t<nt_list_target.size();t++)
 		{
 			printf("node number of target tree %d : %d \n", t, nt_list_target[t].listNeuron.size());	
 		}
-		
+		*/
 		//QList<NeuronTree> subnt_list;
 		//
 		for(int p=0; p<nt_list_target.size();p++)
@@ -327,36 +331,35 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 			
 			//for debug
 			//ReadSubTreesSWC(tr("C:\\Users\\yswantfly\\Documents\\GitHub\\v3d_external\\bin\\subtrees1"), nt_list);
-			printf("Tag1: %s %d \n","nt_list size", nt_list.size());
+			//printf("Tag1: %s %d \n","nt_list size", nt_list.size());
 			
 			//find similar trees
 			vector<V3DLONG>	retrieved_id;
-			tree_retrieval( nt_target, nt_list, retrieved_id);
-			printf("tag1: retrieved_id.size() = %d \n",retrieved_id.size());
+			tree_retrieval( nt_target, nt_list, retrieved_id, num_simstructs);
+			//printf("tag1: retrieved_id.size() = %d \n",retrieved_id.size());
 			
 			
 			//update neural file, for co-debug
 			for(int k=0; k< retrieved_id.size();k++)
 			{
-				printf("tag1: k = %d \n",k);
-				printf("%s %d \n","retrieved_idys:",retrieved_id[k]);
+				//printf("tag1: k = %d \n",k);
+				//printf("%s %d \n","retrieved_idys:",retrieved_id[k]);
 				//
 				int index_nt= retrieved_id[k];
 				QString filename = filepath_pf + tr("subnttree_");
 				QString index_subtree = QString::number(index_nt);
 				filename = filename + index_subtree;
 				filename = filename + tr(".swc");
-				qDebug("tag1: before file read : %s \n", qPrintable(filename));
+				//qDebug("tag1: before file read : %s \n", qPrintable(filename));
 				NeuronTree nt_index = readSWC_file(filename);
-				printf("tag1: after file write \n");
+				//printf("tag1: after file write \n");
 				//get position
 				QString beginend = nt_index.comment;
 				QStringList splitted = beginend.split(",");
 				int begin = splitted[0].toInt();
 				int end = splitted[1].toInt();
 				//for debug
-				printf("%s %d %s %d \n", "position:", begin, ",", end);
-
+				//printf("%s %d %s %d \n", "position:", begin, ",", end);
 				
 				for(int j=begin; j<=end; j++)
 				{
@@ -369,8 +372,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 				filename_match = filename_match + tr("_target_");
 				filename_match = filename_match + QString::number(p+1);
 				filename_match = filename_match + tr(".swc");
-				writeSWC_file(filename_match, nt_index);
-				
+				writeSWC_file(filename_match, nt_index);			
 
 			}//end for k
 			
@@ -379,7 +381,7 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 		//save the updated swc file of searching tree
 		QString updatefilepath = tr("updated_vr_neuron.swc");
 	    writeSWC_file(updatefilepath, nt_search);
-		printf("UpdateSWC finished\n");
+		//printf("UpdateSWC finished\n");
 	}//end if
 	else
 	{

@@ -38,17 +38,17 @@ using namespace std;
 
 
 
-int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_list, vector<V3DLONG> & retrieved_id)
+int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_list, vector<V3DLONG> & retrieved_id, const int & num_simstructs)
 {
 
-	printf("neuron tree retrieve \n");
+	//printf("neuron tree retrieve \n");
 	//
 	int num_tree = nt_list.size();
 	QList<double*> morph_list, gmi_list;
 
 	for (int i=0;i < num_tree; i++)
 	{
-		printf("%s, %d of %d\n","neuron tree",i, num_tree);
+		//printf("%s, %d of %d\n","neuron tree",i, num_tree);
 		NeuronTree nt = nt_list[i];
 		double * feats_morph = NULL;
 		double * feats_gmi = NULL;
@@ -101,7 +101,7 @@ int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_lis
 	}
 
 	int num_candy = nt_list.size();
-	printf("Tag 2: the number of candidates: %d \n", num_candy);
+	//printf("Tag 2: the number of candidates: %d \n", num_candy);
 	for  (int i=0;i<feature_codes.size();i++)
 	{
 		for (int j=0;j<norm_codes.size();j++)
@@ -155,18 +155,20 @@ int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_lis
 
 	//vector<V3DLONG>	retrieved_id;
 	int rej_thres = 6;//if top 5 candidates of both method have no intersection, consider this query does not have matched neuron
-	int retrieved_num = 1;
+	//int retrieved_num = 1;
 
-	if (!compute_intersect(retrieved_all, retrieved_id, retrieved_num, rej_thres))
+	//if (!compute_intersect(retrieved_all, retrieved_id, retrieved_num, rej_thres))
+	if (!compute_intersect(retrieved_all, retrieved_id, num_simstructs, rej_thres))
 	{
 		printf("No similar neurons exist in the database.\n");
 	}
-	printf("retrieved_number: %d \n",retrieved_id.size());
+	//printf("retrieved_number: %d \n",retrieved_id.size());
 	
+	/*
 	for(int k=0; k<retrieved_id.size();k++)
 	{
 		printf("retrieved_id: %d \n",retrieved_id[k]);
-	}
+	}*/
 
 	
 	/*
@@ -209,7 +211,7 @@ int tree_retrieval(const NeuronTree & nt_query, const QList<NeuronTree> & nt_lis
 		if (morph_list[i]) {delete []morph_list[i]; morph_list[i]=NULL;}
 		if (gmi_list[i]) {delete []gmi_list[i]; gmi_list[i]=NULL;}
 	}
-	printf("tag 3: tree retrieve finished! \n");
+	//printf("tag 3: tree retrieve finished! \n");
 
 	return 0;
 }
