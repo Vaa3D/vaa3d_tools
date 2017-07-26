@@ -39,6 +39,7 @@ class S2UI : public QDialog
 	Q_OBJECT
 
 	friend class s2Controller;
+	friend class scopeSimulator;
 
 public:
 	S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
@@ -91,9 +92,9 @@ public slots:
 
 	// Scope Simulator slots, MK, July 2017
 	void initSimScope();
+	void saveCubefromFakeScope(const char*, unsigned char*, V3DLONG[]);
 	
 	
-
 signals:
 	// Scope Simulator signals
 

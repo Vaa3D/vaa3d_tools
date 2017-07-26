@@ -121,6 +121,8 @@ signals:
 	void pmStatus(bool inPosMonMode);
 	void newS2Parameter( QMap<int, S2Parameter> parameterMap);
 	void statusSig(QString statusMessage);
+	
+	// Signals to simulated scope, MK, July 2017
 	void shootFakeScope(LocationSimple, float, float);
 
 private slots:

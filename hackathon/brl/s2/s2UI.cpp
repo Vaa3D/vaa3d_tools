@@ -262,9 +262,6 @@ void S2UI::hookUpSignalsAndSlots(){
 
 	connect(this, SIGNAL(loadLatestSig(QString)),this,SLOT(loadLatest(QString)));
 
-	// Initiate microscope simulator, MK, July 2017
-	connect(tracePB, SIGNAL(clicked()), this, SLOT(initSimScope()));
-
 	// communication with myController to send commands
 	connect(startScanPushButton, SIGNAL(clicked()), this, SLOT(startScan()));
 	connect(&myController,SIGNAL(newBroadcast(QString)), this, SLOT(updateString(QString)));
@@ -289,8 +286,10 @@ void S2UI::hookUpSignalsAndSlots(){
 	connect(this, SIGNAL(startPM()), &myPosMon, SLOT(startPosMon()));
 	connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
 
-	// communication with myPosMon and myController for SimScope
+	// communication with myPosMon and myController for SimScope, MK, July 2017
+	connect(tracePB, SIGNAL(clicked()), this, SLOT(initSimScope()));
 	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
+	connect(&fakeScope, SIGNAL(signalUIsaveCube(const char*, unsigned char*, V3DLONG[])), this, SLOT(saveCubefromFakeScope(const char*, unsigned char*, V3DLONG[])));
 	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
 	
 
@@ -541,7 +540,7 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 	}
 }
 
-
+// --------------------- This block is for simulated scope related methods, MK, July 2017 -------------------------
 void S2UI::initSimScope()
 {
 	myController.mode = offline;
@@ -592,9 +591,9 @@ void S2UI::initSimScope()
 
 	fakeScope.data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
 	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
-	float x = inputSeed[0].x;
-	float y = inputSeed[0].y;
-	float z = inputSeed[0].z;
+	float x = inputSeed[0].x - 1;
+	float y = inputSeed[0].y - 1;
+	float z = inputSeed[0].z - 1;
 	fakeScope.seedLocation.x = x;
 	fakeScope.seedLocation.y = y;
 	fakeScope.seedLocation.z = z;
@@ -603,9 +602,25 @@ void S2UI::initSimScope()
 	fakeScope.bkgThres = initialParam[4].toInt();
 
 	LocationSimple startLoc;
+	startLoc.x = x;
+	startLoc.y = y;
+	startLoc.z = z;
+
+	fakeScope.S2UIcb = cb;
 
 	emit moveToNextWithStage(startLoc, x, y);
 }
+
+void S2UI::saveCubefromFakeScope(const char* cubeName, unsigned char* cubePtr, V3DLONG cubeDim[])
+{
+	cout << cubeDim[0] << " " << cubeName[5] << endl;
+
+	simple_saveimage_wrapper(*cb, cubeName, cubePtr, cubeDim, 1);
+
+
+
+}
+// -----------------END of [This block is for simulated scope related methods, MK, July 2017] ----------------------
 
 void S2UI::traceData(){
 	

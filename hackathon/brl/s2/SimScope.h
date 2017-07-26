@@ -31,16 +31,15 @@ class scopeSimulator : public QObject
 	friend class s2Controller;
 	friend class S2UI;
 
-signals:
-	
-
 public:
 	scopeSimulator() {};
 	~scopeSimulator() {};
 	
+	float cubeSize, overlap;
+	int bkgThres;
 	float seedX, seedY;
-
-
+	LocationSimple seedLocation;
+	long int tileOriginX, tileOriginY;
 
 	void testFunc(int);
 	void imageLocationSetUp();
@@ -48,21 +47,29 @@ public:
 public slots:
 	void paramShotFromController(LocationSimple, float, float);
 	
-private:
-	float cubeSize, overlap;
-	int bkgThres;
-	VirtualVolume* data1d;
-	LocationSimple seedLocation;
-	V3DLONG wholeImgDim[4];
 	
+private:
+	V3DPluginCallback2* S2UIcb;
+
+	VirtualVolume* data1d;
+	V3DLONG wholeImgDim[4];
+	V3DLONG cubeDim[4];
+	unsigned char* cube1d;
+	V3DLONG tileXstart, tileXend, tileYstart, tileYend;
+
 	S2Parameter simScopeParameter; // This contains locations and tile size.
 	QMap<int, S2Parameter> S2SimParameterMap;
 	QString croppedImageFileName;
+
+	
 
 	void fakeScopeCrop();
 	void imageSave();
 
 private slots:
+
+signals:
+	void signalUIsaveCube(const char*, unsigned char*, V3DLONG[]);
 	
 	
 };
