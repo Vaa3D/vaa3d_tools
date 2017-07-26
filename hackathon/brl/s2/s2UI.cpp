@@ -27,7 +27,6 @@
 #include "Tiff3DMngr.h"
 #include <qregexp.h>
 #include <math.h>
-#include "SimScope.h"
 #include <qstringlist.h>
 
 using namespace iim;
@@ -263,7 +262,7 @@ void S2UI::hookUpSignalsAndSlots(){
 
 	connect(this, SIGNAL(loadLatestSig(QString)),this,SLOT(loadLatest(QString)));
 
-	// Initiate microscope simulator
+	// Initiate microscope simulator, MK, July 2017
 	connect(tracePB, SIGNAL(clicked()), this, SLOT(initSimScope()));
 
 	// communication with myController to send commands
@@ -290,7 +289,10 @@ void S2UI::hookUpSignalsAndSlots(){
 	connect(this, SIGNAL(startPM()), &myPosMon, SLOT(startPosMon()));
 	connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
 
-
+	// communication with myPosMon and myController for SimScope
+	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
+	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
+	
 
 	// communication with  myStackAnalyzer
 
@@ -588,7 +590,21 @@ void S2UI::initSimScope()
 	QString bkg = backgroundEdit->text();
 	initialParam.push_back(bkg);
 
-	scopeSimulator fakeScope(initialParam);
+	fakeScope.data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
+	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
+	float x = inputSeed[0].x;
+	float y = inputSeed[0].y;
+	float z = inputSeed[0].z;
+	fakeScope.seedLocation.x = x;
+	fakeScope.seedLocation.y = y;
+	fakeScope.seedLocation.z = z;
+	fakeScope.cubeSize = initialParam[2].toFloat();
+	fakeScope.overlap = initialParam[3].toFloat();
+	fakeScope.bkgThres = initialParam[4].toInt();
+
+	LocationSimple startLoc;
+
+	emit moveToNextWithStage(startLoc, x, y);
 }
 
 void S2UI::traceData(){

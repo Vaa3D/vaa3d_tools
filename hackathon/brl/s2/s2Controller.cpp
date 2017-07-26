@@ -7,6 +7,9 @@
 #include "s2Controller.h"
 #include "v3d_message.h"
 #include "s2UI.h"
+#include <iostream>
+
+using namespace std;
 
 
 S2Parameter::S2Parameter():
@@ -108,6 +111,8 @@ S2Controller::S2Controller(QWidget *parent):   QWidget(parent), networkSession(0
 
     connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(displayError(QAbstractSocket::SocketError)));
+
+	
 
     QGridLayout *mainLayout = new QGridLayout;
     mainLayout->addWidget(hostLabel, 0, 0);
@@ -548,9 +553,17 @@ void S2Controller::initROI(LocationSimple nextLoc){
 
 }
 
-void S2Controller::initROIwithStage(LocationSimple nextLoc, float xStage, float yStage){
-    QString toSend;
-
+void S2Controller::initROIwithStage(LocationSimple nextLoc, float xStage, float yStage)
+{
+    if (mode == offline)
+	{
+		//cout << xStage << " " << yStage << endl;
+		emit shootFakeScope(nextLoc, xStage, yStage);
+		
+	}
+	
+	
+	QString toSend;
 
     // first move the stage in x and y.
     toSend = QString("-ma x ");
@@ -588,7 +601,6 @@ void S2Controller::initROIwithStage(LocationSimple nextLoc, float xStage, float 
     }else{
         status(QString("Y out of bounds!"));
     }
-
 }
 
 

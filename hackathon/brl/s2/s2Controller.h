@@ -9,6 +9,8 @@
 #include <QMap>
 #include <QGroupBox>
 #include <v3d_interface.h>
+
+
 QT_BEGIN_NAMESPACE
 class QDialogButtonBox;
 class QLabel;
@@ -77,8 +79,6 @@ class S2Controller : public QWidget
 {
 	Q_OBJECT
 
-	friend class scopeSimulator;
-
 public:
 	S2Controller(QWidget *parent = 0);
 	bool okToSend;
@@ -121,6 +121,8 @@ signals:
 	void pmStatus(bool inPosMonMode);
 	void newS2Parameter( QMap<int, S2Parameter> parameterMap);
 	void statusSig(QString statusMessage);
+	void shootFakeScope(LocationSimple, float, float);
+
 private slots:
 	void checkForMessage();
 	void processMessage();

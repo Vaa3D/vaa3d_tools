@@ -14,7 +14,6 @@
 #include "Tiff3DMngr.h"
 #include <qregexp.h>
 #include <math.h>
-#include"s2UI.h"
 #include <qstringlist.h>
 #include "basic_landmark.h"
 
@@ -25,36 +24,46 @@
 
 using namespace iim;
 
-class scopeSimulator : public QWidget
+class scopeSimulator : public QObject
 {
 	Q_OBJECT
 
 	friend class s2Controller;
 	friend class S2UI;
 
+signals:
+	
+
 public:
 	scopeSimulator() {};
 	~scopeSimulator() {};
-	scopeSimulator(QStringList initParam);
 	
+	float seedX, seedY;
+
+
+
 	void testFunc(int);
 	void imageLocationSetUp();
 
-
+public slots:
+	void paramShotFromController(LocationSimple, float, float);
+	
 private:
 	float cubeSize, overlap;
 	int bkgThres;
 	VirtualVolume* data1d;
 	LocationSimple seedLocation;
-
-	S2Controller simController;
-	S2Controller simPosMon;
+	V3DLONG wholeImgDim[4];
 	
 	S2Parameter simScopeParameter; // This contains locations and tile size.
+	QMap<int, S2Parameter> S2SimParameterMap;
 	QString croppedImageFileName;
 
-	void imageCrop();
+	void fakeScopeCrop();
 	void imageSave();
+
+private slots:
+	
 	
 };
 

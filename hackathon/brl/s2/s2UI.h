@@ -20,6 +20,8 @@
 #include "tileInfo.h"
 #include "s2monitor.h"
 #include <QMutex>
+#include "SimScope.h"
+
 QT_BEGIN_NAMESPACE
 class QWidget;
 class QDialogButtonBox;
@@ -31,11 +33,12 @@ class QNetworkSession;
 
 QT_END_NAMESPACE
 
+
 class S2UI : public QDialog
 {
 	Q_OBJECT
 
-	friend class scopeSimulator;
+	friend class s2Controller;
 
 public:
 	S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
@@ -50,6 +53,9 @@ public:
 	TileInfoMonitor* myTileInfoMonitor;
 	QList<LandmarkList> myallTipsList;
 	LandmarkList allTargetList;	
+
+	// External S2 simulator
+	scopeSimulator fakeScope;
 
 public slots:
 	/*! \brief update posMon status
@@ -81,10 +87,17 @@ public slots:
 	void combinedSmartScan(QString);
 	//void selectData();
 	void traceData();
-	void initSimScope();
 	void handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
 
+	// Scope Simulator slots, MK, July 2017
+	void initSimScope();
+	
+	
+
 signals:
+	// Scope Simulator signals
+
+	// --------------------------------------------------------
 	void startPM();
 	void stopPM();
 	void callSALoad(QString,float,int,bool,LandmarkList, LocationSimple, QString, bool,bool);
