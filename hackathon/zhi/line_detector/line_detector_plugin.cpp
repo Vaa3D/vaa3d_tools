@@ -450,17 +450,19 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     QList<NeuronSWC> neuron_sorted;
     if (!SortSWC(nt.listNeuron, neuron_sorted, VOID, 0))
     {
-        v3d_msg("fail to call swc sorting function.");
+        v3d_msg("fail to call swc sorting function.",0);
         if(localarea) {delete []localarea; localarea = 0;}
         if(p4d) {delete []p4d; p4d = 0;}
+        QFile file (swc_name);file.remove();
         return -1;
     }
     export_list2file(neuron_sorted, swc_name,swc_name);
     if(neuron_sorted.size() <=0)
     {
-        v3d_msg("cannot find any path based on the given marker.");
+        v3d_msg("cannot find any path based on the given marker.",0);
         if(localarea) {delete []localarea; localarea = 0;}
         if(p4d) {delete []p4d; p4d = 0;}
+        QFile file (swc_name);file.remove();
         return -1;
     }
     nt = readSWC_file(swc_name);  //why you want to do this? PHC noted 170607
