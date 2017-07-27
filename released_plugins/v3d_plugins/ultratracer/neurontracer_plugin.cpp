@@ -44,7 +44,7 @@ QStringList neurontracer::funclist() const
 {
     return QStringList()
             <<tr("trace_APP2")
-           <<tr("trace_APP1")
+           <<tr("trace_APP2_GD")
           <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
         <<tr("trace_SNAKE")

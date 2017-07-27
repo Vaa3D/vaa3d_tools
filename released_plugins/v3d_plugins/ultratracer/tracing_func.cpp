@@ -351,10 +351,13 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
     }
 
-    if(P.tracing_3D)
-        processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
-    else
-        processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
+    if(P.method != 12)
+    {
+        if(P.tracing_3D)
+            processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
+        else
+            processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
+    }
 
 
     v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
@@ -1271,7 +1274,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     if(P.global_name)
-        finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
+        //finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
+        finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
 
     QString imageSaveString = saveDirString;
 
@@ -1434,7 +1438,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         p2.SR_ratio = 3.0/9.9;
         p2.b_256cube = P.b_256cube;
         p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
-        p2.b_resample = 1;
+        p2.b_resample = 0;
         p2.b_intensity = 0;
         p2.b_brightfiled = 0;
         p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
@@ -2030,8 +2034,11 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-    QString fileSaveName = fileWithData + "wofusion.swc";
+  //  QString fileSaveName = fileWithData + "wofusion.swc";
 
+    QDir imagefolderDir = QDir(QFileInfo(fileWithData).absoluteDir());
+    imagefolderDir.cdUp();
+    QString fileSaveName = imagefolderDir.absolutePath()+"/nc_APP2_GD.swc";
 
     while(ifs && getline(ifs, info_swc))
     {
@@ -2118,13 +2125,13 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
     }
     ifs.close();
 
+//    for(V3DLONG i = 0; i < outswc.size(); i++)
+//    {
+//        outswc[i]->x = outswc[i]->x - offsetX_min;
+//        outswc[i]->y = outswc[i]->y - offsetY_min;
+//        outswc[i]->z = outswc[i]->z - offsetZ_min;
+//    }
 
-    for(V3DLONG i = 0; i < outswc.size(); i++)
-    {
-        outswc[i]->x = outswc[i]->x - offsetX_min;
-        outswc[i]->y = outswc[i]->y - offsetY_min;
-        outswc[i]->z = outswc[i]->z - offsetZ_min;
-    }
 
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
     NeuronTree nt_final = readSWC_file(fileSaveName);
@@ -5878,14 +5885,14 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
 
 bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P)
 {
-    QString finaloutputswc = P.inimg_file+ "_nc_APP2_GD.swc";
-    NeuronTree nt_APP2 = readSWC_file(finaloutputswc);
-    QList<NeuronSWC> neuronAPP2_sorted;
-    if (!SortSWC(nt_APP2.listNeuron, neuronAPP2_sorted,VOID, 10))
-    {
-        v3d_msg("fail to call swc sorting function.",0);
-    }
-    export_list2file(neuronAPP2_sorted, finaloutputswc,finaloutputswc);;
+    QString finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
+//    NeuronTree nt_APP2 = readSWC_file(finaloutputswc);
+//    QList<NeuronSWC> neuronAPP2_sorted;
+//    if (!SortSWC(nt_APP2.listNeuron, neuronAPP2_sorted,VOID, 10))
+//    {
+//        v3d_msg("fail to call swc sorting function.",0);
+//    }
+//    export_list2file(neuronAPP2_sorted, finaloutputswc,finaloutputswc);
     NeuronTree nt = readSWC_file(finaloutputswc);
 
     QVector<QVector<V3DLONG> > childs;
@@ -5922,7 +5929,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             listNeuron << curr;
             int count = 0;
             int parent_tip = getParent(i,nt);
-            while(list.at(parent_tip).pn > 0 && count < 10)
+            while(list.at(parent_tip).pn > 0 && count < 50)
             {
                 listNeuron << list.at(parent_tip);
                 parent_tip = getParent(parent_tip,nt);

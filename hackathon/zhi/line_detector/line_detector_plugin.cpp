@@ -131,7 +131,10 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
         QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";
         if(!inneuron_file.isEmpty())
+        {
             PARA.nt_input = readSWC_file(inneuron_file);
+            PARA.nt_last = PARA.nt_input.listNeuron;
+        }
         for (;;)
         {
             int res = reconstruction_func(callback,parent,PARA,bmenu);
@@ -314,7 +317,10 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     if (PARA.nt.listNeuron.size() > 0)
         ComputemaskImage(PARA.nt, data1d_mask, N, M, P, margin);
     else if (PARA.nt_input.listNeuron.size() > 0)
+    {
+        margin = 10;
         ComputemaskImage(PARA.nt_input, data1d_mask, N, M, P, margin);
+    }
 
     unsigned char *localarea=0;
     V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
