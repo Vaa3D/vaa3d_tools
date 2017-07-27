@@ -123,8 +123,9 @@ signals:
 	void statusSig(QString statusMessage);
 	
 	// Signals to simulated scope, MK, July 2017
-	void shootFakeScope(LocationSimple, float, float);
-	void kickFakeScope();
+	void shootFakeScope(LocationSimple, float, float); // myController
+	void kickFakeScope();                              // myController
+	void callS2UI(V3DLONG, V3DLONG);
 
 private slots:
 	void checkForMessage();
@@ -141,6 +142,10 @@ private slots:
 	void overviewHandler();
 	void commandQueueMonitor();
 	void tryToSend();
+
+	// Slots for communicating simulated scope, MK, July 2017
+	void updateFromFakeScope(V3DLONG, V3DLONG); // myPosMon
+
 private:
 	void convertCoordinates(); //Convert coordinates between image data (with a known pixel size, ROI galvo location, z stepper location, z piezo location and stage XY location) and sample location.  Reverse conversion will also be needed.
 	void connectToS2();

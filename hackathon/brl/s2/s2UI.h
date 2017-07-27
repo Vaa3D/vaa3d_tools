@@ -39,7 +39,7 @@ class S2UI : public QDialog
 	Q_OBJECT
 
 	friend class s2Controller;
-	friend class scopeSimulator;
+	friend class ScopeSimulator;
 
 public:
 	S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
@@ -56,7 +56,7 @@ public:
 	LandmarkList allTargetList;	
 
 	// External S2 simulator
-	scopeSimulator fakeScope;
+	ScopeSimulator fakeScope;
 
 public slots:
 	/*! \brief update posMon status
@@ -89,11 +89,6 @@ public slots:
 	//void selectData();
 	void traceData();
 	void handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
-
-	// Scope Simulator slots, MK, July 2017
-	void testSLOT(int);
-	void initSimScope();
-	void saveCubefromFakeScope();
 	
 	
 signals:
@@ -318,6 +313,12 @@ private slots:
  * and the scanData.txt file)
  */
 	void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus, int correctX, int correctY);
+
+	// Scope Simulator slots, MK, July 2017
+	void testSLOT(int);
+	void initSimScope();
+	void saveCubefromFakeScope();
+	void answerMyPosMon(V3DLONG, V3DLONG);
 
 
 private:

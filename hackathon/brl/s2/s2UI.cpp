@@ -291,6 +291,8 @@ void S2UI::hookUpSignalsAndSlots(){
 	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
 	connect(&fakeScope, SIGNAL(signalUIsaveCube()), this, SLOT(saveCubefromFakeScope()));
 	connect(&myController, SIGNAL(kickFakeScope()), &fakeScope, SLOT(fakeScopeCrop()));
+	connect(&fakeScope, SIGNAL(callMyPosMon(V3DLONG, V3DLONG)), &myPosMon, SLOT(updateFromFakeScope(V3DLONG, V3DLONG)));
+	connect(&myPosMon, SIGNAL(callS2UI(V3DLONG, V3DLONG)), this, SLOT(answerMyPosMon(V3DLONG, V3DLONG)));
 	connect(&fakeScope, SIGNAL(testFunc(int)), this, SLOT(testSLOT(int)));
 	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
 	
@@ -563,6 +565,53 @@ void S2UI::initSimScope()
 	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"), "", QObject::tr("Supported file (*.marker *.MARKER)"));
 	if (fileOpenName.isEmpty()) return;
 	else initialParam.push_back(fileOpenName);
+	
+	QString cubeSideLength = sizeEdit->text();
+	initialParam.push_back(cubeSideLength);
+	QString overlap = overlapEdit->text();
+	initialParam.push_back(overlap);
+	QString bkg = backgroundEdit->text();
+	initialParam.push_back(bkg);
+
+	fakeScope.data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
+	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
+	float x = inputSeed[0].x - 1;
+	float y = inputSeed[0].y - 1;
+	float z = inputSeed[0].z - 1;
+	fakeScope.location.x = x;
+	fakeScope.location.y = y;
+	fakeScope.location.z = z;
+	fakeScope.cubeSize = initialParam[2].toInt();
+	fakeScope.overlap = initialParam[3].toFloat();
+	fakeScope.bkgThres = initialParam[4].toInt();
+	fakeScope.testi = 0;
+
+	fakeScope.wholeImgDim[0] = fakeScope.data1d->getDIM_H();
+    fakeScope.wholeImgDim[1] = fakeScope.data1d->getDIM_V();
+    fakeScope.wholeImgDim[2] = fakeScope.data1d->getDIM_D();
+    fakeScope.wholeImgDim[3] = fakeScope.data1d->getDIM_C();
+
+	float tileLocX, tileLocY;
+	if (int(fakeScope.cubeSize)%2 == 0)
+	{
+		tileLocX = x - fakeScope.cubeSize/2;
+		tileLocY = y - fakeScope.cubeSize/2;
+	}
+	else 
+	{
+		tileLocX = x - (fakeScope.cubeSize-1)/2;
+		tileLocY = y - (fakeScope.cubeSize-1)/2;
+	}
+
+	LocationSimple startLoc;
+	startLoc.x = x;
+	startLoc.y = y;
+	startLoc.z = z;
+
+	emit moveToNextWithStage(startLoc, tileLocX, tileLocY);
+	emit startZStackSig();
+	myPosMon.initializeParameters();
+	fakeScope.initFakeScopeParams();
 
 #if defined (Q_OS_WIN32)
 	struct tm* newTime;
@@ -589,40 +638,25 @@ void S2UI::initSimScope()
 	outputDir.mkpath(swcOutput);
 	outputDir.mkpath(cubeOutput);
 #endif
-	
-	QString cubeSideLength = sizeEdit->text();
-	initialParam.push_back(cubeSideLength);
-	QString overlap = overlapEdit->text();
-	initialParam.push_back(overlap);
-	QString bkg = backgroundEdit->text();
-	initialParam.push_back(bkg);
-
-	fakeScope.data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
-	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
-	float x = inputSeed[0].x - 1;
-	float y = inputSeed[0].y - 1;
-	float z = inputSeed[0].z - 1;
-	fakeScope.seedLocation.x = x;
-	fakeScope.seedLocation.y = y;
-	fakeScope.seedLocation.z = z;
-	fakeScope.cubeSize = initialParam[2].toInt();
-	fakeScope.overlap = initialParam[3].toFloat();
-	fakeScope.bkgThres = initialParam[4].toInt();
-
-	LocationSimple startLoc;
-	startLoc.x = x;
-	startLoc.y = y;
-	startLoc.z = z;
-
-	fakeScope.S2UIcb = cb;
-
-	emit moveToNextWithStage(startLoc, x, y);
-	emit startZStackSig();
 }
 
 void S2UI::saveCubefromFakeScope()
 {
 	simple_saveimage_wrapper(*cb, fakeScope.cubeFileName, fakeScope.cube1d, fakeScope.cubeDim, 1);
+
+	++fakeScope.testi;
+	if (fakeScope.testi == 3) return;
+}
+
+void S2UI::answerMyPosMon(V3DLONG tileXstart, V3DLONG tileYstart)
+{
+	LocationSimple startLoc;
+	startLoc.x = tileXstart;
+	startLoc.y = tileYstart;
+	startLoc.z = fakeScope.wholeImgDim[2];
+
+	emit moveToNextWithStage(startLoc, tileXstart, tileYstart);
+	emit startZStackSig();
 }
 // -----------------END of [This block is for simulated scope related methods, MK, July 2017] ----------------------
 

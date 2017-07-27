@@ -207,6 +207,14 @@ void S2Controller::initializeParameters(){
 
 }
 
+// -------------------- Simulated Scope block, MK, July 2017 ----------------------------
+void S2Controller::updateFromFakeScope(V3DLONG tileXstart, V3DLONG tileYstart)
+{
+	emit callS2UI(tileXstart, tileYstart);
+}
+
+// ----------------- END of [Simulated Scope block, MK, July 2017] ------------------------
+
 void S2Controller::startScan(){
     sendCommandButton->setEnabled(false);
     sendAndReceive(QString("-ss"));
