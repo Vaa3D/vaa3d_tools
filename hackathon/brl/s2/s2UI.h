@@ -91,8 +91,9 @@ public slots:
 	void handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
 
 	// Scope Simulator slots, MK, July 2017
+	void testSLOT(int);
 	void initSimScope();
-	void saveCubefromFakeScope(const char*, unsigned char*, V3DLONG[]);
+	void saveCubefromFakeScope();
 	
 	
 signals:

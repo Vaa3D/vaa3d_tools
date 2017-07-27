@@ -559,48 +559,48 @@ void S2Controller::initROIwithStage(LocationSimple nextLoc, float xStage, float 
 	{
 		//cout << xStage << " " << yStage << endl;
 		emit shootFakeScope(nextLoc, xStage, yStage);
-		
 	}
-	
-	
-	QString toSend;
+	else
+	{
+		QString toSend;
 
-    // first move the stage in x and y.
-    toSend = QString("-ma x ");
-    toSend.append(QString::number(xStage));
-    addToQueue(toSend);
-    toSend = QString("-ma y ");
-    toSend.append(QString::number(yStage));
-    addToQueue(toSend);
+		// first move the stage in x and y.
+		toSend = QString("-ma x ");
+		toSend.append(QString::number(xStage));
+		addToQueue(toSend);
+		toSend = QString("-ma y ");
+		toSend.append(QString::number(yStage));
+		addToQueue(toSend);
 
 
-    //    set up the microscope with appropriate parameters for small 3D ROI.
-    float x = nextLoc.x;
-    float y = nextLoc.y;
-    status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
-    if ((x<7.6)&(x>-7.6)){
-        if (false){//(s2ParameterMap[0].getCurrentString().contains("Resonant")){//this controller may not know about the s2parametermap!
-            toSend = QString("-sts currentPanLocationX ");
-            toSend.append(QString::number(x));
-        }else{
-            toSend = QString("-sts currentScanCenter ");
-            toSend.append(QString::number(x));
-            toSend.append(" XAxis");
-        }
-        addToQueue(toSend);
-        //cleanAndSend(toSend);
-    }else{
-        status(QString("X out of bounds!"));}
-    if ((y<7.6)&(y>-7.6)){
-        QString toSend = QString("-sts currentScanCenter ") ;
-        toSend.append(QString::number(y));
-        toSend.append(" YAxis");
-        addToQueue(toSend);
-//        cleanAndSend(toSend);
+		//    set up the microscope with appropriate parameters for small 3D ROI.
+		float x = nextLoc.x;
+		float y = nextLoc.y;
+		status(QString("caught nextLoc x= ").append(QString::number(x)).append(QString("  y = ")).append(QString::number(y)));
+		if ((x<7.6)&(x>-7.6)){
+			if (false){//(s2ParameterMap[0].getCurrentString().contains("Resonant")){//this controller may not know about the s2parametermap!
+				toSend = QString("-sts currentPanLocationX ");
+				toSend.append(QString::number(x));
+			}else{
+				toSend = QString("-sts currentScanCenter ");
+				toSend.append(QString::number(x));
+				toSend.append(" XAxis");
+			}
+			addToQueue(toSend);
+			//cleanAndSend(toSend);
+		}else{
+			status(QString("X out of bounds!"));}
+		if ((y<7.6)&(y>-7.6)){
+			QString toSend = QString("-sts currentScanCenter ") ;
+			toSend.append(QString::number(y));
+			toSend.append(" YAxis");
+			addToQueue(toSend);
+	//        cleanAndSend(toSend);
 
-    }else{
-        status(QString("Y out of bounds!"));
-    }
+		}else{
+			status(QString("Y out of bounds!"));
+		}
+	}
 }
 
 
@@ -646,10 +646,18 @@ void S2Controller::posMon(){
 
 }
 
-void S2Controller::startZStack(){
-    qDebug()<<"starting z stack in s2Controller";
-    //sendAndReceive(QString("-zs"));
-    addToQueue(QString("-zs"));
+void S2Controller::startZStack()
+{
+	if (mode == offline)
+	{
+		emit kickFakeScope();
+	}
+	else
+	{
+		qDebug()<<"starting z stack in s2Controller";
+		//sendAndReceive(QString("-zs"));
+		addToQueue(QString("-zs"));
+	}
 }
 
 

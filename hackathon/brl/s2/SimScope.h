@@ -16,6 +16,7 @@
 #include <math.h>
 #include <qstringlist.h>
 #include "basic_landmark.h"
+#include <cstring>
 
 /* 
   This class aims to simulate real microscope based on image stack.
@@ -35,17 +36,15 @@ public:
 	scopeSimulator() {};
 	~scopeSimulator() {};
 	
-	float cubeSize, overlap;
+	V3DLONG cubeSize;
 	int bkgThres;
-	float seedX, seedY;
+	float overlap, seedX, seedY;
 	LocationSimple seedLocation;
-	long int tileOriginX, tileOriginY;
-
-	void testFunc(int);
-	void imageLocationSetUp();
+	int tileOriginX, tileOriginY;
 
 public slots:
 	void paramShotFromController(LocationSimple, float, float);
+	void fakeScopeCrop();
 	
 	
 private:
@@ -56,20 +55,18 @@ private:
 	V3DLONG cubeDim[4];
 	unsigned char* cube1d;
 	V3DLONG tileXstart, tileXend, tileYstart, tileYend;
+	const char* cubeFileName;
 
 	S2Parameter simScopeParameter; // This contains locations and tile size.
 	QMap<int, S2Parameter> S2SimParameterMap;
 	QString croppedImageFileName;
 
-	
-
-	void fakeScopeCrop();
-	void imageSave();
 
 private slots:
 
 signals:
-	void signalUIsaveCube(const char*, unsigned char*, V3DLONG[]);
+	void testFunc(int);
+	void signalUIsaveCube();
 	
 	
 };

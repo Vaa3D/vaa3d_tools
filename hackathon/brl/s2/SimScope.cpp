@@ -4,18 +4,11 @@
 
 using namespace std;
 
-void scopeSimulator::testFunc(int num) 
-{
-	cout << "test " << num << endl;
-}
-
 void scopeSimulator::paramShotFromController(LocationSimple nextLoc, float x, float y)
 {
 	seedLocation = nextLoc;
 	seedX = x;
 	seedY = y;
-
-	fakeScopeCrop();
 }
 
 void scopeSimulator::fakeScopeCrop()
@@ -27,32 +20,37 @@ void scopeSimulator::fakeScopeCrop()
 
 	if (int(cubeSize)%2 == 0)
 	{
-		tileOriginX = long int(floor(seedX - cubeSize/2));
+		tileOriginX = int(floor(seedX - cubeSize/2));
 		tileXstart = tileOriginX;
 		tileXend = tileOriginX + cubeSize;
-		tileOriginY = long int(floor(seedY - cubeSize/2));
+		tileOriginY = int(floor(seedY - cubeSize/2));
 		tileYstart = tileOriginY;
 		tileYend = tileOriginY + cubeSize;
+		cubeDim[0] = cubeSize + 1;
+		cubeDim[1] = cubeSize + 1;
+		cubeDim[2] = wholeImgDim[2];
+		cubeDim[3] = wholeImgDim[3];
 	}
 	else 
 	{
-		tileOriginX = long int(floor(seedX - (cubeSize-1)/2));
+		tileOriginX = int(floor(seedX - (cubeSize-1)/2));
 		tileXstart = tileOriginX;
 		tileXend = tileOriginX + (cubeSize-1);
-		tileOriginY = long int(floor(seedY - (cubeSize-1)/2));
+		tileOriginY = int(floor(seedY - (cubeSize-1)/2));
 		tileYstart = tileOriginY;
 		tileYend = tileOriginY + (cubeSize-1);
+		cubeDim[0] = cubeSize;
+		cubeDim[1] = cubeSize;
+		cubeDim[2] = wholeImgDim[2];
+		cubeDim[3] = wholeImgDim[3];
 	}
+	//cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
 
-	cubeDim[0] = cubeSize + 1;
-	cubeDim[1] = cubeSize + 1;
-	cubeDim[2] = wholeImgDim[2];
-	cubeDim[3] = wholeImgDim[3];
-
-	this->cube1d = this->data1d->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileYend, 0, wholeImgDim[2]);
-	
+	unsigned char* cubePtr = new unsigned char[cubeDim[0]*cubeDim[1]*cubeDim[2]];
+	cout << "cube size: " << cubeDim[0]*cubeDim[1]*cubeDim[2] << endl;
+	cube1d = data1d->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]);
 	QString saveName = "testCube.v3draw";
-    const char* fileName = saveName.toAscii();
-	//emit signalUIsaveCube(fileName, cube1d, cubeDim);
-	simple_saveimage_wrapper(*S2UIcb, fileName, cube1d, cubeDim, 1);
+    cubeFileName = saveName.toAscii();
+
+	emit signalUIsaveCube();
 }

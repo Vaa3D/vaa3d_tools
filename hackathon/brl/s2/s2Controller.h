@@ -124,6 +124,7 @@ signals:
 	
 	// Signals to simulated scope, MK, July 2017
 	void shootFakeScope(LocationSimple, float, float);
+	void kickFakeScope();
 
 private slots:
 	void checkForMessage();

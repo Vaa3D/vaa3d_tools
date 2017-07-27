@@ -289,7 +289,9 @@ void S2UI::hookUpSignalsAndSlots(){
 	// communication with myPosMon and myController for SimScope, MK, July 2017
 	connect(tracePB, SIGNAL(clicked()), this, SLOT(initSimScope()));
 	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
-	connect(&fakeScope, SIGNAL(signalUIsaveCube(const char*, unsigned char*, V3DLONG[])), this, SLOT(saveCubefromFakeScope(const char*, unsigned char*, V3DLONG[])));
+	connect(&fakeScope, SIGNAL(signalUIsaveCube()), this, SLOT(saveCubefromFakeScope()));
+	connect(&myController, SIGNAL(kickFakeScope()), &fakeScope, SLOT(fakeScopeCrop()));
+	connect(&fakeScope, SIGNAL(testFunc(int)), this, SLOT(testSLOT(int)));
 	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
 	
 
@@ -541,6 +543,12 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 }
 
 // --------------------- This block is for simulated scope related methods, MK, July 2017 -------------------------
+void S2UI::testSLOT(int num)
+{
+	cout << "test: " << num << endl;
+}
+
+
 void S2UI::initSimScope()
 {
 	myController.mode = offline;
@@ -597,7 +605,7 @@ void S2UI::initSimScope()
 	fakeScope.seedLocation.x = x;
 	fakeScope.seedLocation.y = y;
 	fakeScope.seedLocation.z = z;
-	fakeScope.cubeSize = initialParam[2].toFloat();
+	fakeScope.cubeSize = initialParam[2].toInt();
 	fakeScope.overlap = initialParam[3].toFloat();
 	fakeScope.bkgThres = initialParam[4].toInt();
 
@@ -609,16 +617,12 @@ void S2UI::initSimScope()
 	fakeScope.S2UIcb = cb;
 
 	emit moveToNextWithStage(startLoc, x, y);
+	emit startZStackSig();
 }
 
-void S2UI::saveCubefromFakeScope(const char* cubeName, unsigned char* cubePtr, V3DLONG cubeDim[])
+void S2UI::saveCubefromFakeScope()
 {
-	cout << cubeDim[0] << " " << cubeName[5] << endl;
-
-	simple_saveimage_wrapper(*cb, cubeName, cubePtr, cubeDim, 1);
-
-
-
+	simple_saveimage_wrapper(*cb, fakeScope.cubeFileName, fakeScope.cube1d, fakeScope.cubeDim, 1);
 }
 // -----------------END of [This block is for simulated scope related methods, MK, July 2017] ----------------------
 
