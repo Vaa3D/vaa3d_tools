@@ -25,7 +25,7 @@
 
 using namespace iim;
 
-class ScopeSimulator : public QObject
+class SimScope : public QObject
 {
 	Q_OBJECT
 
@@ -33,42 +33,51 @@ class ScopeSimulator : public QObject
 	friend class S2UI;
 
 public:
-	ScopeSimulator() {};
-	~ScopeSimulator() {};
+	SimScope() {};
+	~SimScope() {};
 	
 	V3DLONG cubeSize;
 	int bkgThres;
 	float overlap;
 	LocationSimple location;
-
 	int testi;
 
+	void hookThingsUp();
+
 public slots:
-	void paramShotFromController(LocationSimple, float, float);
-	void fakeScopeCrop();
 	
 private:
+	V3DPluginCallback2* S2UIcb;
 	VirtualVolume* data1d;
 	V3DLONG wholeImgDim[4];
 	V3DLONG cubeDim[4];
 	unsigned char* cube1d;
 	float tileOriginX, tileOriginY;
+	float updatedOriginX, updatedOriginY;
 	V3DLONG tileXstart, tileXend, tileYstart, tileYend;
+	V3DLONG updatedXstart, updatedXend, updatedYstart, updatedYend;
 	const char* cubeFileName;
 
+	bool isRunning;
 	S2Parameter simScopeParameter; // This contains locations and tile size.
 	QMap<int, S2Parameter> S2SimParameterMap;
 	int simMaxParams;
 
 	void initFakeScopeParams();
+	void updateS2ParamMap();
 
 private slots:
-
+	void paramShotFromController(LocationSimple, float, float);
+	void fakeScopeCrop();
+	void gotKicked();
+	void fakeScopeSwitch(bool);
+	void constantReport(QMap<int, S2Parameter>);
 
 signals:
+	void pullSwitch(bool);
+	void transmitKick();
+	void reportToMyPosMon(QMap<int, S2Parameter>);
 	void testFunc(int);
-	void signalUIsaveCube();
-	void callMyPosMon(V3DLONG, V3DLONG);
 	
 };
 

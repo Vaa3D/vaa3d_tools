@@ -207,14 +207,6 @@ void S2Controller::initializeParameters(){
 
 }
 
-// -------------------- Simulated Scope block, MK, July 2017 ----------------------------
-void S2Controller::updateFromFakeScope(V3DLONG tileXstart, V3DLONG tileYstart)
-{
-	emit callS2UI(tileXstart, tileYstart);
-}
-
-// ----------------- END of [Simulated Scope block, MK, July 2017] ------------------------
-
 void S2Controller::startScan(){
     sendCommandButton->setEnabled(false);
     sendAndReceive(QString("-ss"));
@@ -465,9 +457,16 @@ void S2Controller::posMonListener(QString messageL){
         emit newS2Parameter(s2ParameterMap);
         QTimer::singleShot(2, this, SLOT(posMon()));
     }
-
-
 }
+
+// -------------------- Simulated Scope block, MK, July 2017 ----------------------------
+void S2Controller::updateFromFakeScope(QMap<int, S2Parameter> s2ParameterMap)
+{
+	cout << " test" << endl;
+	emit newS2Parameter(s2ParameterMap);
+}
+
+// ----------------- END of [Simulated Scope block, MK, July 2017] ------------------------
 
 void S2Controller::displayError(QAbstractSocket::SocketError socketError)
 {
@@ -644,7 +643,7 @@ bool S2Controller::getPosMon(){
 
 
 void S2Controller::posMon(){
-    // send current query string
+    // send current query string 
     if (!s2ParameterMap[ii].getExpectedType().contains("derived")){
         sendAndReceive(s2ParameterMap[ii].getSendString());
     }else{
@@ -658,7 +657,7 @@ void S2Controller::startZStack()
 {
 	if (mode == offline)
 	{
-		emit kickFakeScope();
+		emit kickFakeScope(true);
 	}
 	else
 	{

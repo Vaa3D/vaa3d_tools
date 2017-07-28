@@ -39,7 +39,7 @@ class S2UI : public QDialog
 	Q_OBJECT
 
 	friend class s2Controller;
-	friend class ScopeSimulator;
+	friend class SimScope;
 
 public:
 	S2UI(V3DPluginCallback2 &callback, QWidget *parent = 0 );
@@ -56,7 +56,7 @@ public:
 	LandmarkList allTargetList;	
 
 	// External S2 simulator
-	ScopeSimulator fakeScope;
+	SimScope fakeScope;
 
 public slots:
 	/*! \brief update posMon status
@@ -317,8 +317,6 @@ private slots:
 	// Scope Simulator slots, MK, July 2017
 	void testSLOT(int);
 	void initSimScope();
-	void saveCubefromFakeScope();
-	void answerMyPosMon(V3DLONG, V3DLONG);
 
 
 private:

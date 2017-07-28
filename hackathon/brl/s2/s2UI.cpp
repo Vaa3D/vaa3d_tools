@@ -289,10 +289,8 @@ void S2UI::hookUpSignalsAndSlots(){
 	// communication with myPosMon and myController for SimScope, MK, July 2017
 	connect(tracePB, SIGNAL(clicked()), this, SLOT(initSimScope()));
 	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
-	connect(&fakeScope, SIGNAL(signalUIsaveCube()), this, SLOT(saveCubefromFakeScope()));
-	connect(&myController, SIGNAL(kickFakeScope()), &fakeScope, SLOT(fakeScopeCrop()));
-	connect(&fakeScope, SIGNAL(callMyPosMon(V3DLONG, V3DLONG)), &myPosMon, SLOT(updateFromFakeScope(V3DLONG, V3DLONG)));
-	connect(&myPosMon, SIGNAL(callS2UI(V3DLONG, V3DLONG)), this, SLOT(answerMyPosMon(V3DLONG, V3DLONG)));
+	connect(&myController, SIGNAL(kickFakeScope(bool)), &fakeScope, SLOT(fakeScopeSwitch(bool)));
+	connect(&fakeScope, SIGNAL(reportToMyPosMon(QMap<int, S2Parameter>)), &myPosMon, SLOT(updateFromFakeScope(QMap<int, S2Parameter>)));
 	connect(&fakeScope, SIGNAL(testFunc(int)), this, SLOT(testSLOT(int)));
 	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
 	
@@ -550,7 +548,6 @@ void S2UI::testSLOT(int num)
 	cout << "test: " << num << endl;
 }
 
-
 void S2UI::initSimScope()
 {
 	myController.mode = offline;
@@ -572,6 +569,7 @@ void S2UI::initSimScope()
 	initialParam.push_back(overlap);
 	QString bkg = backgroundEdit->text();
 	initialParam.push_back(bkg);
+	
 
 	fakeScope.data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
 	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
@@ -584,6 +582,8 @@ void S2UI::initSimScope()
 	fakeScope.cubeSize = initialParam[2].toInt();
 	fakeScope.overlap = initialParam[3].toFloat();
 	fakeScope.bkgThres = initialParam[4].toInt();
+	fakeScope.S2UIcb = cb;
+	fakeScope.hookThingsUp();
 	fakeScope.testi = 0;
 
 	fakeScope.wholeImgDim[0] = fakeScope.data1d->getDIM_H();
@@ -608,10 +608,11 @@ void S2UI::initSimScope()
 	startLoc.y = y;
 	startLoc.z = z;
 
-	emit moveToNextWithStage(startLoc, tileLocX, tileLocY);
-	emit startZStackSig();
 	myPosMon.initializeParameters();
 	fakeScope.initFakeScopeParams();
+
+	emit moveToNextWithStage(startLoc, tileLocX, tileLocY);
+	emit startZStackSig();
 
 #if defined (Q_OS_WIN32)
 	struct tm* newTime;
@@ -638,25 +639,6 @@ void S2UI::initSimScope()
 	outputDir.mkpath(swcOutput);
 	outputDir.mkpath(cubeOutput);
 #endif
-}
-
-void S2UI::saveCubefromFakeScope()
-{
-	simple_saveimage_wrapper(*cb, fakeScope.cubeFileName, fakeScope.cube1d, fakeScope.cubeDim, 1);
-
-	++fakeScope.testi;
-	if (fakeScope.testi == 3) return;
-}
-
-void S2UI::answerMyPosMon(V3DLONG tileXstart, V3DLONG tileYstart)
-{
-	LocationSimple startLoc;
-	startLoc.x = tileXstart;
-	startLoc.y = tileYstart;
-	startLoc.z = fakeScope.wholeImgDim[2];
-
-	emit moveToNextWithStage(startLoc, tileXstart, tileYstart);
-	emit startZStackSig();
 }
 // -----------------END of [This block is for simulated scope related methods, MK, July 2017] ----------------------
 
@@ -2169,7 +2151,7 @@ void S2UI::posMonButtonClicked(){
 void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
 	// this updates the text fields in the UI, and ALSO CHECKS ON THE LATEST FILE and calls checkParameters to check for new values
 	// not all values are currently updated in uiS2ParameterMap
-
+	cout << "final destination!" << endl;
 	int minVal = 0;
 	int maxVal = currentParameterMap.keys().length();
 	for (int i= 0; i <maxVal ; i++){
