@@ -172,8 +172,8 @@ void SimScope::fakeScopeSwitch(bool pull)
 	if (pull == true) 
 	{
 		isRunning = true;
+		S2MapEmitter();
 		emit transmitKick();
-		//QTimer::singleShot(50, this, SLOT(constantReport(S2SimParameterMap)));
 	}
 	else if (pull == false) isRunning = false;
 }
@@ -184,13 +184,13 @@ void SimScope::gotKicked()
 	{
 		fakeScopeCrop();
 		updateS2ParamMap();
-		constantReport(S2SimParameterMap);
 		emit pullSwitch(false);
 	}
 }
 
-void SimScope::constantReport(QMap<int, S2Parameter> S2SimParameterMap)
+void SimScope::S2MapEmitter()
 {
-	cout << "report sent" << endl;
-	emit reportToMyPosMon(S2SimParameterMap);	
+	emit reportToMyPosMon(S2SimParameterMap);
+	if (isRunning == true) QTimer::singleShot(50, this, SLOT(S2MapEmitter()));
 }
+

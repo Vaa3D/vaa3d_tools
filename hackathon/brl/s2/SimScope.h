@@ -70,7 +70,7 @@ private slots:
 	void fakeScopeCrop();
 	void gotKicked();
 	void fakeScopeSwitch(bool);
-	void constantReport(QMap<int, S2Parameter>);
+	void S2MapEmitter();
 
 signals:
 	void notifyConfigReady(LocationSimple, float, float);

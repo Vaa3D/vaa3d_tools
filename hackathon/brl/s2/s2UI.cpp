@@ -2113,6 +2113,7 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
 	// this updates the text fields in the UI, and ALSO CHECKS ON THE LATEST FILE and calls checkParameters to check for new values
 	// not all values are currently updated in uiS2ParameterMap
 	cout << "final destination!" << endl;
+	cout << currentParameterMap[5].getCurrentValue() << endl;
 	int minVal = 0;
 	int maxVal = currentParameterMap.keys().length();
 	for (int i= 0; i <maxVal ; i++){
