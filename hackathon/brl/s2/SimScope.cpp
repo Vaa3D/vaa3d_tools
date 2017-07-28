@@ -8,38 +8,79 @@ using namespace std;
 void SimScope::hookThingsUp()
 {
 	connect(this, SIGNAL(pullSwitch(bool)), this, SLOT(fakeScopeSwitch(bool)));
-	//connect(this, SIGNAL(reportToMyPosMon(QMAP<int, S2Parameter>)), this, SLOT(constantReport(QMap<int, SParameter>)));
 	connect(this, SIGNAL(transmitKick()), this, SLOT(gotKicked()));
+}
+
+void SimScope::configFakeScope(QStringList initialParam)
+{
+	this->data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
+	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
+	float x = inputSeed[0].x - 1;
+	float y = inputSeed[0].y - 1;
+	float z = inputSeed[0].z - 1;
+	this->location.x = x;
+	this->location.y = y;
+	this->location.z = z;
+	this->cubeSize = initialParam[2].toInt();
+	this->overlap = initialParam[3].toFloat();
+	this->bkgThres = initialParam[4].toInt();
+	this->hookThingsUp();
+	this->testi = 0;
+
+	this->wholeImgDim[0] = this->data1d->getDIM_H();
+	this->wholeImgDim[1] = this->data1d->getDIM_V();
+	this->wholeImgDim[2] = this->data1d->getDIM_D();
+	this->wholeImgDim[3] = this->data1d->getDIM_C();
+
+	float tileLocX, tileLocY;
+	if (int(this->cubeSize)%2 == 0)
+	{
+		tileLocX = x - this->cubeSize/2;
+		tileLocY = y - this->cubeSize/2;
+	}
+	else 
+	{
+		tileLocX = x - (this->cubeSize-1)/2;
+		tileLocY = y - (this->cubeSize-1)/2;
+	}
+
+	LocationSimple startLoc;
+	startLoc.x = x;
+	startLoc.y = y;
+	startLoc.z = z;
+
+	this->initFakeScopeParams();
+	emit notifyConfigReady(startLoc, tileLocX, tileLocY);
 }
 
 void SimScope::initFakeScopeParams()
 {
-    S2Parameter tPara = S2Parameter("currentMode", "-gts activeMode", 0.0, "", "string");
-    S2SimParameterMap.insert(0, tPara);
-    S2SimParameterMap.insert(1, S2Parameter("galvoXVolts", "-gts currentScanCenter XAxis")) ;
-    S2SimParameterMap.insert(2, S2Parameter("galvoYVolts", "-gts currentScanCenter YAxis")) ;
-    S2SimParameterMap.insert(3, S2Parameter("piezoZ", "-gmp Z 1")) ;
-    S2SimParameterMap.insert(4, S2Parameter("stepperZ", "-gmp Z 0")) ;
-    S2SimParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ; // changing
-    S2SimParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ; // changing
-    S2SimParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions", 0.0, "", "list")); // changing
-    S2SimParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis")); // fixed as 1
-    S2SimParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis")); // fixed as 1
-    S2SimParameterMap.insert(10, S2Parameter("pixelsPerLine", "-gts pixelsPerLine")); // changing
-    S2SimParameterMap.insert(11, S2Parameter("linesPerFrame", "-gts linesPerFrame")); // changing
-    S2SimParameterMap.insert(12, S2Parameter("opticalZoom", "-gts opticalZoom"));
-    S2SimParameterMap.insert(13, S2Parameter("micronROISizeX", "", 0.0, "", "floatderived"));
-    S2SimParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0, "", "floatderived"));
-    S2SimParameterMap.insert(15, S2Parameter("maxVoltsX", "-gts maxVoltage XAxis ", 0.0, "float"));
-    S2SimParameterMap.insert(16, S2Parameter("minVoltsX", "-gts minVoltage XAxis ", 0.0, "float"));
+	S2Parameter tPara = S2Parameter("currentMode", "-gts activeMode", 0.0, "", "string");
+	S2SimParameterMap.insert(0, tPara);
+	S2SimParameterMap.insert(1, S2Parameter("galvoXVolts", "-gts currentScanCenter XAxis")) ;
+	S2SimParameterMap.insert(2, S2Parameter("galvoYVolts", "-gts currentScanCenter YAxis")) ;
+	S2SimParameterMap.insert(3, S2Parameter("piezoZ", "-gmp Z 1")) ;
+	S2SimParameterMap.insert(4, S2Parameter("stepperZ", "-gmp Z 0")) ;
+	S2SimParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ; // changing
+	S2SimParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ; // changing
+	S2SimParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions", 0.0, "", "list")); // changing
+	S2SimParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis")); // fixed as 1
+	S2SimParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis")); // fixed as 1
+	S2SimParameterMap.insert(10, S2Parameter("pixelsPerLine", "-gts pixelsPerLine")); // changing
+	S2SimParameterMap.insert(11, S2Parameter("linesPerFrame", "-gts linesPerFrame")); // changing
+	S2SimParameterMap.insert(12, S2Parameter("opticalZoom", "-gts opticalZoom"));
+	S2SimParameterMap.insert(13, S2Parameter("micronROISizeX", "", 0.0, "", "floatderived"));
+	S2SimParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0, "", "floatderived"));
+	S2SimParameterMap.insert(15, S2Parameter("maxVoltsX", "-gts maxVoltage XAxis ", 0.0, "float"));
+	S2SimParameterMap.insert(16, S2Parameter("minVoltsX", "-gts minVoltage XAxis ", 0.0, "float"));
 
-    S2SimParameterMap.insert(17, S2Parameter("micronsPerVolt", "", 0.0, "", "floatderived"));
-    S2SimParameterMap.insert(18, S2Parameter("galvoXmicrons", "", 0.0, "", "floatderived"));
-    S2SimParameterMap.insert(19, S2Parameter("galvoYmicrons", "", 0.0, "", "floatderived"));
-    S2SimParameterMap.insert(20, S2Parameter("resonantX", "-gts currentPanLocationX", 0.0, "float"));
-    S2SimParameterMap.insert(21, S2Parameter("maxVoltsY", "-gts maxVoltage YAxis ", 0.0, "float"));
-    S2SimParameterMap.insert(22, S2Parameter("minVoltsY", "-gts minVoltage YAxis ", 0.0, "float"));
-    S2SimParameterMap.insert(23, S2Parameter("micronsPerVoltY", "", 0.0, "", "floatderived"));
+	S2SimParameterMap.insert(17, S2Parameter("micronsPerVolt", "", 0.0, "", "floatderived"));
+	S2SimParameterMap.insert(18, S2Parameter("galvoXmicrons", "", 0.0, "", "floatderived"));
+	S2SimParameterMap.insert(19, S2Parameter("galvoYmicrons", "", 0.0, "", "floatderived"));
+	S2SimParameterMap.insert(20, S2Parameter("resonantX", "-gts currentPanLocationX", 0.0, "float"));
+	S2SimParameterMap.insert(21, S2Parameter("maxVoltsY", "-gts maxVoltage YAxis ", 0.0, "float"));
+	S2SimParameterMap.insert(22, S2Parameter("minVoltsY", "-gts minVoltage YAxis ", 0.0, "float"));
+	S2SimParameterMap.insert(23, S2Parameter("micronsPerVoltY", "", 0.0, "", "floatderived"));
 
 	float frameDim = float(cubeSize);
 	if (int(cubeSize&2) == 0)
@@ -53,7 +94,7 @@ void SimScope::initFakeScopeParams()
 		S2SimParameterMap[11].setCurrentValue(frameDim);
 	}
 
-    simMaxParams = S2SimParameterMap.keys().last()+1;
+	simMaxParams = S2SimParameterMap.keys().last()+1;
 }
 
 void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
@@ -87,8 +128,6 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 		cubeDim[3] = wholeImgDim[3];
 	}
 	//cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
-
-	//pullSwitch(true);
 }
 
 void SimScope::fakeScopeCrop()
@@ -98,7 +137,7 @@ void SimScope::fakeScopeCrop()
 	cube1d = this->data1d->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
 	QString num = QString::number(testi);
 	QString saveName = "testCube" + num + ".v3draw";
-    cubeFileName = saveName.toAscii();
+	cubeFileName = saveName.toAscii();
 
 	updatedOriginX = tileOriginX;
 	updatedOriginY = tileOriginY;
@@ -130,7 +169,6 @@ void SimScope::updateS2ParamMap()
 
 void SimScope::fakeScopeSwitch(bool pull)
 {
-	
 	if (pull == true) 
 	{
 		isRunning = true;
@@ -153,7 +191,6 @@ void SimScope::gotKicked()
 
 void SimScope::constantReport(QMap<int, S2Parameter> S2SimParameterMap)
 {
-	cout << "report sent?" << endl;
-	emit reportToMyPosMon(S2SimParameterMap);
-	
+	cout << "report sent" << endl;
+	emit reportToMyPosMon(S2SimParameterMap);	
 }

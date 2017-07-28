@@ -287,11 +287,12 @@ void S2UI::hookUpSignalsAndSlots(){
 	connect(this, SIGNAL(stopPM()), &myPosMon, SLOT(stopPosMon()));
 
 	// communication with myPosMon and myController for SimScope, MK, July 2017
-	connect(tracePB, SIGNAL(clicked()), this, SLOT(initSimScope()));
+	connect(tracePB, SIGNAL(clicked()), this, SLOT(prepareSimScopeConfig()));
+	connect(this, SIGNAL(initImaginaryScope(QStringList)), &fakeScope, SLOT(configFakeScope(QStringList)));
+	connect(&fakeScope, SIGNAL(notifyConfigReady(LocationSimple, float, float)), this, SLOT(fakeScopeSaysReady(LocationSimple, float, float)));
 	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
 	connect(&myController, SIGNAL(kickFakeScope(bool)), &fakeScope, SLOT(fakeScopeSwitch(bool)));
 	connect(&fakeScope, SIGNAL(reportToMyPosMon(QMap<int, S2Parameter>)), &myPosMon, SLOT(updateFromFakeScope(QMap<int, S2Parameter>)));
-	connect(&fakeScope, SIGNAL(testFunc(int)), this, SLOT(testSLOT(int)));
 	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
 	
 
@@ -543,12 +544,7 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 }
 
 // --------------------- This block is for simulated scope related methods, MK, July 2017 -------------------------
-void S2UI::testSLOT(int num)
-{
-	cout << "test: " << num << endl;
-}
-
-void S2UI::initSimScope()
+void S2UI::prepareSimScopeConfig()
 {
 	myController.mode = offline;
 
@@ -569,50 +565,9 @@ void S2UI::initSimScope()
 	initialParam.push_back(overlap);
 	QString bkg = backgroundEdit->text();
 	initialParam.push_back(bkg);
-	
 
-	fakeScope.data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
-	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
-	float x = inputSeed[0].x - 1;
-	float y = inputSeed[0].y - 1;
-	float z = inputSeed[0].z - 1;
-	fakeScope.location.x = x;
-	fakeScope.location.y = y;
-	fakeScope.location.z = z;
-	fakeScope.cubeSize = initialParam[2].toInt();
-	fakeScope.overlap = initialParam[3].toFloat();
-	fakeScope.bkgThres = initialParam[4].toInt();
-	fakeScope.S2UIcb = cb;
-	fakeScope.hookThingsUp();
-	fakeScope.testi = 0;
-
-	fakeScope.wholeImgDim[0] = fakeScope.data1d->getDIM_H();
-    fakeScope.wholeImgDim[1] = fakeScope.data1d->getDIM_V();
-    fakeScope.wholeImgDim[2] = fakeScope.data1d->getDIM_D();
-    fakeScope.wholeImgDim[3] = fakeScope.data1d->getDIM_C();
-
-	float tileLocX, tileLocY;
-	if (int(fakeScope.cubeSize)%2 == 0)
-	{
-		tileLocX = x - fakeScope.cubeSize/2;
-		tileLocY = y - fakeScope.cubeSize/2;
-	}
-	else 
-	{
-		tileLocX = x - (fakeScope.cubeSize-1)/2;
-		tileLocY = y - (fakeScope.cubeSize-1)/2;
-	}
-
-	LocationSimple startLoc;
-	startLoc.x = x;
-	startLoc.y = y;
-	startLoc.z = z;
-
-	myPosMon.initializeParameters();
-	fakeScope.initFakeScopeParams();
-
-	emit moveToNextWithStage(startLoc, tileLocX, tileLocY);
-	emit startZStackSig();
+	fakeScope.S2UIcb = cb;	
+	emit initImaginaryScope(initialParam);
 
 #if defined (Q_OS_WIN32)
 	struct tm* newTime;
@@ -639,6 +594,12 @@ void S2UI::initSimScope()
 	outputDir.mkpath(swcOutput);
 	outputDir.mkpath(cubeOutput);
 #endif
+}
+
+void S2UI::fakeScopeSaysReady(LocationSimple startLoc, float tileLocX, float tileLocY)
+{
+	emit moveToNextWithStage(startLoc, tileLocX, tileLocY);
+	emit startZStackSig();
 }
 // -----------------END of [This block is for simulated scope related methods, MK, July 2017] ----------------------
 
@@ -2173,8 +2134,6 @@ void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
 		if (item){
 			item->setText(parameterStringi.split("\\").last());
 		}
-
-
 	}
 
 	checkParameters(currentParameterMap);

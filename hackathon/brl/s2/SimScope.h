@@ -43,8 +43,6 @@ public:
 	int testi;
 
 	void hookThingsUp();
-
-public slots:
 	
 private:
 	V3DPluginCallback2* S2UIcb;
@@ -67,6 +65,7 @@ private:
 	void updateS2ParamMap();
 
 private slots:
+	void configFakeScope(QStringList);
 	void paramShotFromController(LocationSimple, float, float);
 	void fakeScopeCrop();
 	void gotKicked();
@@ -74,11 +73,10 @@ private slots:
 	void constantReport(QMap<int, S2Parameter>);
 
 signals:
+	void notifyConfigReady(LocationSimple, float, float);
 	void pullSwitch(bool);
 	void transmitKick();
 	void reportToMyPosMon(QMap<int, S2Parameter>);
-	void testFunc(int);
-	
 };
 
 #endif

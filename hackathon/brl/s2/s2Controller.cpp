@@ -462,10 +462,9 @@ void S2Controller::posMonListener(QString messageL){
 // -------------------- Simulated Scope block, MK, July 2017 ----------------------------
 void S2Controller::updateFromFakeScope(QMap<int, S2Parameter> s2ParameterMap)
 {
-	cout << " test" << endl;
+	cout << "myPosMon response" << endl;
 	emit newS2Parameter(s2ParameterMap);
 }
-
 // ----------------- END of [Simulated Scope block, MK, July 2017] ------------------------
 
 void S2Controller::displayError(QAbstractSocket::SocketError socketError)

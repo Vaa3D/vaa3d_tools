@@ -188,6 +188,9 @@ signals:
 	void waitForDuplicate(TileInfo, LandmarkList, int , int, int, QString);
 	void loadLatestSig(QString);
 
+	// Signals for Simulated Scope, MK, July 2017
+	void initImaginaryScope(QStringList);
+
 
 private slots:
 	void runBoundingBox();
@@ -315,9 +318,8 @@ private slots:
 	void loadDuplicateTile(TileInfo duplicateTile, LandmarkList seedList, int tileStatus, int correctX, int correctY);
 
 	// Scope Simulator slots, MK, July 2017
-	void testSLOT(int);
-	void initSimScope();
-
+	void prepareSimScopeConfig();
+	void fakeScopeSaysReady(LocationSimple, float, float);
 
 private:
 	V3DPluginCallback2 * cb;

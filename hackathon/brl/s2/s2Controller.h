@@ -123,7 +123,7 @@ signals:
 	void statusSig(QString statusMessage);
 	
 	// Signals to simulated scope, MK, July 2017
-	void shootFakeScope(LocationSimple, float, float); // myController
+	void shootFakeScope(LocationSimple, float, float);     // myController
 	void kickFakeScope(bool);                              // myController
 
 private slots:
