@@ -1,0 +1,17 @@
+#PBS -N tracing_166
+#PBS -j oe
+#PBS -l nodes=1:ppn=1
+#PBS -l pmem=64gb
+#PBS -l walltime=48:00:00
+#PBS -m abe
+
+#PBS -t 1-159
+
+export DISPLAY=:$RANDOM
+Xvfb $DISPLAY -auth /dev/null &
+
+#
+cd $PBS_O_WORKDIR
+#
+module load python/2.7
+python initiate_tracing_jobarray_updated.py > $PBS_ARRAYID.txt
