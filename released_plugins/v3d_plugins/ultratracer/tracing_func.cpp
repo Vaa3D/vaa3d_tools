@@ -333,7 +333,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
-    }else if(P.method==2)
+    }
+    else if(P.method==2)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -1383,13 +1384,13 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;
-    double min,max;
-    V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
-    unsigned char * total1dData_scaled = 0;
-    total1dData_scaled = new unsigned char [pagesz_vim];
-    rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
+//    double min,max;
+//    V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
+//    unsigned char * total1dData_scaled = 0;
+//    total1dData_scaled = new unsigned char [pagesz_vim];
+//    rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
 
-    total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     total4DImage->setOriginX(start_x);
     total4DImage->setOriginY(start_y);
     total4DImage->setOriginZ(start_z);
@@ -1464,7 +1465,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
     saveTextFile.close();
 
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_scaled, mysz, total4DImage->getDatatype());
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
     if(in_sz) {delete []in_sz; in_sz =0;}
     if(aVolume) {delete aVolume; aVolume = 0;}
@@ -1562,21 +1563,34 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     //                        }
 
                             inputswc = readSWC_file(poutswc_file.toStdString());
-                            for(V3DLONG d = 0; d < inputswc.size(); d++)
+                            NeuronTree inputswc_nt = readSWC_file(poutswc_file);
+                            QVector<QVector<V3DLONG> > childs;
+                            V3DLONG neuronNum = inputswc_nt.listNeuron.size();
+                            childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+                            for (V3DLONG i=0;i<neuronNum;i++)
                             {
-                                if( inputswc[d]->x < 0.05*  total4DImage->getXDim() || inputswc[d]->x > 0.95 *  total4DImage->getXDim() || inputswc[d]->y < 0.05 * total4DImage->getYDim() || inputswc[d]->y > 0.95* total4DImage->getYDim()
-                                        || inputswc[d]->z < 0.05*  total4DImage->getZDim() || inputswc[d]->z > 0.95 *  total4DImage->getZDim())
-                                {
-                                    num_tips++;
-                                }
+                                V3DLONG par = inputswc_nt.listNeuron[i].pn;
+                                if (par<0) continue;
+                                childs[inputswc_nt.hashNeuron.value(par)].push_back(i);
+                            }
 
+                            for(V3DLONG d = 0; d < inputswc_nt.listNeuron.size(); d++)
+                            {
+//                                if( inputswc[d]->x < 0.05*  total4DImage->getXDim() || inputswc[d]->x > 0.95 *  total4DImage->getXDim() || inputswc[d]->y < 0.05 * total4DImage->getYDim() || inputswc[d]->y > 0.95* total4DImage->getYDim()
+//                                        || inputswc[d]->z < 0.05*  total4DImage->getZDim() || inputswc[d]->z > 0.95 *  total4DImage->getZDim())
+//                                {
+//                                    num_tips++;
+//                                }
+
+                                if(childs[d].size() == 0)
+                                    num_tips++;
                                 if(ifs_swc && inputswc[d]->radius >= 8)
                                 {
                                     soma_tile = true;
                                 }
 
                             }
-                            if (num_tips>=50)
+                            if (num_tips>=100) //add <=20 and #tips>=100 constraints by PHC 20170801
                                 p2.bkg_thresh +=2;
                             else
                                 break;
@@ -2034,11 +2048,11 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-  //  QString fileSaveName = fileWithData + "wofusion.swc";
+    QString fileSaveName = fileWithData + "wofusion.swc";
 
     QDir imagefolderDir = QDir(QFileInfo(fileWithData).absoluteDir());
     imagefolderDir.cdUp();
-    QString fileSaveName = imagefolderDir.absolutePath()+"/nc_APP2_GD.swc";
+    //QString fileSaveName = imagefolderDir.absolutePath()+"/nc_APP2_GD.swc";
 
     while(ifs && getline(ifs, info_swc))
     {

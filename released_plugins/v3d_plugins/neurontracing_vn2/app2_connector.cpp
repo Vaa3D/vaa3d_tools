@@ -627,7 +627,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         saveSWC_file(outswc_file.toStdString(), outswc, infostring);
-        printf("swcsize is %d\n\n\n\n",outswc.size());
 
         if(outswc.size()>1)
         {

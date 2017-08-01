@@ -14,8 +14,6 @@
 
 #include "vaa3dneuron2_plugin.h"
 
-#include "../../../hackathon/brl/s2/s2_preprocessor.h"
-
 
 Q_EXPORT_PLUGIN2(vn2, NTApp2Plugin);
 

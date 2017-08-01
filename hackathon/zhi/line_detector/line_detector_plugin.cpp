@@ -525,11 +525,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
 
 //            printf("(%.2f,%d)\n",angle_j,j);
-            if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
-            {
-                break_id = j;
-                break;
-            }
+//            if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
+//            {
+//                break_id = j;
+//                break;
+//            }
         }
 
         double seg_intensity = 0;
@@ -701,7 +701,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         S.r 	= curr.r;
         S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
         nt_original.listNeuron.append(S);
-        nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);    
+        nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
         if(!b_boundary) PARA.nt_last.push_back(S); //use global coordinates
     }
 
