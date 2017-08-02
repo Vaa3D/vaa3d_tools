@@ -1115,34 +1115,6 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
 
 void assemble_neuron_live_dialog::findTips()
 {
-//    QVector<QVector<V3DLONG> > childs;
-//    V3DLONG neuronNum = nt_original.listNeuron.size();
-//    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-//    for (V3DLONG i = 0;i < neuronNum; i++)
-//    {
-//        V3DLONG par = nt_original.listNeuron[i].pn;
-//        if (par<0) continue;
-//        childs[nt_original.hashNeuron.value(par)].push_back(i);
-//    }
-
-// //  LandmarkList listTips;
-//    vector<MyMarker> listTips;
-
-//    for(V3DLONG i = 0; i < neuronNum; i++)
-//    {
-//        // LocationSimple utTip;
-//        MyMarker utTip;
-
-//        if(childs[i].size() == 0)
-//        {
-//            utTip.x = nt_original.listNeuron.at(i).x+1;
-//            utTip.y = nt_original.listNeuron.at(i).y+1;
-//            utTip.z = nt_original.listNeuron.at(i).z+1;
-//            listTips.push_back(utTip);
-//        }
-//    }
-//    saveMarker_file("/opt/zhi/Desktop/ut.marker",listTips);
-
     if(!dataTerafly)
     {
         terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
@@ -1155,6 +1127,33 @@ void assemble_neuron_live_dialog::findTips()
 
     if(!dataTerafly)
         return;
+
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt_original.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i = 0;i < neuronNum; i++)
+    {
+        V3DLONG par = nt_original.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt_original.hashNeuron.value(par)].push_back(i);
+    }
+
+    LandmarkList listTips;
+    for(V3DLONG i = 0; i < neuronNum; i++)
+    {
+        LocationSimple utTip;
+        if(childs[i].size() == 0)
+        {
+            utTip.x = nt_original.listNeuron.at(i).x+1;
+            utTip.y = nt_original.listNeuron.at(i).y+1;
+            utTip.z = nt_original.listNeuron.at(i).z+1;
+            listTips.push_back(utTip);
+        }
+    }
+
+    V3dR_MainWindow * _3dwin = check3DWindow();
+    callback->setHandleLandmarkList_Any3DViewer(_3dwin,listTips);
+    callback->update_3DViewer(_3dwin);
 
     LandmarkList * mList = getMarkerList();
     V3dR_MainWindow * mainwin_roi = 0;
