@@ -119,11 +119,16 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     QGridLayout * layout_ultratracer = new QGridLayout();
     list_tips = new QListWidget();
     btn_findtips = new QPushButton("find all tips");
+    btn_synctips = new QPushButton("update tips");
+
     layout_ultratracer->addWidget(list_tips,0,0,6,1);
     layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
+    layout_ultratracer->addWidget(btn_synctips,2,2,1,1);
+
     dialog_ultratracer->setLayout(layout_ultratracer);
     tab->addTab(dialog_ultratracer,tr("UltraTracer"));
     connect(btn_findtips,SIGNAL(clicked()),this,SLOT(findTips()));
+    connect(btn_synctips,SIGNAL(clicked()),this,SLOT(syncTips()));
 
     layout->addWidget(tab,4,0,1,4);
 
@@ -1190,7 +1195,10 @@ void assemble_neuron_live_dialog::findTips()
                 QString::number(i+1)+" (Node "+QString::number(info.at(0))+" x "+
                 QString::number(info.at(0))+" )";
         QString tmp_display="Marker "+QString::number(i+1);
-        list_tips->addItem(tmp_display);
+        QListWidgetItem *listItem = new QListWidgetItem;
+        listItem->setCheckState(Qt::Unchecked);
+        listItem->setText(tmp_display);
+        list_tips->addItem(listItem);
         list_tips_information.push_back(tmp);
     }
 
@@ -1199,6 +1207,37 @@ void assemble_neuron_live_dialog::findTips()
     }else{
         list_tips->setCurrentRow(0);
     }
+}
+
+void assemble_neuron_live_dialog::syncTips()
+{
+    v3dhandleList allWindowList = callback->getImageWindowList();
+    v3dhandle localwin = 0;
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        if(callback->getImageName(allWindowList.at(i))==winname_main){
+            localwin = allWindowList[i];
+            break;
+        }
+    }
+    if(localwin != 0)
+    {
+        LandmarkList local_landmark = callback->getLandmark(localwin);
+        for(V3DLONG i = 0; i < local_landmark.size(); i++)
+        {
+            if(list_tips->item(i)->checkState() == Qt::Checked)
+            {
+                local_landmark[i].color.r = 255;
+                local_landmark[i].color.g = 0;
+                local_landmark[i].color.b = 0;
+            }
+        }
+        callback->setLandmark(localwin, local_landmark);
+        callback->updateImageWindow(localwin);
+        callback->open3DWindow(localwin);
+        callback->pushObjectIn3DWindow(localwin);
+    }
+
 }
 
 void assemble_neuron_live_dialog::pairMarker()
@@ -1930,12 +1969,17 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
             SP.x=mList->at(i).x-x_min;
             SP.y=mList->at(i).y-y_min;
             SP.z=mList->at(i).z-z_min;
-            SP.color.r=mList->at(i).color.r;
-            SP.color.g=mList->at(i).color.g;
-            SP.color.b=mList->at(i).color.b;
-            SP.color.a=mList->at(i).color.a;
             SP.comments=mList->at(i).comments;
             SP.name=mList->at(i).name;
+            SP.color.r=mList->at(i).color.r;
+            SP.color.g=mList->at(i).color.g;
+            if(tab->currentIndex() == 3 && list_tips->item(i)->checkState() == Qt::Checked)
+            {
+                SP.color.r=255;
+                SP.color.g=0;
+            }
+            SP.color.b=mList->at(i).color.b;
+            SP.color.a=mList->at(i).color.a;
             local_landmark.append(SP);
         }
         //push object into the window
