@@ -102,18 +102,28 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     connect(list_edge, SIGNAL(currentRowChanged(int)), this, SLOT(highlightEdge()));
 
     //radius annotation
-    //if(p_img4d)
-    //{
-        QDialog * dialog_radius = new QDialog(tab);
-        QGridLayout * layout_radius = new QGridLayout();
-        list_marker = new QListWidget();
-        btn_syncmarkeronly = new QPushButton("update markers");
-        layout_radius->addWidget(list_marker,0,0,6,1);
-        layout_radius->addWidget(btn_syncmarkeronly,1,2,1,1);
-        dialog_radius->setLayout(layout_radius);
-        tab->addTab(dialog_radius,tr("radius"));
-        connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));
-    //}
+
+    QDialog * dialog_radius = new QDialog(tab);
+    QGridLayout * layout_radius = new QGridLayout();
+    list_marker = new QListWidget();
+    btn_syncmarkeronly = new QPushButton("update markers");
+    layout_radius->addWidget(list_marker,0,0,6,1);
+    layout_radius->addWidget(btn_syncmarkeronly,1,2,1,1);
+    dialog_radius->setLayout(layout_radius);
+    tab->addTab(dialog_radius,tr("radius"));
+    connect(btn_syncmarkeronly,SIGNAL(clicked()),this,SLOT(syncMarkerOnly()));
+
+    //ultratracer reconstruction checking
+
+    QDialog * dialog_ultratracer = new QDialog(tab);
+    QGridLayout * layout_ultratracer = new QGridLayout();
+    list_tips = new QListWidget();
+    btn_findtips = new QPushButton("find all tips");
+    layout_ultratracer->addWidget(list_tips,0,0,6,1);
+    layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
+    dialog_ultratracer->setLayout(layout_ultratracer);
+    tab->addTab(dialog_ultratracer,tr("UltraTracer"));
+    connect(btn_findtips,SIGNAL(clicked()),this,SLOT(findTips()));
 
     layout->addWidget(tab,4,0,1,4);
 
@@ -131,6 +141,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
 
 void assemble_neuron_live_dialog::initNeuron(QList<NeuronTree> &ntList)
 {
+    nt_original = ntList.at(0);
     V3DLONG nmax=0;
     noffset=0;
     QMultiHash<NOI*,V3DLONG> parents;
@@ -1102,6 +1113,86 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
     }
 }
 
+void assemble_neuron_live_dialog::findTips()
+{
+//    QVector<QVector<V3DLONG> > childs;
+//    V3DLONG neuronNum = nt_original.listNeuron.size();
+//    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//    for (V3DLONG i = 0;i < neuronNum; i++)
+//    {
+//        V3DLONG par = nt_original.listNeuron[i].pn;
+//        if (par<0) continue;
+//        childs[nt_original.hashNeuron.value(par)].push_back(i);
+//    }
+
+// //  LandmarkList listTips;
+//    vector<MyMarker> listTips;
+
+//    for(V3DLONG i = 0; i < neuronNum; i++)
+//    {
+//        // LocationSimple utTip;
+//        MyMarker utTip;
+
+//        if(childs[i].size() == 0)
+//        {
+//            utTip.x = nt_original.listNeuron.at(i).x+1;
+//            utTip.y = nt_original.listNeuron.at(i).y+1;
+//            utTip.z = nt_original.listNeuron.at(i).z+1;
+//            listTips.push_back(utTip);
+//        }
+//    }
+//    saveMarker_file("/opt/zhi/Desktop/ut.marker",listTips);
+
+    if(!dataTerafly)
+    {
+        terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+                                                           "");
+        if(terafly_folder.isEmpty())
+            return;
+        else
+            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
+    }
+
+    if(!dataTerafly)
+        return;
+
+    LandmarkList * mList = getMarkerList();
+    V3dR_MainWindow * mainwin_roi = 0;
+    QList <V3dR_MainWindow *> tmpwinlist = callback->getListAll3DViewers();
+    for(int j=0; j<tmpwinlist.size(); j++){
+        if(callback->getImageName(tmpwinlist[j])==winname_roi){
+            mainwin_roi = tmpwinlist[j];
+            break;
+        }
+    }
+    if(mainwin_roi)
+    {
+        View3DControl *view = callback->getView3DControl_Any3DViewer(mainwin_roi);
+        LocationSimple *p;
+        p = (LocationSimple *)&mList->at(list_tips->currentRow());
+        p->radius = view->getMarkerSize();
+    }
+    list_tips->clear();
+    list_tips_information.clear();
+
+    for(V3DLONG i=0; i<mList->size(); i++){
+        QList<int> info;
+        get_marker_info(mList->at(i), info);
+        QString tmp="Marker "+QString::number(i+1)+" x "+
+                QString::number(i+1)+" (Node "+QString::number(info.at(0))+" x "+
+                QString::number(info.at(0))+" )";
+        QString tmp_display="Marker "+QString::number(i+1);
+        list_tips->addItem(tmp_display);
+        list_tips_information.push_back(tmp);
+    }
+
+    if(list_tips->count()==0){
+        v3d_msg("Not marker in the 3D viewer.");
+    }else{
+        list_tips->setCurrentRow(0);
+    }
+}
+
 void assemble_neuron_live_dialog::pairMarker()
 {
     LandmarkList * mList = getMarkerList();
@@ -1637,15 +1728,22 @@ void assemble_neuron_live_dialog::zoomin()
             return;
         }
         tmp=list_edge->currentItem()->text();
-    }else{
+    }else if (tab->currentIndex()==2){
         int idx=list_marker->currentRow();
         if(idx<0){
             v3d_msg("Please select the marker to zoomin.");
             return;
         }
         tmp=list_marker->currentItem()->text();
-
+    }else if (tab->currentIndex()==3){
+        int idx=list_tips->currentRow();
+        if(idx<0){
+            v3d_msg("Please select the marker to zoomin.");
+            return;
+        }
+        tmp=list_tips_information.at(idx);
     }
+
 
     QStringList items = tmp.split(" ", QString::SkipEmptyParts);
     if(items.size()>8){

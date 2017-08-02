@@ -39,6 +39,8 @@ public:
 private:
     V3DPluginCallback2 * callback;
     NeuronTree nt;
+    NeuronTree nt_original;
+
     V3DLONG prev_root;
     QHash<V3DLONG, NOI*> nodes;
     int coffset;
@@ -48,13 +50,15 @@ private:
     QString winname_main, winname_3d, winname_roi,terafly_folder;
     
     QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
-        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly;
+        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly, *btn_findtips;
     QTabWidget * tab;
-    QListWidget * list_edge, * list_link, *list_marker;
+    QListWidget * list_edge, * list_link, *list_marker, *list_tips;
     QComboBox * cb_color;
     QCheckBox * check_loop, * check_zoomin;
     QSpinBox * spin_zoomin;
     VirtualVolume* dataTerafly;
+
+    QStringList list_tips_information;
 
 signals:
     
@@ -73,6 +77,8 @@ public slots:
     void highlightPair();
     void highlightEdge();
     void zoomin();
+    void findTips();
+
 
 private:
     void creat(QWidget *parent);
