@@ -1115,15 +1115,24 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
 
 void assemble_neuron_live_dialog::findTips()
 {
+    QSettings settings("HHMI", "Vaa3D");
     if(!dataTerafly)
     {
-        terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+        if(settings.value("terafly_path").toString().size()>0)
+            terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+                                                           settings.value("terafly_path").toString());
+        else
+            terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
                                                            "");
         if(terafly_folder.isEmpty())
             return;
         else
+        {
             dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
+            settings.setValue("terafly_path",terafly_folder);
+        }
     }
+
 
     if(!dataTerafly)
         return;
