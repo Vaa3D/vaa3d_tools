@@ -120,15 +120,18 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     list_tips = new QListWidget();
     btn_findtips = new QPushButton("find all tips");
     btn_synctips = new QPushButton("update tips");
+    btn_savetips = new QPushButton("save tips");
 
     layout_ultratracer->addWidget(list_tips,0,0,6,1);
     layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
     layout_ultratracer->addWidget(btn_synctips,2,2,1,1);
+    layout_ultratracer->addWidget(btn_savetips,3,2,1,1);
 
     dialog_ultratracer->setLayout(layout_ultratracer);
     tab->addTab(dialog_ultratracer,tr("UltraTracer"));
     connect(btn_findtips,SIGNAL(clicked()),this,SLOT(findTips()));
     connect(btn_synctips,SIGNAL(clicked()),this,SLOT(syncTips()));
+    connect(btn_savetips,SIGNAL(clicked()),this,SLOT(saveTips()));
 
     layout->addWidget(tab,4,0,1,4);
 
@@ -1230,6 +1233,11 @@ void assemble_neuron_live_dialog::syncTips()
                 local_landmark[i].color.r = 255;
                 local_landmark[i].color.g = 0;
                 local_landmark[i].color.b = 0;
+            }else
+            {
+                local_landmark[i].color.r = 0;
+                local_landmark[i].color.g = 255;
+                local_landmark[i].color.b = 0;
             }
         }
         callback->setLandmark(localwin, local_landmark);
@@ -1237,6 +1245,41 @@ void assemble_neuron_live_dialog::syncTips()
         callback->open3DWindow(localwin);
         callback->pushObjectIn3DWindow(localwin);
     }
+}
+
+void assemble_neuron_live_dialog::saveTips()
+{
+    LandmarkList * mList = getMarkerList();
+    QList <ImageMarker> tip_markers;
+
+    for(V3DLONG i = 0; i < mList->size(); i++)
+    {
+        ImageMarker t;
+        t.x = mList->at(i).x;
+        t.y = mList->at(i).y;
+        t.z = mList->at(i).z;
+        if(list_tips->item(i)->checkState() == Qt::Checked)
+        {
+            t.color.r = 255;
+            t.color.g = 0;
+        }
+        else
+        {
+            t.color.r = 0;
+            t.color.g = 255;
+        }
+        t.color.b = 0;
+        tip_markers.push_back(t);
+    }
+
+    QString fileDefaultName = terafly_folder + "/tips.marker";
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save Tips"),
+            fileDefaultName,
+            QObject::tr("Supported file (*.marker)"
+                ));
+
+    writeMarker_file(fileSaveName, tip_markers);
+
 
 }
 

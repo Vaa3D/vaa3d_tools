@@ -50,7 +50,8 @@ private:
     QString winname_main, winname_3d, winname_roi,terafly_folder;
     
     QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
-        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly, *btn_findtips, *btn_synctips;
+        *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly,
+        *btn_findtips, *btn_synctips, *btn_savetips;
     QTabWidget * tab;
     QListWidget * list_edge, * list_link, *list_marker, *list_tips;
     QComboBox * cb_color;
@@ -79,6 +80,7 @@ public slots:
     void zoomin();
     void findTips();
     void syncTips();
+    void saveTips();
 
 private:
     void creat(QWidget *parent);
