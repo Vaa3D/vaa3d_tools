@@ -120,7 +120,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     list_tips = new QListWidget();
     btn_findtips = new QPushButton("find all tips");
     btn_synctips = new QPushButton("update tips");
-    btn_savetips = new QPushButton("save tips");
+    btn_savetips = new QPushButton("save unfinished tips");
 
     layout_ultratracer->addWidget(list_tips,0,0,6,1);
     layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
@@ -1284,22 +1284,17 @@ void assemble_neuron_live_dialog::saveTips()
 
     for(V3DLONG i = 0; i < mList->size(); i++)
     {
-        ImageMarker t;
-        t.x = mList->at(i).x;
-        t.y = mList->at(i).y;
-        t.z = mList->at(i).z;
         if(list_tips->item(i)->checkState() == Qt::Checked)
         {
+            ImageMarker t;
+            t.x = mList->at(i).x;
+            t.y = mList->at(i).y;
+            t.z = mList->at(i).z;
             t.color.r = 255;
             t.color.g = 0;
+            t.color.b = 0;
+            tip_markers.push_back(t);
         }
-        else
-        {
-            t.color.r = 0;
-            t.color.g = 255;
-        }
-        t.color.b = 0;
-        tip_markers.push_back(t);
     }
 
     QString fileDefaultName = terafly_folder + "/tips.marker";
