@@ -1164,6 +1164,9 @@ void assemble_neuron_live_dialog::findTips()
             utTip.x = nt_original.listNeuron.at(i).x+1;
             utTip.y = nt_original.listNeuron.at(i).y+1;
             utTip.z = nt_original.listNeuron.at(i).z+1;
+            utTip.color.r = 0;
+            utTip.color.g = 255;
+            utTip.color.b = 0;
             listTips.push_back(utTip);
         }
     }
@@ -1245,6 +1248,33 @@ void assemble_neuron_live_dialog::syncTips()
         callback->open3DWindow(localwin);
         callback->pushObjectIn3DWindow(localwin);
     }
+
+    LandmarkList * mList = getMarkerList();
+    LandmarkList mlist_updated;
+    for(V3DLONG i = 0; i < mList->size(); i++)
+    {
+        LocationSimple t;
+        t.x = mList->at(i).x;
+        t.y = mList->at(i).y;
+        t.z = mList->at(i).z;
+        if(list_tips->item(i)->checkState() == Qt::Checked)
+        {
+            t.color.r = 255;
+            t.color.g = 0;
+        }
+        else
+        {
+            t.color.r = 0;
+            t.color.g = 255;
+        }
+        t.color.b = 0;
+        mlist_updated.push_back(t);
+    }
+
+    V3dR_MainWindow * _3dwin = check3DWindow();
+    callback->setHandleLandmarkList_Any3DViewer(_3dwin,mlist_updated);
+    callback->update_3DViewer(_3dwin);
+
 }
 
 void assemble_neuron_live_dialog::saveTips()
@@ -1488,9 +1518,12 @@ LandmarkList * assemble_neuron_live_dialog::getMarkerList()
         p = (LocationSimple *)&(mList->at(i));
         p->name=QString::number(pid).toStdString();
         p->comments="";
-        p->color.r = 0;
-        p->color.g = 128;
-        p->color.b = 0;
+        if(tab->currentIndex() !=3)
+        {
+            p->color.r = 0;
+            p->color.g = 128;
+            p->color.b = 0;
+        }
         p->x=nodes[pid]->x;
         p->y=nodes[pid]->y;
         p->z=nodes[pid]->z;
