@@ -2175,6 +2175,10 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 V3DLONG xb = ix;
                 V3DLONG xe = xb+Ws-1; if(xe>=N-1) xe = N-1;
 
+                QString  swc_segs = outputfolder + QString("x_%1_y_%2.swc").arg(xb).arg(yb);
+                if(QFileInfo(swc_segs).exists())
+                    continue;
+
                 unsigned char *blockarea_3D=0;
                 V3DLONG *in_sub_sz = 0;
                 if (!loadRawRegion(const_cast<char *>(inimg_file.toStdString().c_str()), blockarea_3D, in_zz, in_sub_sz,datatype,xb,yb,0,
@@ -2306,7 +2310,6 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //                        marklist_3D_final.push_back(S);
 //                    }
 
-                    QString  swc_segs = outputfolder + QString("x_%1_y_%2.swc").arg(xb).arg(yb);
                     NeuronTree nt;
                     QList <NeuronSWC> & listNeuron = nt.listNeuron;
                     writeSWC_file(swc_segs,nt);
