@@ -1547,6 +1547,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                         v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
                         V3DLONG num_tips = 100;
+                        double tips_th = p2.p4dImage->getXDim()*100/512;
                         p2.bkg_thresh = -1;//P.bkg_thresh;
                         p2.landmarks.push_back(RootNewLocation);
 
@@ -1576,12 +1577,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                             for(V3DLONG d = 0; d < inputswc_nt.listNeuron.size(); d++)
                             {
-//                                if( inputswc[d]->x < 0.05*  total4DImage->getXDim() || inputswc[d]->x > 0.95 *  total4DImage->getXDim() || inputswc[d]->y < 0.05 * total4DImage->getYDim() || inputswc[d]->y > 0.95* total4DImage->getYDim()
-//                                        || inputswc[d]->z < 0.05*  total4DImage->getZDim() || inputswc[d]->z > 0.95 *  total4DImage->getZDim())
-//                                {
-//                                    num_tips++;
-//                                }
-
                                 if(childs[d].size() == 0)
                                     num_tips++;
                                 if(ifs_swc && inputswc[d]->radius >= 8)
@@ -1590,7 +1585,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                                 }
 
                             }
-                            if (num_tips>=100) //add <=20 and #tips>=100 constraints by PHC 20170801
+                            if (num_tips>=tips_th) //add <=20 and #tips>=100 constraints by PHC 20170801
                                 p2.bkg_thresh +=2;
                             else
                                 break;
@@ -3527,6 +3522,9 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
     }
+
+    if(P.global_name)
+        finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
 
     QString imageSaveString = saveDirString;
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;

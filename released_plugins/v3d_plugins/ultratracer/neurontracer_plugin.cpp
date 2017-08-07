@@ -587,6 +587,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.method = 2;
+//        P.global_name = true;
         crawler_raw_app(callback,parent,P,bmenu);
 	}
     else if (func_name == tr("trace_APP2_GD"))
@@ -652,6 +653,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.method = 3;
         P.tracing_3D = true;
+        P.global_name = true;
         if(P.grid_trace)
             grid_raw_all(callback,parent,P,bmenu);
         else

@@ -46,7 +46,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     cb_color = new QComboBox();
     cb_color->addItem("color by type");
     cb_color->addItem("color by segment");
-    cb_color->setCurrentIndex(1);
+    cb_color->setCurrentIndex(0);
     layout->addWidget(check_zoomin,2,0,1,2);
     layout->addWidget(cb_color,2,2,1,2);
     layout->addWidget(btn_zoomin,3,0,1,2);
@@ -119,18 +119,16 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     QGridLayout * layout_ultratracer = new QGridLayout();
     list_tips = new QListWidget();
     btn_findtips = new QPushButton("find all tips");
-    btn_synctips = new QPushButton("update tips");
     btn_savetips = new QPushButton("save unfinished tips");
 
     layout_ultratracer->addWidget(list_tips,0,0,6,1);
     layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
-    layout_ultratracer->addWidget(btn_synctips,2,2,1,1);
-    layout_ultratracer->addWidget(btn_savetips,3,2,1,1);
+    layout_ultratracer->addWidget(btn_savetips,2,2,1,1);
 
     dialog_ultratracer->setLayout(layout_ultratracer);
     tab->addTab(dialog_ultratracer,tr("UltraTracer"));
     connect(btn_findtips,SIGNAL(clicked()),this,SLOT(findTips()));
-    connect(btn_synctips,SIGNAL(clicked()),this,SLOT(syncTips()));
+    connect(list_tips,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(syncTips()));
     connect(btn_savetips,SIGNAL(clicked()),this,SLOT(saveTips()));
 
     layout->addWidget(tab,4,0,1,4);
@@ -1274,22 +1272,21 @@ void assemble_neuron_live_dialog::syncTips()
     V3dR_MainWindow * _3dwin = check3DWindow();
     callback->setHandleLandmarkList_Any3DViewer(_3dwin,mlist_updated);
     callback->update_3DViewer(_3dwin);
-
 }
 
 void assemble_neuron_live_dialog::saveTips()
 {
     LandmarkList * mList = getMarkerList();
-    QList <ImageMarker> tip_markers;
+    QList <CellAPO> tip_markers;
 
     for(V3DLONG i = 0; i < mList->size(); i++)
     {
         if(list_tips->item(i)->checkState() == Qt::Checked)
         {
-            ImageMarker t;
-            t.x = mList->at(i).x;
-            t.y = mList->at(i).y;
-            t.z = mList->at(i).z;
+            CellAPO t;
+            t.x = mList->at(i).x+1;
+            t.y = mList->at(i).y+1;
+            t.z = mList->at(i).z+1;
             t.color.r = 255;
             t.color.g = 0;
             t.color.b = 0;
@@ -1297,15 +1294,22 @@ void assemble_neuron_live_dialog::saveTips()
         }
     }
 
-    QString fileDefaultName = terafly_folder + "/tips.marker";
+    QSettings settings("HHMI", "Vaa3D");
+    QString fileDefaultName;
+    if(settings.value("savetips_path").toString().size()>0)
+        fileDefaultName =  settings.value("savetips_path").toString();
+    else
+        fileDefaultName = terafly_folder + "/tips.apo";
+
     QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save Tips"),
             fileDefaultName,
-            QObject::tr("Supported file (*.marker)"
+            QObject::tr("Supported file (*.apo)"
                 ));
-
-    writeMarker_file(fileSaveName, tip_markers);
-
-
+    if(!fileSaveName.isNull())
+    {
+        settings.setValue("savetips_path",fileSaveName);
+        writeAPO_file(fileSaveName, tip_markers);
+    }
 }
 
 void assemble_neuron_live_dialog::pairMarker()
@@ -1914,7 +1918,7 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
     x_max=x_max+spin_zoomin->value();
     y_max=y_max+spin_zoomin->value();
     z_max=z_max+spin_zoomin->value();
-    if(p_img4d!=0){
+    if(p_img4d!=0 && tab->currentIndex()<=1){
         v3dhandle winhandle = getImageWindow();
         if(winhandle==0){
             winhandle = checkImageWindow();
