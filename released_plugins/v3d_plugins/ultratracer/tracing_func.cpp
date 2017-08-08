@@ -223,7 +223,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.z = P.listLandmarks[0].z;
 
     LandmarkList inputRootList;
-    if(P.method !=12 )inputRootList.push_back(tileLocation);
+    if(P.method != gd )inputRootList.push_back(tileLocation);
 
     allTipsList.push_back(inputRootList);
 
@@ -246,9 +246,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     else
     {
-        if(P.method == 1)
+        if(P.method == app1)
             tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
-        else if (P.method == 2)
+        else if (P.method == app2)
             tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         else
             tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
@@ -322,7 +322,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     list<string> infostring;
     string tmpstr; QString qtstr;
-    if(P.method==1)
+    if(P.method==app1)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP1")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -334,7 +334,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
     }
-    else if(P.method==2)
+    else if(P.method==app2)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -352,7 +352,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
     }
 
-    if(P.method != 12)
+    if(P.method != gd)
     {
         if(P.tracing_3D)
             processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
@@ -371,7 +371,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 {
 
     QString saveDirString;
-    if(P.method == 1)
+    if(P.method == app1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
@@ -490,7 +490,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     PARA_APP2 p2;
     QString versionStr = "v0.001";
 
-    if(P.method == 1)
+    if(P.method == app1)
     {
         p1.bkg_thresh = P.bkg_thresh;
         p1.channel = P.channel-1;
@@ -548,7 +548,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
         simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
-        if(P.method == 1)
+        if(P.method == app1)
             qDebug()<<"starting app1";
         else
             qDebug()<<"starting app2";
@@ -556,7 +556,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
         if(inputRootList.size() <1)
         {
-            if(P.method == 1)
+            if(P.method == app1)
             {
                 p1.outswc_file =swcString;
                 proc_app1(callback, p1, versionStr);
@@ -573,7 +573,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             for(int i = 0; i < inputRootList.size(); i++)
             {
                 QString poutswc_file = swcString + (QString::number(i)) + (".swc");
-                if(P.method == 1)
+                if(P.method == app1)
                     p1.outswc_file =poutswc_file;
                 else
                     p2.outswc_file =poutswc_file;
@@ -599,7 +599,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
                 if(!flag)
                 {
-                    if(P.method == 1)
+                    if(P.method == app1)
                     {
                         p1.landmarks.push_back(RootNewLocation);
                         proc_app1(callback, p1, versionStr);
@@ -635,7 +635,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             for(int i = 0; i < inputRootList_pruned.size(); i++)
             {
                 QString poutswc_file = swcString + (QString::number(i)) + ("_2.swc");
-                if(P.method == 1)
+                if(P.method == app1)
                     p1.outswc_file = poutswc_file;
                 else
                     p2.outswc_file = poutswc_file;
@@ -661,7 +661,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
                 if(!flag)
                 {
-                    if(P.method == 1)
+                    if(P.method == app1)
                     {
                         p1.landmarks.push_back(RootNewLocation);
                         proc_app1(callback, p1, versionStr);
@@ -794,7 +794,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     QString saveDirString;
     QString finaloutputswc;
 
-    if(P.method == 1)
+    if(P.method == app1)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
         finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
@@ -984,7 +984,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     PARA_APP2 p2;
     QString versionStr = "v0.001";
 
-    if(P.method == 1)
+    if(P.method == app1)
     {
         p1.bkg_thresh = P.bkg_thresh;
         p1.channel = P.channel-1;
@@ -1047,7 +1047,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     if(ifs_swc)
        finalswc = readSWC_file(finaloutputswc.toStdString());
 
-    if(P.method == 1)
+    if(P.method == app1)
         qDebug()<<"starting app1";
     else
         qDebug()<<"starting app2";
@@ -1057,7 +1057,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(inputRootList.size() <1)
     {
-        if(P.method == 1)
+        if(P.method == app1)
         {
             p1.outswc_file =swcString;
             proc_app1(callback, p1, versionStr);
@@ -1073,7 +1073,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
         for(int i = 0; i < inputRootList.size(); i++)
         {
             QString poutswc_file = swcString + (QString::number(i)) + (".swc");
-            if(P.method == 1)
+            if(P.method == app1)
                 p1.outswc_file =poutswc_file;
             else
                 p2.outswc_file =poutswc_file;
@@ -1086,7 +1086,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
             const float dd = 0.5;
 
-            if(P.method == 1 && (RootNewLocation.x<p1.xc0-dd || RootNewLocation.x>p1.xc1+dd || RootNewLocation.y<p1.yc0-dd || RootNewLocation.y>p1.yc1+dd || RootNewLocation.z<p1.zc0-dd || RootNewLocation.z>p1.zc1+dd))
+            if(P.method == app1 && (RootNewLocation.x<p1.xc0-dd || RootNewLocation.x>p1.xc1+dd || RootNewLocation.y<p1.yc0-dd || RootNewLocation.y>p1.yc1+dd || RootNewLocation.z<p1.zc0-dd || RootNewLocation.z>p1.zc1+dd))
                 continue;
 
             if(tileswc_file.size()>0)
@@ -1104,7 +1104,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
             if(!flag)
             {
-                if(P.method == 1)
+                if(P.method == app1)
                 {
 
                     p1.landmarks.push_back(RootNewLocation);
@@ -1257,12 +1257,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QString saveDirString;
     QString finaloutputswc;
 
-    if(P.method == 1)
+    if(P.method == app1)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
         finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
     }
-    else if(P.method == 2)
+    else if(P.method == app2)
     {
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
@@ -1412,7 +1412,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     PARA_APP2 p2;
     QString versionStr = "v0.001";
 
-    if(P.method == 1)
+    if(P.method == app1)
     {
         p1.bkg_thresh = P.bkg_thresh;
         p1.channel = P.channel-1;
@@ -1477,9 +1477,9 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
        finalswc = readSWC_file(finaloutputswc.toStdString());
 
     vector<MyMarker*> tileswc_file;
-    if(P.method == 1 || P.method == 2)
+    if(P.method == app1 || P.method == app2)
     {
-        if(P.method == 1)
+        if(P.method == app1)
             qDebug()<<"starting app1";
         else
             qDebug()<<"starting app2";
@@ -1487,7 +1487,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
         if(inputRootList.size() <1)
         {
-            if(P.method == 1)
+            if(P.method == app1)
             {
                 p1.outswc_file =swcString;
                 proc_app1(callback, p1, versionStr);
@@ -1503,7 +1503,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             for(int i = 0; i < inputRootList.size(); i++)
             {
                 QString poutswc_file = swcString + (QString::number(i)) + (".swc");
-                if(P.method == 1)
+                if(P.method == app1)
                     p1.outswc_file =poutswc_file;
                 else
                     p2.outswc_file =poutswc_file;
@@ -1536,7 +1536,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 {
                     vector<MyMarker*> inputswc;
                     bool soma_tile;
-                    if(P.method == 1)
+                    if(P.method == app1)
                     {
 
                         p1.landmarks.push_back(RootNewLocation);
@@ -1739,7 +1739,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
-        if (childs[i].size()==0 || P.method != 12)
+        if (childs[i].size()==0 || P.method != gd)
         {
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
@@ -1842,7 +1842,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             ada_win_finding_3D(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
     }
 
-    if(P.method == 12)
+    if(P.method == gd)
         tileswc_file = readSWC_file(swcString.toStdString());
 
     if(ifs_swc)
@@ -2300,23 +2300,23 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     allTargetList.push_back(tileLocation);
 
     QString tmpfolder;
-    if(P.method ==3)
+    if(P.method == neutube)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
-    else if(P.method ==4)
+    else if(P.method == snake)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
-    else if(P.method ==5)
+    else if(P.method == most)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
-    else if(P.method ==6)
+    else if(P.method == neurogpstree)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuroGPSTree");
-    else if(P.method ==7)
+    else if(P.method == advantra)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Advantra");
-    else if(P.method ==8)
+    else if(P.method == tremap)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_TReMAP");
-    else if(P.method ==9)
+    else if(P.method == mst)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MST");
-    else if(P.method ==10)
+    else if(P.method == neuronchaser)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronChaser");
-    else if(P.method ==11)
+    else if(P.method == rivulet2)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Rivulet2");
 
     if(!tmpfolder.isEmpty())
@@ -2374,13 +2374,13 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     list<string> infostring;
     string tmpstr; QString qtstr;
-    if(P.method ==3)
+    if(P.method == neutube)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NEUTUBE")); infostring.push_back(tmpstr);
-    }else if(P.method ==4)
+    }else if(P.method == snake)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_SNAKE")); infostring.push_back(tmpstr);
-    }else if(P.method ==5)
+    }else if(P.method == most)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_MOST")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
@@ -2388,7 +2388,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         tmpstr =  qPrintable( qtstr.setNum(P.seed_win).prepend("#seed_win = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
-    }else if(P.method ==6)
+    }else if(P.method == neurogpstree)
     {
         tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NeuroGPSTree")); infostring.push_back(tmpstr);
     }
@@ -2417,64 +2417,64 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     QString finaloutputswc;
     QString finaloutputswc_left;
 
-    if(P.method ==3)
+    if(P.method == neutube)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
         finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_neutube_adp_left.swc");
     }
-    else if (P.method ==4)
+    else if (P.method == snake)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
         finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_snake_adp_left.swc");
 
     }
-    else if (P.method ==5)
+    else if (P.method == most)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
         finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_most_adp_left.swc");
 
     }
-    else if (P.method ==2)
+    else if (P.method == app2)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_app2_combined_left.swc");
 
     }
-    else if (P.method ==6)
+    else if (P.method == neurogpstree)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuroGPSTree");
         finaloutputswc = P.inimg_file + ("_nc_NeuroGPSTree_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_NeuroGPSTree_adp_left.swc");
     }
-    else if (P.method ==7)
+    else if (P.method == advantra)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Advantra");
         finaloutputswc = P.inimg_file + ("_nc_Advantra_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_Advantra_adp_left.swc");
     }
-    else if (P.method ==8)
+    else if (P.method == tremap)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_TReMAP");
         finaloutputswc = P.inimg_file + ("_nc_TReMAP_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_TReMAP_adp_left.swc");
     }
-    else if (P.method ==9)
+    else if (P.method == mst)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MST");
         finaloutputswc = P.inimg_file + ("_nc_MST_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_MST_adp_left.swc");
     }
-    else if (P.method ==10)
+    else if (P.method == neuronchaser)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuronChaser");
         finaloutputswc = P.inimg_file + ("_nc_NeuronChaser_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_NeuronChaser_adp_left.swc");
     }
-    else if (P.method ==11)
+    else if (P.method == rivulet2)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Rivulet2");
         finaloutputswc = P.inimg_file + ("_nc_Rivulet2_adp.swc");
@@ -2637,19 +2637,19 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         arg.type = "random";
         std::vector<char*> arg_para;
 
-        if(P.method ==3 || P.method == 2)
+        if(P.method == neutube || P.method == app2)
         {
             arg_para.push_back("1");
             arg_para.push_back("1");
             full_plugin_name = "neuTube";
             func_name =  "neutube_trace";
-        }else if(P.method ==4)
+        }else if(P.method == snake)
         {
             arg_para.push_back("1");
             arg_para.push_back("1");
             full_plugin_name = "snake";
             func_name =  "snake_trace";
-        }else if(P.method ==5)
+        }else if(P.method == most)
         {
             string S_channel = boost::lexical_cast<string>(P.channel);
             char* C_channel = new char[S_channel.length() + 1];
@@ -2673,7 +2673,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
             full_plugin_name = "mostVesselTracer";
             func_name =  "MOST_trace";
-        }else if(P.method ==6)
+        }else if(P.method == neurogpstree)
         {
             arg_para.push_back("1");
             arg_para.push_back("1");
@@ -2681,26 +2681,26 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             arg_para.push_back("30");
             full_plugin_name = "NeuroGPSTreeOld";
             func_name =  "tracing_func";
-        }else if(P.method ==7)
+        }else if(P.method == advantra)
         {
             full_plugin_name = "region_neuron2";
             func_name =  "trace_advantra";
-        }else if(P.method ==8)
+        }else if(P.method == tremap)
         {
             arg_para.push_back("0");
             arg_para.push_back("1");
             arg_para.push_back("20");
             full_plugin_name = "TReMap";
             func_name =  "trace_mip";
-        }else if(P.method ==9)
+        }else if(P.method == mst)
         {
             full_plugin_name = "MST_tracing";
             func_name =  "trace_mst";
-        }else if(P.method ==10)
+        }else if(P.method == neuronchaser)
         {
             full_plugin_name = "region_neuron2";
             func_name =  "trace_neuronchaser";
-        }else if(P.method ==11)
+        }else if(P.method == rivulet2)
         {
             arg_para.push_back("1");
             arg_para.push_back("30");
@@ -2708,7 +2708,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             func_name =  "tracing_func";
         }
 
-        if(P.method ==8)
+        if(P.method == tremap)
         {
         #if  defined(Q_OS_LINUX)
             QString cmd_tremap = QString("%1/vaa3d -x TReMap -f trace_mip -i %2 -p 0 1 20").arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str());
@@ -2736,23 +2736,23 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 || P.method ==2)
+    if(P.method == neutube || P.method == app2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
-    else if (P.method ==4)
+    else if (P.method == snake)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
-    else if (P.method ==5)
+    else if (P.method == most)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
-    else if (P.method ==6)
+    else if (P.method == neurogpstree)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_NeuroGPSTree.swc");
-    else if (P.method ==7)
+    else if (P.method == advantra)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_Advantra.swc");
-    else if (P.method ==8)
+    else if (P.method == tremap)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_XY_3D_TreMap.swc");
-    else if (P.method ==9)
+    else if (P.method == mst)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MST_Tracing.swc");
-    else if (P.method ==10)
+    else if (P.method == neuronchaser)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_region_NeuronChaser.swc");
-    else if (P.method ==11)
+    else if (P.method == rivulet2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw.r2.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
@@ -3025,26 +3025,26 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     QString finaloutputswc;
     QString finaloutputswc_left;
 
-    if(P.method ==3)
+    if(P.method == neutube)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
         finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_neutube_adp_left.swc");
     }
-    else if (P.method ==4)
+    else if (P.method == snake)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
         finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_snake_adp_left.swc");
     }
-    else if (P.method ==5)
+    else if (P.method == most)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
         finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
         finaloutputswc_left = P.inimg_file + ("_nc_most_adp_left.swc");
 
     }
-    else if (P.method ==2)
+    else if (P.method == app2)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
@@ -3191,19 +3191,19 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     arg.type = "random";
     std::vector<char*> arg_para;
 
-    if(P.method ==3 || P.method == 2)
+    if(P.method == neutube || P.method == app2)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "neuTube";
         func_name =  "neutube_trace";
-    }else if(P.method ==4)
+    }else if(P.method == snake)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "snake";
         func_name =  "snake_trace";
-    }else if(P.method ==5 )
+    }else if(P.method == most )
     {
         string S_channel = boost::lexical_cast<string>(P.channel);
         char* C_channel = new char[S_channel.length() + 1];
@@ -3241,11 +3241,11 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 || P.method ==2)
+    if(P.method == neutube || P.method == app2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_neutube.swc");
-    else if (P.method ==4 )
+    else if (P.method == snake )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_snake.swc");
-    else if (P.method ==5 )
+    else if (P.method == most )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append(".v3draw_MOST.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
@@ -3502,22 +3502,22 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     QString saveDirString;
     QString finaloutputswc;
-    if(P.method ==3)
+    if(P.method == neutube)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
         finaloutputswc = P.inimg_file + ("_nc_neutube_adp_3D.swc");
     }
-    else if (P.method ==4)
+    else if (P.method == snake)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
         finaloutputswc = P.inimg_file + ("_nc_snake_adp_3D.swc");
     }
-    else if (P.method ==5)
+    else if (P.method == most)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
         finaloutputswc = P.inimg_file + ("_nc_most_adp_3D.swc");
     }
-    else if (P.method ==2)
+    else if (P.method == app2)
     {
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
@@ -3682,19 +3682,19 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     arg.type = "random";
     std::vector<char*> arg_para;
 
-    if(P.method ==3 || P.method == 2)
+    if(P.method == neutube || P.method == app2)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "neuTube";
         func_name =  "neutube_trace";
-    }else if(P.method ==4)
+    }else if(P.method == snake)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "snake";
         func_name =  "snake_trace";
-    }else if(P.method ==5 )
+    }else if(P.method == most )
     {
         string S_channel = boost::lexical_cast<string>(P.channel);
         char* C_channel = new char[S_channel.length() + 1];
@@ -3731,11 +3731,11 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     NeuronTree nt_neutube;
     QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 || P.method ==2)
+    if(P.method == neutube || P.method == app2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
-    else if (P.method ==4 )
+    else if (P.method == snake )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
-    else if (P.method ==5 )
+    else if (P.method == most )
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
 
     nt_neutube = readSWC_file(swcNEUTUBE);
@@ -5513,11 +5513,11 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
     }
 
     QString tmpfolder;
-    if(P.method ==3)
+    if(P.method == neutube)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
-    else if(P.method ==4)
+    else if(P.method == snake)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
-    else if(P.method ==5)
+    else if(P.method == most)
        tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
 
 
@@ -5573,13 +5573,13 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy, V3DLONG iz)
 {
     QString saveDirString;
-    if(P.method ==3)
+    if(P.method == neutube)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-    else if (P.method ==4)
+    else if (P.method == snake)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
-    else if (P.method ==5)
+    else if (P.method == most)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
-    else if (P.method ==2)
+    else if (P.method == app2)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
 
     QString imageSaveString = saveDirString;
@@ -5716,19 +5716,19 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     arg.type = "random";
     std::vector<char*> arg_para;
 
-    if(P.method ==3 || P.method == 2)
+    if(P.method == neutube || P.method == app2)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "neuTube";
         func_name =  "neutube_trace";
-    }else if(P.method ==4)
+    }else if(P.method == snake)
     {
         arg_para.push_back("1");
         arg_para.push_back("1");
         full_plugin_name = "snake";
         func_name =  "snake_trace";
-    }else if(P.method ==5)
+    }else if(P.method == most)
     {
         string S_channel = boost::lexical_cast<string>(P.channel);
         char* C_channel = new char[S_channel.length() + 1];
@@ -5763,11 +5763,11 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     }
 
     QString swcNEUTUBE = saveDirString;
-    if(P.method ==3 || P.method ==2)
+    if(P.method == neutube || P.method == app2)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
-    else if (P.method ==4)
+    else if (P.method == snake)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
-    else if (P.method ==5)
+    else if (P.method == most)
         swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
 
     vector<MyMarker*> inputswc;
@@ -5954,7 +5954,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             P.markerfilename = tip_marker_name;
             P.seed_win = 32;
             P.swcfilename = tip_swc_name;
-            P.method = 12;
+            P.method = gd;
             crawler_raw_app(callback,parent,P,0);
         }
     }

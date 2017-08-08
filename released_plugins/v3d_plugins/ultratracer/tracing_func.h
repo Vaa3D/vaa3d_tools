@@ -8,7 +8,7 @@
 #include <v3d_interface.h>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-
+enum tracingMethod {app1, app2, neutube,snake,most,mst, neurogpstree,rivulet2,tremap,gd,advantra,neuronchaser};
 
 struct TRACE_LS_PARA
 {
@@ -35,7 +35,7 @@ struct TRACE_LS_PARA
     int  seed_win; //for MOST use only
     int  slip_win; //for MOST use only
 
-    int  method; //1:app1, 2:app2, 3: neutube, 4:snake, 5:most.
+    tracingMethod  method;
 
     Image4DSimple* image;
     LandmarkList listLandmarks;

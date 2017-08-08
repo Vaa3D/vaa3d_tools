@@ -108,7 +108,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
-        P.method = 2;
+        P.method = app2;
         P.tracing_3D = dialog.tracing_3D;
         P.tracing_comb = dialog.tracing_comb;
         crawler_raw_app(callback,parent,P,bmenu);
@@ -153,7 +153,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.visible_thresh = dialog.visible_thresh;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
-        P.method = 1;
+        P.method = app1;
         P.tracing_3D = false;
 
         crawler_raw_app(callback,parent,P,bmenu);
@@ -201,7 +201,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.slip_win = dialog.slip_win;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
-        P.method = 5;
+        P.method = most;
         P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }
@@ -244,7 +244,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             P.inimg_file = dialog.teraflyfilename;
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
-        P.method = 3;
+        P.method = neutube;
         P.tracing_3D = dialog.tracing_3D;
         if(!dialog.grid_trace)
             crawler_raw_all(callback,parent,P,bmenu);
@@ -287,7 +287,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 4;
+        P.method = snake;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_NeuroGPSTree"))
     {
@@ -326,7 +326,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 6;
+        P.method = neurogpstree;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_Advantra"))
     {
@@ -365,7 +365,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 7;
+        P.method = advantra;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_TReMAP"))
     {
@@ -404,7 +404,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 8;
+        P.method = tremap;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_MST"))
     {
@@ -443,7 +443,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 9;
+        P.method = mst;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_NeuronChaser"))
     {
@@ -482,7 +482,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 10;
+        P.method = neuronchaser;
         crawler_raw_all(callback,parent,P,bmenu);
     }else if (menu_name == tr("trace_Rivulet2"))
     {
@@ -521,7 +521,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.block_size = dialog.block_size;
         P.adap_win = dialog.adap_win;
         P.tracing_3D = dialog.tracing_3D;
-        P.method = 11;
+        P.method = rivulet2;
         crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (menu_name == tr("generate_final_result(3D)"))
@@ -586,7 +586,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
         P.tracing_3D = true;
         P.tracing_comb = false;
-        P.method = 2;
+        P.method = app2;
 //        P.global_name = true;
         crawler_raw_app(callback,parent,P,bmenu);
 	}
@@ -623,7 +623,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.global_name = true;
-        P.method = 2;
+        P.method = app2;
         crawler_raw_app(callback,parent,P,bmenu);
         //extract_tips(callback,parent,P);
 
@@ -651,7 +651,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
         P.grid_trace = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
-        P.method = 3;
+        P.method = neutube;
         P.tracing_3D = true;
         P.global_name = true;
         if(P.grid_trace)
@@ -687,7 +687,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.seed_win = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
         P.slip_win = (paras.size() >= k+1) ? atoi(paras[k]) : 20;  k++;
 
-        P.method = 5;
+        P.method = most;
         crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (func_name == tr("trace_GD_curveline"))
@@ -716,7 +716,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.swcfilename = (paras.size() >= k+1) ? paras[k] : ""; k++;
         P.tracing_3D = true;
         P.tracing_comb = false;
-        P.method = 12;
+        P.method = gd;
         crawler_raw_app(callback,parent,P,bmenu);
     }
 	else if (func_name == tr("help"))
