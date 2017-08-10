@@ -525,11 +525,11 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
 
 //            printf("(%.2f,%d)\n",angle_j,j);
-//            if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
-//            {
-//                break_id = j;
-//                break;
-//            }
+            if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
+            {
+                break_id = j;
+                break;
+            }
         }
 
         double seg_intensity = 0;
@@ -673,7 +673,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     curve_std = sqrt(curve_std/nt_selected.size());
     printf("curve mean is %.2f, std is %.2f\n\n\n",curve_mean, curve_std);
     bool b_darkSegment = false;
-    if(nt_selected.size() ==0 || fabs(overall_mean-curve_mean) < (overall_std+curve_std)/2)
+    if(nt_selected.size() ==0 || (overall_mean-curve_mean < (overall_std+curve_std)/2 && overall_mean-curve_mean>=0))
     {
         nt_selected.clear();
         PARA.listLandmarks.removeAt(markSize-1);

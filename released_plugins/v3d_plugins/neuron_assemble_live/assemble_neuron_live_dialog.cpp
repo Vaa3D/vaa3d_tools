@@ -119,15 +119,18 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     QGridLayout * layout_ultratracer = new QGridLayout();
     list_tips = new QListWidget();
     btn_findtips = new QPushButton("find all tips");
+    btn_updatetips = new QPushButton("update all tips");
     btn_savetips = new QPushButton("save unfinished tips");
 
     layout_ultratracer->addWidget(list_tips,0,0,6,1);
     layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
-    layout_ultratracer->addWidget(btn_savetips,2,2,1,1);
+    layout_ultratracer->addWidget(btn_updatetips,2,2,1,1);
+    layout_ultratracer->addWidget(btn_savetips,3,2,1,1);
 
     dialog_ultratracer->setLayout(layout_ultratracer);
     tab->addTab(dialog_ultratracer,tr("UltraTracer"));
     connect(btn_findtips,SIGNAL(clicked()),this,SLOT(findTips()));
+    connect(btn_updatetips,SIGNAL(clicked()),this,SLOT(updateTips()));
     connect(list_tips,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(syncTips()));
     connect(btn_savetips,SIGNAL(clicked()),this,SLOT(saveTips()));
 
@@ -1139,39 +1142,44 @@ void assemble_neuron_live_dialog::findTips()
         }
     }
 
-
     if(!dataTerafly)
         return;
 
-    QVector<QVector<V3DLONG> > childs;
-    V3DLONG neuronNum = nt_original.listNeuron.size();
-    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    for (V3DLONG i = 0;i < neuronNum; i++)
-    {
-        V3DLONG par = nt_original.listNeuron[i].pn;
-        if (par<0) continue;
-        childs[nt_original.hashNeuron.value(par)].push_back(i);
-    }
-
-    LandmarkList listTips;
-    for(V3DLONG i = 0; i < neuronNum; i++)
-    {
-        LocationSimple utTip;
-        if(childs[i].size() == 0)
-        {
-            utTip.x = nt_original.listNeuron.at(i).x+1;
-            utTip.y = nt_original.listNeuron.at(i).y+1;
-            utTip.z = nt_original.listNeuron.at(i).z+1;
-            utTip.color.r = 0;
-            utTip.color.g = 255;
-            utTip.color.b = 0;
-            listTips.push_back(utTip);
-        }
-    }
-
     V3dR_MainWindow * _3dwin = check3DWindow();
-    callback->setHandleLandmarkList_Any3DViewer(_3dwin,listTips);
-    callback->update_3DViewer(_3dwin);
+    V3DLONG current_row = list_tips->currentRow();
+    if(callback->getHandleLandmarkList_Any3DViewer(_3dwin)->size() <= 0)
+    {
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt_original.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i = 0;i < neuronNum; i++)
+        {
+            V3DLONG par = nt_original.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt_original.hashNeuron.value(par)].push_back(i);
+        }
+
+        LandmarkList listTips;
+        for(V3DLONG i = 0; i < neuronNum; i++)
+        {
+            LocationSimple utTip;
+            if(childs[i].size() == 0)
+            {
+                utTip.x = nt_original.listNeuron.at(i).x+1;
+                utTip.y = nt_original.listNeuron.at(i).y+1;
+                utTip.z = nt_original.listNeuron.at(i).z+1;
+                utTip.color.r = 0;
+                utTip.color.g = 255;
+                utTip.color.b = 0;
+                listTips.push_back(utTip);
+            }
+        }
+
+        callback->setHandleLandmarkList_Any3DViewer(_3dwin,listTips);
+        callback->update_3DViewer(_3dwin);
+        current_row = 0;
+    }
+
 
     LandmarkList * mList = getMarkerList();
     V3dR_MainWindow * mainwin_roi = 0;
@@ -1189,6 +1197,8 @@ void assemble_neuron_live_dialog::findTips()
         p = (LocationSimple *)&mList->at(list_tips->currentRow());
         p->radius = view->getMarkerSize();
     }
+
+
     list_tips->clear();
     list_tips_information.clear();
 
@@ -1200,7 +1210,11 @@ void assemble_neuron_live_dialog::findTips()
                 QString::number(info.at(0))+" )";
         QString tmp_display="Marker "+QString::number(i+1);
         QListWidgetItem *listItem = new QListWidgetItem;
-        listItem->setCheckState(Qt::Unchecked);
+        if(mList->at(i).color.r == 255 && mList->at(i).color.g == 0 && mList->at(i).color.b ==0)
+            listItem->setCheckState(Qt::Checked);
+        else
+            listItem->setCheckState(Qt::Unchecked);
+
         listItem->setText(tmp_display);
         list_tips->addItem(listItem);
         list_tips_information.push_back(tmp);
@@ -1209,7 +1223,7 @@ void assemble_neuron_live_dialog::findTips()
     if(list_tips->count()==0){
         v3d_msg("Not marker in the 3D viewer.");
     }else{
-        list_tips->setCurrentRow(0);
+        list_tips->setCurrentRow(current_row);
     }
 }
 
@@ -1272,6 +1286,44 @@ void assemble_neuron_live_dialog::syncTips()
     V3dR_MainWindow * _3dwin = check3DWindow();
     callback->setHandleLandmarkList_Any3DViewer(_3dwin,mlist_updated);
     callback->update_3DViewer(_3dwin);
+}
+
+void assemble_neuron_live_dialog::updateTips()
+{
+    v3dhandleList allWindowList = callback->getImageWindowList();
+    v3dhandle localwin = 0;
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        if(callback->getImageName(allWindowList.at(i))==winname_main){
+            localwin = allWindowList[i];
+            break;
+        }
+    }
+    if(localwin != 0)
+    {
+        LandmarkList listTips;
+        LandmarkList local_landmark = callback->getLandmark(localwin);
+        for(V3DLONG i = 0; i < local_landmark.size(); i++)
+        {
+            LocationSimple t;
+            t.x=local_landmark.at(i).x+x_min;
+            t.y=local_landmark.at(i).y+y_min;
+            t.z=local_landmark.at(i).z+z_min;
+            t.comments=local_landmark.at(i).comments;
+            t.name=local_landmark.at(i).name;
+            t.color.r=local_landmark.at(i).color.r;
+            t.color.g=local_landmark.at(i).color.g;
+            t.color.b=local_landmark.at(i).color.b;
+            listTips.push_back(t);
+        }
+
+        V3dR_MainWindow * _3dwin = check3DWindow();
+        callback->setHandleLandmarkList_Any3DViewer(_3dwin,listTips);
+        callback->update_3DViewer(_3dwin);
+
+        findTips();
+    }
+
 }
 
 void assemble_neuron_live_dialog::saveTips()
@@ -1900,7 +1952,6 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
     if(pids.size()<=0)
         return;
     //find the ROI window
-    V3DLONG x_min, x_max, y_min, y_max, z_min, z_max;
     x_min=x_max=nodes[pids.at(0)]->x;
     y_min=y_max=nodes[pids.at(0)]->y;
     z_min=z_max=nodes[pids.at(0)]->z;

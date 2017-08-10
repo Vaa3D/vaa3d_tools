@@ -1384,13 +1384,19 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;
-//    double min,max;
-//    V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
-//    unsigned char * total1dData_scaled = 0;
-//    total1dData_scaled = new unsigned char [pagesz_vim];
-//    rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
+    if(P.global_name)
+    {
+        double min,max;
+        V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
+        unsigned char * total1dData_scaled = 0;
+        total1dData_scaled = new unsigned char [pagesz_vim];
+        rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
+        total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    }else
+    {
+        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    }
 
-    total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     total4DImage->setOriginX(start_x);
     total4DImage->setOriginY(start_y);
     total4DImage->setOriginZ(start_z);
@@ -1466,6 +1472,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+
+    if(P.global_name)
 
     if(in_sz) {delete []in_sz; in_sz =0;}
     if(aVolume) {delete aVolume; aVolume = 0;}
@@ -1547,9 +1555,47 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                         v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
                         V3DLONG num_tips = 100;
-                        double tips_th = p2.p4dImage->getXDim()*100/512;
+                        double tips_th;
+                        if(P.global_name)
+                        {
+                            tips_th = 10;
+                            p2.is_break_accept = true;
+                        }
+                        else
+                            tips_th = p2.p4dImage->getXDim()*100/512;
                         p2.bkg_thresh = -1;//P.bkg_thresh;
                         p2.landmarks.push_back(RootNewLocation);
+
+                        if(P.global_name)
+                        {
+                            double imgAve, imgStd;
+                            mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
+                            double td= (imgStd<10)? 10: imgStd;
+                            p2.bkg_thresh = imgAve +0.5*td ;
+                            bool flag_high = false;
+                            bool flag_low = false;
+                            do
+                            {
+                                double fore_count = 0;
+                                for(V3DLONG i = 0 ; i < p2.p4dImage->getTotalUnitNumberPerChannel(); i++)
+                                {
+                                    if(p2.p4dImage->getRawDataAtChannel(0)[i] > p2.bkg_thresh)
+                                        fore_count++;
+                                }
+
+                                double fore_ratio = fore_count/p2.p4dImage->getTotalUnitNumberPerChannel();
+                                if(fore_ratio > 0.05 && !flag_low)
+                                {
+                                    p2.bkg_thresh++;
+                                    flag_high = true;
+                                }else if (fore_ratio < 0.01 && !flag_high)
+                                {
+                                    p2.bkg_thresh--;
+                                    flag_low = true;
+                                }else
+                                    break;
+                            } while(1);
+                        }
 
                         do
                         {
@@ -1586,7 +1632,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                             }
                             if (num_tips>=tips_th) //add <=20 and #tips>=100 constraints by PHC 20170801
-                                p2.bkg_thresh +=2;
+                                p2.bkg_thresh +=1;
                             else
                                 break;
                         } while (1);

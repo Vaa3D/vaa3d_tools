@@ -51,7 +51,7 @@ private:
     
     QPushButton * btn_link, *btn_loop, *btn_manuallink, *btn_deletelink, *btn_connect, *btn_connectall,
         *btn_syncmarker, *btn_break, * btn_save, * btn_quit, *btn_zoomin, *btn_syncmarkeronly,
-        *btn_findtips, *btn_synctips, *btn_savetips;
+        *btn_findtips, *btn_synctips, *btn_savetips, *btn_updatetips;
     QTabWidget * tab;
     QListWidget * list_edge, * list_link, *list_marker, *list_tips;
     QComboBox * cb_color;
@@ -60,6 +60,9 @@ private:
     VirtualVolume* dataTerafly;
 
     QStringList list_tips_information;
+
+    V3DLONG x_min, x_max, y_min, y_max, z_min, z_max; //ROI window
+
 
 signals:
     
@@ -81,6 +84,8 @@ public slots:
     void findTips();
     void syncTips();
     void saveTips();
+    void updateTips();
+
 
 private:
     void creat(QWidget *parent);
