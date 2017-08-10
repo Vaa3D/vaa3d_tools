@@ -55,31 +55,31 @@ template<class T> bool swc2topo_segs(vector<MyMarker*> & inswc, vector<Hierarchy
 		return false;
 	}
 	// 1. calc distance for every nodes
-	int tol_num = inswc.size();
-	map<MyMarker*, int> swc_map; for(int i = 0; i < tol_num; i++) swc_map[inswc[i]] = i;
+    V3DLONG tol_num = inswc.size();
+    map<MyMarker*, V3DLONG> swc_map; for(V3DLONG i = 0; i < tol_num; i++) swc_map[inswc[i]] = i;
 	
 	vector<MyMarker*> leaf_markers;
 	//GET_LEAF_MARKERS(leaf_markers, inswc);
-	vector<int> childs_num(tol_num); 
+    vector<V3DLONG> childs_num(tol_num);
 	{
-		for(int i = 0; i < tol_num; i++) childs_num[i]=0;
-		for(int m1 = 0; m1 < tol_num; m1++)
+        for(V3DLONG i = 0; i < tol_num; i++) childs_num[i]=0;
+        for(V3DLONG m1 = 0; m1 < tol_num; m1++)
 		{
 			if(!inswc[m1]->parent) continue;
-			int m2 = swc_map[inswc[m1]->parent];
+            V3DLONG m2 = swc_map[inswc[m1]->parent];
 			childs_num[m2]++;
 		}
-		for(int i = 0; i < tol_num; i++) if(childs_num[i] == 0) leaf_markers.push_back(inswc[i]);
+        for(V3DLONG i = 0; i < tol_num; i++) if(childs_num[i] == 0) leaf_markers.push_back(inswc[i]);
 	}
-	int leaf_num = leaf_markers.size();
+    V3DLONG leaf_num = leaf_markers.size();
 
-	long tol_sz = sz0 * sz1 * sz2;
-	long sz01 = sz0 * sz1;
+    V3DLONG tol_sz = sz0 * sz1 * sz2;
+    V3DLONG sz01 = sz0 * sz1;
 
 	vector<double> topo_dists(tol_num, 0.0);  // furthest leaf distance for each tree node
 	vector<MyMarker*> topo_leafs(tol_num, (MyMarker*)0);
 
-	for(int i = 0; i < leaf_num; i++)
+    for(V3DLONG i = 0; i < leaf_num; i++)
 	{
 		MyMarker * leaf_marker = leaf_markers[i];
 		MyMarker * child_node = leaf_markers[i];
@@ -89,7 +89,7 @@ template<class T> bool swc2topo_segs(vector<MyMarker*> & inswc, vector<Hierarchy
 		topo_dists[cid] = (length_method == INTENSITY_DISTANCE_METHOD) ? inimg1d[leaf_marker->ind(sz0, sz01)]/255.0 : 0; 
 		while(parent_node)
 		{
-			int pid = swc_map[parent_node];
+            V3DLONG pid = swc_map[parent_node];
 			double tmp_dst = (length_method == INTENSITY_DISTANCE_METHOD) ? (inimg1d[parent_node->ind(sz0, sz01)]/255.0 + topo_dists[cid]) : (dist(*child_node, *parent_node) + topo_dists[cid]);
 			if(tmp_dst >= topo_dists[pid])   // >= instead of >
 			{
@@ -105,13 +105,13 @@ template<class T> bool swc2topo_segs(vector<MyMarker*> & inswc, vector<Hierarchy
 	// 2. create Hierarchy Segments
 	topo_segs.resize(leaf_num);
 	map<MyMarker *, int> leaf_ind_map;
-	for(int i = 0; i < leaf_num; i++)
+    for(V3DLONG i = 0; i < leaf_num; i++)
 	{
 		topo_segs[i] = new HierarchySegment();
 		leaf_ind_map[leaf_markers[i]] = i;
 	}
 
-	for(int i = 0; i < leaf_num; i++)
+    for(V3DLONG i = 0; i < leaf_num; i++)
 	{
 		MyMarker * leaf_marker = leaf_markers[i];
 		MyMarker * root_marker = leaf_marker;
@@ -154,7 +154,7 @@ template<class T>  bool topo_segs2swc(vector<HierarchySegment*> & topo_segs, vec
 
     double min_dst = topo_segs[0]->length, max_dst = min_dst;
     double min_level = topo_segs[0]->level, max_level = min_level;
-    for(int i = 0; i < topo_segs.size(); i++)
+    for(V3DLONG i = 0; i < topo_segs.size(); i++)
     {
         double dst = topo_segs[i]->length;
         min_dst = MIN(min_dst, dst);
@@ -174,7 +174,7 @@ template<class T>  bool topo_segs2swc(vector<HierarchySegment*> & topo_segs, vec
 
     max_dst -= min_dst; if(max_dst == 0.0) max_dst = 0.0000001;
     max_level -= min_level; if(max_level == 0) max_level = 1.0;
-    for(int i = 0; i < topo_segs.size(); i++)
+    for(V3DLONG i = 0; i < topo_segs.size(); i++)
     {
         double dst = topo_segs[i]->length;
         int level = MIN(topo_segs[i]->level, max_level);    // todo1
@@ -206,7 +206,7 @@ template<class T> bool hierarchy_prune(vector<MyMarker*> &inswc, vector<MyMarker
 //		length_thresh = otsu_threshold(values) / 1000.0;
 //		cout<<"otsu length = "<<length_thresh<<endl;
 //	}
-	for(int i = 0; i < topo_segs.size(); i++)
+    for(V3DLONG i = 0; i < topo_segs.size(); i++)
 	{
 		if(topo_segs[i]->length >= length_thresh) filter_segs.push_back(topo_segs[i]);
 		//if(topo_segs[i]->length * topo_segs[i]->level >= length_thresh) filter_segs.push_back(topo_segs[i]);
@@ -230,13 +230,13 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	cout<<"Construct hierarchical segments"<<endl;
     swc2topo_segs(inswc, topo_segs, INTENSITY_DISTANCE_METHOD, inimg1d, sz0, sz1, sz2);
 	vector<HierarchySegment*> filter_segs;
-	for(int i = 0; i < topo_segs.size(); i++)
+    for(V3DLONG i = 0; i < topo_segs.size(); i++)
 	{
 		if(topo_segs[i]->length >= length_thresh) filter_segs.push_back(topo_segs[i]);
 	}
 	cout<<"pruned by length_thresh (segment number) : "<<topo_segs.size() <<" - "<<topo_segs.size() - filter_segs.size()<<" = "<<filter_segs.size()<<endl;
 	multimap<double, HierarchySegment*> seg_dist_map;
-	for(int i = 0; i < filter_segs.size(); i++)
+    for(V3DLONG i = 0; i < filter_segs.size(); i++)
 	{
 		double dst = filter_segs[i]->length;
 		seg_dist_map.insert(pair<double, HierarchySegment*> (dst, filter_segs[i]));
@@ -251,7 +251,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		while(dark_num_pruned > 0)
 		{
 			dark_num_pruned = 0;
-			for(int i = 0; i < filter_segs.size(); i++)
+            for(V3DLONG i = 0; i < filter_segs.size(); i++)
 			{
 				if(iteration > 1 && !is_pruneable[i]) continue;
 				HierarchySegment * seg = filter_segs[i];
@@ -273,7 +273,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	if(1) // dark segment pruning
 	{
 		set<int> delete_index_set;
-		for(int i = 0; i < filter_segs.size(); i++)
+        for(V3DLONG i = 0; i < filter_segs.size(); i++)
 		{
 			HierarchySegment * seg = filter_segs[i];
 			MyMarker * leaf_marker = seg->leaf_marker;
@@ -308,7 +308,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	{
 		cout<<"Calculating radius for every node"<<endl;
 		V3DLONG in_sz[4] = {sz0, sz1, sz2, 1};
-		for(int i = 0; i < filter_segs.size(); i++)
+        for(V3DLONG i = 0; i < filter_segs.size(); i++)
 		{
 			HierarchySegment * seg = filter_segs[i];
 			MyMarker * leaf_marker = seg->leaf_marker;
@@ -474,7 +474,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		getLeaf_markers(tmp_markers, child_num);
 
 		// calculate sampling markers
-		for(int i = 0; i < filter_segs.size(); i++)
+        for(V3DLONG i = 0; i < filter_segs.size(); i++)
 		{
 			HierarchySegment * seg = filter_segs[i];
 			MyMarker * leaf_marker = seg->leaf_marker;
@@ -511,7 +511,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		if(1) // get child_num of each node
 		{
 			vector<MyMarker*> current_markers;
-			for(int i = 0; i < filter_segs.size(); i++)
+            for(V3DLONG i = 0; i < filter_segs.size(); i++)
 			{
 				HierarchySegment * seg = filter_segs[i];
 				seg->get_markers(current_markers);
@@ -524,13 +524,13 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 			}
 
 		}
-		int leaf_num_pruned = 1;
+        V3DLONG leaf_num_pruned = 1;
 		int iteration = 1;
 		vector<bool> is_pruneable(filter_segs.size(), 0);
 		while(leaf_num_pruned > 0)
 		{
 			leaf_num_pruned = 0;
-			for(int i = 0; i < filter_segs.size(); i++)
+            for(V3DLONG i = 0; i < filter_segs.size(); i++)
 			{
 				if(iteration > 1 && !is_pruneable[i]) continue;
 				HierarchySegment * seg = filter_segs[i];
@@ -605,7 +605,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		}
 		// filter out segments with single marker
 		vector<HierarchySegment*> tmp_segs;
-		for(int i = 0; i < filter_segs.size(); i++)
+        for(V3DLONG i = 0; i < filter_segs.size(); i++)
 		{
 			HierarchySegment * seg = filter_segs[i];
 			MyMarker * leaf_marker = seg->leaf_marker;
@@ -626,7 +626,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		cout<<"\tcompute mask area"<<endl;
 		unsigned short * mask = new unsigned short[tol_sz];
 		memset(mask, 0, sizeof(unsigned short) * tol_sz);
-		for(int s = 0; s < filter_segs.size(); s++)
+        for(V3DLONG s = 0; s < filter_segs.size(); s++)
 		{
 			HierarchySegment * seg = filter_segs[s];
 			MyMarker * leaf_marker = seg->leaf_marker;
@@ -670,7 +670,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		if(0) // get post order of filter_segs
 		{
 			multimap<double, HierarchySegment*> tmp_seg_map;
-			for(int s = 0; s < filter_segs.size(); s++) 
+            for(V3DLONG s = 0; s < filter_segs.size(); s++)
 			{
 				double dst = filter_segs[s]->length;
 				tmp_seg_map.insert(pair<double, HierarchySegment*>(dst, filter_segs[s]));
@@ -688,7 +688,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		if(1) // get child_num of each node
 		{
 			vector<MyMarker*> current_markers;
-			for(int i = 0; i < filter_segs.size(); i++)
+            for(V3DLONG i = 0; i < filter_segs.size(); i++)
 			{
 				HierarchySegment * seg = filter_segs[i];
 				seg->get_markers(current_markers);
@@ -704,13 +704,13 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 		if(1) // start prune leaf nodes
 		{
 			cout<<"\tleaf node pruning"<<endl;
-			int leaf_num_pruned = 1;
+            V3DLONG leaf_num_pruned = 1;
 			int iteration = 1;
 			vector<bool> is_pruneable(post_segs.size(), 0);
 			while(leaf_num_pruned > 0)
 			{
 				leaf_num_pruned = 0;
-				for(int i = 0; i < post_segs.size(); i++)
+                for(V3DLONG i = 0; i < post_segs.size(); i++)
 				{
 					if(iteration > 1 && !is_pruneable[i]) continue;
 					HierarchySegment * seg = post_segs[i];
@@ -797,7 +797,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 			}
 			// filter out segments with single marker
 			vector<HierarchySegment*> tmp_segs;
-			for(int i = 0; i < filter_segs.size(); i++)
+            for(V3DLONG i = 0; i < filter_segs.size(); i++)
 			{
 				HierarchySegment * seg = filter_segs[i];
 				MyMarker * leaf_marker = seg->leaf_marker;
@@ -814,7 +814,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 	if(is_smooth) // smooth curve
 	{
 		cout<<"Smooth the final curve"<<endl;
-		for(int i = 0; i < filter_segs.size(); i++)
+        for(V3DLONG i = 0; i < filter_segs.size(); i++)
 		{
 			HierarchySegment * seg = filter_segs[i];
 			MyMarker * leaf_marker = seg->leaf_marker;
@@ -835,7 +835,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
     topo_segs2swc(filter_segs, outswc, 0); // no resampling
 	
 	// release hierarchical segments
-	for(int i = 0; i < topo_segs.size(); i++) delete topo_segs[i];
+    for(V3DLONG i = 0; i < topo_segs.size(); i++) delete topo_segs[i];
 	return true;
 }
 

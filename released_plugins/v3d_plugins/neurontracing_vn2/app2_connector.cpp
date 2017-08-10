@@ -567,7 +567,8 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
         
         //re-estimate the radius using the original image
-        double real_thres = 40; //PHC 20121011
+        double real_thres = 40; //PHC 20121011 //This should be rescaled later for datatypes that are not UINT8
+
         if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
         
         V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};

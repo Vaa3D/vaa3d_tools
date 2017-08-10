@@ -13,7 +13,7 @@ class NTApp2Plugin : public QObject, public V3DPluginInterface2_1
 	Q_INTERFACES(V3DPluginInterface2_1);
 
 public:
-    float getPluginVersion() const {return 1.2f;}
+    float getPluginVersion() const {return 1.21f;}
 
 	QStringList menulist() const;
 
