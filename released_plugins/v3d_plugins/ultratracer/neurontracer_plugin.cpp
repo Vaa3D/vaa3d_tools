@@ -721,7 +721,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
     }
 	else if (func_name == tr("help"))
 	{
-        printf("\n**** Usage of NeuronCrawler plugin ****\n");
+        printf("\n**** Usage of UltraTracer plugin ****\n");
         printf("vaa3d -x plugin_name -f trace_APP2 -i <inimg_file> -p <inmarker_file> <block_size> <adaptive_win> <channel> <bkg_thresh> <b_256cube> <b_RadiusFrom2D> <is_gsdt> <is_gap> <length_thresh>\n");
         printf("inimg_file       Should be 8 bit image\n");
         printf("inmarker_file    Please specify the path of the marker file\n");

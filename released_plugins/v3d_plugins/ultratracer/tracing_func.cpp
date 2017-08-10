@@ -324,7 +324,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     string tmpstr; QString qtstr;
     if(P.method==app1)
     {
-        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP1")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.prepend("## UT_APP1")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
@@ -336,7 +336,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     }
     else if(P.method==app2)
     {
-        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_APP2")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.prepend("## UT_APP2")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
@@ -2376,13 +2376,13 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     string tmpstr; QString qtstr;
     if(P.method == neutube)
     {
-        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NEUTUBE")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.prepend("## UT_NEUTUBE")); infostring.push_back(tmpstr);
     }else if(P.method == snake)
     {
-        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_SNAKE")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.prepend("## UT_SNAKE")); infostring.push_back(tmpstr);
     }else if(P.method == most)
     {
-        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_MOST")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.prepend("## UT_MOST")); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
@@ -2390,7 +2390,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         tmpstr =  qPrintable( qtstr.setNum(P.slip_win).prepend("#slip_win = ") ); infostring.push_back(tmpstr);
     }else if(P.method == neurogpstree)
     {
-        tmpstr =  qPrintable( qtstr.prepend("## NeuronCrawler_NeuroGPSTree")); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.prepend("## UT_NeuroGPSTree")); infostring.push_back(tmpstr);
     }
 
     tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
