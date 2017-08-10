@@ -505,7 +505,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     vector<MyMarker*> outswc;
     if(p.is_coverage_prune)
     {
-        v3d_msg("start to use happ.\n", 0);
+        v3d_msg("start to use APP2 program.\n", 0);
         happ(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
     }
     else
