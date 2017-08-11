@@ -17,6 +17,7 @@ public:
     explicit Server(QObject* parent = 0);
     void sendUserList();
     void sendToAll(const QString&);
+	void sendColorMsg();
 public slots:
     void onNewConnection();
     void onDisconnect();
@@ -24,6 +25,12 @@ public slots:
 private:
     QTcpServer* server;
     QMap<QTcpSocket*,QString> clients;
+	int clientNum;
 };
 
+struct clientproperty{
+	int number;
+	QString name;
+	int colortype;
+};
 #endif // SERVER_H
