@@ -68,6 +68,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
 
     // push points in v_boundary into v_area;
     vector<NeuronTree> v_area(v_boundary.size());
+    vector<NeuronTree> v_area2;
 
    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
    {
@@ -94,25 +95,64 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
        V3DLONG tol_len = 0;
        if(v_area[i].listNeuron.size()<=1) {cout<<"the number of points within this boundary isn't more than 1"<<endl; continue;}
        NeuronTree area_sorted;
+       double sort_thres = 0;
        area_sorted.listNeuron.clear();
        area_sorted.hashNeuron.clear();
        V3DLONG root_id=v_area[i].listNeuron[0].n;
-       area_sorted = sort(v_area[i], root_id,VOID);
+       area_sorted = sort(v_area[i], root_id,sort_thres);
+       // remove short tree
+       V3DLONG tot_len = area_sorted.listNeuron.size();
+       V3DLONG sublen = 0;
+       V3DLONG max_sublen = 0;
+       V3DLONG max_id = 0;
+       for(V3DLONG j=0; j<tot_len; j++)
+       {
+           NeuronSWC cur = area_sorted.listNeuron[j];
+           if(cur.pn == -1)
+           {
+               sublen = 0;
+           }
+           sublen += 1;
+           if(sublen > max_sublen)
+           {
+               max_sublen = sublen;
+               max_id = j;
+           }
+       }
+       NeuronTree area_big;
+       for(V3DLONG j=max_id - max_sublen + 1; j<= max_id; j++)
+       {
+           area_big.listNeuron.push_back(area_sorted.listNeuron[j]);
+       }
+       area_big.hashNeuron.clear();
+       for(V3DLONG j=0; j<area_big.listNeuron.size();j++){area_big.hashNeuron.insert(area_big.listNeuron[j].n, j);}
+       // save area for test
+       QString savename = "pattern_"+ QString::number(i+1)+".swc";
+       writeSWC_file(savename,area_big);
+       v_area2.push_back(area_big);
 
+       QString saveold="pattern_old.swc";
+        writeSWC_file(saveold,area_sorted);
+
+//        area_big = readSWC_file(savename);
         // get each node's children
-        V3DLONG area_size = area_sorted.listNeuron.size();
+        V3DLONG area_size = area_big.listNeuron.size();
         QVector<QVector<V3DLONG> > childs;
         childs = QVector< QVector<V3DLONG> >(area_size, QVector<V3DLONG>() );
-        for (V3DLONG i=0;i<area_size;i++)
+        for (V3DLONG j=0;j<area_size;j++)
         {
-            V3DLONG par = area_sorted.listNeuron[i].pn;
+            V3DLONG par = area_big.listNeuron[j].pn;
             if (par<0) continue;
-            childs[area_sorted.hashNeuron.value(par)].push_back(i);
+            childs[area_big.hashNeuron.value(par)].push_back(j);
         }
-
-        // save area for test
-//        QString savename = QString::number(i+1)+".swc";
-//        writeSWC_file(savename,area_sorted);
+        for(int n=0; n<childs.size();n++)
+        {
+            for(int m=0;m<childs[n].size();m++)
+            {
+                cout<<childs[n][m]<<"   ";
+            }
+            cout <<endl;
+        }
 
         // using stack marching caculate lenth from each point k to end point;
         cout<<"using stack marching caculate lenth from each point k to end point;"<<endl;
@@ -131,7 +171,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
             {
                 StackElem cur_elem = TreeStack.top();
                 state[cur_elem.id] = ALIVE;
-                V3DLONG cur_elem_pn=getParent(cur_elem.id,area_sorted);
+                V3DLONG cur_elem_pn=getParent(cur_elem.id,area_big);
                 //pop this node
                 TreeStack.pop();
                 // push its children into stack
@@ -169,7 +209,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
             TreeStack.clear();
             if(state){delete [] state;state=0;}
         }//end j
-        //cout<<"tol_len="<<tol_len<<"  endPointNum="<<endPointNum<<endl;
+        cout<<"tol_len="<<tol_len<<"  endPointNum="<<endPointNum<<endl;
         v_tol_dist = v_tol_dist + tol_len/endPointNum;
         area_num += 1;
         int area_len = tol_len/endPointNum;
@@ -181,19 +221,19 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
    int pt_ave_len= int(v_tol_dist/area_num);
    cout<<"pt_ave_len="<<pt_ave_len<<endl;
 
-   if(v_area.size()>=6)
+   if(v_area2.size()>=6)
    {
        // pre_processing
        vector<QString> file_list;
-       for(int i=0;i<v_area.size();i++)
+       for(int i=0;i<v_area2.size();i++)
        {
-            if(v_area[i].listNeuron.size()==0)    continue;
+            if(v_area2[i].listNeuron.size()==0)    continue;
             double step_size=2;
             double prune_size = -1; //default case
             double thres = 2;
             cout<<"into prune"<<endl;
             NeuronTree pruned;
-            if (!prune_branch(v_area[i], pruned,prune_size))
+            if (!prune_branch(v_area2[i], pruned,prune_size))
             {
                 fprintf(stderr,"Error in prune_short_branch.\n");
                 return false;
@@ -272,6 +312,8 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
                V3DLONG root_id=v_area[i].listNeuron[ind0].n;
                sorted = sort (v_area[i],root_id,VOID);
                pt_list.push_back(sorted);
+//               QString sav = "pattern_aaa"+ QString::number(i+1)+".swc";
+//               writeSWC_file(sav,sorted);
            }
        }
        pt_lens=v_area_len;

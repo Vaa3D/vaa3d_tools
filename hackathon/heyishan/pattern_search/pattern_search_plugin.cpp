@@ -61,20 +61,25 @@ bool pattern_search::dofunc(const QString & func_name, const V3DPluginArgList & 
 	if (func_name == tr("tracing_func"))
 	{
         bool bmenu = false;
-        printf("dofunc can't' work yet.\n");
+        input_PARA PARA;
+        vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+        vector<char*>* outlist = NULL;
+        vector<char*>* paralist = NULL;
+        QString searchName = QString(inlist->at(0));
+        QString patternName = QString(inlist->at(1));
+        PARA.nt_search = readSWC_file(searchName);
+        PARA.nt_pattern = readSWC_file(patternName);
+        ml_func(callback,parent,PARA,bmenu);
         return true;
 	}
     else if (func_name == tr("help"))
     {
 		printf("**** Usage of pattern_search tracing **** \n");
-		printf("vaa3d -x pattern_search -f tracing_func -i <inimg_file> -p <channel> <swc_file> <marker_file> <other parameters>\n");
-        printf("inimg_file       The input image\n");
-        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("swc_file         SWC file path.\n");
-        printf("marker_file      Marker file path.\n");
-
+        printf("vaa3d -x pattern_search -f tracing_func -i <search_file> <pattern_file>\n");
+        printf("search_file       The input search neuron swc\n");
+        printf("pattern_file      The input pattern boundary swc\n");
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
-        printf("outmarker_file   Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+        //printf("outmarker_file   Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
 	}
 	else return false;
@@ -122,10 +127,18 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         {
             V3DLONG id_tree=selected_trees[i];
             vector<V3DLONG> ps_tree=p_to_tree[id_tree];
+            // save subtree for test
+            NeuronTree tree_temp;
             for(int j=0;j<ps_tree.size();j++)
             {
+                V3DLONG p_id  = ps_tree[j];
+                tree_temp.listNeuron.push_back(PARA.nt_search.listNeuron[p_id]);
+                // put selected points into result
                 result_points.push_back(ps_tree[j]);
             }
+            QString subtreeName = "subtree_"+ QString::number(v+1) +"_" + QString::number(i+1)+".swc";
+            writeSWC_file(subtreeName,tree_temp);
+            tree_temp.listNeuron.clear();
         }
         // for test
 //        for(int i=0;i<selected_trees.size();i++)
