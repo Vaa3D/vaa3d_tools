@@ -20,7 +20,6 @@ class QTcpSocket;
 class QNetworkSession;
 QT_END_NAMESPACE
 
-
 /*! \brief simple class to contain microscope information
  *
  *  each S2Parameter has a string to send to PV, a current response string from PV and a current value from PV

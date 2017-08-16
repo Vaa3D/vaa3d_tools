@@ -33,7 +33,6 @@ class QNetworkSession;
 
 QT_END_NAMESPACE
 
-
 class S2UI : public QDialog
 {
 	Q_OBJECT
@@ -87,7 +86,6 @@ public slots:
 	 */
 	void combinedSmartScan(QString);
 	//void selectData();
-	void traceData();
 	void handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList newlandmarks, Image4DSimple *mip, double scanIndex,QString tileSaveString, int tileStatus);
 	
 	
@@ -322,6 +320,12 @@ private slots:
 	void fakeScopeSaysReady(LocationSimple, float, float);
 
 private:
+	// Scope Simulator variables, MK, Aug 2017
+	QDir fakeOutputDir;
+	QString fakeSaveDir;
+	QString fakeOutputFolder;
+	///////////////////////////////////////////
+	
 	V3DPluginCallback2 * cb;
 	QThread *workerThread;
 	QThread *workerThread0;

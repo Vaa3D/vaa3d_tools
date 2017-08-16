@@ -125,8 +125,6 @@ S2UI::S2UI(V3DPluginCallback2 &callback, QWidget *parent):   QDialog(parent)
 	createButtonBox1();
 
 
-
-
 	mainLayout->addWidget(startS2PushButton, 0,0, 1, 3);
 	mainLayout->addWidget(startScanPushButton, 2,0);
 	mainLayout->addWidget(loadScanPushButton, 3,0);
@@ -293,7 +291,6 @@ void S2UI::hookUpSignalsAndSlots(){
 	connect(&myController, SIGNAL(shootFakeScope(LocationSimple, float, float)), &fakeScope, SLOT(paramShotFromController(LocationSimple, float, float)));
 	connect(&myController, SIGNAL(kickFakeScope(bool)), &fakeScope, SLOT(fakeScopeSwitch(bool)));
 	connect(&fakeScope, SIGNAL(reportToMyPosMon(QMap<int, S2Parameter>)), &myPosMon, SLOT(updateFromFakeScope(QMap<int, S2Parameter>)));
-	//connect(mysimscope, SIGNAL(newcrap), myposmon, SLOT(recceives2parametermap))
 	
 
 	// communication with  myStackAnalyzer
@@ -546,8 +543,44 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 // --------------------- This block is for simulated scope related methods, MK, July 2017 -------------------------
 void S2UI::prepareSimScopeConfig()
 {
-	myController.mode = offline;
+	cout << "	--> start configuring fakeScope.." << endl;
+#if defined (Q_OS_WIN32)
+	struct tm* newTime;
+	time_t szClock;
+	time( &szClock );
+	newTime = localtime(&szClock);
+	string str = asctime(newTime);
+	for (int i=0; i<str.length(); ++i)
+	{
+		if (str[i] == ' ') str[i] = '_';
+		if (str[i] == ':') str[i] = '-';
+	}
 
+	fakeSaveDir = fakeOutputDir.currentPath();
+	fakeOutputFolder = fakeSaveDir + "/s2_simulator_results/";
+	QString qstr = QString::fromStdString(str);
+	qstr.remove(QRegExp("[\\n\\t\\r]"));
+	fakeOutputFolder = fakeOutputFolder + qstr;
+	qDebug() << fakeOutputFolder;
+
+	QString swcOutput = fakeOutputFolder + "/swc/";
+	QString cubeOutput = fakeOutputFolder + "/cube/";
+	fakeOutputDir.mkpath(swcOutput);
+	fakeOutputDir.mkpath(cubeOutput);
+
+	fakeScope.savingPath = fakeOutputFolder;
+	fakeScope.cubeSavingPath = cubeOutput;
+	fakeScope.swcSavingPath = swcOutput;
+
+	QFile saveTextFile1;
+	QFile saveTextFile2;
+	QString scanFileName = fakeOutputFolder + "scanData.txt";
+	QString fileSummary = fakeOutputFolder + "s2Summary.txt";
+    saveTextFile1.setFileName(scanFileName);
+	saveTextFile2.setFileName(fileSummary);
+#endif
+
+	myController.mode = offline;
 	QStringList initialParam;
 
 	QString m_InputfolderName = QFileDialog::getExistingDirectory(this, QObject::tr("Choose the directory of the input images"), QDir::currentPath(), QFileDialog::ShowDirsOnly);
@@ -568,647 +601,26 @@ void S2UI::prepareSimScopeConfig()
 
 	fakeScope.S2UIcb = cb;	
 	emit initImaginaryScope(initialParam);
-
-#if defined (Q_OS_WIN32)
-	struct tm* newTime;
-	time_t szClock;
-	time( &szClock );
-	newTime = localtime(&szClock);
-	string str = asctime(newTime);
-	for (int i=0; i<str.length(); ++i)
-	{
-		if (str[i] == ' ') str[i] = '_';
-		if (str[i] == ':') str[i] = '-';
-	}
-
-	QDir outputDir;
-	QString saveDir = outputDir.currentPath();
-	QString outputFolder = saveDir + "/s2_simulator_results/";
-	QString qstr = QString::fromStdString(str);
-	qstr.remove(QRegExp("[\\n\\t\\r]"));
-	outputFolder = outputFolder + qstr;
-	//qDebug() << outputFolder;
-
-	QString swcOutput = outputFolder + "/swc/";
-	QString cubeOutput = outputFolder + "/cube/";
-	outputDir.mkpath(swcOutput);
-	outputDir.mkpath(cubeOutput);
-#endif
 }
 
 void S2UI::fakeScopeSaysReady(LocationSimple startLoc, float tileLocX, float tileLocY)
 {
-	emit moveToNextWithStage(startLoc, tileLocX, tileLocY);
-	emit startZStackSig();
+	cout << "        --> fakeScope initialization completed.";
+	posMonStatus = true;
+	uiS2ParameterMap[5].setCurrentValue(tileLocX);
+	uiS2ParameterMap[6].setCurrentValue(tileLocY);
+	uiS2ParameterMap[10].setCurrentValue(startLoc.ev_pc1);
+	uiS2ParameterMap[11].setCurrentValue(startLoc.ev_pc2);
+	TileInfo firstTile;
+	firstTile.setStageLocation(startLoc);
+	firstTile.setPixelLocation(startLoc);
+	firstTile.setGalvoLocation(startLoc);
+	firstTile.setScanIndex(0);
+	allTargetLocations.append(firstTile);
+	cout << "    ---- startingSmartScan() firstly being called" << endl;
+	this->startingSmartScan();
 }
 // -----------------END of [This block is for simulated scope related methods, MK, July 2017] ----------------------
-
-void S2UI::traceData(){
-	
-   // This function aims to simulate how the s2 works in an actual already accquired data of TeraFly format.
-   // It needs the user to select the input TeraFly data as well as a marker file which specify the soma coordinates.
-   // The current version is only a prototypical demo which may subject to further revisions.
-   // S2 connector plug-in is required for this function.
-
-   // The first part of this function reads in the input image file for tracing as well as the marker file of soma coordinates
-   // Open a window for the user to select input image file
-   QString m_InputfolderName = QFileDialog::getExistingDirectory(this, QObject::tr("Choose the directory of the input images"),QDir::currentPath(), QFileDialog::ShowDirsOnly);
-   if (m_InputfolderName.isEmpty())
-			   return;
-
-   // load the input image file
-   VirtualVolume* data1d = VirtualVolume::instance(m_InputfolderName.toStdString().c_str());
-   V3DLONG in_zz[4];
-   in_zz[0] = data1d->getDIM_H();
-   in_zz[1] = data1d->getDIM_V();
-   in_zz[2] = data1d->getDIM_D();
-   in_zz[3] = data1d->getDIM_C();
-  //qDebug() << in_zz[0];
-  // qDebug() << in_zz[1];
-  // qDebug() << in_zz[2];
-  // qDebug() << in_zz[3];
-
-   // Open a window for the user to select input the marker file of soma coordinates
-   QString fileOpenName;
-   fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),"", QObject::tr("Supported file (*.marker *.MARKER)"));
-   if (fileOpenName.isEmpty())
-			   return;
-   // obtain timestamp
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   struct timeval tp;
-   gettimeofday(&tp, NULL);
-   int timestamp=tp.tv_sec;
-
-   char create_output_folder[255] = {0};
-   sprintf(create_output_folder, "mkdir -p s2_simulator_results_%d", timestamp);
-   system(create_output_folder);
-   char cd_output_folder[255] = {0};
-   sprintf(cd_output_folder, "./s2_simulator_results_%d", timestamp);
-   chdir(cd_output_folder);
-   system("mkdir -p swc");
-   //system("mkdir -p cube");
-   system("mkdir -p swc_global");
-#endif
-   //QDebug() << timestamp;
-   //v3d_msg("check");
-
-#if defined (Q_OS_WIN32)
-	struct tm* newTime;
-	time_t szClock;
-	time( &szClock );
-	newTime = localtime(&szClock);
-	string str = asctime(newTime);
-	for (int i=0; i<str.length(); ++i)
-	{
-		if (str[i] == ' ') str[i] = '_';
-		if (str[i] == ':') str[i] = '-';
-	}
-
-	QDir currDir;
-	QString saveDir = currDir.currentPath();
-	QString outputFolder = saveDir + "/s2_simulator_results/";
-	QString qstr = QString::fromStdString(str);
-	qstr.remove(QRegExp("[\\n\\t\\r]"));
-	outputFolder = outputFolder + qstr;
-	//qDebug() << outputFolder;
-
-	QString swcOutput = outputFolder + "/swc/";
-	QString cubeOutput = outputFolder + "/cube/";
-	currDir.mkpath(swcOutput);
-	currDir.mkpath(cubeOutput);
-#endif
-
-
-   // Suppose a simple case, only one point is provided in this marker
-   QList<ImageMarker> initial_markerList;
-   initial_markerList = readMarker_file(fileOpenName);
-
-   // implement a "queue" using a QList
-   //QList<ImageMarker> myqueue;
-   //LandmarkList myqueue;
-   //QList<LandmarkList> TipsList_queue;
-
-   // append the intial marker first, the new coordinates will be appended in the loop later
-   //myqueue.append(initial_markerList.at(0));
-
-   //LandmarkList firstip;
-  // firstip.append(initialTarget);
-  //printf("%f", initialTarget.size);
-   //QDebug() << initialTarget.y;
-   //QDebug() << initialTarget.z;
-   //v3d_msg("test2");
-
-   //myStackAnalyzer3->allTipsList.append(firstip);
-
-   //v3d_msg("test");
-   int count=0;
-   int i=0;
-
-   // obtain the input parameters values from the edit boxes
-   float cubeSideLength=sizeEdit->text().toFloat();
-   float overlap=overlapEdit->text().toFloat();
-   int background=int(round(backgroundEdit->text().toFloat()));
-   if (cubeSideLength<0)
-   {cubeSideLength=50;
-	v3d_msg("Tile size cannot be smaller than 0. Default value of 50 is used instead.");
-   }
-   if ((cubeSideLength>in_zz[0]) || (cubeSideLength>in_zz[1]))
-   {if (in_zz[0]>=in_zz[1])
-		   cubeSideLength=in_zz[0];
-	   else
-		   cubeSideLength=in_zz[1];
-	v3d_msg("Tile size cannot be larger than the input image size. The image size is used instead.");
-   }
-   if (overlap<0)
-   {overlap=0.05;
-	v3d_msg("Overlap cannot be smaller than 0. Default value of 0.05 is used instead.");
-   }
-   if (overlap>1)
-   {overlap=0.05;
-	v3d_msg("Overlap cannot be larger than 1. Default value of 0.05 is used instead.");
-   }
-   if (background<0)
-   {background=35;
-	v3d_msg("Background value cannot be smaller than 0. Default value of 35 is used instead.");
-   }
-   if (background>100)
-   {background=35;
-	v3d_msg("Background value cannot be larger than 100. Default value of 35 is used instead.");
-   }
-   qDebug() << cubeSideLength;
-   qDebug() << overlap;
-   qDebug() << background;
-
-   LocationSimple initialSeed;
-   initialSeed.x=floor(initial_markerList.at(0).x);
-   initialSeed.y=floor(initial_markerList.at(0).y);
-   initialSeed.z=floor(0.5*in_zz[2]);
-
-   LocationSimple initialTarget;
-   initialTarget.x =floor(initial_markerList.at(0).x-0.5*cubeSideLength);
-   initialTarget.y =floor(initial_markerList.at(0).y-0.5*cubeSideLength);
-   initialTarget.z = 0;
-   initialTarget.ev_pc1 = cubeSideLength;
-   initialTarget.ev_pc2 = cubeSideLength;
-
-   allTargetList.append(initialTarget);
-
-
-   //v3d_msg("check");
-   int tileStatus=0;
-
-   //char new_coor_marker_filename[255] = {0};
-   //char boundary_marker_filename[255] = {0};
-   char swc_filename[255] = {0};
-   char swc_filename_global[255] = {0};
-   char cube_filename[255] = {0};
-//#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-//   system("mkdir -p swc");
-//   system("mkdir -p cube");
-//#endif
-
-   // keep a list of the coordinates of the cubes which have already been traced
-   LandmarkList alreadytracedcube_markerList;
-   alreadytracedcube_markerList.clear();
-   //QList<ImageMarker> alreadytracedcube_markerList;
-   float x_start,x_end,y_start,y_end;
-
-  // QDir currDir;
-  // QString saveDir = currDir.currentPath();
-  // QString timelabel = QString::number(timestamp);
-   //QString outputFolder = saveDir + "/s2_simulator_results"+timelabel+'/';
-  // QString scanDataFileString;
-   //scanDataFileString=outputFolder;
-   //scanDataFileString.append("/").append("scanData.txt");
-   //qDebug()<<scanDataFileString;
-   QFile saveTextFile;
-   saveTextFile.setFileName("scanData.txt");// add currentScanFile
-   if (!saveTextFile.isOpen()){
-	   if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
-		   qDebug()<<"unable to save file!";
-   //        total4DImage_mip->deleteRawDataAndSetPointerToNull();
-	//       emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,imageSaveString, tileStatus);
-		  return;}     }
-   QTextStream outputStream;
-   outputStream.setDevice(&saveTextFile);
-
-   // The second part of this function traces neighboring cubes (if tract presents in the boundary) in a breadth-first manner
-   while (allTargetList.size()>0)
-   { //count=count+1;
-	   // For debug purpose only
-	   //for(i=0;i<myqueue.size();i++){
-	   //    printf("iter %d, x= %f , y= %f\n", count, myqueue.at(i).x, myqueue.at(i).y);
-
-	   //}
-
-	   if(alreadytracedcube_markerList.contains(allTargetList.at(0)))
-	   {  //v3d_msg("This cube has already been traced");
-		   qDebug() << allTargetList.size();
-		   allTargetList.removeFirst();
-		   myallTipsList.removeFirst();
-		   count=count+1;
-		   qDebug() << allTargetList.size();
-		   continue;
-	   }
-	 //v3d_msg("test");
-	 //cubeSideLength = in_zz[2];
-	 x_start= allTargetList.at(0).x;
-	 x_end=x_start+cubeSideLength;
-	 y_start= allTargetList.at(0).y;
-	 y_end=y_start+cubeSideLength;
-
-
-   if (x_start<0)
-	   x_start=0;
-   if (y_start<0)
-	   y_start=0;
-
-   if(x_start>in_zz[0])
-	  {allTargetList.removeFirst();
-	   myallTipsList.removeFirst();
-	   count=count+1;
-	   continue;
-	  }
-   if(y_start>in_zz[1])
-	  {allTargetList.removeFirst();
-	   myallTipsList.removeFirst();
-	   count=count+1;
-	   continue;
-	  }
-   if (x_end>in_zz[0])
-	   x_end=in_zz[0];
-   if (y_end>in_zz[1])
-	   y_end=in_zz[1];
-   if (x_end<0)
-   {allTargetList.removeFirst();
-	   myallTipsList.removeFirst();
-	   count=count+1;
-	   continue;
-   }
-   if (y_end<0)
-   {allTargetList.removeFirst();
-	   myallTipsList.removeFirst();
-	   count=count+1;
-	   continue;
-   }
-
-   // crop the image
-   unsigned char * cropped_image = 0;
-   qDebug() << y_start;
-   qDebug() << y_end;
-   qDebug() << x_start;
-   qDebug() << x_end;
-   qDebug() << in_zz[2];
-   cropped_image = data1d->loadSubvolume_to_UINT8(y_start, y_end,
-												  x_start, x_end,
-												  0, in_zz[2]);
-
-   V3DLONG in_sz[4];
-   in_sz[1] = y_end-y_start;
-   in_sz[0] = x_end-x_start;
-   in_sz[2] = in_zz[2];
-   in_sz[3] = data1d->getDIM_C();
-   
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   //sprintf(cube_filename, "./swc/x_%d_y_%d_cube.v3draw", int(x_start),int(y_start));
-   sprintf(cube_filename, "./swc/x_%d_y_%d_Ch2.v3draw", int(x_start),int(y_start));
-   //printf("cube %d",count);
-   QString saveName = cube_filename;
-   const char* fileName = saveName.toAscii();
-   simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
-   //v3d_msg("Cropping complete.");
-
-   if( access( cube_filename, R_OK ) == -1 )
-   {allTargetList.removeFirst();
-	myallTipsList.removeFirst();
-	count=count+1;
-	continue;
-   }
-#endif
-
-#if defined (Q_OS_WIN32)
-	QString cubeLabel = QString::number(count);
-	cubeOutput = cubeOutput + cubeLabel + "_cube.v3draw";
-	const char* temp = cubeOutput.toStdString().c_str();
-	strcpy(cube_filename, temp);
-   printf("cube %d",count);
-   QString saveName = cube_filename;
-   const char* fileName = saveName.toAscii();
-   simple_saveimage_wrapper(*cb, fileName, cropped_image, in_sz, 1);
-   //v3d_msg("Cropping complete.");
-
-	if( access( cube_filename, 4 ) == -1 )
-   {allTargetList.removeFirst();
-	myallTipsList.removeFirst();
-	   count=count+1;
-	continue;
-   }
-#endif
-
-   // prepare the inputs for APP2Tracing
-   Image4DSimple * pNewImage = cb->loadImage(cube_filename);
-   pNewImage->setOriginX(x_start);
-   pNewImage->setOriginY(y_start);
-   pNewImage->setOriginZ(0);
-
-   Image4DSimple * total4DImage_mip;
-   LandmarkList seedList;
-   LocationSimple tileLocation;
-   tileLocation = allTargetList.at(0);
-   if (count>0)
-   { seedList = myallTipsList.at(0);
-   }
-   else
-   {seedList.clear();}
-
-   loadScanNumber = count;
-   bool isSoma = loadScanNumber==0;
-   //bool isAdaptive = false;
-   bool useGSDT = true;
-   bool interrupt = true;
-
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   QString currDir = QDir().currentPath();
-   QString SWClabelcount = QString::number(count);
-   QString SWClabelX = QString::number(int(x_start));
-   QString SWClabelY = QString::number(int(y_start));
-   QString currDir2 = currDir + "/swc";
-   //currDir = currDir + "/swc/" + SWClabelcount+"_x_"+SWClabelX+"_y_"+SWClabelY+"_Ch2.swc";
-
-   currDir = currDir + "/swc/x_"+SWClabelX+"_y_"+SWClabelY+"_Ch2.swc";
-   const char* temp2 = currDir.toStdString().c_str();
-   strcpy(swc_filename, temp2);
-   QString swcString = swc_filename;
-   printf("swc %d",count);
-   sprintf(swc_filename_global, "./swc_global/%d_x_%d_y_%d.swc", count,int(x_start),int(y_start));
-#endif
-
-#if defined(Q_OS_WIN32)
-   QString SWClabel = QString::number(count);
-   QString swcFilename = swc_filename;
-   swcFilename = swcOutput + SWClabel + ".swc";
-   const char* temp1 = swcFilename.toStdString().c_str();
-   strcpy(swc_filename, temp1);
-   QString swcString= swcFilename;
-   cout << "swc " << count << endl;
-#endif
-
-   QString tileSaveString="file2.swc";
-
-   // use APP2 for tracing
-   //bool s2Mode = true;
-
-   if (tracingMethodComboC->currentIndex()==0){
-	//APP2
-		   myStackAnalyzer3->APP2Tracing(pNewImage, total4DImage_mip, swcString, overlap, background, interrupt, seedList, useGSDT, isSoma, tileLocation,tileSaveString,tileStatus);
-
-
-
-	   }
-	   if (tracingMethodComboC->currentIndex()==1){
-	 //MOST
-		   //v3d_msg(currDir2);
-		   if (count==0)
-		   {  seedList.append(initialSeed);
-
-
-		   }
-
-		   //myStackAnalyzer3->SubtractiveTracing('\0',cube_filename, pNewImage, total4DImage_mip, swcString, overlap, background,interrupt, seedList, tileLocation, currDir2,useGSDT, isSoma, 0, tileStatus);
-	   }
-	   if (tracingMethodComboC->currentIndex()==2){
-	  // NeuTube
-		   //myStackAnalyzer3->SubtractiveTracing('\0',cube_filename, pNewImage, total4DImage_mip, swcString, overlap, background,interrupt, seedList, tileLocation, currDir2,useGSDT, isSoma, 1, tileStatus);
-
-	   }
-
-
-
-
-	 // v3d_msg("test");
-  // v3d_msg("test1");
-
-
-   int x_print=int(x_start);
-   int y_print=int(y_start);
-   int tilesize=int(cubeSideLength);
-
-outputStream<< (int) x_print<<" "<< (int) y_print<<" "<<swcString<<" "<< (int) tilesize<<" "<< (int) tilesize<<" "<< 0<<" "<< 0<<"\n";
-
-
-
-   // remove the cubes that havee already been processed
-   alreadytracedcube_markerList.push_back(allTargetList.at(0));
-	allTargetList.removeAt(0);
-   if (count>0)
-   {
-	myallTipsList.removeFirst();}
-
-   count=count+1;
-
-/*
-   // add outputs to the queue
-   for (i=0;i<newTargetList.size();i++)
-   {myqueue.push_back(newTargetList[i]);
-	TipsList_queue.push_back(newTipsList.at(i));
-   }
-*/
-
-   //newTipsList=readLandmarkList("newTipsList.landmarklist");
-   //newTargetList=readLandmarkList("newTargetList.landmarklist");
-
-
-   // convert swc coordinates to world coordinates
-   NeuronTree myswc;
-   myswc=readSWC_file(swc_filename);
-   QList<NeuronSWC> newSWC;
-   for(i=0;i<myswc.listNeuron.size();i++)
-   {
-	   NeuronSWC singleNeuron;
-	   singleNeuron.type = 2;  //myswc.listNeuron.at(i).type;
-	   singleNeuron.n = myswc.listNeuron.at(i).n;
-	   singleNeuron.x = myswc.listNeuron.at(i).x+x_start;
-	   singleNeuron.y = myswc.listNeuron.at(i).y+y_start;
-	   singleNeuron.z = myswc.listNeuron.at(i).z;
-	   singleNeuron.parent = myswc.listNeuron.at(i).parent;
-	   newSWC.append(singleNeuron);
-  }
-   
-   NeuronTree saveSWC;
-   saveSWC.listNeuron = newSWC;
-   writeSWC_file(swc_filename_global, saveSWC);
-
-
- /*
-   // read in the marker of boundary vertices
-   QList<ImageMarker> boundary_markerList;
-
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   sprintf(boundary_marker_filename, "./swc/%d.swcfinal.marker", count);
-   if( access( boundary_marker_filename, R_OK ) == -1 )
-   {myqueue.removeFirst();
-	   count=count+1;
-	continue;
-   }
-#endif
-
-#if defined (Q_OS_WIN32)
-   QString Markerlabel = QString::number(count);
-   QString boundary_markerName = swcOutput + Markerlabel + ".swcfinal.marker";
-   const char* tempBoundaryMarker = boundary_markerName.toStdString().c_str();
-   strcpy (boundary_marker_filename, tempBoundaryMarker);
-   if( access( boundary_marker_filename, 4 ) == -1 )
-   {myqueue.removeFirst();
-	   count=count+1;
-	continue;
-   }
-#endif
-
-   
-   boundary_markerList = readMarker_file(boundary_marker_filename);
-   QList<ImageMarker> neighbor_cube_markerList;
-   ImageMarker new_center_coor;
-   new_center_coor.x=0;
-   new_center_coor.y=0;
-   
-   // determine which neighboring cubes should be traced in the next iteration (8 possible candidates each time)
-   for (i=0;i<boundary_markerList.size();i++)
-   {if((boundary_markerList.at(i).x< cubeSideLength*thrs) &&
-	   (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
-		   new_center_coor.x=xcenter-cubeSideLength;
-		   new_center_coor.y=ycenter-cubeSideLength;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-	 }
-	 else if((boundary_markerList.at(i).x>cubeSideLength*thrs) &&
-			 (boundary_markerList.at(i).x< cubeSideLength*(1-thrs)) &&
-			 (boundary_markerList.at(i).y< cubeSideLength*thrs)) {
-		   new_center_coor.x=xcenter;
-		   new_center_coor.y=ycenter-cubeSideLength;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-	   }
-		else if((boundary_markerList.at(i).x> cubeSideLength*(1-thrs)) &&
-				(boundary_markerList.at(i).y< cubeSideLength*thrs)) {
-		   new_center_coor.x=xcenter+cubeSideLength;
-		   new_center_coor.y=ycenter-cubeSideLength;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-		}
-	 else if((boundary_markerList.at(i).x>cubeSideLength*(1-thrs)) &&
-			 (boundary_markerList.at(i).y< cubeSideLength*(1-thrs)) &&
-			 (boundary_markerList.at(i).y> cubeSideLength*thrs)) {
-		   new_center_coor.x=xcenter+cubeSideLength;
-		   new_center_coor.y=ycenter;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-	 }
-	 else if((boundary_markerList.at(i).x> cubeSideLength*(1-thrs)) &&
-			 (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
-		   new_center_coor.x=xcenter+cubeSideLength;
-		   new_center_coor.y=ycenter+cubeSideLength;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-	 }
-	 else if((boundary_markerList.at(i).x>cubeSideLength*thrs) &&
-			 (boundary_markerList.at(i).x< cubeSideLength*(1-thrs)) &&
-			 (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
-			 new_center_coor.x=xcenter;
-			 new_center_coor.y=ycenter+cubeSideLength;
-			 if(!neighbor_cube_markerList.contains(new_center_coor))
-			 {
-				 neighbor_cube_markerList.append(new_center_coor);
-			 }
-	 }
-	 else if((boundary_markerList.at(i).x<cubeSideLength*thrs) &&
-			 (boundary_markerList.at(i).y> cubeSideLength*(1-thrs))) {
-		   new_center_coor.x=xcenter-cubeSideLength;
-		   new_center_coor.y=ycenter+cubeSideLength;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-	 }
-		else {
-		   new_center_coor.x=xcenter-cubeSideLength;
-		   new_center_coor.y=ycenter;
-		   if(!neighbor_cube_markerList.contains(new_center_coor))
-		   {
-			   neighbor_cube_markerList.append(new_center_coor);
-		   }
-		}
-   }
-
-   if(neighbor_cube_markerList.size()<1)
-   {myqueue.removeFirst();
-	   count=count+1;
-	continue;
-   }
-
-   printf("marker %d",count);
-
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   sprintf(new_coor_marker_filename, "./cube/%d.marker", count);
-#endif
-
-#if defined (Q_OS_WIN32)
-   QString newCoorMarkerlabel = QString::number(count);
-   QString newCoor_marker_filename = cubeOutput + newCoorMarkerlabel + ".marker";
-   const char* new_coor_marker_fileName = newCoor_marker_filename.toStdString().c_str();
-   strcpy(new_coor_marker_filename, new_coor_marker_fileName);
-#endif
-
-   writeMarker_file(new_coor_marker_filename, neighbor_cube_markerList);
-
-   // add the targeted cubes into the queue for next iteration of cropping and tracing
-   for(i=0;i<neighbor_cube_markerList.size();i++){
-	   if((!alreadytracedcube_markerList.contains(neighbor_cube_markerList.at(i))) && (!myqueue.contains(neighbor_cube_markerList.at(i))))
-	   {myqueue.append(neighbor_cube_markerList.at(i));
-		}
-   }
-*/
-
-   // remove the current finished cube from the queue
-   //myqueue.removeFirst();
-  //TipsList_queue.removeFirst();
-
-}
-saveTextFile.close();
-
-	// combine swc files of the cubes into a single swc file (global coordinates)
-#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
-   system("vaa3d -x S2_tracing_connector -f combineSWC -i ./swc_global -o ./swc_global/combined.swc -p linux");
-   system("cp ./swc_global/combined_connected.swc .");
-
-   system("cd ..");
-   v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
-#endif
-
-
-   /*
-#if defined (Q_OS_WIN32)
-   char* command;
-   QString preCommand = "vaa3d_msvc.exe /x S2_tracing_connector /f combineSWC /i " + swcOutput + " /o " + swcOutput + "combined.swc /p windows";
-   const char* CpreCommand = preCommand.toStdString().c_str();
-   strcpy(command, CpreCommand);
-   //cout << command << endl;
-   system(command);
-   v3d_msg("Tracing complete! Please check out the output file 'combined_connected.swc' in your results folder");
-#endif
-*/
-
-   return;
-}
 
 void S2UI::updateLocalRemote(bool state){
 	isLocal = state;
@@ -1690,7 +1102,7 @@ QGroupBox *S2UI::createSimulator(){
 	tracingMethodComboC->addItem("MOST");
 	tracingMethodComboC->addItem("NeuTube");
 	tracingMethodComboC->setCurrentIndex(0);
-	//methodChoice = 2;
+	methodChoice = 2;
 	QLabel * tracingMethodComboCLabel = new QLabel(tr("Tracing Method: "));
 	tracingMethodComboCLabel->setAlignment(Qt::AlignRight);
 
@@ -2109,61 +1521,74 @@ void S2UI::posMonButtonClicked(){
 
 
 }
-void S2UI::updateS2Data( QMap<int, S2Parameter> currentParameterMap){
+void S2UI::updateS2Data(QMap<int, S2Parameter> currentParameterMap)
+{
 	// this updates the text fields in the UI, and ALSO CHECKS ON THE LATEST FILE and calls checkParameters to check for new values
 	// not all values are currently updated in uiS2ParameterMap
-	cout << "final destination!" << endl;
-	cout << currentParameterMap[5].getCurrentValue() << endl;
 	int minVal = 0;
 	int maxVal = currentParameterMap.keys().length();
-	for (int i= 0; i <maxVal ; i++){
+	qDebug() << " -- S2UI got notified by myPosMon";
+	for (int i=0; i<maxVal ; i++)
+	{
+		//qDebug() << "name:" << currentParameterMap[i].getParameterName() << "  current string:" << currentParameterMap[i].getCurrentString() << "  type:" << currentParameterMap[i].getExpectedType() 
+			//<< "  value:" << currentParameterMap[i].getCurrentValue() << "  sent string:" << currentParameterMap[i].getSendString();
 		QString parameterStringi = currentParameterMap[i].getParameterName();
 		float parameterValuei = currentParameterMap[i].getCurrentValue();
 		QString iString = QString::number(i);
-		if (currentParameterMap[i].getExpectedType().contains("string")){
+		if (currentParameterMap[i].getExpectedType().contains("string"))
+		{
 			parameterStringi.append(" = ").append(currentParameterMap[i].getCurrentString());
 		}
-		if (currentParameterMap[i].getExpectedType().contains("float")){
+		if (currentParameterMap[i].getExpectedType().contains("float"))
+		{
 			parameterStringi.append(" = ").append(QString::number(parameterValuei));
 		}
-		if (currentParameterMap[i].getExpectedType().contains("list")){ //this is the latest file!
-			QString fString = currentParameterMap[i].getCurrentString().split(".xml").first();
-			parameterStringi.append(" = ").append(fString);
-			updateFileString(fString);
+		if (currentParameterMap[i].getExpectedType().contains("list"))
+		{ //this is the latest file!
+			if (myController.mode == offline) // simulated scope operation mode
+			{
+				QString fString = currentParameterMap[i].getCurrentString();
+				qDebug() << " -- fString from myPosMon - " << fString;
+				parameterStringi.append(" = ").append(fString);
+				updateFileString(fString);
+			}
+			else 
+			{
+				QString fString = currentParameterMap[i].getCurrentString().split(".xml").first();
+				parameterStringi.append(" = ").append(fString);
+				updateFileString(fString);
+			}
 		}
 		QLabel* item = this->findChild<QLabel*>( iString);
-		if (item){
+		if (item)
+		{
 			item->setText(parameterStringi.split("\\").last());
 		}
 	}
 
 	checkParameters(currentParameterMap);
-
 }
 
-void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap){
+void S2UI::checkParameters(QMap<int, S2Parameter> currentParameterMap)
+{
 	int minVal = 0;
 	int maxVal = currentParameterMap.keys().length();
-	for (int i= 0; i <maxVal ; i++){
-		if (i ==0){ uiS2ParameterMap[i].setCurrentString(currentParameterMap[i].getCurrentString());}
-		if (currentParameterMap[i].getExpectedType().contains("float")){
-			if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue()){
+	for (int i=0; i<maxVal; i++)
+	{
+		if (i == 0) uiS2ParameterMap[i].setCurrentString(currentParameterMap[i].getCurrentString());
+		if (currentParameterMap[i].getExpectedType().contains("float"))
+		{
+			if (currentParameterMap[i].getCurrentValue() != uiS2ParameterMap[i].getCurrentValue())
+			{
 				uiS2ParameterMap[i].setCurrentValue(currentParameterMap[i].getCurrentValue());
-				if (i==18){
-					roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-				}else if (i==19){
-					roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-				}else if (i==13){
-					roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-				}else if (i==14){
-					roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
-				}else if ((i==5)||(i==6)){
-					updateROIPlot("");
-				}
+				if (i==18) roiXEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+				else if (i==19) roiYEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+				else if (i==13) roiXWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+				else if (i==14) roiYWEdit->setText(QString::number( uiS2ParameterMap[i].getCurrentValue()));
+				else if ((i==5)||(i==6)) updateROIPlot("");
 			}
 		}
 	}
-
 }
 
 
@@ -2280,12 +1705,15 @@ void S2UI::handleAllTargets(){
 	QTimer::singleShot(1000, this, SLOT(startingSmartScan()));}
 
 
-void S2UI::startingSmartScan(){
+void S2UI::startingSmartScan()
+{
+	cout << "  ==> startingSmartScan() being called" << endl;
 	numProcessing=0;
 	LocationSimple startLocation ;
 	TileInfo startTileInfo = TileInfo(zoomPixelsProduct);
 
-	if (gridScanCB->isChecked()){
+	if (gridScanCB->isChecked())
+	{
 		gridScanStatus = 1;
 
 		emit eventSignal("startGridScan");
@@ -2299,28 +1727,30 @@ void S2UI::startingSmartScan(){
 
 		status(scanDataFileString);
 		saveTextFile.setFileName(scanDataFileString);// add currentScanFile
-		if (!saveTextFile.isOpen()){
-			if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
+		if (!saveTextFile.isOpen())
+		{
+			if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly))
+			{
 				qDebug()<<"couldnt open file"<<scanDataFileString;
-				return;}     }
+				return;
+			}     
+		}
 
 		outputStream.setDevice(&saveTextFile);
-		if (allROILocations->isEmpty()){
+		if (allROILocations->isEmpty())
+		{
 			scanList.clear();
 			//scanNumber = 0;
 			loadScanNumber = 0;
 			status("starting smartScan...");
-			if (allTargetStatus ==0){
+			if (allTargetStatus ==0)
+			{
 				startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
-						uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
-						0);
+					uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
+					0);
 
-			}else{
-				startLocation = allTargetLocations[targetIndex].getGalvoLocation();
 			}
-
-
-
+			else startLocation = allTargetLocations[targetIndex].getGalvoLocation();
 
 			startLocation.mass = 0;
 			startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();
@@ -2330,8 +1760,10 @@ void S2UI::startingSmartScan(){
 			float tileSize = uiS2ParameterMap[11].getCurrentValue();
 			int minGrid = -(gridSizeSB->value()-1)/2;
 			int maxGrid = -minGrid+1;
-			for (int i=minGrid; i<maxGrid;i++){
-				for (int j=minGrid; j<maxGrid;j++){
+			for (int i=minGrid; i<maxGrid;i++)
+			{
+				for (int j=minGrid; j<maxGrid;j++)
+				{
 					LocationSimple gridLoc;
 					gridLoc.x = startLocation.x+ ((float)i * (1.0-overlap))* tileSize;
 					gridLoc.y = startLocation.y+ ((float)j * (1.0-overlap))* tileSize;
@@ -2341,29 +1773,31 @@ void S2UI::startingSmartScan(){
 					TileInfo gridTileInfo = TileInfo(zoomPixelsProduct);
 					gridTileInfo.setGalvoLocation(gridLoc);
 					allROILocations->append(gridTileInfo);
-
 				}
 			}
 
+			if (allTargetStatus == 0) allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
 
-
-
-
-			if (allTargetStatus ==0)   {allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
-
-			}
-			if (runContinuousCB->isChecked()){
+			if (runContinuousCB->isChecked())
+			{
 				qDebug()<<"allROILocations length "<<allROILocations->length();
 				s2ROIMonitor();
-			}else{        qDebug()<<"headed to smartscanHandler";
-				QTimer::singleShot(10,this, SLOT(smartScanHandler()));}
+			}
+			else
+			{        
+				qDebug()<<"headed to smartscanHandler";
+				QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+			}
 		}
 		return;
 	}
+
+
 	myScanMonitor->startNewScan();
-	qDebug()<<"starting smartscan";
-	if (smartScanStatus==1){
-		smartScanStatus=0;
+	qDebug() << "smartScanStatus = " << smartScanStatus; 
+	if (smartScanStatus == 1)
+	{
+		smartScanStatus = 0;
 		waitingForLast = false;
 		startSmartScanPB->setText("smartScan");
 		allROILocations->clear();
@@ -2375,95 +1809,158 @@ void S2UI::startingSmartScan(){
 		return;
 	}
 
+	if (myController.mode == offline)
+	{
+		system("pause");
+		emit eventSignal("startSmartScan");
+		smartScanStatus = 1;
+		waitingForLast = false;
+		scanDataFileString = fakeOutputFolder.append("/").append("scanData.txt");
+		eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
+		qDebug() << scanDataFileString;
+		status(scanDataFileString);
+		saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+		if (!saveTextFile.isOpen())
+		{
+			if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly))
+			{
+				qDebug() << "couldnt open file" << scanDataFileString;
+				return;
+			}     
+		}
+		outputStream.setDevice(&saveTextFile);
 
-	emit eventSignal("startSmartScan");
-	smartScanStatus = 1;
-	waitingForLast = false;
-	QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
-	sessionDir.mkdir(timeString);
-	saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
+		QStringList stringProcess = scanDataFileString.split("scan");
+		QString summaryFileString = stringProcess[0].append("s2Summary.txt");
+		summaryTextFile.setFileName(summaryFileString);
+		if (!summaryTextFile.isOpen())
+		{
+			if (!summaryTextFile.open(QIODevice::Text|QIODevice::WriteOnly))
+			{
+				qDebug()<< "couldnt open file" << summaryFileString;
+				return;
+			}     
+		}
+	}
+	else 
+	{
+		emit eventSignal("startSmartScan");
+		smartScanStatus = 1;
+		waitingForLast = false;
+		QString timeString = QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm");
+		sessionDir.mkdir(timeString);
+		saveDir = QDir(sessionDir.absolutePath().append("/").append(timeString));
 
-	scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
-	eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
+		scanDataFileString = saveDir.absolutePath().append("/").append("scanData.txt");
+		eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
 
-	status(scanDataFileString);
-	saveTextFile.setFileName(scanDataFileString);// add currentScanFile
-	if (!saveTextFile.isOpen()){
-		if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
-			qDebug()<<"couldnt open file"<<scanDataFileString;
-			return;}     }
+		status(scanDataFileString);
+		saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+		if (!saveTextFile.isOpen())
+		{
+			if (!saveTextFile.open(QIODevice::Text|QIODevice::WriteOnly))
+			{
+				qDebug() << "couldnt open file" << scanDataFileString;
+				return;
+			}     
+		}
+		outputStream.setDevice(&saveTextFile);
 
-	outputStream.setDevice(&saveTextFile);
+		// new file with scan summary information
+		QString summaryFileString =saveDir.absolutePath().append("/").append("s2Summary.txt");
 
+		summaryTextFile.setFileName(summaryFileString);
+		if (!summaryTextFile.isOpen())
+		{
+			if (!summaryTextFile.open(QIODevice::Text|QIODevice::WriteOnly))
+			{
+				qDebug()<< "couldnt open file" << summaryFileString;
+				return;
+			}     
+		}
+	}
 
-	// new file with scan summary information
-
-	QString summaryFileString =saveDir.absolutePath().append("/").append("s2Summary.txt");
-
-	summaryTextFile.setFileName(summaryFileString);
-	if (!summaryTextFile.isOpen()){
-		if (!summaryTextFile.open(QIODevice::Text|QIODevice::WriteOnly)){
-			qDebug()<<"couldnt open file"<<summaryFileString;
-			return;}     }
-
-	QTextStream summaryTextStream;
-	summaryTextStream.setDevice(&summaryTextFile);
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
 	summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
 #endif
 
-	summaryTextStream<<"s2Scan start time: "<<";"<< QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
-	summaryTextStream<<"s2Scan Save Directory: "<<";"<< saveDir.absolutePath()<<"\n";
-
+	QTextStream summaryTextStream;
+	summaryTextStream.setDevice(&summaryTextFile);
+	summaryTextStream << "s2Scan start time: " << ";" << QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz") << "\n";
+	summaryTextStream << "s2Scan Save Directory: " << ";" << saveDir.absolutePath() << "\n";
 
 	startSmartScanPB->setText("cancel smartScan");
-	if (allROILocations->isEmpty()){ // start smartscan of new target
+	if (allROILocations->isEmpty())
+	{ // start smartscan of new target
 		scanList.clear();
 		tipList.clear();
 		//scanNumber = 0;
 		loadScanNumber = 0;
 		status("starting smartScan...");
 
-		if (allTargetStatus ==0){
-			startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
-					uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(),
-					0);
-			startLocation.mass = 0;
-			startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();// size of first block is set here for these non-target scans
-			startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
-			startTileInfo.setGalvoLocation(startLocation);
+		if (myController.mode == offline)
+		{
+			allTargetStatus = 1;
+			qDebug() << "startingSmartScan(): continuous? " << runContinuousCB->isChecked();
+			qDebug() << "startingSmartScan(): all target status: " << allTargetStatus;
+			qDebug() << "startingSmartScan(): target index: " << targetIndex;
+			qDebug() << "startingSmartScan(): all target locations size: " << allTargetLocations.size();
+			if (allTargetStatus == 0)
+			{
+				LocationSimple firstTile = allTargetLocations[0].getStageLocation();
+				startLocation = LocationSimple(firstTile.x, firstTile.y, 0);
+				startLocation.mass = 0;
+				startLocation.ev_pc1 = fakeScope.S2SimParameterMap[10].getCurrentValue();// size of first block is set here for these non-target scans
+				startLocation.ev_pc2 = fakeScope.S2SimParameterMap[11].getCurrentValue();
+				startTileInfo.setGalvoLocation(startLocation);
+			}
+			else startTileInfo = allTargetLocations[targetIndex];
 
-		}else{
-			startTileInfo = allTargetLocations[targetIndex];
-		}
-
-
-
-
-
-
-		totalImagingTime=0.0;
-		totalAnalysisTime=0.0;
-		scanStartTime = QDateTime::currentDateTime();
-		// add the starting location to the ROI queue:
-		int v = startTileInfo.setTimeStamp(QDateTime::currentDateTime());
-		allROILocations->append(startTileInfo);
-
-
-
-
-
-
-		if (allTargetStatus ==0)   allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
-
-		if (runContinuousCB->isChecked()){
+			totalImagingTime=0.0;
+			totalAnalysisTime=0.0;
+			scanStartTime = QDateTime::currentDateTime();
+			// add the starting location to the ROI queue:
+			//int v = startTileInfo.setTimeStamp(QDateTime::currentDateTime());
+			allROILocations->append(startTileInfo);
+			if (allTargetStatus == 0) allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
+			
+			cout << " ------------ END of startingSmartScan() and s2ROIMonitor() is activated HERE." << endl;
+			cout << "      (moveToNextStage that calls initROIwithStage will be emitted in s2ROIMonitor.)" << endl << endl;
 			s2ROIMonitor();
-		}else{        qDebug()<<"headed to smartscanHandler";
-			QTimer::singleShot(10,this, SLOT(smartScanHandler()));}
+		}
+		else
+		{
+			if (allTargetStatus ==0)
+			{
+				startLocation = LocationSimple(uiS2ParameterMap[18].getCurrentValue()/uiS2ParameterMap[8].getCurrentValue(),
+					uiS2ParameterMap[19].getCurrentValue()/uiS2ParameterMap[9].getCurrentValue(), 0);
+				startLocation.mass = 0;
+				startLocation.ev_pc1 = uiS2ParameterMap[10].getCurrentValue();// size of first block is set here for these non-target scans
+				startLocation.ev_pc2 = uiS2ParameterMap[11].getCurrentValue();
+				startTileInfo.setGalvoLocation(startLocation);
+
+			}
+			else startTileInfo = allTargetLocations[targetIndex];
+
+			totalImagingTime=0.0;
+			totalAnalysisTime=0.0;
+			scanStartTime = QDateTime::currentDateTime();
+			// add the starting location to the ROI queue:
+			//int v = startTileInfo.setTimeStamp(QDateTime::currentDateTime());
+			allROILocations->append(startTileInfo);
+
+			if (allTargetStatus ==0) allTargetLocations.append(startTileInfo); // keep track of targets, even when not using the multi-target sequence
+
+			if (runContinuousCB->isChecked()) s2ROIMonitor();
+			else
+			{        
+				qDebug()<<"headed to smartscanHandler";
+				QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+			}
+		}
 	}
 	// append text to noteTaker
 	//
-
 }
 
 void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex, QString tileSaveString, int tileStatus){
@@ -2912,20 +2409,25 @@ void S2UI::smartScanHandler(){
 			status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
 		}
 	}
-
 }
 
 void S2UI::s2ROIMonitor(){ // continuous acquisition mode
+	
 	if (!runContinuousCB->isChecked()) return;
 
-	waitingForLast = allROILocations->length()==1;
+	waitingForLast = allROILocations->length() == 1;
+	if ((!allROILocations->isEmpty()) && (waitingForFile<1))
+	{
+		cout << "~~~~~	" <<  "s2ROIMonitor operations" << endl;
 
-	if ((!allROILocations->isEmpty())&&(waitingForFile<1)){
 		LandmarkList  nextLandmarkList;
-		if (allTipsList->isEmpty()){
-			qDebug()<<"no incoming tip locations";
+		if (allTipsList->isEmpty())
+		{
+			qDebug() << "no incoming tip locations";
 			// leave nextLandmarkList empty and don't touch allTipsList
-		}else{
+		}
+		else
+		{
 			nextLandmarkList = allTipsList->first();
 			allTipsList->removeFirst();
 		}
@@ -2933,46 +2435,48 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
 		TileInfo nextLocation = allROILocations->first();
 		allROILocations->removeFirst();
 
-
-		moveToROI(nextLocation);
+		if (myController.mode == offline) moveToROIWithStage(nextLocation);
+		else moveToROI(nextLocation);
+		
 		TileInfo nextTileInfo = TileInfo(zoomPixelsProduct);
-		nextTileInfo.setPixels((int) nextLocation.getPixelLocation().ev_pc1);
-
+		if (myController.mode == offline) nextTileInfo.setPixels(fakeScope.S2SimParameterMap[10].getCurrentValue() + 1);
+		else nextTileInfo.setPixels((int) nextLocation.getPixelLocation().ev_pc1);
 
 		currentTileInfo = nextTileInfo;
-		QString sString =currentTileInfo.getTileInfoString().join(" _ ");
+		QString sString = currentTileInfo.getTileInfoString().join(" _ ");
 		status("currentTileInfo : "+sString);
-		qDebug()<<sString;
+		qDebug() << sString;
 		waitingForFile = 1;
-		int v = nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
-
-
-
-
-
+		
+		//qDebug() << QDateTime::currentDateTime();
+		//int v = nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
+		//qDebug() << "v: " << v;
 		scanList.append(nextLocation);
-		if (targetIndex < allScanLocations.length()){
-			allScanLocations[targetIndex].append(nextLocation.getPixelLocation());
-		}else{
+		if (targetIndex < allScanLocations.length()) allScanLocations[targetIndex].append(nextLocation.getPixelLocation());
+		else
+		{
 			LandmarkList starterList;
 			starterList.append(nextLocation.getPixelLocation());
 			allScanLocations.append(starterList);
 		}
 
-
-
-
-		emit updateTable(allTargetLocations,allScanLocations);
+		emit updateTable(allTargetLocations, allScanLocations);
 		status(QString("start next ROI at x = ").append(QString::number(nextLocation.getPixelLocation().x)).append("  y = ").append(QString::number(nextLocation.getPixelLocation().y)));
 		waitingToStartStack = true;
 		emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
-	}
-	if ((gridScanStatus ==1) && (allROILocations->length() == 0)){gridScanStatus = -1; return;}
 
-	if (((smartScanStatus ==1)&&(runContinuousCB->isChecked()))||(gridScanStatus==1)) {
-		QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
+		cout << "~~~~~	" << "end of s2ROIMonitor operations" << endl << endl;
 	}
+
+	if ((gridScanStatus ==1) && (allROILocations->length() == 0))
+	{
+		gridScanStatus = -1; 
+		return;
+	}
+
+	if (((smartScanStatus==1) && (runContinuousCB->isChecked())) || (gridScanStatus==1)) QTimer::singleShot(10, this, SLOT(s2ROIMonitor()));
 }
+
 void S2UI::moveToROI(const TileInfo nextROI){
 	TileInfo myNextROI = nextROI;
 
@@ -3001,7 +2505,6 @@ void S2UI::moveToROI(const TileInfo nextROI){
 	// direction is reversed, the plot needs to show that.
 
 	//  the y sign flip may be fixed.  now it's just x?
-
 
 	if( posMonStatus){
 
@@ -3033,33 +2536,32 @@ void S2UI::moveToROI(const TileInfo nextROI){
 	}}
 
 
-void S2UI::moveToROIWithStage(const TileInfo nextROI){
-	if( posMonStatus){
-
+void S2UI::moveToROIWithStage(const TileInfo nextROI)
+{
+	if (posMonStatus)
+	{
 		float xStage =  nextROI.getStageLocation().x;
 		float yStage = -nextROI.getStageLocation().y;
 
-
-
 		// First check the stage position arguments.  Is the move too big?
-
-		float xDiff = qAbs(xStage -uiS2ParameterMap[5].getCurrentValue());
-		float yDiff = qAbs(yStage +uiS2ParameterMap[6].getCurrentValue());
-		qDebug()<<"xDiff = "<<xDiff;
-		qDebug()<<"yDiff = "<<yDiff;
-		if ((xDiff>2000.0)|| (yDiff > 2000.0)){
+		float xDiff = qAbs(xStage - uiS2ParameterMap[5].getCurrentValue());
+		float yDiff = qAbs(yStage + uiS2ParameterMap[6].getCurrentValue());
+		qDebug() << "xDiff = " << xDiff;
+		qDebug() << "yDiff = " << yDiff;
+		if ((xDiff>2000.0) || (yDiff>2000.0))
+		{
 			qDebug()<<"stage move too large!";
 			return;
-
 		}
-
 
 		LocationSimple newLoc;
 		newLoc.x = -nextROI.getGalvoLocation().x*scanVoltageConversion;
 		newLoc.y = nextROI.getGalvoLocation().y*scanVoltageConversion;
 
 		emit moveToNextWithStage(newLoc, xStage, yStage);
-	}else{
+	}
+	else
+	{
 		status("start PosMon before moving galvos");
 		smartScanStatus = -1;
 	}
@@ -3085,151 +2587,233 @@ void S2UI::combinedSmartScan(QString saveFilename){
 }
 
 
-void S2UI::loadLatest(QString inputString){
-	if ((smartScanStatus ==1)||(gridScanStatus!=0)){
-		LandmarkList seedList;
-		qDebug()<<"loadlatest smartscan";
-		qDebug()<<"tipList length "<<tipList.length()<<" loadScanNumber "<<loadScanNumber;
-		if (!tipList.isEmpty()){
-
-			seedList = tipList.at(loadScanNumber);
-			qDebug()<<"seedList length "<<seedList.length();
-		}
-		LocationSimple tileLocation;
-		int v = scanList[loadScanNumber].setTimeStamp(QDateTime::currentDateTime()); //3rd timestamp when imaging is done
-
-
-		tileLocation.ev_pc1 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
-		tileLocation.ev_pc2 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
-		// outgoing landmarks are shifted to the tile upper left
-		tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
-		tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
-		// and the stage location is added to the tile landmark
-		tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).getStageLocation().x/ uiS2ParameterMap[8].getCurrentValue());
-		tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).getStageLocation().y/ uiS2ParameterMap[9].getCurrentValue());
-		// throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
-		tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
-		tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
-		tileLocation.ave= loadScanNumber;
-
-		tileLocation.pixmax = scanList.value(loadScanNumber).getGalvoLocation().pixmax;
-		tileLocation.pixval = scanList.value(loadScanNumber).getGalvoLocation().pixval;
-		qDebug()<<"tileLocation.x = "<<tileLocation.x;
-		qDebug()<<"seedList is empty? "<<seedList.isEmpty();
-		bool isSoma = loadScanNumber==0;
-		int tileStatus=0;
-		if (gridScanStatus!=0){
-			emit eventSignal("startGridLoad");
-
-			emit  callSAGridLoad(getFileString(),   tileLocation, saveDir.absolutePath() );
-
-		}else{
+void S2UI::loadLatest(QString inputString)
+{
+	if (myController.mode == offline)
+	{
+		if ((smartScanStatus == 1) || (gridScanStatus != 0))
+		{
+			qDebug() << " -- inputString to loadLatest(QString): " << inputString;
 			bool isAdaptive = false;
-			int methodChoice = 0;
-			emit eventSignal("startAnalysis");
-			QTimer::singleShot(0,this, SLOT(processingStarted()));
-
-
-			if (tracingMethodComboB->currentIndex()==0){ //MOST
-				methodChoice = 0;
-				isAdaptive = false;
-
+			LandmarkList seedList;
+			qDebug()<< "loadlatest smartscan";
+			qDebug()<< "tipList length " << tipList.length() << " loadScanNumber " << loadScanNumber;
+			if (!tipList.isEmpty())
+			{
+				seedList = tipList.at(loadScanNumber);
+				qDebug() << "seedList length " << seedList.length();
 			}
-			if (tracingMethodComboB->currentIndex()==1){ //APP2
-				methodChoice = 2;
-				isAdaptive = false;
+			LocationSimple tileLocation;
+			qDebug() << "scanList size: " << scanList.size();
+			//int v = scanList[loadScanNumber].setTimeStamp(QDateTime::currentDateTime()); //3rd timestamp when imaging is done
+
+			tileLocation.ev_pc1 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
+			tileLocation.ev_pc2 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
+			cout << "tileLocation.ev_pc1 " << tileLocation.ev_pc1 << ", "; 
+			// outgoing landmarks are shifted to the tile upper left
+			//tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
+			//tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
+			// and the stage location is added to the tile landmark
+			tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).getStageLocation().x);
+			tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).getStageLocation().y);
+			// throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
+			tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
+			tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
+			tileLocation.ave= loadScanNumber;
+
+			tileLocation.pixmax = scanList.value(loadScanNumber).getGalvoLocation().pixmax;
+			tileLocation.pixval = scanList.value(loadScanNumber).getGalvoLocation().pixval;
+			qDebug() << "tileLocation.x = " << tileLocation.x;
+			qDebug() << "seedList is empty? " << seedList.isEmpty();
+			bool isSoma = loadScanNumber==0;
+			int tileStatus=0;
+
+			if (gridScanStatus!=0)
+			{
+				emit eventSignal("startGridLoad");
+				emit  callSAGridLoad(getFileString(),   tileLocation, saveDir.absolutePath() );
 			}
-			if (tracingMethodComboB->currentIndex()==2){ //Neutube
-				methodChoice = 1;
+			else
+			{
+				bool isAdaptive = false;
+				emit eventSignal("startAnalysis");
+				QTimer::singleShot(0,this, SLOT(processingStarted()));
 
-			}
-			if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
-				methodChoice = 0;
-				isAdaptive  = true;
-
-			}
-			if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
-				methodChoice = 2;
-				isAdaptive = true;
-
-			}
-			if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
-				methodChoice= 1;
-				isAdaptive = true;
-
-			}
-			if (tracingMethodComboB->currentIndex()==6){ //automatic
-				methodChoice= -1;
-				isAdaptive = true;
-
-			}
-
-			if (tracingMethodComboB->currentIndex()==7){ //debugging mode
-				methodChoice= 3;
-				isAdaptive = false;
-
-			}
-			qDebug()<<"isadaptive = "<<isAdaptive;
-			qDebug()<<"methodChoice = "<<methodChoice;
-			int internalThreadNumber = traceThreadNumber; // otherwise traceThreadNumber can be incremented during this sequence by other calls/threads
-
-			if (multiThreadTracingCB->isChecked()){
-				if (internalThreadNumber==0){
-					emit callSATrace(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-									 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
-
-
-				}else if (internalThreadNumber==1){
-					emit callSATrace0(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-									  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
-				}else if (internalThreadNumber==2){
-					emit callSATrace1(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-									  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
-				}else if (internalThreadNumber==3){
-					emit callSATrace2(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-									  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
+				if (tracingMethodComboB->currentIndex()==0){ //MOST
+					methodChoice = 0;
+					isAdaptive = false;
+				}
+				if (tracingMethodComboB->currentIndex()==1){ //APP2
+					methodChoice = 2;
+					isAdaptive = false;
+				}
+				if (tracingMethodComboB->currentIndex()==2){ //Neutube
+					methodChoice = 1;
+				}
+				if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
+					methodChoice = 0;
+					isAdaptive  = true;
+				}
+				if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
+					methodChoice = 2;
+					isAdaptive = true;
+				}
+				if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
+					methodChoice= 1;
+					isAdaptive = true;
+				}
+				if (tracingMethodComboB->currentIndex()==6){ //automatic
+					methodChoice= -1;
+					isAdaptive = true;
 				}
 
-
-
-
-			}else{
-				emit callSATrace(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
-								 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
+				if (tracingMethodComboB->currentIndex()==7){ //debugging mode
+					methodChoice= 3;
+					isAdaptive = false;
+				}
+				methodChoice = 2;
+				qDebug() << "  == loadLatest: isadaptive = " << isAdaptive;
+				qDebug() << "  == loadLatest: methodChoice = " << methodChoice;
+			
+				emit callSATrace(inputString, overlap, this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(),
+					seedList, tileLocation, fakeScope.savingPath, useGSDTCB->isChecked(), isSoma, isAdaptive, methodChoice, tileStatus);
 			}
-
-
-			internalThreadNumber++;
-			internalThreadNumber = internalThreadNumber%4;
-			traceThreadNumber = internalThreadNumber;
-
-
-			QDir xmlDir = QFileInfo(inputString).absoluteDir();
-			QStringList newFilterList;
-			newFilterList.append(QString("*.xml"));
-			status("xml directory: "+xmlDir.absolutePath());
-			xmlDir.setNameFilters(newFilterList);
-			QStringList newFileList = xmlDir.entryList();
-			if (!newFileList.isEmpty()){
-				QFileInfo xmlInfo = QFileInfo(xmlDir.absoluteFilePath( newFileList.at(0)));
-				QFile::copy( xmlInfo.absoluteFilePath(),saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
-				qDebug()<<"copy finished from "<<xmlInfo.absoluteFilePath()<<" to "<< saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName());
-
-			}else{
-				qDebug()<<"no xml file available";
-			}
-
-
-
 		}
-
-		loadScanNumber++;
-	}else{
-		loadScanFromFile(inputString);
 	}
+	else
+	{
+		if ((smartScanStatus ==1) || (gridScanStatus!=0))
+		{
+			LandmarkList seedList;
+			qDebug()<< "loadlatest smartscan";
+			qDebug()<< "tipList length " << tipList.length() << " loadScanNumber " << loadScanNumber;
+			if (!tipList.isEmpty())
+			{
+				seedList = tipList.at(loadScanNumber);
+				qDebug() << "seedList length " << seedList.length();
+			}
+			LocationSimple tileLocation;
+			int v = scanList[loadScanNumber].setTimeStamp(QDateTime::currentDateTime()); //3rd timestamp when imaging is done
+
+			tileLocation.ev_pc1 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
+			tileLocation.ev_pc2 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
+			// outgoing landmarks are shifted to the tile upper left
+			tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
+			tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
+			// and the stage location is added to the tile landmark
+			tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).getStageLocation().x/ uiS2ParameterMap[8].getCurrentValue());
+			tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).getStageLocation().y/ uiS2ParameterMap[9].getCurrentValue());
+			// throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
+			tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
+			tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
+			tileLocation.ave= loadScanNumber;
+
+			tileLocation.pixmax = scanList.value(loadScanNumber).getGalvoLocation().pixmax;
+			tileLocation.pixval = scanList.value(loadScanNumber).getGalvoLocation().pixval;
+			qDebug() << "tileLocation.x = " << tileLocation.x;
+			qDebug() << "seedList is empty? "<< seedList.isEmpty();
+			bool isSoma = loadScanNumber == 0;
+			int tileStatus = 0;
+			if (gridScanStatus != 0)
+			{
+				emit eventSignal("startGridLoad");
+				emit callSAGridLoad(getFileString(), tileLocation, saveDir.absolutePath());
+			}
+			else
+			{
+				bool isAdaptive = false;
+				int methodChoice = 0;
+				emit eventSignal("startAnalysis");
+				QTimer::singleShot(0,this, SLOT(processingStarted()));
+
+				if (tracingMethodComboB->currentIndex()==0){ //MOST
+					methodChoice = 0;
+					isAdaptive = false;
+				}
+				if (tracingMethodComboB->currentIndex()==1){ //APP2
+					methodChoice = 2;
+					isAdaptive = false;
+				}
+				if (tracingMethodComboB->currentIndex()==2){ //Neutube
+					methodChoice = 1;
+				}
+				if (tracingMethodComboB->currentIndex()==3){ //adaptive MOST
+					methodChoice = 0;
+					isAdaptive  = true;
+				}
+				if (tracingMethodComboB->currentIndex()==4){ //adaptive APP2
+					methodChoice = 2;
+					isAdaptive = true;
+				}
+				if (tracingMethodComboB->currentIndex()==5){ //adaptive Neutube
+					methodChoice= 1;
+					isAdaptive = true;
+				}
+				if (tracingMethodComboB->currentIndex()==6){ //automatic
+					methodChoice= -1;
+					isAdaptive = true;
+				}
+
+				if (tracingMethodComboB->currentIndex()==7){ //debugging mode
+					methodChoice= 3;
+					isAdaptive = false;
+				}
+				qDebug() << "isadaptive = " << isAdaptive;
+				qDebug() <<" methodChoice = " << methodChoice;
+				int internalThreadNumber = traceThreadNumber; // otherwise traceThreadNumber can be incremented during this sequence by other calls/threads
+
+				if (multiThreadTracingCB->isChecked())
+				{
+					if (internalThreadNumber==0)
+					{
+						emit callSATrace(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+										 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
+					}
+					else if (internalThreadNumber==1)
+					{
+						emit callSATrace0(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+										  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
+					}
+					else if (internalThreadNumber==2)
+					{
+						emit callSATrace1(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+										  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
+					}
+					else if (internalThreadNumber==3)
+					{
+						emit callSATrace2(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+										  this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice,  tileStatus);
+					}
+				}
+				else
+				{
+					emit callSATrace(inputString,overlap,this->findChild<QSpinBox*>("bkgSpinBox")->value(),
+									 this->findChild<QCheckBox*>("interruptCB")->isChecked(),seedList,tileLocation,saveDir.absolutePath(),useGSDTCB->isChecked(),isSoma,isAdaptive,methodChoice, tileStatus);
+				}
+				internalThreadNumber++;
+				internalThreadNumber = internalThreadNumber%4;
+				traceThreadNumber = internalThreadNumber;
+
+				QDir xmlDir = QFileInfo(inputString).absoluteDir();
+				QStringList newFilterList;
+				newFilterList.append(QString("*.xml"));
+				status("xml directory: "+xmlDir.absolutePath());
+				xmlDir.setNameFilters(newFilterList);
+				QStringList newFileList = xmlDir.entryList();
+				if (!newFileList.isEmpty())
+				{
+					QFileInfo xmlInfo = QFileInfo(xmlDir.absoluteFilePath( newFileList.at(0)));
+					QFile::copy( xmlInfo.absoluteFilePath(),saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName()));
+					qDebug()<<"copy finished from "<<xmlInfo.absoluteFilePath()<<" to "<< saveDir.absolutePath().append(QDir::separator()).append(xmlInfo.fileName());
+
+				}
+				else qDebug()<<"no xml file available";
+			}
+			loadScanNumber++;
+		}
+		else loadScanFromFile(inputString);
 	// if there's an .xml file in the filestring directory, copy it to the save directory:
-
-
+	}
 }
 
 
@@ -3454,48 +3038,75 @@ void S2UI::startingZStack(){
 		sequenceNumberText->setZValue(100);
 		roiGS->addItem(sequenceNumberText);
 	}
-
 }
 
-QString S2UI::fixFileString(QString inputString){
+QString S2UI::fixFileString(QString inputString)
+{
 	// take the filestring from the microscope and swap out the path to the directory for the local
 	// path to the data
-	if (!isLocal){
-		//qDebug()<<inputString;
-		QString toSplit = inputString;
-		QStringList splitList =    toSplit.split("\\");
-		QString nameOfFile = splitList.last();// need to pick off the directory above this too!
-		QString dirName= QString("");
-		if (splitList.length() >1){
-			dirName = splitList.at(splitList.length()-2);
-
+	if (!isLocal)
+	{
+		if (myController.mode == offline)
+		{
+			QStringList toSplit = inputString.split(".t");
+			inputString = toSplit[0];
 		}
-		inputString= QDir(localDataDirectory.absolutePath().append(QDir::separator()).append(dirName)).absoluteFilePath(nameOfFile);
-		//inputString = localDataDirectory.absoluteFilePath(nameOfFile);
-		//inputString.replace("\\AIBSDATA","\\data").replace("\\","/");
+		else
+		{
+			QString toSplit = inputString;
+			QStringList splitList =    toSplit.split("\\");
+			QString nameOfFile = splitList.last();// need to pick off the directory above this too!
+			qDebug() << "name of file: " << nameOfFile;
+			QString dirName= QString("");
+			if (splitList.length() >1)
+			{
+				dirName = splitList.at(splitList.length()-2);
+			}
+			inputString= QDir(localDataDirectory.absolutePath().append(QDir::separator()).append(dirName)).absoluteFilePath(nameOfFile);
+			//inputString = localDataDirectory.absoluteFilePath(nameOfFile);
+			//inputString.replace("\\AIBSDATA","\\data").replace("\\","/");
+		}
 	}
 	return inputString;
-
-
 }
-void S2UI::updateFileString(QString inputString){
-	//this means a new file has been created.. it can be late by up to 1 full cycle of s2parametermap updating
+
+void S2UI::updateFileString(QString inputString)
+{
+	// check if a new file has been created.. it can be late by up to 1 full cycle of s2parametermap updating
 	// but it guarantees that the acquisition is done
 	// a separate poller of updated filename could be much faster.
 	// final version will require much more rigorous timing- it's not clear how we'll parse out
 	// the streamed image data into files...
 	machineSaveDir->setText(inputString);
-
-
+	
 	fileString = fixFileString(inputString);
-	fileString.append("_Cycle00001_Ch2_000001.ome.tif");
-	if ((QString::compare(fileString,lastFile, Qt::CaseInsensitive)!=0)&(waitingForFile>0)){
-		emit eventSignal("finishedZStack");
-		waitingForFile = 0;
-		emit loadLatestSig(fileString);
+	
+	cout << " -- waiting for File: " << waitingForFile << endl;
+	if (myController.mode == offline)
+	{
+		qDebug() << "    -- fileString in updateFileString: " << fileString;
+		if ((QString::compare(fileString, lastFile, Qt::CaseInsensitive) != 0) & (waitingForFile > 0)) 
+		{
+			fileString.append(".tif");
+			emit eventSignal("finishedZStack");
+			waitingForFile = 0;
+			emit loadLatestSig(fileString);
+		}
 	}
+	else 
+	{
+		fileString.append("_Cycle00001_Ch2_000001.ome.tif"); 
+		if ((QString::compare(fileString, lastFile, Qt::CaseInsensitive) != 0) & (waitingForFile > 0))
+		{
+			emit eventSignal("finishedZStack");
+			waitingForFile = 0;
+			emit loadLatestSig(fileString);
+		}
+	}
+	
+	qDebug() << "\n -------- checking file names in updateFileString =>\nlastFile: " << lastFile << "\nfileString: " << fileString << "\n";
 	lastFile = fileString;
-	//qDebug()<<lastFile;
+	qDebug() << "	last file (going to loadLatest): " << lastFile;
 }
 
 // need to correctly pick directories. 1.  show current directory in new config window.  2. in new config window also show current data directory and allow user to easily change.
@@ -3560,14 +3171,24 @@ void S2UI::resetToScanPBCB(){
 }
 
 
-void S2UI::scanStatusHandler(){
+void S2UI::scanStatusHandler()
+{
+	if (waitingToStartStack && (myController.mode == offline))
+	{
+		cout << " .. startZStack mark (in scanStatusHandler())" << endl;
+		emit eventSignal("startZStack");
+		waitingForFile = 1;
+		QTimer::singleShot(startZStackDelaySB->value(), &myController, SLOT(startZStack()));
+		//emit startZStackSig();
+		waitingToStartStack = false;
+		return;
+	}
 
-	zoomStateOK = (qAbs( uiS2ParameterMap[12].getCurrentValue() - currentTileInfo.getTileZoom())<(float) 1)&&
+	zoomStateOK = (qAbs( uiS2ParameterMap[12].getCurrentValue() - currentTileInfo.getTileZoom())<(float) 1) &&
 			( qAbs((int) uiS2ParameterMap[10].getCurrentValue() - currentTileInfo.getTilePixelsX())< 2) &&
 			(qAbs((int) uiS2ParameterMap[11].getCurrentValue() - currentTileInfo.getTilePixelsY())< 2);
 
-
-	bool scanStatusTimedOut = scanStatusWaitCycles >200;
+	bool scanStatusTimedOut = scanStatusWaitCycles > 200;
 
 	if (scanStatusTimedOut){
 		QString sString = currentTileInfo.getTileInfoString().join("\n");
@@ -3577,17 +3198,17 @@ void S2UI::scanStatusHandler(){
 		return;
 	}
 
-	if (!zoomStateOK&&!scanStatusTimedOut){
+	if (!zoomStateOK&&!scanStatusTimedOut)
+	{
 		scanStatusWaitCycles++;
-		if (scanStatusWaitCycles%20 ==0 ){
-			qDebug()<< "scanStatus wait = "<<QString::number((scanStatusWaitCycles*50)/1000);
-		}
+		if (scanStatusWaitCycles%20 ==0 ) qDebug()<< "scanStatus wait = "<<QString::number((scanStatusWaitCycles*50)/1000);
 
 		QTimer::singleShot(50, this, SLOT(scanStatusHandler()));
-
-
-	}else{
-		if (waitingToStartStack){
+	}
+	else
+	{
+		if (waitingToStartStack)
+		{
 			emit eventSignal("startZStack");
 			waitingForFile = 1;
 			QTimer::singleShot(startZStackDelaySB->value(), &myController, SLOT(startZStack()));//
@@ -3661,16 +3282,18 @@ void S2UI::collectZoomStack(){
 
 }
 
-void S2UI::pickTargets(){
-	qDebug()<<"in pickTargets...";
-	if (!havePreview){
+void S2UI::pickTargets()
+{
+	qDebug() << "in pickTargets...";
+	if (!havePreview)
+	{
 		v3d_msg("please collect a preview image");
 		return;
 	}
-	LandmarkList previewTargets =  cb->getLandmark(previewWindow);
+	LandmarkList previewTargets = cb->getLandmark(previewWindow);
 
-
-	if (previewTargets.isEmpty()){
+	if (previewTargets.isEmpty())
+	{
 		v3d_msg("please select a target");
 		return;
 	}

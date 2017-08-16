@@ -2,6 +2,7 @@
 #include <iostream>
 #include <math.h>
 #include <qtimer.h>
+#include "v3d_basicdatatype.h"
 
 using namespace std;
 
@@ -48,6 +49,8 @@ void SimScope::configFakeScope(QStringList initialParam)
 	startLoc.x = x;
 	startLoc.y = y;
 	startLoc.z = z;
+	startLoc.ev_pc1 = cubeSize + 1;
+	startLoc.ev_pc2 = cubeSize + 1;
 
 	this->initFakeScopeParams();
 	emit notifyConfigReady(startLoc, tileLocX, tileLocY);
@@ -83,7 +86,7 @@ void SimScope::initFakeScopeParams()
 	S2SimParameterMap.insert(23, S2Parameter("micronsPerVoltY", "", 0.0, "", "floatderived"));
 
 	float frameDim = float(cubeSize);
-	if (int(cubeSize&2) == 0)
+	if (int(cubeSize)%2 == 0)
 	{
 		S2SimParameterMap[10].setCurrentValue(frameDim + 1);
 		S2SimParameterMap[11].setCurrentValue(frameDim + 1);
@@ -132,12 +135,15 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 
 void SimScope::fakeScopeCrop()
 {
-	unsigned char* cubePtr = new unsigned char[cubeDim[0]*cubeDim[1]*cubeDim[2]];
-	cout << "cube size: " << cubeDim[0]*cubeDim[1]*cubeDim[2] << endl;
+	//cout << "cube size: " << cubeDim[0]*cubeDim[1]*cubeDim[2] << endl;
 	cube1d = this->data1d->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
 	QString num = QString::number(testi);
-	QString saveName = "testCube" + num + ".v3draw";
+	//QString folder = savingPath + "/testCubeSlices/";
+	QString folder = savingPath + "/";
+	QDir().mkpath(folder);
+	/*QString saveName = folder + "/testCube" + num + ".v3draw";
 	cubeFileName = saveName.toAscii();
+	simple_saveimage_wrapper(*S2UIcb, cubeFileName, cube1d, cubeDim, 1);*/
 
 	updatedOriginX = tileOriginX;
 	updatedOriginY = tileOriginY;
@@ -146,36 +152,49 @@ void SimScope::fakeScopeCrop()
 	updatedYstart = tileYstart;
 	updatedYend = tileYend;
 
-	simple_saveimage_wrapper(*S2UIcb, cubeFileName, cube1d, cubeDim, 1);
-	//for (size_t i=0; i<1000; ++i) qDebug() << cube1d[i];
+	Image4DSimple* cube4D = new Image4DSimple;
+	Image4DSimple outputImg;
+	ImagePixelType pixelType = V3D_UINT8;
+	
+	cube4D->setData(cube1d, cubeDim[0], cubeDim[1], cubeDim[2], cubeDim[3], pixelType);
+	int x = round(updatedOriginX);
+	int y = round(updatedOriginY);
+	QString tileX = QString::number(x);
+	QString tileY = QString::number(y);
+	QString filePrefix = folder + "x_" + tileX + "_y_" + tileY + "-ZSeries-";
+	system("pause");
+	save_z_slices(*S2UIcb, cube4D, 1, 1, cubeDim[2], filePrefix);
+
+	S2SimParameterMap[7].setCurrentString(lastImgName);
+	cube1d = nullptr;
 }
 
 void SimScope::updateS2ParamMap()
 {
 	// Note: S2SimParameterMap is only needed in the SimScope->myPosMon route.
+	qDebug() << "fakeScope: lastImgName: " << lastImgName;
 	S2Parameter newX("stageX", "-gmp X 0");
 	newX.setCurrentValue(updatedOriginX);
 	S2SimParameterMap[5] = newX;
-	S2Parameter newY("stageY", "-gmp y 0");
-	newX.setCurrentValue(updatedOriginY);
+	S2Parameter newY("stageY", "-gmp Y 0");
+	newY.setCurrentValue(updatedOriginY);
 	S2SimParameterMap[6] = newY;
 }
-
-//infrastructure to start and stop simscope
-// slot that sets isRunning =False 
-// slot startSimscope that sets isRunning =True and calls runSimScope
-// new attribute bool isRunning
-// new signal called currentS2ParamterMap
 
 void SimScope::fakeScopeSwitch(bool pull)
 {
 	if (pull == true) 
 	{
+		cout << "  ========= fakeScope on ========" << endl;
 		isRunning = true;
 		S2MapEmitter();
 		emit transmitKick();
 	}
-	else if (pull == false) isRunning = false;
+	else if (pull == false) 
+	{
+		cout << "  ========= fakeScope off ========" << endl << endl;
+		isRunning = false;
+	}
 }
 
 void SimScope::gotKicked()
@@ -193,4 +212,89 @@ void SimScope::S2MapEmitter()
 	emit reportToMyPosMon(S2SimParameterMap);
 	if (isRunning == true) QTimer::singleShot(50, this, SLOT(S2MapEmitter()));
 }
+
+bool SimScope::save_z_slices(V3DPluginCallback2& callback, Image4DSimple* subject, V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix)
+{
+    if (!subject || !subject->valid()) return false;
+
+    V3DLONG sz0 = subject->getXDim();
+    V3DLONG sz1 = subject->getYDim();
+    V3DLONG sz2 = subject->getZDim();
+    V3DLONG sz3 = subject->getCDim();
+
+    //copy data
+    V3DLONG sz2_new = ceil(double(endnum-startnum+1) / increment);
+
+    Image4DSimple outImage;
+
+    outImage.createBlankImage(sz0, sz1, 1, sz3, subject->getDatatype());
+    if (!outImage.valid()) return false;
+
+    QString curfile = filenameprefix;
+    V3DLONG k=0, c, pagesz;
+    for (V3DLONG i=startnum, k=0; i<=endnum; i+=increment, ++k)
+    {
+        switch (subject->getDatatype())
+        {
+        case V3D_UINT8:
+            pagesz = sz0 * sz1 * subject->getUnitBytes();
+            for (c=0; c<sz3; c++)
+            {
+                //printf("c=%d i=%d k=%d\n", c, i, k);
+                unsigned char *dst = outImage.getRawDataAtChannel(c);
+                unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
+                memcpy(dst, src, pagesz);
+            }
+            curfile = gen_file_name(filenameprefix, k, sz2_new, ".tif");
+            callback.saveImage(&outImage, (char *)qPrintable(curfile));
+
+            break;
+
+        case V3D_UINT16:
+            pagesz = sz0 * sz1 * subject->getUnitBytes();
+            for (c=0; c<sz3; c++)
+            {
+                unsigned char *dst = outImage.getRawDataAtChannel(c);
+                unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
+                memcpy(dst, src, pagesz);
+            }
+            curfile = gen_file_name(filenameprefix, k, sz2_new, ".v3draw");
+            callback.saveImage(&outImage, (char *)qPrintable(curfile));
+
+            break;
+
+        case V3D_FLOAT32:
+            pagesz = sz0 * sz1 * subject->getUnitBytes();
+            for (c=0; c<sz3; c++)
+            {
+                unsigned char *dst = outImage.getRawDataAtChannel(c);
+                unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
+                memcpy(dst, src, pagesz);
+            }
+            curfile = gen_file_name(filenameprefix, k, sz2_new, ".v3draw");
+            callback.saveImage(&outImage, (char *)qPrintable(curfile));
+            break;
+
+        default: v3d_msg("You should never see this. The data is not returned meaningfully. Check your data and code.");
+            return false;
+            break;
+        }
+    }
+
+    return true;
+}
+
+QString SimScope::gen_file_name(QString prefixstr, V3DLONG k, V3DLONG maxn, QString extstr)
+{
+    QString ks=""; ks.setNum(k); 
+	if (k < 10) ks.prepend("0000");
+    else if (k < 100) ks.prepend("000");
+    else if (k < 1000) ks.prepend("00");
+    else if (k < 10000) ks.prepend("0");
+
+	ks = ks + "_Cycle00001_Ch2_000001.ome";
+	lastImgName = prefixstr + ks + extstr;
+    return (prefixstr + ks + extstr);
+}
+
 

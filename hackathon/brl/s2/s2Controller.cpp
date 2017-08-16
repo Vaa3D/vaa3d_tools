@@ -462,7 +462,7 @@ void S2Controller::posMonListener(QString messageL){
 // -------------------- Simulated Scope block, MK, July 2017 ----------------------------
 void S2Controller::updateFromFakeScope(QMap<int, S2Parameter> s2ParameterMap)
 {
-	cout << "myPosMon response" << endl;
+	cout << " -- myPosMon received signal from fakeScope" << endl;
 	emit newS2Parameter(s2ParameterMap);
 }
 // ----------------- END of [Simulated Scope block, MK, July 2017] ------------------------
@@ -563,7 +563,8 @@ void S2Controller::initROIwithStage(LocationSimple nextLoc, float xStage, float 
 {
     if (mode == offline)
 	{
-		//cout << xStage << " " << yStage << endl;
+		yStage = -yStage;
+		cout << "initROIwithStage received new coodrs: " << xStage << " " << yStage << endl;
 		emit shootFakeScope(nextLoc, xStage, yStage);
 	}
 	else
@@ -656,6 +657,7 @@ void S2Controller::startZStack()
 {
 	if (mode == offline)
 	{
+		cout << "  =====> in s2Controller, notify fakeScope to start cropping image stack." << endl;
 		emit kickFakeScope(true);
 	}
 	else

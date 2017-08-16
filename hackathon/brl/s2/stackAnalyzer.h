@@ -15,6 +15,7 @@ class StackAnalyzer : public QObject
     Q_OBJECT
 public:
     StackAnalyzer(V3DPluginCallback2 &callback);
+	bool offOp;
 
 signals:
     void analysisDone(QList<LandmarkList> newTipsList, LandmarkList newTargets, Image4DSimple* total4DImage_mip, double tileIndex, QString tileSaveString, int tileStatus);

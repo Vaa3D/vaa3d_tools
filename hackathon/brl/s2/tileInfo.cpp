@@ -58,6 +58,7 @@ int TileInfo::setTimeStamp(QDateTime timeNow){
         elapsedTimes.append((float) timeSinceLast);
     }
     timeStampCategory++;
+	qDebug() << "tileTimeLengeth " << tileTimes.length();
 return tileTimes.length();
 }
 

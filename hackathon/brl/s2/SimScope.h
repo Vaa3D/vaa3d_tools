@@ -43,8 +43,14 @@ public:
 	int testi;
 
 	void hookThingsUp();
-	
+	bool save_z_slices(V3DPluginCallback2& callback, Image4DSimple* subject, V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix);
+	QString gen_file_name(QString prefixstr, V3DLONG k, V3DLONG maxn, QString extstr);
+
 private:
+	QString savingPath, cubeSavingPath, swcSavingPath;
+	QString lastImgName;
+	int acqCycleNum;
+
 	V3DPluginCallback2* S2UIcb;
 	VirtualVolume* data1d;
 	V3DLONG wholeImgDim[4];
@@ -62,7 +68,7 @@ private:
 	int simMaxParams;
 
 	void initFakeScopeParams();
-	void updateS2ParamMap();
+	void updateS2ParamMap(); 
 
 private slots:
 	void configFakeScope(QStringList);
