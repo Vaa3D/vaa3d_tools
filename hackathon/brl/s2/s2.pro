@@ -157,6 +157,10 @@ SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager
 SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager/plugins/tiff2D/tiff2D.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/terastitcher/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
 
+macx{
+    LIBS += -L$$VAA3D_DIR/v3d_main/common_lib/lib_mac64 -lv3dtiff
+}
+
 TARGET	= $$qtLibraryTarget(s2)
 DESTDIR	= $$VAA3D_DIR/bin/plugins/s2/
 
