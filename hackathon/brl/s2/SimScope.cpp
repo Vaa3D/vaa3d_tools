@@ -166,7 +166,7 @@ void SimScope::fakeScopeCrop()
 	save_z_slices(*S2UIcb, cube4D, 1, 1, cubeDim[2], filePrefix);
 
 	S2SimParameterMap[7].setCurrentString(lastImgName);
-	cube1d = nullptr;
+    if(cube1d) {delete []cube1d; cube1d = 0;}
 }
 
 void SimScope::updateS2ParamMap()

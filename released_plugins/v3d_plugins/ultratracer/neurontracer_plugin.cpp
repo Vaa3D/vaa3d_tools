@@ -46,7 +46,7 @@ QStringList neurontracer::funclist() const
             <<tr("trace_APP2")
            <<tr("trace_APP2_GD")
           <<tr("trace_MOST")
-         <<tr("trace_NEUTUBE")
+         <<tr("")
         <<tr("trace_SNAKE")
        <<tr("trace_NeuroGPSTree")
       <<tr("trace_TReMAP")
@@ -205,7 +205,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }
-    else if (menu_name == tr("trace_NEUTUBE"))
+    else if (menu_name == tr(""))
     {
         TRACE_LS_PARA P;
         bool bmenu = true;

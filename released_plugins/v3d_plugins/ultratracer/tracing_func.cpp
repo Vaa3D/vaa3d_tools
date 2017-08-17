@@ -13,6 +13,7 @@
 #include "../resample_swc/resampling.h"
 #include "../neuron_image_profiling/profile_swc.h"
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
+//#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 
 
 
@@ -2803,6 +2804,8 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     nt_neutube = readSWC_file(swcNEUTUBE);
 
+
+
 //#if  defined(Q_OS_LINUX)
 //    QString cmd_DL = QString("%1/vaa3d -x prediction_caffe -f Quality_Assess -i %2 -p %3 /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/deploy.prototxt /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/caffenet_train_iter_390000.caffemodel /local4/Data/IVSCC_test/comparison/Caffe_testing_3rd/train_package_4th/imagenet_mean.binaryproto").
 //            arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(swcNEUTUBE.toStdString().c_str());
@@ -3684,7 +3687,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("/").append("scanData.txt");
 
-    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists())
+    if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
 
     QString swcString = saveDirString;
@@ -3788,6 +3791,15 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(nt_neutube.listNeuron.size() ==0)
         return true;
 
+    NeuronTree nt_pruned = pruneswc(nt_neutube, 2);
+    NeuronTree nt_pruned_rs = resample(nt_pruned, 10);
+    QString outfilename = swcNEUTUBE + "_connected.swc";
+    QList<NeuronSWC> newNeuron;
+    connect_swc(nt_pruned_rs,newNeuron,120,120);
+    export_list2file(newNeuron, outfilename, swcNEUTUBE);
+
+
+    nt_neutube = readSWC_file(outfilename);
     NeuronTree nt;
     ifstream ifs_swcString(swcString.toStdString().c_str());
     if(!ifs_swcString)
@@ -3816,6 +3828,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     LandmarkList tip_out;
     LandmarkList tip_in;
 
+    double ratio = 0.1;
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
@@ -3823,8 +3836,8 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             LocationSimple newTip;
             bool check_tip = false;
 
-            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim()
-                   || curr.z < 0.05*  total4DImage->getZDim() || curr.z > 0.95 *  total4DImage->getZDim())
+            if( curr.x < ratio*  total4DImage->getXDim() || curr.x > (1 - ratio) *  total4DImage->getXDim() || curr.y < ratio * total4DImage->getYDim() || curr.y > (1 - ratio)* total4DImage->getYDim()
+                   || curr.z < ratio*  total4DImage->getZDim() || curr.z > (1 - ratio) *  total4DImage->getZDim())
             {
                 newTip.x = curr.x + total4DImage->getOriginX();
                 newTip.y = curr.y + total4DImage->getOriginY();
@@ -3841,22 +3854,22 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 }
             }
             if(check_tip) continue;
-            if( curr.x < 0.05* total4DImage->getXDim())
+            if( curr.x < ratio* total4DImage->getXDim())
             {
                 tip_left.push_back(newTip);
-            }else if (curr.x > 0.95 * total4DImage->getXDim())
+            }else if (curr.x > (1 - ratio) * total4DImage->getXDim())
             {
                 tip_right.push_back(newTip);
-            }else if (curr.y < 0.05 * total4DImage->getYDim())
+            }else if (curr.y < ratio * total4DImage->getYDim())
             {
                 tip_up.push_back(newTip);
-            }else if (curr.y > 0.95*total4DImage->getYDim())
+            }else if (curr.y > (1 - ratio)*total4DImage->getYDim())
             {
                 tip_down.push_back(newTip);
-            }else if (curr.z < 0.05 * total4DImage->getZDim())
+            }else if (curr.z < ratio * total4DImage->getZDim())
             {
                 tip_out.push_back(newTip);
-            }else if (curr.z > 0.95*total4DImage->getZDim())
+            }else if (curr.z > (1 - ratio)*total4DImage->getZDim())
             {
                 tip_in.push_back(newTip);
             }
@@ -3935,7 +3948,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage)
 {
     NeuronTree nt_result;
-    NeuronTree nt_resampled = resample(nt, 10);
+    NeuronTree nt_resampled = nt;//resample(nt, 10);
     QList<NeuronSWC> neuron_sorted;
 
     if (!SortSWC(nt_resampled.listNeuron, neuron_sorted,VOID, 10))  //was 10
