@@ -2133,8 +2133,11 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"sample_size = "<<Sxy<<endl;
         cout<<"image_size = "<<Ws<<endl;
 
-        QString outputfolder = outswc_file + "_finished/";
-        QDir().mkdir(outputfolder);
+        for(double th = 0.5; th < 0.9; th += 0.1)
+        {
+            QString outputfolder = outswc_file + QString("_%1_finished/").arg(th);
+            QDir().mkdir(outputfolder);
+        }
 
         unsigned char * datald = 0;
         V3DLONG *in_zz = 0;
@@ -2175,8 +2178,12 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 V3DLONG xb = ix;
                 V3DLONG xe = xb+Ws-1; if(xe>=N-1) xe = N-1;
 
-                QString  swc_segs = outputfolder + QString("x_%1_y_%2.swc").arg(xb).arg(yb);
-                if(QFileInfo(swc_segs).exists())
+//                QString  swc_segs = outputfolder + QString("x_%1_y_%2.swc").arg(xb).arg(yb);
+//                if(QFileInfo(swc_segs).exists())
+//                    continue;
+
+                QString  swc_segs_check = outswc_file + QString("_0.5_finished/x_%1_y_%2.swc").arg(xb).arg(yb);
+                if(QFileInfo(swc_segs_check).exists())
                     continue;
 
                 unsigned char *blockarea_3D=0;
@@ -2309,30 +2316,34 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //                        S.z  = marklist_3D_pruned.at(i).z;
 //                        marklist_3D_final.push_back(S);
 //                    }
-
-                    NeuronTree nt;
-                    QList <NeuronSWC> & listNeuron = nt.listNeuron;
-                    writeSWC_file(swc_segs,nt);
-                    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+                    for(double th = 0.5; th < 0.9; th += 0.1)
                     {
-                        if(marklist_3D_pruned.at(i).radius >0.995)
+                        QString swc_segs_th = outswc_file + QString("_%1_finished/x_%2_y_%3.swc").arg(th).arg(xb).arg(yb);
+                        NeuronTree nt;
+                        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+                        // writeSWC_file(swc_segs,nt);
+                        for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
                         {
-                            V3DLONG ix = marklist_3D_pruned.at(i).x + xb;
-                            V3DLONG iy = marklist_3D_pruned.at(i).y + yb;
-                            V3DLONG iz = marklist_3D_pruned.at(i).z;
+                            if(marklist_3D_pruned.at(i).radius >th)  //was 0.995
+                            {
+                                V3DLONG ix = marklist_3D_pruned.at(i).x + xb;
+                                V3DLONG iy = marklist_3D_pruned.at(i).y + yb;
+                                V3DLONG iz = marklist_3D_pruned.at(i).z;
 
-                            NeuronSWC n;
-                            n.x = ix-1;
-                            n.y = iy-1;
-                            n.z = iz-1;
-                            n.n = i+1;
-                            n.type = 2;
-                            n.r = marklist_3D_pruned.at(i).radius;
-                            n.pn = -1; //so the first one will be root
-                            listNeuron << n;
+                                NeuronSWC n;
+                                n.x = ix-1;
+                                n.y = iy-1;
+                                n.z = iz-1;
+                                n.n = i+1;
+                                n.type = 2;
+                                n.r = marklist_3D_pruned.at(i).radius;
+                                n.pn = -1; //so the first one will be root
+                                listNeuron << n;
+                            }
                         }
+                        writeSWC_file(swc_segs_th,nt);
+                        nt.listNeuron.clear();
                     }
-                    writeSWC_file(swc_segs,nt);
                 }
                 if(blockarea) {delete []blockarea; blockarea =0;}
                 if(blockarea_3D) {delete []blockarea_3D; blockarea_3D = 0;}
@@ -2340,25 +2351,35 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         }
 
-        QStringList swcList = importFileList_addnumbersort(outputfolder, 1);
-        vector<MyMarker*> outswc;
-        for(V3DLONG i = 0; i < swcList.size(); i++)
+
+        for(double th = 0.5; th < 0.9; th += 0.1)
         {
-
-            QString curPathSWC = swcList.at(i);
-
-            vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
-
-            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            QString outputfolder = outswc_file + QString("_%1_finished/").arg(th);
+            QStringList swcList = importFileList_addnumbersort(outputfolder, 1);
+            vector<MyMarker*> outswc;
+            for(V3DLONG i = 0; i < swcList.size(); i++)
             {
-                outswc.push_back(inputswc[d]);
+
+                QString curPathSWC = swcList.at(i);
+
+                vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
+
+                for(V3DLONG d = 0; d < inputswc.size(); d++)
+                {
+                    outswc.push_back(inputswc[d]);
+                }
+                QDir().remove(curPathSWC);
+
             }
-            QDir().remove(curPathSWC);
+            QString  swc_processed = outswc_file + QString("_%1.swc").arg(th);// + QString("_axon_3D_new.swc");
+            saveSWC_file(swc_processed.toStdString().c_str(), outswc);
+            outswc.clear();
+            QDir().rmdir(outputfolder);
 
         }
-        QString  swc_processed = outswc_file;// + QString("_axon_3D_new.swc");
-        saveSWC_file(swc_processed.toStdString().c_str(), outswc);
-        QDir().rmdir(outputfolder);
+
+
+
 
 //        NeuronTree nt;
 //        QList <NeuronSWC> & listNeuron = nt.listNeuron;
