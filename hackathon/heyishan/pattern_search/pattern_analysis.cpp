@@ -2,6 +2,8 @@
 #include "pre_processing_main.h"
 #include "my_sort.h"
 #include <qstack.h>
+#include<qset.h>
+#include<qqueue.h>
 #ifndef VOID
 #define VOID 1000000000
 #endif
@@ -20,6 +22,39 @@ struct Boundary
     float maxy;
     float maxz;
 };
+
+// pt need be sorted and count node from 0
+void create_AM(int *AM, int siz, const NeuronTree & pt)
+{
+    // initialize adjance matrix
+    for(int i=0; i<siz; i++)
+    {
+        for(int j=0; j<siz; j++)
+            AM[i*siz + j] = 0;
+    }
+    // creat AM
+    for(int i=0; i<siz ; i++)
+    {
+        NeuronSWC cur = pt.listNeuron[i];
+        int p = cur.pn;
+        if( p < 0) continue;
+        AM[i*siz + p-1] = AM[(p-1)*siz+i] = 1;
+        cout<<"[i][j]="<<dec<<i<<" "<<p-1<<endl;
+    }
+    return;
+}
+bool cal_degree(int * degree, int siz, const NeuronTree & pt, const QVector<QVector<V3DLONG> > &childs)
+{
+    for(int i=0; i<siz; i++)
+    {
+        NeuronSWC cur = pt.listNeuron[i];
+        if(cur.pn < 0)
+            degree[i] = childs[i].size();
+        else
+            degree[i] = childs[i].size() + 1;
+    }
+    return true;
+}
 
 bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<int> & pt_lens,V3DPluginCallback2 &callback)
 {
@@ -69,7 +104,6 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
     // push points in v_boundary into v_area;
     vector<NeuronTree> v_area(v_boundary.size());
     vector<NeuronTree> v_area2;
-
    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
    {
        NeuronSWC curr = nt.listNeuron[i];
@@ -95,7 +129,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
        V3DLONG tol_len = 0;
        if(v_area[i].listNeuron.size()<=1) {cout<<"the number of points within this boundary isn't more than 1"<<endl; continue;}
        NeuronTree area_sorted;
-       double sort_thres = 0;
+       double sort_thres = 5;
        area_sorted.listNeuron.clear();
        area_sorted.hashNeuron.clear();
        V3DLONG root_id=v_area[i].listNeuron[0].n;
@@ -109,9 +143,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
        {
            NeuronSWC cur = area_sorted.listNeuron[j];
            if(cur.pn == -1)
-           {
                sublen = 0;
-           }
            sublen += 1;
            if(sublen > max_sublen)
            {
@@ -124,8 +156,10 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
        {
            area_big.listNeuron.push_back(area_sorted.listNeuron[j]);
        }
+       area_big = sort(area_big,VOID,VOID);
        area_big.hashNeuron.clear();
        for(V3DLONG j=0; j<area_big.listNeuron.size();j++){area_big.hashNeuron.insert(area_big.listNeuron[j].n, j);}
+
        // save area for test
        QString savename = "pattern_"+ QString::number(i+1)+".swc";
        writeSWC_file(savename,area_big);
@@ -145,15 +179,10 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
             if (par<0) continue;
             childs[area_big.hashNeuron.value(par)].push_back(j);
         }
-        for(int n=0; n<childs.size();n++)
-        {
-            for(int m=0;m<childs[n].size();m++)
-            {
-                cout<<childs[n][m]<<"   ";
-            }
-            cout <<endl;
-        }
 
+       int mtd = 2;
+       if(mtd==1)
+       {
         // using stack marching caculate lenth from each point k to end point;
         cout<<"using stack marching caculate lenth from each point k to end point;"<<endl;
         for(V3DLONG j=0; j<area_size;j++)
@@ -209,11 +238,64 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
             TreeStack.clear();
             if(state){delete [] state;state=0;}
         }//end j
+
         cout<<"tol_len="<<tol_len<<"  endPointNum="<<endPointNum<<endl;
         v_tol_dist = v_tol_dist + tol_len/endPointNum;
         area_num += 1;
         int area_len = tol_len/endPointNum;
         v_area_len.push_back(area_len);
+       } //mtd == 1
+       if(mtd == 2)
+       {
+           //using BFS find the center of graph
+           cout<<"using BFS the center of graph"<<endl;
+           // creat  Adjacency Matrix of Graph
+           int AM[area_size][area_size];
+           int degree[area_size];
+           int level[area_size];
+           int maxlevel = 0;
+           QSet <int> c;
+           QQueue <int> q;
+           create_AM((int*)AM, area_size, area_big);
+           cal_degree(degree,area_size,area_big,childs);
+
+           // Start from leaves
+           for(int j=0; j<area_size; j++)
+           {
+               level[j] = 0;
+               if(degree[j] == 1)
+                   q.enqueue(j);
+           }
+           while (!q.isEmpty())
+           {
+               int v = q.dequeue();
+               // remove leaf and try to add its parent
+               for(int j=0; j<area_size; j++)
+               {
+                   if(AM[v][j])
+                   {
+                       degree[j] --;
+                       if(degree[j] == 1)
+                       {
+                           q.enqueue(j);
+                           level[j] = level[v] + 1;
+                           maxlevel = (maxlevel>=level[j]) ? maxlevel : level[j];
+                       }
+                   }
+               }// end j
+           }//end while
+           // put center node into c
+           for (int j=0; j<area_size; j++)
+               if(level[i] == maxlevel)
+                   c.insert(i);
+           int diam = 2*maxlevel + c.size() - 1;
+           int rad = (diam + 1) / 2;
+            v_area_len.push_back(rad);
+            area_num+=1;
+            cout<<"rad = "<<rad<<endl;
+            v3d_msg("rad");
+       } //mtd ==2
+
         cout<<"v_tol_dist="<<v_tol_dist<<"  area_num="<<area_num<<endl;
         childs.clear();
    }//end i
@@ -297,20 +379,20 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
   }
   else
   {
-       for(int i=0;i<v_area.size();i++)
+       for(int i=0;i<v_area2.size();i++)
        {
-           if(v_area[i].listNeuron.size()>1)
+           if(v_area2[i].listNeuron.size()>1)
            {
                NeuronTree sorted;
                double dist0=VOID;
-               V3DLONG ind0=v_area[i].listNeuron[0].n;
-               for(V3DLONG j=0;j<v_area[i].listNeuron.size();j++)
+               V3DLONG ind0=v_area2[i].listNeuron[0].n;
+               for(V3DLONG j=0;j<v_area2[i].listNeuron.size();j++)
                {
-                   NeuronSWC p=v_area[i].listNeuron[j];
+                   NeuronSWC p=v_area2[i].listNeuron[j];
                    if(dist0>mhd(p)) {dist0=mhd(p);ind0=j;}
                }
-               V3DLONG root_id=v_area[i].listNeuron[ind0].n;
-               sorted = sort (v_area[i],root_id,VOID);
+               V3DLONG root_id=v_area2[i].listNeuron[ind0].n;
+               sorted = sort (v_area2[i],root_id,VOID);
                pt_list.push_back(sorted);
 //               QString sav = "pattern_aaa"+ QString::number(i+1)+".swc";
 //               writeSWC_file(sav,sorted);
