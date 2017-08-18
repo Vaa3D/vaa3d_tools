@@ -336,7 +336,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     unsigned char* data1d_mask = 0;
     data1d_mask = new unsigned char [stacksz];
     memset(data1d_mask,0,stacksz*sizeof(unsigned char));
-    double margin=2;//by PHC 20170531
+    double margin=3;//by PHC 20170531
     if (PARA.nt.listNeuron.size() > 0)
         ComputemaskImage(PARA.nt, data1d_mask, N, M, P, margin);
     else if (PARA.nt_input.listNeuron.size() > 0)
@@ -486,7 +486,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
         if(localarea) {delete []localarea; localarea = 0;}
         if(p4d) {delete []p4d; p4d = 0;}
         QFile file (swc_name);file.remove();
-        return -1;
+        PARA.listLandmarks.removeAt(markSize-1);
+        return(PARA.listLandmarks.size()==0)? 1 : 0;
     }
     nt = readSWC_file(swc_name);  //why you want to do this? PHC noted 170607
     QFile file (swc_name);file.remove();
@@ -548,7 +549,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
 
 //            printf("(%.2f,%d)\n",angle_j,j);
-            if(angle_j < 100) //this angle is also quite sensitive it seems. by PHC 170608
+            if(angle_j < 120) //this angle is also quite sensitive it seems. by PHC 170608
             {
                 break_id = j;
                 break;
@@ -882,7 +883,7 @@ int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA 
         bool flag =false;
         for(int j = 0; j < file_inmarkers.size();j++)
         {
-            if(NTDIS(file_inmarkers.at(j),vp[i].second) < N/20)
+            if(NTDIS(file_inmarkers.at(j),vp[i].second) < N/15)
             {
                 flag = true;
                 break;
@@ -891,7 +892,7 @@ int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA 
         if(!flag)
             file_inmarkers.push_back(vp[i].second);
 
-        if(file_inmarkers.size()>50)
+        if(file_inmarkers.size()>40)
             break;
     }
     vp.clear();
@@ -899,14 +900,16 @@ int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA 
     for(int i =0; i < file_inmarkers.size();i++)
     {
         LocationSimple p;
-        p.x = file_inmarkers.at(i).x;
-        p.y = file_inmarkers.at(i).y;
-        p.z = file_inmarkers.at(i).z;
+        p.x = file_inmarkers.at(i).x+1;
+        p.y = file_inmarkers.at(i).y+1;
+        p.z = file_inmarkers.at(i).z+1;
         PARA.listLandmarks.push_back(p);
     }
     callback.setLandmark(curwin,PARA.listLandmarks);
     callback.updateImageWindow(curwin);
     callback.pushObjectIn3DWindow(curwin);
+
+  //  PARA.angle_size = 2;
 
     for (;;)
     {
