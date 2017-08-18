@@ -45,12 +45,15 @@ struct input_PARA
 //return 0: exit normally
 //return 1: exit when hit bounadry
 int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+
  
 QStringList line_detector::menulist() const
 {
 	return QStringList() 
         <<tr("GD Curveline")
         <<tr("GD Curveline infinite")
+        <<tr("GD Curve fitting")
         <<tr("about");
 }
 
@@ -81,6 +84,12 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             if (res!=0)
                 break;
         }
+    }
+    else if (menu_name == tr("GD Curve fitting"))
+    {
+        bool bmenu = true;
+        input_PARA PARA;
+        curveFitting_func(callback,parent,PARA,bmenu);
     }
     else
 	{
@@ -296,6 +305,20 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     trace_para.b_estRadii = false;
 
     int markSize = PARA.listLandmarks.size();
+    if (PARA.nt.listNeuron.size() > 0 && PARA.listLandmarks.at(markSize-1).category !=1)
+    {
+        for(V3DLONG i=0; i<PARA.nt.listNeuron.size();i++)
+        {
+            if(NTDIS(PARA.nt.listNeuron.at(i),PARA.listLandmarks.at(markSize-1))<5)
+            {
+                   PARA.listLandmarks.removeAt(markSize-1);
+                   callback.setLandmark(curwin,PARA.listLandmarks);
+                   callback.updateImageWindow(curwin);
+                   callback.pushObjectIn3DWindow(curwin);
+                   return(PARA.listLandmarks.size()==0)? 1 : 0;
+            }
+        }
+    }
     p0.x = PARA.listLandmarks.at(markSize-1).x-1;
     p0.y = PARA.listLandmarks.at(markSize-1).y-1;
     p0.z = PARA.listLandmarks.at(markSize-1).z-1;
@@ -635,6 +658,7 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
                 newmarker.x = curr.x + start_x +1;
                 newmarker.y = curr.y + start_y +1;
                 newmarker.z = curr.z + start_z +1;
+                newmarker.category = 1;
                 PARA.listLandmarks.removeAt(markSize-1);
 
                 double boundary_margin_ratio=0.02;
@@ -754,4 +778,141 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     }
 
     return ((b_boundary || b_darkSegment) && PARA.listLandmarks.size()==0) ? 1 : 0;
+}
+
+int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+{
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,sc,c;
+    V3DLONG in_sz[4];
+    v3dhandle curwin;
+    if(bmenu)
+    {
+        curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return -1;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return -1;
+        }
+
+        data1d = p4DImage->getRawData();
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        sc = p4DImage->getCDim();
+
+        bool ok1;
+
+        if(sc==1)
+        {
+            c=1;
+            ok1=true;
+        }
+        else
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                             "Enter channel NO:",
+                                             1, 1, sc, 1, &ok1);
+        }
+
+        if(!ok1)
+            return -1;
+
+        in_sz[0] = N;
+        in_sz[1] = M;
+        in_sz[2] = P;
+        in_sz[3] = sc;
+
+        PARA.inimg_file = p4DImage->getFileName();
+    }
+    else
+    {
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return -1;
+        }
+        if(PARA.channel < 1 || PARA.channel > in_sz[3])
+        {
+            fprintf (stderr, "Invalid channel number. \n");
+            return -1;
+        }
+        N = in_sz[0];
+        M = in_sz[1];
+        P = in_sz[2];
+        sc = in_sz[3];
+        c = PARA.channel;
+    }
+
+    V3DLONG pagesz = N*M*P;
+    vector<pair<V3DLONG,MyMarker> > vp;
+    vp.reserve(pagesz);
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                MyMarker t;
+                t.x = ix;
+                t.y = iy;
+                t.z = iz;
+                vp.push_back(make_pair(data1d[offsetk+offsetj+ix], t));
+            }
+        }
+    }
+
+    sort(vp.begin(), vp.end());
+    vector<MyMarker> file_inmarkers;
+    file_inmarkers.push_back(vp[vp.size()-1].second);
+    for (size_t i = vp.size()-2 ; i >=0; i--)
+    {
+        bool flag =false;
+        for(int j = 0; j < file_inmarkers.size();j++)
+        {
+            if(NTDIS(file_inmarkers.at(j),vp[i].second) < N/20)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+            file_inmarkers.push_back(vp[i].second);
+
+        if(file_inmarkers.size()>50)
+            break;
+    }
+    vp.clear();
+
+    for(int i =0; i < file_inmarkers.size();i++)
+    {
+        LocationSimple p;
+        p.x = file_inmarkers.at(i).x;
+        p.y = file_inmarkers.at(i).y;
+        p.z = file_inmarkers.at(i).z;
+        PARA.listLandmarks.push_back(p);
+    }
+    callback.setLandmark(curwin,PARA.listLandmarks);
+    callback.updateImageWindow(curwin);
+    callback.pushObjectIn3DWindow(curwin);
+
+    for (;;)
+    {
+        printf("\n\n~~~~~~~~~ Enter again @@@@@@@@@@@@@@@@@@@\n\n");
+        int res = reconstruction_func(callback,parent,PARA,bmenu);
+        if (res!=0)
+            break;
+    }
 }
