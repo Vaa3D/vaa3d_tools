@@ -545,7 +545,7 @@ void S2UI::prepareSimScopeConfig()
 {
 	myStackAnalyzer->offOp = false;
 	cout << "	--> start configuring fakeScope.." << endl;
-#if defined (Q_OS_WIN32)
+//#if defined (Q_OS_WIN32)
 	struct tm* newTime;
 	time_t szClock;
 	time( &szClock );
@@ -580,7 +580,7 @@ void S2UI::prepareSimScopeConfig()
 	QString fileSummary = fakeOutputFolder + "s2Summary.txt";
     saveTextFile1.setFileName(scanFileName);
 	saveTextFile2.setFileName(fileSummary);
-#endif
+//#endif
 
 	myController.mode = offline;
 	QStringList initialParam;
