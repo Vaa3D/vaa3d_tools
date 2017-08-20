@@ -543,6 +543,7 @@ void S2UI::handleGlobalVariables(QList<LandmarkList> newTipsList, LandmarkList n
 // --------------------- This block is for simulated scope related methods, MK, July 2017 -------------------------
 void S2UI::prepareSimScopeConfig()
 {
+	myStackAnalyzer->offOp = false;
 	cout << "	--> start configuring fakeScope.." << endl;
 #if defined (Q_OS_WIN32)
 	struct tm* newTime;
@@ -563,14 +564,15 @@ void S2UI::prepareSimScopeConfig()
 	fakeOutputFolder = fakeOutputFolder + qstr;
 	qDebug() << fakeOutputFolder;
 
-	QString swcOutput = fakeOutputFolder + "/swc/";
+	/*QString swcOutput = fakeOutputFolder + "/swc/";
 	QString cubeOutput = fakeOutputFolder + "/cube/";
 	fakeOutputDir.mkpath(swcOutput);
-	fakeOutputDir.mkpath(cubeOutput);
+	fakeOutputDir.mkpath(cubeOutput);*/
 
+	fakeOutputDir.mkpath(fakeOutputFolder);
 	fakeScope.savingPath = fakeOutputFolder;
-	fakeScope.cubeSavingPath = cubeOutput;
-	fakeScope.swcSavingPath = swcOutput;
+	//fakeScope.cubeSavingPath = cubeOutput;
+	//fakeScope.swcSavingPath = swcOutput;
 
 	QFile saveTextFile1;
 	QFile saveTextFile2;
@@ -611,10 +613,19 @@ void S2UI::fakeScopeSaysReady(LocationSimple startLoc, float tileLocX, float til
 	uiS2ParameterMap[6].setCurrentValue(tileLocY);
 	uiS2ParameterMap[10].setCurrentValue(startLoc.ev_pc1);
 	uiS2ParameterMap[11].setCurrentValue(startLoc.ev_pc2);
+	uiS2ParameterMap[8].setCurrentValue(1.0);
+	uiS2ParameterMap[9].setCurrentValue(1.0);
 	TileInfo firstTile;
 	firstTile.setStageLocation(startLoc);
 	firstTile.setPixelLocation(startLoc);
-	firstTile.setGalvoLocation(startLoc);
+
+	LocationSimple startLocForGalvo;
+	startLocForGalvo.x = 0;
+	startLocForGalvo.y = 0;
+	startLocForGalvo.ev_pc1 = startLoc.ev_pc1;
+	startLocForGalvo.ev_pc2 = startLoc.ev_pc2;
+	firstTile.setGalvoLocation(startLocForGalvo);
+	
 	firstTile.setScanIndex(0);
 	allTargetLocations.append(firstTile);
 	cout << "    ---- startingSmartScan() firstly being called" << endl;
@@ -1811,7 +1822,6 @@ void S2UI::startingSmartScan()
 
 	if (myController.mode == offline)
 	{
-		system("pause");
 		emit eventSignal("startSmartScan");
 		smartScanStatus = 1;
 		waitingForLast = false;
@@ -1880,11 +1890,11 @@ void S2UI::startingSmartScan()
 		}
 	}
 
-    QTextStream summaryTextStream;
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
 	summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
 #endif
 
+	QTextStream summaryTextStream;
 	summaryTextStream.setDevice(&summaryTextFile);
 	summaryTextStream << "s2Scan start time: " << ";" << QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz") << "\n";
 	summaryTextStream << "s2Scan Save Directory: " << ";" << saveDir.absolutePath() << "\n";
@@ -1916,8 +1926,8 @@ void S2UI::startingSmartScan()
 			}
 			else startTileInfo = allTargetLocations[targetIndex];
 
-			totalImagingTime=0.0;
-			totalAnalysisTime=0.0;
+			totalImagingTime = 0.0;
+			totalAnalysisTime = 0.0;
 			scanStartTime = QDateTime::currentDateTime();
 			// add the starting location to the ROI queue:
 			//int v = startTileInfo.setTimeStamp(QDateTime::currentDateTime());
@@ -1963,67 +1973,59 @@ void S2UI::startingSmartScan()
 	//
 }
 
-void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks,  Image4DSimple* mip, double scanIndex, QString tileSaveString, int tileStatus){
-
-
+void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLandmarks, Image4DSimple* mip, double scanIndex, QString tileSaveString, int tileStatus)
+{
 	int incomingTileStatus= tileStatus;
 
-	if (incomingTileStatus!=-1){
-		QTimer::singleShot(0,this, SLOT(processingFinished()));
-		qDebug()<<"back in S2UI with new locations, incoming tilestatus = "<<incomingTileStatus ;
-		status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanIndex)));
-		qDebug()<<QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI "). append(QString::number(scanIndex));
+	if (incomingTileStatus != -1)
+	{
+		QTimer::singleShot(0, this, SLOT(processingFinished()));
+		qDebug() << "back in S2UI with new locations, incoming tilestatus = " << incomingTileStatus;
+		status(QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI ").append(QString::number(scanIndex)));
+		qDebug() << QString("got ").append(QString::number( newLandmarks.length())).append("  new landmarks associated with ROI ").append(QString::number(scanIndex));
 	}
-
-
-
 
 	tileNotes->setText(QString("tracing info : "));
 
 	//  add end-time for analysis of tile scanIndex here
 
-
-
-	for (int i = 0; i<newLandmarks.length(); i++){
-		int incomingX=0;
-		int incomingY=0;
-		if (!newTipsList.value(i).empty()){
+	for (int i = 0; i<newLandmarks.length(); i++)
+	{
+		int incomingX = 0;
+		int incomingY = 0;
+		if (!newTipsList.value(i).empty()) 
+		{
 			incomingX = (int) newLandmarks.value(i).x;
 			incomingY = (int) newLandmarks.value(i).y;
 			TileInfo landmarkTileInfo = TileInfo(zoomPixelsProduct);
 			LocationSimple stageLandmark;
 			stageLandmark.x = newLandmarks[i].mcenter.x; // this is the stage location of the tile that is the PARENT OF THIS TILE!
 			stageLandmark.y = newLandmarks[i].mcenter.y; // this will work fine for the fixed-stage scans because the stage won't move.
-
-
-
+			
 			newLandmarks[i].x = newLandmarks[i].x+((float) newLandmarks[i].ev_pc1)/2.0;// shift incoming landmarks from upper left origin back to the tile center
 			newLandmarks[i].y = newLandmarks[i].y+((float) newLandmarks[i].ev_pc2)/2.0;//  this is the conversion from upper left (image) coordinates used in stackAnalyzer back to center-of-scan coordinates
 
-
-
+			cout << " ======== BACK FROM STACKANALYZER, newLandMarksX = " << newLandmarks[i].x << ", newLandmarksY = " << newLandmarks[i].y << endl; 
 
 			LocationSimple pixelsLandmark = newLandmarks.value(i);   // pixelsLandmark is the tile position in pixels, including the stage information
 
 			// and remove the stage position offset to get the galvo-only position
-
-
-			newLandmarks[i].x =newLandmarks[i].x - (newLandmarks[i].mcenter.x / uiS2ParameterMap[8].getCurrentValue());
-			newLandmarks[i].y = newLandmarks[i].y -(newLandmarks[i].mcenter.y/ uiS2ParameterMap[9].getCurrentValue());
-
-
-			if (stageOnlyCB->isChecked()){  // but for the stage-only scans, we need the stageLandmark to reflect the center of the tile position
+			newLandmarks[i].x = newLandmarks[i].x - (newLandmarks[i].mcenter.x / uiS2ParameterMap[8].getCurrentValue());
+			newLandmarks[i].y = newLandmarks[i].y - (newLandmarks[i].mcenter.y / uiS2ParameterMap[9].getCurrentValue());
+			cout << " ------ new landMarks position after adjusting offest, newLandMarksX = " << newLandmarks[i].x << ", newLandmarksY = " << newLandmarks[i].y << endl; 
+			
+			if (stageOnlyCB->isChecked())
+			{  // but for the stage-only scans, we need the stageLandmark to reflect the center of the tile position
 				// and the galvo position to be zero.
 				stageLandmark.x = pixelsLandmark.x*uiS2ParameterMap[8].getCurrentValue();
 				stageLandmark.y = pixelsLandmark.y*uiS2ParameterMap[9].getCurrentValue();
-				newLandmarks[i].x = 0; //galvo position
+				newLandmarks[i].x = 0; //galvo position (mirror position)
 				newLandmarks[i].y = 0;
 				newLandmarks[i].mcenter.x=stageLandmark.x;
 				newLandmarks[i].mcenter.y=stageLandmark.y;
 			}
-
-
-
+			cout << " ------ new landMarks position after checking stageOnlyCB, newLandMarksXmcenter = " << newLandmarks[i].mcenter.x << ", newLandmarksYmcenter = " << newLandmarks[i].mcenter.y << endl; 
+			
 			landmarkTileInfo.setGalvoLocation(newLandmarks[i]);   // now without stage info
 			landmarkTileInfo.setStageLocation(stageLandmark);   // stage info only, in microns
 			landmarkTileInfo.setPixelLocation(pixelsLandmark);  // pixelsLandmark is the tile position in pixels, including the stage information
@@ -2031,8 +2033,9 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 
 			myMutex.lock(); // if incoming landmarks from different parent tiles get queued out of order, that's OK, as long as allROILocations is unmodified during  append() and isDuplicateROI() methods for one incoming landmark
 
-			if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked()){ // this currently ONLY checks based on pixelLocation.
-				qDebug()<<"NOT duplicate tile "<<scanIndex;
+			if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked())
+			{ // this currently ONLY checks based on pixelLocation.
+				qDebug() << "NOT duplicate tile " << scanIndex;
 
 				int v = landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());  // 1st timestamp is when tile is added to queue
 				allROILocations->append(landmarkTileInfo);
@@ -2042,10 +2045,9 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 				QPen myPen =  QPen(makeQColorFromIndex(10, colorIndex), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
 				roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
 						((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
-			}else{
-
-
-
+			}
+			else
+			{
 				//check for the .v3draw file
 				QString fileFinder;
 				QStringList fileFilter;
@@ -2056,25 +2058,31 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 				fileFilter.clear();
 				// need to check for +/- 4 due to vaguely rounded tile locations.
 
-				for (int jj = incomingX-4; jj<=incomingX+4; jj++){
-					for (int kk = incomingY-4; kk<= incomingY+4; kk++){
+				for (int jj=incomingX-4; jj<=incomingX+4; jj++)
+				{
+					for (int kk=incomingY-4; kk<=incomingY+4; kk++)
+					{
 						fileFinder = QString("x_").append(QString::number(jj)).append("_y_").append(QString::number(kk)).append("*.v3draw");
 						fileFilter.append(fileFinder);
 						fileInfoList = saveDir.entryInfoList(fileFilter);
-						if (!fileInfoList.isEmpty()){
+						if (!fileInfoList.isEmpty())
+						{
 							correctX = jj;
 							correctY = kk;
 							foundIt=true;
 							break;
-						}else{
+						}
+						else
+						{
 							correctX = incomingX;
 							correctY = incomingY;
 						}
 					}
-					if ((foundIt)&((incomingX!=correctX)|(incomingY!=correctY))) {
-						qDebug()<<"original xy location "<<incomingX<<" "<<incomingY<<" final location "<<correctX<<" "<<correctY;
-
-						break;}
+					if ((foundIt)&((incomingX!=correctX)|(incomingY!=correctY))) 
+					{
+						qDebug() << "original xy location " << incomingX << " " << incomingY << " final location " << correctX << " " << correctY;
+						break;
+					}
 					if (foundIt) break;
 				}
 
@@ -2082,12 +2090,12 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 				putativeV3draw = QString("x_").append(QString::number(correctX)).append("_y_").append(QString::number(correctY)).append("*.v3draw");
 				fileFilter.append(putativeV3draw);
 				fileInfoList = saveDir.entryInfoList(fileFilter);
-				if (fileInfoList.isEmpty()){
+				if (fileInfoList.isEmpty())
+				{
 					tileStatus = -1;
 					landmarkTileInfo.setFileString(saveDir.absoluteFilePath("unknownV3DRaw*"));
-				}else{
-					landmarkTileInfo.setFileString(fileInfoList.at(0).absoluteFilePath());
 				}
+				else landmarkTileInfo.setFileString(fileInfoList.at(0).absoluteFilePath());
 				//check for swc file
 				QString putativeSWC;
 				fileFilter.clear();
@@ -2095,44 +2103,40 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 				fileFilter.append(putativeSWC);
 				fileInfoList = saveDir.entryInfoList(fileFilter);
 
-
-				if (fileInfoList.isEmpty()){
+				if (fileInfoList.isEmpty())
+				{
 					//  wait until tracing is done
 					tileNotes->setText(QString("tracing info : waiting for .swc ").append(putativeSWC));
 					tileStatus = -1;
 					emit waitForDuplicate(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY, tracingMethodComboB->currentText());
-					qDebug()<<"waitForDuplicate...";
-				} else if (fileInfoList.at(0).isReadable()){
+					qDebug() << "waitForDuplicate...";
+				} 
+				else if (fileInfoList.at(0).isReadable())
+				{
 					tileStatus = 1;
 					//   tracing is done, .swc is readable, send it back for analysis
 					loadDuplicateTile(landmarkTileInfo, newTipsList.at(i), tileStatus, correctX, correctY);
-				} else{
-					qDebug()<<"SWC file exists but isnt readable "<<fileInfoList.at(0).absoluteFilePath();
+				} 
+				else qDebug() << "SWC file exists but isnt readable " << fileInfoList.at(0).absoluteFilePath();
 
+
+				if (tileStatus !=-1)
+				{
+					qDebug() << "duplicate tile " << scanIndex;
+					qDebug() << QString("dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
 				}
-
-				if (tileStatus !=-1){
-				qDebug()<<"duplicate tile "<<scanIndex;
-				qDebug()<<QString("dup: x=").append(QString::number(incomingX)).append(" y=").append(QString::number(incomingY));
-				}
-
 			}
 			myMutex.unlock();
-
 		}
-
-
 	}
 	//
-	if (incomingTileStatus !=-1){
+	if (incomingTileStatus != -1)
+	{
 		emit loadMIPSignal(scanIndex, mip, tileSaveString);
-		QTimer::singleShot(10,this, SLOT(smartScanHandler()));
+		QTimer::singleShot(10, this, SLOT(smartScanHandler()));
 	}
 
 	myNotes->save();
-
-
-
 }
 
 
@@ -2334,9 +2338,6 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
 }
 
 
-
-
-
 void S2UI::smartScanHandler(){
 	// this method does a bit of flow control for s2scans and is an off-ramp for the deprecated, non-continuous acquisition mode.
 	if (smartScanStatus!=1){
@@ -2411,7 +2412,8 @@ void S2UI::smartScanHandler(){
 	}
 }
 
-void S2UI::s2ROIMonitor(){ // continuous acquisition mode
+void S2UI::s2ROIMonitor()
+{ // continuous acquisition mode
 	
 	if (!runContinuousCB->isChecked()) return;
 
@@ -2439,12 +2441,12 @@ void S2UI::s2ROIMonitor(){ // continuous acquisition mode
 		else moveToROI(nextLocation);
 		
 		TileInfo nextTileInfo = TileInfo(zoomPixelsProduct);
-		if (myController.mode == offline) nextTileInfo.setPixels(fakeScope.S2SimParameterMap[10].getCurrentValue() + 1);
+		if (myController.mode == offline) nextTileInfo.setPixels(fakeScope.S2SimParameterMap[10].getCurrentValue());
 		else nextTileInfo.setPixels((int) nextLocation.getPixelLocation().ev_pc1);
 
 		currentTileInfo = nextTileInfo;
 		QString sString = currentTileInfo.getTileInfoString().join(" _ ");
-		status("currentTileInfo : "+sString);
+		status("currentTileInfo : " + sString);
 		qDebug() << sString;
 		waitingForFile = 1;
 		
@@ -2546,11 +2548,12 @@ void S2UI::moveToROIWithStage(const TileInfo nextROI)
 		// First check the stage position arguments.  Is the move too big?
 		float xDiff = qAbs(xStage - uiS2ParameterMap[5].getCurrentValue());
 		float yDiff = qAbs(yStage + uiS2ParameterMap[6].getCurrentValue());
-		qDebug() << "xDiff = " << xDiff;
-		qDebug() << "yDiff = " << yDiff;
+		qDebug() << "xDiff = " << xDiff << "   xStage: " << xStage;
+		qDebug() << "yDiff = " << yDiff << "   yStage: " << yStage;
+		system("pause");
 		if ((xDiff>2000.0) || (yDiff>2000.0))
 		{
-			qDebug()<<"stage move too large!";
+			qDebug() << "stage move too large!";
 			return;
 		}
 
@@ -2609,10 +2612,12 @@ void S2UI::loadLatest(QString inputString)
 
 			tileLocation.ev_pc1 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
 			tileLocation.ev_pc2 = scanList.value(loadScanNumber).getGalvoLocation().ev_pc1;
-			cout << "tileLocation.ev_pc1 " << tileLocation.ev_pc1 << ", "; 
+			cout << "tileLocation.ev_pc1 " << tileLocation.ev_pc1 << endl; 
 			// outgoing landmarks are shifted to the tile upper left
-			//tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
-			//tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y-((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
+			tileLocation.x = scanList.value(loadScanNumber).getGalvoLocation().x - ((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc1)/2.0;
+			tileLocation.y = scanList.value(loadScanNumber).getGalvoLocation().y - ((float)  scanList.value(loadScanNumber).getGalvoLocation().ev_pc2)/2.0;
+			cout << " ---> examine GalvoLocation().x and .y of scanList: GalvoX = " << scanList.value(loadScanNumber).getGalvoLocation().x << ", GalvoY = " << scanList.value(loadScanNumber).getGalvoLocation().y << endl;
+			
 			// and the stage location is added to the tile landmark
 			tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).getStageLocation().x);
 			tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).getStageLocation().y);
@@ -2620,11 +2625,13 @@ void S2UI::loadLatest(QString inputString)
 			tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
 			tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
 			tileLocation.ave= loadScanNumber;
+			qDebug() << " ----> checking mcenter before sending to myStackAnalyzer: getStageLocation().x = " << tileLocation.mcenter.x << ", getStageLocation().y = " << tileLocation.mcenter.y;
 
 			tileLocation.pixmax = scanList.value(loadScanNumber).getGalvoLocation().pixmax;
 			tileLocation.pixval = scanList.value(loadScanNumber).getGalvoLocation().pixval;
 			qDebug() << "tileLocation.x = " << tileLocation.x;
 			qDebug() << "seedList is empty? " << seedList.isEmpty();
+			system("pause");
 			bool isSoma = loadScanNumber==0;
 			int tileStatus=0;
 
@@ -2675,9 +2682,12 @@ void S2UI::loadLatest(QString inputString)
 				qDebug() << "  == loadLatest: isadaptive = " << isAdaptive;
 				qDebug() << "  == loadLatest: methodChoice = " << methodChoice;
 			
+				myStackAnalyzer->offOp = true;
+
 				emit callSATrace(inputString, overlap, this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(),
 					seedList, tileLocation, fakeScope.savingPath, useGSDTCB->isChecked(), isSoma, isAdaptive, methodChoice, tileStatus);
 			}
+			++loadScanNumber;
 		}
 	}
 	else
@@ -3175,7 +3185,6 @@ void S2UI::scanStatusHandler()
 {
 	if (waitingToStartStack && (myController.mode == offline))
 	{
-		cout << " .. startZStack mark (in scanStatusHandler())" << endl;
 		emit eventSignal("startZStack");
 		waitingForFile = 1;
 		QTimer::singleShot(startZStackDelaySB->value(), &myController, SLOT(startZStack()));
@@ -3336,9 +3345,6 @@ void S2UI::pickTargets()
 	allTargetLocations = targets;
 	emit updateTable(targets,startingROIList);
 }
-
-
-
 
 void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString){
 
@@ -3510,9 +3516,10 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	summaryTextStream<<"average ms between tile starts ;"<<((float) (msTileStartEvents.last()-msTileStartEvents.first()) )/((float) scanList.length()-1)<<"\n";
 
 
-	if ((!mip==0)||(mip->getTotalBytes()==0)){
+	/*if ((!mip==0)||(mip->getTotalBytes()==0)){
 		scaleintensity(mip,0,0,8000,double(0),double(255));
 		scale_img_and_convert28bit(mip, 0, 255) ;
+		qDebug() << "test2";
 		QImage myMIP;
 		int x = mip->getXDim();
 		int y = mip->getYDim();
@@ -3555,9 +3562,9 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 		roiGS->addItem(sequenceNumberText);
 
 
-	}else{
+	}else{*/
 		qDebug()<<"not displaying MIP of area already scanned";
-	}
+	//}
 }
 
 

@@ -51,16 +51,14 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     bool b_dofunc = false;
     if (!p.p4dImage || !p.p4dImage->valid())
     {
-        if (p.inimg_file.isEmpty())
-            return false;
+        if (p.inimg_file.isEmpty()) return false;
         
         b_dofunc = true;
         
         //in this case try to read the image files
         QString infile = p.inimg_file;
         p.p4dImage = callback.loadImage((char *)(qPrintable(infile) ));
-        if (!p.p4dImage || !p.p4dImage->valid())
-            return false;
+        if (!p.p4dImage || !p.p4dImage->valid()) return false;
         else
         {
             p.xc0 = p.yc0 = p.zc0 = 0;
@@ -70,8 +68,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
         
         vector<MyMarker> file_inmarkers; 
-        if(!p.inmarker_file.isEmpty()) 
-            file_inmarkers = readMarker_file(string(qPrintable(p.inmarker_file)));
+        if(!p.inmarker_file.isEmpty()) file_inmarkers = readMarker_file(string(qPrintable(p.inmarker_file)));
 
         LocationSimple t;
         for(int i = 0; i < file_inmarkers.size(); i++)
@@ -86,22 +83,17 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                     v3d_msg("The first marker is invalid.",p.b_menu);
                     return false;
                 }
-                else
-                    continue;
-
+                else continue;
             }
             p.landmarks.push_back(t);
         }
     }
-
-    
 
     if(p.landmarks.size() < 2 && p.b_intensity ==1)
     {
        v3d_msg("You have to select at least two markers if using high intensity background option.",p.b_menu);
        return false;
     }
-
 
     int i;
     list<string>::iterator it;
@@ -129,7 +121,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     tmpstr =  qPrintable( qtstr.setNum(p.yc1).prepend("#yc1 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.zc0).prepend("#zc0 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.zc1).prepend("#zc1 = ") ); infostring.push_back(tmpstr);
-
 
     v3d_msg("start to preprocessing.\n", 0);
     
@@ -160,13 +151,14 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
         else
         {
+			cout << "CHECKPOINT 1" << endl;
+			system("pause");
             if(!subvolumecopy(p4dImageNew,
                               p.p4dImage,
                               p.xc0, p.xc1-p.xc0+1,
                               p.yc0, p.yc1-p.yc0+1,
                               p.zc0, p.zc1-p.zc0+1,
                               p.channel, 1))
-
             return false;
         }
     }
@@ -180,7 +172,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
     V3DLONG in_sz[4] = {p4dImageNew->getXDim(), p4dImageNew->getYDim(), p4dImageNew->getZDim(), 1};
     int datatype = p.p4dImage->getDatatype();
-
 
     int marker_thresh = INF;
     if(p.b_intensity)
@@ -201,8 +192,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
         p.bkg_thresh = (marker_thresh - 10 > p.bkg_thresh) ? marker_thresh - 10 : p.bkg_thresh;
     }
-
-
 
     double dfactor_xy = 1, dfactor_z = 1;
     if(datatype != V3D_UINT8 || in_sz[0]>256 || in_sz[1]>256 || in_sz[2]>256)// && datatype != V3D_UINT16)
@@ -277,7 +266,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                 in_sz[2] = p4dImageNew->getZDim();
                 in_sz[3] = p4dImageNew->getCDim();
             }
-            
         }
     }
     
@@ -340,6 +328,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     if(inmarkers.empty())
     {
         cout<<"Start detecting cellbody"<<endl;
+		cout << "IMAGE DATATYPE: " << datatype << endl;
         switch(datatype)
         {
             case V3D_UINT8:
@@ -548,7 +537,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         else
             outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
               
-        
+        cout << "  CRASH test1" << endl;
         for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
         {
             if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
@@ -570,7 +559,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         double real_thres = 40; //PHC 20121011 //This should be rescaled later for datatypes that are not UINT8
 
         if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
-        
+        cout << "  CRASH test2" << endl;
         V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};
         unsigned char * pOriginalData = (unsigned char *)(p.p4dImage->getRawDataAtChannel(p.channel));
         if(p.b_brightfiled)
@@ -586,8 +575,10 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         {
             case V3D_UINT8:
             {
+				cout << "  CRASH test3" << endl;
                 for(i = 0; i < outswc.size(); i++)
                 {
+					cout << "  CRASH test4" << endl;
                     //printf(" node %ld of %ld.\n", i, outswc.size());
                     outswc[i]->radius = markerRadius(pOriginalData, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
                 }
@@ -624,7 +615,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
         }
         //prepare the output comments for neuron info in the swc file
-        
+       
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         saveSWC_file(outswc_file.toStdString(), outswc, infostring);
@@ -641,9 +632,9 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
             arg.type = "random";std::vector<char*> arg_input_resample;
             std:: string fileName_Qstring(outswc_file.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
-            
             arg_input_resample.push_back(fileName_string);
-            arg.p = (void *) & arg_input_resample; input_resample<< arg;
+            cout << "  CRASH test5" << endl;
+			arg.p = (void *) & arg_input_resample; input_resample<< arg;
             arg.type = "random";std::vector<char*> arg_resample_para; arg_resample_para.push_back("10");arg.p = (void *) & arg_resample_para; input_resample << arg;
             arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
             QString full_plugin_name_resample = "resample_swc";

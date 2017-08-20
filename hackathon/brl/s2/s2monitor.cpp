@@ -9,19 +9,22 @@ S2ScanData::S2ScanData(){
 #endif
 }
 
-void S2ScanData::addNewTile(TileInfo newTileInfo){
+void S2ScanData::addNewTile(TileInfo newTileInfo)
+{
     allTiles.append(newTileInfo);
     s2ScanDir = QFileInfo(newTileInfo.getFileString()).absoluteDir();
     QList<LocationSimple> pixelLocations;
     QList<LocationSimple> galvoLocations;
     QList<long> scanNumbers;
-    for (int i = 0; i<allTiles.length(); i++){
+    for (int i = 0; i<allTiles.length(); i++)
+	{
         pixelLocations.append(allTiles.at(i).getPixelLocation());
         galvoLocations.append(allTiles.at(i).getGalvoLocation());
         scanNumbers.append(allTiles.at(i).getScanIndex());
     }
-    if (allTiles.length()>0) {
-        qDebug()<<"not updating our scan image...";
+    if (allTiles.length()>0) 
+	{
+        qDebug() << "not updating our scan image...";
         //       S2ScanImageUpdater newUpdater;
         // newUpdater.initialize(pixelLocations,galvoLocations,scanNumbers,s2ScanDir);
         //  QTimer::singleShot(10,&newUpdater,SLOT(createScanImage()));

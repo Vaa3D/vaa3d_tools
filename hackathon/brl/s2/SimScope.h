@@ -52,7 +52,7 @@ private:
 	int acqCycleNum;
 
 	V3DPluginCallback2* S2UIcb;
-	VirtualVolume* data1d;
+	VirtualVolume* wholeStack;
 	V3DLONG wholeImgDim[4];
 	V3DLONG cubeDim[4];
 	unsigned char* cube1d;

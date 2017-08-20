@@ -731,8 +731,13 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 		V3DLONG nFrames = fileList.length();
 
         V3DLONG tunits = x*y*nFrames;
-        unsigned short int * total1dData = new unsigned short int [tunits];
-        unsigned short int * total1dData_mip= new unsigned short int [x*y];
+
+		//unsigned short int * total1dData = new unsigned short int [tunits];
+		//unsigned short int * total1dData_mip= new unsigned short int [x*y];
+		
+		unsigned char* total1dData = new unsigned char [tunits]; 
+		unsigned char* total1dData_mip= new unsigned char [x*y];
+        
         for(V3DLONG i=0 ; i<x*y; i++) total1dData_mip[i] = 0;
         V3DLONG totalImageIndex = 0;
         double p_vmax=0;
@@ -800,13 +805,23 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
             }
 			else
 			{
-                Image4DSimple * pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+				// For S2 offline mode, it goes here
+                Image4DSimple* pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
+				/*char* imageName; 
+				imageName = new char [imageDir.absoluteFilePath(fileList[f]).size() + 1];
+				strcpy(imageName, imageDir.absoluteFilePath(fileList[f]).toStdString().c_str());
+				Image4DSimple* pNewImage = cb->loadImage(imageName);*/
                 if (pNewImage->valid())
 				{
-                    unsigned short int * data1d = 0;
-                    data1d = new unsigned short int [x*y];
-                    data1d = (unsigned short int*)pNewImage->getRawData();
-                    for (V3DLONG i = 0; i< (x*y); i++)
+                    //unsigned short int* data1d = 0;
+                    //data1d = new unsigned short int [x*y];
+                    //data1d = (unsigned short int*)pNewImage->getRawData();
+
+					unsigned char* data1d = 0;
+					data1d = new unsigned char [x*y];
+					data1d = (unsigned char*)pNewImage->getRawData();;
+
+                    for (V3DLONG i=0; i<(x*y); i++)
                     {
                         total1dData[totalImageIndex]= data1d[i];
                         if(data1d[i] > p_vmax) p_vmax = data1d[i];
@@ -817,15 +832,28 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
                 }
 				else
 				{
-                    qDebug()<<imageDir.absoluteFilePath(fileList[f])<<" failed!";
+                    qDebug()<<imageDir.absoluteFilePath(fileList[f]) << " failed!";
                 }
             }
         }
 
-        total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
-        total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT16);
-        total4DImage->setOriginX(tileLocation.x);
-        total4DImage->setOriginY(tileLocation.y);
+		if (this->offOp == true)
+		{
+			cout << "Setting total4DImage 8 bit!" << endl;
+			total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT8);
+			//for (int testi=352500; testi<355000; ++testi) qDebug() << total1dData[testi];
+			total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT8);
+			total4DImage->setOriginX(tileLocation.x);
+			total4DImage->setOriginY(tileLocation.y); 
+			//total4DImage->setFileName(imageSaveString.toLatin1().data()); // This is interesting that the name of image has to be given here for offline mode.
+		}
+		else
+		{
+			total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
+			total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT16);
+			total4DImage->setOriginX(tileLocation.x);
+			total4DImage->setOriginY(tileLocation.y);
+		}
 
         if (tileStatus==0)
 		{
@@ -862,40 +890,62 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         // add button to do || nT on mXtls
 
         //convert to 8bit image using 8 shiftnbits
-        unsigned char * total1dData_8bit = 0;
-        try
-        {
-            total1dData_8bit = new unsigned char [tunits];
-        }
-        catch (...)
-        {
-            v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
-            total4DImage_mip->deleteRawDataAndSetPointerToNull();
-            emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
+		if (this->offOp == true)
+		{
+			cout << "   -> PRINT OUT INTENSITIES ON SLICE 140" << endl;
+			for (V3DLONG i=0;i<tunits;i++)
+			{
+				double tmp = double(total1dData[i]); 
+				if (i >= 352500 && i < 355000) cout << tmp << " ";
+			}
+			total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT8); // -> Seems not successfully have values assigned to total4DImage..?
+			/*for (int testi=0; testi<51; ++testi)
+			{
+				for (int testj=0; testj<51; ++testj)
+				{
+					qDebug() << total4DImage->getValueUINT8(testi, testj, 140, 1);
+				}
+			}*/
+			simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(), (unsigned char *)total1dData, mysz, V3D_UINT8);
+		}
+		else
+		{
+			unsigned char * total1dData_8bit = 0;
+			try
+			{
+				total1dData_8bit = new unsigned char [tunits];
+			}
+			catch (...)
+			{
+				v3d_msg("Fail to allocate memory in total1dData_8bit.\n");
+				total4DImage_mip->deleteRawDataAndSetPointerToNull();
+				emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
 
-            return;
-        }
-        double dn = pow(2.0, double(5));
-        for (V3DLONG i=0;i<tunits;i++)
-        {
-            double tmp = (double)(total1dData[i]) / dn;
-            if (tmp>255) total1dData_8bit[i] = 255;
-            else if (tmp<1) total1dData_8bit[i] = 0;
-            else
-                total1dData_8bit[i] = (unsigned char)(tmp);
-        }
+				return;
+			}
+			double dn = pow(2.0, double(5));
+			for (V3DLONG i=0;i<tunits;i++)
+			{
+				double tmp = (double)(total1dData[i]) / dn;
+				if (tmp>255) total1dData_8bit[i] = 255;
+				else if (tmp<1) total1dData_8bit[i] = 0;
+				else
+					total1dData_8bit[i] = (unsigned char)(tmp);
+			}
 
-        total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
-        simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
+			total4DImage->setData((unsigned char*)total1dData_8bit, x, y, nFrames, 1, V3D_UINT8);
+			simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(), (unsigned char *)total1dData_8bit, mysz, V3D_UINT8);
+		}
     }
 	else
 	{ // image file IS readable:
         //START HERE (more or less...)
-
+		
         unsigned char* data1d = 0;
         total4DImage->deleteRawDataAndSetPointerToNull();
         V3DLONG in_sz[4];
         int datatype = 0;
+
         if (!simple_loadimage_wrapper(*cb,imageSaveString.toLatin1().data(), data1d, in_sz, datatype))
         {
             qDebug()<<"unable to load file in stackAnalyzer::startTracing";
@@ -975,7 +1025,6 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     p.b_brightfiled = 0;
     p.b_menu = interrupt; //if set to be "true", v3d_msg window will show up.
 
-
     p.p4dImage = total4DImage;
     p.xc0 = p.yc0 = p.zc0 = 0;
     p.xc1 = p.p4dImage->getXDim()-1;
@@ -983,8 +1032,8 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     p.zc1 = p.p4dImage->getZDim()-1;
     QString versionStr = "v2.621";
 
-    qDebug()<<"starting app2";
-    qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
+    qDebug() << "starting app2";
+    qDebug() << "rootlist size " << QString::number(inputRootList.size());
 
     list<string> infostring;
     string tmpstr; QString qtstr;
@@ -1000,15 +1049,13 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     tmpstr =  qPrintable( qtstr.setNum(p.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
 
-
     LandmarkList imageLandmarks;
-
     if(inputRootList.size() < 1)
     {
-		cout << " === APP2Tracing: inputRootList size = " << inputRootList.size() << endl;
+		cout << " === APP2Tracing: inputRootList size = " << inputRootList.size() << endl; 
 		system("pause");
         p.outswc_file =swcString;
-        proc_app2(*cb, p, versionStr);
+        proc_app2(*cb, p, versionStr); 
     }
     else
     {
@@ -1017,7 +1064,8 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
         maxRootListSize = inputRootList.size();
 
         QList<ImageMarker> seedsToSave;
-        for (int i = 0; i<maxRootListSize; i++){
+        for (int i = 0; i<maxRootListSize; i++)
+		{
             LocationSimple RootNewLocation;
             ImageMarker outputMarker;
             RootNewLocation.x = inputRootList.at(i).x - p.p4dImage->getOriginX();
@@ -1028,7 +1076,6 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
             outputMarker.y = inputRootList.at(i).y - p.p4dImage->getOriginY();
             outputMarker.z = inputRootList.at(i).z - p.p4dImage->getOriginZ();
             seedsToSave.append(outputMarker);
-
         }
         QString markerSaveString;
         markerSaveString = swcString;
@@ -1064,7 +1111,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
                 proc_app2(*cb, p, versionStr);
                 p.landmarks.clear();
                 vector<MyMarker*> inputswc = readSWC_file(p.outswc_file.toStdString());
-                qDebug()<<"ran app2";
+                qDebug() << "ran app2";
                 for(V3DLONG d = 0; d < inputswc.size(); d++)
                 {
                     tileswc_file.push_back(inputswc[d]);
@@ -1169,23 +1216,18 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
         }
     }
 
-    if (!imageLandmarks.isEmpty()){
-        qDebug()<<"set landmark group";
-
-    }
-
-
-
-
+    if (!imageLandmarks.isEmpty()) qDebug() << "set landmark group";
 
     QList<ImageMarker> tipsToSave;
     QString markerSaveString2;
     markerSaveString2 = swcString;
     if (tileStatus==1) markerSaveString2.append("D");
     markerSaveString2.append("final.marker");
-    for (int i =0; i<newTipsList.length(); i++){
+    for (int i=0; i<newTipsList.length(); i++)
+	{
         LandmarkList iList = newTipsList[i];
-        for (int j = 0; j<iList.length();j++){
+        for (int j=0; j<iList.length(); j++)
+		{
             ImageMarker markerIJ;
             markerIJ.x = iList[j].x-p.p4dImage->getOriginX();
             markerIJ.y = iList[j].y-p.p4dImage->getOriginY();
@@ -1197,8 +1239,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     }
     writeMarker_file(markerSaveString2, tipsToSave);
 
-    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave,tileSaveString, tileStatus);
-
+    emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, tileSaveString, tileStatus);
 }
 
 void StackAnalyzer::APP2Tracing_adaptive(Image4DSimple* total4DImage,  Image4DSimple* total4DImage_mip, QString swcString, float overlap, int background, bool interrupt, LandmarkList inputRootList, LocationSimple tileLocation, QString saveDirString, bool useGSDT, bool isSoma, QString tileSaveString, int tileStatus)

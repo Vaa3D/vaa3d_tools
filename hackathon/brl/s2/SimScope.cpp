@@ -14,7 +14,8 @@ void SimScope::hookThingsUp()
 
 void SimScope::configFakeScope(QStringList initialParam)
 {
-	this->data1d = VirtualVolume::instance(initialParam[0].toStdString().c_str());
+	acqCycleNum = 0;
+	this->wholeStack = VirtualVolume::instance(initialParam[0].toStdString().c_str());
 	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
 	float x = inputSeed[0].x - 1;
 	float y = inputSeed[0].y - 1;
@@ -28,10 +29,10 @@ void SimScope::configFakeScope(QStringList initialParam)
 	this->hookThingsUp();
 	this->testi = 0;
 
-	this->wholeImgDim[0] = this->data1d->getDIM_H();
-	this->wholeImgDim[1] = this->data1d->getDIM_V();
-	this->wholeImgDim[2] = this->data1d->getDIM_D();
-	this->wholeImgDim[3] = this->data1d->getDIM_C();
+	this->wholeImgDim[0] = this->wholeStack->getDIM_H();
+	this->wholeImgDim[1] = this->wholeStack->getDIM_V();
+	this->wholeImgDim[2] = this->wholeStack->getDIM_D();
+	this->wholeImgDim[3] = this->wholeStack->getDIM_C();
 
 	float tileLocX, tileLocY;
 	if (int(this->cubeSize)%2 == 0)
@@ -67,13 +68,13 @@ void SimScope::initFakeScopeParams()
 	S2SimParameterMap.insert(5, S2Parameter("stageX", "-gmp X 0")) ; // changing
 	S2SimParameterMap.insert(6, S2Parameter("stageY", "-gmp Y 0")) ; // changing
 	S2SimParameterMap.insert(7, S2Parameter("last image", "-gts recentAcquisitions", 0.0, "", "list")); // changing
-	S2SimParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis")); // fixed as 1
-	S2SimParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis")); // fixed as 1
+	S2SimParameterMap.insert(8, S2Parameter("micronsPerPixelX", "-gts micronsPerPixel XAxis",1.0,"","float")); // fixed as 1
+	S2SimParameterMap.insert(9, S2Parameter("micronsPerPixelY", "-gts micronsPerPixel YAxis",1.0)); // fixed as 1
 	S2SimParameterMap.insert(10, S2Parameter("pixelsPerLine", "-gts pixelsPerLine")); // changing
 	S2SimParameterMap.insert(11, S2Parameter("linesPerFrame", "-gts linesPerFrame")); // changing
 	S2SimParameterMap.insert(12, S2Parameter("opticalZoom", "-gts opticalZoom"));
 	S2SimParameterMap.insert(13, S2Parameter("micronROISizeX", "", 0.0, "", "floatderived"));
-	S2SimParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0, "", "floatderived"));
+	S2SimParameterMap.insert(14, S2Parameter("micronROISizeY", "", 0.0, "", "floatderived"));
 	S2SimParameterMap.insert(15, S2Parameter("maxVoltsX", "-gts maxVoltage XAxis ", 0.0, "float"));
 	S2SimParameterMap.insert(16, S2Parameter("minVoltsX", "-gts minVoltage XAxis ", 0.0, "float"));
 
@@ -135,15 +136,23 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 
 void SimScope::fakeScopeCrop()
 {
-	//cout << "cube size: " << cubeDim[0]*cubeDim[1]*cubeDim[2] << endl;
-	cube1d = this->data1d->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
-	QString num = QString::number(testi);
+	cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
+	cout << wholeStack->getDIM_D() << " " << wholeStack->getDIM_H() << " " << wholeStack->getDIM_V() << endl;
+	cout << "length of cube1d: " << sizeof(cube1d)/8 << endl;
+	cout << "cubeDim: " << cubeDim[0] << " " << cubeDim[1] << " " << cubeDim[2] << " " << cubeDim[3] << endl;
 	//QString folder = savingPath + "/testCubeSlices/";
 	QString folder = savingPath + "/";
 	QDir().mkpath(folder);
-	/*QString saveName = folder + "/testCube" + num + ".v3draw";
-	cubeFileName = saveName.toAscii();
-	simple_saveimage_wrapper(*S2UIcb, cubeFileName, cube1d, cubeDim, 1);*/
+	QString sliceFolder = folder + "tile_" + QString::number(acqCycleNum);
+	QDir().mkpath(sliceFolder);
+	
+	// -- Check if the cube is cropped correctly --
+	QString cubeTest = folder + "cube_" + QString::number(acqCycleNum) + ".v3draw";
+	qDebug() << " fakeScope: image stack name = " << cubeTest;
+	//const char* cubeName = cubeTest.toStdString().c_str(); --> This is really weird, that separate conversion would result in garbage code. Qt bug?
+	//simple_saveimage_wrapper(*S2UIcb, cubeTest.toStdString().c_str(), cube1d, cubeDim, 1);
+	simple_saveimage_wrapper(*S2UIcb, cubeTest.toLatin1().data(), (unsigned char *)cube1d, cubeDim, 1);
+	// ----------> Memory violation occurs here sometimes. Need to take a further look later. (THIS IS SO FUCKED UP!! \_/) 
 
 	updatedOriginX = tileOriginX;
 	updatedOriginY = tileOriginY;
@@ -161,12 +170,14 @@ void SimScope::fakeScopeCrop()
 	int y = round(updatedOriginY);
 	QString tileX = QString::number(x);
 	QString tileY = QString::number(y);
-	QString filePrefix = folder + "x_" + tileX + "_y_" + tileY + "-ZSeries-";
+	QString filePrefix = sliceFolder + "/ZSeries-";
+	
 	system("pause");
 	save_z_slices(*S2UIcb, cube4D, 1, 1, cubeDim[2], filePrefix);
 
 	S2SimParameterMap[7].setCurrentString(lastImgName);
-    if(cube1d) {delete []cube1d; cube1d = 0;}
+	if(cube1d) {delete []cube1d; cube1d = 0;}
+	//if(cube4D) {delete []cube4D; cube4D = 0;}
 }
 
 void SimScope::updateS2ParamMap()
@@ -179,6 +190,7 @@ void SimScope::updateS2ParamMap()
 	S2Parameter newY("stageY", "-gmp Y 0");
 	newY.setCurrentValue(updatedOriginY);
 	S2SimParameterMap[6] = newY;
+	++acqCycleNum;
 }
 
 void SimScope::fakeScopeSwitch(bool pull)
@@ -236,7 +248,7 @@ bool SimScope::save_z_slices(V3DPluginCallback2& callback, Image4DSimple* subjec
     {
         switch (subject->getDatatype())
         {
-        case V3D_UINT8:
+        case V3D_UINT8: 
             pagesz = sz0 * sz1 * subject->getUnitBytes();
             for (c=0; c<sz3; c++)
             {
