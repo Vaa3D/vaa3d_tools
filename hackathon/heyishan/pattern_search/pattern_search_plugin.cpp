@@ -110,6 +110,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         return;
     }
     if(pt_list.size()!=pt_lens.size()) {cout<<"list size is not equal to lens size."<<endl; return;}
+    cout<<"pt_list.size="<<pt_list.size()<<endl;
     for(int v=0;v<pt_list.size();v++)
     {
         NeuronTree pt = pt_list[v];
