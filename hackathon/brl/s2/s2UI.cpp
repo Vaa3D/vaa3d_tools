@@ -1736,7 +1736,7 @@ void S2UI::startingSmartScan()
 		scanDataFileString = saveDir.absolutePath().append("/").append("scanDataGrid.txt");
 		eventLogString = QFileInfo(scanDataFileString).absoluteDir().absolutePath().append(QDir::separator()).append( QFileInfo(scanDataFileString).baseName()).append("eventData.txt");
 
-		status(scanDataFileString);
+        status(scanDataFileString);
 		saveTextFile.setFileName(scanDataFileString);// add currentScanFile
 		if (!saveTextFile.isOpen())
 		{
@@ -1890,11 +1890,12 @@ void S2UI::startingSmartScan()
 		}
 	}
 
+    QTextStream summaryTextStream;
+
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
 	summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
 #endif
 
-	QTextStream summaryTextStream;
 	summaryTextStream.setDevice(&summaryTextFile);
 	summaryTextStream << "s2Scan start time: " << ";" << QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz") << "\n";
 	summaryTextStream << "s2Scan Save Directory: " << ";" << saveDir.absolutePath() << "\n";
