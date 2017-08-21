@@ -172,6 +172,9 @@ private:
 	void status(QString statusM);
 	bool cancelQueue;
 	bool newCommandToSend;
+
+	// MK, SimScope operations, Aug, 2017
+	QString lastImageFileName;
 };
 
 

@@ -463,7 +463,16 @@ void S2Controller::posMonListener(QString messageL){
 void S2Controller::updateFromFakeScope(QMap<int, S2Parameter> s2ParameterMap)
 {
 	cout << " -- myPosMon received signal from fakeScope" << endl;
-	emit newS2Parameter(s2ParameterMap);
+	if (this->lastImageFileName == s2ParameterMap[7].getCurrentString())
+	{
+		cout << "  myPosMon: same image file name, signal declined." << endl;
+	}
+	else
+	{
+		cout << "  myPosMon: image file name differes, passing signal to S2UI." << endl;
+		emit newS2Parameter(s2ParameterMap);
+		this->lastImageFileName = s2ParameterMap[7].getCurrentString();
+	}
 }
 // ----------------- END of [Simulated Scope block, MK, July 2017] ------------------------
 

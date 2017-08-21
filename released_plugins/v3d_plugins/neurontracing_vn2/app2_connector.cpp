@@ -151,8 +151,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         }
         else
         {
-			cout << "CHECKPOINT 1" << endl;
-			system("pause");
             if(!subvolumecopy(p4dImageNew,
                               p.p4dImage,
                               p.xc0, p.xc1-p.xc0+1,
@@ -537,7 +535,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         else
             outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
               
-        cout << "  CRASH test1" << endl;
         for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
         {
             if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
@@ -559,7 +556,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         double real_thres = 40; //PHC 20121011 //This should be rescaled later for datatypes that are not UINT8
 
         if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
-        cout << "  CRASH test2" << endl;
         V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};
         unsigned char * pOriginalData = (unsigned char *)(p.p4dImage->getRawDataAtChannel(p.channel));
         if(p.b_brightfiled)
@@ -575,10 +571,8 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         {
             case V3D_UINT8:
             {
-				cout << "  CRASH test3" << endl;
                 for(i = 0; i < outswc.size(); i++)
                 {
-					cout << "  CRASH test4" << endl;
                     //printf(" node %ld of %ld.\n", i, outswc.size());
                     outswc[i]->radius = markerRadius(pOriginalData, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
                 }
@@ -633,7 +627,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             arg.type = "random";std::vector<char*> arg_input_resample;
             std:: string fileName_Qstring(outswc_file.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
             arg_input_resample.push_back(fileName_string);
-            cout << "  CRASH test5" << endl;
 			arg.p = (void *) & arg_input_resample; input_resample<< arg;
             arg.type = "random";std::vector<char*> arg_resample_para; arg_resample_para.push_back("10");arg.p = (void *) & arg_resample_para; input_resample << arg;
             arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;

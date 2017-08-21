@@ -2339,47 +2339,53 @@ bool S2UI::isDuplicateROI(TileInfo inputTileInfo){
 }
 
 
-void S2UI::smartScanHandler(){
+void S2UI::smartScanHandler()
+{
 	// this method does a bit of flow control for s2scans and is an off-ramp for the deprecated, non-continuous acquisition mode.
-	if (smartScanStatus!=1){
+	if (smartScanStatus!=1)
+	{
 		status("smartScan aborted");
 		//scanNumber = 0;
 		loadScanNumber = 0;
 		saveTextFile.close();
 		summaryTextFile.close();
 		emit processSmartScanSig(scanDataFileString);
-		if (allTargetStatus ==1){
-			QTimer::singleShot(0, this, SLOT(handleAllTargets()));
-		}else{        myEventLogger->processEvents(eventLogString);}
+		if (allTargetStatus == 1) QTimer::singleShot(0, this, SLOT(handleAllTargets()));
+		else myEventLogger->processEvents(eventLogString);
+
 		return;
 	}
-	if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(myScanMonitor->allScanData.last().getAllTileInfo().length()))){//scanNumber is incremented AFTER the tracing results come in
-		if (allTargetStatus !=1){  v3d_msg("Finished with smartscan !",true);}
+	if ((allROILocations->isEmpty())&&(!waitingForLast)&&(scanList.length()==(myScanMonitor->allScanData.last().getAllTileInfo().length())))
+	{//scanNumber is incremented AFTER the tracing results come in
+		if (allTargetStatus != 1) { v3d_msg("Finished with smartscan !", true);}
 		saveTextFile.close();
 		smartScanStatus = 0;
 		emit processSmartScanSig(scanDataFileString);
 		emit eventSignal("finishedSmartScan");
 		myEventLogger->processEvents(eventLogString);
-		if ((allTargetStatus ==1)&&(targetIndex<allTargetLocations.length())){
+		if ((allTargetStatus ==1)&&(targetIndex<allTargetLocations.length()))
+		{
 			QTimer::singleShot(0, this, SLOT(handleAllTargets()));
 			return;
-		}
-
+		} 
 	}
 
 	status(QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs..."));
 	qDebug()<<QString("we now have a total of ").append(QString::number( allROILocations->length())).append(" target ROIs...");
-	for (int i = 0; i<allROILocations->length(); i++){
-		LocationSimple iPixelLoc  = allROILocations->value(i).getPixelLocation();
+	for (int i=0; i<allROILocations->length(); i++)
+	{
+		LocationSimple iPixelLoc = allROILocations->value(i).getPixelLocation();
 		status(QString("x= ").append(QString::number(iPixelLoc.x)).append(" y = ").append(QString::number(iPixelLoc.y)).append(" z= ").append(QString::number(iPixelLoc.z)));
 	}
 
-	if ((!allROILocations->isEmpty()) || (waitingForLast)){
-
-
-		if (runContinuousCB->isChecked()){
+	if ((!allROILocations->isEmpty()) || (waitingForLast))
+	{
+		if (runContinuousCB->isChecked())
+		{
 			qDebug()<<"letting s2ROIMonitor initiate scans";
-		}else{
+		}
+		else
+		{
 			TileInfo nextLocation = allROILocations->first();
 			LandmarkList  nextLandmarkList;
 			if (allTipsList->isEmpty()){
@@ -2421,7 +2427,7 @@ void S2UI::s2ROIMonitor()
 	waitingForLast = allROILocations->length() == 1;
 	if ((!allROILocations->isEmpty()) && (waitingForFile<1))
 	{
-		cout << "~~~~~	" <<  "s2ROIMonitor operations" << endl;
+		cout << "\n~~~~~	" <<  "s2ROIMonitor operations" << endl;
 
 		LandmarkList  nextLandmarkList;
 		if (allTipsList->isEmpty())
@@ -3039,7 +3045,8 @@ void S2UI::startingZStack(){
 	float topEdge =  roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0+ uiS2ParameterMap[6].getCurrentValue();
 
 
-	if (smartScanStatus==1){
+	if (smartScanStatus == 1)
+	{
 		QGraphicsTextItem* sequenceNumberText;
 
 		sequenceNumberText = new QGraphicsTextItem;
@@ -3347,29 +3354,26 @@ void S2UI::pickTargets()
 	emit updateTable(targets,startingROIList);
 }
 
-void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString){
-
+void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString)
+{
 	qDebug()<<"loadMIP";
 
 	if (scanList.isEmpty()) return;
 
 	QTextStream summaryTextStream;
 
-	if (imageNumber==-1){
+	if (imageNumber == -1)
+	{
 		summaryTextStream.setDevice(&summaryTextFile);
-		summaryTextStream<<"@@@@@@@@@@@;@@@@@@@@@@@"<<"\n";
-		summaryTextStream<<"tile number ;"<<imageNumber<<"\n";
-		summaryTextStream<<"double-checked tile "<<tileSaveString<<" at "<<QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz")<<"\n";
-		return;}
-
-
-
+		summaryTextStream << "@@@@@@@@@@@;@@@@@@@@@@@" << "\n";
+		summaryTextStream << "tile number ;" << imageNumber << "\n";
+		summaryTextStream << "double-checked tile "<< tileSaveString << " at " << QDateTime::currentDateTime().toString("yyyy_MM_dd_ddd_hh_mm_ss_zzz") << "\n";
+		return;
+	}
 
 	int v = scanList[imageNumber].setTimeStamp(QDateTime::currentDateTime()); // fourth timestamp when analysis is done.
 	scanList[imageNumber].setScanIndex(imageNumber);
 	//    myScanData->addNewTile(scanList.at(imageNumber)); // this tileInfo is the final data for this tile, so const is ok.
-
-
 
 	myScanMonitor->addNewTile(scanList.at(imageNumber));
 	QDir s2ScanDir = QFileInfo(scanList.at(imageNumber).getFileString()).absoluteDir();
@@ -3387,7 +3391,9 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	long sizex=0;
 	long sizey=0;
 	myScanMonitor->allScanData.last().imagedArea=0;
-	if (myScanMonitor->allScanData.last().allTiles.length()>0) {
+	if (myScanMonitor->allScanData.last().allTiles.length() > 0) 
+	{
+		cout << "here1?" << endl;
 
 		float minx = 1000000.0;
 		float maxx = -1000000.0;
@@ -3456,47 +3462,41 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 			testPainter.drawText( QRectF(imageLocations.at(i).x+30, imageLocations.at(i).y+10, imageLocations.at(i).ev_pc1, imageLocations.at(i).ev_pc2), QString::number(scanNumbers.at(i)));
 		}
 		s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
-
-
-
 	}
-
-
 
 	// append this final tile info to our summary file
 
 	// possibly include some running totals: sum of tile area, scanned area, boundingbox size, total time, total imaging time.
 	summaryTextStream.setDevice(&summaryTextFile);
-	summaryTextStream<<"@@@@@@@@@@@;@@@@@@@@@@@"<<"\n";
-	summaryTextStream<<"tile number ;"<<imageNumber<<"\n";
-	summaryTextStream<<"tile mode ;"<<uiS2ParameterMap[0].getCurrentString()<<"\n";
-	summaryTextStream<<"tile zoom ;"<<uiS2ParameterMap[12].getCurrentValue()<<"\n";
-	summaryTextStream<<"microns per pixel ;"<<uiS2ParameterMap[8].getCurrentValue()<<"\n";
-	summaryTextStream<<"tracing algorithm ;"<<tracingMethodComboB->currentText()<<"\n";
-	summaryTextStream<<"tile filename ;"<<tileSaveString<<"\n";
-	QStringList testOutput =     scanList.value(imageNumber).getTimeStrings();
+	summaryTextStream << "@@@@@@@@@@@;@@@@@@@@@@@" << "\n";
+	summaryTextStream << "tile number ;" << imageNumber << "\n";
+	summaryTextStream << "tile mode ;" << uiS2ParameterMap[0].getCurrentString() << "\n";
+	summaryTextStream << "tile zoom ;" << uiS2ParameterMap[12].getCurrentValue() << "\n";
+	summaryTextStream << "microns per pixel ;" << uiS2ParameterMap[8].getCurrentValue() << "\n";
+	summaryTextStream << "tracing algorithm ;" << tracingMethodComboB->currentText() << "\n";
+	summaryTextStream << "tile filename ;" << tileSaveString << "\n";
+	QStringList testOutput = scanList.value(imageNumber).getTimeStrings();
 
-	for (int ii=0; ii<testOutput.length(); ii++){
+	for (int ii=0; ii<testOutput.length(); ii++)
+	{
 		qDebug()<<testOutput.at(ii);
-		summaryTextStream<<"tile event "<<ii<<" ;"<<testOutput.at(ii)<<"\n";
-
+		summaryTextStream << "tile event " << ii << " ;" << testOutput.at(ii) << "\n";
 	}
 	QList<float> testElapsed = scanList.value(imageNumber).getElapsedTimes();
-	for (int jj =0;jj<testElapsed.length(); jj++){
-		qDebug()<<"elapsed time "<<jj<<" = "<<QString::number(testElapsed.at(jj));
-		summaryTextStream<<"elapsed time "<<jj<<" ;"<< QString::number(testElapsed.at(jj))<<"\n";
+	for (int jj=0; jj<testElapsed.length(); jj++)
+	{
+		qDebug() << "elapsed time " << jj << " = " << QString::number(testElapsed.at(jj));
+		summaryTextStream << "elapsed time " << jj << " ; " << QString::number(testElapsed.at(jj)) << "\n";
 		if (jj==2) totalImagingTime=totalImagingTime+testElapsed.at(jj);
 		if (jj==3) totalAnalysisTime=totalAnalysisTime+testElapsed.at(jj);
 	}
 
 	QList<qint64> msTileStartEvents;
 	msTileStartEvents.clear();
-	for (int kk=0; kk<scanList.length(); kk++){
+	cout << " --> in loadMIP(), scanList.length() = " << scanList.length() << endl;
+	for (int kk=0; kk<scanList.length(); kk++) 
 		msTileStartEvents.append(scanList.at(kk).getTileTimes().at(1).toMSecsSinceEpoch());
-	}
-
-
-
+	system("pause");
 
 	summaryTextStream<<"@@  running totals ;    @@"<<"\n";
 	//  some of these (total imaging time and total analysis time) are based on the tiles that have made it here, whereas others (anything from myScanMonitor) is based on
@@ -3516,8 +3516,7 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	// get the average difference by finding the total time delay between first and last  signals
 	summaryTextStream<<"average ms between tile starts ;"<<((float) (msTileStartEvents.last()-msTileStartEvents.first()) )/((float) scanList.length()-1)<<"\n";
 
-
-	/*if ((!mip==0)||(mip->getTotalBytes()==0)){
+	/*if ((!mip==0)||(mip->getTotalBytes()==0)){ 
 		scaleintensity(mip,0,0,8000,double(0),double(255));
 		scale_img_and_convert28bit(mip, 0, 255) ;
 		qDebug() << "test2";
@@ -3563,8 +3562,8 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 		roiGS->addItem(sequenceNumberText);
 
 
-	}else{*/
-		qDebug()<<"not displaying MIP of area already scanned";
+	}else{*/  
+		qDebug()<<"not displaying MIP of area already scanned"; // temporarily disable MIP displaying
 	//}
 }
 

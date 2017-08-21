@@ -839,7 +839,6 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
 		if (this->offOp == true)
 		{
-			cout << "Setting total4DImage 8 bit!" << endl;
 			total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT8);
 			//for (int testi=352500; testi<355000; ++testi) qDebug() << total1dData[testi];
 			total4DImage_mip->setData((unsigned char*)total1dData_mip, x, y, 1, 1, V3D_UINT8);
@@ -892,20 +891,15 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         //convert to 8bit image using 8 shiftnbits
 		if (this->offOp == true)
 		{
-			cout << "   -> PRINT OUT INTENSITIES ON SLICE 140" << endl;
+			/*cout << "   -> PRINT OUT INTENSITIES ON SLICE 140" << endl;
 			for (V3DLONG i=0;i<tunits;i++)
 			{
 				double tmp = double(total1dData[i]); 
 				if (i >= 352500 && i < 355000) cout << tmp << " ";
-			}
-			total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT8); // -> Seems not successfully have values assigned to total4DImage..?
-			/*for (int testi=0; testi<51; ++testi)
-			{
-				for (int testj=0; testj<51; ++testj)
-				{
-					qDebug() << total4DImage->getValueUINT8(testi, testj, 140, 1);
-				}
 			}*/
+			total4DImage->setData((unsigned char *)total1dData, x, y, nFrames, 0, V3D_UINT8); // -> Only 1 channel for offline operation. Channel variable needs to be set as 0.
+			//cout << "  total4D dimension: " << total4DImage->getXDim() << " " << total4DImage->getYDim() << " " << total4DImage->getZDim() << endl;
+			//cout << "  datatype: " << total4DImage->getDatatype() << ", channels: " << total4DImage->getCDim() << endl;
 			simple_saveimage_wrapper(*cb, imageSaveString.toLatin1().data(), (unsigned char *)total1dData, mysz, V3D_UINT8);
 		}
 		else
