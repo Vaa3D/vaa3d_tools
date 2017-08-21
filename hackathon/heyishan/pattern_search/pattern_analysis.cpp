@@ -415,7 +415,7 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
    int pt_ave_len= int(v_tol_dist/area_num);
    cout<<"pt_ave_len="<<pt_ave_len<<endl;
 
-   if(v_area2.size()>=6)
+   if(v_area2.size()>=10) //could not perform well yet
    {
        // pre_processing
        vector<QString> file_list;

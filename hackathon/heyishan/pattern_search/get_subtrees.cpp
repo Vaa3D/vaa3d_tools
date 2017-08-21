@@ -18,7 +18,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, int bound
         cout<<"Neuron Tree is empty"<<endl;
         return false;
     }
-    double step_radio= 0.4;
+    double step_radio= 0.3;
     int search_step = boundary_length * step_radio;
     //search_step=1;
     if(search_step<2)   search_step=2;
