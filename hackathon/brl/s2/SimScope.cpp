@@ -15,11 +15,7 @@ void SimScope::hookThingsUp()
 void SimScope::configFakeScope(QStringList initialParam)
 {
 	acqCycleNum = 0;
-	//int datatype;
-	//simple_loadimage_wrapper(*S2UIcb, initialParam[0].toStdString().c_str(), this->wholeStack1d, wholeImgDim, datatype);
-	//cout << "DATATYPE FROM simple_loadimage_wrapper: " << datatype << endl;
 	this->wholeStack = VirtualVolume::instance(initialParam[0].toStdString().c_str());
-	inputImageStackName = initialParam[0];
 	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
 	float x = inputSeed[0].x - 1;
 	float y = inputSeed[0].y - 1;
@@ -137,35 +133,16 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 		cubeDim[2] = wholeImgDim[2];
 		cubeDim[3] = wholeImgDim[3];
 	}
-	cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
+	//cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
 }
 
 void SimScope::fakeScopeCrop()
 {
 	unsigned char* cube1d = new unsigned char[cubeDim[0]*cubeDim[1]*cubeDim[2]];
-	//cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
-	Image4DSimple* p4DImage = new Image4DSimple;
-	p4DImage->setFileName(inputImageStackName.toStdString().c_str());
-	wholeStack = VirtualVolume::instance(p4DImage->getFileName());
     cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend+1, tileXstart, tileXend+1, 0, wholeImgDim[2]);
-    /*p4DImage->setData(this->wholeStack1d, wholeImgDim[0], wholeImgDim[1], wholeImgDim[2], wholeImgDim[3], V3D_UINT8);
-	size_t j =0;
-	for(size_t iz=0; iz<=(wholeImgDim[2]-1); ++iz)
-    {
-        size_t offsetk = iz * wholeImgDim[0] * wholeImgDim[1];
-        for(size_t iy=tileYstart; iy<=tileYend; ++iy)
-        {
-            size_t offsetj = iy * wholeImgDim[0];
-            for(size_t ix=tileXstart; ix<=tileXend; ++ix)
-            {
-                cube1d[j] = this->wholeStack1d[offsetk + offsetj + ix];
-                j++;
-            }
-        }
-    }*/
 
 	//cout << wholeStack->getDIM_D() << " " << wholeStack->getDIM_H() << " " << wholeStack->getDIM_V() << endl;
-	cout << "cubeDim: " << cubeDim[0] << " " << cubeDim[1] << " " << cubeDim[2] << " " << cubeDim[3] << endl;
+	//cout << "cubeDim: " << cubeDim[0] << " " << cubeDim[1] << " " << cubeDim[2] << " " << cubeDim[3] << endl;
 	QString folder = savingPath + "/";
 	QDir().mkpath(folder);
 	QString sliceFolder = folder + "tile_" + QString::number(acqCycleNum);
@@ -174,10 +151,8 @@ void SimScope::fakeScopeCrop()
 	// -- Check if the cube is cropped correctly --
 	QString cubeTest = folder + "cube_" + QString::number(acqCycleNum) + ".v3draw";
 	qDebug() << " fakeScope: image stack name = " << cubeTest;
-	//const char* cubeName = cubeTest.toStdString().c_str(); --> This is really weird, that separate conversion would result in garbage code. Qt bug?
-	//simple_saveimage_wrapper(*S2UIcb, cubeTest.toStdString().c_str(), cube1d, cubeDim, 1);
-	simple_saveimage_wrapper(*S2UIcb, cubeTest.toLatin1().data(), (unsigned char *)cube1d, cubeDim, 1);
-	// ----------> Memory violation occurs here sometimes. Need to take a further look later. (THIS IS SO FUCKED UP!! \_/) 
+	const char* cubeName = cubeTest.toStdString().c_str(); //--> This is really weird, that separate conversion would result in garbage code. Qt bug?
+	simple_saveimage_wrapper(*S2UIcb, cubeTest.toStdString().c_str(), cube1d, cubeDim, 1);
 
 	updatedOriginX = tileOriginX;
 	updatedOriginY = tileOriginY;
@@ -203,7 +178,6 @@ void SimScope::fakeScopeCrop()
 
 	S2SimParameterMap[7].setCurrentString(lastImgName);
 	if(cube1d) {delete []cube1d; cube1d = 0;}
-	//if(cube4D) {delete []cube4D; cube4D = 0;}
 }
 
 void SimScope::updateS2ParamMap()

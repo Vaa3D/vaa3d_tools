@@ -3342,8 +3342,6 @@ void S2UI::pickTargets()
 
 void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString)
 {
-	qDebug() << "loadMIP";
-
 	if (scanList.isEmpty()) return;
 
 	QTextStream summaryTextStream;

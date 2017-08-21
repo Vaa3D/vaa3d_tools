@@ -50,14 +50,11 @@ private:
 	QString savingPath, cubeSavingPath, swcSavingPath;
 	QString lastImgName;
 	int acqCycleNum;
-	QString inputImageStackName;
 
 	V3DPluginCallback2* S2UIcb;
 	VirtualVolume* wholeStack;
 	V3DLONG wholeImgDim[4];
 	V3DLONG cubeDim[4];
-	unsigned char* wholeStack1d;
-	//unsigned char* cube1d;
 	float tileOriginX, tileOriginY;
 	float updatedOriginX, updatedOriginY;
 	V3DLONG tileXstart, tileXend, tileYstart, tileYend;
