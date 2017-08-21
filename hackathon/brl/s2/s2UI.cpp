@@ -3508,10 +3508,10 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	if (myController.mode != offline)
 		summaryTextStream << "average ms between tile starts;" << ((float) (msTileStartEvents.last()-msTileStartEvents.first()) )/((float) scanList.length()-1) << "\n";
 
-	/*if ((!mip==0)||(mip->getTotalBytes()==0)){ 
-		scaleintensity(mip,0,0,8000,double(0),double(255));
+	if ((!mip==0) || (mip->getTotalBytes()==0))
+	{ 
+		scaleintensity(mip, 0 , 0 , 8000, double(0), double(255));
 		scale_img_and_convert28bit(mip, 0, 255) ;
-		qDebug() << "test2";
 		QImage myMIP;
 		int x = mip->getXDim();
 		int y = mip->getYDim();
@@ -3524,7 +3524,6 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 				total++;
 			}
 		}
-
 
 		QGraphicsPixmapItem* mipPixmap = new QGraphicsPixmapItem(QPixmap::fromImage(myMIP));
 		float xPixMicrons = scanList.value(imageNumber).getPixelLocation().x*uiS2ParameterMap[8].getCurrentValue();// scanList.value(imageNumber).getGalvoLocation().x*uiS2ParameterMap[8].getCurrentValue()+scanList.value(imageNumber).getStageLocation().x;//
@@ -3539,8 +3538,6 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 		//mipPixmap->acceptHoverEvents();
 		//mipPixmap->setToolTip(scanList.value(imageNumber).getFileString());
 
-
-
 		roiGS->addItem(mipPixmap);
 		QGraphicsTextItem* sequenceNumberText;
 
@@ -3552,11 +3549,11 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 		sequenceNumberText->setZValue(1000);
 		sequenceNumberText->setScale(0.8);
 		roiGS->addItem(sequenceNumberText);
-
-
-	}else{*/  
+	}
+	else
+	{ 
 		qDebug()<<"not displaying MIP of area already scanned"; // temporarily disable MIP displaying
-	//}
+	}
 }
 
 
