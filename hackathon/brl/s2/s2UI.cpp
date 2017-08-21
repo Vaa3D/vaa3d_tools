@@ -384,13 +384,6 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
 
-
-
-
-
-
-
-
 	//communicate with NoteTaker:
 	connect(this, SIGNAL(noteStatus(QString)), myNotes, SLOT(status(QString)));
 
@@ -3482,16 +3475,19 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	}
 
 	QList<qint64> msTileStartEvents;
-	msTileStartEvents.clear();
-	cout << " --> in loadMIP(), scanList.size() = " << scanList.size() << endl;
-	cout << " --> in loadMIP(), scanList.length() = " << scanList.length() << endl;
-	for (int kk=0; kk<scanList.length(); kk++) 
+	if (myController.mode != offline)
 	{
-		cout << "    scanList index: k = " << kk << endl;
-		cout << "    scanList.at(kk).getTileTimes() size: " << scanList.at(kk).getTileTimes().size() << endl;
-		msTileStartEvents.append(scanList.at(kk).getTileTimes().at(1).toMSecsSinceEpoch()); // -> why at(1)? 
+		msTileStartEvents.clear();
+		//cout << " --> in loadMIP(), scanList.size() = " << scanList.size() << endl;
+		//cout << " --> in loadMIP(), scanList.length() = " << scanList.length() << endl;
+	
+		for (int kk=0; kk<scanList.length(); kk++) 
+		{
+			//cout << "    scanList index: k = " << kk << endl;
+			//cout << "    scanList.at(kk).getTileTimes() size: " << scanList.at(kk).getTileTimes().size() << endl;
+			msTileStartEvents.append(scanList.at(kk).getTileTimes().at(1).toMSecsSinceEpoch()); // -> why at(1)? 
+		}
 	}
-	system("pause");
 
 	summaryTextStream<<"@@  running totals ;    @@"<<"\n";
 	//  some of these (total imaging time and total analysis time) are based on the tiles that have made it here, whereas others (anything from myScanMonitor) is based on
@@ -3509,7 +3505,8 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	summaryTextStream<<"ms since start ;" <<  QDateTime::currentDateTime().toMSecsSinceEpoch()-scanStartTime.toMSecsSinceEpoch()<<"\n";
 
 	// get the average difference by finding the total time delay between first and last  signals
-	summaryTextStream<<"average ms between tile starts ;"<<((float) (msTileStartEvents.last()-msTileStartEvents.first()) )/((float) scanList.length()-1)<<"\n";
+	if (myController.mode != offline)
+		summaryTextStream << "average ms between tile starts;" << ((float) (msTileStartEvents.last()-msTileStartEvents.first()) )/((float) scanList.length()-1) << "\n";
 
 	/*if ((!mip==0)||(mip->getTotalBytes()==0)){ 
 		scaleintensity(mip,0,0,8000,double(0),double(255));

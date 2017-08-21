@@ -15,7 +15,11 @@ void SimScope::hookThingsUp()
 void SimScope::configFakeScope(QStringList initialParam)
 {
 	acqCycleNum = 0;
+	//int datatype;
+	//simple_loadimage_wrapper(*S2UIcb, initialParam[0].toStdString().c_str(), this->wholeStack1d, wholeImgDim, datatype);
+	//cout << "DATATYPE FROM simple_loadimage_wrapper: " << datatype << endl;
 	this->wholeStack = VirtualVolume::instance(initialParam[0].toStdString().c_str());
+	inputImageStackName = initialParam[0];
 	QList<ImageMarker> inputSeed = readMarker_file(initialParam[1]);
 	float x = inputSeed[0].x - 1;
 	float y = inputSeed[0].y - 1;
@@ -136,8 +140,29 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 
 void SimScope::fakeScopeCrop()
 {
-	cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
-	cout << wholeStack->getDIM_D() << " " << wholeStack->getDIM_H() << " " << wholeStack->getDIM_V() << endl;
+	unsigned char* cube1d = new unsigned char[cubeDim[0]*cubeDim[1]*cubeDim[2]];
+	//cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
+	Image4DSimple* p4DImage = new Image4DSimple;
+	p4DImage->setFileName(inputImageStackName.toStdString().c_str());
+	wholeStack = VirtualVolume::instance(p4DImage->getFileName());
+    cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
+    /*p4DImage->setData(this->wholeStack1d, wholeImgDim[0], wholeImgDim[1], wholeImgDim[2], wholeImgDim[3], V3D_UINT8);
+	size_t j =0;
+	for(size_t iz=0; iz<=(wholeImgDim[2]-1); ++iz)
+    {
+        size_t offsetk = iz * wholeImgDim[0] * wholeImgDim[1];
+        for(size_t iy=tileYstart; iy<=tileYend; ++iy)
+        {
+            size_t offsetj = iy * wholeImgDim[0];
+            for(size_t ix=tileXstart; ix<=tileXend; ++ix)
+            {
+                cube1d[j] = this->wholeStack1d[offsetk + offsetj + ix];
+                j++;
+            }
+        }
+    }*/
+
+	//cout << wholeStack->getDIM_D() << " " << wholeStack->getDIM_H() << " " << wholeStack->getDIM_V() << endl;
 	cout << "cubeDim: " << cubeDim[0] << " " << cubeDim[1] << " " << cubeDim[2] << " " << cubeDim[3] << endl;
 	QString folder = savingPath + "/";
 	QDir().mkpath(folder);

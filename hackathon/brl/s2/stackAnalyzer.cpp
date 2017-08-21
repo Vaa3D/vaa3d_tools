@@ -144,7 +144,6 @@ void StackAnalyzer::loadGridScan(QString latestString,  LocationSimple tileLocat
             }else{
                 qDebug()<<QString(imageDir.absoluteFilePath(fileList[f])).append(" failed!");
             }
-
         }
 
 
