@@ -1406,9 +1406,7 @@ void S2UI::loadScanFromFile(QString fileString){
 				}
 
 			}
-
 		}
-
 
 		Image4DSimple* total4DImage = new Image4DSimple;
 		total4DImage->setData((unsigned char*)total1dData, x, y, nFrames, 1, V3D_UINT16);
@@ -2382,7 +2380,7 @@ void S2UI::smartScanHandler()
 	{
 		if (runContinuousCB->isChecked())
 		{
-			qDebug()<<"letting s2ROIMonitor initiate scans";
+			qDebug() << "letting s2ROIMonitor initiate scans";
 		}
 		else
 		{
@@ -2460,6 +2458,8 @@ void S2UI::s2ROIMonitor()
 		//qDebug() << QDateTime::currentDateTime();
 		//int v = nextLocation.setTimeStamp(QDateTime::currentDateTime());  // 2nd timestamp when tile is sent to the microscope for imaging
 		//qDebug() << "v: " << v;
+		qDebug() << "In s2ROIMonitor, checking nextLocation: ";
+		qDebug() << "  -- ScanIndex = " << nextLocation.getScanIndex() << ", stageX = " << nextLocation.getStageLocation().x;
 		scanList.append(nextLocation);
 		if (targetIndex < allScanLocations.length()) allScanLocations[targetIndex].append(nextLocation.getPixelLocation());
 		else
@@ -2474,7 +2474,7 @@ void S2UI::s2ROIMonitor()
 		waitingToStartStack = true;
 		emit updateZoom(); // when waitingToStartStack is true, updateZoom will finish by executing a z stack.
 
-		cout << "~~~~~	" << "end of s2ROIMonitor operations" << endl << endl;
+		cout << "~~~~~	" << "END of s2ROIMonitor operations" << endl << endl;
 	}
 
 	if ((gridScanStatus ==1) && (allROILocations->length() == 0))
@@ -3183,11 +3183,7 @@ void S2UI::resetToScanPBCB(){
 	// so start my monitor to see when it's in ready state:
 	centerGalvosPB->click();
 	updateCurrentZoom(tileSizeCB->currentIndex());
-
-
-
 }
-
 
 void S2UI::scanStatusHandler()
 {
@@ -3235,7 +3231,6 @@ void S2UI::scanStatusHandler()
 		}
 	}
 }
-
 
 void S2UI::collectZoomStack(){
 	// collect zoom stack based on the coordinates of the Local 3D View  window.
@@ -3295,8 +3290,6 @@ void S2UI::collectZoomStack(){
 	newTargetTI.setGalvoLocation(newTarget);
 	moveToROI(newTargetTI);
 	updateZoom(); // Bigtime race here!  I need a delayed/conditional move that waits until the zoom status is settled.
-
-
 }
 
 void S2UI::pickTargets()
@@ -3356,7 +3349,7 @@ void S2UI::pickTargets()
 
 void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveString)
 {
-	qDebug()<<"loadMIP";
+	qDebug() << "loadMIP";
 
 	if (scanList.isEmpty()) return;
 
@@ -3393,8 +3386,6 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	myScanMonitor->allScanData.last().imagedArea=0;
 	if (myScanMonitor->allScanData.last().allTiles.length() > 0) 
 	{
-		cout << "here1?" << endl;
-
 		float minx = 1000000.0;
 		float maxx = -1000000.0;
 		float miny = 1000000.0;
@@ -3402,7 +3393,8 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 
 		QList<LocationSimple> imageLocations;
 		myScanMonitor->allScanData.last().totalTileArea=0;
-		for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++){
+		for (int i=0; i<myScanMonitor->allScanData.last().allTiles.length(); i++)
+		{
 			LocationSimple locationi = myScanMonitor->allScanData.last().allTiles.at(i).getPixelLocation();
 			locationi.ev_pc1 = myScanMonitor->allScanData.last().allTiles.at(i).getGalvoLocation().ev_pc1;
 			locationi.ev_pc2 = myScanMonitor->allScanData.last().allTiles.at(i).getGalvoLocation().ev_pc2;
@@ -3416,36 +3408,34 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 			myScanMonitor->allScanData.last().totalTileArea = myScanMonitor->allScanData.last().totalTileArea+ (float) locationi.ev_pc2 * (float) locationi.ev_pc1;
 		}
 
-
-
-		for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++){
+		for (int i=0; i<myScanMonitor->allScanData.last().allTiles.length(); i++)
+		{
 			LocationSimple locationi = myScanMonitor->allScanData.last().allTiles.at(i).getPixelLocation();
 			locationi.x = locationi.x-minx;
 			locationi.y = locationi.y-miny;
 			imageLocations.append(locationi);
 		}
-		s2ScanImage  = QImage(sizex,sizey,QImage::Format_RGB888);
+		s2ScanImage = QImage(sizex,sizey,QImage::Format_RGB888);
 		s2ScanImage.fill(0);
 
-		for (int i = 0; i<imageLocations.length(); i++){
-			for (long k = imageLocations.at(i).x; k< (imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++){
-				for (long j = imageLocations.at(i).y; j< (imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++){
+		for (int i=0; i<imageLocations.length(); i++)
+		{
+			for (long k=imageLocations.at(i).x; k<(imageLocations.at(i).x+imageLocations.at(i).ev_pc1); k++)
+			{
+				for (long j=imageLocations.at(i).y; j<(imageLocations.at(i).y+imageLocations.at(i).ev_pc2); j++)
+				{
 					QRgb pixelValue =  s2ScanImage.pixel(k,j);
 					pixelValue = ((uint) pixelValue ) + (uint) 1;
 					s2ScanImage.setPixel(k,j,pixelValue);
-
-
-
 				}
 			}
 		}
 
-
-
-		for (long imi=0; imi<sizex; imi++){
-			for (long imj=0; imj<sizey; imj++){
+		for (long imi=0; imi<sizex; imi++)
+		{
+			for (long imj=0; imj<sizey; imj++)
+			{
 				int imijpixel =  qBlue( s2ScanImage.pixel(imi, imj));
-
 				if ( imijpixel > 0)  myScanMonitor->allScanData.last().imagedArea++;
 			}
 		}
@@ -3454,11 +3444,11 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 		myScanMonitor->allScanData.last().boundingBoxY=(float) sizey;
 		// all because the stupid qpainter operations involving QFont have to happen in the GUI thread...
 
-
 		QPainter testPainter;
 		testPainter.begin(&s2ScanImage);
 		testPainter.setPen(Qt::yellow);
-		for (int i = 0; i<imageLocations.length(); i++){
+		for (int i=0; i<imageLocations.length(); i++)
+		{
 			testPainter.drawText( QRectF(imageLocations.at(i).x+30, imageLocations.at(i).y+10, imageLocations.at(i).ev_pc1, imageLocations.at(i).ev_pc2), QString::number(scanNumbers.at(i)));
 		}
 		s2ScanImage.save(s2ScanDir.absolutePath().append(QDir::separator()).append("S2Image.tif"));
@@ -3493,9 +3483,14 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 
 	QList<qint64> msTileStartEvents;
 	msTileStartEvents.clear();
+	cout << " --> in loadMIP(), scanList.size() = " << scanList.size() << endl;
 	cout << " --> in loadMIP(), scanList.length() = " << scanList.length() << endl;
 	for (int kk=0; kk<scanList.length(); kk++) 
-		msTileStartEvents.append(scanList.at(kk).getTileTimes().at(1).toMSecsSinceEpoch());
+	{
+		cout << "    scanList index: k = " << kk << endl;
+		cout << "    scanList.at(kk).getTileTimes() size: " << scanList.at(kk).getTileTimes().size() << endl;
+		msTileStartEvents.append(scanList.at(kk).getTileTimes().at(1).toMSecsSinceEpoch()); // -> why at(1)? 
+	}
 	system("pause");
 
 	summaryTextStream<<"@@  running totals ;    @@"<<"\n";

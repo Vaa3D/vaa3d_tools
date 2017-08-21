@@ -200,7 +200,6 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 
 template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, int sz1, int sz2, int cnn_type = 3, int bkg_thresh = 0)
 {
-	cout << "HERE???" << endl;
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 	
 	long tol_sz = sz0 * sz1 * sz2;
