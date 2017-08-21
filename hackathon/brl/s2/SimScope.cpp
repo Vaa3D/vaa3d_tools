@@ -56,6 +56,8 @@ void SimScope::configFakeScope(QStringList initialParam)
 	startLoc.z = z;
 	startLoc.ev_pc1 = cubeSize + 1;
 	startLoc.ev_pc2 = cubeSize + 1;
+	//cout << "  --> SEED: " << endl;
+	//cout << startLoc.x << " " << startLoc.y << " " << startLoc.z << endl;
 
 	this->initFakeScopeParams();
 	emit notifyConfigReady(startLoc, tileLocX, tileLocY);
@@ -111,10 +113,10 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 
 	if (int(cubeSize)%2 == 0)
 	{
-		tileOriginX = x;
+		tileOriginX = x - (cubeSize/2);
 		tileXstart = int(floor(tileOriginX));
 		tileXend = tileXstart + cubeSize;
-		tileOriginY = y;
+		tileOriginY = y - (cubeSize/2);
 		tileYstart = int(floor(tileOriginY));
 		tileYend = tileOriginY + cubeSize;
 		cubeDim[0] = cubeSize + 1;
@@ -135,7 +137,7 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 		cubeDim[2] = wholeImgDim[2];
 		cubeDim[3] = wholeImgDim[3];
 	}
-	//cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
+	cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
 }
 
 void SimScope::fakeScopeCrop()
@@ -145,7 +147,7 @@ void SimScope::fakeScopeCrop()
 	Image4DSimple* p4DImage = new Image4DSimple;
 	p4DImage->setFileName(inputImageStackName.toStdString().c_str());
 	wholeStack = VirtualVolume::instance(p4DImage->getFileName());
-    cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend, tileXstart, tileXend, 0, wholeImgDim[2]-1);
+    cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend+1, tileXstart, tileXend+1, 0, wholeImgDim[2]);
     /*p4DImage->setData(this->wholeStack1d, wholeImgDim[0], wholeImgDim[1], wholeImgDim[2], wholeImgDim[3], V3D_UINT8);
 	size_t j =0;
 	for(size_t iz=0; iz<=(wholeImgDim[2]-1); ++iz)
@@ -196,8 +198,8 @@ void SimScope::fakeScopeCrop()
 	QString filePrefix = sliceFolder + "/ZSeries-";
 	
 	qDebug() << "  fakeScope: lastImageName = " << lastImgName;
-	system("pause");
-	save_z_slices(*S2UIcb, cube4D, 1, 1, cubeDim[2], filePrefix);
+	//system("pause");
+	save_z_slices(*S2UIcb, cube4D, 0, 1, cubeDim[2]-1, filePrefix);
 
 	S2SimParameterMap[7].setCurrentString(lastImgName);
 	if(cube1d) {delete []cube1d; cube1d = 0;}

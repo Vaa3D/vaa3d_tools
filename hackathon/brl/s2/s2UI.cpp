@@ -269,7 +269,6 @@ void S2UI::hookUpSignalsAndSlots(){
 	connect(this, SIGNAL(moveToNext(LocationSimple)), &myController, SLOT(initROI(LocationSimple)));
 	connect(this, SIGNAL(moveToNextWithStage(LocationSimple,float,float)), &myController, SLOT(initROIwithStage(LocationSimple,float,float)));
 
-
 	connect(startSmartScanPB, SIGNAL(clicked()), this, SLOT(startingSmartScan()));
 	connect(collectOverviewPushButton, SIGNAL(clicked()),this, SLOT(collectOverview()));
 	connect(collectOverviewPushButton, SIGNAL(clicked()),&myController, SLOT(overviewSetup()));
@@ -1096,7 +1095,8 @@ QGroupBox *S2UI::createROIControls(){
 	return gROIBox;
 }
 
-QGroupBox *S2UI::createSimulator(){
+QGroupBox *S2UI::createSimulator()
+{
    QGroupBox *gSimulator = new QGroupBox(tr("&Simulator"));
    // gSimulator->setCheckable(true);
    // gSimulator->setChecked(true);
@@ -2550,7 +2550,7 @@ void S2UI::moveToROIWithStage(const TileInfo nextROI)
 		float yDiff = qAbs(yStage + uiS2ParameterMap[6].getCurrentValue());
 		qDebug() << "xDiff = " << xDiff << "   xStage: " << xStage;
 		qDebug() << "yDiff = " << yDiff << "   yStage: " << yStage;
-		system("pause");
+		//system("pause");
 		if ((xDiff>2000.0) || (yDiff>2000.0))
 		{
 			qDebug() << "stage move too large!";
@@ -2631,7 +2631,7 @@ void S2UI::loadLatest(QString inputString)
 			tileLocation.pixval = scanList.value(loadScanNumber).getGalvoLocation().pixval;
 			qDebug() << "tileLocation.x = " << tileLocation.x;
 			qDebug() << "seedList is empty? " << seedList.isEmpty();
-			system("pause");
+			//system("pause");
 			bool isSoma = loadScanNumber==0;
 			int tileStatus=0;
 

@@ -696,7 +696,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 
     qDebug() << "  -> APP2: swcString = " << swcString;
     qDebug() << "  -> APP2: imageSaveString = " << imageSaveString;
-	system("pause");
+	//system("pause");
     //TEST
    // imageSaveString = latestString;
 
@@ -1046,7 +1046,7 @@ void StackAnalyzer::APP2Tracing(Image4DSimple* total4DImage, Image4DSimple* tota
     if(inputRootList.size() < 1)
     {
 		cout << " === APP2Tracing: inputRootList size = " << inputRootList.size() << endl; 
-		system("pause");
+		//system("pause");
         p.outswc_file =swcString;
         proc_app2(*cb, p, versionStr); 
     }
