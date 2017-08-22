@@ -1,6 +1,7 @@
 #include "assemble_neuron_live_dialog.h"
 #include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-#include "VirtualVolume.h"
+#include "CPlugin.h"
+#include "CVolume.h"
 
 
 #include <map>
@@ -1039,7 +1040,7 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
         if(terafly_folder.isEmpty())
             return;
         else
-            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());       
+            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
     }
 
     if(!dataTerafly)

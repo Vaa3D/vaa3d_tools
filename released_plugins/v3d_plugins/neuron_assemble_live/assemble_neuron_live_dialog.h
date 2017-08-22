@@ -5,7 +5,8 @@
 #include <QtGui>
 #include "v3d_interface.h"
 #include <map>
-#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "CVolume.h"
+
 
 
 #define WINNAME_ASSEM "assemble_swc_file"

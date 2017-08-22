@@ -3,9 +3,15 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../
+QT_PATH = $$dirname(QMAKE_QMAKE)/..
+
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
-
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/v3d
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/3drenderer
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/basic_c_fun/customary_structs
+INCLUDEPATH     += $$VAA3DPATH/v3d_main
+INCLUDEPATH     += $$QT_PATH/demos/shared
 
 macx{
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
@@ -19,6 +25,10 @@ win32 {
     }
 }
 
+unix {
+INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include/hdf5
+LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_unix64 -lhdf5 -lszip -lz -ldl
+}
 
 HEADERS	+= assemble_neuron_live_plugin.h \
         openSWCDialog.h \
@@ -28,7 +38,6 @@ SOURCES	+= assemble_neuron_live_plugin.cpp \
     assemble_neuron_live_dialog.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
-
 SOURCES	+= ../neurontracing_vn2/app2/my_surf_objs.cpp
 
 INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/3rdparty
@@ -39,6 +48,8 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager
 INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/stitcher
 INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager
 INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/common
+INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/control
+INCLUDEPATH += $$VAA3DPATH/v3d_main/terafly/src/presentation
 
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/3rdparty/tinyxml/tinyxml.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/3rdparty/tinyxml/tinystr.h
@@ -70,7 +81,6 @@ HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/volumeman
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/imBlock.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/dirent_win.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/IM_config.h
-#HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/ProgressBar.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/RawFmtMngr.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/RawVolume.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/SimpleVolume.h
@@ -111,7 +121,6 @@ SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmVirtual
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/volumemanager.config.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/imBlock.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/IM_config.cpp
-#SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/imProgressBar.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/RawFmtMngr.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/RawVolume.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/SimpleVolume.cpp
