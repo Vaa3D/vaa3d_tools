@@ -1,6 +1,6 @@
 #include "assemble_neuron_live_dialog.h"
 #include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-#include "../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "VirtualVolume.h"
 
 
 #include <map>
