@@ -1125,6 +1125,8 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
 
 void assemble_neuron_live_dialog::findTips()
 {
+//    terafly::PluginInterface aa;
+//    aa.getPath(5);
     QSettings settings("HHMI", "Vaa3D");
     if(!dataTerafly)
     {

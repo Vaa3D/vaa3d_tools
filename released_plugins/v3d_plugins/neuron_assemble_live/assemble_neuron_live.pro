@@ -14,6 +14,8 @@ INCLUDEPATH     += $$VAA3DPATH/v3d_main
 INCLUDEPATH     += $$QT_PATH/demos/shared
 
 macx{
+    INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include/hdf5
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lhdf5 -lszip -lz
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
 }
 
@@ -78,6 +80,8 @@ HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmStacked
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmVirtualStack.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmVirtualVolume.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/volumemanager.config.h
+HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmCacheManager.h
+
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/imBlock.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/dirent_win.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/IM_config.h
@@ -94,6 +98,11 @@ HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/TiledVolum
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/TimeSeries.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/VirtualFmtMngr.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/VirtualVolume.h
+HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/IMS_HDF5Mngr.h
+HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/UnstitchedVolume.h
+HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/BDVVolume.h
+HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/HDF5Mngr.h
+
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/3rdparty/tinyxml/tinyxml.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/3rdparty/tinyxml/tinystr.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/3rdparty/tinyxml/tinyxmlerror.cpp
@@ -119,6 +128,8 @@ SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmStacked
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmVirtualStack.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmVirtualVolume.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/volumemanager.config.cpp
+SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/volumemanager/vmCacheManager.cpp
+
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/imBlock.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/IM_config.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/RawFmtMngr.cpp
@@ -134,11 +145,14 @@ SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/TiledVolum
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/TimeSeries.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/VirtualFmtMngr.cpp
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/VirtualVolume.cpp
+SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/IMS_HDF5Mngr.cpp
+SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/UnstitchedVolume.cpp
+SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/BDVVolume.cpp
+SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/imagemanager/HDF5Mngr.cpp
 
 #setup TeraStitcher I/O plugins
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/iomanager/plugins/exampleplugin2D/exampleplugin2D.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/iomanager/plugins/IMS_HDF5/IMS_HDF5.h
-#HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/iomanager/plugins/opencv2D/opencv2D.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/iomanager/plugins/tiff2D/tiff2D.h
 HEADERS += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/iomanager/plugins/tiff3D/tiff3D.h
 SOURCES += $$VAA3DPATH/v3d_main/terafly/src/terarepo/src/iomanager/plugins/exampleplugin2D/exampleplugin2D.cpp
