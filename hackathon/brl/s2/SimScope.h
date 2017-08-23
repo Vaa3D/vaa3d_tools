@@ -39,8 +39,9 @@ public:
 	V3DLONG cubeSize;
 	int bkgThres;
 	float overlap;
+	int zSecNum;
+	int zCoord;
 	LocationSimple location;
-	int testi;
 
 	void hookThingsUp();
 	bool save_z_slices(V3DPluginCallback2& callback, Image4DSimple* subject, V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix);

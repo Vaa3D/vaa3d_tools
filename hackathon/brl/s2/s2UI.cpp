@@ -369,11 +369,6 @@ void S2UI::hookUpSignalsAndSlots(){
 
 
 
-
-
-
-
-
 // communicate with my swc file monitor
 	connect(this,SIGNAL(waitForDuplicate(TileInfo,LandmarkList,int,int,int,QString)),myTileInfoMonitor,SLOT(addTileData(TileInfo,LandmarkList,int,int,int,QString)));
 	connect(myTileInfoMonitor,SIGNAL(foundTile(TileInfo,LandmarkList,int,int,int)),this, SLOT(loadDuplicateTile(TileInfo,LandmarkList,int,int,int)));
@@ -407,7 +402,8 @@ void S2UI::createTargetList(){
 
 */
 
-void S2UI::initializeROISizes(){
+void S2UI::initializeROISizes()
+{
 	tileSizeChoices = new QList<TileInfo>;
 	TileInfo myTileInfo = TileInfo(zoomPixelsProduct);
 	myTileInfo.setZoomPos(1);
@@ -431,11 +427,10 @@ void S2UI::initializeROISizes(){
 	tileSizeChoices->append(myTileInfo);
 	myTileInfo.setZoomPos(32);
 	tileSizeChoices->append(myTileInfo);
-
 }
 
-
-QGroupBox *S2UI::createROIMonitor(){
+QGroupBox *S2UI::createROIMonitor()
+{
 	roiGroupBox = new QGroupBox(tr("ROI Monitor"));
 	gl = new QGridLayout();
 	roiGS = new QGraphicsScene();
@@ -456,8 +451,6 @@ QGroupBox *S2UI::createROIMonitor(){
 	gl->addWidget(roiGV,0,0,5,4);
 	roiClearPB = new QPushButton(tr("clear ROIs"));
 
-
-
 	gl->addWidget(roiClearPB, 5,0);
 
 	zoomSlider = new QSlider();
@@ -468,12 +461,12 @@ QGroupBox *S2UI::createROIMonitor(){
 
 	gl->addWidget(zoomSlider,5,1);
 
-
 	roiGroupBox->setLayout(gl);
 	return roiGroupBox;
 }
 
-void S2UI::updateROIPlot(QString ignore){
+void S2UI::updateROIPlot(QString ignore)
+{
 	//roiRect.moveLeft(roiXEdit->text().toFloat());
 	//roiRect.setY(roiYEdit->text().toFloat());
 	//qDebug()<<"y="<<roiYEdit->text().toFloat();
@@ -483,14 +476,12 @@ void S2UI::updateROIPlot(QString ignore){
 	newRect =  roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen(Qt::blue));
 
 	//newRect =  roiGS->addRect(uiS2ParameterMap[1].getCurrentValue()*10,uiS2ParameterMap[2].getCurrentValue()*10,uiS2ParameterMap[13].getCurrentValue(),uiS2ParameterMap[14].getCurrentValue());
-
-
 	//this value for x and y stage is correct (i.e. it moves to the right location in the sample as the microscope galvo or stage changes.
 	//however, the x position of the overview tile location is mirrored in x about the stage x = 0 axis.  this error propagates into subsequent locations some of the time!
-
 }
 
-void S2UI::updateGVZoom(int sliderValue){
+void S2UI::updateGVZoom(int sliderValue)
+{
 	qreal xyscale =1.0;
 	xyscale = qreal( sliderValue) / 50.0;
 	QTransform newTransform;
@@ -499,13 +490,15 @@ void S2UI::updateGVZoom(int sliderValue){
 	roiGV->setTransform(newTransform);
 }
 
-void S2UI::resetDirectory(){
+void S2UI::resetDirectory()
+{
 	resetDir = true;
 	updateLocalRemote(isLocal);
 }
 
 
-void S2UI::resetDataDir(){
+void S2UI::resetDataDir()
+{
 	QSettings settings("HHMI", "Vaa3D");
 
 	QString localDataString = QFileDialog::getExistingDirectory(this, tr("Choose local data directory..."),
@@ -592,6 +585,8 @@ void S2UI::prepareSimScopeConfig()
 	initialParam.push_back(overlap);
 	QString bkg = backgroundEdit->text();
 	initialParam.push_back(bkg);
+	QString zSection = zSectionEdit->text();
+	initialParam.push_back(zSection);
 
 	fakeScope.S2UIcb = cb;	
 	emit initImaginaryScope(initialParam);
@@ -1115,7 +1110,10 @@ QGroupBox *S2UI::createSimulator()
 	sizeLabel->setBuddy(sizeEdit);
 	sizeEdit->setObjectName("sizeX");
 
-	QLabel* zSectionLabel = new QLabel(tr("z section"));
+	QLabel* zSectionLabel = new QLabel(tr("Thickness = "));
+	zSectionEdit = new QLineEdit("200");
+	zSectionLabel->setBuddy(zSectionEdit);
+	zSectionEdit->setObjectName("thinkness");
 
 	QLabel *overlapLabel = new QLabel(tr("Overlap ="));
 	overlapEdit = new QLineEdit("0.05");
@@ -1131,18 +1129,19 @@ QGroupBox *S2UI::createSimulator()
 
 	QGridLayout *glROI = new QGridLayout;
 
-	glROI->addWidget(tracingMethodComboCLabel, 4, 0);
-	glROI->addWidget(tracingMethodComboC, 4, 1);
+	glROI->addWidget(tracingMethodComboCLabel, 5, 0);
+	glROI->addWidget(tracingMethodComboC, 5, 1);
 
-	glROI->addWidget(tracePB, 5, 0, 1, 2);
+	glROI->addWidget(tracePB, 6, 0, 1, 2);
 	glROI->addWidget(sizeLabel, 1, 0);
 	glROI->addWidget(sizeEdit, 1, 1);
-	glROI->addWidget(overlapLabel, 2, 0);
-	glROI->addWidget(overlapEdit, 2, 1);
-	glROI->addWidget(backgroundLabel, 3, 0);
-	glROI->addWidget(backgroundEdit, 3, 1);
+	glROI->addWidget(overlapLabel, 3, 0);
+	glROI->addWidget(overlapEdit, 3, 1);
+	glROI->addWidget(backgroundLabel, 4, 0);
+	glROI->addWidget(backgroundEdit, 4, 1);
 
-	glROI->addWidget(zSectionLabel, 5, 0);
+	glROI->addWidget(zSectionLabel, 2, 0);
+	glROI->addWidget(zSectionEdit, 2, 1);
 
 	gSimulator->setLayout(glROI);
 

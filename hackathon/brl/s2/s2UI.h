@@ -458,6 +458,7 @@ private:
 	QLineEdit *sizeEdit;
 	QLineEdit *overlapEdit;
 	QLineEdit *backgroundEdit;
+	QLineEdit* zSectionEdit;
 
 
 	QSpinBox *overlapSpinBox;

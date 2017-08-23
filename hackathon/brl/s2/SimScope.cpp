@@ -23,11 +23,12 @@ void SimScope::configFakeScope(QStringList initialParam)
 	this->location.x = x;
 	this->location.y = y;
 	this->location.z = z;
+	this->zCoord = int(floor(z));
 	this->cubeSize = initialParam[2].toInt();
 	this->overlap = initialParam[3].toFloat();
 	this->bkgThres = initialParam[4].toInt();
+	this->zSecNum = initialParam[5].toInt();
 	this->hookThingsUp();
-	this->testi = 0;
 
 	this->wholeImgDim[0] = this->wholeStack->getDIM_H();
 	this->wholeImgDim[1] = this->wholeStack->getDIM_V();
@@ -115,9 +116,11 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 		tileOriginY = y - (cubeSize/2);
 		tileYstart = int(floor(tileOriginY));
 		tileYend = tileOriginY + cubeSize;
+
 		cubeDim[0] = cubeSize + 1;
 		cubeDim[1] = cubeSize + 1;
-		cubeDim[2] = wholeImgDim[2];
+		if (zSecNum > 0) cubeDim[2] = zSecNum + 1;
+		else cubeDim[2] = wholeImgDim[2];
 		cubeDim[3] = wholeImgDim[3];
 	}
 	else 
@@ -128,9 +131,11 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 		tileOriginY = y - (cubeSize-1)/2;
 		tileYstart = int(floor(tileOriginY));
 		tileYend = tileYstart + (cubeSize-1);
+
 		cubeDim[0] = cubeSize;
 		cubeDim[1] = cubeSize;
-		cubeDim[2] = wholeImgDim[2];
+		if (zSecNum > 0) cubeDim[2] = zSecNum + 1;
+		else cubeDim[2] = wholeImgDim[2];
 		cubeDim[3] = wholeImgDim[3];
 	}
 	//cout << tileXstart << " " << tileXend << " " << tileYstart << " " << tileYend << endl;
@@ -139,7 +144,10 @@ void SimScope::paramShotFromController(LocationSimple nextLoc, float x, float y)
 void SimScope::fakeScopeCrop()
 {
 	unsigned char* cube1d = new unsigned char[cubeDim[0]*cubeDim[1]*cubeDim[2]];
-    cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend+1, tileXstart, tileXend+1, 0, wholeImgDim[2]);
+	if (zSecNum > 0) 
+		cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend+1, tileXstart, tileXend+1, (zCoord-zSecNum/2), ((zCoord+zSecNum/2)+1));
+    else 
+		cube1d = wholeStack->loadSubvolume_to_UINT8(tileYstart, tileYend+1, tileXstart, tileXend+1, 0, wholeImgDim[2]);
 
 	//cout << wholeStack->getDIM_D() << " " << wholeStack->getDIM_H() << " " << wholeStack->getDIM_V() << endl;
 	//cout << "cubeDim: " << cubeDim[0] << " " << cubeDim[1] << " " << cubeDim[2] << " " << cubeDim[3] << endl;
