@@ -1115,6 +1115,8 @@ QGroupBox *S2UI::createSimulator()
 	sizeLabel->setBuddy(sizeEdit);
 	sizeEdit->setObjectName("sizeX");
 
+	QLabel* zSectionLabel = new QLabel(tr("z section"));
+
 	QLabel *overlapLabel = new QLabel(tr("Overlap ="));
 	overlapEdit = new QLineEdit("0.05");
 	overlapLabel->setBuddy(overlapEdit);
@@ -1129,18 +1131,21 @@ QGroupBox *S2UI::createSimulator()
 
 	QGridLayout *glROI = new QGridLayout;
 
-
-	glROI->addWidget(tracingMethodComboCLabel,4,0);
+	glROI->addWidget(tracingMethodComboCLabel, 4, 0);
 	glROI->addWidget(tracingMethodComboC, 4, 1);
 
-	glROI->addWidget(tracePB, 5, 0, 1,2);
-	glROI->addWidget(sizeLabel,1, 0);
+	glROI->addWidget(tracePB, 5, 0, 1, 2);
+	glROI->addWidget(sizeLabel, 1, 0);
 	glROI->addWidget(sizeEdit, 1, 1);
 	glROI->addWidget(overlapLabel, 2, 0);
 	glROI->addWidget(overlapEdit, 2, 1);
 	glROI->addWidget(backgroundLabel, 3, 0);
 	glROI->addWidget(backgroundEdit, 3, 1);
+
+	glROI->addWidget(zSectionLabel, 5, 0);
+
 	gSimulator->setLayout(glROI);
+
 	return gSimulator;
 }
 
@@ -2028,12 +2033,17 @@ void S2UI::handleNewLocation(QList<LandmarkList> newTipsList, LandmarkList newLa
 			if (!isDuplicateROI(landmarkTileInfo)|sendThemAllCB->isChecked())
 			{ // this currently ONLY checks based on pixelLocation.
 				qDebug() << "NOT duplicate tile " << scanIndex;
-
 				int v = landmarkTileInfo.setTimeStamp(QDateTime::currentDateTime());  // 1st timestamp is when tile is added to queue
 				allROILocations->append(landmarkTileInfo);
 				allTipsList->append(newTipsList.value(i));
 				// add ROI to ROI plot. by doing this here, we should limit the overhead without having to worry about
 				// keeping track of a bunch of ROIs.
+
+				cout << (pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue() << " " <<
+					(pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue() << " " <<
+					((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue() << " " <<
+					((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue() << endl;
+					//system("pause");
 				QPen myPen =  QPen(makeQColorFromIndex(10, colorIndex), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
 				roiGS->addRect((pixelsLandmark.x-((float)pixelsLandmark.ev_pc1)/2.0)*uiS2ParameterMap[8].getCurrentValue(), (pixelsLandmark.y-((float)pixelsLandmark.ev_pc2)/2.0)*uiS2ParameterMap[9].getCurrentValue(),
 						((float)pixelsLandmark.ev_pc1)*uiS2ParameterMap[8].getCurrentValue(), ((float)pixelsLandmark.ev_pc2)*uiS2ParameterMap[9].getCurrentValue(),  myPen);
@@ -2621,7 +2631,7 @@ void S2UI::loadLatest(QString inputString)
 			// and the stage location is added to the tile landmark
 			tileLocation.x = tileLocation.x + (scanList.value(loadScanNumber).getStageLocation().x);
 			tileLocation.y = tileLocation.y + (scanList.value(loadScanNumber).getStageLocation().y);
-			// throw the stage location along for the ride to the  StackAnalyzer, because when it comes back, we'll need to subtract it again.
+			// throw the stage location along for the ride to the StackAnalyzer, because when it comes back, we'll need to subtract it again.
 			tileLocation.mcenter.x = scanList.value(loadScanNumber).getStageLocation().x;
 			tileLocation.mcenter.y = scanList.value(loadScanNumber).getStageLocation().y;
 			tileLocation.ave= loadScanNumber;
@@ -2638,7 +2648,7 @@ void S2UI::loadLatest(QString inputString)
 			if (gridScanStatus!=0)
 			{
 				emit eventSignal("startGridLoad");
-				emit  callSAGridLoad(getFileString(),   tileLocation, saveDir.absolutePath() );
+				emit callSAGridLoad(getFileString(), tileLocation, saveDir.absolutePath() );
 			}
 			else
 			{
@@ -2695,8 +2705,8 @@ void S2UI::loadLatest(QString inputString)
 		if ((smartScanStatus ==1) || (gridScanStatus!=0))
 		{
 			LandmarkList seedList;
-			qDebug()<< "loadlatest smartscan";
-			qDebug()<< "tipList length " << tipList.length() << " loadScanNumber " << loadScanNumber;
+			qDebug() << "loadlatest smartscan";
+			qDebug() << "tipList length " << tipList.length() << " loadScanNumber " << loadScanNumber;
 			if (!tipList.isEmpty())
 			{
 				seedList = tipList.at(loadScanNumber);
@@ -3364,7 +3374,8 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	QList<LocationSimple> pixelLocations;
 	QList<LocationSimple> galvoLocations;
 	QList<long> scanNumbers;
-	for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++){
+	for (int i = 0; i<myScanMonitor->allScanData.last().allTiles.length(); i++)
+	{
 		pixelLocations.append(myScanMonitor->allScanData.last().allTiles.at(i).getPixelLocation());
 		galvoLocations.append(myScanMonitor->allScanData.last().allTiles.at(i).getGalvoLocation());
 		scanNumbers.append(myScanMonitor->allScanData.last().allTiles.at(i).getScanIndex());
@@ -3550,7 +3561,7 @@ void S2UI::loadMIP(double imageNumber, Image4DSimple* mip, QString tileSaveStrin
 	}
 	else
 	{ 
-		qDebug()<<"not displaying MIP of area already scanned"; // temporarily disable MIP displaying
+		qDebug()<<"not displaying MIP of area already scanned"; 
 	}
 }
 
@@ -3687,7 +3698,8 @@ void S2UI::updateZStepSize(int ignore){
 
 
 QColor S2UI::makeQColorFromIndex(int maxIndex, int index){
-	return    QColor((index%maxIndex)*255/maxIndex,qAbs((256-(index%maxIndex)*255/maxIndex))%256,qAbs((index%(maxIndex/2))*512/maxIndex)%256);
+	//return    QColor((index%maxIndex)*255/maxIndex, qAbs((256-(index%maxIndex)*255/maxIndex))%256, qAbs((index%(maxIndex/2))*512/maxIndex)%256);
+	return (QColor(255, 255, 255));
 }
 
 

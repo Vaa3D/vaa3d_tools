@@ -469,7 +469,7 @@ void S2Controller::updateFromFakeScope(QMap<int, S2Parameter> s2ParameterMap)
 	}
 	else
 	{
-		cout << "  ==> myPosMon: image file name differes, passing signal to S2UI." << endl;
+		cout << "  ==> myPosMon: image file name differs, passing signal to S2UI." << endl;
 		emit newS2Parameter(s2ParameterMap);
 		this->lastImageFileName = s2ParameterMap[7].getCurrentString();
 	}
