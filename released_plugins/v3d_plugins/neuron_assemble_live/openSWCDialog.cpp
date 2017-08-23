@@ -68,6 +68,18 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
     else listWidget1->setCurrentRow(0);
 
 	dlgLayout->addWidget(tabWidget);
+
+
+    //page open from 3D viewers
+    QDialog * open3DDlg2 = new QDialog(tabWidget);
+    QVBoxLayout* layout2  = new QVBoxLayout;
+    open3DDlg2->setLayout(layout2);
+    tabWidget->addTab(open3DDlg2, tr("Open Single SWC in TeraFly"));
+    QPushButton * bt2 = new QPushButton(tr("choose"));
+    connect(bt2, SIGNAL(clicked()), this, SLOT(chooseNeuronTF()));
+    layout2->addWidget(bt2);
+
+
 	setLayout(dlgLayout);
 }
 
@@ -239,4 +251,26 @@ void OpenSWCDialog::getAllWindowsAndNeurons(V3DPluginCallback2 * callback)
         }
 	}
 	return;
+}
+
+bool OpenSWCDialog::chooseNeuronTF()
+{
+    NeuronTree nt = callback->getSWCTeraFly();
+    ntList.append(nt);
+
+    //get neuron
+//    QFileInfo fileinfo(file);
+//    if(fileinfo.suffix().toUpper().contains("SWC")){
+//        NeuronTree nt = readSWC_file(file);
+//        ntList.append(nt);
+//    }
+//    file_name = file;
+
+//    QSettings settings("V3D plugin","neuron_live_assembler");
+//    settings.setValue("fname_input",file);
+
+//    getImage();
+
+    accept();
+    return true;
 }

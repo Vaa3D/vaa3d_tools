@@ -25,6 +25,8 @@ private:
 public slots:
     bool chooseNeuron();
     bool chooseWindow();
+    bool chooseNeuronTF();
+
 	bool setTree(const QString & file);
 };
 
