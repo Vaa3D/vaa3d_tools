@@ -1,9 +1,6 @@
 #include "assemble_neuron_live_dialog.h"
 #include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-#include "CPlugin.h"
 #include "CVolume.h"
-
-
 #include <map>
 
 using namespace std;
@@ -121,7 +118,7 @@ void assemble_neuron_live_dialog::creat(QWidget *parent)
     list_tips = new QListWidget();
     btn_findtips = new QPushButton("find all tips");
     btn_updatetips = new QPushButton("update all tips");
-    btn_savetips = new QPushButton("save unfinished tips");
+    btn_savetips = new QPushButton("set unfinished tips");
 
     layout_ultratracer->addWidget(list_tips,0,0,6,1);
     layout_ultratracer->addWidget(btn_findtips,1,2,1,1);
@@ -1125,24 +1122,24 @@ void assemble_neuron_live_dialog::syncMarkerOnly()
 
 void assemble_neuron_live_dialog::findTips()
 {
-//    terafly::PluginInterface aa;
-//    aa.getPath(5);
-    QSettings settings("HHMI", "Vaa3D");
+//    QSettings settings("HHMI", "Vaa3D");
     if(!dataTerafly)
     {
-        if(settings.value("terafly_path").toString().size()>0)
-            terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
-                                                           settings.value("terafly_path").toString());
-        else
-            terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
-                                                           "");
-        if(terafly_folder.isEmpty())
-            return;
-        else
-        {
-            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
-            settings.setValue("terafly_path",terafly_folder);
-        }
+        dataTerafly = VirtualVolume::instance(callback->getPathTeraFly().toStdString().c_str());
+
+//        if(settings.value("terafly_path").toString().size()>0)
+//            terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+//                                                           settings.value("terafly_path").toString());
+//        else
+//            terafly_folder = QFileDialog::getExistingDirectory(0, QObject::tr("Open Terafly File"),
+//                                                           "");
+//        if(terafly_folder.isEmpty())
+//            return;
+//        else
+//        {
+//            dataTerafly = VirtualVolume::instance(terafly_folder.toStdString().c_str());
+//            settings.setValue("terafly_path",terafly_folder);
+//        }
     }
 
     if(!dataTerafly)
@@ -1332,39 +1329,41 @@ void assemble_neuron_live_dialog::updateTips()
 void assemble_neuron_live_dialog::saveTips()
 {
     LandmarkList * mList = getMarkerList();
-    QList <CellAPO> tip_markers;
-
+//    QList <CellAPO> tip_markers;
+    LandmarkList mList_checked;
     for(V3DLONG i = 0; i < mList->size(); i++)
     {
         if(list_tips->item(i)->checkState() == Qt::Checked)
         {
-            CellAPO t;
-            t.x = mList->at(i).x+1;
-            t.y = mList->at(i).y+1;
-            t.z = mList->at(i).z+1;
-            t.color.r = 255;
-            t.color.g = 0;
-            t.color.b = 0;
-            tip_markers.push_back(t);
+//            CellAPO t;
+//            t.x = mList->at(i).x+1;
+//            t.y = mList->at(i).y+1;
+//            t.z = mList->at(i).z+1;
+//            t.color.r = 255;
+//            t.color.g = 0;
+//            t.color.b = 0;
+//            tip_markers.push_back(t);
+            mList_checked.push_back(mList->at(i));
         }
     }
+    callback->setLandmarkTeraFly(mList_checked);
 
-    QSettings settings("HHMI", "Vaa3D");
-    QString fileDefaultName;
-    if(settings.value("savetips_path").toString().size()>0)
-        fileDefaultName =  settings.value("savetips_path").toString();
-    else
-        fileDefaultName = terafly_folder + "/tips.apo";
+//    QSettings settings("HHMI", "Vaa3D");
+//    QString fileDefaultName;
+//    if(settings.value("savetips_path").toString().size()>0)
+//        fileDefaultName =  settings.value("savetips_path").toString();
+//    else
+//        fileDefaultName = terafly_folder + "/tips.apo";
 
-    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save Tips"),
-            fileDefaultName,
-            QObject::tr("Supported file (*.apo)"
-                ));
-    if(!fileSaveName.isNull())
-    {
-        settings.setValue("savetips_path",fileSaveName);
-        writeAPO_file(fileSaveName, tip_markers);
-    }
+//    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save Tips"),
+//            fileDefaultName,
+//            QObject::tr("Supported file (*.apo)"
+//                ));
+//    if(!fileSaveName.isNull())
+//    {
+//        settings.setValue("savetips_path",fileSaveName);
+//        writeAPO_file(fileSaveName, tip_markers);
+//    }
 }
 
 void assemble_neuron_live_dialog::pairMarker()
