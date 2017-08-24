@@ -46,6 +46,7 @@ struct input_PARA
 //return 1: exit when hit bounadry
 int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 
  
 QStringList line_detector::menulist() const
@@ -54,6 +55,7 @@ QStringList line_detector::menulist() const
         <<tr("GD Curveline")
         <<tr("GD Curveline infinite")
         <<tr("GD Curve fitting")
+        <<tr("GD Curve fitting_v2")
         <<tr("about");
 }
 
@@ -90,6 +92,12 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         bool bmenu = true;
         input_PARA PARA;
         curveFitting_func(callback,parent,PARA,bmenu);
+    }
+    else if (menu_name == tr("GD Curve fitting_v2"))
+    {
+        bool bmenu = true;
+        input_PARA PARA;
+        curveFitting_func_v2(callback,parent,PARA,bmenu);
     }
     else
 	{
@@ -918,4 +926,268 @@ int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA 
         if (res!=0)
             break;
     }
+}
+
+bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+{
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,sc,c;
+    V3DLONG in_sz[4];
+    v3dhandle curwin;
+    if(bmenu)
+    {
+        curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return -1;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return -1;
+        }
+
+        data1d = p4DImage->getRawData();
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        sc = p4DImage->getCDim();
+
+        bool ok1;
+
+        if(sc==1)
+        {
+            c=1;
+            ok1=true;
+        }
+        else
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                             "Enter channel NO:",
+                                             1, 1, sc, 1, &ok1);
+        }
+
+        if(!ok1)
+            return -1;
+
+        in_sz[0] = N;
+        in_sz[1] = M;
+        in_sz[2] = P;
+        in_sz[3] = sc;
+
+        PARA.inimg_file = p4DImage->getFileName();
+    }
+    else
+    {
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return -1;
+        }
+        if(PARA.channel < 1 || PARA.channel > in_sz[3])
+        {
+            fprintf (stderr, "Invalid channel number. \n");
+            return -1;
+        }
+        N = in_sz[0];
+        M = in_sz[1];
+        P = in_sz[2];
+        sc = in_sz[3];
+        c = PARA.channel;
+    }
+
+    V3DLONG pagesz = N*M*P;
+    vector<pair<V3DLONG,MyMarker> > vp;
+    vp.reserve(pagesz);
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                MyMarker t;
+                t.x = ix;
+                t.y = iy;
+                t.z = iz;
+                vp.push_back(make_pair(data1d[offsetk+offsetj+ix], t));
+            }
+        }
+    }
+
+    sort(vp.begin(), vp.end());
+    vector<MyMarker> file_inmarkers;
+    file_inmarkers.push_back(vp[vp.size()-1].second);
+    for (size_t i = vp.size()-2 ; i >=0; i--)
+    {
+        bool flag =false;
+        for(int j = 0; j < file_inmarkers.size();j++)
+        {
+            if(NTDIS(file_inmarkers.at(j),vp[i].second) < N/15)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+            file_inmarkers.push_back(vp[i].second);
+
+        if(file_inmarkers.size()>40)
+            break;
+    }
+    vp.clear();
+
+    for(int i =0; i < file_inmarkers.size();i++)
+    {
+        LocationSimple p;
+        p.x = file_inmarkers.at(i).x+1;
+        p.y = file_inmarkers.at(i).y+1;
+        p.z = file_inmarkers.at(i).z+1;
+        PARA.listLandmarks.push_back(p);
+    }
+    callback.setLandmark(curwin,PARA.listLandmarks);
+    callback.updateImageWindow(curwin);
+    callback.pushObjectIn3DWindow(curwin);
+
+    unsigned char ****p4d = 0;
+    if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], data1d))
+    {
+        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+        if(p4d) {delete []p4d; p4d = 0;}
+        return false;
+    }
+
+    NeuronTree nt_total;
+    while(PARA.listLandmarks.size()>1)
+    {
+        LocationSimple p0 = PARA.listLandmarks.at(0);
+        vector<LocationSimple> pp;
+        for(V3DLONG i = 1; i <PARA.listLandmarks.size();i++)
+            pp.push_back(PARA.listLandmarks.at(i));
+
+        double weight_xy_z=1.0;
+        CurveTracePara trace_para;
+        trace_para.channo = 0;
+        trace_para.sp_graph_background = 0;
+        trace_para.b_postMergeClosebyBranches = false;
+        trace_para.sp_graph_resolution_step=2;
+        trace_para.b_3dcurve_width_from_xyonly = true;
+        trace_para.b_pruneArtifactBranches = false;
+        trace_para.sp_num_end_nodes = 2;
+        trace_para.b_deformcurve = false;
+        trace_para.sp_graph_resolution_step = 1;
+        trace_para.b_estRadii = false;
+
+        NeuronTree nt = v3dneuron_GD_tracing(p4d, in_sz,
+                                  p0, pp,
+                                  trace_para, weight_xy_z);
+
+        QString swc_name = PARA.inimg_file+"_1st.swc";
+        export_list2file(nt.listNeuron, swc_name,swc_name);
+
+        for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+        {
+            V3DLONG pn_ID = nt.listNeuron[i].pn-1;
+            if(pn_ID <0)
+                continue;
+            if((fabs(nt.listNeuron[pn_ID].x-nt.listNeuron[0].x) +
+                fabs(nt.listNeuron[pn_ID].y-nt.listNeuron[0].y) +
+                fabs(nt.listNeuron[pn_ID].z-nt.listNeuron[0].z)) < 1e-3)
+            {
+                    nt.listNeuron[i].pn = 1;
+            }
+        }
+        QList<NeuronSWC> neuron_sorted;
+        if (!SortSWC(nt.listNeuron, neuron_sorted, VOID, 0))
+        {
+            v3d_msg("fail to call swc sorting function.",0);
+            if(p4d) {delete []p4d; p4d = 0;}
+            QFile file (swc_name);file.remove();
+            return false;
+        }
+        export_list2file(neuron_sorted, swc_name,swc_name);
+        nt = readSWC_file(swc_name);
+        QFile file (swc_name);file.remove();
+        QList<NeuronSWC> list = nt.listNeuron;
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+        vector<QList<NeuronSWC> > nt_list;
+        V3DLONG seg_max = 0;
+        for (int i=0;i<list.size();i++)
+        {
+            QList<NeuronSWC> nt_seg;
+            if (childs[i].size()==0)
+            {
+                int index_i = i;
+                while(index_i != 1000000000)
+                {
+                    nt_seg.push_front(list.at(index_i));
+                    index_i = getParent(index_i,nt);
+                }
+                nt_list.push_back(nt_seg);
+                if(nt_seg.size() > seg_max)
+                    seg_max = nt_seg.size();
+                nt_seg.clear();
+            }
+        }
+
+        double seg_mean_max = 0;
+        int seg_tip_id;
+        for (int i =0; i<nt_list.size();i++)
+        {
+            QList<NeuronSWC> nt_seg = nt_list.at(i);
+            double seg_intensity = 0;
+            for(int j = 0; j < nt_seg.size(); j++)
+            {
+                V3DLONG  ix = nt_seg[j].x;
+                V3DLONG  iy = nt_seg[j].y;
+                V3DLONG  iz = nt_seg[j].z;
+                seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix];
+            }
+
+            if(seg_intensity/nt_seg.size() >= seg_mean_max)
+            {
+                seg_mean_max = seg_intensity/nt_seg.size();
+                seg_tip_id = i;
+            }
+        }
+
+        QList<NeuronSWC> nt_seg_optimal = nt_list.at(seg_tip_id);
+        for(V3DLONG i =0 ; i<nt_seg_optimal.size();i++)
+        {
+            nt_total.listNeuron.push_back(nt_seg_optimal.at(i));
+        }
+        QString swc_seg = swc_name +QString("_x%1_y%2_z%3.swc").arg(p0.x).arg(p0.y).arg(p0.z);
+        export_list2file(nt_list.at(seg_tip_id), swc_seg,swc_seg);
+        for(V3DLONG i = PARA.listLandmarks.size()-1; i >=0;i--)
+        {
+            bool flag = false;
+            for(V3DLONG j = 0; j < nt_total.listNeuron.size();j++)
+            {
+                if(NTDIS(PARA.listLandmarks.at(i),nt_total.listNeuron.at(j))<3)
+                {
+                   flag = true;
+                   break;
+                }
+            }
+            if(flag)
+                PARA.listLandmarks.removeAt(i);
+        }
+    }
+
 }
