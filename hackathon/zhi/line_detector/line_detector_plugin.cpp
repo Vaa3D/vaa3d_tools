@@ -951,6 +951,7 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
             return -1;
         }
 
+
         data1d = p4DImage->getRawData();
         N = p4DImage->getXDim();
         M = p4DImage->getYDim();
@@ -1056,21 +1057,43 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
     callback.updateImageWindow(curwin);
     callback.pushObjectIn3DWindow(curwin);
 
-    unsigned char ****p4d = 0;
-    if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], data1d))
-    {
-        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-        if(p4d) {delete []p4d; p4d = 0;}
-        return false;
-    }
+    double overall_mean, overall_std;
+    mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+    printf("overall mean is %.2f, std is %.2f\n",overall_mean, overall_std);
+
+
+    V3DLONG stacksz = N*M*P*sc;
+    unsigned char* data1d_mask = 0;
+    data1d_mask = new unsigned char [stacksz];
+    memset(data1d_mask,0,stacksz*sizeof(unsigned char));
 
     NeuronTree nt_total;
+    LandmarkList checkPoints;
     while(PARA.listLandmarks.size()>1)
     {
         LocationSimple p0 = PARA.listLandmarks.at(0);
         vector<LocationSimple> pp;
         for(V3DLONG i = 1; i <PARA.listLandmarks.size();i++)
             pp.push_back(PARA.listLandmarks.at(i));
+
+        if(nt_total.listNeuron.size()>0)
+            ComputemaskImage(nt_total, data1d_mask, N, M, P, 3);
+
+        unsigned char* data1d_updated = 0;
+        data1d_updated = new unsigned char [stacksz];
+        for(V3DLONG i =0; i < stacksz; i++)
+        {
+            data1d_updated[i] = (data1d_mask[i] == 0)? data1d[i] : 0;
+        }
+
+        unsigned char ****p4d = 0;
+        if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], data1d_updated))
+        {
+            fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+            if(p4d) {delete []p4d; p4d = 0;}
+            return false;
+        }
+
 
         double weight_xy_z=1.0;
         CurveTracePara trace_para;
@@ -1089,6 +1112,13 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
                                   p0, pp,
                                   trace_para, weight_xy_z);
 
+        if(nt.listNeuron.size()<=0)
+        {
+            if(data1d_updated) {delete []data1d_updated; data1d_updated = 0;}
+            if(p4d) {delete []p4d; p4d = 0;}
+            PARA.listLandmarks.removeAt(0);
+            continue;
+        }
         QString swc_name = PARA.inimg_file+"_1st.swc";
         export_list2file(nt.listNeuron, swc_name,swc_name);
 
@@ -1112,9 +1142,12 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
             QFile file (swc_name);file.remove();
             return false;
         }
+
+        if(p4d) {delete []p4d; p4d = 0;}
+
         export_list2file(neuron_sorted, swc_name,swc_name);
         nt = readSWC_file(swc_name);
-        QFile file (swc_name);file.remove();
+       // QFile file (swc_name);file.remove();
         QList<NeuronSWC> list = nt.listNeuron;
         QVector<QVector<V3DLONG> > childs;
         V3DLONG neuronNum = nt.listNeuron.size();
@@ -1126,6 +1159,7 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
             childs[nt.hashNeuron.value(par)].push_back(i);
         }
 
+        checkPoints = PARA.listLandmarks;
         vector<QList<NeuronSWC> > nt_list;
         V3DLONG seg_max = 0;
         for (int i=0;i<list.size();i++)
@@ -1143,36 +1177,56 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
                 if(nt_seg.size() > seg_max)
                     seg_max = nt_seg.size();
                 nt_seg.clear();
+            }else if (childs[i].size()>1)
+            {
+                LocationSimple t;
+                t.x = list.at(i).x;
+                t.y = list.at(i).y;
+                t.z = list.at(i).z;
+                checkPoints.push_back(t);
             }
         }
 
-        double seg_mean_max = 0;
+        double I_max = 0;
         int seg_tip_id;
         for (int i =0; i<nt_list.size();i++)
         {
             QList<NeuronSWC> nt_seg = nt_list.at(i);
             double seg_intensity = 0;
+            double seg_angle = 1;
             for(int j = 0; j < nt_seg.size(); j++)
             {
                 V3DLONG  ix = nt_seg[j].x;
                 V3DLONG  iy = nt_seg[j].y;
                 V3DLONG  iz = nt_seg[j].z;
-                seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix];
+                seg_intensity += data1d_updated[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std);
+                if(j > 1 && j < nt_seg.size()-1)
+                {
+                    for(int p =0; p < checkPoints.size();p++)
+                    {
+                        if(NTDIS(nt_seg[j],checkPoints.at(p))<2)
+                        {
+                            seg_angle *= abs(cos(angle(nt_seg[j],nt_seg[0],nt_seg[nt_seg.size()-1])));
+                            break;
+                        }
+                    }
+                }
             }
-
-            if(seg_intensity/nt_seg.size() >= seg_mean_max)
+            if(seg_intensity*seg_angle >= I_max)
             {
-                seg_mean_max = seg_intensity/nt_seg.size();
+                I_max = seg_intensity*seg_angle;
                 seg_tip_id = i;
             }
         }
+        checkPoints.clear();
+
 
         QList<NeuronSWC> nt_seg_optimal = nt_list.at(seg_tip_id);
         for(V3DLONG i =0 ; i<nt_seg_optimal.size();i++)
         {
             nt_total.listNeuron.push_back(nt_seg_optimal.at(i));
         }
-        QString swc_seg = swc_name +QString("_x%1_y%2_z%3.swc").arg(p0.x).arg(p0.y).arg(p0.z);
+        QString swc_seg = swc_name +QString("_x%1_y%2_z%3_I_%4.swc").arg(p0.x).arg(p0.y).arg(p0.z).arg(I_max);
         export_list2file(nt_list.at(seg_tip_id), swc_seg,swc_seg);
         for(V3DLONG i = PARA.listLandmarks.size()-1; i >=0;i--)
         {
@@ -1188,6 +1242,10 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
             if(flag)
                 PARA.listLandmarks.removeAt(i);
         }
+        if(data1d_updated) {delete []data1d_updated; data1d_updated = 0;}
+
     }
+
+    if(data1d_mask) {delete []data1d_mask; data1d_mask = 0;}
 
 }

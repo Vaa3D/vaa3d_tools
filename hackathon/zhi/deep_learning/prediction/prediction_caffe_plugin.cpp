@@ -2133,7 +2133,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"sample_size = "<<Sxy<<endl;
         cout<<"image_size = "<<Ws<<endl;
 
-        for(double th = 0.5; th < 0.9; th += 0.1)
+        for(double th = 0.91; th <= 0.991; th += 0.01)
         {
             QString outputfolder = outswc_file + QString("_%1_finished/").arg(th);
             QDir().mkdir(outputfolder);
@@ -2316,7 +2316,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //                        S.z  = marklist_3D_pruned.at(i).z;
 //                        marklist_3D_final.push_back(S);
 //                    }
-                    for(double th = 0.5; th < 0.9; th += 0.1)
+                    for(double th = 0.91; th <= 0.991; th += 0.01)
                     {
                         QString swc_segs_th = outswc_file + QString("_%1_finished/x_%2_y_%3.swc").arg(th).arg(xb).arg(yb);
                         NeuronTree nt;
@@ -2351,8 +2351,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         }
 
-
-        for(double th = 0.5; th < 0.9; th += 0.1)
+        for(double th = 0.91; th <= 0.991; th += 0.01)
         {
             QString outputfolder = outswc_file + QString("_%1_finished/").arg(th);
             QStringList swcList = importFileList_addnumbersort(outputfolder, 1);
