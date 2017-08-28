@@ -588,6 +588,10 @@ void S2UI::prepareSimScopeConfig()
 	QString zSection = zSectionEdit->text();
 	initialParam.push_back(zSection);
 
+    QString tracingMethod = tracingMethodComboC->currentText();
+    if (tracingMethod == "APP2") offlineMethod = 2;
+    else if (tracingMethod == "NeuTube") offlineMethod = 1;
+
 	fakeScope.S2UIcb = cb;	
 	emit initImaginaryScope(initialParam);
 }
@@ -1098,10 +1102,9 @@ QGroupBox *S2UI::createSimulator()
 
 	tracingMethodComboC = new QComboBox;
 	tracingMethodComboC->addItem("APP2");
-	tracingMethodComboC->addItem("MOST");
+	//tracingMethodComboC->addItem("MOST");
 	tracingMethodComboC->addItem("NeuTube");
 	tracingMethodComboC->setCurrentIndex(0);
-	methodChoice = 2;
 	QLabel * tracingMethodComboCLabel = new QLabel(tr("Tracing Method: "));
 	tracingMethodComboCLabel->setAlignment(Qt::AlignRight);
 
@@ -2655,7 +2658,7 @@ void S2UI::loadLatest(QString inputString)
 				emit eventSignal("startAnalysis");
 				QTimer::singleShot(0,this, SLOT(processingStarted()));
 
-				if (tracingMethodComboB->currentIndex()==0){ //MOST
+				/*if (tracingMethodComboB->currentIndex()==0){ //MOST
 					methodChoice = 0;
 					isAdaptive = false;
 				}
@@ -2686,15 +2689,15 @@ void S2UI::loadLatest(QString inputString)
 				if (tracingMethodComboB->currentIndex()==7){ //debugging mode
 					methodChoice= 3;
 					isAdaptive = false;
-				}
-				methodChoice = 2;
+				}*/
+				//methodChoice = 2;
 				qDebug() << "  == loadLatest: isadaptive = " << isAdaptive;
-				qDebug() << "  == loadLatest: methodChoice = " << methodChoice;
+				qDebug() << "  == loadLatest: methodChoice = " << offlineMethod;
 			
 				myStackAnalyzer->offOp = true;
 
 				emit callSATrace(inputString, overlap, this->findChild<QSpinBox*>("bkgSpinBox")->value(), this->findChild<QCheckBox*>("interruptCB")->isChecked(),
-					seedList, tileLocation, fakeScope.savingPath, useGSDTCB->isChecked(), isSoma, isAdaptive, methodChoice, tileStatus);
+					seedList, tileLocation, fakeScope.savingPath, useGSDTCB->isChecked(), isSoma, isAdaptive, offlineMethod, tileStatus);
 			}
 			++loadScanNumber;
 		}

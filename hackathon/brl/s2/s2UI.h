@@ -324,6 +324,7 @@ private:
 	QDir fakeOutputDir;
 	QString fakeSaveDir;
 	QString fakeOutputFolder;
+    int offlineMethod;
 	///////////////////////////////////////////
 	
 	V3DPluginCallback2 * cb;

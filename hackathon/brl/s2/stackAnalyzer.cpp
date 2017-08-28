@@ -694,8 +694,8 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
         return;
     }
 
-    qDebug() << "  -> APP2: swcString = " << swcString;
-    qDebug() << "  -> APP2: imageSaveString = " << imageSaveString;
+    //qDebug() << "  -> APP2: swcString = " << swcString;
+    //qDebug() << "  -> APP2: imageSaveString = " << imageSaveString;
 	//system("pause");
     //TEST
    // imageSaveString = latestString;
@@ -806,10 +806,6 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 			{
 				// For S2 offline mode, it goes here
                 Image4DSimple* pNewImage = cb->loadImage(imageDir.absoluteFilePath(fileList[f]).toLatin1().data());
-				/*char* imageName; 
-				imageName = new char [imageDir.absoluteFilePath(fileList[f]).size() + 1];
-				strcpy(imageName, imageDir.absoluteFilePath(fileList[f]).toStdString().c_str());
-				Image4DSimple* pNewImage = cb->loadImage(imageName);*/
                 if (pNewImage->valid())
 				{
                     //unsigned short int* data1d = 0;
@@ -853,7 +849,7 @@ void StackAnalyzer::startTracing(QString latestString, float overlap, int backgr
 			total4DImage->setOriginY(tileLocation.y);
 		}
 
-        if (tileStatus==0)
+        if (tileStatus == 0)
 		{
             QString scanDataFileString = saveDirString;
             scanDataFileString.append("/").append("scanData.txt");
@@ -1517,13 +1513,12 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
 
     QString swcMOST = saveDirString;
 
-    if(methodChoice ==0){
+    if(methodChoice ==0)
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_MOST.swc");
-    }else if(methodChoice ==1){
+    else if(methodChoice ==1)
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_neutube.swc");
-    }else if(methodChoice==3){
+    else if(methodChoice==3)
         swcMOST.append("/x_").append(QString::number((int)tileLocation.x)).append("_y_").append(QString::number((int)tileLocation.y)).append("_").append(imageFileInfo.fileName()).append(channel).append(".v3draw_debug.swc");
-    }
 
 
     if(!alreadyBeenTraced)
@@ -1533,7 +1528,9 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             if (background<150){ nt = generate_crossing_swc(total4DImage); }
             export_list2file(nt.listNeuron, swcMOST,swcMOST);
 
-        }else{
+        }
+        else
+        {
 
             int seed_win = 10;
             int slip_win = 10;
@@ -1578,7 +1575,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
                 full_plugin_name = "mostVesselTracer";  func_name =  "MOST_trace";
 
                 qDebug()<<"starting most";
-            }else if (methodChoice == 1)
+            }
+            else if (methodChoice == 1)
             {
                 arg_para.push_back("1");
                 arg_para.push_back("1");
@@ -1590,6 +1588,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
             arg.p = (void *) & arg_para; input << arg;
 
+            //cout << "Press enter to continue...";
+            //cin.get();
             if(!cb->callPluginFunc(full_plugin_name,func_name,input,output))
             {
 
@@ -1603,21 +1603,27 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     }
 
 
-    if (alreadyBeenTraced) {
+    if (alreadyBeenTraced) 
+    {
         swcMOST = swcString;
-        if (methodChoice==0){
+        if (methodChoice==0)
+        {
             swcMOST.chop(4);
             swcMOST.append(".v3draw_MOST.swc");
-        }else if(methodChoice==1){
+        }
+        else if(methodChoice==1)
+        {
             swcMOST.chop(4);
             swcMOST.append(".v3draw_neutube.swc");
-        }else if(methodChoice==3){
+        }
+        else if(methodChoice==3)
+        {
         swcMOST.chop(4);
         swcMOST.append(".v3draw_debug.swc");
-    }
+        }
     }
 
-    qDebug()<<"reading SWC file ... "<<swcMOST;
+    qDebug() << "reading SWC file ... " << swcMOST;
     nt_most= readSWC_file(swcMOST);
 
     if(nt_most.listNeuron.size()<1){
@@ -1632,7 +1638,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     {
         nt = sort_eliminate_swc(nt_most,inputRootList,total4DImage,isSoma);
         export_list2file(nt.listNeuron, swcString,swcMOST);
-    }else
+    }
+    else
     {
         sAMutex.lock();
         NeuronTree nt_tile = readSWC_file(swcString);
@@ -1644,7 +1651,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
             export_list2file(nt_most.listNeuron, swcString+"X",swcString);
             emit analysisDone(newTipsList, newTargetList, total4DImage_mip, tileLocation.ave, imageSaveString, tileStatus);
             return;
-        }else
+        }
+        else
         {
             nt = sort_eliminate_swc(nt_most,inputRootList_pruned,total4DImage,isSoma);
             combine_list2file(nt.listNeuron, swcString);
@@ -1658,7 +1666,8 @@ void StackAnalyzer::SubtractiveTracing(QString latestString,QString imageSaveStr
     maxRootListSize = inputRootList.size();
 
     QList<ImageMarker> seedsToSave;
-    for (int i = 0; i<maxRootListSize; i++){
+    for (int i = 0; i<maxRootListSize; i++)
+    {
         LocationSimple RootNewLocation;
         ImageMarker outputMarker;
         RootNewLocation.x = inputRootList.at(i).x - total4DImage->getOriginX();
