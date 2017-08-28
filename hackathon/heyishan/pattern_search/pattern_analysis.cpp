@@ -24,25 +24,33 @@ struct Boundary
 };
 
 // pt need be sorted and count node from 0
-void create_AM(int *AM, int siz, const NeuronTree & pt)
+void create_AM(vector<vector<V3DLONG> >&AM, V3DLONG siz, const NeuronTree & pt)
 {
     // initialize adjance matrix
-    for(int i=0; i<siz; i++)
+    v3d_msg("0");
+    for(V3DLONG i=0; i<siz; i++)
     {
-        for(int j=0; j<siz; j++)
-            AM[i*siz + j] = 0;
+        AM[i].resize(siz);
     }
+    v3d_msg("0.5");
+    for(V3DLONG i=0; i<siz; i++)
+    {
+        for(V3DLONG j=0; j<siz; j++)
+            AM[i][j] = 0;
+    }
+    v3d_msg("1");
     // creat AM
     for(int i=0; i<siz ; i++)
     {
         NeuronSWC cur = pt.listNeuron[i];
         int p = cur.pn;
         if( p < 0) continue;
-        AM[i*siz + p-1] = AM[(p-1)*siz+i] = 1;
+        AM[i][p-1] = AM[p-1][i] = 1;
     }
+    v3d_msg("2");
     return;
 }
-bool cal_degree(int * degree, int siz, const NeuronTree & pt, const QVector<QVector<V3DLONG> > &childs)
+bool cal_degree(vector<int> & degree, V3DLONG siz, const NeuronTree & pt, const QVector<QVector<V3DLONG> > &childs)
 {
     for(int i=0; i<siz; i++)
     {
@@ -274,13 +282,14 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
         //using BFS find the center of graph
         cout<<"using BFS the center of graph"<<endl;
         // creat  Adjacency Matrix of Graph
-        int AM[area_size][area_size];
-        int degree[area_size];
-        int level[area_size];
+
+        vector<vector<V3DLONG> >AM(area_size);
+        vector<int> degree(area_size);
+        vector<int> level(area_size);
         int maxlevel = 0;
         QSet <int> c;
         QQueue <int> q;
-        create_AM((int*)AM, area_size, area_sub);
+        create_AM(AM, area_size, area_sub);
         cal_degree(degree,area_size,area_sub,childs);
 
         // Start from leaves
