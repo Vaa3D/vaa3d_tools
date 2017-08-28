@@ -56,7 +56,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
     //cout<<"t="<<t[0]<<"  "<<t[1] <<"  "<<t[2]<<endl;
 
     // put points into area
-    vector<vector<int> > b2p(pow(split_num,3));
+    vector<vector<int> > b2p(split_num*split_num*split_num);
     vector<vector<V3DLONG> > p2b(nt.listNeuron.size());
     for(V3DLONG i=0; i<nt.listNeuron.size(); i++)
     {
