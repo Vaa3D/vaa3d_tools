@@ -1,6 +1,5 @@
 #include "assemble_neuron_live_dialog.h"
 #include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
-#include "CVolume.h"
 #include <map>
 
 using namespace std;
