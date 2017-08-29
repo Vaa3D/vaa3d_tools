@@ -530,7 +530,7 @@ void S2UI::prepareSimScopeConfig()
 {
 	myStackAnalyzer->offOp = false;
 	cout << "	--> start configuring fakeScope.." << endl;
-//#if defined (Q_OS_WIN32)
+
 	struct tm* newTime;
 	time_t szClock;
 	time( &szClock );
@@ -549,15 +549,8 @@ void S2UI::prepareSimScopeConfig()
 	fakeOutputFolder = fakeOutputFolder + qstr;
 	qDebug() << fakeOutputFolder;
 
-	/*QString swcOutput = fakeOutputFolder + "/swc/";
-	QString cubeOutput = fakeOutputFolder + "/cube/";
-	fakeOutputDir.mkpath(swcOutput);
-	fakeOutputDir.mkpath(cubeOutput);*/
-
 	fakeOutputDir.mkpath(fakeOutputFolder);
 	fakeScope.savingPath = fakeOutputFolder;
-	//fakeScope.cubeSavingPath = cubeOutput;
-	//fakeScope.swcSavingPath = swcOutput;
 
 	QFile saveTextFile1;
 	QFile saveTextFile2;
@@ -565,7 +558,6 @@ void S2UI::prepareSimScopeConfig()
 	QString fileSummary = fakeOutputFolder + "s2Summary.txt";
     saveTextFile1.setFileName(scanFileName);
 	saveTextFile2.setFileName(fileSummary);
-//#endif
 
 	myController.mode = offline;
 	QStringList initialParam;
@@ -589,6 +581,7 @@ void S2UI::prepareSimScopeConfig()
 	initialParam.push_back(zSection);
 
     QString tracingMethod = tracingMethodComboC->currentText();
+
     if (tracingMethod == "APP2") offlineMethod = 2;
     else if (tracingMethod == "NeuTube") offlineMethod = 1;
 
@@ -1101,9 +1094,16 @@ QGroupBox *S2UI::createSimulator()
    // gSimulator->setChecked(true);
 
 	tracingMethodComboC = new QComboBox;
+
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
 	tracingMethodComboC->addItem("APP2");
 	//tracingMethodComboC->addItem("MOST");
 	tracingMethodComboC->addItem("NeuTube");
+#elif defined(Q_OS_WIN32)
+	tracingMethodComboC->addItem("APP2");
+	//tracingMethodComboC->addItem("MOST");
+#endif
+
 	tracingMethodComboC->setCurrentIndex(0);
 	QLabel * tracingMethodComboCLabel = new QLabel(tr("Tracing Method: "));
 	tracingMethodComboCLabel->setAlignment(Qt::AlignRight);
@@ -1169,14 +1169,11 @@ void S2UI::startScan()
 	float leftEdge = roiXEdit->text().toFloat() -roiXWEdit->text().toFloat()/2.0;
 	float topEdge = roiYEdit->text().toFloat() - roiYWEdit->text().toFloat()/2.0;
 	roiGS->addRect(leftEdge,topEdge,roiXWEdit->text().toFloat(),roiYWEdit->text().toFloat(), QPen(Qt::green, 3, Qt::DashDotLine, Qt::RoundCap, Qt::RoundJoin));
-
 }
-
 
 void S2UI::loadScan(){
 	loadLatest(getFileString());
 }
-
 
 void S2UI::toLoad(){
 	loadScanFromFile(s2LineEdit->text());
@@ -1882,7 +1879,7 @@ void S2UI::startingSmartScan()
 		{
 			if (!summaryTextFile.open(QIODevice::Text|QIODevice::WriteOnly))
 			{
-				qDebug()<< "couldnt open file" << summaryFileString;
+				qDebug() << "couldnt open file" << summaryFileString;
 				return;
 			}     
 		}
@@ -1891,7 +1888,7 @@ void S2UI::startingSmartScan()
     QTextStream summaryTextStream;
 
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
-	summaryTextStream<<"vaa3d_tools git hash at build: "<<";"<<GIT_CURRENT_SHA1<<"\n";
+	summaryTextStream << "vaa3d_tools git hash at build: " << ";" << GIT_CURRENT_SHA1<< "\n";
 #endif
 
 	summaryTextStream.setDevice(&summaryTextFile);
