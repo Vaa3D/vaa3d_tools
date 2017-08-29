@@ -280,7 +280,6 @@ long int neuronSeparator::findLatestAncestor(bool& circle, NeuronTree& nt, QVect
 	else if (circle == true)
 	{
 		// This part is meant to be implemented for tracing algorithms that allow circle to occur.
-
 	}
 
 	return latestAncestorLoc;

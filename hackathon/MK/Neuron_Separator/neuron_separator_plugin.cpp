@@ -60,7 +60,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		QString swc_circle = inparas.at(0);
 		QString inputSWCfile = infiles.at(0);
 		QString inputSomas = infiles.at(1);
-		qDebug() << inputSWCfile << " " << inputSomas;
+
 		if (swc_circle == "y") this->circle = true;
 		else if (swc_circle == "n")	this->circle = false;
 		
@@ -74,7 +74,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			this->locLabel[inputSWCTree.hashNeuron.value(nodeList.at(i).n)] = false;
 		}
 		//cout << locLabel.size() << endl;
-		for (QList<ImageMarker>::iterator it=somas.begin(); it!=somas.end(); ++it)
+		for (QList<ImageMarker>::iterator it=somas.begin(); it!=somas.end(); ++it)  // collecting all soma locations
 		{
 			for (QList<NeuronSWC>::iterator nodeIt=nodeList.begin(); nodeIt!=nodeList.end(); ++nodeIt)
 			{
@@ -85,27 +85,28 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 				}
 			}
 		}
-		
+		// ------------ Identify the path that needs to be broken between any pair of given soma locations -------------
 		long int wishedID, excludedID;
-		for (size_t i=0; i<somaIDs.size()-1; ++i)
+		for (size_t i=0; i<somaIDs.size()-1; ++i) // 
 		{
 			wishedID = somaIDs[i];
 			for (size_t j=i+1; j<somaIDs.size(); ++j)
 			{
 				excludedID = somaIDs[j];
 				findPath(childsTable, inputSWCTree, wishedID, excludedID, paths);
-				NeuronTree newTree1;
-				newTree1.listNeuron = paths.at(0);
+				NeuronTree newTreePartial;
+				newTreePartial.listNeuron = paths.at(0);
 				//QString filename = QString::number(wishedID) + "_" + QString::number(excludedID) + ".swc";
 				//writeSWC_file(filename, newTree1);
 
 				NeuronSWC wishedSoma = nodeList.at(inputSWCTree.hashNeuron.value(wishedID));
 				NeuronSWC excludedSoma = nodeList.at(inputSWCTree.hashNeuron.value(excludedID));
 				breakPathMorph(this->inputSWCTree, paths[0], this->childsTable, wishedSoma, excludedSoma);
-				//paths.clear();
 			}
 		}
-		somaPathTree(this->somaPath, this->locLabel, paths, inputSWCTree);
+		// -------- END of [Identify the path that needs to be broken between any pair of given soma locations] --------
+		
+		somaPathTree(this->somaPath, this->locLabel, paths, inputSWCTree); // merging all identified paths 
 		NeuronTree pathTree;
 		pathTree.listNeuron = this->somaPath;
 		QString pathTreeFileName = "somasTree.swc";
@@ -125,7 +126,10 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+		cout << 
+			"\n-------------------------------\n" << 
+			"Usage: vaa3d_msvc.exe /x neuron_separator /f separate_neuron /i <input swc file name> <soma location marker file> /p [swc_circle] \n" << 
+			"\n - swc_circle: the parameter allows or prohibits circling strcture to happen; can only be 'y' or 'n'. \n-------------------------------" << endl;
 	}
 	else return false;
 
