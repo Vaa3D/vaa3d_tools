@@ -47,12 +47,14 @@ struct input_PARA
 int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 
  
 QStringList line_detector::menulist() const
 {
 	return QStringList() 
         <<tr("GD Curveline")
+        <<tr("GD Curveline v2")
         <<tr("GD Curveline infinite")
         <<tr("GD Curve fitting")
         <<tr("GD Curve fitting_v2")
@@ -98,6 +100,12 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         bool bmenu = true;
         input_PARA PARA;
         curveFitting_func_v2(callback,parent,PARA,bmenu);
+    }
+    else if (menu_name == tr("GD Curveline v2"))
+    {
+        bool bmenu = true;
+        input_PARA PARA;
+        reconstruction_func_v2(callback,parent,PARA,bmenu);
     }
     else
 	{
@@ -787,6 +795,214 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
     }
 
     return ((b_boundary || b_darkSegment) && PARA.listLandmarks.size()==0) ? 1 : 0;
+}
+
+int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+{
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,sc,c;
+    V3DLONG in_sz[4];
+    v3dhandle curwin;
+    if(bmenu)
+    {
+        curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return -1;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return -1;
+        }
+
+        PARA.listLandmarks = callback.getLandmark(curwin);
+        if(PARA.listLandmarks.count() ==0)
+        {
+            QMessageBox::information(0, "", "No markers in the current image, please select a marker.");
+            return -1;
+        }
+
+        if(PARA.win_size ==0)
+        {
+            bool ok;
+            PARA.win_size = QInputDialog::getInteger(parent, "Window radius",
+                                                     "Enter radius (window size is 2*radius+1):",
+                                                     32, 16, 512, 1, &ok);
+            if (!ok)
+                return -1;
+        }
+
+        data1d = p4DImage->getRawData();
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        sc = p4DImage->getCDim();
+
+        bool ok1;
+
+        if(sc==1)
+        {
+            c=1;
+            ok1=true;
+        }
+        else
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                             "Enter channel NO:",
+                                             1, 1, sc, 1, &ok1);
+        }
+
+        if(!ok1)
+            return -1;
+
+        in_sz[0] = N;
+        in_sz[1] = M;
+        in_sz[2] = P;
+        in_sz[3] = sc;
+
+        PARA.inimg_file = p4DImage->getFileName();
+        PARA.angle_size = 10;
+    }
+    else
+    {
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return -1;
+        }
+        if(PARA.channel < 1 || PARA.channel > in_sz[3])
+        {
+            fprintf (stderr, "Invalid channel number. \n");
+            return -1;
+        }
+        N = in_sz[0];
+        M = in_sz[1];
+        P = in_sz[2];
+        sc = in_sz[3];
+        c = PARA.channel;
+    }
+
+    //GD_tracing
+    LocationSimple p0;
+    vector<LocationSimple> pp;
+    NeuronTree nt;
+
+    double weight_xy_z=1.0;
+    CurveTracePara trace_para;
+    trace_para.channo = 0;
+    trace_para.sp_graph_background = 0;
+    trace_para.b_postMergeClosebyBranches = false;
+    trace_para.b_3dcurve_width_from_xyonly = true;
+    trace_para.b_pruneArtifactBranches = false;
+    trace_para.sp_num_end_nodes = 2;
+    trace_para.b_deformcurve = false;
+    trace_para.sp_graph_resolution_step = 1;
+    trace_para.b_estRadii = false;
+
+    int markSize = PARA.listLandmarks.size();
+    p0.x = PARA.listLandmarks.at(markSize-1).x-1;
+    p0.y = PARA.listLandmarks.at(markSize-1).y-1;
+    p0.z = PARA.listLandmarks.at(markSize-1).z-1;
+
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+    start_x = (p0.x - PARA.win_size < 0)?  0 : (p0.x - PARA.win_size);
+    start_y = (p0.y - PARA.win_size < 0)?  0 : (p0.y - PARA.win_size);
+    start_z = (p0.z - PARA.win_size < 0)?  0 : (p0.z - PARA.win_size);
+
+    end_x = (p0.x + PARA.win_size >= N-1)?  (N-1) : (p0.x + PARA.win_size);
+    end_y = (p0.y + PARA.win_size >= M-1)?  (M-1) : (p0.y + PARA.win_size);
+    end_z = (p0.z + PARA.win_size >= P-1)?  (P-1) : (p0.z + PARA.win_size);
+
+    unsigned char *localarea=0;
+    V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
+    localarea = new unsigned char [blockpagesz];
+
+    vector<pair<V3DLONG,MyMarker> > vp;
+    vp.reserve(blockpagesz);
+
+    V3DLONG d = 0;
+    for(V3DLONG iz = start_z; iz <= end_z; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = start_y; iy <= end_y; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = start_x; ix <= end_x; ix++)
+            {
+                localarea[d++] = data1d[offsetk + offsetj + ix];
+                MyMarker t;
+                t.x = ix - start_x;
+                t.y = iy - start_y;
+                t.z = iz - start_z;
+                vp.push_back(make_pair(data1d[offsetk + offsetj + ix], t));
+            }
+        }
+    }
+
+    sort(vp.begin(), vp.end());
+    vector<MyMarker> file_inmarkers;
+
+    file_inmarkers.push_back(vp[vp.size()-1].second);
+    for (size_t i = vp.size()-2 ; i >=0; i--)
+    {
+        bool flag =false;
+        for(int j = 0; j < file_inmarkers.size();j++)
+        {
+            if(NTDIS(file_inmarkers.at(j),vp[i].second) < PARA.win_size/10)
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(!flag)
+            file_inmarkers.push_back(vp[i].second);
+
+        if(file_inmarkers.size()>5)
+            break;
+    }
+    vp.clear();
+    V3DLONG sz_tracing[4];
+    sz_tracing[0] = end_x-start_x+1;
+    sz_tracing[1] = end_y-start_y+1;
+    sz_tracing[2] = end_z-start_z+1;
+    sz_tracing[3] = 1;
+
+    unsigned char ****p4d = 0;
+    if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
+    {
+        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
+        return -1;
+    }
+    p0.x -= start_x;
+    p0.y -= start_y;
+    p0.z -= start_z;
+
+    LocationSimple tmpp;
+    for(V3DLONG i=0; i < file_inmarkers.size();i++)
+    {
+        tmpp.x = file_inmarkers.at(i).x;
+        tmpp.y = file_inmarkers.at(i).y;
+        tmpp.z = file_inmarkers.at(i).z;
+        pp.push_back(tmpp);
+    }
+
+    nt = v3dneuron_GD_tracing(p4d, sz_tracing,
+                              p0, pp,
+                              trace_para, weight_xy_z);
+
+    writeSWC_file("test.swc",nt);
+    simple_saveimage_wrapper(callback, "test.v3draw",(unsigned char *)localarea, sz_tracing, 1);
+    saveMarker_file("test.marker",file_inmarkers);
+
+    return 1;
 }
 
 int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
