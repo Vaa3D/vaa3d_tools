@@ -1009,33 +1009,25 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
     nt = readSWC_file(swc_name);
    // QFile file (swc_name);file.remove();
     QList<NeuronSWC> list = nt.listNeuron;
-    QVector<QVector<V3DLONG> > childs;
-    V3DLONG neuronNum = nt.listNeuron.size();
-    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    for (V3DLONG i=0;i<neuronNum;i++)
-    {
-        V3DLONG par = nt.listNeuron[i].pn;
-        if (par<0) continue;
-        childs[nt.hashNeuron.value(par)].push_back(i);
-    }
-
     vector<QList<NeuronSWC> > nt_list;
-    V3DLONG seg_max = 0;
-    for (int i=0;i<list.size();i++)
+
+    for(int j = 0; j< PARA.listLandmarks.size();j++)
     {
         QList<NeuronSWC> nt_seg;
-        if (childs[i].size()==0)
+        for (int i=0;i<list.size();i++)
         {
-            int index_i = i;
-            while(index_i != 1000000000)
+            if (NTDIS(PARA.listLandmarks.at(j),list.at(i))< 2)
             {
-                nt_seg.push_front(list.at(index_i));
-                index_i = getParent(index_i,nt);
+                int index_i = i;
+                while(index_i != 1000000000)
+                {
+                    nt_seg.push_front(list.at(index_i));
+                    index_i = getParent(index_i,nt);
+                }
+                nt_list.push_back(nt_seg);
+                nt_seg.clear();
+                break;
             }
-            nt_list.push_back(nt_seg);
-            if(nt_seg.size() > seg_max)
-                seg_max = nt_seg.size();
-            nt_seg.clear();
         }
     }
 
@@ -1053,19 +1045,15 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             V3DLONG  iy = nt_seg[j].y;
             V3DLONG  iz = nt_seg[j].z;
             seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std);
-            if(nt_seg.size() >5)
+            if(j >=5 && j<nt_seg.size()-5)
             {
-                for(int d = 5; d < nt_seg.size()-5; d++)
+                seg_angle = angle(nt_seg[j], nt_seg[j-5], nt_seg[j+5]);
+                if(seg_angle < 120)
                 {
-                    seg_angle = angle(nt_seg[d], nt_seg[d-5], nt_seg[d+5]);
-                    if(seg_angle < 120)
-                    {
-                        flag = true;
-                        break;
-                    }
+                    flag = true;
+                    break;
                 }
             }
-
         }
         if(seg_intensity >= I_max && !flag)
         {
