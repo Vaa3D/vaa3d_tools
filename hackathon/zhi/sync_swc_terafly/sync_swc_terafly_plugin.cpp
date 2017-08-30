@@ -59,7 +59,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 {
     gridLayout = new QGridLayout();
     QPushButton* sync     = new QPushButton("Sync (one shot)");
-    QPushButton* set_markers     = new QPushButton("Set Markers");
+    QPushButton* set_markers     = new QPushButton("Set Annotations");
 
     gridLayout->addWidget(sync, 0,0);
     gridLayout->addWidget(set_markers, 1,0);
@@ -145,7 +145,13 @@ void lookPanel::_slot_set_markers()
     {
         V3dR_MainWindow *surface_win = m_v3d.getListAll3DViewers()[current_index];
         LandmarkList* updated_landmarks = m_v3d.getHandleLandmarkList_Any3DViewer(surface_win);
+        QList<NeuronTree> * updated_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
         m_v3d.setLandmarkTeraFly(*updated_landmarks);
+        if(updated_treeList->size()>0){
+            NeuronTree updated_nt = updated_treeList->at(0);
+            m_v3d.setSWCTeraFly(updated_nt);
+        }
+
     }
 }
 
