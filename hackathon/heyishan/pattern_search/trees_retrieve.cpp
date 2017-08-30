@@ -74,7 +74,7 @@ bool trees_retrieve(vector<NeuronTree> & sub_trees, const NeuronTree & pt_consen
     cout<<"blastneuron: global_retrieve"<<endl;
     NeuronTree query =pt_consensus;
     //int retrieved_num = sub_trees.size()/200;// number
-    int retrieved_num = 10;
+    int retrieved_num = 15;
     if(retrieved_num<10) retrieved_num=10;
     double thres = 0.1;
     vector<int> feature_codes, norm_codes;

@@ -19,6 +19,43 @@ NeuronTree fill_boundary(const NeuronTree &nt, const Boundary & b)
     return res;
 }
 
+NeuronTree rmSmallPart(NeuronTree & nt_sorted)
+{
+    V3DLONG tot_len = nt_sorted.listNeuron.size();
+    vector<V3DLONG> sublens;
+    vector<V3DLONG> root_ids;
+    V3DLONG max_sublen = 0;
+    V3DLONG sublen;
+    for(V3DLONG j=0; j<tot_len; j++)
+    {
+        NeuronSWC cur = nt_sorted.listNeuron[j];
+        if(cur.pn == -1)
+        {
+            sublens.push_back(1);
+            root_ids.push_back(j);
+            sublen = 0;
+        }
+        sublen += 1;
+        if(sublen > max_sublen)
+            max_sublen = sublen;
+        sublens.back() = sublen;
+
+    }
+    V3DLONG rm_thres = max_sublen / 5;
+    NeuronTree nt_res; //sub means the biggest connected subtree in area
+    for(V3DLONG j=0; j<sublens.size(); j++)
+    {
+        if(sublens[j] >rm_thres)
+        {
+            for(V3DLONG k=root_ids[j]; k<sublens[j]; k++)
+                nt_res.listNeuron.push_back(nt_sorted.listNeuron[k]);
+        }
+    }
+    V3DLONG root_id=nt_res.listNeuron[0].n;
+    nt_res = sort(nt_res,root_id,0);
+    return nt_res;
+}
+
 bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<double> & pt_lens, vector<int>& pt_nums, V3DPluginCallback2 &callback)
 {
     V3DLONG boundary_size = boundary.listNeuron.size();
@@ -72,8 +109,9 @@ bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<Neu
         double c_y = cur.miny + (cur.maxy - cur.miny) /2.0;
         double c_z = cur.minz + (cur.maxz - cur.minz) /2.0;
         double d;
-        d = max(cur.maxx - cur.minx, cur.maxy - cur.miny);
-        d = max(float(d), cur.maxz - cur.minz);
+        //d = max(cur.maxx - cur.minx, cur.maxy - cur.miny);
+        //d = max(float(d), cur.maxz - cur.minz);
+        d = (cur.maxx -cur.minx + cur.maxy - cur.miny + cur.maxz - cur.minz) / 3.0;
         large_boundary.maxx = c_x + d; large_boundary.maxy = c_y + d; large_boundary.maxz = c_z +d;
         large_boundary.minx = c_x - d; large_boundary.miny = c_y - d; large_boundary.minz = c_z - d;
 
@@ -96,7 +134,6 @@ bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<Neu
                 c_point = p;
             }
         }
-
         // get pattern boundary and pattern area
         Boundary b_pattern;
         NeuronTree area_pattern;
@@ -113,9 +150,13 @@ bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<Neu
         V3DLONG root_id=area_pattern.listNeuron[0].n;
         pattern_sorted = sort(area_pattern, root_id,sort_thres);
 
-        pt_list.push_back(pattern_sorted);
+        // remove small part   ps:It would be better to transfer to a function
+         NeuronTree pattern_res = rmSmallPart(pattern_sorted);
+
+        // out pattern
+        pt_list.push_back(pattern_res);
         pt_lens.push_back(d);
-        pt_nums.push_back(pattern_sorted.listNeuron.size());
+        pt_nums.push_back(pattern_res.listNeuron.size());
     }
 
     return true;

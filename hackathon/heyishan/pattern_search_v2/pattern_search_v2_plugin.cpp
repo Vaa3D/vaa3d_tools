@@ -12,8 +12,11 @@
 #include "pattern_search_v2_plugin.h"
 #include <iostream>
 Q_EXPORT_PLUGIN2(pattern_search_v2, pattern_search_v2);
-
+#ifndef dist(a,b)
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#endif
 using namespace std;
+
 
 struct input_PARA
 {
@@ -124,28 +127,46 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
         cout<<"selected_tree_size="<<selected_trees.size()<<endl;
         cout<<p_to_tree.size()<<endl;
 
-        for(int i=0; i<selected_trees.size();i++)
+//        for(int i=0; i<selected_trees.size();i++)
+//        {
+//            V3DLONG id_tree=selected_trees[i];
+//            vector<V3DLONG> ps_tree=p_to_tree[id_tree];
+//            // save subtree for test
+//            NeuronTree tree_temp;
+//            for(int j=0;j<ps_tree.size();j++)
+//            {
+//                V3DLONG p_id  = ps_tree[j];
+//                tree_temp.listNeuron.push_back(PARA.nt_search.listNeuron[p_id]);
+//                // put selected points into result
+//                result_points.push_back(ps_tree[j]);
+//            }
+//            QString subtreeName = "subtree_"+ QString::number(v+1) +"_" + QString::number(i+1)+".swc";
+//            writeSWC_file(subtreeName,tree_temp);
+//            tree_temp.listNeuron.clear();
+//        }
+
+        // remove small part from p_to_tree
+        for(V3DLONG i =0; i<selected_trees.size(); i++)
         {
-            V3DLONG id_tree=selected_trees[i];
-            vector<V3DLONG> ps_tree=p_to_tree[id_tree];
-            // save subtree for test
-            NeuronTree tree_temp;
-            for(int j=0;j<ps_tree.size();j++)
+            V3DLONG id_tree = selected_trees[i];
+            vector<V3DLONG> ps_tree = p_to_tree[id_tree];
+            NeuronTree sub_res = sub_trees[id_tree];
+            for(V3DLONG j=0; j<sub_res.listNeuron.size(); j++)
             {
-                V3DLONG p_id  = ps_tree[j];
-                tree_temp.listNeuron.push_back(PARA.nt_search.listNeuron[p_id]);
-                // put selected points into result
-                result_points.push_back(ps_tree[j]);
+                NeuronSWC cur_sub = sub_res.listNeuron[j];
+                for(V3DLONG k=0; k<ps_tree.size(); k++)
+                {
+                    NeuronSWC cur_nt = PARA.nt_search.listNeuron[ps_tree[k]];
+                    if(dist(cur_sub,cur_nt) < 0.1)
+                    {
+                        result_points.push_back(ps_tree[k]);
+                        break;
+                    }
+                }
             }
             QString subtreeName = "subtree_"+ QString::number(v+1) +"_" + QString::number(i+1)+".swc";
-            writeSWC_file(subtreeName,tree_temp);
-            tree_temp.listNeuron.clear();
+            writeSWC_file(subtreeName,sub_trees[id_tree]);
         }
-        // for test
-//        for(int i=0;i<selected_trees.size();i++)
-//        {
-//            cout<<selected_trees[i]<<":"<<PARA.nt_search.listNeuron[selected_trees[i]].n<<endl;
-//        }
         sub_trees.clear();
         p_to_tree.clear();
         selected_trees.clear();

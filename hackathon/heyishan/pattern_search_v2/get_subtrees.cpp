@@ -87,7 +87,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
     double step_radio= 0.05;
     //int search_step = int(boundary_length * step_radio);
     //search_step=1;
-    int search_step = 5;
+    int search_step = 9;
     if(search_step<2)   search_step=2;
     cout<<"search_step="<<search_step<<endl;
 
@@ -133,8 +133,12 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
         V3DLONG root_id=s_tree.listNeuron[0].n;
         subtree_sorted = sort(s_tree, root_id,sort_thres);
 
+        // remove small part
+        NeuronTree subtree_res = rmSmallPart(subtree_sorted);
+        //NeuronTree subtree_res = subtree_sorted;
+        // out subtree
         p_to_tree.push_back(points);
-        sub_trees.push_back(subtree_sorted);
+        sub_trees.push_back(subtree_res);
         points_set.clear();
         //QString name = "subtree_" + QString::number(i) + ".swc";
         //writeSWC_file(name,s_tree);
