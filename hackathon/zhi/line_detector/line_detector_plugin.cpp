@@ -827,16 +827,6 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             return -1;
         }
 
-        if(PARA.win_size ==0)
-        {
-            bool ok;
-            PARA.win_size = QInputDialog::getInteger(parent, "Window radius",
-                                                     "Enter radius (window size is 2*radius+1):",
-                                                     32, 16, 512, 1, &ok);
-            if (!ok)
-                return -1;
-        }
-
         data1d = p4DImage->getRawData();
         N = p4DImage->getXDim();
         M = p4DImage->getYDim();
@@ -890,8 +880,6 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
 
     //GD_tracing
     LocationSimple p0;
-    vector<LocationSimple> pp;
-    NeuronTree nt;
 
     double weight_xy_z=1.0;
     CurveTracePara trace_para;
@@ -910,51 +898,37 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
     p0.y = PARA.listLandmarks.at(markSize-1).y-1;
     p0.z = PARA.listLandmarks.at(markSize-1).z-1;
 
-    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
-    start_x = (p0.x - PARA.win_size < 0)?  0 : (p0.x - PARA.win_size);
-    start_y = (p0.y - PARA.win_size < 0)?  0 : (p0.y - PARA.win_size);
-    start_z = (p0.z - PARA.win_size < 0)?  0 : (p0.z - PARA.win_size);
 
-    end_x = (p0.x + PARA.win_size >= N-1)?  (N-1) : (p0.x + PARA.win_size);
-    end_y = (p0.y + PARA.win_size >= M-1)?  (M-1) : (p0.y + PARA.win_size);
-    end_z = (p0.z + PARA.win_size >= P-1)?  (P-1) : (p0.z + PARA.win_size);
-
-    unsigned char *localarea=0;
-    V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
-    localarea = new unsigned char [blockpagesz];
-
+    V3DLONG pagesz = N*M*P;
     vector<pair<V3DLONG,MyMarker> > vp;
-    vp.reserve(blockpagesz);
+    vp.reserve(pagesz);
 
-    V3DLONG d = 0;
-    for(V3DLONG iz = start_z; iz <= end_z; iz++)
+    for(V3DLONG iz = 0; iz < P; iz++)
     {
         V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = start_y; iy <= end_y; iy++)
+        for(V3DLONG iy = 0; iy < M; iy++)
         {
             V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = start_x; ix <= end_x; ix++)
+            for(V3DLONG ix = 0; ix < N; ix++)
             {
-                localarea[d++] = data1d[offsetk + offsetj + ix];
                 MyMarker t;
-                t.x = ix - start_x;
-                t.y = iy - start_y;
-                t.z = iz - start_z;
-                vp.push_back(make_pair(data1d[offsetk + offsetj + ix], t));
+                t.x = ix;
+                t.y = iy;
+                t.z = iz;
+                vp.push_back(make_pair(data1d[offsetk+offsetj+ix], t));
             }
         }
     }
 
     sort(vp.begin(), vp.end());
     vector<MyMarker> file_inmarkers;
-
     file_inmarkers.push_back(vp[vp.size()-1].second);
     for (size_t i = vp.size()-2 ; i >=0; i--)
     {
         bool flag =false;
         for(int j = 0; j < file_inmarkers.size();j++)
         {
-            if(NTDIS(file_inmarkers.at(j),vp[i].second) < PARA.win_size/10)
+            if(NTDIS(file_inmarkers.at(j),vp[i].second) < N/15)
             {
                 flag = true;
                 break;
@@ -963,44 +937,151 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
         if(!flag)
             file_inmarkers.push_back(vp[i].second);
 
-        if(file_inmarkers.size()>5)
+        if(file_inmarkers.size()>40)
             break;
     }
     vp.clear();
-    V3DLONG sz_tracing[4];
-    sz_tracing[0] = end_x-start_x+1;
-    sz_tracing[1] = end_y-start_y+1;
-    sz_tracing[2] = end_z-start_z+1;
-    sz_tracing[3] = 1;
+
+    for(int i =0; i < file_inmarkers.size();i++)
+    {
+        LocationSimple p;
+        p.x = file_inmarkers.at(i).x+1;
+        p.y = file_inmarkers.at(i).y+1;
+        p.z = file_inmarkers.at(i).z+1;
+        PARA.listLandmarks.push_back(p);
+    }
+
+    double overall_mean, overall_std;
+    mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+    printf("overall mean is %.2f, std is %.2f\n",overall_mean, overall_std);
+
+
+    vector<LocationSimple> pp;
+    for(V3DLONG i = 0; i <PARA.listLandmarks.size();i++)
+        pp.push_back(PARA.listLandmarks.at(i));
+
 
     unsigned char ****p4d = 0;
-    if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
+    if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], data1d))
     {
         fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-        if(localarea) {delete []localarea; localarea = 0;}
         if(p4d) {delete []p4d; p4d = 0;}
-        return -1;
-    }
-    p0.x -= start_x;
-    p0.y -= start_y;
-    p0.z -= start_z;
-
-    LocationSimple tmpp;
-    for(V3DLONG i=0; i < file_inmarkers.size();i++)
-    {
-        tmpp.x = file_inmarkers.at(i).x;
-        tmpp.y = file_inmarkers.at(i).y;
-        tmpp.z = file_inmarkers.at(i).z;
-        pp.push_back(tmpp);
+        return false;
     }
 
-    nt = v3dneuron_GD_tracing(p4d, sz_tracing,
+    NeuronTree nt = v3dneuron_GD_tracing(p4d, in_sz,
                               p0, pp,
                               trace_para, weight_xy_z);
 
-    writeSWC_file("test.swc",nt);
-    simple_saveimage_wrapper(callback, "test.v3draw",(unsigned char *)localarea, sz_tracing, 1);
-    saveMarker_file("test.marker",file_inmarkers);
+    if(nt.listNeuron.size()<=0)
+    {
+        if(p4d) {delete []p4d; p4d = 0;}
+        PARA.listLandmarks.removeAt(0);
+        return -1;
+    }
+    QString swc_name = PARA.inimg_file+"_1st.swc";
+    export_list2file(nt.listNeuron, swc_name,swc_name);
+
+    for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+    {
+        V3DLONG pn_ID = nt.listNeuron[i].pn-1;
+        if(pn_ID <0)
+            continue;
+        if((fabs(nt.listNeuron[pn_ID].x-nt.listNeuron[0].x) +
+            fabs(nt.listNeuron[pn_ID].y-nt.listNeuron[0].y) +
+            fabs(nt.listNeuron[pn_ID].z-nt.listNeuron[0].z)) < 1e-3)
+        {
+                nt.listNeuron[i].pn = 1;
+        }
+    }
+    QList<NeuronSWC> neuron_sorted;
+    if (!SortSWC(nt.listNeuron, neuron_sorted, VOID, 0))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+        if(p4d) {delete []p4d; p4d = 0;}
+        QFile file (swc_name);file.remove();
+        return false;
+    }
+
+    if(p4d) {delete []p4d; p4d = 0;}
+
+    export_list2file(neuron_sorted, swc_name,swc_name);
+    nt = readSWC_file(swc_name);
+   // QFile file (swc_name);file.remove();
+    QList<NeuronSWC> list = nt.listNeuron;
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    vector<QList<NeuronSWC> > nt_list;
+    V3DLONG seg_max = 0;
+    for (int i=0;i<list.size();i++)
+    {
+        QList<NeuronSWC> nt_seg;
+        if (childs[i].size()==0)
+        {
+            int index_i = i;
+            while(index_i != 1000000000)
+            {
+                nt_seg.push_front(list.at(index_i));
+                index_i = getParent(index_i,nt);
+            }
+            nt_list.push_back(nt_seg);
+            if(nt_seg.size() > seg_max)
+                seg_max = nt_seg.size();
+            nt_seg.clear();
+        }
+    }
+
+    double I_max = 0;
+    int seg_tip_id = -1;
+    for (int i =0; i<nt_list.size();i++)
+    {
+        QList<NeuronSWC> nt_seg = nt_list.at(i);
+        double seg_intensity = 0;
+        double seg_angle;
+        bool flag = false;
+        for(int j = 0; j < nt_seg.size(); j++)
+        {
+            V3DLONG  ix = nt_seg[j].x;
+            V3DLONG  iy = nt_seg[j].y;
+            V3DLONG  iz = nt_seg[j].z;
+            seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std);
+            if(nt_seg.size() >5)
+            {
+                for(int d = 5; d < nt_seg.size()-5; d++)
+                {
+                    seg_angle = angle(nt_seg[d], nt_seg[d-5], nt_seg[d+5]);
+                    if(seg_angle < 120)
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+
+        }
+        if(seg_intensity >= I_max && !flag)
+        {
+            I_max = seg_intensity;
+            seg_tip_id = i;
+        }
+    }
+
+    if(seg_tip_id ==-1)
+    {
+        v3d_msg("no path!");
+        return -1;
+    }
+
+    QString swc_seg = swc_name +QString("_x%1_y%2_z%3_I_%4.swc").arg(p0.x).arg(p0.y).arg(p0.z).arg(I_max);
+    export_list2file(nt_list.at(seg_tip_id), swc_seg,swc_seg);
 
     return 1;
 }
@@ -1393,13 +1474,6 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
                 if(nt_seg.size() > seg_max)
                     seg_max = nt_seg.size();
                 nt_seg.clear();
-            }else if (childs[i].size()>1)
-            {
-                LocationSimple t;
-                t.x = list.at(i).x;
-                t.y = list.at(i).y;
-                t.z = list.at(i).z;
-                checkPoints.push_back(t);
             }
         }
 
@@ -1409,32 +1483,34 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
         {
             QList<NeuronSWC> nt_seg = nt_list.at(i);
             double seg_intensity = 0;
-            double seg_angle = 1;
+            double seg_angle;
+            bool flag = false;
             for(int j = 0; j < nt_seg.size(); j++)
             {
                 V3DLONG  ix = nt_seg[j].x;
                 V3DLONG  iy = nt_seg[j].y;
                 V3DLONG  iz = nt_seg[j].z;
                 seg_intensity += data1d_updated[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std);
-                if(j > 1 && j < nt_seg.size()-1)
+                if(nt_seg.size() >5)
                 {
-                    for(int p =0; p < checkPoints.size();p++)
+                    for(int d = 5; d < nt_seg.size()-5; d++)
                     {
-                        if(NTDIS(nt_seg[j],checkPoints.at(p))<2)
+                        seg_angle = angle(nt_seg[d], nt_seg[d-5], nt_seg[d+5]);
+                        if(seg_angle < 120) //this angle is also quite sensitive it seems. by PHC 170608
                         {
-                            seg_angle *= abs(cos(angle(nt_seg[j],nt_seg[0],nt_seg[nt_seg.size()-1])));
+                            flag = true;
                             break;
                         }
                     }
                 }
+
             }
-            if(seg_intensity*seg_angle >= I_max)
+            if(seg_intensity >= I_max && !flag)
             {
-                I_max = seg_intensity*seg_angle;
+                I_max = seg_intensity;
                 seg_tip_id = i;
             }
         }
-        checkPoints.clear();
 
 
         QList<NeuronSWC> nt_seg_optimal = nt_list.at(seg_tip_id);
