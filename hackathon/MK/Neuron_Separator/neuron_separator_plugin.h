@@ -34,7 +34,7 @@ struct somaNode
 	vector<somaNode*> childrenSomas;
 	vector<somaNode*> parent;
 	int level;
-	bool branch, headSoma, taleSoma, middleSoma;
+	bool branch, headSoma, tailSoma, middleSoma;
 };
 
 class neuronSeparator : public QObject, public V3DPluginInterface2_1

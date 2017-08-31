@@ -146,18 +146,18 @@ void neuronSeparator::breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVe
 	// ---------------------- Identify branching node and compute its direction index --------------------
 	vector<branchNodeProfile> branches;
 	QList<NeuronSWC> nodeList = nt.listNeuron;
-	NeuronSWC head, tale;
+	NeuronSWC head, tail;
 	cout << "forward: " << forward << endl;
 	if (this->forward == 1) 
 	{
 		reverse(path.begin(), path.end());
 		head = wishedSoma;
-		tale = excludedSoma;
+		tail = excludedSoma;
 	}
 	else if (this->forward == 0) 
 	{
 		head = excludedSoma;
-		tale = wishedSoma;
+		tail = wishedSoma;
 		//cout << forward << endl;
 		//SortSWC(path, path, excludedSoma.n, VOID);
 		//head = excludedSoma;
@@ -173,14 +173,14 @@ void neuronSeparator::breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVe
 			branch.branchingNum = childList.at(IDloc.value(it->n)).size();
 			branch.branchingNode = *it;
 			double distance1 = (head.x-it->x)*(head.x-it->x) + (head.y-it->y)*(head.y-it->y) + (head.z-it->z)*(head.z-it->z);
-			double distance2 = (tale.x-it->x)*(tale.x-it->x) + (tale.y-it->y)*(tale.y-it->y) + (tale.z-it->z)*(tale.z-it->z);
+			double distance2 = (tail.x-it->x)*(tail.x-it->x) + (tail.y-it->y)*(tail.y-it->y) + (tail.z-it->z)*(tail.z-it->z);
 			if (distance1 > distance2) 
 			{
 				branch.dist = sqrt(distance2);
 				branch.head = false;
-				branch.somaBranchNorm[0] = (branch.branchingNode.x-tale.x) / branch.dist;
-				branch.somaBranchNorm[1] = (branch.branchingNode.y-tale.y) / branch.dist;
-				branch.somaBranchNorm[2] = (branch.branchingNode.z-tale.z) / branch.dist;
+				branch.somaBranchNorm[0] = (branch.branchingNode.x-tail.x) / branch.dist;
+				branch.somaBranchNorm[1] = (branch.branchingNode.y-tail.y) / branch.dist;
+				branch.somaBranchNorm[2] = (branch.branchingNode.z-tail.z) / branch.dist;
 				branch.soma = excludedSoma;
 			}
 			else 
