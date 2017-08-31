@@ -50,28 +50,33 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
-
-	bool circle;
-	int forward;
-	NeuronTree inputSWCTree;
-	NeuronTree somaSWCTree;
-	QVector< QVector<V3DLONG> > childsTable;
+	
 	QVector<long int> toBeBrokenLoc;
 	QList<NeuronSWC> extractedNeuron;
 	QHash<long int, bool> locLabel;
-	QList<NeuronSWC> somaPath;
+	
 	QList< QList<NeuronSWC> > paths;
+	QList<NeuronSWC> somaPath;
+	NeuronTree somaSWCTree;
 
 	QVector< QVector<V3DLONG> > childIndexTable(NeuronTree& nt);
 	void findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID, QList< QList<NeuronSWC> >& outputPathList);
 	void downwardBFS(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end, QVector< QVector<V3DLONG> >& childList);
 	void backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end);
-	long int findLatestAncestor(bool& circle, NeuronTree& nt, QVector< QVector<V3DLONG> >& childList, NeuronSWC& wishedSoma, NeuronSWC& excludedSoma);
+	long int findLatestCommonAncestor(bool& circle, NeuronTree& nt, QVector< QVector<V3DLONG> >& childList, NeuronSWC& wishedSoma, NeuronSWC& excludedSoma);
 	void breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVector< QVector<V3DLONG> >& childList, NeuronSWC wishedSoma, NeuronSWC excludedSoma);
 	void extractBFS(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
-	void somaPathTree(QList<NeuronSWC>& somaPath, QHash<long int, bool>& locLabel, QList< QList<NeuronSWC> >& paths, NeuronTree& nt);
+	void getSomaPath(QList<NeuronSWC>& somaPath, QHash<long int, bool>& locLabel, QList< QList<NeuronSWC> >& paths, NeuronTree& nt);
 	void breakSomaPathMorph();
 	void buildSomaTree();
+
+private:
+	bool circle;
+	int forward;
+	NeuronTree inputSWCTree;
+	QVector< QVector<V3DLONG> > childsTable;
+	
+	vector<branchNodeProfile> branchToBeCut;
 
 };
 

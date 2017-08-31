@@ -69,11 +69,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		QList<ImageMarker> somas = readMarker_file(inputSomas);
 		this->childsTable = childIndexTable(inputSWCTree);
 		vector<long int> somaIDs;
-		for (size_t i=0; i<nodeList.size(); ++i)
-		{
-			this->locLabel[inputSWCTree.hashNeuron.value(nodeList.at(i).n)] = false;
-		}
-		//cout << locLabel.size() << endl;
+		
 		for (QList<ImageMarker>::iterator it=somas.begin(); it!=somas.end(); ++it)  // collecting all soma locations
 		{
 			for (QList<NeuronSWC>::iterator nodeIt=nodeList.begin(); nodeIt!=nodeList.end(); ++nodeIt)
@@ -85,7 +81,9 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 				}
 			}
 		}
-		// ------------ Identify the path that needs to be broken between any pair of given soma locations -------------
+		cout << somaIDs.size() << endl;
+
+		// ------------ Identify the path of any pair of given soma locations -------------
 		long int wishedID, excludedID;
 		for (size_t i=0; i<somaIDs.size()-1; ++i) // 
 		{
@@ -93,7 +91,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			for (size_t j=i+1; j<somaIDs.size(); ++j)
 			{
 				excludedID = somaIDs[j];
-				findPath(childsTable, inputSWCTree, wishedID, excludedID, paths);
+				findPath(childsTable, inputSWCTree, wishedID, excludedID, paths); // identify the path connecting any given 2 nodes
 				NeuronTree newTreePartial;
 				newTreePartial.listNeuron = paths.at(0);
 				//QString filename = QString::number(wishedID) + "_" + QString::number(excludedID) + ".swc";
@@ -101,16 +99,18 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 
 				NeuronSWC wishedSoma = nodeList.at(inputSWCTree.hashNeuron.value(wishedID));
 				NeuronSWC excludedSoma = nodeList.at(inputSWCTree.hashNeuron.value(excludedID));
-				breakPathMorph(this->inputSWCTree, paths[0], this->childsTable, wishedSoma, excludedSoma);
+				breakPathMorph(this->inputSWCTree, paths[0], this->childsTable, wishedSoma, excludedSoma); 
+			  //^^^^^^^^^^^^^^ This method particularly identifies braching nodes and its direction index (inner product) on the path.
 			}
 		}
-		// -------- END of [Identify the path that needs to be broken between any pair of given soma locations] --------
+		// -------- END of [Identify the path of any pair of given soma locations] --------
 		
-		somaPathTree(this->somaPath, this->locLabel, paths, inputSWCTree); // merging all identified paths 
+		getSomaPath(this->somaPath, this->locLabel, paths, inputSWCTree); // put individual soma paths together
 		NeuronTree pathTree;
 		pathTree.listNeuron = this->somaPath;
 		QString pathTreeFileName = "somasTree.swc";
 		writeSWC_file(pathTreeFileName, pathTree);
+		
 		buildSomaTree();
 
 		breakSomaPathMorph();
