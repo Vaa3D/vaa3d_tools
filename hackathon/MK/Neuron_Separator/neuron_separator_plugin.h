@@ -30,7 +30,7 @@ struct branchNodeProfile
 
 struct somaNode
 {
-	NeuronSWC soma;
+	NeuronSWC node;
 	vector<somaNode*> childrenSomas;
 	vector<somaNode*> parent;
 	int level;
@@ -55,6 +55,7 @@ public:
 	QList<NeuronSWC> extractedNeuron;
 	QHash<long int, bool> locLabel;
 	
+	vector<long int> somaIDs;
 	QList< QList<NeuronSWC> > paths;
 	QList<NeuronSWC> somaPath;
 	NeuronTree somaSWCTree;
@@ -76,6 +77,8 @@ private:
 	NeuronTree inputSWCTree;
 	QVector< QVector<V3DLONG> > childsTable;
 	
+	bool branchAncestor;
+	somaNode* somaTreePtr;
 	vector<branchNodeProfile> branchToBeCut;
 
 };
