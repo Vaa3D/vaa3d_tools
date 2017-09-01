@@ -125,8 +125,8 @@ void NeurontreeStructureMatching::domenu(const QString &menu_name, V3DPluginCall
 {
 	//define the thresholds
 	int thd_nt_target = 1; //smallest size of the target tree
-	double step_ratio = 0.25; //step for subtree searching
-	int num_simstructs = 5; //number of the similar trees
+	double step_ratio = 0.2; //step for subtree searching
+	int num_simstructs = 10; //number of the similar trees
 
 	
 	if (menu_name == tr("tracing_menu"))
