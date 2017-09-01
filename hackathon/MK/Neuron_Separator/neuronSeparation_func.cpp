@@ -15,7 +15,7 @@ QVector< QVector<V3DLONG> > neuronSeparator::childIndexTable(NeuronTree& nt)
 	V3DLONG neuronNum = nt.listNeuron.size();
 	childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
 
-	for (V3DLONG i=0; i<neuronNum; i++)
+	for (V3DLONG i=0; i<neuronNum; ++i)
 	{
 		V3DLONG par = nt.listNeuron[i].pn; // pn = parent id
 		if (par < 0) continue;
@@ -23,6 +23,48 @@ QVector< QVector<V3DLONG> > neuronSeparator::childIndexTable(NeuronTree& nt)
 	}
 
 	return childs;
+}
+
+QVector< QVector<V3DLONG> > neuronSeparator::mkChildTableScratch(QList<NeuronSWC>& inputSWC)
+{
+	QVector< QVector<V3DLONG> > childs; // indices of the childs of a given parent index
+	long int neuronNum = inputSWC.size();
+	childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+	for (size_t i=0; i<neuronNum; ++i)
+	{
+		long int paID = inputSWC[i].parent;
+		if (paID == -1) continue;
+		for (size_t j=0; j<neuronNum; ++j)
+		{
+			if (inputSWC[j].n == paID) childs[j].push_back(i);
+		}
+	}
+
+	return childs;
+}
+
+vector<long int> neuronSeparator::mkPaTableScratch(QList<NeuronSWC>& inputSWC)
+{
+	long int neuronNum = inputSWC.size();
+	vector<long int> pa(neuronNum, 0);
+
+	for (size_t i=0; i<neuronNum; ++i)
+	{
+		long int paID = inputSWC[i].parent;
+		if (paID == -1) 
+		{
+			pa[i] = -1;
+			continue;
+		}
+
+		for (size_t j=0; j<neuronNum; ++j)
+		{
+			if (inputSWC[j].n == paID) pa[i] = j;
+		}
+	}
+
+	return pa;
 }
 
 void neuronSeparator::getSomaPath(QList<NeuronSWC>& somaPath, QHash<long int, bool>& locLabel, QList< QList<NeuronSWC> >& paths, NeuronTree& nt)
@@ -170,27 +212,79 @@ void neuronSeparator::buildSomaTree()
 {
 	// This method builds soma tree, identify the hierarchy, and its braching profile.
 
-	NeuronTree somaTree;
-	somaTree.listNeuron = this->somaPath;
-	QVector< QVector<V3DLONG> > somaChildsTable = childIndexTable(somaTree);
-	for (QVector< QVector<V3DLONG> >::iterator it=somaChildsTable.begin(); it!=somaChildsTable.end(); ++it) cout << it->size() << " ";
-	for (size_t somai=0; somai<this->somaIDs.size(); ++somai)
+	for (size_t i=0; i<somaIDs.size(); ++i)
 	{
-		bool paWithinPath = false;
-		QList<NeuronSWC>::iterator it;
-		for (it=this->somaPath.begin(); it!=this->somaPath.end(); ++it)
+		long int paID;
+		NeuronSWC* nodePtr;
+		for (size_t j=0; j<this->somaPath.size(); ++j)
 		{
-			if (it->parent == somaIDs[somai])
+			if (somaPath[j].n == somaIDs[i])
 			{
-				paWithinPath = true;
+				nodePtr = &somaPath[j];
+				paID = somaPath[j].parent;
 				break;
 			}
 		}
-		if (paWithinPath == false)
+		if (paID == -1) break;
+
+		bool paWithin = false;
+		for (size_t j=0; j<this->somaPath.size(); ++j)
 		{
-			it->parent = -1;
-			break;
+			if (somaPath[j].n == paID)
+			{
+				paWithin = true;
+				break;
+			}
 		}
+
+		if (paWithin == false) nodePtr->parent = -1;
+	}
+
+	NeuronTree somaTree;
+	somaTree.listNeuron = this->somaPath;
+	QVector< QVector<V3DLONG> > somaChildsTable;
+	vector<long int> somaPaTable;
+	somaChildsTable = mkChildTableScratch(this->somaPath);
+	somaPaTable = mkPaTableScratch(this->somaPath);
+	//for (QVector< QVector<V3DLONG> >::iterator it=somaChildsTable.begin(); it!=somaChildsTable.end(); ++it) cout << it->size() << " ";
+	//for (vector<long int>::iterator it=somaPaTable.begin(); it!=somaPaTable.end(); ++it) cout << *it << " ";
+	
+	vector< vector<size_t> > tails2headList;
+	vector<size_t> tail2head;
+	for (QVector< QVector<V3DLONG> >::iterator it=somaChildsTable.begin(); it!=somaChildsTable.end(); ++it) 
+	{
+		if (it->size() == 0)
+		{
+			size_t loc = size_t(it - somaChildsTable.begin());
+			tail2head.push_back(loc);
+			size_t paLoc;
+			do
+			{
+				paLoc = somaPaTable[loc];
+				if (somaChildsTable[paLoc].size() > 1) tail2head.push_back(paLoc);
+				else if (somaChildsTable[paLoc].size() == 1)
+				{
+					for (size_t j=0; j<somaIDs.size(); ++j)
+					{
+						if (somaPath[paLoc].n == somaIDs[j]) 
+						{
+							tail2head.push_back(paLoc);
+							break;
+						}
+					}
+				}
+				loc = paLoc;
+			} while (somaPath[loc].parent != -1);
+
+			tails2headList.push_back(tail2head);
+			tail2head.clear();
+		}
+	}
+
+	for (vector< vector<size_t> >::iterator itList=tails2headList.begin(); itList!=tails2headList.end(); ++itList)
+	{
+		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it) cout << *it << " ";
+		cout << endl;
 	}
 
 	

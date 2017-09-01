@@ -70,6 +70,8 @@ public:
 	void getSomaPath(QList<NeuronSWC>& somaPath, QHash<long int, bool>& locLabel, QList< QList<NeuronSWC> >& paths, NeuronTree& nt);
 	void breakSomaPathMorph();
 	void buildSomaTree();
+	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
+	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
 
 private:
 	bool circle;
