@@ -27,18 +27,15 @@ struct Boundary
 void create_AM(vector<vector<V3DLONG> >&AM, V3DLONG siz, const NeuronTree & pt)
 {
     // initialize adjance matrix
-    v3d_msg("0");
     for(V3DLONG i=0; i<siz; i++)
     {
         AM[i].resize(siz);
     }
-    v3d_msg("0.5");
     for(V3DLONG i=0; i<siz; i++)
     {
         for(V3DLONG j=0; j<siz; j++)
             AM[i][j] = 0;
     }
-    v3d_msg("1");
     // creat AM
     for(int i=0; i<siz ; i++)
     {
@@ -47,7 +44,6 @@ void create_AM(vector<vector<V3DLONG> >&AM, V3DLONG siz, const NeuronTree & pt)
         if( p < 0) continue;
         AM[i][p-1] = AM[p-1][i] = 1;
     }
-    v3d_msg("2");
     return;
 }
 bool cal_degree(vector<int> & degree, V3DLONG siz, const NeuronTree & pt, const QVector<QVector<V3DLONG> > &childs)
@@ -199,8 +195,8 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
        area_sub.hashNeuron.clear();
        for(V3DLONG j=0; j<area_sub.listNeuron.size();j++){area_sub.hashNeuron.insert(area_sub.listNeuron[j].n, j);}
 
-       QString saveold="pattern_old.swc";
-        writeSWC_file(saveold,area_sorted);
+//       QString saveold="pattern_old.swc";
+//        writeSWC_file(saveold,area_sorted);
 
         // get each node's children
         V3DLONG area_size = area_sub.listNeuron.size();
@@ -411,8 +407,8 @@ bool pattern_analysis(const NeuronTree &nt, const NeuronTree &boundary,vector<Ne
         }//while
 
         // save area for test
-        QString savename = "pattern_"+ QString::number(i+1)+".swc";
-        writeSWC_file(savename,pattern);
+//        QString savename = "pattern_"+ QString::number(i+1)+".swc";
+//        writeSWC_file(savename,pattern);
         v_area2.push_back(pattern);
 
         pattern.listNeuron.clear();

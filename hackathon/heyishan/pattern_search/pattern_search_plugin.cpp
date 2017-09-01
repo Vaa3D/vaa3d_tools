@@ -114,6 +114,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     for(int v=0;v<pt_list.size();v++)
     {
         NeuronTree pt = pt_list[v];
+        writeSWC_file("pt.swc",pt);
         int area_len = pt_lens[v];
         vector<NeuronTree> sub_trees;
         vector<vector<V3DLONG> > p_to_tree;
