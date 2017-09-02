@@ -13,6 +13,7 @@
 #include "basic_surf_objs.h"
 #include <qvector.h>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -35,6 +36,8 @@ struct somaNode
 	vector<somaNode*> parent;
 	int level;
 	bool branch, headSoma, tailSoma, middleSoma;
+
+	somaNode::somaNode() {branch = false; headSoma = false; tailSoma = false; middleSoma = false;}
 };
 
 class neuronSeparator : public QObject, public V3DPluginInterface2_1
@@ -72,13 +75,14 @@ public:
 	void buildSomaTree();
 	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
 	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
-
+	
 private:
 	bool circle;
 	int forward;
 	NeuronTree inputSWCTree;
 	QVector< QVector<V3DLONG> > childsTable;
-	
+
+	unordered_map<size_t, somaNode*> crucialNodeHash;
 	bool branchAncestor;
 	somaNode* somaTreePtr;
 	vector<branchNodeProfile> branchToBeCut;

@@ -110,6 +110,28 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		// -------- END of [Identify the path of any pair of given soma locations and merge the path] --------
 		
 		buildSomaTree();
+		int childrenCount = 0;
+		vector<somaNode*> curLevelPtr, nextLevelPtr;
+		curLevelPtr.push_back(this->somaTreePtr);
+		do
+		{
+			childrenCount = 0;
+			int childrenSize = 0;
+			nextLevelPtr.clear();
+			for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) 
+			{
+				childrenSize = (*it)->childrenSomas.size();
+				childrenCount = childrenCount + childrenSize;
+
+				cout << " - ID: " << (*it)->node.n << endl;
+				cout << " - level: " << (*it)->level << endl;
+				cout << " - children size: " << childrenSize << endl << endl;
+
+				for (size_t j=0; j<childrenSize; ++j) nextLevelPtr.push_back((*it)->childrenSomas[j]);
+			}	
+			curLevelPtr = nextLevelPtr;
+			
+		} while (childrenCount > 0);
 
 		breakSomaPathMorph();
 

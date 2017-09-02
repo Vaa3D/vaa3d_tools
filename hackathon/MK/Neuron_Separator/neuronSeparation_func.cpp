@@ -9,6 +9,8 @@
 
 using namespace std;
 
+#define MAX_NODE_NUM_ON_TAIL2HEAD_PATH 100000
+
 QVector< QVector<V3DLONG> > neuronSeparator::childIndexTable(NeuronTree& nt)
 {
 	QVector< QVector<V3DLONG> > childs; // indices of the childs of a given parent index
@@ -81,7 +83,7 @@ void neuronSeparator::getSomaPath(QList<NeuronSWC>& somaPath, QHash<long int, bo
 			if (locLabel[nodeHash.value(pathIt->n)] == false) 
 			{
 				somaPath.push_back(*pathIt);
-				locLabel[nodeHash.value(pathIt->n)] = true; // labeling all nodes on the soma path 'true', otherwise 'false'
+				locLabel[nodeHash.value(pathIt->n)] = true; // labeling nodes that have been included in the somaPath 'true', avoiding repeated inclusion 
 			}
 			else if (locLabel[nodeHash.value(pathIt->n)] == true) continue;
 		}
@@ -247,6 +249,7 @@ void neuronSeparator::buildSomaTree()
 	somaChildsTable = mkChildTableScratch(this->somaPath);
 	somaPaTable = mkPaTableScratch(this->somaPath);
 	//for (QVector< QVector<V3DLONG> >::iterator it=somaChildsTable.begin(); it!=somaChildsTable.end(); ++it) cout << it->size() << " ";
+	//cout << endl << endl;
 	//for (vector<long int>::iterator it=somaPaTable.begin(); it!=somaPaTable.end(); ++it) cout << *it << " ";
 	
 	vector< vector<size_t> > tails2headList;
@@ -276,144 +279,142 @@ void neuronSeparator::buildSomaTree()
 				loc = paLoc;
 			} while (somaPath[loc].parent != -1);
 
+			//reverse(tail2head.begin(), tail2head.end());
 			tails2headList.push_back(tail2head);
 			tail2head.clear();
 		}
 	}
 
+	int crucialNodeNum = 0;
+	int maxCrucialNodes = crucialNodeNum;
 	for (vector< vector<size_t> >::iterator itList=tails2headList.begin(); itList!=tails2headList.end(); ++itList)
 	{
-		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it) cout << *it << " ";
-		cout << endl;
-	}
-
-	
-	
-	//cout << endl << somaChildsTable.size() << endl;
-	
-
-
-
-	// ---------------------- Identify branching node and compute its direction index --------------------
-	/*vector<branchNodeProfile> branches;
-	NeuronSWC head, tail;
-	cout << "forward: " << forward << endl;
-	if (this->forward == 1) 
-	{
-		reverse(path.begin(), path.end());
-		head = wishedSoma;
-		tail = excludedSoma;
-	}
-	else if (this->forward == 0) 
-	{
-		head = excludedSoma;
-		tail = wishedSoma;
-		//cout << forward << endl;
-		//SortSWC(path, path, excludedSoma.n, VOID);
-		//head = excludedSoma;
-	}
-
-	QHash<int, int> IDloc = nt.hashNeuron;
-	for (QList<NeuronSWC>::iterator it=path.begin(); it!=path.end(); ++it)
-	{
-		if (childList.at(IDloc.value(it->n)).size() > 1) 
+		cout << "  -- tail to head path " << (itList-tails2headList.begin()+1) << ": ";
+		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it) 
 		{
-			branchNodeProfile branch;
-			branch.loc = IDloc.value(it->n);
-			branch.branchingNum = childList.at(IDloc.value(it->n)).size();
-			branch.branchingNode = *it;
-			double distance1 = (head.x-it->x)*(head.x-it->x) + (head.y-it->y)*(head.y-it->y) + (head.z-it->z)*(head.z-it->z);
-			double distance2 = (tail.x-it->x)*(tail.x-it->x) + (tail.y-it->y)*(tail.y-it->y) + (tail.z-it->z)*(tail.z-it->z);
-			if (distance1 > distance2) 
+			cout << *it << " ";
+			++crucialNodeNum;
+		}
+		cout << endl;
+
+		if (crucialNodeNum >= maxCrucialNodes) maxCrucialNodes = crucialNodeNum;
+
+		crucialNodeNum = 0;
+	}
+	cout << "    --> max namber of crucial nodes on 1 tail-head path: " << maxCrucialNodes << endl;
+
+	vector<somaNode> crucialNodes;
+	crucialNodes.clear();
+	size_t nodeCount = 0;
+	for (vector< vector<size_t> >::iterator itList=tails2headList.begin(); itList!=tails2headList.end(); ++itList)
+	{
+		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it)
+		{
+			if (crucialNodeHash[*it] == 0)
 			{
-				branch.dist = sqrt(distance2);
-				branch.head = false;
-				branch.somaBranchNorm[0] = (branch.branchingNode.x-tail.x) / branch.dist;
-				branch.somaBranchNorm[1] = (branch.branchingNode.y-tail.y) / branch.dist;
-				branch.somaBranchNorm[2] = (branch.branchingNode.z-tail.z) / branch.dist;
-				branch.soma = excludedSoma;
+				somaNode crucialNode;
+				crucialNodes.push_back(crucialNode);
+				crucialNodes[nodeCount].node = somaPath[*it];
+				//crucialNode.node = somaPath[*it];
+				cout << "ID: " << somaPath[*it].n << endl;
+				cout << "    " << crucialNodes[nodeCount].node.n << endl;
+				//cout << "    " << crucialNode.node.n << endl;
+				
+				crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
+				++nodeCount;
+				cout << "    " << crucialNodeHash[*it]->node.n << endl;
+				//cout << *it << "_" << crucialNodeHash[*it] << " " << crucialNodeHash[*it]->node.n << " ";
 			}
-			else 
-			{
-				branch.dist = sqrt(distance1);
-				branch.head = true;
-				branch.somaBranchNorm[0] = (branch.branchingNode.x-head.x) / branch.dist;
-				branch.somaBranchNorm[1] = (branch.branchingNode.y-head.y) / branch.dist;
-				branch.somaBranchNorm[2] = (branch.branchingNode.z-head.z) / branch.dist;
-				branch.soma = wishedSoma;
-			}
-			branches.push_back(branch);
 		}
 	}
-	
-	for (vector<branchNodeProfile>::iterator it=branches.begin(); it!=branches.end(); ++it)
+	//cout << "hash number: " << crucialNodeHash.size() << endl;
+
+	somaNode* curSomaNodePtr;
+	somaNode* paSomaNodePtr;
+	vector<size_t> handled;
+	handled.clear();
+	for (vector< vector<size_t> >::iterator itList=tails2headList.begin(); itList!=tails2headList.end(); ++itList)
 	{
-		cout << it->somaBranchNorm[0] << " " << it->somaBranchNorm[1] << " " << it->somaBranchNorm[2] << endl;
-		cout << it->loc << " " << it->branchingNum << endl; 
-		for (size_t i=0; i<it->branchingNum; ++i)
+		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end()-1; ++it)
 		{
-			//cout << childList.at(it->loc)[i] << endl; // branch's child location 
-			for (size_t j=0; j<path.size(); ++j)
+			bool check = false;
+			for (vector<size_t>::iterator checkIt=handled.begin(); checkIt!=handled.end(); ++checkIt)
 			{
-				//cout << IDloc.value(path[j].n) << " ";
-				if (IDloc.value(path[j].n) == childList.at(it->loc)[i])
+				if (*checkIt == *it)
 				{
-					cout << IDloc.value(path.at(j).n) << " " << childList.at(it->loc)[i] << endl << endl;
-					it->childLoc = childList.at(it->loc).at(i);
-					if (it->head == true)
-					{
-						it->dirIndex = ((it+1)->branchingNode.x-it->branchingNode.x) * it->somaBranchNorm[0] + 
-									   ((it+1)->branchingNode.y-it->branchingNode.y) * it->somaBranchNorm[1] +
-									   ((it+1)->branchingNode.z-it->branchingNode.z) * it->somaBranchNorm[2];
-					}
-					else if (it->head == false)
-					{
-						it->dirIndex = ((it-1)->branchingNode.x-it->branchingNode.x) * it->somaBranchNorm[0] + 
-									   ((it-1)->branchingNode.y-it->branchingNode.y) * it->somaBranchNorm[1] +
-									   ((it-1)->branchingNode.z-it->branchingNode.z) * it->somaBranchNorm[2];
-					}
+					check = true;
+					break;
 				}
 			}
-		}
-	}
-	for (vector<branchNodeProfile>::iterator it=branches.begin(); it!=branches.end(); ++it) cout << it->branchingNode.n << " " << it->dirIndex << endl;
-	// ------------------- END of [Identify branching node and compute its direction index] --------------------- 
+			if (check == true) continue;
 
-	QList<NeuronSWC> newList = nodeList;
-	for (vector<branchNodeProfile>::iterator it=branches.end()-2; it!=branches.begin()-1; --it)
-	{
-		if (it->dirIndex < 0)
-		{
-			if (it->head == true) continue;
-			newList[it->childLoc].parent = -1;
-			branchToBeCut.push_back(*it);
-			cout << "branch node ID: " << it->branchingNode.n << " cut location: " << it->childLoc << endl;
-		}
-	}
-	for (QList<NeuronSWC>::iterator it=newList.begin(); it!=newList.end(); ++it)
-	{
-		if (it->parent == -1) this->extractBFS(this->extractedNeuron, newList, *it);
-		break;
-	}*/
-
-
-
-	QList<NeuronSWC> brokenSomaPath = somaPath;
-	for (size_t i=0; i<somaPath.size(); ++i)
-	{
-		for (size_t j=0; j<this->branchToBeCut.size(); ++j)
-		{
-			if (this->branchToBeCut[j].branchingNode.n == somaPath.at(i).n)
+			if (check == false)
 			{
-				brokenSomaPath[i].parent = -1;
+				curSomaNodePtr = crucialNodeHash[*it];
+				cout << *it << " " << crucialNodeHash[*it]->node.n << endl;
+				curSomaNodePtr->parent.push_back(crucialNodeHash[*(it+1)]);
+				paSomaNodePtr = crucialNodeHash[*(it+1)];
+				paSomaNodePtr->childrenSomas.push_back(crucialNodeHash[*it]);
+
+				cout << curSomaNodePtr->node.n << " " << paSomaNodePtr->node.n << endl << endl;
+
+				handled.push_back(*it);
 			}
 		}
 	}
-	NeuronTree brokenSomaTree;
-	brokenSomaTree.listNeuron = brokenSomaPath;
-	QString brokenPathTreeFileName = "brokenomasTree.swc";
-	writeSWC_file(brokenPathTreeFileName, brokenSomaTree);
+	/*somaNode* testPtr = crucialNodeHash[244];
+	cout << "child address: "; 
+	for (vector<somaNode*>::iterator it=testPtr->childrenSomas.begin(); it!=testPtr->childrenSomas.end(); ++it) cout << *it << " ";
+	cout << endl;*/
 
+	int pathSize = tails2headList[0].size();
+	size_t headLoc = tails2headList[0][pathSize-1];
+	this->somaTreePtr = crucialNodeHash[headLoc];
+	somaTreePtr->headSoma = true;
+
+	int levelCount = 1;
+	int childrenCount;
+	vector<somaNode*> curLevelPtr, nextLevelPtr;
+	curLevelPtr.push_back(somaTreePtr);
+	do
+	{
+		childrenCount = 0;
+		int childrenSize = 0;
+		nextLevelPtr.clear();
+		for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) 
+		{
+			(*it)->level = levelCount;
+			childrenSize = (*it)->childrenSomas.size();
+			//cout << "children size: " << childrenSize << endl;
+			if (childrenSize > 1)
+			{
+				for (size_t i=0; i<somaIDs.size(); ++i)
+				{
+					if (somaIDs[i] == (*it)->node.n) (*it)->middleSoma = true;
+					break;
+				}
+				(*it)->branch = true;
+			}
+			else if (childrenSize == 1 && (*it)->parent.size() > 0) 
+			{
+				(*it)->middleSoma = true;
+			}
+			else if (childrenSize == 0) 
+			{
+				(*it)->tailSoma = true;
+			}
+			childrenCount = childrenCount + childrenSize;
+
+			for (size_t j=0; j<childrenSize; ++j) nextLevelPtr.push_back((*it)->childrenSomas[j]);
+		}	
+		curLevelPtr = nextLevelPtr;
+		++levelCount;
+	} while (childrenCount > 0);
+	
+	
+	
+	
+	
 }
 
 void neuronSeparator::breakSomaPathMorph()
