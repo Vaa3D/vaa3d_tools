@@ -82,33 +82,31 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		//cout << "number of somas: " << this->somaIDs.size() << endl;
 
-		// ------------ Identify the path of any pair of given soma locations and merge the path -------------
+		// ------------ Identify the path of any pair of given soma locations and merge the paths -------------
 		long int wishedID, excludedID;
-		size_t pathCount = 0;
 		for (size_t i=0; i<this->somaIDs.size()-1; ++i) 
 		{
 			wishedID = this->somaIDs[i];
 			for (size_t j=i+1; j<this->somaIDs.size(); ++j)
 			{
 				excludedID = this->somaIDs[j];
-				findPath(childsTable, inputSWCTree, wishedID, excludedID, paths); // identify the path connecting any given 2 nodes
-
+				QList<NeuronSWC> path = findPath(childsTable, inputSWCTree, wishedID, excludedID); // identify the path connecting any given 2 nodes
+				this->paths.push_back(path);
 				NeuronSWC wishedSoma = nodeList.at(inputSWCTree.hashNeuron.value(wishedID));
 				NeuronSWC excludedSoma = nodeList.at(inputSWCTree.hashNeuron.value(excludedID));
-				breakPathMorph(this->inputSWCTree, paths[pathCount], this->childsTable, wishedSoma, excludedSoma); 
-			  //^^^^^^^^^^^^^^ This method particularly identifies braching nodes and its direction index (inner product) on the path.
-
-				++pathCount;
+				//breakPathMorph(this->inputSWCTree, paths[pathCount], this->childsTable, wishedSoma, excludedSoma); 
 			}
 		}
 
-		getSomaPath(this->somaPath, this->locLabel, paths, inputSWCTree); // put individual soma paths together
+		getSomaPath(this->somaPath, this->locLabel, this->paths, this->inputSWCTree); // put individual soma path together
 		NeuronTree pathTree;
 		pathTree.listNeuron = this->somaPath;
 		QString pathTreeFileName = "somasTree.swc";
 		writeSWC_file(pathTreeFileName, pathTree);
-		// -------- END of [Identify the path of any pair of given soma locations and merge the path] --------
+		// -------- END of [Identify the path of any pair of given soma locations and merge the paths] --------
 		
+
+		// ------------- Build soma tree, determine hierarchy, and cut the path -------------
 		buildSomaTree();
 		int childrenCount = 0;
 		vector<somaNode*> curLevelPtr, nextLevelPtr;
@@ -132,8 +130,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			curLevelPtr = nextLevelPtr;
 			
 		} while (childrenCount > 0);
-
-		breakSomaPathMorph();
+		// ------- END of [Build soma tree and determine hierarchy, and cut the path] -------
 
 		/*NeuronTree newTree;
 		newTree.listNeuron = this->extractedNeuron;

@@ -90,7 +90,38 @@ void neuronSeparator::getSomaPath(QList<NeuronSWC>& somaPath, QHash<long int, bo
 	}
 }
 
-void neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID, QList< QList<NeuronSWC> >& outputPathList)
+void neuronSeparator::backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end)
+{
+	// This method traces a path backward; from end to start.
+
+	QList<NeuronSWC> inputList = nt.listNeuron;
+
+	vector<size_t> loc;
+	long parent, id, child;
+	long int parentLoc;
+	QList<long int> childrenLoc;  // both parents and children are represented in the index number on the listNeuron.
+	QList<NeuronSWC> parentNode;
+	QList<NeuronSWC> childNodes;
+	parentLoc = nt.hashNeuron.value(start.parent);
+	tracedSWC.push_back(start);
+
+	NeuronSWC currNode;
+	NeuronSWC lastNode;
+	while (inputList.at(parentLoc).n != end.parent)
+	{
+		currNode = inputList.at(parentLoc);
+		tracedSWC.push_back(currNode);
+		lastNode = currNode;
+		parentLoc = nt.hashNeuron.value(currNode.parent);
+		if (inputList.at(parentLoc).parent == -1) 
+		{
+			tracedSWC.push_back(inputList.at(parentLoc));
+			break;
+		}
+	}
+}
+
+QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID)
 {
 	QList<NeuronSWC> nodeList = nt.listNeuron;
 	QList<NeuronSWC>::iterator startIt_wished = nodeList.begin();
@@ -104,7 +135,7 @@ void neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childList, NeuronTre
 	
 	long int latestAncestorLoc = findLatestCommonAncestor(this->circle, nt, childList, *startIt_wished, *startIt_excluded);
 	somaNode somaNodeWished;
-	cout << "-- latest ancestor location: " << latestAncestorLoc << endl;
+	//cout << "-- latest ancestor location: " << latestAncestorLoc << endl;
 	NeuronSWC latestAncestor = *(nodeList.begin() + ptrdiff_t(latestAncestorLoc));
 
 	if (this->branchAncestor == true)
@@ -115,13 +146,12 @@ void neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childList, NeuronTre
 		//cout << path1.size() << " " << path2.size() << endl;
 		for (QList<NeuronSWC>::iterator it=path2.begin(); it!=path2.end()-1; ++it) path1.push_back(*it);
 		//cout << path1.size() << endl;
-		outputPathList.push_back(path1);
 
 		NeuronTree somaTreePartial;
 		somaTreePartial.listNeuron = path1;
 		QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 		writeSWC_file(name, somaTreePartial);
-		path1.clear();
+		return path1;
 	}
 	else 
 	{
@@ -129,37 +159,36 @@ void neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childList, NeuronTre
 		{
 			QList<NeuronSWC> path;
 			backwardPath(path, nt, *startIt_excluded, *startIt_wished);
-			outputPathList.push_back(path);
 			
 			NeuronTree somaTreePartial;
 			somaTreePartial.listNeuron = path;
 			QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 			writeSWC_file(name, somaTreePartial);
-			path.clear();
+			return path;
 		}
 		else if (forward == 0)
 		{
 			QList<NeuronSWC> path;
 			backwardPath(path, nt, *startIt_wished, *startIt_excluded);
-			outputPathList.push_back(path);
 			
 			NeuronTree somaTreePartial;
 			somaTreePartial.listNeuron = path;
 			QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 			writeSWC_file(name, somaTreePartial);
-			path.clear();
+			return path;
 		}
 	}
 
-	return;
+	QList<NeuronSWC> dummy;
+	return dummy;
 }
 
 long int neuronSeparator::findLatestCommonAncestor(bool& circle, NeuronTree& nt, QVector< QVector<V3DLONG> >& childList, NeuronSWC& wishedSoma, NeuronSWC& excludedSoma)
 {
-	// This method identifies the latest common ancestor of 2 given nodes. (A common ancester is not necessarily a soma, could be a branching point.)
+	// This method identifies the location of the latest common ancestor of 2 given nodes. (A common ancester is not necessarily a soma, could be a branching point.)
 
 	this->forward = 1;
-	if (this->circle == false)
+	if (circle == false)
 	{
 		QList<NeuronSWC> nodeList = nt.listNeuron;
 		vector<ptrdiff_t> ancestors;
@@ -220,10 +249,10 @@ void neuronSeparator::buildSomaTree()
 		NeuronSWC* nodePtr;
 		for (size_t j=0; j<this->somaPath.size(); ++j)
 		{
-			if (somaPath[j].n == somaIDs[i])
+			if (this->somaPath[j].n == this->somaIDs[i])
 			{
-				nodePtr = &somaPath[j];
-				paID = somaPath[j].parent;
+				nodePtr = &(this->somaPath[j]);
+				paID = this->somaPath[j].parent;
 				break;
 			}
 		}
@@ -232,7 +261,7 @@ void neuronSeparator::buildSomaTree()
 		bool paWithin = false;
 		for (size_t j=0; j<this->somaPath.size(); ++j)
 		{
-			if (somaPath[j].n == paID)
+			if (this->somaPath[j].n == paID)
 			{
 				paWithin = true;
 				break;
@@ -269,7 +298,7 @@ void neuronSeparator::buildSomaTree()
 				{
 					for (size_t j=0; j<somaIDs.size(); ++j)
 					{
-						if (somaPath[paLoc].n == somaIDs[j]) 
+						if (this->somaPath[paLoc].n == this->somaIDs[j]) 
 						{
 							tail2head.push_back(paLoc);
 							break;
@@ -277,7 +306,7 @@ void neuronSeparator::buildSomaTree()
 					}
 				}
 				loc = paLoc;
-			} while (somaPath[loc].parent != -1);
+			} while (this->somaPath[loc].parent != -1);
 
 			//reverse(tail2head.begin(), tail2head.end());
 			tails2headList.push_back(tail2head);
@@ -285,49 +314,35 @@ void neuronSeparator::buildSomaTree()
 		}
 	}
 
-	int crucialNodeNum = 0;
-	int maxCrucialNodes = crucialNodeNum;
+	cout << endl << "===== Analyzing soma path =====" << endl;
 	for (vector< vector<size_t> >::iterator itList=tails2headList.begin(); itList!=tails2headList.end(); ++itList)
 	{
 		cout << "  -- tail to head path " << (itList-tails2headList.begin()+1) << ": ";
-		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it) 
-		{
-			cout << *it << " ";
-			++crucialNodeNum;
-		}
+		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it) cout << *it << " ";
+		
 		cout << endl;
-
-		if (crucialNodeNum >= maxCrucialNodes) maxCrucialNodes = crucialNodeNum;
-
-		crucialNodeNum = 0;
 	}
-	cout << "    --> max namber of crucial nodes on 1 tail-head path: " << maxCrucialNodes << endl;
+	cout << endl;
 
-	vector<somaNode> crucialNodes;
-	crucialNodes.clear();
+	this->crucialNodes.clear();
 	size_t nodeCount = 0;
 	for (vector< vector<size_t> >::iterator itList=tails2headList.begin(); itList!=tails2headList.end(); ++itList)
 	{
 		for (vector<size_t>::iterator it=itList->begin(); it!=itList->end(); ++it)
 		{
-			if (crucialNodeHash[*it] == 0)
+			if (this->crucialNodeHash[*it] == 0)
 			{
 				somaNode crucialNode;
-				crucialNodes.push_back(crucialNode);
-				crucialNodes[nodeCount].node = somaPath[*it];
-				//crucialNode.node = somaPath[*it];
-				cout << "ID: " << somaPath[*it].n << endl;
-				cout << "    " << crucialNodes[nodeCount].node.n << endl;
-				//cout << "    " << crucialNode.node.n << endl;
-				
-				crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
+				this->crucialNodes.push_back(crucialNode);
+				this->crucialNodes[nodeCount].node = somaPath[*it];
+				this->crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
 				++nodeCount;
-				cout << "    " << crucialNodeHash[*it]->node.n << endl;
-				//cout << *it << "_" << crucialNodeHash[*it] << " " << crucialNodeHash[*it]->node.n << " ";
+				//cout << "location on the soma path: " << *it << endl;
+				//cout << " - memory address: " << crucialNodeHash[*it] << endl;
+				//cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
 			}
 		}
 	}
-	//cout << "hash number: " << crucialNodeHash.size() << endl;
 
 	somaNode* curSomaNodePtr;
 	somaNode* paSomaNodePtr;
@@ -350,13 +365,10 @@ void neuronSeparator::buildSomaTree()
 
 			if (check == false)
 			{
-				curSomaNodePtr = crucialNodeHash[*it];
-				cout << *it << " " << crucialNodeHash[*it]->node.n << endl;
-				curSomaNodePtr->parent.push_back(crucialNodeHash[*(it+1)]);
-				paSomaNodePtr = crucialNodeHash[*(it+1)];
-				paSomaNodePtr->childrenSomas.push_back(crucialNodeHash[*it]);
-
-				cout << curSomaNodePtr->node.n << " " << paSomaNodePtr->node.n << endl << endl;
+				curSomaNodePtr = this->crucialNodeHash[*it];
+				curSomaNodePtr->parent.push_back(this->crucialNodeHash[*(it+1)]);
+				paSomaNodePtr = this->crucialNodeHash[*(it+1)];
+				paSomaNodePtr->childrenSomas.push_back(this->crucialNodeHash[*it]);
 
 				handled.push_back(*it);
 			}
@@ -369,13 +381,13 @@ void neuronSeparator::buildSomaTree()
 
 	int pathSize = tails2headList[0].size();
 	size_t headLoc = tails2headList[0][pathSize-1];
-	this->somaTreePtr = crucialNodeHash[headLoc];
-	somaTreePtr->headSoma = true;
+	this->somaTreePtr = this->crucialNodeHash[headLoc];
+	this->somaTreePtr->headSoma = true;
 
 	int levelCount = 1;
 	int childrenCount;
 	vector<somaNode*> curLevelPtr, nextLevelPtr;
-	curLevelPtr.push_back(somaTreePtr);
+	curLevelPtr.push_back(this->somaTreePtr);
 	do
 	{
 		childrenCount = 0;
@@ -388,9 +400,9 @@ void neuronSeparator::buildSomaTree()
 			//cout << "children size: " << childrenSize << endl;
 			if (childrenSize > 1)
 			{
-				for (size_t i=0; i<somaIDs.size(); ++i)
+				for (size_t i=0; i<this->somaIDs.size(); ++i)
 				{
-					if (somaIDs[i] == (*it)->node.n) (*it)->middleSoma = true;
+					if (this->somaIDs[i] == (*it)->node.n) (*it)->middleSoma = true;
 					break;
 				}
 				(*it)->branch = true;
@@ -409,23 +421,7 @@ void neuronSeparator::buildSomaTree()
 		}	
 		curLevelPtr = nextLevelPtr;
 		++levelCount;
-	} while (childrenCount > 0);
-	
-	
-	
-	
-	
-}
-
-void neuronSeparator::breakSomaPathMorph()
-{
-	vector<branchNodeProfile> branches;
-	QList<NeuronSWC> nodeList = this->inputSWCTree.listNeuron;
-	QHash<int, int> IDloc = this->inputSWCTree.hashNeuron;
-
-
-
-
+	} while (childrenCount > 0);	
 }
 
 void neuronSeparator::breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVector< QVector<V3DLONG> >& childList, NeuronSWC wishedSoma, NeuronSWC excludedSoma)
@@ -531,37 +527,6 @@ void neuronSeparator::breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVe
 	{
 		if (it->parent == -1) this->extractBFS(this->extractedNeuron, newList, *it);
 		break;
-	}
-}
-
-void neuronSeparator::backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end)
-{
-	// This method traces a path backward; from end to start.
-
-	QList<NeuronSWC> inputList = nt.listNeuron;
-
-	vector<size_t> loc;
-	long parent, id, child;
-	long int parentLoc;
-	QList<long int> childrenLoc;  // both parents and children are represented in the index number on the listNeuron.
-	QList<NeuronSWC> parentNode;
-	QList<NeuronSWC> childNodes;
-	parentLoc = nt.hashNeuron.value(start.parent);
-	tracedSWC.push_back(start);
-
-	NeuronSWC currNode;
-	NeuronSWC lastNode;
-	while (inputList.at(parentLoc).n != end.parent)
-	{
-		currNode = inputList.at(parentLoc);
-		tracedSWC.push_back(currNode);
-		lastNode = currNode;
-		parentLoc = nt.hashNeuron.value(currNode.parent);
-		if (inputList.at(parentLoc).parent == -1) 
-		{
-			tracedSWC.push_back(inputList.at(parentLoc));
-			break;
-		}
 	}
 }
 

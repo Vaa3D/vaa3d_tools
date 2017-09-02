@@ -54,37 +54,44 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 	
+	// -----------------------------------------------------------------------------------------------------------------------------------------
 	QVector<long int> toBeBrokenLoc;
 	QList<NeuronSWC> extractedNeuron;
-	QHash<long int, bool> locLabel;
 	
 	vector<long int> somaIDs;
-	QList< QList<NeuronSWC> > paths;
 	QList<NeuronSWC> somaPath;
 	NeuronTree somaSWCTree;
+	QVector< QVector<V3DLONG> > childsTable;
+	QHash<long int, bool> locLabel;
 
 	QVector< QVector<V3DLONG> > childIndexTable(NeuronTree& nt);
-	void findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID, QList< QList<NeuronSWC> >& outputPathList);
-	void downwardBFS(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end, QVector< QVector<V3DLONG> >& childList);
+	QList<NeuronSWC> findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID);
 	void backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end);
 	long int findLatestCommonAncestor(bool& circle, NeuronTree& nt, QVector< QVector<V3DLONG> >& childList, NeuronSWC& wishedSoma, NeuronSWC& excludedSoma);
-	void breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVector< QVector<V3DLONG> >& childList, NeuronSWC wishedSoma, NeuronSWC excludedSoma);
-	void extractBFS(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
 	void getSomaPath(QList<NeuronSWC>& somaPath, QHash<long int, bool>& locLabel, QList< QList<NeuronSWC> >& paths, NeuronTree& nt);
-	void breakSomaPathMorph();
-	void buildSomaTree();
+	
 	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
 	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
 	
+	void downwardBFS(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end, QVector< QVector<V3DLONG> >& childList);
+	void breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVector< QVector<V3DLONG> >& childList, NeuronSWC wishedSoma, NeuronSWC excludedSoma);
+	void extractBFS(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
+	void breakSomaPathMorph();
+	
+protected:
+	void buildSomaTree();
+
 private:
 	bool circle;
+	bool branchAncestor;
 	int forward;
 	NeuronTree inputSWCTree;
-	QVector< QVector<V3DLONG> > childsTable;
+	QList< QList<NeuronSWC> > paths;
 
 	unordered_map<size_t, somaNode*> crucialNodeHash;
-	bool branchAncestor;
+	vector<somaNode> crucialNodes;
 	somaNode* somaTreePtr;
+	
 	vector<branchNodeProfile> branchToBeCut;
 
 };
