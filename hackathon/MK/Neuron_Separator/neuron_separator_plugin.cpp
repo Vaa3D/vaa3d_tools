@@ -63,6 +63,19 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 
 		if (swc_circle == "y") this->circle = true;
 		else if (swc_circle == "n")	this->circle = false;
+
+		vector<long int> targetSoma;
+		if (inparas.size() > 1)
+		{
+			for (size_t i=1; i<inparas.size(); ++i)
+			{
+				QString inputSomaID = inparas.at(i);
+				targetSoma.push_back(inputSomaID.toLong());
+			}
+		}
+		//cout << "Target Soma(s): ";
+		//for (vector<long int>::iterator it=targetSoma.begin(); it!=targetSoma.end(); ++it) cout << *it << " ";
+		//cout << endl;
 		
 		this->inputSWCTree = readSWC_file(inputSWCfile);
 		QList<NeuronSWC> nodeList = inputSWCTree.listNeuron;
@@ -98,7 +111,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			}
 		}
 
-		getSomaPath(this->somaPath, this->locLabel, this->paths, this->inputSWCTree); // put individual soma path together
+		getMergedPath(this->somaPath, this->locLabel, this->paths, this->inputSWCTree); // put individual soma path together
 		NeuronTree pathTree;
 		pathTree.listNeuron = this->somaPath;
 		QString pathTreeFileName = "somasTree.swc";
@@ -108,34 +121,59 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 
 		// ------------- Build soma tree, determine hierarchy, and cut the path -------------
 		buildSomaTree();
+
 		int childrenCount = 0;
 		vector<somaNode*> curLevelPtr, nextLevelPtr;
 		curLevelPtr.push_back(this->somaTreePtr);
-		do
+		if (targetSoma.size() == 0)
 		{
-			childrenCount = 0;
-			int childrenSize = 0;
-			nextLevelPtr.clear();
-			for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) 
+			long int segmentHeadID;
+			long int segmentTailID;
+			do
 			{
-				childrenSize = (*it)->childrenSomas.size();
-				childrenCount = childrenCount + childrenSize;
+				childrenCount = 0;
+				int childrenSize = 0;
+				nextLevelPtr.clear();
+				for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) 
+				{
+					segmentHeadID = (*it)->node.n;
+					childrenSize = (*it)->childrenSomas.size();
+					childrenCount = childrenCount + childrenSize;
 
-				cout << " - ID: " << (*it)->node.n << endl;
-				cout << " - level: " << (*it)->level << endl;
-				cout << " - children size: " << childrenSize << endl << endl;
+					cout << " - ID: " << (*it)->node.n << endl;
+					cout << " - level: " << (*it)->level << endl;
+					cout << " - children size: " << childrenSize << " -> ";
+					for (vector<somaNode*>::iterator checkChi=(*it)->childrenSomas.begin(); checkChi!=(*it)->childrenSomas.end(); ++checkChi)
+						cout << (*checkChi)->node.n << " ";
+					cout << endl;
+					cout << " - is branch? " << (*it)->branch << endl;
+					cout << " - is soma? " << (*it)->soma << endl;
+					if ((*it)->soma)
+					{
+						if ((*it)->headSoma) cout << "   - head" << endl;
+						else if ((*it)->middleSoma) cout << "   - middle" << endl;
+						else if ((*it)->tailSoma) cout << "   - tail" << endl;
+					}
+					cout << endl;
 
-				for (size_t j=0; j<childrenSize; ++j) nextLevelPtr.push_back((*it)->childrenSomas[j]);
-			}	
-			curLevelPtr = nextLevelPtr;
-			
-		} while (childrenCount > 0);
+					for (size_t j=0; j<childrenSize; ++j) 
+					{
+						segmentTailID = (*it)->childrenSomas[j]->node.n;
+						nextLevelPtr.push_back((*it)->childrenSomas[j]);
+					}
+				}	
+				curLevelPtr = nextLevelPtr;		
+			} while (childrenCount > 0);
+		}
 		// ------- END of [Build soma tree and determine hierarchy, and cut the path] -------
 
+		breakPathMorph(this->somaTreePtr);
 		/*NeuronTree newTree;
 		newTree.listNeuron = this->extractedNeuron;
 		QString extractedFileName = "soma" + QString::number(wishedID) + ".swc";
 		writeSWC_file(extractedFileName, newTree);*/
+
+		return true;
 	}
 	else if (func_name == tr("func2"))
 	{
