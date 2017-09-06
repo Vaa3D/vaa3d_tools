@@ -1269,7 +1269,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
-    else
+    else if(P.method == gd)
     {
         saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
@@ -1669,7 +1669,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             nt = readSWC_file(swcString);
         }
     }
-    else
+    else if (P.method == gd )
     {
         QString marker_name = imageSaveString + ".marker";
         QString inputswc_name = marker_name + ".swc";
@@ -1736,7 +1736,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             arg_para.push_back(char_inputswc);
         }
         full_plugin_name = "line_detector";
-        func_name =  "GD_Curveline_infinite";
+        func_name =  "GD_Curveline_v2";
 
         arg.p = (void *) & arg_para; input << arg;
         if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
@@ -1746,23 +1746,23 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         }
 
         nt = readSWC_file(swcString);
-        if(nt.listNeuron.size() < 50)
-        {
-            ImageMarker additionalMarker;
-            additionalMarker.x = seedsToSave.at(0).x+1;
-            additionalMarker.y = seedsToSave.at(0).y;
-            additionalMarker.z = seedsToSave.at(0).z;
+//        if(nt.listNeuron.size() < 50)
+//        {
+//            ImageMarker additionalMarker;
+//            additionalMarker.x = seedsToSave.at(0).x+1;
+//            additionalMarker.y = seedsToSave.at(0).y;
+//            additionalMarker.z = seedsToSave.at(0).z;
 
-            seedsToSave.append(additionalMarker);
-            writeMarker_file(marker_name, seedsToSave);
-            if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
-            {
-                printf("Can not find the tracing plugin!\n");
-                return false;
-            }
+//            seedsToSave.append(additionalMarker);
+//            writeMarker_file(marker_name, seedsToSave);
+//            if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+//            {
+//                printf("Can not find the tracing plugin!\n");
+//                return false;
+//            }
 
-            nt = readSWC_file(swcString);
-        }
+//            nt = readSWC_file(swcString);
+//        }
 
     }
 
@@ -1783,6 +1783,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     LandmarkList tip_out;
     LandmarkList tip_in;
 
+    double overlap_ratio = 0.1;
+
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
     {
@@ -1791,8 +1793,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             NeuronSWC curr = list.at(i);
             LocationSimple newTip;
             bool check_tip = false;
-            if( curr.x < 0.05*  total4DImage->getXDim() || curr.x > 0.95 *  total4DImage->getXDim() || curr.y < 0.05 * total4DImage->getYDim() || curr.y > 0.95* total4DImage->getYDim()
-                   || curr.z < 0.05*  total4DImage->getZDim() || curr.z > 0.95 *  total4DImage->getZDim())
+            if( curr.x < overlap_ratio*  total4DImage->getXDim() || curr.x > (1-overlap_ratio) *  total4DImage->getXDim() || curr.y < overlap_ratio * total4DImage->getYDim() || curr.y > (1-overlap_ratio)* total4DImage->getYDim()
+                    || curr.z < overlap_ratio*  total4DImage->getZDim() || curr.z > (1-overlap_ratio) *  total4DImage->getZDim())
             {
 //                V3DLONG node_pn = getParent(i,nt);
 //                V3DLONG node_pn_2nd;
@@ -1828,22 +1830,22 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 }
             }
             if(check_tip) continue;
-            if( curr.x < 0.05* total4DImage->getXDim())
+            if( curr.x < overlap_ratio* total4DImage->getXDim())
             {
                 tip_left.push_back(newTip);
-            }else if (curr.x > 0.95 * total4DImage->getXDim())
+            }else if (curr.x > (1-overlap_ratio) * total4DImage->getXDim())
             {
                 tip_right.push_back(newTip);
-            }else if (curr.y < 0.05 * total4DImage->getYDim())
+            }else if (curr.y < overlap_ratio * total4DImage->getYDim())
             {
                 tip_up.push_back(newTip);
-            }else if (curr.y > 0.95*total4DImage->getYDim())
+            }else if (curr.y > (1-overlap_ratio)*total4DImage->getYDim())
             {
                 tip_down.push_back(newTip);
-            }else if (curr.z < 0.05 * total4DImage->getZDim())
+            }else if (curr.z < overlap_ratio * total4DImage->getZDim())
             {
                 tip_out.push_back(newTip);
-            }else if (curr.z > 0.95*total4DImage->getZDim())
+            }else if (curr.z > (1-overlap_ratio)*total4DImage->getZDim())
             {
                 tip_in.push_back(newTip);
             }

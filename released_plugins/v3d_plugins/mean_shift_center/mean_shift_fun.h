@@ -25,8 +25,8 @@ V3DLONG landMark2pos(LocationSimple Landmark_input, V3DLONG _offset_Y, V3DLONG _
 vector<V3DLONG> pos2xyz(const V3DLONG _pos_input, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
 V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z, const V3DLONG _offset_Y, const V3DLONG _offset_Z);
 
-void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
-void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz);
+void convert2UINT8_meanshift(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz);
+void convert2UINT8_meanshift(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode);
 

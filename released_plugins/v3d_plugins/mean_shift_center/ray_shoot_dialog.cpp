@@ -23,12 +23,12 @@ void ray_shoot_dialog::core()
     else if (pixeltype == 2) //V3D_UINT16;
     {
         mean_shift_obj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
-        convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+        convert2UINT8_meanshift((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
     }
     else if(pixeltype == 4) //V3D_FLOAT32;
     {
         mean_shift_obj.pushNewData<float>((float*)image1Dc_in, sz_img);
-        convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+        convert2UINT8_meanshift((float*)image1Dc_in, image1Dc_in, size_tmp);
     }
     else
     {

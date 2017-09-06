@@ -81,6 +81,9 @@ SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_smarttracing/hang
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
 SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
 
+#meanshift
+HEADERS += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 
 macx{
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff

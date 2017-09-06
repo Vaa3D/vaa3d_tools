@@ -17,6 +17,7 @@
 #include "hang/topology_analysis.h"
 #include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 
 
 Q_EXPORT_PLUGIN2(line_detector, line_detector);
@@ -228,7 +229,17 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             t.z = file_inmarkers[i].z+1;
             PARA.listLandmarks.push_back(t);
         }
+
+        PARA.win_size = (paras.size() >= k+1) ? atoi(paras[k]) : 32;  k++;
+        PARA.angle_size = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+
+        QString inneuron_file = (paras.size() >= k+1) ? paras[k] : "";
+        if(!inneuron_file.isEmpty())
+        {
+            PARA.nt_input = readSWC_file(inneuron_file);
+        }
+
         if(reconstruction_func_v2(callback,parent,PARA,bmenu) == 1)
         {
             QString output;
@@ -923,6 +934,31 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
         c = PARA.channel;
     }
 
+    //meanshift first before tracing
+
+    mean_shift_fun fun_obj;
+    vector<V3DLONG> poss_landmark;
+    vector<float> mass_center;
+    double windowradius = 5;
+
+    fun_obj.pushNewData<unsigned char>((unsigned char*)data1d, in_sz);
+    poss_landmark=landMarkList2poss(PARA.listLandmarks, in_sz[0], in_sz[0]*in_sz[1]);
+    PARA.listLandmarks.clear();
+    for (V3DLONG j=0;j<poss_landmark.size();j++)
+    {
+        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        PARA.listLandmarks.push_back(tmp);
+    }
+
+    V3DLONG stacksz = N*M*P*sc;
+    unsigned char* data1d_mask = 0;
+    data1d_mask = new unsigned char [stacksz];
+    memset(data1d_mask,0,stacksz*sizeof(unsigned char));
+    double margin=3;//by PHC 20170531
+    if (PARA.nt_input.listNeuron.size() > 0)
+        ComputemaskImage(PARA.nt_input, data1d_mask, N, M, P, margin);
+
     //GD_tracing
     LocationSimple p0;
 
@@ -960,7 +996,8 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
                 t.x = ix;
                 t.y = iy;
                 t.z = iz;
-                vp.push_back(make_pair(data1d[offsetk+offsetj+ix], t));
+                V3DLONG I_t = (data1d_mask[offsetk + offsetj + ix] == 0) ? data1d[offsetk + offsetj + ix] : 1;
+                vp.push_back(make_pair(I_t, t));
             }
         }
     }

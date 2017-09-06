@@ -137,12 +137,12 @@ void mean_shift_plugin::all_method_comp_func(V3DPluginCallback2 & callback, cons
     else if (intype == 2) //V3D_UINT16;
     {
       fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
-      convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+      convert2UINT8_meanshift((unsigned short*)image_data, image_data, size_tmp);
     }
     else if(intype == 4) //V3D_FLOAT32;
     {
       fun_obj.pushNewData<float>((float*)image_data, sz_img);
-      convert2UINT8((float*)image_data, image_data, size_tmp);
+      convert2UINT8_meanshift((float*)image_data, image_data, size_tmp);
     }
     else
     {
@@ -327,12 +327,12 @@ void mean_shift_plugin::all_method_comp(V3DPluginCallback2 *callback)
     else if (pixeltype == 2) //V3D_UINT16;
     {
         mean_shift_obj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
-        convert2UINT8((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
+        convert2UINT8_meanshift((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
     }
     else if(pixeltype == 4) //V3D_FLOAT32;
     {
         mean_shift_obj.pushNewData<float>((float*)image1Dc_in, sz_img);
-        convert2UINT8((float*)image1Dc_in, image1Dc_in, size_tmp);
+        convert2UINT8_meanshift((float*)image1Dc_in, image1Dc_in, size_tmp);
     }
     else
     {
@@ -589,12 +589,12 @@ void mean_shift_plugin::gradient(V3DPluginCallback2 & callback, const V3DPluginA
     else if (intype == 2) //V3D_UINT16;
     {
       fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
-      convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+      convert2UINT8_meanshift((unsigned short*)image_data, image_data, size_tmp);
     }
     else if(intype == 4) //V3D_FLOAT32;
     {
       fun_obj.pushNewData<float>((float*)image_data, sz_img);
-      convert2UINT8((float*)image_data, image_data, size_tmp);
+      convert2UINT8_meanshift((float*)image_data, image_data, size_tmp);
     }
     else
     {
@@ -777,12 +777,12 @@ void mean_shift_plugin::ray_shoot(V3DPluginCallback2 & callback, const V3DPlugin
     else if (intype == 2) //V3D_UINT16;
     {
         fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
-        convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+        convert2UINT8_meanshift((unsigned short*)image_data, image_data, size_tmp);
     }
     else if(intype == 4) //V3D_FLOAT32;
     {
         fun_obj.pushNewData<float>((float*)image_data, sz_img);
-        convert2UINT8((float*)image_data, image_data, size_tmp);
+        convert2UINT8_meanshift((float*)image_data, image_data, size_tmp);
     }
     else
     {
@@ -884,12 +884,12 @@ void mean_shift_plugin::mean_shift_center(V3DPluginCallback2 & callback, const V
     else if (intype == 2) //V3D_UINT16;
     {
         fun_obj.pushNewData<unsigned short>((unsigned short*)image_data, sz_img);
-        convert2UINT8((unsigned short*)image_data, image_data, size_tmp);
+        convert2UINT8_meanshift((unsigned short*)image_data, image_data, size_tmp);
     }
     else if(intype == 4) //V3D_FLOAT32;
     {
         fun_obj.pushNewData<float>((float*)image_data, sz_img);
-        convert2UINT8((float*)image_data, image_data, size_tmp);
+        convert2UINT8_meanshift((float*)image_data, image_data, size_tmp);
     }
     else
     {

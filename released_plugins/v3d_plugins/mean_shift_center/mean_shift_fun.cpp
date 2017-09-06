@@ -620,7 +620,7 @@ V3DLONG xyz2pos(const V3DLONG _x, const V3DLONG _y, const V3DLONG _z, const V3DL
     return _z*_offset_Z+_y*_offset_Y+_x;
 }
 
-void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
+void convert2UINT8_meanshift(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
 {
     unsigned short* pPre = (unsigned short*)pre1d;
     unsigned short max_v=0, min_v = 255;
@@ -646,7 +646,7 @@ void convert2UINT8(unsigned short *pre1d, unsigned char *pPost, V3DLONG imsz)
     }
 }
 
-void convert2UINT8(float *pre1d, unsigned char *pPost, V3DLONG imsz)
+void convert2UINT8_meanshift(float *pre1d, unsigned char *pPost, V3DLONG imsz)
 {
     float* pPre = (float*)pre1d;
     float max_v=0, min_v = 65535;
