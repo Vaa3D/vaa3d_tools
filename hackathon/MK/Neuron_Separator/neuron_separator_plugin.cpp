@@ -120,7 +120,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		
 
 		// ------------- Build soma tree, determine hierarchy, and cut the path -------------
-		buildSomaTree();
+		buildSomaTree(); // <- This is the function for the purpose. The rest of the codes in this section is for examination.
 
 		int childrenCount = 0;
 		vector<somaNode*> curLevelPtr, nextLevelPtr;
@@ -167,11 +167,56 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			cout << "================================" << endl;
 		}
 		// ------- END of [Build soma tree and determine hierarchy, and cut the path] -------
-		breakPathMorph(this->somaTreePtr);
-		/*NeuronTree newTree;
-		newTree.listNeuron = this->extractedNeuron;
-		QString extractedFileName = "soma" + QString::number(wishedID) + ".swc";
-		writeSWC_file(extractedFileName, newTree);*/
+		
+
+		// ------ Break nodes on input SWC ------
+		breakPathMorph(this->somaTreePtr); // -> Identify the IDs of nodes to be cut.
+		
+		QHash<int, int> inputSWCHash = this->inputSWCTree.hashNeuron;
+		this->brokenInputSWC = this->inputSWCTree.listNeuron;
+		cout << "IDs of nodes to be cut: ";
+		for (vector<long int>::iterator cutIt=this->nodeToBeCutID.begin(); cutIt!=this->nodeToBeCutID.end(); ++cutIt)
+		{
+			cout << *cutIt << " ";
+			this->brokenInputSWC[inputSWCHash[*cutIt]].parent = -1;
+		}
+		cout << endl << endl;
+		NeuronTree brokenWholeTree;
+		brokenWholeTree.listNeuron = this->brokenInputSWC;
+		QString brokenName = "brokenWholeSWC.swc";
+		writeSWC_file(brokenName, brokenWholeTree);
+
+		QList<NeuronSWC> extracted;
+		for (vector<long int>::iterator extIt=this->somaIDs.begin(); extIt!=this->somaIDs.end(); ++extIt)
+		{
+			long int ID = *extIt;
+			cout << "soma ID: " << ID << endl;
+			size_t loc = inputSWCHash[ID];
+			NeuronSWC startNode = this->inputSWCTree.listNeuron[loc];
+			extracted = swcTrace(this->brokenInputSWC, ID, startNode);
+			NeuronTree extTree;
+			extTree.listNeuron = extracted;
+			QString name = "extracted_" + QString::number(ID) + ".swc";
+			writeSWC_file(name, extTree);
+			extracted.clear();
+		}
+		cout << endl;
+		
+		/*long int somaID = 1;
+		NeuronSWC startNode = this->brokenInputSWC[inputSWCHash[somaID]];
+		QList<NeuronSWC> traced = swcTrace(this->brokenInputSWC, somaID, startNode);
+		NeuronTree extTree;
+		extTree.listNeuron = traced;
+		QString name = "test_extracted_" + QString::number(somaID) + ".swc";
+		writeSWC_file(name, extTree);*/
+
+		/*unordered_map<long int, size_t> brokenSomaHash = hashScratch(this->brokenSomaPath);
+		NeuronSWC testNode = this->brokenSomaPath[brokenSomaHash[2161]];
+		QList<NeuronSWC> tracedTest = swcTrace(this->brokenSomaPath, 2161, testNode);
+		NeuronTree testTree;
+		testTree.listNeuron = tracedTest;
+		QString name = "testTraced.swc";
+		writeSWC_file(name, testTree);*/
 
 		return true;
 	}

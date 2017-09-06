@@ -63,6 +63,7 @@ public:
 	QHash<long int, bool> locLabel;
 	QList<NeuronSWC> brokenSomaPath;
 	vector<long int> nodeToBeCutID;
+	QList<NeuronSWC> brokenInputSWC;
 
 	QVector< QVector<V3DLONG> > childIndexTable(NeuronTree& nt);
 	QList<NeuronSWC> findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID);
@@ -74,8 +75,8 @@ public:
 	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
 	unordered_map<long int, size_t> hashScratch(QList<NeuronSWC>&);
 	
-	void downwardBFS(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end, QVector< QVector<V3DLONG> >& childList);
-	void extractBFS(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
+	void downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
+	QList<NeuronSWC> swcTrace(QList<NeuronSWC>& list, long int startID, NeuronSWC& startNode);
 	
 protected:
 	void buildSomaTree();
