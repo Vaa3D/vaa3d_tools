@@ -2133,7 +2133,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"sample_size = "<<Sxy<<endl;
         cout<<"image_size = "<<Ws<<endl;
 
-        for(double th = 0.91; th <= 0.991; th += 0.01)
+       // for(double th = 0.91; th <= 0.991; th += 0.01)
+        for(double th = 0.5; th <= 0.99; th += 0.1)
         {
             QString outputfolder = outswc_file + QString("_%1_finished/").arg(th);
             QDir().mkdir(outputfolder);
@@ -2151,6 +2152,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG N = in_zz[0];
         V3DLONG M = in_zz[1];
         V3DLONG P = in_zz[2];
+
+        V3DLONG start_z = int(P/4); //was 0 for the entire Z
 
 //        QList <ImageMarker> marklist_3D_final;
         unsigned int numOfThreads = 8; // default value for number of theads
@@ -2188,7 +2191,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
                 unsigned char *blockarea_3D=0;
                 V3DLONG *in_sub_sz = 0;
-                if (!loadRawRegion(const_cast<char *>(inimg_file.toStdString().c_str()), blockarea_3D, in_zz, in_sub_sz,datatype,xb,yb,0,
+                if (!loadRawRegion(const_cast<char *>(inimg_file.toStdString().c_str()), blockarea_3D, in_zz, in_sub_sz,datatype,xb,yb,start_z,
                                    xe+1,ye+1,P))
                 {
                     printf("can not load the region");
@@ -2204,7 +2207,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     for(V3DLONG iix = 0; iix < in_sub_sz[0]; iix++)
                     {
                         int max_mip = 0;
-                        for(V3DLONG iiz = 0; iiz < P; iiz++)
+                        for(V3DLONG iiz = 0; iiz < P-start_z; iiz++)
                         {
                             V3DLONG offsetk = iiz*in_sub_sz[1]*in_sub_sz[0];
                             if(blockarea_3D[offsetk + offsetj + iix] >= max_mip)
@@ -2267,7 +2270,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     double I_max = 0;
                     double I_sum = 0;
                     V3DLONG iz_2D;
-                    for(V3DLONG j = 0; j < P; j++)
+                    for(V3DLONG j = 0; j < P-start_z; j++)
                     {
                         I_sum += blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
                         if(blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D] >= I_max)
@@ -2285,28 +2288,28 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     S.color.b = 0;
                     marklist_3D.append(S);
 
-                    double I_mean = I_sum/P;
-                    int valid_j = iz_2D;
-                    for(V3DLONG j = 1; j < P-1; j++)
-                    {
-                        double I_current = blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
-                        double I_before = blockarea_3D[(j-1)*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
-                        double I_after = blockarea_3D[(j+1)*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
-                        if(I_current > I_before && I_current > I_after && j != iz_2D && abs(j-valid_j) >30 && I_current > I_mean*1.2)
-                        {
-                            S.x = ix_2D;
-                            S.y = iy_2D;
-                            S.z = j;
-                            S.color.r = 255;
-                            S.color.g = 0;
-                            S.color.b = 0;
-                            marklist_3D.append(S);
-                            valid_j = j;
-                        }
-                    }
+//                    double I_mean = I_sum/P;
+//                    int valid_j = iz_2D;
+//                    for(V3DLONG j = 1; j < P-start_z-1; j++)
+//                    {
+//                        double I_current = blockarea_3D[j*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+//                        double I_before = blockarea_3D[(j-1)*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+//                        double I_after = blockarea_3D[(j+1)*sz_img[1]*sz_img[0] + iy_2D*sz_img[0] + ix_2D];
+//                        if(I_current > I_before && I_current > I_after && j != iz_2D && abs(j-valid_j) >30 && I_current > I_mean*1.2)
+//                        {
+//                            S.x = ix_2D;
+//                            S.y = iy_2D;
+//                            S.z = j;
+//                            S.color.r = 255;
+//                            S.color.g = 0;
+//                            S.color.b = 0;
+//                            marklist_3D.append(S);
+//                            valid_j = j;
+//                        }
+//                    }
                 }
 
-                QList <ImageMarker> marklist_3D_pruned = batch_deletion(blockarea_3D,classifier,marklist_3D,xe-xb+1,ye-yb+1,P);
+                QList <ImageMarker> marklist_3D_pruned = batch_deletion(blockarea_3D,classifier,marklist_3D,xe-xb+1,ye-yb+1,P-start_z);
                 if(marklist_3D_pruned.size()>0)
                 {
 //                    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
@@ -2316,7 +2319,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //                        S.z  = marklist_3D_pruned.at(i).z;
 //                        marklist_3D_final.push_back(S);
 //                    }
-                    for(double th = 0.91; th <= 0.991; th += 0.01)
+              //      for(double th = 0.91; th <= 0.991; th += 0.01)
+                    for(double th = 0.5; th <= 0.99; th += 0.1)
                     {
                         QString swc_segs_th = outswc_file + QString("_%1_finished/x_%2_y_%3.swc").arg(th).arg(xb).arg(yb);
                         NeuronTree nt;
@@ -2333,7 +2337,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                                 NeuronSWC n;
                                 n.x = ix-1;
                                 n.y = iy-1;
-                                n.z = iz-1;
+                                n.z = iz-1+start_z;
                                 n.n = i+1;
                                 n.type = 2;
                                 n.r = marklist_3D_pruned.at(i).radius;
@@ -2351,7 +2355,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         }
 
-        for(double th = 0.91; th <= 0.991; th += 0.01)
+     //   for(double th = 0.91; th <= 0.991; th += 0.01)
+        for(double th = 0.5; th <= 0.99; th += 0.1)
         {
             QString outputfolder = outswc_file + QString("_%1_finished/").arg(th);
             QStringList swcList = importFileList_addnumbersort(outputfolder, 1);

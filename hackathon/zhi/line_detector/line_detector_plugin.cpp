@@ -66,6 +66,7 @@ QStringList line_detector::funclist() const
 	return QStringList()
         <<tr("GD_curveline")
         <<tr("GD_Curveline_infinite")
+        <<tr("GD_Curveline_v2")
         <<tr("help");
 }
 
@@ -192,6 +193,51 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         //            }
         //            QString fname_tmp = output+"_scored.swc";
         //            saveSWC_file(fname_tmp.toStdString(), ntmarkers);
+    }else if (func_name == tr("GD_Curveline_v2"))
+    {
+        bool bmenu = false;
+        input_PARA PARA;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        if(infiles.empty())
+        {
+            fprintf (stderr, "Need input image. \n");
+            return false;
+        }
+        else
+            PARA.inimg_file = infiles[0];
+
+        PARA.outswc_file = outfiles.empty() ? "" : outfiles[0];
+        int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        vector<MyMarker> file_inmarkers;
+        if(!inmarker_file.isEmpty())
+            file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+
+        LocationSimple t;
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            t.x = file_inmarkers[i].x+1;
+            t.y = file_inmarkers[i].y+1;
+            t.z = file_inmarkers[i].z+1;
+            PARA.listLandmarks.push_back(t);
+        }
+        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        if(reconstruction_func_v2(callback,parent,PARA,bmenu) == 1)
+        {
+            QString output;
+            if(PARA.outswc_file != "")
+                output = PARA.outswc_file;
+            else
+                output = PARA.inimg_file + "_GD_curveline_v2.swc";
+            export_list2file(PARA.nt.listNeuron, output,output);
+        }
     }
     else if (func_name == tr("help"))
     {
@@ -856,7 +902,6 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
         in_sz[3] = sc;
 
         PARA.inimg_file = p4DImage->getFileName();
-        PARA.angle_size = 10;
     }
     else
     {
@@ -1064,13 +1109,18 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
 
     if(seg_tip_id ==-1)
     {
-        v3d_msg("no path!");
+        v3d_msg("no path!",bmenu);
         return -1;
     }
 
-    QString swc_seg = swc_name +QString("_x%1_y%2_z%3_I_%4.swc").arg(p0.x).arg(p0.y).arg(p0.z).arg(I_max);
-    export_list2file(nt_list.at(seg_tip_id), swc_seg,swc_seg);
-
+    if(bmenu)
+    {
+        QString swc_seg = swc_name +QString("_x%1_y%2_z%3_I_%4.swc").arg(p0.x).arg(p0.y).arg(p0.z).arg(I_max);
+        export_list2file(nt_list.at(seg_tip_id), swc_seg,swc_seg);
+    }else
+    {
+        PARA.nt.listNeuron = nt_list.at(seg_tip_id);
+    }
     return 1;
 }
 
