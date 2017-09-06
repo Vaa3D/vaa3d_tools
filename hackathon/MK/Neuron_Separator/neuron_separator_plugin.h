@@ -17,12 +17,10 @@
 
 using namespace std;
 
-struct node_to_be_cut
+struct nodeCheck
 {
 	NeuronSWC node;
 	double dist;
-	int branchingNum;
-	bool toBeBroken;
 	double dirIndex;
 	double somaBranchNorm[3];
 	int locOnPath, childLocOnPath;
@@ -74,9 +72,9 @@ public:
 	
 	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
 	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
+	unordered_map<long int, size_t> hashScratch(QList<NeuronSWC>&);
 	
 	void downwardBFS(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end, QVector< QVector<V3DLONG> >& childList);
-	void breakPathMorph(NeuronTree& nt, QList<NeuronSWC>& path, QVector< QVector<V3DLONG> >& childList, NeuronSWC wishedSoma, NeuronSWC excludedSoma);
 	void extractBFS(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
 	
 protected:
@@ -90,12 +88,11 @@ private:
 	NeuronTree inputSWCTree;
 	QList< QList<NeuronSWC> > paths;
 
-	unordered_map<size_t, somaNode*> crucialNodeHash;
+	unordered_map<size_t, somaNode*> crucialNodeHash; // location -> somaNode address
 	vector<somaNode> crucialNodes;
 	somaNode* somaTreePtr;
-	vector<node_to_be_cut> nodesToBeCut;
 	
-	void pathScissor(QList<NeuronSWC> segment, vector<node_to_be_cut> nodeScreen);
+	long int pathScissor(QList<NeuronSWC>& segment);
 
 };
 
