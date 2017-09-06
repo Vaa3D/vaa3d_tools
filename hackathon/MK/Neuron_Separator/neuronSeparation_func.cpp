@@ -433,6 +433,7 @@ void neuronSeparator::buildSomaTree()
 
 void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 {
+	cout << endl << "===== Identifying nodes to break =====" << endl;
 	cout << "crucial node number: " << this->crucialNodes.size() << endl;
 
 	QHash<int, int> IDloc = this->inputSWCTree.hashNeuron;
@@ -444,18 +445,18 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 	int childrenCount;
 	long int segmentHeadID;
 	long int segmentTailID;
+	vector<node_to_be_cut> nodeScreen;
 	do
 	{	
 		childrenCount = 0;
 		int childrenSize = 0;
 		nextLevelPtr.clear();
-		vector<node_to_be_cut> nodeScreen;
-		for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) // parent crucial-node
+		for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) // parent crucial-node loop
 		{
 			segmentHeadID = (*it)->node.n;
 			childrenSize = (*it)->childrenSomas.size();
 			childrenCount = childrenCount + childrenSize;
-			cout << "children size of " << segmentHeadID << ": " << childrenSize << " ->";
+			cout << endl << "children size of " << segmentHeadID << ": " << childrenSize << " ->";
 			
 			somaNode** childrenAddr = new somaNode*[childrenSize];
 			int childCount = 0;
@@ -471,12 +472,12 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 				++childCount;
 			} cout << endl;	
 
-			for (size_t i=0; i<childrenSize; ++i) // children crucial-node
+			for (size_t i=0; i<childrenSize; ++i) // children crucial-node loop
 			{
 				segmentTailID = childrenAddr[i]->node.n;
 				cout << "Head: " << segmentHeadID << endl << "Tail: " << segmentTailID << endl;
 				
-				if ((*it)->soma == true)
+				if ((*it)->soma == true) // parent crucial node
 				{
 					if (childrenAddr[i]->soma == true)
 					{
@@ -486,7 +487,7 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
 						QVector< QVector<V3DLONG> > segmentChildTable = mkChildTableScratch(pathAnalyze);
 
-						nodeScreen.clear();
+						/*nodeScreen.clear();
 						for (QList<NeuronSWC>::iterator pathIt=pathAnalyze.begin(); pathIt!=pathAnalyze.end(); ++pathIt)
 						{
 							double distCheck;
@@ -517,17 +518,16 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 							nodeScanned.somaBranchNorm[0] = nodeNorm[0];
 							nodeScanned.somaBranchNorm[1] = nodeNorm[1];
 							nodeScanned.somaBranchNorm[2] = nodeNorm[2];
-							nodeScanned.locOnPath = size_t(pathIt - pathAnalyze.begin());
+							nodeScanned.locOnPath = int(ptrdiff_t(pathIt - pathAnalyze.begin()));
 							nodeScanned.childLocOnPath = segmentChildTable[nodeScanned.locOnPath][0];
 							nodeScreen.push_back(nodeScanned);
-						}
-						nodeScreen.at(0).childLocOnPath = -10;
-						pathScissor(pathAnalyze, nodeScreen);
+						}*/
+						//pathScissor(pathAnalyze, nodeScreen);
 					}
-					else if (childrenAddr[i]->branch==true && childrenAddr[i]->soma==false)
+					else if ((childrenAddr[i]->branch == true) && (childrenAddr[i]->soma == false))
 					{
 						bool allSoma = true;
-						for (vector<somaNode*>::iterator somaIt=(childrenAddr[i]->childrenSomas).begin(); 
+						for (vector<somaNode*>::iterator somaIt=childrenAddr[i]->childrenSomas.begin(); 
 							somaIt!=childrenAddr[i]->childrenSomas.end(); ++somaIt)
 						{
 							if ((*somaIt)->soma == false)
@@ -541,7 +541,6 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 						{
 							this->nodeToBeCutID.push_back(childrenAddr[i]->node.n);
 							cout << "cut ID: " << childrenAddr[i]->node.n << endl << endl;
-							continue;
 						}
 					}
 				}
@@ -554,9 +553,9 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 						tail = this->inputSWCTree.listNeuron[IDloc[segmentTailID]];
 						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
 						QVector< QVector<V3DLONG> > segmentChildTable = mkChildTableScratch(pathAnalyze);
-						cout << "path size: " << pathAnalyze.size() << endl;
+						cout << "path size: " << pathAnalyze.size() << endl << "--" << endl;
 
-						nodeScreen.clear();
+						/*nodeScreen.clear();
 						for (QList<NeuronSWC>::iterator pathIt=pathAnalyze.begin(); pathIt!=pathAnalyze.end(); ++pathIt)
 						{
 							double distCheck;
@@ -587,12 +586,10 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 							nodeScanned.somaBranchNorm[0] = nodeNorm[0];
 							nodeScanned.somaBranchNorm[1] = nodeNorm[1];
 							nodeScanned.somaBranchNorm[2] = nodeNorm[2];
-							nodeScanned.locOnPath = size_t(pathIt - pathAnalyze.begin());
+							nodeScanned.locOnPath = int(ptrdiff_t(pathIt - pathAnalyze.begin()));
 							nodeScanned.childLocOnPath = segmentChildTable[nodeScanned.locOnPath][0];
-
 							nodeScreen.push_back(nodeScanned);
-						}
-						cout << endl << endl;
+						}*/
 						//pathScissor(pathAnalyze, nodeScreen);
 					}
 				}
@@ -601,7 +598,7 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 		}
 		
 
-		cout << "number of curLevel Ptr: " << curLevelPtr.size() << "\n -> ";
+		/*cout << "number of curLevel Ptr: " << curLevelPtr.size() << "\n -> ";
 		for (vector<somaNode*>::iterator testIt=curLevelPtr.begin(); testIt!=curLevelPtr.end(); ++testIt)
 			cout << (*testIt)->node.n << " ";
 		cout << endl;
@@ -609,16 +606,16 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 		cout << "number of nextLevel Ptr: " << nextLevelPtr.size() << "\n -> ";
 		for (vector<somaNode*>::iterator testIt=nextLevelPtr.begin(); testIt!=nextLevelPtr.end(); ++testIt)
 			cout << (*testIt)->node.n << " ";
-		cout << endl;
+		cout << endl;*/
 		
 		curLevelPtr.clear();
 		for (vector<somaNode*>::iterator levelIt=nextLevelPtr.begin(); levelIt!=nextLevelPtr.end(); ++levelIt)
 			curLevelPtr.push_back(*levelIt);
 		
-		cout << "number of new curLevel Ptr: " << curLevelPtr.size() << "\n -> ";
+		/*cout << "number of new curLevel Ptr: " << curLevelPtr.size() << "\n -> ";
 		for (vector<somaNode*>::iterator testIt=curLevelPtr.begin(); testIt!=curLevelPtr.end(); ++testIt)
 			cout << (*testIt)->node.n << " ";
-		cout << endl << endl;
+		cout << endl << endl;*/
 						
 	} while (childrenCount > 0);
 }

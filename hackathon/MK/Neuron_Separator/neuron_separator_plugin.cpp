@@ -134,39 +134,39 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 				childrenCount = 0;
 				int childrenSize = 0;
 				nextLevelPtr.clear();
-				for (vector<somaNode*>::iterator it=curLevelPtr.begin(); it!=curLevelPtr.end(); ++it) 
+				for (vector<somaNode*>::iterator checkIt=curLevelPtr.begin(); checkIt!=curLevelPtr.end(); ++checkIt) 
 				{
-					segmentHeadID = (*it)->node.n;
-					childrenSize = (*it)->childrenSomas.size();
+					segmentHeadID = (*checkIt)->node.n;
+					childrenSize = (*checkIt)->childrenSomas.size();
 					childrenCount = childrenCount + childrenSize;
 
-					cout << " - ID: " << (*it)->node.n << endl;
-					cout << " - level: " << (*it)->level << endl;
+					cout << " - ID: " << (*checkIt)->node.n << endl;
+					cout << " - level: " << (*checkIt)->level << endl;
 					cout << " - children size: " << childrenSize << " -> ";
-					for (vector<somaNode*>::iterator checkChi=(*it)->childrenSomas.begin(); checkChi!=(*it)->childrenSomas.end(); ++checkChi)
+					for (vector<somaNode*>::iterator checkChi=(*checkIt)->childrenSomas.begin(); checkChi!=(*checkIt)->childrenSomas.end(); ++checkChi)
 						cout << (*checkChi)->node.n << " ";
 					cout << endl;
-					cout << " - is branch? " << (*it)->branch << endl;
-					cout << " - is soma? " << (*it)->soma << endl;
-					if ((*it)->soma)
+					cout << " - is branch? " << (*checkIt)->branch << endl;
+					cout << " - is soma? " << (*checkIt)->soma << endl;
+					if ((*checkIt)->soma)
 					{
-						if ((*it)->headSoma) cout << "   - head" << endl;
-						else if ((*it)->middleSoma) cout << "   - middle" << endl;
-						else if ((*it)->tailSoma) cout << "   - tail" << endl;
+						if ((*checkIt)->headSoma) cout << "   - head" << endl;
+						else if ((*checkIt)->middleSoma) cout << "   - middle" << endl;
+						else if ((*checkIt)->tailSoma) cout << "   - tail" << endl;
 					}
 					cout << endl;
 
 					for (size_t j=0; j<childrenSize; ++j) 
 					{
-						segmentTailID = (*it)->childrenSomas[j]->node.n;
-						nextLevelPtr.push_back((*it)->childrenSomas[j]);
+						segmentTailID = (*checkIt)->childrenSomas[j]->node.n;
+						nextLevelPtr.push_back((*checkIt)->childrenSomas[j]);
 					}
 				}	
 				curLevelPtr = nextLevelPtr;		
 			} while (childrenCount > 0);
+			cout << "================================" << endl;
 		}
 		// ------- END of [Build soma tree and determine hierarchy, and cut the path] -------
-
 		breakPathMorph(this->somaTreePtr);
 		/*NeuronTree newTree;
 		newTree.listNeuron = this->extractedNeuron;

@@ -25,8 +25,19 @@ struct node_to_be_cut
 	bool toBeBroken;
 	double dirIndex;
 	double somaBranchNorm[3];
-	long int locOnPath, childLocOnPath;
+	int locOnPath, childLocOnPath;
 	bool closerToHead;
+};
+
+struct somaNode // This structure carries crucial node properties on a soma tree and such.
+{
+	NeuronSWC node;
+	vector<somaNode*> childrenSomas;
+	vector<somaNode*> parent;
+	int level;
+	bool branch, headSoma, tailSoma, middleSoma, soma;
+
+	somaNode::somaNode() {branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;}
 };
 
 class neuronSeparator : public QObject, public V3DPluginInterface2_1
@@ -44,17 +55,6 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 	
 	// -----------------------------------------------------------------------------------------------------------------------------------------
-	struct somaNode // This structure carries crucial node properties on a soma tree and such.
-	{
-		NeuronSWC node;
-		vector<somaNode*> childrenSomas;
-		vector<somaNode*> parent;
-		int level;
-		bool branch, headSoma, tailSoma, middleSoma, soma;
-
-		somaNode::somaNode() {branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;}
-	};
-		
 	QVector<long int> toBeBrokenLoc;
 	QList<NeuronSWC> extractedNeuron;
 	
