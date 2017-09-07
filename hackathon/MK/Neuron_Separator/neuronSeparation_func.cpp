@@ -484,7 +484,8 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 	this->brokenSomaPath = this->somaPath;
 	//unordered_map<long int, size_t> somaPathHash = hashScratch(this->somaPath);
 	map<long int, size_t> somaPathHash = hashScratchMap(this->somaPath);
-	unordered_map<long int, bool> branchCutHash;
+	//unordered_map<long int, bool> branchCutHash;
+	map<long int, size_t> branchCutHash;
 	QVector< QVector<V3DLONG> > somaPathChildTable = mkChildTableScratch(this->somaPath);
 
 	NeuronSWC head, tail;
