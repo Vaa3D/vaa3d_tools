@@ -14,6 +14,7 @@
 #include <qvector.h>
 #include <vector>
 #include <unordered_map>
+#include <map>
 
 using namespace std;
 
@@ -74,6 +75,7 @@ public:
 	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
 	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
 	unordered_map<long int, size_t> hashScratch(QList<NeuronSWC>&);
+	map<long int, size_t> hashScratchMap(QList<NeuronSWC>&);
 	
 	void downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
 	QList<NeuronSWC> swcTrace(QList<NeuronSWC>& list, long int startID, NeuronSWC& startNode);
@@ -89,7 +91,8 @@ private:
 	NeuronTree inputSWCTree;
 	QList< QList<NeuronSWC> > paths;
 
-	unordered_map<size_t, somaNode*> crucialNodeHash; // location -> somaNode address
+	//unordered_map<size_t, somaNode*> crucialNodeHash; // location -> somaNode address
+	map<size_t, somaNode*> crucialNodeHash;
 	vector<somaNode> crucialNodes;
 	somaNode* somaTreePtr;
 	
