@@ -624,8 +624,8 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.tracing_comb = false;
         P.global_name = true;
         P.method = app2;
-        crawler_raw_app(callback,parent,P,bmenu);
-        //extract_tips(callback,parent,P);
+       // crawler_raw_app(callback,parent,P,bmenu);
+        extract_tips(callback,parent,P);
 
 	}
     else if (func_name == tr("trace_NEUTUBE"))

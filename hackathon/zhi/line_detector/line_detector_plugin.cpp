@@ -240,15 +240,17 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             PARA.nt_input = readSWC_file(inneuron_file);
         }
 
-        if(reconstruction_func_v2(callback,parent,PARA,bmenu) == 1)
-        {
+       // if(reconstruction_func_v2(callback,parent,PARA,bmenu) == 1)
+       // {
+        reconstruction_func_v2(callback,parent,PARA,bmenu);
             QString output;
             if(PARA.outswc_file != "")
                 output = PARA.outswc_file;
             else
                 output = PARA.inimg_file + "_GD_curveline_v2.swc";
             export_list2file(PARA.nt.listNeuron, output,output);
-        }
+        //}else
+
     }
     else if (func_name == tr("help"))
     {
@@ -955,7 +957,7 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
     unsigned char* data1d_mask = 0;
     data1d_mask = new unsigned char [stacksz];
     memset(data1d_mask,0,stacksz*sizeof(unsigned char));
-    double margin=3;//by PHC 20170531
+    double margin=20;//by PHC 20170531
     if (PARA.nt_input.listNeuron.size() > 0)
         ComputemaskImage(PARA.nt_input, data1d_mask, N, M, P, margin);
 
@@ -1127,13 +1129,24 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             V3DLONG  iy = nt_seg[j].y;
             V3DLONG  iz = nt_seg[j].z;
             seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std);
-            if(j >=5 && j<nt_seg.size()-5)
+            if(j >=10 && j<nt_seg.size()-10)
             {
-                seg_angle = angle(nt_seg[j], nt_seg[j-5], nt_seg[j+5]);
+                seg_angle = angle(nt_seg[j], nt_seg[j-10], nt_seg[j+10]);
                 if(seg_angle < 120)
                 {
-                    flag = true;
-                    break;
+//                    double I_part1 = 0;
+//                    double I_part2 = 0;
+//                    for(int d = 1; d <= 10;d++)
+//                    {
+//                        I_part1 += data1d[(V3DLONG)nt_seg[j-d].z*in_sz[0]*in_sz[1]+ (V3DLONG)nt_seg[j-d].y *in_sz[0] + (V3DLONG)nt_seg[j-d].x];
+//                        I_part2 += data1d[(V3DLONG)nt_seg[j+d].z*in_sz[0]*in_sz[1]+ (V3DLONG)nt_seg[j+d].y *in_sz[0] + (V3DLONG)nt_seg[j+d].x];
+//                    }
+//                    if(fabs(I_part1-I_part2)/10 > 20.0)
+//                    {
+//                        v3d_msg(QString("%1").arg(fabs(I_part1-I_part2)/10));
+                        flag = true;
+                        break;
+//                    }
                 }
             }
         }

@@ -129,7 +129,7 @@ void neuronSeparator::getMergedPath(QList<NeuronSWC>& somaPath, QHash<long int, 
 		{
 			if (locLabel[nodeHash.value(pathIt->n)] == false) 
 			{
-				somaPath.push_back(*pathIt);
+				this->somaPath.push_back(*pathIt);
 				locLabel[nodeHash.value(pathIt->n)] = true; // labeling nodes that have been included in the somaPath 'true', avoiding repeated inclusion 
 			}
 			else if (locLabel[nodeHash.value(pathIt->n)] == true) continue;
@@ -383,13 +383,24 @@ void neuronSeparator::buildSomaTree()
 				this->crucialNodes.push_back(crucialNode);
 				this->crucialNodes[nodeCount].node = somaPath[*it];
 				this->crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
+				
+				somaNode newCrucialNode;
+				newCrucialNode.node = somaPath[*it];
+				this->crucialNodeHash2[*it] = newCrucialNode;
 				++nodeCount;
+<<<<<<< HEAD
 				cout << "location on the soma path: " << *it << endl;
 				cout << " - memory address: " << crucialNodeHash[*it] << endl;
 				cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
+=======
+				//cout << "location on the soma path: " << *it << endl;
+				//cout << " - memory address: " << &(crucialNodeHash2[*it]) << endl;
+				//cout << " - ID: " << crucialNodeHash2[*it].node.n << endl << endl;
+>>>>>>> 920f144da6fae99c1adf65c08f261525c1566ffd
 			}
 		}
 	}
+
 
 	somaNode* curSomaNodePtr;
 	somaNode* paSomaNodePtr;
@@ -412,9 +423,29 @@ void neuronSeparator::buildSomaTree()
 
 			if (check == false)
 			{
+<<<<<<< HEAD
 				curSomaNodePtr = this->crucialNodeHash[*it];
 				curSomaNodePtr->parent.push_back(this->crucialNodeHash[*(it+1)]);
 				paSomaNodePtr = this->crucialNodeHash[*(it+1)];
+=======
+				int curID = crucialNodeHash2[*it].node.n;
+				for (vector<somaNode>::iterator curIt=crucialNodes.begin(); curIt!=crucialNodes.end(); ++curIt)
+				{
+					if (curIt->node.n == curID) 
+					{
+						curSomaNodePtr = &(crucialNodes[ptrdiff_t(curIt-crucialNodes.begin())]);
+						cout << curSomaNodePtr->node.n << endl;
+						break;
+					}
+				}
+
+				//curSomaNodePtr = this->crucialNodeHash[*it];
+				//curSomaNodePtr->parent.push_back(this->crucialNodeHash[*(it+1)]);
+				curSomaNodePtr->parent.push_back(curSomaNodePtr + 1);
+				//paSomaNodePtr = this->crucialNodeHash[*(it+1)];
+				paSomaNodePtr = curSomaNodePtr + 1;;
+				//paSomaNodePtr->childrenSomas.push_back(this->crucialNodeHash[*it]);
+>>>>>>> 920f144da6fae99c1adf65c08f261525c1566ffd
 				paSomaNodePtr->childrenSomas.push_back(curSomaNodePtr);
 
 				handled.push_back(*it);
