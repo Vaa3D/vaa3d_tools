@@ -11,6 +11,11 @@ using namespace std;
 
 #define MAX_NODE_NUM_ON_TAIL2HEAD_PATH 100000
 
+neuronSeparator::neuronSeparator() // Need this constructor to put crucialNodes in stack instead of heap, otherwise the addresses of its elements may change.
+{
+	crucialNodes.resize(500);
+}
+
 QVector< QVector<V3DLONG> > neuronSeparator::childIndexTable(NeuronTree& nt)
 {
 	QVector< QVector<V3DLONG> > childs; // indices of the childs of a given parent index
@@ -379,9 +384,9 @@ void neuronSeparator::buildSomaTree()
 				this->crucialNodes[nodeCount].node = somaPath[*it];
 				this->crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
 				++nodeCount;
-				//cout << "location on the soma path: " << *it << endl;
-				//cout << " - memory address: " << crucialNodeHash[*it] << endl;
-				//cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
+				cout << "location on the soma path: " << *it << endl;
+				cout << " - memory address: " << crucialNodeHash[*it] << endl;
+				cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
 			}
 		}
 	}
@@ -410,12 +415,16 @@ void neuronSeparator::buildSomaTree()
 				curSomaNodePtr = this->crucialNodeHash[*it];
 				curSomaNodePtr->parent.push_back(this->crucialNodeHash[*(it+1)]);
 				paSomaNodePtr = this->crucialNodeHash[*(it+1)];
-				paSomaNodePtr->childrenSomas.push_back(this->crucialNodeHash[*it]);
+				paSomaNodePtr->childrenSomas.push_back(curSomaNodePtr);
 
 				handled.push_back(*it);
+
+				cout << "loc and mem addr: " << *it << " " << curSomaNodePtr << " / " << *(it+1) << " " << paSomaNodePtr << endl;
+				cout << "  -- parent ID: " << curSomaNodePtr->node.n << " children ID: " << paSomaNodePtr->node.n << endl;
 			}
 		}
 	}
+
 	/*somaNode* testPtr = crucialNodeHash[244];
 	cout << "child address: "; 
 	for (vector<somaNode*>::iterator it=testPtr->childrenSomas.begin(); it!=testPtr->childrenSomas.end(); ++it) cout << *it << " ";

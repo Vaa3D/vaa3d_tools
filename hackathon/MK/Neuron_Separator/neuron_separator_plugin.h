@@ -33,10 +33,16 @@ struct somaNode // This structure carries crucial node properties on a soma tree
 	NeuronSWC node;
 	vector<somaNode*> childrenSomas;
 	vector<somaNode*> parent;
+	somaNode* selfAddr;
 	int level;
 	bool branch, headSoma, tailSoma, middleSoma, soma;
 
-	somaNode::somaNode() {branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;}
+	somaNode() 
+	{
+		branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;
+		childrenSomas.clear();
+		parent.clear();
+	}
 };
 
 class neuronSeparator : public QObject, public V3DPluginInterface2_1
@@ -54,6 +60,8 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 	
 	// -----------------------------------------------------------------------------------------------------------------------------------------
+	neuronSeparator();
+	
 	QVector<long int> toBeBrokenLoc;
 	QList<NeuronSWC> extractedNeuron;
 	
@@ -95,6 +103,7 @@ private:
 	map<size_t, somaNode*> crucialNodeHash;
 	vector<somaNode> crucialNodes;
 	somaNode* somaTreePtr;
+	
 	
 	long int pathScissor(QList<NeuronSWC>& segment);
 
