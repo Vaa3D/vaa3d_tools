@@ -21,6 +21,39 @@
     #include <omp.h>
 #endif
 
+template <class T>
+void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d)
+{
+    V3DLONG i, j,k,n,count;
+    double t, temp;
+
+    V3DLONG mCount = iImageHeight * iImageWidth;
+    for (i=0; i<iImageLayer; i++)
+    {
+        for (j=0; j<iImageHeight; j++)
+        {
+            for (k=0; k<iImageWidth; k++)
+            {
+                V3DLONG curpos = i * mCount + j*iImageWidth + k;
+                V3DLONG curpos1 = i* mCount + j*iImageWidth;
+                V3DLONG curpos2 = j* iImageWidth + k;
+                temp = 0;
+                count = 0;
+                for(n =1 ; n <= d  ;n++)
+                {
+                    if (k>h*n) {temp += apsInput[curpos1 + k-(h*n)]; count++;}
+                    if (k+(h*n)< iImageWidth) { temp += apsInput[curpos1 + k+(h*n)]; count++;}
+                    if (j>h*n) {temp += apsInput[i* mCount + (j-(h*n))*iImageWidth + k]; count++;}//
+                    if (j+(h*n)<iImageHeight) {temp += apsInput[i* mCount + (j+(h*n))*iImageWidth + k]; count++;}//
+                    if (i>(h*n)) {temp += apsInput[(i-(h*n))* mCount + curpos2]; count++;}//
+                    if (i+(h*n)< iImageLayer) {temp += apsInput[(i+(h*n))* mCount + j* iImageWidth + k ]; count++;}
+                }
+                t =  apsInput[curpos]-temp/(count);
+                aspOutput[curpos]= (t > 0)? t : 0;
+            }
+        }
+    }
+}
 
 #include <boost/lexical_cast.hpp>
 template <class T> T pow2(T a)
@@ -1385,17 +1418,23 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;
+    V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char* total1dData_apa = 0;
+
     if(P.global_name)
     {
         double min,max;
-        V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
         unsigned char * total1dData_scaled = 0;
         total1dData_scaled = new unsigned char [pagesz_vim];
         rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
         total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     }else
     {
-        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        total1dData_apa = new unsigned char [pagesz_vim];
+        BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
+
+
+        total4DImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     }
 
     total4DImage->setOriginX(start_x);
@@ -1472,9 +1511,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
     saveTextFile.close();
 
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-    if(P.global_name)
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_apa, mysz, total4DImage->getDatatype());
 
     if(in_sz) {delete []in_sz; in_sz =0;}
     if(aVolume) {delete aVolume; aVolume = 0;}

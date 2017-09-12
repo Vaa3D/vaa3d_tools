@@ -689,9 +689,13 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
     {
         //get markers and check markers
         LList_in.clear();
-        LList_in = callback->getLandmark(v3dhandleList_current[0]);
-        mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
-        if (LList_in.size()==0 && mTreeList->size()==0)
+        if(callback->getLandmark(v3dhandleList_current[0]).size()>0)
+        {
+            LList_in = callback->getLandmark(v3dhandleList_current[0]);
+        }else if (callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0])->size()>0)
+        {
+            mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+        }else
         {
             v3d_msg("Please load markers or the swc file");
             return false;
@@ -754,10 +758,13 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         }
         //get markers and check markers
         LList_in.clear();
-        LList_in = callback->getLandmark(curwin);
-        mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
-
-        if (LList_in.size()==0 || mTreeList->size()==0)
+        if(callback->getLandmark(v3dhandleList_current[0]).size()>0)
+        {
+            LList_in = callback->getLandmark(v3dhandleList_current[0]);
+        }else if (callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0])->size()>0)
+        {
+            mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+        }else
         {
             v3d_msg("Please load markers or the swc file");
             return false;
