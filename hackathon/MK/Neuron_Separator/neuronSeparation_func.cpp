@@ -74,27 +74,6 @@ vector<long int> neuronSeparator::mkPaTableScratch(QList<NeuronSWC>& inputSWC)
 	return pa;
 }
 
-unordered_map<long int, size_t> neuronSeparator::hashScratch(QList<NeuronSWC>& inputSWC)
-{
-	unordered_map<long int, size_t> hashTable;
-
-	int inputSWCsize = inputSWC.size();
-	for (int i=0; i<inputSWCsize; ++i)
-	{
-		int ID = inputSWC[i].n;
-		for (int j=0; j<inputSWCsize; ++j)
-		{
-			if (inputSWC[j].n == ID)
-			{
-				hashTable[ID] = j;
-				break;
-			}
-		}
-	}
-
-	return hashTable;
-}
-
 map<long int, size_t> neuronSeparator::hashScratchMap(QList<NeuronSWC>& inputSWC)
 {
 	map<long int, size_t> hashTable;
@@ -491,9 +470,7 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 	vector<somaNode*> curLevelPtr, nextLevelPtr;
 	curLevelPtr.push_back(this->somaTreePtr);
 	this->brokenSomaPath = this->somaPath;
-	//unordered_map<long int, size_t> somaPathHash = hashScratch(this->somaPath);
 	map<long int, size_t> somaPathHash = hashScratchMap(this->somaPath);
-	//unordered_map<long int, bool> branchCutHash;
 	map<long int, size_t> branchCutHash;
 	QVector< QVector<V3DLONG> > somaPathChildTable = mkChildTableScratch(this->somaPath);
 
