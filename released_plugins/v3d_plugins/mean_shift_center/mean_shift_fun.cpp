@@ -800,7 +800,7 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback->getListAll3DViewers();
     LandmarkList LList_in;
-    QList<NeuronTree> * mTreeList;
+    QList<NeuronTree> * mTreeList = 0;
     if (v3dhandleList_current.size()==0){
         v3d_msg("Please open image and select markers");
         return false;
@@ -812,14 +812,21 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         if(callback->getLandmark(v3dhandleList_current[0]).size()>0)
         {
             LList_in = callback->getLandmark(v3dhandleList_current[0]);
-        }else if (callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0])->size()>0)
+        }else if (callback->getListAll3DViewers().size()>0)
         {
             mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+            if(mTreeList->size() == 0)
+            {
+                v3d_msg("Please load markers or the swc file");
+                return false;
+            }
         }else
         {
             v3d_msg("Please load markers or the swc file");
             return false;
         }
+
+
         curwin=v3dhandleList_current[0];
     }
     else if (v3dhandleList_current.size()>1)
@@ -881,9 +888,14 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         if(callback->getLandmark(v3dhandleList_current[0]).size()>0)
         {
             LList_in = callback->getLandmark(v3dhandleList_current[0]);
-        }else if (callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0])->size()>0)
+        }else if (callback->getListAll3DViewers().size()>0)
         {
             mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+            if(mTreeList->size() == 0)
+            {
+                v3d_msg("Please load markers or the swc file");
+                return false;
+            }
         }else
         {
             v3d_msg("Please load markers or the swc file");
