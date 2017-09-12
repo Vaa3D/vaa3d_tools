@@ -91,7 +91,6 @@ public:
 protected:
 	void buildSomaTree();
 	void breakPathMorph(somaNode* somaTreePtr);
-	NeuronSWC* somaPathArray;
 
 private:
 	bool circle;
@@ -102,7 +101,6 @@ private:
 
 	//unordered_map<size_t, somaNode*> crucialNodeHash; // location -> somaNode address
 	map<size_t, somaNode*> crucialNodeHash;
-	map<size_t, somaNode> crucialNodeHash2;
 	vector<somaNode> crucialNodes;
 	somaNode* somaTreePtr;
 	
