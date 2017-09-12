@@ -37,7 +37,7 @@ public:
     void setValue(float v);
 
 public:
-    float lx, ly, lz; // location
+    float x, y, z; // location
     float radius; // radius
     float val; // intensity value
 };

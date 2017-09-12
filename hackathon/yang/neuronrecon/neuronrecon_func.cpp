@@ -50,7 +50,7 @@ bool neuronrecon_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     QStringList files;
     for (int i=0;i<inlist->size();i++)
     {
-        files.push_back(QString(inlist[i]));
+        files.push_back(QString(inlist->at(i)));
     }
 
     pointcloud.getPointCloud(files);

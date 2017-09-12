@@ -32,9 +32,9 @@ template <class T> T pow2(T a)
 // class Point
 Point::Point()
 {
-    lx = 0;
-    ly = 0;
-    lz = 0;
+    x = 0;
+    y = 0;
+    z = 0;
     radius = 0;
     val = 0;
 }
@@ -46,9 +46,9 @@ Point::~Point()
 
 void Point::setLocation(float x, float y, float z)
 {
-    lx = x;
-    ly = y;
-    lz = z;
+    this->x = x;
+    this->y = y;
+    this->z = z;
 }
 
 void Point::setRadius(float r)
@@ -99,14 +99,17 @@ int PointCloud::addPointFromNeuronTree(NeuronTree nt)
     //
     if(nt.listNeuron.size()>0)
     {
-        Point p;
+        for(V3DLONG i=0; i<nt.listNeuron.size(); i++)
+        {
+            Point p;
 
-        p.lx = nt.listNeuron[i].x;
-        p.ly = nt.listNeuron[i].y;
-        p.lz = nt.listNeuron[i].z;
-        p.radius = nt.listNeuron[i].r;
+            p.x = nt.listNeuron[i].x;
+            p.y = nt.listNeuron[i].y;
+            p.z = nt.listNeuron[i].z;
+            p.radius = nt.listNeuron[i].r;
 
-        pc.push_back(p);
+            pc.push_back(p);
+        }
     }
 
     //
