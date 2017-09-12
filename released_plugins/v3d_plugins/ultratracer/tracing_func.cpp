@@ -21,6 +21,39 @@
     #include <omp.h>
 #endif
 
+template <class T>
+void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d)
+{
+    V3DLONG i, j,k,n,count;
+    double t, temp;
+
+    V3DLONG mCount = iImageHeight * iImageWidth;
+    for (i=0; i<iImageLayer; i++)
+    {
+        for (j=0; j<iImageHeight; j++)
+        {
+            for (k=0; k<iImageWidth; k++)
+            {
+                V3DLONG curpos = i * mCount + j*iImageWidth + k;
+                V3DLONG curpos1 = i* mCount + j*iImageWidth;
+                V3DLONG curpos2 = j* iImageWidth + k;
+                temp = 0;
+                count = 0;
+                for(n =1 ; n <= d  ;n++)
+                {
+                    if (k>h*n) {temp += apsInput[curpos1 + k-(h*n)]; count++;}
+                    if (k+(h*n)< iImageWidth) { temp += apsInput[curpos1 + k+(h*n)]; count++;}
+                    if (j>h*n) {temp += apsInput[i* mCount + (j-(h*n))*iImageWidth + k]; count++;}//
+                    if (j+(h*n)<iImageHeight) {temp += apsInput[i* mCount + (j+(h*n))*iImageWidth + k]; count++;}//
+                    if (i>(h*n)) {temp += apsInput[(i-(h*n))* mCount + curpos2]; count++;}//
+                    if (i+(h*n)< iImageLayer) {temp += apsInput[(i+(h*n))* mCount + j* iImageWidth + k ]; count++;}
+                }
+                t =  apsInput[curpos]-temp/(count);
+                aspOutput[curpos]= (t > 0)? t : 0;
+            }
+        }
+    }
+}
 
 #include <boost/lexical_cast.hpp>
 template <class T> T pow2(T a)
@@ -1385,17 +1418,23 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     Image4DSimple* total4DImage = new Image4DSimple;
+    V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char* total1dData_apa = 0;
+
     if(P.global_name)
     {
         double min,max;
-        V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
         unsigned char * total1dData_scaled = 0;
         total1dData_scaled = new unsigned char [pagesz_vim];
         rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
         total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     }else
     {
-        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        total1dData_apa = new unsigned char [pagesz_vim];
+        BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
+
+
+        total4DImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     }
 
     total4DImage->setOriginX(start_x);
@@ -1472,9 +1511,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
     saveTextFile.close();
 
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-    if(P.global_name)
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_apa, mysz, total4DImage->getDatatype());
 
     if(in_sz) {delete []in_sz; in_sz =0;}
     if(aVolume) {delete aVolume; aVolume = 0;}
@@ -1689,6 +1726,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
             }
             writeSWC_file(inputswc_name,input_nt);
+
         }
         else
         {
@@ -1783,7 +1821,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     LandmarkList tip_out;
     LandmarkList tip_in;
 
-    double overlap_ratio = 0.1;
+    double overlap_ratio = 0.5;
 
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
@@ -1821,7 +1859,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 2*finalswc.at(j)->radius || dis < 20 || curr.type ==0)
+                    if(dis < 2*finalswc.at(j)->radius || dis < 5 || curr.type ==0)
                    // if(dis < 10)
                     {
                         check_tip = true;
@@ -1830,24 +1868,57 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 }
             }
             if(check_tip) continue;
-            if( curr.x < overlap_ratio* total4DImage->getXDim())
+
+            if(P.method == gd)
             {
-                tip_left.push_back(newTip);
-            }else if (curr.x > (1-overlap_ratio) * total4DImage->getXDim())
+                double x_diff = curr.x - list.at(0).x;
+                double y_diff = curr.y - list.at(0).y;
+                double z_diff = curr.z - list.at(0).z;
+
+                if(fabs(x_diff) >= fabs(y_diff) && fabs(x_diff) >= fabs(z_diff))
+                {
+                    if(x_diff < 0)
+                        tip_left.push_back(newTip);
+                    else
+                        tip_right.push_back(newTip);
+
+                }else if(fabs(y_diff) >= fabs(x_diff) && fabs(y_diff) >= fabs(z_diff))
+                {
+                    if(y_diff < 0)
+                        tip_up.push_back(newTip);
+                    else
+                        tip_down.push_back(newTip);
+
+                }else if(fabs(z_diff) >= fabs(x_diff) && fabs(z_diff) >= fabs(y_diff))
+                {
+                    if(z_diff < 0)
+                        tip_in.push_back(newTip);
+                    else
+                        tip_out.push_back(newTip);
+                }
+
+            }else
             {
-                tip_right.push_back(newTip);
-            }else if (curr.y < overlap_ratio * total4DImage->getYDim())
-            {
-                tip_up.push_back(newTip);
-            }else if (curr.y > (1-overlap_ratio)*total4DImage->getYDim())
-            {
-                tip_down.push_back(newTip);
-            }else if (curr.z < overlap_ratio * total4DImage->getZDim())
-            {
-                tip_out.push_back(newTip);
-            }else if (curr.z > (1-overlap_ratio)*total4DImage->getZDim())
-            {
-                tip_in.push_back(newTip);
+
+                if( curr.x < overlap_ratio* total4DImage->getXDim())
+                {
+                    tip_left.push_back(newTip);
+                }else if (curr.x > (1-overlap_ratio) * total4DImage->getXDim())
+                {
+                    tip_right.push_back(newTip);
+                }else if (curr.y < overlap_ratio * total4DImage->getYDim())
+                {
+                    tip_up.push_back(newTip);
+                }else if (curr.y > (1-overlap_ratio)*total4DImage->getYDim())
+                {
+                    tip_down.push_back(newTip);
+                }else if (curr.z < overlap_ratio * total4DImage->getZDim())
+                {
+                    tip_out.push_back(newTip);
+                }else if (curr.z > (1-overlap_ratio)*total4DImage->getZDim())
+                {
+                    tip_in.push_back(newTip);
+                }
             }
         }
     }
@@ -5067,7 +5138,7 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
 bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction)
 {
     newTipsList->push_back(tips);
-    double overlap = 0.1;
+    double overlap = 0.05;
 
     float min_x = INF, max_x = -INF;
     float min_y = INF, max_y = -INF;
@@ -5138,38 +5209,42 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
     adaptive_size_z = (adaptive_size_z >= block_size) ? block_size : adaptive_size_z;
 
     LocationSimple newTarget;
-
     if(direction == 1)
     {
-        newTarget.x = -floor(adaptive_size_x*(1.0-overlap)) + tileLocation.x;
+        newTarget.x = -floor(adaptive_size_x*(1.0-overlap)) + tips.at(0).x;
         newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
         newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
     }else if(direction == 2)
     {
-        newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size_x*overlap);
+        //newTarget.x = tips.at(0).x + tileLocation.ev_pc1 - floor(adaptive_size_x*overlap);
+        newTarget.x = tips.at(0).x - floor(adaptive_size_x*overlap);
         newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
         newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
 
     }else if(direction == 3)
     {
         newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
-        newTarget.y = -floor(adaptive_size_y*(1.0-overlap)) + tileLocation.y;
+        newTarget.y = -floor(adaptive_size_y*(1.0-overlap)) + tips.at(0).y;
         newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
     }else if(direction == 4)
     {
         newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
-        newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size_y*overlap);
+        //newTarget.y = tips.at(0).y - tileLocation.ev_pc2 - floor(adaptive_size_y*overlap);
+        newTarget.y = tips.at(0).y - floor(adaptive_size_y*overlap);
         newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
+
+
     }else if(direction == 5)
     {
         newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
         newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
-        newTarget.z = -floor(adaptive_size_z*(1.0-overlap)) + tileLocation.z;
+        newTarget.z = -floor(adaptive_size_z*(1.0-overlap)) + tips.at(0).z;
     }else if(direction == 6)
     {
         newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
         newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
-        newTarget.z = tileLocation.z + tileLocation.ev_pc3 - floor(adaptive_size_z*overlap);
+        //newTarget.z = tips.at(0).z + tileLocation.ev_pc3 - floor(adaptive_size_z*overlap);
+        newTarget.z = tips.at(0).z - floor(adaptive_size_z*overlap);
     }
 
 

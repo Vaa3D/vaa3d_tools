@@ -13,7 +13,7 @@
 #include "basic_surf_objs.h"
 #include <qvector.h>
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 using namespace std;
 
@@ -32,10 +32,16 @@ struct somaNode // This structure carries crucial node properties on a soma tree
 	NeuronSWC node;
 	vector<somaNode*> childrenSomas;
 	vector<somaNode*> parent;
+	somaNode* selfAddr;
 	int level;
 	bool branch, headSoma, tailSoma, middleSoma, soma;
 
-	somaNode::somaNode() {branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;}
+	somaNode() 
+	{
+		branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;
+		childrenSomas.clear();
+		parent.clear();
+	}
 };
 
 class neuronSeparator : public QObject, public V3DPluginInterface2_1
@@ -53,6 +59,8 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 	
 	// -----------------------------------------------------------------------------------------------------------------------------------------
+	neuronSeparator();
+	
 	QVector<long int> toBeBrokenLoc;
 	QList<NeuronSWC> extractedNeuron;
 	
@@ -73,7 +81,7 @@ public:
 	
 	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
 	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
-	unordered_map<long int, size_t> hashScratch(QList<NeuronSWC>&);
+	map<long int, size_t> hashScratchMap(QList<NeuronSWC>&);
 	
 	void downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
 	QList<NeuronSWC> swcTrace(QList<NeuronSWC>& list, long int startID, NeuronSWC& startNode);
@@ -89,9 +97,10 @@ private:
 	NeuronTree inputSWCTree;
 	QList< QList<NeuronSWC> > paths;
 
-	unordered_map<size_t, somaNode*> crucialNodeHash; // location -> somaNode address
+	map<size_t, somaNode*> crucialNodeHash;
 	vector<somaNode> crucialNodes;
 	somaNode* somaTreePtr;
+	
 	
 	long int pathScissor(QList<NeuronSWC>& segment);
 

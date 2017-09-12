@@ -11,6 +11,11 @@ using namespace std;
 
 #define MAX_NODE_NUM_ON_TAIL2HEAD_PATH 100000
 
+neuronSeparator::neuronSeparator() // Need this constructor to put crucialNodes in stack instead of heap, otherwise the addresses of its elements may change.
+{
+	crucialNodes.resize(500);
+}
+
 QVector< QVector<V3DLONG> > neuronSeparator::childIndexTable(NeuronTree& nt)
 {
 	QVector< QVector<V3DLONG> > childs; // indices of the childs of a given parent index
@@ -69,9 +74,9 @@ vector<long int> neuronSeparator::mkPaTableScratch(QList<NeuronSWC>& inputSWC)
 	return pa;
 }
 
-unordered_map<long int, size_t> neuronSeparator::hashScratch(QList<NeuronSWC>& inputSWC)
+map<long int, size_t> neuronSeparator::hashScratchMap(QList<NeuronSWC>& inputSWC)
 {
-	unordered_map<long int, size_t> hashTable;
+	map<long int, size_t> hashTable;
 
 	int inputSWCsize = inputSWC.size();
 	for (int i=0; i<inputSWCsize; ++i)
@@ -358,9 +363,9 @@ void neuronSeparator::buildSomaTree()
 				this->crucialNodes[nodeCount].node = somaPath[*it];
 				this->crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
 				++nodeCount;
-				//cout << "location on the soma path: " << *it << endl;
-				//cout << " - memory address: " << crucialNodeHash[*it] << endl;
-				//cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
+				cout << "location on the soma path: " << *it << endl;
+				cout << " - memory address: " << crucialNodeHash[*it] << endl;
+				cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
 			}
 		}
 	}
@@ -389,12 +394,16 @@ void neuronSeparator::buildSomaTree()
 				curSomaNodePtr = this->crucialNodeHash[*it];
 				curSomaNodePtr->parent.push_back(this->crucialNodeHash[*(it+1)]);
 				paSomaNodePtr = this->crucialNodeHash[*(it+1)];
-				paSomaNodePtr->childrenSomas.push_back(this->crucialNodeHash[*it]);
+				paSomaNodePtr->childrenSomas.push_back(curSomaNodePtr);
 
 				handled.push_back(*it);
+
+				cout << "loc and mem addr: " << *it << " " << curSomaNodePtr << " / " << *(it+1) << " " << paSomaNodePtr << endl;
+				cout << "  -- parent ID: " << curSomaNodePtr->node.n << " children ID: " << paSomaNodePtr->node.n << endl;
 			}
 		}
 	}
+
 	/*somaNode* testPtr = crucialNodeHash[244];
 	cout << "child address: "; 
 	for (vector<somaNode*>::iterator it=testPtr->childrenSomas.begin(); it!=testPtr->childrenSomas.end(); ++it) cout << *it << " ";
@@ -461,8 +470,8 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 	vector<somaNode*> curLevelPtr, nextLevelPtr;
 	curLevelPtr.push_back(this->somaTreePtr);
 	this->brokenSomaPath = this->somaPath;
-	unordered_map<long int, size_t> somaPathHash = hashScratch(this->somaPath);
-	unordered_map<long int, bool> branchCutHash;
+	map<long int, size_t> somaPathHash = hashScratchMap(this->somaPath);
+	map<long int, size_t> branchCutHash;
 	QVector< QVector<V3DLONG> > somaPathChildTable = mkChildTableScratch(this->somaPath);
 
 	NeuronSWC head, tail;

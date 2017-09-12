@@ -90,37 +90,43 @@ LandmarkList mean_shift_dialog::core()
 //        if(fp)
 //        fprintf(fp,"%1d %5.1f %5.1f %5.1f\n",j+1,mass_center[0],mass_center[1],mass_center[2]);
     }
-    //visualize
-    Image4DSimple image4d;
-    //V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-    unsigned char* image1D_input=memory_allocate_uchar1D(size_tmp);
-    memcpy(image1D_input, image1Dc_in, size_tmp*sizeof(unsigned char));
-    image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
 
-    v3dhandle v3dhandle_main=callback->newImageWindow();
-    callback->setImage(v3dhandle_main, &image4d);
-    callback->setLandmark(v3dhandle_main,LList_new_center);
-    if (methodcode==2)
-        callback->setImageName(v3dhandle_main, "mean_shift_constraints_"+callback->getImageName(curwin));
-    else
-        callback->setImageName(v3dhandle_main, "mean_shift_"+callback->getImageName(curwin));
-    callback->updateImageWindow(v3dhandle_main);
-    callback->open3DWindow(v3dhandle_main);
-    callback->pushObjectIn3DWindow(v3dhandle_main);
-//    NeuronTree nt;
-//    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
-//    QList<NeuronTree> * mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
-//    nt = mTreeList->at(0);
-//    for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
-//    {
-//        nt.listNeuron[i].x = LList_new_center.at(i).x;
-//        nt.listNeuron[i].y = LList_new_center.at(i).y;
-//        nt.listNeuron[i].z = LList_new_center.at(i).z;
-//    }
-//    QString swc_out_name = callback->getImageName(v3dhandleList_current[0]) + "_meanshifted.swc";
-//    writeSWC_file(swc_out_name,nt);
-//    v3d_msg(QString("Now you can drag and drop the meanshifted swc fle [%1] into Vaa3D."
-//                    ).arg(swc_out_name));
+    v3dhandleList v3dhandleList_current=callback->getImageWindowList();
+    QList<NeuronTree> * mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+    if(mTreeList->size() == 0)
+    {
+        //visualize
+        Image4DSimple image4d;
+        //V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
+        unsigned char* image1D_input=memory_allocate_uchar1D(size_tmp);
+        memcpy(image1D_input, image1Dc_in, size_tmp*sizeof(unsigned char));
+        image4d.setData(image1D_input, sz_img[0], sz_img[1], sz_img[2], sz_img[3], V3D_UINT8);
+
+        v3dhandle v3dhandle_main=callback->newImageWindow();
+        callback->setImage(v3dhandle_main, &image4d);
+        callback->setLandmark(v3dhandle_main,LList_new_center);
+        if (methodcode==2)
+            callback->setImageName(v3dhandle_main, "mean_shift_constraints_"+callback->getImageName(curwin));
+        else
+            callback->setImageName(v3dhandle_main, "mean_shift_"+callback->getImageName(curwin));
+        callback->updateImageWindow(v3dhandle_main);
+        callback->open3DWindow(v3dhandle_main);
+        callback->pushObjectIn3DWindow(v3dhandle_main);
+    }else
+    {
+
+        NeuronTree nt;
+        nt = mTreeList->at(0);
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            nt.listNeuron[i].x = LList_new_center.at(i).x;
+            nt.listNeuron[i].y = LList_new_center.at(i).y;
+            nt.listNeuron[i].z = LList_new_center.at(i).z;
+        }
+        QString swc_out_name = callback->getImageName(v3dhandleList_current[0]) + "_meanshifted.swc";
+        writeSWC_file(swc_out_name,nt);
+        v3d_msg(QString("Now you can drag and drop the meanshifted swc fle [%1] into Vaa3D.").arg(swc_out_name));
+    }
     return LList_new_center;
 
 }
