@@ -1129,9 +1129,9 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             V3DLONG  iy = nt_seg[j].y;
             V3DLONG  iz = nt_seg[j].z;
             seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std);
-            if(j >=10 && j<nt_seg.size()-10)
+            if(j >=7 && j<nt_seg.size()-7)
             {
-                seg_angle = angle(nt_seg[j], nt_seg[j-10], nt_seg[j+10]);
+                seg_angle = angle(nt_seg[j], nt_seg[j-7], nt_seg[j+7]);
                 if(seg_angle < 120)
                 {
 //                    double I_part1 = 0;

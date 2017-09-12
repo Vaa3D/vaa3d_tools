@@ -29,6 +29,7 @@ void convert2UINT8_meanshift(unsigned short *pre1d, unsigned char *pPost, V3DLON
 void convert2UINT8_meanshift(float *pre1d, unsigned char *pPost, V3DLONG imsz);
 
 vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode);
+vector<float> calc_mean_shift_center_mass(V3DLONG ind, int windowradius,float *data1Dc_float,V3DLONG sz_image[],int methodcode);
 
 bool load_data(V3DPluginCallback2 *cb,unsigned char * &image1Dc_in,LandmarkList &LList,
                ImagePixelType &pixeltype,V3DLONG sz_img[4],v3dhandle &curwin);
@@ -39,6 +40,8 @@ public:
     mean_shift_fun();
     ~mean_shift_fun();
     vector<float> mean_shift_center(V3DLONG ind, int windowradius);
+    vector<float> mean_shift_center_mass(V3DLONG ind, int windowradius);  //added by Zhi 90122017
+
     vector<float> mean_shift_with_constraint(V3DLONG ind, int windowradius);
     vector<float> ray_shoot_center(V3DLONG ind, int bg_thr, int j);
     vector<float> gradient_transform(float *&outimg1d,V3DLONG ind,
