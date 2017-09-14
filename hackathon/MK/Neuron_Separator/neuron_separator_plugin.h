@@ -58,37 +58,46 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 	
-	// -----------------------------------------------------------------------------------------------------------------------------------------
+	/* -------------------------------------------------------------------------------------------------------------------------------------------- */
 	neuronSeparator();
-	
-	QVector<long int> toBeBrokenLoc;
-	QList<NeuronSWC> extractedNeuron;
 	
 	vector<long int> somaIDs;
 	QList<NeuronSWC> somaPath;
 	NeuronTree somaSWCTree;
-	QVector< QVector<V3DLONG> > childsTable; // childs table of the whole input SWC (in which hash neuron is available)
+	
+	// Soma tree building stuff ------
 	QHash<long int, bool> locLabel;
-	QList<NeuronSWC> brokenSomaPath;
-	vector<long int> nodeToBeCutID;
-	QList<NeuronSWC> brokenInputSWC;
-
-	QVector< QVector<V3DLONG> > childIndexTable(NeuronTree& nt);
+		
 	QList<NeuronSWC> findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID);
 	long int findLatestCommonAncestor(bool& circle, NeuronTree& nt, QVector< QVector<V3DLONG> >& childList, NeuronSWC& wishedSoma, NeuronSWC& excludedSoma);
 	void backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end);
 	void getMergedPath(QList<NeuronSWC>& somaPath, QHash<long int, bool>& locLabel, QList< QList<NeuronSWC> >& paths, NeuronTree& nt);
+	// -------------------------------
+
+	// Some hash methods -------
+	QVector< QVector<V3DLONG> > childsTable; // childs table of the whole input SWC (in which hash neuron is available, given node's location -> the given node's children's location)
 	
-	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&);
-	vector<long int> mkPaTableScratch(QList<NeuronSWC>&);
-	map<long int, size_t> hashScratchMap(QList<NeuronSWC>&);
-	
+	QVector< QVector<V3DLONG> > childIndexTable(NeuronTree& nt); // this method produces the [childsTable]
+	QVector< QVector<V3DLONG> > mkChildTableScratch(QList<NeuronSWC>&); // Same as childsTable, but is for simple swc that doesn't have hash neuron information (loc -> loc)
+	vector<long int> mkPaTableScratch(QList<NeuronSWC>&); // given node's location -> the given node's parent's location  
+	map<long int, size_t> hashScratchMap(QList<NeuronSWC>&); // ID -> location
+	// -------------------------
+
+	// Some tracing methods -------
 	void downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start);
 	QList<NeuronSWC> swcTrace(QList<NeuronSWC>& list, long int startID, NeuronSWC& startNode);
-	
+	// ----------------------------
+
+	// Containers for soma path breaking stuff --------
+	QList<NeuronSWC> brokenSomaPath;
+	vector<long int> nodeToBeCutID;
+	QList<NeuronSWC> brokenInputSWC;
+	// ------------------------------------------------
+
 protected:
-	void buildSomaTree();
-	void breakPathMorph(somaNode* somaTreePtr);
+	void buildSomaTree(); // This method produces [crucialNodes] and establishes hierarchical orders. 
+	void breakPathMorph(somaNode* somaTreePtr); // This is the method that does the job => CUTS THE SOMA TREE AND PARTITIONS NEURONS
+	long int pathScissor(QList<NeuronSWC>& segment); // This method gets called by breakSomaMorph.
 
 private:
 	bool circle;
@@ -97,13 +106,9 @@ private:
 	NeuronTree inputSWCTree;
 	QList< QList<NeuronSWC> > paths;
 
-	map<size_t, somaNode*> crucialNodeHash;
-	vector<somaNode> crucialNodes;
-	somaNode* somaTreePtr;
-	
-	
-	long int pathScissor(QList<NeuronSWC>& segment);
-
+	somaNode* somaTreePtr; // the pointer to the head soma of the soma tree
+	map<size_t, somaNode*> crucialNodeHash; // location on somaPath -> crucial node's STACK memory address
+	vector<somaNode> crucialNodes; // SOMA TREE MEMBERS
 };
 
 #endif

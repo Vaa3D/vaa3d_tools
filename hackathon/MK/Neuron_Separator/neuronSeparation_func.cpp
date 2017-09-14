@@ -363,9 +363,9 @@ void neuronSeparator::buildSomaTree()
 				this->crucialNodes[nodeCount].node = somaPath[*it];
 				this->crucialNodeHash[*it] = &(crucialNodes[nodeCount]);
 				++nodeCount;
-				cout << "location on the soma path: " << *it << endl;
-				cout << " - memory address: " << crucialNodeHash[*it] << endl;
-				cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
+				//cout << "location on the soma path: " << *it << endl;
+				//cout << " - memory address: " << crucialNodeHash[*it] << endl;
+				//cout << " - ID: " << crucialNodeHash[*it]->node.n << endl << endl;
 			}
 		}
 	}
@@ -398,16 +398,11 @@ void neuronSeparator::buildSomaTree()
 
 				handled.push_back(*it);
 
-				cout << "loc and mem addr: " << *it << " " << curSomaNodePtr << " / " << *(it+1) << " " << paSomaNodePtr << endl;
-				cout << "  -- parent ID: " << curSomaNodePtr->node.n << " children ID: " << paSomaNodePtr->node.n << endl;
+				//cout << "loc and mem addr: " << *it << " " << curSomaNodePtr << " / " << *(it+1) << " " << paSomaNodePtr << endl;
+				//cout << "  -- parent ID: " << curSomaNodePtr->node.n << " children ID: " << paSomaNodePtr->node.n << endl;
 			}
 		}
 	}
-
-	/*somaNode* testPtr = crucialNodeHash[244];
-	cout << "child address: "; 
-	for (vector<somaNode*>::iterator it=testPtr->childrenSomas.begin(); it!=testPtr->childrenSomas.end(); ++it) cout << *it << " ";
-	cout << endl;*/
 
 	int pathSize = tails2headList[0].size();
 	size_t headLoc = tails2headList[0][pathSize-1];
@@ -583,25 +578,9 @@ void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
 		}
 		cout << "  --  Finished determining branch break/path break" << endl;
 		
-		/*cout << "number of curLevel Ptr: " << curLevelPtr.size() << "\n -> ";
-		for (vector<somaNode*>::iterator testIt=curLevelPtr.begin(); testIt!=curLevelPtr.end(); ++testIt)
-			cout << (*testIt)->node.n << " ";
-		cout << endl;
-		
-		cout << "number of nextLevel Ptr: " << nextLevelPtr.size() << "\n -> ";
-		for (vector<somaNode*>::iterator testIt=nextLevelPtr.begin(); testIt!=nextLevelPtr.end(); ++testIt)
-			cout << (*testIt)->node.n << " ";
-		cout << endl;*/
-		
 		curLevelPtr.clear();
 		for (vector<somaNode*>::iterator levelIt=nextLevelPtr.begin(); levelIt!=nextLevelPtr.end(); ++levelIt)
 			curLevelPtr.push_back(*levelIt);
-		
-		/*cout << "number of new curLevel Ptr: " << curLevelPtr.size() << "\n -> ";
-		for (vector<somaNode*>::iterator testIt=curLevelPtr.begin(); testIt!=curLevelPtr.end(); ++testIt)
-			cout << (*testIt)->node.n << " ";
-		cout << endl << endl;*/
-						
 	} while (childrenCount > 0);
 
 	QString name = "brokenSomaPath_test.swc";
@@ -788,10 +767,6 @@ QList<NeuronSWC> neuronSeparator::swcTrace(QList<NeuronSWC>& list, long int star
 
 	QList<NeuronSWC> tracedSorted;
 	SortSWC(traced, tracedSorted, VOID, VOID);
-	/*NeuronTree newTree;
-	newTree.listNeuron = tracedSorted;
-	QString outputSWCfile = "extractedSWCtest.swc";
-	writeSWC_file(outputSWCfile, newTree);*/
 	
 	return tracedSorted;
 }
