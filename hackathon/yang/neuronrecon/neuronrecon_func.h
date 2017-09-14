@@ -10,6 +10,8 @@
 
 int neuronrecon_menu(V3DPluginCallback2 &callback,QWidget * parent);
 bool neuronrecon_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+bool samplingtree_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 void printHelp();
 
 #endif // __NEURONRECON_FUNC_H__

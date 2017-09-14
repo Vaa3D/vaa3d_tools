@@ -54,6 +54,8 @@ public:
     int savePointCloud(QString filename);
     int addPointFromNeuronTree(NeuronTree nt);
 
+    int resample();
+
 public:
     vector<Point> pc;
 };

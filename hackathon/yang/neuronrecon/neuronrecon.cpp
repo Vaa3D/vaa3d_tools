@@ -119,7 +119,6 @@ int PointCloud::addPointFromNeuronTree(NeuronTree nt)
     return 0;
 }
 
-
 int PointCloud::savePointCloud(QString filename)
 {
     //
@@ -135,6 +134,14 @@ int PointCloud::savePointCloud(QString filename)
 
     //
     writeMarker_file(filename, markers);
+
+    //
+    return 0;
+}
+
+int PointCloud::resample()
+{
+    //
 
     //
     return 0;

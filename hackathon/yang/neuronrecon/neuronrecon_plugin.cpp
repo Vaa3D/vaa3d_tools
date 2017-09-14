@@ -5,6 +5,8 @@
 
 #include "neuronrecon_plugin.h"
 #include "neuronrecon_func.h"
+#include "neuronrecon.h"
+
 
 Q_EXPORT_PLUGIN2(neuronrecon, NeuReconPlugin);
 
@@ -19,6 +21,8 @@ QStringList NeuReconPlugin::funclist() const
 {
     return QStringList()
             <<tr("neurecon")
+           <<tr("samplingtree")
+          <<tr("finetunepoints")
            <<tr("help");
 }
 
@@ -45,6 +49,14 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     if (func_name == tr("neurecon"))
     {
         return neuronrecon_func(input, output, callback);
+    }
+    else if (func_name == tr("samplingtree"))
+    {
+        return samplingtree_func(input, output, callback);
+    }
+    else if (func_name == tr("finetunepoints"))
+    {
+        return finetunepoints_func(input, output, callback);
     }
     else if (func_name == tr("help"))
     {
