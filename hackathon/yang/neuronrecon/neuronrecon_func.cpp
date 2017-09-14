@@ -211,10 +211,18 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
 
     // fine tuning with mean-shift
     float distance = 2; // converge
-
+    PointCloud pointcloud;
     for(V3DLONG i=0; i<pc.size(); i++)
     {
         cout<<"before fine tuning ... "<<pc[i].x <<" "<<pc[i].y <<" "<<pc[i].z <<" "<<pc[i].radius<<endl;
+
+        Point p;
+
+        p.setLocation(pc[i].x, pc[i].y, pc[i].z);
+        p.setRadius(pc[i].radius);
+
+        // mean shift
+
 
     }
 

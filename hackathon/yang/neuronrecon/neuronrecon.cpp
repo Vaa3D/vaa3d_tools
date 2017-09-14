@@ -123,17 +123,38 @@ int PointCloud::savePointCloud(QString filename)
 {
     //
     V3DLONG n = pc.size();
-    QList<ImageMarker> markers;
+
+    // .apo
+    QList <CellAPO> pointcloud;
+
     for(V3DLONG i=0; i<n; i++)
     {
         Point p = pc[i];
-        ImageMarker marker(0, 1, p.x, p.y, p.z, p.radius);
+        CellAPO cell;
 
-        markers.push_back(marker);
+        cell.x = p.x;
+        cell.y = p.y;
+        cell.z = p.z;
+        cell.volsize = 2*p.radius;
+
+        pointcloud.push_back(cell);
     }
 
-    //
-    writeMarker_file(filename, markers);
+    writeAPO_file(filename, pointcloud);
+
+
+
+//    QList<ImageMarker> markers;
+//    for(V3DLONG i=0; i<n; i++)
+//    {
+//        Point p = pc[i];
+//        ImageMarker marker(0, 1, p.x, p.y, p.z, p.radius);
+
+//        markers.push_back(marker);
+//    }
+
+//    //
+//    writeMarker_file(filename, markers);
 
     //
     return 0;
@@ -145,4 +166,13 @@ int PointCloud::resample()
 
     //
     return 0;
+}
+
+float PointCloud::distance(Point a, Point b)
+{
+    float x = a.x - b.x;
+    float y = a.y - b.y;
+    float z = a.z - b.z;
+
+    return sqrt(x*x + y*y + z*z);
 }

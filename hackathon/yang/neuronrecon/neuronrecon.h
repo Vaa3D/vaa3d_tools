@@ -54,6 +54,8 @@ public:
     int savePointCloud(QString filename);
     int addPointFromNeuronTree(NeuronTree nt);
 
+    float distance(Point a, Point b);
+
     int resample();
 
 public:
