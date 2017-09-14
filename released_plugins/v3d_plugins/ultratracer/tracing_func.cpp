@@ -1430,11 +1430,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     }else
     {
-        total1dData_apa = new unsigned char [pagesz_vim];
-        BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
+//        total1dData_apa = new unsigned char [pagesz_vim];
+//        BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
 
 
-        total4DImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
     }
 
     total4DImage->setOriginX(start_x);
@@ -1511,7 +1511,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
     saveTextFile.close();
 
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_apa, mysz, total4DImage->getDatatype());
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
     if(in_sz) {delete []in_sz; in_sz =0;}
     if(aVolume) {delete aVolume; aVolume = 0;}
@@ -1718,14 +1718,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             outputMarker.y = int(total4DImage->getYDim()/2) + 1;
             outputMarker.z = int(total4DImage->getZDim()/2) + 1;
             seedsToSave.append(outputMarker);
-            NeuronTree input_nt = readSWC_file(P.swcfilename);
-            for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
-            {
-                input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
-                input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
-                input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
-            }
-            writeSWC_file(inputswc_name,input_nt);
+//            NeuronTree input_nt = readSWC_file(P.swcfilename);
+//            for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
+//            {
+//                input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
+//                input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
+//                input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
+//            }
+//            writeSWC_file(inputswc_name,input_nt);
 
         }
         else
@@ -1768,11 +1768,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         arg_para.push_back("10");
         arg_para.push_back("1");
 
-        if(inputRootList.size() <1)
-        {
-            char* char_inputswc =  new char[inputswc_name.length() + 1];strcpy(char_inputswc, inputswc_name.toStdString().c_str());
-            arg_para.push_back(char_inputswc);
-        }
+//        if(inputRootList.size() <1)
+//        {
+//            char* char_inputswc =  new char[inputswc_name.length() + 1];strcpy(char_inputswc, inputswc_name.toStdString().c_str());
+//            arg_para.push_back(char_inputswc);
+//        }
         full_plugin_name = "line_detector";
         func_name =  "GD_Curveline_v2";
 

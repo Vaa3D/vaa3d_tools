@@ -20,6 +20,13 @@ vector<float> mean_shift_fun::mean_shift_center(V3DLONG ind, int windowradius)
     return center;
 }
 
+vector<float> mean_shift_fun::mean_shift_center_mass(V3DLONG ind, int windowradius)
+{
+    int methodcode=0; //if methodcode is 2,there are constrains.
+    vector<float> center=calc_mean_shift_center_mass(ind,windowradius,data1Dc_float,sz_image,methodcode);
+    return center;
+}
+
 vector<float> mean_shift_fun::mean_shift_with_constraint(V3DLONG ind, int windowradius)
 {
     int methodcode=2; //if methodcode is 2,there are constrains.
@@ -390,6 +397,119 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
     }
     //qDebug()<<"v_Prev:"<<v_prev;
     int testCount=0;
+    int testCount1=0;
+
+    while (center_dis>=0.5 && testCount<50)
+    {
+        total_x=total_y=total_z=sum_v=0;
+        testCount++;
+        testCount=testCount1=0;
+
+        for(V3DLONG dx=MAX(x+0.5-windowradius,0); dx<=MIN(sz_image[0]-1,x+0.5+windowradius); dx++){
+            for(V3DLONG dy=MAX(y+0.5-windowradius,0); dy<=MIN(sz_image[1]-1,y+0.5+windowradius); dy++){
+                for(V3DLONG dz=MAX(z+0.5-windowradius,0); dz<=MIN(sz_image[2]-1,z+0.5+windowradius); dz++){
+                    pos=xyz2pos(dx,dy,dz,y_offset,z_offset);
+                    double tmp=(dx-x)*(dx-x)+(dy-y)*(dy-y)
+                         +(dz-z)*(dz-z);
+                    double distance=sqrt(tmp);
+                    if (distance>windowradius) continue;
+                    v_color=data1Dc_float[pos+page_size*channel];
+
+                    total_x=v_color*(float)dx+total_x;
+                    total_y=v_color*(float)dy+total_y;
+                    total_z=v_color*(float)dz+total_z;
+                    sum_v=sum_v+v_color;
+
+                    testCount++;
+                    if(v_color>100)
+                        testCount1++;
+                 }
+             }
+         }
+
+
+//        qDebug()<<"windowradius:"<<windowradius;
+//        qDebug()<<"total xyz:"<<total_x<<":"<<total_y<<":"<<total_z<<":"<<sum_v<<":"<<sum_v/testCount<<":"<<testCount<<":"<<testCount1;
+
+        center_float[0]=total_x/sum_v;
+        center_float[1]=total_y/sum_v;
+        center_float[2]=total_z/sum_v;
+        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2];
+
+        if (total_x<1e-5||total_y<1e-5||total_z<1e-5) //a very dark marker.
+        {
+
+            v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move",0);
+            center_float[0]=x;
+            center_float[1]=y;
+            center_float[2]=z;
+            return center_float;
+        }
+
+        V3DLONG prev_ind=xyz2pos((int)(x+0.5),(int)(y+0.5),(int)(z+0.5),y_offset,z_offset);
+        V3DLONG tmp_ind=xyz2pos((int)(center_float[0]+0.5),(int)(center_float[1]+0.5),(int)(center_float[2]+0.5),
+                y_offset,z_offset);
+
+        if (methodcode==2)
+        {
+            if (data1Dc_float[tmp_ind+channel*page_size]<data1Dc_float[prev_ind+channel*page_size]&& windowradius>=2) // && windowradius>2)
+            {
+            //qDebug()<<methodcode<<" window too large"<<windowradius;
+            windowradius--;
+            center_dis=1;
+            continue;
+            }
+         }
+
+        float tmp_1=(center_float[0]-x)*(center_float[0]-x)+(center_float[1]-y)*(center_float[1]-y)
+                    +(center_float[2]-z)*(center_float[2]-z);
+        center_dis=sqrt(tmp_1);
+
+//        qDebug()<<"new_center:"<<center_float[0]<<":"<<center_float[1]<<":"<<center_float[2]<<" intensity:"<<data1Dc_float[tmp_ind+channel*page_size];
+//        qDebug()<<"center distance:"<<center_dis;
+        x=center_float[0]; y=center_float[1]; z=center_float[2];
+    }
+
+    return center_float;
+}
+
+vector<float> calc_mean_shift_center_mass(V3DLONG ind, int windowradius,float *data1Dc_float,
+                                     V3DLONG sz_image[],int methodcode)
+{
+    //qDebug()<<"methodcode:"<<methodcode;
+    V3DLONG y_offset=sz_image[0];
+    V3DLONG z_offset=sz_image[0]*sz_image[1];
+    V3DLONG page_size=sz_image[0]*sz_image[1]*sz_image[2];
+
+    V3DLONG N = sz_image[0];
+    V3DLONG M = sz_image[0];
+    V3DLONG P = sz_image[0];
+
+
+    V3DLONG pos;
+    vector<V3DLONG> coord;
+
+    float total_x,total_y,total_z,v_color,sum_v,v_prev,x,y,z;
+    float center_dis=1;
+    vector<float> center_float(3,0);
+
+    coord=pos2xyz(ind, y_offset, z_offset);
+    x=(float)coord[0];y=(float)coord[1];z=(float)coord[2];
+    //qDebug()<<"x,y,z:"<<x<<":"<<y<<":"<<z<<"ind:"<<ind;
+
+    //find out the channel with the maximum intensity for the marker
+    v_prev=data1Dc_float[ind];
+    int channel=0;
+    for (int j=1;j<sz_image[3];j++)
+    {
+        if (data1Dc_float[ind+page_size*j]>v_prev)
+        {
+            v_prev=data1Dc_float[ind+page_size*j];
+            channel=j;
+        }
+    }
+    //qDebug()<<"v_Prev:"<<v_prev;
+    int testCount=0;
 //    int testCount1=0;
 
     while (center_dis>=0.5 && testCount<50)
@@ -680,7 +800,7 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
     v3dhandleList v3dhandleList_current=callback->getImageWindowList();
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback->getListAll3DViewers();
     LandmarkList LList_in;
-    QList<NeuronTree> * mTreeList;
+    QList<NeuronTree> * mTreeList = 0;
     if (v3dhandleList_current.size()==0){
         v3d_msg("Please open image and select markers");
         return false;
@@ -692,14 +812,21 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         if(callback->getLandmark(v3dhandleList_current[0]).size()>0)
         {
             LList_in = callback->getLandmark(v3dhandleList_current[0]);
-        }else if (callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0])->size()>0)
+        }else if (callback->getListAll3DViewers().size()>0)
         {
             mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+            if(mTreeList->size() == 0)
+            {
+                v3d_msg("Please load markers or the swc file");
+                return false;
+            }
         }else
         {
             v3d_msg("Please load markers or the swc file");
             return false;
         }
+
+
         curwin=v3dhandleList_current[0];
     }
     else if (v3dhandleList_current.size()>1)
@@ -761,9 +888,14 @@ bool load_data(V3DPluginCallback2 *cb,unsigned char * & image1Dc_in,LandmarkList
         if(callback->getLandmark(v3dhandleList_current[0]).size()>0)
         {
             LList_in = callback->getLandmark(v3dhandleList_current[0]);
-        }else if (callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0])->size()>0)
+        }else if (callback->getListAll3DViewers().size()>0)
         {
             mTreeList = callback->getHandleNeuronTrees_3DGlobalViewer(v3dhandleList_current[0]);
+            if(mTreeList->size() == 0)
+            {
+                v3d_msg("Please load markers or the swc file");
+                return false;
+            }
         }else
         {
             v3d_msg("Please load markers or the swc file");

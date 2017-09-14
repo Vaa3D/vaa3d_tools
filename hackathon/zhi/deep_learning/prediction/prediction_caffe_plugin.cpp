@@ -1769,7 +1769,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
-            mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+            mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
             marklist_2D_shifted.append(tmp);
 
@@ -1991,7 +1991,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
                     for (V3DLONG j=0;j<poss_landmark.size();j++)
                     {
-                        mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+                        mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
                         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
                         marklist_2D_shifted.append(tmp);
                     }
@@ -2255,7 +2255,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
                 for (V3DLONG j=0;j<poss_landmark.size();j++)
                 {
-                    mass_center=fun_obj.mean_shift_center(poss_landmark[j],windowradius);
+                    mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
                     LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
                     marklist_2D_shifted.append(tmp);
                 }
