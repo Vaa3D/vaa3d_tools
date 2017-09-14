@@ -1597,14 +1597,15 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         if(P.global_name)
                         {
                             tips_th = 10;
-                            p2.is_break_accept = true;
+                            p2.is_break_accept = false;
                         }
                         else
                             tips_th = p2.p4dImage->getXDim()*100/512;
                         p2.bkg_thresh = -1;//P.bkg_thresh;
                         p2.landmarks.push_back(RootNewLocation);
 
-                        if(P.global_name)
+                       // if(P.global_name && ifs_swc)
+                        if(0)
                         {
                             double imgAve, imgStd;
                             mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
@@ -1669,7 +1670,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                                 }
 
                             }
-                            if (num_tips>=tips_th) //add <=20 and #tips>=100 constraints by PHC 20170801
+                            if (num_tips>=tips_th  && ifs_swc) //add <=20 and #tips>=100 constraints by PHC 20170801
                                 p2.bkg_thresh +=1;
                             else
                                 break;
@@ -1718,14 +1719,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             outputMarker.y = int(total4DImage->getYDim()/2) + 1;
             outputMarker.z = int(total4DImage->getZDim()/2) + 1;
             seedsToSave.append(outputMarker);
-//            NeuronTree input_nt = readSWC_file(P.swcfilename);
-//            for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
-//            {
-//                input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
-//                input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
-//                input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
-//            }
-//            writeSWC_file(inputswc_name,input_nt);
+            NeuronTree input_nt = readSWC_file(P.swcfilename);
+            for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
+            {
+                input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
+                input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
+                input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
+            }
+            writeSWC_file(inputswc_name,input_nt);
 
         }
         else
@@ -1768,11 +1769,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         arg_para.push_back("10");
         arg_para.push_back("1");
 
-//        if(inputRootList.size() <1)
-//        {
-//            char* char_inputswc =  new char[inputswc_name.length() + 1];strcpy(char_inputswc, inputswc_name.toStdString().c_str());
-//            arg_para.push_back(char_inputswc);
-//        }
+        if(inputRootList.size() <1)
+        {
+            char* char_inputswc =  new char[inputswc_name.length() + 1];strcpy(char_inputswc, inputswc_name.toStdString().c_str());
+            arg_para.push_back(char_inputswc);
+        }
         full_plugin_name = "line_detector";
         func_name =  "GD_Curveline_v2";
 
@@ -1821,7 +1822,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     LandmarkList tip_out;
     LandmarkList tip_in;
 
-    double overlap_ratio = 0.5;
+
+    double overlap_ratio;
+    if(P.method == gd)
+        overlap_ratio = 0.5;
+    else
+        overlap_ratio = 0.05;
 
     QList<NeuronSWC> list = nt.listNeuron;
     for (V3DLONG i=0;i<list.size();i++)
@@ -1927,39 +1933,69 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     {
         QList<LandmarkList> group_tips_left = group_tips(tip_left,512,1);
         for(int i = 0; i < group_tips_left.size();i++)
-            ada_win_finding_3D(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+        {
+            if(P.method == gd)
+                ada_win_finding_3D_GD(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+            else
+                ada_win_finding_3D(group_tips_left.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,1);
+        }
     }
     if(tip_right.size()>0)
     {
         QList<LandmarkList> group_tips_right = group_tips(tip_right,512,2);
         for(int i = 0; i < group_tips_right.size();i++)
-            ada_win_finding_3D(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+        {
+            if(P.method == gd)
+                ada_win_finding_3D_GD(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+            else
+                ada_win_finding_3D(group_tips_right.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,2);
+        }
     }
     if(tip_up.size()>0)
     {
         QList<LandmarkList> group_tips_up = group_tips(tip_up,512,3);
         for(int i = 0; i < group_tips_up.size();i++)
-            ada_win_finding_3D(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+        {
+            if(P.method == gd)
+                ada_win_finding_3D_GD(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+            else
+                ada_win_finding_3D(group_tips_up.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,3);
+        }
     }
     if(tip_down.size()>0)
     {
         QList<LandmarkList> group_tips_down = group_tips(tip_down,512,4);
         for(int i = 0; i < group_tips_down.size();i++)
-            ada_win_finding_3D(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+        {
+            if(P.method == gd)
+                ada_win_finding_3D_GD(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+            else
+                ada_win_finding_3D(group_tips_down.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,4);
+        }
     }
 
     if(tip_out.size()>0)
     {
         QList<LandmarkList> group_tips_out = group_tips(tip_out,512,5);
         for(int i = 0; i < group_tips_out.size();i++)
-            ada_win_finding_3D(group_tips_out.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,5);
+        {
+            if(P.method == gd)
+                ada_win_finding_3D_GD(group_tips_out.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,5);
+            else
+                ada_win_finding_3D(group_tips_out.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,5);
+        }
     }
 
     if(tip_in.size()>0)
     {
         QList<LandmarkList> group_tips_in = group_tips(tip_in,512,6);
         for(int i = 0; i < group_tips_in.size();i++)
-            ada_win_finding_3D(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
+        {
+            if(P.method == gd)
+                ada_win_finding_3D_GD(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
+            else
+                ada_win_finding_3D(group_tips_in.at(i),tileLocation,newTargetList,newTipsList,total4DImage,P.block_size,6);
+        }
     }
 
     if(P.method == gd)
@@ -5135,7 +5171,7 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
     return true;
 }
 
-bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction)
+bool ada_win_finding_3D_GD(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction)
 {
     newTipsList->push_back(tips);
     double overlap = 0.05;
@@ -5245,6 +5281,127 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
         newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
         //newTarget.z = tips.at(0).z + tileLocation.ev_pc3 - floor(adaptive_size_z*overlap);
         newTarget.z = tips.at(0).z - floor(adaptive_size_z*overlap);
+    }
+
+
+   // v3d_msg(QString("zmin is %1, zmax is %2, z is %3, z_winsize is %4").arg(min_z).arg(max_z).arg(tileLocation.z).arg(adaptive_size_z));
+
+
+    newTarget.ev_pc1 = adaptive_size_x;
+    newTarget.ev_pc2 = adaptive_size_y;
+    newTarget.ev_pc3 = adaptive_size_z;
+
+    newTarget.radius = max_r;
+
+    newTargetList->push_back(newTarget);
+    return true;
+}
+
+bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction)
+{
+    newTipsList->push_back(tips);
+    double overlap = 0.1;
+
+    float min_x = INF, max_x = -INF;
+    float min_y = INF, max_y = -INF;
+    float min_z = INF, max_z = -INF;
+
+
+    double adaptive_size_x,adaptive_size_y,adaptive_size_z;
+    double max_r = -INF;
+
+    if(direction == 1 || direction == 2)
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).y <= min_y) min_y = tips.at(i).y;
+            if(tips.at(i).y >= max_y) max_y = tips.at(i).y;
+
+            if(tips.at(i).z <= min_z) min_z = tips.at(i).z;
+            if(tips.at(i).z >= max_z) max_z = tips.at(i).z;
+
+            if(tips.at(i).radius >= max_r) max_r = tips.at(i).radius;
+        }
+
+        adaptive_size_y = (max_y - min_y)*1.2;
+        adaptive_size_z = (max_z - min_z)*1.2;
+        adaptive_size_x = adaptive_size_y;
+
+    }else if(direction == 3 || direction == 4)
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).x <= min_x) min_x = tips.at(i).x;
+            if(tips.at(i).x >= max_x) max_x = tips.at(i).x;
+
+            if(tips.at(i).z <= min_z) min_z = tips.at(i).z;
+            if(tips.at(i).z >= max_z) max_z = tips.at(i).z;
+
+            if(tips.at(i).radius >= max_r) max_r = tips.at(i).radius;
+        }
+
+        adaptive_size_x = (max_x - min_x)*1.2;
+        adaptive_size_z = (max_z - min_z)*1.2;
+        adaptive_size_y = adaptive_size_x;
+    }else
+    {
+        for(int i = 0; i<tips.size();i++)
+        {
+            if(tips.at(i).x <= min_x) min_x = tips.at(i).x;
+            if(tips.at(i).x >= max_x) max_x = tips.at(i).x;
+
+            if(tips.at(i).y <= min_y) min_y = tips.at(i).y;
+            if(tips.at(i).y >= max_y) max_y = tips.at(i).y;
+
+            if(tips.at(i).radius >= max_r) max_r = tips.at(i).radius;
+        }
+
+        adaptive_size_x = (max_x - min_x)*1.2;
+        adaptive_size_y = (max_y - min_y)*1.2;
+        adaptive_size_z = adaptive_size_x;
+    }
+
+    adaptive_size_x = (adaptive_size_x <= 256) ? 256 : adaptive_size_x;
+    adaptive_size_y = (adaptive_size_y <= 256) ? 256 : adaptive_size_y;
+    adaptive_size_z = (adaptive_size_z <= 256) ? 256 : adaptive_size_z;
+
+
+    adaptive_size_x = (adaptive_size_x >= block_size) ? block_size : adaptive_size_x;
+    adaptive_size_y = (adaptive_size_y >= block_size) ? block_size : adaptive_size_y;
+    adaptive_size_z = (adaptive_size_z >= block_size) ? block_size : adaptive_size_z;
+
+    LocationSimple newTarget;
+    if(direction == 1)
+    {
+        newTarget.x = -floor(adaptive_size_x*(1.0-overlap)) + tileLocation.x;
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
+    }else if(direction == 2)
+    {
+        newTarget.x = tileLocation.x + tileLocation.ev_pc1 - floor(adaptive_size_x*overlap);
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
+
+    }else if(direction == 3)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
+        newTarget.y = -floor(adaptive_size_y*(1.0-overlap)) + tileLocation.y;
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
+    }else if(direction == 4)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
+        newTarget.y = tileLocation.y + tileLocation.ev_pc2 - floor(adaptive_size_y*overlap);
+        newTarget.z = floor((min_z + max_z - adaptive_size_z)/2);
+    }else if(direction == 5)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
+        newTarget.z = -floor(adaptive_size_z*(1.0-overlap)) + tileLocation.z;
+    }else if(direction == 6)
+    {
+        newTarget.x = floor((min_x + max_x - adaptive_size_x)/2);
+        newTarget.y = floor((min_y + max_y - adaptive_size_y)/2);
+        newTarget.z = tileLocation.z + tileLocation.ev_pc3 - floor(adaptive_size_z*overlap);
     }
 
 
@@ -6034,13 +6191,13 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
 bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P)
 {
     QString finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
-//    NeuronTree nt_APP2 = readSWC_file(finaloutputswc);
-//    QList<NeuronSWC> neuronAPP2_sorted;
-//    if (!SortSWC(nt_APP2.listNeuron, neuronAPP2_sorted,VOID, 10))
-//    {
-//        v3d_msg("fail to call swc sorting function.",0);
-//    }
-//    export_list2file(neuronAPP2_sorted, finaloutputswc,finaloutputswc);
+    NeuronTree nt_APP2 = readSWC_file(finaloutputswc);
+    QList<NeuronSWC> neuronAPP2_sorted;
+    if (!SortSWC(nt_APP2.listNeuron, neuronAPP2_sorted,VOID, 10))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+    }
+    export_list2file(neuronAPP2_sorted, finaloutputswc,finaloutputswc);
     NeuronTree nt = readSWC_file(finaloutputswc);
 
     QVector<QVector<V3DLONG> > childs;
@@ -6088,6 +6245,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
             //call GD
             P.markerfilename = tip_marker_name;
+            P.block_size = 168;
             P.seed_win = 32;
             P.swcfilename = tip_swc_name;
             P.method = gd;
