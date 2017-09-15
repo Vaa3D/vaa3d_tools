@@ -174,7 +174,7 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
     }
 
     // load
-    QList <ImageMarker> pc;
+    QList <CellAPO> pc;
     V3DLONG *szimg = 0;
     int datatype_img = 0;
     unsigned char* p1dImg = NULL;
@@ -183,9 +183,9 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
     {
         QString filename = QString(inlist->at(i));
 
-        if(filename.toUpper().endsWith(".MARKER"))
+        if(filename.toUpper().endsWith(".APO"))
         {
-            pc = readMarker_file(filename);
+            pc = readAPO_file(filename);
         }
         else if(filename.toUpper().endsWith(".V3DRAW"))
         {
@@ -214,23 +214,90 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
     PointCloud pointcloud;
     for(V3DLONG i=0; i<pc.size(); i++)
     {
-        cout<<"before fine tuning ... "<<pc[i].x <<" "<<pc[i].y <<" "<<pc[i].z <<" "<<pc[i].radius<<endl;
+        cout<<"before fine tuning ... "<<pc[i].x <<" "<<pc[i].y <<" "<<pc[i].z <<" "<<pc[i].volsize<<endl;
 
         Point p;
 
         p.setLocation(pc[i].x, pc[i].y, pc[i].z);
-        p.setRadius(pc[i].radius);
+        p.setRadius(pc[i].volsize/2);
 
-        // mean shift
+        // mean shift estimate location
+        float errorDist = INFINITY;
+        double weightx = 0, weighty = 0, weightz = 0;
+        double sumval = 0;
+        Point q;
 
+        while(errorDist > distance)
+        {
+            q.x = p.x;
+            q.y = p.y;
+            q.z = p.z;
 
+            for(V3DLONG z = p.z - radius; z <= p.z + radius; z++)
+            {
+                if(z<0 || z>=dimz)
+                    continue;
+
+                V3DLONG ofz = z*dimx*dimy;
+
+                for(V3DLONG y = p.y - radius; y <= p.y + radius; y++)
+                {
+                    if(y<0 || y>=dimy)
+                        continue;
+
+                    V3DLONG ofy = ofz + y*dimx;
+
+                    for(V3DLONG x = p.x - radius; x <= p.x + radius; x++)
+                    {
+                        if(x<0 || x>=dimx)
+                            continue;
+
+                        double val = p1dImg[ofy + x];
+
+                        // center of mass
+                        weightx += x*val;
+                        weighty += y*val;
+                        weightz += z*val;
+
+                        sumval += val;
+                    }
+
+                }
+            }
+
+            // center of mass
+            if(sumval)
+            {
+                p.x = weightx / sumval;
+                p.y = weighty / sumval;
+                p.z = weightz / sumval;
+            }
+            else
+            {
+                cout<<"No signals\n";
+                break;
+            }
+
+            errorDist = pointcloud.distance(p,q);
+
+        } // while
+
+        pc[i].x = p.x;
+        pc[i].y = p.y;
+        pc[i].z = p.z;
+
+        // mean-shift estimate the radius
+
+        pc[i].volsize = 2*p.radius;
+
+        cout<<"after fine tuning ... "<<pc[i].x <<" "<<pc[i].y <<" "<<pc[i].z <<" "<<pc[i].volsize<<endl;
     }
-
-
 
     // output
     QString outfileName;
     outfileName = QString(outlist->at(0));
+
+    writeAPO_file(outfileName,pc);
 
     //
     return true;

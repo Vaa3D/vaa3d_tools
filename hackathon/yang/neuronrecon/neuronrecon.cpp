@@ -142,8 +142,6 @@ int PointCloud::savePointCloud(QString filename)
 
     writeAPO_file(filename, pointcloud);
 
-
-
 //    QList<ImageMarker> markers;
 //    for(V3DLONG i=0; i<n; i++)
 //    {
