@@ -941,6 +941,8 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
 	int edge_select    = para.edge_select;  //0 -- only use length 1 edge(optimal for small step), 1 -- plus diagonal edge
 	double imgTH = para.imgTH; //anything <= imgTH will NOT be traced!
 
+    int dowsample_method = para.downsample_method; //0 for average, 1 for max
+
 	if (min_step<1)       min_step =1;
 	if (smooth_winsize<1) smooth_winsize =1;
 
@@ -1076,10 +1078,20 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
 
 					//=========================================================================================
 					// edge link
-					va = getBlockAveValue(img3d, dim0, dim1, dim2, X_I(ii),Y_I(jj),Z_I(kk),
-							xstep, ystep, (zstep/zthickness)); //zthickness
-					vb = getBlockAveValue(img3d, dim0, dim1, dim2, X_I(ii1),Y_I(jj1),Z_I(kk1),
-							xstep, ystep, (zstep/zthickness)); //zthickness
+                    if(dowsample_method == 0)
+                    {
+                        va = getBlockAveValue(img3d, dim0, dim1, dim2, X_I(ii),Y_I(jj),Z_I(kk),
+                                xstep, ystep, (zstep/zthickness)); //zthickness
+                        vb = getBlockAveValue(img3d, dim0, dim1, dim2, X_I(ii1),Y_I(jj1),Z_I(kk1),
+                                xstep, ystep, (zstep/zthickness)); //zthickness
+                    }else if(dowsample_method == 1)
+                    {
+                        va = getBlockMaxValue(img3d, dim0, dim1, dim2, X_I(ii),Y_I(jj),Z_I(kk),
+                                xstep, ystep, (zstep/zthickness)); //zthickness
+                        vb = getBlockMaxValue(img3d, dim0, dim1, dim2, X_I(ii1),Y_I(jj1),Z_I(kk1),
+                                xstep, ystep, (zstep/zthickness)); //zthickness
+                    }
+
 					if (va<=imgTH || vb<=imgTH)
 						continue; //skip background node link
 
