@@ -40,6 +40,11 @@ public:
     float x, y, z; // location
     float radius; // radius
     float val; // intensity value
+    vector<V3DLONG> parents;
+    vector<V3DLONG> children;
+    V3DLONG n; // #
+    bool visited;
+    int type; // -1 cell body; 0 tip point; 1 regular point; 3 branch point
 };
 
 //
@@ -52,14 +57,18 @@ public:
 public:
     int getPointCloud(QStringList files);
     int savePointCloud(QString filename);
+    int savePC2SWC(PointCloud pc, QString filename);
     int addPointFromNeuronTree(NeuronTree nt);
 
     float distance(Point a, Point b);
 
+    int getBranchPoints(QString filename);
+    int getNeurites(QString filename);
+
     int resample();
 
 public:
-    vector<Point> pc;
+    vector<Point> points;
 };
 
 #endif // _NEURONRECON_H_

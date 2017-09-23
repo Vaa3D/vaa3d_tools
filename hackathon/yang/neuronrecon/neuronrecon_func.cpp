@@ -287,8 +287,98 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
         pc[i].z = p.z;
 
         // mean-shift estimate the radius
+        float r = p.radius;
+        float thresh = 15;
+        float ratio = 0.01;
+        float step = 1;
 
-        pc[i].volsize = 2*p.radius;
+        V3DLONG sx = 0, sy = 0, sz = 0, count = 0;
+
+        // init
+        for(V3DLONG z = p.z - r; z <= p.z + r; z++)
+        {
+            if(z<0 || z>=dimz)
+                continue;
+
+            sz++;
+
+            V3DLONG ofz = z*dimx*dimy;
+
+            for(V3DLONG y = p.y - r; y <= p.y + r; y++)
+            {
+                if(y<0 || y>=dimy)
+                    continue;
+
+                sy++;
+
+                V3DLONG ofy = ofz + y*dimx;
+
+                for(V3DLONG x = p.x - r; x <= p.x + r; x++)
+                {
+                    if(x<0 || x>=dimx)
+                        continue;
+
+                    sx++;
+
+                    if(p1dImg[ofy + x] > thresh)
+                    {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        if(count/sx/sy/sz < ratio)
+            step = -1;
+
+
+        while(count/sx/sy/sz < ratio && r>1)
+        {
+            count = 0;
+            sx = 0;
+            sy = 0;
+            sz = 0;
+
+            r += step;
+
+            for(V3DLONG z = p.z - r; z <= p.z + r; z++)
+            {
+                if(z<0 || z>=dimz)
+                    continue;
+
+                sz++;
+
+                V3DLONG ofz = z*dimx*dimy;
+
+                for(V3DLONG y = p.y - r; y <= p.y + r; y++)
+                {
+                    if(y<0 || y>=dimy)
+                        continue;
+
+                    sy++;
+
+                    V3DLONG ofy = ofz + y*dimx;
+
+                    for(V3DLONG x = p.x - r; x <= p.x + r; x++)
+                    {
+                        if(x<0 || x>=dimx)
+                            continue;
+
+                        sx++;
+
+                        if(p1dImg[ofy + x] > thresh)
+                        {
+                            count++;
+                        }
+                    }
+                }
+            }
+
+            cout<<"count "<<count<<" : "<<sx*sy*sz<< endl;
+
+        }
+
+        pc[i].volsize = 2*r;
 
         cout<<"after fine tuning ... "<<pc[i].x <<" "<<pc[i].y <<" "<<pc[i].z <<" "<<pc[i].volsize<<endl;
     }
@@ -298,6 +388,67 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
     outfileName = QString(outlist->at(0));
 
     writeAPO_file(outfileName,pc);
+
+    //
+    return true;
+}
+
+bool getbranchpoints_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a swc\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    // load
+    QString filename = QString(inlist->at(0));
+
+    qDebug()<<"filename: "<<filename;
+
+    PointCloud pointcloud;
+    pointcloud.getBranchPoints(filename);
+
+    // output
+    if(output.size()>0)
+    {
+        vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+        if (outlist->size()>1)
+        {
+            cerr << "You cannot specify more than 1 output files"<<endl;
+            return false;
+        }
+
+        //QString outfileName;
+        //outfileName = QString(outlist->at(0));
+
+        //writeSWC_file(outfileName, nt);
+    }
 
     //
     return true;

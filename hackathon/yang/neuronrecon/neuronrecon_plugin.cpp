@@ -23,6 +23,7 @@ QStringList NeuReconPlugin::funclist() const
             <<tr("neurecon")
            <<tr("samplingtree")
           <<tr("finetunepoints")
+         <<tr("getbranchpoints")
            <<tr("help");
 }
 
@@ -57,6 +58,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("finetunepoints"))
     {
         return finetunepoints_func(input, output, callback);
+    }
+    else if (func_name == tr("getbranchpoints"))
+    {
+        return getbranchpoints_func(input, output, callback);
     }
     else if (func_name == tr("help"))
     {
