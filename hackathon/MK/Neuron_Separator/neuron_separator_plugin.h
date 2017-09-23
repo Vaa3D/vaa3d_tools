@@ -94,6 +94,12 @@ public:
 	QList<NeuronSWC> brokenInputSWC;
 	// ------------------------------------------------
 
+	// Soma detection ---------------------------------
+	vector<long int> autoSomaIDs;
+
+	void autoSomaDetection();
+	// ------------------------------------------------
+
 protected:
 	void buildSomaTree(); // This method produces [crucialNodes] and establishes hierarchical orders. 
 	void breakPathMorph(somaNode* somaTreePtr); // This is the method that does the job => CUTS THE SOMA TREE AND PARTITIONS NEURONS

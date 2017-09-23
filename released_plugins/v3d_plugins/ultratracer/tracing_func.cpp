@@ -14,6 +14,7 @@
 #include "../neuron_image_profiling/profile_swc.h"
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 //#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../mean_shift_center/mean_shift_fun.h"
 
 
 
@@ -1419,7 +1420,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     Image4DSimple* total4DImage = new Image4DSimple;
     V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
-    unsigned char* total1dData_apa = 0;
+ //   unsigned char* total1dData_apa = 0;
 
     if(P.global_name)
     {
@@ -1522,6 +1523,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(ifs_swc)
        finalswc = readSWC_file(finaloutputswc.toStdString());
 
+    //meanshift first before tracing
+
+    mean_shift_fun fun_obj;
+    fun_obj.pushNewData<unsigned char>((unsigned char*)total1dData, mysz);
+
     vector<MyMarker*> tileswc_file;
     if(P.method == app1 || P.method == app2)
     {
@@ -1559,6 +1565,42 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 RootNewLocation.x = inputRootList.at(i).x - total4DImage->getOriginX();
                 RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
                 RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
+
+                if(!ifs_swc)
+                {
+                    LandmarkList marklist_tmp;
+                    marklist_tmp.push_back(RootNewLocation);
+
+
+                    ImageMarker outputMarker;
+                    QList<ImageMarker> seedsToSave;
+                    outputMarker.x = RootNewLocation.x;
+                    outputMarker.y = RootNewLocation.y;
+                    outputMarker.z = RootNewLocation.z;
+                    seedsToSave.append(outputMarker);
+
+
+
+
+                    vector<V3DLONG> poss_landmark;
+                    double windowradius = 10;
+
+                    poss_landmark=landMarkList2poss(marklist_tmp, mysz[0], mysz[0]*mysz[1]);
+                    marklist_tmp.clear();
+                    vector<float> mass_center=fun_obj.mean_shift_center_mass(poss_landmark[0],windowradius);
+                    RootNewLocation.x = mass_center[0]+1;
+                    RootNewLocation.y = mass_center[1]+1;
+                    RootNewLocation.z = mass_center[2]+1;
+
+                    outputMarker.x = RootNewLocation.x;
+                    outputMarker.y = RootNewLocation.y;
+                    outputMarker.z = RootNewLocation.z;
+                    seedsToSave.append(outputMarker);
+
+                    QString marker_name = imageSaveString + ".marker";
+                    writeMarker_file(marker_name, seedsToSave);
+
+                }
 
                 const float dd = 0.5;
 

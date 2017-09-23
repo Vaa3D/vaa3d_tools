@@ -76,6 +76,8 @@ struct ParaShortestPath
     bool b_use_favorite_direction; //add by PHC 170606
     double favorite_direction[3];
 
+    int downsample_method; //0 -- use average, 1 -- use max //added by Zhi 20170925
+
 	ParaShortestPath()
 	{
 		node_step = 3; //should be >=1
@@ -88,6 +90,8 @@ struct ParaShortestPath
 
         b_use_favorite_direction = false;
         favorite_direction[0] = favorite_direction[1] = favorite_direction[2] = 0;
+
+        downsample_method = 0;
 	}
 };
 
@@ -1126,6 +1130,80 @@ template <class T> double getBlockAveValue(T ****img4d, V3DLONG sz[4], V3DLONG c
 	if(v) {delete v; v=0;}
 	return s;
 }
+
+template <class T> VPoint *getBlockMaxValueVPoint(T ****img4d, V3DLONG sz[4], V3DLONG channelsToUse[], V3DLONG nChannel,
+                                           V3DLONG x0, V3DLONG y0, V3DLONG z0,
+                                           int xstep, int ystep, int zstep, int method)
+{
+    if (!img4d || !sz|| sz[0]<=0 || sz[1]<=0 || sz[2]<=0 || sz[3]<=0 ||
+        x0<0 || x0>=sz[0] || y0<0 || y0>=sz[1] || z0<0 || z0>=sz[2] || nChannel<=0 || !channelsToUse)
+        return 0;
+
+    V3DLONG i,j,k,c;
+    for (c=0;c<nChannel;c++)
+    {
+        if (channelsToUse[c]<0 || channelsToUse[c]>=sz[3])
+            return 0;
+    }
+
+    double xsteph=fabs(xstep)/2, ysteph=fabs(ystep)/2, zsteph=fabs(zstep)/2;
+    V3DLONG xs=x0-xsteph, xe=x0+xsteph,
+    ys=y0-ysteph, ye=y0+ysteph,
+    zs=z0-zsteph, ze=z0+zsteph;
+
+    if (xs<0) xs=0; if (xe>=sz[0]) xe=sz[0]-1;
+    if (ys<0) ys=0; if (ye>=sz[1]) ye=sz[1]-1;
+    if (zs<0) zs=0; if (ze>=sz[2]) ze=sz[2]-1;
+
+    if (method==0)
+    {
+        VPoint *v = new VPoint(nChannel, 0);
+        for (k=zs;k<=ze; k++)
+            for (j=ys;j<=ye; j++)
+                for (i=xs;i<=xe; i++)
+                {
+                    for (c=0;c<nChannel;c++)
+                    {
+                        if(double(img4d[channelsToUse[c]][k][j][i]) >= v->v[c])
+                            v->v[c] = double(img4d[channelsToUse[c]][k][j][i]);
+                    }
+                }
+        return v;
+    }
+    else
+    {
+        VPoint *v = new VPoint(1, 0);
+        for (k=zs;k<=ze; k++)
+            for (j=ys;j<=ye; j++)
+                for (i=xs;i<=xe; i++)
+                {
+                    double m = double(img4d[channelsToUse[0]][k][j][i]);
+                    for (c=1;c<nChannel;c++)
+                    {
+                        if (m<double(img4d[channelsToUse[c]][k][j][i]))
+                            m = double(img4d[channelsToUse[c]][k][j][i]);
+                    }
+
+                    if(m >= v->v[0])
+                        v->v[0] = m;
+                }
+        return v;
+    }
+}
+
+template <class T> double getBlockMaxValue(T ****img4d, V3DLONG sz[4], V3DLONG channelsToUse[], V3DLONG nChannel,
+                                            V3DLONG x0, V3DLONG y0, V3DLONG z0,
+                                            int xstep, int ystep, int zstep, int method)
+{
+    VPoint * v = getBlockMaxValueVPoint(img4d, sz, channelsToUse, nChannel,
+                                  x0, y0, z0,
+                                  xstep, ystep, zstep, method);
+    if (!v) return 0;
+    double s = v->abs();
+    if(v) {delete v; v=0;}
+    return s;
+}
+
 
 template <class T> VPoint *getImageAveValueVPoint(T ****img4d, V3DLONG sz[4], V3DLONG channelsToUse[], V3DLONG nChannel, int method) 
 {

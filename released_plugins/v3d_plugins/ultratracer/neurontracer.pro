@@ -74,6 +74,10 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp \
     $$VAA3DPATH/graph/dijk.cpp
 
+#meanshift
+HEADERS += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+
 
 INCLUDEPATH += ../terastitcher/include
 INCLUDEPATH += ../terastitcher/src/core/iomanager

@@ -261,6 +261,7 @@ V_NeuronSWC_list trace_one_pt_to_N_points_shortestdist(unsigned char ****p4d, V3
 	sp_para.smooth_winsize = trace_para.sp_smoothing_win_sz;
 	sp_para.imgTH = trace_para.imgTH;
     sp_para.visible_thresh = trace_para.visible_thresh;
+    sp_para.downsample_method = trace_para.sp_downsample_method;
 
     //170606
     sp_para.b_use_favorite_direction = trace_para.b_use_favorite_direction;
