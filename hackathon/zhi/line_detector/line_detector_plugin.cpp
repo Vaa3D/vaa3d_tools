@@ -975,6 +975,7 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
     trace_para.b_deformcurve = false;
     trace_para.sp_graph_resolution_step = 1;
     trace_para.b_estRadii = false;
+    trace_para.sp_downsample_method = 1;
 
     int markSize = PARA.listLandmarks.size();
     p0.x = PARA.listLandmarks.at(markSize-1).x-1;
