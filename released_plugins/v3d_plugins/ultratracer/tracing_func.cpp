@@ -1761,14 +1761,17 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             outputMarker.y = int(total4DImage->getYDim()/2) + 1;
             outputMarker.z = int(total4DImage->getZDim()/2) + 1;
             seedsToSave.append(outputMarker);
-            NeuronTree input_nt = readSWC_file(P.swcfilename);
-            for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
+            if(QFileInfo(P.swcfilename).exists())
             {
-                input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
-                input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
-                input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
+                NeuronTree input_nt = readSWC_file(P.swcfilename);
+                for(V3DLONG i = 0; i <input_nt.listNeuron.size();i++)
+                {
+                    input_nt.listNeuron[i].x = input_nt.listNeuron[i].x - total4DImage->getOriginX() + 1;
+                    input_nt.listNeuron[i].y = input_nt.listNeuron[i].y - total4DImage->getOriginY() + 1;
+                    input_nt.listNeuron[i].z = input_nt.listNeuron[i].z - total4DImage->getOriginZ() + 1;
+                }
+                writeSWC_file(inputswc_name,input_nt);
             }
-            writeSWC_file(inputswc_name,input_nt);
 
         }
         else
@@ -1811,7 +1814,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         arg_para.push_back("10");
         arg_para.push_back("1");
 
-        if(inputRootList.size() <1)
+        if(inputRootList.size() <1 && QFileInfo(inputswc_name).exists())
         {
             char* char_inputswc =  new char[inputswc_name.length() + 1];strcpy(char_inputswc, inputswc_name.toStdString().c_str());
             arg_para.push_back(char_inputswc);
