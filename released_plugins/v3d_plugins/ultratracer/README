@@ -1,0 +1,28 @@
+How to use UltraTracer framework to trace fMOST whole mouse brain data
+1.Checkout the latest code, and build UltraTracer plugin under "vaa3d_tools/released_plugins/v3d_plugins/ultratracer/", APP2 plugin under "vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/", and line detecor plugin under "/vaa3d_tools/hackathon/zhi/line_detector/".
+2.Using command line, run "v3d -x ultratracer -f trace_APP2_GD -i Terafly_HighestResoluton_Folder -p marker_file adap_win channel channel bkg_thresh"
+Terafly_HighestResoluton_Folder: the highest resolution folder from TeraConverter
+marker_file: starting location 
+adap_win: 1 for adapative window, 0 for fixed window
+channel: from 1 
+bkg_thresh: background threshold used in APP2 tracing
+3. The final SWC file is named "nc_APP2_GD.swc" under the same folder which contains the highest terafly folder.
+
+Here is one example script used to trace all markers in one folder:
+
+#!/bin/bash
+cd /local2/fmost-data/mouseID_26174-TDI51302025_converted/22singleCells_swcs/
+for markername in `ls *.marker`
+do 
+	echo $markername
+	if [ ! -f '/local2/fmost-data/mouseID_26174-TDI51302025_converted/'${markername}_app2_axon.swc ]; then 
+		export DISPLAY=:$RANDOM	
+		Xvfb $DISPLAY -auth /dev/null &	
+		timeout 18000 /local2/zhi/Vaa3D_CentOS_64bit_forMK/start_vaa3d.sh -x ultratracer -f trace_APP2_GD -i '/local2/fmost-data/mouseID_26174-TDI51302025_converted/RES(36400x23814x11772)' -p '/local2/fmost-data/mouseID_26174-TDI51302025_converted/22singleCells_swcs/'$markername 512 1 1 AUTO
+		rm -rf /local2/fmost-data/mouseID_26174-TDI51302025_converted/*GD_Curveline
+		rm -rf /local2/fmost-data/mouseID_26174-TDI51302025_converted/*tmp_APP2*
+		rm -rf /local2/fmost-data/mouseID_26174-TDI51302025_converted/tips
+		mv /local2/fmost-data/mouseID_26174-TDI51302025_converted/nc_APP2_GD.swc '/local2/fmost-data/mouseID_26174-TDI51302025_converted/'${markername}_app2_axon.swc
+	fi
+done
+ 
