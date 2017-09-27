@@ -9,6 +9,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include <qvector.h>
+#include "basic_surf_objs.h"
 
 class DatasetGenerator : public QObject, public V3DPluginInterface2_1
 {

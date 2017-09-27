@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "Dataset_Generator_plugin.h"
+#include <iostream>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Dataset_Generator, DatasetGenerator);
@@ -54,10 +55,10 @@ bool DatasetGenerator::dofunc(const QString & func_name, const V3DPluginArgList 
 	{
 		this->inputSWCdir = infiles.at(0);
 		this->inputImagedir = infiles.at(1);
-		this->outputImagedir = outfiles.at(0);
-		
-		getImageFolders();
+		//this->outputImagedir = outfiles.at(0);
 
+		getImageFolders();
+		pick_save();
 
 	}
 	else if (func_name == tr("func2"))
