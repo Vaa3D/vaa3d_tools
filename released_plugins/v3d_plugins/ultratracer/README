@@ -1,8 +1,9 @@
 How to use UltraTracer framework to trace fMOST whole mouse brain data
 1.Checkout the latest code, and build UltraTracer plugin under "vaa3d_tools/released_plugins/v3d_plugins/ultratracer/", APP2 plugin under "vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/", and line detecor plugin under "/vaa3d_tools/hackathon/zhi/line_detector/".
-2.Using command line, run "v3d -x ultratracer -f trace_APP2_GD -i Terafly_HighestResoluton_Folder -p marker_file adap_win channel channel bkg_thresh"
+2.Using command line, run "v3d -x ultratracer -f trace_APP2_GD -i Terafly_HighestResoluton_Folder -p marker_file block_size adap_win channel bkg_thresh"
 Terafly_HighestResoluton_Folder: the highest resolution folder from TeraConverter
 marker_file: starting location 
+block_size: the initial block size, default 512
 adap_win: 1 for adapative window, 0 for fixed window
 channel: from 1 
 bkg_thresh: background threshold used in APP2 tracing
