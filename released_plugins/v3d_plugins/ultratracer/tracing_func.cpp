@@ -498,7 +498,15 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             in_sz[2] = P.in_sz[2];
 
             VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > aVolume->getDIM_C())
+               P.channel = 1;
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2])[pagesz*(P.channel-1)+i];
+            }
         }
     }
 
@@ -994,7 +1002,15 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             in_sz[2] = P.in_sz[2];
 
             VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > aVolume->getDIM_C())
+               P.channel = 1;
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2])[pagesz*(P.channel-1)+i];
+            }
         }
 
     }
@@ -1414,7 +1430,15 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             in_sz[2] = end_z - start_z;
 
             aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > aVolume->getDIM_C())
+               P.channel = 1;
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z)[pagesz*(P.channel-1)+i];
+            }
         }
     }
 
@@ -3818,7 +3842,15 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             in_sz[2] = end_z - start_z;
 
             aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > aVolume->getDIM_C())
+               P.channel = 1;
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z)[pagesz*(P.channel-1)+i];
+            }
         }
     }
 
@@ -4946,7 +4978,15 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
             in_sz[2] = end_z - start_z;
 
             aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > aVolume->getDIM_C())
+                P.channel = 1;
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z)[pagesz*(P.channel-1)+i];
+            }
         }
     }
 
@@ -5999,7 +6039,15 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
             in_sz[2] = end_z - start_z;
 
             aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
-            total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > aVolume->getDIM_C())
+               P.channel = 1;
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z)[pagesz*(P.channel-1)+i];
+            }
         }
 
     }
