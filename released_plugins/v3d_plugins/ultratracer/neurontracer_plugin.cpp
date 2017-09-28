@@ -610,6 +610,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         }else
             P.markerfilename = inmarker_file;
 
+        v3d_msg("enter trace_APP2_GD_before_parsing");
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
         P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
 
@@ -624,8 +625,11 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.tracing_comb = false;
         P.global_name = true;
         P.method = app2;
+        v3d_msg("enter trace_APP2_GD_before_calling");
         crawler_raw_app(callback,parent,P,bmenu);
+        v3d_msg("enter trace_APP2_GD_finish_crawler_raw_app");
         extract_tips(callback,parent,P);
+        v3d_msg("enter trace_APP2_GD_finish_extract_tips");
 
 	}
     else if (func_name == tr("trace_NEUTUBE"))
