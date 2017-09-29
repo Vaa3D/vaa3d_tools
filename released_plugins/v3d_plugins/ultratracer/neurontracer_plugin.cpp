@@ -12,7 +12,7 @@
 #include "../istitch/y_imglib.h"
 #include "../neurontracing_vn2/app2/my_surf_objs.h"
 
-#include "../terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "VirtualVolume.h"
 
 
 using namespace std;

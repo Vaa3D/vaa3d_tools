@@ -9,7 +9,7 @@
 
 #include "../sort_neuron_swc/sort_swc.h"
 #include "../istitch/y_imglib.h"
-#include "../terastitcher/src/core/imagemanager/VirtualVolume.h"
+#include "VirtualVolume.h"
 #include "../resample_swc/resampling.h"
 #include "../neuron_image_profiling/profile_swc.h"
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
