@@ -5,6 +5,7 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH  += $$VAA3DPATH/basic_c_fun
 INCLUDEPATH  += $$VAA3DPATH/common_lib/include
+INCLUDEPATH  += $$VAA3DPATH/common_lib/include/hdf5
 INCLUDEPATH  += $$VAA3DPATH/terafly
 INCLUDEPATH     += ../neurontracing_vn2
 INCLUDEPATH     += ../neurontracing_vn2/app2
@@ -87,6 +88,7 @@ INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/volumemanager
 INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/stitcher
 INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager
 INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/common
+INCLUDEPATH += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/IMS_HDF5
 
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/3rdparty/tinyxml/tinyxml.h
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/3rdparty/tinyxml/tinystr.h
@@ -181,6 +183,14 @@ HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/HDF5Mngr.h
 
 SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/IMS_HDF5/IMS_HDF5.cpp
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/IMS_HDF5/IMS_HDF5.h
+
+SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/UnstitchedVolume.cpp
+HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/UnstitchedVolume.h
+
+SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/BDVVolume.cpp
+HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/BDVVolume.h
+SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/volumemanager/vmCacheManager.cpp
+HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/volumemanager/vmCacheManager.h
 
 #setup TeraStitcher I/O plugins
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/exampleplugin2D/exampleplugin2D.h
