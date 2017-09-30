@@ -51,6 +51,7 @@ NeuronTree rmSmallPart(NeuronTree & nt_sorted)
                 nt_res.listNeuron.push_back(nt_sorted.listNeuron[k]);
         }
     }
+    if(nt_res.listNeuron.size()<1) return nt_sorted;
     V3DLONG root_id=nt_res.listNeuron[0].n;
     nt_res = sort(nt_res,root_id,0);
     return nt_res;

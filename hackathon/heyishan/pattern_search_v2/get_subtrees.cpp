@@ -85,10 +85,9 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
 
     // get subtrees
     double step_radio= 0.05;
-    //int search_step = int(boundary_length * step_radio);
-    //search_step=1;
-    int search_step = 2;
-    if(search_step<2)   search_step=2;
+    int search_step = int(boundary_length * step_radio);
+    //int search_step = 5;
+    if(search_step<4)   search_step=4;
     cout<<"search_step="<<search_step<<endl;
 
     // get subtrees in whole nt
@@ -110,7 +109,6 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
                 points_set.insert(b2p[b_ind][k]);
         }
         //cout<<"set_size="<<points_set.size()<<endl;
-        // put
         set<int>::iterator set_iter = points_set.begin();
         for( ; set_iter!=points_set.end(); set_iter++)
         {
@@ -123,6 +121,7 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
                 points.push_back(ind);
             }
         }
+        //cout << i << "/" << nt.listNeuron.size()-search_step << "    ";
         // subtree connect
         if(s_tree.listNeuron.size()<=1) {cout<<"the number of subtree within this boundary isn't more than 1"<<endl; continue;}
         if(s_tree.listNeuron.size() > 1.3*pt_num || s_tree.listNeuron.size()<0.7 * pt_num) continue;
@@ -132,7 +131,6 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
         subtree_sorted.hashNeuron.clear();
         V3DLONG root_id=s_tree.listNeuron[0].n;
         subtree_sorted = sort(s_tree, root_id,sort_thres);
-
         // remove small part
         NeuronTree subtree_res = rmSmallPart(subtree_sorted);
         //NeuronTree subtree_res = subtree_sorted;
