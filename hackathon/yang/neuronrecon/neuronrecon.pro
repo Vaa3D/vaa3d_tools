@@ -8,6 +8,9 @@ INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/
 
+INCLUDEPATH     += /home/yangy/work/local/include/ITK-4.13
+INCLUDEPATH     += /home/yangy/work/local/include
+
 HEADERS	+= neuronrecon_plugin.h
 HEADERS	+= neuronrecon_func.h
 HEADERS	+= neuronrecon.h
@@ -27,6 +30,11 @@ SOURCES	+= neuronrecon.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+
+LIBS += -lOpenCL
+LIBS += /home/yangy/work/local/lib/libITKIOTIFF-4.13.so
+LIBS += /home/yangy/work/local/lib/libITKGPUCommon-4.13.so
+LIBS += /home/yangy/work/local/lib/libITKGPUAnisotropicSmoothing-4.13.so
 
 TARGET	= $$qtLibraryTarget(neuronrecon)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neuronrecon/

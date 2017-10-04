@@ -55,7 +55,7 @@ bool neuronrecon_func(const V3DPluginArgList & input, V3DPluginArgList & output,
 
     pointcloud.getPointCloud(files);
 
-    // output .marker file (point cloud)
+    // output .apo file (point cloud)
     QString outfileName;
     outfileName = QString(outlist->at(0));
 
@@ -454,8 +454,81 @@ bool getbranchpoints_func(const V3DPluginArgList & input, V3DPluginArgList & out
     return true;
 }
 
+//
+bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    // 1. read TIFF image
+    // 2. itk anisotropic filtering TIFF
+    // 3. app2 tracing SWC
+    // 4. convert swc to a point cloud APO
+    // 5. optimal construction SWC
+
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    // processing
+
+    // step 1.
+    QString filename = QString(inlist->at(0));
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+
+//    if(filename.toUpper().endsWith(".TIF"))
+//    {
+//        runGPUGradientAnisotropicDiffusionImageFilter<3>(filename.toStdString(), fnITKfiltered.toStdString());
+//    }
+//    else
+//    {
+//        cout<<"Current only support TIFF image as input file\n";
+//        return -1;
+//    }
+
+    // step 2.
+    if(filename.toUpper().endsWith(".V3DRAW") || filename.toUpper().endsWith(".TIF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return -1;
+    }
+
+
+
+    //
+    return true;
+}
+
+//
 void printHelp()
 {
     cout<<"\n Optimal Constructing Neuron Trees: \n"<<endl;
 }
-

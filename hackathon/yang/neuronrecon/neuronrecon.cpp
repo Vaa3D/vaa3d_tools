@@ -486,3 +486,65 @@ int PointCloud::getNeurites(QString filename)
     //
     return 0;
 }
+
+float PointCloud::getAngle(Point a, Point b, Point c)
+{
+    // get angle between a->b and b->c
+
+    float x1 = b.x - a.x;
+    float y1 = b.y - a.y;
+    float z1 = b.z - a.z;
+
+    float x2 = c.x - b.x;
+    float y2 = c.y - b.y;
+    float z2 = c.z - b.z;
+
+    float dot = x1*x2 + y1*y2 + z1*z2;
+    float lenSq1 = x1*x1 + y1*y1 + z1*z1;
+    float lenSq2 = x2*x2 + y2*y2 + z2*z2;
+
+    //
+    return acos(dot/sqrt(lenSq1 * lenSq2));
+}
+
+// class Quadruple
+Quadruple::Quadruple()
+{
+
+}
+
+Quadruple::~Quadruple()
+{
+
+}
+
+int Quadruple::find3nearestpoints(Point p, PointCloud pc)
+{
+
+}
+
+// class LineSegment
+LineSegment::LineSegment()
+{
+    points.clear();
+}
+
+LineSegment::~LineSegment()
+{
+    points.clear();
+}
+
+int LineSegment::getMean()
+{
+    return 0;
+}
+
+int LineSegment::getStdDev()
+{
+    return 0;
+}
+
+
+
+
+
