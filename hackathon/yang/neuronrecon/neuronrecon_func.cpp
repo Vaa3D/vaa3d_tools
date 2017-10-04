@@ -499,6 +499,8 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
     // step 1.
     QString filename = QString(inlist->at(0));
     QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+    QString neuronTraced = filename.left(filename.lastIndexOf(".")).append("_traced.swc");
+    QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
 
 //    if(filename.toUpper().endsWith(".TIF"))
 //    {
@@ -513,7 +515,47 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
     // step 2.
     if(filename.toUpper().endsWith(".V3DRAW") || filename.toUpper().endsWith(".TIF"))
     {
-        runGPUGradientAnisotropicDiffusionImageFilter<3>(filename.toStdString(), fnITKfiltered.toStdString());
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(filename.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            cout<<"Not supported!\n";
+            return false;
+        }
+
+        PARA_APP2 p2;
+        QString versionStr = "v0.001";
+
+        p2.is_gsdt = true;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = true;
+        p2.bkg_thresh = -1;//P.bkg_thresh;
+        p2.length_thresh = 5;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = false;
+        p2.b_RadiusFrom2D = true;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.p4dImage = p4dImage;
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = p2.p4dImage->getXDim()-1;
+        p2.yc1 = p2.p4dImage->getYDim()-1;
+        p2.zc1 = p2.p4dImage->getZDim()-1;
+
+
+        p2.outswc_file = neuronTraced;
+        proc_app2(callback, p2, versionStr);
+
     }
     else
     {
@@ -521,7 +563,22 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
         return -1;
     }
 
+    // step 3. load multiple traced neurons (trees saved as .swc)
+    PointCloud pointcloud;
 
+    QStringList files;
+//    for (int i=0;i<inlist->size();i++)
+//    {
+//        files.push_back(QString(inlist->at(i)));
+//    }
+
+    files.push_back(neuronTraced);
+
+    //
+    pointcloud.getPointCloud(files);
+    pointcloud.savePointCloud(cnvtPoints);
+
+    // step 4.
 
     //
     return true;

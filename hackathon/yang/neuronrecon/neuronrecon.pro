@@ -36,5 +36,7 @@ LIBS += /home/yangy/work/local/lib/libITKIOTIFF-4.13.so
 LIBS += /home/yangy/work/local/lib/libITKGPUCommon-4.13.so
 LIBS += /home/yangy/work/local/lib/libITKGPUAnisotropicSmoothing-4.13.so
 
+LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
+
 TARGET	= $$qtLibraryTarget(neuronrecon)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neuronrecon/
