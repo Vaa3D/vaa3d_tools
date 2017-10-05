@@ -13,6 +13,7 @@
 #include "smooth_curve.h"
 #include "hierarchy_prune.h"
 #include "../IVSCC_sort_swc/openSWCDialog.h"
+#include <map>
 
 using namespace std;
 
@@ -103,11 +104,21 @@ QStringList IVSCC_radius_estimation::menulist() const
         <<tr("neuron_radius_selected_folder")
         <<tr("neuron_radius_interpolation")
         <<tr("neuron_radius_interpolation_updated")
+		<<tr("neuron_radius_interpolation_updated_r1.0")
 
       //  <<tr("swc_3D_to_2D")
       //  <<tr("swc_2D_to_3D_radius")
 		<<tr("about");
 }
+
+/* ----------------------------------------------------------------------- */
+IVSCC_radius_estimation::~IVSCC_radius_estimation()
+{
+	// Without deconstructor, it would crash when repeatedly calling this plugin in the same Vaa3D instance.
+	// Could be resulted from memory violation at the plugin location when attempting to access it by a new call of the same plugin.
+	// Still need investigation to verify the true cause.   MK, Oct, 2017
+}
+/* ----------------------------------------------------------------------- */
 
 QStringList IVSCC_radius_estimation::funclist() const
 {
@@ -467,6 +478,105 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         writeSWC_file(fileSaveName,nt);
 
     }
+	/* =================== As per anotation group's request, use only the length of the furthest node to interpolate. MK, Oct, 2017 ======================== */
+	else if (menu_name == tr("neuron_radius_interpolation_updated_r1.0")) // 
+	{
+		OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec()) return;
+
+        QString fileOpenName = openDlg->file_name;
+
+        if(fileOpenName.isEmpty()) return;
+        NeuronTree nt;
+        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC")) nt = openDlg->nt;
+        
+		QVector<QVector<V3DLONG> > childs; // location and its children, also in location.
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        V3DLONG *flag = new V3DLONG[neuronNum];
+        for (V3DLONG i=0; i<neuronNum; ++i)
+        {
+            flag[i] = 1;
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+
+		QList<NeuronSWC> list = nt.listNeuron;
+		map<size_t, bool> nodeAssigned;
+		for (size_t i=0; i<list.size(); ++i) nodeAssigned[i] = false;
+		map<size_t, size_t> leafLength;
+		for (size_t i=0; i<list.size(); ++i)
+		{
+			if (list.at(i).parent == -1)
+			{
+				nodeAssigned[i] = true;
+				continue;
+			}
+
+			if (list.at(i).type != 2 && childs.at(i).size() ==0)
+			{
+				size_t path_length = 0;
+				size_t curr_index = i;
+				NeuronSWC currNode = list.at(i);
+				//cout << list.at(i).n << "..." << endl;
+				while (currNode.parent != -1)
+				{
+					curr_index = nt.hashNeuron.value(currNode.parent);
+					currNode = list.at(curr_index);
+					//cout << currNode.n << "..." << endl;
+					++path_length;
+				}
+				leafLength[i] = path_length;
+			}
+		}
+
+		map<size_t, size_t> inversedLeafLength;
+		for (size_t j=0; j<leafLength.size(); ++j)
+		{
+			if (leafLength[j] == 0) continue;
+			//cout << j << ": " << leafLength[j] << endl;
+
+			inversedLeafLength[leafLength[j]] = j;
+		}
+		for (size_t j=0; j<inversedLeafLength.size(); ++j)
+		{
+			if (inversedLeafLength[j] == 0) continue;
+			//cout << j << ": " << inversedLeafLength[j] << endl;
+		}
+
+		for (int j=inversedLeafLength.size()-1; j>=0; --j)
+		{
+			if (inversedLeafLength[j] == 0) continue;
+
+			int currLength = j;
+			int currLoc = inversedLeafLength[j];
+			//cout << currLoc << ": ";
+			int d = 0;
+			NeuronSWC currNode = list.at(currLoc);
+			while (currNode.parent != -1)
+			{
+				if (nodeAssigned[currLoc] == true) break;
+
+				double estimatedR = 2.0 + d*(list.at(currLoc).radius-2.0)/(currLength);
+				nt.listNeuron[currLoc].radius = estimatedR;
+				++d;
+				nodeAssigned[currLoc] = true;
+				currLoc = nt.hashNeuron.value(currNode.parent);
+				currNode = nt.listNeuron.at(currLoc);
+
+				//cout << estimatedR << " ";
+			}
+			//cout << endl;
+		}
+
+		QString fileDefaultName = fileOpenName+QString("_interpolatedA.swc");
+        //write new SWC to file
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"), fileDefaultName, 
+			QObject::tr("Supported file (*.swc)" ";;Neuron structure(*.swc)"));
+        writeSWC_file(fileSaveName,nt);
+	}
+	/* ================== END of [As per anotation group's request, use only the length of the furthest node to interpolate. MK, Oct, 2017] ======================== */
     else if(menu_name == tr("swc_3D_to_2D"))
     {
         OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
