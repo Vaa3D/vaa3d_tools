@@ -54,6 +54,7 @@ QStringList neurontracer::funclist() const
     <<tr("trace_NeuronChaser")
     <<tr("trace_Rivulet2")
     <<tr("trace_GD_curveline")
+    <<tr("trace_pairs")
     <<tr("help");
 }
 
@@ -590,8 +591,32 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 //        P.global_name = true;
         crawler_raw_app(callback,parent,P,bmenu);
 	}
-    else if (func_name == tr("trace_APP2_GD"))
+    else if (func_name == tr("trace_pairs"))
 	{
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        P.image = 0;
+        int k=0;
+
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }else
+            P.markerfilename = inmarker_file;
+
+        P.inimg_file_2nd = (paras.size() >= k+1) ? paras[k] : "NULL";
+        P.method = gd;
+        tracing_pair_app(callback,parent,P,bmenu);
+	}
+    else if (func_name == tr("trace_APP2_GD"))
+    {
         if(infiles.empty())
         {
             cerr<<"Need input image"<<endl;
@@ -631,7 +656,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         extract_tips(callback,parent,P);
         v3d_msg("enter trace_APP2_GD_finish_extract_tips");
 
-	}
+    }
     else if (func_name == tr("trace_NEUTUBE"))
     {
         if(infiles.empty())
