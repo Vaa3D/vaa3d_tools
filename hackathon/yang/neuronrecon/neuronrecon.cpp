@@ -526,21 +526,96 @@ int Quadruple::find3nearestpoints(Point p, PointCloud pc)
 // class LineSegment
 LineSegment::LineSegment()
 {
+    meanval_adjangles = 0;
+    stddev_adjangles = 0;
     points.clear();
 }
 
 LineSegment::~LineSegment()
 {
+    meanval_adjangles = 0;
+    stddev_adjangles = 0;
     points.clear();
 }
 
-int LineSegment::getMean()
+int LineSegment::getMeanDev()
 {
+    // mean and stdard deviation
+    if(points.size()<3)
+    {
+        cout<<"Not enough points for statistics\n";
+        return -1;
+    }
+    else
+    {
+        //
+        Point firstPoint = points.back();
+        points.pop_back();
+
+        Point secondPoint = points.back();
+        points.pop_back();
+
+        long n = 0;
+        float sum = 0;
+
+        vector<float> angles;
+
+        while(!points.empty())
+        {
+            Point thirdPoint = points.back();
+            points.pop_back();
+
+            if(thirdPoint.x == secondPoint.x && thirdPoint.y == secondPoint.y && thirdPoint.z == secondPoint.z)
+            {
+                // duplicated point
+                continue;
+            }
+
+            float angle = 3.14159265f - getAngle(firstPoint, secondPoint, thirdPoint);
+
+            sum += angle;
+            angles.push_back(angle);
+
+            n++;
+
+            qDebug()<<"angle ... "<<angle<<" sum "<<sum;
+
+            firstPoint = secondPoint;
+            secondPoint = thirdPoint;
+
+            qDebug()<<"first point ..."<<firstPoint.x<<firstPoint.y<<firstPoint.z;
+        }
+
+        qDebug()<<"sum of "<<n<<" angles ... "<<sum;
+
+        //
+        meanval_adjangles = sum / n;
+
+        //
+        sum = 0;
+        for(int i=0; i<angles.size(); i++)
+        {
+            sum += (angles[i] - meanval_adjangles)*(angles[i] - meanval_adjangles);
+        }
+
+        stddev_adjangles = sqrt(sum/(n-1));
+
+        qDebug()<<"mean ... "<<meanval_adjangles<<" std dev ..."<<stddev_adjangles;
+    }
+
+    //
     return 0;
 }
 
-int LineSegment::getStdDev()
+int LineSegment::save(QString filename)
 {
+    //
+    std::ofstream outfile;
+
+    outfile.open(filename.toStdString().c_str(), std::ios_base::app);
+    outfile << meanval_adjangles << ", " << stddev_adjangles << endl;
+
+    //
     return 0;
 }
 

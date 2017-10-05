@@ -63,6 +63,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     {
         return getbranchpoints_func(input, output, callback);
     }
+    else if (func_name == tr("getstatistics"))
+    {
+        return getStatisticsTracedNeurons_func(input, output, callback);
+    }
     else if (func_name == tr("runpipeline"))
     {
         return processpipeline_func(input, output, callback);

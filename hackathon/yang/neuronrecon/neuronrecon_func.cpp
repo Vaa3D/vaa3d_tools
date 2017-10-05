@@ -283,7 +283,8 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
         } // while
 
         pc[i].x = p.x;
-        pc[i].y = p.y;
+        pc[i].y = p.y;    //
+        return true;
         pc[i].z = p.z;
 
         // mean-shift estimate the radius
@@ -579,6 +580,51 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
     pointcloud.savePointCloud(cnvtPoints);
 
     // step 4.
+
+    //
+    return true;
+}
+
+bool getStatisticsTracedNeurons_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    // load swc and save statistics to a plain text file
+    //
+    if(input.size()==0 || output.size() != 1) return false;
+
+    //parsing input
+    char * paras = NULL;
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    // load multiple traced neurons (trees saved as .swc)
+    LineSegment line;
+
+    QStringList files;
+    for (int i=0;i<inlist->size();i++)
+    {
+        files.push_back(QString(inlist->at(i)));
+    }
+
+    line.getPointCloud(files);
+    line.getMeanDev();
+
+    // output .apo file (point cloud)
+    QString outfileName;
+    outfileName = QString(outlist->at(0));
+
+    line.save(outfileName);
 
     //
     return true;

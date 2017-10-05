@@ -111,8 +111,8 @@ public:
     ~LineSegment();
 
 public:
-    int getMean();
-    int getStdDev();
+    int getMeanDev();
+    int save(QString filename);
 
 public:
     float meanval_adjangles, stddev_adjangles; //
