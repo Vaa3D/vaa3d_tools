@@ -39,7 +39,7 @@ struct TRACE_LS_PARA
 
     Image4DSimple* image;
     LandmarkList listLandmarks;
-    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename;
+    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd;
 };
 
 
@@ -83,6 +83,9 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
 NeuronTree pruning_cross_swc(NeuronTree nt);
 
 bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P);
+bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
+
+
 
 #endif
 

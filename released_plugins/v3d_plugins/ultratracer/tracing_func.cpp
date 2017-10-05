@@ -15,6 +15,7 @@
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 //#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../mean_shift_center/mean_shift_fun.h"
+#include "../neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 
 
 
@@ -6364,8 +6365,174 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             crawler_raw_app(callback,parent,P,0);
         }
     }
+}
+
+bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
+{
+    QString fileOpenName = P.inimg_file;
+    vector<MyMarker> file_inmarkers;
+    file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
+    unsigned char * total1dData = 0;
+    V3DLONG *in_sz = 0;
+    VirtualVolume* aVolume =0;
+
+    aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
+    P.in_sz[0] = aVolume->getDIM_H();
+    P.in_sz[1] = aVolume->getDIM_V();
+    P.in_sz[2] = aVolume->getDIM_D();
+
+    V3DLONG start_x,end_x,start_y,end_y,start_z,end_z;
+    if(file_inmarkers.size()>=4)
+    {
+        start_x = (file_inmarkers[2].x - 50)<0 ? 0 :file_inmarkers[2].x - 50;
+        start_y = (file_inmarkers[2].y - 50)<0 ? 0 :file_inmarkers[2].y - 50;
+        start_z = (file_inmarkers[2].z - 50)<0 ? 0 :file_inmarkers[2].z - 50;
+
+        end_x = (file_inmarkers[3].x + 50)> P.in_sz[0]? P.in_sz[0] :file_inmarkers[3].x + 50;
+        end_y = (file_inmarkers[3].y + 50)> P.in_sz[1]? P.in_sz[1] :file_inmarkers[3].y + 50;
+        end_z = (file_inmarkers[3].z + 50)> P.in_sz[2]? P.in_sz[2] :file_inmarkers[3].z + 50;
+    }
+    else if(file_inmarkers.size()>=2)
+    {
+        if(file_inmarkers.at(0).x >= file_inmarkers.at(1).x)
+        {
+            start_x = file_inmarkers.at(1).x;
+            end_x = file_inmarkers.at(0).x+1;
+        }else
+        {
+            end_x = file_inmarkers.at(1).x+1;
+            start_x = file_inmarkers.at(0).x;
+        }
+
+        if(file_inmarkers.at(0).y >= file_inmarkers.at(1).y)
+        {
+            start_y = file_inmarkers.at(1).y;
+            end_y = file_inmarkers.at(0).y+1;
+        }else
+        {
+            end_y = file_inmarkers.at(1).y+1;
+            start_y = file_inmarkers.at(0).y;
+        }
+
+        if(file_inmarkers.at(0).z >= file_inmarkers.at(1).z)
+        {
+            start_z = file_inmarkers.at(1).z;
+            end_z = file_inmarkers.at(0).z+1;
+        }else
+        {
+            end_z = file_inmarkers.at(1).z+1;
+            start_z = file_inmarkers.at(0).z;
+        }
+
+        int win_size = 100;
+        start_x = (start_x - win_size)<0 ? 0 :start_x - win_size;
+        start_y = (start_y - win_size)<0 ? 0 :start_y - win_size;
+        start_z = (start_z - win_size)<0 ? 0 :start_z - win_size;
+
+        end_x = (end_x + win_size)> P.in_sz[0]? P.in_sz[0] :end_x + win_size;
+        end_y = (end_y + win_size)> P.in_sz[1]? P.in_sz[1] :end_y + win_size;
+        end_z = (end_z + win_size)> P.in_sz[2]? P.in_sz[2] :end_z + win_size;
+    }
+
+    /*unsigned char * total1dData_apa = 0;
+    total1dData_apa = new unsigned char [pagesz];
+    BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);*/
+
+    in_sz = new V3DLONG[4];
+    in_sz[0] = end_x - start_x;
+    in_sz[1] = end_y - start_y;
+    in_sz[2] = end_z - start_z;
+    in_sz[3] = 1;
+    V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
+    if(pagesz >= 8589934592) //use the 2nd highest resolution folder
+    {
+        if(aVolume) {delete aVolume; aVolume = 0;}
+        aVolume = VirtualVolume::instance(P.inimg_file_2nd.toStdString().c_str());
+        start_x /= 2; start_y /= 2; start_z /= 2;
+        end_x /= 2;   end_y /= 2;   end_z /= 2;
+        in_sz[0] = end_x - start_x;
+        in_sz[1] = end_y - start_y;
+        in_sz[2] = end_z - start_z;
+
+        for(V3DLONG i = 0; i <file_inmarkers.size(); i++)
+        {
+            file_inmarkers[i].x /= 2;
+            file_inmarkers[i].y /= 2;
+            file_inmarkers[i].z /= 2;
+        }
+     }
+
+    total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+    unsigned char ****p4d = 0;
+    if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], 1, total1dData))
+    {
+        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+        if(p4d) {delete []p4d; p4d = 0;}
+        return false;
+    }
+    LocationSimple p0;
+    p0.x = file_inmarkers[1].x - start_x;
+    p0.y = file_inmarkers[1].y - start_y;
+    p0.z = file_inmarkers[1].z - start_z;
+
+    vector<LocationSimple> pp;
+    LocationSimple p1;
+    p1.x = file_inmarkers[0].x - start_x;
+    p1.y = file_inmarkers[0].y - start_y;
+    p1.z = file_inmarkers[0].z - start_z;
+    pp.push_back(p1);
+
+    double weight_xy_z=1.0;
+    CurveTracePara trace_para;
+    trace_para.channo = 0;
+    trace_para.sp_graph_background = 0;
+    trace_para.b_postMergeClosebyBranches = false;
+    trace_para.sp_graph_resolution_step=4;
+    trace_para.b_3dcurve_width_from_xyonly = true;
+    trace_para.b_pruneArtifactBranches = false;
+    trace_para.sp_num_end_nodes = 2;
+    trace_para.b_deformcurve = false;
+    trace_para.sp_graph_resolution_step = 1;
+    trace_para.b_estRadii = false;
+    trace_para.sp_downsample_method = 1;
+    trace_para.sp_downsample_step = 4;
+    trace_para.sp_graph_resolution_step = 4;
+
+    NeuronTree nt = v3dneuron_GD_tracing(p4d, in_sz,
+                                         p0, pp,
+                                         trace_para, weight_xy_z);
+
+    for(V3DLONG i = 0; i < nt.listNeuron.size();i++)
+    {
+        nt.listNeuron[i].x += start_x;
+        nt.listNeuron[i].y += start_y;
+        nt.listNeuron[i].z += start_z;
+
+        if(pagesz >= 8589934592)
+        {
+            nt.listNeuron[i].x *= 2;
+            nt.listNeuron[i].y *= 2;
+            nt.listNeuron[i].z *= 2;
+        }
+    }
+
+    for(V3DLONG i = 0; i <file_inmarkers.size(); i++)
+    {
+        file_inmarkers[i].x -= start_x;
+        file_inmarkers[i].y -= start_y;
+        file_inmarkers[i].z -= start_z;
+    }
+
+    QString swc_name = P.markerfilename+"_gd.swc";
+    QString marker_name = P.markerfilename+"_shifted.marker";
+    QString image_name = P.markerfilename+"_gd.v3draw";
 
 
+    export_list2file(nt.listNeuron, swc_name,swc_name);
+    saveMarker_file(marker_name.toStdString().c_str(),file_inmarkers);
+    simple_saveimage_wrapper(callback,image_name.toStdString().c_str(),total1dData,in_sz,1);
+    if(total1dData) {delete [] total1dData; total1dData =0;}
+    if(aVolume) {delete aVolume; aVolume = 0;}
 }
 
 NeuronTree pruning_cross_swc(NeuronTree nt)

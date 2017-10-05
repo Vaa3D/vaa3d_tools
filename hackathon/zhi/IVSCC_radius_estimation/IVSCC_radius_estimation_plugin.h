@@ -15,6 +15,8 @@ class IVSCC_radius_estimation : public QObject, public V3DPluginInterface2_1
 	Q_INTERFACES(V3DPluginInterface2_1);
 
 public:
+	~IVSCC_radius_estimation();
+
 	float getPluginVersion() const {return 1.1f;}
 
 	QStringList menulist() const;
