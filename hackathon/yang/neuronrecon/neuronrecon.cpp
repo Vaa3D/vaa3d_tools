@@ -66,17 +66,18 @@ void Point::setValue(float v)
     val = v;
 }
 
-PointCloud::PointCloud()
+//
+NCPointCloud::NCPointCloud()
 {
     points.clear();
 }
 
-PointCloud::~PointCloud()
+NCPointCloud::~NCPointCloud()
 {
     points.clear();
 }
 
-int PointCloud::getPointCloud(QStringList files)
+int NCPointCloud::getPointCloud(QStringList files)
 {
     //
     if(files.size()>0)
@@ -99,7 +100,7 @@ int PointCloud::getPointCloud(QStringList files)
     return 0;
 }
 
-int PointCloud::addPointFromNeuronTree(NeuronTree nt)
+int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
 {
     //
     if(nt.listNeuron.size()>0)
@@ -175,7 +176,7 @@ int PointCloud::addPointFromNeuronTree(NeuronTree nt)
     return 0;
 }
 
-int PointCloud::savePointCloud(QString filename)
+int NCPointCloud::savePointCloud(QString filename)
 {
     //
     V3DLONG n = points.size();
@@ -214,7 +215,7 @@ int PointCloud::savePointCloud(QString filename)
     return 0;
 }
 
-int PointCloud::savePC2SWC(PointCloud pc, QString filename)
+int NCPointCloud::savePC2SWC(NCPointCloud pc, QString filename)
 {
     //
     NeuronTree nt;
@@ -238,7 +239,7 @@ int PointCloud::savePC2SWC(PointCloud pc, QString filename)
     return writeESWC_file(filename, nt);
 }
 
-int PointCloud::resample()
+int NCPointCloud::resample()
 {
     //
 
@@ -246,7 +247,7 @@ int PointCloud::resample()
     return 0;
 }
 
-float PointCloud::distance(Point a, Point b)
+float NCPointCloud::distance(Point a, Point b)
 {
     float x = a.x - b.x;
     float y = a.y - b.y;
@@ -255,7 +256,7 @@ float PointCloud::distance(Point a, Point b)
     return sqrt(x*x + y*y + z*z);
 }
 
-int PointCloud::getBranchPoints(QString filename)
+int NCPointCloud::getBranchPoints(QString filename)
 {
     //
     if(filename.toUpper().endsWith(".SWC"))
@@ -287,7 +288,7 @@ int PointCloud::getBranchPoints(QString filename)
                 }
 
                 //
-                PointCloud pc;
+                NCPointCloud pc;
 
                 Point parent, child1, child2;
 
@@ -346,7 +347,7 @@ int PointCloud::getBranchPoints(QString filename)
                 parent.parents[0] = pn;
 
                 // segment start from the parent of branch point
-                PointCloud pcSeg;
+                NCPointCloud pcSeg;
                 V3DLONG nseg = parent.n;
                 bool keepFinding = true;
 
@@ -408,7 +409,7 @@ int PointCloud::getBranchPoints(QString filename)
             }
             else if(points[i].type == 0)
             {
-                PointCloud pcSeg;
+                NCPointCloud pcSeg;
                 V3DLONG nseg = current.n;
                 bool keepFinding = true;
 
@@ -478,7 +479,7 @@ int PointCloud::getBranchPoints(QString filename)
     return 0;
 }
 
-int PointCloud::getNeurites(QString filename)
+int NCPointCloud::getNeurites(QString filename)
 {
     //
 
@@ -487,7 +488,7 @@ int PointCloud::getNeurites(QString filename)
     return 0;
 }
 
-float PointCloud::getAngle(Point a, Point b, Point c)
+float NCPointCloud::getAngle(Point a, Point b, Point c)
 {
     // get angle between a->b and b->c
 
@@ -518,7 +519,7 @@ Quadruple::~Quadruple()
 
 }
 
-int Quadruple::find3nearestpoints(Point p, PointCloud pc)
+int Quadruple::find3nearestpoints(Point p, NCPointCloud pc)
 {
 
 }

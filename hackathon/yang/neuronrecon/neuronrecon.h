@@ -37,7 +37,18 @@
 
 #include "itkTIFFImageIOFactory.h"
 
+#include <map>
+#include <pcl/common/time.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/common/distances.h>
+#include <pcl/io/pcd_io.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+
 using namespace std;
+using namespace pcl;
 
 //
 class Point
@@ -63,16 +74,16 @@ public:
 };
 
 //
-class PointCloud
+class NCPointCloud
 {
 public:
-    PointCloud();
-    ~PointCloud();
+    NCPointCloud();
+    ~NCPointCloud();
 
 public:
     int getPointCloud(QStringList files);
     int savePointCloud(QString filename);
-    int savePC2SWC(PointCloud pc, QString filename);
+    int savePC2SWC(NCPointCloud pc, QString filename);
     int addPointFromNeuronTree(NeuronTree nt);
 
     float distance(Point a, Point b);
@@ -96,7 +107,7 @@ public:
     ~Quadruple();
 
 public:
-    int find3nearestpoints(Point p, PointCloud pc);
+    int find3nearestpoints(Point p, NCPointCloud pc);
 
 public:
     vector<Point> quad;
@@ -104,7 +115,7 @@ public:
 
 };
 
-class LineSegment : public PointCloud
+class LineSegment : public NCPointCloud
 {
 public:
     LineSegment();
@@ -118,7 +129,7 @@ public:
     float meanval_adjangles, stddev_adjangles; //
 };
 
-template< unsigned int VImageDimension >
+template<class InputPixelType, class OutputPixelType, unsigned int VImageDimension >
 int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, const std::string& outFile)
 {
     if(!itk::IsGPUAvailable())
@@ -128,10 +139,6 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
     }
 
     itk::TIFFImageIOFactory::RegisterOneFactory();
-
-    //
-    typedef float InputPixelType;
-    typedef float OutputPixelType;
 
     //
     bool useGPU = true;

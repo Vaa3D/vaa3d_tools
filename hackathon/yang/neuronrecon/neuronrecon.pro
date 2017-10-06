@@ -3,13 +3,16 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
+
+INCLUDEPATH     += /home/yangy/work/local/include
+INCLUDEPATH     += /home/yangy/work/local/include/ITK-4.13
+INCLUDEPATH     += /home/yangy/work/local/include/pcl-1.8
+INCLUDEPATH     += /home/yangy/work/local/include/eigen3
+
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/
-
-INCLUDEPATH     += /home/yangy/work/local/include/ITK-4.13
-INCLUDEPATH     += /home/yangy/work/local/include
 
 HEADERS	+= neuronrecon_plugin.h
 HEADERS	+= neuronrecon_func.h

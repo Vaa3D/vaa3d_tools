@@ -45,7 +45,7 @@ bool neuronrecon_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     }
 
     // load multiple traced neurons (trees saved as .swc)
-    PointCloud pointcloud;
+    NCPointCloud pointcloud;
 
     QStringList files;
     for (int i=0;i<inlist->size();i++)
@@ -211,7 +211,7 @@ bool finetunepoints_func(const V3DPluginArgList & input, V3DPluginArgList & outp
 
     // fine tuning with mean-shift
     float distance = 2; // converge
-    PointCloud pointcloud;
+    NCPointCloud pointcloud;
     for(V3DLONG i=0; i<pc.size(); i++)
     {
         cout<<"before fine tuning ... "<<pc[i].x <<" "<<pc[i].y <<" "<<pc[i].z <<" "<<pc[i].volsize<<endl;
@@ -432,7 +432,7 @@ bool getbranchpoints_func(const V3DPluginArgList & input, V3DPluginArgList & out
 
     qDebug()<<"filename: "<<filename;
 
-    PointCloud pointcloud;
+    NCPointCloud pointcloud;
     pointcloud.getBranchPoints(filename);
 
     // output
@@ -503,20 +503,20 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
     QString neuronTraced = filename.left(filename.lastIndexOf(".")).append("_traced.swc");
     QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
 
-//    if(filename.toUpper().endsWith(".TIF"))
-//    {
-//        runGPUGradientAnisotropicDiffusionImageFilter<3>(filename.toStdString(), fnITKfiltered.toStdString());
-//    }
-//    else
-//    {
-//        cout<<"Current only support TIFF image as input file\n";
-//        return -1;
-//    }
+    if(filename.toUpper().endsWith(".TIF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return -1;
+    }
 
     // step 2.
-    if(filename.toUpper().endsWith(".V3DRAW") || filename.toUpper().endsWith(".TIF"))
+    if(fnITKfiltered.toUpper().endsWith(".V3DRAW") || fnITKfiltered.toUpper().endsWith(".TIF"))
     {
-        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(filename.toStdString().c_str()) );
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnITKfiltered.toStdString().c_str()) );
         if (!p4dImage || !p4dImage->valid())
         {
             cout<<"fail to load image!\n";
@@ -532,11 +532,11 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
         PARA_APP2 p2;
         QString versionStr = "v0.001";
 
-        p2.is_gsdt = true;
+        p2.is_gsdt = false;
         p2.is_coverage_prune = true;
         p2.is_break_accept = true;
-        p2.bkg_thresh = -1;//P.bkg_thresh;
-        p2.length_thresh = 5;
+        p2.bkg_thresh = 15;
+        p2.length_thresh = 15;
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;
@@ -553,7 +553,6 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
         p2.yc1 = p2.p4dImage->getYDim()-1;
         p2.zc1 = p2.p4dImage->getZDim()-1;
 
-
         p2.outswc_file = neuronTraced;
         proc_app2(callback, p2, versionStr);
 
@@ -565,7 +564,7 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
     }
 
     // step 3. load multiple traced neurons (trees saved as .swc)
-    PointCloud pointcloud;
+    NCPointCloud pointcloud;
 
     QStringList files;
 //    for (int i=0;i<inlist->size();i++)
