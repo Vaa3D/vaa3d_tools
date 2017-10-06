@@ -629,6 +629,36 @@ bool getStatisticsTracedNeurons_func(const V3DPluginArgList & input, V3DPluginAr
     return true;
 }
 
+bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1) return false;
+
+    //parsing input
+    char * paras = NULL;
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    // load
+    NCPointCloud pointcloud;
+    pointcloud.connectPoints2Lines(QString(inlist->at(0)), QString(outlist->at(0)));
+
+    //
+    return true;
+}
+
 //
 void printHelp()
 {

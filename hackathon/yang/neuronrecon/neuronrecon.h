@@ -47,30 +47,36 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
+#include <pcl/kdtree/impl/kdtree_flann.hpp>
+
 using namespace std;
 using namespace pcl;
 
 //
-class Point
+class Point : public PointXYZ
 {
 public:
     Point();
+    Point(float x, float y, float z);
     ~Point();
 
 public:
     void setLocation(float x, float y, float z);
     void setRadius(float r);
     void setValue(float v);
+    bool isSamePoint(Point p);
 
 public:
     float x, y, z; // location
     float radius; // radius
     float val; // intensity value
-    vector<V3DLONG> parents;
-    vector<V3DLONG> children;
+    vector<V3DLONG> parents; // n (same definition in .swc)
+    vector<V3DLONG> children; // k nearest neighbors (indices)
     V3DLONG n; // #
     bool visited;
     int type; // -1 cell body; 0 tip point; 1 regular point; 3 branch point
+
+    int connected; // 0 not connected; 1 connected to one other point; 2 connected two other points; ...
 };
 
 //
@@ -91,13 +97,25 @@ public:
     int getBranchPoints(QString filename);
     int getNeurites(QString filename);
 
+    bool findNextUnvisitPoint(unsigned long &index);
+
     int resample();
 
     // statistics
     float getAngle(Point a, Point b, Point c);
 
+    // k nearest neighbor search
+    int knn(int k);
+
+    //
+    int connectPoints2Lines(QString infile, QString outfile);
+
+    // cost func
+    int minAngle(unsigned long &loc);
+
 public:
     vector<Point> points;
+    PointCloud<PointXYZ> cloud;
 };
 
 class Quadruple

@@ -24,7 +24,9 @@ QStringList NeuReconPlugin::funclist() const
            <<tr("samplingtree")
           <<tr("finetunepoints")
          <<tr("getbranchpoints")
-           <<tr("help");
+        <<tr("getstatistics")
+       <<tr("lineconstruction")
+      <<tr("help");
 }
 
 void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -66,6 +68,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("getstatistics"))
     {
         return getStatisticsTracedNeurons_func(input, output, callback);
+    }
+    else if (func_name == tr("lineconstruction"))
+    {
+        return connectpointstolines_func(input, output, callback);
     }
     else if (func_name == tr("runpipeline"))
     {
