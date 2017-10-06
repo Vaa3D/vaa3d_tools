@@ -14,6 +14,7 @@
 #include "hierarchy_prune.h"
 #include "../IVSCC_sort_swc/openSWCDialog.h"
 #include <map>
+#include "qdir.h"
 
 using namespace std;
 
@@ -477,7 +478,9 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
                     ));
         writeSWC_file(fileSaveName,nt);
 
+		this->~IVSCC_radius_estimation();
     }
+
 	/* =================== As per anotation group's request, use only the length of the furthest node to interpolate. MK, Oct, 2017 ======================== */
 	else if (menu_name == tr("neuron_radius_interpolation_updated_r1.0")) // 
 	{
@@ -508,7 +511,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 		map<size_t, size_t> leafLength;
 		for (size_t i=0; i<list.size(); ++i)
 		{
-			if (list.at(i).parent == -1)
+			if (list.at(i).parent == 1 || list.at(i).parent == -1)
 			{
 				nodeAssigned[i] = true;
 				continue;
@@ -520,7 +523,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 				size_t curr_index = i;
 				NeuronSWC currNode = list.at(i);
 				//cout << list.at(i).n << "..." << endl;
-				while (currNode.parent != -1)
+				while (currNode.parent != 1)
 				{
 					curr_index = nt.hashNeuron.value(currNode.parent);
 					currNode = list.at(curr_index);
@@ -575,9 +578,12 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"), fileDefaultName, 
 			QObject::tr("Supported file (*.swc)" ";;Neuron structure(*.swc)"));
         writeSWC_file(fileSaveName,nt);
+
+		this->~IVSCC_radius_estimation();
 	}
 	/* ================== END of [As per anotation group's request, use only the length of the furthest node to interpolate. MK, Oct, 2017] ======================== */
-    else if(menu_name == tr("swc_3D_to_2D"))
+    
+	else if(menu_name == tr("swc_3D_to_2D"))
     {
         OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
         if (!openDlg->exec())
@@ -733,7 +739,109 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("neuron_radius"))
+	if (func_name == tr("radius_interpolation_r1.0"))
+	{
+		const char* swcDIR;
+		QString inputSWCPath = infiles.at(0);
+		string str = inputSWCPath.toStdString();
+		swcDIR = str.c_str();
+		//cout << swcDIR << endl;
+		
+		QDir swcDir(inputSWCPath);
+		QFileInfoList swcList = swcDir.entryInfoList(QDir::AllEntries);
+		for (int i=0; i<swcList.size(); ++i)
+		{
+			//qDebug() << swcList.at(i).fileName();
+			if (swcList.at(i).fileName() == "."  ||  swcList.at(i).fileName() == "..") continue;
+			
+			NeuronTree nt;
+			nt = readSWC_file(swcList.at(i).filePath());
+        
+			QVector<QVector<V3DLONG> > childs; // location and its children, also in location.
+			V3DLONG neuronNum = nt.listNeuron.size();
+			childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+			V3DLONG *flag = new V3DLONG[neuronNum];
+			for (V3DLONG i=0; i<neuronNum; ++i)
+			{
+				flag[i] = 1;
+				V3DLONG par = nt.listNeuron[i].pn;
+				if (par<0) continue;
+				childs[nt.hashNeuron.value(par)].push_back(i);
+			}
+
+			QList<NeuronSWC> list = nt.listNeuron;
+			map<size_t, bool> nodeAssigned;
+			for (size_t i=0; i<list.size(); ++i) nodeAssigned[i] = false;
+			map<size_t, size_t> leafLength;
+			for (size_t i=0; i<list.size(); ++i)
+			{
+				if (list.at(i).parent == 1 || list.at(i).parent == -1)
+				{
+					nodeAssigned[i] = true;
+					continue;
+				}
+
+				if (list.at(i).type != 2 && childs.at(i).size() ==0)
+				{
+					size_t path_length = 0;
+					size_t curr_index = i;
+					NeuronSWC currNode = list.at(i);
+					//cout << list.at(i).n << "..." << endl;
+					while (currNode.parent != 1)
+					{
+						curr_index = nt.hashNeuron.value(currNode.parent);
+						currNode = list.at(curr_index);
+						//cout << currNode.n << "..." << endl;
+						++path_length;
+					}
+					leafLength[i] = path_length;
+				}
+			}
+
+			map<size_t, size_t> inversedLeafLength;
+			for (size_t j=0; j<leafLength.size(); ++j)
+			{
+				if (leafLength[j] == 0) continue;
+				//cout << j << ": " << leafLength[j] << endl;
+
+				inversedLeafLength[leafLength[j]] = j;
+			}
+			for (size_t j=0; j<inversedLeafLength.size(); ++j)
+			{
+				if (inversedLeafLength[j] == 0) continue;
+				//cout << j << ": " << inversedLeafLength[j] << endl;
+			}
+
+			for (int j=inversedLeafLength.size()-1; j>=0; --j)
+			{
+				if (inversedLeafLength[j] == 0) continue;
+
+				int currLength = j;
+				int currLoc = inversedLeafLength[j];
+				//cout << currLoc << ": ";
+				int d = 0;
+				NeuronSWC currNode = list.at(currLoc);
+				while (currNode.parent != -1)
+				{
+					if (nodeAssigned[currLoc] == true) break;
+
+					double estimatedR = 2.0 + d*(list.at(currLoc).radius-2.0)/(currLength);
+					nt.listNeuron[currLoc].radius = estimatedR;
+					++d;
+					nodeAssigned[currLoc] = true;
+					currLoc = nt.hashNeuron.value(currNode.parent);
+					currNode = nt.listNeuron.at(currLoc);
+
+					//cout << estimatedR << " ";
+				}
+				//cout << endl;
+			}
+
+			QString fileSaveName = swcList.at(i).filePath() + "_interpolatedNew.swc";
+			writeSWC_file(fileSaveName, nt);
+		}
+	}
+    else if (func_name == tr("neuron_radius"))
 	{
         if(infiles.size() != 2 && infiles.size() != 3)
         {
