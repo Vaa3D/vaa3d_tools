@@ -579,15 +579,15 @@ int NCPointCloud::knn(int k)
     {
         PointXYZ p = cloud.points[i];
 
-        cout<<i<<" "<<p.x<<" "<<p.y<<" "<<p.z<<endl; // for debug
+        //cout<<i<<" "<<p.x<<" "<<p.y<<" "<<p.z<<endl; // for debug
 
         kdtree.nearestKSearch (p, k, k_indices, k_distances);
 
         // 0 is self, so start recording nearest neighbor from 1
         for (size_t j = 1; j < k_indices.size (); ++j)
         {
-            const PointXYZ& point = cloud.points[k_indices[j]];
-            cout<<"test ... "<<point.x<<" "<<point.y<<" "<<point.z<<" ... dist: "<< euclideanDistance(point, cloud.points[i])<<endl;
+            //const PointXYZ& point = cloud.points[k_indices[j]];
+            //cout<<"test ... "<<point.x<<" "<<point.y<<" "<<point.z<<" ... dist: "<< euclideanDistance(point, cloud.points[i])<<endl;
 
             points[i].children.push_back(k_indices[j]);
         }
@@ -611,6 +611,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
         //
         Point p;
 
+        p.n = i+1; // # assigned
         p.x = cell.x;
         p.y = cell.y;
         p.z = cell.z;
@@ -634,38 +635,28 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
 
     // connect points into lines
     unsigned long loc;
-//    while(findNextUnvisitPoint(loc))
-//    {
-//        //
-//        cout<<"current point ..."<<loc<<endl;
+    while(findNextUnvisitPoint(loc))
+    {
+        //
+        cout<<"current point ..."<<loc<<endl;
 
-//        //
-//        cloud.points[loc].visited = true;
-//        cloud.points[loc].parents.push_back(-1);
-//        Point p = cloud.points[loc];
+        //
+        points[loc].visited = true;
+        points[loc].parents.push_back(-1);
 
-//        cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
+        Point p = points[loc];
 
+        cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
 
-////        while(minAngle(loc)>=0)
-////        {
-////            cout<<"next point ... "<<loc<<endl;
-////        }
-
-
-
-//        //
-
-
-//    }
-
-
+        //
+        while(minAngle(loc)>=0)
+        {
+            cout<<"next point ... "<<loc<<endl;
+        }
+    }
 
     // save connected results into a .swc file
-
-
-
-
+    savePC2SWC(*this, outfile);
 
     //
     return 0;
@@ -674,12 +665,8 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
 // cost func
 int NCPointCloud::minAngle(unsigned long &loc)
 {
-    cout<<"call minAngle ... \n";
-
     //
     Point p = points[loc];
-
-    cout<<"test ... p "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
 
     //
     unsigned int nneighbors = 5;
@@ -690,89 +677,57 @@ int NCPointCloud::minAngle(unsigned long &loc)
     long next_next = -1;
 
     //
-//    vector<int> k_indices;
-//    k_indices.resize (nneighbors);
-//    vector<float> k_distances;
-//    k_distances.resize (nneighbors);
+    for(V3DLONG i=0; i<p.children.size(); i++)
+    {
+        Point p_next = points[p.children[i]];
 
-//    KdTreeFLANN<Point> kdtree;
-//    kdtree.setInputCloud(cloud.makeShared());
-//    kdtree.nearestKSearch (p, nneighbors, k_indices, k_distances);
+        if(p_next.visited || p_next.isSamePoint(p))
+        {
+            continue;
+        }
 
-//    cout<<"test ... knn "<<k_indices.size()<<endl;
+        cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
 
-//    for(long i=k_indices.size()-1; i>=0; i--)
-//    {
-//        cout<<"test ... i "<<i<<endl;
+        for(V3DLONG j=0; j<p_next.children.size(); j++)
+        {
+            Point p_next_next = points[p_next.children[j]];
 
-//        Point p_next = cloud.points[k_indices[i]];
+            if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
+            {
+                continue;
+            }
 
-//        // connected? reconsider it later
-//        if(p_next.visited || p_next.isSamePoint(p))
-//        {
-//            continue;
-//        }
+            cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
 
-//        cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+            float angle = getAngle(p, p_next, p_next_next);
 
-//        vector<int> k_indices_next;
-//        k_indices_next.resize (nneighbors);
-//        vector<float> k_distances_next;
-//        k_distances_next.resize (nneighbors);
+            if(angle<maxAngle && angle<minAngle)
+            {
+                minAngle = angle;
+                next = p.children[i];
+                next_next = p_next.children[j];
+            }
+        }
 
-//        KdTreeFLANN<Point> kdtree_next;
-//        kdtree_next.setInputCloud(cloud.makeShared());
-//        kdtree_next.nearestKSearch (p_next, nneighbors, k_indices_next, k_distances_next);
+    }
 
+    //
+    if(next>0 && next_next>0)
+    {
+        points[loc].connected++;
+        points[next].visited = true;
+        points[next].connected++;
+        points[next].parents.push_back(p.n);
+        points[next_next].visited = true;
+        points[next_next].connected++;
+        points[next_next].parents.push_back(points[next].n);
 
-//        for(size_t m=0; m<nneighbors; m++)
-//        {
-//            cout<<"compare ... "<<k_indices[m]<<" : "<<k_indices_next[m]<<endl;
-//        }
+        loc = next_next;
 
+        cout<<"update loc ... "<<loc<<endl;
 
-//        for(long j=k_indices_next.size()-1; j>=0; j--)
-//        {
-//            cout<<"test ... j "<<j<<endl;
-
-//            Point p_next_next = cloud.points[k_indices_next[j]];
-
-//            if(p_next_next.visited || p_next_next.isSamePoint(p_next))
-//            {
-//                continue;
-//            }
-
-//            cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
-
-//            float angle = getAngle(p, p_next, p_next_next);
-
-//            cout<<"angle ... "<<angle<<" : "<<loc<<" "<<k_indices[i]<<" "<<k_indices_next[j]<<endl;
-
-//            if(angle<maxAngle && angle<minAngle)
-//            {
-//                minAngle = angle;
-//                next = k_indices[i];
-//                next_next = k_indices_next[j];
-//            }
-//        }
-//    }
-
-//    if(next>0 && next_next>0)
-//    {
-//        cloud.points[loc].connected++;
-//        cloud.points[next].visited = true;
-//        cloud.points[next].connected++;
-//        cloud.points[next].parents.push_back(cloud.points[loc].n);
-//        cloud.points[next_next].visited = true;
-//        cloud.points[next_next].connected++;
-//        cloud.points[next_next].parents.push_back(cloud.points[next].n);
-
-//        loc = next_next;
-
-//         cout<<"update loc ... "<<loc<<endl;
-
-//        return 0;
-//    }
+        return 0;
+    }
 
     //
     return -1;
