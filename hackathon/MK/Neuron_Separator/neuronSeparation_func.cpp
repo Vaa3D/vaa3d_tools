@@ -759,5 +759,6 @@ QList<NeuronSWC> neuronSeparator::swcTrace(QList<NeuronSWC>& list, long int star
 	QList<NeuronSWC> tracedSorted;
 	//SortSWC(traced, tracedSorted, VOID, VOID);
 	
-	return tracedSorted;
+	//return tracedSorted;
+	return traced;
 }
