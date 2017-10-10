@@ -53,7 +53,7 @@ using namespace std;
 using namespace pcl;
 
 //
-class Point : public PointXYZ
+class Point
 {
 public:
     Point();
@@ -71,12 +71,14 @@ public:
     float radius; // radius
     float val; // intensity value
     vector<V3DLONG> parents; // n (same definition in .swc)
-    vector<V3DLONG> children; // k nearest neighbors (indices)
+    vector<V3DLONG> children; // n (same definition in .swc) used for detect branch points
     V3DLONG n; // #
-    bool visited;
     int type; // -1 cell body; 0 tip point; 1 regular point; 3 branch point
 
+    bool visited;
     int connected; // 0 not connected; 1 connected to one other point; 2 connected two other points; ...
+    V3DLONG pre, next; // index
+    vector<V3DLONG> nn; // k nearest neighbors (indices)
 };
 
 //
@@ -87,12 +89,18 @@ public:
     ~NCPointCloud();
 
 public:
-    int getPointCloud(QStringList files);
-    int savePointCloud(QString filename);
-    int savePC2SWC(NCPointCloud pc, QString filename);
-    int addPointFromNeuronTree(NeuronTree nt);
 
-    float distance(Point a, Point b);
+    // load a single/multiple .swc file(s)
+    int getPointCloud(QStringList files);
+
+    // save as a .apo file
+    int savePointCloud(QString filename);
+
+    // save as a .swc file
+    int saveNeuronTree(NCPointCloud pc, QString filename);
+
+    //
+    int addPointFromNeuronTree(NeuronTree nt);
 
     int getBranchPoints(QString filename);
     int getNeurites(QString filename);
@@ -101,8 +109,17 @@ public:
 
     int resample();
 
-    // statistics
+    // distance between point a and point b
+    float distance(Point a, Point b);
+
+    // compute angle between (a, b) and (b, c)
     float getAngle(Point a, Point b, Point c);
+
+    // shortest distance between point p and line segment (a, b)
+    float distPoint2LineSegment(Point a, Point b, Point p);
+
+    // judge whether a point important
+    bool isConsidered(Point p);
 
     // k nearest neighbor search
     int knn(int k);
@@ -113,9 +130,11 @@ public:
     // cost func
     int minAngle(unsigned long &loc);
 
+    //
+
 public:
     vector<Point> points;
-    PointCloud<PointXYZ> cloud;
+
 };
 
 class Quadruple

@@ -38,10 +38,12 @@ Point::Point()
     radius = 0;
     val = 0;
     parents.clear();
-    children.clear();
+    nn.clear();
     n=0;
     visited = false;
     connected = 0;
+    pre = -1;
+    next = -1;
 }
 
 Point::Point (float x, float y, float z)
@@ -53,17 +55,20 @@ Point::Point (float x, float y, float z)
     radius = 0;
     val = 0;
     parents.clear();
-    children.clear();
+    nn.clear();
     n=0;
     visited = false;
 
     connected = 0;
+    pre = -1;
+    next = -1;
 }
 
 Point::~Point()
 {
     parents.clear();
     children.clear();
+    nn.clear();
 }
 
 void Point::setLocation(float x, float y, float z)
@@ -244,7 +249,7 @@ int NCPointCloud::savePointCloud(QString filename)
     return 0;
 }
 
-int NCPointCloud::savePC2SWC(NCPointCloud pc, QString filename)
+int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
 {
     //
     NeuronTree nt;
@@ -370,7 +375,7 @@ int NCPointCloud::getBranchPoints(QString filename)
                 pc.points.push_back(child2);
 
                 QString output = filename.left(filename.lastIndexOf(".")).append("_branch_%1.swc").arg(current.n);
-                savePC2SWC(pc, output);
+                saveNeuronTree(pc, output);
 
                 // recover parent's parent after saving the branch
                 parent.parents[0] = pn;
@@ -431,7 +436,7 @@ int NCPointCloud::getBranchPoints(QString filename)
                     if(pcSeg.points.size()>1)
                     {
                         QString outSegs = filename.left(filename.lastIndexOf(".")).append("_segment_%1.swc").arg(nseg);
-                        savePC2SWC(pcSeg, outSegs);
+                        saveNeuronTree(pcSeg, outSegs);
                     }
                 }
 
@@ -493,7 +498,7 @@ int NCPointCloud::getBranchPoints(QString filename)
                     if(pcSeg.points.size()>1)
                     {
                         QString outSegs = filename.left(filename.lastIndexOf(".")).append("_segment_%1.swc").arg(nseg);
-                        savePC2SWC(pcSeg, outSegs);
+                        saveNeuronTree(pcSeg, outSegs);
                     }
                 }
             } // type
@@ -559,10 +564,25 @@ bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
 int NCPointCloud::knn(int k)
 {
     //
-    if(k<1 || cloud.points.size()<k)
+    if(k<1 || points.size()<k)
     {
         cout<<"invalid k or cloud\n";
         return -1;
+    }
+
+    //
+    PointCloud<PointXYZ> cloud;
+
+    for(V3DLONG i=0; i<points.size(); i++)
+    {
+        //
+        PointXYZ point;
+
+        point.x = points[i].x;
+        point.y = points[i].y;
+        point.z = points[i].z;
+
+        cloud.points.push_back(point);
     }
 
     //
@@ -589,7 +609,7 @@ int NCPointCloud::knn(int k)
             //const PointXYZ& point = cloud.points[k_indices[j]];
             //cout<<"test ... "<<point.x<<" "<<point.y<<" "<<point.z<<" ... dist: "<< euclideanDistance(point, cloud.points[i])<<endl;
 
-            points[i].children.push_back(k_indices[j]);
+            points[i].nn.push_back(k_indices[j]);
         }
     }
 
@@ -618,18 +638,9 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
         p.radius = 0.5*cell.volsize;
 
         points.push_back(p);
-
-        //
-        PointXYZ point;
-
-        point.x = cell.x;
-        point.y = cell.y;
-        point.z = cell.z;
-
-        cloud.points.push_back(point);
     }
 
-    // find k nearest neighbors and save indices into children
+    // find k nearest neighbors
     int k=6;
     knn(k);
 
@@ -641,9 +652,13 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
         cout<<"current point ..."<<loc<<endl;
 
         //
-        points[loc].visited = true;
-        points[loc].parents.push_back(-1);
+        if(points[loc].visited == false)
+        {
+            points[loc].visited = true;
+            points[loc].parents.push_back(-1);
+        }
 
+        //
         Point p = points[loc];
 
         cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
@@ -656,7 +671,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
     }
 
     // save connected results into a .swc file
-    savePC2SWC(*this, outfile);
+    saveNeuronTree(*this, outfile);
 
     //
     return 0;
@@ -670,67 +685,178 @@ int NCPointCloud::minAngle(unsigned long &loc)
 
     //
     unsigned int nneighbors = 5;
-    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    float maxAngle = 0.1; // 0.942; // threshold 60 degree (120 degree)
     float minAngle = 3.14;
 
     long next = -1;
     long next_next = -1;
 
     //
-    for(V3DLONG i=0; i<p.children.size(); i++)
+    if(p.parents[0] == -1)
     {
-        Point p_next = points[p.children[i]];
-
-        if(p_next.visited || p_next.isSamePoint(p))
+        // connect points from -1 "soma" (starting point)
+        for(V3DLONG i=0; i<p.nn.size(); i++)
         {
-            continue;
-        }
+            Point p_next = points[p.nn[i]];
 
-        cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
-
-        for(V3DLONG j=0; j<p_next.children.size(); j++)
-        {
-            Point p_next_next = points[p_next.children[j]];
-
-            if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
+            if(p_next.visited || p_next.isSamePoint(p))
             {
                 continue;
             }
 
-            cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
+            cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
 
-            float angle = getAngle(p, p_next, p_next_next);
+            for(V3DLONG j=0; j<p_next.nn.size(); j++)
+            {
+                Point p_next_next = points[p_next.nn[j]];
+
+                if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
+                {
+                    continue;
+                }
+
+                cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
+
+                float angle = getAngle(p, p_next, p_next_next);
+
+                if(angle<maxAngle && angle<minAngle)
+                {
+                    minAngle = angle;
+                    next = p.nn[i];
+                    next_next = p_next.nn[j];
+                }
+            }
+
+        }
+
+        //
+        if(next>0 && next_next>0)
+        {
+            points[loc].connected++;
+            points[next].visited = true;
+            points[next].connected++;
+            points[next].parents.push_back(p.n);
+            points[next_next].visited = true;
+            points[next_next].connected++;
+            points[next_next].parents.push_back(points[next].n);
+
+            points[next].pre = loc;
+            points[next].next = next_next;
+
+            points[next_next].pre = next;
+
+            loc = next_next;
+
+            cout<<"update loc ... "<<loc<<" angle "<<minAngle<<endl;
+
+            return 0;
+        }
+    }
+    else
+    {
+        // connect points from the intermediate point
+        Point p_pre = points[p.pre];
+
+        for(V3DLONG i=0; i<p.nn.size(); i++)
+        {
+            Point p_next = points[p.nn[i]];
+
+            if(p_next.visited || p_next.isSamePoint(p) || p_next.isSamePoint(p_pre))
+            {
+                continue;
+            }
+
+            cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+
+            float angle = getAngle(p_pre, p, p_next);
 
             if(angle<maxAngle && angle<minAngle)
             {
                 minAngle = angle;
-                next = p.children[i];
-                next_next = p_next.children[j];
+                next = p.nn[i];
             }
+        }
+
+        if(next>0)
+        {
+            points[loc].connected++;
+            points[next].visited = true;
+            points[next].connected++;
+            points[next].parents.push_back(p.n);
+
+            points[next].pre = loc;
+
+            loc = next;
+
+            cout<<"update loc ... "<<loc<<" angle "<<minAngle<<endl;
+
+            return 0;
         }
 
     }
 
     //
-    if(next>0 && next_next>0)
+    return -1;
+}
+
+//
+float NCPointCloud::distPoint2LineSegment(Point a, Point b, Point p)
+{
+    //
+    Point w, v, pb;
+
+    w.x = p.x - a.x;
+    w.y = p.y - a.y;
+    w.z = p.z - a.z;
+
+    v.x = b.x - a.x;
+    v.y = b.y - a.y;
+    v.z = b.z - a.z;
+
+    float dot = w.x*v.x + w.y*v.y + w.z*v.z;
+
+    if(dot <=0 )
     {
-        points[loc].connected++;
-        points[next].visited = true;
-        points[next].connected++;
-        points[next].parents.push_back(p.n);
-        points[next_next].visited = true;
-        points[next_next].connected++;
-        points[next_next].parents.push_back(points[next].n);
-
-        loc = next_next;
-
-        cout<<"update loc ... "<<loc<<endl;
-
-        return 0;
+        return distance(a, p);
     }
 
+    float dot2 = v.x*v.x + v.y*v.y + v.z*v.z;
+
+    if(dot2 <= dot)
+    {
+        return distance(b, p);
+    }
+
+    float k = dot / dot2;
+
+    pb.x = a.x + k*v.x;
+    pb.y = a.y + k*v.y;
+    pb.z = a.z + k*v.z;
+
     //
-    return -1;
+    return distance(p, pb);
+}
+
+//
+bool NCPointCloud::isConsidered(Point p)
+{
+    // assume knn has been run
+    if(p.nn.size()<1)
+    {
+        cout<<"need find k neareast neighbors first\n";
+        return false;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<p.nn.size(); i++)
+        {
+
+        }
+    }
+
+
+    //
+    return true;
 }
 
 // class Quadruple
