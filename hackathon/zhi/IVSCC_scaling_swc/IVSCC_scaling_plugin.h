@@ -9,6 +9,13 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
+namespace Ui 
+{
+	class swcScalingUI;
+}
+
+void scaleSWC(QStringList params, NeuronTree* nt, QString inputSWCName);
+
 class IVSCC_scaling : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
@@ -22,6 +29,26 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+};
+
+class swcScalingUI : public QDialog
+{
+    Q_OBJECT
+
+public:
+	V3DPluginCallback2* callback;
+    swcScalingUI(QWidget* parent, V3DPluginCallback2* callback);
+	QStringList inputs;
+    ~swcScalingUI();
+
+public slots:
+	bool okClicked();
+	void filePath();
+
+private:
+    Ui::swcScalingUI* ui;
+	NeuronTree inputNt;
+	QString SWCfileName;
 };
 
 #endif

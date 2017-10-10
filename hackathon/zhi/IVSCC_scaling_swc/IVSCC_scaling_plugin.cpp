@@ -6,15 +6,17 @@
 #include "v3d_message.h"
 #include <vector>
 #include "IVSCC_scaling_plugin.h"
-
 #include <iostream>
+#include "../IVSCC_sort_swc/openSWCDialog.h"
+#include "ui_SWC_scaling.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(IVSCC_scaling, IVSCC_scaling);
  
 QStringList IVSCC_scaling::menulist() const
 {
-	return QStringList() 
+	return QStringList()
+		<<("scale swc")
 		<<tr("about");
 }
 
@@ -28,10 +30,17 @@ QStringList IVSCC_scaling::funclist() const
 
 void IVSCC_scaling::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("about"))
+	if (menu_name == tr("scale swc"))
 	{
-        v3d_msg(tr("This is a plugin only worked using command line to scale swc files in IVSCC pipeline. "
-            "Developed by Zhi Zhou, 2014-10-30"));
+		swcScalingUI* inputForm = new swcScalingUI(0, &callback);
+		inputForm->exec();
+		inputForm->~swcScalingUI();
+	}
+    else if (menu_name == tr("about"))
+	{
+        v3d_msg(tr("This is a plugin for scaling swc files in IVSCC pipeline. \n"
+            "Developed by Zhi Zhou, 2014-10-30\n"
+			"Revised by MK, 2017-10-10"));
 	}
 }
 
