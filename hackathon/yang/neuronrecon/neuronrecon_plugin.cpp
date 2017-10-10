@@ -20,7 +20,7 @@ QStringList NeuReconPlugin::menulist() const
 QStringList NeuReconPlugin::funclist() const
 {
     return QStringList()
-            <<tr("neurecon")
+            <<tr("trees2pointcloud")
            <<tr("samplingtree")
           <<tr("finetunepoints")
          <<tr("getbranchpoints")
@@ -49,9 +49,9 @@ void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     //
-    if (func_name == tr("neurecon"))
+    if (func_name == tr("trees2pointcloud"))
     {
-        return neuronrecon_func(input, output, callback);
+        return convertTrees2Pointcloud_func(input, output, callback);
     }
     else if (func_name == tr("samplingtree"))
     {

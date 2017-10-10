@@ -22,7 +22,7 @@ int neuronrecon_menu(V3DPluginCallback2 &callback, QWidget *parent)
     return 0;
 }
 
-bool neuronrecon_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+bool convertTrees2Pointcloud_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //
     if(input.size()==0 || output.size() != 1) return false;
@@ -636,6 +636,22 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
 
     //parsing input
     char * paras = NULL;
+    float maxAngle = 0.1; // 0.942; // threshold 60 degree (120 degree)
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            maxAngle = atof(paras->at(0));
+            cout<<"angle threshold: "<<maxAngle<<endl;
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
     vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
     if (inlist->size()==0)
     {
@@ -653,7 +669,7 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
 
     // load
     NCPointCloud pointcloud;
-    pointcloud.connectPoints2Lines(QString(inlist->at(0)), QString(outlist->at(0)));
+    pointcloud.connectPoints2Lines(QString(inlist->at(0)), QString(outlist->at(0)), maxAngle);
 
     //
     return true;

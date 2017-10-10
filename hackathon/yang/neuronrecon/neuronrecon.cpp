@@ -617,7 +617,7 @@ int NCPointCloud::knn(int k)
     return 0;
 }
 
-int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
+int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, float angle)
 {
     // load point cloud save as a .apo file
     QList <CellAPO> inputPoints = readAPO_file(infile);
@@ -652,23 +652,29 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
         cout<<"current point ..."<<loc<<endl;
 
         //
-        if(points[loc].visited == false)
+        if(isConsidered(loc))
         {
-            points[loc].visited = true;
-            points[loc].parents.push_back(-1);
-        }
+            //
+            if(points[loc].visited == false)
+            {
+                points[loc].visited = true;
+                points[loc].parents.push_back(-1);
+            }
 
-        //
-        Point p = points[loc];
+            //
+            Point p = points[loc];
 
-        cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
+            cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
 
-        //
-        while(minAngle(loc)>=0)
-        {
-            cout<<"next point ... "<<loc<<endl;
+            //
+            while(minAngle(loc, angle)>=0)
+            {
+                cout<<"next point ... "<<loc<<endl;
+            }
         }
     }
+
+    cout<<"done connection ... \n";
 
     // save connected results into a .swc file
     saveNeuronTree(*this, outfile);
@@ -678,14 +684,14 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile)
 }
 
 // cost func
-int NCPointCloud::minAngle(unsigned long &loc)
+int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 {
     //
     Point p = points[loc];
 
     //
     unsigned int nneighbors = 5;
-    float maxAngle = 0.1; // 0.942; // threshold 60 degree (120 degree)
+    //float maxAngle = 0.1; // 0.942; // threshold 60 degree (120 degree)
     float minAngle = 3.14;
 
     long next = -1;
@@ -838,9 +844,13 @@ float NCPointCloud::distPoint2LineSegment(Point a, Point b, Point p)
 }
 
 //
-bool NCPointCloud::isConsidered(Point p)
+bool NCPointCloud::isConsidered(unsigned long &index)
 {
     // assume knn has been run
+    Point p = points[index];
+
+    float thresh = 3*p.radius;
+
     if(p.nn.size()<1)
     {
         cout<<"need find k neareast neighbors first\n";
@@ -850,10 +860,47 @@ bool NCPointCloud::isConsidered(Point p)
     {
         for(V3DLONG i=0; i<p.nn.size(); i++)
         {
+            Point p1 = points[p.nn[i]];
 
+            if(p1.pre!=-1)
+            {
+                Point p1_pre = points[p1.pre];
+
+                if(distPoint2LineSegment(p1_pre, p1, p) <= thresh)
+                {
+                    points[index].visited = true;
+                    points[index].parents.push_back(-1);
+                    return false;
+                }
+
+                if(p1.next!=-1)
+                {
+                    Point p1_next = points[p1.next];
+
+                    if(distPoint2LineSegment(p1, p1_next, p) <= thresh)
+                    {
+                        points[index].visited = true;
+                        points[index].parents.push_back(-1);
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                if(p1.next!=-1)
+                {
+                    Point p1_next = points[p1.next];
+
+                    if(distPoint2LineSegment(p1, p1_next, p) <= thresh)
+                    {
+                        points[index].visited = true;
+                        points[index].parents.push_back(-1);
+                        return false;
+                    }
+                }
+            }
         }
     }
-
 
     //
     return true;
