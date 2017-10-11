@@ -781,10 +781,13 @@ ControlPanel::ControlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QGridLayout *controlLayout = new QGridLayout();
     controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),1,1,1,1);
     controlLayout->addWidget(pknn,1,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("nearest point(s)")),1,3,1,1);
     controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),2,1,1,1);
     controlLayout->addWidget(pthresh,2,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("degree")),2,3,1,1);
     controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),3,1,1,1);
     controlLayout->addWidget(pdist,3,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("X point's radius")),3,3,1,1);
     control_panel->setLayout(controlLayout);
 
     QWidget* container = new QWidget();
@@ -856,12 +859,57 @@ void ControlPanel::_slot_start()
         nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);
     }
 
-    //
-    v3dhandle curwin = m_v3d.currentImageWindow();
+    // need to reset the color to zero of display with color (using the types)
+    nt.color.r = 0;
+    nt.color.g = 0;
+    nt.color.b = 0;
+    nt.color.a = 0;
 
-    m_v3d.setSWC(curwin, nt);
-    m_v3d.updateImageWindow(curwin);
-    m_v3d.pushObjectIn3DWindow(curwin);
+    //
+    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
+    V3dR_MainWindow * new3DWindow = NULL;
+    bool b_found = false;
+    QString title = QString("line construction");
+    if (list_3dviewer.size() < 1)
+    {
+        new3DWindow = m_v3d.createEmpty3DViewer();
+        if (!new3DWindow)
+        {
+            v3d_msg(QString("Failed to open an empty window!"));
+            return;
+        }
+    }
+    else
+    {
+        for(int j= 0; j < list_3dviewer.size(); j++)
+        {
+            if(m_v3d.getImageName(list_3dviewer[j]).contains(title))
+            {
+                b_found = true;
+                new3DWindow = list_3dviewer[j];
+                break;
+            }
+        }
+
+        if(!b_found)
+        {
+            new3DWindow = m_v3d.createEmpty3DViewer();
+            if(!new3DWindow)
+            {
+                v3d_msg(QString("Failed to open an empty window!"));
+                return;
+            }
+        }
+    }
+
+    //
+    QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    new_treeList->clear();
+    new_treeList->push_back(nt);
+
+    //
+    m_v3d.setWindowDataTitle(new3DWindow, title);
+    m_v3d.update_NeuronBoundingBox(new3DWindow);
 }
 
 void ControlPanel::_slots_openFile()

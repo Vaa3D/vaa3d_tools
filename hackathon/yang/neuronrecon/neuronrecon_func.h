@@ -7,6 +7,7 @@
 #define __NEURONRECON_FUNC_H__
 
 #include <v3d_interface.h>
+#include "basic_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h"
 
