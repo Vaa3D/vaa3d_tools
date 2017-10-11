@@ -44,6 +44,7 @@ public:
 public slots:
 	bool okClicked();
 	void filePath();
+	void checkboxToggled(bool);
 
 private:
     Ui::swcScalingUI* ui;

@@ -84,25 +84,6 @@
      <string>Browse</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="checkBox">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>291</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <weight>75</weight>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Use default filename saving format</string>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="lineEdit_2">
     <property name="geometry">
      <rect>
@@ -150,6 +131,19 @@
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>30</y>
+      <width>241</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Use default saving filename</string>
     </property>
    </widget>
   </widget>
@@ -331,8 +325,8 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>425</x>
-     <y>348</y>
+     <x>545</x>
+     <y>368</y>
     </hint>
     <hint type="destinationlabel">
      <x>189</x>
@@ -347,8 +341,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>499</x>
-     <y>345</y>
+     <x>619</x>
+     <y>365</y>
     </hint>
     <hint type="destinationlabel">
      <x>277</x>
@@ -363,8 +357,8 @@
    <slot>filePath()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>482</x>
-     <y>64</y>
+     <x>632</x>
+     <y>124</y>
     </hint>
     <hint type="destinationlabel">
      <x>562</x>
@@ -372,9 +366,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>swcScalingUI</receiver>
+   <slot>checkboxToggled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>59</x>
+     <y>62</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>9</x>
+     <y>75</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
+  <signal>toggled(bool)</signal>
   <slot>filePath()</slot>
   <slot>okClicked()</slot>
+  <slot>checkboxToggled(bool)</slot>
  </slots>
 </ui>

@@ -17,7 +17,7 @@ swcScalingUI::swcScalingUI(QWidget* parent, V3DPluginCallback2* callback) : QDia
 	ui->lineEdit_3->setText("0.1144");
 	ui->lineEdit_4->setText("0.1144");
 	ui->lineEdit_5->setText("0.2800");
-	ui->lineEdit_6->setText("0.2800");
+	ui->lineEdit_6->setText("0.1144");
 
 	this->show();
 }
@@ -25,6 +25,35 @@ swcScalingUI::swcScalingUI(QWidget* parent, V3DPluginCallback2* callback) : QDia
 swcScalingUI::~swcScalingUI()
 {
     delete ui;
+}
+
+void swcScalingUI::checkboxToggled(bool checked)
+{
+	if (ui->checkBox->isChecked())
+	{
+		this->inputSaveName = SWCfileName;
+		QString pattern = "_p_";
+		if (this->inputSaveName.contains(pattern)) 
+		{
+			this->inputSaveName.replace("_p_", "_m_");
+			ui->lineEdit_2->setText(this->inputSaveName);
+		}
+		else 
+		{
+			if (this->inputSaveName == "") ui->lineEdit_2->setText("");
+			else
+			{
+				this->inputSaveName = this->inputSaveName + "_scaled.swc";
+				ui->lineEdit_2->setText(this->inputSaveName);
+			}
+		}
+	}
+	else
+	{
+		ui->lineEdit_2->setText("Input saving filename here.");
+		this->inputSaveName = SWCfileName;
+		this->inputSaveName = this->inputSaveName + "_scaled.swc";
+	}
 }
 
 void swcScalingUI::filePath()
@@ -45,13 +74,27 @@ void swcScalingUI::filePath()
 	if (ui->checkBox->isChecked())
 	{
 		this->inputSaveName = SWCfileName;
-		this->inputSaveName.replace("_p_", "_m_");
-		ui->lineEdit_2->setText(this->inputSaveName);
+		QString pattern = "_p_";
+		if (this->inputSaveName.contains(pattern)) 
+		{
+			this->inputSaveName.replace("_p_", "_m_");
+			ui->lineEdit_2->setText(this->inputSaveName);
+		}
+		else 
+		{
+			if (this->inputSaveName == "") ui->lineEdit_2->setText("");
+			else
+			{
+				this->inputSaveName = this->inputSaveName + "_scaled.swc";
+				ui->lineEdit_2->setText(this->inputSaveName);
+			}
+		}
 	}
 	else
 	{
 		ui->lineEdit_2->setText("Input saving filename here.");
-		this->inputSaveName = ui->lineEdit_2->text();
+		this->inputSaveName = SWCfileName;
+		this->inputSaveName = this->inputSaveName + "_scaled.swc";
 	}
 	
 	delete openDlg;
