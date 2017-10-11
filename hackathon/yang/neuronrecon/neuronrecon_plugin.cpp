@@ -1,5 +1,5 @@
 /* neuronrecon_plugin.cpp
- * a plugin to reconstruct neuron from multiple traced neurons
+ * a plugin to construct neuron tree(s) from detected signals
  * 09/11/2017 : by Yang Yu
  */
 
@@ -8,12 +8,14 @@
 #include "neuronrecon.h"
 
 
-Q_EXPORT_PLUGIN2(neuronrecon, NeuReconPlugin);
+Q_EXPORT_PLUGIN2(neurontree_construct, NeuReconPlugin);
+
+ControlPanel* ControlPanel::m_controlpanel = 0;
 
 QStringList NeuReconPlugin::menulist() const
 {
     return QStringList()
-            <<tr("NeuronReconstruction")
+            <<tr("line_construct")
            <<tr("about");
 }
 
@@ -26,23 +28,24 @@ QStringList NeuReconPlugin::funclist() const
          <<tr("getbranchpoints")
         <<tr("getstatistics")
        <<tr("lineconstruction")
-      <<tr("help");
+      <<tr("anisotropicfilter")
+     <<tr("help");
 }
 
 void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     //
-    if (menu_name == tr("NeuronReconstruction"))
+    if (menu_name == tr("line_construct"))
     {
-        neuronrecon_menu(callback,parent);
+        lineconstruct_menu(callback,parent);
     }
     else if (menu_name == tr("about"))
     {
-        v3d_msg(tr("a plugin to reconstruct neuron from multiple traced neurons. "));
+        v3d_msg(tr("a plugin to construct neuron tree(s) from detected signals. developed by Yang Yu, 2017. "));
     }
     else
     {
-        v3d_msg(tr("a plugin to reconstruct neuron from multiple traced neurons. "));
+        v3d_msg(tr("a plugin to construct neuron tree(s) from detected signals. "));
     }
 }
 
@@ -72,6 +75,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("lineconstruction"))
     {
         return connectpointstolines_func(input, output, callback);
+    }
+    else if (func_name == tr("anisotropicfilter"))
+    {
+        return anisotropicimagefilter_func(input, output, callback);
     }
     else if (func_name == tr("runpipeline"))
     {

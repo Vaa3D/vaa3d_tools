@@ -1,5 +1,5 @@
 /* neuronrecon_plugin.h
- * a plugin to reconstruct neuron from multiple traced neurons
+ * a plugin to construct neuron tree(s) from detected signals
  * 09/11/2017 : by Yang Yu
  */
  

@@ -46,5 +46,5 @@ LIBS += /home/yangy/work/local/lib/libpcl_common.so
 LIBS += /home/yangy/work/local/lib/libflann.so
 LIBS += /home/yangy/work/local/lib/libboost_system.so
 
-TARGET	= $$qtLibraryTarget(neuronrecon)
-DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neuronrecon/
+TARGET	= $$qtLibraryTarget(neurontree_construct)
+DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neurontree_construct/

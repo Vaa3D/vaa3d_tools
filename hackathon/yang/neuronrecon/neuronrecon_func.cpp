@@ -1,5 +1,5 @@
 /* neuronrecon_func.cpp
- * a plugin to reconstruct neuron from multiple traced neurons
+ * a plugin to construct neuron tree(s) from detected signals
  * 09/11/2017 : by Yang Yu
  */
 
@@ -8,15 +8,21 @@
 #include "neuronrecon.h"
 
 //
-const QString title = QObject::tr("Neuron Reconstruction");
+const QString title = QObject::tr("Neuron Tree(s) Construction");
 
-int neuronrecon_menu(V3DPluginCallback2 &callback, QWidget *parent)
+int lineconstruct_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    // select a folder
-
-    // load all .swc from user selected folder
-
-    // reconstruct neuron
+    //
+    if (ControlPanel::m_controlpanel)
+    {
+        ControlPanel::m_controlpanel->show();
+        return 0;
+    }
+    else
+    {
+        ControlPanel* p = new ControlPanel(callback, parent);
+        if (p)	p->show();
+    }
 
     //
     return 0;
@@ -567,10 +573,10 @@ bool processpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & out
     NCPointCloud pointcloud;
 
     QStringList files;
-//    for (int i=0;i<inlist->size();i++)
-//    {
-//        files.push_back(QString(inlist->at(i)));
-//    }
+    //    for (int i=0;i<inlist->size();i++)
+    //    {
+    //        files.push_back(QString(inlist->at(i)));
+    //    }
 
     files.push_back(neuronTraced);
 
@@ -636,14 +642,22 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
 
     //parsing input
     char * paras = NULL;
-    float maxAngle = 0.1; // 0.942; // threshold 60 degree (120 degree)
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int k=6;
+    float m = 3;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
         if (paras->size() >= 1)
         {
             maxAngle = atof(paras->at(0));
-            cout<<"angle threshold: "<<maxAngle<<endl;
+            cout<<"threshold(angle): "<<maxAngle<<endl;
+
+            k = atoi(paras->at(1));
+            cout<<"k(nn): "<<k<<endl;
+
+            m = atof(paras->at(2));
+            cout<<"dist(p2lc): "<<m<<endl;
         }
         else
         {
@@ -669,7 +683,59 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
 
     // load
     NCPointCloud pointcloud;
-    pointcloud.connectPoints2Lines(QString(inlist->at(0)), QString(outlist->at(0)), maxAngle);
+    pointcloud.connectPoints2Lines(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m);
+
+    //
+    return true;
+}
+
+bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //
+    QString filename = QString(inlist->at(0));
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+
+    //
+    if(filename.toUpper().endsWith(".TIF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return false;
+    }
 
     //
     return true;
@@ -679,4 +745,131 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
 void printHelp()
 {
     cout<<"\n Optimal Constructing Neuron Trees: \n"<<endl;
+}
+
+//
+ControlPanel::ControlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
+    QDialog(parent), m_v3d(_v3d)
+{
+    m_controlpanel = this;
+
+    //
+    m_le_filename = new QLineEdit(QObject::tr(" .apo"));
+    QPushButton *pPushButton_start = new QPushButton(QObject::tr("construct"));
+    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
+    QPushButton *pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
+
+    pknn = new QSpinBox();
+    pthresh = new QSpinBox();
+    pdist = new QSpinBox();
+
+    pknn->setMaximum(100); pknn->setMinimum(1); pknn->setValue(5);
+    pthresh->setMaximum(180); pthresh->setMinimum(0); pthresh->setValue(120);
+    pdist->setMaximum(100); pdist->setMinimum(1); pdist->setValue(5);
+
+    //
+    QGroupBox *input_panel = new QGroupBox("Line Construction:");
+    input_panel->setStyle(new QWindowsStyle());
+    QGridLayout *constructLayout = new QGridLayout();
+    constructLayout->addWidget(new QLabel(QObject::tr("Input a point cloud:")),1,1);
+    constructLayout->addWidget(m_le_filename,2,1,1,2);
+    constructLayout->addWidget(pPushButton_openFileDlg,2,3,1,1);
+    input_panel->setLayout(constructLayout);
+
+    QGroupBox *control_panel = new QGroupBox("Parameters:");
+    control_panel->setStyle(new QWindowsStyle());
+    QGridLayout *controlLayout = new QGridLayout();
+    controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),1,1,1,1);
+    controlLayout->addWidget(pknn,1,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),2,1,1,1);
+    controlLayout->addWidget(pthresh,2,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),3,1,1,1);
+    controlLayout->addWidget(pdist,3,2,1,1);
+    control_panel->setLayout(controlLayout);
+
+    QWidget* container = new QWidget();
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(pPushButton_start,1,2);
+    bottomBar->addWidget(pPushButton_close,1,1);
+    container->setLayout(bottomBar);
+
+    QGridLayout *pGridLayout = new QGridLayout();
+    pGridLayout->addWidget(input_panel);
+    pGridLayout->addWidget(control_panel);
+    pGridLayout->addWidget(container);
+
+    setLayout(pGridLayout);
+    setWindowTitle(QString("Construct points into line segments"));
+
+    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
+    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
+    connect(pPushButton_openFileDlg, SIGNAL(clicked()), this, SLOT(_slots_openFile()));
+}
+
+ControlPanel::~ControlPanel()
+{
+    m_controlpanel = 0;
+}
+
+void ControlPanel::_slot_close()
+{
+    if (m_controlpanel)
+    {
+        delete m_controlpanel;
+        m_controlpanel=0;
+    }
+}
+void ControlPanel::_slot_start()
+{
+    //
+    QString pointcloud_filename = m_le_filename->text();
+    if (!QFile(pointcloud_filename).exists())
+    {
+        v3d_msg("Cannot find your point cloud file.");
+        return;
+    }
+
+    //
+    int k = pknn->value() + 1;
+    float maxAngle = 3.14f - (pthresh->value()/180.0f*3.14159f);
+    float m = pdist->value();
+
+    //
+    NCPointCloud pointcloud;
+    pointcloud.connectPoints2Lines(pointcloud_filename, NULL, k, maxAngle, m);
+
+    //
+    NeuronTree nt;
+
+    for(V3DLONG i=0; i<pointcloud.points.size(); i++)
+    {
+        NeuronSWC S;
+        S.n = pointcloud.points[i].n;
+        S.type = 3;
+        S.x = pointcloud.points[i].x;
+        S.y= pointcloud.points[i].y;
+        S.z = pointcloud.points[i].z;
+        S.r = pointcloud.points[i].radius;
+        S.pn = pointcloud.points[i].parents[0];
+
+        nt.listNeuron.append(S);
+        nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);
+    }
+
+    //
+    v3dhandle curwin = m_v3d.currentImageWindow();
+
+    m_v3d.setSWC(curwin, nt);
+    m_v3d.updateImageWindow(curwin);
+    m_v3d.pushObjectIn3DWindow(curwin);
+}
+
+void ControlPanel::_slots_openFile()
+{
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Choose a file (.apo):"));
+    if(!fileOpenName.isEmpty())
+    {
+        m_le_filename->setText(fileOpenName);
+    }
 }

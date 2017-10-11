@@ -119,13 +119,13 @@ public:
     float distPoint2LineSegment(Point a, Point b, Point p);
 
     // judge whether a point important
-    bool isConsidered(unsigned long &index);
+    bool isConsidered(unsigned long &index, float m);
 
     // k nearest neighbor search
     int knn(int k);
 
     //
-    int connectPoints2Lines(QString infile, QString outfile, float angle);
+    int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
 
     // cost func
     int minAngle(unsigned long &loc, float maxAngle);

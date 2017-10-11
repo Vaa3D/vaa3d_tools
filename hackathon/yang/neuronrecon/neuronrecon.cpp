@@ -1,5 +1,5 @@
 // neuronrecon.cpp
-// neuron reconstruction from multiple traced neurons
+// construct neuron tree(s) from detected signals
 
 #include "neuronrecon.h"
 
@@ -617,7 +617,7 @@ int NCPointCloud::knn(int k)
     return 0;
 }
 
-int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, float angle)
+int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m)
 {
     // load point cloud save as a .apo file
     QList <CellAPO> inputPoints = readAPO_file(infile);
@@ -641,7 +641,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, float ang
     }
 
     // find k nearest neighbors
-    int k=6;
+    //int k=6;
     knn(k);
 
     // connect points into lines
@@ -652,7 +652,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, float ang
         cout<<"current point ..."<<loc<<endl;
 
         //
-        if(isConsidered(loc))
+        if(isConsidered(loc, m))
         {
             //
             if(points[loc].visited == false)
@@ -677,7 +677,11 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, float ang
     cout<<"done connection ... \n";
 
     // save connected results into a .swc file
-    saveNeuronTree(*this, outfile);
+
+    if(!outfile.isEmpty())
+    {
+        saveNeuronTree(*this, outfile);
+    }
 
     //
     return 0;
@@ -844,12 +848,12 @@ float NCPointCloud::distPoint2LineSegment(Point a, Point b, Point p)
 }
 
 //
-bool NCPointCloud::isConsidered(unsigned long &index)
+bool NCPointCloud::isConsidered(unsigned long &index, float m)
 {
     // assume knn has been run
     Point p = points[index];
 
-    float thresh = 3*p.radius;
+    float thresh = m*p.radius;
 
     if(p.nn.size()<1)
     {
