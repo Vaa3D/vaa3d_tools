@@ -909,6 +909,7 @@ void ControlPanel::_slot_start()
 
     //
     m_v3d.setWindowDataTitle(new3DWindow, title);
+    m_v3d.update_3DViewer(new3DWindow);
     m_v3d.update_NeuronBoundingBox(new3DWindow);
 }
 
