@@ -4,6 +4,7 @@
 #include "../IVSCC_sort_swc/openSWCDialog.h"
 #include "ui_SWC_scaling.h"
 #include <qstring.h>
+#include <qstringlist.h>
 
 using namespace std;
 
@@ -12,10 +13,11 @@ swcScalingUI::swcScalingUI(QWidget* parent, V3DPluginCallback2* callback) : QDia
     ui->setupUi(this);
 	this->callback = callback;
 	
-	ui->lineEdit_3->setText("114.4");
-	ui->lineEdit_4->setText("114.4");
-	ui->lineEdit_5->setText("280");
-	ui->lineEdit_6->setText("280");
+	ui->checkBox->setChecked(true);	
+	ui->lineEdit_3->setText("0.1144");
+	ui->lineEdit_4->setText("0.1144");
+	ui->lineEdit_5->setText("0.2800");
+	ui->lineEdit_6->setText("0.2800");
 
 	this->show();
 }
@@ -40,6 +42,18 @@ void swcScalingUI::filePath()
 	NeuronTree nt;
 	if (SWCfileName.toUpper().endsWith(".SWC") || SWCfileName.toUpper().endsWith(".ESWC")) this->inputNt = openDlg->nt;
 
+	if (ui->checkBox->isChecked())
+	{
+		this->inputSaveName = SWCfileName;
+		this->inputSaveName.replace("_p_", "_m_");
+		ui->lineEdit_2->setText(this->inputSaveName);
+	}
+	else
+	{
+		ui->lineEdit_2->setText("Input saving filename here.");
+		this->inputSaveName = ui->lineEdit_2->text();
+	}
+	
 	delete openDlg;
 }
 
@@ -53,7 +67,7 @@ bool swcScalingUI::okClicked()
 	accept();
 	
 	NeuronTree* inputTreePtr = &(this->inputNt);
-	scaleSWC(this->inputs, inputTreePtr, this->SWCfileName);
+	scaleSWC(this->inputs, inputTreePtr, this->inputSaveName);
 
 	return true;
 }
@@ -61,10 +75,10 @@ bool swcScalingUI::okClicked()
 
 void scaleSWC(QStringList params, NeuronTree* nt, QString inputSWCName)
 {
-	if (inputSWCName == "")
+	if (inputSWCName == "Input saving filename here.")
 	{
-		cerr << "Not a valid input. Exit with doing nothing." << endl;
-		QString errMsg = "Not a valid input. Exit plugin with doing nothing.";
+		cerr << "Not a valid filename. Exit with doing nothing." << endl;
+		QString errMsg = "Not a valid filename. Exit plugin with doing nothing.";
 		v3d_msg(errMsg);
 		return;
 	}
@@ -102,9 +116,8 @@ void scaleSWC(QStringList params, NeuronTree* nt, QString inputSWCName)
     nt_scaled.listNeuron = listNeuron;
     nt_scaled.hashNeuron = hashNeuron;
 
-	QString outSWCFileName = inputSWCName + "_scaled.swc";
-    writeSWC_file(outSWCFileName, nt_scaled);
+    writeSWC_file(inputSWCName, nt_scaled);
 
-	QString FinishMsg = QString("The scaled SWC file [") + outSWCFileName + QString("] has been generated.");
+	QString FinishMsg = QString("The scaled SWC file [") + inputSWCName + QString("] has been generated.");
 	v3d_msg(FinishMsg);
 }

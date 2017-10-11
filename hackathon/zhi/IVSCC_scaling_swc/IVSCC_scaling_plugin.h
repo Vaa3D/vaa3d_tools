@@ -49,6 +49,7 @@ private:
     Ui::swcScalingUI* ui;
 	NeuronTree inputNt;
 	QString SWCfileName;
+	QString inputSaveName;
 };
 
 #endif
