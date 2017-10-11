@@ -148,7 +148,7 @@ void computeLinear(const NeuronTree & nt)
 	double xmin,ymin,zmin;
 	xmin = ymin = zmin = VOID;
 	double xmax,ymax,zmax;
-	xmax = ymax = zmax = 0;
+    xmax = ymax = zmax = -VOID;
 	QList<NeuronSWC> list = nt.listNeuron;
 	NeuronSWC soma = list.at(rootidx);
 
