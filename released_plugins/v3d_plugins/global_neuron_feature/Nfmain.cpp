@@ -127,6 +127,7 @@ void nf_main(V3DPluginCallback2 &callback, QWidget *parent)
 
 	if (features) {delete []features; features = NULL;}
 
+	delete openDlg; // MK, Oct, 2017, free up dialog pointer to memory violation.
 }
 
 void nf_first_main(V3DPluginCallback2 &callback, QWidget *parent)
@@ -204,7 +205,7 @@ void nf_first_main(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     if (features) {delete []features; features = NULL;}
-
+	delete openDlg; // MK, Oct, 2017, free up dialog pointer to memory violation.
 }
 
 void printFeature(double * features)
