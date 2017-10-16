@@ -79,6 +79,12 @@ public:
     int connected; // 0 not connected; 1 connected to one other point; 2 connected two other points; ...
     V3DLONG pre, next; // index
     vector<V3DLONG> nn; // k nearest neighbors (indices)
+
+    bool treeConnected; // connected to a tree
+    int lengthLine; // if the point is root, how many points connected to it
+    bool isBranch; // is the point a branch point
+    bool isSoma; // is the point the soma
+    int nLine; // # of the line
 };
 
 //
@@ -188,7 +194,7 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
 
 
         typedef itk::ImageFileReader< InputImageType  >  ReaderType;
-        typedef itk::ImageFileWriter< OutputImageType >  WriterType;
+        typedef itk::ImageFileWriter< OutputImageType >  WriterType;http://www.geeksforgeeks.org/construct-a-binary-tree-from-parent-array-representation/
 
         typename ReaderType::Pointer reader = ReaderType::New();
         typename WriterType::Pointer writer = WriterType::New();

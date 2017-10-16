@@ -29,7 +29,9 @@ QStringList NeuReconPlugin::funclist() const
         <<tr("getstatistics")
        <<tr("lineconstruction")
       <<tr("anisotropicfilter")
-     <<tr("help");
+     <<tr("bnprocess")
+    <<tr("dlprocess")
+    <<tr("help");
 }
 
 void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -83,6 +85,14 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("runpipeline"))
     {
         return processpipeline_func(input, output, callback);
+    }
+    else if (func_name == tr("bnprocess"))
+    {
+        return bnpipeline_func(input, output, callback);
+    }
+    else if (func_name == tr("dlprocess"))
+    {
+        return dlpipeline_func(input, output, callback);
     }
     else if (func_name == tr("help"))
     {

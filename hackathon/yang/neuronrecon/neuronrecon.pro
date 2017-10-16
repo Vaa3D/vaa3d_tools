@@ -12,7 +12,9 @@ INCLUDEPATH     += /home/yangy/work/local/include/eigen3
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
-INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/
+INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include
+
+INCLUDEPATH += /home/yangy/work/cuda/include
 
 HEADERS	+= neuronrecon_plugin.h
 HEADERS	+= neuronrecon_func.h
@@ -27,6 +29,9 @@ HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/adjacency_list.hpp
 HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/config.hpp
 HEADERS	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.h
 
+HEADERS	+= zhidl/classification.h
+HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+
 SOURCES	+= neuronrecon_plugin.cpp
 SOURCES	+= neuronrecon_func.cpp
 SOURCES	+= neuronrecon.cpp
@@ -34,17 +39,35 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
+SOURCES += zhidl/classification.cpp
+SOURCES += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+
+macx{
+    LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
+}
+
+unix:!macx {
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -fopenmp
+    LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
+}
+
 LIBS += -lOpenCL
-LIBS += /home/yangy/work/local/lib/libITKIOTIFF-4.13.so
-LIBS += /home/yangy/work/local/lib/libITKGPUCommon-4.13.so
-LIBS += /home/yangy/work/local/lib/libITKGPUAnisotropicSmoothing-4.13.so
+LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
+LIBS += -lpcl_kdtree -lpcl_common -lflann
+LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
+#LIBS += -lcaffe -lhdf5 -lhdf5_cpp
+LIBS += -lglog -lgflags -lprotobuf -llmdb -lleveldb -lstdc++ -lcudnn -lcblas -latlas
+LIBS += -L/home/yangy/work/local/lib -lboost_system -lboost_filesystem -lboost_thread
+LIBS += -L/home/yangy/work/cuda/lib64 -lcudart -lcublas -lcurand
+
+LIBS += /home/yangy/work/local/lib64/libcaffe.a
+LIBS += /home/yangy/work/local/lib64/libcaffeproto.a
+#LIBS += /home/yangy/work/local/lib/libhdf5.a
+#LIBS += /home/yangy/work/local/lib/libhdf5_cpp.a
 
 LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
-
-LIBS += /home/yangy/work/local/lib/libpcl_kdtree.so
-LIBS += /home/yangy/work/local/lib/libpcl_common.so
-LIBS += /home/yangy/work/local/lib/libflann.so
-LIBS += /home/yangy/work/local/lib/libboost_system.so
 
 TARGET	= $$qtLibraryTarget(neurontree_construct)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neurontree_construct/

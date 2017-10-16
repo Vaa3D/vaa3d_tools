@@ -6,6 +6,8 @@
 //
 #include "neuronrecon_func.h"
 #include "neuronrecon.h"
+#include "zhidl/classification.h"
+#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 
 //
 const QString title = QObject::tr("Neuron Tree(s) Construction");
@@ -736,6 +738,446 @@ bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgLis
         cout<<"Current only support TIFF image as input file\n";
         return false;
     }
+
+    //
+    return true;
+}
+
+// bigneuron-based methods to detect signals
+bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    // processing
+
+    // step 1.
+    QString filename = QString(inlist->at(0));
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+
+    QString neuronTraced1 = filename.left(filename.lastIndexOf(".")).append("_traced1.swc");
+    QString neuronTraced2 = filename.left(filename.lastIndexOf(".")).append("_traced2.swc");
+
+    QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
+    QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
+
+    if(filename.toUpper().endsWith(".TIF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return -1;
+    }
+
+    // step 2.
+    if(fnITKfiltered.toUpper().endsWith(".V3DRAW") || fnITKfiltered.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnITKfiltered.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            cout<<"Not supported!\n";
+            return false;
+        }
+
+        // method #1
+        PARA_APP2 p2;
+        QString versionStr = "v0.001";
+
+        // method #1 parameters set #1
+        p2.is_gsdt = true;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = true;
+        p2.bkg_thresh = 55;
+        p2.length_thresh = 15;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = false;
+        p2.b_RadiusFrom2D = true;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.p4dImage = p4dImage;
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = p2.p4dImage->getXDim()-1;
+        p2.yc1 = p2.p4dImage->getYDim()-1;
+        p2.zc1 = p2.p4dImage->getZDim()-1;
+
+        p2.outswc_file = neuronTraced1;
+        proc_app2(callback, p2, versionStr);
+
+        // method #1 parameters set #2
+        p2.is_gsdt = true;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = true;
+        p2.bkg_thresh = 10;
+        p2.length_thresh = 5;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = false;
+        p2.b_RadiusFrom2D = true;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.p4dImage = p4dImage;
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = p2.p4dImage->getXDim()-1;
+        p2.yc1 = p2.p4dImage->getYDim()-1;
+        p2.zc1 = p2.p4dImage->getZDim()-1;
+
+        p2.outswc_file = neuronTraced2;
+        proc_app2(callback, p2, versionStr);
+
+        // method2 ...
+
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return -1;
+    }
+
+    // step 3. load multiple traced neurons (trees saved as .swc)
+    NCPointCloud pointcloud;
+
+    QStringList files;
+    files.push_back(neuronTraced1);
+    files.push_back(neuronTraced2);
+
+    //
+    pointcloud.getPointCloud(files);
+    pointcloud.savePointCloud(cnvtPoints);
+
+    // step 4. lines constructed
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int k=6;
+    float m = 8;
+
+    NCPointCloud lines;
+    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
+
+    // step 5. neuron tree(s) traced
+
+
+    //
+    return true;
+}
+
+// deep-learning methods to detect signals
+bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    // pipeline:
+    // 1. use dl trained classifier to detect signals
+    // 2. connect detected points into lines
+    // 3. assemble into (a) tree(s)
+
+    cout<<"deep-learning methods to detect signals ...\n";
+
+    // Zhi's 3D Axon Detection
+    // inputs: image, model, deployed, mean
+    vector<char*> infiles, paras, outfiles;
+
+    if(input.size() >= 1)
+    {
+        infiles = *((vector<char*> *)input.at(0).p);
+    }
+    else
+    {
+        cout<<"please input an image\n";
+        return false;
+    }
+
+    if(input.size() >= 2)
+    {
+        paras = *((vector<char*> *)input.at(1).p);
+    }
+    else
+    {
+        cout<<"please input classifier, mean, ...\n";
+        return false;
+    }
+
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if(infiles.empty())
+    {
+        cerr<<"Need input image file"<<endl;
+        return false;
+    }
+
+    QString  inimg_file =  infiles[0];
+    int k=0;
+    QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+    if(model_file.isEmpty())
+    {
+        cerr<<"Need a model_file"<<endl;
+        return false;
+    }
+
+    QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+    if(trained_file.isEmpty())
+    {
+        cerr<<"Need a trained_file"<<endl;
+        return false;
+    }
+
+    QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+    if(mean_file.isEmpty())
+    {
+        cerr<<"Need a mean_file"<<endl;
+        return false;
+    }
+
+    //
+    int Sxy = (paras.size() >= k+1) ? atoi(paras[k]):10;k++;
+    int Ws = (paras.size() >= k+1) ? atoi(paras[k]):512;k++;
+
+    QString mip_file = (paras.size() >= k+1) ? paras[k]:""; if(mip_file == "NULL") mip_file = "";
+    bool mip_flag = false;
+    if(!mip_file.isEmpty())
+    {
+        mip_flag = true;
+    }
+
+    //
+    cout<<"inputs ...\n";
+    cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+    cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+    cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+    cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+    cout<<"sample_size = "<<Sxy<<endl;
+    cout<<"image_size = "<<Ws<<endl;
+    cout<<"mip_file = "<<mip_flag<<endl;
+    cout<<"...\n";
+
+    unsigned char * data1d = 0;
+    V3DLONG in_sz[4];
+    unsigned char *data1d_mip=0;
+    int datatype;
+    V3DLONG N,M,P;
+    if(mip_flag)
+    {
+        V3DLONG in_mip_sz[4];
+        if(!simple_loadimage_wrapper(callback, mip_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
+        {
+            cerr<<"load image "<<mip_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+        N = in_mip_sz[0];
+        M = in_mip_sz[1];
+    }else
+    {
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        N = in_sz[0];
+        M = in_sz[1];
+        P = in_sz[2];
+
+        V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
+        try {data1d_mip = new unsigned char [pagesz_mip];}
+        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                int max_mip = 0;
+                for(V3DLONG iz = 0; iz < P; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    if(data1d[offsetk + offsetj + ix] >= max_mip)
+                    {
+                        data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                        max_mip = data1d[offsetk + offsetj + ix];
+                    }
+                }
+            }
+        }
+        if(data1d) {delete []data1d; data1d = 0;}
+    }
+
+    std::vector<std::vector<float> > detection_results;
+    LandmarkList marklist_2D;
+
+    //
+    for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+    {
+
+        V3DLONG yb = iy;
+        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+        {
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+            unsigned char *blockarea=0;
+            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+
+            blockarea = new unsigned char [blockpagesz];
+            V3DLONG i = 0;
+            for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+            {
+                V3DLONG offsetj = iiy*N;
+                for(V3DLONG iix = xb; iix < xe+1; iix++)
+                {
+
+                    blockarea[i] = data1d_mip[offsetj + iix];
+                    i++;
+                }
+            }
+            Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+            detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+            V3DLONG d = 0;
+            for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+            {
+                for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                {
+                    std::vector<float> output = detection_results[d];
+                    if(output.at(1) > output.at(0))
+                    {
+                        LocationSimple S;
+                        S.x = iix;
+                        S.y = iiy;
+                        S.z = 1;
+                        marklist_2D.push_back(S);
+                    }
+                    d++;
+                }
+            }
+            if(blockarea) {delete []blockarea; blockarea =0;}
+
+        }
+    }
+
+    cerr<<"mean shifting ..."<<endl;
+
+    //mean shift
+    mean_shift_fun fun_obj;
+    LandmarkList marklist_2D_shifted;
+    vector<V3DLONG> poss_landmark;
+    vector<float> mass_center;
+    double windowradius = Sxy+5;
+
+    V3DLONG sz_img[4];
+    sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+    fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+    poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+    for (V3DLONG j=0;j<poss_landmark.size();j++)
+    {
+        mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+        marklist_2D_shifted.append(tmp);
+
+    }
+
+    QList <ImageMarker> marklist_3D;
+    ImageMarker S;
+    NeuronTree nt;
+    QList <NeuronSWC> & listNeuron = nt.listNeuron;
+
+    if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+    {
+        cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+        return false;
+    }
+
+    if(mip_flag)    P = in_sz[2];
+
+    for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+    {
+        V3DLONG ix = marklist_2D_shifted.at(i).x;
+        V3DLONG iy = marklist_2D_shifted.at(i).y;
+        double I_max = 0;
+        V3DLONG iz;
+        for(V3DLONG j = 0; j < P; j++)
+        {
+            if(data1d[j*M*N + iy*N + ix] >= I_max)
+            {
+                I_max = data1d[j*M*N + iy*N + ix];
+                iz = j;
+            }
+
+        }
+        S.x = ix;
+        S.y = iy;
+        S.z = iz;
+        S.color.r = 255;
+        S.color.g = 0;
+        S.color.b = 0;
+        marklist_3D.append(S);
+    }
+
+    Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+    QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
+    cerr<<"Deleting false detection ..."<<endl;
+
+    if(data1d) {delete []data1d; data1d = 0;}
+    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+    {
+        V3DLONG ix = marklist_3D_pruned.at(i).x;
+        V3DLONG iy = marklist_3D_pruned.at(i).y;
+        V3DLONG iz = marklist_3D_pruned.at(i).z;
+
+        NeuronSWC n;
+        n.x = ix-1;
+        n.y = iy-1;
+        n.z = iz-1;
+        n.n = i+1;
+        n.type = 2;
+        n.r = 1;
+        n.pn = -1; //so the first one will be root
+        listNeuron << n;
+    }
+
+    QString  swc_processed = inimg_file + "_axon_3D.swc";
+    writeSWC_file(swc_processed,nt);
 
     //
     return true;
