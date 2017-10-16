@@ -22,7 +22,6 @@ using std::string;
 template <class T> T pow2(T a)
 {
     return a*a;
-
 }
 
 /* Pair (label, confidence) representing a prediction. */

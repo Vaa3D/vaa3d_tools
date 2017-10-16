@@ -57,15 +57,19 @@ LIBS += -lOpenCL
 LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
 LIBS += -lpcl_kdtree -lpcl_common -lflann
 LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
-#LIBS += -lcaffe -lhdf5 -lhdf5_cpp
+LIBS += -lcaffe -lhdf5 -lhdf5_cpp
 LIBS += -lglog -lgflags -lprotobuf -llmdb -lleveldb -lstdc++ -lcudnn -lcblas -latlas
 LIBS += -L/home/yangy/work/local/lib -lboost_system -lboost_filesystem -lboost_thread
 LIBS += -L/home/yangy/work/cuda/lib64 -lcudart -lcublas -lcurand
 
-LIBS += /home/yangy/work/local/lib64/libcaffe.a
-LIBS += /home/yangy/work/local/lib64/libcaffeproto.a
+#LIBS += /home/yangy/work/local/lib64/libcaffe.a
+#LIBS += /home/yangy/work/local/lib64/libcaffeproto.a
 #LIBS += /home/yangy/work/local/lib/libhdf5.a
 #LIBS += /home/yangy/work/local/lib/libhdf5_cpp.a
+
+#LIBS += /local1/work/tools/vaa3d_tools/hackathon/yang/neuronrecon/templib/libcaffe.so.1.0.0-rc3
+#LIBS += /local1/work/tools/vaa3d_tools/hackathon/yang/neuronrecon/templib/libhdf5_hl.so.10
+#LIBS += /local1/work/tools/vaa3d_tools/hackathon/yang/neuronrecon/templib/libhdf5.so.10
 
 LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
 

@@ -3,9 +3,12 @@
 //
 Classifier::Classifier(const string& model_file,
                        const string& trained_file,
-                       const string& mean_file) {
+                       const string& mean_file)
+{
+    //
+    Caffe::set_mode(Caffe::GPU);
 
-    /* Load the network. */
+    //std::cout<<" Load the network ...\n";
     batch_size_=1000;
     net_.reset(new Net<float>(model_file, TEST));
     net_->CopyTrainedLayersFrom(trained_file);
@@ -13,13 +16,12 @@ Classifier::Classifier(const string& model_file,
     CHECK_EQ(net_->num_outputs(), 1) << "Network should have exactly one output.";
     Blob<float>* input_layer = net_->input_blobs()[0];
     num_channels_ = input_layer->channels();
-    CHECK(num_channels_ == 3 || num_channels_ == 1)
-            << "Input layer should have 1 or 3 channels.";
+    CHECK(num_channels_ == 3 || num_channels_ == 1) << "Input layer should have 1 or 3 channels.";
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
-    /* Load the binaryproto mean file. */
-    if(!mean_file.empty()) SetMean(mean_file);
-    Caffe::set_mode(Caffe::CPU);
-    /* Load labels. */
+
+    //std::cout<<" Load the binaryproto mean file ...\n";
+    if(!mean_file.empty())
+        SetMean(mean_file);
 }
 
 /* Load the mean file in binaryproto format. */

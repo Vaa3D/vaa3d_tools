@@ -912,7 +912,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     // 2. connect detected points into lines
     // 3. assemble into (a) tree(s)
 
-    cout<<"deep-learning methods to detect signals ...\n";
+    cout<<"step 1. deep-learning methods to detect signals ...\n";
 
     // Zhi's 3D Axon Detection
     // inputs: image, model, deployed, mean
@@ -991,6 +991,29 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     cout<<"mip_file = "<<mip_flag<<endl;
     cout<<"...\n";
 
+    // check file exist
+    if (!QFile(inimg_file).exists())
+    {
+        cout<<"Cannot find the input image file.\n";
+        return false;
+    }
+    if (!QFile(model_file).exists())
+    {
+        cout<<"Cannot find the model image file.\n";
+        return false;
+    }
+    if (!QFile(trained_file).exists())
+    {
+        cout<<"Cannot find the trained image file.\n";
+        return false;
+    }
+    if (!QFile(mean_file).exists())
+    {
+        cout<<"Cannot find the mean image file.\n";
+        return false;
+    }
+
+    //
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     unsigned char *data1d_mip=0;
@@ -1054,7 +1077,9 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
         {
             V3DLONG xb = ix;
-            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+            V3DLONG xe = ix+Ws-1;
+            if(xe>=N-1) xe = N-1;
+
             unsigned char *blockarea=0;
             V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
 
@@ -1143,7 +1168,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                 I_max = data1d[j*M*N + iy*N + ix];
                 iz = j;
             }
-
         }
         S.x = ix;
         S.y = iy;
@@ -1176,8 +1200,31 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         listNeuron << n;
     }
 
-    QString  swc_processed = inimg_file + "_axon_3D.swc";
-    writeSWC_file(swc_processed,nt);
+    QString  swc_dl_detected = inimg_file.left(inimg_file.lastIndexOf(".")).append("_axon_3D.swc");
+    writeSWC_file(swc_dl_detected,nt);
+
+    // step 2. load multiple traced neurons (trees saved as .swc)
+    QString cnvtPoints = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_pointcloud.apo");
+    QString linesTraced = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_linestraced.swc");
+
+    NCPointCloud pointcloud;
+
+    QStringList files;
+    files.push_back(swc_dl_detected);
+
+    //
+    pointcloud.getPointCloud(files);
+    pointcloud.savePointCloud(cnvtPoints);
+
+    // step 3. lines constructed
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int knn=6;
+    float m = 8;
+
+    NCPointCloud lines;
+    lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
+
+    // step 4.
 
     //
     return true;
