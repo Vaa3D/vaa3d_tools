@@ -541,14 +541,14 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 		for (size_t j=0; j<leafLength.size(); ++j)
 		{
 			if (leafLength[j] == 0) continue;
-			cout << j << ": " << leafLength[j] << " " << headRadius[j] << endl;
+			//cout << j << ": " << leafLength[j] << " " << headRadius[j] << endl;
 
 			inversedLeafLength[leafLength[j]] = j;
 		}
 		for (size_t j=0; j<inversedLeafLength.size(); ++j)
 		{
 			if (inversedLeafLength[j] == 0) continue;
-			cout << j << ": " << inversedLeafLength[j] << endl;
+			//cout << j << ": " << inversedLeafLength[j] << endl;
 		}
 
 		for (int j=inversedLeafLength.size()-1; j>=0; --j)
@@ -561,7 +561,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 			int d = 0;
 			NeuronSWC currNode = list.at(currLoc);
 			double headR = headRadius[currLoc];
-			cout << "head radius: " << headR << " ";
+			//cout << "head radius: " << headR << " ";
 			while (currNode.parent != -1)
 			{
 				if (nodeAssigned[currLoc] == true) break;
@@ -573,9 +573,9 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 				currLoc = nt.hashNeuron.value(currNode.parent);
 				currNode = nt.listNeuron.at(currLoc);
 
-				cout << estimatedR << " ";
+				//cout << estimatedR << " ";
 			}
-			cout << endl;
+			//cout << endl;
 		}
 
 		QString fileDefaultName = fileOpenName+QString("_interpolatedA.swc");
@@ -778,15 +778,16 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 			map<size_t, bool> nodeAssigned;
 			for (size_t i=0; i<list.size(); ++i) nodeAssigned[i] = false;
 			map<size_t, size_t> leafLength;
+			map<size_t, double> headRadius;
+			double headR = 0;
 			for (size_t i=0; i<list.size(); ++i)
 			{
 				if (list.at(i).parent == 1 || list.at(i).parent == -1)
 				{
 					nodeAssigned[i] = true;
-					continue;
 				}
 
-				if (list.at(i).type != 2 && childs.at(i).size() ==0)
+				if (list.at(i).type != 2 && childs.at(i).size() == 0)
 				{
 					size_t path_length = 0;
 					size_t curr_index = i;
@@ -799,15 +800,17 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 						//cout << currNode.n << "..." << endl;
 						++path_length;
 					}
+					headR = list.at(currNode.parent).radius;
+					headRadius[i] = headR;
 					leafLength[i] = path_length;
 				}
 			}
 
-			map<size_t, size_t> inversedLeafLength;
+			map<size_t, size_t> inversedLeafLength; 
 			for (size_t j=0; j<leafLength.size(); ++j)
 			{
 				if (leafLength[j] == 0) continue;
-				//cout << j << ": " << leafLength[j] << endl;
+				//cout << j << ": " << leafLength[j] << " " << headRadius[j] << endl;
 
 				inversedLeafLength[leafLength[j]] = j;
 			}
@@ -826,11 +829,13 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 				//cout << currLoc << ": ";
 				int d = 0;
 				NeuronSWC currNode = list.at(currLoc);
+				double headR = headRadius[currLoc];
+				//cout << "head radius: " << headR << " ";
 				while (currNode.parent != -1)
 				{
 					if (nodeAssigned[currLoc] == true) break;
 
-					double estimatedR = 2.0 + d*(list.at(currLoc).radius-2.0)/(currLength);
+					double estimatedR = 2.0 + d*(headR-2.0)/(currLength);
 					nt.listNeuron[currLoc].radius = estimatedR;
 					++d;
 					nodeAssigned[currLoc] = true;
