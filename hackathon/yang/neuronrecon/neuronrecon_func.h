@@ -22,6 +22,7 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
 bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 void printHelp();
 
 //

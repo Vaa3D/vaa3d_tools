@@ -743,6 +743,59 @@ bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgLis
     return true;
 }
 
+bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1)
+    {
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    // load multiple traced neurons (trees saved as .swc)
+    NCPointCloud pointcloud;
+
+    QStringList files;
+    for (int i=0;i<inlist->size();i++)
+    {
+        files.push_back(QString(inlist->at(i)));
+    }
+
+    pointcloud.getPointCloud(files);
+
+    // delete duplicated points
+    pointcloud.delDuplicatedPoints();
+
+    // sort
+    NCPointCloud pcsorted;
+    pcsorted.ksort(pointcloud, 10);
+
+    // output .apo file (point cloud)
+    QString outfileName;
+    outfileName = QString(outlist->at(0));
+
+    pcsorted.savePointCloud(outfileName);
+
+    //
+    return true;
+}
+
 // bigneuron-based methods to detect signals
 bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
@@ -1017,6 +1070,9 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     unsigned char *data1d_mip=0;
+
+    unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
+
     int datatype;
     V3DLONG N,M,P;
     if(mip_flag)
@@ -1029,7 +1085,8 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         }
         N = in_mip_sz[0];
         M = in_mip_sz[1];
-    }else
+    }
+    else
     {
         if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
@@ -1061,11 +1118,11 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                 }
             }
         }
-        if(data1d) {delete []data1d; data1d = 0;}
     }
 
     std::vector<std::vector<float> > detection_results;
     LandmarkList marklist_2D;
+    Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
 
     //
     for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
@@ -1095,7 +1152,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     i++;
                 }
             }
-            Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+            //
             detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
 
             V3DLONG d = 0;
@@ -1119,8 +1176,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
 
         }
     }
-
-    cerr<<"mean shifting ..."<<endl;
 
     //mean shift
     mean_shift_fun fun_obj;
@@ -1147,10 +1202,13 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     NeuronTree nt;
     QList <NeuronSWC> & listNeuron = nt.listNeuron;
 
-    if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+    if(!data1d)
     {
-        cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
-        return false;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
     }
 
     if(mip_flag)    P = in_sz[2];
@@ -1178,11 +1236,11 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         marklist_3D.append(S);
     }
 
-    Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+    // delete false detections
+    //Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
     QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
-    cerr<<"Deleting false detection ..."<<endl;
 
-    if(data1d) {delete []data1d; data1d = 0;}
+    // estimate radius
     for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
     {
         V3DLONG ix = marklist_3D_pruned.at(i).x;
@@ -1195,10 +1253,11 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         n.z = iz-1;
         n.n = i+1;
         n.type = 2;
-        n.r = 1;
-        n.pn = -1; //so the first one will be root
+        n.r = estimateRadius<unsigned char>(data1d, in_sz, n.x, n.y, n.z, 10);
+        n.pn = -1;
         listNeuron << n;
     }
+    if(data1d) {delete []data1d; data1d = 0;}
 
     QString  swc_dl_detected = inimg_file.left(inimg_file.lastIndexOf(".")).append("_axon_3D.swc");
     writeSWC_file(swc_dl_detected,nt);
@@ -1207,14 +1266,16 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     QString cnvtPoints = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_pointcloud.apo");
     QString linesTraced = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_linestraced.swc");
 
-    NCPointCloud pointcloud;
+    NCPointCloud pointcloud, pcsorted;
 
     QStringList files;
     files.push_back(swc_dl_detected);
 
     //
     pointcloud.getPointCloud(files);
-    pointcloud.savePointCloud(cnvtPoints);
+    pointcloud.delDuplicatedPoints();
+    pcsorted.ksort(pointcloud, 10);
+    pcsorted.savePointCloud(cnvtPoints);
 
     // step 3. lines constructed
     float maxAngle = 0.942; // threshold 60 degree (120 degree)
@@ -1358,7 +1419,7 @@ void ControlPanel::_slot_start()
     QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
     V3dR_MainWindow * new3DWindow = NULL;
     bool b_found = false;
-    QString title = QString("line construction");
+    QString title = QString("construct");
     if (list_3dviewer.size() < 1)
     {
         new3DWindow = m_v3d.createEmpty3DViewer();

@@ -31,6 +31,7 @@ QStringList NeuReconPlugin::funclist() const
       <<tr("anisotropicfilter")
      <<tr("bnprocess")
     <<tr("dlprocess")
+      <<tr("sort")
     <<tr("help");
 }
 
@@ -93,6 +94,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("dlprocess"))
     {
         return dlpipeline_func(input, output, callback);
+    }
+    else if (func_name == tr("sort"))
+    {
+        return sort_func(input, output, callback);
     }
     else if (func_name == tr("help"))
     {

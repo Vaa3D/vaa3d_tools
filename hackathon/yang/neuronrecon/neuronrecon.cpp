@@ -44,6 +44,8 @@ Point::Point()
     connected = 0;
     pre = -1;
     next = -1;
+
+    neighborVisited = false;
 }
 
 Point::Point (float x, float y, float z)
@@ -62,6 +64,8 @@ Point::Point (float x, float y, float z)
     connected = 0;
     pre = -1;
     next = -1;
+
+    neighborVisited = false;
 }
 
 Point::~Point()
@@ -561,7 +565,7 @@ bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
     return false;
 }
 
-int NCPointCloud::knn(int k)
+int NCPointCloud::knn(int k, int radius)
 {
     //
     if(k<1 || points.size()<k)
@@ -601,7 +605,14 @@ int NCPointCloud::knn(int k)
 
         //cout<<i<<" "<<p.x<<" "<<p.y<<" "<<p.z<<endl; // for debug
 
-        kdtree.nearestKSearch (p, k, k_indices, k_distances);
+        if(radius)
+        {
+            kdtree.radiusSearch(p, radius, k_indices, k_distances);
+        }
+        else
+        {
+            kdtree.nearestKSearch(p, k, k_indices, k_distances);
+        }
 
         // 0 is self, so start recording nearest neighbor from 1
         for (size_t j = 1; j < k_indices.size (); ++j)
@@ -649,7 +660,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     while(findNextUnvisitPoint(loc))
     {
         //
-        cout<<"current point ..."<<loc<<endl;
+        //cout<<"current point ..."<<loc<<endl;
 
         //
         if(isConsidered(loc, m))
@@ -664,17 +675,17 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
             //
             Point p = points[loc];
 
-            cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
+            //cout<<" ... "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
 
             //
             while(minAngle(loc, angle)>=0)
             {
-                cout<<"next point ... "<<loc<<endl;
+                //cout<<"next point ... "<<loc<<endl;
             }
         }
     }
 
-    cout<<"done connection ... \n";
+    //cout<<"done connection ... \n";
 
     // save connected results into a .swc file
 
@@ -714,7 +725,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
                 continue;
             }
 
-            cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+            //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
 
             for(V3DLONG j=0; j<p_next.nn.size(); j++)
             {
@@ -725,7 +736,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
                     continue;
                 }
 
-                cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
+                //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
 
                 float angle = getAngle(p, p_next, p_next_next);
 
@@ -757,7 +768,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
             loc = next_next;
 
-            cout<<"update loc ... "<<loc<<" angle "<<minAngle<<endl;
+            //cout<<"update loc ... "<<loc<<" angle "<<minAngle<<endl;
 
             return 0;
         }
@@ -776,7 +787,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
                 continue;
             }
 
-            cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+            //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
 
             float angle = getAngle(p_pre, p, p_next);
 
@@ -798,7 +809,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
             loc = next;
 
-            cout<<"update loc ... "<<loc<<" angle "<<minAngle<<endl;
+            //cout<<"update loc ... "<<loc<<" angle "<<minAngle<<endl;
 
             return 0;
         }
@@ -908,6 +919,152 @@ bool NCPointCloud::isConsidered(unsigned long &index, float m)
 
     //
     return true;
+}
+
+int NCPointCloud::delDuplicatedPoints()
+{
+    // tmp points
+    std::vector<Point> pc;
+    pc.clear();
+
+    //
+    for(std::vector<Point>::iterator it = points.begin(); it != points.end(); ++it)
+    {
+        if(pc.size()<1)
+        {
+            pc.push_back(*it);
+        }
+        else
+        {
+            bool found = false;
+            for(std::vector<Point>::iterator i = pc.begin(); i != pc.end(); ++i)
+            {
+                if(i->isSamePoint(*it))
+                {
+                    found = true;
+                    continue;
+                }
+            }
+
+            if(found==false)
+            {
+                pc.push_back(*it);
+            }
+        }
+    }
+
+    // copy back
+    points.clear();
+
+    for(std::vector<Point>::iterator it = pc.begin(); it != pc.end(); ++it)
+    {
+        points.push_back(*it);
+    }
+
+    //
+    return 0;
+}
+
+int NCPointCloud::copy(NCPointCloud pc)
+{
+    //
+    if(pc.points.size()<1)
+    {
+        cout<<"Empty input\n";
+        return -1;
+    }
+
+    //
+    points.clear();
+
+    for(std::vector<Point>::iterator it = pc.points.begin(); it != pc.points.end(); ++it)
+    {
+        points.push_back(*it);
+    }
+
+    //
+    return 0;
+}
+
+// breadth-first sort
+int NCPointCloud::ksort(NCPointCloud pc, int k)
+{
+    //
+    points.clear();
+
+    //
+    pc.knn(k);
+
+    //
+    float maxradius = 0;
+    V3DLONG soma = 0;
+    // find the point with biggest radius
+    for(V3DLONG i=0; i<pc.points.size(); i++)
+    {
+        if(pc.points[i].radius > maxradius)
+        {
+            maxradius = pc.points[i].radius;
+            soma = i;
+        }
+    }
+
+    // sort
+    while(points.size() < pc.points.size())
+    {
+        if(points.size()<1)
+        {
+            // soma
+            points.push_back(pc.points[soma]);
+            //points[0].visited = true;
+            points[0].n = soma;
+            pc.points[soma].visited = true;
+        }
+        else
+        {
+            // add neighbors
+            bool allvisited = true;
+            V3DLONG n = points.size();
+            for(V3DLONG i=0; i<n; i++)
+            {
+                int cur = points[i].n;
+                if(pc.points[cur].neighborVisited)
+                {
+                    continue;
+                }
+
+                //
+                pc.points[cur].neighborVisited = true;
+
+                //
+                for(int j=1; j<pc.points[cur].nn.size(); j++)
+                {
+                    int neighbor = pc.points[cur].nn[j];
+                    if(!pc.points[neighbor].visited)
+                    {
+                        allvisited = false;
+
+                        pc.points[neighbor].visited = true;
+                        points.push_back(pc.points[neighbor]);
+                        points[points.size()-1].n = neighbor;
+                    }
+                }
+            }
+
+            if(allvisited)
+            {
+                // find unvisited one from input point cloud
+                unsigned long loc;
+                pc.findNextUnvisitPoint(loc);
+
+                pc.points[loc].visited = true;
+                points.push_back(pc.points[loc]);
+                points[points.size()-1].n = loc;
+            }
+        }
+    }
+
+    //
+    return 0;
 }
 
 // class Quadruple

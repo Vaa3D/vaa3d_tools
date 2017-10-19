@@ -80,6 +80,8 @@ public:
     V3DLONG pre, next; // index
     vector<V3DLONG> nn; // k nearest neighbors (indices)
 
+    bool neighborVisited; // sort points from soma/cell body
+
     bool treeConnected; // connected to a tree
     int lengthLine; // if the point is root, how many points connected to it
     bool isBranch; // is the point a branch point
@@ -90,6 +92,9 @@ public:
 //
 class NCPointCloud
 {
+    // breadth-first sort
+    // depth-first line construction
+
 public:
     NCPointCloud();
     ~NCPointCloud();
@@ -128,7 +133,7 @@ public:
     bool isConsidered(unsigned long &index, float m);
 
     // k nearest neighbor search
-    int knn(int k);
+    int knn(int k, int radius=0);
 
     //
     int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
@@ -136,11 +141,19 @@ public:
     // cost func
     int minAngle(unsigned long &loc, float maxAngle);
 
+    // knn sort from the point with the biggest radius
+    int ksort(NCPointCloud pc, int k);
+
+    // delete duplicated points
+    int delDuplicatedPoints();
+
+    // copy
+    int copy(NCPointCloud pc);
+
     //
 
 public:
     vector<Point> points;
-
 };
 
 class Quadruple
@@ -298,6 +311,67 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
 
     //
     return EXIT_SUCCESS;
+}
+
+// modify markerRadius
+template<class T>
+float estimateRadius(T* &inimg1d, V3DLONG *sz, float mx, float my, float mz, float thresh)
+{
+    //
+    double max_r = max(max(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
+    double r;
+    double tol_num, bak_num;
+
+    //
+    V3DLONG x[2], y[2], z[2];
+
+    tol_num = bak_num = 0.0;
+    V3DLONG sz01 = sz[0] * sz[1];
+    for(r = 1; r <= max_r; r++)
+    {
+        double r1 = r - 0.5;
+        double r2 = r + 0.5;
+        double r1_r1 = r1 * r1;
+        double r2_r2 = r2 * r2;
+        double z_min = 0, z_max = r2;
+        for(int dz = z_min ; dz < z_max; dz++)
+        {
+            double dz_dz = dz * dz;
+            double y_min = 0;
+            double y_max = sqrt(r2_r2 - dz_dz);
+            for(int dy = y_min; dy < y_max; dy++)
+            {
+                double dy_dy = dy * dy;
+                double x_min = r1_r1 - dz_dz - dy_dy;
+                x_min = x_min > 0 ? sqrt(x_min)+1 : 0;
+                double x_max = sqrt(r2_r2 - dz_dz - dy_dy);
+                for(int dx = x_min; dx < x_max; dx++)
+                {
+                    x[0] = mx - dx, x[1] = mx + dx;
+                    y[0] = my - dy, y[1] = my + dy;
+                    z[0] = mz - dz, z[1] = mz + dz;
+                    for(char b = 0; b < 8; b++)
+                    {
+                        char ii = b & 0x01, jj = (b >> 1) & 0x01, kk = (b >> 2) & 0x01;
+                        if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) return r;
+                        else
+                        {
+                            tol_num++;
+                            long pos = z[kk]*sz01 + y[jj] * sz[0] + x[ii];
+                            if(inimg1d[pos] < thresh){bak_num++;}
+
+                            //cout<<bak_num<<" / "<<tol_num<<" = "<<bak_num / tol_num<<" r "<<r<<endl;
+
+                            if((bak_num / tol_num) > 0.1) return r;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //
+    return r;
 }
 
 #endif // _NEURONRECON_H_
