@@ -4,10 +4,15 @@
  */
 
 //
+#include "img.h"
 #include "neuronrecon_func.h"
 #include "neuronrecon.h"
 #include "zhidl/classification.h"
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
+
+#if  defined(Q_OS_LINUX)
+    #include <omp.h>
+#endif
 
 //
 const QString title = QObject::tr("Neuron Tree(s) Construction");
@@ -22,7 +27,61 @@ int lineconstruct_menu(V3DPluginCallback2 &callback, QWidget *parent)
     }
     else
     {
-        ControlPanel* p = new ControlPanel(callback, parent);
+        ControlPanel* p = new ControlPanel(callback, parent, 1);
+        if (p)	p->show();
+    }
+
+    //
+    return 0;
+}
+
+int localmaxima_menu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //
+    if (ControlPanel::m_controlpanel)
+    {
+        ControlPanel::m_controlpanel->show();
+        return 0;
+    }
+    else
+    {
+        ControlPanel* p = new ControlPanel(callback, parent, 2);
+        if (p)	p->show();
+    }
+
+    //
+    return 0;
+}
+
+int bigneuron_menu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //
+    if (ControlPanel::m_controlpanel)
+    {
+        ControlPanel::m_controlpanel->show();
+        return 0;
+    }
+    else
+    {
+        ControlPanel* p = new ControlPanel(callback, parent, 3);
+        if (p)	p->show();
+    }
+
+    //
+    return 0;
+}
+
+int deeplearning_menu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //
+    if (ControlPanel::m_controlpanel)
+    {
+        ControlPanel::m_controlpanel->show();
+        return 0;
+    }
+    else
+    {
+        ControlPanel* p = new ControlPanel(callback, parent, 4);
         if (p)	p->show();
     }
 
@@ -796,6 +855,86 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     return true;
 }
 
+bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    // processing
+
+    // step 1.
+    QString filename = QString(inlist->at(0));
+    QString outFileName = filename.left(filename.lastIndexOf(".")).append("_test.tif");
+
+    if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".V3DRAW"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(filename.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        //
+        unsigned char *p=NULL;
+
+        int volsz = p4dImage->getTotalUnitNumberPerChannel();
+
+        try
+        {
+            p = new unsigned char [volsz];
+        }
+        catch(...)
+        {
+            cout<<"fail to alloc memory for out image\n";
+            return false;
+        }
+
+        // test
+        adaptiveThresholding(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 3);
+
+        //
+        p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());
+        p4dImage->saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+    }
+    else
+    {
+        cout<<"Current only support TIFF/V3DRAW image as input file\n";
+        return -1;
+    }
+
+    //
+    return true;
+}
+
 // bigneuron-based methods to detect signals
 bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
@@ -1071,7 +1210,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     V3DLONG in_sz[4];
     unsigned char *data1d_mip=0;
 
-    unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
+    //unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
 
     int datatype;
     V3DLONG N,M,P;
@@ -1125,55 +1264,64 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
 
     //
-    for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+    unsigned int numOfThreads = 8; // default value for number of theads
+    omp_set_num_threads(numOfThreads);
+
+    V3DLONG iy, yb, ye;
+    V3DLONG ix, xb, xe, blockpagesz;
+    V3DLONG i, d, iiy, offsetj, iix;
+    std::vector<float> det_output;
+    LocationSimple LS;
+
+//#pragma omp parallel for default(shared) private(ix, iy, xb, xe, yb, ye, blockpagesz, i, d, iiy, iix, offsetj, detection_results, det_output, LS)
+    for(iy = 0; iy < M; iy = iy+Ws)
     {
 
-        V3DLONG yb = iy;
-        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+        yb = iy;
+        ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
 
-        for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+        unsigned char *blockarea=0;
+
+        for(ix = 0; ix < N; ix = ix+Ws)
         {
-            V3DLONG xb = ix;
-            V3DLONG xe = ix+Ws-1;
+            xb = ix;
+            xe = ix+Ws-1;
             if(xe>=N-1) xe = N-1;
 
-            unsigned char *blockarea=0;
-            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
-
+            blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
             blockarea = new unsigned char [blockpagesz];
-            V3DLONG i = 0;
-            for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
-            {
-                V3DLONG offsetj = iiy*N;
-                for(V3DLONG iix = xb; iix < xe+1; iix++)
-                {
 
+
+            i = 0;
+            for(iiy = yb; iiy < ye+1; iiy++)
+            {
+                offsetj = iiy*N;
+                for(iix = xb; iix < xe+1; iix++)
+                {
                     blockarea[i] = data1d_mip[offsetj + iix];
                     i++;
                 }
             }
-            //
+
             detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
 
-            V3DLONG d = 0;
-            for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+            d = 0;
+            for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
             {
-                for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
                 {
-                    std::vector<float> output = detection_results[d];
-                    if(output.at(1) > output.at(0))
+                    det_output = detection_results[d];
+                    if(det_output.at(1) > det_output.at(0))
                     {
-                        LocationSimple S;
-                        S.x = iix;
-                        S.y = iiy;
-                        S.z = 1;
-                        marklist_2D.push_back(S);
+                        LS.x = iix;
+                        LS.y = iiy;
+                        LS.z = 1;
+                        marklist_2D.push_back(LS);
                     }
                     d++;
                 }
             }
             if(blockarea) {delete []blockarea; blockarea =0;}
-
         }
     }
 
@@ -1194,7 +1342,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         marklist_2D_shifted.append(tmp);
-
     }
 
     QList <ImageMarker> marklist_3D;
@@ -1237,7 +1384,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
 
     // delete false detections
-    //Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
     QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
 
     // estimate radius
@@ -1298,8 +1444,37 @@ void printHelp()
 }
 
 //
-ControlPanel::ControlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
+ControlPanel::ControlPanel(V3DPluginCallback2 &_v3d, QWidget *parent, int func) :
     QDialog(parent), m_v3d(_v3d)
+{
+    if(func==1)
+    {
+        lineconstruct(_v3d, parent);
+    }
+    else if(func==2)
+    {
+        localmaxima(_v3d, parent);
+    }
+    else if(func==3)
+    {
+        bigneuron(_v3d, parent);
+    }
+    else if(func==4)
+    {
+        deeplearning(_v3d, parent);
+    }
+    else
+    {
+        cout<<"input is not supported.\n";
+    }
+}
+
+ControlPanel::~ControlPanel()
+{
+    m_controlpanel = 0;
+}
+
+void ControlPanel::lineconstruct(V3DPluginCallback2 &_v3d, QWidget *parent)
 {
     m_controlpanel = this;
 
@@ -1354,14 +1529,24 @@ ControlPanel::ControlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     setLayout(pGridLayout);
     setWindowTitle(QString("Construct points into line segments"));
 
-    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
+    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start1()));
     connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
     connect(pPushButton_openFileDlg, SIGNAL(clicked()), this, SLOT(_slots_openFile()));
 }
 
-ControlPanel::~ControlPanel()
+void ControlPanel::localmaxima(V3DPluginCallback2 &_v3d, QWidget *parent)
 {
-    m_controlpanel = 0;
+
+}
+
+void ControlPanel::bigneuron(V3DPluginCallback2 &_v3d, QWidget *parent)
+{
+
+}
+
+void ControlPanel::deeplearning(V3DPluginCallback2 &_v3d, QWidget *parent)
+{
+
 }
 
 void ControlPanel::_slot_close()
@@ -1372,7 +1557,7 @@ void ControlPanel::_slot_close()
         m_controlpanel=0;
     }
 }
-void ControlPanel::_slot_start()
+void ControlPanel::_slot_start1()
 {
     //
     QString pointcloud_filename = m_le_filename->text();

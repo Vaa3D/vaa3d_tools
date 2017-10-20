@@ -16,6 +16,7 @@ INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include
 
 INCLUDEPATH += /home/yangy/work/cuda/include
 
+HEADERS	+= img.h
 HEADERS	+= neuronrecon_plugin.h
 HEADERS	+= neuronrecon_func.h
 HEADERS	+= neuronrecon.h
@@ -32,6 +33,7 @@ HEADERS	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.h
 HEADERS	+= zhidl/classification.h
 HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
 
+SOURCES	+= img.cxx
 SOURCES	+= neuronrecon_plugin.cpp
 SOURCES	+= neuronrecon_func.cpp
 SOURCES	+= neuronrecon.cpp
