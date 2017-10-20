@@ -1,4 +1,4 @@
-#include "../../zhi/IVSCC_sort_swc/openSWCDialog.h"
+#include "openSWCDialog.h"
 #include <vector>
 #include "Tip_marker_finder_plugin.h"
 #include <v3d_interface.h>
@@ -14,9 +14,7 @@ using namespace std;
 
 const QString title = QObject::tr("Border Marker Finder");
 
-TipMarkerFinderUI::TipMarkerFinderUI(QWidget* parent, V3DPluginCallback2* callback, int menu) :
-    QDialog(parent),
-    ui(new Ui::TipMarkerFinderUI)
+TipMarkerFinderUI::TipMarkerFinderUI(QWidget* parent, V3DPluginCallback2* callback, int menu) : QDialog(parent), ui(new Ui::TipMarkerFinderUI)
 {
     ui->setupUi(this);
 	if (menu == 2) 
@@ -24,6 +22,7 @@ TipMarkerFinderUI::TipMarkerFinderUI(QWidget* parent, V3DPluginCallback2* callba
 		ui->lineEdit_3->setEnabled(false);
 		ui->lineEdit_4->setEnabled(false);
 	}
+	this->callback = callback;
 
 	this->show();
 }
@@ -35,16 +34,22 @@ TipMarkerFinderUI::~TipMarkerFinderUI()
 
 void TipMarkerFinderUI::filePath()
 {
-	SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Choose the SWC file to look into"),
-                                               "", QObject::tr("Supported file (*.swc *.eswc)"
-                                               ";;Neuron structure	(*.swc)"
-                                               ";;Extended neuron structure (*.eswc)"));
+	OpenSWCDialog* openDlg = new OpenSWCDialog(0, this->callback);
+    if (!openDlg->exec()) return;
 
+    QString SWCfileName = openDlg->file_name;
+
+    if(SWCfileName.isEmpty()) return;
+
+	ui->lineEdit->setText("");
 	ui->lineEdit->setText(SWCfileName);
+
+	delete openDlg;
 }
 
 bool TipMarkerFinderUI::okClicked()
 {
+	inputs.clear();
 	inputs << ui->lineEdit->text();
 	inputs << ui->lineEdit_3->text();
 	inputs << ui->lineEdit_4->text();
@@ -55,7 +60,7 @@ bool TipMarkerFinderUI::okClicked()
 	else done = TipProcessor(inputs, 1);
 	qDebug() << inputs;
 	
-	accept();
+	//accept();
 	
 	return true;
 }
@@ -105,9 +110,9 @@ bool TipProcessor(QStringList input, int menu)
 						z_coord = int(nt.listNeuron.at(i).z);
 						if ((z_coord >= bottom) || (z_coord <= top))
 						{
-							t.x = nt.listNeuron.at(i).x;
-							t.y = nt.listNeuron.at(i).y;
-							t.z = nt.listNeuron.at(i).z;
+							t.x = nt.listNeuron.at(i).x - 1;
+							t.y = nt.listNeuron.at(i).y - 1;
+							t.z = nt.listNeuron.at(i).z - 1;
 							t.type = nt.listNeuron.at(i).type;
 							t.name = QString::number(10);
 							bifur_marker.append(t);
@@ -138,9 +143,9 @@ bool TipProcessor(QStringList input, int menu)
 
 				if (childs[i].size() == 0)
 				{
-					t.x = nt.listNeuron.at(i).x;
-					t.y = nt.listNeuron.at(i).y;
-					t.z = nt.listNeuron.at(i).z;
+					t.x = nt.listNeuron.at(i).x - 1;
+					t.y = nt.listNeuron.at(i).y - 1;
+					t.z = nt.listNeuron.at(i).z - 1;
 					t.type = nt.listNeuron.at(i).type;
 					t.name = QString::number(10);
 					bifur_marker.append(t);
