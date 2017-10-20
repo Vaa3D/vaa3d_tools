@@ -1,4 +1,4 @@
-#include "openSWCDialog.h"
+#include "../../zhi/IVSCC_sort_swc/openSWCDialog.h"
 #include <vector>
 #include "Tip_marker_finder_plugin.h"
 #include <v3d_interface.h>

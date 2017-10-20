@@ -443,7 +443,7 @@ std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classi
                 cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
                 imgs.push_back(img);
 
-                if(num_patches >=5000)
+                if(num_patches >= 5000)
                 {
                     outputs = classifier.Predict(imgs);
                     for(V3DLONG d = 0; d<outputs.size();d++)

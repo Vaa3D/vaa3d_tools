@@ -9,7 +9,7 @@
 #include <cmath>
 #include <iostream>
 
-#include <classification.h>
+#include "classification.h"
 #include "../../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
@@ -2153,7 +2153,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG M = in_zz[1];
         V3DLONG P = in_zz[2];
 
-        V3DLONG start_z = int(P/4); //was 0 for the entire Z
+        V3DLONG start_z = 0; //int(P/4); //was 0 for the entire Z
 
 //        QList <ImageMarker> marklist_3D_final;
         unsigned int numOfThreads = 8; // default value for number of theads
