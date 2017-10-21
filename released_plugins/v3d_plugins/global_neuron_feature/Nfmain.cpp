@@ -53,8 +53,7 @@ void nf_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 			nt_list.push_back(tmp);
 		}
 	}
-
-
+	
 	for (int i=0;i<neuronNum;i++)
 	{
 		NeuronTree nt = nt_list[i];
