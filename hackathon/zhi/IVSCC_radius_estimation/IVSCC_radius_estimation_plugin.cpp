@@ -484,7 +484,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 	/* =================== As per anotation group's request, use only the length of the furthest node to interpolate. MK, Oct, 2017 ======================== */
 	else if (menu_name == tr("neuron_radius_interpolation_updated_r1.0")) // 
 	{
-		OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+		OpenSWCDialog* openDlg = new OpenSWCDialog(0, &callback);
         if (!openDlg->exec()) return;
 
         QString fileOpenName = openDlg->file_name;
@@ -537,7 +537,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 			}
 		}
 
-		map<size_t, size_t> inversedLeafLength; 
+		map<size_t, size_t> inversedLeafLength; // Map sorts elements by default.
 		for (size_t j=0; j<leafLength.size(); ++j)
 		{
 			if (leafLength[j] == 0) continue;
@@ -584,6 +584,7 @@ void IVSCC_radius_estimation::domenu(const QString &menu_name, V3DPluginCallback
 			QObject::tr("Supported file (*.swc)" ";;Neuron structure(*.swc)"));
         writeSWC_file(fileSaveName,nt);
 
+		delete openDlg;
 		this->~IVSCC_radius_estimation();
 	}
 	/* ================== END of [As per anotation group's request, use only the length of the furthest node to interpolate. MK, Oct, 2017] ======================== */

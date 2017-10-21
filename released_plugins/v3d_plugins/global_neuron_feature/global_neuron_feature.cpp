@@ -81,6 +81,8 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 		cout<<"Usage: v3d -x global_neuron_feature -f compute_feature -i test.swc \n"<<endl;
 		return true;
 	}
+
+	// ----- As per annotation team's request, a dofunc allowing batch operations is added here. MK, Oct, 2017
 	else if (func_name==tr("compute_feature_batch"))
 	{
 		const char* swcDIR;
@@ -190,6 +192,8 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 			outfile.close();
 		}
 	} 
+	// ------------------------------------------------------------------------------------------------------
+
 	else if (func_name == tr("compute_feature"))
 	{
 		cout<<"\n===============Welcome to compute_feature Function==============="<<endl;

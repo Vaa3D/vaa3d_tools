@@ -30,7 +30,7 @@ QStringList IVSCC_scaling::funclist() const
 
 void IVSCC_scaling::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("scale swc"))
+	if (menu_name == tr("scale swc")) // As per annotation team's request, an UI is added. MK, Oct, 2017.
 	{
 		swcScalingUI* inputForm = new swcScalingUI(0, &callback);
 		inputForm->exec();

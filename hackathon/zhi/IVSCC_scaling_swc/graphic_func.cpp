@@ -1,3 +1,10 @@
+/* ------------------------------------------------------- */
+
+//	This piece of cpp implements the UI for this plugin.
+//	  Develped by MK, Oct, 2017
+
+/* ------------------------------------------------------- */
+
 #include <vector>
 #include "IVSCC_scaling_plugin.h"
 #include <iostream>
