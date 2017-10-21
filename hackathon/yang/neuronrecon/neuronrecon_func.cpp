@@ -919,7 +919,8 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         }
 
         // test
-        adaptiveThresholding(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 3);
+        //adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 3);
+        distanceTransformL2(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim());
 
         //
         p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());

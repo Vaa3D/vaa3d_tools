@@ -25,7 +25,7 @@ const char compute_source[] = BOOST_COMPUTE_STRINGIZE_SOURCE
                 int x = i%dimx;
                 int slicesz = dimx*dimy;
 
-                if(z<r || z >=get_image_depth(src)-r || y<r || y>=get_image_height(src)-r || x<r || x>=get_image_width(src)-r)
+                if(z<r || z >=dimz-r || y<r || y>=dimy-r || x<r || x>=dimx-r)
                 {
                     return;
                 }
@@ -59,6 +59,8 @@ const char compute_source[] = BOOST_COMPUTE_STRINGIZE_SOURCE
 int adaptiveThresholding(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r);
 
 //
+int distanceTransformL2(unsigned char *&dst, unsigned char *src, int x, int y, int z);
 
+//
 
 #endif // _IMG_H_

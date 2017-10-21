@@ -2,6 +2,9 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
+QMAKE_CXXFLAGS += -std=c++11 -pthread
+LIBS += -pthread
+
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 
 INCLUDEPATH     += /home/yangy/work/local/include
@@ -13,6 +16,8 @@ INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include
+
+INCLUDEPATH     += ./3rdparty
 
 INCLUDEPATH += /home/yangy/work/cuda/include
 
@@ -40,6 +45,7 @@ SOURCES	+= neuronrecon.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 
 SOURCES += zhidl/classification.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp

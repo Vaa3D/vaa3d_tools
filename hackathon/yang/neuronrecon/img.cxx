@@ -17,11 +17,17 @@
 
 using namespace std;
 
+#include "distance_transform.hpp"
+
+using namespace dt;
+using namespace dope;
+
+
 // adaptive thresholding (for dt)
 // distance transform (estimate radius)
 // max filtering (find local maxima)
 
-int adaptiveThresholding(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
+int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
 {
     std::vector<boost::compute::platform> platforms = boost::compute::system::platforms();
     int gpucnt=0; // more than one GPU
@@ -78,21 +84,20 @@ int adaptiveThresholding(unsigned char *&dst, unsigned char *src, int x, int y, 
     //
     int volsz = x*y*z;
 
-    // create memory buffers for the input and output
+    cout<<" create memory buffers for the input and output \n";
     boost::compute::buffer buffer_dst(context, volsz);
     boost::compute::buffer buffer_src(context, volsz);
 
-    // create the program with the source
+    cout<<" create the program with the source \n";
     boost::compute::program program = boost::compute::program::create_with_source(compute_source, context);
 
-    // compile the program
+    cout<<" compile the program \n";
     program.build();
 
-    /// rotate
-    // create the kernel
+    cout<<" create the kernel \n";
     boost::compute::kernel kernel_adaptive_thresholding(program, "adaptive_thresholding");
 
-    // set the kernel arguments
+    cout<<" set the kernel arguments \n";
     kernel_adaptive_thresholding.set_arg(0, buffer_dst);
     kernel_adaptive_thresholding.set_arg(1, buffer_src);
     kernel_adaptive_thresholding.set_arg(2, x);
@@ -109,6 +114,61 @@ int adaptiveThresholding(unsigned char *&dst, unsigned char *src, int x, int y, 
 
     // transfer result back to the host array 'dst'
     queue.enqueue_read_buffer(buffer_dst, 0, volsz, dst);
+
+    //
+    return 0;
+}
+
+int distanceTransformL2(unsigned char *&dst, unsigned char *src, int x, int y, int z)
+{
+    // init
+    Index3 size3D;
+
+    size3D[0] = x;
+    size3D[1] = y;
+    size3D[2] = z;
+
+    Grid<SizeType, 3> indices(size3D);
+    DistanceTransform::initializeIndices(indices);
+
+    Grid<unsigned char, 3> u3d(size3D);
+
+    long i,j,k,offk,offj;
+
+    // copy data
+    for (k = 0; k < z; ++k)
+    {
+        offk = k*x*y;
+        for (j = 0; j < y; ++j)
+        {
+            offj = offk + j*x;
+            for (i = 0; i < x; ++i)
+            {
+                u3d[i][j][k] = src[offj+i];
+            }
+        }
+    }
+
+    u3d[0][0][0] = 0.0f;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    DistanceTransform::distanceTransformL2(u3d, u3d, false, std::thread::hardware_concurrency());
+    std::cout << std::endl << size3D[0] << 'x' << size3D[1] << 'x' << size3D[2]
+              << " distance function (concurrently) computed in: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count()
+              << " ms. (with " << std::thread::hardware_concurrency() << " threads)." << std::endl;
+
+    // copy result
+    for (k = 0; k < z; ++k)
+    {
+        offk = k*x*y;
+        for (j = 0; j < y; ++j)
+        {
+            offj = offk + j*x;
+            for (i = 0; i < x; ++i)
+            {
+                dst[offj+i] = u3d[i][j][k];
+            }
+        }
+    }
 
     //
     return 0;

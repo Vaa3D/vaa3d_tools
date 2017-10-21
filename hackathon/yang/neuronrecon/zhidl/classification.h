@@ -47,7 +47,7 @@ private:
                          std::vector< std::vector<cv::Mat> >* input_batch);
 
 private:
-    shared_ptr<Net<float> > net_;
+    boost::shared_ptr<Net<float> > net_;
     cv::Size input_geometry_;
     int num_channels_;
     cv::Mat mean_;
