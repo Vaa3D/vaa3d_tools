@@ -16,6 +16,9 @@ INCLUDEPATH	+= $$VAA3DPATH/jba/newmat11
 
 INCLUDEPATH     += $$VAA3DPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
+#INCLUDEPATH     += $$VAA3DPATH/terafly/src/terarepo/src/3rdparty/libtiff
+#INCLUDEPATH     += $$VAA3DPATH/common_lib/build/libtiff
+
 
 macx{
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
@@ -191,6 +194,9 @@ SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/BDVVolume.cpp
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/imagemanager/BDVVolume.h
 SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/volumemanager/vmCacheManager.cpp
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/volumemanager/vmCacheManager.h
+
+SOURCES += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/dcimg/dcimg.cpp
+HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/dcimg/dcimg.h
 
 #setup TeraStitcher I/O plugins
 HEADERS += $$VAA3DPATH/terafly/src/terarepo/src/iomanager/plugins/exampleplugin2D/exampleplugin2D.h

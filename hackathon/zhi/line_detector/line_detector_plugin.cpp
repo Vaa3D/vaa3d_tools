@@ -72,6 +72,7 @@ QStringList line_detector::funclist() const
         <<tr("GD_Curveline_v2")
         <<tr("mip_swc")
         <<tr("GD_steps")
+        <<tr("GD_markers")
         <<tr("help");
 }
 
@@ -489,9 +490,10 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
         QString inimg_file_mip = paras.empty() ? "" : paras[k]; if(inimg_file_mip == "NULL") inimg_file_mip = ""; k++;
         QString ano_name = paras.empty() ? "" : paras[k]; if(ano_name == "NULL") ano_name = ""; k++;
+        int step_size = 8;
 
         NeuronTree nt_total;
-        QString output2Dimage = inimg_file_mip + "_gd_steps_8.tif";
+        QString output2Dimage = inimg_file_mip + QString("_gd_steps_%1.tif").arg(step_size);
         int datatype = 0;
         if (!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
@@ -508,7 +510,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
 
         NeuronTree nt = readSWC_file(swc_name);
-        if(nt.listNeuron.size() <9)
+        if(nt.listNeuron.size() < step_size+1)
             return -1;
 
         LocationSimple p0;
@@ -534,7 +536,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         p0.x = nt.listNeuron[0].x + 10;
         p0.y = nt.listNeuron[0].y + 10;
         p0.z = nt.listNeuron[0].z;
-        int step = nt.listNeuron.size()/8;
+        int step = nt.listNeuron.size()/step_size;
 
         for(V3DLONG i = step; i <nt.listNeuron.size()+step;i+=step)
         {
@@ -567,7 +569,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             {
                 NeuronSWC curr = nt_seg.listNeuron.at(d);
                 S.n 	= curr.n + index;
-                S.type 	= 5;
+                S.type 	= step_size;
                 S.x 	= curr.x;
                 S.y 	= curr.y;
                 S.z 	= curr.z;
@@ -587,7 +589,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                 break;
         }
 
-        QString outputswc = swc_name + "_gd_steps_8.swc";
+        QString outputswc = swc_name + QString("_gd_steps_%1.swc").arg(step_size);
         export_list2file(nt_total.listNeuron, outputswc,outputswc);
 
         V3DLONG stacksz =in_sz[0]*in_sz[1];
@@ -618,6 +620,137 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         myfile.open (ano_name.toStdString().c_str(),fstream::in | fstream::out | fstream::app);
         myfile << "SWCFILE=" <<outputswc.toStdString().c_str()<<endl;
         myfile.close();
+
+    }else if (func_name == tr("GD_markers"))
+    {
+        bool bmenu = false;
+        input_PARA PARA;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        unsigned char* data1d = 0;
+        V3DLONG in_sz[4];
+        QString inimg_file = infiles[0];
+        int k=0;
+//        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+//        QString inimg_file_mip = paras.empty() ? "" : paras[k]; if(inimg_file_mip == "NULL") inimg_file_mip = ""; k++;
+//        QString ano_name = paras.empty() ? "" : paras[k]; if(ano_name == "NULL") ano_name = ""; k++;
+        QString marker_file = paras.empty() ? "" : paras[k]; if(marker_file == "NULL") marker_file = ""; k++;
+
+        NeuronTree nt_total;
+//        QString output2Dimage = inimg_file_mip + "_gd_steps_32.tif";
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return -1;
+        }
+
+        unsigned char ****p4d = 0;
+        if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], 1, data1d))
+        {
+            fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+            if(p4d) {delete []p4d; p4d = 0;}
+            return false;
+        }
+
+        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(marker_file)));
+        LocationSimple p0;
+        vector<LocationSimple> pp;
+
+
+        double weight_xy_z=1.0;
+        CurveTracePara trace_para;
+        trace_para.channo = 0;
+        trace_para.sp_graph_background = 0;
+        trace_para.b_postMergeClosebyBranches = false;
+        trace_para.sp_graph_resolution_step=4;
+        trace_para.b_3dcurve_width_from_xyonly = true;
+        trace_para.b_pruneArtifactBranches = false;
+        trace_para.sp_num_end_nodes = 2;
+        trace_para.b_deformcurve = false;
+        trace_para.sp_graph_resolution_step = 1;
+        trace_para.b_estRadii = false;
+        trace_para.sp_downsample_method = 1;
+        trace_para.sp_downsample_step = 1;
+        trace_para.sp_graph_resolution_step = 1;
+
+        for(V3DLONG i = 1; i <file_inmarkers.size();i++)
+        {
+            p0.x = file_inmarkers.at(i-1).x;
+            p0.y = file_inmarkers.at(i-1).y;
+            p0.z = file_inmarkers.at(i-1).z;
+
+            LocationSimple tmpp;
+            tmpp.x = file_inmarkers.at(i).x;
+            tmpp.y = file_inmarkers.at(i).y;
+            tmpp.z = file_inmarkers.at(i).z;
+            pp.push_back(tmpp);
+
+            NeuronTree nt_seg = v3dneuron_GD_tracing(p4d, in_sz,
+                                                     p0, pp,
+                                                     trace_para, weight_xy_z);
+            V3DLONG nt_length = nt_total.listNeuron.size();
+            V3DLONG index;
+            if(nt_length>0)
+                index = nt_total.listNeuron.at(nt_length-1).n;
+            else
+                index = 0;
+
+            NeuronSWC S;
+            for (int d=0;d<nt_seg.listNeuron.size();d++)
+            {
+                NeuronSWC curr = nt_seg.listNeuron.at(d);
+                S.n 	= curr.n + index;
+                S.type 	= 7;
+                S.x 	= curr.x;
+                S.y 	= curr.y;
+                S.z 	= curr.z;
+                S.r 	= curr.r;
+                S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
+                nt_total.listNeuron.append(S);
+                nt_total.hashNeuron.insert(S.n, nt_total.listNeuron.size()-1);
+            }
+
+            pp.clear();
+        }
+
+        QString outputswc = marker_file + "_gd_steps_32.swc";
+        export_list2file(nt_total.listNeuron, outputswc,outputswc);
+
+       /* V3DLONG stacksz =in_sz[0]*in_sz[1];
+        double margin=0;
+        unsigned char* data1d_mask = 0;
+        data1d_mask = new unsigned char [stacksz];
+        for(V3DLONG i =0; i < nt_total.listNeuron.size();i++)
+        {
+            nt_total.listNeuron[i].z = 0;
+            nt_total.listNeuron[i].r = 1;
+        }
+
+        ComputemaskImage(nt_total, data1d_mask, in_sz[0], in_sz[1], 1, margin);
+
+        unsigned char* data1d_2D = 0;
+        if (!simple_loadimage_wrapper(callback,inimg_file_mip.toStdString().c_str(), data1d_2D, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",inimg_file_mip.toStdString().c_str());
+            return -1;
+        }
+
+        for(V3DLONG i=0; i<stacksz; i++)
+            data1d_2D[i+2*stacksz] = (data1d_mask[i] ==255) ? 255: data1d_2D[i+2*stacksz];
+
+        simple_saveimage_wrapper(callback,output2Dimage.toStdString().c_str(),data1d_2D,in_sz,1);
+
+        ofstream myfile;
+        myfile.open (ano_name.toStdString().c_str(),fstream::in | fstream::out | fstream::app);
+        myfile << "SWCFILE=" <<outputswc.toStdString().c_str()<<endl;
+        myfile.close();*/
 
     }else if (func_name == tr("linker"))
     {

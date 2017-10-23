@@ -8,7 +8,6 @@
 #include "cropped3DImageSeries_plugin.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
-#include "../terastitcher/src/core/imagemanager/VirtualVolume.h"
 #include <qfile.h>
 #include <qtextstream.h>
 //#include "dirent.h"
@@ -19,8 +18,6 @@
 
 
 using namespace std;
-using namespace iim;
-
 QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
 {
     QStringList myList;
@@ -276,12 +273,12 @@ void cropped3DImageSeries::domenu(const QString &menu_name, V3DPluginCallback2 &
         QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including the highest terafly images "),
                                                                       QDir::currentPath(),
                                                                       QFileDialog::ShowDirsOnly);
-        VirtualVolume* data1d = VirtualVolume::instance(m_InputfolderName.toStdString().c_str());
-        V3DLONG in_zz[4];
-        in_zz[0] = data1d->getDIM_H();
-        in_zz[1] = data1d->getDIM_V();
-        in_zz[2] = data1d->getDIM_D();
-        in_zz[3] = data1d->getDIM_C();
+        V3DLONG *in_zz;
+        if(!callback.getDimTeraFly(m_InputfolderName.toStdString(),in_zz))
+        {
+            v3d_msg("Cannot load terafly images.");
+            return;
+        }
 
         CropRegionNavigateDialog dialog(parent, in_zz);
         if (dialog.exec()!=QDialog::Accepted)
@@ -289,13 +286,13 @@ void cropped3DImageSeries::domenu(const QString &menu_name, V3DPluginCallback2 &
         dialog.update();
 
         unsigned char * cropped_image = 0;
-        cropped_image = data1d->loadSubvolume_to_UINT8(dialog.ys,dialog.ye+1,dialog.xs,dialog.xe+1,dialog.zs,dialog.ze+1);
+        cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(),dialog.xs,dialog.xe+1,dialog.ys,dialog.ye+1,dialog.zs,dialog.ze+1);
         V3DLONG in_sz[4];
 
         in_sz[0] = dialog.xe - dialog.xs + 1;
         in_sz[1] = dialog.ye - dialog.ys + 1;
         in_sz[2] = dialog.ze - dialog.zs + 1;
-        in_sz[3] = data1d->getDIM_C();
+        in_sz[3] = in_zz[3];
 
         Image4DSimple * new4DImage = new Image4DSimple();
         new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
@@ -543,7 +540,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
     }
 	else if (func_name == tr("cropTerafly"))
 	{
-		vector<char*> infiles, inparas, outfiles;
+        vector<char*> infiles, inparas, outfiles;
 		if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
 		if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 		if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
@@ -554,12 +551,12 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		QString inputListFile = infiles.at(1);
 		QString savePath = infiles.at(2);
 		
-		VirtualVolume* data1d = VirtualVolume::instance(m_InputfolderName.toStdString().c_str());
-		V3DLONG in_zz[4];
-		in_zz[0] = data1d->getDIM_H();
-		in_zz[1] = data1d->getDIM_V();
-		in_zz[2] = data1d->getDIM_D();
-		in_zz[3] = data1d->getDIM_C();
+        V3DLONG *in_zz;
+        if(!callback.getDimTeraFly(m_InputfolderName.toStdString(),in_zz))
+        {
+            v3d_msg("Cannot load terafly images.",0);
+            return false;
+        }
 
 		long cubeSideLength1 = length1.toLong();
 		long cubeSideLength2 = length2.toLong();
@@ -593,8 +590,9 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 				cout << zcenter << " " << xcenter << " " << ycenter << endl;
 
 				unsigned char * cropped_image = 0;
-				cropped_image = data1d->loadSubvolume_to_UINT8((ycenter-cubeSideLength2/2), (ycenter+cubeSideLength2/2), 
-															   (xcenter-cubeSideLength1/2), (xcenter+cubeSideLength1/2), 
+                cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(),
+                                                               (xcenter-cubeSideLength2/2), (xcenter+cubeSideLength2/2),
+                                                               (ycenter-cubeSideLength1/2), (ycenter+cubeSideLength1/2),
 															   (zcenter-cubeSideLength3/2), (zcenter+cubeSideLength3/2));
 				Image4DSimple* new4DImage = new Image4DSimple();
 				new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
