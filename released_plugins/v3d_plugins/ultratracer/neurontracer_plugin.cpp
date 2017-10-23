@@ -12,11 +12,7 @@
 #include "../istitch/y_imglib.h"
 #include "../neurontracing_vn2/app2/my_surf_objs.h"
 
-#include "VirtualVolume.h"
-
-
 using namespace std;
-using namespace iim;
 
 Q_EXPORT_PLUGIN2(neurontracer, neurontracer);
 
@@ -650,10 +646,8 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.tracing_comb = false;
         P.global_name = true;
         P.method = app2;
-        v3d_msg("enter trace_APP2_GD_before_calling");
         crawler_raw_app(callback,parent,P,bmenu);
         v3d_msg("enter trace_APP2_GD_finish_crawler_raw_app");
-        extract_tips(callback,parent,P);
         v3d_msg("enter trace_APP2_GD_finish_extract_tips");
 
     }

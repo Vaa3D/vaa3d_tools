@@ -9,7 +9,6 @@
 
 #include "../sort_neuron_swc/sort_swc.h"
 #include "../istitch/y_imglib.h"
-#include "VirtualVolume.h"
 #include "../resample_swc/resampling.h"
 #include "../neuron_image_profiling/profile_swc.h"
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
@@ -67,7 +66,6 @@ template <class T> T pow2(T a)
 QString getAppPath();
 
 using namespace std;
-using namespace iim;
 
 
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
@@ -218,10 +216,14 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[2] = in_zz[2];
         }else
         {
-            VirtualVolume* aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
-            P.in_sz[0] = aVolume->getDIM_H();
-            P.in_sz[1] = aVolume->getDIM_V();
-            P.in_sz[2] = aVolume->getDIM_D();
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
+            {
+                return false;
+            }
+            P.in_sz[0] = in_zz[0];
+            P.in_sz[1] = in_zz[1];
+            P.in_sz[2] = in_zz[2];
         }
 
         LocationSimple t;
@@ -498,14 +500,20 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             in_sz[1] = end_y - start_y;
             in_sz[2] = P.in_sz[2];
 
-            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > aVolume->getDIM_C())
+            if(P.channel > in_zz[3])
                P.channel = 1;
             unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,0,P.in_sz[2]);
+
             for(V3DLONG i=0; i<pagesz; i++)
             {
                 total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
@@ -1005,15 +1013,20 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
             in_sz[1] = end_y - start_y;
             in_sz[2] = P.in_sz[2];
 
-            VirtualVolume* aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > aVolume->getDIM_C())
+            if(P.channel > in_zz[3])
                P.channel = 1;
 
             unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,0,P.in_sz[2]);
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,0,P.in_sz[2]);
             for(V3DLONG i=0; i<pagesz; i++)
             {
                 total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
@@ -1370,7 +1383,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
-    VirtualVolume* aVolume;
 
     if(P.image)
     {
@@ -1437,14 +1449,21 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
+
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > aVolume->getDIM_C())
+            if(P.channel > in_zz[3])
                P.channel = 1;
             unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,start_z,end_z);
+
             for(V3DLONG i=0; i<pagesz; i++)
             {
                 total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
@@ -1550,7 +1569,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
     if(in_sz) {delete []in_sz; in_sz =0;}
-    if(aVolume) {delete aVolume; aVolume = 0;}
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -2479,10 +2497,14 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[2] = in_zz[2];
         }else
         {
-            VirtualVolume* aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
-            P.in_sz[0] = aVolume->getDIM_H();
-            P.in_sz[1] = aVolume->getDIM_V();
-            P.in_sz[2] = aVolume->getDIM_D();
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
+            {
+                return false;
+            }
+            P.in_sz[0] = in_zz[0];
+            P.in_sz[1] = in_zz[1];
+            P.in_sz[2] = in_zz[2];
         }
 
         LocationSimple t;
@@ -3786,7 +3808,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
-    VirtualVolume* aVolume =0;
 
     if(P.image)
     {
@@ -3852,14 +3873,20 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > aVolume->getDIM_C())
+            if(P.channel > in_zz[3])
                P.channel = 1;
             unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,start_z,end_z);
+
             for(V3DLONG i=0; i<pagesz; i++)
             {
                 total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
@@ -4140,7 +4167,6 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     total4DImage->deleteRawDataAndSetPointerToNull();
-    if(aVolume) {delete aVolume; aVolume = 0;}
     return true;
 }
 
@@ -4924,7 +4950,6 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
-    VirtualVolume* aVolume;
 
     if(P.image)
     {
@@ -4991,14 +5016,21 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
+
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > aVolume->getDIM_C())
+            if(P.channel > in_zz[3])
                 P.channel = 1;
             unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,start_z, end_z);
+
             for(V3DLONG i=0; i<pagesz; i++)
             {
                 total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
@@ -5053,7 +5085,6 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData_scaled, mysz, total4DImage->getDatatype());
     if(in_sz) {delete []in_sz; in_sz =0;}
-    if(aVolume) {delete aVolume; aVolume = 0;}
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
@@ -5875,10 +5906,14 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             P.in_sz[2] = in_zz[2];
         }else
         {
-            VirtualVolume* aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
-            P.in_sz[0] = aVolume->getDIM_H();
-            P.in_sz[1] = aVolume->getDIM_V();
-            P.in_sz[2] = aVolume->getDIM_D();
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
+            {
+                return false;
+            }
+            P.in_sz[0] = in_zz[0];
+            P.in_sz[1] = in_zz[1];
+            P.in_sz[2] = in_zz[2];
         }
 
         LocationSimple t;
@@ -5990,7 +6025,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
-    VirtualVolume* aVolume;
     if(P.image)
     {
         in_sz = new V3DLONG[4];
@@ -6055,14 +6089,21 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
 
-            aVolume = VirtualVolume::instance(P.inimg_file.toStdString().c_str());
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
+
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > aVolume->getDIM_C())
+            if(P.channel > in_zz[3])
                P.channel = 1;
             unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,start_z,end_z);
+
             for(V3DLONG i=0; i<pagesz; i++)
             {
                 total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
@@ -6090,7 +6131,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     {
         if(total1dData) {delete []total1dData; total1dData = 0;}
         if(in_sz) {delete []in_sz; in_sz =0;}
-        if(aVolume) {delete aVolume; aVolume = 0;}
         return true;
     }
 
@@ -6099,7 +6139,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     if(total1dData) {delete []total1dData; total1dData = 0;}
     if(in_sz) {delete []in_sz; in_sz =0;}
-    if(aVolume) {delete aVolume; aVolume = 0;}
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
@@ -6373,13 +6412,14 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
     vector<MyMarker> file_inmarkers;
     file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
     unsigned char * total1dData = 0;
-    V3DLONG *in_sz = 0;
-    VirtualVolume* aVolume =0;
-
-    aVolume = VirtualVolume::instance(fileOpenName.toStdString().c_str());
-    P.in_sz[0] = aVolume->getDIM_H();
-    P.in_sz[1] = aVolume->getDIM_V();
-    P.in_sz[2] = aVolume->getDIM_D();
+    V3DLONG *in_zz = 0;
+    if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
+    {
+        return false;
+    }
+    P.in_sz[0] = in_zz[0];
+    P.in_sz[1] = in_zz[1];
+    P.in_sz[2] = in_zz[2];
 
     V3DLONG start_x,end_x,start_y,end_y,start_z,end_z;
     if(file_inmarkers.size()>=4)
@@ -6438,6 +6478,7 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
     total1dData_apa = new unsigned char [pagesz];
     BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);*/
 
+    V3DLONG *in_sz = 0;
     in_sz = new V3DLONG[4];
     in_sz[0] = end_x - start_x;
     in_sz[1] = end_y - start_y;
@@ -6446,8 +6487,7 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
     if(pagesz >= 8589934592) //use the 2nd highest resolution folder
     {
-        if(aVolume) {delete aVolume; aVolume = 0;}
-        aVolume = VirtualVolume::instance(P.inimg_file_2nd.toStdString().c_str());
+        fileOpenName = P.inimg_file_2nd;
         start_x /= 2; start_y /= 2; start_z /= 2;
         end_x /= 2;   end_y /= 2;   end_z /= 2;
         in_sz[0] = end_x - start_x;
@@ -6462,7 +6502,9 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
         }
      }
 
-    total1dData = aVolume->loadSubvolume_to_UINT8(start_y,end_y,start_x,end_x,start_z,end_z);
+    total1dData = callback.getSubVolumeTeraFly(fileOpenName.toStdString(),start_x,end_x,
+                                                      start_y,end_y,start_z,end_z);
+
     unsigned char ****p4d = 0;
     if (!new4dpointer(p4d, in_sz[0], in_sz[1], in_sz[2], 1, total1dData))
     {
@@ -6532,7 +6574,6 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
     saveMarker_file(marker_name.toStdString().c_str(),file_inmarkers);
     simple_saveimage_wrapper(callback,image_name.toStdString().c_str(),total1dData,in_sz,1);
     if(total1dData) {delete [] total1dData; total1dData =0;}
-    if(aVolume) {delete aVolume; aVolume = 0;}
 }
 
 NeuronTree pruning_cross_swc(NeuronTree nt)
