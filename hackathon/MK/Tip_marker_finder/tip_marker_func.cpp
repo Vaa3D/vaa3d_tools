@@ -110,9 +110,9 @@ bool TipProcessor(QStringList input, int menu)
 						z_coord = int(nt.listNeuron.at(i).z);
 						if ((z_coord >= bottom) || (z_coord <= top))
 						{
-							t.x = nt.listNeuron.at(i).x - 1;
-							t.y = nt.listNeuron.at(i).y - 1;
-							t.z = nt.listNeuron.at(i).z - 1;
+							t.x = nt.listNeuron.at(i).x + 1;
+							t.y = nt.listNeuron.at(i).y + 1;
+							t.z = nt.listNeuron.at(i).z + 1;
 							t.type = nt.listNeuron.at(i).type;
 							t.name = QString::number(10);
 							bifur_marker.append(t);
@@ -143,9 +143,9 @@ bool TipProcessor(QStringList input, int menu)
 
 				if (childs[i].size() == 0)
 				{
-					t.x = nt.listNeuron.at(i).x - 1;
-					t.y = nt.listNeuron.at(i).y - 1;
-					t.z = nt.listNeuron.at(i).z - 1;
+					t.x = nt.listNeuron.at(i).x + 1;
+					t.y = nt.listNeuron.at(i).y + 1;
+					t.z = nt.listNeuron.at(i).z + 1;
 					t.type = nt.listNeuron.at(i).type;
 					t.name = QString::number(10);
 					bifur_marker.append(t);
