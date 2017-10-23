@@ -4,30 +4,98 @@
 
 #include "img.h"
 
-//
-#include <vector>
-#include <iostream>
-#include <string.h>
-#include <cmath>
-#include <climits>
-#include <numeric>
-#include <algorithm>
-#include <string>
-#include <map>
-
-using namespace std;
-
-#include "distance_transform.hpp"
-
-using namespace dt;
-using namespace dope;
-
-
 // adaptive thresholding (for dt)
 // distance transform (estimate radius)
 // max filtering (find local maxima)
 
-int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
+
+// histogram
+template<class Tdata, class Tidx>
+HistogramLUT<Tdata, Tidx> :: HistogramLUT()
+{
+    bins=0; index=0; lut=NULL;
+}
+
+template<class Tdata, class Tidx>
+HistogramLUT<Tdata, Tidx> :: ~HistogramLUT()
+{
+}
+
+template<class Tdata, class Tidx>
+void HistogramLUT<Tdata, Tidx> :: initLUT(Tdata *p, Tidx sz, Tidx nbins)
+{
+    //
+    if(!p || nbins<=0)
+    {
+        cout<<"Invalid inputs"<<endl;
+        return;
+    }
+
+    //
+    bins = nbins;
+    y_new1dp<Tdata, Tidx>(lut, bins);
+
+    // histogram bin #i [minv+i*stepv, minv+(i+1)*stepv)
+    minv=1E10;
+    maxv=-1E10;
+    double stepv=0;
+    for(Tidx i=0; i<sz; i++)
+    {
+        if(minv>p[i]) minv=p[i];
+        if(maxv<p[i]) maxv=p[i];
+    }
+    stepv = (maxv - minv)/(double)bins;
+
+    for(Tidx i=0; i<bins; i++)
+    {
+        lut[i] = minv + i*stepv; // only left values
+    }
+
+    return;
+}
+
+template<class Tdata, class Tidx>
+Tidx HistogramLUT<Tdata, Tidx> :: getIndex(Tdata val)
+{
+    //
+    Tidx min=0;
+    Tidx max=bins-1;
+
+    // binary search
+    bool found = false;
+    index=0;
+    while(min<max && !found)
+    {
+        Tidx mid=(min+max)/2;
+
+        if(val == lut[mid] || (val > lut[mid] && y_abs<Tdata>(val - lut[mid])<1E-10) ) // =
+        {
+            found = true;
+            index = mid;
+        }
+        else if(val < lut[mid]) // <
+        {
+            max = mid - 1;
+        }
+        else // >
+        {
+            if(mid+1>=max)
+            {
+                found = true;
+                index = mid;
+            }
+            else
+            {
+                min = mid + 1;
+            }
+        }
+    }
+
+    //
+    return index;
+}
+
+int adaptiveThresholdMT(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
 {
     std::vector<boost::compute::platform> platforms = boost::compute::system::platforms();
     int gpucnt=0; // more than one GPU
@@ -114,6 +182,113 @@ int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int
 
     // transfer result back to the host array 'dst'
     queue.enqueue_read_buffer(buffer_dst, 0, volsz, dst);
+
+    //
+    return 0;
+}
+
+int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
+{
+    //
+
+    //
+    return 0;
+}
+
+int estimateIntensityThreshold(unsigned char *p, long size, float &thresh, int method)
+{
+    // method 0: k-means 1: mean + stddev
+
+    //
+    if(method==0)
+    {
+        long BINS = 256; // histogram bins
+
+        long *h=NULL, *hc=NULL;
+
+        try
+        {
+            h = new long [BINS];
+            hc = new long [BINS];
+        }
+        catch(...)
+        {
+            cout<<"fail to alloc memory\n";
+            return -1;
+        }
+
+        memset(h, 0, sizeof(long)*BINS);
+
+        // histogram
+        HistogramLUT<unsigned char, long> hlut;
+        hlut.initLUT(p, size, BINS);
+
+        for(long i=0; i<size; i++)
+        {
+            h[hlut.getIndex(p[i])] ++;
+        }
+
+        // heuristic init center
+        float mub=0.05*(hlut.maxv - hlut.minv) + hlut.minv;
+        float muf=0.30*(hlut.maxv - hlut.minv) + hlut.minv;
+
+        //
+        while (true)
+        {
+            float oldmub=mub, oldmuf=muf;
+
+            for(long i=0; i<BINS; i++)
+            {
+                if(h[i]==0)
+                    continue;
+
+                float cb = y_abs<float>(float(hlut.lut[i])-mub);
+                float cf = y_abs<float>(float(hlut.lut[i])-muf);
+
+                hc[i] = (cb<=cf)?1:2; // class 1 and class 2
+            }
+
+            // update centers
+            float sum_b=0, sum_bw=0, sum_f=0, sum_fw=0;
+
+            for(long i=0; i<BINS; i++)
+            {
+                if(h[i]==0)
+                    continue;
+
+                if(hc[i]==1)
+                {
+                    sum_bw += (i+1)*h[i];
+                    sum_b += h[i];
+                }
+                else if(hc[i]==2)
+                {
+                    sum_fw += (i+1)*h[i];
+                    sum_f += h[i];
+                }
+            }
+
+            mub = hlut.lut[ long(sum_bw/sum_b) ];
+            muf = hlut.lut[ long(sum_fw/sum_f) ];
+
+            if(y_abs<float>(mub - oldmub)<1 && y_abs<float>(muf - oldmuf)<1)  break;
+        }
+
+        //
+        thresh = (mub+muf)/2;
+
+        cout<<"k-means estimates the threshold is ..."<<thresh<<endl;
+    }
+    else if(method==1)
+    {
+        //
+        float mean, stddev;
+
+    }
+    else
+    {
+
+    }
 
     //
     return 0;

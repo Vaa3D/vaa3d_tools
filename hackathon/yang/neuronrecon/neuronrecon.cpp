@@ -652,26 +652,27 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     }
 
     // find k nearest neighbors
-    //int k=6;
-    knn(k);
+    float mean, stddev;
+    knnMeanStddevDist(mean, stddev, k);
+    knn(k, mean);
 
     // connect points into lines
     unsigned long loc;
     while(findNextUnvisitPoint(loc))
     {
         //
-        //cout<<"current point ..."<<loc<<endl;
+        cout<<"current point ..."<<loc<<endl;
+
+        //
+        if(points[loc].visited == false)
+        {
+            points[loc].visited = true;
+            points[loc].parents.push_back(-1);
+        }
 
         //
         if(isConsidered(loc, m))
         {
-            //
-            if(points[loc].visited == false)
-            {
-                points[loc].visited = true;
-                points[loc].parents.push_back(-1);
-            }
-
             //
             Point p = points[loc];
 
@@ -685,7 +686,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
         }
     }
 
-    //cout<<"done connection ... \n";
+    cout<<"done connection ... \n";
 
     // save connected results into a .swc file
 
@@ -1066,6 +1067,59 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
     //
     return 0;
 }
+
+int NCPointCloud::knnMeanStddevDist(float &mean, float &stddev, int k)
+{
+    //
+    NCPointCloud pc;
+    pc.copy(*this);
+
+    //
+    pc.knn(k);
+
+    //
+    mean = 0;
+    stddev = 0;
+
+    // mean
+    long n = 0;
+
+    for(long i=0; i<pc.points.size(); i++)
+    {
+        Point p = pc.points[i];
+
+        for(long j=1; j<pc.points[i].nn.size(); j++)
+        {
+            Point q = pc.points[pc.points[i].nn[j]];
+
+            if(q.isSamePoint(p))
+            {
+                continue;
+            }
+            else
+            {
+                mean += distance(p,q);
+                n++;
+            }
+        }
+    }
+
+    cout<<k<<" nn ... "<<mean<<" / "<<n<<endl;
+
+    if(n>0)
+    {
+        mean /= n;
+    }
+
+    cout<<"mean distance: "<<mean<<endl;
+
+    // stdard deviation
+
+
+    //
+    return 0;
+}
+
 
 // class Quadruple
 Quadruple::Quadruple()

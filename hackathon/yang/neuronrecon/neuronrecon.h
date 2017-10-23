@@ -151,6 +151,8 @@ public:
     int copy(NCPointCloud pc);
 
     //
+    int knnMeanStddevDist(float &mean, float &stddev, int k=2);
+
 
 public:
     vector<Point> points;
