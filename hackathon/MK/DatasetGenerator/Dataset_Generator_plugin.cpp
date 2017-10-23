@@ -7,6 +7,9 @@
 #include <vector>
 #include "Dataset_Generator_plugin.h"
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Dataset_Generator, DatasetGenerator);
@@ -55,11 +58,29 @@ bool DatasetGenerator::dofunc(const QString & func_name, const V3DPluginArgList 
 	{
 		this->inputSWCdir = infiles.at(0);
 		this->inputImagedir = infiles.at(1);
+		//this->inputBkgDir = infiles.at(2);
 		//this->outputImagedir = outfiles.at(0);
 
 		getImageFolders();
-		pick_save();
+		//pick_save();
+		//createList();
+		createList2();
 
+		/*ifstream infile("train.txt");
+		ofstream outfile("newTrain.txt");
+		string line, buffer;
+		vector<string> wholeLine;
+		while (getline(infile, line))
+		{
+			stringstream ss(line);
+			while (ss >> buffer) wholeLine.push_back(buffer);
+			//cout << wholeLine[0] << endl;
+			QString bkgLine = QString::fromStdString(wholeLine[0]);
+			bkgLine.replace("MK_Drive", "mnt/MK_Drive");
+			string thisLine = bkgLine.toStdString();
+			outfile << thisLine << " 0" << endl;
+			wholeLine.clear();
+		}*/
 	}
 	else if (func_name == tr("func2"))
 	{

@@ -30,11 +30,17 @@ public:
 	
 	QString inputSWCdir;
 	QString inputImagedir;
+	QString inputBkgDir;
 	QVector<QString> imageFolders;
-
 	QString outputImagedir;
-
 	void getImageFolders();
+	
+	double valProportion;
+	double proportion1;
+	double proportion2;
+	void createList();
+	void createList2();
+	
 
 	void pick_save();
 
