@@ -1743,10 +1743,19 @@ void ControlPanel::lineconstruct(V3DPluginCallback2 &_v3d, QWidget *parent)
 
 void ControlPanel::localmaxima(V3DPluginCallback2 &_v3d, QWidget *parent)
 {
+    //
     m_controlpanel = this;
 
     //
     m_le_filename = new QLineEdit(QObject::tr(" .tif"));
+
+    //
+    v3dhandle curwin = m_v3d.currentImageWindow();
+    if(curwin)
+    {
+        m_le_filename->setText(m_v3d.getImageName(curwin));
+    }
+
     QPushButton *pPushButton_start = new QPushButton(QObject::tr("construct"));
     QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
     QPushButton *pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
@@ -1803,12 +1812,140 @@ void ControlPanel::localmaxima(V3DPluginCallback2 &_v3d, QWidget *parent)
 
 void ControlPanel::bigneuron(V3DPluginCallback2 &_v3d, QWidget *parent)
 {
+    //
+    m_controlpanel = this;
 
+    //
+    m_le_filename = new QLineEdit(QObject::tr(" .tif"));
+
+    //
+    v3dhandle curwin = m_v3d.currentImageWindow();
+    if(curwin)
+    {
+        m_le_filename->setText(m_v3d.getImageName(curwin));
+    }
+
+    QPushButton *pPushButton_start = new QPushButton(QObject::tr("construct"));
+    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
+    QPushButton *pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
+
+    pknn = new QSpinBox();
+    pthresh = new QSpinBox();
+    pdist = new QSpinBox();
+
+    pknn->setMaximum(100); pknn->setMinimum(1); pknn->setValue(5);
+    pthresh->setMaximum(180); pthresh->setMinimum(0); pthresh->setValue(120);
+    pdist->setMaximum(100); pdist->setMinimum(1); pdist->setValue(5);
+
+    //
+    QGroupBox *input_panel = new QGroupBox("Local Maxima Neuron Construction:");
+    input_panel->setStyle(new QWindowsStyle());
+    QGridLayout *constructLayout = new QGridLayout();
+    constructLayout->addWidget(new QLabel(QObject::tr("Input:")),1,1);
+    constructLayout->addWidget(m_le_filename,2,1,1,2);
+    constructLayout->addWidget(pPushButton_openFileDlg,2,3,1,1);
+    input_panel->setLayout(constructLayout);
+
+    QGroupBox *control_panel = new QGroupBox("Parameters:");
+    control_panel->setStyle(new QWindowsStyle());
+    QGridLayout *controlLayout = new QGridLayout();
+    controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),1,1,1,1);
+    controlLayout->addWidget(pknn,1,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("nearest point(s)")),1,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),2,1,1,1);
+    controlLayout->addWidget(pthresh,2,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("degree")),2,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),3,1,1,1);
+    controlLayout->addWidget(pdist,3,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("X point's radius")),3,3,1,1);
+    control_panel->setLayout(controlLayout);
+
+    QWidget* container = new QWidget();
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(pPushButton_start,1,2);
+    bottomBar->addWidget(pPushButton_close,1,1);
+    container->setLayout(bottomBar);
+
+    QGridLayout *pGridLayout = new QGridLayout();
+    pGridLayout->addWidget(input_panel);
+    pGridLayout->addWidget(control_panel);
+    pGridLayout->addWidget(container);
+
+    setLayout(pGridLayout);
+    setWindowTitle(QString("Construct points into line segments"));
+
+    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start3()));
+    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
+    connect(pPushButton_openFileDlg, SIGNAL(clicked()), this, SLOT(_slots_openFile()));
 }
 
 void ControlPanel::deeplearning(V3DPluginCallback2 &_v3d, QWidget *parent)
 {
+    //
+    m_controlpanel = this;
 
+    //
+    m_le_filename = new QLineEdit(QObject::tr(" .tif"));
+
+    //
+    v3dhandle curwin = m_v3d.currentImageWindow();
+    if(curwin)
+    {
+        m_le_filename->setText(m_v3d.getImageName(curwin));
+    }
+
+    QPushButton *pPushButton_start = new QPushButton(QObject::tr("construct"));
+    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
+    QPushButton *pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
+
+    pknn = new QSpinBox();
+    pthresh = new QSpinBox();
+    pdist = new QSpinBox();
+
+    pknn->setMaximum(100); pknn->setMinimum(1); pknn->setValue(5);
+    pthresh->setMaximum(180); pthresh->setMinimum(0); pthresh->setValue(120);
+    pdist->setMaximum(100); pdist->setMinimum(1); pdist->setValue(5);
+
+    //
+    QGroupBox *input_panel = new QGroupBox("Local Maxima Neuron Construction:");
+    input_panel->setStyle(new QWindowsStyle());
+    QGridLayout *constructLayout = new QGridLayout();
+    constructLayout->addWidget(new QLabel(QObject::tr("Input:")),1,1);
+    constructLayout->addWidget(m_le_filename,2,1,1,2);
+    constructLayout->addWidget(pPushButton_openFileDlg,2,3,1,1);
+    input_panel->setLayout(constructLayout);
+
+    QGroupBox *control_panel = new QGroupBox("Parameters:");
+    control_panel->setStyle(new QWindowsStyle());
+    QGridLayout *controlLayout = new QGridLayout();
+    controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),1,1,1,1);
+    controlLayout->addWidget(pknn,1,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("nearest point(s)")),1,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),2,1,1,1);
+    controlLayout->addWidget(pthresh,2,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("degree")),2,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),3,1,1,1);
+    controlLayout->addWidget(pdist,3,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("X point's radius")),3,3,1,1);
+    control_panel->setLayout(controlLayout);
+
+    QWidget* container = new QWidget();
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(pPushButton_start,1,2);
+    bottomBar->addWidget(pPushButton_close,1,1);
+    container->setLayout(bottomBar);
+
+    QGridLayout *pGridLayout = new QGridLayout();
+    pGridLayout->addWidget(input_panel);
+    pGridLayout->addWidget(control_panel);
+    pGridLayout->addWidget(container);
+
+    setLayout(pGridLayout);
+    setWindowTitle(QString("Construct points into line segments"));
+
+    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start4()));
+    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
+    connect(pPushButton_openFileDlg, SIGNAL(clicked()), this, SLOT(_slots_openFile()));
 }
 
 void ControlPanel::_slot_close()
@@ -1914,13 +2051,6 @@ void ControlPanel::_slot_start1()
 void ControlPanel::_slot_start2()
 {
     //
-    v3dhandle curwin = m_v3d.currentImageWindow();
-    if(curwin)
-    {
-        m_le_filename->setText(m_v3d.getImageName(curwin));
-    }
-
-    //
     QString filename = m_le_filename->text();
     if (!QFile(filename).exists())
     {
@@ -1937,8 +2067,6 @@ void ControlPanel::_slot_start2()
     QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
     QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
     QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
-
-
 
     //
     if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".TIFF"))
