@@ -490,7 +490,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
         QString inimg_file_mip = paras.empty() ? "" : paras[k]; if(inimg_file_mip == "NULL") inimg_file_mip = ""; k++;
         QString ano_name = paras.empty() ? "" : paras[k]; if(ano_name == "NULL") ano_name = ""; k++;
-        int step_size = 8;
+        int step_size = 16;
 
         NeuronTree nt_total;
         QString output2Dimage = inimg_file_mip + QString("_gd_steps_%1.tif").arg(step_size);
@@ -637,13 +637,13 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         V3DLONG in_sz[4];
         QString inimg_file = infiles[0];
         int k=0;
-//        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
-//        QString inimg_file_mip = paras.empty() ? "" : paras[k]; if(inimg_file_mip == "NULL") inimg_file_mip = ""; k++;
-//        QString ano_name = paras.empty() ? "" : paras[k]; if(ano_name == "NULL") ano_name = ""; k++;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+        QString inimg_file_mip = paras.empty() ? "" : paras[k]; if(inimg_file_mip == "NULL") inimg_file_mip = ""; k++;
+        QString ano_name = paras.empty() ? "" : paras[k]; if(ano_name == "NULL") ano_name = ""; k++;
         QString marker_file = paras.empty() ? "" : paras[k]; if(marker_file == "NULL") marker_file = ""; k++;
 
         NeuronTree nt_total;
-//        QString output2Dimage = inimg_file_mip + "_gd_steps_32.tif";
+        QString output2Dimage = inimg_file_mip + "_gd_steps_32.tif";
         int datatype = 0;
         if (!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
@@ -677,8 +677,8 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         trace_para.sp_graph_resolution_step = 1;
         trace_para.b_estRadii = false;
         trace_para.sp_downsample_method = 1;
-        trace_para.sp_downsample_step = 1;
-        trace_para.sp_graph_resolution_step = 1;
+        trace_para.sp_downsample_step = 4;
+        trace_para.sp_graph_resolution_step = 4;
 
         for(V3DLONG i = 1; i <file_inmarkers.size();i++)
         {
@@ -723,7 +723,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         QString outputswc = marker_file + "_gd_steps_32.swc";
         export_list2file(nt_total.listNeuron, outputswc,outputswc);
 
-       /* V3DLONG stacksz =in_sz[0]*in_sz[1];
+        V3DLONG stacksz =in_sz[0]*in_sz[1];
         double margin=0;
         unsigned char* data1d_mask = 0;
         data1d_mask = new unsigned char [stacksz];
@@ -750,7 +750,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         ofstream myfile;
         myfile.open (ano_name.toStdString().c_str(),fstream::in | fstream::out | fstream::app);
         myfile << "SWCFILE=" <<outputswc.toStdString().c_str()<<endl;
-        myfile.close();*/
+        myfile.close();
 
     }else if (func_name == tr("linker"))
     {
