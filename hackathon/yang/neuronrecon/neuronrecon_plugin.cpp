@@ -16,7 +16,10 @@ QStringList NeuReconPlugin::menulist() const
 {
     return QStringList()
             <<tr("line_construct")
-           <<tr("about");
+           <<tr("localmaxima_construct")
+          <<tr("bigneuron_construct")
+         <<tr("deeplearning_construct")
+        <<tr("about");
 }
 
 QStringList NeuReconPlugin::funclist() const
@@ -43,6 +46,18 @@ void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     if (menu_name == tr("line_construct"))
     {
         lineconstruct_menu(callback,parent);
+    }
+    else if (menu_name == tr("localmaxima_construct"))
+    {
+        localmaxima_menu(callback,parent);
+    }
+    else if (menu_name == tr("bigneuron_construct"))
+    {
+        bigneuron_menu(callback,parent);
+    }
+    else if (menu_name == tr("deeplearning_construct"))
+    {
+        deeplearning_menu(callback,parent);
     }
     else if (menu_name == tr("about"))
     {

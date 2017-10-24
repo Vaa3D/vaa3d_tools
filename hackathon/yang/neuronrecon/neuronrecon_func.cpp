@@ -1743,7 +1743,62 @@ void ControlPanel::lineconstruct(V3DPluginCallback2 &_v3d, QWidget *parent)
 
 void ControlPanel::localmaxima(V3DPluginCallback2 &_v3d, QWidget *parent)
 {
+    m_controlpanel = this;
 
+    //
+    m_le_filename = new QLineEdit(QObject::tr(" .tif"));
+    QPushButton *pPushButton_start = new QPushButton(QObject::tr("construct"));
+    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
+    QPushButton *pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
+
+    pknn = new QSpinBox();
+    pthresh = new QSpinBox();
+    pdist = new QSpinBox();
+
+    pknn->setMaximum(100); pknn->setMinimum(1); pknn->setValue(5);
+    pthresh->setMaximum(180); pthresh->setMinimum(0); pthresh->setValue(120);
+    pdist->setMaximum(100); pdist->setMinimum(1); pdist->setValue(5);
+
+    //
+    QGroupBox *input_panel = new QGroupBox("Local Maxima Neuron Construction:");
+    input_panel->setStyle(new QWindowsStyle());
+    QGridLayout *constructLayout = new QGridLayout();
+    constructLayout->addWidget(new QLabel(QObject::tr("Input:")),1,1);
+    constructLayout->addWidget(m_le_filename,2,1,1,2);
+    constructLayout->addWidget(pPushButton_openFileDlg,2,3,1,1);
+    input_panel->setLayout(constructLayout);
+
+    QGroupBox *control_panel = new QGroupBox("Parameters:");
+    control_panel->setStyle(new QWindowsStyle());
+    QGridLayout *controlLayout = new QGridLayout();
+    controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),1,1,1,1);
+    controlLayout->addWidget(pknn,1,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("nearest point(s)")),1,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),2,1,1,1);
+    controlLayout->addWidget(pthresh,2,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("degree")),2,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),3,1,1,1);
+    controlLayout->addWidget(pdist,3,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("X point's radius")),3,3,1,1);
+    control_panel->setLayout(controlLayout);
+
+    QWidget* container = new QWidget();
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(pPushButton_start,1,2);
+    bottomBar->addWidget(pPushButton_close,1,1);
+    container->setLayout(bottomBar);
+
+    QGridLayout *pGridLayout = new QGridLayout();
+    pGridLayout->addWidget(input_panel);
+    pGridLayout->addWidget(control_panel);
+    pGridLayout->addWidget(container);
+
+    setLayout(pGridLayout);
+    setWindowTitle(QString("Construct points into line segments"));
+
+    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start2()));
+    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
+    connect(pPushButton_openFileDlg, SIGNAL(clicked()), this, SLOT(_slots_openFile()));
 }
 
 void ControlPanel::bigneuron(V3DPluginCallback2 &_v3d, QWidget *parent)
@@ -1764,7 +1819,449 @@ void ControlPanel::_slot_close()
         m_controlpanel=0;
     }
 }
+
 void ControlPanel::_slot_start1()
+{
+    //
+    QString pointcloud_filename = m_le_filename->text();
+    if (!QFile(pointcloud_filename).exists())
+    {
+        v3d_msg("Cannot find your point cloud file.");
+        return;
+    }
+
+    //
+    int k = pknn->value() + 1;
+    float maxAngle = 3.14f - (pthresh->value()/180.0f*3.14159f);
+    float m = pdist->value();
+
+    //
+    NCPointCloud pointcloud;
+    pointcloud.connectPoints2Lines(pointcloud_filename, NULL, k, maxAngle, m);
+
+    //
+    NeuronTree nt;
+
+    for(V3DLONG i=0; i<pointcloud.points.size(); i++)
+    {
+        NeuronSWC S;
+        S.n = pointcloud.points[i].n;
+        S.type = 3;
+        S.x = pointcloud.points[i].x;
+        S.y= pointcloud.points[i].y;
+        S.z = pointcloud.points[i].z;
+        S.r = pointcloud.points[i].radius;
+        S.pn = pointcloud.points[i].parents[0];
+
+        nt.listNeuron.append(S);
+        nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);
+    }
+
+    // need to reset the color to zero of display with color (using the types)
+    nt.color.r = 0;
+    nt.color.g = 0;
+    nt.color.b = 0;
+    nt.color.a = 0;
+
+    //
+    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
+    V3dR_MainWindow * new3DWindow = NULL;
+    bool b_found = false;
+    QString title = QString("construct");
+    if (list_3dviewer.size() < 1)
+    {
+        new3DWindow = m_v3d.createEmpty3DViewer();
+        if (!new3DWindow)
+        {
+            v3d_msg(QString("Failed to open an empty window!"));
+            return;
+        }
+    }
+    else
+    {
+        for(int j= 0; j < list_3dviewer.size(); j++)
+        {
+            if(m_v3d.getImageName(list_3dviewer[j]).contains(title))
+            {
+                b_found = true;
+                new3DWindow = list_3dviewer[j];
+                break;
+            }
+        }
+
+        if(!b_found)
+        {
+            new3DWindow = m_v3d.createEmpty3DViewer();
+            if(!new3DWindow)
+            {
+                v3d_msg(QString("Failed to open an empty window!"));
+                return;
+            }
+        }
+    }
+
+    //
+    QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    new_treeList->clear();
+    new_treeList->push_back(nt);
+
+    //
+    m_v3d.setWindowDataTitle(new3DWindow, title);
+    m_v3d.update_3DViewer(new3DWindow);
+    m_v3d.update_NeuronBoundingBox(new3DWindow);
+}
+
+void ControlPanel::_slot_start2()
+{
+    //
+    v3dhandle curwin = m_v3d.currentImageWindow();
+    if(curwin)
+    {
+        m_le_filename->setText(m_v3d.getImageName(curwin));
+    }
+
+    //
+    QString filename = m_le_filename->text();
+    if (!QFile(filename).exists())
+    {
+        v3d_msg("Cannot find your image file.");
+        return;
+    }
+
+    //
+    int k = pknn->value() + 1;
+    float maxAngle = 3.14f - (pthresh->value()/180.0f*3.14159f);
+    float m = pdist->value();
+
+    // temporary files
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+    QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
+    QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
+
+
+
+    //
+    if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".TIFF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return;
+    }
+
+    //
+    NCPointCloud pointcloud;
+
+    //
+    if(fnITKfiltered.toUpper().endsWith(".V3DRAW") || fnITKfiltered.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = m_v3d.loadImage( const_cast<char *>(fnITKfiltered.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return;
+        }
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            cout<<"Not supported!\n";
+            return;
+        }
+
+        // local maxima
+        V3DLONG nstep = 16; // searching window's radius
+
+        V3DLONG i,j,k, idx;
+        V3DLONG ii, jj, kk, ofkk, ofjj;
+        V3DLONG xb, xe, yb, ye, zb, ze;
+
+        float lmax;
+
+        unsigned char *p1dImg = p4dImage->getRawData();
+        V3DLONG dimx = p4dImage->getXDim();
+        V3DLONG dimy = p4dImage->getYDim();
+        V3DLONG dimz = p4dImage->getZDim();
+        long volsz = p4dImage->getTotalUnitNumberPerChannel();
+
+        // estimate the radius with distance transform
+        unsigned char *dt=NULL;
+        try
+        {
+            dt = new unsigned char [volsz];
+        }
+        catch(...)
+        {
+            cout<<"fail to alloc memory for out image\n";
+            return;
+        }
+        distanceTransformL2(dt, p1dImg, dimx, dimy, dimz);
+
+        // estimate threshold
+        float threshold;
+        estimateIntensityThreshold(p1dImg, volsz, threshold);
+
+        //
+        for(k=0; k<dimz; k+=nstep)
+        {
+            for(j=0; j<dimy; j+=nstep)
+            {
+                for(i=0; i<dimx; i+=nstep)
+                {
+                    //
+                    xb = i - nstep;
+                    xe = i + nstep;
+
+                    if(xb<0)
+                        xb = 0;
+                    if(xe>dimx)
+                        xe = dimx;
+
+                    yb = j - nstep;
+                    ye = j + nstep;
+
+                    if(yb<0)
+                        yb = 0;
+                    if(ye>dimy)
+                        ye = dimy;
+
+                    zb = k - nstep;
+                    ze = k + nstep;
+
+                    if(zb<0)
+                        zb = 0;
+                    if(ze>dimz)
+                        ze = dimz;
+
+                    lmax = threshold;
+                    Point p;
+                    bool found = false;
+                    for(kk=zb; kk<ze; kk++)
+                    {
+                        ofkk = kk*dimx*dimy;
+                        for(jj=yb; jj<ye; jj++)
+                        {
+                            ofjj = ofkk + jj*dimx;
+                            for(ii=xb; ii<xe; ii++)
+                            {
+                                idx = ofjj + ii;
+
+                                if(p1dImg[idx]>lmax)
+                                {
+                                    found = true;
+
+                                    lmax = p1dImg[idx];
+
+                                    p.x = ii;
+                                    p.y = jj;
+                                    p.z = kk;
+                                }
+                            }
+                        }
+                    }
+
+                    if(found)
+                    {
+                        pointcloud.points.push_back(p);
+                    }
+                }
+            }
+        }
+
+        //
+        pointcloud.delDuplicatedPoints();
+
+        // add radius
+        for(int i=0; i<pointcloud.points.size(); i++)
+        {
+            long idx = pointcloud.points[i].z*dimy*dimx + pointcloud.points[i].y*dimx + pointcloud.points[i].x;
+
+            pointcloud.points[i].radius = dt[idx];
+        }
+
+        //
+        y_del1dp<unsigned char>(dt);
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return;
+    }
+
+    //
+    NCPointCloud pcsorted;
+    pcsorted.ksort(pointcloud, 10);
+    pcsorted.savePointCloud(cnvtPoints);
+
+    // construct lines
+    NCPointCloud lines;
+    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
+
+    //
+    NeuronTree nt;
+
+    for(V3DLONG i=0; i<lines.points.size(); i++)
+    {
+        NeuronSWC S;
+        S.n = lines.points[i].n;
+        S.type = 3;
+        S.x = lines.points[i].x;
+        S.y = lines.points[i].y;
+        S.z = lines.points[i].z;
+        S.r = lines.points[i].radius;
+        S.pn = lines.points[i].parents[0];
+
+        nt.listNeuron.append(S);
+        nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);
+    }
+
+    // need to reset the color to zero of display with color (using the types)
+    nt.color.r = 0;
+    nt.color.g = 0;
+    nt.color.b = 0;
+    nt.color.a = 0;
+
+    //
+    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
+    V3dR_MainWindow * new3DWindow = NULL;
+    bool b_found = false;
+    QString title = QString("construct");
+    if (list_3dviewer.size() < 1)
+    {
+        new3DWindow = m_v3d.createEmpty3DViewer();
+        if (!new3DWindow)
+        {
+            v3d_msg(QString("Failed to open an empty window!"));
+            return;
+        }
+    }
+    else
+    {
+        for(int j= 0; j < list_3dviewer.size(); j++)
+        {
+            if(m_v3d.getImageName(list_3dviewer[j]).contains(title))
+            {
+                b_found = true;
+                new3DWindow = list_3dviewer[j];
+                break;
+            }
+        }
+
+        if(!b_found)
+        {
+            new3DWindow = m_v3d.createEmpty3DViewer();
+            if(!new3DWindow)
+            {
+                v3d_msg(QString("Failed to open an empty window!"));
+                return;
+            }
+        }
+    }
+
+    //
+    QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    new_treeList->clear();
+    new_treeList->push_back(nt);
+
+    //
+    m_v3d.setWindowDataTitle(new3DWindow, title);
+    m_v3d.update_3DViewer(new3DWindow);
+    m_v3d.update_NeuronBoundingBox(new3DWindow);
+}
+
+void ControlPanel::_slot_start3()
+{
+    //
+    QString pointcloud_filename = m_le_filename->text();
+    if (!QFile(pointcloud_filename).exists())
+    {
+        v3d_msg("Cannot find your point cloud file.");
+        return;
+    }
+
+    //
+    int k = pknn->value() + 1;
+    float maxAngle = 3.14f - (pthresh->value()/180.0f*3.14159f);
+    float m = pdist->value();
+
+    //
+    NCPointCloud pointcloud;
+    pointcloud.connectPoints2Lines(pointcloud_filename, NULL, k, maxAngle, m);
+
+    //
+    NeuronTree nt;
+
+    for(V3DLONG i=0; i<pointcloud.points.size(); i++)
+    {
+        NeuronSWC S;
+        S.n = pointcloud.points[i].n;
+        S.type = 3;
+        S.x = pointcloud.points[i].x;
+        S.y= pointcloud.points[i].y;
+        S.z = pointcloud.points[i].z;
+        S.r = pointcloud.points[i].radius;
+        S.pn = pointcloud.points[i].parents[0];
+
+        nt.listNeuron.append(S);
+        nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);
+    }
+
+    // need to reset the color to zero of display with color (using the types)
+    nt.color.r = 0;
+    nt.color.g = 0;
+    nt.color.b = 0;
+    nt.color.a = 0;
+
+    //
+    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
+    V3dR_MainWindow * new3DWindow = NULL;
+    bool b_found = false;
+    QString title = QString("construct");
+    if (list_3dviewer.size() < 1)
+    {
+        new3DWindow = m_v3d.createEmpty3DViewer();
+        if (!new3DWindow)
+        {
+            v3d_msg(QString("Failed to open an empty window!"));
+            return;
+        }
+    }
+    else
+    {
+        for(int j= 0; j < list_3dviewer.size(); j++)
+        {
+            if(m_v3d.getImageName(list_3dviewer[j]).contains(title))
+            {
+                b_found = true;
+                new3DWindow = list_3dviewer[j];
+                break;
+            }
+        }
+
+        if(!b_found)
+        {
+            new3DWindow = m_v3d.createEmpty3DViewer();
+            if(!new3DWindow)
+            {
+                v3d_msg(QString("Failed to open an empty window!"));
+                return;
+            }
+        }
+    }
+
+    //
+    QList<NeuronTree> * new_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+    new_treeList->clear();
+    new_treeList->push_back(nt);
+
+    //
+    m_v3d.setWindowDataTitle(new3DWindow, title);
+    m_v3d.update_3DViewer(new3DWindow);
+    m_v3d.update_NeuronBoundingBox(new3DWindow);
+}
+
+void ControlPanel::_slot_start4()
 {
     //
     QString pointcloud_filename = m_le_filename->text();
