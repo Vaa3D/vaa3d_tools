@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <qstringlist.h>
 #include <iostream>
-#include <cstdlib>
 #include <qfile.h>
 #include <ctime>
 
@@ -346,4 +345,59 @@ void DatasetGenerator::createList2()
 		imgNames.clear();
 		//system("pause");
 	}
+}
+
+void DatasetGenerator::shapeFilter_line_dot()
+{
+	for (QVector<QString>::iterator it=this->imageFolders.begin(); it!=this->imageFolders.end(); ++it)
+	{
+		qDebug() << *it;
+		DIR* dir;
+		struct dirent *ent;
+		string imgFolderString = (*it).toStdString(); // to each image folder
+		const char* imgFolderName = imgFolderString.c_str();
+		
+		QVector<QString> imgNames;
+		if ((dir = opendir(imgFolderName)) != NULL) 
+		{
+			int fileCount = 0;
+			QString name;
+			while ((ent = readdir(dir)) != NULL) 
+			{
+				++fileCount;
+				if (fileCount <= 2) continue;
+				for (size_t i=0; i<100; ++i) 
+				{
+					if (ent->d_name[i] == NULL) break;
+					else if (ent->d_name[i] == '..'  ||  ent->d_name[i] == '...') continue;
+					name = name + QChar(ent->d_name[i]);
+				}
+				imgNames.push_back(name); // to each patch
+				name.clear();
+			}
+
+			for (QVector<QString>::iterator imgIt=imgNames.begin(); imgIt!=imgNames.end(); ++imgIt)
+			{
+				QString imgFileName = *it + "\\" + *imgIt;
+				const char* imgNameC = imgFileName.toStdString().c_str();
+				unsigned short* ImgPtr = 0;
+				long int in_sz[4];
+				int datatype;
+				if (!simple_loadimage(imgNameC, ImgPtr, in_sz, datatype))
+				{
+					//fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
+					return;
+				}
+				int imgLength = in_sz[0] * in_sz[1];
+			}
+
+
+			
+			
+		}
+
+		imgNames.clear();
+		//system("pause");
+	}
+
 }

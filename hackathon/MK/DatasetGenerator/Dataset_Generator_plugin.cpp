@@ -64,23 +64,9 @@ bool DatasetGenerator::dofunc(const QString & func_name, const V3DPluginArgList 
 		getImageFolders();
 		//pick_save();
 		//createList();
-		createList2();
+		//createList2();
 
-		/*ifstream infile("train.txt");
-		ofstream outfile("newTrain.txt");
-		string line, buffer;
-		vector<string> wholeLine;
-		while (getline(infile, line))
-		{
-			stringstream ss(line);
-			while (ss >> buffer) wholeLine.push_back(buffer);
-			//cout << wholeLine[0] << endl;
-			QString bkgLine = QString::fromStdString(wholeLine[0]);
-			bkgLine.replace("MK_Drive", "mnt/MK_Drive");
-			string thisLine = bkgLine.toStdString();
-			outfile << thisLine << " 0" << endl;
-			wholeLine.clear();
-		}*/
+		shapeFilter_line_dot();
 	}
 	else if (func_name == tr("func2"))
 	{

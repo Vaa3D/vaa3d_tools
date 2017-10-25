@@ -19,6 +19,8 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include "dirent.h"
+#include <map>
 
 using namespace std;
 
@@ -43,6 +45,7 @@ QStringList GNFPlugin::funclist() const
 {
 	return QStringList()
 	<<tr("compute_feature_batch")
+	<<tr("feature_value_distribution")
 	<<tr("compute_feature")
 	<<tr("help");
 }
@@ -192,6 +195,70 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 			outfile.close();
 		}
 	} 
+	else if (func_name == tr("feature_value_distribution"))
+	{
+		const char* folder = infiles.at(0);
+		QString pathQString = infiles.at(0);
+
+		map<string, double> ave;
+
+		DIR* dir;
+		struct dirent* ent;
+		if ((dir = opendir(folder)) != NULL) 
+		{
+			QString path;
+			QString fileName;
+			
+			QString out = pathQString + "\\average.txt";
+			const char* outputFile = out.toStdString().c_str();
+			ofstream outfile(outputFile);
+			int fileCount = 0;
+			while ((ent = readdir(dir)) != NULL) 
+			{
+				for (size_t i=0; i<100; ++i) 
+				{
+					if (ent->d_name[i] == NULL) break;
+					fileName = fileName + QChar(ent->d_name[i]);
+				}
+				if (fileName == "." || fileName == "..") 
+				{
+					fileName.clear();
+					continue;	
+				}
+
+				path = pathQString + "\\" + fileName;
+				const char* fullName = path.toStdString().c_str();
+				//cout << fullName << endl;
+
+				ifstream inTXT(fullName);
+				string line;
+				string buffer;
+				while (getline(inTXT, line))
+				{
+					QString inputLine = QString::fromStdString(line);
+					QStringList splitList = inputLine.split(":");
+					//qDebug() << splitList[0] << " " << splitList[1];
+					string feaName = splitList[0].toStdString();
+					double value = splitList[1].toDouble();
+					ave[feaName] = ave[feaName] + value;
+					cout << feaName << ": " << ave[feaName] << endl;
+					line.clear();
+				}
+				++fileCount;
+				fileName.clear();
+				path.clear();
+			}
+
+			
+			for (map<string, double>::iterator feaIt=ave.begin(); feaIt!=ave.end(); ++feaIt)
+			{
+				double aveValue = feaIt->second / fileCount;
+				outfile << feaIt->first << " " << aveValue << endl;
+			}
+			outfile.close();
+		}
+		closedir(dir);
+	}
 	// ------------------------------------------------------------------------------------------------------
 
 	else if (func_name == tr("compute_feature"))
