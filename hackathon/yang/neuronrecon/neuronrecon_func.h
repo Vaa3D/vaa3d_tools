@@ -64,6 +64,9 @@ public:
     QLineEdit *m_le_filename;
     QSpinBox *pknn, *pthresh, *pdist;
 
+    QLineEdit *m_le_model, *m_le_train, *m_le_mean;
+    QSpinBox *pStep, *pWin; // searching windows (radius)
+
     V3DPluginCallback2 &m_v3d;
     static ControlPanel *m_controlpanel;
 };

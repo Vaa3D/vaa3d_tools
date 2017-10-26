@@ -153,6 +153,9 @@ public:
     //
     int knnMeanStddevDist(float &mean, float &stddev, int k=2);
 
+    //
+    int knnMaxDist(float &max);
+
 
 public:
     vector<Point> points;
@@ -229,9 +232,9 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
         gputimer.Start();
 
         GPUFilter->SetInput( reader->GetOutput() );
-        GPUFilter->SetNumberOfIterations( 10 );
+        GPUFilter->SetNumberOfIterations( 20 );
         GPUFilter->SetTimeStep( 0.0625 );
-        GPUFilter->SetConductanceParameter( 3.0 );
+        GPUFilter->SetConductanceParameter( 1.0 ); // 3.0
         GPUFilter->UseImageSpacingOn();
 
         try

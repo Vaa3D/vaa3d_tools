@@ -1760,6 +1760,9 @@ void ControlPanel::localmaxima(V3DPluginCallback2 &_v3d, QWidget *parent)
     QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
     QPushButton *pPushButton_openFileDlg = new QPushButton(QObject::tr("..."));
 
+    pWin = new QSpinBox();
+    pWin->setMaximum(100); pWin->setMinimum(1); pWin->setValue(16);
+
     pknn = new QSpinBox();
     pthresh = new QSpinBox();
     pdist = new QSpinBox();
@@ -1780,15 +1783,18 @@ void ControlPanel::localmaxima(V3DPluginCallback2 &_v3d, QWidget *parent)
     QGroupBox *control_panel = new QGroupBox("Parameters:");
     control_panel->setStyle(new QWindowsStyle());
     QGridLayout *controlLayout = new QGridLayout();
-    controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),1,1,1,1);
-    controlLayout->addWidget(pknn,1,2,1,1);
-    controlLayout->addWidget(new QLabel(QObject::tr("nearest point(s)")),1,3,1,1);
-    controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),2,1,1,1);
-    controlLayout->addWidget(pthresh,2,2,1,1);
-    controlLayout->addWidget(new QLabel(QObject::tr("degree")),2,3,1,1);
-    controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),3,1,1,1);
-    controlLayout->addWidget(pdist,3,2,1,1);
-    controlLayout->addWidget(new QLabel(QObject::tr("X point's radius")),3,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("searching window radius:")),1,1,1,1);
+    controlLayout->addWidget(pWin,1,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("voxel(s)")),1,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("k(nn):")),2,1,1,1);
+    controlLayout->addWidget(pknn,2,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("nearest point(s)")),2,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("thresh(angle):")),3,1,1,1);
+    controlLayout->addWidget(pthresh,3,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("degree")),3,3,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("dist(p2ls):")),4,1,1,1);
+    controlLayout->addWidget(pdist,4,2,1,1);
+    controlLayout->addWidget(new QLabel(QObject::tr("X point's radius")),4,3,1,1);
     control_panel->setLayout(controlLayout);
 
     QWidget* container = new QWidget();
@@ -2099,7 +2105,7 @@ void ControlPanel::_slot_start2()
         }
 
         // local maxima
-        V3DLONG nstep = 16; // searching window's radius
+        V3DLONG nstep = pWin->value(); // searching window's radius
 
         V3DLONG i,j,k, idx;
         V3DLONG ii, jj, kk, ofkk, ofjj;
@@ -2301,10 +2307,10 @@ void ControlPanel::_slot_start2()
 void ControlPanel::_slot_start3()
 {
     //
-    QString pointcloud_filename = m_le_filename->text();
-    if (!QFile(pointcloud_filename).exists())
+    QString filename = m_le_filename->text();
+    if (!QFile(filename).exists())
     {
-        v3d_msg("Cannot find your point cloud file.");
+        v3d_msg("Cannot find your image file.");
         return;
     }
 
@@ -2313,23 +2319,130 @@ void ControlPanel::_slot_start3()
     float maxAngle = 3.14f - (pthresh->value()/180.0f*3.14159f);
     float m = pdist->value();
 
+    // temporary files
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+    QString neuronTraced1 = filename.left(filename.lastIndexOf(".")).append("_traced1.swc");
+    QString neuronTraced2 = filename.left(filename.lastIndexOf(".")).append("_traced2.swc");
+    QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
+    QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
+
     //
+    if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".TIFF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return;
+    }
+
+    //
+    if(fnITKfiltered.toUpper().endsWith(".V3DRAW") || fnITKfiltered.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = m_v3d.loadImage( const_cast<char *>(fnITKfiltered.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return;
+        }
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            cout<<"Not supported!\n";
+            return;
+        }
+
+        // method #1
+        PARA_APP2 p2;
+        QString versionStr = "v0.001";
+
+        // method #1 parameters set #1
+        p2.is_gsdt = true;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = true;
+        p2.bkg_thresh = 55;
+        p2.length_thresh = 15;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = false;
+        p2.b_RadiusFrom2D = true;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.p4dImage = p4dImage;
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = p2.p4dImage->getXDim()-1;
+        p2.yc1 = p2.p4dImage->getYDim()-1;
+        p2.zc1 = p2.p4dImage->getZDim()-1;
+
+        p2.outswc_file = neuronTraced1;
+        proc_app2(m_v3d, p2, versionStr);
+
+        // method #1 parameters set #2
+        p2.is_gsdt = true;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = true;
+        p2.bkg_thresh = 10;
+        p2.length_thresh = 5;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = false;
+        p2.b_RadiusFrom2D = true;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.p4dImage = p4dImage;
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = p2.p4dImage->getXDim()-1;
+        p2.yc1 = p2.p4dImage->getYDim()-1;
+        p2.zc1 = p2.p4dImage->getZDim()-1;
+
+        p2.outswc_file = neuronTraced2;
+        proc_app2(m_v3d, p2, versionStr);
+
+        // method2 ...
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return;
+    }
+
+    // step 3. load multiple traced neurons (trees saved as .swc)
     NCPointCloud pointcloud;
-    pointcloud.connectPoints2Lines(pointcloud_filename, NULL, k, maxAngle, m);
+
+    QStringList files;
+    files.push_back(neuronTraced1);
+    files.push_back(neuronTraced2);
+
+    //
+    pointcloud.getPointCloud(files);
+    pointcloud.savePointCloud(cnvtPoints);
+
+    // construct lines
+    NCPointCloud lines;
+    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
 
     //
     NeuronTree nt;
 
-    for(V3DLONG i=0; i<pointcloud.points.size(); i++)
+    for(V3DLONG i=0; i<lines.points.size(); i++)
     {
         NeuronSWC S;
-        S.n = pointcloud.points[i].n;
+        S.n = lines.points[i].n;
         S.type = 3;
-        S.x = pointcloud.points[i].x;
-        S.y= pointcloud.points[i].y;
-        S.z = pointcloud.points[i].z;
-        S.r = pointcloud.points[i].radius;
-        S.pn = pointcloud.points[i].parents[0];
+        S.x = lines.points[i].x;
+        S.y = lines.points[i].y;
+        S.z = lines.points[i].z;
+        S.r = lines.points[i].radius;
+        S.pn = lines.points[i].parents[0];
 
         nt.listNeuron.append(S);
         nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);
@@ -2392,35 +2505,219 @@ void ControlPanel::_slot_start3()
 void ControlPanel::_slot_start4()
 {
     //
-    QString pointcloud_filename = m_le_filename->text();
-    if (!QFile(pointcloud_filename).exists())
+    QString filename = m_le_filename->text();
+    if (!QFile(filename).exists())
     {
-        v3d_msg("Cannot find your point cloud file.");
+        v3d_msg("Cannot find your image file.");
         return;
     }
+
+    QString model_file = m_le_model->text();
+    if(model_file.isEmpty() || !QFile(model_file).exists())
+    {
+        v3d_msg("Need a model_file");
+        return;
+    }
+
+    QString trained_file = m_le_train->text();
+    if(trained_file.isEmpty() || !QFile(trained_file).exists())
+    {
+        v3d_msg("Need a trained_file");
+        return;
+    }
+
+    QString mean_file = m_le_mean->text();
+    if(mean_file.isEmpty() || !QFile(mean_file).exists())
+    {
+        v3d_msg("Need a mean_file");
+        return;
+    }
+
+    //
+    int Sxy = pStep->value();
+    int Ws = pWin->value();
 
     //
     int k = pknn->value() + 1;
     float maxAngle = 3.14f - (pthresh->value()/180.0f*3.14159f);
     float m = pdist->value();
 
+    // temporary files
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+    QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
+    QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
+
+    //
+    if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".TIFF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return;
+    }
+
     //
     NCPointCloud pointcloud;
-    pointcloud.connectPoints2Lines(pointcloud_filename, NULL, k, maxAngle, m);
+
+    //
+    if(fnITKfiltered.toUpper().endsWith(".V3DRAW") || fnITKfiltered.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = m_v3d.loadImage( const_cast<char *>(fnITKfiltered.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return;
+        }
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            cout<<"Not supported!\n";
+            return;
+        }
+
+        // local maxima
+        V3DLONG nstep = 16; // searching window's radius
+
+        V3DLONG i,j,k, idx;
+        V3DLONG ii, jj, kk, ofkk, ofjj;
+        V3DLONG xb, xe, yb, ye, zb, ze;
+
+        float lmax;
+
+        unsigned char *p1dImg = p4dImage->getRawData();
+        V3DLONG dimx = p4dImage->getXDim();
+        V3DLONG dimy = p4dImage->getYDim();
+        V3DLONG dimz = p4dImage->getZDim();
+        long volsz = p4dImage->getTotalUnitNumberPerChannel();
+
+        // estimate the radius with distance transform
+        unsigned char *dt=NULL;
+        try
+        {
+            dt = new unsigned char [volsz];
+        }
+        catch(...)
+        {
+            cout<<"fail to alloc memory for out image\n";
+            return;
+        }
+        distanceTransformL2(dt, p1dImg, dimx, dimy, dimz);
+
+        // estimate threshold
+        float threshold;
+        estimateIntensityThreshold(p1dImg, volsz, threshold);
+
+        //
+        for(k=0; k<dimz; k+=nstep)
+        {
+            for(j=0; j<dimy; j+=nstep)
+            {
+                for(i=0; i<dimx; i+=nstep)
+                {
+                    //
+                    xb = i - nstep;
+                    xe = i + nstep;
+
+                    if(xb<0)
+                        xb = 0;
+                    if(xe>dimx)
+                        xe = dimx;
+
+                    yb = j - nstep;
+                    ye = j + nstep;
+
+                    if(yb<0)
+                        yb = 0;
+                    if(ye>dimy)
+                        ye = dimy;
+
+                    zb = k - nstep;
+                    ze = k + nstep;
+
+                    if(zb<0)
+                        zb = 0;
+                    if(ze>dimz)
+                        ze = dimz;
+
+                    lmax = threshold;
+                    Point p;
+                    bool found = false;
+                    for(kk=zb; kk<ze; kk++)
+                    {
+                        ofkk = kk*dimx*dimy;
+                        for(jj=yb; jj<ye; jj++)
+                        {
+                            ofjj = ofkk + jj*dimx;
+                            for(ii=xb; ii<xe; ii++)
+                            {
+                                idx = ofjj + ii;
+
+                                if(p1dImg[idx]>lmax)
+                                {
+                                    found = true;
+
+                                    lmax = p1dImg[idx];
+
+                                    p.x = ii;
+                                    p.y = jj;
+                                    p.z = kk;
+                                }
+                            }
+                        }
+                    }
+
+                    if(found)
+                    {
+                        pointcloud.points.push_back(p);
+                    }
+                }
+            }
+        }
+
+        //
+        pointcloud.delDuplicatedPoints();
+
+        // add radius
+        for(int i=0; i<pointcloud.points.size(); i++)
+        {
+            long idx = pointcloud.points[i].z*dimy*dimx + pointcloud.points[i].y*dimx + pointcloud.points[i].x;
+
+            pointcloud.points[i].radius = dt[idx];
+        }
+
+        //
+        y_del1dp<unsigned char>(dt);
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return;
+    }
+
+    //
+    NCPointCloud pcsorted;
+    pcsorted.ksort(pointcloud, 10);
+    pcsorted.savePointCloud(cnvtPoints);
+
+    // construct lines
+    NCPointCloud lines;
+    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
 
     //
     NeuronTree nt;
 
-    for(V3DLONG i=0; i<pointcloud.points.size(); i++)
+    for(V3DLONG i=0; i<lines.points.size(); i++)
     {
         NeuronSWC S;
-        S.n = pointcloud.points[i].n;
+        S.n = lines.points[i].n;
         S.type = 3;
-        S.x = pointcloud.points[i].x;
-        S.y= pointcloud.points[i].y;
-        S.z = pointcloud.points[i].z;
-        S.r = pointcloud.points[i].radius;
-        S.pn = pointcloud.points[i].parents[0];
+        S.x = lines.points[i].x;
+        S.y = lines.points[i].y;
+        S.z = lines.points[i].z;
+        S.r = lines.points[i].radius;
+        S.pn = lines.points[i].parents[0];
 
         nt.listNeuron.append(S);
         nt.hashNeuron.insert(S.n, nt.listNeuron.size()-1);

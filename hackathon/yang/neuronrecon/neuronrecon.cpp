@@ -652,9 +652,13 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     }
 
     // find k nearest neighbors
-    float mean, stddev;
-    knnMeanStddevDist(mean, stddev, k);
-    knn(k, mean);
+//    float mean, stddev;
+//    knnMeanStddevDist(mean, stddev, k);
+//    knn(k, mean);
+
+    float searchingRadius;
+    knnMaxDist(searchingRadius);
+    knn(k, searchingRadius);
 
     // connect points into lines
     unsigned long loc;
@@ -1115,6 +1119,46 @@ int NCPointCloud::knnMeanStddevDist(float &mean, float &stddev, int k)
 
     // stdard deviation
 
+
+    //
+    return 0;
+}
+
+int NCPointCloud::knnMaxDist(float &max)
+{
+    //
+    NCPointCloud pc;
+    pc.copy(*this);
+
+    // 1 nearest neighbor
+    pc.knn(2);
+
+    //
+    max = 0;
+    for(long i=0; i<pc.points.size(); i++)
+    {
+        Point p = pc.points[i];
+
+        for(long j=1; j<pc.points[i].nn.size(); j++)
+        {
+            Point q = pc.points[pc.points[i].nn[j]];
+
+            if(q.isSamePoint(p))
+            {
+                continue;
+            }
+            else
+            {
+                float dist = distance(p,q);
+
+                if(dist > max)
+                    max = dist;
+            }
+        }
+    }
+
+    //
+    cout<<"max ... "<<max<<endl;
 
     //
     return 0;
