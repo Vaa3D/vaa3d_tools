@@ -29,6 +29,76 @@ template <class T> T pow2(T a)
 #define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
 #endif
 
+// class Plane
+Plane::Plane()
+{
+
+}
+
+Plane::~Plane()
+{
+
+}
+
+// class Vector
+Vector::Vector()
+{
+
+}
+
+Vector::~Vector()
+{
+
+}
+
+// axb
+Vector* Vector::vcross(Vector *a, Vector *b)
+{
+    Vector *c;
+    c->dx = a->dy * b->dz - a->dz * b->dy;
+    c->dy = a->dz * b->dx - a->dx * b->dz;
+    c->dz = a->dx * b->dy - a->dy * b->dx;
+    return (c);
+}
+
+// inner product
+float Vector::vdot(Vector *a, Vector *b)
+{
+    return (a->dx * b->dx + a->dy * b->dy + a->dz * b->dz);
+}
+
+// magnitude
+float Vector::vmag(Vector *a)
+{
+    return (sqrt(vdot(a, a)));
+}
+
+// reciprocal magnitude
+float Vector::recip_vmag(Vector *a)
+{
+    return (1.0 / sqrt(vdot(a, a)));
+}
+
+// a /= ||a||
+Vector* Vector::vnorm(Vector *a)
+{
+    float d;
+
+    if ((d = recip_vmag(a)) > 1.0E6)
+    {
+        fprintf (stderr, "\nvector at 0x%x: %g %g %g?", a, a->dx, a->dy, a->dz);
+        a->dx = a->dy = a->dz = 0.0;
+        return (NULL);
+    }
+    else
+    {
+        a->dx *= d;
+        a->dy *= d;
+        a->dz *= d;
+        return (a);
+    }
+}
+
 // class Point
 Point::Point()
 {
@@ -652,9 +722,9 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     }
 
     // find k nearest neighbors
-//    float mean, stddev;
-//    knnMeanStddevDist(mean, stddev, k);
-//    knn(k, mean);
+    //    float mean, stddev;
+    //    knnMeanStddevDist(mean, stddev, k);
+    //    knn(k, mean);
 
     float searchingRadius;
     knnMaxDist(searchingRadius);
@@ -1164,6 +1234,103 @@ int NCPointCloud::knnMaxDist(float &max)
     return 0;
 }
 
+Point* NCPointCloud::pplusv(Point *p, Vector *v)
+{
+    Point *a;
+    a->x = p->x + v->dx;
+    a->y = p->y + v->dy;
+    a->z = p->z + v->dz;
+    return (a);
+}
+
+float NCPointCloud::point_plane_dist(Point *a, Plane *P)
+{
+    return (a->x * P->a + a->y * P->b + a->z * P->c + P->d);
+}
+
+Point* NCPointCloud::plerp(Point *a, Point *b, float t)
+{
+    Point *p;
+    p->x = t * b->x + (1-t) * a->x;
+    p->y = t * b->y + (1-t) * a->y;
+    p->z = t * b->z + (1-t) * a->z;
+    return (p);
+}
+
+Point* NCPointCloud::intersect_line_plane(Point *a, Point *b, Plane *M)
+{
+    Point *p;
+    float Mdota, Mdotb, denom, t;
+
+    Mdota = point_plane_dist (a, M);
+    Mdotb = point_plane_dist (b, M);
+
+    denom = Mdota - Mdotb;
+    if (fabsf(denom / (fabsf(Mdota) + fabsf(Mdotb))) < 1E-6) {
+        fprintf (stderr, "int_line_plane(): no intersection?\n");
+        p->x = p->y = p->z = 0.0;
+        return (NULL);
+    }
+    else    {
+        t = Mdota / denom;
+        p = plerp (a, b, t);
+        return (p);
+    }
+}
+
+Point* NCPointCloud::intersect_dline_plane(Point *a, Vector *adir, Plane *M)
+{
+    Point *b = pplusv (a, adir);
+    return (intersect_line_plane (a, b, M));
+}
+
+Plane* NCPointCloud::plane_from_two_vectors_and_point(Vector *u, Vector *v, Point *p)
+{
+    Plane *M;
+    Vector *t = t->vcross (u, v);
+    t = t->vnorm(t);
+
+    M->a = t->dx;
+    M->b = t->dy;
+    M->c = t->dz;
+
+    // plane contains p
+    M->d = -(M->a * p->x + M->b * p->y + M->c * p->z);
+    return (M);
+}
+
+int NCPointCloud::line_line_closest_point(Point *pA, Point *pB, Point *a, Vector *adir, Point *b, Vector *bdir)
+{
+    Vector *cdir;
+    Plane *ac, *bc;
+
+    // connecting line is perpendicular to both
+    cdir = cdir->vcross(adir, bdir);
+
+    // lines are near-parallel -- all points are closest
+    if (!cdir->vnorm(cdir))   {
+        *pA = *a;
+        *pB = *b;
+        return (0);
+    }
+
+    // form plane containing line A, parallel to cdir
+    ac = plane_from_two_vectors_and_point(cdir, adir, a);
+
+    // form plane containing line B, parallel to cdir
+    bc = plane_from_two_vectors_and_point(cdir, bdir, b);
+
+    // closest point on A is line A ^ bc
+    pA = intersect_dline_plane(a, adir, bc);
+
+    // closest point on B is line B ^ ac
+    pB = intersect_dline_plane(b, bdir, ac);
+
+    if (distance(*pA, *pB) < 1E-6)
+        return (1);     // coincident
+    else
+        return (2);     // distinct
+}
 
 // class Quadruple
 Quadruple::Quadruple()
@@ -1187,6 +1354,7 @@ LineSegment::LineSegment()
     meanval_adjangles = 0;
     stddev_adjangles = 0;
     points.clear();
+    b_bbox = false;
 }
 
 LineSegment::~LineSegment()
@@ -1277,7 +1445,89 @@ int LineSegment::save(QString filename)
     return 0;
 }
 
+int LineSegment::boundingbox()
+{
+    if(points.size()>0)
+    {
+        for(long i=0; i<points.size(); i++)
+        {
+            Point p = points[i];
 
+            if(i==0)
+            {
+                pbbs.x = pbbe.x = p.x;
+                pbbs.y = pbbe.y = p.y;
+                pbbs.z = pbbe.z = p.z;
+            }
+            else
+            {
+                if(p.x<pbbs.x)
+                    pbbs.x = p.x;
+                if(p.x>pbbe.x)
+                    pbbe.x = p.x;
+
+                if(p.y<pbbs.y)
+                    pbbs.y = p.y;
+                if(p.y>pbbe.y)
+                    pbbe.y = p.y;
+
+                if(p.z<pbbs.z)
+                    pbbs.z = p.z;
+                if(p.z>pbbe.z)
+                    pbbe.z = p.z;
+            }
+        }
+    }
+    else
+    {
+        return -1;
+    }
+
+    b_bbox = true;
+
+    //
+    return 0;
+}
+
+bool LineSegment::insideLineSegments(Point p)
+{
+    if(b_bbox == false)
+        boundingbox();
+
+    if(p.x >= pbbs.x && p.x <= pbbe.x && p.y >= pbbs.y && p.y <= pbbe.y && p.z >= pbbs.z && p.z <= pbbe.z)
+        return true;
+
+    return false;
+}
+
+int LineSegment::lineFromPoints()
+{
+    // copy coordinates to  matrix in Eigen format
+    size_t num_atoms = points.size();
+    Eigen::Matrix< Eigen::Vector3d::Scalar, Eigen::Dynamic, Eigen::Dynamic > centers(num_atoms, 3);
+    for (size_t i = 0; i < num_atoms; ++i)
+    {
+        centers.row(i) = Eigen::Vector3d(points[i].x, points[i].y, points[i].z);
+    }
+
+    Eigen::Vector3d v_origin = centers.colwise().mean();
+
+    origin->x = v_origin(0);
+    origin->y = v_origin(1);
+    origin->z = v_origin(2);
+
+    Eigen::MatrixXd centered = centers.rowwise() - v_origin.transpose();
+    Eigen::MatrixXd cov = centered.adjoint() * centered;
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(cov);
+    Eigen::Vector3d v_axis = eig.eigenvectors().col(2).normalized();
+
+    axis->dx = v_axis(0);
+    axis->dy = v_axis(1);
+    axis->dz = v_axis(2);
+
+    //
+    return 0;
+}
 
 
 

@@ -49,8 +49,37 @@
 
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
 
+#include <Eigen/Eigenvalues>
+
 using namespace std;
 using namespace pcl;
+
+class Plane
+{
+public:
+    Plane();
+    ~Plane();
+
+public:
+    float a,b,c,d;
+};
+
+class Vector
+{
+public:
+    Vector();
+    ~Vector();
+
+public:
+    Vector* vcross(Vector *a, Vector *b);
+    float vdot(Vector *a, Vector *b);
+    float vmag(Vector *a);
+    float recip_vmag(Vector *a);
+    Vector* vnorm(Vector *a);
+
+public:
+    float dx,dy,dz;
+};
 
 //
 class Point
@@ -156,6 +185,14 @@ public:
     //
     int knnMaxDist(float &max);
 
+    //
+    Point* pplusv(Point *p, Vector *v);
+    float point_plane_dist(Point *a, Plane *P);
+    Point* plerp(Point *a, Point *b, float t);
+    Point* intersect_line_plane(Point *a, Point *b, Plane *M);
+    Point* intersect_dline_plane(Point *a, Vector *adir, Plane *M);
+    Plane* plane_from_two_vectors_and_point(Vector *u, Vector *v, Point *p);
+    int line_line_closest_point(Point *pA, Point *pB, Point *a, Vector *adir, Point *b, Vector *bdir);
 
 public:
     vector<Point> points;
@@ -186,8 +223,16 @@ public:
     int getMeanDev();
     int save(QString filename);
 
+    int boundingbox();
+    bool insideLineSegments(Point p);
+    int lineFromPoints();
+
 public:
     float meanval_adjangles, stddev_adjangles; //
+    Point pbbs, pbbe; // bounding box
+    Point *origin;
+    Vector *axis;
+    bool b_bbox;
 };
 
 template<class InputPixelType, class OutputPixelType, unsigned int VImageDimension >
@@ -232,7 +277,7 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
         gputimer.Start();
 
         GPUFilter->SetInput( reader->GetOutput() );
-        GPUFilter->SetNumberOfIterations( 20 );
+        GPUFilter->SetNumberOfIterations( 10 );
         GPUFilter->SetTimeStep( 0.0625 );
         GPUFilter->SetConductanceParameter( 1.0 ); // 3.0
         GPUFilter->UseImageSpacingOn();
