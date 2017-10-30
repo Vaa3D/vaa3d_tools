@@ -17,6 +17,10 @@ git clone https://github.com/PointCloudLibrary/pcl.git
 cmake .
 make
 
+# Eigen header only
+
+hg clone https://bitbucket.org/eigen/eigen
+
 # set the above path into your evironment path
 
 # change the following lines into your environment settings
