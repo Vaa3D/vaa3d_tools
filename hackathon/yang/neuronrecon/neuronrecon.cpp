@@ -1332,6 +1332,63 @@ int NCPointCloud::line_line_closest_point(Point *pA, Point *pB, Point *a, Vector
         return (2);     // distinct
 }
 
+int NCPointCloud::mergeLines()
+{
+    //
+    vector<LineSegment> lines;
+
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].parents[0]==-1)
+        {
+            if(points[i].children.size()>0 && points[i].visited==false)
+            {
+                LineSegment ls;
+
+                long j=i;
+                while(points[j].children.size()>0)
+                {
+                    ls.points.push_back(points[j]);
+
+                    points[j].visited = true;
+
+                    j = indexChildren(points[j].children[0]);
+
+                    if(j<0)
+                        break;
+                }
+
+                ls.boundingbox();
+                ls.lineFromPoints();
+                lines.push_back(ls);
+            }
+        }
+    }
+
+    //
+    for(int i=0; i<lines.size(); i++)
+    {
+
+    }
+
+    //
+    return 0;
+}
+
+long NCPointCloud::indexChildren(long n)
+{
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].children.size()>0)
+        {
+            if(points[i].children[0] == n)
+                return i;
+        }
+    }
+
+    return -1;
+}
+
 // class Quadruple
 Quadruple::Quadruple()
 {
@@ -1355,6 +1412,7 @@ LineSegment::LineSegment()
     stddev_adjangles = 0;
     points.clear();
     b_bbox = false;
+    visited = false;
 }
 
 LineSegment::~LineSegment()
@@ -1362,6 +1420,8 @@ LineSegment::~LineSegment()
     meanval_adjangles = 0;
     stddev_adjangles = 0;
     points.clear();
+    b_bbox = false;
+    visited = false;
 }
 
 int LineSegment::getMeanDev()

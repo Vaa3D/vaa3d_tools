@@ -193,6 +193,9 @@ public:
     Point* intersect_dline_plane(Point *a, Vector *adir, Plane *M);
     Plane* plane_from_two_vectors_and_point(Vector *u, Vector *v, Point *p);
     int line_line_closest_point(Point *pA, Point *pB, Point *a, Vector *adir, Point *b, Vector *bdir);
+    int mergeLines();
+    long indexChildren(long n);
+
 
 public:
     vector<Point> points;
@@ -233,6 +236,7 @@ public:
     Point *origin;
     Vector *axis;
     bool b_bbox;
+    bool visited;
 };
 
 template<class InputPixelType, class OutputPixelType, unsigned int VImageDimension >

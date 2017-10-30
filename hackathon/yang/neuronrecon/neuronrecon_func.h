@@ -27,6 +27,7 @@ bool getStatisticsTracedNeurons_func(const V3DPluginArgList & input, V3DPluginAr
 bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+bool mergelines_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 
 // methods in pipelines
