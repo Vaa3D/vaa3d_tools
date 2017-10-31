@@ -862,14 +862,14 @@ bool mergelines_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
 
     //parsing input
     char * paras = NULL;
-    float sampleratio = 2;
+    float maxAngle = 0.942;
     if (input.size()==2)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
         if (paras->size() >= 1)
         {
-            sampleratio = atof(paras->at(0));
-            cout<<"sampleratio: "<<sampleratio<<endl;
+            maxAngle = atof(paras->at(0));
+            cout<<"max angle: "<<maxAngle<<endl;
         }
         else
         {
@@ -904,9 +904,10 @@ bool mergelines_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     pc.getPointCloud(files);
 
     // merge
-    pc.mergeLines();
+    pc.mergeLines(maxAngle);
 
     // save
+    pc.saveNeuronTree(pc, QString(outlist->at(0)));
 
     //
     return true;

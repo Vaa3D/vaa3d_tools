@@ -100,8 +100,8 @@ public:
     float x, y, z; // location
     float radius; // radius
     float val; // intensity value
-    vector<V3DLONG> parents; // n (same definition in .swc)
-    vector<V3DLONG> children; // n (same definition in .swc) used for detect branch points
+    vector<long> parents; // n (same definition in .swc)
+    vector<long> children; // n (same definition in .swc) used for detect branch points
     V3DLONG n; // #
     int type; // -1 cell body; 0 tip point; 1 regular point; 3 branch point
 
@@ -194,9 +194,10 @@ public:
     Point intersect_dline_plane(Point *a, Vector *adir, Plane *M);
     Plane* plane_from_two_vectors_and_point(Vector *u, Vector *v, Point *p);
     int line_line_closest_point(Point &pA, Point &pB, Point *a, Vector *adir, Point *b, Vector *bdir);
-    int mergeLines();
-    long indexChildren(long n);
+    int mergeLines(float maxAngle);
+    long indexofpoint(long n);
 
+    int removeIsolatedPoints();
 
 public:
     vector<Point> points;

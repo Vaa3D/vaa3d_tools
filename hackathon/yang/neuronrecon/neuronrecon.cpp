@@ -190,9 +190,9 @@ int NCPointCloud::getPointCloud(QStringList files)
     //
     if(files.size()>0)
     {
-        V3DLONG n = files.size();
+        long n = files.size();
 
-        for(V3DLONG i=0; i<n; i++)
+        for(long i=0; i<n; i++)
         {
             QString filename = files[i];
 
@@ -213,9 +213,9 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
     //
     if(nt.listNeuron.size()>0)
     {
-        V3DLONG n = nt.listNeuron.size();
+        long n = nt.listNeuron.size();
 
-        for(V3DLONG i=0; i<n; i++)
+        for(long i=0; i<n; i++)
         {
             Point p;
 
@@ -230,11 +230,11 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
         }
 
         // update children
-        for(V3DLONG i=0; i<n; i++)
+        for(long i=0; i<n; i++)
         {
             if(points[i].parents[0]>0)
             {
-                for(V3DLONG j=0; j<n; j++)
+                for(long j=0; j<n; j++)
                 {
                     if(points[j].n == points[i].parents[0])
                     {
@@ -245,7 +245,7 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
         }
 
         // update type
-        for(V3DLONG i=0; i<n; i++)
+        for(long i=0; i<n; i++)
         {
             if(points[i].parents[0] == -1)
             {
@@ -287,12 +287,12 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
 int NCPointCloud::savePointCloud(QString filename)
 {
     //
-    V3DLONG n = points.size();
+    long n = points.size();
 
     // .apo
     QList <CellAPO> pointcloud;
 
-    for(V3DLONG i=0; i<n; i++)
+    for(long i=0; i<n; i++)
     {
         Point p = points[i];
         CellAPO cell;
@@ -308,7 +308,7 @@ int NCPointCloud::savePointCloud(QString filename)
     writeAPO_file(filename, pointcloud);
 
     //    QList<ImageMarker> markers;
-    //    for(V3DLONG i=0; i<n; i++)
+    //    for(long i=0; i<n; i++)
     //    {
     //        Point p = points[i];
     //        ImageMarker marker(0, 1, p.x, p.y, p.z, p.radius);
@@ -328,8 +328,12 @@ int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
     //
     NeuronTree nt;
 
-    for(V3DLONG i=0; i<pc.points.size(); i++)
+    for(long i=0; i<pc.points.size(); i++)
     {
+        // isolated point
+        if(pc.points[i].parents[0] == -1 &&)
+
+        //
         NeuronSWC S;
         S.n = pc.points[i].n;
         S.type = 3;
@@ -373,7 +377,7 @@ int NCPointCloud::getBranchPoints(QString filename)
         addPointFromNeuronTree(nt);
 
         // find the branch point
-        for(V3DLONG i=0; i<points.size(); i++)
+        for(long i=0; i<points.size(); i++)
         {
             Point current;
 
@@ -390,7 +394,7 @@ int NCPointCloud::getBranchPoints(QString filename)
             {
                 cout<<i<<" branch point: "<<points[i].n<< " - parent - "<<points[i].parents[0]<<endl;
 
-                for(V3DLONG j=0; j<points[i].children.size(); j++)
+                for(long j=0; j<points[i].children.size(); j++)
                 {
                     cout<<" children "<<j<<" : "<<points[i].children[j]<<endl;
                 }
@@ -400,14 +404,14 @@ int NCPointCloud::getBranchPoints(QString filename)
 
                 Point parent, child1, child2;
 
-                V3DLONG pn, c1n, c2n;
+                long pn, c1n, c2n;
 
                 pn = points[i].parents[0];
                 c1n = points[i].children[0];
                 c2n = points[i].children[1];
 
                 //
-                for(V3DLONG j=0; j<points.size(); j++)
+                for(long j=0; j<points.size(); j++)
                 {
                     if(points[j].n == pn)
                     {
@@ -456,7 +460,7 @@ int NCPointCloud::getBranchPoints(QString filename)
 
                 // segment start from the parent of branch point
                 NCPointCloud pcSeg;
-                V3DLONG nseg = parent.n;
+                long nseg = parent.n;
                 bool keepFinding = true;
 
                 if(parent.visited == false)
@@ -469,7 +473,7 @@ int NCPointCloud::getBranchPoints(QString filename)
                     {
                         //
                         bool found = false;
-                        for(V3DLONG j=0; j<points.size(); j++)
+                        for(long j=0; j<points.size(); j++)
                         {
                             if(points[j].n == parent.parents[0])
                             {
@@ -518,7 +522,7 @@ int NCPointCloud::getBranchPoints(QString filename)
             else if(points[i].type == 0)
             {
                 NCPointCloud pcSeg;
-                V3DLONG nseg = current.n;
+                long nseg = current.n;
                 bool keepFinding = true;
 
                 if(current.visited == false)
@@ -531,7 +535,7 @@ int NCPointCloud::getBranchPoints(QString filename)
                     {
                         //
                         bool found = false;
-                        for(V3DLONG j=0; j<points.size(); j++)
+                        for(long j=0; j<points.size(); j++)
                         {
                             if(points[j].n == current.parents[0])
                             {
@@ -618,11 +622,11 @@ float NCPointCloud::getAngle(Point a, Point b, Point c)
 
 bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
 {
-    V3DLONG n = points.size();
+    long n = points.size();
 
     if(n>0)
     {
-        for(V3DLONG i=0; i<n; i++)
+        for(long i=0; i<n; i++)
         {
             if(points[i].visited==false)
             {
@@ -647,7 +651,7 @@ int NCPointCloud::knn(int k, int radius)
     //
     PointCloud<PointXYZ> cloud;
 
-    for(V3DLONG i=0; i<points.size(); i++)
+    for(long i=0; i<points.size(); i++)
     {
         //
         PointXYZ point;
@@ -703,9 +707,9 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     // load point cloud save as a .apo file
     QList <CellAPO> inputPoints = readAPO_file(infile);
 
-    V3DLONG n = inputPoints.size();
+    long n = inputPoints.size();
 
-    for(V3DLONG i=0; i<n; i++)
+    for(long i=0; i<n; i++)
     {
         CellAPO cell = inputPoints[i];
 
@@ -780,9 +784,9 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
     Point p = points[loc];
 
     //
-    unsigned int nneighbors = 5;
+    //unsigned int nneighbors = 5;
     //float maxAngle = 0.1; // 0.942; // threshold 60 degree (120 degree)
-    float minAngle = 3.14;
+    float minAngle = maxAngle;
 
     long next = -1;
     long next_next = -1;
@@ -791,7 +795,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
     if(p.parents[0] == -1)
     {
         // connect points from -1 "soma" (starting point)
-        for(V3DLONG i=0; i<p.nn.size(); i++)
+        for(long i=0; i<p.nn.size(); i++)
         {
             Point p_next = points[p.nn[i]];
 
@@ -802,7 +806,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
             //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
 
-            for(V3DLONG j=0; j<p_next.nn.size(); j++)
+            for(long j=0; j<p_next.nn.size(); j++)
             {
                 Point p_next_next = points[p_next.nn[j]];
 
@@ -815,7 +819,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
                 float angle = getAngle(p, p_next, p_next_next);
 
-                if(angle<maxAngle && angle<minAngle)
+                if(angle<minAngle)
                 {
                     minAngle = angle;
                     next = p.nn[i];
@@ -853,7 +857,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
         // connect points from the intermediate point
         Point p_pre = points[p.pre];
 
-        for(V3DLONG i=0; i<p.nn.size(); i++)
+        for(long i=0; i<p.nn.size(); i++)
         {
             Point p_next = points[p.nn[i]];
 
@@ -893,6 +897,15 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
     //
     return -1;
+}
+
+int NCPointCloud::removeIsolatedPoints()
+{
+    //
+
+
+    //
+    return 0;
 }
 
 //
@@ -948,7 +961,7 @@ bool NCPointCloud::isConsidered(unsigned long &index, float m)
     }
     else
     {
-        for(V3DLONG i=0; i<p.nn.size(); i++)
+        for(long i=0; i<p.nn.size(); i++)
         {
             Point p1 = points[p.nn[i]];
 
@@ -1072,9 +1085,9 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
 
     //
     float maxradius = 0;
-    V3DLONG soma = 0;
+    long soma = 0;
     // find the point with biggest radius
-    for(V3DLONG i=0; i<pc.points.size(); i++)
+    for(long i=0; i<pc.points.size(); i++)
     {
         if(pc.points[i].radius > maxradius)
         {
@@ -1098,8 +1111,8 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
         {
             // add neighbors
             bool allvisited = true;
-            V3DLONG n = points.size();
-            for(V3DLONG i=0; i<n; i++)
+            long n = points.size();
+            for(long i=0; i<n; i++)
             {
                 int cur = points[i].n;
                 if(pc.points[cur].neighborVisited)
@@ -1332,16 +1345,13 @@ int NCPointCloud::line_line_closest_point(Point &pA, Point &pB, Point *a, Vector
         return (2);     // distinct
 }
 
-int NCPointCloud::mergeLines()
+int NCPointCloud::mergeLines(float maxAngle)
 {
-    cout<<"test ... "<<points.size()<<endl;
-
     //
     vector<LineSegment> lines;
 
     for(long i=0; i<points.size(); i++)
     {
-        cout<<"i "<<i<<endl;
         if(points[i].parents[0]==-1)
         {
             if(points[i].children.size()>0 && points[i].visited==false)
@@ -1351,12 +1361,10 @@ int NCPointCloud::mergeLines()
                 long j=i;
                 while(points[j].children.size()>0)
                 {
-                    cout<<"... j "<<j<<" its child "<<points[j].children[0]<<endl;
-
                     ls.points.push_back(points[j]);
                     points[j].visited = true;
 
-                    j = indexChildren(points[j].children[0]);
+                    j = indexofpoint(points[j].children[0]);
 
                     if(j<0)
                         break;
@@ -1372,20 +1380,19 @@ int NCPointCloud::mergeLines()
         }
     }
 
-    cout<<"how many lines to compute ... "<<lines.size();
+    cout<<" ... "<<lines.size()<<" to be merged "<<endl;
 
     //
     for(int i=0; i<lines.size(); i++)
     {
-        cout<<"consider line # "<<i<<endl;
-
         LineSegment lsi = lines[i];
 
         lines[i].visited = true;
 
         for(int j=1; j<lines.size(); j++)
         {
-            cout<<"comparing to line # "<<j<<endl;
+            if(j==i)
+                continue;
 
             LineSegment lsj = lines[j];
 
@@ -1405,27 +1412,32 @@ int NCPointCloud::mergeLines()
             }
             else
             {
-                cout<<"checking angles ... \n";
+                cout<<"checking angles ... "<<lsi.points.size()<<" "<<lsj.points.size()<<endl;
 
                 // angle
                 Point pi, pj;
+                Point t1 = lsi.points[0];
+                Point t2 = lsi.points[lsi.points.size()-1];
 
-                if(distance(*(lsi.points.begin()), pA) < distance(*(lsi.points.end()), pA))
+                if(distance(t1, pA) < distance(t2, pA))
                 {
-                    pi = *(lsi.points.begin());
+                    pi = t1;
                 }
                 else
                 {
-                    pi = *(lsi.points.end());
+                    pi = t2;
                 }
 
-                if(distance(*(lsj.points.begin()), pB) < distance(*(lsj.points.end()), pB))
+                Point q1 = lsj.points[0];
+                Point q2 = lsj.points[lsj.points.size()-1];
+
+                if(distance(q1, pB) < distance(q2, pB))
                 {
-                    pj = *(lsj.points.begin());
+                    pj = q1;
                 }
                 else
                 {
-                    pj = *(lsj.points.end());
+                    pj = q2;
                 }
 
                 cout<<"point i "<<pi.x<<" "<<pi.y<<" "<<pi.z<<endl;
@@ -1433,9 +1445,93 @@ int NCPointCloud::mergeLines()
 
                 float angle = getAngle(pi, pA, pj);
 
-                cout<<"test ... "<<angle<<endl;
+                cout<<"angle ... "<<angle<<endl;
 
-                // if angle < anglethresh then connect them
+                // connect them
+                if(angle < maxAngle)
+                {
+                    long i = indexofpoint(pi.n);
+                    long j = indexofpoint(pj.n);
+
+                    if(pi.parents[0]==-1 && pj.parents[0]!=-1)
+                    {
+                        points[i].parents[0] = points[j].n;
+                    }
+                    else if(pi.parents[0]!=-1 && pj.parents[0]==-1)
+                    {
+                        points[j].parents[0] = points[i].n;
+                    }
+                    else
+                    {
+                        // inverse the short line and connect it to the other
+                        if(lsi.points.size() < lsj.points.size())
+                        {
+                            // inverse lsi
+                            long idxcur, ncur;
+                            long n = lsi.points.size() - 1;
+                            for(long k = n; k>0; --k)
+                            {
+                                idxcur = indexofpoint(lsi.points[k].n);
+
+                                cout<<"1 idxcur ... "<<idxcur<<endl;
+
+                                if(k == n)
+                                {
+                                    points[idxcur].parents[0] = -1;
+                                }
+                                else
+                                {
+                                    points[idxcur].parents[0] = ncur;
+                                }
+
+                                ncur = points[idxcur].n;
+                            }
+
+                            if(pi.parents[0]==-1)
+                            {
+                                // pj -> pi
+                                points[j].parents[0] = points[i].n;
+                            }
+                            else
+                            {
+                                points[i].parents[0] = points[j].n;
+                            }
+                        }
+                        else
+                        {
+                            // inverse lsj
+                            long idxcur, ncur;
+                            long n = lsj.points.size() - 1;
+                            for(long k = n; k>0; --k)
+                            {
+                                idxcur = indexofpoint(lsj.points[k].n);
+
+                                cout<<"2 idxcur ... "<<idxcur<<" "<<lsj.points[k].n<<endl;
+
+                                if(k == n)
+                                {
+                                    points[idxcur].parents[0] = -1;
+                                }
+                                else
+                                {
+                                    points[idxcur].parents[0] = ncur;
+                                }
+
+                                ncur = points[idxcur].n;
+                            }
+
+                            if(pj.parents[0]==-1)
+                            {
+                                // pi -> pj
+                                points[i].parents[0] = points[j].n;
+                            }
+                            else
+                            {
+                                points[j].parents[0] = points[i].n;
+                            }
+                        }
+                    }
+                }
 
             }
 
@@ -1446,7 +1542,7 @@ int NCPointCloud::mergeLines()
     return 0;
 }
 
-long NCPointCloud::indexChildren(long n)
+long NCPointCloud::indexofpoint(long n)
 {
     for(long i=0; i<points.size(); i++)
     {
@@ -1630,8 +1726,6 @@ bool LineSegment::insideLineSegments(Point p)
 
 int LineSegment::lineFromPoints()
 {
-    cout<<"call lineFromPoints "<<points.size()<<endl;
-
     auto start = std::chrono::high_resolution_clock::now();
 
     // copy coordinates to  matrix in Eigen format
@@ -1650,23 +1744,10 @@ int LineSegment::lineFromPoints()
     origin->y = v_origin(1);
     origin->z = v_origin(2);
 
-    cout<<"origin "<<v_origin<<endl;
-
     Eigen::MatrixXd centered = centers.rowwise() - v_origin.transpose();
-
-    cout<<"centered ... "<<centered<<endl;
-
     Eigen::MatrixXd cov = centered.adjoint() * centered;
-
-    cout<<"cov ... "<<cov<<endl;
-
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(cov);
-
-    cout<<"eig ... "<<endl;
-
     Eigen::Vector3d v_axis = eig.eigenvectors().col(2).normalized();
-
-    cout<<"v_axis ... "<<v_axis<<endl;
 
     axis = new Vector;
 
@@ -1676,7 +1757,7 @@ int LineSegment::lineFromPoints()
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    cout<<"estimate a line in "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<endl;
+    //cout<<"estimate a line in "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<endl;
 
     //
     return 0;
