@@ -54,7 +54,7 @@ Vector::~Vector()
 // axb
 Vector* Vector::vcross(Vector *a, Vector *b)
 {
-    Vector *c;
+    Vector *c = new Vector;
     c->dx = a->dy * b->dz - a->dz * b->dy;
     c->dy = a->dz * b->dx - a->dx * b->dz;
     c->dz = a->dx * b->dy - a->dy * b->dx;
@@ -1234,12 +1234,12 @@ int NCPointCloud::knnMaxDist(float &max)
     return 0;
 }
 
-Point* NCPointCloud::pplusv(Point *p, Vector *v)
+Point NCPointCloud::pplusv(Point *p, Vector *v)
 {
-    Point *a;
-    a->x = p->x + v->dx;
-    a->y = p->y + v->dy;
-    a->z = p->z + v->dz;
+    Point a;
+    a.x = p->x + v->dx;
+    a.y = p->y + v->dy;
+    a.z = p->z + v->dz;
     return (a);
 }
 
@@ -1248,18 +1248,18 @@ float NCPointCloud::point_plane_dist(Point *a, Plane *P)
     return (a->x * P->a + a->y * P->b + a->z * P->c + P->d);
 }
 
-Point* NCPointCloud::plerp(Point *a, Point *b, float t)
+Point NCPointCloud::plerp(Point *a, Point *b, float t)
 {
-    Point *p;
-    p->x = t * b->x + (1-t) * a->x;
-    p->y = t * b->y + (1-t) * a->y;
-    p->z = t * b->z + (1-t) * a->z;
+    Point p;
+    p.x = t * b->x + (1-t) * a->x;
+    p.y = t * b->y + (1-t) * a->y;
+    p.z = t * b->z + (1-t) * a->z;
     return (p);
 }
 
-Point* NCPointCloud::intersect_line_plane(Point *a, Point *b, Plane *M)
+Point NCPointCloud::intersect_line_plane(Point *a, Point *b, Plane *M)
 {
-    Point *p;
+    Point p;
     float Mdota, Mdotb, denom, t;
 
     Mdota = point_plane_dist (a, M);
@@ -1268,25 +1268,25 @@ Point* NCPointCloud::intersect_line_plane(Point *a, Point *b, Plane *M)
     denom = Mdota - Mdotb;
     if (fabsf(denom / (fabsf(Mdota) + fabsf(Mdotb))) < 1E-6) {
         fprintf (stderr, "int_line_plane(): no intersection?\n");
-        p->x = p->y = p->z = 0.0;
-        return (NULL);
+        p.x = p.y = p.z = 0.0;
     }
     else    {
         t = Mdota / denom;
         p = plerp (a, b, t);
-        return (p);
     }
+
+    return (p);
 }
 
-Point* NCPointCloud::intersect_dline_plane(Point *a, Vector *adir, Plane *M)
+Point NCPointCloud::intersect_dline_plane(Point *a, Vector *adir, Plane *M)
 {
-    Point *b = pplusv (a, adir);
-    return (intersect_line_plane (a, b, M));
+    Point b = pplusv (a, adir);
+    return (intersect_line_plane (a, &b, M));
 }
 
 Plane* NCPointCloud::plane_from_two_vectors_and_point(Vector *u, Vector *v, Point *p)
 {
-    Plane *M;
+    Plane *M = new Plane;
     Vector *t = t->vcross (u, v);
     t = t->vnorm(t);
 
@@ -1299,7 +1299,7 @@ Plane* NCPointCloud::plane_from_two_vectors_and_point(Vector *u, Vector *v, Poin
     return (M);
 }
 
-int NCPointCloud::line_line_closest_point(Point *pA, Point *pB, Point *a, Vector *adir, Point *b, Vector *bdir)
+int NCPointCloud::line_line_closest_point(Point &pA, Point &pB, Point *a, Vector *adir, Point *b, Vector *bdir)
 {
     Vector *cdir;
     Plane *ac, *bc;
@@ -1309,8 +1309,8 @@ int NCPointCloud::line_line_closest_point(Point *pA, Point *pB, Point *a, Vector
 
     // lines are near-parallel -- all points are closest
     if (!cdir->vnorm(cdir))   {
-        *pA = *a;
-        *pB = *b;
+        pA = *a;
+        pB = *b;
         return (0);
     }
 
@@ -1326,7 +1326,7 @@ int NCPointCloud::line_line_closest_point(Point *pA, Point *pB, Point *a, Vector
     // closest point on B is line B ^ ac
     pB = intersect_dline_plane(b, bdir, ac);
 
-    if (distance(*pA, *pB) < 1E-6)
+    if (distance(pA, pB) < 1E-6)
         return (1);     // coincident
     else
         return (2);     // distinct
@@ -1334,11 +1334,14 @@ int NCPointCloud::line_line_closest_point(Point *pA, Point *pB, Point *a, Vector
 
 int NCPointCloud::mergeLines()
 {
+    cout<<"test ... "<<points.size()<<endl;
+
     //
     vector<LineSegment> lines;
 
     for(long i=0; i<points.size(); i++)
     {
+        cout<<"i "<<i<<endl;
         if(points[i].parents[0]==-1)
         {
             if(points[i].children.size()>0 && points[i].visited==false)
@@ -1348,8 +1351,9 @@ int NCPointCloud::mergeLines()
                 long j=i;
                 while(points[j].children.size()>0)
                 {
-                    ls.points.push_back(points[j]);
+                    cout<<"... j "<<j<<" its child "<<points[j].children[0]<<endl;
 
+                    ls.points.push_back(points[j]);
                     points[j].visited = true;
 
                     j = indexChildren(points[j].children[0]);
@@ -1358,17 +1362,84 @@ int NCPointCloud::mergeLines()
                         break;
                 }
 
-                ls.boundingbox();
-                ls.lineFromPoints();
-                lines.push_back(ls);
+                if(ls.points.size()>2)
+                {
+                    ls.boundingbox();
+                    ls.lineFromPoints();
+                    lines.push_back(ls);
+                }
             }
         }
     }
 
+    cout<<"how many lines to compute ... "<<lines.size();
+
     //
     for(int i=0; i<lines.size(); i++)
     {
+        cout<<"consider line # "<<i<<endl;
 
+        LineSegment lsi = lines[i];
+
+        lines[i].visited = true;
+
+        for(int j=1; j<lines.size(); j++)
+        {
+            cout<<"comparing to line # "<<j<<endl;
+
+            LineSegment lsj = lines[j];
+
+            if(lsj.visited)
+            {
+                continue;
+            }
+
+            Point pA, pB;
+            line_line_closest_point(pA, pB, lsi.origin, lsi.axis, lsj.origin, lsj.axis);
+
+            // connect them
+
+            if(lsi.insideLineSegments(pA) || lsj.insideLineSegments(pB))
+            {
+                continue;
+            }
+            else
+            {
+                cout<<"checking angles ... \n";
+
+                // angle
+                Point pi, pj;
+
+                if(distance(*(lsi.points.begin()), pA) < distance(*(lsi.points.end()), pA))
+                {
+                    pi = *(lsi.points.begin());
+                }
+                else
+                {
+                    pi = *(lsi.points.end());
+                }
+
+                if(distance(*(lsj.points.begin()), pB) < distance(*(lsj.points.end()), pB))
+                {
+                    pj = *(lsj.points.begin());
+                }
+                else
+                {
+                    pj = *(lsj.points.end());
+                }
+
+                cout<<"point i "<<pi.x<<" "<<pi.y<<" "<<pi.z<<endl;
+                cout<<"point j "<<pj.x<<" "<<pj.y<<" "<<pj.z<<endl;
+
+                float angle = getAngle(pi, pA, pj);
+
+                cout<<"test ... "<<angle<<endl;
+
+                // if angle < anglethresh then connect them
+
+            }
+
+        }
     }
 
     //
@@ -1379,11 +1450,8 @@ long NCPointCloud::indexChildren(long n)
 {
     for(long i=0; i<points.size(); i++)
     {
-        if(points[i].children.size()>0)
-        {
-            if(points[i].children[0] == n)
-                return i;
-        }
+        if(points[i].n == n)
+            return i;
     }
 
     return -1;
@@ -1562,6 +1630,10 @@ bool LineSegment::insideLineSegments(Point p)
 
 int LineSegment::lineFromPoints()
 {
+    cout<<"call lineFromPoints "<<points.size()<<endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
     // copy coordinates to  matrix in Eigen format
     size_t num_atoms = points.size();
     Eigen::Matrix< Eigen::Vector3d::Scalar, Eigen::Dynamic, Eigen::Dynamic > centers(num_atoms, 3);
@@ -1572,18 +1644,39 @@ int LineSegment::lineFromPoints()
 
     Eigen::Vector3d v_origin = centers.colwise().mean();
 
+    origin = new Point;
+
     origin->x = v_origin(0);
     origin->y = v_origin(1);
     origin->z = v_origin(2);
 
+    cout<<"origin "<<v_origin<<endl;
+
     Eigen::MatrixXd centered = centers.rowwise() - v_origin.transpose();
+
+    cout<<"centered ... "<<centered<<endl;
+
     Eigen::MatrixXd cov = centered.adjoint() * centered;
+
+    cout<<"cov ... "<<cov<<endl;
+
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(cov);
+
+    cout<<"eig ... "<<endl;
+
     Eigen::Vector3d v_axis = eig.eigenvectors().col(2).normalized();
+
+    cout<<"v_axis ... "<<v_axis<<endl;
+
+    axis = new Vector;
 
     axis->dx = v_axis(0);
     axis->dy = v_axis(1);
     axis->dz = v_axis(2);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    cout<<"estimate a line in "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<endl;
 
     //
     return 0;

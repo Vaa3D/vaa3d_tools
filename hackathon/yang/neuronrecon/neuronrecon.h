@@ -20,6 +20,7 @@
 #include <climits>
 #include <numeric>
 #include <algorithm>
+#include <chrono>
 #include <string>
 
 #include "itkImageFileReader.h"
@@ -186,13 +187,13 @@ public:
     int knnMaxDist(float &max);
 
     //
-    Point* pplusv(Point *p, Vector *v);
+    Point pplusv(Point *p, Vector *v);
     float point_plane_dist(Point *a, Plane *P);
-    Point* plerp(Point *a, Point *b, float t);
-    Point* intersect_line_plane(Point *a, Point *b, Plane *M);
-    Point* intersect_dline_plane(Point *a, Vector *adir, Plane *M);
+    Point plerp(Point *a, Point *b, float t);
+    Point intersect_line_plane(Point *a, Point *b, Plane *M);
+    Point intersect_dline_plane(Point *a, Vector *adir, Plane *M);
     Plane* plane_from_two_vectors_and_point(Vector *u, Vector *v, Point *p);
-    int line_line_closest_point(Point *pA, Point *pB, Point *a, Vector *adir, Point *b, Vector *bdir);
+    int line_line_closest_point(Point &pA, Point &pB, Point *a, Vector *adir, Point *b, Vector *bdir);
     int mergeLines();
     long indexChildren(long n);
 

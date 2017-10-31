@@ -904,6 +904,7 @@ bool mergelines_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     pc.getPointCloud(files);
 
     // merge
+    pc.mergeLines();
 
     // save
 
