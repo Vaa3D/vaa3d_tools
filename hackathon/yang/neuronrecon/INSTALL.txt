@@ -2,20 +2,11 @@
 # install ITK
 
 git clone https://github.com/InsightSoftwareConsortium/ITK.git
-cmake .
+mkdir build
+cd build
+ccmake ..
 make
-
-# install flann
-
-git clone git://github.com/mariusmuja/flann.git
-cmake .
-make
-
-# install pcl
-
-git clone https://github.com/PointCloudLibrary/pcl.git
-cmake .
-make
+make install
 
 # Eigen header only
 
@@ -25,8 +16,5 @@ hg clone https://bitbucket.org/eigen/eigen
 
 # change the following lines into your environment settings
 
-#INCLUDEPATH     += /home/yangy/work/local/include
-#INCLUDEPATH     += /home/yangy/work/local/include/ITK-4.13
-#INCLUDEPATH     += /home/yangy/work/local/include/pcl-1.8
-#INCLUDEPATH     += /home/yangy/work/local/include/eigen3
+#HOMEDIR = /home/yangy/work/local
 #LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so

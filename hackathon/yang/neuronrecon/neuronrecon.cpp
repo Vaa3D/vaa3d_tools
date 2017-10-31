@@ -331,7 +331,9 @@ int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
     for(long i=0; i<pc.points.size(); i++)
     {
         // isolated point
-        if(pc.points[i].parents[0] == -1 &&)
+        if(pc.points[i].parents[0] == -1)
+        {
+        }
 
         //
         NeuronSWC S;
@@ -649,53 +651,86 @@ int NCPointCloud::knn(int k, int radius)
     }
 
     //
-    PointCloud<PointXYZ> cloud;
+    long n = points.size();
+    PointCloud<float> cloud;
+    cloud.pts.resize(n);
 
-    for(long i=0; i<points.size(); i++)
+    for(long i=0; i<n; i++)
     {
-        //
-        PointXYZ point;
+        cloud.pts[i].x = points[i].x;
+        cloud.pts[i].y = points[i].y;
+        cloud.pts[i].z = points[i].z;
+    }
 
-        point.x = points[i].x;
-        point.y = points[i].y;
-        point.z = points[i].z;
+    // construct a kd-tree index
+    KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<float, PointCloud<float> >, PointCloud<float>, 3> kdtree(3, cloud, KDTreeSingleIndexAdaptorParams(max(10, 2*k)));
+    kdtree.buildIndex();
 
-        cloud.points.push_back(point);
+    //
+    float *p = NULL;
+    try
+    {
+        p = new float [3];
+    }
+    catch(...)
+    {
+        cout<<"fail to alloc memory for a point\n";
+        return -1;
     }
 
     //
-    vector<int> k_indices;
-    k_indices.resize (k);
-    vector<float> k_distances;
-    k_distances.resize (k);
-
-    KdTreeFLANN<PointXYZ> kdtree;
-    kdtree.setInputCloud(cloud.makeShared());
-
-    //
-    for(long i=0; i<cloud.points.size(); i++)
+    for(long i=0; i<n; i++)
     {
-        PointXYZ p = cloud.points[i];
+        p[0] = cloud.pts[i].x;
+        p[1] = cloud.pts[i].y;
+        p[2] = cloud.pts[i].z;
 
-        //cout<<i<<" "<<p.x<<" "<<p.y<<" "<<p.z<<endl; // for debug
+        cout<<"current point ... "<<i<<" "<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
 
+        // 0 is itself, so start recording nearest neighbor from 1
         if(radius)
         {
-            kdtree.radiusSearch(p, radius, k_indices, k_distances);
+            //
+            vector<pair<size_t,float> > ret_matches;
+            nanoflann::SearchParams params;
+
+            //
+            const size_t nMatches = kdtree.radiusSearch(p, radius, ret_matches, params);
+
+            //
+            cout << "radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
+            for (size_t j = 1; j < nMatches; j++)
+            {
+                cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
+                points[i].nn.push_back(ret_matches[j].first);
+            }
         }
         else
         {
-            kdtree.nearestKSearch(p, k, k_indices, k_distances);
-        }
+            //
+            vector<size_t> k_indices;
+            k_indices.resize (k);
+            vector<float> k_distances;
+            k_distances.resize (k);
 
-        // 0 is self, so start recording nearest neighbor from 1
-        for (size_t j = 1; j < k_indices.size (); ++j)
-        {
-            //const PointXYZ& point = cloud.points[k_indices[j]];
-            //cout<<"test ... "<<point.x<<" "<<point.y<<" "<<point.z<<" ... dist: "<< euclideanDistance(point, cloud.points[i])<<endl;
+            //
+            size_t num_results = kdtree.knnSearch(p, k, &k_indices[0], &k_distances[0]);
 
-            points[i].nn.push_back(k_indices[j]);
+            //
+            cout << "knnSearch(): num_results=" << num_results << "\n";
+            for (size_t j = 1; j < k_indices.size (); ++j)
+            {
+                cout << "idx["<< j << "]=" << long(k_indices[j]) << " dist["<< j << "]=" << k_distances[j] << endl;
+                points[i].nn.push_back(k_indices[j]);
+            }
         }
+    }
+
+    //
+    if(p)
+    {
+        delete []p;
+        p = NULL;
     }
 
     //
@@ -739,7 +774,7 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     while(findNextUnvisitPoint(loc))
     {
         //
-        cout<<"current point ..."<<loc<<endl;
+        //cout<<"current point ..."<<loc<<endl;
 
         //
         if(points[loc].visited == false)
@@ -1222,7 +1257,7 @@ int NCPointCloud::knnMaxDist(float &max)
     {
         Point p = pc.points[i];
 
-        for(long j=1; j<pc.points[i].nn.size(); j++)
+        for(long j=0; j<pc.points[i].nn.size(); j++)
         {
             Point q = pc.points[pc.points[i].nn[j]];
 

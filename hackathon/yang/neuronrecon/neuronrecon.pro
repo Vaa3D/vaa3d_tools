@@ -7,11 +7,13 @@ LIBS += -pthread
 
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 
-INCLUDEPATH     += /home/yangy/work/local/include
-INCLUDEPATH     += /home/yangy/work/local/include/ITK-4.13
-INCLUDEPATH     += /home/yangy/work/local/include/pcl-1.8
-INCLUDEPATH     += /home/yangy/work/local/include/eigen3
+# set with your evironment settings
+HOMEDIR = /home/yangy/work/local
+INCLUDEPATH     += $${HOMEDIR}/include
+INCLUDEPATH     += $${HOMEDIR}/include/ITK-4.13
+INCLUDEPATH     += $${HOMEDIR}/include/eigen3
 
+#
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
@@ -55,7 +57,6 @@ unix:!macx {
 
 LIBS += -lOpenCL
 LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
-LIBS += -lpcl_kdtree -lpcl_common -lflann
 
 # deep learning detection
 #HEADERS += zhidl/classification.h
