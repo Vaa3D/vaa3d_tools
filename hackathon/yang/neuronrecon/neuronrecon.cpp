@@ -116,6 +116,7 @@ Point::Point()
     next = -1;
 
     neighborVisited = false;
+    isolated = false;
 }
 
 Point::Point (float x, float y, float z)
@@ -136,6 +137,7 @@ Point::Point (float x, float y, float z)
     next = -1;
 
     neighborVisited = false;
+    isolated = false;
 }
 
 Point::~Point()
@@ -325,14 +327,17 @@ int NCPointCloud::savePointCloud(QString filename)
 
 int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
 {
+    // isolated points
+    pc.isolatedPoints();
+
     //
     NeuronTree nt;
 
     for(long i=0; i<pc.points.size(); i++)
     {
-        // isolated point
-        if(pc.points[i].parents[0] == -1)
+        if(pc.points[i].isolated)
         {
+            continue;
         }
 
         //
@@ -685,7 +690,7 @@ int NCPointCloud::knn(int k, int radius)
         p[1] = cloud.pts[i].y;
         p[2] = cloud.pts[i].z;
 
-        cout<<"current point ... "<<i<<" "<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
+        //cout<<"current point ... "<<i<<" "<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
 
         // 0 is itself, so start recording nearest neighbor from 1
         if(radius)
@@ -698,10 +703,10 @@ int NCPointCloud::knn(int k, int radius)
             const size_t nMatches = kdtree.radiusSearch(p, radius, ret_matches, params);
 
             //
-            cout << "radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
-            for (size_t j = 1; j < nMatches; j++)
+            //cout << "radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
+            for (size_t j = 1; j < ret_matches.size(); j++)
             {
-                cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
+                //cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
                 points[i].nn.push_back(ret_matches[j].first);
             }
         }
@@ -717,10 +722,10 @@ int NCPointCloud::knn(int k, int radius)
             size_t num_results = kdtree.knnSearch(p, k, &k_indices[0], &k_distances[0]);
 
             //
-            cout << "knnSearch(): num_results=" << num_results << "\n";
-            for (size_t j = 1; j < k_indices.size (); ++j)
+            //cout << "knnSearch(): num_results=" << num_results << "\n";
+            for (size_t j = 1; j < k_indices.size(); ++j)
             {
-                cout << "idx["<< j << "]=" << long(k_indices[j]) << " dist["<< j << "]=" << k_distances[j] << endl;
+                //cout << "idx["<< j << "]=" << long(k_indices[j]) << " dist["<< j << "]=" << k_distances[j] << endl;
                 points[i].nn.push_back(k_indices[j]);
             }
         }
@@ -934,10 +939,32 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
     return -1;
 }
 
-int NCPointCloud::removeIsolatedPoints()
+int NCPointCloud::isolatedPoints()
 {
     //
+    for(std::vector<Point>::iterator it = points.begin(); it != points.end(); ++it)
+    {
+        if(it->parents[0]==-1)
+        {
+            bool deleted = true;
+            for(std::vector<Point>::iterator j = points.begin(); j != points.end(); ++j)
+            {
+                if(j->n == it->n)
+                    continue;
 
+                if(j->parents[0] == it->n)
+                {
+                    deleted = false;
+                    break;
+                }
+            }
+
+            if(deleted)
+            {
+                it->isolated = true;
+            }
+        }
+    }
 
     //
     return 0;
@@ -991,7 +1018,7 @@ bool NCPointCloud::isConsidered(unsigned long &index, float m)
 
     if(p.nn.size()<1)
     {
-        cout<<"need find k neareast neighbors first\n";
+        cout<<"point #"<<p.n<<" without nearest neighbor ... increase your searching radius to include this point\n";
         return false;
     }
     else

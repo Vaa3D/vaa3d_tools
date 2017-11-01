@@ -106,6 +106,7 @@ public:
     bool isBranch; // is the point a branch point
     bool isSoma; // is the point the soma
     int nLine; // # of the line
+    bool isolated; // not connected to other point(s)
 };
 
 //
@@ -185,8 +186,7 @@ public:
     int line_line_closest_point(Point &pA, Point &pB, Point *a, Vector *adir, Point *b, Vector *bdir);
     int mergeLines(float maxAngle);
     long indexofpoint(long n);
-
-    int removeIsolatedPoints();
+    int isolatedPoints();
 
 public:
     vector<Point> points;
