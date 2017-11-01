@@ -47,12 +47,14 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 macx{
     LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.dylib
 }
 
 unix:!macx {
     QMAKE_CXXFLAGS += -fopenmp
     LIBS += -fopenmp
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
 }
 
 LIBS += -lOpenCL
@@ -69,8 +71,6 @@ LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
 #LIBS += -lglog -lgflags -lprotobuf -llmdb -lleveldb -lstdc++ -lcudnn -lcblas -latlas
 #LIBS += -L/home/yangy/work/local/lib -lboost_system -lboost_filesystem -lboost_thread
 #LIBS += -L/home/yangy/work/cuda/lib64 -lcudart -lcublas -lcurand
-
-LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
 
 TARGET	= $$qtLibraryTarget(neurontree_construct)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neurontree_construct/
