@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
+#include <tuple>
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -66,6 +67,7 @@ public:
     float vmag(Vector *a);
     float recip_vmag(Vector *a);
     Vector* vnorm(Vector *a);
+    void info();
 
 public:
     float dx,dy,dz;
@@ -84,6 +86,7 @@ public:
     void setRadius(float r);
     void setValue(float v);
     bool isSamePoint(Point p);
+    void info();
 
 public:
     float x, y, z; // location
@@ -175,6 +178,9 @@ public:
 
     //
     int knnMaxDist(float &max);
+
+    //
+    int resetVisitStatus();
 
     //
     Point pplusv(Point *p, Vector *v);
