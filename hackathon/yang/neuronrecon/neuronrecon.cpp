@@ -1600,22 +1600,21 @@ int NCPointCloud::mergeLines(float maxAngle)
                         cout<<"inverse lsi \n";
 
                         // inverse lsi
-                        long idxcur, ncur;
+                        long idxcur, ncur, nnext;
                         long n = lsi.points.size() - 1;
-                        for(long k = n; k>0; --k)
+
+                        idxcur = indexofpoint(lsi.points[n].n);
+                        ncur = lsi.points[n].n;
+                        nnext = points[idxcur].parents[0];
+                        points[idxcur].parents[0] = -1;
+                        while(n>0)
                         {
-                            idxcur = indexofpoint(lsi.points[k].n);
+                            n--;
 
-                            if(k == n)
-                            {
-                                points[idxcur].parents[0] = -1;
-                            }
-                            else
-                            {
-                                points[idxcur].parents[0] = ncur;
-                            }
-
-                            ncur = points[idxcur].n;
+                            idxcur = indexofpoint(nnext);
+                            nnext = points[idxcur].parents[0];
+                            points[idxcur].parents[0] = ncur;
+                            ncur = nnext;
                         }
 
                         if(points[tipi].parents[0]==-1)
@@ -1632,24 +1631,22 @@ int NCPointCloud::mergeLines(float maxAngle)
                     {
                         cout<<"inverse lsj \n";
 
-
                         // inverse lsj
-                        long idxcur, ncur;
+                        long idxcur, ncur, nnext;
                         long n = lsj.points.size() - 1;
-                        for(long k = n; k>0; --k)
+
+                        idxcur = indexofpoint(lsj.points[n].n);
+                        ncur = lsj.points[n].n;
+                        nnext = points[idxcur].parents[0];
+                        points[idxcur].parents[0] = -1;
+                        while(n>0)
                         {
-                            idxcur = indexofpoint(lsj.points[k].n);
+                            n--;
 
-                            if(k == n)
-                            {
-                                points[idxcur].parents[0] = -1;
-                            }
-                            else
-                            {
-                                points[idxcur].parents[0] = ncur;
-                            }
-
-                            ncur = points[idxcur].n;
+                            idxcur = indexofpoint(nnext);
+                            nnext = points[idxcur].parents[0];
+                            points[idxcur].parents[0] = ncur;
+                            ncur = nnext;
                         }
 
                         if(points[tipj].parents[0]==-1)
