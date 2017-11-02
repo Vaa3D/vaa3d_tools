@@ -2,9 +2,6 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
-QMAKE_CXXFLAGS += -std=c++11 -pthread
-LIBS += -pthread
-
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 
 # set with your evironment settings
@@ -45,21 +42,25 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 
 macx{
+    QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-c++11-narrowing
     LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
     LIBS += -framework OpenCL
-    LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.dylib
+    LIBS += -lc++
+    LIBS += -litksys-4.13 -lITKVNLInstantiation-4.13 -litkvnl_algo-4.13 -litkvnl-4.13 -litkv3p_netlib-4.13 -litknetlib-4.13 -litkvcl-4.13
+    LIBS += -lITKCommon-4.13 -lITKIOImageBase-4.13 -lITKIOTIFF-4.13 -lITKGPUAnisotropicSmoothing-4.13 -lITKGPUFiniteDifference-4.13 -lITKGPUCommon-4.13
+    LIBS += -L$$VAA3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
+    LIBS += /Users/yuy/work/alleninst/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer_debug.dylib
 }
 
 unix:!macx {
-    QMAKE_CXXFLAGS += -fopenmp
+    QMAKE_CXXFLAGS += -fopenmp -pthread
     LIBS += -fopenmp
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
     LIBS += -lOpenCL
+    LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
     LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
 }
-
-LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
 
 # deep learning detection
 #HEADERS += zhidl/classification.h
