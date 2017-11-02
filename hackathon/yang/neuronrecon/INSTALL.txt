@@ -24,7 +24,9 @@ hg clone https://bitbucket.org/eigen/eigen
 # Mac
 # ****
 
-Modify the following 2 files within Qt-4.7.1 to support c++11.
+1)
+
+Modify the following 3 files within Qt-4.7.1 to support c++11.
 
 Qt-4.7.1/include/QtCore/qobjectdefs.h
 change the LINE 217 to the following:
@@ -56,9 +58,13 @@ static const char qt_plugin_verification_data[] = \
 
 
 Qt-4.7.1/mkspecs/common/mac-g++.conf
-change the LINE 22-25 to the following:
-QMAKE_CFLAGS_PPC_64     += -arch ppc64 -Xarch_ppc64 -mmacosx-version-min=10.7
-QMAKE_OBJECTIVE_CFLAGS_PPC_64  += -arch ppc64 -Xarch_ppc64 -mmacosx-version-min=10.7
-QMAKE_CFLAGS_X86_64     += -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.7
-QMAKE_OBJECTIVE_CFLAGS_X86_64  += -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.7
+
+replace all “-mmacosx-version-min=10.5” with “-mmacosx-version-min=10.7”
+
+2)
+
+uncomment the following lines in v3d64.pro:
+
+    #QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-c++11-narrowing
+    #LIBS += -lc++
 
