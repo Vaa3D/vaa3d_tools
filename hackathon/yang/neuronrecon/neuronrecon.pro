@@ -42,7 +42,7 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 
 macx{
-    QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-c++11-narrowing -mmacosx-version-min=10.7
+    QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++ -Wno-c++11-narrowing
     LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
     LIBS += -framework OpenCL
