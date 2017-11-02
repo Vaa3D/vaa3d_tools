@@ -47,6 +47,7 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 macx{
     LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -framework OpenCL
     LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.dylib
 }
 
@@ -54,10 +55,10 @@ unix:!macx {
     QMAKE_CXXFLAGS += -fopenmp
     LIBS += -fopenmp
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
+    LIBS += -lOpenCL
     LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
 }
 
-LIBS += -lOpenCL
 LIBS += -lITKIOTIFF-4.13 -lITKGPUCommon-4.13 -lITKGPUAnisotropicSmoothing-4.13
 
 # deep learning detection
