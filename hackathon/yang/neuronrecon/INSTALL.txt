@@ -18,3 +18,43 @@ hg clone https://bitbucket.org/eigen/eigen
 
 #HOMEDIR = /home/yangy/work/local
 #LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
+
+
+# ****
+# Mac
+# ****
+
+Modify the following 2 files within Qt-4.7.1 to support c++11.
+
+Qt-4.7.1/include/QtCore/qobjectdefs.h
+change the LINE 217 to the following:
+
+#if __cplusplus >= 201103L || (__cplusplus < 200000 && __cplusplus > 199711L)
+# define QLOCATION "\0" __FILE__ ":" QTOSTRING(__LINE__)
+#else
+# define QLOCATION "\0"__FILE__":"QTOSTRING(__LINE__)
+#endif
+
+Qt-4.7.1/include/QtCore/qplugin.h
+change the LINE 112 to the following:
+
+#if __cplusplus >= 201103L || (__cplusplus < 200000 && __cplusplus > 199711L)
+#  define Q_PLUGIN_VERIFICATION_DATA \
+static const char qt_plugin_verification_data[] = \
+"pattern=""QT_PLUGIN_VERIFICATION_DATA""\n" \
+"version=" QT_VERSION_STR "\n" \
+"debug=" QPLUGIN_DEBUG_STR "\n" \
+"buildkey=" QT_BUILD_KEY;
+#else
+#  define Q_PLUGIN_VERIFICATION_DATA \
+static const char qt_plugin_verification_data[] = \
+"pattern=""QT_PLUGIN_VERIFICATION_DATA""\n" \
+"version="QT_VERSION_STR"\n" \
+"debug="QPLUGIN_DEBUG_STR"\n" \
+"buildkey="QT_BUILD_KEY;
+#endif
+
+
+
+
+
