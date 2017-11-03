@@ -1447,6 +1447,7 @@ int NCPointCloud::mergeLines(float maxAngle)
         vector<LineSegment> lines;
         resetVisitStatus();
 
+        //
         for(long i=0; i<points.size(); i++)
         {
             if(points[i].parents[0]==-1)
@@ -1466,6 +1467,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                         if(j<0)
                             break;
                     }
+                    ls.points.push_back(points[j]); // end point
+
 
                     if(ls.points.size()>2)
                     {
@@ -1479,192 +1482,247 @@ int NCPointCloud::mergeLines(float maxAngle)
 
         cout<<"iter #"<<++iter<<" : "<<lines.size()<<" lines to be considered merging"<<endl;
 
-        //
-        Point pi, pj;
-        LineSegment lsi, lsj;
-        for(long i=0; i<lines.size(); i++)
+        // test
+        for(int i=0; i<lines.size(); i++)
         {
-            lsi = lines[i];
+            LineSegment line = lines[i];
 
-            lines[i].visited = true;
-            vector<tuple<float,float,long>> candidates;
-            vector<pair<Point,long>> jPoints;
-
-            for(long j=1; j<lines.size(); j++)
+            cout<<"test ... line "<<i<<" "<<line.points.size()<<endl;
+            for(int k=0; k<line.points.size(); k++)
             {
-                if(j==i)
-                    continue;
+                cout<<"test line point's parent ? "<<k<<" "<<line.points[k].n<<" "<<line.points[k].parents.size()<<endl;
+                cout<<"... parent "<<line.points[k].parents[0]<<endl;
+            }
+        }
 
-                lsj = lines[j];
 
-                Point pA, pB;
-                line_line_closest_point(pA, pB, lsi.origin, lsi.axis, lsj.origin, lsj.axis);
+        if(lines.size()>1)
+        {
+            //
+            Point pi, pj;
+            LineSegment lsi, lsj;
+            for(long i=0; i<lines.size(); i++)
+            {
+                cout<<"line i:"<<i<<endl;
 
-                if(lsi.insideLineSegments(pA) || lsj.insideLineSegments(pB))
+                lsi = lines[i];
+
+                lines[i].visited = true;
+                vector<tuple<float,float,long>> candidates;
+                vector<pair<Point,long>> jPoints;
+
+                for(long j=1; j<lines.size(); j++)
                 {
-                    continue;
-                }
-                else
-                {
-                    // angle
-                    Point t1 = lsi.points[0];
-                    Point t2 = lsi.points[lsi.points.size()-1];
+                    if(j==i)
+                        continue;
 
-                    if(distance(t1, pA) < distance(t2, pA))
+                    cout<<"line j:"<<j<<endl;
+
+                    lsj = lines[j];
+
+                    Point pA, pB;
+                    line_line_closest_point(pA, pB, lsi.origin, lsi.axis, lsj.origin, lsj.axis);
+
+                    cout<<"evaluating line "<<i<<" & "<<j<<endl;
+                    lsi.origin->info();
+                    lsi.axis->info();
+
+                    lsj.origin->info();
+                    lsj.axis->info();
+
+                    if(maxAngle>1 && (lsi.insideLineSegments(pA) || lsj.insideLineSegments(pB)))
                     {
-                        pi = t1;
+                        cout<<lsi.insideLineSegments(pA)<<endl;
+                        pA.info();
+                        cout<<lsj.insideLineSegments(pB)<<endl;
+                        pB.info();
+
+                        continue;
                     }
                     else
                     {
-                        pi = t2;
+                        // angle
+                        Point t1 = lsi.points[0];
+                        Point t2 = lsi.points[lsi.points.size()-1];
+
+                        if(distance(t1, pA) < distance(t2, pA))
+                        {
+                            pi = t1;
+                        }
+                        else
+                        {
+                            pi = t2;
+                        }
+
+                        Point q1 = lsj.points[0];
+                        Point q2 = lsj.points[lsj.points.size()-1];
+
+                        if(distance(q1, pB) < distance(q2, pB))
+                        {
+                            pj = q1;
+                        }
+                        else
+                        {
+                            pj = q2;
+                        }
+
+                        float angle = getAngle(pi, pA, pj);
+                        candidates.push_back(make_tuple(distance(pi, pj), angle, j));
+                        jPoints.push_back(make_pair(pj,j));
+
+                        cout<<"angle "<<angle<<" < "<<maxAngle<<endl;
+
+                        if(angle>1.57)
+                            angle = 3.14 - angle;
+
+                        if(angle<maxAngle)
+                            merging = true;
                     }
+                } // j
 
-                    Point q1 = lsj.points[0];
-                    Point q2 = lsj.points[lsj.points.size()-1];
-
-                    if(distance(q1, pB) < distance(q2, pB))
-                    {
-                        pj = q1;
-                    }
-                    else
-                    {
-                        pj = q2;
-                    }
-
-                    float angle = getAngle(pi, pA, pj);
-                    candidates.push_back(make_tuple(distance(pi, pj), angle, j));
-                    jPoints.push_back(make_pair(pj,j));
-
-                    if(angle<maxAngle)
-                        merging = true;
-                }
-            } // j
-
-            if(merging)
-            {
-                // sort by angle
-                sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+                if(merging)
                 {
-                    return std::get<1>(a) < std::get<1>(b);
-                });
-
-                // sort by distance
-                if(candidates.size()>top)
-                {
-                    sort(candidates.begin(), candidates.begin()+top, [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
-                    {
-                        return std::get<0>(a) < std::get<0>(b);
-                    });
-                }
-                else
-                {
+                    // sort by angle
                     sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
                     {
-                        return std::get<0>(a) < std::get<0>(b);
+                        return std::get<1>(a) < std::get<1>(b);
                     });
-                }
 
-                // merge
-                long tipi = indexofpoint(pi.n);
-                long tipj;
-                long jLine = get<2>(candidates[0]);
-                for(long k=0; k<jPoints.size(); k++)
-                {
-                    if(jPoints[k].second == jLine)
+                    // sort by distance
+                    if(candidates.size()>top)
                     {
-                        tipj = indexofpoint(jPoints[k].first.n);
-                        break;
-                    }
-                }
-
-                //
-                cout<<"connecting ... line #"<<i<<" to line #"<<jLine<<endl;
-                cout<<"connected tip point #"<<tipi<<" tip point #"<<tipj<<endl;
-
-                cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
-
-                //
-                if(pi.parents[0]==-1 && pj.parents[0]!=-1)
-                {
-                    points[tipi].parents[0] = points[tipj].n;
-                }
-                else if(pi.parents[0]!=-1 && pj.parents[0]==-1)
-                {
-                    points[tipj].parents[0] = points[tipi].n;
-                }
-                else
-                {
-                    // inverse the short line and connect it to the other
-                    if(lsi.points.size() < lsj.points.size())
-                    {
-                        cout<<"inverse lsi \n";
-
-                        // inverse lsi
-                        long idxcur, ncur, nnext;
-                        long n = lsi.points.size() - 1;
-
-                        idxcur = indexofpoint(lsi.points[n].n);
-                        ncur = lsi.points[n].n;
-                        nnext = points[idxcur].parents[0];
-                        points[idxcur].parents[0] = -1;
-                        while(n>0)
+                        sort(candidates.begin(), candidates.begin()+top, [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
                         {
-                            n--;
-
-                            idxcur = indexofpoint(nnext);
-                            nnext = points[idxcur].parents[0];
-                            points[idxcur].parents[0] = ncur;
-                            ncur = nnext;
-                        }
-
-                        if(points[tipi].parents[0]==-1)
-                        {
-                            // pj -> pi
-                            points[tipj].parents[0] = points[tipi].n;
-                        }
-                        else
-                        {
-                            points[tipi].parents[0] = points[tipj].n;
-                        }
+                            return std::get<0>(a) < std::get<0>(b);
+                        });
                     }
                     else
                     {
-                        cout<<"inverse lsj \n";
-
-                        // inverse lsj
-                        long idxcur, ncur, nnext;
-                        long n = lsj.points.size() - 1;
-
-                        idxcur = indexofpoint(lsj.points[n].n);
-                        ncur = lsj.points[n].n;
-                        nnext = points[idxcur].parents[0];
-                        points[idxcur].parents[0] = -1;
-                        while(n>0)
+                        sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
                         {
-                            n--;
+                            return std::get<0>(a) < std::get<0>(b);
+                        });
+                    }
 
-                            idxcur = indexofpoint(nnext);
-                            nnext = points[idxcur].parents[0];
-                            points[idxcur].parents[0] = ncur;
-                            ncur = nnext;
+                    // merge
+                    long tipi = indexofpoint(pi.n);
+                    long tipj;
+                    long jLine = get<2>(candidates[0]);
+                    for(long k=0; k<jPoints.size(); k++)
+                    {
+                        if(jPoints[k].second == jLine)
+                        {
+                            tipj = indexofpoint(jPoints[k].first.n);
+                            break;
                         }
+                    }
 
-                        if(points[tipj].parents[0]==-1)
+                    //
+                    cout<<"connecting ... line #"<<i<<" to line #"<<jLine<<endl;
+                    cout<<"connected tip point #"<<tipi<<" tip point #"<<tipj<<endl;
+
+                    cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
+
+                    //
+                    if(pi.parents[0]==-1 && pj.parents[0]!=-1)
+                    {
+                        points[tipi].parents[0] = points[tipj].n;
+                        points[tipj].children.push_back(points[tipi].n);
+                    }
+                    else if(pi.parents[0]!=-1 && pj.parents[0]==-1)
+                    {
+                        points[tipj].parents[0] = points[tipi].n;
+                        points[tipi].children.push_back(points[tipj].n);
+                    }
+                    else
+                    {
+                        // inverse the short line and connect it to the other
+                        if(lsi.points.size() < lsj.points.size())
                         {
-                            // pi -> pj
-                            points[tipi].parents[0] = points[tipj].n;
+                            cout<<"inverse lsi \n";
+
+                            // inverse lsi
+                            long idxcur, ncur, nnext;
+                            long n = lsi.points.size() - 1;
+
+                            idxcur = indexofpoint(lsi.points[n].n);
+                            ncur = lsi.points[n].n;
+                            nnext = points[idxcur].parents[0];
+                            points[idxcur].parents[0] = -1;
+                            while(n>0)
+                            {
+                                n--;
+
+                                idxcur = indexofpoint(nnext);
+                                nnext = points[idxcur].parents[0];
+                                points[idxcur].parents[0] = ncur;
+                                ncur = nnext;
+                            }
+
+                            if(points[tipi].parents[0]==-1)
+                            {
+                                // pj -> pi
+                                points[tipj].parents[0] = points[tipi].n;
+                                points[tipi].children.push_back(points[tipj].n);
+                            }
+                            else
+                            {
+                                points[tipi].parents[0] = points[tipj].n;
+                                points[tipj].children.push_back(points[tipi].n);
+                            }
                         }
                         else
                         {
-                            points[tipj].parents[0] = points[tipi].n;
+                            cout<<"inverse lsj "<<lsj.points.size()<<endl;
+
+                            // inverse lsj
+                            long idxcur, ncur, nnext;
+                            long n = lsj.points.size() - 1;
+
+                            idxcur = indexofpoint(lsj.points[n].n);
+                            ncur = lsj.points[n].n;
+
+                            cout<<"access idxcur and its parent "<<idxcur<<" "<<points.size()<<endl;
+
+                            for(int k=0; k<=n; k++)
+                                cout<<"test lsj point's parent "<<k<<" "<<lsj.points[k].n<<" "<<lsj.points[k].parents[0]<<endl;
+
+                            nnext = points[idxcur].parents[0];
+                            points[idxcur].parents[0] = -1;
+                            while(n>0)
+                            {
+                                n--;
+
+                                cout<<"nnext "<<nnext<<endl;
+
+                                idxcur = indexofpoint(nnext);
+                                nnext = points[idxcur].parents[0];
+
+                                cout<<" ... nnext "<<nnext<<endl;
+
+                                points[idxcur].parents[0] = ncur;
+                                ncur = nnext;
+                            }
+
+                            if(points[tipj].parents[0]==-1)
+                            {
+                                // pi -> pj
+                                points[tipi].parents[0] = points[tipj].n;
+                                points[tipj].children.push_back(points[tipi].n);
+                            }
+                            else
+                            {
+                                points[tipj].parents[0] = points[tipi].n;
+                                points[tipi].children.push_back(points[tipj].n);
+                            }
                         }
                     }
-                }
 
-                // update lines
-                break;
-            }
-        } // i
+                    // update lines
+                    break;
+                }
+            } // i
+        }
     } // while
 
     //
