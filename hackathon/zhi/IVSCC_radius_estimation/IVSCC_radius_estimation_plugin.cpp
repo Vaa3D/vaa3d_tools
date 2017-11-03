@@ -752,6 +752,11 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 		string str = inputSWCPath.toStdString();
 		swcDIR = str.c_str();
 		//cout << swcDIR << endl;
+
+		QString radiusString = inparas.at(0);
+		double inputRadius;
+		if (radiusString == "") inputRadius = 2;
+		else inputRadius = radiusString.toDouble();
 		
 		QDir swcDir(inputSWCPath);
 		QFileInfoList swcList = swcDir.entryInfoList(QDir::AllEntries);
@@ -836,7 +841,8 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 				{
 					if (nodeAssigned[currLoc] == true) break;
 
-					double estimatedR = 2.0 + d*(headR-2.0)/(currLength);
+					//double estimatedR = 2.0 + d*(headR-2.0)/(currLength);
+					double estimatedR = inputRadius + d*(headR-inputRadius)/(currLength);
 					nt.listNeuron[currLoc].radius = estimatedR;
 					++d;
 					nodeAssigned[currLoc] = true;
