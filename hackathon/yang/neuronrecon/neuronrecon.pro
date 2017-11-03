@@ -20,24 +20,37 @@ INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include
 
 INCLUDEPATH     += ./3rdparty
 
+# app2
 INCLUDEPATH     += $$VAA3DPLUGINPATH/neurontracing_vn2
+INCLUDEPATH     += $$VAA3DPLUGINPATH/neurontracing_vn2/app1
 INCLUDEPATH     += $$VAA3DPLUGINPATH/neurontracing_vn2/app2
+INCLUDEPATH     += $$VAA3DMAINPATH/neuron_editing
+INCLUDEPATH     += $$VAA3DMAINPATH/worm_straighten_c
 
 # basic func
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.h
+HEADERS += $$VAA3DMAINPATH/basic_c_fun/mg_utilities.h
+HEADERS += $$VAA3DMAINPATH/basic_c_fun/mg_image_lib.h
+HEADERS += $$VAA3DMAINPATH/basic_c_fun/stackutil.h
+HEADERS += $$VAA3DMAINPATH/basic_c_fun/imageio_mylib.h
+HEADERS += $$VAA3DMAINPATH//io/v3d_nrrd.h
 HEADERS += $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.h
-HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/prim_minimum_spanning_tree.hpp
-HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/kruskal_min_spanning_tree.hpp
-HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/graph/adjacency_list.hpp
-HEADERS += $$VAA3DMAINPATH/common_lib/include/boost/config.hpp
 HEADERS	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.h
 
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
-SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
+SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES += $$VAA3DMAINPATH/basic_c_fun/mg_utilities.cpp
+SOURCES += $$VAA3DMAINPATH/basic_c_fun/mg_image_lib.cpp
+SOURCES += $$VAA3DMAINPATH/basic_c_fun/stackutil.cpp
+SOURCES += $$VAA3DMAINPATH/basic_c_fun/imageio_mylib.cpp
+SOURCES += $$VAA3DMAINPATH//io/v3d_nrrd.cpp
+SOURCES += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
+SOURCES	+= $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.cpp
+SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
+SOURCES	+= $$VAA3DMAINPATH/graph/dijk.cpp
 
 # neuron tree(s) construction
 HEADERS	+= img.h
@@ -54,17 +67,29 @@ SOURCES	+= neuronrecon.cpp
 HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/vn_imgpreprocess.h
 HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/vn.h
 HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/vn_app2.h
-HEADERS	+= $$VAA3DPLUGINPATH/neurontracing_vn2/app2/my_surf_objs.h
+HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/vn_app1.h
+HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/app1/v3dneuron_gd_tracing.h
+HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/app1/gd.h
 HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/app2/fastmarching_tree.h
 HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += $$VAA3DPLUGINPATH/neurontracing_vn2/app2/fastmarching_dt.h
 
 SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/vn_imgpreprocess.cpp
 SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/app2_connector.cpp
+SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/app1_connector.cpp
+SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/swc_convert.cpp
+SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/app2/my_surf_objs.cpp
+SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/app1/v3dneuron_gd_tracing.cpp
+SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/app1/gd.cpp
+SOURCES += $$VAA3DPLUGINPATH/neurontracing_vn2/app1/calculate_cover_scores.cpp
+SOURCES += $$VAA3DMAINPATH/worm_straighten_c/bdb_minus.cpp
+SOURCES += $$VAA3DMAINPATH/worm_straighten_c/mst_prim_c.cpp
+SOURCES += $$VAA3DMAINPATH/worm_straighten_c/bfs_1root.cpp
 
+#
 macx{
-    QMAKE_CXXFLAGS += -stdlib=libc++ -Wno-c++11-narrowing
-    LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
+    QMAKE_CXXFLAGS += -stdlib=libc++ -Wno-c++11-narrowing -mmacosx-version-min=10.7
+    LIBS += -L$$VAA3DMAINPATH/common_lib/lib_mac64 -lv3dtiff -lz -lbz2 -lteem
     LIBS += -L$$VAA3DMAINPATH/jba/c++ -lv3dnewmat
     LIBS += -framework OpenCL
     LIBS += -lc++

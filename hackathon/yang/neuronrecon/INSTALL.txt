@@ -14,20 +14,20 @@ hg clone https://bitbucket.org/eigen/eigen
 
 # set the above path into your evironment path
 
-# change the following lines into your environment settings
+# change the variable HOMEDIR in the project file into your environment settings
 
 #HOMEDIR = /home/yangy/work/local
-#LIBS += /local1/work/tools/v3d_external/bin/plugins/neuron_tracing/ultratracer/libultratracer.so
 
 
 # ****
 # Mac
 # ****
 
-1)
+(A)
 
 Modify the following 3 files within Qt-4.7.1 to support c++11.
 
+1.
 Qt-4.7.1/include/QtCore/qobjectdefs.h
 change the LINE 217 to the following:
 
@@ -37,6 +37,7 @@ change the LINE 217 to the following:
 # define QLOCATION "\0"__FILE__":"QTOSTRING(__LINE__)
 #endif
 
+2.
 Qt-4.7.1/include/QtCore/qplugin.h
 change the LINE 112 to the following:
 
@@ -56,12 +57,12 @@ static const char qt_plugin_verification_data[] = \
 "buildkey="QT_BUILD_KEY;
 #endif
 
-
+3.
 Qt-4.7.1/mkspecs/common/mac-g++.conf
 
 replace all “-mmacosx-version-min=10.5” with “-mmacosx-version-min=10.7”
 
-2)
+(B)
 
 uncomment the following lines in v3d64.pro:
 
