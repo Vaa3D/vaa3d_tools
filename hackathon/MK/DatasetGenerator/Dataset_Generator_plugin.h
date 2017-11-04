@@ -11,12 +11,8 @@
 #include <qvector.h>
 #include "basic_surf_objs.h"
 #include "basic_4dimage.h"
-#include "stackutil.h"
-#include "v3d_nrrd.h"
-#include "mg_image_lib.h"
-#include "mg_utilities.h"
 
-inline bool simple_loadimage(const char* filename, unsigned short*& pdata, long int sz[], int& datatype)
+/*inline bool simple_loadimage(const char* filename, unsigned short*& pdata, long int sz[], int& datatype)
 {
     if (!filename || !sz) return false;
 
@@ -50,7 +46,7 @@ inline bool simple_loadimage(const char* filename, unsigned short*& pdata, long 
 Label_error_simple_loadimage:
     if (inimg) {delete inimg; inimg=0;}
 	return false;
-}
+}*/
 
 class DatasetGenerator : public QObject, public V3DPluginInterface2_1
 {

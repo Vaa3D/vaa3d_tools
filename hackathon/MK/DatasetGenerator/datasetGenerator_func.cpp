@@ -383,11 +383,11 @@ void DatasetGenerator::shapeFilter_line_dot()
 				unsigned short* ImgPtr = 0;
 				long int in_sz[4];
 				int datatype;
-				if (!simple_loadimage(imgNameC, ImgPtr, in_sz, datatype))
+				/*if (!simple_loadimage(imgNameC, ImgPtr, in_sz, datatype))
 				{
 					//fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
 					return;
-				}
+				}*/
 				int imgLength = in_sz[0] * in_sz[1];
 			}
 
