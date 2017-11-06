@@ -809,6 +809,7 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 					headR = list.at(currNode.parent).radius;
 					headRadius[i] = headR;
 					leafLength[i] = path_length;
+					//cout << list.at(i).n << " " << headR << " " << path_length << endl;
 				}
 			}
 
@@ -818,7 +819,13 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 				if (leafLength[j] == 0) continue;
 				//cout << j << ": " << leafLength[j] << " " << headRadius[j] << endl;
 
-				inversedLeafLength[leafLength[j]] = j;
+				size_t incre = 0;
+				if (inversedLeafLength[leafLength[j]] != 0) // avoiding tips with the same path length to be overwritten here
+				{
+					while (inversedLeafLength[leafLength[j] - incre] != 0) ++incre;
+					inversedLeafLength[leafLength[j] - incre] = j;
+				}
+				else inversedLeafLength[leafLength[j]] = j;
 			}
 			for (size_t j=0; j<inversedLeafLength.size(); ++j)
 			{
@@ -849,7 +856,7 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 					currLoc = nt.hashNeuron.value(currNode.parent);
 					currNode = nt.listNeuron.at(currLoc);
 
-					//cout << estimatedR << " ";
+					//if (d == 1) cout << currNode.n << " " << estimatedR << " " << currLength << endl;
 				}
 				//cout << endl;
 			}
