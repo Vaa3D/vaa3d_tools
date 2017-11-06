@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include "datasetGeneratorUI.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Dataset_Generator, DatasetGenerator);
@@ -34,7 +35,11 @@ void DatasetGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &call
 {
 	if (menu_name == tr("menu1"))
 	{
-		v3d_msg("To be implemented.");
+		DatasetGeneratorUI* inputForm = new DatasetGeneratorUI(0, &callback);
+		inputForm->exec();
+		inputForm->~DatasetGeneratorUI(); // Needs to force freeing up memory for Win7..? (Win10 doesn't need this.)
+
+		return;
 	}
 	else if (menu_name == tr("menu2"))
 	{

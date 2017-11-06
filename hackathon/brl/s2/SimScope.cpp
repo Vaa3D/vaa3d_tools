@@ -174,8 +174,8 @@ void SimScope::fakeScopeCrop()
 	ImagePixelType pixelType = V3D_UINT8;
 	
 	cube4D->setData(cube1d, cubeDim[0], cubeDim[1], cubeDim[2], cubeDim[3], pixelType);
-	int x = round(updatedOriginX);
-	int y = round(updatedOriginY);
+	int x = std::round(updatedOriginX);
+	int y = std::round(updatedOriginY);
 	QString tileX = QString::number(x);
 	QString tileY = QString::number(y);
 	QString filePrefix = sliceFolder + "/ZSeries-";

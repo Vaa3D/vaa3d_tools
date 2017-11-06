@@ -4,6 +4,7 @@
 #include "Dataset_Generator_plugin.h"
 #include "ui_DatasetGenerator.h"
 
+
 namespace Ui 
 {
 	class DatasetGeneratorUI;
@@ -20,6 +21,7 @@ public:
 
 private:
 	Ui::DatasetGeneratorUI* ui;
+	QDirModel* dirModel;
 
 };
 
