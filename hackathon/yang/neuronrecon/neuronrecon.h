@@ -87,6 +87,7 @@ public:
     void setValue(float v);
     bool isSamePoint(Point p);
     void info();
+    bool hasChildren();
 
 public:
     float x, y, z; // location
@@ -226,6 +227,7 @@ public:
     int boundingbox();
     bool insideLineSegments(Point p);
     int lineFromPoints();
+    int update();
 
 public:
     float meanval_adjangles, stddev_adjangles; //
@@ -234,6 +236,7 @@ public:
     Vector *axis;
     bool b_bbox;
     bool visited;
+    Point root, tip;
 };
 
 template <typename T>

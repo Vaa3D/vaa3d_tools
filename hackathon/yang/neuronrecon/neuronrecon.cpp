@@ -183,7 +183,26 @@ void Point::setValue(float v)
 
 void Point::info()
 {
-    cout<<"Point: "<<n<<" ( "<<x<<" "<<y<<" "<<z<<" )"<<endl;
+    if(parents.size()>0)
+    {
+        if(children.size()>0)
+        {
+            cout<<"Point: "<<n<<" ( "<<x<<" "<<y<<" "<<z<<" ) - parent: "<<parents[0]<<" - first child: "<<children[0]<<endl;
+        }
+        else
+        {
+            cout<<"Point: "<<n<<" ( "<<x<<" "<<y<<" "<<z<<" ) - parent: "<<parents[0]<<endl;
+        }
+    }
+    else
+    {
+        cout<<"Point: "<<n<<" ( "<<x<<" "<<y<<" "<<z<<" )"<<endl;
+    }
+}
+
+bool Point::hasChildren()
+{
+    return (children.size()>0);
 }
 
 //
@@ -1438,7 +1457,8 @@ int NCPointCloud::mergeLines(float maxAngle)
     // merge lines
     bool merging = true;
     long iter = 0;
-    size_t top = 3;
+    size_t top = 10;
+    long nLines = -1;
     while(merging)
     {
         merging = false;
@@ -1446,6 +1466,15 @@ int NCPointCloud::mergeLines(float maxAngle)
         // update lines after each merging
         vector<LineSegment> lines;
         resetVisitStatus();
+
+        // check
+//        cout<<" check the update of the point cloud \n";
+//        cout<<"*****\n";
+//        for(long i=0; i<points.size(); i++)
+//        {
+//            points[i].info();
+//        }
+//        cout<<"*****\n";
 
         //
         for(long i=0; i<points.size(); i++)
@@ -1467,13 +1496,12 @@ int NCPointCloud::mergeLines(float maxAngle)
                         if(j<0)
                             break;
                     }
-                    ls.points.push_back(points[j]); // end point
+                    ls.points.push_back(points[j]); // tip point
 
-
+                    //
                     if(ls.points.size()>2)
                     {
-                        ls.boundingbox();
-                        ls.lineFromPoints();
+                        ls.update();
                         lines.push_back(ls);
                     }
                 }
@@ -1483,18 +1511,33 @@ int NCPointCloud::mergeLines(float maxAngle)
         cout<<"iter #"<<++iter<<" : "<<lines.size()<<" lines to be considered merging"<<endl;
 
         // test
-        for(int i=0; i<lines.size(); i++)
-        {
-            LineSegment line = lines[i];
+//        for(int i=0; i<lines.size(); i++)
+//        {
+//            LineSegment line = lines[i];
 
-            cout<<"test ... line "<<i<<" "<<line.points.size()<<endl;
-            for(int k=0; k<line.points.size(); k++)
+//            cout<<"test ... line "<<i<<" "<<line.points.size()<<endl;
+//            for(int k=0; k<line.points.size(); k++)
+//            {
+//                long child = -1;
+
+//                if(line.points[k].hasChildren()>0)
+//                {
+//                    child = line.points[k].children[0];
+//                }
+
+//                cout<<"node "<<k<<" n "<<line.points[k].n<<" "<<line.points[k].parents[0]<<" child "<<child<<endl;
+//            }
+//        }
+
+        if(nLines > 0 )
+        {
+            if(lines.size() == nLines)
             {
-                cout<<"test line point's parent ? "<<k<<" "<<line.points[k].n<<" "<<line.points[k].parents.size()<<endl;
-                cout<<"... parent "<<line.points[k].parents[0]<<endl;
+                // converged
+                break;
             }
         }
-
+        nLines = lines.size();
 
         if(lines.size()>1)
         {
@@ -1542,10 +1585,57 @@ int NCPointCloud::mergeLines(float maxAngle)
                     else
                     {
                         // angle
-                        Point t1 = lsi.points[0];
-                        Point t2 = lsi.points[lsi.points.size()-1];
+                        Point t1 = lsi.root;
+                        Point t2 = lsi.tip;
 
-                        if(distance(t1, pA) < distance(t2, pA))
+//                        if(distance(t1, pA) < distance(t2, pA))
+//                        {
+//                            pi = t1;
+//                        }
+//                        else
+//                        {
+//                            pi = t2;
+//                        }
+
+                        Point q1 = lsj.root;
+                        Point q2 = lsj.tip;
+
+//                        if(distance(q1, pB) < distance(q2, pB))
+//                        {
+//                            pj = q1;
+//                        }
+//                        else
+//                        {
+//                            pj = q2;
+//                        }
+
+//                        cout<<"test ... ... \n";
+
+
+//                        cout<<"comparing A vs B: "<<getAngle(pi, pA, pj)<<" == "<<getAngle(pi, pB, pj)<<endl;
+
+//                        pi.info();
+//                        pA.info();
+//                        pj.info();
+
+//                        cout<<" ... ... "<<endl;
+
+//                        Vector v;
+
+
+//                        cout<<" ... angle : "<<acos( v.vdot(lsi.axis, lsj.axis) / (v.vmag(lsi.axis)*v.vmag(lsj.axis)) )<<endl;
+
+
+
+//                        cout<<"test ... ... \n";
+
+                        //
+//                      float angle = getAngle(pi, pA, pj);
+                        Vector v;
+                        float angle = acos( v.vdot(lsi.axis, lsj.axis) / (v.vmag(lsi.axis)*v.vmag(lsj.axis)) );
+
+                        //
+                        if(distance(t1, *(lsj.origin)) < distance(t2, *(lsj.origin)))
                         {
                             pi = t1;
                         }
@@ -1554,10 +1644,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                             pi = t2;
                         }
 
-                        Point q1 = lsj.points[0];
-                        Point q2 = lsj.points[lsj.points.size()-1];
-
-                        if(distance(q1, pB) < distance(q2, pB))
+                        if(distance(q1, *(lsi.origin)) < distance(q2, *(lsi.origin)))
                         {
                             pj = q1;
                         }
@@ -1566,15 +1653,17 @@ int NCPointCloud::mergeLines(float maxAngle)
                             pj = q2;
                         }
 
-                        float angle = getAngle(pi, pA, pj);
-                        candidates.push_back(make_tuple(distance(pi, pj), angle, j));
-                        jPoints.push_back(make_pair(pj,j));
+                        //
+//                        if(angle>1.57)
+//                            angle = 3.14 - angle;
 
                         cout<<"angle "<<angle<<" < "<<maxAngle<<endl;
 
-                        if(angle>1.57)
-                            angle = 3.14 - angle;
+                        //
+                        candidates.push_back(make_tuple(distance(pi, pj), angle, j));
+                        jPoints.push_back(make_pair(pj,j));
 
+                        //
                         if(angle<maxAngle)
                             merging = true;
                     }
@@ -1604,6 +1693,18 @@ int NCPointCloud::mergeLines(float maxAngle)
                         });
                     }
 
+//                    // distance only
+//                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+//                    {
+//                        return std::get<0>(a) < std::get<0>(b);
+//                    });
+
+
+                    // plot statistics
+
+
+
+
                     // merge
                     long tipi = indexofpoint(pi.n);
                     long tipj;
@@ -1617,19 +1718,25 @@ int NCPointCloud::mergeLines(float maxAngle)
                         }
                     }
 
+                    float dist = get<0>(candidates[0]);
+                    float angle = get<1>(candidates[0]);
+
                     //
-                    cout<<"connecting ... line #"<<i<<" to line #"<<jLine<<endl;
+                    cout<<"connecting ... line #"<<i<<" to line #"<<jLine<<" angle "<<angle<<" distance "<<dist<<endl;
                     cout<<"connected tip point #"<<tipi<<" tip point #"<<tipj<<endl;
 
                     cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
 
                     //
-                    if(pi.parents[0]==-1 && pj.parents[0]!=-1)
+                    lsj = lines[jLine];
+
+                    //
+                    if(points[tipi].parents[0]==-1 && points[tipj].parents[0]!=-1)
                     {
                         points[tipi].parents[0] = points[tipj].n;
                         points[tipj].children.push_back(points[tipi].n);
                     }
-                    else if(pi.parents[0]!=-1 && pj.parents[0]==-1)
+                    else if(points[tipi].parents[0]!=-1 && points[tipj].parents[0]==-1)
                     {
                         points[tipj].parents[0] = points[tipi].n;
                         points[tipi].children.push_back(points[tipj].n);
@@ -1639,27 +1746,56 @@ int NCPointCloud::mergeLines(float maxAngle)
                         // inverse the short line and connect it to the other
                         if(lsi.points.size() < lsj.points.size())
                         {
-                            cout<<"inverse lsi \n";
+                            cout<<"reverse lsi \n";
 
                             // inverse lsi
-                            long idxcur, ncur, nnext;
+                            long idxcur;
+                            long ncur, ncurparent;
+                            long nparent;
                             long n = lsi.points.size() - 1;
 
-                            idxcur = indexofpoint(lsi.points[n].n);
-                            ncur = lsi.points[n].n;
-                            nnext = points[idxcur].parents[0];
+                            // tip point
+                            if(points[tipi].parents[0]==-1)
+                            {
+                                idxcur = tipi;
+                                while(points[idxcur].hasChildren())
+                                {
+                                    idxcur = indexofpoint(points[idxcur].children[0]);
+                                }
+                            }
+                            else
+                            {
+                                idxcur = tipi;
+                            }
+
+                            //
+                            ncur = points[idxcur].n;
+                            ncurparent = points[idxcur].parents[0];
+
                             points[idxcur].parents[0] = -1;
+                            points[idxcur].children.push_back(ncurparent);
+
                             while(n>0)
                             {
                                 n--;
 
-                                idxcur = indexofpoint(nnext);
-                                nnext = points[idxcur].parents[0];
+                                idxcur = indexofpoint(ncurparent);
+
+                                nparent = ncurparent;
+                                ncurparent = points[idxcur].parents[0];
                                 points[idxcur].parents[0] = ncur;
-                                ncur = nnext;
+                                points[idxcur].children[0] = ncurparent;
+                                ncur = nparent;
                             }
 
-                            if(points[tipi].parents[0]==-1)
+                            if(points[idxcur].hasChildren())
+                            {
+                                if(points[idxcur].children[0]==-1)
+                                    points[idxcur].children.clear();
+                            }
+
+                            //
+                            if(points[tipj].parents[0]==-1)
                             {
                                 // pj -> pi
                                 points[tipj].parents[0] = points[tipi].n;
@@ -1673,38 +1809,52 @@ int NCPointCloud::mergeLines(float maxAngle)
                         }
                         else
                         {
-                            cout<<"inverse lsj "<<lsj.points.size()<<endl;
+                            cout<<"reverse lsj "<<lsj.points.size()<<endl;
 
                             // inverse lsj
-                            long idxcur, ncur, nnext;
+                            long idxcur;
+                            long ncur, ncurparent;
+                            long nparent;
                             long n = lsj.points.size() - 1;
 
-                            idxcur = indexofpoint(lsj.points[n].n);
-                            ncur = lsj.points[n].n;
+                            // tip point
+                            if(points[tipj].parents[0]==-1)
+                            {
+                                idxcur = tipj;
+                                while(points[idxcur].hasChildren())
+                                {
+                                    idxcur = indexofpoint(points[idxcur].children[0]);
+                                }
+                            }
+                            else
+                            {
+                                idxcur = tipj;
+                            }
 
-                            cout<<"access idxcur and its parent "<<idxcur<<" "<<points.size()<<endl;
+                            //
+                            ncur = points[idxcur].n;
+                            ncurparent = points[idxcur].parents[0];
 
-                            for(int k=0; k<=n; k++)
-                                cout<<"test lsj point's parent "<<k<<" "<<lsj.points[k].n<<" "<<lsj.points[k].parents[0]<<endl;
-
-                            nnext = points[idxcur].parents[0];
                             points[idxcur].parents[0] = -1;
+                            points[idxcur].children.push_back(ncurparent);
+
                             while(n>0)
                             {
                                 n--;
 
-                                cout<<"nnext "<<nnext<<endl;
+                                idxcur = indexofpoint(ncurparent);
 
-                                idxcur = indexofpoint(nnext);
-                                nnext = points[idxcur].parents[0];
-
-                                cout<<" ... nnext "<<nnext<<endl;
-
+                                nparent = ncurparent;
+                                ncurparent = points[idxcur].parents[0];
                                 points[idxcur].parents[0] = ncur;
-                                ncur = nnext;
+                                points[idxcur].children[0] = ncurparent;
+                                ncur = nparent;
                             }
+                            if(points[idxcur].children[0]==-1)
+                                points[idxcur].children.clear();
 
-                            if(points[tipj].parents[0]==-1)
+                            //
+                            if(points[tipi].parents[0]==-1)
                             {
                                 // pi -> pj
                                 points[tipi].parents[0] = points[tipj].n;
@@ -2234,6 +2384,34 @@ int LineSegment::lineFromPoints()
     //
     return 0;
 }
+
+int LineSegment::update()
+{
+    // update bounding box
+    boundingbox();
+
+    // update line equation (origin, axis)
+    lineFromPoints();
+
+    // update start/root and end/tip points
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].parents[0] == -1)
+        {
+            root = points[i];
+        }
+
+        if(!points[i].hasChildren())
+        {
+            tip = points[i];
+        }
+    }
+
+    //
+    return 0;
+}
+
+
 
 
 
