@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1049</width>
+    <width>1015</width>
     <height>857</height>
    </rect>
   </property>
@@ -305,9 +305,9 @@
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>10</y>
-     <width>961</width>
+     <x>340</x>
+     <y>20</y>
+     <width>651</width>
      <height>561</height>
     </rect>
    </property>
@@ -332,23 +332,10 @@
     <attribute name="title">
      <string>Create Training Images</string>
     </attribute>
-    <widget class="QTreeView" name="treeView">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>281</width>
-       <height>481</height>
-      </rect>
-     </property>
-     <property name="mouseTracking">
-      <bool>false</bool>
-     </property>
-    </widget>
     <widget class="QToolBox" name="toolBox">
      <property name="geometry">
       <rect>
-       <x>330</x>
+       <x>20</x>
        <y>20</y>
        <width>601</width>
        <height>481</height>
@@ -567,13 +554,45 @@
     </attribute>
    </widget>
   </widget>
+  <widget class="QTreeView" name="treeView">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>301</width>
+     <height>561</height>
+    </rect>
+   </property>
+   <property name="mouseTracking">
+    <bool>false</bool>
+   </property>
+  </widget>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>selectClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>413</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>818</x>
+     <y>639</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
  <slots>
   <signal>toggled(bool)</signal>
+  <signal>clicked()</signal>
   <slot>filePath()</slot>
   <slot>okClicked()</slot>
   <slot>checkboxToggled(bool)</slot>
+  <slot>selectClicked()</slot>
  </slots>
 </ui>

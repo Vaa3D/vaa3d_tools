@@ -18,10 +18,13 @@ public:
 	DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* callback);
 	~DatasetGeneratorUI() {};
 
+public slots:
+	void selectClicked();
 
 private:
 	Ui::DatasetGeneratorUI* ui;
 	QDirModel* dirModel;
+
 
 };
 

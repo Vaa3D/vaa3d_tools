@@ -1,5 +1,8 @@
 #include "ui_DatasetGenerator.h"
 #include "datasetGeneratorUI.h"
+#include <qabstractitemview.h>
+#include <qitemselectionmodel.h>
+#include <qfilesystemmodel.h>
 
 using namespace std;
 
@@ -15,5 +18,14 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->treeView->setCurrentIndex(dirModel->index(QDir::currentPath()));
 
 	this->show();
+}
+
+void DatasetGeneratorUI::selectClicked()
+{
+	QModelIndexList indexList = ui->treeView->selectionModel()->selectedIndexes();
+	QModelIndex selectedEntry = *(indexList.begin());
+	QString wholePath = this->dirModel->fileInfo(selectedEntry).absoluteFilePath();
+	ui->lineEdit_7->setText(wholePath);
+	qDebug() << wholePath;
 }
 
