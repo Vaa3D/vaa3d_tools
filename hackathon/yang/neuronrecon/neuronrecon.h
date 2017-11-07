@@ -226,15 +226,17 @@ public:
 
     int boundingbox();
     bool insideLineSegments(Point p);
+    bool onSegment(Point p);
     int lineFromPoints();
     int update();
+    float angle(LineSegment ls);
 
 public:
     float meanval_adjangles, stddev_adjangles; //
     Point pbbs, pbbe; // bounding box
     Point *origin;
     Vector *axis;
-    bool b_bbox;
+    bool b_bbox, b_updated;
     bool visited;
     Point root, tip;
 };
