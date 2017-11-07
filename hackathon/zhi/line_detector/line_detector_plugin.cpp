@@ -299,7 +299,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         int k=0;
 //        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
-        QString swc_name_manual = paras.empty() ? "" : paras[k]; if(swc_name_manual == "NULL") swc_name_manual = ""; k++;
+//        QString swc_name_manual = paras.empty() ? "" : paras[k]; if(swc_name_manual == "NULL") swc_name_manual = ""; k++;
 //        QString marker_shift = paras.empty() ? "" : paras[k]; if(marker_shift == "NULL") marker_shift = ""; k++;
 
 //        QString filename = (QFileInfo(inmarker_file).completeBaseName());
@@ -365,7 +365,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 //        end_x += 50; end_y +=50; end_z +=50;
 //        V3DLONG pagesz = (end_x - start_x)*(end_y - start_y)*(end_z - start_z);
         NeuronTree nt = readSWC_file(swc_name);
-        NeuronTree nt_manual = readSWC_file(swc_name_manual);
+//        NeuronTree nt_manual = readSWC_file(swc_name_manual);
 
 //        if(pagesz >= 8589934592)
 //        {
@@ -448,13 +448,13 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 //        out << "APOFILE=" << apo_shift << endl;
 
         unsigned char* data1d_mask = 0;
-        unsigned char* data1d_mask_manual = 0;
+ //       unsigned char* data1d_mask_manual = 0;
 
         data1d_mask = new unsigned char [stacksz];
-        data1d_mask_manual = new unsigned char [stacksz];
+ //       data1d_mask_manual = new unsigned char [stacksz];
 
         memset(data1d_mask,0,stacksz*sizeof(unsigned char));
-        memset(data1d_mask_manual,0,stacksz*sizeof(unsigned char));
+ //       memset(data1d_mask_manual,0,stacksz*sizeof(unsigned char));
 
 
         for(V3DLONG i =0; i < nt.listNeuron.size();i++)
@@ -463,19 +463,19 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             nt.listNeuron[i].r = 1;
         }
 
-        for(V3DLONG i =0; i < nt_manual.listNeuron.size();i++)
-        {
-            nt_manual.listNeuron[i].z = 0;;
-            nt_manual.listNeuron[i].r = 1;
-        }
+//        for(V3DLONG i =0; i < nt_manual.listNeuron.size();i++)
+//        {
+//            nt_manual.listNeuron[i].z = 0;;
+//            nt_manual.listNeuron[i].r = 1;
+//        }
 
         double margin=0;//by PHC 20170531
         ComputemaskImage(nt, data1d_mask, in_sz[0], in_sz[1], 1, margin);
-        QList<NeuronSWC> neuron_output;
-        SortSWC(nt_manual.listNeuron, neuron_output,VOID, 0);
-        nt_manual.listNeuron.clear();
-        nt_manual.listNeuron = neuron_output;
-        ComputemaskImage(nt_manual, data1d_mask_manual, in_sz[0], in_sz[1], 1, margin);
+//        QList<NeuronSWC> neuron_output;
+//        SortSWC(nt_manual.listNeuron, neuron_output,VOID, 0);
+//        nt_manual.listNeuron.clear();
+//        nt_manual.listNeuron = neuron_output;
+//        ComputemaskImage(nt_manual, data1d_mask_manual, in_sz[0], in_sz[1], 1, margin);
 
        // QString output_swc = QFileInfo(inimg_file).absolutePath() + "_swc_mip.tif";
         QString output_swc = inimg_file + "_swc_mip.tif";
@@ -485,8 +485,11 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
         unsigned char* data1d_2D = 0;
         data1d_2D = new unsigned char [3*stacksz];
+//        for(V3DLONG i=0; i<stacksz; i++)
+//            data1d_2D[i] = (data1d_mask_manual[i] ==255) ? 255: image_mip[i];
+
         for(V3DLONG i=0; i<stacksz; i++)
-            data1d_2D[i] = (data1d_mask_manual[i] ==255) ? 255: image_mip[i];
+            data1d_2D[i] = image_mip[i];
 
         for(V3DLONG i=0; i<stacksz; i++)
         {
@@ -901,40 +904,61 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
         QString inimg_file = infiles[0];
         int k=0;
-        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
-        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") swc_name = ""; k++;
+        QString apo_name = paras.empty() ? "" : paras[k]; if(apo_name == "NULL") apo_name = ""; k++;
+        QList<CellAPO> file_inmarkers;
+        file_inmarkers = readAPO_file(apo_name);
+        V3DLONG start_x = file_inmarkers.at(0).x - 512;
+        V3DLONG end_x = start_x + 1024 - 1;
+        V3DLONG start_y = file_inmarkers.at(0).y - 512;
+        V3DLONG end_y = start_y + 1024 - 1;
+        V3DLONG start_z = file_inmarkers.at(0).z - 256;
+        V3DLONG end_z = start_z + 512 - 1;
 
-        NeuronTree nt = readSWC_file(swc_name);
-        V3DLONG start_x = nt.listNeuron.at(0).x;
-        V3DLONG end_x = nt.listNeuron.at(0).x;
-        V3DLONG start_y = nt.listNeuron.at(0).y;
-        V3DLONG end_y = nt.listNeuron.at(0).y;
-        V3DLONG start_z = nt.listNeuron.at(0).z;
-        V3DLONG end_z = nt.listNeuron.at(0).z;
 
-        for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
-        {
-            if(start_x>nt.listNeuron.at(i).x) start_x = nt.listNeuron.at(i).x;
-            if(end_x<nt.listNeuron.at(i).x) end_x = nt.listNeuron.at(i).x;
+//        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+//        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") swc_name = ""; k++;
 
-            if(start_y>nt.listNeuron.at(i).y) start_y = nt.listNeuron.at(i).y;
-            if(end_y<nt.listNeuron.at(i).y) end_y = nt.listNeuron.at(i).y;
+//        NeuronTree nt = readSWC_file(swc_name);
+//        V3DLONG start_x = nt.listNeuron.at(0).x;
+//        V3DLONG end_x = nt.listNeuron.at(0).x;
+//        V3DLONG start_y = nt.listNeuron.at(0).y;
+//        V3DLONG end_y = nt.listNeuron.at(0).y;
+//        V3DLONG start_z = nt.listNeuron.at(0).z;
+//        V3DLONG end_z = nt.listNeuron.at(0).z;
 
-            if(start_z>nt.listNeuron.at(i).z) start_z = nt.listNeuron.at(i).z;
-            if(end_z<nt.listNeuron.at(i).z) end_z = nt.listNeuron.at(i).z;
+//        for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+//        {
+//            if(start_x>nt.listNeuron.at(i).x) start_x = nt.listNeuron.at(i).x;
+//            if(end_x<nt.listNeuron.at(i).x) end_x = nt.listNeuron.at(i).x;
 
-        }
+//            if(start_y>nt.listNeuron.at(i).y) start_y = nt.listNeuron.at(i).y;
+//            if(end_y<nt.listNeuron.at(i).y) end_y = nt.listNeuron.at(i).y;
 
-//        unsigned char * total1dData = 0;
-//        total1dData = callback.getSubVolumeTeraFly(inimg_file.toStdString(),start_x,end_x+1,
-//                                                   start_y,end_y+1,start_z,end_z+1);
-//        V3DLONG mysz[4];
-//        mysz[0] = end_x -start_x +1;
-//        mysz[1] = end_y - start_y +1;
-//        mysz[2] = end_z - start_z +1;
-//        mysz[3] = 1;
-//        QString imageSaveString = marker_name + "_cropped.v3draw";
-//        simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+//            if(start_z>nt.listNeuron.at(i).z) start_z = nt.listNeuron.at(i).z;
+//            if(end_z<nt.listNeuron.at(i).z) end_z = nt.listNeuron.at(i).z;
+
+//        }
+
+        unsigned char * total1dData = 0;
+        total1dData = callback.getSubVolumeTeraFly(inimg_file.toStdString(),start_x,end_x+1,
+                                                   start_y,end_y+1,start_z,end_z+1);
+        V3DLONG mysz[4];
+        mysz[0] = end_x -start_x +1;
+        mysz[1] = end_y - start_y +1;
+        mysz[2] = end_z - start_z +1;
+        mysz[3] = 1;
+        QString imageSaveString = apo_name + "_cropped.v3dpbd";
+        simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+
+        vector<MyMarker> marker_inmarkers;
+        QString shifted_marker_name = apo_name + "_cropped.marker";
+        ImageMarker outputMarker;
+        QList<ImageMarker> seedsToSave;
+        outputMarker.x = file_inmarkers.at(0).x - start_x;
+        outputMarker.y = file_inmarkers.at(0).y - start_y;
+        outputMarker.z = file_inmarkers.at(0).z - start_z;
+        seedsToSave.append(outputMarker);
+        writeMarker_file(shifted_marker_name, seedsToSave);
 
 //        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(marker_name)));
 
@@ -947,14 +971,14 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 //        outputMarker.z = file_inmarkers.at(0).z - start_z;
 //        seedsToSave.append(outputMarker);
 //        writeMarker_file(shifted_marker_name, seedsToSave);
-        for(V3DLONG i = 0; i < nt.listNeuron.size();i++)
-        {
-            nt.listNeuron[i].x -= start_x;
-            nt.listNeuron[i].y -= start_y;
-            nt.listNeuron[i].z -= start_z;
-        }
-        QString swcString = marker_name + "_cropped.v3draw_manual.swc";
-        writeSWC_file(swcString,nt);
+//        for(V3DLONG i = 0; i < nt.listNeuron.size();i++)
+//        {
+//            nt.listNeuron[i].x -= start_x;
+//            nt.listNeuron[i].y -= start_y;
+//            nt.listNeuron[i].z -= start_z;
+//        }
+//        QString swcString = marker_name + "_cropped.v3draw_manual.swc";
+//        writeSWC_file(swcString,nt);
 
 
     }
@@ -973,7 +997,8 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         QString cellfile = paras[0];
         QString markerfile = paras[1];
 
-        QString qs_filename_out = "/local4/Data/MOST_MOUSE/manual_22_branches/" + cellfile + "/" + markerfile + "_linker.ano";
+       // QString qs_filename_out = "/local4/Data/MOST_MOUSE/manual_22_branches/" + cellfile + "/" + markerfile + "_linker.ano";
+        QString qs_filename_out = cellfile + "_linker.ano";
         QFile qf_anofile(qs_filename_out);
         if(!qf_anofile.open(QIODevice::WriteOnly))
         {
@@ -982,10 +1007,12 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
 
         QTextStream out(&qf_anofile);
-        out << "RAWIMG=" << markerfile << "/" << markerfile << ".marker_gd.v3dpbd"<<endl;
-        out << "SWCFILE=" << markerfile << "/" << markerfile << ".marker_gd_shifted.swc"<<endl;
-        out << "SWCFILE=" <<markerfile << "/" << markerfile << ".marker_manual_shifted.swc"<<endl;
-        out << "APOFILE=" <<markerfile << "/" << markerfile << ".marker_shifted.apo"<<endl;
+//        out << "RAWIMG=" << markerfile << "/" << markerfile << ".marker_gd.v3dpbd"<<endl;
+//        out << "SWCFILE=" << markerfile << "/" << markerfile << ".marker_gd_shifted.swc"<<endl;
+//        out << "SWCFILE=" <<markerfile << "/" << markerfile << ".marker_manual_shifted.swc"<<endl;
+//        out << "APOFILE=" <<markerfile << "/" << markerfile << ".marker_shifted.apo"<<endl;
+        out << "SWCFILE=" << cellfile << "/" << cellfile << ".marker_cropped.v3draw_manual.swc"<<endl;
+        out << "SWCFILE=" << markerfile<<endl;
 
     }
     else if (func_name == tr("help"))
