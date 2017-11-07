@@ -86,7 +86,7 @@ Vector* Vector::vnorm(Vector *a)
 
     if ((d = recip_vmag(a)) > 1.0E6)
     {
-        fprintf (stderr, "\nvector at 0x%x: %g %g %g?", a, a->dx, a->dy, a->dz);
+        fprintf (stderr, "\nvector at 0x%x: (%g, %g, %g) ?\n", a, a->dx, a->dy, a->dz);
         a->dx = a->dy = a->dz = 0.0;
         return (NULL);
     }
@@ -101,7 +101,7 @@ Vector* Vector::vnorm(Vector *a)
 
 void Vector::info()
 {
-    cout<<"vector: "<<dx<<" "<<dy<<" "<<dz<<endl;
+    cout<<"vector: ("<<dx<<", "<<dy<<", "<<dz<<")"<<endl;
 }
 
 // class Point
@@ -1404,6 +1404,12 @@ Plane* NCPointCloud::plane_from_two_vectors_and_point(Vector *u, Vector *v, Poin
 {
     Plane *M = new Plane;
     Vector *t = t->vcross (u, v);
+
+    if(!t)
+    {
+        cout<<"NULL plane!\n";
+    }
+
     t = t->vnorm(t);
 
     M->a = t->dx;
@@ -1425,6 +1431,9 @@ int NCPointCloud::line_line_closest_point(Point &pA, Point &pB, Point *a, Vector
 
     // lines are near-parallel -- all points are closest
     if (!cdir->vnorm(cdir))   {
+
+        cout<<"cdir is NULL\n";
+
         pA = *a;
         pB = *b;
         return (0);
@@ -1454,27 +1463,25 @@ int NCPointCloud::mergeLines(float maxAngle)
     // 1. distance
     // 2. intersections and angles
 
+    cout<<"call mergeLines func with maxAngle: "<<maxAngle<<endl;
+
     // merge lines
     bool merging = true;
     long iter = 0;
     size_t top = 10;
     long nLines = -1;
+
+    /*
+
     while(merging)
     {
+        cout<<"mergine lines ...\n";
+
         merging = false;
 
         // update lines after each merging
         vector<LineSegment> lines;
         resetVisitStatus();
-
-        // check
-//        cout<<" check the update of the point cloud \n";
-//        cout<<"*****\n";
-//        for(long i=0; i<points.size(); i++)
-//        {
-//            points[i].info();
-//        }
-//        cout<<"*****\n";
 
         //
         for(long i=0; i<points.size(); i++)
@@ -1541,6 +1548,10 @@ int NCPointCloud::mergeLines(float maxAngle)
 
         if(lines.size()>1)
         {
+            // all pair comparison
+            vector<tuple<float,float,long,long>> candidates;
+            vector<tuple<Point, Point,long,long>> ijpoints;
+
             //
             Point pi, pj;
             LineSegment lsi, lsj;
@@ -1549,11 +1560,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                 cout<<"line i:"<<i<<endl;
 
                 lsi = lines[i];
-
                 lines[i].visited = true;
-                vector<tuple<float,float,long>> candidates;
-                vector<pair<Point,long>> jPoints;
-
                 for(long j=1; j<lines.size(); j++)
                 {
                     if(j==i)
@@ -1588,49 +1595,10 @@ int NCPointCloud::mergeLines(float maxAngle)
                         Point t1 = lsi.root;
                         Point t2 = lsi.tip;
 
-//                        if(distance(t1, pA) < distance(t2, pA))
-//                        {
-//                            pi = t1;
-//                        }
-//                        else
-//                        {
-//                            pi = t2;
-//                        }
-
                         Point q1 = lsj.root;
                         Point q2 = lsj.tip;
 
-//                        if(distance(q1, pB) < distance(q2, pB))
-//                        {
-//                            pj = q1;
-//                        }
-//                        else
-//                        {
-//                            pj = q2;
-//                        }
-
-//                        cout<<"test ... ... \n";
-
-
-//                        cout<<"comparing A vs B: "<<getAngle(pi, pA, pj)<<" == "<<getAngle(pi, pB, pj)<<endl;
-
-//                        pi.info();
-//                        pA.info();
-//                        pj.info();
-
-//                        cout<<" ... ... "<<endl;
-
-//                        Vector v;
-
-
-//                        cout<<" ... angle : "<<acos( v.vdot(lsi.axis, lsj.axis) / (v.vmag(lsi.axis)*v.vmag(lsj.axis)) )<<endl;
-
-
-
-//                        cout<<"test ... ... \n";
-
                         //
-//                      float angle = getAngle(pi, pA, pj);
                         Vector v;
                         float angle = acos( v.vdot(lsi.axis, lsj.axis) / (v.vmag(lsi.axis)*v.vmag(lsj.axis)) );
 
@@ -1653,230 +1621,643 @@ int NCPointCloud::mergeLines(float maxAngle)
                             pj = q2;
                         }
 
-                        //
-//                        if(angle>1.57)
-//                            angle = 3.14 - angle;
-
                         cout<<"angle "<<angle<<" < "<<maxAngle<<endl;
 
                         //
-                        candidates.push_back(make_tuple(distance(pi, pj), angle, j));
-                        jPoints.push_back(make_pair(pj,j));
+                        candidates.push_back(make_tuple(distance(pi, pj), angle, i, j));
+                        ijpoints.push_back(make_tuple(pi,pj,i,j));
 
                         //
                         if(angle<maxAngle)
                             merging = true;
                     }
                 } // j
+            } // i
 
-                if(merging)
+            //
+            if(merging)
+            {
+                // sort by angle
+                sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
                 {
-                    // sort by angle
-                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+                    return std::get<1>(a) < std::get<1>(b);
+                });
+
+                // sort by distance
+                if(candidates.size()>top)
+                {
+                    sort(candidates.begin(), candidates.begin()+top, [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
                     {
-                        return std::get<1>(a) < std::get<1>(b);
+                        return std::get<0>(a) < std::get<0>(b);
                     });
-
-                    // sort by distance
-                    if(candidates.size()>top)
+                }
+                else
+                {
+                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
                     {
-                        sort(candidates.begin(), candidates.begin()+top, [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+                        return std::get<0>(a) < std::get<0>(b);
+                    });
+                }
+
+                // merge
+                long tipi, tipj;
+                long iLine = get<2>(candidates[0]);
+                long jLine = get<3>(candidates[0]);
+                for(long k=0; k<ijpoints.size(); k++)
+                {
+                    if( get<2>(ijpoints[k]) == iLine && get<3>(ijpoints[k]) == jLine)
+                    {
+                        tipi = indexofpoint(get<0>(ijpoints[k]).n);
+                        tipj = indexofpoint(get<1>(ijpoints[k]).n);
+                        break;
+                    }
+                }
+
+                //
+                float dist = get<0>(candidates[0]);
+                float angle = get<1>(candidates[0]);
+
+                //
+                cout<<"connecting ... line #"<<iLine<<" to line #"<<jLine<<" angle "<<angle<<" distance "<<dist<<endl;
+                cout<<"connected tip point #"<<tipi<<" tip point #"<<tipj<<endl;
+
+                cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
+
+                //
+                lsj = lines[jLine];
+
+                //
+                if(points[tipi].parents[0]==-1 && points[tipj].parents[0]!=-1)
+                {
+                    points[tipi].parents[0] = points[tipj].n;
+                    points[tipj].children.push_back(points[tipi].n);
+                }
+                else if(points[tipi].parents[0]!=-1 && points[tipj].parents[0]==-1)
+                {
+                    points[tipj].parents[0] = points[tipi].n;
+                    points[tipi].children.push_back(points[tipj].n);
+                }
+                else
+                {
+                    // inverse the short line and connect it to the other
+                    if(lsi.points.size() < lsj.points.size())
+                    {
+                        cout<<"reverse lsi \n";
+
+                        // inverse lsi
+                        long idxcur;
+                        long ncur, ncurparent;
+                        long nparent;
+                        long n = lsi.points.size() - 1;
+
+                        // tip point
+                        if(points[tipi].parents[0]==-1)
                         {
-                            return std::get<0>(a) < std::get<0>(b);
-                        });
-                    }
-                    else
-                    {
-                        sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
-                        {
-                            return std::get<0>(a) < std::get<0>(b);
-                        });
-                    }
-
-//                    // distance only
-//                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
-//                    {
-//                        return std::get<0>(a) < std::get<0>(b);
-//                    });
-
-
-                    // plot statistics
-
-
-
-
-                    // merge
-                    long tipi = indexofpoint(pi.n);
-                    long tipj;
-                    long jLine = get<2>(candidates[0]);
-                    for(long k=0; k<jPoints.size(); k++)
-                    {
-                        if(jPoints[k].second == jLine)
-                        {
-                            tipj = indexofpoint(jPoints[k].first.n);
-                            break;
-                        }
-                    }
-
-                    float dist = get<0>(candidates[0]);
-                    float angle = get<1>(candidates[0]);
-
-                    //
-                    cout<<"connecting ... line #"<<i<<" to line #"<<jLine<<" angle "<<angle<<" distance "<<dist<<endl;
-                    cout<<"connected tip point #"<<tipi<<" tip point #"<<tipj<<endl;
-
-                    cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
-
-                    //
-                    lsj = lines[jLine];
-
-                    //
-                    if(points[tipi].parents[0]==-1 && points[tipj].parents[0]!=-1)
-                    {
-                        points[tipi].parents[0] = points[tipj].n;
-                        points[tipj].children.push_back(points[tipi].n);
-                    }
-                    else if(points[tipi].parents[0]!=-1 && points[tipj].parents[0]==-1)
-                    {
-                        points[tipj].parents[0] = points[tipi].n;
-                        points[tipi].children.push_back(points[tipj].n);
-                    }
-                    else
-                    {
-                        // inverse the short line and connect it to the other
-                        if(lsi.points.size() < lsj.points.size())
-                        {
-                            cout<<"reverse lsi \n";
-
-                            // inverse lsi
-                            long idxcur;
-                            long ncur, ncurparent;
-                            long nparent;
-                            long n = lsi.points.size() - 1;
-
-                            // tip point
-                            if(points[tipi].parents[0]==-1)
+                            idxcur = tipi;
+                            while(points[idxcur].hasChildren())
                             {
-                                idxcur = tipi;
-                                while(points[idxcur].hasChildren())
-                                {
-                                    idxcur = indexofpoint(points[idxcur].children[0]);
-                                }
-                            }
-                            else
-                            {
-                                idxcur = tipi;
-                            }
-
-                            //
-                            ncur = points[idxcur].n;
-                            ncurparent = points[idxcur].parents[0];
-
-                            points[idxcur].parents[0] = -1;
-                            points[idxcur].children.push_back(ncurparent);
-
-                            while(n>0)
-                            {
-                                n--;
-
-                                idxcur = indexofpoint(ncurparent);
-
-                                nparent = ncurparent;
-                                ncurparent = points[idxcur].parents[0];
-                                points[idxcur].parents[0] = ncur;
-                                points[idxcur].children[0] = ncurparent;
-                                ncur = nparent;
-                            }
-
-                            if(points[idxcur].hasChildren())
-                            {
-                                if(points[idxcur].children[0]==-1)
-                                    points[idxcur].children.clear();
-                            }
-
-                            //
-                            if(points[tipj].parents[0]==-1)
-                            {
-                                // pj -> pi
-                                points[tipj].parents[0] = points[tipi].n;
-                                points[tipi].children.push_back(points[tipj].n);
-                            }
-                            else
-                            {
-                                points[tipi].parents[0] = points[tipj].n;
-                                points[tipj].children.push_back(points[tipi].n);
+                                idxcur = indexofpoint(points[idxcur].children[0]);
                             }
                         }
                         else
                         {
-                            cout<<"reverse lsj "<<lsj.points.size()<<endl;
+                            idxcur = tipi;
+                        }
 
-                            // inverse lsj
-                            long idxcur;
-                            long ncur, ncurparent;
-                            long nparent;
-                            long n = lsj.points.size() - 1;
+                        //
+                        ncur = points[idxcur].n;
+                        ncurparent = points[idxcur].parents[0];
 
-                            // tip point
-                            if(points[tipj].parents[0]==-1)
-                            {
-                                idxcur = tipj;
-                                while(points[idxcur].hasChildren())
-                                {
-                                    idxcur = indexofpoint(points[idxcur].children[0]);
-                                }
-                            }
-                            else
-                            {
-                                idxcur = tipj;
-                            }
+                        points[idxcur].parents[0] = -1;
+                        points[idxcur].children.push_back(ncurparent);
 
-                            //
-                            ncur = points[idxcur].n;
+                        while(n>0)
+                        {
+                            n--;
+
+                            idxcur = indexofpoint(ncurparent);
+
+                            nparent = ncurparent;
                             ncurparent = points[idxcur].parents[0];
+                            points[idxcur].parents[0] = ncur;
+                            points[idxcur].children[0] = ncurparent;
+                            ncur = nparent;
+                        }
 
-                            points[idxcur].parents[0] = -1;
-                            points[idxcur].children.push_back(ncurparent);
-
-                            while(n>0)
-                            {
-                                n--;
-
-                                idxcur = indexofpoint(ncurparent);
-
-                                nparent = ncurparent;
-                                ncurparent = points[idxcur].parents[0];
-                                points[idxcur].parents[0] = ncur;
-                                points[idxcur].children[0] = ncurparent;
-                                ncur = nparent;
-                            }
+                        if(points[idxcur].hasChildren())
+                        {
                             if(points[idxcur].children[0]==-1)
                                 points[idxcur].children.clear();
+                        }
 
-                            //
-                            if(points[tipi].parents[0]==-1)
-                            {
-                                // pi -> pj
-                                points[tipi].parents[0] = points[tipj].n;
-                                points[tipj].children.push_back(points[tipi].n);
-                            }
-                            else
-                            {
-                                points[tipj].parents[0] = points[tipi].n;
-                                points[tipi].children.push_back(points[tipj].n);
-                            }
+                        //
+                        if(points[tipj].parents[0]==-1)
+                        {
+                            // pj -> pi
+                            points[tipj].parents[0] = points[tipi].n;
+                            points[tipi].children.push_back(points[tipj].n);
+                        }
+                        else
+                        {
+                            points[tipi].parents[0] = points[tipj].n;
+                            points[tipj].children.push_back(points[tipi].n);
                         }
                     }
+                    else
+                    {
+                        cout<<"reverse lsj "<<lsj.points.size()<<endl;
 
-                    // update lines
-                    break;
+                        // inverse lsj
+                        long idxcur;
+                        long ncur, ncurparent;
+                        long nparent;
+                        long n = lsj.points.size() - 1;
+
+                        // tip point
+                        if(points[tipj].parents[0]==-1)
+                        {
+                            idxcur = tipj;
+                            while(points[idxcur].hasChildren())
+                            {
+                                idxcur = indexofpoint(points[idxcur].children[0]);
+                            }
+                        }
+                        else
+                        {
+                            idxcur = tipj;
+                        }
+
+                        //
+                        ncur = points[idxcur].n;
+                        ncurparent = points[idxcur].parents[0];
+
+                        points[idxcur].parents[0] = -1;
+                        points[idxcur].children.push_back(ncurparent);
+
+                        while(n>0)
+                        {
+                            n--;
+
+                            idxcur = indexofpoint(ncurparent);
+
+                            nparent = ncurparent;
+                            ncurparent = points[idxcur].parents[0];
+                            points[idxcur].parents[0] = ncur;
+                            points[idxcur].children[0] = ncurparent;
+                            ncur = nparent;
+                        }
+                        if(points[idxcur].children[0]==-1)
+                            points[idxcur].children.clear();
+
+                        //
+                        if(points[tipi].parents[0]==-1)
+                        {
+                            // pi -> pj
+                            points[tipi].parents[0] = points[tipj].n;
+                            points[tipj].children.push_back(points[tipi].n);
+                        }
+                        else
+                        {
+                            points[tipj].parents[0] = points[tipi].n;
+                            points[tipi].children.push_back(points[tipj].n);
+                        }
+                    }
                 }
-            } // i
+            }
+
         }
     } // while
 
+    */
+
     //
     return 0;
+
+
+
+//    // merge lines
+//    bool merging = true;
+//    long iter = 0;
+//    size_t top = 10;
+//    long nLines = -1;
+//    while(merging)
+//    {
+//        merging = false;
+
+//        // update lines after each merging
+//        vector<LineSegment> lines;
+//        resetVisitStatus();
+
+//        // check
+////        cout<<" check the update of the point cloud \n";
+////        cout<<"*****\n";
+////        for(long i=0; i<points.size(); i++)
+////        {
+////            points[i].info();
+////        }
+////        cout<<"*****\n";
+
+//        //
+//        for(long i=0; i<points.size(); i++)
+//        {
+//            if(points[i].parents[0]==-1)
+//            {
+//                if(points[i].children.size()>0 && points[i].visited==false)
+//                {
+//                    LineSegment ls;
+
+//                    long j=i;
+//                    while(points[j].children.size()>0)
+//                    {
+//                        ls.points.push_back(points[j]);
+//                        points[j].visited = true;
+
+//                        j = indexofpoint(points[j].children[0]);
+
+//                        if(j<0)
+//                            break;
+//                    }
+//                    ls.points.push_back(points[j]); // tip point
+
+//                    //
+//                    if(ls.points.size()>2)
+//                    {
+//                        ls.update();
+//                        lines.push_back(ls);
+//                    }
+//                }
+//            }
+//        }
+
+//        cout<<"iter #"<<++iter<<" : "<<lines.size()<<" lines to be considered merging"<<endl;
+
+//        // test
+////        for(int i=0; i<lines.size(); i++)
+////        {
+////            LineSegment line = lines[i];
+
+////            cout<<"test ... line "<<i<<" "<<line.points.size()<<endl;
+////            for(int k=0; k<line.points.size(); k++)
+////            {
+////                long child = -1;
+
+////                if(line.points[k].hasChildren()>0)
+////                {
+////                    child = line.points[k].children[0];
+////                }
+
+////                cout<<"node "<<k<<" n "<<line.points[k].n<<" "<<line.points[k].parents[0]<<" child "<<child<<endl;
+////            }
+////        }
+
+//        if(nLines > 0 )
+//        {
+//            if(lines.size() == nLines)
+//            {
+//                // converged
+//                break;
+//            }
+//        }
+//        nLines = lines.size();
+
+//        if(lines.size()>1)
+//        {
+//            //
+//            Point pi, pj;
+//            LineSegment lsi, lsj;
+//            for(long i=0; i<lines.size(); i++)
+//            {
+//                cout<<"line i:"<<i<<endl;
+
+//                lsi = lines[i];
+
+//                lines[i].visited = true;
+//                vector<tuple<float,float,long>> candidates;
+//                vector<pair<Point,long>> jPoints;
+
+//                for(long j=1; j<lines.size(); j++)
+//                {
+//                    if(j==i)
+//                        continue;
+
+//                    cout<<"line j:"<<j<<endl;
+
+//                    lsj = lines[j];
+
+//                    Point pA, pB;
+//                    line_line_closest_point(pA, pB, lsi.origin, lsi.axis, lsj.origin, lsj.axis);
+
+//                    cout<<"evaluating line "<<i<<" & "<<j<<endl;
+//                    lsi.origin->info();
+//                    lsi.axis->info();
+
+//                    lsj.origin->info();
+//                    lsj.axis->info();
+
+//                    if(maxAngle>1 && (lsi.insideLineSegments(pA) || lsj.insideLineSegments(pB)))
+//                    {
+//                        cout<<lsi.insideLineSegments(pA)<<endl;
+//                        pA.info();
+//                        cout<<lsj.insideLineSegments(pB)<<endl;
+//                        pB.info();
+
+//                        continue;
+//                    }
+//                    else
+//                    {
+//                        // angle
+//                        Point t1 = lsi.root;
+//                        Point t2 = lsi.tip;
+
+////                        if(distance(t1, pA) < distance(t2, pA))
+////                        {
+////                            pi = t1;
+////                        }
+////                        else
+////                        {
+////                            pi = t2;
+////                        }
+
+//                        Point q1 = lsj.root;
+//                        Point q2 = lsj.tip;
+
+////                        if(distance(q1, pB) < distance(q2, pB))
+////                        {
+////                            pj = q1;
+////                        }
+////                        else
+////                        {
+////                            pj = q2;
+////                        }
+
+////                        cout<<"test ... ... \n";
+
+
+////                        cout<<"comparing A vs B: "<<getAngle(pi, pA, pj)<<" == "<<getAngle(pi, pB, pj)<<endl;
+
+////                        pi.info();
+////                        pA.info();
+////                        pj.info();
+
+////                        cout<<" ... ... "<<endl;
+
+////                        Vector v;
+
+
+////                        cout<<" ... angle : "<<acos( v.vdot(lsi.axis, lsj.axis) / (v.vmag(lsi.axis)*v.vmag(lsj.axis)) )<<endl;
+
+
+
+////                        cout<<"test ... ... \n";
+
+//                        //
+////                      float angle = getAngle(pi, pA, pj);
+//                        Vector v;
+//                        float angle = acos( v.vdot(lsi.axis, lsj.axis) / (v.vmag(lsi.axis)*v.vmag(lsj.axis)) );
+
+//                        //
+//                        if(distance(t1, *(lsj.origin)) < distance(t2, *(lsj.origin)))
+//                        {
+//                            pi = t1;
+//                        }
+//                        else
+//                        {
+//                            pi = t2;
+//                        }
+
+//                        if(distance(q1, *(lsi.origin)) < distance(q2, *(lsi.origin)))
+//                        {
+//                            pj = q1;
+//                        }
+//                        else
+//                        {
+//                            pj = q2;
+//                        }
+
+//                        //
+////                        if(angle>1.57)
+////                            angle = 3.14 - angle;
+
+//                        cout<<"angle "<<angle<<" < "<<maxAngle<<endl;
+
+//                        //
+//                        candidates.push_back(make_tuple(distance(pi, pj), angle, j));
+//                        jPoints.push_back(make_pair(pj,j));
+
+//                        //
+//                        if(angle<maxAngle)
+//                            merging = true;
+//                    }
+//                } // j
+
+//                if(merging)
+//                {
+//                    // sort by angle
+//                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+//                    {
+//                        return std::get<1>(a) < std::get<1>(b);
+//                    });
+
+//                    // sort by distance
+//                    if(candidates.size()>top)
+//                    {
+//                        sort(candidates.begin(), candidates.begin()+top, [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+//                        {
+//                            return std::get<0>(a) < std::get<0>(b);
+//                        });
+//                    }
+//                    else
+//                    {
+//                        sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+//                        {
+//                            return std::get<0>(a) < std::get<0>(b);
+//                        });
+//                    }
+
+////                    // distance only
+////                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+////                    {
+////                        return std::get<0>(a) < std::get<0>(b);
+////                    });
+
+
+//                    // plot statistics
+
+
+
+
+//                    // merge
+//                    long tipi = indexofpoint(pi.n);
+//                    long tipj;
+//                    long jLine = get<2>(candidates[0]);
+//                    for(long k=0; k<jPoints.size(); k++)
+//                    {
+//                        if(jPoints[k].second == jLine)
+//                        {
+//                            tipj = indexofpoint(jPoints[k].first.n);
+//                            break;
+//                        }
+//                    }
+
+//                    float dist = get<0>(candidates[0]);
+//                    float angle = get<1>(candidates[0]);
+
+//                    //
+//                    cout<<"connecting ... line #"<<i<<" to line #"<<jLine<<" angle "<<angle<<" distance "<<dist<<endl;
+//                    cout<<"connected tip point #"<<tipi<<" tip point #"<<tipj<<endl;
+
+//                    cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
+
+//                    //
+//                    lsj = lines[jLine];
+
+//                    //
+//                    if(points[tipi].parents[0]==-1 && points[tipj].parents[0]!=-1)
+//                    {
+//                        points[tipi].parents[0] = points[tipj].n;
+//                        points[tipj].children.push_back(points[tipi].n);
+//                    }
+//                    else if(points[tipi].parents[0]!=-1 && points[tipj].parents[0]==-1)
+//                    {
+//                        points[tipj].parents[0] = points[tipi].n;
+//                        points[tipi].children.push_back(points[tipj].n);
+//                    }
+//                    else
+//                    {
+//                        // inverse the short line and connect it to the other
+//                        if(lsi.points.size() < lsj.points.size())
+//                        {
+//                            cout<<"reverse lsi \n";
+
+//                            // inverse lsi
+//                            long idxcur;
+//                            long ncur, ncurparent;
+//                            long nparent;
+//                            long n = lsi.points.size() - 1;
+
+//                            // tip point
+//                            if(points[tipi].parents[0]==-1)
+//                            {
+//                                idxcur = tipi;
+//                                while(points[idxcur].hasChildren())
+//                                {
+//                                    idxcur = indexofpoint(points[idxcur].children[0]);
+//                                }
+//                            }
+//                            else
+//                            {
+//                                idxcur = tipi;
+//                            }
+
+//                            //
+//                            ncur = points[idxcur].n;
+//                            ncurparent = points[idxcur].parents[0];
+
+//                            points[idxcur].parents[0] = -1;
+//                            points[idxcur].children.push_back(ncurparent);
+
+//                            while(n>0)
+//                            {
+//                                n--;
+
+//                                idxcur = indexofpoint(ncurparent);
+
+//                                nparent = ncurparent;
+//                                ncurparent = points[idxcur].parents[0];
+//                                points[idxcur].parents[0] = ncur;
+//                                points[idxcur].children[0] = ncurparent;
+//                                ncur = nparent;
+//                            }
+
+//                            if(points[idxcur].hasChildren())
+//                            {
+//                                if(points[idxcur].children[0]==-1)
+//                                    points[idxcur].children.clear();
+//                            }
+
+//                            //
+//                            if(points[tipj].parents[0]==-1)
+//                            {
+//                                // pj -> pi
+//                                points[tipj].parents[0] = points[tipi].n;
+//                                points[tipi].children.push_back(points[tipj].n);
+//                            }
+//                            else
+//                            {
+//                                points[tipi].parents[0] = points[tipj].n;
+//                                points[tipj].children.push_back(points[tipi].n);
+//                            }
+//                        }
+//                        else
+//                        {
+//                            cout<<"reverse lsj "<<lsj.points.size()<<endl;
+
+//                            // inverse lsj
+//                            long idxcur;
+//                            long ncur, ncurparent;
+//                            long nparent;
+//                            long n = lsj.points.size() - 1;
+
+//                            // tip point
+//                            if(points[tipj].parents[0]==-1)
+//                            {
+//                                idxcur = tipj;
+//                                while(points[idxcur].hasChildren())
+//                                {
+//                                    idxcur = indexofpoint(points[idxcur].children[0]);
+//                                }
+//                            }
+//                            else
+//                            {
+//                                idxcur = tipj;
+//                            }
+
+//                            //
+//                            ncur = points[idxcur].n;
+//                            ncurparent = points[idxcur].parents[0];
+
+//                            points[idxcur].parents[0] = -1;
+//                            points[idxcur].children.push_back(ncurparent);
+
+//                            while(n>0)
+//                            {
+//                                n--;
+
+//                                idxcur = indexofpoint(ncurparent);
+
+//                                nparent = ncurparent;
+//                                ncurparent = points[idxcur].parents[0];
+//                                points[idxcur].parents[0] = ncur;
+//                                points[idxcur].children[0] = ncurparent;
+//                                ncur = nparent;
+//                            }
+//                            if(points[idxcur].children[0]==-1)
+//                                points[idxcur].children.clear();
+
+//                            //
+//                            if(points[tipi].parents[0]==-1)
+//                            {
+//                                // pi -> pj
+//                                points[tipi].parents[0] = points[tipj].n;
+//                                points[tipj].children.push_back(points[tipi].n);
+//                            }
+//                            else
+//                            {
+//                                points[tipj].parents[0] = points[tipi].n;
+//                                points[tipi].children.push_back(points[tipj].n);
+//                            }
+//                        }
+//                    }
+
+//                    // update lines
+//                    break;
+//                }
+//            } // i
+//        }
+//    } // while
+
+//    //
+//    return 0;
 
 
     /*
