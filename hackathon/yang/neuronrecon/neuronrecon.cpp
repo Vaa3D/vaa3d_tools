@@ -1516,10 +1516,10 @@ int NCPointCloud::mergeLines(float maxAngle)
 
         cout<<"iter #"<<++iter<<" : "<<lines.size()<<" lines to be considered merging"<<endl;
 
-        if(swe>lines.size())
-        {
-            swe = lines.size();
-        }
+//        if(swe>lines.size())
+//        {
+//            swe = lines.size();
+//        }
 
         if(iter > 30)
             break;
@@ -1576,6 +1576,13 @@ int NCPointCloud::mergeLines(float maxAngle)
                     cout<<"line j:"<<j<<endl;
 
                     lsj = lines[j];
+
+                    if(!lsi.sidebyside(lsj))
+                    {
+                        cout<<"not considering ... \n";
+                        continue;
+                    }
+                    cout<<"further computing ... \n";
 
                     // comparing line #i and #j
                     float angle = lsi.angle(lsj);
@@ -1648,70 +1655,100 @@ int NCPointCloud::mergeLines(float maxAngle)
             //
             if(merging)
             {
-                // sort by distance
+//                cout<<"before sorting ...\n";
+//                for(size_t i=0; i<candidates.size(); i++)
+//                {
+//                    cout<<" #"<<i<<": "<<get<0>(candidates[i])<<" "<<get<1>(candidates[i])<<" "<<get<2>(candidates[i])<<" "<<get<3>(candidates[i])<<endl;
+//                }
+
+//                // sort by distance
+//                sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+//                {
+//                    return std::get<0>(a) < std::get<0>(b);
+//                });
+
+
+//                cout<<"sort by distance ... \n";
+//                for(size_t i=0; i<candidates.size(); i++)
+//                {
+//                    cout<<" #"<<i<<": "<<get<0>(candidates[i])<<" "<<get<1>(candidates[i])<<" "<<get<2>(candidates[i])<<" "<<get<3>(candidates[i])<<endl;
+//                }
+
+
+//                // sort by angle
+//                if(candidates.size()>swe)
+//                {
+//                    sort(candidates.begin() + sws, candidates.begin() + swe, [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+//                    {
+//                        return std::get<1>(a) < std::get<1>(b);
+//                    });
+//                }
+//                else
+//                {
+//                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+//                    {
+//                        return std::get<1>(a) < std::get<1>(b);
+//                    });
+//                }
+
+
                 sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
                 {
-                    return std::get<0>(a) < std::get<0>(b);
+                    if(std::get<0>(a) < std::get<0>(b)) return true;
+                    if(std::get<0>(a) == std::get<0>(b)) return std::get<1>(a) < std::get<1>(b);
+                    return false;
                 });
 
-                // sort by angle
-                if(candidates.size()>swe)
-                {
-                    sort(candidates.begin() + sws, candidates.begin() + swe, [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
-                    {
-                        return std::get<1>(a) < std::get<1>(b);
-                    });
-                }
-                else
-                {
-                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
-                    {
-                        return std::get<1>(a) < std::get<1>(b);
-                    });
-                }
+//                cout<<"after sort ... \n";
+//                for(size_t i=0; i<candidates.size(); i++)
+//                {
+//                    cout<<" #"<<i<<": "<<get<0>(candidates[i])<<" "<<get<1>(candidates[i])<<" "<<get<2>(candidates[i])<<" "<<get<3>(candidates[i])<<endl;
+//                }
+
+
 
                 // merge
 
-                cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin() + sws))<<endl;
-                bool alldone = false;
-                while(get<1>(*(candidates.begin() + sws)) > maxAngle)
-                {
-                    cout<<"possible pair lines within the searching window are satisfied\n";
+                cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin()))<<endl;
+//                bool alldone = false;
+//                while(get<1>(*(candidates.begin())) > maxAngle)
+//                {
+//                    cout<<"possible pair lines within the searching window are satisfied\n";
 
-                    sws += swstep;
-                    swe += swstep;
+//                    sws += swstep;
+//                    swe += swstep;
 
-                    if(sws>lines.size())
-                    {
-                        cout<<"all possible pair lines are satisfied\n";
-                        alldone = true;
-                        break;
-                    }
+//                    if(sws>lines.size())
+//                    {
+//                        cout<<"all possible pair lines are satisfied\n";
+//                        alldone = true;
+//                        break;
+//                    }
 
-                    if(candidates.size()>swe)
-                    {
-                        sort(candidates.begin() + sws, candidates.begin() + swe, [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
-                        {
-                            return std::get<1>(a) < std::get<1>(b);
-                        });
-                    }
-                    else
-                    {
-                        sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
-                        {
-                            return std::get<1>(a) < std::get<1>(b);
-                        });
-                    }
+//                    if(candidates.size()>swe)
+//                    {
+//                        sort(candidates.begin() + sws, candidates.begin() + swe, [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+//                        {
+//                            return std::get<1>(a) < std::get<1>(b);
+//                        });
+//                    }
+//                    else
+//                    {
+//                        sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+//                        {
+//                            return std::get<1>(a) < std::get<1>(b);
+//                        });
+//                    }
 
-                }
+//                }
 
-                if(alldone)
-                    break;
+//                if(alldone)
+//                    break;
 
                 //
                 long tipi, tipj;
-                long iLine = get<2>(*(candidates.begin() + sws));
-                long jLine = get<3>(*(candidates.begin() + sws));
+                long iLine = get<2>(*(candidates.begin()));
+                long jLine = get<3>(*(candidates.begin()));
                 for(long k=0; k<ijpoints.size(); k++)
                 {
                     if( get<2>(ijpoints[k]) == iLine && get<3>(ijpoints[k]) == jLine)
@@ -1723,8 +1760,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                 }
 
                 //
-                float dist = get<0>(*(candidates.begin() + sws));
-                float angle = get<1>(*(candidates.begin() + sws));
+                float dist = get<0>(*(candidates.begin()));
+                float angle = get<1>(*(candidates.begin()));
 
                 //
                 cout<<"connecting ... line #"<<iLine<<" to line #"<<jLine<<" angle "<<angle<<" distance "<<dist<<endl;
@@ -2191,7 +2228,82 @@ float LineSegment::angle(LineSegment ls)
     }
 }
 
+bool LineSegment::sidebyside(LineSegment ls)
+{
+    Point maxPosi, minPosi, maxPosj, minPosj;
 
+    if(points.size()<1 || ls.points.size()<1)
+    {
+        return false;
+    }
+
+    // i
+    maxPosi = minPosi = points[0];
+    for(size_t i=1; i<points.size(); i++)
+    {
+        Point p = points[i];
+
+        if(maxPosi.x < p.x)
+            maxPosi.x = p.x;
+        if(minPosi.x > p.x)
+            minPosi.x = p.x;
+
+
+        if(maxPosi.y < p.y)
+            maxPosi.y = p.y;
+        if(minPosi.y > p.y)
+            minPosi.y = p.y;
+
+        if(maxPosi.z < p.z)
+            maxPosi.z = p.z;
+        if(minPosi.z > p.z)
+            minPosi.z = p.z;
+    }
+
+    // j
+    maxPosj = minPosj = ls.points[0];
+    for(size_t i=1; i<ls.points.size(); i++)
+    {
+        Point p = ls.points[i];
+
+        if(maxPosj.x < p.x)
+            maxPosj.x = p.x;
+        if(minPosj.x > p.x)
+            minPosj.x = p.x;
+
+
+        if(maxPosj.y < p.y)
+            maxPosj.y = p.y;
+        if(minPosj.y > p.y)
+            minPosj.y = p.y;
+
+        if(maxPosj.z < p.z)
+            maxPosj.z = p.z;
+        if(minPosj.z > p.z)
+            minPosj.z = p.z;
+    }
+
+    cout<<"side by side testing ... \n";
+    maxPosi.info();
+    minPosi.info();
+
+    maxPosj.info();
+    minPosj.info();
+
+    //
+    if((maxPosi.x < minPosj.x && maxPosi.z < minPosj.z)
+            || (maxPosi.x < minPosj.x && maxPosi.y < minPosj.y)
+            || (maxPosi.y < minPosj.y && maxPosi.z < minPosj.z)
+            || (maxPosj.x < minPosi.x && maxPosj.y < minPosi.y)
+            || (maxPosj.x < minPosi.x && maxPosj.z < minPosi.z)
+            || (maxPosj.y < minPosi.y && maxPosj.z < minPosi.z))
+    {
+        return true;
+    }
+
+    //
+    return false;
+}
 
 
 

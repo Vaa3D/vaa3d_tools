@@ -45,6 +45,10 @@
 using namespace std;
 using namespace nanoflann;
 
+//
+typedef tuple<float,float,long,long> PairCompareType;
+
+//
 class Plane
 {
 public:
@@ -55,6 +59,7 @@ public:
     float a,b,c,d;
 };
 
+//
 class Vector
 {
 public:
@@ -107,7 +112,7 @@ public:
 
     bool treeConnected; // connected to a tree
     int lengthLine; // if the point is root, how many points connected to it
-    bool isBranch; // is the point a branch point
+    bool isBranch; // is the point acandidates.begin(), candidates.end(), branch point
     bool isSoma; // is the point the soma
     int nLine; // # of the line
     bool isolated; // not connected to other point(s)
@@ -230,6 +235,7 @@ public:
     int lineFromPoints();
     int update();
     float angle(LineSegment ls);
+    bool sidebyside(LineSegment ls);
 
 public:
     float meanval_adjangles, stddev_adjangles; //
