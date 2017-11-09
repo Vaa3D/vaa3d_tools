@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1054</width>
+    <width>1045</width>
     <height>1282</height>
    </rect>
   </property>
@@ -18,8 +18,8 @@
     <rect>
      <x>340</x>
      <y>20</y>
-     <width>691</width>
-     <height>701</height>
+     <width>671</width>
+     <height>841</height>
     </rect>
    </property>
    <property name="font">
@@ -46,10 +46,10 @@
     <widget class="QToolBox" name="toolBox">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>651</width>
-       <height>621</height>
+       <x>10</x>
+       <y>10</y>
+       <width>641</width>
+       <height>771</height>
       </rect>
      </property>
      <property name="font">
@@ -65,8 +65,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>651</width>
-        <height>555</height>
+        <width>641</width>
+        <height>705</height>
        </rect>
       </property>
       <attribute name="label">
@@ -76,13 +76,13 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>470</y>
+         <y>620</y>
          <width>311</width>
          <height>80</height>
         </rect>
        </property>
        <property name="title">
-        <string>3D Training Patches</string>
+        <string>Generate 3D Training Patches</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -95,13 +95,13 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>320</y>
+         <y>300</y>
          <width>621</width>
-         <height>141</height>
+         <height>271</height>
         </rect>
        </property>
        <property name="title">
-        <string>2D Training Patches</string>
+        <string>Generate 2D Training Patches</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -109,12 +109,141 @@
        <property name="checked">
         <bool>false</bool>
        </property>
+       <widget class="QListView" name="listView">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>50</y>
+          <width>231</width>
+          <height>111</height>
+         </rect>
+        </property>
+        <property name="dragEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="dragDropOverwriteMode">
+         <bool>false</bool>
+        </property>
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::DragDrop</enum>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>30</y>
+          <width>151</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Processing steps:</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>190</y>
+          <width>71</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_4">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>190</y>
+          <width>71</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Insert</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_5">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>180</x>
+          <y>190</y>
+          <width>71</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Delete</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>160</y>
+          <width>231</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
       </widget>
       <widget class="QGroupBox" name="groupBox_5">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>10</y>
+         <y>0</y>
          <width>621</width>
          <height>291</height>
         </rect>
@@ -238,6 +367,12 @@
           <height>31</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
         <property name="text">
          <string>Source</string>
         </property>
@@ -253,6 +388,12 @@
           <width>91</width>
           <height>31</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
         </property>
         <property name="text">
          <string>Destination</string>
@@ -319,8 +460,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>651</width>
-        <height>555</height>
+        <width>641</width>
+        <height>705</height>
        </rect>
       </property>
       <attribute name="label">
@@ -348,25 +489,6 @@
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>780</y>
-     <width>261</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="acceptDrops">
-    <bool>true</bool>
-   </property>
-   <property name="editable">
-    <bool>false</bool>
-   </property>
-   <property name="modelColumn">
-    <number>0</number>
-   </property>
-  </widget>
  </widget>
  <resources/>
  <connections>
@@ -377,8 +499,8 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>421</x>
-     <y>317</y>
+     <x>411</x>
+     <y>297</y>
     </hint>
     <hint type="destinationlabel">
      <x>487</x>
@@ -393,8 +515,8 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>452</x>
-     <y>366</y>
+     <x>442</x>
+     <y>346</y>
     </hint>
     <hint type="destinationlabel">
      <x>653</x>
@@ -409,8 +531,8 @@
    <slot>checkboxToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>422</x>
-     <y>157</y>
+     <x>412</x>
+     <y>137</y>
     </hint>
     <hint type="destinationlabel">
      <x>145</x>
@@ -425,8 +547,8 @@
    <slot>checkboxToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>403</x>
-     <y>203</y>
+     <x>393</x>
+     <y>183</y>
     </hint>
     <hint type="destinationlabel">
      <x>150</x>
@@ -441,8 +563,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>493</x>
-     <y>221</y>
+     <x>483</x>
+     <y>201</y>
     </hint>
     <hint type="destinationlabel">
      <x>164</x>
@@ -457,12 +579,108 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>466</x>
-     <y>243</y>
+     <x>456</x>
+     <y>223</y>
     </hint>
     <hint type="destinationlabel">
      <x>153</x>
      <y>818</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_4</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>725</x>
+     <y>485</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>764</x>
+     <y>819</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>616</x>
+     <y>748</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>665</x>
+     <y>871</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>521</x>
+     <y>132</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1036</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>432</x>
+     <y>180</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1036</x>
+     <y>266</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_6</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>checkboxToggled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>579</x>
+     <y>196</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1036</x>
+     <y>327</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>preprocessingEdit()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>425</x>
+     <y>597</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>278</x>
+     <y>839</y>
     </hint>
    </hints>
   </connection>
@@ -475,5 +693,6 @@
   <slot>checkboxToggled(bool)</slot>
   <slot>selectClicked()</slot>
   <slot>exclusiveToggle(bool)</slot>
+  <slot>preprocessingEdit()</slot>
  </slots>
 </ui>

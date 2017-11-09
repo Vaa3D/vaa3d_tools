@@ -19,14 +19,18 @@ public:
 	DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* callback);
 	~DatasetGeneratorUI();
 
+	QStringList procItems;
+
 public slots:
 	void selectClicked();
 	void checkboxToggled(bool);
 	void exclusiveToggle(bool);
+	void preprocessingEdit();
 
 private:
 	Ui::DatasetGeneratorUI* ui;
 	QDirModel* dirModel;
+	QStringListModel* procSteps;
 
 
 };
