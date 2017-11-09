@@ -6,309 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1015</width>
-    <height>857</height>
+    <width>1054</width>
+    <height>1282</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dataset Generator</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>820</x>
-     <y>1020</y>
-     <width>171</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="groupBox">
-   <property name="geometry">
-    <rect>
-     <x>80</x>
-     <y>610</y>
-     <width>661</width>
-     <height>191</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>8</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="title">
-    <string>Select SWC file:</string>
-   </property>
-   <widget class="QLineEdit" name="lineEdit">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>90</y>
-      <width>511</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>560</x>
-      <y>90</y>
-      <width>71</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>9</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Browse</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_2">
-    <property name="geometry">
-     <rect>
-      <x>140</x>
-      <y>140</y>
-      <width>491</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_6">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>140</y>
-      <width>101</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Saving filename:</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>241</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Use default saving filename</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_2">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>990</y>
-     <width>351</width>
-     <height>161</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>8</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="title">
-    <string>Parameter settings:</string>
-   </property>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>30</y>
-      <width>141</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Scaling factor on x: </string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>60</y>
-      <width>371</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Scaling factor on y: </string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_3">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>30</y>
-      <width>121</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_4">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>60</y>
-      <width>121</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_4">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>90</y>
-      <width>141</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Scaling factor on z: </string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_5">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>90</y>
-      <width>121</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_6">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>120</y>
-      <width>121</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_5">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>120</y>
-      <width>171</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>8</pointsize>
-      <weight>50</weight>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="text">
-     <string>Scaling factor for radius: </string>
-    </property>
-   </widget>
-  </widget>
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
      <x>340</x>
      <y>20</y>
-     <width>651</width>
-     <height>561</height>
+     <width>691</width>
+     <height>701</height>
     </rect>
    </property>
    <property name="font">
@@ -337,8 +48,8 @@
       <rect>
        <x>20</x>
        <y>20</y>
-       <width>601</width>
-       <height>481</height>
+       <width>651</width>
+       <height>621</height>
       </rect>
      </property>
      <property name="font">
@@ -354,8 +65,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>601</width>
-        <height>415</height>
+        <width>651</width>
+        <height>555</height>
        </rect>
       </property>
       <attribute name="label">
@@ -365,7 +76,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>210</y>
+         <y>470</y>
          <width>311</width>
          <height>80</height>
         </rect>
@@ -384,9 +95,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>300</y>
-         <width>311</width>
-         <height>80</height>
+         <y>320</y>
+         <width>621</width>
+         <height>141</height>
         </rect>
        </property>
        <property name="title">
@@ -404,8 +115,8 @@
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>581</width>
-         <height>181</height>
+         <width>621</width>
+         <height>291</height>
         </rect>
        </property>
        <property name="title">
@@ -434,7 +145,7 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>60</y>
+          <y>80</y>
           <width>161</width>
           <height>20</height>
          </rect>
@@ -452,8 +163,8 @@
        <widget class="QCheckBox" name="checkBox_4">
         <property name="geometry">
          <rect>
-          <x>210</x>
-          <y>30</y>
+          <x>50</x>
+          <y>50</y>
           <width>281</width>
           <height>20</height>
          </rect>
@@ -471,8 +182,8 @@
        <widget class="QLineEdit" name="lineEdit_7">
         <property name="geometry">
          <rect>
-          <x>80</x>
-          <y>130</y>
+          <x>120</x>
+          <y>190</y>
           <width>481</width>
           <height>31</height>
          </rect>
@@ -488,8 +199,8 @@
         <property name="geometry">
          <rect>
           <x>280</x>
-          <y>100</y>
-          <width>281</width>
+          <y>160</y>
+          <width>321</width>
           <height>20</height>
          </rect>
         </property>
@@ -506,7 +217,7 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>100</y>
+          <y>160</y>
           <width>251</width>
           <height>16</height>
          </rect>
@@ -522,13 +233,83 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>130</y>
-          <width>51</width>
+          <y>190</y>
+          <width>91</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Select</string>
+         <string>Source</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_3">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>240</y>
+          <width>91</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Destination</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_8">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>240</y>
+          <width>481</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBox_6">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>100</y>
+          <width>281</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>2D patches</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBox_5">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>120</y>
+          <width>281</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>3D patches</string>
         </property>
        </widget>
       </widget>
@@ -538,8 +319,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>601</width>
-        <height>415</height>
+        <width>651</width>
+        <height>555</height>
        </rect>
       </property>
       <attribute name="label">
@@ -567,6 +348,25 @@
     <bool>false</bool>
    </property>
   </widget>
+  <widget class="QComboBox" name="comboBox">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>780</y>
+     <width>261</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="acceptDrops">
+    <bool>true</bool>
+   </property>
+   <property name="editable">
+    <bool>false</bool>
+   </property>
+   <property name="modelColumn">
+    <number>0</number>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>
@@ -577,12 +377,92 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>413</x>
-     <y>260</y>
+     <x>421</x>
+     <y>317</y>
     </hint>
     <hint type="destinationlabel">
-     <x>818</x>
-     <y>639</y>
+     <x>487</x>
+     <y>615</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_3</sender>
+   <signal>clicked()</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>selectClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>452</x>
+     <y>366</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>653</x>
+     <y>674</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>checkboxToggled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>422</x>
+     <y>157</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>145</x>
+     <y>624</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>checkboxToggled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>403</x>
+     <y>203</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>150</x>
+     <y>678</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_6</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>493</x>
+     <y>221</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>164</x>
+     <y>752</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_5</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>466</x>
+     <y>243</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>153</x>
+     <y>818</y>
     </hint>
    </hints>
   </connection>
@@ -594,5 +474,6 @@
   <slot>okClicked()</slot>
   <slot>checkboxToggled(bool)</slot>
   <slot>selectClicked()</slot>
+  <slot>exclusiveToggle(bool)</slot>
  </slots>
 </ui>
