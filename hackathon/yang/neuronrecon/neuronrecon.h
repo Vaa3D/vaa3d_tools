@@ -236,6 +236,8 @@ public:
     int update();
     float angle(LineSegment ls);
     bool sidebyside(LineSegment ls);
+    void info();
+    bool isSmooth();
 
 public:
     float meanval_adjangles, stddev_adjangles; //

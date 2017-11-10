@@ -653,7 +653,7 @@ float NCPointCloud::getAngle(Point a, Point b, Point c)
     float lenSq2 = x2*x2 + y2*y2 + z2*z2;
 
     //
-    return acos(dot/sqrt(lenSq1 * lenSq2));
+    return acos(dot/(sqrt(lenSq1 * lenSq2) + 1e-6));
 }
 
 bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
@@ -1476,8 +1476,6 @@ int NCPointCloud::mergeLines(float maxAngle)
         //
         merging = false;
 
-        cout<<"merging ... "<<endl;
-
         // update lines after each merging
         vector<LineSegment> lines;
         resetVisitStatus();
@@ -1485,7 +1483,7 @@ int NCPointCloud::mergeLines(float maxAngle)
         //
         for(long i=0; i<npoints; i++)
         {
-            cout<<"update lines ... point #"<<i<<endl;
+            //cout<<"update lines ... point #"<<i<<endl;
             if(points[i].parents[0]==-1)
             {
                 if(points[i].children.size()>0 && points[i].visited==false)
@@ -1517,8 +1515,8 @@ int NCPointCloud::mergeLines(float maxAngle)
 
         cout<<"iter #"<<++iter<<" : "<<lines.size()<<" lines to be considered merging"<<endl;
 
-        if(iter > 30)
-            break;
+//        if(iter > 30)
+//            break;
 
         // test
 //        for(int i=0; i<lines.size(); i++)
@@ -1538,6 +1536,12 @@ int NCPointCloud::mergeLines(float maxAngle)
 //                cout<<"node "<<k<<" n "<<line.points[k].n<<" "<<line.points[k].parents[0]<<" child "<<child<<endl;
 //            }
 //        }
+
+        for(int i=0; i<lines.size(); i++)
+        {
+            cout<<"test ... line #"<<i<<" "<<lines[i].points.size()<<endl;
+            lines[i].isSmooth();
+        }
 
         if(nLines > 0 )
         {
@@ -1773,6 +1777,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                 cout<<"checking ... "<<points[tipi].parents[0]<<" "<<points[tipj].parents[0]<<endl;
 
                 //
+                lsi = lines[iLine];
                 lsj = lines[jLine];
 
                 //
@@ -2338,5 +2343,91 @@ bool LineSegment::sidebyside(LineSegment ls)
     return false;
 }
 
+void LineSegment::info()
+{
+    for(size_t i=1; i<points.size(); i++)
+    {
+        points[i].info();
+    }
+}
 
+bool LineSegment::isSmooth()
+{
+    // evaluate the neighbor angle
+    if(points.size()<3)
+    {
+        cout<<"Not enough points for statistics\n";
+        return -1;
+    }
+    else
+    {
+        //
+        vector<Point> pc;
+        for(size_t i=0; i<points.size(); i++)
+        {
+            pc.push_back(points[i]);
+        }
 
+        //
+        Point firstPoint = pc.back();
+        pc.pop_back();
+
+        Point secondPoint = pc.back();
+        pc.pop_back();
+
+        long n = 0;
+        float sum = 0;
+
+        vector<float> angles;
+
+        while(!pc.empty())
+        {
+            Point thirdPoint = pc.back();
+            pc.pop_back();
+
+            if(thirdPoint.x == secondPoint.x && thirdPoint.y == secondPoint.y && thirdPoint.z == secondPoint.z)
+            {
+                // duplicated point
+                continue;
+            }
+
+            float angle = getAngle(firstPoint, secondPoint, thirdPoint);
+
+            cout<<"... angle ... "<<angle/3.14*180<<endl;
+
+            if(angle > 1.57)
+                cout<<"!!!!!!!!!!!!!!!!!!"<<endl;
+
+            sum += angle;
+            angles.push_back(angle);
+
+            n++;
+
+            firstPoint = secondPoint;
+            secondPoint = thirdPoint;
+        }
+
+        //
+        meanval_adjangles = sum / n;
+
+        //
+        if(n>1)
+        {
+            sum = 0;
+            for(int i=0; i<angles.size(); i++)
+            {
+                sum += (angles[i] - meanval_adjangles)*(angles[i] - meanval_adjangles);
+            }
+
+            stddev_adjangles = sqrt(sum/(n-1));
+        }
+        else
+        {
+            stddev_adjangles = 0;
+        }
+
+        cout<<"mean angle ... "<<meanval_adjangles/3.14*180<<" std dev ..."<<stddev_adjangles<<endl;
+    }
+
+    return true;
+}
