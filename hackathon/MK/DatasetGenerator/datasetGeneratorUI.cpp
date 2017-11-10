@@ -24,9 +24,12 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->checkBox_6->setEnabled(false);
 
 	procSteps = new QStringListModel(this);
+	listViewSteps = new QStringListModel(this);
 	this->procItems << "crop" << "Maximum Intensity Projection" << "Central Slice";
 	procSteps->setStringList(this->procItems);
+	listViewSteps->setStringList(this->selectedProcItems);
 	ui->comboBox->setModel(procSteps);
+	ui->listView->setModel(listViewSteps);
 
 	this->show();
 }
@@ -104,20 +107,21 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 
 void DatasetGeneratorUI::preprocessingEdit()
 {
+	QString currItemName = ui->comboBox->currentText();
+	//qDebug() << currItemName;
+
 	QObject* emitter = sender();
 	QString emitterName = emitter->objectName();
-
-	QString curItem = ui->comboBox->currentText();
-	qDebug() << curItem;
+	int listViewCount = ui->listView->model()->rowCount();
 	if (emitterName == "pushButton")
 	{
-		int row = this->procSteps->rowCount();
-		this->procSteps->insertRow(row);
+		listViewSteps->insertRow(listViewCount);
+		QModelIndex newEntry = listViewSteps->index(listViewCount);
+		listViewSteps->setData(newEntry, currItemName);
+		ui->listView->setCurrentIndex(newEntry);
 		
-		QModelIndex entry = this->procSteps->index(row);
-		this->procSteps->setData(entry, curItem);
-		//ui->listView->setCurrentIndex(entry);
-		//ui->listView->edit(index);
+		
+
 		
 	}
 	else if (emitterName == "pushButton_4")

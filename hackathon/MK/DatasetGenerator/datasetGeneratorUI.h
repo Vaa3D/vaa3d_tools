@@ -20,6 +20,7 @@ public:
 	~DatasetGeneratorUI();
 
 	QStringList procItems;
+	QStringList selectedProcItems;
 
 public slots:
 	void selectClicked();
@@ -31,6 +32,7 @@ private:
 	Ui::DatasetGeneratorUI* ui;
 	QDirModel* dirModel;
 	QStringListModel* procSteps;
+	QStringListModel* listViewSteps;
 
 
 };
