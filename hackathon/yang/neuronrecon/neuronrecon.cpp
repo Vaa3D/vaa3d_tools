@@ -1731,15 +1731,15 @@ int NCPointCloud::mergeLines(float maxAngle)
 
                 sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
                 {
-                    return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b);
+                    return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
                 });
 
-                cout<<"after sort ... \n";
-                for(size_t i=0; i<candidates.size(); i++)
-                {
-                    //cout<<" #"<<i<<": "<<get<0>(candidates[i])<<" "<<get<1>(candidates[i])<<" "<<get<2>(candidates[i])<<" "<<get<3>(candidates[i])<<endl;
-                    cout<<"["<<get<0>(candidates[i])<<", "<<get<1>(candidates[i])<<"], ";
-                }
+//                cout<<"after sort ... \n";
+//                for(size_t i=0; i<candidates.size(); i++)
+//                {
+//                    //cout<<" #"<<i<<": "<<get<0>(candidates[i])<<" "<<get<1>(candidates[i])<<" "<<get<2>(candidates[i])<<" "<<get<3>(candidates[i])<<endl;
+//                    cout<<"["<<get<0>(candidates[i])<<", "<<get<1>(candidates[i])<<"], ";
+//                }
 
                 // merge
                 cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin()))<<endl;
@@ -1784,12 +1784,14 @@ int NCPointCloud::mergeLines(float maxAngle)
                 }
                 else
                 {
+                    cout<<"test ... lsi size "<<lsi.points.size()<<" lsj size "<<lsj.points.size()<<endl;
+
                     // inverse the short line and connect it to the other
                     if(lsi.points.size() < lsj.points.size())
                     {
                         cout<<"reverse lsi \n";
 
-                        // inverse lsi
+                        // reverse lsi
                         long idxcur;
                         long ncur, ncurparent;
                         long nparent;
@@ -1852,7 +1854,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     {
                         cout<<"reverse lsj "<<lsj.points.size()<<endl;
 
-                        // inverse lsj
+                        // reverse lsj
                         long idxcur;
                         long ncur, ncurparent;
                         long nparent;
