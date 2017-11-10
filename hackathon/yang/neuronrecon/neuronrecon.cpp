@@ -1468,6 +1468,7 @@ int NCPointCloud::mergeLines(float maxAngle)
     bool merging = true;
     long iter = 0;
     long nLines = -1;
+    long npoints = points.size();
 
     //
     while(merging)
@@ -1475,13 +1476,16 @@ int NCPointCloud::mergeLines(float maxAngle)
         //
         merging = false;
 
+        cout<<"merging ... "<<endl;
+
         // update lines after each merging
         vector<LineSegment> lines;
         resetVisitStatus();
 
         //
-        for(long i=0; i<points.size(); i++)
+        for(long i=0; i<npoints; i++)
         {
+            cout<<"update lines ... point #"<<i<<endl;
             if(points[i].parents[0]==-1)
             {
                 if(points[i].children.size()>0 && points[i].visited==false)
@@ -1556,7 +1560,7 @@ int NCPointCloud::mergeLines(float maxAngle)
             LineSegment lsi, lsj;
             for(long i=0; i<lines.size(); i++)
             {
-                cout<<"line i:"<<i<<endl;
+                //cout<<"line i:"<<i<<endl;
 
                 lsi = lines[i];
                 lines[i].visited = true;
@@ -1565,7 +1569,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     if(j==i)
                         continue;
 
-                    cout<<"line j:"<<j<<endl;
+                    //cout<<"line j:"<<j<<endl;
 
                     lsj = lines[j];
 
@@ -1786,7 +1790,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                 {
                     cout<<"test ... lsi size "<<lsi.points.size()<<" lsj size "<<lsj.points.size()<<endl;
 
-                    // inverse the short line and connect it to the other
+                    // reverse the short line and connect it to the other
                     if(lsi.points.size() < lsj.points.size())
                     {
                         cout<<"reverse lsi \n";
@@ -1818,6 +1822,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                         points[idxcur].parents[0] = -1;
                         points[idxcur].children.push_back(ncurparent);
 
+                        cout<<"test ... "<<n<<endl;
+
                         while(n>0)
                         {
                             n--;
@@ -1830,6 +1836,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                             points[idxcur].children[0] = ncurparent;
                             ncur = nparent;
                         }
+
+                        cout<<"test ... "<<n<<endl;
 
                         if(points[idxcur].hasChildren())
                         {
@@ -1849,6 +1857,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                             points[tipi].parents[0] = points[tipj].n;
                             points[tipj].children.push_back(points[tipi].n);
                         }
+
+                        cout<<"test ... done"<<endl;
                     }
                     else
                     {
@@ -1911,6 +1921,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                     }
                 }
             }
+
+            cout<<"test ... done ... test next ..."<<endl;
 
         }
     } // while
