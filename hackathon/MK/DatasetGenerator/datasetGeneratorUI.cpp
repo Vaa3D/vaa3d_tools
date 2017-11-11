@@ -24,10 +24,11 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->checkBox_6->setEnabled(false);
 
 	procSteps = new QStringListModel(this);
-	listViewSteps = new QStringListModel(this);
+	listViewSteps = new QStandardItemModel(this);
 	this->procItems << "crop" << "Maximum Intensity Projection" << "Central Slice";
 	procSteps->setStringList(this->procItems);
-	listViewSteps->setStringList(this->selectedProcItems);
+	//listViewSteps->set
+	//listViewSteps->setStringList(this->selectedProcItems);
 	ui->comboBox->setModel(procSteps);
 	ui->listView->setModel(listViewSteps);
 
@@ -70,7 +71,13 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 			ui->checkBox_5->setEnabled(true);
 			ui->checkBox_6->setEnabled(true);
 		}
-		else if (checkBoxName == "checkBox_6") ui->groupBox_3->setEnabled(false);
+		else if (checkBoxName == "checkBox_6")
+		{
+			ui->groupBox_3->setEnabled(false);
+			ui->checkBox_7->setEnabled(false);
+			ui->checkBox_8->setEnabled(false);
+			ui->checkBox_9->setEnabled(false);
+		}
 	}
 	else
 	{
@@ -85,7 +92,13 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 			ui->checkBox_2->setEnabled(true);
 			ui->checkBox_4->setEnabled(true);
 		}
-		else if (checkBoxName == "checkBox_6") ui->groupBox_3->setEnabled(true);
+		else if (checkBoxName == "checkBox_6")
+		{
+			ui->groupBox_3->setEnabled(true);
+			ui->checkBox_7->setEnabled(true);
+			ui->checkBox_8->setEnabled(true);
+			ui->checkBox_9->setEnabled(true);
+		}
 	}
 }
 
@@ -114,24 +127,16 @@ void DatasetGeneratorUI::preprocessingEdit()
 	QString emitterName = emitter->objectName();
 	int listViewCount = ui->listView->model()->rowCount();
 	if (emitterName == "pushButton")
-	{
-		listViewSteps->insertRow(listViewCount);
-		QModelIndex newEntry = listViewSteps->index(listViewCount);
-		listViewSteps->setData(newEntry, currItemName);
-		ui->listView->setCurrentIndex(newEntry);
-		
-		
-
-		
-	}
-	else if (emitterName == "pushButton_4")
-	{
-
-
+	{		
+		QStandardItem* newItem = new QStandardItem(currItemName);
+		newItem->setFlags(newItem->flags() ^ Qt::ItemIsDropEnabled);
+		listViewSteps->appendRow(newItem);
 	}
 	else if (emitterName == "pushButton_5")
 	{
-
+		QModelIndexList selectedItems = ui->listView->selectionModel()->selectedRows();
+		int rowNum = selectedItems.begin()->row();
+		listViewSteps->removeRow(rowNum);
 	}
 }
 

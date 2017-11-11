@@ -19,7 +19,7 @@
      <x>340</x>
      <y>20</y>
      <width>671</width>
-     <height>841</height>
+     <height>831</height>
     </rect>
    </property>
    <property name="font">
@@ -72,32 +72,13 @@
       <attribute name="label">
        <string>Training Images Preparation</string>
       </attribute>
-      <widget class="QGroupBox" name="groupBox_3">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>620</y>
-         <width>311</width>
-         <height>80</height>
-        </rect>
-       </property>
-       <property name="title">
-        <string>Generate 3D Training Patches</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
       <widget class="QGroupBox" name="groupBox_4">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>300</y>
-         <width>621</width>
-         <height>271</height>
+         <width>311</width>
+         <height>401</height>
         </rect>
        </property>
        <property name="title">
@@ -117,8 +98,8 @@
          <rect>
           <x>20</x>
           <y>50</y>
-          <width>231</width>
-          <height>111</height>
+          <width>271</width>
+          <height>131</height>
          </rect>
         </property>
         <property name="dragDropMode">
@@ -139,7 +120,7 @@
          <rect>
           <x>20</x>
           <y>30</y>
-          <width>151</width>
+          <width>231</width>
           <height>21</height>
          </rect>
         </property>
@@ -150,7 +131,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Processing steps:</string>
+         <string>Determine patch preparation steps:</string>
         </property>
        </widget>
        <widget class="QPushButton" name="pushButton">
@@ -159,9 +140,9 @@
         </property>
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>190</y>
-          <width>71</width>
+          <x>80</x>
+          <y>210</y>
+          <width>101</width>
           <height>28</height>
          </rect>
         </property>
@@ -175,37 +156,15 @@
          <string>Add</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushButton_4">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>100</x>
-          <y>190</y>
-          <width>71</width>
-          <height>28</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Insert</string>
-        </property>
-       </widget>
        <widget class="QPushButton" name="pushButton_5">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <property name="geometry">
          <rect>
-          <x>180</x>
-          <y>190</y>
-          <width>71</width>
+          <x>190</x>
+          <y>210</y>
+          <width>101</width>
           <height>28</height>
          </rect>
         </property>
@@ -226,8 +185,8 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>160</y>
-          <width>231</width>
+          <y>180</y>
+          <width>271</width>
           <height>22</height>
          </rect>
         </property>
@@ -236,6 +195,235 @@
           <weight>50</weight>
           <bold>false</bold>
          </font>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBox_7">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>280</y>
+          <width>41</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>xy</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBox_8">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>280</y>
+          <width>51</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>yz</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBox_9">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>160</x>
+          <y>280</y>
+          <width>51</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>xz</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_3">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>260</y>
+          <width>281</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Choose directions if from 3D stacks/patches:</string>
+        </property>
+       </widget>
+       <widget class="Line" name="line_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>240</y>
+          <width>291</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <strikeout>false</strikeout>
+         </font>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_9">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>310</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_4">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>310</y>
+          <width>201</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>x side length (in pixel number):</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_10">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>340</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_11">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>370</y>
+          <width>71</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_7">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>340</y>
+          <width>201</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>y side length (in pixel number):</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_8">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>370</y>
+          <width>201</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>z side length (in pixel number):</string>
         </property>
        </widget>
       </widget>
@@ -454,6 +642,25 @@
         </property>
        </widget>
       </widget>
+      <widget class="QGroupBox" name="groupBox_3">
+       <property name="geometry">
+        <rect>
+         <x>330</x>
+         <y>300</y>
+         <width>301</width>
+         <height>401</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Generate 3D Training Patches</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="page_2">
       <property name="geometry">
@@ -595,8 +802,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>725</x>
-     <y>485</y>
+     <x>672</x>
+     <y>545</y>
     </hint>
     <hint type="destinationlabel">
      <x>764</x>
@@ -611,8 +818,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>616</x>
-     <y>748</y>
+     <x>936</x>
+     <y>471</y>
     </hint>
     <hint type="destinationlabel">
      <x>665</x>
@@ -675,12 +882,28 @@
    <slot>preprocessingEdit()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>425</x>
-     <y>597</y>
+     <x>485</x>
+     <y>629</y>
     </hint>
     <hint type="destinationlabel">
      <x>278</x>
      <y>839</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_5</sender>
+   <signal>clicked()</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>preprocessingEdit()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>621</x>
+     <y>618</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>474</x>
+     <y>961</y>
     </hint>
    </hints>
   </connection>
