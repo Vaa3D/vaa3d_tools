@@ -118,6 +118,37 @@ public:
     bool isolated; // not connected to other point(s)
 };
 
+typedef pair<Point, Point> PointPairType;
+
+//
+class PointPair
+{
+public:
+    PointPair(Point a, Point b);
+    ~PointPair();
+
+public:
+    bool samePair(Point a, Point b);
+
+public:
+    bool visited;
+    pair<Point, Point> pointpair;
+};
+
+class Pairs
+{
+public:
+    Pairs();
+    ~Pairs();
+
+public:
+    void resetStatus();
+    void appendPair(Point a, Point b);
+
+public:
+    vector<PointPair> pairs;
+};
+
 //
 class NCPointCloud
 {
@@ -189,6 +220,12 @@ public:
     int resetVisitStatus();
 
     //
+    int reverseLineSegment(long idx, long size);
+
+    //
+    int connectLineSegments(long rooti, long tipj, float angle);
+
+    //
     Point pplusv(Point *p, Vector *v);
     float point_plane_dist(Point *a, Plane *P);
     Point plerp(Point *a, Point *b, float t);
@@ -201,7 +238,8 @@ public:
     int isolatedPoints();
 
 public:
-    vector<Point> points;
+    vector<Point> points; // data
+    Pairs skipConnecting; // for connecting line segments
 };
 
 class Quadruple

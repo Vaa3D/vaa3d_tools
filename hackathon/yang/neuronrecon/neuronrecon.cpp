@@ -205,15 +205,68 @@ bool Point::hasChildren()
     return (children.size()>0);
 }
 
+// class PointPair
+PointPair::PointPair(Point a, Point b)
+{
+    pointpair = pair<Point, Point>(a,b);
+    visited = false;
+}
+
+PointPair::~PointPair()
+{
+
+}
+
+bool PointPair::samePair(Point a, Point b)
+{
+    Point p = get<0>(pointpair);
+    Point q = get<1>(pointpair);
+
+    if((p.isSamePoint(a) && q.isSamePoint(b))
+            || (p.isSamePoint(b) && q.isSamePoint(a)))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+// class Pairs
+Pairs::Pairs()
+{
+
+}
+
+Pairs::~Pairs()
+{
+
+}
+
+void Pairs::resetStatus()
+{
+    for(size_t i=0; i<pairs.size(); i++)
+    {
+        pairs[i].visited = false;
+    }
+}
+
+void Pairs::appendPair(Point a, Point b)
+{
+    PointPair pp(a,b);
+    pairs.push_back(pp);
+}
+
 //
 NCPointCloud::NCPointCloud()
 {
     points.clear();
+    skipConnecting.pairs.clear();
 }
 
 NCPointCloud::~NCPointCloud()
 {
     points.clear();
+    skipConnecting.pairs.clear();
 }
 
 int NCPointCloud::getPointCloud(QStringList files)
@@ -1480,6 +1533,7 @@ int NCPointCloud::mergeLines(float maxAngle)
         vector<LineSegment> lines;
         resetVisitStatus();
 
+
         //
         for(long i=0; i<npoints; i++)
         {
@@ -1753,16 +1807,23 @@ int NCPointCloud::mergeLines(float maxAngle)
                 bool connected = false;
                 long ntests = 5;
                 long itest = -1;
+                long skip = 0;
+
+                skipConnecting.resetStatus();
 
                 while(!connected && itest++<ntests)
                 {
+                    long offset = skip + itest;
 
-                    cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin()+itest))<<endl;
+                    if(offset>=candidates.size())
+                        break;
+
+                    cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin()+offset))<<endl;
 
                     //
                     long tipi, tipj;
-                    long iLine = get<2>(*(candidates.begin()+itest));
-                    long jLine = get<3>(*(candidates.begin()+itest));
+                    long iLine = get<2>(*(candidates.begin()+offset));
+                    long jLine = get<3>(*(candidates.begin()+offset));
                     for(long k=0; k<ijpoints.size(); k++)
                     {
                         if( get<2>(ijpoints[k]) == iLine && get<3>(ijpoints[k]) == jLine)
@@ -1774,8 +1835,29 @@ int NCPointCloud::mergeLines(float maxAngle)
                     }
 
                     //
-                    float dist = get<0>(*(candidates.begin()+itest));
-                    float angle = get<1>(*(candidates.begin()+itest));
+                    bool found = false;
+                    for(size_t i=0; i<skipConnecting.pairs.size(); i++)
+                    {
+                        if(skipConnecting.pairs[i].visited)
+                            continue;
+
+                        if(skipConnecting.pairs[i].samePair(points[tipi], points[tipj]))
+                        {
+                            skipConnecting.pairs[i].visited = true;
+                            skip++;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if(found)
+                    {
+                        continue;
+                    }
+
+                    //
+                    float dist = get<0>(*(candidates.begin()+offset));
+                    float angle = get<1>(*(candidates.begin()+offset));
 
                     //
                     cout<<"connecting ... line #"<<iLine<<" to line #"<<jLine<<" angle "<<angle<<" distance "<<dist<<endl;
@@ -1790,49 +1872,18 @@ int NCPointCloud::mergeLines(float maxAngle)
                     //
                     if(points[tipi].parents[0]==-1 && points[tipj].parents[0]!=-1)
                     {
-                        // check the angles around joint
-                        if(points[tipi].hasChildren())
+                        if(connectLineSegments(tipi, tipj, maxAngle)<0)
                         {
-                            long idx = indexofpoint(points[tipi].children[0]);
-
-                            if(getAngle(points[idx], points[tipi], points[tipj]) > maxAngle)
-                                continue;
-                        }
-                        else
-                        {
-
-                        }
-
-                        long idx = indexofpoint(points[tipj].parents[0]);
-                        if(getAngle(points[tipi], points[tipj], points[idx]) > maxAngle)
                             continue;
+                        }
 
-                        //
-                        points[tipi].parents[0] = points[tipj].n;
-                        points[tipj].children.push_back(points[tipi].n);
                     }
                     else if(points[tipi].parents[0]!=-1 && points[tipj].parents[0]==-1)
                     {
-                        // check the angles around joint
-                        if(points[tipj].hasChildren())
+                        if(connectLineSegments(tipj, tipi, maxAngle)<0)
                         {
-                            long idx = indexofpoint(points[tipj].children[0]);
-
-                            if(getAngle(points[idx], points[tipj], points[tipi]) > maxAngle)
-                                continue;
-                        }
-                        else
-                        {
-
-                        }
-
-                        long idx = indexofpoint(points[tipi].parents[0]);
-                        if(getAngle(points[tipj], points[tipi], points[idx]) > maxAngle)
                             continue;
-
-                        //
-                        points[tipj].parents[0] = points[tipi].n;
-                        points[tipi].children.push_back(points[tipj].n);
+                        }
                     }
                     else
                     {
@@ -1844,100 +1895,23 @@ int NCPointCloud::mergeLines(float maxAngle)
                             cout<<"reverse lsi \n";
 
                             // reverse lsi
-                            long idxcur;
-                            long ncur, ncurparent;
-                            long nparent;
-                            long n = lsi.points.size() - 1;
-
-                            // tip point
-                            if(points[tipi].parents[0]==-1)
-                            {
-                                idxcur = tipi;
-                                while(points[idxcur].hasChildren())
-                                {
-                                    idxcur = indexofpoint(points[idxcur].children[0]);
-                                }
-                            }
-                            else
-                            {
-                                idxcur = tipi;
-                            }
-
-                            //
-                            ncur = points[idxcur].n;
-                            ncurparent = points[idxcur].parents[0];
-
-                            points[idxcur].parents[0] = -1;
-                            points[idxcur].children.push_back(ncurparent);
-
-                            cout<<"test ... "<<n<<endl;
-
-                            while(n>0)
-                            {
-                                n--;
-
-                                idxcur = indexofpoint(ncurparent);
-
-                                nparent = ncurparent;
-                                ncurparent = points[idxcur].parents[0];
-                                points[idxcur].parents[0] = ncur;
-                                points[idxcur].children[0] = ncurparent;
-                                ncur = nparent;
-                            }
-
-                            cout<<"test ... "<<n<<endl;
-
-                            if(points[idxcur].hasChildren())
-                            {
-                                if(points[idxcur].children[0]==-1)
-                                    points[idxcur].children.clear();
-                            }
+                            reverseLineSegment(tipi, lsi.points.size());
 
                             //
                             if(points[tipj].parents[0]==-1)
                             {
                                 // pj -> pi
-                                if(points[tipj].hasChildren())
+                                if(connectLineSegments(tipj, tipi, maxAngle)<0)
                                 {
-                                    long idx = indexofpoint(points[tipj].children[0]);
-
-                                    if(getAngle(points[idx], points[tipj], points[tipi]) > maxAngle)
-                                        continue;
-                                }
-                                else
-                                {
-
-                                }
-
-                                long idx = indexofpoint(points[tipi].parents[0]);
-                                if(getAngle(points[tipj], points[tipi], points[idx]) > maxAngle)
                                     continue;
-
-                                //
-                                points[tipj].parents[0] = points[tipi].n;
-                                points[tipi].children.push_back(points[tipj].n);
+                                }
                             }
                             else
                             {
-                                if(points[tipi].hasChildren())
+                                if(connectLineSegments(tipi, tipj, maxAngle)<0)
                                 {
-                                    long idx = indexofpoint(points[tipi].children[0]);
-
-                                    if(getAngle(points[idx], points[tipi], points[tipj]) > maxAngle)
-                                        continue;
-                                }
-                                else
-                                {
-
-                                }
-
-                                long idx = indexofpoint(points[tipj].parents[0]);
-                                if(getAngle(points[tipi], points[tipj], points[idx]) > maxAngle)
                                     continue;
-
-                                //
-                                points[tipi].parents[0] = points[tipj].n;
-                                points[tipj].children.push_back(points[tipi].n);
+                                }
                             }
 
                             cout<<"test ... done"<<endl;
@@ -1947,93 +1921,24 @@ int NCPointCloud::mergeLines(float maxAngle)
                             cout<<"reverse lsj "<<lsj.points.size()<<endl;
 
                             // reverse lsj
-                            long idxcur;
-                            long ncur, ncurparent;
-                            long nparent;
-                            long n = lsj.points.size() - 1;
-
-                            // tip point
-                            if(points[tipj].parents[0]==-1)
-                            {
-                                idxcur = tipj;
-                                while(points[idxcur].hasChildren())
-                                {
-                                    idxcur = indexofpoint(points[idxcur].children[0]);
-                                }
-                            }
-                            else
-                            {
-                                idxcur = tipj;
-                            }
-
-                            //
-                            ncur = points[idxcur].n;
-                            ncurparent = points[idxcur].parents[0];
-
-                            points[idxcur].parents[0] = -1;
-                            points[idxcur].children.push_back(ncurparent);
-
-                            while(n>0)
-                            {
-                                n--;
-
-                                idxcur = indexofpoint(ncurparent);
-
-                                nparent = ncurparent;
-                                ncurparent = points[idxcur].parents[0];
-                                points[idxcur].parents[0] = ncur;
-                                points[idxcur].children[0] = ncurparent;
-                                ncur = nparent;
-                            }
-                            if(points[idxcur].children[0]==-1)
-                                points[idxcur].children.clear();
+                            reverseLineSegment(tipj, lsj.points.size());
 
                             //
                             if(points[tipi].parents[0]==-1)
                             {
                                 // pi -> pj
-                                if(points[tipi].hasChildren())
+                                if(connectLineSegments(tipi, tipj, maxAngle)<0)
                                 {
-                                    long idx = indexofpoint(points[tipi].children[0]);
-
-                                    if(getAngle(points[idx], points[tipi], points[tipj]) > maxAngle)
-                                        continue;
-                                }
-                                else
-                                {
-
-                                }
-
-                                long idx = indexofpoint(points[tipj].parents[0]);
-                                if(getAngle(points[tipi], points[tipj], points[idx]) > maxAngle)
                                     continue;
-
-                                //
-                                points[tipi].parents[0] = points[tipj].n;
-                                points[tipj].children.push_back(points[tipi].n);
+                                }
                             }
                             else
                             {
                                 //
-                                if(points[tipj].hasChildren())
+                                if(connectLineSegments(tipj, tipi, maxAngle)<0)
                                 {
-                                    long idx = indexofpoint(points[tipj].children[0]);
-
-                                    if(getAngle(points[idx], points[tipj], points[tipi]) > maxAngle)
-                                        continue;
-                                }
-                                else
-                                {
-
-                                }
-
-                                long idx = indexofpoint(points[tipi].parents[0]);
-                                if(getAngle(points[tipj], points[tipi], points[idx]) > maxAngle)
                                     continue;
-
-                                //
-                                points[tipj].parents[0] = points[tipi].n;
-                                points[tipi].children.push_back(points[tipj].n);
+                                }
                             }
                         }
                     }
@@ -2060,6 +1965,95 @@ long NCPointCloud::indexofpoint(long n)
     }
 
     return -1;
+}
+
+//
+int NCPointCloud::reverseLineSegment(long idx, long size)
+{
+    //
+    long idxcur;
+    long ncur, ncurparent;
+    long nparent;
+    long n = size - 1;
+
+    // tip point
+    if(points[idx].parents[0]==-1)
+    {
+        idxcur = idx;
+        while(points[idxcur].hasChildren())
+        {
+            idxcur = indexofpoint(points[idxcur].children[0]);
+        }
+    }
+    else
+    {
+        idxcur = idx;
+    }
+
+    //
+    ncur = points[idxcur].n;
+    ncurparent = points[idxcur].parents[0];
+
+    points[idxcur].parents[0] = -1;
+    points[idxcur].children.push_back(ncurparent);
+
+    //
+    while(n>0)
+    {
+        n--;
+
+        idxcur = indexofpoint(ncurparent);
+
+        nparent = ncurparent;
+        ncurparent = points[idxcur].parents[0];
+        points[idxcur].parents[0] = ncur;
+        points[idxcur].children[0] = ncurparent;
+        ncur = nparent;
+    }
+
+    //
+    if(points[idxcur].hasChildren())
+    {
+        if(points[idxcur].children[0]==-1)
+            points[idxcur].children.clear();
+    }
+
+    //
+    return 0;
+}
+
+//
+int NCPointCloud::connectLineSegments(long rooti, long tipj, float angle)
+{
+    //
+    if(points[rooti].hasChildren())
+    {
+        long idx = indexofpoint(points[rooti].children[0]);
+
+        if(getAngle(points[idx], points[rooti], points[tipj]) > angle)
+        {
+            skipConnecting.appendPair(points[rooti], points[tipj]);
+            return -1;
+        }
+    }
+    else
+    {
+
+    }
+
+    long idx = indexofpoint(points[tipj].parents[0]);
+    if(getAngle(points[rooti], points[tipj], points[idx]) > angle)
+    {
+        skipConnecting.appendPair(points[rooti], points[tipj]);
+        return -1;
+    }
+
+    //
+    points[rooti].parents[0] = points[tipj].n;
+    points[tipj].children.push_back(points[rooti].n);
+
+    //
+    return 0;
 }
 
 // class Quadruple
