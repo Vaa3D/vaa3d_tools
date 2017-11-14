@@ -32,7 +32,9 @@ private:
 	Ui::DatasetGeneratorUI* ui;
 	QDirModel* dirModel;
 	QStringListModel* procSteps;
+	QStringListModel* procSteps3D;
 	QStandardItemModel* listViewSteps;
+	QStandardItemModel* listViewSteps3D;
 };
 
 
