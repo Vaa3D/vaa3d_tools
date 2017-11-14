@@ -1805,20 +1805,20 @@ int NCPointCloud::mergeLines(float maxAngle)
 
                 // merge
                 bool connected = false;
-                long ntests = 5;
-                long itest = -1;
+                long ntests = 15;
+                long itest = 0;
                 long skip = 0;
 
                 skipConnecting.resetStatus();
 
-                while(!connected && itest++<ntests)
+                while(!connected && itest<ntests)
                 {
                     long offset = skip + itest;
 
                     if(offset>=candidates.size())
                         break;
 
-                    cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin()+offset))<<endl;
+                    cout<<"merging ... w/ angle: "<<get<1>(*(candidates.begin()+offset))<<" ... offset "<<offset<<" ... "<<itest<<endl;
 
                     //
                     long tipi, tipj;
@@ -1854,6 +1854,8 @@ int NCPointCloud::mergeLines(float maxAngle)
                     {
                         continue;
                     }
+
+                    itest++;
 
                     //
                     float dist = get<0>(*(candidates.begin()+offset));
