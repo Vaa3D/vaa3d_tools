@@ -1,9 +1,11 @@
 #include "ui_DatasetGenerator.h"
 #include "datasetGeneratorUI.h"
+#include "Dataset_Generator_plugin.h"
 #include <qabstractitemview.h>
 #include <qitemselectionmodel.h>
 #include <qfilesystemmodel.h>
 #include <iostream>
+#include <queue>
 
 using namespace std;
 
@@ -37,6 +39,8 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->comboBox_2->setModel(procSteps);
 	ui->listView->setModel(listViewSteps);
 	ui->listView_2->setModel(listViewSteps3D);
+
+	ui->lineEdit_20->setText("0.1");
 
 	this->show();
 }
@@ -73,6 +77,16 @@ void DatasetGeneratorUI::selectClicked()
 			ui->lineEdit_16->setText(wholePath);
 		}
 		ui->lineEdit_17->setText(wholePath);
+	}
+	else if (pushButtonName == "pushButton_10")
+	{
+		ui->lineEdit_19->setText(wholePath);
+		ui->lineEdit_21->setText(wholePath);
+	}
+	else if (pushButtonName == "pushButton_12")
+	{
+		wholePath = wholePath + "/";
+		ui->lineEdit_21->setText(wholePath);
 	}
 }
 
@@ -113,6 +127,10 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 			ui->checkBox_12->setEnabled(true);
 			ui->checkBox_13->setEnabled(true);
 		}
+		else if (checkBoxName == "groupBox")
+		{
+			ui->pushButton_8->setEnabled(true);
+		}
 	}
 	else
 	{
@@ -139,6 +157,10 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 			ui->checkBox_11->setEnabled(false);
 			ui->checkBox_12->setEnabled(false);
 			ui->checkBox_13->setEnabled(false);
+		}
+		else if (checkBoxName == "groupBox")
+		{
+			ui->pushButton_8->setEnabled(false);
 		}
 	}
 }
@@ -180,6 +202,27 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 	}
 }
 
+void DatasetGeneratorUI::associativeToggle(bool checked)
+{
+	QObject* signalSender = sender();
+	QString checkBoxName = signalSender->objectName();
+
+	if (checked == true)
+	{
+		if (checkBoxName == "checkBox_14")
+		{
+			if (ui->checkBox_11->isChecked()) ui->groupBox->setChecked(true);
+		}
+	}
+	else
+	{
+		if (checkBoxName == "checkBox_14")
+		{
+			if (ui->checkBox_11->isChecked()) ui->groupBox_3->setChecked(false);
+		}
+	}
+}
+
 void DatasetGeneratorUI::preprocessingEdit()
 {
 	QObject* emitter = sender();
@@ -215,3 +258,24 @@ void DatasetGeneratorUI::preprocessingEdit()
 	}
 }
 
+void DatasetGeneratorUI::okClicked()
+{
+	if (ui->groupBox_2->isChecked())
+	{
+		taskFromUI newTask;
+		newTask.createList = true;
+		newTask.createPatch = false;
+		newTask.createPatchNList = false;
+		QString sourceQString = ui->lineEdit_19->text();
+		QString destQString = ui->lineEdit_21->text();
+		QString percentageString = ui->lineEdit_20->text();
+		newTask.source = sourceQString.toStdString();
+		newTask.outputFileName = destQString.toStdString();
+		newTask.subsetRatio = percentageString.toDouble();
+		newTask.listOp = subset;
+		DatasetOperator.taskQueu.push(newTask);
+		DatasetOperator.taskQueuDispatcher();
+	}
+
+
+}

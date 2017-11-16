@@ -1,4 +1,5 @@
 #include "Dataset_Generator_plugin.h"
+#include "datasetGeneratorUI.h"
 #include "dirent.h"
 #include <fstream>
 #include <stdlib.h>
@@ -401,3 +402,4 @@ void DatasetGenerator::shapeFilter_line_dot()
 	}
 
 }
+

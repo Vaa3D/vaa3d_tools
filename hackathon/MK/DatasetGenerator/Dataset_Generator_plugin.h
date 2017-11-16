@@ -77,6 +77,7 @@ public:
 	double proportion2;
 	void createList();
 	void createList2();
+	//void createListFromList(listOpType listOp);
 	
 	void shapeFilter_line_dot();
 

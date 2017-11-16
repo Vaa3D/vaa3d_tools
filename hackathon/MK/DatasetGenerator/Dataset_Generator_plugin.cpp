@@ -37,7 +37,7 @@ void DatasetGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &call
 	{
 		DatasetGeneratorUI* inputForm = new DatasetGeneratorUI(0, &callback);
 		inputForm->exec();
-		inputForm->~DatasetGeneratorUI(); // Needs to force freeing up memory for Win7..? (Win10 doesn't need this.)
+		inputForm->~DatasetGeneratorUI();
 
 		return;
 	}
