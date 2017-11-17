@@ -35,6 +35,9 @@ bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
 bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 
+// test
+bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+
 // help info
 void printHelp();
 

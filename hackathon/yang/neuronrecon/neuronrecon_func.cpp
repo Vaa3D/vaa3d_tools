@@ -1200,6 +1200,202 @@ bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     return true;
 }
 
+bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    // anisotropic filter
+    // distance transform
+    // find the 26-neighborhood peaks as the points for neuron reconstruction
+
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    // processing
+
+    // step 1.
+    QString filename = QString(inlist->at(0));
+    QString fnITKfiltered = filename.left(filename.lastIndexOf(".")).append("_anisotropicFiltered.tif");
+    QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
+    QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
+
+    if(filename.toUpper().endsWith(".TIF"))
+    {
+        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+    }
+    else
+    {
+        cout<<"Current only support TIFF image as input file\n";
+        return -1;
+    }
+
+    // step 2.
+    NCPointCloud pointcloud;
+
+    //
+    if(fnITKfiltered.toUpper().endsWith(".V3DRAW") || fnITKfiltered.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnITKfiltered.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            cout<<"Not supported!\n";
+            return false;
+        }
+
+        // local maxima (peaks)
+        V3DLONG i,j,k, idx, nn;
+
+        unsigned char *p1dImg = p4dImage->getRawData();
+        V3DLONG dimx = p4dImage->getXDim();
+        V3DLONG dimy = p4dImage->getYDim();
+        V3DLONG dimz = p4dImage->getZDim();
+        long volsz = p4dImage->getTotalUnitNumberPerChannel();
+
+        // estimate the radius with distance transform
+        unsigned char *dt=NULL;
+        try
+        {
+            dt = new unsigned char [volsz];
+        }
+        catch(...)
+        {
+            cout<<"fail to alloc memory for out image\n";
+            return false;
+        }
+        distanceTransformL2(dt, p1dImg, dimx, dimy, dimz);
+
+        // estimate threshold
+        float threshold;
+        estimateIntensityThreshold(p1dImg, volsz, threshold);
+
+        cout<<"threshold ... "<<threshold<<endl;
+
+        //
+        long ofz = dimx*dimy;
+        long ofy = dimx;
+        long ofx = 1;
+
+        long offset[26] = {ofx, -ofx, ofy, -ofy, ofz, -ofz,
+                           ofx+ofy, ofx-ofy, ofx+ofz, ofx-ofz, ofy+ofz, ofy-ofz, -ofx+ofy, -ofx-ofy, -ofx+ofz, -ofx-ofz, -ofy+ofz, -ofy-ofz,
+                           ofx+ofy+ofz, -ofx+ofy+ofz, ofx-ofy+ofz, -ofx-ofy+ofz, ofx+ofy-ofz, -ofx+ofy-ofz, ofx-ofy-ofz, -ofx-ofy-ofz};
+
+
+        //
+        cout<<"find peaks in a image "<<dimx<<" x "<<dimy<<" x "<<dimz<<endl;
+
+        //
+        for(k=1; k<dimz-1; k++)
+        {
+            for(j=1; j<dimy-1; j++)
+            {
+                for(i=1; i<dimx-1; i++)
+                {
+                    //
+                    idx = k*ofz + j*ofy + i;
+
+                    float val = p1dImg[idx];
+                    if(val<threshold)
+                        continue;
+
+                    Point p;
+                    p.radius = dt[idx];
+                    bool skip = false;
+                    for(nn=0; nn<26; nn++)
+                    {
+                        if(p1dImg[idx + offset[nn] ]>val)
+                        {
+                            skip = true;
+                            break;
+                        }
+                    }
+
+                    if(skip)
+                    {
+                        continue;
+                    }
+
+                    //
+                    cout<<"add a peak ... "<<i<<" "<<j<<" "<<k<<endl;
+
+                    //
+                    p.x = i;
+                    p.y = j;
+                    p.z = k;
+
+                    pointcloud.points.push_back(p);
+                }
+            }
+        }
+
+        //
+        pointcloud.delDuplicatedPoints();
+
+        // add radius
+        for(int i=0; i<pointcloud.points.size(); i++)
+        {
+            long idx = pointcloud.points[i].z*dimy*dimx + pointcloud.points[i].y*dimx + pointcloud.points[i].x;
+
+            pointcloud.points[i].radius = dt[idx];
+        }
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return -1;
+    }
+
+    //
+    NCPointCloud pcsorted;
+    pcsorted.ksort(pointcloud, 10);
+    pcsorted.savePointCloud(cnvtPoints);
+
+    // step 4. lines constructed
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int k=6;
+    float m = 8;
+
+    NCPointCloud lines;
+    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
+
+    // step 5. neuron tree(s) traced
+
+
+    //
+    return true;
+}
+
 // bigneuron-based methods to detect signals
 bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
