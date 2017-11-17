@@ -806,7 +806,8 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 						//cout << currNode.n << "..." << endl;
 						++path_length;
 					}
-					headR = list.at(currNode.parent).radius;
+					headR = list.at(curr_index).radius;
+					//if (headR < inputRadius) inputRadius = headR;
 					headRadius[i] = headR;
 					leafLength[i] = path_length;
 					//cout << list.at(i).n << " " << headR << " " << path_length << endl;
@@ -844,7 +845,7 @@ bool IVSCC_radius_estimation::dofunc(const QString & func_name, const V3DPluginA
 				NeuronSWC currNode = list.at(currLoc);
 				double headR = headRadius[currLoc];
 				//cout << "head radius: " << headR << " ";
-				while (currNode.parent != -1)
+				while (currNode.parent != 1)
 				{
 					if (nodeAssigned[currLoc] == true) break;
 
