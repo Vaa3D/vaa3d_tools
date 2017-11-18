@@ -226,6 +226,9 @@ public:
     int connectLineSegments(long rooti, long tipj, float angle);
 
     //
+    int append(Point p);
+
+    //
     Point pplusv(Point *p, Vector *v);
     float point_plane_dist(Point *a, Plane *P);
     Point plerp(Point *a, Point *b, float t);

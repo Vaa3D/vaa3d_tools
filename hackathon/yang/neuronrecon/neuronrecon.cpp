@@ -1525,7 +1525,7 @@ int NCPointCloud::mergeLines(float maxAngle)
 
     //
     while(merging)
-    {
+    {https://github.com/kerautret/CDCVAM.git
         //
         merging = false;
 
@@ -1576,7 +1576,6 @@ int NCPointCloud::mergeLines(float maxAngle)
         //        for(int i=0; i<lines.size(); i++)
         //        {
         //            LineSegment line = lines[i];
-
         //            cout<<"test ... line "<<i<<" "<<line.points.size()<<endl;
         //            for(int k=0; k<line.points.size(); k++)
         //            {
@@ -1627,7 +1626,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     if(j==i)
                         continue;
 
-                    //cout<<"line j:"<<j<<endl;
+                    //cout<<"line j:"<<j<<endl;https://github.com/kerautret/CDCVAM.git
 
                     lsj = lines[j];
 
@@ -1636,7 +1635,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     //                        cout<<"not considering ... \n";
                     //                        continue;
                     //                    }
-                    //                    cout<<"further computing ... \n";
+                    //                    cout<<"further computing ... \n";https://github.com/kerautret/CDCVAM.git
 
                     // comparing line #i and #j
                     float angle = lsi.angle(lsj);
@@ -2053,6 +2052,46 @@ int NCPointCloud::connectLineSegments(long rooti, long tipj, float angle)
     //
     points[rooti].parents[0] = points[tipj].n;
     points[tipj].children.push_back(points[rooti].n);
+
+    //
+    return 0;
+}
+
+//
+int NCPointCloud::append(Point p)
+{
+    // add a new point
+    float distthresh = 5;
+    bool added = false;
+    for(long i=0; i<points.size(); i++)
+    {
+        //
+        Point q = points[i];
+
+        if(distance(p,q)<distthresh)
+        {
+            if(q.radius < p.radius)
+            {
+                added = true;
+
+                points[i].x = p.x;
+                points[i].y = p.y;
+                points[i].z = p.z;
+                points[i].radius = p.radius;
+            }
+            else
+            {
+                // not adding
+            }
+
+            return 0;
+        }
+    }
+
+    if(!added)
+    {
+        points.push_back(p);
+    }
 
     //
     return 0;

@@ -199,6 +199,12 @@ int estimateIntensityThreshold(unsigned char *p, long size, float &thresh, int m
 {
     // method 0: k-means 1: mean + stddev
 
+    if(!p || size<2)
+    {
+        cout<<"NULL input \n";
+        return -1;
+    }
+
     //
     if(method==0)
     {
@@ -277,12 +283,36 @@ int estimateIntensityThreshold(unsigned char *p, long size, float &thresh, int m
         //
         thresh = (mub+muf)/2;
 
-        cout<<"k-means estimates the threshold is ..."<<thresh<<endl;
+        cout<<"k-means estimates the threshold is ... "<<thresh<<endl;
     }
     else if(method==1)
     {
         //
         float mean, stddev;
+
+        //
+        float sum = 0;
+        for(long i=0; i<size; i++)
+        {
+            sum += p[i];
+        }
+
+        //
+        mean = sum / size;
+
+        //
+        sum = 0;
+        for(int i=0; i<size; i++)
+        {
+            sum += (p[i] - mean)*(p[i] - mean);
+        }
+
+        stddev = sqrt(sum/(size-1));
+
+        //
+        thresh =  mean + stddev;
+
+        cout<<"the threshold (mean + stddev) is ... "<<thresh<<endl;
 
     }
     else
