@@ -17,12 +17,13 @@ class DatasetGeneratorUI : public QDialog
 {
 
 	Q_OBJECT
+	friend class Operator;
 
-public:
-	Operator DatasetOperator;
-
+public:	
 	DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* callback);
 	~DatasetGeneratorUI();
+
+	Operator DatasetOperator;
 
 	QStringList procItems;
 	QStringList selectedProcItems;
@@ -43,7 +44,8 @@ private:
 	QStandardItemModel* listViewSteps;
 	QStandardItemModel* listViewSteps3D;
 
-	
+private slots:
+	void progressBarUpdater(QString taskName, int percentage);
 	
 
 

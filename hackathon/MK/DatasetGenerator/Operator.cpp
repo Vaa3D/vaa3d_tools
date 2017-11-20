@@ -12,8 +12,6 @@
 #include <qfile.h>
 #include <qvector.h>
 
-
-
 using namespace std;
 
 void Operator::taskQueuDispatcher()
@@ -26,7 +24,11 @@ void Operator::taskQueuDispatcher()
 
 		if (taskQueu.front().createList == true)
 		{
-			if (taskQueu.front().listOp == subset) createListFromList(subset);
+			if (taskQueu.front().listOp == subset)
+			{
+				emit progressBarReporter("Creating List..  ", 0);
+				createListFromList(subset);
+			}
 		}
 
 		if (taskQueu.front().createPatchNList == true)
@@ -40,15 +42,24 @@ void Operator::createListFromList(listOpType listOp)
 {
 	if (listOp == subset)
 	{
+		ifstream inputFile_forSize(operatingTask.source);
 		ifstream inputFile(operatingTask.source);
 		ofstream outputFile(operatingTask.outputFileName);
+
+		string tempLine;
+		double lineCount;
+		for (lineCount = 0; getline(inputFile_forSize, tempLine); ++lineCount);
+		cout << "total lines: " << lineCount << endl;
+		inputFile_forSize.close();
 
 		string line;
 		vector<string> lineSplit;
 		vector<string> wholeLines;
 		int classLabel = 0;
+		double count = 0;
 		while (getline(inputFile, line))
 		{
+			++count;
 			stringstream lineStream(line);
 			string streamedLine;
 			while (lineStream >> streamedLine) lineSplit.push_back(streamedLine);
@@ -72,12 +83,15 @@ void Operator::createListFromList(listOpType listOp)
 					//cout << wholeLines[num] << endl;
 					++pickedCount;
 				}
-
 				classLabel = currLabel;
 				wholeLines.clear();
 				lineSplit.clear();
 				pickedLineNums.clear();
 				wholeLines.push_back(line);
+
+				double processedPortion = count / lineCount;
+				int percentageNum = int(processedPortion * 100);
+				emit progressBarReporter("Creating List..  ", percentageNum);
 			}
 		}
 		
@@ -92,93 +106,12 @@ void Operator::createListFromList(listOpType listOp)
 			//cout << wholeLines[num] << endl;
 			++pickedCount;
 		}
-
 		wholeLines.clear();
 		lineSplit.clear();
 		pickedLineNums.clear();
-	}
-}
 
-void Operator::createList2()
-{
-	this->proportion1 = 0.5;
-	//this->proportion2 = 0.2;		
-	srand(time(NULL));
-
-	ofstream outfileTrain("train.txt");
-	ofstream outfileVal("val.txt");
-	for (QVector<QString>::iterator it = this->imageFolders.begin(); it != this->imageFolders.end(); ++it)
-	{
-		qDebug() << *it;
-		DIR* dir;
-		struct dirent *ent;
-		string imgFolderString = (*it).toStdString();
-		const char* imgFolderName = imgFolderString.c_str();
-
-		QVector<QString> imgNames;
-		if ((dir = opendir(imgFolderName)) != NULL)
-		{
-			int fileCount = 0;
-			QString name;
-			while ((ent = readdir(dir)) != NULL)
-			{
-				++fileCount;
-				if (fileCount <= 2) continue;
-				for (size_t i = 0; i<100; ++i)
-				{
-					if (ent->d_name[i] == NULL) break;
-					else if (ent->d_name[i] == '..' || ent->d_name[i] == '...') continue;
-					name = name + QChar(ent->d_name[i]);
-				}
-				imgNames.push_back(name);
-				//qDebug() << name;
-				name.clear();
-			}
-
-			int imgNum = imgNames.size();
-			int poolTotalNum = imgNum * this->proportion1;
-			cout << "  total patches number: " << imgNum << endl;
-			vector<int> poolNums;
-			int count = 1;
-			while (count <= poolTotalNum)
-			{
-				int num = rand() % poolTotalNum + 1;
-				poolNums.push_back(num);
-				++count;
-				//cout << num << " ";
-			}
-			cout << "  pool patches number: " << poolNums.size() << endl << endl;
-
-			QString fullPath = *it;
-			fullPath.replace("\\/", "/");
-			fullPath.replace("\\", "/");
-			//fullPath.replace("Z:", "MK_Drive");
-			for (int i = 0; i<imgNum; ++i)
-			{
-				for (vector<int>::iterator poolIt = poolNums.begin(); poolIt != poolNums.end(); ++poolIt)
-				{
-					if (*poolIt == i)
-					{
-						string patchName = fullPath.toStdString();
-						patchName = patchName + "/" + imgNames[i].toStdString();
-						if (size_t(poolIt - poolNums.begin() + 1) <= poolNums.size()*0.8)
-						{
-							//cout << *poolIt << " ";
-							outfileTrain << patchName << " 0" << endl;
-						}
-						else
-						{
-							//cout << "val" << *poolIt << " ";
-							outfileVal << patchName << " 0" << endl;
-						}
-					}
-				}
-			}
-			poolNums.clear();
-			cout << endl;
-		}
-
-		imgNames.clear();
-		//system("pause");
+		double processedPortion = count / lineCount;
+		int percentageNum = int(processedPortion * 100);
+		emit progressBarReporter("Complete. ", 100);
 	}
 }

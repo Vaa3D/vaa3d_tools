@@ -9,6 +9,7 @@
 using namespace std;
 
 enum listOpType { newList, merge, divide, subset };
+enum patchOpType { stackTo3D, stackTo2D, teraTo3D, teraTo2D, patch3DTo3D, patch3DTo2D, patch2DTo2D };
 
 struct taskFromUI
 {
@@ -20,17 +21,22 @@ struct taskFromUI
 	double subsetRatio;
 	int classNum;
 
+	patchOpType patchOp;
+
 	string source;
 	string outputFileName;
-
+	string outputDirName;
+	string neuronStrucFileName;
 };
 
 class Operator : public QObject
 {
 
 	Q_OBJECT
-
 	friend class DatasetGeneratorUI;
+
+signals:
+	void progressBarReporter(QString taskName, int percentage);
 
 public:
 	QString inputSWCdir;
@@ -56,8 +62,6 @@ public:
 private:
 	queue<taskFromUI> taskQueu;
 	taskFromUI operatingTask;
-
-
 };
 
 

@@ -1,10 +1,12 @@
 #include "ui_DatasetGenerator.h"
 #include "datasetGeneratorUI.h"
 #include "Dataset_Generator_plugin.h"
+
+#include <iostream>
+
 #include <qabstractitemview.h>
 #include <qitemselectionmodel.h>
 #include <qfilesystemmodel.h>
-#include <iostream>
 #include <queue>
 
 using namespace std;
@@ -39,8 +41,9 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->comboBox_2->setModel(procSteps);
 	ui->listView->setModel(listViewSteps);
 	ui->listView_2->setModel(listViewSteps3D);
-
 	ui->lineEdit_20->setText("0.1");
+
+	connect(&DatasetOperator, SIGNAL(progressBarReporter(QString, int)), this, SLOT(progressBarUpdater(QString, int)));
 
 	this->show();
 }
@@ -48,6 +51,13 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 DatasetGeneratorUI::~DatasetGeneratorUI()
 {
 	delete ui;
+}
+
+void DatasetGeneratorUI::progressBarUpdater(QString taskName, int percentage)
+{
+	ui->progressBar->setAlignment(Qt::AlignCenter);
+	ui->progressBar->setFormat(taskName + QString::number(percentage) + "%");
+	ui->progressBar->setValue(percentage);
 }
 
 void DatasetGeneratorUI::selectClicked()
@@ -260,12 +270,13 @@ void DatasetGeneratorUI::preprocessingEdit()
 
 void DatasetGeneratorUI::okClicked()
 {
-	if (ui->groupBox_2->isChecked())
+	if (ui->groupBox_2->isChecked()) // Create list from existing list.
 	{
 		taskFromUI newTask;
 		newTask.createList = true;
 		newTask.createPatch = false;
 		newTask.createPatchNList = false;
+
 		QString sourceQString = ui->lineEdit_19->text();
 		QString destQString = ui->lineEdit_21->text();
 		QString percentageString = ui->lineEdit_20->text();
@@ -273,9 +284,42 @@ void DatasetGeneratorUI::okClicked()
 		newTask.outputFileName = destQString.toStdString();
 		newTask.subsetRatio = percentageString.toDouble();
 		newTask.listOp = subset;
+		
 		DatasetOperator.taskQueu.push(newTask);
 		DatasetOperator.taskQueuDispatcher();
 	}
+	else if (ui->checkBox_2->isChecked() && ui->checkBox_10->isChecked()) // Create patches based on neuronstructure file.
+	{
+		if (!ui->groupBox_6->isChecked() && !ui->groupBox_7->isChecked())
+		{ }
+		
+		taskFromUI newTask;
+		newTask.createList = false;
+		QString imageSource = ui->lineEdit_7->text();
+		QString destImageDir = ui->lineEdit_8->text();
+		QString neuronStructFile = ui->lineEdit_15->text();
+		newTask.source = imageSource.toStdString();
+		newTask.outputDirName = destImageDir.toStdString();
+		newTask.neuronStrucFileName = neuronStructFile.toStdString();
+		if (ui->checkBox_14->isChecked()) // Create list for the patches at the same time.
+		{
 
-
+		}
+		else  // List for the patches will not be created.
+		{
+			if (ui->checkBox_4->isChecked()) // From terafly
+			{
+			}
+			else // From non-terafly image stack
+			{
+				newTask.createPatch = true;
+				newTask.createPatchNList = false;
+				if (ui->groupBox_4->isChecked())
+				{
+					newTask.patchOp = stackTo2D;
+					
+				}
+			}
+		}
+	}
 }
