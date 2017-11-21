@@ -217,8 +217,6 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 			ui->checkBox_11->setChecked(false);
 			ui->checkBox_12->setChecked(false);
 		}
-		else if (checkBoxName == "groupBox_2") ui->groupBox_8->setChecked(false);
-		else if (checkBoxName == "groupBox_8") ui->groupBox_2->setChecked(false);
 	}
 }
 
@@ -255,7 +253,7 @@ void DatasetGeneratorUI::preprocessingEdit()
 	if (emitterName == "pushButton")
 	{		
 		QStandardItem* newItem = new QStandardItem(currItemName);
-		newItem->setFlags(newItem->flags() ^ Qt::ItemIsDropEnabled);
+		newItem->setFlags(newItem->flags() ^ Qt::ItemIsDropEnabled); // XOR for allowing drop feature but not overwrite
 		listViewSteps->appendRow(newItem);
 	}
 	else if (emitterName == "pushButton_5")
@@ -267,7 +265,7 @@ void DatasetGeneratorUI::preprocessingEdit()
 	else if (emitterName == "pushButton_4")
 	{
 		QStandardItem* newItem = new QStandardItem(currItemName);
-		newItem->setFlags(newItem->flags() ^ Qt::ItemIsDropEnabled);
+		newItem->setFlags(newItem->flags() ^ Qt::ItemIsDropEnabled); // XOR for allowing drop feature but not overwrite
 		listViewSteps3D->appendRow(newItem);
 	}
 	else if (emitterName == "pushButton_6")
@@ -346,6 +344,20 @@ void DatasetGeneratorUI::okClicked()
 				{
 					newTask.patchOp = stackTo2D;
 					
+					for (int i = 0; i < listViewSteps->rowCount(); ++i)
+					{
+						QStandardItem* thisItem = listViewSteps->item(i);
+						newTask.opSequence.push_back(thisItem->text());
+					}
+					if (ui->checkBox_7->isChecked()) newTask.dimSelection = xy;
+					else if (ui->checkBox_8->isChecked()) newTask.dimSelection = yz;
+					else if (ui->checkBox_9->isChecked()) newTask.dimSelection = xz;
+					newTask.sideX = ui->lineEdit_9->text().toInt();
+					newTask.sideX = ui->lineEdit_10->text().toInt();
+					newTask.sideX = ui->lineEdit_11->text().toInt();
+
+					DatasetOperator.taskQueu.push(newTask);
+					DatasetOperator.taskQueuDispatcher();
 				}
 			}
 		}

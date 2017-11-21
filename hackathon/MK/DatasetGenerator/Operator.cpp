@@ -31,7 +31,7 @@ void Operator::taskQueuDispatcher()
 			}
 			else if (taskQueu.front().listOp == crossVal)
 			{
-				emit progressBarReporter("Creating List..  ", 0);
+				emit progressBarReporter("Creating Lists..  ", 0);
 				createListFromList(crossVal);
 			}
 		}
@@ -115,8 +115,6 @@ void Operator::createListFromList(listOpType listOp)
 		lineSplit.clear();
 		pickedLineNums.clear();
 
-		double processedPortion = count / lineCount;
-		int percentageNum = int(processedPortion * 100);
 		emit progressBarReporter("Complete. ", 100);
 
 		inputFile.close();
@@ -153,16 +151,172 @@ void Operator::createListFromList(listOpType listOp)
 		}
 		allLinesByClass.push_back(classLines);
 
-		for (int i = 1; i <= operatingTask.foldNum; ++i)
+		for (int i = 0; i < operatingTask.foldNum; ++i)
 		{
-			string num = to_string(i);
+			string num = to_string(i + 1);
 			string trainFileName = operatingTask.outputDirName + "/train_" + num + ".txt";
 			string valFileName = operatingTask.outputDirName + "/val_" + num + ".txt";
 			ofstream outTrain(trainFileName);
 			ofstream outVal(valFileName);
 
+			for (int j = 0; j < allLinesByClass.size(); ++j)
+			{
+				int currClassLinesNum = allLinesByClass[j].size();
+				vector<string>::iterator start = allLinesByClass[j].begin() + (currClassLinesNum / operatingTask.foldNum) * i;
+				vector<string>::iterator end = start + (currClassLinesNum / operatingTask.foldNum);
+				if ((end - allLinesByClass[j].begin()) >= (allLinesByClass[j].end() - 1 - allLinesByClass[j].begin())) 
+					end = allLinesByClass[j].end();
+
+				for (vector<string>::iterator it = allLinesByClass[j].begin(); it != start; ++it) outTrain << *it << endl;
+				for (vector<string>::iterator it = start; it != end; ++it) outVal << *it << endl;
+				for (vector<string>::iterator it = end; it != allLinesByClass[j].end(); ++it) outTrain << *it << endl;
+			}
+
+			double processedPortion = double(i + 1) / double(operatingTask.foldNum);
+			int percentageNum = int(processedPortion * 100);
+			emit progressBarReporter("Creating Lists..  ", percentageNum);
+
+			outTrain.close();
+			outVal.close();
 		}
+		emit progressBarReporter("Complete. ", 100);
 	}
+}
+
+void cropping3D(V3DPluginCallback2 &callback,
+	Image4DSimple* p4DImage,
+	NeuronTree nt,
+	QString outputfolder,
+	V3DLONG *in_sz,
+	int Wx,
+	int Wy,
+	int Wz,
+	int type,
+	int offset)
+{
+	V3DLONG N = in_sz[0];
+	V3DLONG M = in_sz[1];
+	V3DLONG P = in_sz[2];
+	V3DLONG sc = in_sz[3];
+
+	/*VirtualVolume* data1d;
+
+	for (int i = 0; i<nt.listNeuron.size(); i++)
+	{
+		if (type == -1 || nt.listNeuron.at(i).type == type)
+		{
+			V3DLONG tmpx = nt.listNeuron.at(i).x;
+			V3DLONG tmpy = nt.listNeuron.at(i).y;
+			V3DLONG tmpz = nt.listNeuron.at(i).z;
+
+			if (tmpx >= 0 && tmpx <= N - 1 && tmpy >= 0 && tmpy <= M - 1 && tmpz >= 0 && tmpz <= P - 1)
+			{
+
+				V3DLONG xb = tmpx - 1 - Wx; if (xb<0) xb = 0; if (xb >= N - 1) xb = N - 1;
+				V3DLONG xe = tmpx - 1 + Wx; if (xe >= N - 1) xe = N - 1;
+				V3DLONG yb = tmpy - 1 - Wy; if (yb<0) yb = 0; if (yb >= M - 1) yb = M - 1;
+				V3DLONG ye = tmpy - 1 + Wy; if (ye >= M - 1) ye = M - 1;
+				V3DLONG zb = tmpz - 1 - Wz; if (zb<0) zb = 0; if (zb >= P - 1) zb = P - 1;
+				V3DLONG ze = tmpz - 1 + Wz; if (ze >= P - 1) ze = P - 1;
+
+				QString outimg_file = outputfolder + QString("x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+				QString outimg_file_swc = outputfolder + QString("x%1_y%2_z%3.swc").arg(tmpx).arg(tmpy).arg(tmpz);
+				QString outimg_file_linker = outputfolder + QString("x%1_y%2_z%3.ano").arg(tmpx).arg(tmpy).arg(tmpz);
+				int p = 1;
+
+				while (QFile(outimg_file).exists())
+				{
+					outimg_file = outimg_file + QString("_%1.tif").arg(p);
+					outimg_file_swc = outimg_file_swc + QString("_%1.swc").arg(p);
+					outimg_file_linker = outimg_file_linker + QString("_%1.ano").arg(p);
+					p++;
+				}
+
+
+				NeuronTree nt_cropped;
+				if (P>1)
+					nt_cropped = cropSWCfile3D(nt, xb, xe, yb, ye, zb, ze, type);
+				else
+					nt_cropped = cropSWCfile(nt, xb, xe, yb, ye, type);
+
+				NeuronTree nt_sort;
+				if (nt_cropped.listNeuron.size()>0)
+				{
+					nt_sort = SortSWC_pipeline(nt_cropped.listNeuron, nt_cropped.listNeuron.at(0).n, 0);
+				}
+				else
+					nt_sort = nt_cropped;
+
+				writeSWC_file(outimg_file_swc, nt_sort);
+
+				if (offset)
+				{
+					QString outimg_file_swc_offset = outimg_file_swc + "_offset.swc";
+					for (V3DLONG ii = 0; ii < nt_sort.listNeuron.size(); ii++)
+					{
+						nt_sort.listNeuron[ii].x += xb;
+						nt_sort.listNeuron[ii].y += yb;
+						nt_sort.listNeuron[ii].z += zb;
+					}
+					writeSWC_file(outimg_file_swc_offset, nt_sort);
+				}
+
+
+				V3DLONG im_cropped_sz[4];
+				im_cropped_sz[0] = xe - xb + 1;
+				im_cropped_sz[1] = ye - yb + 1;
+				im_cropped_sz[2] = ze - zb + 1;
+				im_cropped_sz[3] = sc;
+
+
+				unsigned char *im_cropped = 0;
+				if (p4DImage->getDatatype())
+				{
+					V3DLONG pagesz = im_cropped_sz[0] * im_cropped_sz[1] * im_cropped_sz[2] * im_cropped_sz[3];
+					try { im_cropped = new unsigned char[pagesz]; }
+					catch (...)  { v3d_msg("cannot allocate memory for im_cropped."); return; }
+					V3DLONG j = 0;
+					for (V3DLONG iz = zb; iz <= ze; iz++)
+					{
+						V3DLONG offsetk = iz*M*N;
+						for (V3DLONG iy = yb; iy <= ye; iy++)
+						{
+							V3DLONG offsetj = iy*N;
+							for (V3DLONG ix = xb; ix <= xe; ix++)
+							{
+								im_cropped[j] = p4DImage->getRawData()[offsetk + offsetj + ix];
+								j++;
+							}
+						}
+					}
+				}
+				else
+				{
+					data1d = VirtualVolume::instance(p4DImage->getFileName());
+					im_cropped = data1d->loadSubvolume_to_UINT8(yb, ye + 1, xb, xe + 1, zb, ze + 1);
+				}
+
+				simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(), (unsigned char *)im_cropped, im_cropped_sz, 1);
+				QFile qf_anofile(outimg_file_linker);
+				if (!qf_anofile.open(QIODevice::WriteOnly))
+				{
+					v3d_msg("Cannot open file for writing!", 0);
+					return;
+				}
+
+				QTextStream out(&qf_anofile);
+				out << "RAWIMG= " << outimg_file.toStdString().c_str() << endl;
+				out << "SWCFILE= " << outimg_file_swc.toStdString().c_str() << endl;
+
+				if (im_cropped) { delete[]im_cropped; im_cropped = 0; }
+				if (data1d) { delete data1d; data1d = 0; }
+			}
+
+		}
+
+	}*/
+	return;
+
 }
 
 void Operator::getImageFolders()

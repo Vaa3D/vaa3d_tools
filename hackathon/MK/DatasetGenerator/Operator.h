@@ -1,5 +1,5 @@
 #ifndef OPERATOR_H
-#define OPERATPR_H
+#define OPERATOR_H
 
 #include <QtGui>
 #include <v3d_interface.h>
@@ -10,6 +10,7 @@ using namespace std;
 
 enum listOpType { newList, merge, divide, subset, crossVal };
 enum patchOpType { stackTo3D, stackTo2D, teraTo3D, teraTo2D, patch3DTo3D, patch3DTo2D, patch2DTo2D };
+enum dim2D { xy, xz, yz };
 
 struct taskFromUI
 {
@@ -23,6 +24,9 @@ struct taskFromUI
 	int classNum;
 
 	patchOpType patchOp;
+	QStringList opSequence;
+	dim2D dimSelection;
+	int sideX, sideY, sideZ;
 
 	string source;
 	string outputFileName;
@@ -47,15 +51,11 @@ public:
 	QString outputImagedir;
 	void getImageFolders();
 
-	double valProportion;
-	double proportion1;
-	double proportion2;
-	void createListFromList(listOpType listOp);
-
-
-	void shapeFilter_line_dot();
-
 	void pick_save();
+
+	void crop(int sideX, int sideY, int sideZ);
+
+	void createListFromList(listOpType listOp);
 
 	void taskQueuDispatcher();
 
