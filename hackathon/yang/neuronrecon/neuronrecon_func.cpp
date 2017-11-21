@@ -1298,7 +1298,8 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
         // estimate threshold
         float threshold;
-        estimateIntensityThreshold(p1dImg, volsz, threshold, 1);
+        //estimateIntensityThreshold(p1dImg, volsz, threshold, 1);
+        estimateIntensityThreshold(p1dImg, volsz, threshold);
 
         cout<<"threshold ... "<<threshold<<endl;
 
@@ -1347,14 +1348,11 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                     }
 
                     //
-                    //cout<<"add a peak ... "<<i<<" "<<j<<" "<<k<<endl;
-
-                    //
                     p.x = i;
                     p.y = j;
                     p.z = k;
 
-                    // pointcloud.points.push_back(p);
+                    //
                     pointcloud.append(p);
                 }
             }

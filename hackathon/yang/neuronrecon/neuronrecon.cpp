@@ -2061,12 +2061,14 @@ int NCPointCloud::connectLineSegments(long rooti, long tipj, float angle)
 int NCPointCloud::append(Point p)
 {
     // add a new point
-    float distthresh = 5;
+    float distthresh;
     bool added = false;
     for(long i=0; i<points.size(); i++)
     {
         //
         Point q = points[i];
+
+        distthresh = p.radius + q.radius;
 
         if(distance(p,q)<distthresh)
         {
