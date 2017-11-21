@@ -8,7 +8,7 @@
 
 using namespace std;
 
-enum listOpType { newList, merge, divide, subset };
+enum listOpType { newList, merge, divide, subset, crossVal };
 enum patchOpType { stackTo3D, stackTo2D, teraTo3D, teraTo2D, patch3DTo3D, patch3DTo2D, patch2DTo2D };
 
 struct taskFromUI
@@ -19,6 +19,7 @@ struct taskFromUI
 
 	listOpType listOp;
 	double subsetRatio;
+	int foldNum;
 	int classNum;
 
 	patchOpType patchOp;
@@ -49,9 +50,8 @@ public:
 	double valProportion;
 	double proportion1;
 	double proportion2;
-	void createList();
-	void createList2();
 	void createListFromList(listOpType listOp);
+
 
 	void shapeFilter_line_dot();
 

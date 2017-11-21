@@ -93,6 +93,14 @@ void DatasetGeneratorUI::selectClicked()
 		ui->lineEdit_19->setText(wholePath);
 		ui->lineEdit_21->setText(wholePath);
 	}
+	else if (pushButtonName == "pushButton_14")
+	{
+		ui->lineEdit_22->setText(wholePath);
+	}
+	else if (pushButtonName == "pushButton_15")
+	{
+		ui->lineEdit_24->setText(wholePath);
+	}
 	else if (pushButtonName == "pushButton_12")
 	{
 		wholePath = wholePath + "/";
@@ -209,6 +217,8 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 			ui->checkBox_11->setChecked(false);
 			ui->checkBox_12->setChecked(false);
 		}
+		else if (checkBoxName == "groupBox_2") ui->groupBox_8->setChecked(false);
+		else if (checkBoxName == "groupBox_8") ui->groupBox_2->setChecked(false);
 	}
 }
 
@@ -285,6 +295,24 @@ void DatasetGeneratorUI::okClicked()
 		newTask.subsetRatio = percentageString.toDouble();
 		newTask.listOp = subset;
 		
+		DatasetOperator.taskQueu.push(newTask);
+		DatasetOperator.taskQueuDispatcher();
+	}
+	else if (ui->groupBox_8->isChecked())
+	{
+		taskFromUI newTask;
+		newTask.createList = true;
+		newTask.createPatch = false;
+		newTask.createPatchNList = false;
+
+		QString sourceQString = ui->lineEdit_22->text();
+		QString destQString = ui->lineEdit_24->text();
+		QString foldNumString = ui->lineEdit_23->text();
+		newTask.source = sourceQString.toStdString();
+		newTask.outputDirName = destQString.toStdString();
+		newTask.foldNum = foldNumString.toInt();
+		newTask.listOp = crossVal;
+
 		DatasetOperator.taskQueu.push(newTask);
 		DatasetOperator.taskQueuDispatcher();
 	}

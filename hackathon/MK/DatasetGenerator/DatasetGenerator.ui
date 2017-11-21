@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>967</width>
+    <width>964</width>
     <height>879</height>
    </rect>
   </property>
@@ -122,7 +122,7 @@
         </font>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="iconSize">
         <size>
@@ -156,8 +156,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>621</width>
-            <height>665</height>
+            <width>96</width>
+            <height>26</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1361,7 +1361,7 @@
           </font>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page_3">
           <property name="geometry">
@@ -1486,8 +1486,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>100</width>
-            <height>30</height>
+            <width>611</width>
+            <height>665</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1664,6 +1664,136 @@
             </property>
            </widget>
           </widget>
+          <widget class="QGroupBox" name="groupBox_8">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>200</y>
+             <width>591</width>
+             <height>171</height>
+            </rect>
+           </property>
+           <property name="title">
+            <string>Make Cross-Validation Lists</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+           <widget class="QPushButton" name="pushButton_14">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>80</y>
+              <width>121</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>List Source</string>
+            </property>
+           </widget>
+           <widget class="QLineEdit" name="lineEdit_22">
+            <property name="geometry">
+             <rect>
+              <x>150</x>
+              <y>80</y>
+              <width>421</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+           </widget>
+           <widget class="QLabel" name="label_15">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>30</y>
+              <width>91</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Fold Number:</string>
+            </property>
+           </widget>
+           <widget class="QLineEdit" name="lineEdit_23">
+            <property name="geometry">
+             <rect>
+              <x>120</x>
+              <y>30</y>
+              <width>51</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton_15">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>120</y>
+              <width>121</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Choose Directory</string>
+            </property>
+           </widget>
+           <widget class="QLineEdit" name="lineEdit_24">
+            <property name="geometry">
+             <rect>
+              <x>150</x>
+              <y>120</y>
+              <width>421</width>
+              <height>31</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+           </widget>
+          </widget>
          </widget>
         </widget>
        </widget>
@@ -1749,8 +1879,8 @@
    <slot>preprocessingEdit()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>471</x>
-     <y>584</y>
+     <x>472</x>
+     <y>551</y>
     </hint>
     <hint type="destinationlabel">
      <x>278</x>
@@ -1765,8 +1895,8 @@
    <slot>preprocessingEdit()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>581</x>
-     <y>584</y>
+     <x>582</x>
+     <y>551</y>
     </hint>
     <hint type="destinationlabel">
      <x>474</x>
@@ -1845,8 +1975,8 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>428</x>
-     <y>183</y>
+     <x>429</x>
+     <y>249</y>
     </hint>
     <hint type="destinationlabel">
      <x>28</x>
@@ -1861,12 +1991,12 @@
    <slot>okClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>732</x>
-     <y>842</y>
+     <x>743</x>
+     <y>843</y>
     </hint>
     <hint type="destinationlabel">
      <x>670</x>
-     <y>921</y>
+     <y>878</y>
     </hint>
    </hints>
   </connection>
@@ -1877,12 +2007,12 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>428</x>
-     <y>223</y>
+     <x>429</x>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
      <x>468</x>
-     <y>898</y>
+     <y>878</y>
     </hint>
    </hints>
   </connection>
@@ -1893,11 +2023,11 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>489</x>
-     <y>146</y>
+     <x>490</x>
+     <y>113</y>
     </hint>
     <hint type="destinationlabel">
-     <x>998</x>
+     <x>958</x>
      <y>199</y>
     </hint>
    </hints>
@@ -1909,11 +2039,11 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>599</x>
-     <y>206</y>
+     <x>600</x>
+     <y>173</y>
     </hint>
     <hint type="destinationlabel">
-     <x>989</x>
+     <x>958</x>
      <y>39</y>
     </hint>
    </hints>
@@ -1925,8 +2055,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>456</x>
-     <y>223</y>
+     <x>460</x>
+     <y>203</y>
     </hint>
     <hint type="destinationlabel">
      <x>153</x>
@@ -1941,8 +2071,8 @@
    <slot>checkboxToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>632</x>
-     <y>134</y>
+     <x>643</x>
+     <y>113</y>
     </hint>
     <hint type="destinationlabel">
      <x>751</x>
@@ -1957,8 +2087,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>649</x>
-     <y>186</y>
+     <x>650</x>
+     <y>153</y>
     </hint>
     <hint type="destinationlabel">
      <x>921</x>
@@ -1973,12 +2103,12 @@
    <slot>associativeToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>724</x>
-     <y>221</y>
+     <x>735</x>
+     <y>203</y>
     </hint>
     <hint type="destinationlabel">
      <x>746</x>
-     <y>940</y>
+     <y>878</y>
     </hint>
    </hints>
   </connection>
@@ -1989,11 +2119,11 @@
    <slot>checkboxToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>459</x>
-     <y>216</y>
+     <x>460</x>
+     <y>183</y>
     </hint>
     <hint type="destinationlabel">
-     <x>998</x>
+     <x>958</x>
      <y>327</y>
     </hint>
    </hints>
@@ -2005,11 +2135,11 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>432</x>
-     <y>180</y>
+     <x>443</x>
+     <y>163</y>
     </hint>
     <hint type="destinationlabel">
-     <x>998</x>
+     <x>958</x>
      <y>266</y>
     </hint>
    </hints>
@@ -2021,8 +2151,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>599</x>
-     <y>166</y>
+     <x>600</x>
+     <y>133</y>
     </hint>
     <hint type="destinationlabel">
      <x>688</x>
@@ -2037,8 +2167,8 @@
    <slot>exclusiveToggle(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>459</x>
-     <y>216</y>
+     <x>460</x>
+     <y>183</y>
     </hint>
     <hint type="destinationlabel">
      <x>164</x>
@@ -2053,8 +2183,8 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>429</x>
-     <y>367</y>
+     <x>430</x>
+     <y>334</y>
     </hint>
     <hint type="destinationlabel">
      <x>653</x>
@@ -2069,8 +2199,8 @@
    <slot>checkboxToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>412</x>
-     <y>137</y>
+     <x>423</x>
+     <y>113</y>
     </hint>
     <hint type="destinationlabel">
      <x>145</x>
@@ -2085,8 +2215,8 @@
    <slot>checkboxToggled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>393</x>
-     <y>183</y>
+     <x>404</x>
+     <y>163</y>
     </hint>
     <hint type="destinationlabel">
      <x>150</x>
@@ -2101,8 +2231,8 @@
    <slot>selectClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>411</x>
-     <y>297</y>
+     <x>422</x>
+     <y>284</y>
     </hint>
     <hint type="destinationlabel">
      <x>487</x>
@@ -2117,8 +2247,8 @@
    <slot>preprocessingEdit()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>781</x>
-     <y>584</y>
+     <x>782</x>
+     <y>551</y>
     </hint>
     <hint type="destinationlabel">
      <x>250</x>
@@ -2149,8 +2279,8 @@
    <slot>preprocessingEdit()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>891</x>
-     <y>584</y>
+     <x>892</x>
+     <y>551</y>
     </hint>
     <hint type="destinationlabel">
      <x>254</x>
@@ -2169,8 +2299,72 @@
      <y>831</y>
     </hint>
     <hint type="destinationlabel">
-     <x>961</x>
+     <x>958</x>
      <y>565</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_14</sender>
+   <signal>clicked()</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>selectClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>387</x>
+     <y>431</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_15</sender>
+   <signal>clicked()</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>selectClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>357</x>
+     <y>470</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>6</x>
+     <y>663</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>325</x>
+     <y>148</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>3</x>
+     <y>725</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_8</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>DatasetGeneratorUI</receiver>
+   <slot>exclusiveToggle(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>357</x>
+     <y>339</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>5</x>
+     <y>790</y>
     </hint>
    </hints>
   </connection>
