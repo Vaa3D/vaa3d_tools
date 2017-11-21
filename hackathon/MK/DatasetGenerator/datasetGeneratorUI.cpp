@@ -321,12 +321,14 @@ void DatasetGeneratorUI::okClicked()
 		
 		taskFromUI newTask;
 		newTask.createList = false;
-		QString imageSource = ui->lineEdit_7->text();
-		QString destImageDir = ui->lineEdit_8->text();
-		QString neuronStructFile = ui->lineEdit_15->text();
-		newTask.source = imageSource.toStdString();
-		newTask.outputDirName = destImageDir.toStdString();
-		newTask.neuronStrucFileName = neuronStructFile.toStdString();
+		newTask.source = ui->lineEdit_7->text().toStdString();
+		newTask.outputDirName = ui->lineEdit_8->text().toStdString();
+		if (ui->groupBox_6->isChecked()) newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString();
+		else if (ui->groupBox_7->isChecked())
+		{
+			newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString();
+		}
+		 
 		if (ui->checkBox_14->isChecked()) // Create list for the patches at the same time.
 		{
 

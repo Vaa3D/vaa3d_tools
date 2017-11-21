@@ -53,9 +53,9 @@ public:
 
 	void pick_save();
 
-	void crop(int sideX, int sideY, int sideZ);
-
 	void createListFromList(listOpType listOp);
+
+	void create2DPatches(patchOpType patchOp);
 
 	void taskQueuDispatcher();
 
