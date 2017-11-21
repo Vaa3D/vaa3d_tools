@@ -77,6 +77,7 @@ QStringList line_detector::funclist() const
         <<tr("GD_markers")
         <<tr("Crop_blocks")
         <<tr("Crop_dendrite")
+        <<tr("shift_swc")
         <<tr("help");
 }
 
@@ -980,6 +981,48 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 //        QString swcString = marker_name + "_cropped.v3draw_manual.swc";
 //        writeSWC_file(swcString,nt);
 
+
+    }else if (func_name == tr("shift_swc"))
+    {
+        bool bmenu = false;
+        input_PARA PARA;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+
+        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+
+        V3DLONG start_x,start_y,start_z;
+        start_x = file_inmarkers[0].x;
+        start_y = file_inmarkers[0].y;
+        start_z = file_inmarkers[0].z;
+
+        for(int i =1; i < file_inmarkers.size();i++)
+        {
+            start_x = (start_x < file_inmarkers[i].x)? start_x:file_inmarkers[i].x;
+            start_y = (start_y < file_inmarkers[i].y)? start_y:file_inmarkers[i].y;
+            start_z = (start_z < file_inmarkers[i].z)? start_z:file_inmarkers[i].z;
+        }
+
+        start_x -= 50; start_y -=50; start_z -=50;
+        NeuronTree nt = readSWC_file(swc_name);
+        for(V3DLONG i =0; i < nt.listNeuron.size();i++)
+        {
+            nt.listNeuron[i].x += start_x;
+            nt.listNeuron[i].y += start_y;
+            nt.listNeuron[i].z += start_z;
+            nt.listNeuron[i].type = 2;
+        }
+        QString swc_name_output = swc_name + "_global.swc";
+        writeSWC_file(swc_name_output,nt);
 
     }
     else if (func_name == tr("linker"))

@@ -287,7 +287,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         if(P.method == app1)
             tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
         else if (P.method == app2)
-            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         else
             tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
@@ -413,7 +413,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
     else
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
+        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
 
     QString imageSaveString = saveDirString;
 
@@ -858,7 +858,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     {
 
         //   saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP2");
+        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
     }
 
@@ -1337,7 +1337,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else if(P.method == app2)
     {
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
     else if(P.method == gd)
