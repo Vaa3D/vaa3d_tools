@@ -731,6 +731,9 @@ bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
 int NCPointCloud::knn(int k, int radius)
 {
     //
+    cout<<"knn searching radius: "<<radius<<endl;
+
+    //
     if(k<1 || points.size()<k)
     {
         cout<<"invalid k or cloud\n";
@@ -785,10 +788,10 @@ int NCPointCloud::knn(int k, int radius)
             const size_t nMatches = kdtree.radiusSearch(p, radius, ret_matches, params);
 
             //
-            //cout << "radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
+            cout << "radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
             for (size_t j = 1; j < ret_matches.size(); j++)
             {
-                //cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
+                cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
                 points[i].nn.push_back(ret_matches[j].first);
             }
         }
@@ -1378,9 +1381,9 @@ int NCPointCloud::knnMaxDist(float &max)
     {
         Point p = pc.points[i];
 
-        for(long j=0; j<pc.points[i].nn.size(); j++)
+        for(long j=0; j<p.nn.size(); j++)
         {
-            Point q = pc.points[pc.points[i].nn[j]];
+            Point q = pc.points[p.nn[j]];
 
             if(q.isSamePoint(p))
             {
@@ -1395,9 +1398,6 @@ int NCPointCloud::knnMaxDist(float &max)
             }
         }
     }
-
-    //
-    cout<<"max ... "<<max<<endl;
 
     //
     return 0;
