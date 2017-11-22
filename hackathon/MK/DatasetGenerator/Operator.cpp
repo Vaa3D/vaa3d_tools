@@ -1,4 +1,5 @@
 #include "Operator.h"
+#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 
 #include "dirent.h"
 #include <vector>
@@ -193,7 +194,57 @@ void Operator::createListFromList(listOpType listOp)
 
 void Operator::create2DPatches(patchOpType patchOp)
 {
-	
+	if (patchOp == stackTo2D)
+	{
+		QString swcQStringName = QString::fromStdString(operatingTask.neuronStrucFileName);
+		QFileInfo checkFileOrPath(swcQStringName);
+		int xRadius = operatingTask.sideX / 2;
+		int yRadius = operatingTask.sideY / 2;
+		int zRadius = operatingTask.sideZ / 2;
+		if (checkFileOrPath.isFile())
+		{
+			Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+			V3DLONG offset[3];
+			offset[0] = 0; offset[1] = 0; offset[2] = 0;
+			indexed_t<V3DLONG, REAL> idx_t(offset);
+			idx_t.ref_n = 0; // init with default values
+			idx_t.fn_image = operatingTask.source;
+			vim.tilesList.push_back(idx_t);
+			int n_slice = vim.tilesList.size();
+			unsigned char* ImgPtr = 0;
+			V3DLONG in_sz[4];
+			int datatype;
+			if (!simple_loadimage_wrapper(*OperatorCallback, const_cast<char*>(vim.tilesList.at(0).fn_image.c_str()), ImgPtr, in_sz, datatype))
+			{
+				fprintf(stderr, "Error happens in reading the subject file [%0]. Exit. \n", vim.tilesList.at(0).fn_image.c_str());
+				return;
+			}
+
+			NeuronTree inputSWC = readSWC_file(swcQStringName);
+			int x_coord, y_coord, z_coord;
+			int xlb, xhb, ylb, yhb, zlb, zhb;
+
+			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
+			{
+				x_coord = it->x;
+				y_coord = it->y;
+				z_coord = it->z;
+				xlb = x_coord - xRadius;
+				xhb = x_coord + xRadius;
+				ylb = y_coord - yRadius;
+				yhb = y_coord + yRadius;
+				zlb = z_coord - zRadius;
+				zhb = z_coord + zRadius;
+				//cout << xlb << " " << xhb << " " << ylb << " " << yhb << " " << zlb << " " << zhb << endl;
+
+				NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
+				QString patchSWCFolder = QString::fromStdString(operatingTask.outputDirName) + "/patchSWCs";
+				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
+				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
+				writeSWC_file(outimg_fileSWC, patchSWC); 
+			}
+		}
+	}
 }
 
 void Operator::getImageFolders()
@@ -233,4 +284,38 @@ void Operator::getImageFolders()
 		}
 	}
 	closedir(dir);
+}
+
+NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type)
+{
+	//NeutronTree structure
+	NeuronTree nt_cut;
+	QList<NeuronSWC> listNeuron;
+	QHash<int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+
+	//set node
+	QList<NeuronSWC> list = nt.listNeuron;
+	NeuronSWC S;
+	for (int i = 0; i<list.size(); i++)
+	{
+		NeuronSWC curr = list.at(i);
+		if (curr.x <= xe && curr.x >= xb && curr.y <= ye && curr.y >= yb && curr.z <= ze && curr.z >= zb && (type == -1 || curr.type == type))
+		{
+			S.x = curr.x - xb;
+			S.y = curr.y - yb;
+			S.z = curr.z - zb;
+			S.n = curr.n;
+			S.type = curr.type;
+			S.r = curr.r;
+			S.pn = curr.pn;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size() - 1);
+		}
+	}
+	nt_cut.listNeuron = listNeuron;
+	nt_cut.hashNeuron = hashNeuron;
+
+	return nt_cut;
 }

@@ -55,11 +55,13 @@ public:
 
 	void createListFromList(listOpType listOp);
 
+	NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type);
 	void create2DPatches(patchOpType patchOp);
 
 	void taskQueuDispatcher();
 
 private:
+	V3DPluginCallback2* OperatorCallback;
 	queue<taskFromUI> taskQueu;
 	taskFromUI operatingTask;
 };

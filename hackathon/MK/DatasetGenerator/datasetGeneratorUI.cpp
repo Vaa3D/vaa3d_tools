@@ -45,6 +45,7 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 
 	connect(&DatasetOperator, SIGNAL(progressBarReporter(QString, int)), this, SLOT(progressBarUpdater(QString, int)));
 
+	DatasetOperator.OperatorCallback = callback;
 	this->show();
 }
 
@@ -284,13 +285,9 @@ void DatasetGeneratorUI::okClicked()
 		newTask.createList = true;
 		newTask.createPatch = false;
 		newTask.createPatchNList = false;
-
-		QString sourceQString = ui->lineEdit_19->text();
-		QString destQString = ui->lineEdit_21->text();
-		QString percentageString = ui->lineEdit_20->text();
-		newTask.source = sourceQString.toStdString();
-		newTask.outputFileName = destQString.toStdString();
-		newTask.subsetRatio = percentageString.toDouble();
+		newTask.source = ui->lineEdit_19->text().toStdString();
+		newTask.outputFileName = ui->lineEdit_21->text().toStdString();
+		newTask.subsetRatio = ui->lineEdit_20->text().toDouble();
 		newTask.listOp = subset;
 		
 		DatasetOperator.taskQueu.push(newTask);
@@ -302,13 +299,9 @@ void DatasetGeneratorUI::okClicked()
 		newTask.createList = true;
 		newTask.createPatch = false;
 		newTask.createPatchNList = false;
-
-		QString sourceQString = ui->lineEdit_22->text();
-		QString destQString = ui->lineEdit_24->text();
-		QString foldNumString = ui->lineEdit_23->text();
-		newTask.source = sourceQString.toStdString();
-		newTask.outputDirName = destQString.toStdString();
-		newTask.foldNum = foldNumString.toInt();
+		newTask.source = ui->lineEdit_22->text().toStdString();
+		newTask.outputDirName = ui->lineEdit_24->text().toStdString();
+		newTask.foldNum = ui->lineEdit_23->text().toInt();
 		newTask.listOp = crossVal;
 
 		DatasetOperator.taskQueu.push(newTask);
@@ -355,8 +348,8 @@ void DatasetGeneratorUI::okClicked()
 					else if (ui->checkBox_8->isChecked()) newTask.dimSelection = yz;
 					else if (ui->checkBox_9->isChecked()) newTask.dimSelection = xz;
 					newTask.sideX = ui->lineEdit_9->text().toInt();
-					newTask.sideX = ui->lineEdit_10->text().toInt();
-					newTask.sideX = ui->lineEdit_11->text().toInt();
+					newTask.sideY = ui->lineEdit_10->text().toInt();
+					newTask.sideZ = ui->lineEdit_11->text().toInt();
 
 					DatasetOperator.taskQueu.push(newTask);
 					DatasetOperator.taskQueuDispatcher();
