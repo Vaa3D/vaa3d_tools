@@ -190,6 +190,94 @@ int adaptiveThresholdMT(unsigned char *&dst, unsigned char *src, int x, int y, i
 int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
 {
     //
+    float thresh;
+    long i,j,k;
+    long ofz, idx;
+
+    long xs, xe, ys, ye, zs, ze;
+
+    unsigned char *block = NULL;
+    long xb, yb, zb, szblock;
+    long ii, jj, kk;
+
+    //
+    for(k=0; k<z; k+=r)
+    {
+        zs = k;
+        ze = zs+r;
+
+        if(ze>z-1)
+            ze = z - 1;
+
+        xb = ze - zs;
+
+        for(j=0; j<y; j+=r)
+        {
+            ys = j;
+            ye = ys+r;
+
+            if(ye > y-1)
+                ye = y - 1;
+
+            yb = ye - ys;
+
+            for(i=0; i<x; i+=r)
+            {
+                xs = i;
+                xe = xs + r;
+
+                if(xe > x-1)
+                    xe = x-1;
+
+                xb = xe - xs;
+
+                try
+                {
+                    szblock = xb*yb*zb;
+                    block = new unsigned char [szblock];
+
+                    for(kk=zs; kk<ze; kk++)
+                    {
+                        for(jj=ys; jj<ye; jj++)
+                        {
+                            for(ii=xs; ii<xe; ii++)
+                            {
+                                block[(kk-zs)*yb*xb + (jj-ys)*xb + (ii-xs)] = src[kk*y*x + jj*x + ii];
+                            }
+                        }
+                    }
+
+                    estimateIntensityThreshold(block, szblock, thresh);
+
+                    for(kk=zs; kk<ze; kk++)
+                    {
+                        for(jj=ys; jj<ye; jj++)
+                        {
+                            for(ii=xs; ii<xe; ii++)
+                            {
+                                idx = kk*y*x + jj*x + ii;
+                                if(src[idx]>thresh)
+                                {
+                                    dst[idx] = src[idx];
+                                }
+                            }
+                        }
+                    }
+                }
+                catch(...)
+                {
+                    cout<<"fail to alloc memory\n";
+                    return -1;
+                }
+
+                if(block)
+                {
+                    delete []block;
+                    block = NULL;
+                }
+            }
+        }
+    }
 
     //
     return 0;

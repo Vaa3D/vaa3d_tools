@@ -978,11 +978,20 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 
         // test
         //adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 3);
+        //distanceTransformL2(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim());
 
-        //float threshold;
-        //estimateIntensityThreshold(p4dImage->getRawData(), volsz, threshold);
+//        float threshold;
+//        estimateIntensityThreshold(p4dImage->getRawData(), volsz, threshold);
 
-        distanceTransformL2(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim());
+//        unsigned char *p1dImg = p4dImage->getRawData();
+
+//        for(long i=0; i<volsz; i++)
+//        {
+//            if(p1dImg[i]>threshold)
+//                p[i] = p1dImg[i];
+//        }
+
+        adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 8);
 
         //
         p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());
