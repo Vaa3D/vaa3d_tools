@@ -10,7 +10,6 @@
 #include <v3d_interface.h>
 #include <qvector.h>
 #include "basic_surf_objs.h"
-#include "basic_4dimage.h"
 
 /*inline bool simple_loadimage(const char* filename, unsigned short*& pdata, long int sz[], int& datatype)
 {

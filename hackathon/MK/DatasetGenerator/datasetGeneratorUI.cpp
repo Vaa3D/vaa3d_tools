@@ -1,13 +1,13 @@
-#include "ui_DatasetGenerator.h"
-#include "datasetGeneratorUI.h"
-#include "Dataset_Generator_plugin.h"
-
 #include <iostream>
 
 #include <qabstractitemview.h>
 #include <qitemselectionmodel.h>
 #include <qfilesystemmodel.h>
 #include <queue>
+
+#include "ui_DatasetGenerator.h"
+#include "datasetGeneratorUI.h"
+#include "Dataset_Generator_plugin.h"
 
 using namespace std;
 

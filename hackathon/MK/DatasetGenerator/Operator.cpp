@@ -1,7 +1,4 @@
-#include "Operator.h"
-#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-
-#include "dirent.h"
+#include <dirent.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -13,6 +10,8 @@
 #include <qfile.h>
 #include <qvector.h>
 #include <qfileinfo.h>
+
+#include "Operator.h"
 
 using namespace std;
 
@@ -203,27 +202,22 @@ void Operator::create2DPatches(patchOpType patchOp)
 		int zRadius = operatingTask.sideZ / 2;
 		if (checkFileOrPath.isFile())
 		{
-			Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
-			V3DLONG offset[3];
-			offset[0] = 0; offset[1] = 0; offset[2] = 0;
-			indexed_t<V3DLONG, REAL> idx_t(offset);
-			idx_t.ref_n = 0; // init with default values
-			idx_t.fn_image = operatingTask.source;
-			vim.tilesList.push_back(idx_t);
-			int n_slice = vim.tilesList.size();
 			unsigned char* ImgPtr = 0;
 			V3DLONG in_sz[4];
 			int datatype;
-			if (!simple_loadimage_wrapper(*OperatorCallback, const_cast<char*>(vim.tilesList.at(0).fn_image.c_str()), ImgPtr, in_sz, datatype))
+			if (!simple_loadimage_wrapper(*OperatorCallback, operatingTask.source.c_str(), ImgPtr, in_sz, datatype))
 			{
-				fprintf(stderr, "Error happens in reading the subject file [%0]. Exit. \n", vim.tilesList.at(0).fn_image.c_str());
+				cerr << "Error reading image file [" << operatingTask.source << "]. Exit." << endl;
 				return;
 			}
+			int imgX = in_sz[0];
+			int imgY = in_sz[1];
+			int imgZ = in_sz[2];
+			int channel = in_sz[3];
 
 			NeuronTree inputSWC = readSWC_file(swcQStringName);
 			int x_coord, y_coord, z_coord;
 			int xlb, xhb, ylb, yhb, zlb, zhb;
-
 			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
 			{
 				x_coord = it->x;
@@ -235,6 +229,12 @@ void Operator::create2DPatches(patchOpType patchOp)
 				yhb = y_coord + yRadius;
 				zlb = z_coord - zRadius;
 				zhb = z_coord + zRadius;
+				if (xlb < 0) xlb = 0;
+				if (xhb > imgX) xhb = imgX - 1;
+				if (ylb < 0) ylb = 0;
+				if (yhb > imgY) yhb = imgY - 1;
+				if (zlb < 0) zlb = 0;
+				if (zhb > imgZ) zhb = imgZ - 1;
 				//cout << xlb << " " << xhb << " " << ylb << " " << yhb << " " << zlb << " " << zhb << endl;
 
 				NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
@@ -242,7 +242,25 @@ void Operator::create2DPatches(patchOpType patchOp)
 				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
 				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
 				writeSWC_file(outimg_fileSWC, patchSWC); 
+
+				V3DLONG VOIxyz[4];
+				VOIxyz[0] = xhb - xlb + 1;
+				VOIxyz[1] = yhb - ylb + 1;
+				VOIxyz[2] = zhb - zlb + 1;
+				VOIxyz[3] = channel;
+				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
+				unsigned char* VOIPtr = new unsigned char[VOIsz];
+				int zSlice = int(VOIxyz[2]);
+				crop3DImg(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, zSlice, imgX, imgY, imgZ);
+				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches";
+				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
+				QString outimg_file	= patchPath + QString("/x%1_y%2_z%3.v3draw").arg(x_coord).arg(y_coord).arg(z_coord);
+				string filename = outimg_file.toStdString();
+				const char* filenameptr = filename.c_str();
+				simple_saveimage_wrapper(*OperatorCallback, filenameptr, VOIPtr, VOIxyz, 1);
+				if (VOIPtr) { delete[]VOIPtr; VOIPtr = 0; }
 			}
+			delete ImgPtr;
 		}
 	}
 }
@@ -318,4 +336,20 @@ NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye
 	nt_cut.hashNeuron = hashNeuron;
 
 	return nt_cut;
+}
+
+void Operator::crop3DImg(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+	int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int z_slice, int imgX, int imgY, int imgZ)
+{
+	V3DLONG ROIsz = (xhb - xlb + 1) * (yhb - ylb + 1);
+	V3DLONG OutputArrayi = ROIsz * (z_slice - zlb);
+	//cout << ROIsz << " " << OutputArrayi << endl;
+	for (V3DLONG yi = ylb; yi <= yhb; ++yi)
+	{
+		for (V3DLONG xi = xlb; xi <= xhb; ++xi)
+		{
+			OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*imgY*(z_slice - 1) + imgX*(yi - 1) + xi];
+			++OutputArrayi;
+		}
+	}
 }
