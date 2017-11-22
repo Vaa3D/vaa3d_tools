@@ -78,6 +78,7 @@ QStringList line_detector::funclist() const
         <<tr("Crop_blocks")
         <<tr("Crop_dendrite")
         <<tr("shift_swc")
+        <<tr("blocks_steps")
         <<tr("help");
 }
 
@@ -1024,6 +1025,153 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         QString swc_name_output = swc_name + "_global.swc";
         writeSWC_file(swc_name_output,nt);
 
+    }else if (func_name == tr("blocks_steps"))
+    {
+        bool bmenu = false;
+        input_PARA PARA;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+//        unsigned char* data1d = 0;
+//        V3DLONG in_sz[4];
+        QString inimg_file = infiles[0];
+        int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+//        int datatype = 0;
+//        if (!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+//        {
+//            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+//            return -1;
+//        }
+
+        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+        V3DLONG start_x,start_y,start_z;
+        for (double block_size = 18; block_size < 32; block_size +=2)
+        {
+            if(file_inmarkers[0].x < 8)
+            {
+                start_x = file_inmarkers[0].x - floor(block_size*0.1);
+                start_y = file_inmarkers[0].y - block_size/2;
+                start_z = file_inmarkers[0].z - block_size/2;
+            }
+            else if (file_inmarkers[0].y < 8)
+            {
+                start_x = file_inmarkers[0].x - block_size/2;
+                start_y = file_inmarkers[0].y - floor(block_size*0.1);
+                start_z = file_inmarkers[0].z - block_size/2;
+            }
+            else if (file_inmarkers[0].z < 8)
+            {
+                start_x = file_inmarkers[0].x - block_size/2;
+                start_y = file_inmarkers[0].y - block_size/2;
+                start_z = file_inmarkers[0].z - floor(block_size*0.1);
+            }
+            else if (file_inmarkers[0].x > 22)
+            {
+                start_x = file_inmarkers[0].x - floor(block_size*0.9);
+                start_y = file_inmarkers[0].y - block_size/2;
+                start_z = file_inmarkers[0].z - block_size/2;
+            }
+            else if (file_inmarkers[0].y > 22)
+            {
+                start_x = file_inmarkers[0].x - block_size/2;
+                start_y = file_inmarkers[0].y - floor(block_size*0.9);
+                start_z = file_inmarkers[0].z - block_size/2;
+            }
+            else if (file_inmarkers[0].z > 22)
+            {
+                start_x = file_inmarkers[0].x - block_size/2;
+                start_y = file_inmarkers[0].y - block_size/2;
+                start_z = file_inmarkers[0].z - floor(block_size*0.9);
+            }
+
+//        V3DLONG in_sz_cropped[4];
+//        in_sz_cropped[0] = block_size;
+//        in_sz_cropped[1] = block_size;
+//        in_sz_cropped[2] = block_size;
+//        in_sz_cropped[3] = 1;
+//        V3DLONG stacksz =block_size*block_size*block_size;
+//        unsigned char *image_cropped=0;
+//        image_cropped = new unsigned char [stacksz];
+
+
+//        V3DLONG N = in_sz[0];
+//        V3DLONG M = in_sz[1];
+//        V3DLONG P = in_sz[2];
+//        V3DLONG i = 0;
+//        for(V3DLONG iz = start_z; iz < start_z + block_size; iz++)
+//        {
+//            V3DLONG offsetk = iz*M*N;
+//            for(V3DLONG iy = start_y; iy < start_y + block_size; iy++)
+//            {
+//                V3DLONG offsetj = iy*N;
+//                for(V3DLONG ix = start_x; ix < start_x + block_size; ix++)
+//                {
+//                    image_cropped[i] = data1d[ offsetk + offsetj + ix];
+//                    i++;
+//                }
+//            }
+//        }
+
+//        QString output_image = inimg_file + QString("_%1.v3draw").arg(block_size);
+//        simple_saveimage_wrapper(callback,output_image.toStdString().c_str(),image_cropped,in_sz_cropped,1);
+
+//        QString shifted_marker_name = inmarker_file + QString("_%1.marker").arg(block_size);
+            LocationSimple t;
+            for(int i = 0; i < file_inmarkers.size(); i++)
+            {
+                t.x = file_inmarkers.at(0).x - start_x + 1;
+                t.y = file_inmarkers.at(0).y - start_y + 1;
+                t.z = file_inmarkers.at(0).z - start_z + 1;
+                PARA.listLandmarks.push_back(t);
+            }
+            PARA.win_size = 32;
+            PARA.angle_size = 10;
+            PARA.channel = 1;
+
+            PARA.xc0 = start_x;
+            PARA.xc1 = start_x + block_size;
+            PARA.yc0 = start_y;
+            PARA.yc1 = start_y + block_size;
+            PARA.zc0 = start_z;
+            PARA.zc1 = start_z + block_size;
+
+            PARA.inimg_file = inimg_file;
+            reconstruction_func_v2(callback,parent,PARA,bmenu);
+            QString swc_auto = inimg_file + QString("_%1_GD_curveline.swc").arg(block_size);
+
+            export_list2file(PARA.nt.listNeuron, swc_auto,swc_auto);
+
+//        ImageMarker outputMarker;
+//        QList<ImageMarker> seedsToSave;
+//        outputMarker.x = file_inmarkers.at(0).x - start_x;
+//        outputMarker.y = file_inmarkers.at(0).y - start_y;
+//        outputMarker.z = file_inmarkers.at(0).z - start_z;
+//        seedsToSave.append(outputMarker);
+//        writeMarker_file(shifted_marker_name, seedsToSave);
+
+            NeuronTree nt = readSWC_file(swc_name);
+            for(V3DLONG i = nt.listNeuron.size() -1 ; i >=0;i--)
+            {
+                nt.listNeuron[i].x -= start_x;
+                nt.listNeuron[i].y -= start_y;
+                nt.listNeuron[i].z -= start_z;
+                if(nt.listNeuron[i].x < 0 || nt.listNeuron[i].x >= block_size || nt.listNeuron[i].y < 0 || nt.listNeuron[i].y >= block_size
+                    || nt.listNeuron[i].z < 0 || nt.listNeuron[i].z >= block_size)
+                    nt.listNeuron.removeAt(i);
+            }
+            QString swcString = swc_name + QString("_%1.swc").arg(block_size);
+            writeSWC_file(swcString,nt);
+        }
+
+
+
     }
     else if (func_name == tr("linker"))
     {
@@ -1724,8 +1872,11 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
     }
     else
     {
+        unsigned char* data1d_full = 0;
+        V3DLONG in_sz_full[4];
+
         int datatype = 0;
-        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d_full, in_sz_full, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
             return -1;
@@ -1735,6 +1886,30 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             fprintf (stderr, "Invalid channel number. \n");
             return -1;
         }
+
+        in_sz[0] = PARA.xc1 - PARA.xc0;
+        in_sz[1] = PARA.yc1 - PARA.yc0;
+        in_sz[2] = PARA.zc1 - PARA.zc0;
+        in_sz[3] = 1;
+
+        V3DLONG stacksz =in_sz[0]*in_sz[1]*in_sz[2];
+        data1d = new unsigned char [stacksz];
+        V3DLONG i = 0;
+        for(V3DLONG iz = PARA.zc0; iz < PARA.zc1; iz++)
+        {
+            V3DLONG offsetk = iz*in_sz_full[0]*in_sz_full[1];
+            for(V3DLONG iy = PARA.yc0; iy < PARA.yc1; iy++)
+            {
+                V3DLONG offsetj = iy*in_sz_full[0];
+                for(V3DLONG ix = PARA.xc0; ix < PARA.xc1; ix++)
+                {
+                    data1d[i] = data1d_full[ offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+
+        if(data1d_full) {delete []data1d_full; data1d_full = 0;}
         N = in_sz[0];
         M = in_sz[1];
         P = in_sz[2];
@@ -1870,7 +2045,7 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
         PARA.listLandmarks.removeAt(0);
         return -1;
     }
-    QString swc_name = PARA.inimg_file+"_1st.swc";
+    QString swc_name = PARA.inimg_file+QString("_1st_%1.swc").arg(PARA.xc1 - PARA.xc0);
     export_list2file(nt.listNeuron, swc_name,swc_name);
 
     for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
@@ -1898,7 +2073,7 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
 
     export_list2file(neuron_sorted, swc_name,swc_name);
     nt = readSWC_file(swc_name);
-   // QFile file (swc_name);file.remove();
+    QFile file (swc_name);file.remove();
     QList<NeuronSWC> list = nt.listNeuron;
     vector<QList<NeuronSWC> > nt_list;
 
