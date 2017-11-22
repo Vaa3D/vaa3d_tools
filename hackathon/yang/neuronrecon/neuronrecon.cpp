@@ -261,12 +261,16 @@ NCPointCloud::NCPointCloud()
 {
     points.clear();
     skipConnecting.pairs.clear();
+    maxDistNN = -1;
+    threshDistNN = -1;
 }
 
 NCPointCloud::~NCPointCloud()
 {
     points.clear();
     skipConnecting.pairs.clear();
+    maxDistNN = -1;
+    threshDistNN = -1;
 }
 
 int NCPointCloud::getPointCloud(QStringList files)
@@ -728,7 +732,7 @@ bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
     return false;
 }
 
-int NCPointCloud::knn(int k, int radius)
+int NCPointCloud::knn(int k, float radius)
 {
     //
     cout<<"knn searching radius: "<<radius<<endl;
@@ -775,7 +779,7 @@ int NCPointCloud::knn(int k, int radius)
         p[1] = cloud.pts[i].y;
         p[2] = cloud.pts[i].z;
 
-        //cout<<"current point ... "<<i<<" "<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
+        //cout<<"current point ... "<<i<<" n "<<points[i].n<<" "<<p[0]<<" "<<p[1]<<" "<<p[2]<<endl;
 
         // 0 is itself, so start recording nearest neighbor from 1
         if(radius)
@@ -785,13 +789,12 @@ int NCPointCloud::knn(int k, int radius)
             nanoflann::SearchParams params;
 
             //
-            const size_t nMatches = kdtree.radiusSearch(p, radius, ret_matches, params);
+            const size_t nMatches = kdtree.radiusSearch(p, static_cast<float>(radius), ret_matches, params);
 
-            //
-            cout << "radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
-            for (size_t j = 1; j < ret_matches.size(); j++)
+            cout <<"#"<<points[i].n<< " radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
+            for (size_t j = 1; j < nMatches; j++)
             {
-                cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
+                //cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
                 points[i].nn.push_back(ret_matches[j].first);
             }
         }
@@ -800,21 +803,29 @@ int NCPointCloud::knn(int k, int radius)
             //
             vector<size_t> k_indices;
             k_indices.resize (k);
-            vector<float> k_distances;
-            k_distances.resize (k);
+            vector<float> k_distsqr;
+            k_distsqr.resize (k);
 
             //
-            size_t num_results = kdtree.knnSearch(p, k, &k_indices[0], &k_distances[0]);
+            size_t num_results = kdtree.knnSearch(p, k, &k_indices[0], &k_distsqr[0]);
 
             //
             //cout << "knnSearch(): num_results=" << num_results << "\n";
-            for (size_t j = 1; j < k_indices.size(); ++j)
+            for (size_t j = 1; j < num_results; ++j)
             {
-                //cout << "idx["<< j << "]=" << long(k_indices[j]) << " dist["<< j << "]=" << k_distances[j] << endl;
+                //cout <<"#"<<points[i].n<<" idx["<< j << "]=" << long(k_indices[j]) << " dist["<< j << "]=" << k_distsqr[j] << endl;
+
+                if(maxDistNN<k_distsqr[j])
+                {
+                    maxDistNN = k_distsqr[j];
+                }
+
                 points[i].nn.push_back(k_indices[j]);
             }
         }
     }
+
+    maxDistNN = sqrt(maxDistNN);
 
     //
     if(p)
@@ -1372,32 +1383,42 @@ int NCPointCloud::knnMaxDist(float &max)
     NCPointCloud pc;
     pc.copy(*this);
 
-    // 1 nearest neighbor
+    // compare at least 2 nearest neighbors
     pc.knn(2);
 
     //
-    max = 0;
-    for(long i=0; i<pc.points.size(); i++)
-    {
-        Point p = pc.points[i];
+//    max = 0;
+//    for(long i=0; i<pc.points.size(); i++)
+//    {
+//        Point p = pc.points[i];
 
-        for(long j=0; j<p.nn.size(); j++)
-        {
-            Point q = pc.points[p.nn[j]];
 
-            if(q.isSamePoint(p))
-            {
-                continue;
-            }
-            else
-            {
-                float dist = distance(p,q);
 
-                if(dist > max)
-                    max = dist;
-            }
-        }
-    }
+//        for(long j=0; j<p.nn.size(); j++)
+//        {
+//            Point q = pc.points[p.nn[j]];
+
+//            if(q.isSamePoint(p))
+//            {
+//                continue;
+//            }
+//            else
+//            {
+//                float dist = distance(p,q);
+
+//                if(p.n==173)
+//                {
+//                    cout<<"dist "<<dist<<endl;
+//                }
+
+//                if(dist > max)
+//                    max = dist;
+//            }
+//        }
+//    }
+
+    // adjust searching area
+    max = 5*pc.maxDistNN;
 
     //
     return 0;
@@ -1532,7 +1553,6 @@ int NCPointCloud::mergeLines(float maxAngle)
         // update lines after each merging
         vector<LineSegment> lines;
         resetVisitStatus();
-
 
         //
         for(long i=0; i<npoints; i++)
@@ -2027,6 +2047,19 @@ int NCPointCloud::reverseLineSegment(long idx, long size)
 int NCPointCloud::connectLineSegments(long rooti, long tipj, float angle)
 {
     //
+    if(threshDistNN<0)
+    {
+        knnMaxDist(threshDistNN);
+        threshDistNN *= 2;
+    }
+
+    if(distance(points[rooti], points[tipj])>threshDistNN)
+    {
+        skipConnecting.appendPair(points[rooti], points[tipj]);
+        return -1;
+    }
+
+    //
     if(points[rooti].hasChildren())
     {
         long idx = indexofpoint(points[rooti].children[0]);
@@ -2094,6 +2127,22 @@ int NCPointCloud::append(Point p)
     {
         points.push_back(p);
     }
+
+    //
+    return 0;
+}
+
+// method to publish
+int NCPointCloud::trace()
+{
+    // input: detected points w/ radius info
+    // output: traced neuron trees
+
+    // 1. connect points into lines
+
+    // 2. merge lines
+
+    // 3. connect lines into trees
 
     //
     return 0;

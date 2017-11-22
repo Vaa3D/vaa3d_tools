@@ -193,10 +193,13 @@ public:
     bool isConsidered(unsigned long &index, float m);
 
     // k nearest neighbor search
-    int knn(int k, int radius=0);
+    int knn(int k, float radius=0);
 
     //
     int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
+
+    //
+    int trace();
 
     // cost func
     int minAngle(unsigned long &loc, float maxAngle);
@@ -243,6 +246,7 @@ public:
 public:
     vector<Point> points; // data
     Pairs skipConnecting; // for connecting line segments
+    float maxDistNN, threshDistNN;
 };
 
 class Quadruple

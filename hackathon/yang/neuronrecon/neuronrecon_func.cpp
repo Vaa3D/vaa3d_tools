@@ -978,6 +978,10 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 
         // test
         //adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 3);
+
+        //float threshold;
+        //estimateIntensityThreshold(p4dImage->getRawData(), volsz, threshold);
+
         distanceTransformL2(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim());
 
         //
