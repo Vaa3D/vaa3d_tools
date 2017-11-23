@@ -190,15 +190,21 @@ int adaptiveThresholdMT(unsigned char *&dst, unsigned char *src, int x, int y, i
 int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r)
 {
     //
-    float thresh;
+    cout<<"adaptive searching radius ... "<<r<<endl;
+
+    //
+    float globalthresh, thresh;
     long i,j,k;
-    long ofz, idx;
+    long idx;
 
     long xs, xe, ys, ye, zs, ze;
 
     unsigned char *block = NULL;
     long xb, yb, zb, szblock;
     long ii, jj, kk;
+
+    //
+    estimateIntensityThreshold(src, x*y*z, globalthresh);
 
     //
     for(k=0; k<z; k+=r)
@@ -209,7 +215,7 @@ int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int
         if(ze>z-1)
             ze = z - 1;
 
-        xb = ze - zs;
+        zb = ze - zs;
 
         for(j=0; j<y; j+=r)
         {
@@ -231,53 +237,63 @@ int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int
 
                 xb = xe - xs;
 
-                try
+                //
+                szblock = xb*yb*zb;
+                if(szblock)
                 {
-                    szblock = xb*yb*zb;
-                    block = new unsigned char [szblock];
-
-                    for(kk=zs; kk<ze; kk++)
+                    try
                     {
-                        for(jj=ys; jj<ye; jj++)
+                        block = new unsigned char [szblock];
+
+                        for(kk=zs; kk<ze; kk++)
                         {
-                            for(ii=xs; ii<xe; ii++)
+                            for(jj=ys; jj<ye; jj++)
                             {
-                                block[(kk-zs)*yb*xb + (jj-ys)*xb + (ii-xs)] = src[kk*y*x + jj*x + ii];
+                                for(ii=xs; ii<xe; ii++)
+                                {
+                                    block[(kk-zs)*yb*xb + (jj-ys)*xb + (ii-xs)] = src[kk*y*x + jj*x + ii];
+                                }
                             }
                         }
-                    }
 
-                    estimateIntensityThreshold(block, szblock, thresh);
+                        estimateIntensityThreshold(block, szblock, thresh);
+                        thresh = max(thresh, globalthresh);
 
-                    for(kk=zs; kk<ze; kk++)
-                    {
-                        for(jj=ys; jj<ye; jj++)
+                        for(kk=zs; kk<ze; kk++)
                         {
-                            for(ii=xs; ii<xe; ii++)
+                            for(jj=ys; jj<ye; jj++)
                             {
-                                idx = kk*y*x + jj*x + ii;
-                                if(src[idx]>thresh)
+                                for(ii=xs; ii<xe; ii++)
                                 {
-                                    dst[idx] = src[idx];
+                                    idx = kk*y*x + jj*x + ii;
+                                    if(src[idx]>thresh)
+                                    {
+                                        dst[idx] = src[idx];
+                                    }
                                 }
                             }
                         }
                     }
+                    catch(...)
+                    {
+                        cout<<"fail to alloc memory\n";
+                        return -1;
+                    }
+
+                    if(block)
+                    {
+                        delete []block;
+                        block = NULL;
+                    }
                 }
-                catch(...)
+                else
                 {
-                    cout<<"fail to alloc memory\n";
-                    return -1;
+                    continue;
                 }
 
-                if(block)
-                {
-                    delete []block;
-                    block = NULL;
-                }
-            }
-        }
-    }
+            }// i
+        }// j
+    }// k
 
     //
     return 0;
@@ -362,8 +378,10 @@ int estimateIntensityThreshold(unsigned char *p, long size, float &thresh, int m
                 }
             }
 
-            mub = hlut.lut[ long(sum_bw/sum_b) ];
-            muf = hlut.lut[ long(sum_fw/sum_f) ];
+            if(sum_b)
+                mub = hlut.lut[ long(sum_bw/sum_b) ];
+            if(sum_f)
+                muf = hlut.lut[ long(sum_fw/sum_f) ];
 
             if(y_abs<float>(mub - oldmub)<1 && y_abs<float>(muf - oldmuf)<1)  break;
         }
@@ -371,7 +389,7 @@ int estimateIntensityThreshold(unsigned char *p, long size, float &thresh, int m
         //
         thresh = (mub+muf)/2;
 
-        cout<<"k-means estimates the threshold is ... "<<thresh<<endl;
+        //cout<<"k-means estimates the threshold is ... "<<thresh<<endl;
     }
     else if(method==1)
     {

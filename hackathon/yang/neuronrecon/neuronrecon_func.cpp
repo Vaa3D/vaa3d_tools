@@ -924,12 +924,14 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 
     //parsing input
     char * paras = NULL;
+    int searchingradius = 64;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
         if (paras->size() >= 1)
         {
             // parameters
+            searchingradius = atoi(paras->at(0));
         }
         else
         {
@@ -991,7 +993,7 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 //                p[i] = p1dImg[i];
 //        }
 
-        adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 8);
+        adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), searchingradius);
 
         //
         p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());
