@@ -26,15 +26,15 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->checkBox_4->setEnabled(false);
 	ui->checkBox_5->setEnabled(false);
 	ui->checkBox_6->setEnabled(false);
-	ui->checkBox_11->setEnabled(false);
-	ui->checkBox_12->setEnabled(false);
-	ui->checkBox_13->setEnabled(false);
+	ui->checkBox_11->setEnabled(true);
+	ui->checkBox_12->setEnabled(true);
+	ui->checkBox_13->setEnabled(true);
 
 	procSteps = new QStringListModel(this);
 	procSteps3D = new QStringListModel(this);
 	listViewSteps = new QStandardItemModel(this);
 	listViewSteps3D = new QStandardItemModel(this);
-	this->procItems << "crop" << "Maximum Intensity Projection" << "Central Slice";
+	this->procItems << "Crop" << "Maximum Intensity Projection" << "Central Slice";
 	procSteps->setStringList(this->procItems);
 	procSteps3D->setStringList(this->procItems);
 	ui->comboBox->setModel(procSteps);
@@ -140,12 +140,6 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 		{
 			ui->groupBox_3->setEnabled(true);
 		}
-		else if (checkBoxName == "checkBox_10")
-		{
-			ui->checkBox_11->setEnabled(true);
-			ui->checkBox_12->setEnabled(true);
-			ui->checkBox_13->setEnabled(true);
-		}
 		else if (checkBoxName == "groupBox")
 		{
 			ui->pushButton_8->setEnabled(true);
@@ -170,12 +164,6 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 			ui->checkBox_7->setEnabled(true);
 			ui->checkBox_8->setEnabled(true);
 			ui->checkBox_9->setEnabled(true);
-		}
-		else if (checkBoxName == "checkBox_10")
-		{
-			ui->checkBox_11->setEnabled(false);
-			ui->checkBox_12->setEnabled(false);
-			ui->checkBox_13->setEnabled(false);
 		}
 		else if (checkBoxName == "groupBox")
 		{
@@ -293,7 +281,7 @@ void DatasetGeneratorUI::okClicked()
 		DatasetOperator.taskQueu.push(newTask);
 		DatasetOperator.taskQueuDispatcher();
 	}
-	else if (ui->groupBox_8->isChecked())
+	else if (ui->groupBox_8->isChecked()) // Create cross validation sets.
 	{
 		taskFromUI newTask;
 		newTask.createList = true;
@@ -307,38 +295,33 @@ void DatasetGeneratorUI::okClicked()
 		DatasetOperator.taskQueu.push(newTask);
 		DatasetOperator.taskQueuDispatcher();
 	}
-	else if (ui->checkBox_2->isChecked() && ui->checkBox_10->isChecked()) // Create patches based on neuronstructure file.
+	else if (ui->checkBox_2->isChecked()) // Create patches based on neuronstructure file.
 	{
 		if (!ui->groupBox_6->isChecked() && !ui->groupBox_7->isChecked())
 		{ }
 		
+		bool autoList = false; // Create list for the patches at the same time or not.
+		if (ui->checkBox_14->isChecked()) autoList = true; 
+		else autoList = false; 
+
 		taskFromUI newTask;
 		newTask.createList = false;
 		newTask.source = ui->lineEdit_7->text().toStdString();
 		newTask.outputDirName = ui->lineEdit_8->text().toStdString();
-		if (ui->groupBox_6->isChecked()) newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString();
-		else if (ui->groupBox_7->isChecked())
-		{
-			newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString();
-		}
-		 
-		if (ui->checkBox_14->isChecked()) // Create list for the patches at the same time.
-		{
 
-		}
-		else  // List for the patches will not be created.
+		if (ui->groupBox_6->isChecked()) // single neuron structure file
 		{
-			if (ui->checkBox_4->isChecked()) // From terafly
-			{
-			}
-			else // From non-terafly image stack
+			newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString(); 
+			if (ui->checkBox_4->isChecked()) // from terafly
+			{ }
+			else // from non-terafly image stack
 			{
 				newTask.createPatch = true;
 				newTask.createPatchNList = false;
 				if (ui->groupBox_4->isChecked())
 				{
 					newTask.patchOp = stackTo2D;
-					
+
 					for (int i = 0; i < listViewSteps->rowCount(); ++i)
 					{
 						QStandardItem* thisItem = listViewSteps->item(i);
@@ -356,5 +339,7 @@ void DatasetGeneratorUI::okClicked()
 				}
 			}
 		}
+		else if (ui->groupBox_7->isChecked()) // multiple neuron structure file
+		{ }
 	}
 }

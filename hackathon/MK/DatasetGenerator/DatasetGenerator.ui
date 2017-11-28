@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>964</width>
-    <height>879</height>
+    <height>874</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,6 +30,9 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
      </property>
      <property name="verticalScrollBarPolicy">
       <enum>Qt::ScrollBarAsNeeded</enum>
@@ -122,7 +125,7 @@
         </font>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="iconSize">
         <size>
@@ -149,15 +152,15 @@
           </font>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="page">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>96</width>
-            <height>26</height>
+            <width>621</width>
+            <height>665</height>
            </rect>
           </property>
           <attribute name="label">
@@ -333,25 +336,6 @@
              <string>2D patches</string>
             </property>
            </widget>
-           <widget class="QCheckBox" name="checkBox_10">
-            <property name="geometry">
-             <rect>
-              <x>200</x>
-              <y>30</y>
-              <width>211</width>
-              <height>20</height>
-             </rect>
-            </property>
-            <property name="font">
-             <font>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Based on Neuron Structures</string>
-            </property>
-           </widget>
            <widget class="QCheckBox" name="checkBox_13">
             <property name="geometry">
              <rect>
@@ -476,6 +460,28 @@
               <weight>50</weight>
               <bold>false</bold>
              </font>
+            </property>
+           </widget>
+           <widget class="QLabel" name="label_16">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="geometry">
+             <rect>
+              <x>200</x>
+              <y>30</y>
+              <width>261</width>
+              <height>21</height>
+             </rect>
+            </property>
+            <property name="font">
+             <font>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Choose a neuron structure format below</string>
             </property>
            </widget>
           </widget>
@@ -2061,22 +2067,6 @@
     <hint type="destinationlabel">
      <x>153</x>
      <y>818</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_10</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>DatasetGeneratorUI</receiver>
-   <slot>checkboxToggled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>643</x>
-     <y>113</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>751</x>
-     <y>11</y>
     </hint>
    </hints>
   </connection>

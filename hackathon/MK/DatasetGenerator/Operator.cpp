@@ -200,7 +200,8 @@ void Operator::create2DPatches(patchOpType patchOp)
 		int xRadius = operatingTask.sideX / 2;
 		int yRadius = operatingTask.sideY / 2;
 		int zRadius = operatingTask.sideZ / 2;
-		if (checkFileOrPath.isFile())
+
+		if (checkFileOrPath.isFile()) // single stack/structure operation
 		{
 			unsigned char* ImgPtr = 0;
 			V3DLONG in_sz[4];
@@ -218,6 +219,7 @@ void Operator::create2DPatches(patchOpType patchOp)
 			NeuronTree inputSWC = readSWC_file(swcQStringName);
 			int x_coord, y_coord, z_coord;
 			int xlb, xhb, ylb, yhb, zlb, zhb;
+
 			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
 			{
 				x_coord = it->x;
@@ -229,19 +231,18 @@ void Operator::create2DPatches(patchOpType patchOp)
 				yhb = y_coord + yRadius;
 				zlb = z_coord - zRadius;
 				zhb = z_coord + zRadius;
-				if (xlb < 0) xlb = 0;
-				if (xhb > imgX) xhb = imgX - 1;
-				if (ylb < 0) ylb = 0;
-				if (yhb > imgY) yhb = imgY - 1;
-				if (zlb < 0) zlb = 0;
-				if (zhb > imgZ) zhb = imgZ - 1;
-				//cout << xlb << " " << xhb << " " << ylb << " " << yhb << " " << zlb << " " << zhb << endl;
+				if (xlb < 1) xlb = 1;
+				if (xhb > imgX) xhb = imgX;
+				if (ylb < 1) ylb = 1;
+				if (yhb > imgY) yhb = imgY;
+				if (zlb < 1) zlb = 1;
+				if (zhb > imgZ) zhb = imgZ;
 
-				NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
+				/*NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
 				QString patchSWCFolder = QString::fromStdString(operatingTask.outputDirName) + "/patchSWCs";
 				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
 				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
-				writeSWC_file(outimg_fileSWC, patchSWC); 
+				writeSWC_file(outimg_fileSWC, patchSWC); */
 
 				V3DLONG VOIxyz[4];
 				VOIxyz[0] = xhb - xlb + 1;
@@ -250,18 +251,30 @@ void Operator::create2DPatches(patchOpType patchOp)
 				VOIxyz[3] = channel;
 				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
 				unsigned char* VOIPtr = new unsigned char[VOIsz];
-				int zSlice = int(VOIxyz[2]);
-				crop3DImg(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, zSlice, imgX, imgY, imgZ);
+				V3DLONG OutputArrayi = 0;
+				for (V3DLONG zi = zlb; zi <= zhb; ++zi)
+				{
+					for (V3DLONG yi = ylb; yi <= yhb; ++yi)
+					{
+						for (V3DLONG xi = xlb; xi <= xhb; ++xi)
+						{
+							VOIPtr[OutputArrayi] = ImgPtr[imgX*imgY*(zi - 1) + imgX*(yi - 1) + (xi - 1)];
+							++OutputArrayi;
+						}
+					}
+				}
 				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches";
 				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
 				QString outimg_file	= patchPath + QString("/x%1_y%2_z%3.v3draw").arg(x_coord).arg(y_coord).arg(z_coord);
 				string filename = outimg_file.toStdString();
 				const char* filenameptr = filename.c_str();
 				simple_saveimage_wrapper(*OperatorCallback, filenameptr, VOIPtr, VOIxyz, 1);
-				if (VOIPtr) { delete[]VOIPtr; VOIPtr = 0; }
+				delete[] VOIPtr;
 			}
-			delete ImgPtr;
+			delete[] ImgPtr;
 		}
+		else 
+		{ }
 	}
 }
 
@@ -336,20 +349,4 @@ NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye
 	nt_cut.hashNeuron = hashNeuron;
 
 	return nt_cut;
-}
-
-void Operator::crop3DImg(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
-	int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int z_slice, int imgX, int imgY, int imgZ)
-{
-	V3DLONG ROIsz = (xhb - xlb + 1) * (yhb - ylb + 1);
-	V3DLONG OutputArrayi = ROIsz * (z_slice - zlb);
-	//cout << ROIsz << " " << OutputArrayi << endl;
-	for (V3DLONG yi = ylb; yi <= yhb; ++yi)
-	{
-		for (V3DLONG xi = xlb; xi <= xhb; ++xi)
-		{
-			OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*imgY*(z_slice - 1) + imgX*(yi - 1) + xi];
-			++OutputArrayi;
-		}
-	}
 }
