@@ -38,6 +38,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("lmprocess")
     <<tr("mergelines")
     <<tr("findpeaks")
+      <<tr("trace")
     <<tr("test")
     <<tr("help");
 }
@@ -129,6 +130,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("findpeaks"))
     {
         return findpeaks_func(input, output, callback);
+    }
+    else if (func_name == tr("trace"))
+    {
+        return trace_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {

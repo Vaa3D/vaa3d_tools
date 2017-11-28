@@ -199,6 +199,12 @@ public:
     int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
 
     //
+    int assembleFragments(int k);
+
+    //
+    int tracing(QString infile, QString outfile, int k, float angle, float m, float nn);
+
+    //
     int trace();
 
     // cost func
@@ -217,7 +223,7 @@ public:
     int knnMeanStddevDist(float &mean, float &stddev, int k=2);
 
     //
-    int knnMaxDist(float &max);
+    int knnMaxDist(float &max, int k=2);
 
     //
     int resetVisitStatus();

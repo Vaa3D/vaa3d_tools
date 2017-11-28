@@ -791,7 +791,8 @@ int NCPointCloud::knn(int k, float radius)
             //
             const size_t nMatches = kdtree.radiusSearch(p, static_cast<float>(radius), ret_matches, params);
 
-            cout <<"#"<<points[i].n<< " radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
+            //cout <<"#"<<points[i].n<< " radiusSearch(): radius=" << radius << " -> " << nMatches << " matches\n";
+            points[i].nn.clear();
             for (size_t j = 1; j < nMatches; j++)
             {
                 //cout << "idx["<< j << "]=" << ret_matches[j].first << " dist["<< j << "]=" << ret_matches[j].second << endl;
@@ -809,8 +810,8 @@ int NCPointCloud::knn(int k, float radius)
             //
             size_t num_results = kdtree.knnSearch(p, k, &k_indices[0], &k_distsqr[0]);
 
-            //
             //cout << "knnSearch(): num_results=" << num_results << "\n";
+            points[i].nn.clear();
             for (size_t j = 1; j < num_results; ++j)
             {
                 //cout <<"#"<<points[i].n<<" idx["<< j << "]=" << long(k_indices[j]) << " dist["<< j << "]=" << k_distsqr[j] << endl;
@@ -838,6 +839,164 @@ int NCPointCloud::knn(int k, float radius)
     return 0;
 }
 
+//
+int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, float nn)
+{
+    // load point cloud save as a .apo file
+    QList <CellAPO> inputPoints = readAPO_file(infile);
+
+    long n = inputPoints.size();
+
+    //
+    for(long i=0; i<n; i++)
+    {
+        CellAPO cell = inputPoints[i];
+
+        //
+        Point p;
+
+        p.n = i+1; // # assigned
+        p.x = cell.x;
+        p.y = cell.y;
+        p.z = cell.z;
+        p.radius = 0.5*cell.volsize;
+
+        points.push_back(p);
+    }
+
+    // find k nearest neighbors
+    //float searchingRadius;
+    //knnMaxDist(searchingRadius, nn);
+    knn(k);
+
+    // connect points into lines
+    unsigned long loc;
+    while(findNextUnvisitPoint(loc))
+    {
+        //
+        if(points[loc].visited == false)
+        {
+            points[loc].visited = true;
+            points[loc].parents.push_back(-1);
+        }
+
+        //
+        if(isConsidered(loc, m))
+        {
+            //
+            while(minAngle(loc, angle)>=0)
+            {
+                //cout<<"next point ... "<<loc<<endl;
+            }
+        }
+    }
+
+    // merge lines
+    mergeLines(2*angle);
+
+    // assemble fragments into trees
+    assembleFragments(k);
+
+    // save connected results into a .swc file
+    if(!outfile.isEmpty())
+    {
+        saveNeuronTree(*this, outfile);
+    }
+
+    //
+    return 0;
+}
+
+int NCPointCloud::assembleFragments(int k)
+{
+    // assemble merged lines into trees
+    // connect root/tip point into its shortest neighbor
+
+    //
+    knn(k);
+
+    //
+    resetVisitStatus();
+
+    //
+    bool assembling = true;
+    while(assembling)
+    {
+        assembling = false;
+
+        for(size_t i=0; i<points.size(); i++)
+        {
+            Point p = points[i];
+
+            if(p.parents[0]==-1)
+            {
+                if(points[i].visited)
+                {
+                    continue;
+                }
+                else
+                {
+                    points[i].visited = true;
+                }
+
+                // root
+                for(size_t j=1; j<p.nn.size(); j++)
+                {
+                    Point q = points[p.nn[j]];
+
+                    if(q.isSamePoint(p))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        points[i].parents[0] = q.n;
+                        points[p.nn[j]].children.push_back(p.n); // > 2?
+                        assembling = true;
+                        break;
+                    }
+                }
+            }
+            else if(!p.hasChildren())
+            {
+                if(points[i].visited)
+                {
+                    continue;
+                }
+                else
+                {
+                    points[i].visited = true;
+                }
+
+                // tip
+                for(size_t j=1; j<p.nn.size(); j++)
+                {
+                    Point q = points[p.nn[j]];
+
+                    if(q.isSamePoint(p))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if(q.parents[0]==-1)
+                        {
+                            points[p.nn[j]].parents[0] = p.n;
+                            points[i].children.push_back(q.n);
+                            assembling = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //
+    return 0;
+}
+
+//
 int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m)
 {
     // load point cloud save as a .apo file
@@ -962,7 +1121,6 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
                     next_next = p_next.nn[j];
                 }
             }
-
         }
 
         //
@@ -1006,7 +1164,7 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
             float angle = getAngle(p_pre, p, p_next);
 
-            if(angle<maxAngle && angle<minAngle)
+            if(angle<minAngle)
             {
                 minAngle = angle;
                 next = p.nn[i];
@@ -1028,7 +1186,6 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
             return 0;
         }
-
     }
 
     //
@@ -1145,31 +1302,17 @@ bool NCPointCloud::isConsidered(unsigned long &index, float m)
                     points[index].parents.push_back(-1);
                     return false;
                 }
-
-                if(p1.next!=-1)
-                {
-                    Point p1_next = points[p1.next];
-
-                    if(distPoint2LineSegment(p1, p1_next, p) <= thresh)
-                    {
-                        points[index].visited = true;
-                        points[index].parents.push_back(-1);
-                        return false;
-                    }
-                }
             }
-            else
-            {
-                if(p1.next!=-1)
-                {
-                    Point p1_next = points[p1.next];
 
-                    if(distPoint2LineSegment(p1, p1_next, p) <= thresh)
-                    {
-                        points[index].visited = true;
-                        points[index].parents.push_back(-1);
-                        return false;
-                    }
+            if(p1.next!=-1)
+            {
+                Point p1_next = points[p1.next];
+
+                if(distPoint2LineSegment(p1, p1_next, p) <= thresh)
+                {
+                    points[index].visited = true;
+                    points[index].parents.push_back(-1);
+                    return false;
                 }
             }
         }
@@ -1322,6 +1465,9 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
     }
 
     //
+    resetVisitStatus();
+
+    //
     return 0;
 }
 
@@ -1377,47 +1523,16 @@ int NCPointCloud::knnMeanStddevDist(float &mean, float &stddev, int k)
     return 0;
 }
 
-int NCPointCloud::knnMaxDist(float &max)
+int NCPointCloud::knnMaxDist(float &max, int k)
 {
     //
     NCPointCloud pc;
     pc.copy(*this);
 
     // compare at least 2 nearest neighbors
-    pc.knn(2);
+    pc.knn(k);
 
-    //
-//    max = 0;
-//    for(long i=0; i<pc.points.size(); i++)
-//    {
-//        Point p = pc.points[i];
-
-
-
-//        for(long j=0; j<p.nn.size(); j++)
-//        {
-//            Point q = pc.points[p.nn[j]];
-
-//            if(q.isSamePoint(p))
-//            {
-//                continue;
-//            }
-//            else
-//            {
-//                float dist = distance(p,q);
-
-//                if(p.n==173)
-//                {
-//                    cout<<"dist "<<dist<<endl;
-//                }
-
-//                if(dist > max)
-//                    max = dist;
-//            }
-//        }
-//    }
-
-    // adjust searching area
+    // adjust searching area 5x
     max = 5*pc.maxDistNN;
 
     //
@@ -1546,7 +1661,7 @@ int NCPointCloud::mergeLines(float maxAngle)
 
     //
     while(merging)
-    {https://github.com/kerautret/CDCVAM.git
+    {
         //
         merging = false;
 
@@ -1646,7 +1761,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     if(j==i)
                         continue;
 
-                    //cout<<"line j:"<<j<<endl;https://github.com/kerautret/CDCVAM.git
+                    //cout<<"line j:"<<j<<endl;
 
                     lsj = lines[j];
 
@@ -1655,7 +1770,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     //                        cout<<"not considering ... \n";
                     //                        continue;
                     //                    }
-                    //                    cout<<"further computing ... \n";https://github.com/kerautret/CDCVAM.git
+                    //                    cout<<"further computing ... \n";
 
                     // comparing line #i and #j
                     float angle = lsi.angle(lsj);

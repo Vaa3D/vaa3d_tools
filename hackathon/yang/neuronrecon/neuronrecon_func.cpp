@@ -750,6 +750,76 @@ bool connectpointstolines_func(const V3DPluginArgList & input, V3DPluginArgList 
     return true;
 }
 
+bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1)
+    {
+        cout<<"Need at least one input and one output filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int k=6;
+    float m = 3;
+    float nn = 3;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            maxAngle = atof(paras->at(0));
+            cout<<"threshold(angle): "<<maxAngle<<endl;
+
+            if (paras->size() >= 2)
+            {
+                k = atoi(paras->at(1));
+                cout<<"k(nn): "<<k<<endl;
+
+                if (paras->size() >= 3)
+                {
+                    m = atof(paras->at(2));
+                    cout<<"dist(p2lc): "<<m<<endl;
+
+                    if (paras->size() >= 4)
+                    {
+                        nn = atof(paras->at(3));
+                        cout<<"nn: "<<nn<<endl;
+                    }
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    // load
+    NCPointCloud pointcloud;
+    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, nn);
+
+    //
+    return true;
+}
+
 bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //
@@ -858,10 +928,13 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 bool mergelines_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     // load linetraced.swc output a mergedlines.swc
-    if(input.size()==0 || output.size() != 1) return false;
+    if(input.size()==0 || output.size() != 1)
+    {
+        cout<<"Please specify one input and one output\n";
+        return false;
+    }
 
     //parsing input
-    char * paras = NULL;
     float maxAngle = 0.942;
     if (input.size()==2)
     {
@@ -1229,13 +1302,23 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     }
 
     //parsing input
-    char * paras = NULL;
+    float athresh = 0.75;
+    float aradius = 0.75;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
         if (paras->size() >= 1)
         {
             // parameters
+            athresh = atof(paras->at(0));
+            cout<<"threshold relax parameter (0.75 by default): "<<athresh<<endl;
+
+            if (paras->size() >= 2)
+            {
+                aradius = atof(paras->at(1));
+                cout<<"radius relax parameter (0.75 by default): "<<aradius<<endl;
+            }
+
         }
         else
         {
@@ -1315,7 +1398,7 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
         float threshold;
         //estimateIntensityThreshold(p1dImg, volsz, threshold, 1);
         estimateIntensityThreshold(p1dImg, volsz, threshold);
-
+        threshold *= athresh;
         cout<<"threshold ... "<<threshold<<endl;
 
         //
@@ -1346,7 +1429,7 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                         continue;
 
                     Point p;
-                    p.radius = dt[idx];
+                    p.radius = aradius*dt[idx];
                     bool skip = false;
                     for(nn=0; nn<26; nn++)
                     {
@@ -1375,14 +1458,6 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
         //
         pointcloud.delDuplicatedPoints();
-
-        // add radius
-        for(int i=0; i<pointcloud.points.size(); i++)
-        {
-            long idx = pointcloud.points[i].z*dimy*dimx + pointcloud.points[i].y*dimx + pointcloud.points[i].x;
-
-            pointcloud.points[i].radius = dt[idx];
-        }
     }
     else
     {
