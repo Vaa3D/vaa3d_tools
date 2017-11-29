@@ -219,7 +219,7 @@ void Operator::create2DPatches(patchOpType patchOp)
 			NeuronTree inputSWC = readSWC_file(swcQStringName);
 			int x_coord, y_coord, z_coord;
 			int xlb, xhb, ylb, yhb, zlb, zhb;
-
+			
 			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
 			{
 				x_coord = it->x;
@@ -242,7 +242,7 @@ void Operator::create2DPatches(patchOpType patchOp)
 				QString patchSWCFolder = QString::fromStdString(operatingTask.outputDirName) + "/patchSWCs";
 				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
 				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
-				writeSWC_file(outimg_fileSWC, patchSWC); */
+				writeSWC_file(outimg_fileSWC, patchSWC);*/ 
 
 				V3DLONG VOIxyz[4];
 				VOIxyz[0] = xhb - xlb + 1;
@@ -251,18 +251,21 @@ void Operator::create2DPatches(patchOpType patchOp)
 				VOIxyz[3] = channel;
 				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
 				unsigned char* VOIPtr = new unsigned char[VOIsz];
-				V3DLONG OutputArrayi = 0;
-				for (V3DLONG zi = zlb; zi <= zhb; ++zi)
+
+				for (vector<opSequence>::iterator seqIt = operatingTask.opSeq.begin(); seqIt != operatingTask.opSeq.end(); ++seqIt)
 				{
-					for (V3DLONG yi = ylb; yi <= yhb; ++yi)
+					switch (*seqIt)
 					{
-						for (V3DLONG xi = xlb; xi <= xhb; ++xi)
-						{
-							VOIPtr[OutputArrayi] = ImgPtr[imgX*imgY*(zi - 1) + imgX*(yi - 1) + (xi - 1)];
-							++OutputArrayi;
-						}
+						case Crop:
+							cropStack(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, imgX, imgY, imgZ);
+						case MIP:
+
+							break;
 					}
 				}
+
+				
+		
 				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches";
 				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
 				QString outimg_file	= patchPath + QString("/x%1_y%2_z%3.v3draw").arg(x_coord).arg(y_coord).arg(z_coord);
@@ -276,6 +279,57 @@ void Operator::create2DPatches(patchOpType patchOp)
 		else 
 		{ }
 	}
+}
+
+void Operator::cropStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+	int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ)
+{
+	V3DLONG OutputArrayi = 0;
+	for (V3DLONG zi = zlb; zi <= zhb; ++zi)
+	{
+		for (V3DLONG yi = ylb; yi <= yhb; ++yi)
+		{
+			for (V3DLONG xi = xlb; xi <= xhb; ++xi)
+			{
+				OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*imgY*(zi - 1) + imgX*(yi - 1) + (xi - 1)];
+				++OutputArrayi;
+			}
+		}
+	}
+}
+
+NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type)
+{
+	//NeutronTree structure
+	NeuronTree nt_cut;
+	QList<NeuronSWC> listNeuron;
+	QHash<int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+
+	//set node
+	QList<NeuronSWC> list = nt.listNeuron;
+	NeuronSWC S;
+	for (int i = 0; i<list.size(); i++)
+	{
+		NeuronSWC curr = list.at(i);
+		if (curr.x <= xe && curr.x >= xb && curr.y <= ye && curr.y >= yb && curr.z <= ze && curr.z >= zb && (type == -1 || curr.type == type))
+		{
+			S.x = curr.x - xb;
+			S.y = curr.y - yb;
+			S.z = curr.z - zb;
+			S.n = curr.n;
+			S.type = curr.type;
+			S.r = curr.r;
+			S.pn = curr.pn;
+			listNeuron.append(S);
+			hashNeuron.insert(S.n, listNeuron.size() - 1);
+		}
+	}
+	nt_cut.listNeuron = listNeuron;
+	nt_cut.hashNeuron = hashNeuron;
+
+	return nt_cut;
 }
 
 void Operator::getImageFolders()
@@ -315,38 +369,4 @@ void Operator::getImageFolders()
 		}
 	}
 	closedir(dir);
-}
-
-NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type)
-{
-	//NeutronTree structure
-	NeuronTree nt_cut;
-	QList<NeuronSWC> listNeuron;
-	QHash<int, int>  hashNeuron;
-	listNeuron.clear();
-	hashNeuron.clear();
-
-	//set node
-	QList<NeuronSWC> list = nt.listNeuron;
-	NeuronSWC S;
-	for (int i = 0; i<list.size(); i++)
-	{
-		NeuronSWC curr = list.at(i);
-		if (curr.x <= xe && curr.x >= xb && curr.y <= ye && curr.y >= yb && curr.z <= ze && curr.z >= zb && (type == -1 || curr.type == type))
-		{
-			S.x = curr.x - xb;
-			S.y = curr.y - yb;
-			S.z = curr.z - zb;
-			S.n = curr.n;
-			S.type = curr.type;
-			S.r = curr.r;
-			S.pn = curr.pn;
-			listNeuron.append(S);
-			hashNeuron.insert(S.n, listNeuron.size() - 1);
-		}
-	}
-	nt_cut.listNeuron = listNeuron;
-	nt_cut.hashNeuron = hashNeuron;
-
-	return nt_cut;
 }

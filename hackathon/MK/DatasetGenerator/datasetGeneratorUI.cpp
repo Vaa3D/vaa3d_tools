@@ -325,7 +325,8 @@ void DatasetGeneratorUI::okClicked()
 					for (int i = 0; i < listViewSteps->rowCount(); ++i)
 					{
 						QStandardItem* thisItem = listViewSteps->item(i);
-						newTask.opSequence.push_back(thisItem->text());
+						if (thisItem->text() == "Crop") newTask.opSeq.push_back(Crop);
+						else if (thisItem->text() == "Maximum Intensity Projection") newTask.opSeq.push_back(MIP);
 					}
 					if (ui->checkBox_7->isChecked()) newTask.dimSelection = xy;
 					else if (ui->checkBox_8->isChecked()) newTask.dimSelection = yz;

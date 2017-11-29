@@ -11,6 +11,7 @@ using namespace std;
 enum listOpType { newList, merge, divide, subset, crossVal };
 enum patchOpType { stackTo3D, stackTo2D, teraTo3D, teraTo2D, patch3DTo3D, patch3DTo2D, patch2DTo2D };
 enum dim2D { xy, xz, yz };
+enum opSequence { Crop, MIP };
 
 struct taskFromUI
 {
@@ -24,7 +25,7 @@ struct taskFromUI
 	int classNum;
 
 	patchOpType patchOp;
-	QStringList opSequence;
+	vector<opSequence> opSeq;
 	dim2D dimSelection;
 	int sideX, sideY, sideZ;
 
@@ -56,7 +57,8 @@ public:
 	void createListFromList(listOpType listOp);
 
 	NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type);
-
+	void cropStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+		int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
 
 	void create2DPatches(patchOpType patchOp);
 
