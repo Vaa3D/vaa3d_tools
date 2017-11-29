@@ -220,6 +220,24 @@ void Operator::create2DPatches(patchOpType patchOp)
 			int x_coord, y_coord, z_coord;
 			int xlb, xhb, ylb, yhb, zlb, zhb;
 			
+			// ------------------------- Create function pointer sequence 
+			vector<opPtr> opFuncSeq;
+			opPtr currOpPtr = NULL;	
+			for (vector<opSequence>::iterator seqIt = operatingTask.opSeq.begin(); seqIt != operatingTask.opSeq.end(); ++seqIt)
+			{
+				switch (*seqIt)
+				{
+				case Crop:
+					currOpPtr = &Operator::cropStack;
+					opFuncSeq.push_back(currOpPtr);
+					currOpPtr = NULL;
+				case MIP:
+
+					break;
+				}
+			}
+			// ---------------------------------------------------------
+			
 			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
 			{
 				x_coord = it->x;
@@ -252,19 +270,10 @@ void Operator::create2DPatches(patchOpType patchOp)
 				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
 				unsigned char* VOIPtr = new unsigned char[VOIsz];
 
-				for (vector<opSequence>::iterator seqIt = operatingTask.opSeq.begin(); seqIt != operatingTask.opSeq.end(); ++seqIt)
+				for (vector<opPtr>::iterator opIt = opFuncSeq.begin(); opIt != opFuncSeq.end(); ++opIt)
 				{
-					switch (*seqIt)
-					{
-						case Crop:
-							cropStack(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, imgX, imgY, imgZ);
-						case MIP:
-
-							break;
-					}
+					(this->**opIt)(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, imgX, imgY, imgZ);
 				}
-
-				
 		
 				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches";
 				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);

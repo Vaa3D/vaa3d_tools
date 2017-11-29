@@ -68,6 +68,9 @@ private:
 	V3DPluginCallback2* OperatorCallback;
 	queue<taskFromUI> taskQueu;
 	taskFromUI operatingTask;
+
+	typedef void (Operator::* opPtr)(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+		int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
 };
 
 
