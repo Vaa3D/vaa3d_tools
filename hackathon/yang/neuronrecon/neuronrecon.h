@@ -116,6 +116,7 @@ public:
     bool isSoma; // is the point the soma
     int nLine; // # of the line
     bool isolated; // not connected to other point(s)
+    bool isNoise;
 };
 
 typedef pair<Point, Point> PointPairType;
@@ -199,6 +200,12 @@ public:
     int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
 
     //
+    int connectPoints(int k, float maxAngle, float m);
+
+    //
+    int removeNoise();
+
+    //
     int assembleFragments(int k);
 
     //
@@ -236,6 +243,9 @@ public:
 
     //
     int append(Point p);
+
+    //
+    bool allendpointvisited();
 
     //
     Point pplusv(Point *p, Vector *v);
