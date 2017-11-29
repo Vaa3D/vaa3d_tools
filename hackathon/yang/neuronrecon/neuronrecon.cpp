@@ -966,7 +966,8 @@ int NCPointCloud::assembleFragments(int k)
 
             if(p.parents[0]==-1)
             {
-                if(points[i].visited)
+                // root
+                if(p.visited)
                 {
                     continue;
                 }
@@ -975,26 +976,82 @@ int NCPointCloud::assembleFragments(int k)
                     points[i].visited = true;
                 }
 
-                // root
+                //
+                Point pchild, pn, pchildn;
+                long pnidx, pchildnidx, pchildidx;
+                pchild = p;
+                while(pchild.hasChildren())
+                {
+                    pchildidx = indexofpoint(p.children[0]);
+                    pchild = points[indexofpoint(p.children[0])];
+                }
+
+                //
+                float distP, distC;
                 for(size_t j=1; j<p.nn.size(); j++)
                 {
-                    Point q = points[p.nn[j]];
+                    pnidx = p.nn[j];
+                    pn = points[pnidx];
 
-                    if(q.isSamePoint(p))
+                    if(pn.isSamePoint(p))
                     {
                         continue;
                     }
-                    else if(distance(p,q)<5*p.radius)
+                    else
                     {
-                        points[i].parents[0] = q.n;
-                        points[p.nn[j]].children.push_back(p.n); // > 2?
+                        distP = distance(p,pn);
                         break;
                     }
                 }
+
+                if(!pchild.isSamePoint(p))
+                {
+                    for(size_t j=1; j<pchild.nn.size(); j++)
+                    {
+                        pchildnidx = pchild.nn[j];
+                        pchildn = points[pchildnidx];
+
+                        if(pchildn.isSamePoint(pchild))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            distC = distance(pchild,pchildn);
+                            break;
+                        }
+                    }
+
+                    if(distC<distP)
+                    {
+                        if(points[pchildnidx].parents[0]==-1)
+                        {
+                            points[pchildnidx].parents[0] = pchild.n;
+                            points[pchildidx].children.push_back(points[pchildnidx].n);
+
+                        }
+                        else
+                        {
+                            // reverse
+                        }
+                    }
+                    else
+                    {
+                        points[i].parents[0] = pn.n;
+                        points[pnidx].children.push_back(p.n);
+                    }
+                }
+                else
+                {
+                    points[i].parents[0] = pn.n;
+                    points[pnidx].children.push_back(p.n);
+                }
+
             }
             else if(!p.hasChildren())
             {
-                if(points[i].visited)
+                // tip
+                if(p.visited)
                 {
                     continue;
                 }
@@ -1003,28 +1060,64 @@ int NCPointCloud::assembleFragments(int k)
                     points[i].visited = true;
                 }
 
-                // tip
+                //
+                Point pparent, pn, pparentn;
+                long pnidx, pparentnidx, pparentidx;
+                pparent = p;
+                while(pparent.parents[0]!=-1)
+                {
+                    pparentidx = indexofpoint(p.parents[0]);
+                    pparent = points[pparentidx];
+                }
+
+                //
+                float distP, distC;
                 for(size_t j=1; j<p.nn.size(); j++)
                 {
-                    Point q = points[p.nn[j]];
+                    pn = points[p.nn[j]];
 
-                    if(q.isSamePoint(p))
+                    if(pn.isSamePoint(p))
                     {
                         continue;
                     }
-                    else if(distance(p,q)<5*p.radius)
+                    else
                     {
-                        if(q.parents[0]==-1)
-                        {
-                            points[p.nn[j]].parents[0] = p.n;
-                            points[i].children.push_back(q.n);
-                            break;
-                        }
-                        else
-                        {
-
-                        }
+                        distC = distance(p, pn);
                     }
+                }
+
+                for(size_t j=1; j<pparent.nn.size(); j++)
+                {
+                    pparentnidx = pparent.nn[j];
+                    pparentn = points[pparentidx];
+
+                    if(pparentn.isSamePoint(pparent))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        distP = distance(pparent,pparentn);
+                        break;
+                    }
+                }
+
+                if(distC<distP)
+                {
+                    if(pn.parents[0]==-1)
+                    {
+
+                    }
+                    else
+                    {
+                        // reverse
+                    }
+
+                }
+                else
+                {
+                    points[pparentidx].parents[0] = pparentn.n;
+                    points[pparentnidx].children.push_back(pparent.n);
                 }
             }
         }
@@ -1195,9 +1288,6 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
             }
         }
     }
-
-
-
 
     //
     return 0;
