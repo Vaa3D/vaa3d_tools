@@ -253,14 +253,13 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
        // if(reconstruction_func_v2(callback,parent,PARA,bmenu) == 1)
        // {
-        QElapsedTimer timer1;
-        timer1.start();
-
+//        QElapsedTimer timer1;
+//        timer1.start();
         reconstruction_func_v2(callback,parent,PARA,bmenu);
-        qint64 etime1 = timer1.elapsed();
+//        qint64 etime1 = timer1.elapsed();
 
-        QDir imagefolderDir = QDir(QFileInfo(PARA.inimg_file).absoluteDir());
-        QString time_text =  imagefolderDir.absolutePath() + "/time.txt";
+//        QDir imagefolderDir = QDir(QFileInfo(PARA.inimg_file).absoluteDir());
+//        QString time_text =  imagefolderDir.absolutePath() + "/time.txt";
         QString output;
         if(PARA.outswc_file != "")
             output = PARA.outswc_file;
@@ -268,16 +267,16 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             output = PARA.inimg_file + "_GD_curveline_v2.swc";
         export_list2file(PARA.nt.listNeuron, output,output);
 
-        QFile saveTextFile;
-        saveTextFile.setFileName(time_text);
-        if (!saveTextFile.isOpen()){
-            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
-                qDebug()<<"unable to save file!";
-                return false;}     }
-        QTextStream outputStream;
-        outputStream.setDevice(&saveTextFile);
-        outputStream<< PARA.inimg_file.toStdString().c_str()<<"\t"<< etime1<<"\n";
-        saveTextFile.close();
+//        QFile saveTextFile;
+//        saveTextFile.setFileName(time_text);
+//        if (!saveTextFile.isOpen()){
+//            if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+//                qDebug()<<"unable to save file!";
+//                return false;}     }
+//        QTextStream outputStream;
+//        outputStream.setDevice(&saveTextFile);
+//        outputStream<< PARA.inimg_file.toStdString().c_str()<<"\t"<< etime1<<"\n";
+//        saveTextFile.close();
 
 
 
@@ -1872,11 +1871,11 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
     }
     else
     {
-        unsigned char* data1d_full = 0;
-        V3DLONG in_sz_full[4];
+//        unsigned char* data1d_full = 0;
+//        V3DLONG in_sz_full[4];
 
         int datatype = 0;
-        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d_full, in_sz_full, datatype))
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
         {
             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
             return -1;
@@ -1887,29 +1886,29 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             return -1;
         }
 
-        in_sz[0] = PARA.xc1 - PARA.xc0;
-        in_sz[1] = PARA.yc1 - PARA.yc0;
-        in_sz[2] = PARA.zc1 - PARA.zc0;
-        in_sz[3] = 1;
+//        in_sz[0] = PARA.xc1 - PARA.xc0;
+//        in_sz[1] = PARA.yc1 - PARA.yc0;
+//        in_sz[2] = PARA.zc1 - PARA.zc0;
+//        in_sz[3] = 1;
 
-        V3DLONG stacksz =in_sz[0]*in_sz[1]*in_sz[2];
-        data1d = new unsigned char [stacksz];
-        V3DLONG i = 0;
-        for(V3DLONG iz = PARA.zc0; iz < PARA.zc1; iz++)
-        {
-            V3DLONG offsetk = iz*in_sz_full[0]*in_sz_full[1];
-            for(V3DLONG iy = PARA.yc0; iy < PARA.yc1; iy++)
-            {
-                V3DLONG offsetj = iy*in_sz_full[0];
-                for(V3DLONG ix = PARA.xc0; ix < PARA.xc1; ix++)
-                {
-                    data1d[i] = data1d_full[ offsetk + offsetj + ix];
-                    i++;
-                }
-            }
-        }
+//        V3DLONG stacksz =in_sz[0]*in_sz[1]*in_sz[2];
+//        data1d = new unsigned char [stacksz];
+//        V3DLONG i = 0;
+//        for(V3DLONG iz = PARA.zc0; iz < PARA.zc1; iz++)
+//        {
+//            V3DLONG offsetk = iz*in_sz_full[0]*in_sz_full[1];
+//            for(V3DLONG iy = PARA.yc0; iy < PARA.yc1; iy++)
+//            {
+//                V3DLONG offsetj = iy*in_sz_full[0];
+//                for(V3DLONG ix = PARA.xc0; ix < PARA.xc1; ix++)
+//                {
+//                    data1d[i] = data1d_full[ offsetk + offsetj + ix];
+//                    i++;
+//                }
+//            }
+//        }
 
-        if(data1d_full) {delete []data1d_full; data1d_full = 0;}
+//        if(data1d_full) {delete []data1d_full; data1d_full = 0;}
         N = in_sz[0];
         M = in_sz[1];
         P = in_sz[2];
@@ -2110,7 +2109,7 @@ int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_
             V3DLONG  ix = nt_seg[j].x;
             V3DLONG  iy = nt_seg[j].y;
             V3DLONG  iz = nt_seg[j].z;
-            seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 0*overall_std); //was 5 *overall_std
+            seg_intensity += data1d[iz*in_sz[0]*in_sz[1]+ iy *in_sz[0] + ix] - (overall_mean + 5*overall_std); //was 5 *overall_std
             if(j >=7 && j<nt_seg.size()-7)
             {
                 seg_angle = angle(nt_seg[j], nt_seg[j-7], nt_seg[j+7]);

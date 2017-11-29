@@ -735,6 +735,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
         P.seed_win = (paras.size() >= k+1) ? atoi(paras[k]) : 32; k++;
         P.swcfilename = (paras.size() >= k+1) ? paras[k] : ""; k++;
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.method = gd;
