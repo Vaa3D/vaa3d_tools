@@ -1696,7 +1696,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         }
                         else
                             tips_th = p2.p4dImage->getXDim()*100/512;
-                        p2.bkg_thresh = -1;//P.bkg_thresh;
+                       // p2.bkg_thresh = -1;//P.bkg_thresh;
+                        double imgAve, imgStd;
+                        mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
+                        double td= (imgStd<10)? 10: imgStd;
+                        p2.bkg_thresh = imgAve +0.7*td ;
+
                         p2.landmarks.push_back(RootNewLocation);
 
                        // if(P.global_name && ifs_swc)
@@ -6397,7 +6402,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 
             //call GD
             P.markerfilename = tip_marker_name;
-            P.block_size = 168;
+            P.block_size = 64;
             P.seed_win = 32;
             P.swcfilename = tip_swc_name;
             P.method = gd;
