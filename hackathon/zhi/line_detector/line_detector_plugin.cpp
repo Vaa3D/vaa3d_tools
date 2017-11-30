@@ -265,6 +265,7 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             output = PARA.outswc_file;
         else
             output = PARA.inimg_file + "_GD_curveline_v2.swc";
+
         export_list2file(PARA.nt.listNeuron, output,output);
 
 //        QFile saveTextFile;
@@ -277,9 +278,6 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 //        outputStream.setDevice(&saveTextFile);
 //        outputStream<< PARA.inimg_file.toStdString().c_str()<<"\t"<< etime1<<"\n";
 //        saveTextFile.close();
-
-
-
         //}else
 
     }else if (func_name == tr("mip_swc"))
