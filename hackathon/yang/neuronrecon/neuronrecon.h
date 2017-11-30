@@ -237,12 +237,19 @@ public:
 
     //
     int reverseLineSegment(long idx, long size);
+    int reverseLineSegment(long idx);
+
+    //
+    int endpoints();
 
     //
     int connectLineSegments(long rooti, long tipj, float angle);
 
     //
     int append(Point p);
+
+    //
+    bool checkloop(Point p, Point q);
 
     //
     bool allendpointvisited();

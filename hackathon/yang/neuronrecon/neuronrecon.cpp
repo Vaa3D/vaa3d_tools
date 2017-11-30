@@ -921,6 +921,33 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
 }
 
 //
+int NCPointCloud::endpoints()
+{
+    //
+    int n=0;
+
+    //
+    for(size_t i=0; i<points.size(); i++)
+    {
+        Point p = points[i];
+
+        if(p.parents[0]==-1 || !p.hasChildren())
+        {
+            if(points[i].visited)
+            {
+                continue;
+            }
+            else
+            {
+                n++;
+            }
+        }
+    }
+
+    return n;
+}
+
+//
 bool NCPointCloud::allendpointvisited()
 {
     //
@@ -936,6 +963,7 @@ bool NCPointCloud::allendpointvisited()
             }
             else
             {
+                cout<<"unvisited endpoint "<<i<<endl;
                 return false;
             }
         }
@@ -945,183 +973,324 @@ bool NCPointCloud::allendpointvisited()
     return true;
 }
 
+//
+bool NCPointCloud::checkloop(Point p, Point q)
+{
+    // check possible loop if connect p to q
+
+    // parent
+    Point pcheck = p;
+    long iter = 0;
+    while(pcheck.parents[0]!=-1)
+    {
+        if(pcheck.parents[0]==q.n || (++iter>1 && pcheck.isSamePoint(p)))
+        {
+            return true;
+        }
+        pcheck = points[indexofpoint(pcheck.parents[0])];
+        cout<<"... "<<iter<<" p "<<pcheck.parents[0]<<" index "<<indexofpoint(pcheck.parents[0])<<" n "<<pcheck.n<<endl;
+    }
+
+    // children
+    pcheck = q;
+    iter = 0;
+    while(pcheck.hasChildren())
+    {
+        if(pcheck.children[0]==p.n || (++iter>1 && pcheck.isSamePoint(q)))
+        {
+            return true;
+        }
+        pcheck = points[indexofpoint(pcheck.children[0])];
+        cout<<"... "<<iter<<" c "<<pcheck.children[0]<<endl;
+    }
+
+    //
+    return false;
+}
+
 int NCPointCloud::assembleFragments(int k)
 {
     // assemble lines into trees
     // connect root/tip point into its shortest neighbor
 
+    float adist = 5;
+
     //
     knn(k);
 
     //
-    resetVisitStatus();
-
-    //
-    while(!allendpointvisited())
+    long maxiteration = 10;
+    for(long iter=0; iter<maxiteration; iter++)
     {
         //
-        for(size_t i=0; i<points.size(); i++)
+        resetVisitStatus();
+
+        //
+        int ncurendpoints, npreendpoints;
+
+        npreendpoints = endpoints();
+
+        //
+        while(!allendpointvisited())
         {
-            Point p = points[i];
-
-            if(p.parents[0]==-1)
+            if(ncurendpoints==npreendpoints)
             {
-                // root
-                if(p.visited)
-                {
-                    continue;
-                }
-                else
-                {
-                    points[i].visited = true;
-                }
+                cout<<"done assembling \n";
+                break;
+            }
+            npreendpoints = ncurendpoints;
 
-                //
-                Point pchild, pn, pchildn;
-                long pnidx, pchildnidx, pchildidx;
-                pchild = p;
-                while(pchild.hasChildren())
-                {
-                    pchildidx = indexofpoint(p.children[0]);
-                    pchild = points[indexofpoint(p.children[0])];
-                }
+            //
+            for(size_t i=0; i<points.size(); i++)
+            {
+                Point p = points[i];
 
-                //
-                float distP, distC;
-                for(size_t j=1; j<p.nn.size(); j++)
+                if(p.parents[0]==-1)
                 {
-                    pnidx = p.nn[j];
-                    pn = points[pnidx];
+                    cout<<"test ... root "<<i<<endl;
 
-                    if(pn.isSamePoint(p))
+                    // root
+                    if(p.visited)
                     {
                         continue;
                     }
                     else
                     {
-                        distP = distance(p,pn);
-                        break;
+                        points[i].visited = true;
                     }
-                }
 
-                if(!pchild.isSamePoint(p))
-                {
-                    for(size_t j=1; j<pchild.nn.size(); j++)
+                    //
+                    Point pchild, pn, pchildn;
+                    long pnidx, pchildnidx, pchildidx;
+                    pchild = p;
+                    while(pchild.hasChildren())
                     {
-                        pchildnidx = pchild.nn[j];
-                        pchildn = points[pchildnidx];
+                        pchildidx = indexofpoint(pchild.children[0]);
+                        pchild = points[pchildidx];
+                    }
 
-                        if(pchildn.isSamePoint(pchild))
+                    //
+                    float distP=-1, distC=-1;
+                    for(size_t j=1; j<p.nn.size(); j++)
+                    {
+                        pnidx = p.nn[j];
+                        pn = points[pnidx];
+
+                        if(pn.isSamePoint(p))
                         {
                             continue;
                         }
                         else
                         {
-                            distC = distance(pchild,pchildn);
+                            distP = distance(p,pn);
+                            break;
+                        }
+                    }
+
+                    if(!pchild.isSamePoint(p))
+                    {
+                        for(size_t j=1; j<pchild.nn.size(); j++)
+                        {
+                            pchildnidx = pchild.nn[j];
+                            pchildn = points[pchildnidx];
+
+                            if(pchildn.isSamePoint(pchild))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                distC = distance(pchild,pchildn);
+                                break;
+                            }
+                        }
+
+                        // connect
+                        if(distC<distP && distC>0)
+                        {
+                            if(distC > adist*points[pchildnidx].radius)
+                            {
+                                continue;
+                            }
+
+                            //
+                            if(points[pchildnidx].parents[0]==-1)
+                            {
+                                points[pchildnidx].visited = true;
+                                points[i].visited = false;
+
+                                //
+                                if(!checkloop(pchild, points[pchildnidx]))
+                                {
+                                    cout<<"connect "<<points[pchildnidx].n<<" -> "<<pchild.n<<endl;
+
+                                    points[pchildnidx].parents[0] = pchild.n;
+                                    points[pchildidx].children.push_back(points[pchildnidx].n);
+                                }
+                            }
+                            else
+                            {
+                                // reverse
+                                cout<<"need reverse \n";
+                                reverseLineSegment(i);
+
+                                if(!checkloop(points[pchildnidx], pchild))
+                                {
+                                    cout<<"connect "<<pchild.n<<" -> "<<points[pchildnidx].n<<endl;
+
+                                    points[pchildidx].parents[0] = points[pchildnidx].n;
+                                    points[pchildnidx].children.push_back(pchild.n);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(distP > adist*points[i].radius)
+                            {
+                                continue;
+                            }
+
+                            if(!checkloop(pn, p) && distP>0)
+                            {
+                                cout<<"connect "<<p.n<<" -> "<<pn.n<<endl;
+
+                                points[i].parents[0] = pn.n;
+                                points[pnidx].children.push_back(p.n);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(!checkloop(pn, p))
+                        {
+                            cout<<"connect "<<p.n<<" -> "<<pn.n<<endl;
+
+                            points[i].parents[0] = pn.n;
+                            points[pnidx].children.push_back(p.n);
+                        }
+                    }
+
+                }
+                else if(!p.hasChildren())
+                {
+                    cout<<"test ... tip "<<i<<endl;
+
+                    // tip
+                    if(p.visited)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        points[i].visited = true;
+                    }
+
+                    //
+                    Point pparent, pn, pparentn;
+                    long pnidx, pparentnidx, pparentidx;
+                    pparent = p;
+                    while(pparent.parents[0]!=-1)
+                    {
+                        pparentidx = indexofpoint(pparent.parents[0]);
+                        pparent = points[pparentidx];
+                    }
+
+                    //
+                    float distP=-1, distC=-1;
+                    for(size_t j=1; j<p.nn.size(); j++)
+                    {
+                        pnidx = p.nn[j];
+                        pn = points[pnidx];
+
+                        if(pn.isSamePoint(p))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            distC = distance(p, pn);
+                        }
+                    }
+
+                    for(size_t j=1; j<pparent.nn.size(); j++)
+                    {
+                        pparentnidx = pparent.nn[j];
+                        pparentn = points[pparentidx];
+
+                        if(pparentn.isSamePoint(pparent))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            distP = distance(pparent,pparentn);
                             break;
                         }
                     }
 
                     if(distC<distP)
                     {
-                        if(points[pchildnidx].parents[0]==-1)
+                        if(distC > adist*points[pnidx].radius)
                         {
-                            points[pchildnidx].parents[0] = pchild.n;
-                            points[pchildidx].children.push_back(points[pchildnidx].n);
+                            continue;
+                        }
+
+                        //
+                        if(pn.parents[0]==-1)
+                        {
+                            points[pnidx].visited = true;
+
+                            //
+                            if(!checkloop(p,pn) && distC>0)
+                            {
+                                cout<<"connect "<<points[pnidx].n<<" -> "<<p.n<<endl;
+
+                                points[pnidx].parents[0] = p.n;
+                                points[i].children.push_back(pn.n);
+                            }
 
                         }
                         else
                         {
                             // reverse
+                            cout<<"need reverse \n";
+                            reverseLineSegment(i);
+
+                            if(!checkloop(pn, p))
+                            {
+                                cout<<"connect "<<p.n<<" -> "<<points[pnidx].n<<endl;
+
+                                points[i].parents[0] = points[pnidx].n;
+                                points[pnidx].children.push_back(p.n);
+                            }
                         }
                     }
                     else
                     {
-                        points[i].parents[0] = pn.n;
-                        points[pnidx].children.push_back(p.n);
+                        points[pparentidx].visited = true;
+
+                        if(distP > adist*points[pparentidx].radius)
+                        {
+                            continue;
+                        }
+
+                        //
+                        if(!checkloop(pparentn, pparent) && distP>0)
+                        {
+                            cout<<"connect "<<points[pparentidx].n<<" -> "<<pparentn.n<<endl;
+
+                            points[pparentidx].parents[0] = pparentn.n;
+                            points[pparentnidx].children.push_back(pparent.n);
+                        }
                     }
-                }
-                else
-                {
-                    points[i].parents[0] = pn.n;
-                    points[pnidx].children.push_back(p.n);
-                }
-
-            }
-            else if(!p.hasChildren())
-            {
-                // tip
-                if(p.visited)
-                {
-                    continue;
-                }
-                else
-                {
-                    points[i].visited = true;
-                }
-
-                //
-                Point pparent, pn, pparentn;
-                long pnidx, pparentnidx, pparentidx;
-                pparent = p;
-                while(pparent.parents[0]!=-1)
-                {
-                    pparentidx = indexofpoint(p.parents[0]);
-                    pparent = points[pparentidx];
-                }
-
-                //
-                float distP, distC;
-                for(size_t j=1; j<p.nn.size(); j++)
-                {
-                    pn = points[p.nn[j]];
-
-                    if(pn.isSamePoint(p))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        distC = distance(p, pn);
-                    }
-                }
-
-                for(size_t j=1; j<pparent.nn.size(); j++)
-                {
-                    pparentnidx = pparent.nn[j];
-                    pparentn = points[pparentidx];
-
-                    if(pparentn.isSamePoint(pparent))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        distP = distance(pparent,pparentn);
-                        break;
-                    }
-                }
-
-                if(distC<distP)
-                {
-                    if(pn.parents[0]==-1)
-                    {
-
-                    }
-                    else
-                    {
-                        // reverse
-                    }
-
-                }
-                else
-                {
-                    points[pparentidx].parents[0] = pparentn.n;
-                    points[pparentnidx].children.push_back(pparent.n);
                 }
             }
-        }
-    }
+
+            //
+            ncurendpoints = endpoints();
+        }// while
+
+    }// iter
 
     //
     return 0;
@@ -2423,6 +2592,68 @@ int NCPointCloud::reverseLineSegment(long idx, long size)
     }
     else
     {
+        idxcur = idx;
+    }
+
+    //
+    ncur = points[idxcur].n;
+    ncurparent = points[idxcur].parents[0];
+
+    points[idxcur].parents[0] = -1;
+    points[idxcur].children.push_back(ncurparent);
+
+    //
+    while(n>0)
+    {
+        n--;
+
+        idxcur = indexofpoint(ncurparent);
+
+        nparent = ncurparent;
+        ncurparent = points[idxcur].parents[0];
+        points[idxcur].parents[0] = ncur;
+        points[idxcur].children[0] = ncurparent;
+        ncur = nparent;
+    }
+
+    //
+    if(points[idxcur].hasChildren())
+    {
+        if(points[idxcur].children[0]==-1)
+            points[idxcur].children.clear();
+    }
+
+    //
+    return 0;
+}
+
+int NCPointCloud::reverseLineSegment(long idx)
+{
+    //
+    long idxcur;
+    long ncur, ncurparent;
+    long nparent;
+    long n = 0;
+
+    // tip point
+    if(points[idx].parents[0]==-1)
+    {
+        idxcur = idx;
+        while(points[idxcur].hasChildren())
+        {
+            idxcur = indexofpoint(points[idxcur].children[0]);
+            ++n;
+        }
+    }
+    else
+    {
+        long idxtest = idx;
+        while(points[idxtest].parents[0]!=-1)
+        {
+            idxtest = indexofpoint(points[idxtest].parents[0]);
+            ++n;
+        }
+
         idxcur = idx;
     }
 
