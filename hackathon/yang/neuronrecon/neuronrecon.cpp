@@ -1013,14 +1013,14 @@ int NCPointCloud::assembleFragments(int k)
     // assemble lines into trees
     // connect root/tip point into its shortest neighbor
 
-    float adist = 5;
+    float adist = 1;
 
     //
     knn(k);
 
     //
     long maxiteration = 10;
-    for(long iter=0; iter<maxiteration; iter++)
+    for(long iter=0; iter<maxiteration; iter++,adist++)
     {
         //
         resetVisitStatus();
@@ -1161,6 +1161,11 @@ int NCPointCloud::assembleFragments(int k)
                     }
                     else
                     {
+                        if(distP > adist*points[i].radius)
+                        {
+                            continue;
+                        }
+
                         if(!checkloop(pn, p))
                         {
                             cout<<"connect "<<p.n<<" -> "<<pn.n<<endl;
@@ -2682,7 +2687,10 @@ int NCPointCloud::reverseLineSegment(long idx)
     if(points[idxcur].hasChildren())
     {
         if(points[idxcur].children[0]==-1)
+        {
+            cout<<"test reverse func "<<idxcur<<" = "<<idx<<endl;
             points[idxcur].children.clear();
+        }
     }
 
     //
