@@ -237,10 +237,12 @@ void Operator::create2DPatches(patchOpType patchOp)
 					currOpPtr = &Operator::cropStack;
 					opFuncSeq.push_back(currOpPtr);
 					currOpPtr = NULL;
+					break;
 				case MIP:
 					currOpPtr = &Operator::maxIPStack;
 					opFuncSeq.push_back(currOpPtr);
 					currOpPtr = NULL;
+					break;
 				case mIP:
 					currOpPtr = &Operator::minIPStack;
 					opFuncSeq.push_back(currOpPtr);
@@ -384,11 +386,11 @@ void Operator::create3DPatches(patchOpType patchOp)
 				if (zlb < 1) zlb = 1;
 				if (zhb > imgZ) zhb = imgZ;
 
-				NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
+				/*NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
 				QString patchSWCFolder = QString::fromStdString(operatingTask.outputDirName) + "/patchSWCs";
 				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
 				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
-				writeSWC_file(outimg_fileSWC, patchSWC);
+				writeSWC_file(outimg_fileSWC, patchSWC);*/
 
 				V3DLONG VOIxyz[4];
 				VOIxyz[0] = xhb - xlb + 1;

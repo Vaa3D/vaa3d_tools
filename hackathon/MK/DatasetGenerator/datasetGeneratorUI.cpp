@@ -39,7 +39,7 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	procSteps->setStringList(this->procItems2D);
 	procSteps3D->setStringList(this->procItems3D);
 	ui->comboBox->setModel(procSteps);
-	ui->comboBox_2->setModel(procSteps);
+	ui->comboBox_2->setModel(procSteps3D);
 	ui->listView->setModel(listViewSteps);
 	ui->listView_2->setModel(listViewSteps3D);
 	ui->lineEdit_20->setText("0.1");
@@ -344,9 +344,9 @@ void DatasetGeneratorUI::okClicked()
 				{
 					newTask.patchOp = stackTo3D;
 
-					for (int i = 0; i < listViewSteps->rowCount(); ++i)
+					for (int i = 0; i < listViewSteps3D->rowCount(); ++i)
 					{
-						QStandardItem* thisItem = listViewSteps->item(i);
+						QStandardItem* thisItem = listViewSteps3D->item(i);
 						if (thisItem->text() == "Crop") newTask.opSeq.push_back(Crop);
 					}
 					newTask.sideX = ui->lineEdit_13->text().toInt();
