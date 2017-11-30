@@ -56,17 +56,7 @@ bool DatasetGenerator::dofunc(const QString & func_name, const V3DPluginArgList 
 
 	if (func_name == tr("pickup"))
 	{
-		this->inputSWCdir = infiles.at(0);
-		this->inputImagedir = infiles.at(1);
-		//this->inputBkgDir = infiles.at(2);
-		//this->outputImagedir = outfiles.at(0);
-
-		getImageFolders();
-		//pick_save();
-		//createList();
-		//createList2();
-
-		shapeFilter_line_dot();
+	
 	}
 	else if (func_name == tr("func2"))
 	{

@@ -60,9 +60,9 @@ void Operator::createListFromList(listOpType listOp)
 {
 	if (listOp == subset)
 	{
-		ifstream inputFile_forSize(operatingTask.source);
-		ifstream inputFile(operatingTask.source);
-		ofstream outputFile(operatingTask.outputFileName);
+		ifstream inputFile_forSize(operatingTask.source.c_str());
+		ifstream inputFile(operatingTask.source.c_str());
+		ofstream outputFile(operatingTask.outputFileName.c_str());
 
 		string tempLine;
 		double lineCount;
@@ -82,7 +82,9 @@ void Operator::createListFromList(listOpType listOp)
 			string streamedLine;
 			while (lineStream >> streamedLine) lineSplit.push_back(streamedLine);
 			
-			int currLabel = stoi(*(lineSplit.end() - 1));
+			int currLabel;
+			string currLabelStr = *(lineSplit.end() - 1);
+			istringstream(currLabelStr) >> currLabel;
 			if (currLabel == classLabel)
 			{
 				wholeLines.push_back(line);
@@ -135,12 +137,12 @@ void Operator::createListFromList(listOpType listOp)
 	}
 	else if (listOp == crossVal)
 	{
-		ifstream inputFile(operatingTask.source);
+		ifstream inputFile(operatingTask.source.c_str());
 
 		string line;
 		vector<string> lineSplit;
 		int classLabel = 0;
-		vector<vector<string>> allLinesByClass;
+		vector<vector<string> > allLinesByClass;
 		vector<string> classLines;
 		while (getline(inputFile, line))
 		{
@@ -148,7 +150,9 @@ void Operator::createListFromList(listOpType listOp)
 			string streamedLine;
 			while (lineStream >> streamedLine) lineSplit.push_back(streamedLine);
 
-			int currLabel = stoi(*(lineSplit.end() - 1));
+			int currLabel;
+			string currLabelStr = *(lineSplit.end() - 1);
+			istringstream(currLabelStr) >> currLabel;
 			if (currLabel == classLabel)
 			{
 				classLines.push_back(line);
@@ -166,11 +170,13 @@ void Operator::createListFromList(listOpType listOp)
 
 		for (int i = 0; i < operatingTask.foldNum; ++i)
 		{
-			string num = to_string(i + 1);
+			string num; 
+			int currNum = i + 1;
+			ostringstream(num) << currNum;
 			string trainFileName = operatingTask.outputDirName + "/train_" + num + ".txt";
 			string valFileName = operatingTask.outputDirName + "/val_" + num + ".txt";
-			ofstream outTrain(trainFileName);
-			ofstream outVal(valFileName);
+			ofstream outTrain(trainFileName.c_str());
+			ofstream outVal(valFileName.c_str());
 
 			for (int j = 0; j < allLinesByClass.size(); ++j)
 			{
@@ -471,7 +477,7 @@ void Operator::maxIPStack(unsigned char InputImagePtr[], unsigned char inputVOIP
 					short int curValue = inputVOIPtr[xDim*yDim*zi + xDim*yi + xi];
 					if (curValue > maxVal) maxVal = curValue;
 				}
-				OutputImage2DPtr[xDim*yi + xi] = unsigned char(maxVal);
+				OutputImage2DPtr[xDim*yi + xi] = (unsigned char)(maxVal);
 			}
 		}
 	}
@@ -496,7 +502,7 @@ void Operator::minIPStack(unsigned char InputImagePtr[], unsigned char inputVOIP
 					short int curValue = inputVOIPtr[xDim*yDim*zi + xDim*yi + xi];
 					if (curValue < minVal) minVal = curValue;
 				}
-				OutputImage2DPtr[xDim*yi + xi] = unsigned char(minVal);
+				OutputImage2DPtr[xDim*yi + xi] = (unsigned char)(minVal);
 			}
 		}
 	}
