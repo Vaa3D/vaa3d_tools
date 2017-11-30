@@ -25,7 +25,8 @@ public:
 
 	Operator DatasetOperator;
 
-	QStringList procItems;
+	QStringList procItems2D;
+	QStringList procItems3D;
 	QStringList selectedProcItems;
 
 public slots:

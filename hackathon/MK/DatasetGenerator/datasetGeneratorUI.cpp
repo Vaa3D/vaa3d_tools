@@ -34,9 +34,10 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	procSteps3D = new QStringListModel(this);
 	listViewSteps = new QStandardItemModel(this);
 	listViewSteps3D = new QStandardItemModel(this);
-	this->procItems << "Crop" << "Maximum Intensity Projection" << "Central Slice";
-	procSteps->setStringList(this->procItems);
-	procSteps3D->setStringList(this->procItems);
+	this->procItems2D << "Crop" << "Maximum Intensity Projection" << "Minimum Intensity Projection";
+	this->procItems3D << "Crop";
+	procSteps->setStringList(this->procItems2D);
+	procSteps3D->setStringList(this->procItems3D);
 	ui->comboBox->setModel(procSteps);
 	ui->comboBox_2->setModel(procSteps);
 	ui->listView->setModel(listViewSteps);
@@ -327,6 +328,7 @@ void DatasetGeneratorUI::okClicked()
 						QStandardItem* thisItem = listViewSteps->item(i);
 						if (thisItem->text() == "Crop") newTask.opSeq.push_back(Crop);
 						else if (thisItem->text() == "Maximum Intensity Projection") newTask.opSeq.push_back(MIP);
+						else if (thisItem->text() == "Minimum Intensity Projection") newTask.opSeq.push_back(mIP);
 					}
 					if (ui->checkBox_7->isChecked()) newTask.dimSelection = xy;
 					else if (ui->checkBox_8->isChecked()) newTask.dimSelection = yz;
@@ -334,6 +336,22 @@ void DatasetGeneratorUI::okClicked()
 					newTask.sideX = ui->lineEdit_9->text().toInt();
 					newTask.sideY = ui->lineEdit_10->text().toInt();
 					newTask.sideZ = ui->lineEdit_11->text().toInt();
+
+					DatasetOperator.taskQueu.push(newTask);
+					DatasetOperator.taskQueuDispatcher();
+				}
+				else if (ui->groupBox_3->isChecked())
+				{
+					newTask.patchOp = stackTo3D;
+
+					for (int i = 0; i < listViewSteps->rowCount(); ++i)
+					{
+						QStandardItem* thisItem = listViewSteps->item(i);
+						if (thisItem->text() == "Crop") newTask.opSeq.push_back(Crop);
+					}
+					newTask.sideX = ui->lineEdit_13->text().toInt();
+					newTask.sideY = ui->lineEdit_12->text().toInt();
+					newTask.sideZ = ui->lineEdit_14->text().toInt();
 
 					DatasetOperator.taskQueu.push(newTask);
 					DatasetOperator.taskQueuDispatcher();

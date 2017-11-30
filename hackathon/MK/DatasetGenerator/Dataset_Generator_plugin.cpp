@@ -18,8 +18,7 @@ Q_EXPORT_PLUGIN2(Dataset_Generator, DatasetGenerator);
 QStringList DatasetGenerator::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+		<<tr("Start Dataset Generator")
 		<<tr("about");
 }
 
@@ -33,17 +32,13 @@ QStringList DatasetGenerator::funclist() const
 
 void DatasetGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("Start Dataset Generator"))
 	{
 		DatasetGeneratorUI* inputForm = new DatasetGeneratorUI(0, &callback);
 		inputForm->exec();
 		inputForm->~DatasetGeneratorUI();
 
 		return;
-	}
-	else if (menu_name == tr("menu2"))
-	{
-		v3d_msg("To be implemented.");
 	}
 	else
 	{

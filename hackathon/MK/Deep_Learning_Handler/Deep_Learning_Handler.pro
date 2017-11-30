@@ -8,6 +8,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 HEADERS	+= Deep_Learning_Handler_plugin.h
 SOURCES	+= Deep_Learning_Handler_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES += funcs.cpp
 
 TARGET	= $$qtLibraryTarget(Deep_Learning_Handler)
 DESTDIR	= $$VAA3DPATH/bin/plugins/Deep_Learning_Handler/
