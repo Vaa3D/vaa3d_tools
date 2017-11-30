@@ -59,6 +59,8 @@ public:
 	NeuronTree cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type);
 	void cropStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
 		int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
+	void mipStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+		int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
 
 	void create2DPatches(patchOpType patchOp);
 

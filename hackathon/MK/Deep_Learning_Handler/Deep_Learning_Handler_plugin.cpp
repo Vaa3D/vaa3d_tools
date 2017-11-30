@@ -7,6 +7,8 @@
 #include <vector>
 #include "Deep_Learning_Handler_plugin.h"
 #include <iostream>
+#include <qfileinfo.h>
+#include <qdir.h>>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Deep_Learning_Handler, DL_Handler);
@@ -54,6 +56,10 @@ bool DL_Handler::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if (func_name == tr("imageCrop4CaffePredict"))
 	{
 		string outputDir = infiles.at(1);
+        QString patchPath = QString::fromStdString(outputDir) + "/patches";
+        if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
+        QString swcPath = QString::fromStdString(outputDir) + "/SWCs";
+        if (!QDir(swcPath).exists()) QDir().mkpath(swcPath);
 		unsigned char* ImgPtr = 0;
 		V3DLONG in_sz[4];
 		int datatype;
@@ -67,14 +73,6 @@ bool DL_Handler::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 		int imgZ = in_sz[2];
 		int channel = in_sz[3];
 
-		V3DLONG VOIxyz[4];
-		VOIxyz[0] = 256;
-		VOIxyz[1] = 256;
-		VOIxyz[2] = imgZ;
-		VOIxyz[3] = channel;
-		V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
-		unsigned char* VOIPtr = new unsigned char[VOIsz];
-
 		int i_incres = imgX / 256;
 		int j_incres = imgY / 256;
 		int zlb = 1;
@@ -83,19 +81,46 @@ bool DL_Handler::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 		{
 			for (int i = 0; i < i_incres; ++i)
 			{
+                V3DLONG VOIxyz[4];
+                VOIxyz[0] = 256;
+                VOIxyz[1] = 256;
+                VOIxyz[2] = imgZ;
+                VOIxyz[3] = channel;
+                V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
+                unsigned char* VOIPtr = new unsigned char[VOIsz];
 				int xlb = 256 * i + 1;
 				int xhb = 256 * (i + 1);
 				int ylb = 256 * j + 1;
 				int yhb = 256 * (j + 1);
 				this->cropStack(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, 1, zhb, imgX, imgY, imgZ);
-				QString patchPath = QString::fromStdString(outputDir) + "/patches";
-				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
-				QString outimg_file = patchPath + QString("/x%1_y%2.v3draw").arg(xlb).arg(ylb);
+                QString outimg_file = patchPath + QString("/x%1_y%2.v3draw").arg(xlb-1).arg(ylb-1);
 				string filename = outimg_file.toStdString();
 				const char* filenameptr = filename.c_str();
-				simple_saveimage_wrapper(callback, filenameptr, VOIPtr, VOIxyz, 1);
+                simple_saveimage_wrapper(callback, filenameptr, VOIPtr, VOIxyz, 1);
+                delete [] VOIPtr;
 			}
 		}
+
+        QString m_InputfolderName = patchPath;
+        QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
+        for (QStringList::iterator imgIt=imgList.begin(); imgIt!=imgList.end(); ++imgIt)
+        {
+            QStringList imgNameparse = (*imgIt).split("/");
+            QString name1 = *(imgNameparse.end()-1);
+            QStringList name1parse = name1.split(".");
+            QString name = name1parse[0];
+            QString indiSWCPath = swcPath + "/" + name;
+            if (!QDir(indiSWCPath).exists()) QDir().mkpath(indiSWCPath);
+            string fileFullName = (*imgIt).toStdString();
+            string command = "vaa3d -x prediction_caffe -f 3D_Axon_detection_raw -i ";
+            command = command + fileFullName + " -p /local2/MK/DL_work/IVSCC/ModelComparison/AlexNet_6layers_all/deploy.prototxt " +
+                    "/local2/MK/DL_work/IVSCC/ModelComparison/AlexNet_6layers_all/caffenet_train_iter_240000.caffemodel " +
+                    "/local2/MK/DL_work/IVSCC/ModelComparison/AlexNet_6layers_all/imagenet_mean.binaryproto 4 128 -o " +
+                    indiSWCPath.toStdString() + "/traced.swc";
+            const char* command_cStr = command.c_str();
+
+            system(command_cStr);
+        }
 
 		return true;
 	}

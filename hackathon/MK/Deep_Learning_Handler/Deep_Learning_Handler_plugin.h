@@ -25,6 +25,8 @@ public:
 
 	void cropStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
 		int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
+
+    QStringList importSeriesFileList_addnumbersort(const QString & curFilePath);
 };
 
 #endif

@@ -270,10 +270,9 @@ void Operator::create2DPatches(patchOpType patchOp)
 				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
 				unsigned char* VOIPtr = new unsigned char[VOIsz];
 
-				for (vector<opPtr>::iterator opIt = opFuncSeq.begin(); opIt != opFuncSeq.end(); ++opIt)
-				{
+				for (vector<opPtr>::iterator opIt = opFuncSeq.begin(); opIt != opFuncSeq.end(); ++opIt) 
 					(this->**opIt)(ImgPtr, VOIPtr, xlb, xhb, ylb, yhb, zlb, zhb, imgX, imgY, imgZ);
-				}
+				
 		
 				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches";
 				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
@@ -305,6 +304,20 @@ void Operator::cropStack(unsigned char InputImagePtr[], unsigned char OutputImag
 			}
 		}
 	}
+}
+
+void Operator::mipStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
+	int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ)
+{
+	V3DLONG OutputArrayi = 0;
+	for (V3DLONG yi = ylb; yi <= yhb; ++yi)
+	{
+		for (V3DLONG xi = xlb; xi <= xhb; ++xi)
+		{
+
+		}
+	}
+
 }
 
 NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type)
