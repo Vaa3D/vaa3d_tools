@@ -1933,6 +1933,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         overlap_ratio = 0.05;
 
     QList<NeuronSWC> list = nt.listNeuron;
+    if(list.size()<3) return true;
     for (V3DLONG i=0;i<list.size();i++)
     {
         if (childs[i].size()==0 || P.method != gd)

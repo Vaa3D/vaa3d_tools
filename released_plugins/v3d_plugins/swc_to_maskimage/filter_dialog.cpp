@@ -264,6 +264,8 @@ void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLO
         xs = p_cur->x;
         ys = p_cur->y;
         zs = p_cur->z;
+        if(xs<0 || ys<0 || zs<0)
+            continue;
         rs = p_cur->r+margin;//margin added by PHC 20170531
 
         double ballx0, ballx1, bally0, bally1, ballz0, ballz1, tmpf;
