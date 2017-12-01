@@ -9,9 +9,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>973</width>
+    <width>965</width>
     <height>881</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>980</width>
+    <height>890</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dataset Generator</string>
@@ -1165,8 +1171,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>96</width>
-            <height>26</height>
+            <width>621</width>
+            <height>665</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1374,8 +1380,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>96</width>
-            <height>26</height>
+            <width>98</width>
+            <height>28</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1492,8 +1498,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>96</width>
-            <height>26</height>
+            <width>611</width>
+            <height>665</height>
            </rect>
           </property>
           <attribute name="label">
