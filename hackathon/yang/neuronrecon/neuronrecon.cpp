@@ -416,7 +416,7 @@ int NCPointCloud::savePointCloud(QString filename)
 int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
 {
     // isolated points
-    pc.isolatedPoints();
+    //pc.isolatedPoints();
 
     //
     NeuronTree nt;
@@ -908,7 +908,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     // mergeLines(angle);
 
     // assemble fragments into trees
-    assembleFragments(k);
+    //assembleFragments(k);
 
     // save connected results into a .swc file
     if(!outfile.isEmpty())
@@ -1491,14 +1491,18 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
         points.push_back(p);
     }
 
+    //
+    removeNoise();
+
     // find k nearest neighbors
     //    float mean, stddev;
     //    knnMeanStddevDist(mean, stddev, k);
     //    knn(k, mean);
 
-    float searchingRadius;
-    knnMaxDist(searchingRadius);
-    knn(k, searchingRadius);
+//    float searchingRadius;
+//    knnMaxDist(searchingRadius);
+//    knn(k, searchingRadius);
+    knn(k);
 
     // connect points into lines
     unsigned long loc;
