@@ -50,10 +50,11 @@ signals:
 	void progressBarReporter(QString taskName, int percentage);
 
 public:
-	void taskQueuDispatcher();
+	void taskQueuDispatcher(); // The task queue sent from UI is handled here. This method addresses each individual task accordingly.
 
 	void createListFromList(listOpType listOp);
 
+	// ------------------- Patches generation ----------------------- 
 	void create2DPatches(patchOpType patchOp);
 	void create3DPatches(patchOpType patchOp);
 
@@ -70,6 +71,7 @@ public:
 		int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
 
 	VirtualVolume* teraStack;
+	// --------------------------------------------------------------
 
 	QString inputSWCdir;
 	QString inputImagedir;

@@ -32,7 +32,7 @@ public slots:
 	void checkboxToggled(bool);
 	void exclusiveToggle(bool);
 	void associativeToggle(bool);
-	void preprocessingEdit();
+	void preprocessingEdit(); // This method handles the 2 boxes for planning patch preparation.
 	void okClicked();
 
 private:

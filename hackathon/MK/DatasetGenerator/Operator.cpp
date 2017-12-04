@@ -80,7 +80,7 @@ void Operator::taskQueuDispatcher()
 
 void Operator::createListFromList(listOpType listOp)
 {
-	if (listOp == subset)
+	if (listOp == subset) // Create a subset list out of a given list.
 	{
 		ifstream inputFile_forSize(operatingTask.source.c_str());
 		ifstream inputFile(operatingTask.source.c_str());
@@ -155,7 +155,7 @@ void Operator::createListFromList(listOpType listOp)
 		inputFile.close();
 		outputFile.close();
 	}
-	else if (listOp == crossVal)
+	else if (listOp == crossVal) // Create cross validation lists set with given fold number.
 	{
 		ifstream inputFile(operatingTask.source.c_str());
 
