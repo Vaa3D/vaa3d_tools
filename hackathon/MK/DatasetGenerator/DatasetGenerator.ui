@@ -9,14 +9,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>965</width>
-    <height>881</height>
+    <width>1034</width>
+    <height>872</height>
    </rect>
   </property>
   <property name="maximumSize">
    <size>
-    <width>980</width>
-    <height>890</height>
+    <width>1050</width>
+    <height>880</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -54,8 +54,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>938</width>
-        <height>848</height>
+        <width>1002</width>
+        <height>840</height>
        </rect>
       </property>
       <widget class="QWidget" name="widget" native="true">
@@ -77,7 +77,7 @@
       <widget class="QPushButton" name="pushButton_11">
        <property name="geometry">
         <rect>
-         <x>720</x>
+         <x>790</x>
          <y>800</y>
          <width>93</width>
          <height>31</height>
@@ -99,7 +99,7 @@
         <rect>
          <x>11</x>
          <y>11</y>
-         <width>256</width>
+         <width>331</width>
          <height>521</height>
         </rect>
        </property>
@@ -112,11 +112,14 @@
        <property name="mouseTracking">
         <bool>false</bool>
        </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
       </widget>
       <widget class="QTabWidget" name="tabWidget">
        <property name="geometry">
         <rect>
-         <x>274</x>
+         <x>350</x>
          <y>11</y>
          <width>641</width>
          <height>781</height>
@@ -146,7 +149,7 @@
         <widget class="QToolBox" name="toolBox">
          <property name="geometry">
           <rect>
-           <x>11</x>
+           <x>10</x>
            <y>11</y>
            <width>621</width>
            <height>731</height>
@@ -1380,8 +1383,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>28</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1813,7 +1816,7 @@
       <widget class="QProgressBar" name="progressBar">
        <property name="geometry">
         <rect>
-         <x>280</x>
+         <x>350</x>
          <y>800</y>
          <width>431</width>
          <height>31</height>
@@ -1844,7 +1847,7 @@
       <widget class="QPushButton" name="pushButton_13">
        <property name="geometry">
         <rect>
-         <x>820</x>
+         <x>890</x>
          <y>800</y>
          <width>93</width>
          <height>31</height>

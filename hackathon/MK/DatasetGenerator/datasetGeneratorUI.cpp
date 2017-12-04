@@ -280,9 +280,8 @@ void DatasetGeneratorUI::okClicked()
 		newTask.listOp = subset;
 		
 		DatasetOperator.taskQueu.push(newTask);
-		DatasetOperator.taskQueuDispatcher();
 	}
-	else if (ui->groupBox_8->isChecked()) // Create cross validation sets.
+	if (ui->groupBox_8->isChecked()) // Create cross validation sets.
 	{
 		taskFromUI newTask;
 		newTask.createList = true;
@@ -294,27 +293,68 @@ void DatasetGeneratorUI::okClicked()
 		newTask.listOp = crossVal;
 
 		DatasetOperator.taskQueu.push(newTask);
-		DatasetOperator.taskQueuDispatcher();
 	}
-	else if (ui->checkBox_2->isChecked()) // Create patches based on neuronstructure file.
+
+	/* ======================= Create patches based on neuronstructure file ======================= */
+	if (ui->checkBox_2->isChecked()) 
 	{
 		if (!ui->groupBox_6->isChecked() && !ui->groupBox_7->isChecked())
 		{ }
 		
-		bool autoList = false; // Create list for the patches at the same time or not.
+		// -- Determine if data lists are going to be created at the same time or not --
+		bool autoList = false;
 		if (ui->checkBox_14->isChecked()) autoList = true; 
 		else autoList = false; 
+		// -----------------------------------------------------------------------------
 
-		taskFromUI newTask;
-		newTask.createList = false;
-		newTask.source = ui->lineEdit_7->text().toStdString();
-		newTask.outputDirName = ui->lineEdit_8->text().toStdString();
-
-		if (ui->groupBox_6->isChecked()) // single neuron structure file
+		if (ui->groupBox_6->isChecked()) // single neuron structure file => single image stack or terafly
 		{
+			taskFromUI newTask;
+			newTask.createList = false;
+			newTask.source = ui->lineEdit_7->text().toStdString();
+			newTask.outputDirName = ui->lineEdit_8->text().toStdString();
+
 			newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString(); 
 			if (ui->checkBox_4->isChecked()) // from terafly
-			{ }
+			{
+				newTask.createPatch = true;
+				newTask.createPatchNList = false;
+				if (ui->groupBox_4->isChecked())
+				{
+					newTask.patchOp = teraTo2D;
+
+					for (int i = 0; i < listViewSteps->rowCount(); ++i)
+					{
+						QStandardItem* thisItem = listViewSteps->item(i);
+						if (thisItem->text() == "Crop") newTask.opSeq.push_back(Crop);
+						else if (thisItem->text() == "Maximum Intensity Projection") newTask.opSeq.push_back(MIP);
+						else if (thisItem->text() == "Minimum Intensity Projection") newTask.opSeq.push_back(mIP);
+					}
+					if (ui->checkBox_7->isChecked()) newTask.dimSelection = xy;
+					else if (ui->checkBox_8->isChecked()) newTask.dimSelection = yz;
+					else if (ui->checkBox_9->isChecked()) newTask.dimSelection = xz;
+					newTask.sideX = ui->lineEdit_9->text().toInt();
+					newTask.sideY = ui->lineEdit_10->text().toInt();
+					newTask.sideZ = ui->lineEdit_11->text().toInt();
+
+					DatasetOperator.taskQueu.push(newTask);
+				}
+				else if (ui->groupBox_3->isChecked())
+				{
+					newTask.patchOp = teraTo3D;
+
+					for (int i = 0; i < listViewSteps3D->rowCount(); ++i)
+					{
+						QStandardItem* thisItem = listViewSteps3D->item(i);
+						if (thisItem->text() == "Crop") newTask.opSeq.push_back(Crop);
+					}
+					newTask.sideX = ui->lineEdit_13->text().toInt();
+					newTask.sideY = ui->lineEdit_12->text().toInt();
+					newTask.sideZ = ui->lineEdit_14->text().toInt();
+
+					DatasetOperator.taskQueu.push(newTask);
+				}
+			}
 			else // from non-terafly image stack
 			{
 				newTask.createPatch = true;
@@ -338,7 +378,6 @@ void DatasetGeneratorUI::okClicked()
 					newTask.sideZ = ui->lineEdit_11->text().toInt();
 
 					DatasetOperator.taskQueu.push(newTask);
-					DatasetOperator.taskQueuDispatcher();
 				}
 				else if (ui->groupBox_3->isChecked())
 				{
@@ -354,11 +393,13 @@ void DatasetGeneratorUI::okClicked()
 					newTask.sideZ = ui->lineEdit_14->text().toInt();
 
 					DatasetOperator.taskQueu.push(newTask);
-					DatasetOperator.taskQueuDispatcher();
 				}
 			}
 		}
-		else if (ui->groupBox_7->isChecked()) // multiple neuron structure file
+		else if (ui->groupBox_7->isChecked()) // multiple neuron structure file => multiple image stacks but no terafly allowed
 		{ }
+		/* ================ END of [Create patches based on neuronstructure file] ================ */
 	}
+
+	DatasetOperator.taskQueuDispatcher();
 }

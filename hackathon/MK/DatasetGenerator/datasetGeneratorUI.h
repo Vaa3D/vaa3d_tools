@@ -11,8 +11,6 @@ namespace Ui
 	class DatasetGeneratorUI;
 } 
 
-
-
 class DatasetGeneratorUI : public QDialog
 {
 

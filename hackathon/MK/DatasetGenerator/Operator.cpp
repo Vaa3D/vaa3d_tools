@@ -14,9 +14,11 @@
 #include "Operator.h"
 
 using namespace std;
+using namespace iim;
 
 void Operator::taskQueuDispatcher()
 {
+	cout << "task number: " << taskQueu.size() << endl;
 	while (!taskQueu.empty())
 	{
 		operatingTask = taskQueu.front();
@@ -27,11 +29,29 @@ void Operator::taskQueuDispatcher()
 			{
 				emit progressBarReporter("Creating Patches..", 0);
 				create2DPatches(stackTo2D);
+				emit progressBarReporter("Complete. ", 100);
+				cout << "Patch generation complete." << endl;
+			}
+			else if (operatingTask.patchOp == teraTo2D)
+			{
+				emit progressBarReporter("Creating Patches..", 0);
+				create2DPatches(teraTo2D);
+				emit progressBarReporter("Complete. ", 100);
+				cout << "Patch generation complete." << endl;
 			}
 			else if (operatingTask.patchOp == stackTo3D)
 			{
 				emit progressBarReporter("Creating Patches..", 0);
 				create3DPatches(stackTo3D);
+				emit progressBarReporter("Complete. ", 100);
+				cout << "Patch generation complete." << endl;
+			}
+			else if (operatingTask.patchOp == teraTo3D)
+			{
+				emit progressBarReporter("Creating Patches..", 0);
+				create3DPatches(teraTo3D);
+				emit progressBarReporter("Complete. ", 100);
+				cout << "Patch generation complete." << endl;
 			}
 		}
 
@@ -41,11 +61,13 @@ void Operator::taskQueuDispatcher()
 			{
 				emit progressBarReporter("Creating List..  ", 0);
 				createListFromList(subset);
+				emit progressBarReporter("Complete. ", 100);
 			}
 			else if (operatingTask.listOp == crossVal)
 			{
 				emit progressBarReporter("Creating Lists..  ", 0);
 				createListFromList(crossVal);
+				emit progressBarReporter("Complete. ", 100);
 			}
 		}
 
@@ -130,8 +152,6 @@ void Operator::createListFromList(listOpType listOp)
 		lineSplit.clear();
 		pickedLineNums.clear();
 
-		emit progressBarReporter("Complete. ", 100);
-
 		inputFile.close();
 		outputFile.close();
 	}
@@ -198,7 +218,6 @@ void Operator::createListFromList(listOpType listOp)
 			outTrain.close();
 			outVal.close();
 		}
-		emit progressBarReporter("Complete. ", 100);
 	}
 }
 
@@ -206,8 +225,8 @@ void Operator::create2DPatches(patchOpType patchOp)
 {
 	if (patchOp == stackTo2D)
 	{
-		QString swcQStringName = QString::fromStdString(operatingTask.neuronStrucFileName);
-		QFileInfo checkFileOrPath(swcQStringName);
+		QString inputNeuronFileQString = QString::fromStdString(operatingTask.neuronStrucFileName);
+		QFileInfo checkFileOrPath(inputNeuronFileQString);
 		int xRadius = operatingTask.sideX / 2;
 		int yRadius = operatingTask.sideY / 2;
 		int zRadius = operatingTask.sideZ / 2;
@@ -227,104 +246,134 @@ void Operator::create2DPatches(patchOpType patchOp)
 			int imgZ = in_sz[2];
 			int channel = in_sz[3];
 
-			NeuronTree inputSWC = readSWC_file(swcQStringName);
-			int x_coord, y_coord, z_coord;
-			int xlb, xhb, ylb, yhb, zlb, zhb;
-			double nodeNum = inputSWC.listNeuron.size();
+			NeuronStructNavigator nodeProcessor(xRadius, yRadius, zRadius, imgX, imgY, imgZ);
+			nodeProcessor.neuronStructFileName = inputNeuronFileQString;
+			nodeProcessor.generateNodeQueue();
+			double nodeNum = nodeProcessor.nodeQueue.size();
+			cout << "Node number: " << nodeNum << endl;
 			
-			// ------------------------- Create function pointer sequence 
-			vector<opPtr> opFuncSeq;
-			opPtr currOpPtr = NULL;	
-			for (vector<opSequence>::iterator seqIt = operatingTask.opSeq.begin(); seqIt != operatingTask.opSeq.end(); ++seqIt)
-			{
-				switch (*seqIt)
-				{
-				case Crop:
-					currOpPtr = &Operator::cropStack;
-					opFuncSeq.push_back(currOpPtr);
-					currOpPtr = NULL;
-					break;
-				case MIP:
-					currOpPtr = &Operator::maxIPStack;
-					opFuncSeq.push_back(currOpPtr);
-					currOpPtr = NULL;
-					break;
-				case mIP:
-					currOpPtr = &Operator::minIPStack;
-					opFuncSeq.push_back(currOpPtr);
-					currOpPtr = NULL;
-					break;
-				}
-			}
-			// ---------------------------------------------------------
+			funcSequencer(operatingTask.opSeq); // create function pointer sequence
 			
-			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
+			double nodeCount = 0;
+			while (!nodeProcessor.nodeQueue.empty())
 			{
-				x_coord = it->x;
-				y_coord = it->y;
-				z_coord = it->z;
-				xlb = x_coord - xRadius;
-				xhb = x_coord + xRadius;
-				ylb = y_coord - yRadius;
-				yhb = y_coord + yRadius;
-				zlb = z_coord - zRadius;
-				zhb = z_coord + zRadius;
-				if (xlb < 1) xlb = 1;
-				if (xhb > imgX) xhb = imgX;
-				if (ylb < 1) ylb = 1;
-				if (yhb > imgY) yhb = imgY;
-				if (zlb < 1) zlb = 1;
-				if (zhb > imgZ) zhb = imgZ;
-
-				/*NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
-				QString patchSWCFolder = QString::fromStdString(operatingTask.outputDirName) + "/patchSWCs";
-				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
-				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
-				writeSWC_file(outimg_fileSWC, patchSWC);*/ 
+				nodeInfo currNode = nodeProcessor.nodeQueue.front(); 
 
 				V3DLONG VOIxyz[4];
-				VOIxyz[0] = xhb - xlb + 1;
-				VOIxyz[1] = yhb - ylb + 1;
-				VOIxyz[2] = zhb - zlb + 1;
+				VOIxyz[0] = currNode.xhb - currNode.xlb + 1;
+				VOIxyz[1] = currNode.yhb - currNode.ylb + 1;
+				VOIxyz[2] = currNode.zhb - currNode.zlb + 1;
 				VOIxyz[3] = channel;
 				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
 				unsigned char* VOIPtr = new unsigned char[VOIsz];
 
 				V3DLONG ROIxyz[4];
-				ROIxyz[0] = xhb - xlb + 1;
-				ROIxyz[1] = yhb - ylb + 1;
+				ROIxyz[0] = currNode.xhb - currNode.xlb + 1;
+				ROIxyz[1] = currNode.yhb - currNode.ylb + 1;
 				ROIxyz[2] = 1;
 				ROIxyz[3] = channel;
 				V3DLONG ROIsz = VOIxyz[0] * VOIxyz[1];
 				unsigned char* ROIPtr = new unsigned char[ROIsz];
 
-				for (vector<opPtr>::iterator opIt = opFuncSeq.begin(); opIt != opFuncSeq.end(); ++opIt) 
-					(this->**opIt)(ImgPtr, VOIPtr, ROIPtr, xlb, xhb, ylb, yhb, zlb, zhb, imgX, imgY, imgZ);
+				for (vector<opPtr>::iterator opIt = this->opFuncSeq.begin(); opIt != this->opFuncSeq.end(); ++opIt) 
+					(this->**opIt)(ImgPtr, VOIPtr, ROIPtr, currNode.xlb, currNode.xhb, currNode.ylb, currNode.yhb, currNode.zlb, currNode.zhb, imgX, imgY, imgZ);
 				
 				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches";
 				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
 				if (operatingTask.dimSelection == xy)
 				{
-					QString outimg_file = patchPath + QString("/x%1_y%2.tif").arg(x_coord).arg(y_coord);
+					QString outimg_file = patchPath + QString("/x%1_y%2.tif").arg(currNode.nameX).arg(currNode.nameY);
 					string filename = outimg_file.toStdString();
 					const char* filenameptr = filename.c_str();
 					simple_saveimage_wrapper(*OperatorCallback, filenameptr, ROIPtr, ROIxyz, 1);
 				}
 				delete[] VOIPtr;
 				delete[] ROIPtr;
+				
+				nodeProcessor.nodeQueue.pop();
+				++nodeCount;
 
-				double processedPortion = size_t(it - inputSWC.listNeuron.begin() + 1) / nodeNum;
+				double processedPortion = nodeCount / nodeNum;
 				int percentageNum = int(processedPortion * 100);
 				emit progressBarReporter("Creating Patches..  ", percentageNum);
 			}
 			delete[] ImgPtr;
-			emit progressBarReporter("Complete. ", 100);
-			cout << "Patch generation complete." << endl;
 			
 			return;
 		}
 		else 
 		{ }
+	}
+	else if (patchOp == teraTo2D)
+	{ 
+		QString inputNeuronFileQString = QString::fromStdString(operatingTask.neuronStrucFileName);
+		int xRadius = operatingTask.sideX / 2;
+		int yRadius = operatingTask.sideY / 2;
+		int zRadius = operatingTask.sideZ / 2;
+
+		this->teraStack = VirtualVolume::instance(operatingTask.source.c_str());
+		int imgX = this->teraStack->getDIM_H();
+		int imgY = this->teraStack->getDIM_V();
+		int imgZ = this->teraStack->getDIM_D();
+		int channel = this->teraStack->getDIM_C();
+
+		NeuronStructNavigator nodeProcessor(xRadius, yRadius, zRadius, imgX, imgY, imgZ);
+		nodeProcessor.neuronStructFileName = inputNeuronFileQString;
+		nodeProcessor.generateNodeQueue();
+		double nodeNum = nodeProcessor.nodeQueue.size();
+		cout << "Node number: " << nodeNum << endl;
+
+		if (operatingTask.opSeq[0] != Crop)
+		{
+			cerr << "Terafly image needs to be cropped first. Doing nothing." << endl;
+			return;
+		}
+		else operatingTask.opSeq.erase(operatingTask.opSeq.begin());
+
+		funcSequencer(operatingTask.opSeq); // create function pointer sequence
+		
+		double nodeCount = 0;
+		while (!nodeProcessor.nodeQueue.empty())
+		{
+			nodeInfo currNode = nodeProcessor.nodeQueue.front();
+
+			V3DLONG VOIxyz[4];
+			VOIxyz[0] = currNode.xhb - currNode.xlb + 1;
+			VOIxyz[1] = currNode.yhb - currNode.ylb + 1;
+			VOIxyz[2] = currNode.zhb - currNode.zlb + 1;
+			VOIxyz[3] = channel;
+			V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
+			unsigned char* VOIPtr = new unsigned char[VOIsz];
+
+			V3DLONG ROIxyz[4];
+			ROIxyz[0] = currNode.xhb - currNode.xlb + 1;
+			ROIxyz[1] = currNode.yhb - currNode.ylb + 1;
+			ROIxyz[2] = 1;
+			ROIxyz[3] = channel;
+			V3DLONG ROIsz = VOIxyz[0] * VOIxyz[1];
+			unsigned char* ROIPtr = new unsigned char[ROIsz];
+
+			VOIPtr = this->teraStack->loadSubvolume_to_UINT8(currNode.ylb, currNode.yhb + 1, currNode.xlb, currNode.xhb + 1, currNode.zlb, currNode.zhb + 1);
+			for (vector<opPtr>::iterator opIt = this->opFuncSeq.begin(); opIt != this->opFuncSeq.end(); ++opIt)
+				(this->**opIt)(VOIPtr, VOIPtr, ROIPtr, currNode.xlb, currNode.xhb, currNode.ylb, currNode.yhb, currNode.zlb, currNode.zhb, imgX, imgY, imgZ);
+
+			QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/terafly_patches_2D";
+			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
+			QString outimg_file = patchPath + QString("/x%1_y%2.tif").arg(currNode.nameX).arg(currNode.nameY);
+			string filename = outimg_file.toStdString();
+			const char* filenameptr = filename.c_str();
+			simple_saveimage_wrapper(*OperatorCallback, filenameptr, ROIPtr, ROIxyz, 1);
+			delete[] VOIPtr;
+			delete[] ROIPtr;
+			
+			nodeProcessor.nodeQueue.pop();
+			++nodeCount;
+
+			double processedPortion = nodeCount / nodeNum;
+			int percentageNum = int(processedPortion * 100);
+			emit progressBarReporter("Creating Patches..  ", percentageNum);
+		}
+		delete[] this->teraStack;
 	}
 }
 
@@ -332,8 +381,8 @@ void Operator::create3DPatches(patchOpType patchOp)
 {
 	if (patchOp == stackTo3D)
 	{
-		QString swcQStringName = QString::fromStdString(operatingTask.neuronStrucFileName);
-		QFileInfo checkFileOrPath(swcQStringName);
+		QString inputNeuronFileQString = QString::fromStdString(operatingTask.neuronStrucFileName);
+		QFileInfo checkFileOrPath(inputNeuronFileQString);
 		int xRadius = operatingTask.sideX / 2;
 		int yRadius = operatingTask.sideY / 2;
 		int zRadius = operatingTask.sideZ / 2;
@@ -353,91 +402,129 @@ void Operator::create3DPatches(patchOpType patchOp)
 			int imgZ = in_sz[2];
 			int channel = in_sz[3];
 
-			NeuronTree inputSWC = readSWC_file(swcQStringName);
-			int x_coord, y_coord, z_coord;
-			int xlb, xhb, ylb, yhb, zlb, zhb;
-			double nodeNum = inputSWC.listNeuron.size();
+			NeuronStructNavigator nodeProcessor(xRadius, yRadius, zRadius, imgX, imgY, imgZ);
+			nodeProcessor.neuronStructFileName = inputNeuronFileQString;
+			nodeProcessor.generateNodeQueue();
+			double nodeNum = nodeProcessor.nodeQueue.size();
+			cout << "Node number: " << nodeNum << endl;
 
-			// ------------------------- Create function pointer sequence 
-			vector<opPtr> opFuncSeq;
-			opPtr currOpPtr = NULL;
-			for (vector<opSequence>::iterator seqIt = operatingTask.opSeq.begin(); seqIt != operatingTask.opSeq.end(); ++seqIt)
+			funcSequencer(operatingTask.opSeq); // create function pointer sequence
+
+			double nodeCount = 0;
+			while (!nodeProcessor.nodeQueue.empty())
 			{
-				switch (*seqIt)
-				{
-				case Crop:
-					currOpPtr = &Operator::cropStack;
-					opFuncSeq.push_back(currOpPtr);
-					currOpPtr = NULL;
-					break;
-				}
-			}
-			// ---------------------------------------------------------
-
-			for (QList<NeuronSWC>::iterator it = inputSWC.listNeuron.begin(); it != inputSWC.listNeuron.end(); ++it)
-			{
-				x_coord = it->x;
-				y_coord = it->y;
-				z_coord = it->z;
-				xlb = x_coord - xRadius;
-				xhb = x_coord + xRadius;
-				ylb = y_coord - yRadius;
-				yhb = y_coord + yRadius;
-				zlb = z_coord - zRadius;
-				zhb = z_coord + zRadius;
-				if (xlb < 1) xlb = 1;
-				if (xhb > imgX) xhb = imgX;
-				if (ylb < 1) ylb = 1;
-				if (yhb > imgY) yhb = imgY;
-				if (zlb < 1) zlb = 1;
-				if (zhb > imgZ) zhb = imgZ;
-
-				/*NeuronTree patchSWC = cropSWCfile3D(inputSWC, xlb, xhb, ylb, yhb, zlb, zhb, -1);
-				QString patchSWCFolder = QString::fromStdString(operatingTask.outputDirName) + "/patchSWCs";
-				if (!QDir(patchSWCFolder).exists()) QDir().mkpath(patchSWCFolder);
-				QString outimg_fileSWC = patchSWCFolder + QString("/x%1_y%2_z%3.swc").arg(x_coord).arg(y_coord).arg(z_coord);
-				writeSWC_file(outimg_fileSWC, patchSWC);*/
+				nodeInfo currNode = nodeProcessor.nodeQueue.front();
 
 				V3DLONG VOIxyz[4];
-				VOIxyz[0] = xhb - xlb + 1;
-				VOIxyz[1] = yhb - ylb + 1;
-				VOIxyz[2] = zhb - zlb + 1;
+				VOIxyz[0] = currNode.xhb - currNode.xlb + 1;
+				VOIxyz[1] = currNode.yhb - currNode.ylb + 1;
+				VOIxyz[2] = currNode.zhb - currNode.zlb + 1;
 				VOIxyz[3] = channel;
 				V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
 				unsigned char* VOIPtr = new unsigned char[VOIsz];
 
 				V3DLONG ROIxyz[4];
-				ROIxyz[0] = xhb - xlb + 1;
-				ROIxyz[1] = yhb - ylb + 1;
-				ROIxyz[2] = zhb - zlb + 1;
+				ROIxyz[0] = currNode.xhb - currNode.xlb + 1;
+				ROIxyz[1] = currNode.yhb - currNode.ylb + 1;
+				ROIxyz[2] = currNode.zhb - currNode.zlb + 1;
 				ROIxyz[3] = channel;
-				V3DLONG ROIsz = ROIxyz[0] * ROIxyz[1] * ROIxyz[2];
+				V3DLONG ROIsz = VOIxyz[0] * VOIxyz[1];
 				unsigned char* ROIPtr = new unsigned char[ROIsz];
 
 				for (vector<opPtr>::iterator opIt = opFuncSeq.begin(); opIt != opFuncSeq.end(); ++opIt)
-					(this->**opIt)(ImgPtr, VOIPtr, ROIPtr, xlb, xhb, ylb, yhb, zlb, zhb, imgX, imgY, imgZ);
+					(this->**opIt)(ImgPtr, VOIPtr, ROIPtr, currNode.xlb, currNode.xhb, currNode.ylb, currNode.yhb, currNode.zlb, currNode.zhb, imgX, imgY, imgZ);
 
 				QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/patches_3D";
 				if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
-				QString outimg_file = patchPath + QString("/x%1_y%2_z%3.v3draw").arg(x_coord).arg(y_coord).arg(z_coord);
+				QString outimg_file = patchPath + QString("/x%1_y%2_z%3.v3draw").arg(currNode.nameX).arg(currNode.nameY).arg(currNode.nameZ);
 				string filename = outimg_file.toStdString();
 				const char* filenameptr = filename.c_str();
 				simple_saveimage_wrapper(*OperatorCallback, filenameptr, VOIPtr, VOIxyz, 1);
 				delete[] VOIPtr;
 				delete[] ROIPtr;
+				
+				nodeProcessor.nodeQueue.pop();
+				++nodeCount;
 
-				double processedPortion = size_t(it - inputSWC.listNeuron.begin() + 1) / nodeNum;
+				double processedPortion = nodeCount / nodeNum;
 				int percentageNum = int(processedPortion * 100);
 				emit progressBarReporter("Creating Patches..  ", percentageNum);
 			}
 			delete[] ImgPtr;
-			emit progressBarReporter("Complete. ", 100);
-			cout << "Patch generation complete." << endl;
 
 			return;
 		}
 		else
 		{ }
+	}
+	else if (patchOp == teraTo3D)
+	{
+		QString inputNeuronFileQString = QString::fromStdString(operatingTask.neuronStrucFileName);
+		int xRadius = operatingTask.sideX / 2;
+		int yRadius = operatingTask.sideY / 2;
+		int zRadius = operatingTask.sideZ / 2;
+
+		this->teraStack = VirtualVolume::instance(operatingTask.source.c_str());
+		int imgX = this->teraStack->getDIM_H();
+		int imgY = this->teraStack->getDIM_V();
+		int imgZ = this->teraStack->getDIM_D();
+		int channel = this->teraStack->getDIM_C();
+
+		NeuronStructNavigator nodeProcessor(xRadius, yRadius, zRadius, imgX, imgY, imgZ);
+		nodeProcessor.neuronStructFileName = inputNeuronFileQString;
+		nodeProcessor.generateNodeQueue();
+		double nodeNum = nodeProcessor.nodeQueue.size();
+		cout << "Node number: " << nodeNum << endl;
+
+		if (operatingTask.opSeq[0] != Crop)
+		{
+			cerr << "Terafly image needs to be cropped first. Doing nothing." << endl;
+			return;
+		}
+		else operatingTask.opSeq.erase(operatingTask.opSeq.begin());
+
+		funcSequencer(operatingTask.opSeq); // create function pointer sequence
+
+		double nodeCount = 0;
+		while (!nodeProcessor.nodeQueue.empty())
+		{
+			nodeInfo currNode = nodeProcessor.nodeQueue.front();
+
+			V3DLONG VOIxyz[4];
+			VOIxyz[0] = currNode.xhb - currNode.xlb + 1;
+			VOIxyz[1] = currNode.yhb - currNode.ylb + 1;
+			VOIxyz[2] = currNode.zhb - currNode.zlb + 1;
+			VOIxyz[3] = channel;
+			V3DLONG VOIsz = VOIxyz[0] * VOIxyz[1] * VOIxyz[2];
+			unsigned char* VOIPtr = new unsigned char[VOIsz];
+
+			V3DLONG ROIxyz[4];
+			ROIxyz[0] = currNode.xhb - currNode.xlb + 1;
+			ROIxyz[1] = currNode.yhb - currNode.ylb + 1;
+			ROIxyz[2] = currNode.zhb - currNode.zlb + 1;
+			ROIxyz[3] = channel;
+			V3DLONG ROIsz = VOIxyz[0] * VOIxyz[1];
+			unsigned char* ROIPtr = new unsigned char[ROIsz];
+
+			VOIPtr = this->teraStack->loadSubvolume_to_UINT8(currNode.ylb, currNode.yhb + 1, currNode.xlb, currNode.xhb + 1, currNode.zlb, currNode.zhb + 1);
+
+			QString patchPath = QString::fromStdString(operatingTask.outputDirName) + "/terafly_patches_3D";
+			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
+			QString outimg_file = patchPath + QString("/x%1_y%2_z%3.v3draw").arg(currNode.nameX).arg(currNode.nameY).arg(currNode.nameZ);
+			string filename = outimg_file.toStdString();
+			const char* filenameptr = filename.c_str();
+			simple_saveimage_wrapper(*OperatorCallback, filenameptr, VOIPtr, VOIxyz, 1);
+			delete[] VOIPtr;
+			delete[] ROIPtr;
+
+			nodeProcessor.nodeQueue.pop();
+			++nodeCount;
+
+			double processedPortion = nodeCount / nodeNum;
+			int percentageNum = int(processedPortion * 100);
+			emit progressBarReporter("Creating Patches..  ", percentageNum);
+		}
+		delete[] this->teraStack;
 	}
 }
 
@@ -507,6 +594,33 @@ void Operator::minIPStack(unsigned char InputImagePtr[], unsigned char inputVOIP
 		}
 	}
 }
+
+void Operator::funcSequencer(vector<opSequence> uiOpSeq)
+{
+	opPtr currOpPtr = NULL;
+	for (vector<opSequence>::iterator seqIt = uiOpSeq.begin(); seqIt != uiOpSeq.end(); ++seqIt)
+	{
+		switch (*seqIt)
+		{
+		case Crop:
+			currOpPtr = &Operator::cropStack;
+			this->opFuncSeq.push_back(currOpPtr);
+			currOpPtr = NULL;
+			break;
+		case MIP:
+			currOpPtr = &Operator::maxIPStack;
+			this->opFuncSeq.push_back(currOpPtr);
+			currOpPtr = NULL;
+			break;
+		case mIP:
+			currOpPtr = &Operator::minIPStack;
+			this->opFuncSeq.push_back(currOpPtr);
+			currOpPtr = NULL;
+			break;
+		}
+	}
+}
+
 
 NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye, int zb, int ze, int type)
 {

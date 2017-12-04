@@ -10,7 +10,8 @@ INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2
 INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 
 win32 {
-    LIBS += -L$$VAA3D_DIR/v3d_main/common_lib/winlib64/libtiff.lib
+    LIBS += -L$$VAA3D_DIR/v3d_main/common_lib/winlib64
+    LIBS += -llibtiff
 }
 
 
