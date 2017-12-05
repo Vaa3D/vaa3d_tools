@@ -21,8 +21,13 @@ public:
     LandmarkList markerList;
     QString imageName;
 
+    QString deployName;
+    QString modelName;
+    QString meanName;
+
 public slots:
     void okClicked();
+    void filePath();
 
 private:
     Ui::neuriteInstructorUI* ui;

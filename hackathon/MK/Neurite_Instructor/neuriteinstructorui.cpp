@@ -38,3 +38,31 @@ void neuriteInstructorUI::okClicked()
         this->imageName = mainCallBack->getImageName(curwin);
     }
 }
+
+void neuriteInstructorUI::filePath()
+{
+    QObject* emitter = sender();
+    QString emitterName = emitter->objectName();
+
+    QString fileName = QFileDialog::getOpenFileName(0, QObject::tr("open Network Model Files"), "");
+
+    if(fileName.isEmpty()) return;
+
+    if (emitterName == "pushButton")
+    {
+        ui->lineEdit->setText(fileName);
+        this->deployName = fileName;
+    }
+    else if (emitterName == "pushButton_2")
+    {
+        ui->lineEdit_2->setText(fileName);
+        this->modelName = fileName;
+    }
+    else if (emitterName == "pushButton_3")
+    {
+        ui->lineEdit_3->setText(fileName);
+        this->meanName = fileName;
+    }
+
+    //delete fileDlg;
+}

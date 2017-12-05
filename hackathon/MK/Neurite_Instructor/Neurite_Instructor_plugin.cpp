@@ -68,9 +68,12 @@ void NeuriteInstructor::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         clock_t startTime, endTime;
         startTime = clock();
 
-        Classifier classifier("/local2/MK/DL_work/IVSCC/ModelComparison/AlexNet_6layers_all/deploy.prototxt",
-                              "/local2/MK/DL_work/IVSCC/ModelComparison/AlexNet_6layers_all/caffenet_train_iter_240000.caffemodel",
-                              "/local2/MK/DL_work/IVSCC/ModelComparison/AlexNet_6layers_all/imagenet_mean.binaryproto");
+        const string deployCString = inputForm->deployName.toStdString();
+        const string modelCString = inputForm->modelName.toStdString();
+        const string meanCString = inputForm->meanName.toStdString();
+        cout << deployCString << " " << modelCString << " " << meanCString << endl;
+        //v3d_msg("continue");
+        Classifier classifier(deployCString, modelCString, meanCString);
 
         LandmarkList markerList = inputForm->markerList;
         std::vector<std::vector<float> > outputs_overall;
