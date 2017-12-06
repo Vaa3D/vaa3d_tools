@@ -1987,6 +1987,192 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     return true;
 }
 
+// trace array tomography data
+bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file and a marker file\n";
+        return false;
+    }
+
+    //parsing input
+    float athresh = 0.75;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+            athresh = atof(paras->at(0));
+            cout<<"threshold relax parameter (0.75 by default): "<<athresh<<endl;
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<2)
+    {
+        cerr<<"You must specify input tiff and marker files"<<endl;
+        return false;
+    }
+
+    //
+    QString fnimage = QString(inlist->at(0));
+    QString fnmarker = QString(inlist->at(1));
+    QString traced = fnimage.left(fnimage.lastIndexOf(".")).append("_autotraced.swc");
+
+    //
+    if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnimage.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        long sx = p4dImage->getXDim();
+        long sy = p4dImage->getYDim();
+        long sz = p4dImage->getZDim();
+        long size = sx*sy*sz;
+        unsigned char *p = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        //
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                p = puint8;
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+
+        //
+        float thresh;
+        estimateIntensityThreshold(p, size, thresh);
+        thresh *= athresh;
+        cout<<"threshold ... "<<thresh<<endl;
+
+        //
+        LandmarkList landmarks;
+        QList<ImageMarker> markers = readMarker_file(fnmarker);
+        NCPointCloud pc;
+        for(size_t i=0; i<markers.size(); i++)
+        {
+            ImageMarker marker = markers[i];
+            Point point;
+            long z = long(marker.z);
+
+            if(z>sz-1) z=sz-1;
+
+            long y = long(marker.y);
+
+            if(y>sy-1) y=sy-1;
+
+            long x = long(marker.x);
+
+            if(x>sx-1) x=sx-1;
+
+            point.x = x;
+            point.y = y;
+            point.z = z;
+            point.val = p[ z*sx*sy + y*sx + x];
+
+            if( point.val > thresh)
+            {
+                //
+                pc.points.push_back(point);
+            }
+        }
+        //
+        sort(pc.points.begin(), pc.points.end(), [](const Point& a, const Point& b) -> bool
+        {
+            return a.val*a.radius > b.val*b.radius;
+        });
+
+        for(size_t i=0; i<pc.points.size(); i++)
+        {
+            Point point = pc.points[i];
+            landmarks.push_back(LocationSimple(point.x, point.y, point.z));
+        }
+        cout<<"tracing with "<<landmarks.size()<<" markers "<<endl;
+
+        // app2
+        PARA_APP2 p2;
+        QString versionStr = "v0.001";
+
+        //
+        p2.is_gsdt = true;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = true;
+        p2.bkg_thresh = thresh;
+        p2.length_thresh = 5;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = false;
+        p2.b_RadiusFrom2D = true;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0;
+        p2.landmarks = landmarks;
+
+        p2.p4dImage = p4dImage;
+        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+        p2.xc1 = sx-1;
+        p2.yc1 = sy-1;
+        p2.zc1 = sz-1;
+
+        p2.outswc_file = traced;
+        proc_app2(callback, p2, versionStr);
+
+        //
+        y_del1dp<unsigned char>(puint8);
+    }
+    else
+    {
+        cout<<"Please input an image file (.v3draw/.tif)\n";
+        return -1;
+    }
+
+    //
+    return true;
+}
+
 //
 void printHelp()
 {
