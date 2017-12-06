@@ -239,7 +239,8 @@ void NeuriteInstructor::domenu(const QString &menu_name, V3DPluginCallback2 &cal
                 nt.color.g = 0;
                 nt.color.b = 0;
                 nt.color.a = 0;
-                nt.editable = false;
+                nt_list->removeAt(i);
+                nt_list->push_back(nt);
                 callback.setSWC(curwin,nt);
                 imgs.clear();
             }
