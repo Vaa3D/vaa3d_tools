@@ -2131,34 +2131,44 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         cout<<"tracing with "<<landmarks.size()<<" markers "<<endl;
 
         // app2
-        PARA_APP2 p2;
-        QString versionStr = "v0.001";
+        long iter = 0;
+        for(size_t i=0; i<pc.points.size(); i++)
+        {
+            QString segmenttraced = fnimage.left(fnimage.lastIndexOf(".")).append(QString("_autotraced%1.swc").arg(++iter));
+            LandmarkList landmark;
+            Point point = pc.points[i];
+            landmark.push_back(LocationSimple(point.x, point.y, point.z));
 
-        //
-        p2.is_gsdt = true;
-        p2.is_coverage_prune = true;
-        p2.is_break_accept = true;
-        p2.bkg_thresh = thresh;
-        p2.length_thresh = 5;
-        p2.cnn_type = 2;
-        p2.channel = 0;
-        p2.SR_ratio = 3.0/9.9;
-        p2.b_256cube = false;
-        p2.b_RadiusFrom2D = true;
-        p2.b_resample = 1;
-        p2.b_intensity = 0;
-        p2.b_brightfiled = 0;
-        p2.b_menu = 0;
-        p2.landmarks = landmarks;
+            //
+            PARA_APP2 p2;
+            QString versionStr = "v0.001";
 
-        p2.p4dImage = p4dImage;
-        p2.xc0 = p2.yc0 = p2.zc0 = 0;
-        p2.xc1 = sx-1;
-        p2.yc1 = sy-1;
-        p2.zc1 = sz-1;
+            //
+            p2.is_gsdt = true;
+            p2.is_coverage_prune = true;
+            p2.is_break_accept = true;
+            p2.bkg_thresh = thresh;
+            p2.length_thresh = 10;
+            p2.cnn_type = 2;
+            p2.channel = 0;
+            p2.SR_ratio = 3.0/9.9;
+            p2.b_256cube = false;
+            p2.b_RadiusFrom2D = true;
+            p2.b_resample = 1;
+            p2.b_intensity = 0;
+            p2.b_brightfiled = 0;
+            p2.b_menu = 0;
+            p2.landmarks = landmark;
 
-        p2.outswc_file = traced;
-        proc_app2(callback, p2, versionStr);
+            p2.p4dImage = p4dImage;
+            p2.xc0 = p2.yc0 = p2.zc0 = 0;
+            p2.xc1 = sx-1;
+            p2.yc1 = sy-1;
+            p2.zc1 = sz-1;
+
+            p2.outswc_file = segmenttraced;
+            proc_app2(callback, p2, versionStr);
+        }
 
         //
         y_del1dp<unsigned char>(puint8);
