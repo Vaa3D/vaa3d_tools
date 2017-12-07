@@ -822,7 +822,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
     if (func_name == tr("Prediction"))
-	{
+    {
+
         cout<<"Welcome to Caffe prediction plugin"<<endl;
         if(infiles.empty())
         {
@@ -858,90 +859,117 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
         cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
 
+        clock_t begin = clock();
+
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
 
-        QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
-
-        Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
-
-        V3DLONG count=0;
-        foreach (QString img_str, imgList)
+        QDir dir(m_InputfolderName);
+        QStringList folderNames = dir.entryList();
+        //qDebug() << folderNames;
+        for (QList<QString>::iterator folderIt=folderNames.begin(); folderIt!=folderNames.end(); ++folderIt)
         {
-            V3DLONG offset[3];
-            offset[0]=0; offset[1]=0; offset[2]=0;
+            if (*folderIt == "."  ||  *folderIt == "..") continue;
 
-            indexed_t<V3DLONG, REAL> idx_t(offset);
+            QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName + *folderIt);
 
-            idx_t.n = count;
-            idx_t.ref_n = 0; // init with default values
-            idx_t.fn_image = img_str.toStdString();
-            idx_t.score = 0;
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
-            vim.tilesList.push_back(idx_t);
-            count++;
-        }
+            V3DLONG count=0;
+            foreach (QString img_str, imgList)
+            {
+                V3DLONG offset[3];
+                offset[0]=0; offset[1]=0; offset[2]=0;
 
-        int NTILES  = vim.tilesList.size();
-        std::vector<cv::Mat> imgs;
-        V3DLONG num_patches = 0;
-        std::vector<std::vector<float> > outputs_overall;
-        std::vector<std::vector<float> > outputs;
+                indexed_t<V3DLONG, REAL> idx_t(offset);
 
-        for (V3DLONG i = 0; i <NTILES; i++)
-        {
-            cv::Mat img = cv::imread(vim.tilesList.at(i).fn_image.c_str(),-1);
-            imgs.push_back(img);
+                idx_t.n = count;
+                idx_t.ref_n = 0; // init with default values
+                idx_t.fn_image = img_str.toStdString();
+                idx_t.score = 0;
 
-            if(num_patches >=5000)
+                vim.tilesList.push_back(idx_t);
+                count++;
+            }
+
+            int NTILES  = vim.tilesList.size();
+            std::vector<cv::Mat> imgs;
+            V3DLONG num_patches = 0;
+            std::vector<std::vector<float> > outputs_overall;
+            std::vector<std::vector<float> > outputs;
+
+            for (V3DLONG i = 0; i <NTILES; i++)
+            {
+                cv::Mat img = cv::imread(vim.tilesList.at(i).fn_image.c_str(),-1);
+                imgs.push_back(img);
+
+                if(num_patches >= 100)
+                {
+                    outputs = classifier.Predict(imgs);
+                    for(V3DLONG d = 0; d<outputs.size();d++)
+                        outputs_overall.push_back(outputs[d]);
+                    outputs.clear();
+                    imgs.clear();
+                    num_patches = 0;
+                }else
+                    num_patches++;
+            }
+
+            if(imgs.size()>0)
             {
                 outputs = classifier.Predict(imgs);
                 for(V3DLONG d = 0; d<outputs.size();d++)
                     outputs_overall.push_back(outputs[d]);
-                outputs.clear();
-                imgs.clear();
-                num_patches = 0;
-            }else
-                num_patches++;
+            }
+
+            double p_num = 0;
+            double n_num = 0;
+            double a_num = 0;
+            for (int j = 0; j < outputs_overall.size(); j++)
+            {
+                std::vector<float> output = outputs_overall[j];
+                cout << output.at(0) << " " << output.at(1) << " " << output.at(2) << endl;
+                if(output.at(0) > output.at(1)  &&  output.at(0) > output.at(2))
+                    n_num++;
+                else if (output.at(1) > output.at(0)  &&  output.at(1) > output.at(2))
+                    p_num++;
+                else if (output.at(2) > output.at(0)  &&  output.at(2) > output.at(1))
+                    ++a_num;
+
+                /*if(output.at(0) > output.at(1))
+                    n_num++;
+                else if (output.at(1) > output.at(0))
+                    p_num++;*/
+            }
+
+            //cout<<"\dendrite rate: "<<p_num/outputs_overall.size()<<", axon rate: "<<a_num/outputs_overall.size()<< ", bkg rate: " << n_num/outputs_overall.size() << endl;
+
+            double rateD = p_num/outputs_overall.size();
+            double rateA = a_num/outputs_overall.size();
+            double rateB = n_num/outputs_overall.size();
+
+            if(!outfiles.empty())
+            {
+                QString  outputfile =  outfiles[0];
+                QFile saveTextFile;
+                saveTextFile.setFileName(outputfile);
+                if (!saveTextFile.isOpen()){
+                    if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+                        qDebug()<<"unable to save file!";
+                        return false;}     }
+                QTextStream outputStream;
+                outputStream.setDevice(&saveTextFile);
+                outputStream<< m_InputfolderName<<"\t"<< NTILES<<"\t"<<p_num<<"\t"<< a_num << "\t" << n_num<<"\t" << rateD << "\t" << rateA << "\t" << rateB << "\n";
+                //outputStream<< m_InputfolderName<<"\t"<< NTILES<<"\t"<<p_num<<"\t" << n_num<<"\t" << rateD << "\t"  << rateB << "\n";
+                saveTextFile.close();
+            }
+            imgs.clear();
         }
+        clock_t end = clock();
+        double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+        cout << "time elapsed: " << elapsed_secs << "sec" << endl;
 
-        if(imgs.size()>0)
-        {
-            outputs = classifier.Predict(imgs);
-            for(V3DLONG d = 0; d<outputs.size();d++)
-                outputs_overall.push_back(outputs[d]);
-        }
-
-        double p_num = 0;
-        double n_num = 0;
-        for (int j = 0; j < outputs_overall.size(); j++)
-        {
-            std::vector<float> output = outputs_overall[j];
-            if(output.at(0) > output.at(1))
-                n_num++;
-            else
-                p_num++;
-
-        }
-
-        cout<<"\positive rate: "<<p_num/outputs_overall.size()<<" and negative rate: "<<n_num/outputs_overall.size()<<endl;
-
-        if(!outfiles.empty())
-        {
-            QString  outputfile =  outfiles[0];
-            QFile saveTextFile;
-            saveTextFile.setFileName(outputfile);
-            if (!saveTextFile.isOpen()){
-                if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
-                    qDebug()<<"unable to save file!";
-                    return false;}     }
-            QTextStream outputStream;
-            outputStream.setDevice(&saveTextFile);
-            outputStream<< m_InputfolderName<<"\t"<< NTILES<<"\t"<<p_num<<"\t"<< n_num<<"\n";
-            saveTextFile.close();
-        }
-        imgs.clear();
         return true;
-	}
+    }
     else if (func_name == tr("Quality_Assess"))
 	{
         cout<<"Welcome to Caffe quality assessment plugin"<<endl;
@@ -2185,7 +2213,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //                if(QFileInfo(swc_segs).exists())
 //                    continue;
 
-                QString  swc_segs_check = outswc_file + QString("_0.5_finished/x_%1_y_%2.swc").arg(xb).arg(yb);
+                QString  swc_segs_check = outswc_file + QString("_0.3_finished/x_%1_y_%2.swc").arg(xb).arg(yb);
                 if(QFileInfo(swc_segs_check).exists())
                     continue;
 
@@ -2229,14 +2257,25 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
                     {
                         std::vector<float> output = detection_results[d];
-                        if(output.at(1) > output.at(0))
+                        if(output.at(1) > output.at(0)  &&  output.at(1) > output.at(2))
                         {
                             LocationSimple S;
                             S.x = iix-xb;
                             S.y = iiy-yb;
                             S.z = 1;
+                            S.category = 2;
                             marklist_2D.push_back(S);
                         }
+                        else if (output.at(2) > output.at(0)  &&  output.at(2) > output.at(1))
+                        {
+                            LocationSimple S;
+                            S.x = iix-xb;
+                            S.y = iiy-yb;
+                            S.z = 1;
+                            S.category = 3;
+                            marklist_2D.push_back(S);
+                        }
+                        //cout << output.at(0) << " " << output.at(1) << " " << output.at(2) << " " << endl;
                         d++;
                     }
                 }
@@ -2257,6 +2296,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 {
                     mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
                     LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+                    tmp.category = marklist_2D[j].category;
                     marklist_2D_shifted.append(tmp);
                 }
 
@@ -2286,6 +2326,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     S.color.r = 255;
                     S.color.g = 0;
                     S.color.b = 0;
+                    S.type = marklist_2D_shifted[i].category;
                     marklist_3D.append(S);
 
 //                    double I_mean = I_sum/P;
@@ -2333,18 +2374,21 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                                 V3DLONG ix = marklist_3D_pruned.at(i).x + xb;
                                 V3DLONG iy = marklist_3D_pruned.at(i).y + yb;
                                 V3DLONG iz = marklist_3D_pruned.at(i).z;
+                                int type = marklist_3D_pruned.at(i).type;
 
                                 NeuronSWC n;
                                 n.x = ix-1;
                                 n.y = iy-1;
                                 n.z = iz-1+start_z;
                                 n.n = i+1;
-                                n.type = 2;
+                                n.type = type;
+                                //cout << n.type << " ";
                                 n.r = marklist_3D_pruned.at(i).radius;
                                 n.pn = -1; //so the first one will be root
                                 listNeuron << n;
                             }
                         }
+                        //cout << endl;
                         writeSWC_file(swc_segs_th,nt);
                         nt.listNeuron.clear();
                     }
