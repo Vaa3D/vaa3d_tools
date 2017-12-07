@@ -11,6 +11,7 @@ unix:!macx {
 
 
 HEADERS	+= branch_pt_detection_plugin.h
+HEADERS	+= branch_pt_detection_func.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_smarttracing/hang/my_surf_objs.h
 
 SOURCES	+= branch_pt_detection_plugin.cpp

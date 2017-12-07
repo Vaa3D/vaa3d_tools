@@ -15,6 +15,7 @@
 //#include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../mean_shift_center/mean_shift_fun.h"
 #include "../neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
+#include "../../../hackathon/zhi/branch_point_detection/branch_pt_detection_func.h"
 
 
 
@@ -6438,6 +6439,23 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             P.swcfilename = tip_swc_name;
             P.method = gd;
             crawler_raw_app(callback,parent,P,0);
+
+            //detect branch points and call GD
+            QString GD_folder = QFileInfo(P.inimg_file).path()+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+            QString GD_result_name = GD_folder + QString("/scanData.txtwofusion.swc");
+            QString branches_folder = GD_folder + QString("/branches");
+            system(qPrintable(QString("mkdir %1").arg(branches_folder.toStdString().c_str())));
+
+            NeuronTree GD_result = readSWC_file(GD_result_name);
+            if(GD_result.listNeuron.size() > 10)
+            {
+                vector<MyMarker> branchMarker = extract_branch_pts(callback,P.inimg_file,GD_result);
+                QString branch_marker_name =  branches_folder+QString("/branches.marker");
+                saveMarker_file(branch_marker_name.toStdString(),branchMarker);
+
+            }
+
+
         }
     }
 }
@@ -6709,4 +6727,79 @@ NeuronTree pruning_cross_swc(NeuronTree nt)
 
    if(flag) {delete[] flag; flag = 0;}
    return nt_prunned;
+}
+
+vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString& filename,NeuronTree nt)
+{
+    V3DLONG start_x = nt.listNeuron.at(0).x;
+    V3DLONG end_x = nt.listNeuron.at(0).x;
+    V3DLONG start_y = nt.listNeuron.at(0).y;
+    V3DLONG end_y = nt.listNeuron.at(0).y;
+    V3DLONG start_z = nt.listNeuron.at(0).z;
+    V3DLONG end_z = nt.listNeuron.at(0).z;
+
+    for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+    {
+        if(start_x>nt.listNeuron.at(i).x) start_x = nt.listNeuron.at(i).x;
+        if(end_x<nt.listNeuron.at(i).x) end_x = nt.listNeuron.at(i).x;
+
+        if(start_y>nt.listNeuron.at(i).y) start_y = nt.listNeuron.at(i).y;
+        if(end_y<nt.listNeuron.at(i).y) end_y = nt.listNeuron.at(i).y;
+
+        if(start_z>nt.listNeuron.at(i).z) start_z = nt.listNeuron.at(i).z;
+        if(end_z<nt.listNeuron.at(i).z) end_z = nt.listNeuron.at(i).z;
+
+    }
+
+    unsigned char * total1dData = 0;
+    total1dData = callback.getSubVolumeTeraFly(filename.toStdString(),start_x,end_x+1,
+                                               start_y,end_y+1,start_z,end_z+1);
+    V3DLONG mysz[4];
+    mysz[0] = end_x -start_x +1;
+    mysz[1] = end_y - start_y +1;
+    mysz[2] = end_z - start_z +1;
+    mysz[3] = 1;
+
+    double seg_mean = 0;
+    for(V3DLONG i =0; i <nt.listNeuron.size(); i++)
+    {
+        V3DLONG ix = nt.listNeuron.at(i).x - start_x;
+        V3DLONG iy = nt.listNeuron.at(i).y - start_y;
+        V3DLONG iz = nt.listNeuron.at(i).z - start_z;
+
+        V3DLONG offsetk = iz*mysz[1]*mysz[0];
+        V3DLONG offsetj = iy*mysz[0];
+
+        seg_mean += total1dData[offsetk + offsetj + ix];
+    }
+    seg_mean /= nt.listNeuron.size();
+
+    int c = mysz[3] - 1;
+    double rs = 5;
+
+    double score_each = 0, ave_v=0;
+    vector<MyMarker> file_inmarkers;
+    for(V3DLONG i =0; i <nt.listNeuron.size(); i++)
+    {
+        V3DLONG ix = nt.listNeuron.at(i).x - start_x;
+        V3DLONG iy = nt.listNeuron.at(i).y - start_y;
+        V3DLONG iz = nt.listNeuron.at(i).z - start_z;
+
+        V3DLONG offsetk = iz*mysz[1]*mysz[0];
+        V3DLONG offsetj = iy*mysz[0];
+
+        V3DLONG PixelValue = total1dData[offsetk + offsetj + ix];
+        compute_Anisotropy_sphere(total1dData, mysz[0], mysz[1], mysz[2], c, ix, iy, iz, rs, score_each, ave_v);
+        if(PixelValue >= seg_mean && score_each >0.25)
+        {
+            MyMarker t;
+            t.x = nt.listNeuron.at(i).x;
+            t.y = nt.listNeuron.at(i).y;
+            t.z = nt.listNeuron.at(i).z;
+            file_inmarkers.push_back(t);
+        }
+    }
+    if(total1dData) {delete []total1dData; total1dData = 0;}
+    return file_inmarkers;
+
 }
