@@ -6,6 +6,7 @@
 #include "ui_Neurite_Instructor.h"
 #include "neuriteinstructorui.h"
 #include "Neurite_Instructor_plugin.h"
+#include "funcs.h"
 
 using namespace std;
 
@@ -14,6 +15,10 @@ neuriteInstructorUI::neuriteInstructorUI(QWidget* parent, V3DPluginCallback2* ca
     ui->setupUi(this);
     this->mainCallBack = callback;
     this->pluginParent = parent;
+
+    this->deployDisplay = "";
+    this->modelDisplay = "";
+    this->meanDisplay = "";
 
     this->show();
 }
@@ -25,18 +30,48 @@ neuriteInstructorUI::~neuriteInstructorUI()
 
 void neuriteInstructorUI::okClicked()
 {
-    if (ui->checkBox->isChecked())
+    v3dhandle curwin = this->mainCallBack->currentImageWindow();
+    if (!curwin)
     {
-        v3dhandle curwin = this->mainCallBack->currentImageWindow();
-        if (!curwin)
+        QMessageBox::information(0, "", "No image window found.");
+        return;
+    }
+    else
+    {
+        this->p4DImage = mainCallBack->getImage(curwin);
+        if (!p4DImage)
         {
-            cout << "no window opened" << endl;
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
             return;
         }
 
-        this->markerList = mainCallBack->getLandmark(curwin);
-        this->imageName = mainCallBack->getImageName(curwin);
+        this->ImgPtr = this->p4DImage->getRawData();
+        this->imgX = this->p4DImage->getXDim();
+        this->imgY = this->p4DImage->getYDim();
+        this->imgZ = this->p4DImage->getZDim();
+        this->channel = this->p4DImage->getCDim();
     }
+
+    if (this->deployDisplay == "")
+    {
+        QMessageBox::information(0, "", "Deploying file is not chosen.");
+        return;
+    }
+    if (this->modelDisplay == "")
+    {
+        QMessageBox::information(0, "", "Trained model file is not chosen.");
+        return;
+    }
+    if (this->meanDisplay == "")
+    {
+        QMessageBox::information(0, "", "Image mean file is not chosen.");
+        return;
+    }
+
+    this->markerList = mainCallBack->getLandmark(curwin);
+    predictSWCstroke(this, mainCallBack, curwin);
+
+    accepted();
 }
 
 void neuriteInstructorUI::filePath()
@@ -44,25 +79,32 @@ void neuriteInstructorUI::filePath()
     QObject* emitter = sender();
     QString emitterName = emitter->objectName();
 
-    QString fileName = QFileDialog::getOpenFileName(0, QObject::tr("open Network Model Files"), "");
-
-    if(fileName.isEmpty()) return;
+    //if(fileName.isEmpty()) return;
 
     if (emitterName == "pushButton")
     {
+        QString fileName = QFileDialog::getOpenFileName(0, QObject::tr("open Network Model Files"), "",
+                                                        QObject::tr("Deploying file (*.prototxt)"));
+
         ui->lineEdit->setText(fileName);
-        this->deployName = fileName;
+        this->deployDisplay = fileName;
+        this->deployName = fileName.toStdString();
     }
     else if (emitterName == "pushButton_2")
     {
+        QString fileName = QFileDialog::getOpenFileName(0, QObject::tr("open Network Model Files"), "",
+                                                        QObject::tr("Trained model file (*.caffemodel)"));
+
         ui->lineEdit_2->setText(fileName);
-        this->modelName = fileName;
+        this->modelDisplay = fileName;
+        this->modelName = fileName.toStdString();
     }
     else if (emitterName == "pushButton_3")
     {
+        QString fileName = QFileDialog::getOpenFileName(0, QObject::tr("open Network Model Files"), "",
+                                                        QObject::tr("Image mean file (*.binaryproto)"));
         ui->lineEdit_3->setText(fileName);
-        this->meanName = fileName;
+        this->meanDisplay = fileName;
+        this->meanName = fileName.toStdString();
     }
-
-    //delete fileDlg;
 }

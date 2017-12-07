@@ -23,14 +23,6 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
-    void cropStack(unsigned char InputImagePtr[], unsigned char OutputImagePtr[],
-        int xlb, int xhb, int ylb, int yhb, int zlb, int zhb, int imgX, int imgY, int imgZ);
-
-    QStringList importSeriesFileList_addnumbersort(const QString & curFilePath);
-
-    void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
-        int xlb, int xhb, int ylb, int yhb, int zlb, int zhb);
-
 };
 
 #endif

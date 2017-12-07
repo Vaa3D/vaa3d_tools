@@ -13,6 +13,7 @@
 #include "ui_Neurite_Instructor.h"
 #include "neuriteinstructorui.h"
 #include <ctime>
+#include "funcs.h"
 
 
 using namespace std;
@@ -42,41 +43,8 @@ void NeuriteInstructor::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         neuriteInstructorUI* inputForm = new neuriteInstructorUI(0, &callback);
         inputForm->exec();
 
-        v3dhandle curwin = callback.currentImageWindow();
-        if (!curwin)
-        {
-            QMessageBox::information(0, "", "You don't have any image open in the main window.");
-            return;
-        }
-
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-
-        if (!p4DImage)
-        {
-            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-            return;
-        }
-
-        unsigned char* ImgPtr = p4DImage->getRawData();
-
-        V3DLONG imgX = p4DImage->getXDim();
-        V3DLONG imgY = p4DImage->getYDim();
-        V3DLONG imgZ = p4DImage->getZDim();
-        V3DLONG channel = p4DImage->getCDim();
-
-
-        clock_t startTime, endTime;
-        startTime = clock();
-
-        const string deployCString = inputForm->deployName.toStdString();
-        const string modelCString = inputForm->modelName.toStdString();
-        const string meanCString = inputForm->meanName.toStdString();
-        cout << deployCString << " " << modelCString << " " << meanCString << endl;
-        //v3d_msg("continue");
-        Classifier classifier(deployCString, modelCString, meanCString);
-
         //markers
-        LandmarkList markerList = inputForm->markerList;
+        /*LandmarkList markerList = inputForm->markerList;
         std::vector<std::vector<float> > outputs_overall;
         //NeuronTree newTree;
         if(markerList.size()>0)
@@ -87,13 +55,6 @@ void NeuriteInstructor::domenu(const QString &menu_name, V3DPluginCallback2 &cal
                 int markerX = int(floor(markerIt->x)) - 1;
                 int markerY = int(floor(markerIt->y)) - 1;
                 int z = int(floor(markerIt->z)) - 1;
-
-    //            NeuronSWC newNode;
-    //            newNode.x = markerIt->x;
-    //            newNode.y = markerIt->y;
-    //            newNode.z = markerIt->z;
-    //            newNode.parent = -1;
-    //            newTree.listNeuron.push_back(newNode);
 
                 V3DLONG VOIxyz[4];
                 VOIxyz[0] = 61;
@@ -156,103 +117,12 @@ void NeuriteInstructor::domenu(const QString &menu_name, V3DPluginCallback2 &cal
                 }
             }
             callback.setLandmark(curwin,markerList);
-        }
-
-
-        //swc
-        V3DLONG N = imgX;
-        V3DLONG M = imgY;
-        V3DLONG P = imgZ;
-        int Wx = 30, Wy= 30, Wz=30;
-        std::vector<cv::Mat> imgs;
-        QList <NeuronTree> * nt_list = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
-        if(nt_list->size() > 0)
-        {
-            for(V3DLONG i=0; i<nt_list->size();i++)
-            {
-                NeuronTree nt = nt_list->at(i);
-                for(V3DLONG j=0; j< nt.listNeuron.size(); j++)
-                {
-                    V3DLONG tmpx = nt.listNeuron.at(j).x;
-                    V3DLONG tmpy = nt.listNeuron.at(j).y;
-                    V3DLONG tmpz = nt.listNeuron.at(j).z;
-
-                    V3DLONG xb = tmpx-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
-                    V3DLONG xe = tmpx+Wx; if(xe>=N-1) xe = N-1;
-                    V3DLONG yb = tmpy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
-                    V3DLONG ye = tmpy+Wy; if(ye>=M-1) ye = M-1;
-                    V3DLONG zb = tmpz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
-                    V3DLONG ze = tmpz+Wz; if(ze>=P-1) ze = P-1;
-
-                    V3DLONG im_cropped_sz[4];
-                    im_cropped_sz[0] = xe - xb + 1;
-                    im_cropped_sz[1] = ye - yb + 1;
-                    im_cropped_sz[2] = 1;
-                    im_cropped_sz[3] = channel;
-
-                    unsigned char *im_cropped = 0;
-
-                    V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
-                    try {im_cropped = new unsigned char [pagesz];}
-                    catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
-                    memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
-
-                    for(V3DLONG iz = zb; iz <= ze; iz++)
-                    {
-                        V3DLONG offsetk = iz*M*N;
-                        V3DLONG j = 0;
-                        for(V3DLONG iy = yb; iy <= ye; iy++)
-                        {
-                            V3DLONG offsetj = iy*N;
-                            for(V3DLONG ix = xb; ix <= xe; ix++)
-                            {
-                                if(ImgPtr[offsetk + offsetj + ix] >= im_cropped[j])
-                                    im_cropped[j] = ImgPtr[offsetk + offsetj + ix];
-                                j++;
-                            }
-                        }
-                    }
-
-                    cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
-                    imgs.push_back(img);
-                }
-                std::vector<std::vector<float> > outputs = classifier.Predict(imgs);
-                for(V3DLONG j=0; j< nt.listNeuron.size(); j++)
-                {
-                    std::vector<float> output = outputs[j];
-
-                    if (output.at(1) > output.at(0)  &&  output.at(1) > output.at(2))
-                    {
-                        nt.listNeuron[j].type = 2;
-                    }
-                    else if (output.at(2) > output.at(0)  &&  output.at(2) > output.at(1))
-                    {
-                        nt.listNeuron[j].type = 3;
-                    }
-                    else
-                    {
-                        nt.listNeuron[j].type = 0;
-                    }
-                }
-
-                nt.color.r = 0;
-                nt.color.g = 0;
-                nt.color.b = 0;
-                nt.color.a = 0;
-                nt_list->removeAt(i);
-                nt_list->push_back(nt);
-                callback.setSWC(curwin,nt);
-                imgs.clear();
-            }
-        }
-        callback.update_NeuronBoundingBox(callback.find3DViewerByName(p4DImage->getFileName()));
+        }*/
 
 //        QString outswc_file = "/local2/MK/DL_work/IVSCC/exampleImages/test.swc";
 //        writeSWC_file(outswc_file, newTree);
 
-        endTime = clock();
-        double totalTime = double(endTime - startTime) / CLOCKS_PER_SEC;
-        cout << "time elapsed: " << totalTime << " secs" << endl;
+
 
         inputForm->~neuriteInstructorUI();
 	}
@@ -276,7 +146,7 @@ bool NeuriteInstructor::dofunc(const QString & func_name, const V3DPluginArgList
 
     if (func_name == tr("neurite_sampler"))
 	{
-        QString model_file = inparas.at(0);
+        /*QString model_file = inparas.at(0);
         QString trained_file = inparas.at(1);
         QString mean_file = inparas.at(2);
         QString outswc_file = outfiles.at(0);
@@ -439,7 +309,7 @@ bool NeuriteInstructor::dofunc(const QString & func_name, const V3DPluginArgList
         }
         delete [] ImgPtr;
         writeSWC_file(outswc_file, sampledTree);
-        sampledTree.listNeuron.clear();
+        sampledTree.listNeuron.clear();*/
 	}
 	else if (func_name == tr("func2"))
     {

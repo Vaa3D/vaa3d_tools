@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>523</width>
-    <height>395</height>
+    <width>532</width>
+    <height>248</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,8 +24,8 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>501</width>
-     <height>371</height>
+     <width>511</width>
+     <height>221</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -38,22 +38,22 @@
     <enum>Qt::ScrollBarAsNeeded</enum>
    </property>
    <property name="widgetResizable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <widget class="QWidget" name="scrollAreaWidgetContents">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>499</width>
-      <height>369</height>
+      <width>509</width>
+      <height>219</height>
      </rect>
     </property>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>330</y>
+       <y>170</y>
        <width>201</width>
        <height>32</height>
       </rect>
@@ -65,150 +65,11 @@
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
-    <widget class="QCheckBox" name="checkBox">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>221</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Point examinatiopn</string>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>50</y>
-       <width>481</width>
-       <height>91</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="title">
-      <string>Area examination</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-     <widget class="QLabel" name="label_4">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>30</y>
-        <width>391</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Squared area side length (in pixel number):</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_5">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>310</x>
-        <y>60</y>
-        <width>101</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Step size:</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="lineEdit_9">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>400</x>
-        <y>30</y>
-        <width>71</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="lineEdit_10">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>400</x>
-        <y>60</y>
-        <width>71</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
-      </property>
-     </widget>
-    </widget>
-    <widget class="Line" name="line">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>150</y>
-       <width>481</width>
-       <height>16</height>
-      </rect>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>170</y>
+       <y>10</y>
        <width>481</width>
        <height>151</height>
       </rect>
@@ -373,54 +234,6 @@
  <resources/>
  <connections>
   <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>neuriteInstructorUI</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>neuriteInstructorUI</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>neuriteInstructorUI</receiver>
-   <slot>okClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>354</x>
-     <y>233</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>410</x>
-     <y>46</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>pushButton</sender>
    <signal>clicked()</signal>
    <receiver>neuriteInstructorUI</receiver>
@@ -432,7 +245,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>89</x>
-     <y>388</y>
+     <y>242</y>
     </hint>
    </hints>
   </connection>
@@ -447,7 +260,7 @@
      <y>267</y>
     </hint>
     <hint type="destinationlabel">
-     <x>519</x>
+     <x>441</x>
      <y>42</y>
     </hint>
    </hints>
@@ -463,8 +276,40 @@
      <y>303</y>
     </hint>
     <hint type="destinationlabel">
-     <x>460</x>
+     <x>441</x>
      <y>4</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>neuriteInstructorUI</receiver>
+   <slot>okClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>458</x>
+     <y>198</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>465</x>
+     <y>465</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>neuriteInstructorUI</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>358</x>
+     <y>199</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>358</x>
+     <y>330</y>
     </hint>
    </hints>
   </connection>

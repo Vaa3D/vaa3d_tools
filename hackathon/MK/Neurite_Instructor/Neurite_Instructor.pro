@@ -2,15 +2,15 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /local2/MK/Vaa3D/v3d_external/v3d_main
+VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/common_lib/include
-INCLUDEPATH	+= /local2/zhi/caffe/include
-INCLUDEPATH	+= /local2/cuda/cuda-8.0/include/
-INCLUDEPATH	+= /local2/zhi/caffe/.build_release/src
-INCLUDEPATH     += /local2/MK/Vaa3D/vaa3d_tools/hackathon/zhi/deep_learning/prediction
-INCLUDEPATH     += /local2/MK/Vaa3D/vaa3d_tools/released_plugins/v3d_plugins/terastitcher/include
-INCLUDEPATH     += /local2/MK/Vaa3D/vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center
+INCLUDEPATH	+= ../../../../../../zhi/caffe/include
+INCLUDEPATH	+= ../../../../../../cuda/cuda-8.0/include/
+INCLUDEPATH	+= ../../../../../../zhi/caffe/.build_release/src
+INCLUDEPATH     += ../../zhi/deep_learning/prediction
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/terastitcher/include
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/mean_shift_center
 
 
 LIBS += -L/local2/zhi/caffe/build/lib
@@ -48,7 +48,8 @@ LIBS += -L/usr/local/lib
 LIBS += -lglog -lgflags -lprotobuf -lboost_system -lboost_thread -llmdb -lleveldb -lstdc++ -lcblas -latlas
 
 HEADERS	+= Neurite_Instructor_plugin.h \
-    neuriteinstructorui.h
+    neuriteinstructorui.h \
+    funcs.h
 HEADERS += ../../zhi/deep_learning/prediction/classification.h
 HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
 HEADERS += $$VAA3DPATH/basic_c_fun/basic_surf_objs.h

@@ -21,9 +21,20 @@ public:
     LandmarkList markerList;
     QString imageName;
 
-    QString deployName;
-    QString modelName;
-    QString meanName;
+    QString deployDisplay;
+    QString modelDisplay;
+    QString meanDisplay;
+
+    string deployName;
+    string modelName;
+    string meanName;
+
+    unsigned char* ImgPtr;
+    V3DLONG imgX;
+    V3DLONG imgY;
+    V3DLONG imgZ;
+    V3DLONG channel;
+    Image4DSimple* p4DImage;
 
 public slots:
     void okClicked();
