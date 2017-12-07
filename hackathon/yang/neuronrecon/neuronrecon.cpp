@@ -374,40 +374,52 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
     return 0;
 }
 
-int NCPointCloud::savePointCloud(QString filename)
+int NCPointCloud::savePointCloud(QString filename, int format)
 {
     //
     long n = points.size();
 
-    // .apo
-    QList <CellAPO> pointcloud;
-
-    for(long i=0; i<n; i++)
+    //
+    if(format==0)
     {
-        Point p = points[i];
-        CellAPO cell;
+        // apo
+        QList <CellAPO> pointcloud;
 
-        cell.x = p.x;
-        cell.y = p.y;
-        cell.z = p.z;
-        cell.volsize = 2*p.radius;
+        for(long i=0; i<n; i++)
+        {
+            Point p = points[i];
+            CellAPO cell;
 
-        pointcloud.push_back(cell);
+            cell.x = p.x;
+            cell.y = p.y;
+            cell.z = p.z;
+            cell.volsize = 2*p.radius;
+
+            pointcloud.push_back(cell);
+        }
+
+        writeAPO_file(filename, pointcloud);
     }
+    else if(format==1)
+    {
+        // marker
+        QList<ImageMarker> markers;
+        for(long i=0; i<n; i++)
+        {
+            Point p = points[i];
+            ImageMarker marker(0, 1, p.x, p.y, p.z, p.radius);
 
-    writeAPO_file(filename, pointcloud);
+            markers.push_back(marker);
+        }
 
-    //    QList<ImageMarker> markers;
-    //    for(long i=0; i<n; i++)
-    //    {
-    //        Point p = points[i];
-    //        ImageMarker marker(0, 1, p.x, p.y, p.z, p.radius);
-
-    //        markers.push_back(marker);
-    //    }
-
-    //    //
-    //    writeMarker_file(filename, markers);
+        //
+        writeMarker_file(filename, markers);
+    }
+    else
+    {
+        cout<<"Invalid file format specified \n";
+        return -1;
+    }
 
     //
     return 0;

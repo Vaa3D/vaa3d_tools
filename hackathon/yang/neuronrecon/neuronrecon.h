@@ -166,7 +166,7 @@ public:
     int getPointCloud(QStringList files);
 
     // save as a .apo file
-    int savePointCloud(QString filename);
+    int savePointCloud(QString filename, int format=0);
 
     // save as a .swc file
     int saveNeuronTree(NCPointCloud pc, QString filename);

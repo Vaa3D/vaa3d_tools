@@ -2026,7 +2026,8 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     //
     QString fnimage = QString(inlist->at(0));
     QString fnmarker = QString(inlist->at(1));
-    QString traced = fnimage.left(fnimage.lastIndexOf(".")).append("_autotraced.swc");
+    QString markers4trace = fnimage.left(fnimage.lastIndexOf(".")).append(".marker");
+    QString markersIntrace = fnimage.left(fnimage.lastIndexOf(".")).append("_used4trace.marker");
 
     //
     if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
@@ -2089,7 +2090,7 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         //
         LandmarkList landmarks;
         QList<ImageMarker> markers = readMarker_file(fnmarker);
-        NCPointCloud pc;
+        NCPointCloud pc, pcsave;
         for(size_t i=0; i<markers.size(); i++)
         {
             ImageMarker marker = markers[i];
@@ -2122,6 +2123,7 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         {
             return a.val*a.radius > b.val*b.radius;
         });
+        pc.savePointCloud(markers4trace, 1);
 
         for(size_t i=0; i<pc.points.size(); i++)
         {
@@ -2131,12 +2133,52 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         cout<<"tracing with "<<landmarks.size()<<" markers "<<endl;
 
         // app2
+        vector<NeuronTree> tracedFilaments;
+        float distthresh = 10;
         long iter = 0;
         for(size_t i=0; i<pc.points.size(); i++)
         {
+            //
+            Point point = pc.points[i];
+
+            //
+            bool skip = false;
+            if(i>0)
+            {
+                if(tracedFilaments.size()>0)
+                {
+                    for(size_t j=0; j<tracedFilaments.size(); j++)
+                    {
+                        NeuronTree nt = tracedFilaments[j];
+
+                        if(nt.listNeuron.size()>0)
+                        {
+                            for(size_t k=0; k<nt.listNeuron.size(); k++)
+                            {
+                                Point q;
+                                q.x = nt.listNeuron[k].x;
+                                q.y = nt.listNeuron[k].y;
+                                q.z = nt.listNeuron[k].z;
+
+                                if(pc.distance(point, q)<distthresh)
+                                {
+                                    skip = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if(skip)
+            {
+                cout<<"skip point #"<<i<<endl;
+                continue;
+            }
+
+            //
             QString segmenttraced = fnimage.left(fnimage.lastIndexOf(".")).append(QString("_autotraced%1.swc").arg(++iter));
             LandmarkList landmark;
-            Point point = pc.points[i];
             landmark.push_back(LocationSimple(point.x, point.y, point.z));
 
             //
@@ -2148,13 +2190,13 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             p2.is_coverage_prune = true;
             p2.is_break_accept = true;
             p2.bkg_thresh = thresh;
-            p2.length_thresh = 10;
+            p2.length_thresh = 5;
             p2.cnn_type = 2;
             p2.channel = 0;
             p2.SR_ratio = 3.0/9.9;
             p2.b_256cube = false;
             p2.b_RadiusFrom2D = true;
-            p2.b_resample = 1;
+            p2.b_resample = 0;
             p2.b_intensity = 0;
             p2.b_brightfiled = 0;
             p2.b_menu = 0;
@@ -2168,7 +2210,19 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
             p2.outswc_file = segmenttraced;
             proc_app2(callback, p2, versionStr);
+
+            //
+            NeuronTree nt = readSWC_file(segmenttraced);
+            if(nt.listNeuron.size()>0)
+            {
+                tracedFilaments.push_back(nt);
+                pcsave.points.push_back(point);
+            }
+
         }
+
+        //
+        pcsave.savePointCloud(markersIntrace, 1);
 
         //
         y_del1dp<unsigned char>(puint8);
