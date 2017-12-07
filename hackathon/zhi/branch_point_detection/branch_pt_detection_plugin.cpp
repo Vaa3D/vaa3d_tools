@@ -8,6 +8,7 @@
 #include "branch_pt_detection_plugin.h"
 #include "../../../v3d_main/jba/newmat11/newmatap.h"
 #include "../../../v3d_main/jba/newmat11/newmatio.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(branch_pt_detection, branch_pt_detection);
@@ -15,8 +16,8 @@ Q_EXPORT_PLUGIN2(branch_pt_detection, branch_pt_detection);
 QStringList branch_pt_detection::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+        <<tr("detection")
+        <<tr("detection_terafly")
 		<<tr("about");
 }
 
@@ -245,7 +246,7 @@ template <class T> bool swapthree(T& dummya, T& dummyb, T& dummyc)
 
 void branch_pt_detection::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("detection"))
 	{
         v3dhandle curwin = callback.currentImageWindow();
         if (!curwin)
@@ -352,10 +353,10 @@ void branch_pt_detection::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
 
 	}
-	else if (menu_name == tr("menu2"))
+    else if (menu_name == tr("detection_terafly"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        v3d_msg("To be implemented.");
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
@@ -370,10 +371,92 @@ bool branch_pt_detection::dofunc(const QString & func_name, const V3DPluginArgLi
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("detection_terafly"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        QString inimg_file = infiles[0];
+        int k=0;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+        NeuronTree nt = readSWC_file(swc_name);
+        V3DLONG start_x = nt.listNeuron.at(0).x;
+        V3DLONG end_x = nt.listNeuron.at(0).x;
+        V3DLONG start_y = nt.listNeuron.at(0).y;
+        V3DLONG end_y = nt.listNeuron.at(0).y;
+        V3DLONG start_z = nt.listNeuron.at(0).z;
+        V3DLONG end_z = nt.listNeuron.at(0).z;
+
+        for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+        {
+            if(start_x>nt.listNeuron.at(i).x) start_x = nt.listNeuron.at(i).x;
+            if(end_x<nt.listNeuron.at(i).x) end_x = nt.listNeuron.at(i).x;
+
+            if(start_y>nt.listNeuron.at(i).y) start_y = nt.listNeuron.at(i).y;
+            if(end_y<nt.listNeuron.at(i).y) end_y = nt.listNeuron.at(i).y;
+
+            if(start_z>nt.listNeuron.at(i).z) start_z = nt.listNeuron.at(i).z;
+            if(end_z<nt.listNeuron.at(i).z) end_z = nt.listNeuron.at(i).z;
+
+        }
+
+        unsigned char * total1dData = 0;
+        total1dData = callback.getSubVolumeTeraFly(inimg_file.toStdString(),start_x,end_x+1,
+                                                   start_y,end_y+1,start_z,end_z+1);
+        V3DLONG mysz[4];
+        mysz[0] = end_x -start_x +1;
+        mysz[1] = end_y - start_y +1;
+        mysz[2] = end_z - start_z +1;
+        mysz[3] = 1;
+
+        double seg_mean = 0;
+        for(V3DLONG i =0; i <nt.listNeuron.size(); i++)
+        {
+            V3DLONG ix = nt.listNeuron.at(i).x - start_x;
+            V3DLONG iy = nt.listNeuron.at(i).y - start_y;
+            V3DLONG iz = nt.listNeuron.at(i).z - start_z;
+
+            V3DLONG offsetk = iz*mysz[1]*mysz[0];
+            V3DLONG offsetj = iy*mysz[0];
+
+            seg_mean += total1dData[offsetk + offsetj + ix];
+        }
+        seg_mean /= nt.listNeuron.size();
+
+        int c = mysz[3] - 1;
+        double rs = 5;
+
+        double score_each = 0, ave_v=0;
+        vector<MyMarker> file_inmarkers;
+        for(V3DLONG i =0; i <nt.listNeuron.size(); i++)
+        {
+            V3DLONG ix = nt.listNeuron.at(i).x - start_x;
+            V3DLONG iy = nt.listNeuron.at(i).y - start_y;
+            V3DLONG iz = nt.listNeuron.at(i).z - start_z;
+
+            V3DLONG offsetk = iz*mysz[1]*mysz[0];
+            V3DLONG offsetj = iy*mysz[0];
+
+            V3DLONG PixelValue = total1dData[offsetk + offsetj + ix];
+            compute_Anisotropy_sphere(total1dData, mysz[0], mysz[1], mysz[2], c, ix, iy, iz, rs, score_each, ave_v);
+            if(PixelValue >= seg_mean && score_each >0.25)
+            {
+                MyMarker t;
+                t.x = nt.listNeuron.at(i).x;
+                t.y = nt.listNeuron.at(i).y;
+                t.z = nt.listNeuron.at(i).z;
+                file_inmarkers.push_back(t);
+            }
+        }
+
+        QString output_marker = swc_name + "_branches.marker";
+        saveMarker_file(output_marker.toStdString(),file_inmarkers);
+
+    }
 	else if (func_name == tr("func2"))
 	{
 		v3d_msg("To be implemented.");
