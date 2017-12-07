@@ -281,7 +281,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     QString tmpfolder;
     if(P.tracing_comb)
-        tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     else
     {
         if(P.method == app1)
@@ -289,7 +289,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         else if (P.method == app2)
             tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         else
-            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
     if(!tmpfolder.isEmpty())
@@ -396,7 +396,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
         else
             processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
-    }
+    }else
+        processSmartScan_3D_wofuison(callback,infostring,tmpfolder +"/scanData.txt");
+
+
 
 
     v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
@@ -1338,12 +1341,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     {
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
         saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
     else if(P.method == gd)
     {
-        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
     if(P.global_name)
@@ -2457,6 +2460,33 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
     myfile.flush();
     myfile.close();
     ifs_2nd.close();
+}
+
+void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
+{
+    ifstream ifs(fileWithData.toLatin1());
+    string info_swc;
+    string swcfilepath;
+    vector<MyMarker*> outswc,inputswc;
+
+    QString fileSaveName = fileWithData + "wofusion.swc";
+    int offsetX, offsetY,offsetZ,sizeX, sizeY, sizeZ;
+    while(ifs && getline(ifs, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> offsetZ >> swcfilepath >> sizeX >> sizeY >> sizeZ;
+
+            inputswc = readSWC_file(swcfilepath);;
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->x = inputswc[d]->x + offsetX;
+                inputswc[d]->y = inputswc[d]->y + offsetY;
+                inputswc[d]->z = inputswc[d]->z + offsetZ;
+                outswc.push_back(inputswc[d]);
+            }
+    }
+    ifs.close();
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
 }
 
 bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
@@ -4925,12 +4955,12 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
 bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+    QString saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     QString finaloutputswc;
     if(P.global_name)
         finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
     else
-        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z%3_nc_combo_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_combo_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
 
     QString imageSaveString = saveDirString;
 
