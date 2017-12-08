@@ -116,7 +116,7 @@ Point::Point()
     nn.clear();
     n=0;
     visited = false;
-    connected = 0;
+    connects = 0;
     pre = -1;
     next = -1;
 
@@ -127,6 +127,7 @@ Point::Point()
     weight = -1;
     connect1 = -1;
     connect2 = -1;
+    interested = true;
 }
 
 Point::Point (float x, float y, float z)
@@ -142,7 +143,7 @@ Point::Point (float x, float y, float z)
     n=0;
     visited = false;
 
-    connected = 0;
+    connects = 0;
     pre = -1;
     next = -1;
 
@@ -153,6 +154,7 @@ Point::Point (float x, float y, float z)
     weight = -1;
     connect1 = -1;
     connect2 = -1;
+    interested = true;
 }
 
 Point::~Point()
@@ -758,6 +760,53 @@ bool NCPointCloud::findNextUnvisitPoint(unsigned long &index)
     return false;
 }
 
+bool NCPointCloud::findNextPoint(unsigned long &index)
+{
+    long n = points.size();
+
+    if(index==0)
+    {
+        float minweight = points[0].weight;
+        for(size_t i=1; i<n; i++)
+        {
+            if(points[i].interested && points[i].connects<1 && points[i].weight<minweight)
+            {
+                minweight = points[i].weight;
+                index = i;
+            }
+        }
+    }
+    else
+    {
+        if(points[index].interested)
+        {
+            if(points[index].connects<2)
+            {
+                return true;
+            }
+            else
+            {
+                float minweight = 1e6;
+                for(size_t i=0; i<n; i++)
+                {
+                    if(points[i].weight<minweight && points[i].connects<2 && points[i].interested)
+                    {
+                        minweight = points[i].weight;
+                        index = i;
+                    }
+                }
+            }
+        }
+    }
+
+    if(index>0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 int NCPointCloud::knn(int k, float radius)
 {
     //
@@ -926,13 +975,13 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     removeNoise();
 
     // connect points into lines
-    connectPoints(k,angle,m);
+    connectPoints2(k,angle,m);
 
     // merge lines
     // mergeLines(angle);
 
     // assemble fragments into trees
-    assembleFragments(k);
+    //assembleFragments(k);
 
     // save connected results into a .swc file
     if(!outfile.isEmpty())
@@ -1411,13 +1460,13 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
                     next = p.nn[get<2>(*(candidates.begin()))];
                     next_next = points[next].nn[get<3>(*(candidates.begin()))];
 
-                    points[loc].connected++;
+                    points[loc].connects++;
                     points[next].visited = true;
-                    points[next].connected++;
+                    points[next].connects++;
                     points[next].parents.push_back(p.n);
                     points[loc].children.push_back(points[next].n);
                     points[next_next].visited = true;
-                    points[next_next].connected++;
+                    points[next_next].connects++;
                     points[next_next].parents.push_back(points[next].n);
                     points[next].children.push_back(points[next_next].n);
 
@@ -1473,9 +1522,9 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
 
                     next = p.nn[get<2>(*(candidates.begin()))];
 
-                    points[loc].connected++;
+                    points[loc].connects++;
                     points[next].visited = true;
-                    points[next].connected++;
+                    points[next].connects++;
                     points[next].parents.push_back(p.n);
                     points[loc].children.push_back(points[next].n);
 
@@ -1506,6 +1555,10 @@ int NCPointCloud::connectPoints2(int k, float maxAngle, float m)
     for(long k=0; k<points.size(); k++)
     {
         Point p = points[k];
+
+        //
+        long next = -1;
+        long next_next = -1;
 
         //
         for(long i=0; i<p.nn.size(); i++)
@@ -1542,163 +1595,160 @@ int NCPointCloud::connectPoints2(int k, float maxAngle, float m)
                 }
             }
         }
+
+        //
+        if(candidates.size()>0)
+        {
+            sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+            {
+                return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
+            });
+
+            //
+            next = p.nn[get<2>(*(candidates.begin()))];
+            next_next = points[next].nn[get<3>(*(candidates.begin()))];
+
+            //
+            points[k].weight = get<0>(*(candidates.begin()))*get<1>(*(candidates.begin()));
+            points[k].connect1 = next;
+            points[k].connect2 = next_next;
+        }
     }
 
-
-
+    cout<<"connecting ... ..."<<endl;
 
     // connect points into lines
-    unsigned long loc;
-    while(findNextUnvisitPoint(loc))
+    unsigned long loc=0;
+    while(findNextPoint(loc))
     {
-        //
-        if(points[loc].visited == false)
-        {
-            points[loc].visited = true;
-            points[loc].parents.push_back(-1);
-        }
+        cout<<"processing ... "<<loc<<endl;
 
         //
         if(isConsidered(loc, m))
         {
+            cout<<"considering ... "<<loc<<endl;
+
             //
             Point p = points[loc];
 
             //
-            vector<tuple<float,float,long,long>> candidates;
-
-            //
-            long next = -1;
-            long next_next = -1;
-
-            //
-            if(p.parents[0] == -1)
+            if(p.connect1>0)
             {
-                // connect points from -1 "soma" (starting point)
-                for(long i=0; i<p.nn.size(); i++)
+                Point p_next = points[p.connect1];
+
+                cout<<"comparing ... "<<p.weight<<" <> "<<p_next.weight<<endl;
+
+                if(p.weight<=p_next.weight)
                 {
-                    Point p_next = points[p.nn[i]];
-
-                    if(p_next.visited || p_next.isSamePoint(p))
-                    {
-                        continue;
-                    }
-
-                    //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
-
-                    for(long j=0; j<p_next.nn.size(); j++)
-                    {
-                        Point p_next_next = points[p_next.nn[j]];
-
-                        if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
-                        {
-                            continue;
-                        }
-
-                        //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
-
-                        float angle = getAngle(p, p_next, p_next_next);
-                        float dist1 = distance(p,p_next);
-                        float dist2 = distance(p_next, p_next_next);
-                        float dist = dist1 + dist2;
-
-                        distThresh1 = 2*m*(p.radius + p_next.radius);
-                        distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
-
-                        if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
-                        {
-                            candidates.push_back(make_tuple(dist, angle, i, j));
-                        }
-                    }
+                    // connect
+                    cout<<"connect #"<<loc<<" -> #"<<p.connect1<<endl;
+                    connect(p);
+                    loc = p.connect1;
                 }
-
-                //
-                if(candidates.size()>0)
+                else
                 {
-                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+                    bool searching = true;
+                    Point p_pre = p;
+                    while(p.weight>p_next.weight && searching)
                     {
-                        return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
-                    });
+                        cout<<"continue comparing ... "<<p.weight<<" <> "<<p_next.weight<<endl;
 
-                    //
-                    next = p.nn[get<2>(*(candidates.begin()))];
-                    next_next = points[next].nn[get<3>(*(candidates.begin()))];
+                        p_pre = p;
+                        p = p_next;
 
-                    points[loc].connected++;
-                    points[next].visited = true;
-                    points[next].connected++;
-                    points[next].parents.push_back(p.n);
-                    points[loc].children.push_back(points[next].n);
-                    points[next_next].visited = true;
-                    points[next_next].connected++;
-                    points[next_next].parents.push_back(points[next].n);
-                    points[next].children.push_back(points[next_next].n);
+                        if(p.connect1>0)
+                        {
+                            p_next = points[p.connect1];
+                        }
+                        else
+                        {
+                            searching = false;
+                        }
+                    }
 
-                    points[next].pre = loc;
-                    points[next].next = next_next;
-
-                    points[next_next].pre = next;
-
-                    loc = next_next;
+                    if(p.weight<=p_next.weight)
+                    {
+                        // already connected, if so mark loc
+                        if(p_next.parents[0]==p.n)
+                        {
+                            cout<<loc<<" will not be considered next time ... "<<endl;
+                            points[loc].visited = true;
+                            points[loc].parents.push_back(-1);
+                            points[loc].interested = false;
+                            loc = 0;
+                        }
+                        else
+                        {
+                            //
+                            cout<<"connect "<<" #"<<indexofpoint(p.n)<<" -> #"<<indexofpoint(p_next.n)<<" "<<p.weight<<"<="<<p_next.weight<<endl;
+                            connect(p);
+                            loc = p.connect1;
+                        }
+                    }
+                    else
+                    {
+                        cout<<"not considering ... "<<loc<<" anymore "<<endl;
+                        points[loc].visited = true;
+                        points[loc].parents.push_back(-1);
+                        points[loc].interested = false;
+                        loc = 0;
+                    }
                 }
             }
             else
             {
-                // connect points from the intermediate point
-                Point p_pre = points[p.pre];
-
-                //
-                vector<tuple<float,float,long>> candidates;
-
-                //
-                for(long i=0; i<p.nn.size(); i++)
-                {
-                    Point p_next = points[p.nn[i]];
-
-                    if(p_next.visited || p_next.isSamePoint(p) || p_next.isSamePoint(p_pre))
-                    {
-                        continue;
-                    }
-
-                    //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
-
-                    float angle = getAngle(p_pre, p, p_next);
-                    float dist1 = distance(p_pre,p);
-                    float dist2 = distance(p, p_next);
-                    float dist = dist1 + dist2;
-
-                    distThresh1 = 2*m*(p_pre.radius + p.radius);
-                    distThresh2 = 2*m*(p_next.radius + p.radius);
-
-                    if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
-                    {
-                        candidates.push_back(make_tuple(dist, angle, i));
-                    }
-                }
-
-                //
-                if(candidates.size()>0)
-                {
-                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
-                    {
-                        return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
-                    });
-
-                    next = p.nn[get<2>(*(candidates.begin()))];
-
-                    points[loc].connected++;
-                    points[next].visited = true;
-                    points[next].connected++;
-                    points[next].parents.push_back(p.n);
-                    points[loc].children.push_back(points[next].n);
-
-                    points[next].pre = loc;
-
-                    loc = next;
-                }
+                cout<<"not considering ... "<<loc<<" anymore "<<endl;
+                points[loc].visited = true;
+                points[loc].parents.push_back(-1);
+                points[loc].interested = false;
+                loc = 0;
             }
         }
+        else
+        {
+            loc = 0;
+        }
     }
+
+
+    //
+    return 0;
+}
+
+//
+int NCPointCloud::connect(Point p)
+{
+    long loc = indexofpoint(p.n);
+    long next = p.connect1;
+    long next_next = p.connect2;
+
+    if(p.parents.size()<1)
+    {
+        points[loc].parents.push_back(-1);
+    }
+
+    if(points[loc].connects>2)
+    {
+        points[loc].interested = false;
+        return -1;
+    }
+
+    points[loc].visited = true;
+    points[loc].connects++;
+    points[next].visited = true;
+    points[next].connects++;
+    points[next].parents.push_back(p.n);
+    points[loc].children.push_back(points[next].n);
+
+    points[loc].next = next;
+    points[next].pre = loc;
+
+    points[next_next].visited = true;
+    points[next_next].connects++;
+    points[next_next].parents.push_back(points[next].n);
+    points[next].children.push_back(points[next_next].n);
+    points[next].next = next_next;
+    points[next_next].pre = next;
 
     //
     return 0;
@@ -1838,13 +1888,13 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
         //
         if(next>0 && next_next>0)
         {
-            points[loc].connected++;
+            points[loc].connects++;
             points[next].visited = true;
-            points[next].connected++;
+            points[next].connects++;
             points[next].parents.push_back(p.n);
             points[loc].children.push_back(points[next].n);
             points[next_next].visited = true;
-            points[next_next].connected++;
+            points[next_next].connects++;
             points[next_next].parents.push_back(points[next].n);
             points[next].children.push_back(points[next_next].n);
 
@@ -1887,9 +1937,9 @@ int NCPointCloud::minAngle(unsigned long &loc, float maxAngle)
 
         if(next>0)
         {
-            points[loc].connected++;
+            points[loc].connects++;
             points[next].visited = true;
-            points[next].connected++;
+            points[next].connects++;
             points[next].parents.push_back(p.n);
             points[loc].children.push_back(points[next].n);
 
@@ -2009,24 +2059,32 @@ bool NCPointCloud::isConsidered(unsigned long &index, float m)
 
             if(p1.pre!=-1)
             {
+                cout<<"test ... pre "<<p1.pre<<endl;
+
                 Point p1_pre = points[p1.pre];
 
-                if(distPoint2LineSegment(p1_pre, p1, p) <= thresh)
+                if(!p.isSamePoint(p1_pre) && distPoint2LineSegment(p1_pre, p1, p) <= thresh)
                 {
+                    cout<<"not considering ... "<<index<<endl;
                     points[index].visited = true;
                     points[index].parents.push_back(-1);
+                    points[index].interested = false;
                     return false;
                 }
             }
 
             if(p1.next!=-1)
             {
+                cout<<"test ... next "<<p1.next<<endl;
+
                 Point p1_next = points[p1.next];
 
-                if(distPoint2LineSegment(p1, p1_next, p) <= thresh)
+                if(!p.isSamePoint(p1_next) && distPoint2LineSegment(p1, p1_next, p) <= thresh)
                 {
+                    cout<<"not considering ... "<<index<<endl;
                     points[index].visited = true;
                     points[index].parents.push_back(-1);
+                    points[index].interested = false;
                     return false;
                 }
             }

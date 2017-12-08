@@ -104,7 +104,7 @@ public:
     int type; // -1 cell body; 0 tip point; 1 regular point; 3 branch point
 
     bool visited;
-    int connected; // 0 not connected; 1 connected to one other point; 2 connected two other points; ...
+    int connects; // 0 not connected; 1 connected to one other point; 2 connected two other points; ...
     V3DLONG pre, next; // index
     vector<V3DLONG> nn; // k nearest neighbors (indices)
 
@@ -117,6 +117,9 @@ public:
     int nLine; // # of the line
     bool isolated; // not connected to other point(s)
     bool isNoise;
+    float weight;
+    int connect1, connect2;
+    bool interested;
 };
 
 typedef pair<Point, Point> PointPairType;
@@ -204,6 +207,8 @@ public:
 
     //
     int connectPoints2(int k, float maxAngle, float m);
+    bool findNextPoint(unsigned long &index);
+    int connect(Point p);
 
     //
     int removeNoise();
