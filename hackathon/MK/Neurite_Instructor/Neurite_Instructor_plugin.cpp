@@ -19,6 +19,7 @@
 using namespace std;
 
 Q_EXPORT_PLUGIN2(Neurite_Instructor, NeuriteInstructor);
+
  
 QStringList NeuriteInstructor::menulist() const
 {
@@ -40,8 +41,17 @@ void NeuriteInstructor::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 {
 	if (menu_name == tr("menu1"))
 	{
-        neuriteInstructorUI* inputForm = new neuriteInstructorUI(0, &callback);
-        inputForm->exec();
+        neuriteInstructorUI* inputForm = new neuriteInstructorUI(parent, &callback);
+        connect(this, SIGNAL(callUpUI()), inputForm, SLOT(uiCall()));
+        emit callUpUI();
+        //inputForm->show();
+        //inputForm->raise();
+        //inputForm->activateWindow();
+
+
+        //inputForm->setModal(true);
+        //inputForm->show();
+        //inputForm->exec();
 
         //markers
         /*LandmarkList markerList = inputForm->markerList;

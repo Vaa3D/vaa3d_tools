@@ -85,7 +85,7 @@ void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
     return myList;
 }*/
 
-void predictSWCstroke(neuriteInstructorUI* inputFormPtr, V3DPluginCallback2* inputCallBack, v3dhandle curwin)
+void predictSWCstroke(neuriteInstructorUI* inputFormPtr, V3DPluginCallback2*& inputCallBack, v3dhandle curwin)
 {
 
     clock_t startTime, endTime;

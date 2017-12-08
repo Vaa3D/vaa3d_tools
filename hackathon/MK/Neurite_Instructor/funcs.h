@@ -18,7 +18,7 @@ void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
 
 //QStringList importSeriesFileList_addnumbersort(const QString & curFilePath);
 
-void predictSWCstroke(neuriteInstructorUI*, V3DPluginCallback2*, v3dhandle);
+void predictSWCstroke(neuriteInstructorUI*, V3DPluginCallback2*&, v3dhandle);
 
 
 #endif // FUNCS_H

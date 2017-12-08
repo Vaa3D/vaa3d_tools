@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 
 #include "ui_Neurite_Instructor.h"
 #include "neuriteinstructorui.h"
@@ -19,8 +20,6 @@ neuriteInstructorUI::neuriteInstructorUI(QWidget* parent, V3DPluginCallback2* ca
     this->deployDisplay = "";
     this->modelDisplay = "";
     this->meanDisplay = "";
-
-    this->show();
 }
 
 neuriteInstructorUI::~neuriteInstructorUI()
@@ -28,8 +27,15 @@ neuriteInstructorUI::~neuriteInstructorUI()
     delete ui;
 }
 
+void neuriteInstructorUI::uiCall()
+{
+    this->exec();
+}
+
 void neuriteInstructorUI::okClicked()
 {
+    this->setWindowModality(Qt::ApplicationModal);
+
     v3dhandle curwin = this->mainCallBack->currentImageWindow();
     if (!curwin)
     {
@@ -71,7 +77,7 @@ void neuriteInstructorUI::okClicked()
     this->markerList = mainCallBack->getLandmark(curwin);
     predictSWCstroke(this, mainCallBack, curwin);
 
-    accepted();
+    this->setWindowModality(Qt::NonModal);
 }
 
 void neuriteInstructorUI::filePath()

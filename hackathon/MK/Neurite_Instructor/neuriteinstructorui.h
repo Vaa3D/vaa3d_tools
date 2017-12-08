@@ -13,6 +13,7 @@ namespace Ui
 class neuriteInstructorUI : public QDialog
 {
     Q_OBJECT
+    friend class NeuriteInstructor;
 
 public:
     neuriteInstructorUI(QWidget* parent, V3DPluginCallback2* callback);
@@ -39,6 +40,8 @@ public:
 public slots:
     void okClicked();
     void filePath();
+
+    void uiCall();
 
 private:
     Ui::neuriteInstructorUI* ui;
