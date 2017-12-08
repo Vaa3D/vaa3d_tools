@@ -2488,6 +2488,17 @@ void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & i
     }
     ifs.close();
     saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
+    NeuronTree nt_final = readSWC_file(fileSaveName);
+    QList<NeuronSWC> neuron_final_sorted;
+
+    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, VOID))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+    }
+
+    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+
+
 }
 
 bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
@@ -6447,15 +6458,41 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             system(qPrintable(QString("mkdir %1").arg(branches_folder.toStdString().c_str())));
 
             NeuronTree GD_result = readSWC_file(GD_result_name);
-            if(GD_result.listNeuron.size() > 10)
+            if(GD_result.listNeuron.size() > 50)
             {
                 vector<MyMarker> branchMarker = extract_branch_pts(callback,P.inimg_file,GD_result);
-                QString branch_marker_name =  branches_folder+QString("/branches.marker");
-                saveMarker_file(branch_marker_name.toStdString(),branchMarker);
+                QString all_branch_marker_name =  branches_folder+QString("/branches.marker");
+                saveMarker_file(all_branch_marker_name.toStdString(),branchMarker);
 
+                vector<MyMarker> branch_list_temp;
+                for(V3DLONG d = 0; d < branchMarker.size(); d++)
+                {
+                    branch_list_temp.clear();
+                    MyMarker each_branch = branchMarker.at(d);
+                    QString branch_marker_name =  branches_folder+QString("/x_%1_y_%2_z_%3.marker").arg(each_branch.x).arg(each_branch.y).arg(each_branch.z);
+                    branch_list_temp.push_back(each_branch);
+                    saveMarker_file(branch_marker_name.toStdString(), branch_list_temp);
+
+                    QString branch_swc_name =  branches_folder+QString("/x_%1_y_%2_z_%3.swc").arg(each_branch.x).arg(each_branch.y).arg(each_branch.z);;
+                    NeuronTree nt_branches;
+                    QList <NeuronSWC> & listNeuron = nt_branches.listNeuron;
+                    int start_node =  (each_branch.type - 25)<0 ? 0 : each_branch.type - 25;
+                    int end_node   =  (each_branch.type + 25)>GD_result.listNeuron.size()-1 ? GD_result.listNeuron.size()-1 : each_branch.type + 25;
+                    for(int dd = start_node; dd <= end_node; dd++)
+                    {
+                        listNeuron << GD_result.listNeuron.at(dd);
+                    }
+                    writeSWC_file(branch_swc_name,nt_branches);
+                    listNeuron.clear();
+
+                    P.markerfilename = branch_marker_name;
+                    P.block_size = 64;
+                    P.seed_win = 32;
+                    P.swcfilename = branch_swc_name;
+                    P.method = gd;
+                    crawler_raw_app(callback,parent,P,0);
+                }
             }
-
-
         }
     }
 }
@@ -6793,9 +6830,10 @@ vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString&
         if(PixelValue >= seg_mean && score_each >0.25)
         {
             MyMarker t;
-            t.x = nt.listNeuron.at(i).x;
-            t.y = nt.listNeuron.at(i).y;
-            t.z = nt.listNeuron.at(i).z;
+            t.x = nt.listNeuron.at(i).x + 1;
+            t.y = nt.listNeuron.at(i).y + 1;
+            t.z = nt.listNeuron.at(i).z + 1;
+            t.type = i;// give the index
             file_inmarkers.push_back(t);
         }
     }
