@@ -203,6 +203,9 @@ public:
     int connectPoints(int k, float maxAngle, float m);
 
     //
+    int connectPoints2(int k, float maxAngle, float m);
+
+    //
     int removeNoise();
 
     //
@@ -456,7 +459,7 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
         CPUFilter->SetNumberOfThreads( 8 );
 
         CPUFilter->SetInput( reader->GetOutput() );
-        CPUFilter->SetNumberOfIterations( 10 );
+        CPUFilter->SetNumberOfIterations( 5 );
         CPUFilter->SetTimeStep( 0.0625 );
         CPUFilter->SetConductanceParameter( 3.0 );
         CPUFilter->UseImageSpacingOn();

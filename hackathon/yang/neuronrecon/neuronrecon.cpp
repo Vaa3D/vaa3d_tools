@@ -123,6 +123,10 @@ Point::Point()
     neighborVisited = false;
     isolated = false;
     isNoise = false;
+
+    weight = -1;
+    connect1 = -1;
+    connect2 = -1;
 }
 
 Point::Point (float x, float y, float z)
@@ -145,6 +149,10 @@ Point::Point (float x, float y, float z)
     neighborVisited = false;
     isolated = false;
     isNoise = false;
+
+    weight = -1;
+    connect1 = -1;
+    connect2 = -1;
 }
 
 Point::~Point()
@@ -388,14 +396,18 @@ int NCPointCloud::savePointCloud(QString filename, int format)
         for(long i=0; i<n; i++)
         {
             Point p = points[i];
-            CellAPO cell;
 
-            cell.x = p.x;
-            cell.y = p.y;
-            cell.z = p.z;
-            cell.volsize = 2*p.radius;
+            if(p.radius > 2.5)
+            {
+                CellAPO cell;
 
-            pointcloud.push_back(cell);
+                cell.x = p.x;
+                cell.y = p.y;
+                cell.z = p.z;
+                cell.volsize = 2*p.radius;
+
+                pointcloud.push_back(cell);
+            }
         }
 
         writeAPO_file(filename, pointcloud);
@@ -920,7 +932,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     // mergeLines(angle);
 
     // assemble fragments into trees
-    //assembleFragments(k);
+    assembleFragments(k);
 
     // save connected results into a .swc file
     if(!outfile.isEmpty())
@@ -1321,6 +1333,219 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
 
     //
     knn(k);
+
+    // connect points into lines
+    unsigned long loc;
+    while(findNextUnvisitPoint(loc))
+    {
+        //
+        if(points[loc].visited == false)
+        {
+            points[loc].visited = true;
+            points[loc].parents.push_back(-1);
+        }
+
+        //
+        if(isConsidered(loc, m))
+        {
+            //
+            Point p = points[loc];
+
+            //
+            vector<tuple<float,float,long,long>> candidates;
+
+            //
+            long next = -1;
+            long next_next = -1;
+
+            //
+            if(p.parents[0] == -1)
+            {
+                // connect points from -1 "soma" (starting point)
+                for(long i=0; i<p.nn.size(); i++)
+                {
+                    Point p_next = points[p.nn[i]];
+
+                    if(p_next.visited || p_next.isSamePoint(p))
+                    {
+                        continue;
+                    }
+
+                    //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+
+                    for(long j=0; j<p_next.nn.size(); j++)
+                    {
+                        Point p_next_next = points[p_next.nn[j]];
+
+                        if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
+                        {
+                            continue;
+                        }
+
+                        //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
+
+                        float angle = getAngle(p, p_next, p_next_next);
+                        float dist1 = distance(p,p_next);
+                        float dist2 = distance(p_next, p_next_next);
+                        float dist = dist1 + dist2;
+
+                        distThresh1 = 2*m*(p.radius + p_next.radius);
+                        distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
+
+                        if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
+                        {
+                            candidates.push_back(make_tuple(dist, angle, i, j));
+                        }
+                    }
+                }
+
+                //
+                if(candidates.size()>0)
+                {
+                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+                    {
+                        return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
+                    });
+
+                    //
+                    next = p.nn[get<2>(*(candidates.begin()))];
+                    next_next = points[next].nn[get<3>(*(candidates.begin()))];
+
+                    points[loc].connected++;
+                    points[next].visited = true;
+                    points[next].connected++;
+                    points[next].parents.push_back(p.n);
+                    points[loc].children.push_back(points[next].n);
+                    points[next_next].visited = true;
+                    points[next_next].connected++;
+                    points[next_next].parents.push_back(points[next].n);
+                    points[next].children.push_back(points[next_next].n);
+
+                    points[next].pre = loc;
+                    points[next].next = next_next;
+
+                    points[next_next].pre = next;
+
+                    loc = next_next;
+                }
+            }
+            else
+            {
+                // connect points from the intermediate point
+                Point p_pre = points[p.pre];
+
+                //
+                vector<tuple<float,float,long>> candidates;
+
+                //
+                for(long i=0; i<p.nn.size(); i++)
+                {
+                    Point p_next = points[p.nn[i]];
+
+                    if(p_next.visited || p_next.isSamePoint(p) || p_next.isSamePoint(p_pre))
+                    {
+                        continue;
+                    }
+
+                    //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+
+                    float angle = getAngle(p_pre, p, p_next);
+                    float dist1 = distance(p_pre,p);
+                    float dist2 = distance(p, p_next);
+                    float dist = dist1 + dist2;
+
+                    distThresh1 = 2*m*(p_pre.radius + p.radius);
+                    distThresh2 = 2*m*(p_next.radius + p.radius);
+
+                    if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
+                    {
+                        candidates.push_back(make_tuple(dist, angle, i));
+                    }
+                }
+
+                //
+                if(candidates.size()>0)
+                {
+                    sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long>& a, const tuple<float,float,long>& b) -> bool
+                    {
+                        return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
+                    });
+
+                    next = p.nn[get<2>(*(candidates.begin()))];
+
+                    points[loc].connected++;
+                    points[next].visited = true;
+                    points[next].connected++;
+                    points[next].parents.push_back(p.n);
+                    points[loc].children.push_back(points[next].n);
+
+                    points[next].pre = loc;
+
+                    loc = next;
+                }
+            }
+        }
+    }
+
+    //
+    return 0;
+}
+
+int NCPointCloud::connectPoints2(int k, float maxAngle, float m)
+{
+    //
+    float distThresh1, distThresh2;
+
+    //
+    knn(k);
+
+    //
+    vector<tuple<float,float,long,long>> candidates;
+
+    //
+    for(long k=0; k<points.size(); k++)
+    {
+        Point p = points[k];
+
+        //
+        for(long i=0; i<p.nn.size(); i++)
+        {
+            Point p_next = points[p.nn[i]];
+
+            if(p_next.visited || p_next.isSamePoint(p))
+            {
+                continue;
+            }
+
+            for(long j=0; j<p_next.nn.size(); j++)
+            {
+                Point p_next_next = points[p_next.nn[j]];
+
+                if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
+                {
+                    continue;
+                }
+
+                //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
+
+                float angle = getAngle(p, p_next, p_next_next);
+                float dist1 = distance(p,p_next);
+                float dist2 = distance(p_next, p_next_next);
+                float dist = dist1 + dist2;
+
+                distThresh1 = 2*m*(p.radius + p_next.radius);
+                distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
+
+                if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
+                {
+                    candidates.push_back(make_tuple(dist, angle, i, j));
+                }
+            }
+        }
+    }
+
+
+
 
     // connect points into lines
     unsigned long loc;
