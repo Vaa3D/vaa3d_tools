@@ -249,6 +249,8 @@ void DatasetGeneratorUI::preprocessingEdit()
 	else if (emitterName == "pushButton_5")
 	{
 		QModelIndexList selectedItems = ui->listView->selectionModel()->selectedRows();
+		if (selectedItems.empty()) return;
+
 		int rowNum = selectedItems.begin()->row();
 		listViewSteps->removeRow(rowNum);
 	}
@@ -261,6 +263,8 @@ void DatasetGeneratorUI::preprocessingEdit()
 	else if (emitterName == "pushButton_6")
 	{
 		QModelIndexList selectedItems = ui->listView_2->selectionModel()->selectedRows();
+		if (selectedItems.empty()) return;
+
 		int rowNum = selectedItems.begin()->row();
 		listViewSteps3D->removeRow(rowNum);
 	}
