@@ -26,6 +26,7 @@ public:
 	QStringList procItems2D;
 	QStringList procItems3D;
 	QStringList selectedProcItems;
+	QStringList valPercentage;
 
 public slots:
 	void selectClicked();
@@ -42,6 +43,7 @@ private:
 	QStringListModel* procSteps3D;
 	QStandardItemModel* listViewSteps;
 	QStandardItemModel* listViewSteps3D;
+	QStringListModel* valPer;
 
 private slots:
 	void progressBarUpdater(QString taskName, int percentage);

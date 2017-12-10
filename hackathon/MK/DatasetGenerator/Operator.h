@@ -22,7 +22,6 @@ struct taskFromUI
 {
 	bool createPatch;
 	bool createList;
-	bool createPatchNList;
 
 	listOpType listOp;
 	double subsetRatio;
@@ -53,6 +52,7 @@ public:
 	void taskQueuDispatcher(); // The task queue sent from UI is handled here. This method addresses each individual task accordingly.
 
 	void createListFromList(listOpType listOp);
+	void createListFromPatch(double ratio);
 
 	// ------------------- Patches generation ----------------------- 
 	void create2DPatches(patchOpType patchOp);
