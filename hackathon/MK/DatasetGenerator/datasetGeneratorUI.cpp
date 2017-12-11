@@ -77,14 +77,18 @@ void DatasetGeneratorUI::selectClicked()
 	QObject* signalSender = sender();
 	QString pushButtonName = signalSender->objectName();
 	if (pushButtonName == "pushButton_2") ui->lineEdit_7->setText(wholePath);
-	else if (pushButtonName == "pushButton_3") ui->lineEdit_8->setText(wholePath);
+	else if (pushButtonName == "pushButton_3")
+	{	
+		ui->lineEdit_8->setText(wholePath);
+		if (ui->checkBox_14->isChecked()) ui->lineEdit_27->setText(wholePath);
+	}
+	else if (pushButtonName == "pushButton_17") ui->lineEdit_26->setText(wholePath);
+	else if (pushButtonName == "pushButton_16")
+	{
+		if (!ui->checkBox_14->isChecked()) ui->lineEdit_27->setText(wholePath);
+	}
 	else if (pushButtonName == "pushButton_7")
 	{
-		if (ui->checkBox_14->isChecked() && ui->checkBox_11->isChecked())
-		{
-			ui->groupBox->setChecked(true);
-			ui->lineEdit_16->setText(wholePath);
-		}
 		ui->lineEdit_15->setText(wholePath);
 	}
 	else if (pushButtonName == "pushButton_9")
@@ -213,6 +217,11 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 			ui->checkBox_11->setChecked(false);
 			ui->checkBox_12->setChecked(false);
 		}
+		else if (checkBoxName == "checkBox_14")
+		{
+			ui->pushButton_17->setEnabled(false);
+			ui->lineEdit_26->setEnabled(false);
+		}
 	}
 }
 
@@ -225,18 +234,15 @@ void DatasetGeneratorUI::associativeToggle(bool checked)
 	{
 		if (checkBoxName == "checkBox_14")
 		{
-			if (ui->checkBox_11->isChecked())
-			{
-				ui->groupBox_3->setChecked(true);
-				ui->comboBox_3->setEnabled(true);
-			}
+			ui->groupBox_9->setChecked(true);		
+			ui->lineEdit_27->setText(ui->lineEdit_8->text());
 		}
 	}
 	else
 	{
 		if (checkBoxName == "checkBox_14")
 		{
-			if (ui->checkBox_11->isChecked()) ui->groupBox_3->setChecked(false);
+			if (ui->checkBox_11->isChecked()) ui->groupBox_9->setChecked(false);
 		}
 	}
 }
@@ -303,6 +309,25 @@ void DatasetGeneratorUI::okClicked()
 		newTask.outputDirName = ui->lineEdit_24->text().toStdString();
 		newTask.foldNum = ui->lineEdit_23->text().toInt();
 		newTask.listOp = crossVal;
+
+		DatasetOperator.taskQueu.push(newTask);
+	}
+	if (ui->groupBox_9->isChecked() && (!ui->checkBox_14->isChecked())) // Create new list from patch folder.
+	{
+		taskFromUI newTask;
+		newTask.label = ui->lineEdit_25->text().toStdString();
+		newTask.createList = true;
+		newTask.createPatch = false;
+		if (ui->checkBox->isChecked())
+		{
+			QString valPer = ui->comboBox_3->currentText();
+			QStringList valPerParse = valPer.split("%");
+			newTask.subsetRatio = (valPerParse[0].toDouble()) / 100;
+		}
+		else newTask.subsetRatio = 0;
+		newTask.source = ui->lineEdit_26->text().toStdString();
+		newTask.outputDirName = ui->lineEdit_27->text().toStdString();
+		newTask.listOp = newList;
 
 		DatasetOperator.taskQueu.push(newTask);
 	}
@@ -406,19 +431,9 @@ void DatasetGeneratorUI::okClicked()
 				newTask2.createList = true;
 				newTask2.createPatch = false;
 				newTask2.listOp = newList;
-				newTask2.source = ui->lineEdit_8->text().toStdString();
+				newTask2.label = ui->lineEdit_25->text().toStdString();
+				if (newTask.patchOp == teraTo2D) newTask2.source = ui->lineEdit_8->text().toStdString() + "/terafly_patches_2D";
 				newTask2.outputDirName = ui->lineEdit_8->text().toStdString();
-
-				if (ui->groupBox_4->isChecked())
-				{
-					if (ui->checkBox_4->isChecked()) newTask2.patchOp = teraTo2D;
-					else newTask2.patchOp = stackTo2D;
-				}
-				else if (ui->groupBox_3->isChecked())
-				{
-					if (ui->checkBox_4->isChecked()) newTask2.patchOp = teraTo3D;
-					else newTask2.patchOp = stackTo3D;
-				}
 
 				if (ui->checkBox->isChecked())
 				{

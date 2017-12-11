@@ -26,7 +26,7 @@ struct taskFromUI
 	listOpType listOp;
 	double subsetRatio;
 	int foldNum;
-	int classNum;
+	string label;
 
 	patchOpType patchOp;
 	vector<opSequence> opSeq;
@@ -51,8 +51,7 @@ signals:
 public:
 	void taskQueuDispatcher(); // The task queue sent from UI is handled here. This method addresses each individual task accordingly.
 
-	void createListFromList(listOpType listOp);
-	void createListFromPatch(double ratio);
+	void createList(listOpType listOp);
 
 	// ------------------- Patches generation ----------------------- 
 	void create2DPatches(patchOpType patchOp);
