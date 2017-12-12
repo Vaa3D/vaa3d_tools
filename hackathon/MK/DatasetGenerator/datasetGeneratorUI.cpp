@@ -37,11 +37,17 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	this->procItems2D << "Crop" << "Maximum Intensity Projection" << "Minimum Intensity Projection";
 	this->procItems3D << "Crop";
 	procSteps->setStringList(this->procItems2D);
-	procSteps3D->setStringList(this->procItems3D);
+	procSteps3D->setStringList(this->procItems3D);	
 	ui->comboBox->setModel(procSteps);
 	ui->comboBox_2->setModel(procSteps3D);
 	ui->listView->setModel(listViewSteps);
 	ui->listView_2->setModel(listViewSteps3D);
+	
+	valPer = new QStringListModel(this);
+	this->valPercentage << "5%" << "10%" << "15%" << "20%";
+	valPer->setStringList(this->valPercentage);
+	ui->comboBox_3->setModel(valPer);
+
 	ui->lineEdit_20->setText("0.1");
 
 	connect(&DatasetOperator, SIGNAL(progressBarReporter(QString, int)), this, SLOT(progressBarUpdater(QString, int)));
@@ -71,14 +77,18 @@ void DatasetGeneratorUI::selectClicked()
 	QObject* signalSender = sender();
 	QString pushButtonName = signalSender->objectName();
 	if (pushButtonName == "pushButton_2") ui->lineEdit_7->setText(wholePath);
-	else if (pushButtonName == "pushButton_3") ui->lineEdit_8->setText(wholePath);
+	else if (pushButtonName == "pushButton_3")
+	{	
+		ui->lineEdit_8->setText(wholePath);
+		if (ui->checkBox_14->isChecked()) ui->lineEdit_27->setText(wholePath);
+	}
+	else if (pushButtonName == "pushButton_17") ui->lineEdit_26->setText(wholePath);
+	else if (pushButtonName == "pushButton_16")
+	{
+		if (!ui->checkBox_14->isChecked()) ui->lineEdit_27->setText(wholePath);
+	}
 	else if (pushButtonName == "pushButton_7")
 	{
-		if (ui->checkBox_14->isChecked() && ui->checkBox_11->isChecked())
-		{
-			ui->groupBox->setChecked(true);
-			ui->lineEdit_16->setText(wholePath);
-		}
 		ui->lineEdit_15->setText(wholePath);
 	}
 	else if (pushButtonName == "pushButton_9")
@@ -207,6 +217,11 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 			ui->checkBox_11->setChecked(false);
 			ui->checkBox_12->setChecked(false);
 		}
+		else if (checkBoxName == "checkBox_14")
+		{
+			ui->pushButton_17->setEnabled(false);
+			ui->lineEdit_26->setEnabled(false);
+		}
 	}
 }
 
@@ -219,14 +234,15 @@ void DatasetGeneratorUI::associativeToggle(bool checked)
 	{
 		if (checkBoxName == "checkBox_14")
 		{
-			if (ui->checkBox_11->isChecked()) ui->groupBox->setChecked(true);
+			ui->groupBox_9->setChecked(true);		
+			ui->lineEdit_27->setText(ui->lineEdit_8->text());
 		}
 	}
 	else
 	{
 		if (checkBoxName == "checkBox_14")
 		{
-			if (ui->checkBox_11->isChecked()) ui->groupBox_3->setChecked(false);
+			if (ui->checkBox_11->isChecked()) ui->groupBox_9->setChecked(false);
 		}
 	}
 }
@@ -249,6 +265,8 @@ void DatasetGeneratorUI::preprocessingEdit()
 	else if (emitterName == "pushButton_5")
 	{
 		QModelIndexList selectedItems = ui->listView->selectionModel()->selectedRows();
+		if (selectedItems.empty()) return;
+
 		int rowNum = selectedItems.begin()->row();
 		listViewSteps->removeRow(rowNum);
 	}
@@ -261,6 +279,8 @@ void DatasetGeneratorUI::preprocessingEdit()
 	else if (emitterName == "pushButton_6")
 	{
 		QModelIndexList selectedItems = ui->listView_2->selectionModel()->selectedRows();
+		if (selectedItems.empty()) return;
+
 		int rowNum = selectedItems.begin()->row();
 		listViewSteps3D->removeRow(rowNum);
 	}
@@ -273,7 +293,6 @@ void DatasetGeneratorUI::okClicked()
 		taskFromUI newTask;
 		newTask.createList = true;
 		newTask.createPatch = false;
-		newTask.createPatchNList = false;
 		newTask.source = ui->lineEdit_19->text().toStdString();
 		newTask.outputFileName = ui->lineEdit_21->text().toStdString();
 		newTask.subsetRatio = ui->lineEdit_20->text().toDouble();
@@ -286,11 +305,29 @@ void DatasetGeneratorUI::okClicked()
 		taskFromUI newTask;
 		newTask.createList = true;
 		newTask.createPatch = false;
-		newTask.createPatchNList = false;
 		newTask.source = ui->lineEdit_22->text().toStdString();
 		newTask.outputDirName = ui->lineEdit_24->text().toStdString();
 		newTask.foldNum = ui->lineEdit_23->text().toInt();
 		newTask.listOp = crossVal;
+
+		DatasetOperator.taskQueu.push(newTask);
+	}
+	if (ui->groupBox_9->isChecked() && (!ui->checkBox_14->isChecked())) // Create new list from patch folder.
+	{
+		taskFromUI newTask;
+		newTask.label = ui->lineEdit_25->text().toStdString();
+		newTask.createList = true;
+		newTask.createPatch = false;
+		if (ui->checkBox->isChecked())
+		{
+			QString valPer = ui->comboBox_3->currentText();
+			QStringList valPerParse = valPer.split("%");
+			newTask.subsetRatio = (valPerParse[0].toDouble()) / 100;
+		}
+		else newTask.subsetRatio = 0;
+		newTask.source = ui->lineEdit_26->text().toStdString();
+		newTask.outputDirName = ui->lineEdit_27->text().toStdString();
+		newTask.listOp = newList;
 
 		DatasetOperator.taskQueu.push(newTask);
 	}
@@ -300,25 +337,18 @@ void DatasetGeneratorUI::okClicked()
 	{
 		if (!ui->groupBox_6->isChecked() && !ui->groupBox_7->isChecked())
 		{ }
-		
-		// -- Determine if data lists are going to be created at the same time or not --
-		bool autoList = false;
-		if (ui->checkBox_14->isChecked()) autoList = true; 
-		else autoList = false; 
-		// -----------------------------------------------------------------------------
 
 		if (ui->groupBox_6->isChecked()) // single neuron structure file => single image stack or terafly
 		{
 			taskFromUI newTask;
 			newTask.createList = false;
+			newTask.createPatch = true;
 			newTask.source = ui->lineEdit_7->text().toStdString();
 			newTask.outputDirName = ui->lineEdit_8->text().toStdString();
 
 			newTask.neuronStrucFileName = ui->lineEdit_15->text().toStdString(); 
 			if (ui->checkBox_4->isChecked()) // from terafly
 			{
-				newTask.createPatch = true;
-				newTask.createPatchNList = false;
 				if (ui->groupBox_4->isChecked())
 				{
 					newTask.patchOp = teraTo2D;
@@ -357,8 +387,6 @@ void DatasetGeneratorUI::okClicked()
 			}
 			else // from non-terafly image stack
 			{
-				newTask.createPatch = true;
-				newTask.createPatchNList = false;
 				if (ui->groupBox_4->isChecked())
 				{
 					newTask.patchOp = stackTo2D;
@@ -395,6 +423,29 @@ void DatasetGeneratorUI::okClicked()
 					DatasetOperator.taskQueu.push(newTask);
 				}
 			}
+
+			// -- Determine if data lists are going to be created at the same time or not --
+			if (ui->checkBox_14->isChecked())
+			{
+				taskFromUI newTask2;
+				newTask2.createList = true;
+				newTask2.createPatch = false;
+				newTask2.listOp = newList;
+				newTask2.label = ui->lineEdit_25->text().toStdString();
+				if (newTask.patchOp == teraTo2D) newTask2.source = ui->lineEdit_8->text().toStdString() + "/terafly_patches_2D";
+				newTask2.outputDirName = ui->lineEdit_8->text().toStdString();
+
+				if (ui->checkBox->isChecked())
+				{
+					QString valPer = ui->comboBox_3->currentText();
+					QStringList valPerParse = valPer.split("%");
+					newTask2.subsetRatio = (valPerParse[0].toDouble()) / 100;
+				}
+				else newTask2.subsetRatio = 0;
+
+				DatasetOperator.taskQueu.push(newTask2);
+			}
+			// -----------------------------------------------------------------------------
 		}
 		else if (ui->groupBox_7->isChecked()) // multiple neuron structure file => multiple image stacks but no terafly allowed
 		{ }

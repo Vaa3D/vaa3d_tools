@@ -6,10 +6,11 @@
 #include <stdlib.h>
 #include <ctime>
 
-#include <qstringlist.h>
-#include <qfile.h>
-#include <qvector.h>
-#include <qfileinfo.h>
+#include <QStringList>
+#include <QFile>
+#include <QVector>
+#include <QFileinfo>
+#include <QDir>
 
 #include "Operator.h"
 
@@ -60,25 +61,28 @@ void Operator::taskQueuDispatcher()
 			if (operatingTask.listOp == subset)
 			{
 				emit progressBarReporter("Creating List..  ", 0);
-				createListFromList(subset);
+				createList(subset);
 				emit progressBarReporter("Complete. ", 100);
 			}
 			else if (operatingTask.listOp == crossVal)
 			{
 				emit progressBarReporter("Creating Lists..  ", 0);
-				createListFromList(crossVal);
+				createList(crossVal);
+				emit progressBarReporter("Complete. ", 100);
+			}
+			else if (operatingTask.listOp == newList)
+			{
+				emit progressBarReporter("Creating Lists..  ", 0);
+				createList(newList);
 				emit progressBarReporter("Complete. ", 100);
 			}
 		}
-
-		if (operatingTask.createPatchNList == true)
-		{ }
 
 		taskQueu.pop();
 	}
 }
 
-void Operator::createListFromList(listOpType listOp)
+void Operator::createList(listOpType listOp)
 {
 	if (listOp == subset) // Create a subset list out of a given list.
 	{
@@ -217,6 +221,83 @@ void Operator::createListFromList(listOpType listOp)
 
 			outTrain.close();
 			outVal.close();
+		}
+	}
+	else if (listOp == newList)
+	{
+		if (operatingTask.subsetRatio == 0)
+		{
+		}
+		else
+		{
+			string patchDirString = operatingTask.source;
+			const char* patchDir = patchDirString.c_str();
+			string outTrainTxt = operatingTask.outputDirName + "/train.txt";
+			string outValTxt = operatingTask.outputDirName + "/val.txt";
+			QString patchPath = QString::fromStdString(patchDirString);
+			DIR* dir;
+			struct dirent* ent;
+
+			QDir sourceDir(patchPath);
+			sourceDir.setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
+			int patchCount = sourceDir.count();
+			srand(time(NULL));
+			size_t neededNum = operatingTask.subsetRatio * double(patchCount);
+			size_t pickedCount = 0;
+			vector<size_t> pickedPatchNo;
+			while (pickedCount <= neededNum)
+			{
+				size_t num = rand() % neededNum + 1;
+				pickedPatchNo.push_back(num);
+				++pickedCount;
+			}
+
+			ofstream outTrain(outTrainTxt.c_str());
+			ofstream outVal(outValTxt.c_str());
+			if ((dir = opendir(patchDir)) != NULL)
+			{
+				QString patchName;
+				size_t patchNum = 1;
+				bool val = false;
+				while ((ent = readdir(dir)) != NULL)
+				{
+					for (size_t i = 0; i < 30; ++i)
+					{
+						if (ent->d_name[i] == NULL) break;
+						patchName = patchName + QChar(ent->d_name[i]);
+					}
+					if (patchName == "." || patchName == ".." || patchName == "..." || patchName == "train.txt" || patchName == "val.txt")
+						continue;
+
+					for (vector<size_t>::iterator it = pickedPatchNo.begin(); it != pickedPatchNo.end(); ++it)
+					{
+						if (patchNum == *it)
+						{
+							val = true;
+							break;
+						}
+					}
+					if (val == true)
+					{
+						string valPatchFullName = patchDirString + "/" + patchName.toStdString() + " " + operatingTask.label;
+						outVal << valPatchFullName << endl;
+						++patchNum;
+						val = false;
+					}
+					else
+					{
+						string trainPatchFullName = patchDirString + "/" + patchName.toStdString() + " " + operatingTask.label;
+						outTrain << trainPatchFullName << endl;
+						++patchNum;
+					}
+					patchName.clear();
+
+					double processedPortion = double(patchNum) / double(patchCount);
+					int percentageNum = int(processedPortion * 100);
+					emit progressBarReporter("Creating Lists..  ", percentageNum);
+				}
+			}
+			closedir(dir);
 		}
 	}
 }
