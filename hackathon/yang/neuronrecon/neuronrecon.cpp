@@ -469,7 +469,7 @@ int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
     }
 
     //
-    return writeESWC_file(filename, nt);
+    return writeSWC_file(filename, nt);
 }
 
 int NCPointCloud::resample()
@@ -987,6 +987,22 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     if(!outfile.isEmpty())
     {
         saveNeuronTree(*this, outfile);
+    }
+
+    // assemble fragments into trees
+    QList<NeuronSWC> neuron, result;
+    NeuronTree nt = readSWC_file(outfile);
+    neuron = nt.listNeuron;
+    double thres = 15;
+    if (SortSWC<long>(neuron, result, VOID, thres))
+    {
+        QString fileDefaultName = outfile+QString("_sorted.swc");
+        //write new SWC to file
+        if (!export_list2file<long>(result,fileDefaultName,outfile))
+        {
+            cout<<"fail to write the output result"<<endl;
+            return -1;
+        }
     }
 
     //
@@ -2581,7 +2597,7 @@ int NCPointCloud::mergeLines(float maxAngle)
                     //                    cout<<"further computing ... \n";
 
                     // comparing line #i and #j
-                    float angle = lsi.angle(lsj);
+                    float angle = lsi.angleLine2Line(lsj);
                     if(angle > 6)
                     {
                         // parallel
@@ -3398,7 +3414,7 @@ int LineSegment::update()
     return 0;
 }
 
-float LineSegment::angle(LineSegment ls)
+float LineSegment::angleLine2Line(LineSegment ls)
 {
     // 1. angle; 2. =0 near colinear; 3. =inf near parallel
 
@@ -3449,7 +3465,7 @@ bool LineSegment::sidebyside(LineSegment ls)
     diff->dy = ls.origin->y - origin->y;
     diff->dz = ls.origin->z - origin->z;
 
-    cout<<"test ... ... angle: "<<angle(ls)<<endl;
+    cout<<"test ... ... angle: "<<angleLine2Line(ls)<<endl;
     cout<<"test ... ... diff angle: "<<acos(diff->vdot(axis, diff) / (diff->vmag(axis)*diff->vmag(diff)))<<endl;
 
 

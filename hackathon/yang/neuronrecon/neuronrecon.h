@@ -42,6 +42,8 @@
 #include <Eigen/Eigenvalues>
 #include "nanoflann.hpp"
 
+#include "sort_swc.hpp"
+
 using namespace std;
 using namespace nanoflann;
 
@@ -313,7 +315,7 @@ public:
     bool onSegment(Point p);
     int lineFromPoints();
     int update();
-    float angle(LineSegment ls);
+    float angleLine2Line(LineSegment ls);
     bool sidebyside(LineSegment ls);
     void info();
     bool isSmooth();

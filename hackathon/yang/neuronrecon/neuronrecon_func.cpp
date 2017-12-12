@@ -9,7 +9,6 @@
 #include "neuronrecon.h"
 //#include "zhidl/classification.h"
 //#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
-#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 #if  defined(Q_OS_LINUX)
 #include <omp.h>
