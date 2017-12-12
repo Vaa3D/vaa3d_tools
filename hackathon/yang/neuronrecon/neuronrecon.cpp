@@ -975,7 +975,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     removeNoise();
 
     // connect points into lines
-    connectPoints2(k,angle,m);
+    connectPoints(k,angle,m);
 
     // merge lines
     // mergeLines(angle);
@@ -987,6 +987,41 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     if(!outfile.isEmpty())
     {
         saveNeuronTree(*this, outfile);
+    }
+
+    //
+    return 0;
+}
+
+//
+int NCPointCloud::sample(QString infile, QString outfile, float srx, float sry, float srz)
+{
+    // load point cloud save as a .apo file
+    QList <CellAPO> inputPoints = readAPO_file(infile);
+
+    long n = inputPoints.size();
+
+    //
+    for(long i=0; i<n; i++)
+    {
+        CellAPO cell = inputPoints[i];
+
+        //
+        Point p;
+
+        p.n = i+1; // # assigned
+        p.x = srx*cell.x;
+        p.y = sry*cell.y;
+        p.z = srz*cell.z;
+        p.radius = 0.5*cell.volsize;
+
+        points.push_back(p);
+    }
+
+    //
+    if(!outfile.isEmpty())
+    {
+        savePointCloud(outfile);
     }
 
     //
@@ -1443,7 +1478,7 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
 
                         if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                         {
-                            candidates.push_back(make_tuple(dist, angle, i, j));
+                            candidates.push_back(make_tuple(dist*angle, 1/p.radius, i, j));
                         }
                     }
                 }

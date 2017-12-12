@@ -263,6 +263,9 @@ public:
     bool allendpointvisited();
 
     //
+    int sample(QString infile, QString outfile, float srx=0.5, float sry=0.5, float srz=0.5);
+
+    //
     Point pplusv(Point *p, Vector *v);
     float point_plane_dist(Point *a, Plane *P);
     Point plerp(Point *a, Point *b, float t);
@@ -397,7 +400,7 @@ int runGPUGradientAnisotropicDiffusionImageFilter(const std::string& inFile, con
         gputimer.Start();
 
         GPUFilter->SetInput( reader->GetOutput() );
-        GPUFilter->SetNumberOfIterations( 10 );
+        GPUFilter->SetNumberOfIterations( 5 );
         GPUFilter->SetTimeStep( 0.0625 );
         GPUFilter->SetConductanceParameter( 1.0 ); // 3.0
         GPUFilter->UseImageSpacingOn();

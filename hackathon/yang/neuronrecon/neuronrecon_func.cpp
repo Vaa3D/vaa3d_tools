@@ -9,6 +9,7 @@
 #include "neuronrecon.h"
 //#include "zhidl/classification.h"
 //#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 #if  defined(Q_OS_LINUX)
 #include <omp.h>
@@ -986,6 +987,53 @@ bool mergelines_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     return true;
 }
 
+bool samplepc_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char*> *infiles, *outfiles;
+    infiles =  (vector<char*> *)(input.at(0).p);
+    if (infiles->size()<1)
+    {
+        cerr<<"Invalid input"<<endl;
+        return false;
+    }
+
+    //
+    QString inputfile = QString(infiles->at(0));
+    if(output.size() >= 1)
+        outfiles = (vector<char*> *)output.at(0).p;
+    QString outputfile = QString(outfiles->at(0));
+
+    //
+    NCPointCloud pointcloud;
+    pointcloud.sample(inputfile, outputfile);
+
+    //
+    return true;
+}
+
 bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //
@@ -1055,16 +1103,16 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         //adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 3);
         //distanceTransformL2(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim());
 
-//        float threshold;
-//        estimateIntensityThreshold(p4dImage->getRawData(), volsz, threshold);
+        //        float threshold;
+        //        estimateIntensityThreshold(p4dImage->getRawData(), volsz, threshold);
 
-//        unsigned char *p1dImg = p4dImage->getRawData();
+        //        unsigned char *p1dImg = p4dImage->getRawData();
 
-//        for(long i=0; i<volsz; i++)
-//        {
-//            if(p1dImg[i]>threshold)
-//                p[i] = p1dImg[i];
-//        }
+        //        for(long i=0; i<volsz; i++)
+        //        {
+        //            if(p1dImg[i]>threshold)
+        //                p[i] = p1dImg[i];
+        //        }
 
         adaptiveThreshold(p, p4dImage->getRawData(), p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), searchingradius);
 
@@ -1654,334 +1702,334 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     // 2. connect detected points into lines
     // 3. assemble into (a) tree(s)
     
-//    cout<<"step 1. deep-learning methods to detect signals ...\n";
+    //    cout<<"step 1. deep-learning methods to detect signals ...\n";
     
-//    // Zhi's 3D Axon Detection
-//    // inputs: image, model, deployed, mean
-//    vector<char*> infiles, paras, outfiles;
+    //    // Zhi's 3D Axon Detection
+    //    // inputs: image, model, deployed, mean
+    //    vector<char*> infiles, paras, outfiles;
     
-//    if(input.size() >= 1)
-//    {
-//        infiles = *((vector<char*> *)input.at(0).p);
-//    }
-//    else
-//    {
-//        cout<<"please input an image\n";
-//        return false;
-//    }
+    //    if(input.size() >= 1)
+    //    {
+    //        infiles = *((vector<char*> *)input.at(0).p);
+    //    }
+    //    else
+    //    {
+    //        cout<<"please input an image\n";
+    //        return false;
+    //    }
     
-//    if(input.size() >= 2)
-//    {
-//        paras = *((vector<char*> *)input.at(1).p);
-//    }
-//    else
-//    {
-//        cout<<"please input classifier, mean, ...\n";
-//        return false;
-//    }
+    //    if(input.size() >= 2)
+    //    {
+    //        paras = *((vector<char*> *)input.at(1).p);
+    //    }
+    //    else
+    //    {
+    //        cout<<"please input classifier, mean, ...\n";
+    //        return false;
+    //    }
     
-//    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    //    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     
-//    if(infiles.empty())
-//    {
-//        cerr<<"Need input image file"<<endl;
-//        return false;
-//    }
+    //    if(infiles.empty())
+    //    {
+    //        cerr<<"Need input image file"<<endl;
+    //        return false;
+    //    }
     
-//    QString  inimg_file =  infiles[0];
-//    int k=0;
-//    QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
-//    if(model_file.isEmpty())
-//    {
-//        cerr<<"Need a model_file"<<endl;
-//        return false;
-//    }
+    //    QString  inimg_file =  infiles[0];
+    //    int k=0;
+    //    QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+    //    if(model_file.isEmpty())
+    //    {
+    //        cerr<<"Need a model_file"<<endl;
+    //        return false;
+    //    }
     
-//    QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
-//    if(trained_file.isEmpty())
-//    {
-//        cerr<<"Need a trained_file"<<endl;
-//        return false;
-//    }
+    //    QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+    //    if(trained_file.isEmpty())
+    //    {
+    //        cerr<<"Need a trained_file"<<endl;
+    //        return false;
+    //    }
     
-//    QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
-//    if(mean_file.isEmpty())
-//    {
-//        cerr<<"Need a mean_file"<<endl;
-//        return false;
-//    }
+    //    QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+    //    if(mean_file.isEmpty())
+    //    {
+    //        cerr<<"Need a mean_file"<<endl;
+    //        return false;
+    //    }
     
-//    //
-//    int Sxy = (paras.size() >= k+1) ? atoi(paras[k]):10;k++;
-//    int Ws = (paras.size() >= k+1) ? atoi(paras[k]):512;k++;
+    //    //
+    //    int Sxy = (paras.size() >= k+1) ? atoi(paras[k]):10;k++;
+    //    int Ws = (paras.size() >= k+1) ? atoi(paras[k]):512;k++;
     
-//    QString mip_file = (paras.size() >= k+1) ? paras[k]:""; if(mip_file == "NULL") mip_file = "";
-//    bool mip_flag = false;
-//    if(!mip_file.isEmpty())
-//    {
-//        mip_flag = true;
-//    }
+    //    QString mip_file = (paras.size() >= k+1) ? paras[k]:""; if(mip_file == "NULL") mip_file = "";
+    //    bool mip_flag = false;
+    //    if(!mip_file.isEmpty())
+    //    {
+    //        mip_flag = true;
+    //    }
     
-//    //
-//    cout<<"inputs ...\n";
-//    cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
-//    cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
-//    cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
-//    cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
-//    cout<<"sample_size = "<<Sxy<<endl;
-//    cout<<"image_size = "<<Ws<<endl;
-//    cout<<"mip_file = "<<mip_flag<<endl;
-//    cout<<"...\n";
+    //    //
+    //    cout<<"inputs ...\n";
+    //    cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+    //    cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+    //    cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+    //    cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+    //    cout<<"sample_size = "<<Sxy<<endl;
+    //    cout<<"image_size = "<<Ws<<endl;
+    //    cout<<"mip_file = "<<mip_flag<<endl;
+    //    cout<<"...\n";
     
-//    // check file exist
-//    if (!QFile(inimg_file).exists())
-//    {
-//        cout<<"Cannot find the input image file.\n";
-//        return false;
-//    }
-//    if (!QFile(model_file).exists())
-//    {
-//        cout<<"Cannot find the model image file.\n";
-//        return false;
-//    }
-//    if (!QFile(trained_file).exists())
-//    {
-//        cout<<"Cannot find the trained image file.\n";
-//        return false;
-//    }
-//    if (!QFile(mean_file).exists())
-//    {
-//        cout<<"Cannot find the mean image file.\n";
-//        return false;
-//    }
+    //    // check file exist
+    //    if (!QFile(inimg_file).exists())
+    //    {
+    //        cout<<"Cannot find the input image file.\n";
+    //        return false;
+    //    }
+    //    if (!QFile(model_file).exists())
+    //    {
+    //        cout<<"Cannot find the model image file.\n";
+    //        return false;
+    //    }
+    //    if (!QFile(trained_file).exists())
+    //    {
+    //        cout<<"Cannot find the trained image file.\n";
+    //        return false;
+    //    }
+    //    if (!QFile(mean_file).exists())
+    //    {
+    //        cout<<"Cannot find the mean image file.\n";
+    //        return false;
+    //    }
     
-//    //
-//    unsigned char * data1d = 0;
-//    V3DLONG in_sz[4];
-//    unsigned char *data1d_mip=0;
+    //    //
+    //    unsigned char * data1d = 0;
+    //    V3DLONG in_sz[4];
+    //    unsigned char *data1d_mip=0;
     
-//    //unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
+    //    //unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
     
-//    int datatype;
-//    V3DLONG N,M,P;
-//    if(mip_flag)
-//    {
-//        V3DLONG in_mip_sz[4];
-//        if(!simple_loadimage_wrapper(callback, mip_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
-//        {
-//            cerr<<"load image "<<mip_file.toStdString().c_str()<<" error!"<<endl;
-//            return false;
-//        }
-//        N = in_mip_sz[0];
-//        M = in_mip_sz[1];
-//    }
-//    else
-//    {
-//        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
-//        {
-//            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
-//            return false;
-//        }
-        
-//        N = in_sz[0];
-//        M = in_sz[1];
-//        P = in_sz[2];
-        
-//        V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
-//        try {data1d_mip = new unsigned char [pagesz_mip];}
-//        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-//        for(V3DLONG iy = 0; iy < M; iy++)
-//        {
-//            V3DLONG offsetj = iy*N;
-//            for(V3DLONG ix = 0; ix < N; ix++)
-//            {
-//                int max_mip = 0;
-//                for(V3DLONG iz = 0; iz < P; iz++)
-//                {
-//                    V3DLONG offsetk = iz*M*N;
-//                    if(data1d[offsetk + offsetj + ix] >= max_mip)
-//                    {
-//                        data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
-//                        max_mip = data1d[offsetk + offsetj + ix];
-//                    }
-//                }
-//            }
-//        }
-//    }
-    
-//    std::vector<std::vector<float> > detection_results;
-//    LandmarkList marklist_2D;
-//    Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
-    
-//    //
-//    unsigned int numOfThreads = 8; // default value for number of theads
-//    omp_set_num_threads(numOfThreads);
-    
-//    V3DLONG iy, yb, ye;
-//    V3DLONG ix, xb, xe, blockpagesz;
-//    V3DLONG i, d, iiy, offsetj, iix;
-//    std::vector<float> det_output;
-//    LocationSimple LS;
-    
-//    //#pragma omp parallel for default(shared) private(ix, iy, xb, xe, yb, ye, blockpagesz, i, d, iiy, iix, offsetj, detection_results, det_output, LS)
-//    for(iy = 0; iy < M; iy = iy+Ws)
-//    {
-        
-//        yb = iy;
-//        ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
-        
-//        unsigned char *blockarea=0;
+    //    int datatype;
+    //    V3DLONG N,M,P;
+    //    if(mip_flag)
+    //    {
+    //        V3DLONG in_mip_sz[4];
+    //        if(!simple_loadimage_wrapper(callback, mip_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
+    //        {
+    //            cerr<<"load image "<<mip_file.toStdString().c_str()<<" error!"<<endl;
+    //            return false;
+    //        }
+    //        N = in_mip_sz[0];
+    //        M = in_mip_sz[1];
+    //    }
+    //    else
+    //    {
+    //        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+    //        {
+    //            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+    //            return false;
+    //        }
 
-//        for(ix = 0; ix < N; ix = ix+Ws)
-//        {
-//            xb = ix;
-//            xe = ix+Ws-1;
-//            if(xe>=N-1) xe = N-1;
-            
-//            blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
-//            blockarea = new unsigned char [blockpagesz];
-            
-            
-//            i = 0;
-//            for(iiy = yb; iiy < ye+1; iiy++)
-//            {
-//                offsetj = iiy*N;
-//                for(iix = xb; iix < xe+1; iix++)
-//                {
-//                    blockarea[i] = data1d_mip[offsetj + iix];
-//                    i++;
-//                }
-//            }
-            
-//            detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
-            
-//            d = 0;
-//            for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
-//            {
-//                for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
-//                {
-//                    det_output = detection_results[d];
-//                    if(det_output.at(1) > det_output.at(0))
-//                    {
-//                        LS.x = iix;
-//                        LS.y = iiy;
-//                        LS.z = 1;
-//                        marklist_2D.push_back(LS);
-//                    }
-//                    d++;
-//                }
-//            }
-//            if(blockarea) {delete []blockarea; blockarea =0;}
-//        }
-//    }
+    //        N = in_sz[0];
+    //        M = in_sz[1];
+    //        P = in_sz[2];
+
+    //        V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
+    //        try {data1d_mip = new unsigned char [pagesz_mip];}
+    //        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+    //        for(V3DLONG iy = 0; iy < M; iy++)
+    //        {
+    //            V3DLONG offsetj = iy*N;
+    //            for(V3DLONG ix = 0; ix < N; ix++)
+    //            {
+    //                int max_mip = 0;
+    //                for(V3DLONG iz = 0; iz < P; iz++)
+    //                {
+    //                    V3DLONG offsetk = iz*M*N;
+    //                    if(data1d[offsetk + offsetj + ix] >= max_mip)
+    //                    {
+    //                        data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+    //                        max_mip = data1d[offsetk + offsetj + ix];
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
     
-//    //mean shift
-//    mean_shift_fun fun_obj;
-//    LandmarkList marklist_2D_shifted;
-//    vector<V3DLONG> poss_landmark;
-//    vector<float> mass_center;
-//    double windowradius = Sxy+5;
+    //    std::vector<std::vector<float> > detection_results;
+    //    LandmarkList marklist_2D;
+    //    Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
     
-//    V3DLONG sz_img[4];
-//    sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
-//    fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
-//    poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+    //    //
+    //    unsigned int numOfThreads = 8; // default value for number of theads
+    //    omp_set_num_threads(numOfThreads);
     
-//    for (V3DLONG j=0;j<poss_landmark.size();j++)
-//    {
-//        mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
-//        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-//        marklist_2D_shifted.append(tmp);
-//    }
+    //    V3DLONG iy, yb, ye;
+    //    V3DLONG ix, xb, xe, blockpagesz;
+    //    V3DLONG i, d, iiy, offsetj, iix;
+    //    std::vector<float> det_output;
+    //    LocationSimple LS;
     
-//    QList <ImageMarker> marklist_3D;
-//    ImageMarker S;
-//    NeuronTree nt;
-//    QList <NeuronSWC> & listNeuron = nt.listNeuron;
+    //    //#pragma omp parallel for default(shared) private(ix, iy, xb, xe, yb, ye, blockpagesz, i, d, iiy, iix, offsetj, detection_results, det_output, LS)
+    //    for(iy = 0; iy < M; iy = iy+Ws)
+    //    {
+
+    //        yb = iy;
+    //        ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+    //        unsigned char *blockarea=0;
+
+    //        for(ix = 0; ix < N; ix = ix+Ws)
+    //        {
+    //            xb = ix;
+    //            xe = ix+Ws-1;
+    //            if(xe>=N-1) xe = N-1;
+
+    //            blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+    //            blockarea = new unsigned char [blockpagesz];
+
+
+    //            i = 0;
+    //            for(iiy = yb; iiy < ye+1; iiy++)
+    //            {
+    //                offsetj = iiy*N;
+    //                for(iix = xb; iix < xe+1; iix++)
+    //                {
+    //                    blockarea[i] = data1d_mip[offsetj + iix];
+    //                    i++;
+    //                }
+    //            }
+
+    //            detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+    //            d = 0;
+    //            for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+    //            {
+    //                for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+    //                {
+    //                    det_output = detection_results[d];
+    //                    if(det_output.at(1) > det_output.at(0))
+    //                    {
+    //                        LS.x = iix;
+    //                        LS.y = iiy;
+    //                        LS.z = 1;
+    //                        marklist_2D.push_back(LS);
+    //                    }
+    //                    d++;
+    //                }
+    //            }
+    //            if(blockarea) {delete []blockarea; blockarea =0;}
+    //        }
+    //    }
     
-//    if(!data1d)
-//    {
-//        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
-//        {
-//            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
-//            return false;
-//        }
-//    }
+    //    //mean shift
+    //    mean_shift_fun fun_obj;
+    //    LandmarkList marklist_2D_shifted;
+    //    vector<V3DLONG> poss_landmark;
+    //    vector<float> mass_center;
+    //    double windowradius = Sxy+5;
     
-//    if(mip_flag)    P = in_sz[2];
+    //    V3DLONG sz_img[4];
+    //    sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+    //    fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+    //    poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
     
-//    for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
-//    {
-//        V3DLONG ix = marklist_2D_shifted.at(i).x;
-//        V3DLONG iy = marklist_2D_shifted.at(i).y;
-//        double I_max = 0;
-//        V3DLONG iz;
-//        for(V3DLONG j = 0; j < P; j++)
-//        {
-//            if(data1d[j*M*N + iy*N + ix] >= I_max)
-//            {
-//                I_max = data1d[j*M*N + iy*N + ix];
-//                iz = j;
-//            }
-//        }
-//        S.x = ix;
-//        S.y = iy;
-//        S.z = iz;
-//        S.color.r = 255;
-//        S.color.g = 0;
-//        S.color.b = 0;
-//        marklist_3D.append(S);
-//    }
+    //    for (V3DLONG j=0;j<poss_landmark.size();j++)
+    //    {
+    //        mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+    //        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+    //        marklist_2D_shifted.append(tmp);
+    //    }
     
-//    // delete false detections
-//    QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
+    //    QList <ImageMarker> marklist_3D;
+    //    ImageMarker S;
+    //    NeuronTree nt;
+    //    QList <NeuronSWC> & listNeuron = nt.listNeuron;
     
-//    // estimate radius
-//    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
-//    {
-//        V3DLONG ix = marklist_3D_pruned.at(i).x;
-//        V3DLONG iy = marklist_3D_pruned.at(i).y;
-//        V3DLONG iz = marklist_3D_pruned.at(i).z;
-        
-//        NeuronSWC n;
-//        n.x = ix-1;
-//        n.y = iy-1;
-//        n.z = iz-1;
-//        n.n = i+1;
-//        n.type = 2;
-//        n.r = estimateRadius<unsigned char>(data1d, in_sz, n.x, n.y, n.z, 10);
-//        n.pn = -1;
-//        listNeuron << n;
-//    }
-//    if(data1d) {delete []data1d; data1d = 0;}
+    //    if(!data1d)
+    //    {
+    //        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+    //        {
+    //            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+    //            return false;
+    //        }
+    //    }
     
-//    QString  swc_dl_detected = inimg_file.left(inimg_file.lastIndexOf(".")).append("_axon_3D.swc");
-//    writeSWC_file(swc_dl_detected,nt);
+    //    if(mip_flag)    P = in_sz[2];
     
-//    // step 2. load multiple traced neurons (trees saved as .swc)
-//    QString cnvtPoints = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_pointcloud.apo");
-//    QString linesTraced = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_linestraced.swc");
+    //    for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+    //    {
+    //        V3DLONG ix = marklist_2D_shifted.at(i).x;
+    //        V3DLONG iy = marklist_2D_shifted.at(i).y;
+    //        double I_max = 0;
+    //        V3DLONG iz;
+    //        for(V3DLONG j = 0; j < P; j++)
+    //        {
+    //            if(data1d[j*M*N + iy*N + ix] >= I_max)
+    //            {
+    //                I_max = data1d[j*M*N + iy*N + ix];
+    //                iz = j;
+    //            }
+    //        }
+    //        S.x = ix;
+    //        S.y = iy;
+    //        S.z = iz;
+    //        S.color.r = 255;
+    //        S.color.g = 0;
+    //        S.color.b = 0;
+    //        marklist_3D.append(S);
+    //    }
     
-//    NCPointCloud pointcloud, pcsorted;
+    //    // delete false detections
+    //    QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
     
-//    QStringList files;
-//    files.push_back(swc_dl_detected);
+    //    // estimate radius
+    //    for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
+    //    {
+    //        V3DLONG ix = marklist_3D_pruned.at(i).x;
+    //        V3DLONG iy = marklist_3D_pruned.at(i).y;
+    //        V3DLONG iz = marklist_3D_pruned.at(i).z;
+
+    //        NeuronSWC n;
+    //        n.x = ix-1;
+    //        n.y = iy-1;
+    //        n.z = iz-1;
+    //        n.n = i+1;
+    //        n.type = 2;
+    //        n.r = estimateRadius<unsigned char>(data1d, in_sz, n.x, n.y, n.z, 10);
+    //        n.pn = -1;
+    //        listNeuron << n;
+    //    }
+    //    if(data1d) {delete []data1d; data1d = 0;}
     
-//    //
-//    pointcloud.getPointCloud(files);
-//    pointcloud.delDuplicatedPoints();
-//    pcsorted.ksort(pointcloud, 10);
-//    pcsorted.savePointCloud(cnvtPoints);
+    //    QString  swc_dl_detected = inimg_file.left(inimg_file.lastIndexOf(".")).append("_axon_3D.swc");
+    //    writeSWC_file(swc_dl_detected,nt);
     
-//    // step 3. lines constructed
-//    float maxAngle = 0.942; // threshold 60 degree (120 degree)
-//    int knn=6;
-//    float m = 8;
+    //    // step 2. load multiple traced neurons (trees saved as .swc)
+    //    QString cnvtPoints = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_pointcloud.apo");
+    //    QString linesTraced = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_linestraced.swc");
     
-//    NCPointCloud lines;
-//    lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
+    //    NCPointCloud pointcloud, pcsorted;
     
-//    // step 4.
+    //    QStringList files;
+    //    files.push_back(swc_dl_detected);
+    
+    //    //
+    //    pointcloud.getPointCloud(files);
+    //    pointcloud.delDuplicatedPoints();
+    //    pcsorted.ksort(pointcloud, 10);
+    //    pcsorted.savePointCloud(cnvtPoints);
+    
+    //    // step 3. lines constructed
+    //    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    //    int knn=6;
+    //    float m = 8;
+    
+    //    NCPointCloud lines;
+    //    lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
+    
+    //    // step 4.
     
     //
     return true;
