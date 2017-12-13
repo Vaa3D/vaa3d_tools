@@ -763,7 +763,7 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     float maxAngle = 0.942; // threshold 60 degree (120 degree)
     int k=6;
     float m = 3;
-    float nn = 3;
+    double distthresh = 15;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -784,8 +784,8 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
 
                     if (paras->size() >= 4)
                     {
-                        nn = atof(paras->at(3));
-                        cout<<"nn: "<<nn<<endl;
+                        distthresh = double(atof(paras->at(3)));
+                        cout<<"dist: "<<distthresh<<endl;
                     }
                 }
             }
@@ -814,7 +814,7 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
 
     // load
     NCPointCloud pointcloud;
-    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, nn);
+    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, distthresh);
 
     //
     return true;
@@ -1351,6 +1351,7 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     //parsing input
     float athresh = 0.75;
     float aradius = 0.75;
+    int nn = 10;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -1364,6 +1365,12 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             {
                 aradius = atof(paras->at(1));
                 cout<<"radius relax parameter (0.75 by default): "<<aradius<<endl;
+            }
+
+            if (paras->size() >= 3)
+            {
+                nn = atoi(paras->at(2));
+                cout<<"nn (neareast neighbor for sort): "<<nn<<endl;
             }
 
         }
@@ -1514,7 +1521,7 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
     //
     NCPointCloud pcsorted;
-    pcsorted.ksort(pointcloud, 10);
+    pcsorted.ksort(pointcloud, nn);
     pcsorted.savePointCloud(cnvtPoints);
 
     // step 4. lines constructed

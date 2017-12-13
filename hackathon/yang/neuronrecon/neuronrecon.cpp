@@ -947,7 +947,7 @@ int NCPointCloud::removeNoise()
 }
 
 //
-int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, float nn)
+int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh)
 {
     // load point cloud save as a .apo file
     QList <CellAPO> inputPoints = readAPO_file(infile);
@@ -993,8 +993,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     QList<NeuronSWC> neuron, result;
     NeuronTree nt = readSWC_file(outfile);
     neuron = nt.listNeuron;
-    double thres = 15;
-    if (SortSWC<long>(neuron, result, VOID, thres))
+    if (SortSWC<long>(neuron, result, VOID, distthresh))
     {
         QString fileDefaultName = outfile+QString("_sorted.swc");
         //write new SWC to file
@@ -2233,6 +2232,8 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
         }
     }
 
+    somas.push_back(soma); // multiple somas
+
     // sort
     while(points.size() < pc.points.size())
     {
@@ -2248,29 +2249,60 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
         {
             // add neighbors
             bool allvisited = true;
-            long n = points.size();
-            for(long i=0; i<n; i++)
+
+            // soma's neighbors
+            if(points.size()==1 && pc.points[soma].neighborVisited==false)
             {
-                int cur = points[i].n;
-                if(pc.points[cur].neighborVisited)
-                {
-                    continue;
-                }
+                cout<<"deal with soma ... "<<endl;
+                pc.points[soma].neighborVisited = true;
 
-                //
-                pc.points[cur].neighborVisited = true;
-
-                //
-                for(int j=1; j<pc.points[cur].nn.size(); j++)
+                for(int j=1; j<pc.points[soma].nn.size(); j++)
                 {
-                    int neighbor = pc.points[cur].nn[j];
-                    if(!pc.points[neighbor].visited)
+                    int neighbor = pc.points[soma].nn[j];
+
+                    if(pc.distance(pc.points[neighbor], pc.points[soma])<2*pc.points[soma].radius)
+                    {
+                        pc.points[neighbor].visited = true;
+                        allvisited = false;
+                        cout<<"skip soma's neighbors ... ..."<<points.size()<<endl;
+                    }
+                    else if(!pc.points[neighbor].visited)
                     {
                         allvisited = false;
 
                         pc.points[neighbor].visited = true;
                         points.push_back(pc.points[neighbor]);
                         points[points.size()-1].n = neighbor;
+                    }
+                }
+            }
+            else
+            {
+                //
+                long n = points.size();
+                for(long i=1; i<n; i++)
+                {
+                    int cur = points[i].n;
+                    if(pc.points[cur].neighborVisited)
+                    {
+                        continue;
+                    }
+
+                    //
+                    pc.points[cur].neighborVisited = true;
+
+                    //
+                    for(int j=1; j<pc.points[cur].nn.size(); j++)
+                    {
+                        int neighbor = pc.points[cur].nn[j];
+                        if(!pc.points[neighbor].visited)
+                        {
+                            allvisited = false;
+
+                            pc.points[neighbor].visited = true;
+                            points.push_back(pc.points[neighbor]);
+                            points[points.size()-1].n = neighbor;
+                        }
                     }
                 }
             }

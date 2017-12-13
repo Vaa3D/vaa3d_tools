@@ -46,6 +46,7 @@
 
 using namespace std;
 using namespace nanoflann;
+using namespace sortswc;
 
 //
 typedef tuple<float,float,long,long> PairCompareType;
@@ -219,7 +220,7 @@ public:
     int assembleFragments(int k);
 
     //
-    int tracing(QString infile, QString outfile, int k, float angle, float m, float nn);
+    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15);
 
     //
     int trace();
@@ -283,6 +284,7 @@ public:
     vector<Point> points; // data
     Pairs skipConnecting; // for connecting line segments
     float maxDistNN, threshDistNN;
+    vector<size_t> somas;
 };
 
 class Quadruple
