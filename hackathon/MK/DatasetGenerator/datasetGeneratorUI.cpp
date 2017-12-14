@@ -23,9 +23,7 @@ DatasetGeneratorUI::DatasetGeneratorUI(QWidget* parent, V3DPluginCallback2* call
 	ui->treeView->hideColumn(3);
 	ui->treeView->setCurrentIndex(this->dirModel->index(QDir::currentPath()));
 
-	ui->checkBox_4->setEnabled(false);
-	ui->checkBox_5->setEnabled(false);
-	ui->checkBox_6->setEnabled(false);
+	ui->checkBox_4->setEnabled(true);
 	ui->checkBox_11->setEnabled(true);
 	ui->checkBox_12->setEnabled(true);
 	ui->checkBox_13->setEnabled(true);
@@ -129,26 +127,7 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 	{
 		if (checkBoxName == "checkBox_2")
 		{
-			ui->checkBox_5->setEnabled(false);
-			ui->checkBox_6->setEnabled(false);
 			ui->checkBox_4->setEnabled(true);
-			ui->groupBox_3->setEnabled(true);
-		}
-		else if (checkBoxName == "checkBox_3")
-		{
-			ui->checkBox_4->setEnabled(false);
-			ui->checkBox_5->setEnabled(true);
-			ui->checkBox_6->setEnabled(true);
-		}
-		else if (checkBoxName == "checkBox_6")
-		{
-			ui->groupBox_3->setEnabled(false);
-			ui->checkBox_7->setEnabled(false);
-			ui->checkBox_8->setEnabled(false);
-			ui->checkBox_9->setEnabled(false);
-		}
-		else if (checkBoxName == "checkBox_5")
-		{
 			ui->groupBox_3->setEnabled(true);
 		}
 		else if (checkBoxName == "groupBox")
@@ -158,28 +137,7 @@ void DatasetGeneratorUI::checkboxToggled(bool checked)
 	}
 	else
 	{
-		if (checkBoxName == "checkBox_2")
-		{
-			ui->checkBox_3->setEnabled(true);
-			ui->checkBox_5->setEnabled(true);
-			ui->checkBox_6->setEnabled(true);
-		}
-		else if (checkBoxName == "checkBox_3")
-		{
-			ui->checkBox_2->setEnabled(true);
-			ui->checkBox_4->setEnabled(true);
-		}
-		else if (checkBoxName == "checkBox_6")
-		{
-			ui->groupBox_3->setEnabled(true);
-			ui->checkBox_7->setEnabled(true);
-			ui->checkBox_8->setEnabled(true);
-			ui->checkBox_9->setEnabled(true);
-		}
-		else if (checkBoxName == "groupBox")
-		{
-			ui->pushButton_8->setEnabled(false);
-		}
+		if (checkBoxName == "groupBox") ui->pushButton_8->setEnabled(false);
 	}
 }
 
@@ -190,16 +148,8 @@ void DatasetGeneratorUI::exclusiveToggle(bool checked)
 
 	if (checked == true)
 	{
-		if (checkBoxName == "checkBox_5") ui->checkBox_6->setChecked(false);
-		else if (checkBoxName == "checkBox_6") ui->checkBox_5->setChecked(false);
-		else if (checkBoxName == "groupBox_4") ui->groupBox_3->setChecked(false);
+		if (checkBoxName == "groupBox_4") ui->groupBox_3->setChecked(false);
 		else if (checkBoxName == "groupBox_3") ui->groupBox_4->setChecked(false);
-		else if (checkBoxName == "checkBox_2")
-		{
-			ui->checkBox_3->setChecked(false);
-			ui->checkBox_6->setChecked(false);
-		}
-		else if (checkBoxName == "checkBox_3") ui->checkBox_2->setChecked(false);
 		else if (checkBoxName == "groupBox_6") ui->groupBox_7->setChecked(false);
 		else if (checkBoxName == "groupBox_7") ui->groupBox_6->setChecked(false);
 		else if (checkBoxName == "checkBox_11")
@@ -288,6 +238,7 @@ void DatasetGeneratorUI::preprocessingEdit()
 
 void DatasetGeneratorUI::okClicked()
 {
+	/* ====================== Create data list =============================== */
 	if (ui->groupBox_2->isChecked()) // Create list from existing list.
 	{
 		taskFromUI newTask;
