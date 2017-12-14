@@ -1352,6 +1352,7 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     float athresh = 0.75;
     float aradius = 0.75;
     int nn = 10;
+    int plateau = 1;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -1365,14 +1366,19 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             {
                 aradius = atof(paras->at(1));
                 cout<<"radius relax parameter (0.75 by default): "<<aradius<<endl;
-            }
 
-            if (paras->size() >= 3)
-            {
-                nn = atoi(paras->at(2));
-                cout<<"nn (neareast neighbor for sort): "<<nn<<endl;
-            }
+                if (paras->size() >= 3)
+                {
+                    nn = atoi(paras->at(2));
+                    cout<<"nn (neareast neighbor for sort): "<<nn<<endl;
 
+                    if (paras->size() >= 4)
+                    {
+                        plateau = atoi(paras->at(3));
+                        cout<<"plateau (neighbors for local maxima): "<<plateau<<endl;
+                    }
+                }
+            }
         }
         else
         {
@@ -1485,12 +1491,16 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                     Point p;
                     p.radius = aradius*dt[idx];
                     bool skip = false;
+                    int n = 0;
                     for(nn=0; nn<26; nn++)
                     {
                         if(p1dImg[idx + offset[nn] ]>val)
                         {
-                            skip = true;
-                            break;
+                            if(++n > plateau)
+                            {
+                                skip = true;
+                                break;
+                            }
                         }
                     }
 

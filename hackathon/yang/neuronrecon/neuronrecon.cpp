@@ -442,7 +442,7 @@ int NCPointCloud::savePointCloud(QString filename, int format)
 int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
 {
     // isolated points
-    //pc.isolatedPoints();
+    // pc.isolatedPoints();
 
     //
     NeuronTree nt;
@@ -2253,18 +2253,15 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
             // soma's neighbors
             if(points.size()==1 && pc.points[soma].neighborVisited==false)
             {
-                cout<<"deal with soma ... "<<endl;
                 pc.points[soma].neighborVisited = true;
 
                 for(int j=1; j<pc.points[soma].nn.size(); j++)
                 {
                     int neighbor = pc.points[soma].nn[j];
-
                     if(pc.distance(pc.points[neighbor], pc.points[soma])<2*pc.points[soma].radius)
                     {
                         pc.points[neighbor].visited = true;
                         allvisited = false;
-                        cout<<"skip soma's neighbors ... ..."<<points.size()<<endl;
                     }
                     else if(!pc.points[neighbor].visited)
                     {
@@ -2283,6 +2280,7 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
                 for(long i=1; i<n; i++)
                 {
                     int cur = points[i].n;
+
                     if(pc.points[cur].neighborVisited)
                     {
                         continue;
@@ -2311,11 +2309,17 @@ int NCPointCloud::ksort(NCPointCloud pc, int k)
             {
                 // find unvisited one from input point cloud
                 unsigned long loc;
-                pc.findNextUnvisitPoint(loc);
-
-                pc.points[loc].visited = true;
-                points.push_back(pc.points[loc]);
-                points[points.size()-1].n = loc;
+                if(pc.findNextUnvisitPoint(loc))
+                {
+                    pc.points[loc].visited = true;
+                    points.push_back(pc.points[loc]);
+                    points[points.size()-1].n = loc;
+                }
+                else
+                {
+                    cout<<"all peaks are found"<<endl;
+                    break;
+                }
             }
         }
     }
