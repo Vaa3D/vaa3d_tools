@@ -3,7 +3,7 @@
 
 #include <v3d_interface.h>
 #include "Neurite_Instructor_plugin.h"
-#include "ui_Neurite_Instructor.h"
+//#include "ui_Neurite_Instructor.h"
 
 namespace Ui
 {

@@ -4,10 +4,11 @@
 
 #include "v3d_message.h"
 #include "building_tester.h"
-#include <caffe/caffe.hpp>
 #include "classification.h"
 #include "mean_shift_fun.h"
 #include "..\Neurite_Instructor\funcs.h"
+
+#include "caffe/caffe.hpp"
 
 using namespace std;
 

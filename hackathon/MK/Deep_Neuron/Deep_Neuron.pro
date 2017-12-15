@@ -2,19 +2,22 @@ TEMPLATE    = lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
-CAFFEPATH = C:/caffe
+CAFFEPATH = C:/caffe_root/caffe
 CUDAPATH  = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
+OTHERINCLUDEPATH = "C:/Users/King Mars/.caffe/dependencies/libraries_v120_x64_py27_1.1.0/libraries/include"
+OTHERLIBPATH = "C:/Users/King Mars/.caffe/dependencies/libraries_v120_x64_py27_1.1.0/libraries"
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/common_lib/include
 INCLUDEPATH	+= $$CAFFEPATH/include
+INCLUDEPATH += $$CAFFEPATH/include/caffe/util
 INCLUDEPATH	+= $$CAFFEPATH/src/caffe
 INCLUDEPATH	+= $$CUDAPATH/include/
 INCLUDEPATH += ../../zhi/deep_learning/prediction
-INCLUDEPATH += ../../../released_plugins/v3d_plugins/terastitcher/include
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/mean_shift_center
+INCLUDEPATH += $$OTHERINCLUDEPATH
 
 win32 {
-    LIBS += -L$$CAFFEPATH\\scripts\\build\\lib\\Release
+    LIBS += -L$$CAFFEPATH\\build\\lib\\Release
     LIBS += -lcaffe
 
     # cuda
@@ -23,18 +26,24 @@ win32 {
     LIBS += -lcudart -lcublas -lcurand
 
     # opencv
-    INCLUDEPATH += C:\\Users\\hsienchik\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include\\opencv
-    LIBS += -LC:\\Users\\hsienchik\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\x64\\vc12\\lib
+    INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv
+    INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv2
+    INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv2\\core
+    LIBS += -L$$OTHERLIBPATH\\x64\\vc12\\lib
     LIBS += -lopencv_core310 -lopencv_imgproc310 -lopencv_highgui310
 
     # other dependencies
-    INCLUDEPATH += C:\\Users\\hsienchik\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include
-    INCLUDEPATH += C:\\Users\\hsienchik\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include\\boost-1_61
+    INCLUDEPATH += $$OTHERINCLUDEPATH\\boost-1_61
+    INCLUDEPATH += $$CAFFEPATH\\build\\include
     INCLUDEPATH += $$CAFFEPATH\\scripts\\build
     INCLUDEPATH += $$CAFFEPATH\\scripts\\build\\include
     LIBS += -L$$CAFFEPATH\\scripts\\build\\lib\\Release
-    LIBS += -LC:\\Users\\hsienchik\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\lib
-    LIBS += -lglog -lgflags -lprotobuf -llmdb -lleveldb -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61
+    LIBS += -L$$OTHERLIBPATH\\lib
+    LIBS += -L$$VAA3DPATH\\common_lib\\src_packages\\boost_1_57_0\\stage\\lib
+
+    LIBS += -lcaffe -lcaffeproto -llibprotobuf -lcaffehdf5 -lcaffehdf5_hl -llibopenblas 
+    LIBS += -lopencv_core310 -lopencv_highgui310 -lopencv_imgproc310 -lopencv_imgcodecs310 
+    LIBS += -lglog -lgflags -llmdb -lleveldb -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61
 }
 
 unix {
