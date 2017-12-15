@@ -1,20 +1,26 @@
 #ifndef __CLASSIFICATION_H__
 #define __CLASSIFICATION_H__
 
-
-#include <caffe/caffe.hpp>
-
+#include "../../../MK/Deep_Neuron/Deep_Neuron_plugin.h"
+#ifdef WIN_DEEP_NEURON
+#include "core.hpp"
+#include "highgui.hpp"
+#include "imgproc.hpp"
+#elif
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "prediction_caffe_plugin.h"
+#endif
+
+#include <caffe/caffe.hpp>
+
 #include <algorithm>
 #include <iosfwd>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "prediction_caffe_plugin.h"
 
 using namespace caffe; // NOLINT(build/namespaces)
 using std::string;
@@ -42,7 +48,7 @@ private:
                                           std::vector< std::vector<cv::Mat> >* input_batch);
 
 private:
-    shared_ptr<Net<float> > net_;
+    boost::shared_ptr<Net<float> > net_; // Add boost qualifier to avoid ambiguity in C++ 11, MK, Dec, 2017
     cv::Size input_geometry_;
     int num_channels_;
     cv::Mat mean_;

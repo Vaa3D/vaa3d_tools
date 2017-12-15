@@ -8,8 +8,6 @@
 
 #include "v3d_message.h"
 #include "Deep_Neuron_plugin.h"
-#include "classification.h"
-#include "mean_shift_fun.h"
 #include "building_tester.h"
 
 using namespace std;
