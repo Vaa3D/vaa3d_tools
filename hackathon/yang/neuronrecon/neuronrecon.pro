@@ -109,16 +109,16 @@ unix:!macx {
 }
 
 # deep learning detection
-#HEADERS += zhidl/classification.h
-#HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
-#SOURCES += zhidl/classification.cpp
-#SOURCES += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
-#INCLUDEPATH += /home/yangy/work/cuda/include
-#LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
-#LIBS += -lcaffe -lhdf5 -lhdf5_cpp
-#LIBS += -lglog -lgflags -lprotobuf -llmdb -lleveldb -lstdc++ -lcudnn -lcblas -latlas
-#LIBS += -L/home/yangy/work/local/lib -lboost_system -lboost_filesystem -lboost_thread
-#LIBS += -L/home/yangy/work/cuda/lib64 -lcudart -lcublas -lcurand
+HEADERS += zhidl/classification.h
+HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+SOURCES += zhidl/classification.cpp
+SOURCES += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+INCLUDEPATH += /home/yangy/work/cuda/include
+LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
+LIBS += -lcaffe -lhdf5 -lhdf5_cpp
+LIBS += -lglog -lgflags -lprotobuf -llmdb -lleveldb -lstdc++ -lcudnn -lcblas -latlas
+LIBS += -L/home/yangy/work/local/lib -lboost_system -lboost_filesystem -lboost_thread
+LIBS += -L/home/yangy/work/cuda/lib64 -lcudart -lcublas -lcurand
 
 TARGET	= $$qtLibraryTarget(neurontree_construct)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/neuron_utilities/neurontree_construct/

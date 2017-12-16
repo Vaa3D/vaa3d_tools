@@ -46,7 +46,6 @@
 
 using namespace std;
 using namespace nanoflann;
-using namespace sortswc;
 
 //
 typedef tuple<float,float,long,long> PairCompareType;

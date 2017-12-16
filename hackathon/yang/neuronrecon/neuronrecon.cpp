@@ -993,11 +993,11 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     QList<NeuronSWC> neuron, result;
     NeuronTree nt = readSWC_file(outfile);
     neuron = nt.listNeuron;
-    if (SortSWC<long>(neuron, result, VOID, distthresh))
+    if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
     {
         QString fileDefaultName = outfile+QString("_sorted.swc");
         //write new SWC to file
-        if (!export_list2file<long>(result,fileDefaultName,outfile))
+        if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
         {
             cout<<"fail to write the output result"<<endl;
             return -1;

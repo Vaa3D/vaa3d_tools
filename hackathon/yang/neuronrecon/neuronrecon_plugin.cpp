@@ -40,7 +40,8 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("findpeaks")
     <<tr("trace")
     <<tr("attrace")
-    <<("samplepc")
+    <<tr("samplepc")
+    <<tr("imagecheck")
     <<tr("test")
     <<tr("help");
 }
@@ -144,6 +145,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("samplepc"))
     {
         return samplepc_func(input, output, callback);
+    }
+    else if (func_name == tr("imagecheck"))
+    {
+        return checkImage_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {
