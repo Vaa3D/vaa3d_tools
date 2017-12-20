@@ -9,7 +9,7 @@
 #include <QStringList>
 #include <QFile>
 #include <QVector>
-#include <QFileinfo>
+#include <QFileInfo>
 #include <QDir>
 
 #include "Operator.h"
