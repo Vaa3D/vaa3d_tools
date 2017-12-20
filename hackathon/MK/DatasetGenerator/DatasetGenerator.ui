@@ -152,7 +152,7 @@
         </font>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="iconSize">
         <size>
@@ -179,7 +179,7 @@
           </font>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page">
           <property name="geometry">
@@ -187,7 +187,7 @@
             <x>0</x>
             <y>0</y>
             <width>621</width>
-            <height>585</height>
+            <height>579</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1066,7 +1066,7 @@
             <x>0</x>
             <y>0</y>
             <width>621</width>
-            <height>585</height>
+            <height>579</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1092,7 +1092,7 @@
            </property>
            <widget class="QPushButton" name="pushButton_7">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1149,7 +1149,7 @@
            </property>
            <widget class="QPushButton" name="pushButton_9">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1346,7 +1346,7 @@
           </font>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page_3">
           <property name="geometry">
@@ -1354,7 +1354,7 @@
             <x>0</x>
             <y>0</y>
             <width>611</width>
-            <height>585</height>
+            <height>579</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1657,7 +1657,7 @@
             <x>0</x>
             <y>0</y>
             <width>611</width>
-            <height>585</height>
+            <height>579</height>
            </rect>
           </property>
           <attribute name="label">
