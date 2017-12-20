@@ -2,16 +2,11 @@
 #define __CLASSIFICATION_H__
 
 #include "../../../MK/Deep_Neuron/Deep_Neuron_plugin.h"
-#ifdef WIN_DEEP_NEURON
-#include "core.hpp"
-#include "highgui.hpp"
-#include "imgproc.hpp"
-#elif
+#include "prediction_caffe_plugin.h"
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "prediction_caffe_plugin.h"
-#endif
 
 #include <caffe/caffe.hpp>
 

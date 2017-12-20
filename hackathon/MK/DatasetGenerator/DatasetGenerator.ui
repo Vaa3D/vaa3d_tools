@@ -152,7 +152,7 @@
         </font>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="iconSize">
         <size>
@@ -179,7 +179,7 @@
           </font>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="page">
           <property name="geometry">
@@ -1346,7 +1346,7 @@
           </font>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="page_3">
           <property name="geometry">
@@ -1386,7 +1386,7 @@
            </property>
            <widget class="QPushButton" name="pushButton_8">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1407,6 +1407,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_16">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>130</x>
@@ -1443,7 +1446,7 @@
            </property>
            <widget class="QComboBox" name="comboBox_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1456,7 +1459,7 @@
            </widget>
            <widget class="QLabel" name="label_17">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1478,7 +1481,7 @@
            </widget>
            <widget class="QLabel" name="label_11">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1500,7 +1503,7 @@
            </widget>
            <widget class="QLineEdit" name="lineEdit_25">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1519,7 +1522,7 @@
            </widget>
            <widget class="QCheckBox" name="checkBox">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1680,7 +1683,7 @@
            </property>
            <widget class="QPushButton" name="pushButton_10">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1701,6 +1704,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_19">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>130</x>
@@ -1717,6 +1723,9 @@
             </property>
            </widget>
            <widget class="QLabel" name="label_13">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>20</x>
@@ -1736,6 +1745,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_20">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>110</x>
@@ -1752,6 +1764,9 @@
             </property>
            </widget>
            <widget class="QLabel" name="label_14">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>200</x>
@@ -1771,6 +1786,9 @@
             </property>
            </widget>
            <widget class="QCheckBox" name="checkBox_15">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>260</x>
@@ -1794,7 +1812,7 @@
            </widget>
            <widget class="QPushButton" name="pushButton_12">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1815,6 +1833,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_21">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>130</x>
@@ -1851,7 +1872,7 @@
            </property>
            <widget class="QPushButton" name="pushButton_14">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1872,6 +1893,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_22">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>150</x>
@@ -1888,6 +1912,9 @@
             </property>
            </widget>
            <widget class="QLabel" name="label_15">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>20</x>
@@ -1907,6 +1934,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_23">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>120</x>
@@ -1924,7 +1954,7 @@
            </widget>
            <widget class="QPushButton" name="pushButton_15">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="geometry">
              <rect>
@@ -1945,6 +1975,9 @@
             </property>
            </widget>
            <widget class="QLineEdit" name="lineEdit_24">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="geometry">
              <rect>
               <x>150</x>

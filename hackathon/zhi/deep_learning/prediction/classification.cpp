@@ -3,15 +3,9 @@
 #include <caffe/caffe.hpp>
 
 #include "../../../MK/Deep_Neuron/Deep_Neuron_plugin.h"
-#ifdef WIN_DEEP_NEURON
-#include "core.hpp"
-#include "highgui.hpp"
-#include "imgproc.hpp"
-#elif
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#endif
 
 #include <algorithm>
 #include <iosfwd>
