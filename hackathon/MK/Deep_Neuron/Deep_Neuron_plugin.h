@@ -10,10 +10,6 @@
 
 #include <v3d_interface.h>
 
-#ifdef Q_OS_WIN32
-#define WIN_DEEP_NEURON
-#endif
-
 class DeepNeuron_plugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT

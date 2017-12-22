@@ -8,7 +8,7 @@
 
 #include "v3d_message.h"
 #include "Deep_Neuron_plugin.h"
-#include "building_tester.h"
+#include "tester.h"
 
 using namespace std;
 
@@ -34,6 +34,7 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 {
 	if (menu_name == tr("menu1"))
 	{
+		cout << "menu test" << endl;
 		v3d_msg("To be implemented.");
 	}
 	else if (menu_name == tr("menu2"))
@@ -56,15 +57,16 @@ bool DeepNeuron_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 
 	if (func_name == tr("func1"))
 	{
-		BuildingTester tester1;
-		tester1.inputFileStrings.push_back(infiles[0]);
-		tester1.inputFileStrings.push_back(infiles[1]);
-		tester1.inputStrings.push_back(inparas[0]);
-		tester1.inputStrings.push_back(inparas[1]);
-		tester1.inputStrings.push_back(inparas[2]);
-		tester1.outputStrings.push_back(outfiles[0]);
+		Tester tester1;
+		tester1.inputFileStrings.push_back(infiles[0]); // image
+		tester1.inputFileStrings.push_back(infiles[1]); // marker
+		tester1.inputStrings.push_back(inparas[0]);     // deploy
+		tester1.inputStrings.push_back(inparas[1]);     // model
+		tester1.inputStrings.push_back(inparas[2]);     // mean
+		tester1.outputStrings.push_back(outfiles[0]);   // output swc
 
 		tester1.theCallbackPtr = &callback;
+		tester1.test1();
 	}
 	else if (func_name == tr("func2"))
 	{

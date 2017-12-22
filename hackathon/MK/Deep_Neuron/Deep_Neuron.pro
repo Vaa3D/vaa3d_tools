@@ -88,14 +88,14 @@ HEADERS	+= Deep_Neuron_plugin.h
 HEADERS += ../../zhi/deep_learning/prediction/classification.h
 HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
 HEADERS += $$VAA3DPATH/basic_c_fun/basic_surf_objs.h
-HEADERS += building_tester.h
+HEADERS += tester.h
 
 SOURCES	+= Deep_Neuron_plugin.cpp 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += ../../zhi/deep_learning/prediction/classification.cpp
 SOURCES += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
-SOURCES += building_tester.cpp
+SOURCES += tester.cpp
 
 TARGET	= $$qtLibraryTarget(Deep_Neuron)
 DESTDIR	= ../../../../v3d_external/bin/plugins/Deep_Neuron/
