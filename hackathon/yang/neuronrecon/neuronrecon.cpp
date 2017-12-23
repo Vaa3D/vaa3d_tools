@@ -416,12 +416,14 @@ int NCPointCloud::savePointCloud(QString filename, int format)
     }
     else if(format==1)
     {
+        filename = filename.left(filename.lastIndexOf(".")).append(".marker");
+
         // marker
         QList<ImageMarker> markers;
         for(long i=0; i<n; i++)
         {
             Point p = points[i];
-            ImageMarker marker(0, 1, p.x, p.y, p.z, p.radius);
+            ImageMarker marker(0, 1, p.x+1, p.y+1, p.z+1, p.radius);
 
             markers.push_back(marker);
         }
@@ -815,7 +817,7 @@ int NCPointCloud::knn(int k, float radius)
     //
     if(k<1 || points.size()<k)
     {
-        cout<<"invalid k or cloud\n";
+        cout<<"invalid k "<<k<<" cloud size of "<<points.size()<<endl;
         return -1;
     }
 
@@ -3170,6 +3172,83 @@ int NCPointCloud::append(Point p)
 
     //
     return 0;
+}
+
+//
+int NCPointCloud::sortbyradius()
+{
+    //
+    sort(points.begin(), points.end(), [](const Point& a, const Point& b) -> bool
+    {
+        return a.radius < b.radius;
+    });
+
+    //
+    return true;
+}
+
+//
+float NCPointCloud::hausdorffdistance(NCPointCloud a, NCPointCloud b)
+{
+    float h = 0;
+
+    for(size_t i=0; i<a.points.size(); i++)
+    {
+        Point p = a.points[i];
+        float d = 1e6;
+        for(size_t j=0; j<b.points.size(); j++)
+        {
+            Point q = b.points[j];
+
+            float dist = distance(p,q);
+
+            if(dist < d)
+                d = dist;
+        }
+
+        if(d > h)
+            h = d;
+    }
+
+    return h;
+}
+
+float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
+{
+    float m = 0;
+    long n = a.listNeuron.size();
+
+    if(n<=0)
+    {
+        cout<<"Invalid input\n";
+        return -1;
+    }
+
+    for(size_t i=0; i<n; i++)
+    {
+        Point p;
+        p.x = a.listNeuron[i].x;
+        p.y = a.listNeuron[i].y;
+        p.z = a.listNeuron[i].z;
+
+        float d = 1e6;
+        for(size_t j=0; j<b.listNeuron.size(); j++)
+        {
+            Point q;
+            q.x = b.listNeuron[j].x;
+            q.y = b.listNeuron[j].y;
+            q.z = b.listNeuron[j].z;
+
+            float dist = distance(p,q);
+
+            if(dist < d)
+                d = dist;
+        }
+
+        m += d;
+    }
+
+    return m/n;
 }
 
 // method to publish

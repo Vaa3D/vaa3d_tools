@@ -268,6 +268,15 @@ public:
     int sample(QString infile, QString outfile, float srx=0.5, float sry=0.5, float srz=0.5);
 
     //
+    float hausdorffdistance(NCPointCloud a, NCPointCloud b);
+
+    //
+    float meandistance(NeuronTree a, NeuronTree b);
+
+    //
+    int sortbyradius();
+
+    //
     Point pplusv(Point *p, Vector *v);
     float point_plane_dist(Point *a, Plane *P);
     Point plerp(Point *a, Point *b, float t);

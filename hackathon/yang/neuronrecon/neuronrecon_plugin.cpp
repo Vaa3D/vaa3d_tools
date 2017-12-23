@@ -42,6 +42,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("attrace")
     <<tr("samplepc")
     <<tr("imagecheck")
+    <<tr("ushort2ubyte")
     <<tr("test")
     <<tr("help");
 }
@@ -149,6 +150,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("imagecheck"))
     {
         return checkImage_func(input, output, callback);
+    }
+    else if (func_name == tr("ushort2ubyte"))
+    {
+        return convertUShort2UByte_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {

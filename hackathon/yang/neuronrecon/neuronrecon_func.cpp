@@ -1335,6 +1335,92 @@ bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     return true;
 }
 
+bool convertUShort2UByte_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        cout<<"usage: -i input -o output\n";
+        return false;
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //
+    QString fn_in = QString(inlist->at(0));
+    QString fn_out = fn_in.left(fn_in.lastIndexOf(".")).append("_ubyte.tif");
+
+    //
+    if(fn_in.toUpper().endsWith(".V3DRAW") || fn_in.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fn_in.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        V3DLONG dimx = p4dImage->getXDim();
+        V3DLONG dimy = p4dImage->getYDim();
+        V3DLONG dimz = p4dImage->getZDim();
+        long size = dimx*dimy*dimz;
+        unsigned char *p1dImg = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                //
+                p4dImage->setDatatype(V3D_UINT8);
+                p4dImage->setNewRawDataPointer(puint8);
+                p4dImage->saveImage(const_cast<char *>(fn_out.toStdString().c_str()));
+
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+    }
+    else
+    {
+        cout<<"Image format is not supported\n";
+        return false;
+    }
+
+    //
+    return true;
+}
+
 bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     // anisotropic filter
@@ -1345,6 +1431,7 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     if(input.size()<1)
     {
         cout<<"please input a TIFF file\n";
+        cout<<"usage: -i input -o output -p intensity_thresh_percent radius_thresh_percent nn_sort nn_lm outformat\n";
         return false;
     }
 
@@ -1353,6 +1440,8 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     float aradius = 0.75;
     int nn = 10;
     int plateau = 1;
+    int format = 0;
+    int skipfiltering = 0;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -1376,6 +1465,18 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                     {
                         plateau = atoi(paras->at(3));
                         cout<<"plateau (neighbors for local maxima): "<<plateau<<endl;
+
+                        if (paras->size() >= 5)
+                        {
+                            format = atoi(paras->at(4));
+                            cout<<"point cloud format (0:apo, 1:marker): "<<format<<endl;
+
+                            if (paras->size() >= 6)
+                            {
+                                skipfiltering = atoi(paras->at(5));
+                                cout<<"skip aniostropic filtering (0:skip, 1:no): "<<skipfiltering<<endl;
+                            }
+                        }
                     }
                 }
             }
@@ -1403,14 +1504,21 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     QString cnvtPoints = filename.left(filename.lastIndexOf(".")).append("_pointcloud.apo");
     QString linesTraced = filename.left(filename.lastIndexOf(".")).append("_linestraced.swc");
 
-    if(filename.toUpper().endsWith(".TIF"))
+    if(!skipfiltering)
     {
-        runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+        if(filename.toUpper().endsWith(".TIF"))
+        {
+            runGPUGradientAnisotropicDiffusionImageFilter<unsigned char, unsigned char, 3>(filename.toStdString(), fnITKfiltered.toStdString());
+        }
+        else
+        {
+            cout<<"Current only support TIFF image as input file\n";
+            return -1;
+        }
     }
     else
     {
-        cout<<"Current only support TIFF image as input file\n";
-        return -1;
+        fnITKfiltered = filename;
     }
 
     // step 2.
@@ -1426,20 +1534,49 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             return false;
         }
 
-        if(p4dImage->getDatatype()!=V3D_UINT8)
-        {
-            cout<<"Not supported!\n";
-            return false;
-        }
-
-        // local maxima (peaks)
-        V3DLONG i,j,k, idx, nn;
-
-        unsigned char *p1dImg = p4dImage->getRawData();
         V3DLONG dimx = p4dImage->getXDim();
         V3DLONG dimy = p4dImage->getYDim();
         V3DLONG dimz = p4dImage->getZDim();
         long volsz = p4dImage->getTotalUnitNumberPerChannel();
+        long size = dimx*dimy*dimz;
+        unsigned char *p1dImg = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                p1dImg = puint8;
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+
+        // local maxima (peaks)
+        V3DLONG i,j,k, idx, nn;
 
         // estimate the radius with distance transform
         unsigned char *dt=NULL;
@@ -1531,16 +1668,26 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
     //
     NCPointCloud pcsorted;
-    pcsorted.ksort(pointcloud, nn);
-    pcsorted.savePointCloud(cnvtPoints);
+
+    if(format==0)
+    {
+        pcsorted.ksort(pointcloud, nn);
+        pcsorted.savePointCloud(cnvtPoints, format);
+    }
+    else if(format==1)
+    {
+        pointcloud.sortbyradius();
+        pointcloud.savePointCloud(cnvtPoints, format);
+    }
+
 
     // step 4. lines constructed
-    float maxAngle = 0.942; // threshold 60 degree (120 degree)
-    int k=6;
-    float m = 8;
+//    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+//    int k=6;
+//    float m = 8;
 
-    NCPointCloud lines;
-    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
+//    NCPointCloud lines;
+//    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
 
     // step 5. neuron tree(s) traced
 
@@ -2129,7 +2276,6 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
                 maxval = 255 / maxval;
 
-
                 y_new1dp<unsigned char, long>(puint8, size);
                 for(long i=0; i<size; i++)
                 {
@@ -2198,7 +2344,7 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
         // app2
         vector<NeuronTree> tracedFilaments;
-        float distthresh = 10;
+        float distthresh = 6;
         long iter = 0;
         for(size_t i=0; i<pc.points.size(); i++)
         {
@@ -2223,8 +2369,9 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                                 q.x = nt.listNeuron[k].x;
                                 q.y = nt.listNeuron[k].y;
                                 q.z = nt.listNeuron[k].z;
+                                q.radius = nt.listNeuron[k].r;
 
-                                if(pc.distance(point, q)<distthresh)
+                                if(pc.distance(point, q)< max(distthresh, q.radius))
                                 {
                                     skip = true;
                                     break;
@@ -2279,14 +2426,67 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             NeuronTree nt = readSWC_file(segmenttraced);
             if(nt.listNeuron.size()>0)
             {
-                tracedFilaments.push_back(nt);
-                pcsave.points.push_back(point);
+                float swcdistthresh = 10;
+
+                if(tracedFilaments.size()>0)
+                {
+                    bool add = true;
+                    for(size_t j=0; j<tracedFilaments.size(); j++)
+                    {
+                        if(pc.meandistance(nt, tracedFilaments[j])<swcdistthresh)
+                        {
+                            add = false;
+                            break;
+                        }
+                    }
+
+                    if(add)
+                    {
+                        tracedFilaments.push_back(nt);
+                        pcsave.points.push_back(point);
+                    }
+                }
+                else
+                {
+                    tracedFilaments.push_back(nt);
+                    pcsave.points.push_back(point);
+                }
             }
 
         }
 
         //
         pcsave.savePointCloud(markersIntrace, 1);
+
+        //
+        long offset = 0;
+        QString outputswc = fnimage.left(fnimage.lastIndexOf(".")).append(QString("_autotraced.swc"));
+        NeuronTree autotraced;
+        if(tracedFilaments.size()>0)
+        {
+            for(size_t j=0; j<tracedFilaments.size(); j++)
+            {
+                NeuronTree nt = tracedFilaments[j];
+
+                if(nt.listNeuron.size()>0)
+                {
+                    for(size_t k=0; k<nt.listNeuron.size(); k++)
+                    {
+                        nt.listNeuron[k].n += offset;
+
+                        if(nt.listNeuron[k].pn > 0)
+                        {
+                            nt.listNeuron[k].pn += offset;
+                        }
+
+                        autotraced.listNeuron.push_back(nt.listNeuron[k]);
+                    }
+
+                    offset += nt.listNeuron.size() + 1;
+                }
+            }
+        }
+        writeSWC_file(outputswc,autotraced);
 
         //
         y_del1dp<unsigned char>(puint8);
