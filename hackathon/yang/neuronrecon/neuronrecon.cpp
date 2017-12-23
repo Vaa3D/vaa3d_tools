@@ -3180,7 +3180,7 @@ int NCPointCloud::sortbyradius()
     //
     sort(points.begin(), points.end(), [](const Point& a, const Point& b) -> bool
     {
-        return a.radius < b.radius;
+        return a.radius > b.radius;
     });
 
     //

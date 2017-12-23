@@ -2317,10 +2317,45 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
             if(x>sx-1) x=sx-1;
 
+
+            long xpre = x-1, xnext = x+1;
+
+            if(xpre<0) xpre=0;
+            if(xnext>sx-1) xnext = sx-1;
+
+            long ypre = y-1, ynext = y+1;
+
+            if(ypre<0) ypre=0;
+            if(ynext>sy-1) ynext = sy-1;
+
+            long zpre = z-1, znext = z+1;
+
+            if(zpre<0) zpre=0;
+            if(znext>sz-1) znext = sz-1;
+
+            float maxval = 0;
+
+            for(long zz=zpre; zz<=znext; zz++)
+            {
+                for(long yy=ypre; yy<=ynext; yy++)
+                {
+                    for(long xx=xpre; xx<=xnext; xx++)
+                    {
+                        if(float(p[zz*sx*sy + yy*sx + xx]) > maxval)
+                        {
+                            maxval = float(p[zz*sx*sy + yy*sx + xx]);
+                            x = xx;
+                            y = yy;
+                            z = zz;
+                        }
+                    }
+                }
+            }
+
             point.x = x;
             point.y = y;
             point.z = z;
-            point.val = p[ z*sx*sy + y*sx + x];
+            point.val = maxval;
 
             if( point.val > thresh)
             {
