@@ -1966,12 +1966,14 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         return false;
     }
     
+    // compare single projection to 3 projections
+    bool zprojonly = true;
+
     //
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     unsigned char *data1d_mip=0;
-    
-    //unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
+    unsigned char *data1d_zmip=0, *data1d_ymip=0, *data1d_xmip=0;
     
     int datatype;
     V3DLONG N,M,P;
@@ -1998,22 +2000,93 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         M = in_sz[1];
         P = in_sz[2];
 
-        V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
-        try {data1d_mip = new unsigned char [pagesz_mip];}
-        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-        for(V3DLONG iy = 0; iy < M; iy++)
+        if(zprojonly)
         {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = 0; ix < N; ix++)
+            V3DLONG pagesz_mip = in_sz[0]*in_sz[1];
+            try {data1d_mip = new unsigned char [pagesz_mip];}
+            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+            for(V3DLONG iy = 0; iy < M; iy++)
             {
-                int max_mip = 0;
-                for(V3DLONG iz = 0; iz < P; iz++)
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                    V3DLONG offsetk = iz*M*N;
-                    if(data1d[offsetk + offsetj + ix] >= max_mip)
+                    int max_mip = 0;
+                    for(V3DLONG iz = 0; iz < P; iz++)
                     {
-                        data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
-                        max_mip = data1d[offsetk + offsetj + ix];
+                        V3DLONG offsetk = iz*M*N;
+                        if(data1d[offsetk + offsetj + ix] >= max_mip)
+                        {
+                            data1d_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            max_mip = data1d[offsetk + offsetj + ix];
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // z proj
+            V3DLONG pagesz_mip = N*M;
+            try {data1d_zmip = new unsigned char [pagesz_mip];}
+            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
+                    int max_mip = 0;
+                    for(V3DLONG iz = 0; iz < P; iz++)
+                    {
+                        V3DLONG offsetk = iz*M*N;
+                        if(data1d[offsetk + offsetj + ix] >= max_mip)
+                        {
+                            data1d_zmip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            max_mip = data1d[offsetk + offsetj + ix];
+                        }
+                    }
+                }
+            }
+
+            // y proj
+            pagesz_mip = N*P;
+            try {data1d_ymip = new unsigned char [pagesz_mip];}
+            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
+                    int max_mip = 0;
+                    for(V3DLONG iy = 0; iy < M; iy++)
+                    {
+                        V3DLONG offsetj = iy*N;
+                        if(data1d[offsetk + offsetj + ix] >= max_mip)
+                        {
+                            data1d_ymip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            max_mip = data1d[offsetk + offsetj + ix];
+                        }
+                    }
+                }
+            }
+
+            // x proj
+            pagesz_mip = M*P;
+            try {data1d_xmip = new unsigned char [pagesz_mip];}
+            catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = 0; iy < M; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    int max_mip = 0;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                        if(data1d[offsetk + offsetj + ix] >= max_mip)
+                        {
+                            data1d_xmip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            max_mip = data1d[offsetk + offsetj + ix];
+                        }
                     }
                 }
             }
@@ -2021,7 +2094,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
     
     std::vector<std::vector<float> > detection_results;
-    LandmarkList marklist_2D;
+    LandmarkList marklist_2D, marklist_2Dz, marklist_2Dy, marklist_2Dx;
     Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
     
     //
@@ -2052,34 +2125,131 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
             blockarea = new unsigned char [blockpagesz];
 
-
-            i = 0;
-            for(iiy = yb; iiy < ye+1; iiy++)
+            if(zprojonly)
             {
-                offsetj = iiy*N;
-                for(iix = xb; iix < xe+1; iix++)
+                i = 0;
+                for(iiy = yb; iiy < ye+1; iiy++)
                 {
-                    blockarea[i] = data1d_mip[offsetj + iix];
-                    i++;
+                    offsetj = iiy*N;
+                    for(iix = xb; iix < xe+1; iix++)
+                    {
+                        blockarea[i] = data1d_mip[offsetj + iix];
+                        i++;
+                    }
+                }
+
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+                d = 0;
+                for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                {
+                    for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                    {
+                        det_output = detection_results[d];
+                        if(det_output.at(1) > det_output.at(0))
+                        {
+                            LS.x = iix;
+                            LS.y = iiy;
+                            LS.z = 1;
+                            marklist_2D.push_back(LS);
+                        }
+                        d++;
+                    }
                 }
             }
-
-            detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
-
-            d = 0;
-            for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+            else
             {
-                for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                // z proj
+                i = 0;
+                for(iiy = yb; iiy < ye+1; iiy++)
                 {
-                    det_output = detection_results[d];
-                    if(det_output.at(1) > det_output.at(0))
+                    offsetj = iiy*N;
+                    for(iix = xb; iix < xe+1; iix++)
                     {
-                        LS.x = iix;
-                        LS.y = iiy;
-                        LS.z = 1;
-                        marklist_2D.push_back(LS);
+                        blockarea[i] = data1d_zmip[offsetj + iix];
+                        i++;
                     }
-                    d++;
+                }
+
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+                d = 0;
+                for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                {
+                    for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                    {
+                        det_output = detection_results[d];
+                        if(det_output.at(1) > det_output.at(0))
+                        {
+                            LS.x = iix;
+                            LS.y = iiy;
+                            LS.z = 1;
+                            marklist_2Dz.push_back(LS);
+                        }
+                        d++;
+                    }
+                }
+
+                // y proj
+                i = 0;
+                for(iiy = yb; iiy < ye+1; iiy++)
+                {
+                    offsetj = iiy*N;
+                    for(iix = xb; iix < xe+1; iix++)
+                    {
+                        blockarea[i] = data1d_ymip[offsetj + iix];
+                        i++;
+                    }
+                }
+
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+                d = 0;
+                for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                {
+                    for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                    {
+                        det_output = detection_results[d];
+                        if(det_output.at(1) > det_output.at(0))
+                        {
+                            LS.x = iix;
+                            LS.y = 1;
+                            LS.z = iiy;
+                            marklist_2Dy.push_back(LS);
+                        }
+                        d++;
+                    }
+                }
+
+                // x proj
+                i = 0;
+                for(iiy = yb; iiy < ye+1; iiy++)
+                {
+                    offsetj = iiy*N;
+                    for(iix = xb; iix < xe+1; iix++)
+                    {
+                        blockarea[i] = data1d_xmip[offsetj + iix];
+                        i++;
+                    }
+                }
+
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+
+                d = 0;
+                for(iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                {
+                    for(iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                    {
+                        det_output = detection_results[d];
+                        if(det_output.at(1) > det_output.at(0))
+                        {
+                            LS.x = 1;
+                            LS.y = iix;
+                            LS.z = iiy;
+                            marklist_2Dx.push_back(LS);
+                        }
+                        d++;
+                    }
                 }
             }
             if(blockarea) {delete []blockarea; blockarea =0;}
@@ -2087,24 +2257,66 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
     
     //mean shift
-    mean_shift_fun fun_obj;
-    LandmarkList marklist_2D_shifted;
+    mean_shift_fun fun_obj, fun_objz, fun_objy, fun_objx;
+    LandmarkList marklist_2D_shifted, marklist_2D_shiftedz, marklist_2D_shiftedy, marklist_2D_shiftedx;
     vector<V3DLONG> poss_landmark;
     vector<float> mass_center;
     double windowradius = Sxy+5;
-    
     V3DLONG sz_img[4];
-    sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
-    fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
-    poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
-    
-    for (V3DLONG j=0;j<poss_landmark.size();j++)
+
+    if(zprojonly)
     {
-        mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
-        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-        marklist_2D_shifted.append(tmp);
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            marklist_2D_shifted.append(tmp);
+        }
+    }
+    else
+    {
+        // z proj
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_objz.pushNewData<unsigned char>((unsigned char*)data1d_zmip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2Dz, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_objz.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            marklist_2D_shiftedz.append(tmp);
+        }
+
+        // y proj
+        sz_img[0] = N; sz_img[1] = 1; sz_img[2] = P; sz_img[3] = 1;
+        fun_objy.pushNewData<unsigned char>((unsigned char*)data1d_ymip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_objy.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            marklist_2D_shiftedy.append(tmp);
+        }
+
+        // x proj
+        sz_img[0] = 1; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
+        fun_objx.pushNewData<unsigned char>((unsigned char*)data1d_xmip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            marklist_2D_shiftedx.append(tmp);
+        }
     }
     
+    //
     QList <ImageMarker> marklist_3D;
     ImageMarker S;
     NeuronTree nt;
@@ -2121,27 +2333,104 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     
     if(mip_flag)    P = in_sz[2];
     
-    for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+    if(zprojonly)
     {
-        V3DLONG ix = marklist_2D_shifted.at(i).x;
-        V3DLONG iy = marklist_2D_shifted.at(i).y;
-        double I_max = 0;
-        V3DLONG iz;
-        for(V3DLONG j = 0; j < P; j++)
+        for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
         {
-            if(data1d[j*M*N + iy*N + ix] >= I_max)
+            V3DLONG ix = marklist_2D_shifted.at(i).x;
+            V3DLONG iy = marklist_2D_shifted.at(i).y;
+            double I_max = 0;
+            V3DLONG iz;
+            for(V3DLONG j = 0; j < P; j++)
             {
-                I_max = data1d[j*M*N + iy*N + ix];
-                iz = j;
+                if(data1d[j*M*N + iy*N + ix] >= I_max)
+                {
+                    I_max = data1d[j*M*N + iy*N + ix];
+                    iz = j;
+                }
             }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            S.color.r = 255;
+            S.color.g = 0;
+            S.color.b = 0;
+            marklist_3D.append(S);
         }
-        S.x = ix;
-        S.y = iy;
-        S.z = iz;
-        S.color.r = 255;
-        S.color.g = 0;
-        S.color.b = 0;
-        marklist_3D.append(S);
+    }
+    else
+    {
+        // z proj
+        for(V3DLONG i = 0; i < marklist_2D_shiftedz.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shiftedz.at(i).x;
+            V3DLONG iy = marklist_2D_shiftedz.at(i).y;
+            double I_max = 0;
+            V3DLONG iz;
+            for(V3DLONG j = 0; j < P; j++)
+            {
+                if(data1d[j*M*N + iy*N + ix] >= I_max)
+                {
+                    I_max = data1d[j*M*N + iy*N + ix];
+                    iz = j;
+                }
+            }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            S.color.r = 255;
+            S.color.g = 0;
+            S.color.b = 0;
+            marklist_3D.append(S);
+        }
+
+        // y proj
+        for(V3DLONG i = 0; i < marklist_2D_shiftedy.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shiftedy.at(i).x;
+            V3DLONG iz = marklist_2D_shiftedy.at(i).z;
+            double I_max = 0;
+            V3DLONG iy;
+            for(V3DLONG j = 0; j < M; j++)
+            {
+                if(data1d[iz*M*N + j*N + ix] >= I_max)
+                {
+                    I_max = data1d[iz*M*N + j*N + ix];
+                    iy = j;
+                }
+            }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            S.color.r = 255;
+            S.color.g = 0;
+            S.color.b = 0;
+            marklist_3D.append(S);
+        }
+
+        // x proj
+        for(V3DLONG i = 0; i < marklist_2D_shiftedx.size(); i++)
+        {
+            V3DLONG iz = marklist_2D_shiftedx.at(i).z;
+            V3DLONG iy = marklist_2D_shiftedx.at(i).y;
+            double I_max = 0;
+            V3DLONG ix;
+            for(V3DLONG j = 0; j < N; j++)
+            {
+                if(data1d[iz*M*N + iy*N + j] >= I_max)
+                {
+                    I_max = data1d[iz*M*N + iy*N + j];
+                    ix = j;
+                }
+            }
+            S.x = ix;
+            S.y = iy;
+            S.z = iz;
+            S.color.r = 255;
+            S.color.g = 0;
+            S.color.b = 0;
+            marklist_3D.append(S);
+        }
     }
     
     // delete false detections
