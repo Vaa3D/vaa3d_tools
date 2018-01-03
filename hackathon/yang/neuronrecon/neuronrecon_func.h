@@ -34,6 +34,7 @@ bool samplepc_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool checkImage_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 bool convertUShort2UByte_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
 
 // methods in pipelines
 bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);

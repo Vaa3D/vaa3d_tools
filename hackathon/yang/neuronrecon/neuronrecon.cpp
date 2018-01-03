@@ -3251,6 +3251,47 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
     return m/n;
 }
 
+//
+vector<LineSegment> NCPointCloud::separate()
+{
+    vector<LineSegment> lines;
+    resetVisitStatus();
+
+    //
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].parents[0]==-1)
+        {
+            if(points[i].children.size()>0 && points[i].visited==false)
+            {
+                LineSegment ls;
+
+                long j=i;
+                while(points[j].children.size()>0)
+                {
+                    ls.points.push_back(points[j]);
+                    points[j].visited = true;
+
+                    j = indexofpoint(points[j].children[0]);
+
+                    if(j<0)
+                        break;
+                }
+                ls.points.push_back(points[j]); // tip point
+
+                //
+                if(ls.points.size()>2)
+                {
+                    ls.update();
+                    lines.push_back(ls);
+                }
+            }
+        }
+    }
+
+    return lines;
+}
+
 // method to publish
 int NCPointCloud::trace()
 {

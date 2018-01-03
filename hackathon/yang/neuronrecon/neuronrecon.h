@@ -277,6 +277,9 @@ public:
     int sortbyradius();
 
     //
+    vector<LineSegment> separate();
+
+    //
     Point pplusv(Point *p, Vector *v);
     float point_plane_dist(Point *a, Plane *P);
     Point plerp(Point *a, Point *b, float t);
@@ -557,6 +560,125 @@ float estimateRadius(T* &inimg1d, V3DLONG *sz, float mx, float my, float mz, flo
 
     //
     return r;
+}
+
+template<class T>
+int getMarkersBetween(vector<T> &allmarkers, T m1, T m2)
+{
+    double A = m2.x - m1.x;
+    double B = m2.y - m1.y;
+    double C = m2.z - m1.z;
+    double R = m2.radius - m1.radius;
+    double D = sqrt(A*A + B*B + C*C);
+    A = A/D; B = B/D; C = C/D; R = R/D;
+
+    double ctz = A/sqrt(A*A + B*B);
+    double stz = B/sqrt(A*A + B*B);
+
+    double cty = C/sqrt(A*A + B*B + C*C);
+    double sty = sqrt(A*A + B*B)/sqrt(A*A + B*B + C*C);
+
+    double x0 = m1.x;
+    double y0 = m1.y;
+    double z0 = m1.z;
+    double r0 = m1.radius;
+
+    set<T> marker_set;
+
+    for(double t = 0.0; t <= dist(m1, m2); t += 1.0)
+    {
+        int cx = x0 + A*t + 0.5;
+        int cy = y0 + B*t + 0.5;
+        int cz = z0 + C*t + 0.5;
+        int radius = r0 + R*t + 0.5;
+        int radius2 = radius * radius;
+
+        for(int k = -radius; k <= radius; k++)
+        {
+            for(int j = -radius; j <= radius; j++)
+            {
+                for(int i = -radius; i <= radius; i++)
+                {
+                    if(i * i + j * j + k * k > radius2) continue;
+                    double x = i, y = j, z = k;
+                    double x1, y1, z1;
+
+                    //rotate_coordinate_z_clockwise(ctz, stz, x, y, z);
+                    //rotate_along_y_clockwise     (cty, sty, x, y, z);
+                    //rotate_coordinate_x_anticlock(ctz, stz, x, y, z);
+                    //translate_to(cx, cy, cz, x, y, z);
+                    y1 = y * ctz - x * stz; x1 = x * ctz + y * stz; y = y1; x = x1;
+                    x1 = x * cty + z * sty; z1 = z * cty - x * sty; x = x1; z = z1;
+                    z1 = z * ctz + y * stz; y1 = y * ctz - z * stz; z = z1; y = y1;
+                    x += cx; y += cy; z += cz;
+                    x = (int)(x+0.5);
+                    y = (int)(y+0.5);
+                    z = (int)(z+0.5);
+                    marker_set.insert(T(x, y, z));
+                }
+            }
+        }
+    }
+
+    allmarkers.insert(allmarkers.end(), marker_set.begin(), marker_set.end());
+
+    //
+    return 0;
+}
+
+template<class T>
+vector<T> getLeaf_markers(vector<T> & inmarkers)
+{
+    set<T> par_markers;
+    vector<T> leaf_markers;
+    for(int i = 0; i < inmarkers.size(); i++)
+    {
+        T marker = inmarkers[i];
+        if(marker.parent) par_markers.insert(marker.parent);
+    }
+    for(int i = 0; i < inmarkers.size(); i++)
+    {
+        if(par_markers.find(inmarkers[i]) == par_markers.end()) leaf_markers.push_back(inmarkers[i]);
+    }
+    par_markers.clear();
+    return leaf_markers;
+}
+
+template<class Tdata, class T>
+int points2maskimage(Tdata * &img1d, vector<T> & inswc, long sz0, long sz1, long sz2, Tdata val)
+{
+    long sz01 = sz0 * sz1;
+    if(img1d == 0)
+    {
+        cout<<"Invalid input"<<endl;
+        return -1;
+    }
+    vector<T> leaf_markers = getLeaf_markers<T>(inswc);
+    set<T> visited_markers;
+    for(int i = 0; i < leaf_markers.size(); i++)
+    {
+        T leaf = leaf_markers[i];
+        T p = leaf;
+        while(visited_markers.find(p) == visited_markers.end() && p->parent != 0)
+        {
+            T par = p.parent;
+            vector<T> tmp_markers;
+            getMarkersBetween(tmp_markers, p, par);
+            for(int j = 0; j < tmp_markers.size(); j++)
+            {
+                int x = tmp_markers[j].x;
+                int y = tmp_markers[j].y;
+                int z = tmp_markers[j].z;
+                if(x < 0 || x >= sz0 || y < 0 || y >= sz1 || z < 0 || z >= sz2) continue;
+                img1d[z*sz01 + y * sz0 + x] = val;
+            }
+            visited_markers.insert(p);
+            p = par;
+        }
+    }
+
+    //
+    return 0;
 }
 
 #endif // _NEURONRECON_H_

@@ -1881,9 +1881,22 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         return false;
     }
     
+    // compare single projection to 3 projections
+    bool zprojonly = true;
     if(input.size() >= 2)
     {
         paras = *((vector<char*> *)input.at(1).p);
+        if (paras.size() >= 1)
+        {
+            // parameters
+            zprojonly = atoi(paras.at(0))==0?false:true;
+            cout<<"consider only z-projection (true by default): "<<zprojonly<<endl;
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
     }
     else
     {
@@ -1965,9 +1978,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         cout<<"Cannot find the mean image file.\n";
         return false;
     }
-    
-    // compare single projection to 3 projections
-    bool zprojonly = true;
 
     //
     unsigned char * data1d = 0;
@@ -2668,7 +2678,7 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
         // app2
         vector<NeuronTree> tracedFilaments;
-        float distthresh = 6;
+        float distthresh = 10;
         long iter = 0;
         for(size_t i=0; i<pc.points.size(); i++)
         {
@@ -2820,6 +2830,170 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         cout<<"Please input an image file (.v3draw/.tif)\n";
         return -1;
     }
+
+    //
+    return true;
+}
+
+//
+bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file and a swc file\n";
+        return false;
+    }
+
+    //parsing input
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<2)
+    {
+        cerr<<"You must specify input tiff and marker files"<<endl;
+        return false;
+    }
+
+    //
+    QString fnimage = QString(inlist->at(0));
+    QString fnswc = QString(inlist->at(1));
+
+    //
+    if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnimage.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        long sx = p4dImage->getXDim();
+        long sy = p4dImage->getYDim();
+        long sz = p4dImage->getZDim();
+        long size = sx*sy*sz;
+        unsigned char *p = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        //
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                p = puint8;
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+
+        //
+        NCPointCloud pc;
+        vector<LineSegment> lines;
+        if(fnswc.toUpper().endsWith(".SWC"))
+        {
+            NeuronTree nt = readSWC_file(fnswc);
+            pc.addPointFromNeuronTree(nt);
+            lines = pc.separate();
+        }
+
+        //
+        unsigned char *mask = NULL;
+        y_new1dp<unsigned char, long>(mask, size);
+
+        //
+        long n = lines.size();
+        for(long i=0; i<n; i++)
+        {
+            points2maskimage<unsigned char, Point>(mask, lines[i].points, sx, sy, sz, i+1);
+        }
+
+        double *meanval = NULL, *stddev = NULL;
+        y_new1dp<double, long>(meanval, n);
+        y_new1dp<double, long>(stddev, n);
+        long *nvox = NULL;
+        y_new1dp<long, long>(nvox, n);
+
+        for(long i=0; i<size; i++)
+        {
+            for(long ii=0; ii<n; ii++)
+            {
+                if(mask[i]==ii+1)
+                {
+                    meanval[ii] += p[i];
+                    nvox[ii]++;
+                }
+            }
+        }
+
+        for(long ii=0; ii<n; ii++)
+        {
+            meanval[ii] /= nvox[ii];
+        }
+
+        //
+        for(long i=0; i<size; i++)
+        {
+            for(long ii=0; ii<n; ii++)
+            {
+                if(mask[i]==ii+1)
+                {
+                    stddev[ii] += (p[i] - meanval[ii])*(p[i] - meanval[ii]);
+                }
+            }
+        }
+
+//        for(long ii=0; ii<n; ii++)
+//        {
+//            stddev[ii] += (angles[i] - meanval_adjangles)*(angles[i] - meanval_adjangles);
+//        }
+
+//        stddev_adjangles = sqrt(sum/(n-1));
+
+
+        //
+        y_del1dp<long>(nvox);
+        y_del1dp<double>(meanval);
+        y_del1dp<double>(stddev);
+        y_del1dp<unsigned char>(mask);
+    }
+
 
     //
     return true;
