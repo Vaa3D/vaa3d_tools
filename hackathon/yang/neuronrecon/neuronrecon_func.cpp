@@ -2871,6 +2871,7 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     //
     QString fnimage = QString(inlist->at(0));
     QString fnswc = QString(inlist->at(1));
+    QString outFileName = fnimage.left(fnimage.lastIndexOf(".")).append("_mask.tif");
 
     //
     if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
@@ -2930,7 +2931,7 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         {
             NeuronTree nt = readSWC_file(fnswc);
             pc.addPointFromNeuronTree(nt);
-            lines = pc.separate();
+            lines = separate(pc);
         }
 
         //
@@ -2941,14 +2942,93 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         long n = lines.size();
         for(long i=0; i<n; i++)
         {
-            points2maskimage<unsigned char, Point>(mask, lines[i].points, sx, sy, sz, i+1);
+            points2maskimage<unsigned char>(mask, lines[i], sx, sy, sz, i+1);
         }
 
-        double *meanval = NULL, *stddev = NULL;
+        unsigned char *dt=NULL;
+        y_new1dp<unsigned char, long>(dt, size);
+
+        distanceTransformL2(dt, p, sx, sy, sz);
+
+        //
+        double *meanr = NULL;
+        y_new1dp<double, long>(meanr, n);
+        for(long ii=0; ii<n; ii++)
+        {
+            meanr[ii] = 0;
+        }
+
+        V3DLONG insz[4];
+        insz[0] = sx;
+        insz[1] = sy;
+        insz[2] = sz;
+        insz[3] = 1;
+
+        long nstep=3;
+
+        for(long i=0; i<n; i++)
+        {
+            for(long j=0; j<lines[i].points.size(); j++)
+            {
+                Point pi = lines[i].points[j];
+
+                double maxval = 0;
+
+                long x = pi.x;
+                long y = pi.y;
+                long z = pi.z;
+
+                for(long zz=z-nstep; zz<=z+nstep; zz++)
+                {
+                    if(zz<0 || zz>sz-1)
+                        continue;
+
+                    long ofz = zz*sx*sy;
+                    for(long yy=y-nstep; yy<=y+nstep; yy++)
+                    {
+                        if(yy<0 || yy>sy-1)
+                            continue;
+
+                        long ofy = ofz + yy*sx;
+                        for(long xx=x-nstep; xx<=x+nstep; xx++)
+                        {
+                            if(xx<0 || xx>sx-1)
+                                continue;
+
+                            if(dt[ofy+xx]>maxval)
+                                maxval = dt[ofy+xx];
+                        }
+                    }
+
+                }
+
+                meanr[i] += maxval;
+                //meanr[i] += estimateRadius<unsigned char>(p, insz, pi.x, pi.y, pi.z, 10);
+            }
+        }
+
+        for(long i=0; i<n; i++)
+        {
+            meanr[i] /= lines[i].points.size();
+        }
+
+        y_del1dp<unsigned char>(dt);
+
+        //
+        double *meanval = NULL, *stddev = NULL, *snr = NULL;
         y_new1dp<double, long>(meanval, n);
         y_new1dp<double, long>(stddev, n);
+        y_new1dp<double, long>(snr, n);
         long *nvox = NULL;
         y_new1dp<long, long>(nvox, n);
+
+        for(long ii=0; ii<n; ii++)
+        {
+            meanval[ii] = 0;
+            stddev[ii] = 0;
+            snr[ii] = 0;
+            nvox[ii] = 0;
+        }
 
         for(long i=0; i<size; i++)
         {
@@ -2965,6 +3045,7 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         for(long ii=0; ii<n; ii++)
         {
             meanval[ii] /= nvox[ii];
+            cout<<"i "<<ii+1<<" mean "<<meanval[ii]<<endl;
         }
 
         //
@@ -2979,21 +3060,95 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
             }
         }
 
-//        for(long ii=0; ii<n; ii++)
-//        {
-//            stddev[ii] += (angles[i] - meanval_adjangles)*(angles[i] - meanval_adjangles);
-//        }
+        if(n>1)
+        {
+            for(long ii=0; ii<n; ii++)
+            {
+                stddev[ii] = sqrt(stddev[ii]/(n-1));
+                cout<<"i "<<ii+1<<" standard deviation "<<stddev[ii]<<endl;
 
-//        stddev_adjangles = sqrt(sum/(n-1));
+                if(stddev[ii])
+                {
+                    snr[ii] = meanval[ii] / stddev[ii];
+                    cout<<"snr "<<snr[ii]<<endl;
+                }
+            }
+        }
 
+        //
+        double mean = 0, sd = 0;
+
+        if(n>1)
+        {
+            // mean radius
+            for(long ii=0; ii<n; ii++)
+            {
+                mean += meanr[ii];
+            }
+
+            mean /= n;
+
+            for(long ii=0; ii<n; ii++)
+            {
+                sd += (snr[ii] - mean)*(snr[ii] - mean);
+            }
+
+            sd = sqrt(sd / (n-1));
+
+            cout<<endl<<"mean "<<mean<<" stddev "<<sd<<endl;
+
+            // mean val
+            mean = 0;
+            sd = 0;
+            for(long ii=0; ii<n; ii++)
+            {
+                mean += meanval[ii];
+            }
+
+            mean /= n;
+
+            for(long ii=0; ii<n; ii++)
+            {
+                sd += (snr[ii] - mean)*(snr[ii] - mean);
+            }
+
+            sd = sqrt(sd / (n-1));
+
+            cout<<endl<<"mean "<<mean<<" stddev "<<sd<<endl;
+
+
+            // SNR
+            mean = 0;
+            sd = 0;
+            for(long ii=0; ii<n; ii++)
+            {
+                mean += snr[ii];
+            }
+
+            mean /= n;
+
+            for(long ii=0; ii<n; ii++)
+            {
+                sd += (snr[ii] - mean)*(snr[ii] - mean);
+            }
+
+            sd = sqrt(sd / (n-1));
+
+            cout<<endl<<"mean "<<mean<<" stddev "<<sd<<endl;
+        }
 
         //
         y_del1dp<long>(nvox);
+        y_del1dp<double>(meanr);
+        y_del1dp<double>(snr);
         y_del1dp<double>(meanval);
         y_del1dp<double>(stddev);
         y_del1dp<unsigned char>(mask);
-    }
 
+        //
+        p4dImage->setData(mask, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, V3D_UINT8);
+        p4dImage->saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+    }
 
     //
     return true;

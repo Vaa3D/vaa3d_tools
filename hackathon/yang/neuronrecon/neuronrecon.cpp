@@ -474,6 +474,25 @@ int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
     return writeSWC_file(filename, nt);
 }
 
+Point NCPointCloud::parent(long n)
+{
+    Point p;
+
+    if(n>0)
+    {
+        if(points.size()>0)
+        {
+            if(indexofpoint(n)>0)
+            {
+                p = points[indexofpoint(n)];
+            }
+        }
+    }
+
+    //
+    return p;
+}
+
 int NCPointCloud::resample()
 {
     //
@@ -1838,9 +1857,9 @@ int NCPointCloud::connectPoints2Lines(QString infile, QString outfile, int k, fl
     //    knnMeanStddevDist(mean, stddev, k);
     //    knn(k, mean);
 
-//    float searchingRadius;
-//    knnMaxDist(searchingRadius);
-//    knn(k, searchingRadius);
+    //    float searchingRadius;
+    //    knnMaxDist(searchingRadius);
+    //    knn(k, searchingRadius);
     knn(k);
 
     // connect points into lines
@@ -3251,47 +3270,6 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
     return m/n;
 }
 
-//
-vector<LineSegment> NCPointCloud::separate()
-{
-    vector<LineSegment> lines;
-    resetVisitStatus();
-
-    //
-    for(long i=0; i<points.size(); i++)
-    {
-        if(points[i].parents[0]==-1)
-        {
-            if(points[i].children.size()>0 && points[i].visited==false)
-            {
-                LineSegment ls;
-
-                long j=i;
-                while(points[j].children.size()>0)
-                {
-                    ls.points.push_back(points[j]);
-                    points[j].visited = true;
-
-                    j = indexofpoint(points[j].children[0]);
-
-                    if(j<0)
-                        break;
-                }
-                ls.points.push_back(points[j]); // tip point
-
-                //
-                if(ls.points.size()>2)
-                {
-                    ls.update();
-                    lines.push_back(ls);
-                }
-            }
-        }
-    }
-
-    return lines;
-}
-
 // method to publish
 int NCPointCloud::trace()
 {
@@ -3792,4 +3770,45 @@ bool LineSegment::isSmooth()
     }
 
     return true;
+}
+
+//
+vector<LineSegment> separate(NCPointCloud pc)
+{
+    vector<LineSegment> lines;
+    pc.resetVisitStatus();
+
+    //
+    for(long i=0; i<pc.points.size(); i++)
+    {
+        if(pc.points[i].parents[0]==-1)
+        {
+            if(pc.points[i].children.size()>0 && pc.points[i].visited==false)
+            {
+                LineSegment ls;
+
+                long j=i;
+                while(pc.points[j].children.size()>0)
+                {
+                    ls.points.push_back(pc.points[j]);
+                    pc.points[j].visited = true;
+
+                    j = pc.indexofpoint(pc.points[j].children[0]);
+
+                    if(j<0)
+                        break;
+                }
+                ls.points.push_back(pc.points[j]); // tip point
+
+                //
+                if(ls.points.size()>2)
+                {
+                    ls.update();
+                    lines.push_back(ls);
+                }
+            }
+        }
+    }
+
+    return lines;
 }

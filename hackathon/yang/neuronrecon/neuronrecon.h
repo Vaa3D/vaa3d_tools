@@ -274,10 +274,10 @@ public:
     float meandistance(NeuronTree a, NeuronTree b);
 
     //
-    int sortbyradius();
+    Point parent(long n);
 
     //
-    vector<LineSegment> separate();
+    int sortbyradius();
 
     //
     Point pplusv(Point *p, Vector *v);
@@ -343,6 +343,10 @@ public:
     Point root, tip;
 };
 
+//
+vector<LineSegment> separate(NCPointCloud pc);
+
+//
 template <typename T>
 struct PointCloud
 {
@@ -563,7 +567,7 @@ float estimateRadius(T* &inimg1d, V3DLONG *sz, float mx, float my, float mz, flo
 }
 
 template<class T>
-int getMarkersBetween(vector<T> &allmarkers, T m1, T m2)
+int getMarkersBetween(vector<Point> &allmarkers, Point m1, Point m2)
 {
     double A = m2.x - m1.x;
     double B = m2.y - m1.y;
@@ -583,21 +587,23 @@ int getMarkersBetween(vector<T> &allmarkers, T m1, T m2)
     double z0 = m1.z;
     double r0 = m1.radius;
 
-    set<T> marker_set;
+    vector<Point> marker_set;
 
-    for(double t = 0.0; t <= dist(m1, m2); t += 1.0)
+    NCPointCloud pc;
+    double dist = pc.distance(m1, m2);
+    for(double t = 0.0; t <= dist; t += 1.0)
     {
-        int cx = x0 + A*t + 0.5;
-        int cy = y0 + B*t + 0.5;
-        int cz = z0 + C*t + 0.5;
-        int radius = r0 + R*t + 0.5;
-        int radius2 = radius * radius;
+        T cx = x0 + A*t + 0.5;
+        T cy = y0 + B*t + 0.5;
+        T cz = z0 + C*t + 0.5;
+        T radius = r0 + R*t + 0.5;
+        T radius2 = radius * radius;
 
-        for(int k = -radius; k <= radius; k++)
+        for(T k = -radius; k <= radius; k++)
         {
-            for(int j = -radius; j <= radius; j++)
+            for(T j = -radius; j <= radius; j++)
             {
-                for(int i = -radius; i <= radius; i++)
+                for(T i = -radius; i <= radius; i++)
                 {
                     if(i * i + j * j + k * k > radius2) continue;
                     double x = i, y = j, z = k;
@@ -614,7 +620,7 @@ int getMarkersBetween(vector<T> &allmarkers, T m1, T m2)
                     x = (int)(x+0.5);
                     y = (int)(y+0.5);
                     z = (int)(z+0.5);
-                    marker_set.insert(T(x, y, z));
+                    marker_set.push_back(Point(x, y, z));
                 }
             }
         }
@@ -627,25 +633,20 @@ int getMarkersBetween(vector<T> &allmarkers, T m1, T m2)
 }
 
 template<class T>
-vector<T> getLeaf_markers(vector<T> & inmarkers)
+vector<Point> getLeaf_markers(NCPointCloud pc)
 {
-    set<T> par_markers;
-    vector<T> leaf_markers;
-    for(int i = 0; i < inmarkers.size(); i++)
+    vector<Point> leaf_markers;
+    for(T i = 0; i < pc.points.size(); i++)
     {
-        T marker = inmarkers[i];
-        if(marker.parent) par_markers.insert(marker.parent);
+        if(!pc.points[i].hasChildren())
+            leaf_markers.push_back(pc.points[i]);
     }
-    for(int i = 0; i < inmarkers.size(); i++)
-    {
-        if(par_markers.find(inmarkers[i]) == par_markers.end()) leaf_markers.push_back(inmarkers[i]);
-    }
-    par_markers.clear();
+
     return leaf_markers;
 }
 
-template<class Tdata, class T>
-int points2maskimage(Tdata * &img1d, vector<T> & inswc, long sz0, long sz1, long sz2, Tdata val)
+template<class T>
+int points2maskimage(T * &img1d, NCPointCloud pc, long sz0, long sz1, long sz2, T val)
 {
     long sz01 = sz0 * sz1;
     if(img1d == 0)
@@ -653,27 +654,66 @@ int points2maskimage(Tdata * &img1d, vector<T> & inswc, long sz0, long sz1, long
         cout<<"Invalid input"<<endl;
         return -1;
     }
-    vector<T> leaf_markers = getLeaf_markers<T>(inswc);
-    set<T> visited_markers;
-    for(int i = 0; i < leaf_markers.size(); i++)
+//    vector<Point> leaf_markers = getLeaf_markers<T>(pc);
+//    set<Point*> visited_markers;
+//    for(int i = 0; i < leaf_markers.size(); i++)
+//    {
+//        Point leaf = leaf_markers[i];
+//        Point p = leaf;
+//        while(visited_markers.find(&p) == visited_markers.end() && p.parents.size() > 0)
+//        {
+//            Point par = pc.parent(p.parents[0]);;
+//            vector<Point> tmp_markers;
+//            getMarkersBetween<long>(tmp_markers, p, par);
+//            for(int j = 0; j < tmp_markers.size(); j++)
+//            {
+//                int x = tmp_markers[j].x;
+//                int y = tmp_markers[j].y;
+//                int z = tmp_markers[j].z;
+//                if(x < 0 || x >= sz0 || y < 0 || y >= sz1 || z < 0 || z >= sz2) continue;
+//                img1d[z*sz01 + y * sz0 + x] = val;
+//            }
+//            visited_markers.insert(&p);
+//            p = par;
+//        }
+//    }
+
+    for(long i=0; i<pc.points.size(); i++)
     {
-        T leaf = leaf_markers[i];
-        T p = leaf;
-        while(visited_markers.find(p) == visited_markers.end() && p->parent != 0)
+        Point p = pc.points[i];
+        long x = p.x;
+        long y = p.y;
+        long z = p.z;
+        double radius = p.radius;
+
+        long xb,xe, yb,ye, zb,ze;
+
+        xb = x-radius;
+        if(xb<0) xb = 0;
+        xe = x+radius;
+        if(xe>sz0-1) xe = sz0-1;
+
+        yb = y-radius;
+        if(yb<0) yb = 0;
+        ye = y+radius;
+        if(ye>sz1-1) ye = sz1-1;
+
+        zb = z-radius;
+        if(zb<0) zb = 0;
+        ze = z + radius;
+        if(ze>sz2-1) ze = sz2-1;
+
+        for(z = zb; z<=ze; z++)
         {
-            T par = p.parent;
-            vector<T> tmp_markers;
-            getMarkersBetween(tmp_markers, p, par);
-            for(int j = 0; j < tmp_markers.size(); j++)
+            long ofz = z*sz0*sz1;
+            for(y = yb; y<=ye; y++)
             {
-                int x = tmp_markers[j].x;
-                int y = tmp_markers[j].y;
-                int z = tmp_markers[j].z;
-                if(x < 0 || x >= sz0 || y < 0 || y >= sz1 || z < 0 || z >= sz2) continue;
-                img1d[z*sz01 + y * sz0 + x] = val;
+                long ofy = ofz + y*sz0;
+                for(x = xb; x<=xe; x++)
+                {
+                    img1d[ofy+x] = val;
+                }
             }
-            visited_markers.insert(p);
-            p = par;
         }
     }
 
