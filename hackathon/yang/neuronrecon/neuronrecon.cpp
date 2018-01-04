@@ -971,25 +971,57 @@ int NCPointCloud::removeNoise()
 int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh)
 {
     // load point cloud save as a .apo file
-    QList <CellAPO> inputPoints = readAPO_file(infile);
 
-    long n = inputPoints.size();
-
-    //
-    for(long i=0; i<n; i++)
+    if(infile.toUpper().endsWith(".APO"))
     {
-        CellAPO cell = inputPoints[i];
+        QList <CellAPO> inputPoints = readAPO_file(infile);
+
+        long n = inputPoints.size();
 
         //
-        Point p;
+        for(long i=0; i<n; i++)
+        {
+            CellAPO cell = inputPoints[i];
 
-        p.n = i+1; // # assigned
-        p.x = cell.x;
-        p.y = cell.y;
-        p.z = cell.z;
-        p.radius = 0.5*cell.volsize;
+            //
+            Point p;
 
-        points.push_back(p);
+            p.n = i+1; // # assigned
+            p.x = cell.x;
+            p.y = cell.y;
+            p.z = cell.z;
+            p.radius = 0.5*cell.volsize;
+
+            points.push_back(p);
+        }
+    }
+    else if(infile.toUpper().endsWith(".MARKER"))
+    {
+        QList<ImageMarker> file_inmarkers = readMarker_file(infile);;
+
+        long n = file_inmarkers.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            //
+            Point p;
+
+            p.n = file_inmarkers.at(i).n;
+
+            p.x = file_inmarkers.at(i).x;
+            p.y = file_inmarkers.at(i).y;
+            p.z = file_inmarkers.at(i).z;
+
+            p.radius = file_inmarkers.at(i).radius;
+
+            points.push_back(p);
+        }
+    }
+    else
+    {
+        cout<<"Invalid input"<<endl;
+        return -1;
     }
 
     //
