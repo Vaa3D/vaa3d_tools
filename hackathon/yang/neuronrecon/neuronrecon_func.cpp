@@ -1682,12 +1682,12 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
 
     // step 4. lines constructed
-//    float maxAngle = 0.942; // threshold 60 degree (120 degree)
-//    int k=6;
-//    float m = 8;
+    //    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    //    int k=6;
+    //    float m = 8;
 
-//    NCPointCloud lines;
-//    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
+    //    NCPointCloud lines;
+    //    lines.connectPoints2Lines(cnvtPoints, linesTraced, k, maxAngle, m);
 
     // step 5. neuron tree(s) traced
 
@@ -1886,17 +1886,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     if(input.size() >= 2)
     {
         paras = *((vector<char*> *)input.at(1).p);
-        if (paras.size() >= 1)
-        {
-            // parameters
-            zprojonly = atoi(paras.at(0))==0?false:true;
-            cout<<"consider only z-projection (true by default): "<<zprojonly<<endl;
-        }
-        else
-        {
-            cerr<<"Too many parameters"<<endl;
-            return false;
-        }
     }
     else
     {
@@ -1914,6 +1903,8 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     
     QString  inimg_file =  infiles[0];
     int k=0;
+
+    // 1st parameter k=0
     QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
     if(model_file.isEmpty())
     {
@@ -1921,6 +1912,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         return false;
     }
     
+    // 2nd parameter k=1
     QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
     if(trained_file.isEmpty())
     {
@@ -1928,17 +1920,30 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         return false;
     }
     
+    // 3rd parameter k=2
     QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
     if(mean_file.isEmpty())
     {
         cerr<<"Need a mean_file"<<endl;
         return false;
     }
+
+    // 4th parameter k=3
+    if(paras.size() >= k+1)
+        zprojonly = atoi(paras.at(k))==0?false:true;
+    k++;
+
+    cout<<"z proj only "<<zprojonly<<endl;
+    
+    // 5th parameter k=4
+    int Sxy = (paras.size() >= k+1) ? atoi(paras[k]):10;k++;
+
+    // 6th parameter k=5
+    int Ws = (paras.size() >= k+1) ? atoi(paras[k]):512;k++;
+
+
     
     //
-    int Sxy = (paras.size() >= k+1) ? atoi(paras[k]):10;k++;
-    int Ws = (paras.size() >= k+1) ? atoi(paras[k]):512;k++;
-    
     QString mip_file = (paras.size() >= k+1) ? paras[k]:""; if(mip_file == "NULL") mip_file = "";
     bool mip_flag = false;
     if(!mip_file.isEmpty())
@@ -2072,7 +2077,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                         V3DLONG offsetj = iy*N;
                         if(data1d[offsetk + offsetj + ix] >= max_mip)
                         {
-                            data1d_ymip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            data1d_ymip[iz*N + ix] = data1d[offsetk + offsetj + ix];
                             max_mip = data1d[offsetk + offsetj + ix];
                         }
                     }
@@ -2094,7 +2099,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     {
                         if(data1d[offsetk + offsetj + ix] >= max_mip)
                         {
-                            data1d_xmip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                            data1d_xmip[iz*M + iy] = data1d[offsetk + offsetj + ix];
                             max_mip = data1d[offsetk + offsetj + ix];
                         }
                     }
@@ -2117,26 +2122,24 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     std::vector<float> det_output;
     LocationSimple LS;
     
-    //#pragma omp parallel for default(shared) private(ix, iy, xb, xe, yb, ye, blockpagesz, i, d, iiy, iix, offsetj, detection_results, det_output, LS)
-    for(iy = 0; iy < M; iy = iy+Ws)
+    if(zprojonly)
     {
-
-        yb = iy;
-        ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
-
-        unsigned char *blockarea=0;
-
-        for(ix = 0; ix < N; ix = ix+Ws)
+        for(iy = 0; iy < M; iy = iy+Ws)
         {
-            xb = ix;
-            xe = ix+Ws-1;
-            if(xe>=N-1) xe = N-1;
+            yb = iy;
+            ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
 
-            blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
-            blockarea = new unsigned char [blockpagesz];
+            unsigned char *blockarea=0;
 
-            if(zprojonly)
+            for(ix = 0; ix < N; ix = ix+Ws)
             {
+                xb = ix;
+                xe = ix+Ws-1;
+                if(xe>=N-1) xe = N-1;
+
+                blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+                blockarea = new unsigned char [blockpagesz];
+
                 i = 0;
                 for(iiy = yb; iiy < ye+1; iiy++)
                 {
@@ -2166,9 +2169,30 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                         d++;
                     }
                 }
+
+                if(blockarea) {delete []blockarea; blockarea =0;}
             }
-            else
+        }
+    }
+    else
+    {
+
+        for(iy = 0; iy < M; iy = iy+Ws)
+        {
+            yb = iy;
+            ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+            unsigned char *blockarea=0;
+
+            for(ix = 0; ix < N; ix = ix+Ws)
             {
+                xb = ix;
+                xe = ix+Ws-1;
+                if(xe>=N-1) xe = N-1;
+
+                blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+                blockarea = new unsigned char [blockpagesz];
+
                 // z proj
                 i = 0;
                 for(iiy = yb; iiy < ye+1; iiy++)
@@ -2199,6 +2223,26 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                         d++;
                     }
                 }
+                if(blockarea) {delete []blockarea; blockarea =0;}
+            }
+        }
+
+        for(iy = 0; iy < P; iy = iy+Ws)
+        {
+
+            yb = iy;
+            ye = iy+Ws-1; if(ye>=P-1) ye = P-1;
+
+            unsigned char *blockarea=0;
+
+            for(ix = 0; ix < N; ix = ix+Ws)
+            {
+                xb = ix;
+                xe = ix+Ws-1;
+                if(xe>=N-1) xe = N-1;
+
+                blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+                blockarea = new unsigned char [blockpagesz];
 
                 // y proj
                 i = 0;
@@ -2230,6 +2274,27 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                         d++;
                     }
                 }
+                if(blockarea) {delete []blockarea; blockarea =0;}
+            }
+        }
+
+        for(iy = 0; iy < P; iy = iy+Ws)
+        {
+
+            yb = iy;
+            ye = iy+Ws-1; if(ye>=P-1) ye = P-1;
+
+            unsigned char *blockarea=0;
+
+            for(ix = 0; ix < M; ix = ix+Ws)
+            {
+                xb = ix;
+                xe = ix+Ws-1;
+                if(xe>=M-1) xe = M-1;
+
+                blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+                blockarea = new unsigned char [blockpagesz];
+
 
                 // x proj
                 i = 0;
@@ -2265,7 +2330,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             if(blockarea) {delete []blockarea; blockarea =0;}
         }
     }
-    
+
     //mean shift
     mean_shift_fun fun_obj, fun_objz, fun_objy, fun_objx;
     LandmarkList marklist_2D_shifted, marklist_2D_shiftedz, marklist_2D_shiftedy, marklist_2D_shiftedx;
@@ -2294,6 +2359,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         fun_objz.pushNewData<unsigned char>((unsigned char*)data1d_zmip, sz_img);
         poss_landmark=landMarkList2poss(marklist_2Dz, sz_img[0], sz_img[0]*sz_img[1]);
 
+        cout<<"z "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objz.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2304,20 +2370,35 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         // y proj
         sz_img[0] = N; sz_img[1] = 1; sz_img[2] = P; sz_img[3] = 1;
         fun_objy.pushNewData<unsigned char>((unsigned char*)data1d_ymip, sz_img);
-        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+        poss_landmark=landMarkList2poss(marklist_2Dy, sz_img[0], sz_img[0]*sz_img[1]);
 
+        cout<<"y "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
+            cout<<j<<endl;
+
             mass_center=fun_objy.mean_shift_center_mass(poss_landmark[j],windowradius);
+
+            cout<<"test -1"<<endl;
+
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+
+            cout<<"test -2"<<endl;
+
             marklist_2D_shiftedy.append(tmp);
         }
+
+        cout<<"test 0"<<endl;
 
         // x proj
         sz_img[0] = 1; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
         fun_objx.pushNewData<unsigned char>((unsigned char*)data1d_xmip, sz_img);
-        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
 
+        cout<<"test 1"<<endl;
+
+        poss_landmark=landMarkList2poss(marklist_2Dx, sz_img[0], sz_img[0]*sz_img[1]);
+
+        cout<<"x "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2325,13 +2406,13 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             marklist_2D_shiftedx.append(tmp);
         }
     }
-    
+
     //
     QList <ImageMarker> marklist_3D;
     ImageMarker S;
     NeuronTree nt;
     QList <NeuronSWC> & listNeuron = nt.listNeuron;
-    
+
     if(!data1d)
     {
         if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
@@ -2340,9 +2421,9 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             return false;
         }
     }
-    
+
     if(mip_flag)    P = in_sz[2];
-    
+
     if(zprojonly)
     {
         for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
@@ -2370,6 +2451,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
     else
     {
+        cout << "add "<<marklist_2D_shiftedz.size()<<" "<<marklist_2D_shiftedy.size()<<" "<<marklist_2D_shiftedx.size()<<endl;
         // z proj
         for(V3DLONG i = 0; i < marklist_2D_shiftedz.size(); i++)
         {
@@ -2442,10 +2524,10 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             marklist_3D.append(S);
         }
     }
-    
+
     // delete false detections
     QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
-    
+
     // estimate radius
     for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
     {
@@ -2464,35 +2546,35 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         listNeuron << n;
     }
     if(data1d) {delete []data1d; data1d = 0;}
-    
+
     QString  swc_dl_detected = inimg_file.left(inimg_file.lastIndexOf(".")).append("_axon_3D.swc");
     writeSWC_file(swc_dl_detected,nt);
-    
+
     // step 2. load multiple traced neurons (trees saved as .swc)
     QString cnvtPoints = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_pointcloud.apo");
     QString linesTraced = swc_dl_detected.left(swc_dl_detected.lastIndexOf(".")).append("_linestraced.swc");
-    
+
     NCPointCloud pointcloud, pcsorted;
-    
+
     QStringList files;
     files.push_back(swc_dl_detected);
-    
+
     //
     pointcloud.getPointCloud(files);
     pointcloud.delDuplicatedPoints();
     pcsorted.ksort(pointcloud, 10);
     pcsorted.savePointCloud(cnvtPoints);
-    
+
     // step 3. lines constructed
     float maxAngle = 0.942; // threshold 60 degree (120 degree)
     int knn=6;
     float m = 8;
-    
+
     NCPointCloud lines;
     lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
-    
+
     // step 4.
-    
+
     //
     return true;
 }
@@ -2933,18 +3015,9 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
             pc.addPointFromNeuronTree(nt);
             lines = separate(pc);
         }
-
-        //
-        unsigned char *mask = NULL;
-        y_new1dp<unsigned char, long>(mask, size);
-
-        //
         long n = lines.size();
-        for(long i=0; i<n; i++)
-        {
-            points2maskimage<unsigned char>(mask, lines[i], sx, sy, sz, i+1);
-        }
 
+        //
         unsigned char *dt=NULL;
         y_new1dp<unsigned char, long>(dt, size);
 
@@ -3003,8 +3076,20 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                 }
 
                 meanr[i] += maxval;
+
+                lines[i].points[j].radius = maxval; // update radius with distance transform
                 //meanr[i] += estimateRadius<unsigned char>(p, insz, pi.x, pi.y, pi.z, 10);
             }
+        }
+
+        //
+        unsigned char *mask = NULL;
+        y_new1dp<unsigned char, long>(mask, size);
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            points2maskimage<unsigned char>(mask, lines[i], sx, sy, sz, i+1);
         }
 
         for(long i=0; i<n; i++)
