@@ -6,9 +6,9 @@ set(PLUGIN_SOURCES
     lobeseg_func.cpp
     getopt.c
     lobeseg_main/lobeseg.cpp
-    ${V3D_MAIN}/worm_straighten_c/bdb_minus.cpp
-    ${V3D_MAIN}/worm_straighten_c/mst_prim_c.cpp
-    ${V3D_MAIN}/worm_straighten_c/bfs_1root.cpp
+    ${V3DMAINDIR}/worm_straighten_c/bdb_minus.cpp
+    ${V3DMAINDIR}/worm_straighten_c/mst_prim_c.cpp
+    ${V3DMAINDIR}/worm_straighten_c/bfs_1root.cpp
 )
 include_directories("${TIFF_INCLUDE_DIR}")
 configure_v3d_plugin(lobeseg)

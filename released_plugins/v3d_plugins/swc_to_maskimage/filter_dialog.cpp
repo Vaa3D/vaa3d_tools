@@ -13,7 +13,7 @@
 inline long lroundf(float num) { return static_cast<long>(num > 0 ? num + 0.5f : ceilf(num - 0.5f)); }
 #endif
 
-filter_dialog::filter_dialog(V3DPluginCallback2 *cb)
+filter_dialog::filter_dialog(V3DPluginCallback2 *cb): QDialog()
 {
     callback=cb;
     image_data=0;
