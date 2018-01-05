@@ -1913,6 +1913,9 @@ QStringList ImageBlendPlugin::funclist() const
 bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & v3d, QWidget * parent)
 {
     //
+    int ref_chans[2] = {-1, -1};
+    bool b_override_channel = false; // User specified merge channels on command-line
+
     if (func_name == tr("multiscanblend"))
     {
         if(input.size()<1) return false; // no inputs
@@ -1920,6 +1923,7 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         vector<char*> * infilelist = (vector<char*> *)(input.at(0).p);
         vector<char*> * paralist;
         vector<char*> * outfilelist;
+
         if(infilelist->empty())
         {
             //print Help info
@@ -2011,6 +2015,14 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                             {
                                 b_deformed = (atoi( argv[i+1] )) ? true:false;
                                 printf("Now set the b_deformed = %s\n", (b_deformed)? "TRUE" : "FALSE");
+                                i++;
+                            }
+                            else if (!strcmp(key, "r"))
+                            {
+                                ref_chans[0] = atoi( argv[++i] );
+                                ref_chans[1] = atoi( argv[++i] );
+                                b_override_channel = true;
+                                printf("Using channels %d and %d as blending channels.\n", ref_chans[0], ref_chans[1]);
                                 i++;
                             }
                             else
@@ -2244,6 +2256,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         }
         else
         {
+            if (b_override_channel)
+            {
+                ref1 = ref_chans[0];
+                ref2 = ref_chans[1];
+            }
+            else
+            {
             // step 1: find null color channel
             for(V3DLONG c=0; c<sz_img1[3]; c++) // image 1
             {
@@ -2339,14 +2358,16 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
             {
                 if(b_img1existNULL)
                 {
-                    if(c1==nullcolor1) continue;
+                     if ( c1 == nullcolor1 )
+                        continue;
                 }
 
                 for(V3DLONG c2=0; c2<sz_img2[3]; c2++)
                 {
                     if(b_img2existNULL)
                     {
-                        if(c2==nullcolor2) continue;
+                        if ( c2 == nullcolor2 )
+                           continue;
                     }
 
                     if(datatype_img1 == V3D_UINT8)
@@ -2354,7 +2375,8 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                         unsigned char* pImg1Proxy = p1dImg1 + c1*pagesz;
                         unsigned char* pImg2Proxy = p1dImg2 + c2*pagesz;
 
-                        double valMI = mi_computing<unsigned char>(pImg1Proxy, pImg2Proxy, pagesz, 1);
+                        double valMI = mi_computing< unsigned char >(
+                            pImg1Proxy, pImg2Proxy, pagesz, 1 );
 
                         if(valMI>scoreMI)
                         {
@@ -2366,10 +2388,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                     else if(datatype_img1 == V3D_UINT16)
                     {
-                        unsigned short* pImg1Proxy = ((unsigned short *)p1dImg1) + c1*pagesz;
-                        unsigned short* pImg2Proxy = ((unsigned short *)p1dImg2) + c2*pagesz;
+                        unsigned short *pImg1Proxy =
+                            ( (unsigned short *)p1dImg1 ) + c1 * pagesz;
+                        unsigned short *pImg2Proxy =
+                            ( (unsigned short *)p1dImg2 ) + c2 * pagesz;
 
-                        double valMI = mi_computing<unsigned short>(pImg1Proxy, pImg2Proxy, pagesz, 2);
+                        double valMI = mi_computing< unsigned short >(
+                            pImg1Proxy, pImg2Proxy, pagesz, 2 );
 
                         qDebug()<<"mi ..."<<valMI<<c1<<c2;
 
@@ -2383,17 +2408,19 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                     else if(datatype_img1 == V3D_FLOAT32)
                     {
-                        printf("Currently this program dose not support FLOAT32.\n"); // temporary
+                        printf(
+                            "Currently this program dose not support FLOAT32.\n" ); // temporary
                         return false;
                     }
                     else
                     {
-                        printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                        printf( "Currently this program only support UINT8, UINT16, and "
+                                "FLOAT32 datatype.\n" );
                         return false;
                     }
-
                 }
             }
+        }
         }
         qDebug()<<"ref ..."<<ref1<<ref2<<"null color ..."<<b_img1existNULL<<nullcolor1<<b_img2existNULL<<nullcolor2;
 
@@ -3613,6 +3640,8 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         vector<char*> * infilelist = (vector<char*> *)(input.at(0).p);
         vector<char*> * paralist;
         vector<char*> * outfilelist;
+        int ref_chans[2] = {-1, -1};
+
         if(infilelist->empty())
         {
             //print Help info
@@ -3691,6 +3720,14 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                             {
                                 b_deformed = (atoi( argv[i+1] )) ? true:false;
                                 printf("Now set the b_deformed = %s\n", (b_deformed)? "TRUE" : "FALSE");
+                                i++;
+                            }
+                            else if (!strcmp(key, "r"))
+                            {
+                                ref_chans[0] = atoi( argv[++i] );
+                                ref_chans[1] = atoi( argv[++i] );
+                                b_override_channel = true;
+                                printf("Using channels %d and %d as blending channels.\n", ref_chans[0], ref_chans[1]);
                                 i++;
                             }
                             else
@@ -3826,6 +3863,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         V3DLONG ref1=0, ref2=0, nullcolor1 = -1, nullcolor2 = -1;
         bool b_img1existNULL=false, b_img2existNULL=false;
 
+        if (b_override_channel)
+        {
+            ref1 = ref_chans[0];
+            ref2 = ref_chans[1];
+        }
+        else
+        {
         // step 1: find null color channel
         for(V3DLONG c=0; c<sz_img1[3]; c++) // image 1
         {
@@ -3921,14 +3965,16 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         {
             if(b_img1existNULL)
             {
-                if(c1==nullcolor1) continue;
+                 if ( c1 == nullcolor1 )
+                    continue;
             }
 
             for(V3DLONG c2=0; c2<sz_img2[3]; c2++)
             {
                 if(b_img2existNULL)
                 {
-                    if(c2==nullcolor2) continue;
+                    if ( c2 == nullcolor2 )
+                       continue;
                 }
 
                 if(datatype_img1 == V3D_UINT8)
@@ -3936,7 +3982,8 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     unsigned char* pImg1Proxy = p1dImg1 + c1*pagesz;
                     unsigned char* pImg2Proxy = p1dImg2 + c2*pagesz;
 
-                    double valMI = mi_computing<unsigned char>(pImg1Proxy, pImg2Proxy, pagesz, 1);
+                    double valMI = mi_computing< unsigned char >( pImg1Proxy, pImg2Proxy,
+                                                                  pagesz, 1 );
 
                     if(valMI>scoreMI)
                     {
@@ -3948,10 +3995,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                 }
                 else if(datatype_img1 == V3D_UINT16)
                 {
-                    unsigned short* pImg1Proxy = ((unsigned short *)p1dImg1) + c1*pagesz;
-                    unsigned short* pImg2Proxy = ((unsigned short *)p1dImg2) + c2*pagesz;
+                    unsigned short *pImg1Proxy =
+                        ( (unsigned short *)p1dImg1 ) + c1 * pagesz;
+                    unsigned short *pImg2Proxy =
+                        ( (unsigned short *)p1dImg2 ) + c2 * pagesz;
 
-                    double valMI = mi_computing<unsigned short>(pImg1Proxy, pImg2Proxy, pagesz, 2);
+                    double valMI = mi_computing< unsigned short >( pImg1Proxy, pImg2Proxy,
+                                                                   pagesz, 2 );
 
                     if(valMI>scoreMI)
                     {
@@ -3963,16 +4013,18 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                 }
                 else if(datatype_img1 == V3D_FLOAT32)
                 {
-                    printf("Currently this program dose not support FLOAT32.\n"); // temporary
+                    printf(
+                        "Currently this program dose not support FLOAT32.\n" ); // temporary
                     return false;
                 }
                 else
                 {
-                    printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                    printf( "Currently this program only support UINT8, UINT16, and "
+                            "FLOAT32 datatype.\n" );
                     return false;
                 }
-
             }
+        }
         }
 
         qDebug()<<"ref ..."<<ref1<<ref2<<"null color ..."<<b_img1existNULL<<nullcolor1<<b_img2existNULL<<nullcolor2;
@@ -4922,6 +4974,14 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                                 printf("Now set the b_morecolorstack_first = %s\n", (b_morecolorstack_first)? "TRUE" : "FALSE");
                                 i++;
                             }
+                            else if (!strcmp(key, "r"))
+                            {
+                                ref_chans[0] = atoi( argv[++i] );
+                                ref_chans[1] = atoi( argv[++i] );
+                                b_override_channel = true;
+                                printf("Using channels %d and %d as blending channels.\n", ref_chans[0], ref_chans[1]);
+                                i++;
+                            }
                             else
                             {
                                 cout<<"parsing ..."<<key<<" "<<i<<" "<<"Unknown command. Type 'v3d -x plugin_name -f function_name' for usage"<<endl;
@@ -5122,6 +5182,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         }
         else
         {
+           if ( b_override_channel )
+           {
+              ref1 = ref_chans[ 0 ];
+              ref2 = ref_chans[ 1 ];
+           }
+           else
+           {
             // step 1: find null color channel
             for(V3DLONG c=0; c<sz_img1[3]; c++) // image 1
             {
@@ -5217,14 +5284,16 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
             {
                 if(b_img1existNULL)
                 {
-                    if(c1==nullcolor1) continue;
+                    if ( c1 == nullcolor1 )
+                       continue;
                 }
 
                 for(V3DLONG c2=0; c2<sz_img2[3]; c2++)
                 {
                     if(b_img2existNULL)
                     {
-                        if(c2==nullcolor2) continue;
+                       if ( c2 == nullcolor2 )
+                          continue;
                     }
 
                     if(datatype_img1 == V3D_UINT8)
@@ -5232,7 +5301,8 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                         unsigned char* pImg1Proxy = p1dImg1 + c1*pagesz;
                         unsigned char* pImg2Proxy = p1dImg2 + c2*pagesz;
 
-                        double valMI = mi_computing<unsigned char>(pImg1Proxy, pImg2Proxy, pagesz, 1);
+                       double valMI = mi_computing< unsigned char >(
+                           pImg1Proxy, pImg2Proxy, pagesz, 1 );
 
                         if(valMI>scoreMI)
                         {
@@ -5244,10 +5314,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                     else if(datatype_img1 == V3D_UINT16)
                     {
-                        unsigned short* pImg1Proxy = ((unsigned short *)p1dImg1) + c1*pagesz;
-                        unsigned short* pImg2Proxy = ((unsigned short *)p1dImg2) + c2*pagesz;
+                       unsigned short *pImg1Proxy =
+                           ( (unsigned short *)p1dImg1 ) + c1 * pagesz;
+                       unsigned short *pImg2Proxy =
+                           ( (unsigned short *)p1dImg2 ) + c2 * pagesz;
 
-                        double valMI = mi_computing<unsigned short>(pImg1Proxy, pImg2Proxy, pagesz, 2);
+                       double valMI = mi_computing< unsigned short >(
+                           pImg1Proxy, pImg2Proxy, pagesz, 2 );
 
                         qDebug()<<"mi ..."<<valMI<<c1<<c2;
 
@@ -5261,19 +5334,22 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                     else if(datatype_img1 == V3D_FLOAT32)
                     {
-                        printf("Currently this program dose not support FLOAT32.\n"); // temporary
+                       printf(
+                           "Currently this program dose not support FLOAT32.\n" ); // temporary
                         return false;
                     }
                     else
                     {
-                        printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                       printf( "Currently this program only support UINT8, UINT16, and "
+                               "FLOAT32 datatype.\n" );
                         return false;
                     }
-
                 }
             }
         }
-        qDebug()<<"ref ..."<<ref1<<ref2<<"null color ..."<<b_img1existNULL<<nullcolor1<<b_img2existNULL<<nullcolor2;
+        }
+        qDebug() << "ref ..." << ref1 << ref2 << "null color ..." << b_img1existNULL
+                 << nullcolor1 << b_img2existNULL << nullcolor2;
 
         //step 3: detect transformation type
         int transtype;
@@ -5378,6 +5454,14 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                             {
                                 b_morecolorstack_first = (atoi( argv[i+1] )) ? true:false;
                                 printf("Now set the b_morecolorstack_first = %s\n", (b_morecolorstack_first)? "TRUE" : "FALSE");
+                                i++;
+                            }
+                            else if (!strcmp(key, "r"))
+                            {
+                                ref_chans[0] = atoi( argv[++i] );
+                                ref_chans[1] = atoi( argv[++i] );
+                                b_override_channel = true;
+                                printf("Using channels %d and %d as blending channels.\n", ref_chans[0], ref_chans[1]);
                                 i++;
                             }
                             else
@@ -5572,6 +5656,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         }
         else
         {
+           if ( b_override_channel )
+           {
+              ref1 = ref_chans[ 0 ];
+              ref2 = ref_chans[ 1 ];
+           }
+           else
+           {
             // step 1: find null color channel
             for(V3DLONG c=0; c<sz_img1[3]; c++) // image 1
             {
@@ -5667,14 +5758,16 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
             {
                 if(b_img1existNULL)
                 {
-                    if(c1==nullcolor1) continue;
+                    if ( c1 == nullcolor1 )
+                       continue;
                 }
 
                 for(V3DLONG c2=0; c2<sz_img2[3]; c2++)
                 {
                     if(b_img2existNULL)
                     {
-                        if(c2==nullcolor2) continue;
+                       if ( c2 == nullcolor2 )
+                          continue;
                     }
 
                     if(datatype_img1 == V3D_UINT8)
@@ -5682,7 +5775,8 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                         unsigned char* pImg1Proxy = p1dImg1 + c1*pagesz;
                         unsigned char* pImg2Proxy = p1dImg2 + c2*pagesz;
 
-                        double valMI = mi_computing<unsigned char>(pImg1Proxy, pImg2Proxy, pagesz, 1);
+                       double valMI = mi_computing< unsigned char >(
+                           pImg1Proxy, pImg2Proxy, pagesz, 1 );
 
                         if(valMI>scoreMI)
                         {
@@ -5694,10 +5788,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                     else if(datatype_img1 == V3D_UINT16)
                     {
-                        unsigned short* pImg1Proxy = ((unsigned short *)p1dImg1) + c1*pagesz;
-                        unsigned short* pImg2Proxy = ((unsigned short *)p1dImg2) + c2*pagesz;
+                       unsigned short *pImg1Proxy =
+                           ( (unsigned short *)p1dImg1 ) + c1 * pagesz;
+                       unsigned short *pImg2Proxy =
+                           ( (unsigned short *)p1dImg2 ) + c2 * pagesz;
 
-                        double valMI = mi_computing<unsigned short>(pImg1Proxy, pImg2Proxy, pagesz, 2);
+                       double valMI = mi_computing< unsigned short >(
+                           pImg1Proxy, pImg2Proxy, pagesz, 2 );
 
                         qDebug()<<"mi ..."<<valMI<<c1<<c2;
 
@@ -5711,19 +5808,22 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                     else if(datatype_img1 == V3D_FLOAT32)
                     {
-                        printf("Currently this program dose not support FLOAT32.\n"); // temporary
+                       printf(
+                           "Currently this program dose not support FLOAT32.\n" ); // temporary
                         return false;
                     }
                     else
                     {
-                        printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                       printf( "Currently this program only support UINT8, UINT16, and "
+                               "FLOAT32 datatype.\n" );
                         return false;
                     }
-
                 }
             }
         }
-        qDebug()<<"ref ..."<<ref1<<ref2<<"null color ..."<<b_img1existNULL<<nullcolor1<<b_img2existNULL<<nullcolor2;
+        }
+        qDebug() << "ref ..." << ref1 << ref2 << "null color ..." << b_img1existNULL
+                 << nullcolor1 << b_img2existNULL << nullcolor2;
 
         //step 3: save
         V3DLONG sz_output[4];
