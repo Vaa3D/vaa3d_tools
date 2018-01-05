@@ -3239,6 +3239,63 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     return true;
 }
 
+bool swcsplit_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file and a swc file\n";
+        return false;
+    }
+
+    //parsing input
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must input a swc file"<<endl;
+        return false;
+    }
+
+    //
+    QString fnswc = QString(inlist->at(0));
+
+    //
+    NCPointCloud pc;
+    vector<LineSegment> lines;
+    if(fnswc.toUpper().endsWith(".SWC"))
+    {
+        NeuronTree nt = readSWC_file(fnswc);
+        pc.addPointFromNeuronTree(nt);
+        lines = separate(pc);
+    }
+    long n = lines.size();
+
+    //
+    for(long i=0; i<n; i++)
+    {
+        QString separateswc = fnswc.left(fnswc.lastIndexOf(".")).append(QString("_part%1.swc").arg(i));
+        pc.saveNeuronTree(lines[i], separateswc);
+    }
+
+    //
+    return true;
+}
+
 bool checkImage_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //

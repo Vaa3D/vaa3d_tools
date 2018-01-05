@@ -384,6 +384,32 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
     return 0;
 }
 
+bool NCPointCloud::childrenVisited(long n)
+{
+    bool visited = true;
+    if(points[n].hasChildren())
+    {
+        for(long i=0; i<points[n].children.size(); i++)
+        {
+            if(points[indexofpoint(points[n].children[i])].visited==false)
+            {
+                visited = false;
+                break;
+            }
+        }
+    }
+
+    return visited;
+}
+
+long NCPointCloud::nextUnvisitedChild()
+{
+    long j;
+
+
+    return j;
+}
+
 int NCPointCloud::savePointCloud(QString filename, int format)
 {
     //
@@ -3817,20 +3843,49 @@ vector<LineSegment> separate(NCPointCloud pc)
         {
             if(pc.points[i].children.size()>0 && pc.points[i].visited==false)
             {
+                // dfs
                 LineSegment ls;
+                stack<long> stack;
 
-                long j=i;
-                while(pc.points[j].children.size()>0)
+                //
+                stack.push(i);
+
+                while(!stack.empty())
                 {
-                    ls.points.push_back(pc.points[j]);
-                    pc.points[j].visited = true;
+                    long j = stack.top();
+                    stack.pop();
 
-                    j = pc.indexofpoint(pc.points[j].children[0]);
+                    if(pc.points[j].visited==false)
+                    {
+                        ls.points.push_back(pc.points[j]);
+                        pc.points[j].visited = true;
 
-                    if(j<0)
-                        break;
+                        if(pc.points[j].children.size()>0)
+                        {
+                            for(long k=0; k<pc.points[j].children.size(); k++)
+                            {
+                                long m = pc.indexofpoint(pc.points[j].children[k]);
+                                if(pc.points[m].visited==false)
+                                {
+                                    stack.push(m);
+                                }
+                            }
+                        }
+                    }
                 }
-                ls.points.push_back(pc.points[j]); // tip point
+
+//                long j=i;
+//                while(pc.points[j].children.size()>0)
+//                {
+//                    ls.points.push_back(pc.points[j]);
+//                    pc.points[j].visited = true;
+
+//                    j = pc.indexofpoint(pc.points[j].children[0]);
+
+//                    if(j<0)
+//                        break;
+//                }
+//                ls.points.push_back(pc.points[j]); // tip point
 
                 //
                 if(ls.points.size()>2)
@@ -3842,5 +3897,6 @@ vector<LineSegment> separate(NCPointCloud pc)
         }
     }
 
+    //
     return lines;
 }

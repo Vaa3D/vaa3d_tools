@@ -44,6 +44,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("imagecheck")
     <<tr("ushort2ubyte")
     <<tr("maskmeandev")
+    <<tr("swcsplit")
     <<tr("test")
     <<tr("help");
 }
@@ -159,6 +160,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("maskmeandev"))
     {
         return maskmeandev_func(input, output, callback);
+    }
+    else if (func_name == tr("swcsplit"))
+    {
+        return swcsplit_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {

@@ -23,6 +23,7 @@
 #include <chrono>
 #include <string>
 #include <tuple>
+#include <stack>
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -178,6 +179,9 @@ public:
 
     //
     int addPointFromNeuronTree(NeuronTree nt);
+
+    bool childrenVisited(long n);
+    long nextUnvisitedChild();
 
     int getBranchPoints(QString filename);
     int getNeurites(QString filename);
