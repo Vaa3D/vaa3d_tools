@@ -3874,19 +3874,6 @@ vector<LineSegment> separate(NCPointCloud pc)
                     }
                 }
 
-//                long j=i;
-//                while(pc.points[j].children.size()>0)
-//                {
-//                    ls.points.push_back(pc.points[j]);
-//                    pc.points[j].visited = true;
-
-//                    j = pc.indexofpoint(pc.points[j].children[0]);
-
-//                    if(j<0)
-//                        break;
-//                }
-//                ls.points.push_back(pc.points[j]); // tip point
-
                 //
                 if(ls.points.size()>2)
                 {

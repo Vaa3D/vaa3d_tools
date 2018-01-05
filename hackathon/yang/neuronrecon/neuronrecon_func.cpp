@@ -2063,7 +2063,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             }
 
             // y proj
-            pagesz_mip = N*P;
+            pagesz_mip = N*M*P;
             try {data1d_ymip = new unsigned char [pagesz_mip];}
             catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
             for(V3DLONG iz = 0; iz < P; iz++)
@@ -2077,7 +2077,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                         V3DLONG offsetj = iy*N;
                         if(data1d[offsetk + offsetj + ix] >= max_mip)
                         {
-                            data1d_ymip[iz*N + ix] = data1d[offsetk + offsetj + ix];
+                            data1d_ymip[offsetk + ix] = data1d[offsetk + offsetj + ix];
                             max_mip = data1d[offsetk + offsetj + ix];
                         }
                     }
@@ -2085,7 +2085,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             }
 
             // x proj
-            pagesz_mip = M*P;
+            pagesz_mip = N*M*P;
             try {data1d_xmip = new unsigned char [pagesz_mip];}
             catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
             for(V3DLONG iz = 0; iz < P; iz++)
@@ -2099,7 +2099,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     {
                         if(data1d[offsetk + offsetj + ix] >= max_mip)
                         {
-                            data1d_xmip[iz*M + iy] = data1d[offsetk + offsetj + ix];
+                            data1d_xmip[offsetk + iy] = data1d[offsetk + offsetj + ix];
                             max_mip = data1d[offsetk + offsetj + ix];
                         }
                     }
@@ -2251,7 +2251,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     offsetj = iiy*N;
                     for(iix = xb; iix < xe+1; iix++)
                     {
-                        blockarea[i] = data1d_ymip[offsetj + iix];
+                        blockarea[i] = data1d_ymip[iiy*M*N + iix];
                         i++;
                     }
                 }
@@ -2303,7 +2303,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     offsetj = iiy*N;
                     for(iix = xb; iix < xe+1; iix++)
                     {
-                        blockarea[i] = data1d_xmip[offsetj + iix];
+                        blockarea[i] = data1d_xmip[iiy*M*N + iix];
                         i++;
                     }
                 }
@@ -2375,16 +2375,8 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         cout<<"y "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
-            cout<<j<<endl;
-
             mass_center=fun_objy.mean_shift_center_mass(poss_landmark[j],windowradius);
-
-            cout<<"test -1"<<endl;
-
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-
-            cout<<"test -2"<<endl;
-
             marklist_2D_shiftedy.append(tmp);
         }
 
