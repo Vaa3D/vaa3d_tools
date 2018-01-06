@@ -79,6 +79,7 @@ QStringList line_detector::funclist() const
         <<tr("Crop_dendrite")
         <<tr("shift_swc")
         <<tr("blocks_steps")
+        <<tr("check_tips")
         <<tr("help");
 }
 
@@ -1167,8 +1168,129 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
             writeSWC_file(swcString,nt);
         }
 
+    }else if (func_name == tr("check_tips"))
+    {
+        bool bmenu = false;
+        input_PARA PARA;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        QString inimg_file = infiles[0];
+        QString output_folder = outfiles[0];
+        int k=0;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+        NeuronTree nt = readSWC_file(swc_name);
+        QVector<QVector<V3DLONG> > childs;
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+        int Wx = 128;
+        int Wy = 128;
+        int Wz = 128;
+        QList<NeuronSWC> list = nt.listNeuron;
+        for (V3DLONG i=0;i<list.size();i++)
+        {
+            if (childs[i].size()==0)
+            {
+                V3DLONG tmpx = nt.listNeuron.at(i).x;
+                V3DLONG tmpy = nt.listNeuron.at(i).y;
+                V3DLONG tmpz = nt.listNeuron.at(i).z;
+                V3DLONG xb = tmpx-Wx;
+                V3DLONG xe = tmpx+Wx;
+                V3DLONG yb = tmpy-Wy;
+                V3DLONG ye = tmpy+Wy;
+                V3DLONG zb = tmpz-Wz;
+                V3DLONG ze = tmpz+Wz;
+                QString outimg_file;
+                if(nt.listNeuron.at(i).type == 2)
+                    outimg_file = output_folder + QString("/axons/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+                else
+                    outimg_file = output_folder + QString("/dendrites/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+
+                unsigned char * data1d = 0;
+                data1d = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
+                V3DLONG im_cropped_sz[4];
+                im_cropped_sz[0] = xe - xb + 1;
+                im_cropped_sz[1] = ye - yb + 1;
+                im_cropped_sz[2] = ze - zb + 1;
+
+                V3DLONG stacksz =im_cropped_sz[0]*im_cropped_sz[1];
+                unsigned char *image_mip=0;
+                image_mip = new unsigned char [stacksz];
+                for(V3DLONG iy = 0; iy < im_cropped_sz[1]; iy++)
+                {
+                    V3DLONG offsetj = iy*im_cropped_sz[0];
+                    for(V3DLONG ix = 0; ix < im_cropped_sz[0]; ix++)
+                    {
+                        int max_mip = 0;
+                        for(V3DLONG iz = 0; iz < im_cropped_sz[2]; iz++)
+                        {
+                            V3DLONG offsetk = iz*im_cropped_sz[1]*im_cropped_sz[0];
+                            if(data1d[offsetk + offsetj + ix] >= max_mip)
+                            {
+                                image_mip[iy*im_cropped_sz[0] + ix] = data1d[offsetk + offsetj + ix];
+                                max_mip = data1d[offsetk + offsetj + ix];
+                            }
+                        }
+                    }
+                }
+
+                NeuronSWC curr = list.at(i);
+                NeuronTree nt_tps;
+                QList <NeuronSWC> & listNeuron = nt_tps.listNeuron;
+                listNeuron << curr;
+                int count = 0;
+                int parent_tip = getParent(i,nt);
+                while(list.at(parent_tip).pn > 0 && count < 20)
+                {
+                    list[parent_tip].x -= xb;
+                    list[parent_tip].y -= yb;
+                    list[parent_tip].z = 0;
+                    if(list[parent_tip].x < 0 || list[parent_tip].x > im_cropped_sz[0] ||list[parent_tip].y <0 || list[parent_tip].y>im_cropped_sz[1])
+                        break;
+                    listNeuron << list.at(parent_tip);
+                    parent_tip = getParent(parent_tip,nt);
+                    count++;
+                }
+                unsigned char *data1d_mask = new unsigned char [stacksz];
+                memset(data1d_mask,0,stacksz*sizeof(unsigned char));
+                double margin=0;//by PHC 20170531
+                ComputemaskImage(nt_tps, data1d_mask, im_cropped_sz[0], im_cropped_sz[1], 1, margin);
+                listNeuron.clear();
+
+                unsigned char* data1d_2D = 0;
+                data1d_2D = new unsigned char [3*stacksz];
+                for(V3DLONG d=0; d<stacksz; d++)
+                    data1d_2D[d] = image_mip[d];
+
+                for(V3DLONG d=0; d<stacksz; d++)
+                {
+                    data1d_2D[d+stacksz] = (data1d_mask[d] ==255) ? 255: image_mip[d];
+                }
+                for(V3DLONG d=0; d<stacksz; d++)
+                    data1d_2D[d+2*stacksz] = image_mip[d];
+
+                im_cropped_sz[2] = 1;
+                Image4DSimple * new4DImage = new Image4DSimple();
+                new4DImage->setData((unsigned char *)data1d_2D, im_cropped_sz[0], im_cropped_sz[1], 1, 3, V3D_UINT8);
+                callback.saveImage(new4DImage,(char *)outimg_file.toStdString().c_str());
+                if(data1d_mask) { delete []data1d_mask; data1d_mask = 0;}
+                if(data1d) { delete []data1d; data1d = 0;}
+                if(data1d_2D) { delete []data1d_2D; data1d_2D = 0;}
 
 
+            }
+        }
     }
     else if (func_name == tr("linker"))
     {

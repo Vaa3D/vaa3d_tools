@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 
 using namespace std;
@@ -108,9 +109,9 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
         cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
 
 
-        NeuronTree nt_input = readSWC_file(inputswc_file);
+        NeuronTree nt_input_rs = readSWC_file(inputswc_file);
         cout<<" Soma sorting: 1) resample"<<endl;
-        NeuronTree nt_input_rs = resample(nt_input, dis_th);
+//        NeuronTree nt_input_rs = resample(nt_input, dis_th);
 
 //        NeuronTree nt_input_rs_sort;
 //        if (!SortSWC(nt_input_rs.listNeuron, nt_input_rs_sort.listNeuron ,VOID, sort_th))
@@ -137,19 +138,26 @@ bool soma_sorting::dofunc(const QString & func_name, const V3DPluginArgList & in
 //        }
 //        nt_input_rs_sort.hashNeuron = hashNeuron;
 
-        NeuronTree nt_gs = readSWC_file(gsswc_file);
+//        NeuronTree nt_gs = readSWC_file(gsswc_file);
         double soma_x, soma_y, soma_z, soma_r;
-        for (V3DLONG i = 0; i < nt_gs.listNeuron.size(); i++)
-        {
-            if(nt_gs.listNeuron[i].pn<0)
-            {
-                soma_x = nt_gs.listNeuron.at(i).x;
-                soma_y = nt_gs.listNeuron.at(i).y;
-                soma_z = nt_gs.listNeuron.at(i).z;
-                soma_r = nt_gs.listNeuron.at(i).r;
-                break;
-            }
-        }
+        QList <ImageMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(gsswc_file);
+        soma_x = file_inmarkers.at(0).x;
+        soma_y = file_inmarkers.at(0).y;
+        soma_z = file_inmarkers.at(0).z;
+        soma_r = 3;
+
+//        for (V3DLONG i = 0; i < nt_gs.listNeuron.size(); i++)
+//        {
+//            if(nt_gs.listNeuron[i].pn<0)
+//            {
+//                soma_x = nt_gs.listNeuron.at(i).x;
+//                soma_y = nt_gs.listNeuron.at(i).y;
+//                soma_z = nt_gs.listNeuron.at(i).z;
+//                soma_r = nt_gs.listNeuron.at(i).r;
+//                break;
+//            }
+//        }
 
         V3DLONG neuronNum = nt_input_rs.listNeuron.size();
         QVector<QVector<V3DLONG> > children_list = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
