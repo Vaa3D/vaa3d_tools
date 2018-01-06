@@ -725,4 +725,88 @@ int points2maskimage(T * &img1d, NCPointCloud pc, long sz0, long sz1, long sz2, 
     return 0;
 }
 
+template<class T>
+int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud pc)
+{
+    //
+    float thresh;
+    estimateIntensityThreshold(data1d, sx*sy*sz, thresh);
+    thresh *= 0.25;
+
+    //
+    for(size_t i=0; i<pc.points.size(); i++)
+    {
+        Point p = pc.points[i];
+        Point point;
+        long z = long(p.z);
+
+        if(z>sz-1) z=sz-1;
+
+        long y = long(p.y);
+
+        if(y>sy-1) y=sy-1;
+
+        long x = long(p.x);
+
+        if(x>sx-1) x=sx-1;
+
+
+        long xpre = x-1, xnext = x+1;
+
+        if(xpre<0) xpre=0;
+        if(xnext>sx-1) xnext = sx-1;
+
+        long ypre = y-1, ynext = y+1;
+
+        if(ypre<0) ypre=0;
+        if(ynext>sy-1) ynext = sy-1;
+
+        long zpre = z-1, znext = z+1;
+
+        if(zpre<0) zpre=0;
+        if(znext>sz-1) znext = sz-1;
+
+        float maxval = 0;
+
+        for(long zz=zpre; zz<=znext; zz++)
+        {
+            long ofz = zz*sx*sy;
+            for(long yy=ypre; yy<=ynext; yy++)
+            {
+                long ofy = ofz + yy*sx;
+                for(long xx=xpre; xx<=xnext; xx++)
+                {
+                    if(float(data1d[ofy + xx]) > maxval)
+                    {
+                        maxval = float(data1d[ofy + xx]);
+                        x = xx;
+                        y = yy;
+                        z = zz;
+                    }
+                }
+            }
+        }
+
+        point.x = x;
+        point.y = y;
+        point.z = z;
+        point.val = maxval;
+
+        if( point.val > thresh)
+        {
+            //
+            pc.points.push_back(point);
+        }
+    }
+    //
+    sort(pc.points.begin(), pc.points.end(), [](const Point& a, const Point& b) -> bool
+    {
+        return a.val*a.radius > b.val*b.radius;
+    });
+
+    //
+    return 0;
+}
+
+
 #endif // _NEURONRECON_H_

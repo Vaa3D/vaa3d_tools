@@ -425,7 +425,7 @@ int NCPointCloud::savePointCloud(QString filename, int format)
         {
             Point p = points[i];
 
-            if(p.radius > 2.5)
+            //if(p.radius > 2.5)
             {
                 CellAPO cell;
 

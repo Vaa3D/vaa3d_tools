@@ -820,6 +820,147 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     return true;
 }
 
+bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1)
+    {
+        cout<<"Need at least one input and one output filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int k=6;
+    float m = 3;
+    double distthresh = 15;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            maxAngle = atof(paras->at(0));
+            cout<<"threshold(angle): "<<maxAngle<<endl;
+
+            if (paras->size() >= 2)
+            {
+                k = atoi(paras->at(1));
+                cout<<"k(nn): "<<k<<endl;
+
+                if (paras->size() >= 3)
+                {
+                    m = atof(paras->at(2));
+                    cout<<"dist(p2lc): "<<m<<endl;
+
+                    if (paras->size() >= 4)
+                    {
+                        distthresh = double(atof(paras->at(3)));
+                        cout<<"dist: "<<distthresh<<endl;
+                    }
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    //
+    QString fnimage = QString(inlist->at(0));
+    QString fnpointcloud = fnimage.left(fnimage.lastIndexOf(".")).append(".apo");
+
+    //
+    if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnimage.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        long sx = p4dImage->getXDim();
+        long sy = p4dImage->getYDim();
+        long sz = p4dImage->getZDim();
+        long size = sx*sy*sz;
+        unsigned char *p = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        //
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                p = puint8;
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+
+        //
+        NCPointCloud pc;
+
+        QStringList files;
+        for (int i=1;i<inlist->size();i++)
+        {
+            files.push_back(QString(inlist->at(i)));
+        }
+
+        //
+        pc.getPointCloud(files);
+        pc.delDuplicatedPoints();
+        sortByRadiusIntensity<unsigned char>(p, sx, sy, sz, pc);
+        pc.savePointCloud(fnpointcloud);
+    }
+
+    // load
+    NCPointCloud pointcloud;
+    pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh);
+
+    //
+    return true;
+}
+
 bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //
@@ -2359,7 +2500,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         fun_objz.pushNewData<unsigned char>((unsigned char*)data1d_zmip, sz_img);
         poss_landmark=landMarkList2poss(marklist_2Dz, sz_img[0], sz_img[0]*sz_img[1]);
 
-        cout<<"z "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objz.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2372,7 +2512,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         fun_objy.pushNewData<unsigned char>((unsigned char*)data1d_ymip, sz_img);
         poss_landmark=landMarkList2poss(marklist_2Dy, sz_img[0], sz_img[0]*sz_img[1]);
 
-        cout<<"y "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objy.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2380,17 +2519,11 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             marklist_2D_shiftedy.append(tmp);
         }
 
-        cout<<"test 0"<<endl;
-
         // x proj
         sz_img[0] = 1; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
         fun_objx.pushNewData<unsigned char>((unsigned char*)data1d_xmip, sz_img);
-
-        cout<<"test 1"<<endl;
-
         poss_landmark=landMarkList2poss(marklist_2Dx, sz_img[0], sz_img[0]*sz_img[1]);
 
-        cout<<"x "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2554,16 +2687,19 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     //
     pointcloud.getPointCloud(files);
     pointcloud.delDuplicatedPoints();
-    pcsorted.ksort(pointcloud, 10);
-    pcsorted.savePointCloud(cnvtPoints);
+    //pcsorted.ksort(pointcloud, 10);
+    //pcsorted.savePointCloud(cnvtPoints);
+
+    pointcloud.sortbyradius();
+    pointcloud.savePointCloud(cnvtPoints);
 
     // step 3. lines constructed
     float maxAngle = 0.942; // threshold 60 degree (120 degree)
     int knn=6;
     float m = 8;
 
-    NCPointCloud lines;
-    lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
+    //NCPointCloud lines;
+    //lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
 
     // step 4.
 
