@@ -731,24 +731,27 @@ int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud pc)
     //
     float thresh;
     estimateIntensityThreshold(data1d, sx*sy*sz, thresh);
-    thresh *= 0.25;
+    thresh *= 0.5;
+
+    //
+    NCPointCloud pointcloud;
 
     //
     for(size_t i=0; i<pc.points.size(); i++)
     {
         Point p = pc.points[i];
-        Point point;
+
         long z = long(p.z);
 
-        if(z>sz-1) z=sz-1;
+        if(z>sz-1) continue;
 
         long y = long(p.y);
 
-        if(y>sy-1) y=sy-1;
+        if(y>sy-1) continue;
 
         long x = long(p.x);
 
-        if(x>sx-1) x=sx-1;
+        if(x>sx-1) continue;
 
 
         long xpre = x-1, xnext = x+1;
@@ -787,17 +790,21 @@ int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud pc)
             }
         }
 
-        point.x = x;
-        point.y = y;
-        point.z = z;
-        point.val = maxval;
-
-        if( point.val > thresh)
+        //
+        if(maxval>thresh)
         {
-            //
-            pc.points.push_back(point);
+            p.x = x;
+            p.y = y;
+            p.z = z;
+            p.val = maxval;
+
+            pointcloud.points.push_back(p);
         }
     }
+
+    //
+    pc.copy(pointcloud);
+
     //
     sort(pc.points.begin(), pc.points.end(), [](const Point& a, const Point& b) -> bool
     {
