@@ -726,7 +726,7 @@ int points2maskimage(T * &img1d, NCPointCloud pc, long sz0, long sz1, long sz2, 
 }
 
 template<class T>
-int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud pc)
+int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud &pc)
 {
     //
     float thresh;
@@ -789,6 +789,10 @@ int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud pc)
                 }
             }
         }
+
+        if(z>sz-1) continue;
+        if(y>sy-1) continue;
+        if(x>sx-1) continue;
 
         //
         if(maxval>thresh)
