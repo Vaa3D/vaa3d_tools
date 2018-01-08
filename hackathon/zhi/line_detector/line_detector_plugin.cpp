@@ -1249,19 +1249,20 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                 NeuronTree nt_tps;
                 QList <NeuronSWC> & listNeuron = nt_tps.listNeuron;
                 listNeuron << curr;
-                int count = 0;
-                int parent_tip = getParent(i,nt);
-                while(list.at(parent_tip).pn > 0 && count < 20)
+                for(V3DLONG j =0; j < list.size();j++)
                 {
-                    list[parent_tip].x -= xb;
-                    list[parent_tip].y -= yb;
-                    list[parent_tip].z = 0;
-                    if(list[parent_tip].x < 0 || list[parent_tip].x > im_cropped_sz[0] ||list[parent_tip].y <0 || list[parent_tip].y>im_cropped_sz[1])
-                        break;
-                    listNeuron << list.at(parent_tip);
-                    parent_tip = getParent(parent_tip,nt);
-                    count++;
+                    NeuronSWC t;
+                    t = list.at(j);
+                    t.x = list[j].x - xb;
+                    t.y = list[j].y - yb;
+                    t.z = list[j].z - zb;
+                    if(t.x >= 0 && t.x < im_cropped_sz[0] && t.y >= 0 && t.y < im_cropped_sz[1] && t.z >= 0 && t.z < im_cropped_sz[0])
+                    {
+                        t.z = 0;
+                        listNeuron << t;
+                    }
                 }
+
                 unsigned char *data1d_mask = new unsigned char [stacksz];
                 memset(data1d_mask,0,stacksz*sizeof(unsigned char));
                 double margin=0;//by PHC 20170531
@@ -1272,6 +1273,12 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                 data1d_2D = new unsigned char [3*stacksz];
                 for(V3DLONG d=0; d<stacksz; d++)
                     data1d_2D[d] = image_mip[d];
+
+                for(V3DLONG dy=126; dy<=132; dy++)
+                    for(V3DLONG dx=126; dx<=132;dx++)
+                    {
+                        data1d_2D[dy*im_cropped_sz[0] + dx] = 255;
+                    }
 
                 for(V3DLONG d=0; d<stacksz; d++)
                 {
@@ -1287,7 +1294,6 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                 if(data1d_mask) { delete []data1d_mask; data1d_mask = 0;}
                 if(data1d) { delete []data1d; data1d = 0;}
                 if(data1d_2D) { delete []data1d_2D; data1d_2D = 0;}
-
 
             }
         }
