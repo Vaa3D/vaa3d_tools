@@ -52,6 +52,9 @@ using namespace nanoflann;
 typedef tuple<float,float,long,long> PairCompareType;
 
 //
+class LineSegment;
+
+//
 class Plane
 {
 public:
@@ -199,6 +202,9 @@ public:
     // shortest distance between point p and line segment (a, b)
     float distPoint2LineSegment(Point a, Point b, Point p);
 
+    //
+    float distP2L(Point p, LineSegment line);
+
     // judge whether a point important
     bool isConsidered(unsigned long &index, float m);
 
@@ -218,6 +224,9 @@ public:
 
     //
     int removeNoise();
+
+    //
+    int removeRedundant();
 
     //
     int assembleFragments(int k);
@@ -336,6 +345,7 @@ public:
     bool sidebyside(LineSegment ls);
     void info();
     bool isSmooth();
+    float maxradius();
 
 public:
     float meanval_adjangles, stddev_adjangles; //

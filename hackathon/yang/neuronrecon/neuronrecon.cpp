@@ -993,6 +993,108 @@ int NCPointCloud::removeNoise()
     return 0;
 }
 
+int NCPointCloud::removeRedundant()
+{
+    vector<LineSegment> lines = separate(*this);
+    NCPointCloud pc;
+
+    float distthresh;
+
+    for(long j=0; j<lines.size(); j++)
+    {
+        LineSegment line = lines[j];
+
+        for(long k=0; k<line.points.size(); k++)
+        {
+            long idx = indexofpoint(line.points[k].n);
+            points[idx].visited = true;
+        }
+    }
+
+    for(long j=0; j<lines.size(); j++)
+    {
+        LineSegment line = lines[j];
+
+        for(long i=0; i<points.size(); i++)
+        {
+            Point p = points[i];
+
+            if(p.visited==false)
+            {
+                distthresh = 0.25 * max(p.radius, line.maxradius());
+
+                if(distP2L(p, line)<distthresh)
+                {
+                    points[i].visited = true;
+                }
+            }
+        }
+    }
+
+    for(long j=0; j<lines.size(); j++)
+    {
+        LineSegment line = lines[j];
+
+        for(long k=0; k<line.points.size(); k++)
+        {
+            long idx = indexofpoint(line.points[k].n);
+            points[idx].visited = false;
+        }
+    }
+
+    for(long i=0; i<points.size(); i++)
+    {
+        Point p = points[i];
+        if(p.visited==false)
+            pc.points.push_back(p);
+
+    }
+
+    //
+    this->copy(pc);
+
+    //
+    return 0;
+}
+
+float NCPointCloud::distP2L(Point p, LineSegment line)
+{
+    float d = 1e6;
+
+    for(long i=0; i<line.points.size(); i++)
+    {
+        Point q1 = line.points[i];
+
+        if(q1.parents[0]==-1)
+        {
+            if(q1.hasChildren())
+            {
+                Point q2 = line.points[indexofpoint(q1.children[0])];
+
+                float dist = distPoint2LineSegment(q1,q2,p);
+
+                if(dist<d)
+                {
+                    d = dist;
+                }
+            }
+        }
+        else
+        {
+            Point q2 = line.points[indexofpoint(q1.parents[0])];
+
+            float dist = distPoint2LineSegment(q1,q2,p);
+
+            if(dist<d)
+            {
+                d = dist;
+            }
+        }
+    }
+
+    return d;
+}
+
 //
 int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh)
 {
@@ -1056,6 +1158,9 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     // connect points into lines
     connectPoints(k,angle,m);
 
+    //
+    removeRedundant();
+
     // merge lines
     // mergeLines(angle);
 
@@ -1066,20 +1171,20 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     if(!outfile.isEmpty())
     {
         saveNeuronTree(*this, outfile);
-    }
 
-    // assemble fragments into trees
-    QList<NeuronSWC> neuron, result;
-    NeuronTree nt = readSWC_file(outfile);
-    neuron = nt.listNeuron;
-    if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
-    {
-        QString fileDefaultName = outfile+QString("_sorted.swc");
-        //write new SWC to file
-        if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
+        // assemble fragments into trees
+        QList<NeuronSWC> neuron, result;
+        NeuronTree nt = readSWC_file(outfile);
+        neuron = nt.listNeuron;
+        if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
         {
-            cout<<"fail to write the output result"<<endl;
-            return -1;
+            QString fileDefaultName = outfile+QString("_sorted.swc");
+            //write new SWC to file
+            if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
+            {
+                cout<<"fail to write the output result"<<endl;
+                return -1;
+            }
         }
     }
 
@@ -3828,6 +3933,19 @@ bool LineSegment::isSmooth()
     }
 
     return true;
+}
+
+float LineSegment::maxradius()
+{
+    float radius = 0;
+
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].radius > radius)
+            radius = points[i].radius;
+    }
+
+    return radius;
 }
 
 //

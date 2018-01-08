@@ -850,7 +850,7 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                 if (paras->size() >= 3)
                 {
                     m = atof(paras->at(2));
-                    cout<<"dist(p2lc): "<<m<<endl;
+                    cout<<"dist(p2ls): "<<m<<endl;
 
                     if (paras->size() >= 4)
                     {
