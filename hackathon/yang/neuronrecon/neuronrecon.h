@@ -259,6 +259,9 @@ public:
     int resetVisitStatus();
 
     //
+    int reverseVisitStatus();
+
+    //
     int reverseLineSegment(long idx, long size);
     int reverseLineSegment(long idx);
 

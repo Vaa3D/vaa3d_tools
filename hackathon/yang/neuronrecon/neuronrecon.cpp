@@ -995,10 +995,12 @@ int NCPointCloud::removeNoise()
 
 int NCPointCloud::removeRedundant()
 {
+    cout<<"remove redundant points: "<<points.size()<<endl;
     vector<LineSegment> lines = separate(*this);
     NCPointCloud pc;
 
     float distthresh;
+    reverseVisitStatus();
 
     for(long j=0; j<lines.size(); j++)
     {
@@ -1021,9 +1023,10 @@ int NCPointCloud::removeRedundant()
 
             if(p.visited==false)
             {
-                distthresh = 0.25 * max(p.radius, line.maxradius());
+                distthresh = 2*max(p.radius, line.maxradius());
 
-                if(distP2L(p, line)<distthresh)
+                float dist = distP2L(p, line);
+                if(dist<distthresh)
                 {
                     points[i].visited = true;
                 }
@@ -1053,6 +1056,8 @@ int NCPointCloud::removeRedundant()
     //
     this->copy(pc);
 
+    cout<<"after clean: "<<points.size()<<endl;
+
     //
     return 0;
 }
@@ -1069,7 +1074,7 @@ float NCPointCloud::distP2L(Point p, LineSegment line)
         {
             if(q1.hasChildren())
             {
-                Point q2 = line.points[indexofpoint(q1.children[0])];
+                Point q2 = points[indexofpoint(q1.children[0])];
 
                 float dist = distPoint2LineSegment(q1,q2,p);
 
@@ -1081,7 +1086,7 @@ float NCPointCloud::distP2L(Point p, LineSegment line)
         }
         else
         {
-            Point q2 = line.points[indexofpoint(q1.parents[0])];
+            Point q2 = points[indexofpoint(q1.parents[0])];
 
             float dist = distPoint2LineSegment(q1,q2,p);
 
@@ -2228,6 +2233,25 @@ int NCPointCloud::resetVisitStatus()
     for(std::vector<Point>::iterator it = points.begin(); it != points.end(); ++it)
     {
         it->visited = false;
+    }
+
+    //
+    return 0;
+}
+
+int NCPointCloud::reverseVisitStatus()
+{
+    //
+    for(std::vector<Point>::iterator it = points.begin(); it != points.end(); ++it)
+    {
+        if(it->visited == false)
+        {
+            it->visited = true;
+        }
+        else
+        {
+            it->visited = false;
+        }
     }
 
     //
