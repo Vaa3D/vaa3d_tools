@@ -232,7 +232,7 @@ public:
     int assembleFragments(int k);
 
     //
-    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15);
+    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
 
     //
     int trace();

@@ -764,6 +764,7 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     int k=6;
     float m = 3;
     double distthresh = 15;
+    bool removeNoise=true;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -786,6 +787,12 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
                     {
                         distthresh = double(atof(paras->at(3)));
                         cout<<"dist: "<<distthresh<<endl;
+
+                        if (paras->size() >= 5)
+                        {
+                            removeNoise = atoi(paras->at(4))==0?false:true;
+                            cout<<"remove noise: "<<removeNoise<<endl;
+                        }
                     }
                 }
             }
@@ -814,7 +821,7 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
 
     // load
     NCPointCloud pointcloud;
-    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, distthresh);
+    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, distthresh, removeNoise);
 
     //
     return true;
@@ -834,6 +841,7 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     int k=6;
     float m = 3;
     double distthresh = 15;
+    bool removeNoise = true;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -856,6 +864,12 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                     {
                         distthresh = double(atof(paras->at(3)));
                         cout<<"dist: "<<distthresh<<endl;
+
+                        if (paras->size() >= 5)
+                        {
+                            removeNoise = atoi(paras->at(4))==0?false:true;
+                            cout<<"remove noise: "<<removeNoise<<endl;
+                        }
                     }
                 }
             }
@@ -955,7 +969,108 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
     // load
     NCPointCloud pointcloud;
-    pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh);
+    pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, removeNoise);
+
+    //
+    return true;
+}
+
+bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1)
+    {
+        cout<<"Need at least one input and one output filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    long z = 5;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            z = atoi(paras->at(0));
+            cout<<"translate (z): "<<z<<endl;
+        }
+        else
+        {
+            cerr<<"Invalid parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    //
+    QString fninput = QString(inlist->at(0));
+    QString fnoutput = QString(outlist->at(0));
+
+    //
+    NCPointCloud pc;
+    if(fninput.toUpper().endsWith(".APO"))
+    {
+        QList <CellAPO> inputPoints = readAPO_file(fninput);
+
+        long n = inputPoints.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            CellAPO cell = inputPoints[i];
+
+            //
+            Point p;
+
+            p.n = i+1; // # assigned
+            p.x = cell.x;
+            p.y = cell.y;
+            p.z = cell.z + z;
+            p.radius = 0.5*cell.volsize;
+            p.parents.push_back(-1);
+
+            pc.points.push_back(p);
+        }
+    }
+
+    if(fninput.toUpper().endsWith(".SWC"))
+    {
+        QStringList files;
+        files.push_back(fninput);
+
+        //
+        pc.getPointCloud(files);
+
+        for(long i=0; i<pc.points.size(); i++)
+        {
+            pc.points[i].z += z;
+        }
+    }
+
+    //
+    if(fnoutput.toUpper().endsWith(".APO"))
+    {
+        pc.savePointCloud(fnoutput);
+    }
+
+    if(fnoutput.toUpper().endsWith(".SWC"))
+    {
+        pc.saveNeuronTree(pc,fnoutput);
+    }
 
     //
     return true;

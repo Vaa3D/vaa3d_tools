@@ -46,6 +46,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("ushort2ubyte")
     <<tr("maskmeandev")
     <<tr("swcsplit")
+    <<tr("translate")
     <<tr("test")
     <<tr("help");
 }
@@ -169,6 +170,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("swcsplit"))
     {
         return swcsplit_func(input, output, callback);
+    }
+    else if (func_name == tr("translate"))
+    {
+        return translate_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {

@@ -1101,7 +1101,7 @@ float NCPointCloud::distP2L(Point p, LineSegment line)
 }
 
 //
-int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh)
+int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh, bool rmNoise)
 {
     // load point cloud save as a .apo file
 
@@ -1158,13 +1158,15 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     }
 
     //
-    removeNoise();
+    if(rmNoise)
+        removeNoise();
 
     // connect points into lines
     connectPoints(k,angle,m);
 
     //
-    removeRedundant();
+    if(rmNoise)
+        removeRedundant();
 
     // merge lines
     // mergeLines(angle);
