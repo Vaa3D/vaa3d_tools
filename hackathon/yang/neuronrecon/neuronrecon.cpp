@@ -1682,9 +1682,11 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
                         distThresh1 = 2*m*(p.radius + p_next.radius);
                         distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
 
+                        float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3;
+
                         if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                         {
-                            candidates.push_back(make_tuple(dist*angle, 1/p.radius, i, j));
+                            candidates.push_back(make_tuple(dist*angle, 1/meanradius, i, j));
                         }
                     }
                 }
