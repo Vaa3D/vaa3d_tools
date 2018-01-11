@@ -6,6 +6,11 @@
 #ifndef __DEEP_NEURON_PLUGIN_H__
 #define __DEEP_NEURON_PLUGIN_H__
 
+#define BOOST_DATE_TIME_NO_LIB
+#define BOOST_FILESYSTEM_NO_LIB
+#define BOOST_SYSTEM_NO_LIB
+
+
 #include <QtGui>
 
 #include <v3d_interface.h>
