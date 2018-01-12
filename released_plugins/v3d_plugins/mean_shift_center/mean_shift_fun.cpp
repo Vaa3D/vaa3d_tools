@@ -369,8 +369,8 @@ vector<float> calc_mean_shift_center(V3DLONG ind, int windowradius,float *data1D
     V3DLONG page_size=sz_image[0]*sz_image[1]*sz_image[2];
 
     V3DLONG N = sz_image[0];
-    V3DLONG M = sz_image[0];
-    V3DLONG P = sz_image[0];
+    V3DLONG M = sz_image[1];
+    V3DLONG P = sz_image[2];
 
     V3DLONG pos;
     vector<V3DLONG> coord;
