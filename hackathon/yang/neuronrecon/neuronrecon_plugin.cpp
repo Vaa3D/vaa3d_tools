@@ -39,7 +39,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("mergelines")
     <<tr("findpeaks")
     <<tr("trace")
-      <<tr("neutrace")
+    <<tr("neutrace")
     <<tr("attrace")
     <<tr("samplepc")
     <<tr("imagecheck")
@@ -47,6 +47,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("maskmeandev")
     <<tr("swcsplit")
     <<tr("translate")
+    <<tr("rmisolatepoints")
     <<tr("test")
     <<tr("help");
 }
@@ -170,6 +171,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("swcsplit"))
     {
         return swcsplit_func(input, output, callback);
+    }
+    else if (func_name == tr("rmisolatepoints"))
+    {
+        return rmisolatepoints_func(input, output, callback);
     }
     else if (func_name == tr("translate"))
     {
