@@ -2,24 +2,29 @@ TEMPLATE    = lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
-CAFFEPATH = C:/caffe
-CUDAPATH  = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
-USERPATH = $$(USERPROFILE)
-OTHERINCLUDEPATH = $$USERPATH/.caffe/dependencies/libraries_v120_x64_py27_1.1.0/libraries/include
-OTHERLIBPATH = $$USERPATH/.caffe/dependencies/libraries_v120_x64_py27_1.1.0/libraries
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/common_lib/include
-INCLUDEPATH	+= $$CAFFEPATH/include
-INCLUDEPATH += $$CAFFEPATH/include/caffe/util
-INCLUDEPATH	+= $$CAFFEPATH/src/caffe
-INCLUDEPATH	+= $$CUDAPATH/include/
 INCLUDEPATH += ../../zhi/deep_learning/prediction
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/mean_shift_center
-INCLUDEPATH += $$OTHERINCLUDEPATH
 
 win32 {
+    DEFINES += "CMAKE_WINDOWS_BUILD"
+    CAFFEPATH = $$(CAFFE_PATH)
+    CUDAPATH  = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
+    USERPATH = $$(USERPROFILE)
+    OTHERINCLUDEPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include
+    OTHERLIBPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries
+
+    INCLUDEPATH += $$OTHERINCLUDEPATH
+    INCLUDEPATH	+= $$CAFFEPATH\\include
+    INCLUDEPATH += $$CAFFEPATH\\include\\caffe\\util
+    INCLUDEPATH	+= $$CAFFEPATH\\src\\caffe
+    INCLUDEPATH += $$CAFFEPATH\\build\\include
+    INCLUDEPATH += $$CAFFEPATH\\scripts\\build
+    INCLUDEPATH += $$CAFFEPATH\\scripts\\build\\include
     LIBS += -L$$CAFFEPATH\\build\\lib\\Release
-    LIBS += -lcaffe
+    LIBS += -L$$CAFFEPATH\\scripts\\build\\lib\\Release
+    LIBS += -lcaffe -lcaffeproto
 
     # cuda
     INCLUDEPATH += $$CUDAPATH\\include
@@ -31,20 +36,14 @@ win32 {
     INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv2
     INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv2\\core
     LIBS += -L$$OTHERLIBPATH\\x64\\vc12\\lib
-    LIBS += -lopencv_core310 -lopencv_imgproc310 -lopencv_highgui310
+    LIBS += -lopencv_core310 -lopencv_imgproc310 -lopencv_highgui310 -lopencv_imgcodecs310 
 
     # other dependencies
-    INCLUDEPATH += $$OTHERINCLUDEPATH\\boost-1_61
-    INCLUDEPATH += $$CAFFEPATH\\build\\include
-    INCLUDEPATH += $$CAFFEPATH\\scripts\\build
-    INCLUDEPATH += $$CAFFEPATH\\scripts\\build\\include
-    LIBS += -L$$CAFFEPATH\\scripts\\build\\lib\\Release
+    INCLUDEPATH += $$OTHERINCLUDEPATH\\boost-1_61  
+    LIBS += -L3rdPartyLibs_win
     LIBS += -L$$OTHERLIBPATH\\lib
-    LIBS += -L$$VAA3DPATH\\common_lib\\src_packages\\boost_1_57_0\\stage\\lib
-
-    LIBS += -lcaffe -lcaffeproto -llibprotobuf -lcaffehdf5 -lcaffehdf5_hl -llibopenblas 
-    LIBS += -lopencv_core310 -lopencv_highgui310 -lopencv_imgproc310 -lopencv_imgcodecs310 
-    LIBS += -lglog -lgflags -llmdb -lleveldb -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61
+    LIBS += -llibprotobuf -lcaffehdf5 -lcaffehdf5_hl -llibopenblas -lglog -lgflags -llmdb -lleveldb -lntdll 
+    LIBS += -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61 -lboost_python-vc120-mt-1_61 -lboost_filesystem-vc120-mt-1_61
 }
 
 unix {
