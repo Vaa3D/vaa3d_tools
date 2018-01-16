@@ -2545,6 +2545,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[2] = in_zz[2];
         }else
         {
+            v3d_msg("check!");
             V3DLONG *in_zz = 0;
             if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
             {
@@ -2867,7 +2868,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
-        }else
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -2878,6 +2879,32 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > in_zz[3])
+               P.channel = 1;
+            unsigned char * total1dDataTerafly = 0;
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,0,P.in_sz[2]);
+
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
+            }
+            if(total1dDataTerafly) {delete []total1dDataTerafly; total1dDataTerafly = 0;}
         }
     }
 
@@ -3427,7 +3454,7 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 return false;
             }
 
-        }else
+        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
             V3DLONG *in_zz = 0;
             int datatype;
@@ -3438,6 +3465,32 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
                 if(total1dData) {delete []total1dData; total1dData = 0;}
                 return false;
             }
+        }else
+        {
+            in_sz = new V3DLONG[4];
+            in_sz[0] = end_x - start_x;
+            in_sz[1] = end_y - start_y;
+            in_sz[2] = P.in_sz[2];
+
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
+            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+            try {total1dData = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+            if(P.channel > in_zz[3])
+               P.channel = 1;
+            unsigned char * total1dDataTerafly = 0;
+            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
+                                                              start_y,end_y,0,P.in_sz[2]);
+
+            for(V3DLONG i=0; i<pagesz; i++)
+            {
+                total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
+            }
+            if(total1dDataTerafly) {delete []total1dDataTerafly; total1dDataTerafly = 0;}
         }
     }
 
