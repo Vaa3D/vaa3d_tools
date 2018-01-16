@@ -48,6 +48,7 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("swcsplit")
     <<tr("translate")
     <<tr("rmisolatepoints")
+    <<tr("dfsconnect")
     <<tr("test")
     <<tr("help");
 }
@@ -179,6 +180,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("translate"))
     {
         return translate_func(input, output, callback);
+    }
+    else if (func_name == tr("dfsconnect"))
+    {
+        return dfsconnect_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {

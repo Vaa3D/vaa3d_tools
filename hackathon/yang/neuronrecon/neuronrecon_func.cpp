@@ -842,6 +842,7 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     float m = 3;
     double distthresh = 15;
     bool removeNoise = true;
+    float adjintthresh = 0.5;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -869,6 +870,12 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
                         {
                             removeNoise = atoi(paras->at(4))==0?false:true;
                             cout<<"remove noise: "<<removeNoise<<endl;
+
+                            if (paras->size() >= 6)
+                            {
+                                adjintthresh = atof(paras->at(5));
+                                cout<<"adjintthresh: "<<adjintthresh<<endl;
+                            }
                         }
                     }
                 }
@@ -963,7 +970,7 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         //
         pc.getPointCloud(files);
         pc.delDuplicatedPoints();
-        sortByRadiusIntensity<unsigned char>(p, sx, sy, sz, pc);
+        sortByRadiusIntensity<unsigned char>(p, sx, sy, sz, pc, adjintthresh);
         pc.savePointCloud(fnpointcloud);
     }
 
@@ -1073,6 +1080,60 @@ bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     }
 
     //
+    return true;
+}
+
+bool dfsconnect_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0)
+    {
+        cout<<"Need at least one input filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    long distthresh = 5;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            distthresh = atoi(paras->at(0));
+            cout<<"distthresh: "<<distthresh<<endl;
+        }
+        else
+        {
+            cerr<<"Invalid parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //
+    QString fninput = QString(inlist->at(0));
+
+    // assemble fragments into trees
+    QList<NeuronSWC> neuron, result;
+    NeuronTree nt = readSWC_file(fninput);
+    neuron = nt.listNeuron;
+    if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
+    {
+        QString fileDefaultName = fninput+QString("_sorted.swc");
+        //write new SWC to file
+        if (!sortswc::export_list2file<long>(result,fileDefaultName,fninput))
+        {
+            cout<<"fail to write the output result"<<endl;
+            return -1;
+        }
+    }
+
     return true;
 }
 
@@ -1835,17 +1896,11 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
         V3DLONG i,j,k, idx, nn;
 
         // estimate the radius with distance transform
-        unsigned char *dt=NULL;
-        try
-        {
-            dt = new unsigned char [volsz];
-        }
-        catch(...)
-        {
-            cout<<"fail to alloc memory for out image\n";
-            return false;
-        }
-        distanceTransformL2(dt, p1dImg, dimx, dimy, dimz);
+        float *dt=NULL;
+        y_new1dp<float, long>(dt, volsz);
+
+        //
+        distanceTransformL2<float>(dt, p1dImg, dimx, dimy, dimz);
 
         // estimate threshold
         float threshold;
@@ -1908,10 +1963,20 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                     p.z = k;
 
                     //
+                    pointcloud.shift(dt, dimx, dimy, dimz, max(3.0f, p.radius), p);
+
+                    if(p.radius<1.5)
+                    {
+                        continue;
+                    }
+
+                    //
                     pointcloud.append(p);
                 }
             }
         }
+        //
+        y_del1dp<float>(dt);
 
         //
         pointcloud.delDuplicatedPoints();
@@ -2767,47 +2832,47 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     // delete false detections
     QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
 
-//    cout<<"test 01 "<<marklist_3D.size()<<" "<<marklist_3D_pruned.size()<<endl;
+    //    cout<<"test 01 "<<marklist_3D.size()<<" "<<marklist_3D_pruned.size()<<endl;
 
-//    //
-//    LandmarkList marklist_3D_pruned1,marklist_3D_pruned_shifted;
-//    for(long i=0; i<marklist_3D_pruned.size(); i++)
-//    {
-//        ImageMarker m = marklist_3D_pruned[i];
-//        LocationSimple s;
-//        s.x = m.x;
-//        s.y = m.y;
-//        s.z = m.z;
+    //    //
+    //    LandmarkList marklist_3D_pruned1,marklist_3D_pruned_shifted;
+    //    for(long i=0; i<marklist_3D_pruned.size(); i++)
+    //    {
+    //        ImageMarker m = marklist_3D_pruned[i];
+    //        LocationSimple s;
+    //        s.x = m.x;
+    //        s.y = m.y;
+    //        s.z = m.z;
 
-//        if(s.x<0 || s.y<0 || s.z<0 || s.x>N-2 || s.y>M-2 || s.z>P-2)
-//        {
-//            cout<<"odd"<<endl;
-//        }
-//        else
-//        {
-//            marklist_3D_pruned1.append(s);
-//        }
-//    }
+    //        if(s.x<0 || s.y<0 || s.z<0 || s.x>N-2 || s.y>M-2 || s.z>P-2)
+    //        {
+    //            cout<<"odd"<<endl;
+    //        }
+    //        else
+    //        {
+    //            marklist_3D_pruned1.append(s);
+    //        }
+    //    }
 
-//    cout<<"test 02\n";
+    //    cout<<"test 02\n";
 
-//    sz_img[0] = N; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
-//    fun_objx.pushNewData<unsigned char>((unsigned char*)data1d, sz_img);
+    //    sz_img[0] = N; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
+    //    fun_objx.pushNewData<unsigned char>((unsigned char*)data1d, sz_img);
 
-//    cout<<"test 021\n";
+    //    cout<<"test 021\n";
 
-//    poss_landmark=landMarkList2poss(marklist_3D_pruned1, sz_img[0], sz_img[0]*sz_img[1]);
+    //    poss_landmark=landMarkList2poss(marklist_3D_pruned1, sz_img[0], sz_img[0]*sz_img[1]);
 
-//    cout<<"test 022 "<<poss_landmark.size()<<endl;
+    //    cout<<"test 022 "<<poss_landmark.size()<<endl;
 
-//    for (V3DLONG j=0;j<poss_landmark.size();j++)
-//    {
-//        mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
-//        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-//        marklist_3D_pruned_shifted.append(tmp);
-//    }
+    //    for (V3DLONG j=0;j<poss_landmark.size();j++)
+    //    {
+    //        mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
+    //        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+    //        marklist_3D_pruned_shifted.append(tmp);
+    //    }
 
-//    cout<<"test 03\n";
+    //    cout<<"test 03\n";
 
     // estimate radius
     for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)

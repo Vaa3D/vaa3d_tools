@@ -131,15 +131,68 @@ public:
 };
 
 //
+template<class T>
+int distanceTransformL2(T *&dst, unsigned char *src, int x, int y, int z)
+{
+    // init
+    Index3 size3D;
+
+    size3D[0] = x;
+    size3D[1] = y;
+    size3D[2] = z;
+
+    Grid<SizeType, 3> indices(size3D);
+    DistanceTransform::initializeIndices(indices);
+
+    Grid<T, 3> u3d(size3D);
+
+    long i,j,k,offk,offj;
+
+    // copy data
+    for (k = 0; k < z; ++k)
+    {
+        offk = k*x*y;
+        for (j = 0; j < y; ++j)
+        {
+            offj = offk + j*x;
+            for (i = 0; i < x; ++i)
+            {
+                u3d[i][j][k] = src[offj+i];
+            }
+        }
+    }
+
+    u3d[0][0][0] = 0.0f;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    DistanceTransform::distanceTransformL2(u3d, u3d, false, std::thread::hardware_concurrency());
+    std::cout << std::endl << size3D[0] << 'x' << size3D[1] << 'x' << size3D[2]
+              << " distance function (concurrently) computed in: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count()
+              << " ms. (with " << std::thread::hardware_concurrency() << " threads)." << std::endl;
+
+    // copy result
+    for (k = 0; k < z; ++k)
+    {
+        offk = k*x*y;
+        for (j = 0; j < y; ++j)
+        {
+            offj = offk + j*x;
+            for (i = 0; i < x; ++i)
+            {
+                dst[offj+i] = u3d[i][j][k];
+            }
+        }
+    }
+
+    //
+    return 0;
+}
+
+//
 int adaptiveThresholdMT(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r);
 int adaptiveThreshold(unsigned char *&dst, unsigned char *src, int x, int y, int z, int r);
 
 //
 int estimateIntensityThreshold(unsigned char *p, long size, float &thresh, int method=0);
 
-//
-int distanceTransformL2(unsigned char *&dst, unsigned char *src, int x, int y, int z);
-
-//
 
 #endif // _IMG_H_

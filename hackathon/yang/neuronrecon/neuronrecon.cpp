@@ -1062,6 +1062,65 @@ int NCPointCloud::removeRedundant()
     return 0;
 }
 
+int NCPointCloud::shift(float *p, long sx, long sy, long sz, long nstep, Point &pt)
+{
+    long i = pt.x;
+    long j = pt.y;
+    long k = pt.z;
+
+    //
+    long xb = i - nstep;
+    long xe = i + nstep;
+
+    if(xb<0)
+        xb = 0;
+    if(xe>sx)
+        xe = sx;
+
+    long yb = j - nstep;
+    long ye = j + nstep;
+
+    if(yb<0)
+        yb = 0;
+    if(ye>sy)
+        ye = sy;
+
+    long zb = k - nstep;
+    long ze = k + nstep;
+
+    if(zb<0)
+        zb = 0;
+    if(ze>sz)
+        ze = sz;
+
+    float maxval = p[k*sx*sy + j*sx + i];
+
+    //
+    for(long kk=zb; kk<ze; kk++)
+    {
+        long ofkk = kk*sx*sy;
+        for(long jj=yb; jj<ye; jj++)
+        {
+            long ofjj = ofkk + jj*sx;
+            for(long ii=xb; ii<xe; ii++)
+            {
+                long idx = ofjj + ii;
+
+                if(p[idx]>maxval)
+                {
+                    maxval = p[idx];
+
+                    pt.x = ii;
+                    pt.y = jj;
+                    pt.z = kk;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 float NCPointCloud::distP2L(Point p, LineSegment line)
 {
     float d = 1e6;

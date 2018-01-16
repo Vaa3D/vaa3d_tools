@@ -229,6 +229,9 @@ public:
     int removeRedundant();
 
     //
+    int shift(float *p, long sx, long sy, long sz, long nstep, Point &pt);
+
+    //
     int assembleFragments(int k);
 
     //
@@ -739,12 +742,12 @@ int points2maskimage(T * &img1d, NCPointCloud pc, long sz0, long sz1, long sz2, 
 }
 
 template<class T>
-int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud &pc)
+int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud &pc, float adjintthresh=0.5)
 {
     //
     float thresh;
     estimateIntensityThreshold(data1d, sx*sy*sz, thresh);
-    thresh *= 0.5;
+    thresh *= adjintthresh;
 
     //
     NCPointCloud pointcloud;
