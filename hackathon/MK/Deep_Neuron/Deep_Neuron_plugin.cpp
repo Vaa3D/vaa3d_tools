@@ -8,6 +8,7 @@
 
 #include "v3d_message.h"
 #include "Deep_Neuron_plugin.h"
+#include "DeepNeuronUI.h"
 #include "tester.h"
 
 using namespace std;
@@ -17,8 +18,7 @@ Q_EXPORT_PLUGIN2(Deep_Neuron, DeepNeuron_plugin);
 QStringList DeepNeuron_plugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+		<<tr("start Deep Neuron application")
 		<<tr("about");
 }
 
@@ -32,10 +32,11 @@ QStringList DeepNeuron_plugin::funclist() const
 
 void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("start Deep Neuron application"))
 	{
-		cout << "menu test" << endl;
-		v3d_msg("To be implemented.");
+		DeepNeuronUI* inputForm = new DeepNeuronUI(0, &callback);
+		connect(this, SIGNAL(callUpUI()), inputForm, SLOT(uiCall()));
+		emit callUpUI();
 	}
 	else if (menu_name == tr("menu2"))
 	{

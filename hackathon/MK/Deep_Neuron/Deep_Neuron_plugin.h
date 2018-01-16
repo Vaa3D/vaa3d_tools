@@ -28,6 +28,10 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+
+signals:
+	void callUpUI();
+
 };
 
 #endif

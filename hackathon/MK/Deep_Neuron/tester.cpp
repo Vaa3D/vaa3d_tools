@@ -46,7 +46,6 @@ void Tester::test1()
 		int markerX = int(floor(markerIt->x)) - 1;
 		int markerY = int(floor(markerIt->y)) - 1;
 		int z = int(floor(markerIt->z)) - 1;
-
 		V3DLONG VOIxyz[4];
 		VOIxyz[0] = 97;
 		VOIxyz[1] = 97;
@@ -170,10 +169,10 @@ void Tester::test1()
 				}
 			}
 			//cout << endl;
-		}
+		}*/
 		if (blockarea) { delete[]blockarea; blockarea = 0; }
 		if (VOIPtr) { delete[]VOIPtr; VOIPtr = 0; }
-		cout << "complete 1 marker" << endl;*/
+		cout << "complete 1 marker" << endl;
 	}
 	delete[] ImgPtr;
 	writeSWC_file(outswc_file, sampledTree);
