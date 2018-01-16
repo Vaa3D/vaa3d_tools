@@ -2545,7 +2545,6 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             P.in_sz[2] = in_zz[2];
         }else
         {
-            v3d_msg("check!");
             V3DLONG *in_zz = 0;
             if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
             {
