@@ -10,7 +10,6 @@
 #define BOOST_FILESYSTEM_NO_LIB
 #define BOOST_SYSTEM_NO_LIB
 
-
 #include <QtGui>
 
 #include <v3d_interface.h>
@@ -28,9 +27,6 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
-
-signals:
-	void callUpUI();
 
 };
 

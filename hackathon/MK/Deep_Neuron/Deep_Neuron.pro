@@ -90,6 +90,8 @@ HEADERS += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fu
 HEADERS += $$VAA3DPATH/basic_c_fun/basic_surf_objs.h
 HEADERS += tester.h
 HEADERS += DeepNeuronUI.h
+HEADERS += imgOperator.h
+HEADERS += DLOperator.h
 
 SOURCES	+= Deep_Neuron_plugin.cpp 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
@@ -98,6 +100,8 @@ SOURCES += ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fu
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += tester.cpp
 SOURCES += DeepNeuronUI.cpp
+SOURCES += imgOperator.cpp
+SOURCES += DLOperator.cpp
 
 FORMS += DeepNeuronForm.ui
 

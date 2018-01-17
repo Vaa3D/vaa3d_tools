@@ -9,6 +9,8 @@
 #include "v3d_message.h"
 #include "Deep_Neuron_plugin.h"
 #include "DeepNeuronUI.h"
+#include "DLOperator.h"
+#include "imgOperator.h"
 #include "tester.h"
 
 using namespace std;
@@ -34,9 +36,10 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 {
 	if (menu_name == tr("start Deep Neuron application"))
 	{
-		DeepNeuronUI* inputForm = new DeepNeuronUI(0, &callback);
-		connect(this, SIGNAL(callUpUI()), inputForm, SLOT(uiCall()));
-		emit callUpUI();
+		DeepNeuronUI* inputForm = new DeepNeuronUI(parent, &callback);
+		inputForm->setWindowModality(Qt::NonModal);
+		inputForm->setWindowFlags(Qt::WindowStaysOnTopHint);
+		inputForm->show();
 	}
 	else if (menu_name == tr("menu2"))
 	{

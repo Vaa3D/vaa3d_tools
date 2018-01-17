@@ -84,8 +84,8 @@
               <string>Select required files</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_4">
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_3">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label">
                 <property name="font">
                  <font>
                   <weight>50</weight>
@@ -93,12 +93,12 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Training dataset mean (.binaryproto):</string>
+                 <string>Model deployment file:</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="1" colspan="2">
-               <widget class="QLineEdit" name="lineEdit_3">
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="lineEdit">
                 <property name="font">
                  <font>
                   <weight>50</weight>
@@ -107,7 +107,7 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="3">
+              <item row="0" column="2">
                <widget class="QPushButton" name="pushButton_3">
                 <property name="font">
                  <font>
@@ -120,39 +120,6 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="3">
-               <widget class="QPushButton" name="pushButton_5">
-                <property name="font">
-                 <font>
-                  <weight>50</weight>
-                  <bold>false</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Browse</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0" colspan="4">
-               <widget class="Line" name="line">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label">
-                <property name="font">
-                 <font>
-                  <weight>50</weight>
-                  <bold>false</bold>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Model deployment file (.prototxt): </string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="0">
                <widget class="QLabel" name="label_2">
                 <property name="font">
@@ -162,21 +129,11 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Trained model file (.caffemodel):</string>
+                 <string>Trained model file:</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1" colspan="2">
-               <widget class="QLineEdit" name="lineEdit">
-                <property name="font">
-                 <font>
-                  <weight>50</weight>
-                  <bold>false</bold>
-                 </font>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1" colspan="2">
+              <item row="1" column="1">
                <widget class="QLineEdit" name="lineEdit_2">
                 <property name="font">
                  <font>
@@ -186,7 +143,7 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="3">
+              <item row="1" column="2">
                <widget class="QPushButton" name="pushButton_4">
                 <property name="font">
                  <font>
@@ -199,7 +156,50 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_3">
+                <property name="font">
+                 <font>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Training dataset mean:</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLineEdit" name="lineEdit_3">
+                <property name="font">
+                 <font>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QPushButton" name="pushButton_5">
+                <property name="font">
+                 <font>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Browse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0" colspan="3">
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0" colspan="2">
                <widget class="QCheckBox" name="checkBox">
                 <property name="font">
                  <font>
@@ -285,8 +285,74 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>DeepNeuronDialog</receiver>
+   <slot>closeClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>625</x>
+     <y>290</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>699</x>
+     <y>294</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_3</sender>
+   <signal>clicked()</signal>
+   <receiver>DeepNeuronDialog</receiver>
+   <slot>filePath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>589</x>
+     <y>109</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>627</x>
+     <y>6</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_4</sender>
+   <signal>clicked()</signal>
+   <receiver>DeepNeuronDialog</receiver>
+   <slot>filePath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>620</x>
+     <y>150</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>700</x>
+     <y>156</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_5</sender>
+   <signal>clicked()</signal>
+   <receiver>DeepNeuronDialog</receiver>
+   <slot>filePath()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>621</x>
+     <y>186</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>695</x>
+     <y>202</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>okClicked()</slot>
+  <slot>closeClicked()</slot>
+  <slot>filePath()</slot>
  </slots>
 </ui>

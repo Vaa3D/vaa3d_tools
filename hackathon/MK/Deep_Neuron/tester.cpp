@@ -6,7 +6,6 @@
 #include "tester.h"
 #include "classification.h"
 #include "mean_shift_fun.h"
-#include "..\Neurite_Instructor\funcs.h"
 
 #include "caffe/caffe.hpp"
 
