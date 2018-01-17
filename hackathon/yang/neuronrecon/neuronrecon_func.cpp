@@ -1123,9 +1123,10 @@ bool dfsconnect_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     QList<NeuronSWC> neuron, result;
     NeuronTree nt = readSWC_file(fninput);
     neuron = nt.listNeuron;
+    QString fileDefaultName;
     if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
     {
-        QString fileDefaultName = fninput+QString("_sorted.swc");
+        fileDefaultName = fninput+QString("_sorted.swc");
         //write new SWC to file
         if (!sortswc::export_list2file<long>(result,fileDefaultName,fninput))
         {
@@ -1134,6 +1135,19 @@ bool dfsconnect_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         }
     }
 
+    //
+    QStringList files;
+    files << fileDefaultName;
+
+    NCPointCloud pc;
+    pc.getPointCloud(files);
+
+    vector<LineSegment> lines = separate(pc);
+    pc = combinelines(lines);
+
+    pc.saveNeuronTree(pc, fninput + QString("_cleaned.swc"));
+
+    //
     return true;
 }
 

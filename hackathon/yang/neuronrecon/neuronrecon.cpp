@@ -1259,6 +1259,124 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
 }
 
 //
+int NCPointCloud::tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh, bool rmNoise)
+{
+    // load point cloud save as a .apo file
+
+    if(infile.toUpper().endsWith(".APO"))
+    {
+        QList <CellAPO> inputPoints = readAPO_file(infile);
+
+        long n = inputPoints.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            CellAPO cell = inputPoints[i];
+
+            //
+            Point p;
+
+            p.n = i+1; // # assigned
+            p.x = cell.x;
+            p.y = cell.y;
+            p.z = cell.z;
+            p.radius = 0.5*cell.volsize;
+
+            points.push_back(p);
+        }
+    }
+    else if(infile.toUpper().endsWith(".MARKER"))
+    {
+        QList<ImageMarker> file_inmarkers = readMarker_file(infile);;
+
+        long n = file_inmarkers.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            //
+            Point p;
+
+            p.n = file_inmarkers.at(i).n;
+
+            p.x = file_inmarkers.at(i).x;
+            p.y = file_inmarkers.at(i).y;
+            p.z = file_inmarkers.at(i).z;
+
+            p.radius = file_inmarkers.at(i).radius;
+
+            points.push_back(p);
+        }
+    }
+    else
+    {
+        cout<<"Invalid input"<<endl;
+        return -1;
+    }
+
+    //
+    if(rmNoise)
+        removeNoise();
+
+    // connect points into lines
+    connectPoints(2*k,2*angle,2*m);
+
+    //
+    NCPointCloud pc;
+    //pc.copy(*this);
+
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].parents[0]!=-1 || points[i].hasChildren())
+        {
+            continue;
+        }
+
+        pc.points.push_back(points[i]);
+    }
+
+    pc.connectPoints(k,angle,m);
+
+    saveNeuronTree(pc, outfile+QString("_2nd.swc"));
+
+
+    //
+    if(rmNoise)
+        removeRedundant();
+
+    // merge lines
+    // mergeLines(angle);
+
+    // assemble fragments into trees
+    //assembleFragments(k);
+
+    // save connected results into a .swc file
+    if(!outfile.isEmpty())
+    {
+        saveNeuronTree(*this, outfile);
+
+        // assemble fragments into trees
+        QList<NeuronSWC> neuron, result;
+        NeuronTree nt = readSWC_file(outfile);
+        neuron = nt.listNeuron;
+        if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
+        {
+            QString fileDefaultName = outfile+QString("_sorted.swc");
+            //write new SWC to file
+            if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
+            {
+                cout<<"fail to write the output result"<<endl;
+                return -1;
+            }
+        }
+    }
+
+    //
+    return 0;
+}
+
+//
 int NCPointCloud::sample(QString infile, QString outfile, float srx, float sry, float srz)
 {
     // load point cloud save as a .apo file
@@ -1741,11 +1859,13 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
                         distThresh1 = 2*m*(p.radius + p_next.radius);
                         distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
 
-                        float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3;
+                        float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
+
+                        float meanintensity = (p.val + p_next.val + p_next_next.val)/3 + 1e-6;
 
                         if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                         {
-                            candidates.push_back(make_tuple(dist*angle, 1/meanradius, i, j));
+                            candidates.push_back(make_tuple(dist*angle, 1/meanradius/meanintensity, i, j));
                         }
                     }
                 }
@@ -4091,4 +4211,29 @@ vector<LineSegment> separate(NCPointCloud pc)
 
     //
     return lines;
+}
+
+NCPointCloud combinelines(vector<LineSegment> lines)
+{
+    //
+    NCPointCloud pc;
+
+    long thresh = 3;
+
+    //
+    for(long i=0; i<lines.size(); i++)
+    {
+        LineSegment line = lines[i];
+
+        if(line.points.size()>thresh)
+        {
+            for(long j=0; j<line.points.size(); j++)
+            {
+                pc.points.push_back(line.points[j]);
+            }
+        }
+    }
+
+    //
+    return pc;
 }

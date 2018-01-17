@@ -238,6 +238,9 @@ public:
     int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
 
     //
+    int tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
+
+    //
     int trace();
 
     // cost func
@@ -365,6 +368,7 @@ public:
 
 //
 vector<LineSegment> separate(NCPointCloud pc);
+NCPointCloud combinelines(vector<LineSegment> lines);
 
 //
 template <typename T>
