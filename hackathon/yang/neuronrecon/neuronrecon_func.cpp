@@ -1460,6 +1460,130 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     return true;
 }
 
+bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    char * paras = NULL;
+    long xstep = 512;
+    long ystep = 512;
+    long zstep = 512;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+            xstep = atoi(paras->at(0));
+
+            if (paras->size() >= 2)
+            {
+                ystep = atoi(paras->at(1));
+
+                if (paras->size() >= 3)
+                {
+                    zstep = atoi(paras->at(2));
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    long n = 0;
+
+    //
+    QString filename = QString(inlist->at(0));
+
+
+    if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".V3DRAW"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(filename.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        //
+        unsigned char *p=NULL;
+        unsigned char *pImg = p4dImage->getRawData();
+        long sx = p4dImage->getXDim(), sy = p4dImage->getYDim(), sz = p4dImage->getZDim();
+
+        for(long z=0; z<sz; z+=zstep)
+        {
+            n++;
+            QString outFileName = filename.left(filename.lastIndexOf(".")).append(QString("_block%1.tif").arg(n));
+
+            long zs = (n-1)*zstep;
+            long ze = z+zstep-1;
+
+            long ofz = z*sx*sy;
+
+            for(long y=0; y<sy; y+=ystep)
+            {
+                long ys = (n-1)*ystep;
+                long ye = y+ystep-1;
+
+                long ofy = ofz + y*sx;
+
+                for(long x=0; x<sx; x+=xstep)
+                {
+                    long xs = (n-1)*xstep;
+                    long xe = x+xstep-1;
+
+                    //
+                    y_new1dp<unsigned char, long>(p, xstep*ystep*zstep);
+
+                    //
+                    for(long k=0; k<zstep; k++)
+                    {
+                        for(long j=0; j<ystep; j++)
+                        {
+                            for(long i=0; i<xstep; i++)
+                            {
+
+                            }
+                        }
+                    }
+
+
+
+                    Image4DSimple * p4dimg;
+                    p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());
+                    p4dImage->saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+
+                }
+            }
+        }
+    }
+    else
+    {
+        cout<<"Current only support TIFF/V3DRAW image as input file\n";
+        return -1;
+    }
+
+    //
+    return true;
+}
+
 bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //
