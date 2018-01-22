@@ -993,6 +993,8 @@ bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
     //parsing input
     long z = 5;
+    long y = 0;
+    long x = 0;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -1000,6 +1002,16 @@ bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
         {
             z = atoi(paras->at(0));
             cout<<"translate (z): "<<z<<endl;
+            if (paras->size() >= 2)
+            {
+                y = atoi(paras->at(1));
+                cout<<"translate (y): "<<z<<endl;
+                if (paras->size() >= 3)
+                {
+                    x = atoi(paras->at(2));
+                    cout<<"translate (x): "<<z<<endl;
+                }
+            }
         }
         else
         {
