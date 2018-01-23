@@ -972,11 +972,11 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         pc.delDuplicatedPoints();
         sortByRadiusIntensity<unsigned char>(p, sx, sy, sz, pc, adjintthresh);
         pc.savePointCloud(fnpointcloud);
-    }
 
-    // load
-    NCPointCloud pointcloud;
-    pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, removeNoise);
+        // load
+        NCPointCloud pointcloud;
+        pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, removeNoise, p, sx, sy, sz);
+    }
 
     //
     return true;
@@ -992,7 +992,7 @@ bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
     }
 
     //parsing input
-    long z = 5;
+    long z = 0;
     long y = 0;
     long x = 0;
     if (input.size()>1)
@@ -1173,7 +1173,6 @@ bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgLis
     }
     
     //parsing input
-    char * paras = NULL;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -2283,8 +2282,8 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         p2.is_gsdt = true;
         p2.is_coverage_prune = true;
         p2.is_break_accept = true;
-        p2.bkg_thresh = 45; // 55
-        p2.length_thresh = 10; // 15
+        p2.bkg_thresh = 10; // 55
+        p2.length_thresh = 5; // 15
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;

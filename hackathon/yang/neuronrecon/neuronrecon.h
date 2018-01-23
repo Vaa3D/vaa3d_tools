@@ -215,7 +215,7 @@ public:
     int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
 
     //
-    int connectPoints(int k, float maxAngle, float m);
+    int connectPoints(int k, float maxAngle, float m, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     //
     int connectPoints2(int k, float maxAngle, float m);
@@ -235,7 +235,7 @@ public:
     int assembleFragments(int k);
 
     //
-    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
+    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     //
     int tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
@@ -837,6 +837,104 @@ int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud &pc
 
     //
     return 0;
+}
+
+template<class T>
+float meanIntensityValueLineSegment(T *pImg, long sx, long sy, long sz, Point p, Point q)
+{
+    //
+    float meanVal = 0;
+    long n=0;
+
+    //
+    LineSegment ls;
+    ls.points.push_back(p);
+    ls.points.push_back(q);
+
+    ls.origin = new Point;
+    ls.origin->x = p.x;
+    ls.origin->y = p.y;
+    ls.origin->z = p.z;
+
+    ls.axis = new Vector;
+    ls.axis->dx = q.x - p.x;
+    ls.axis->dy = q.y - p.y;
+    ls.axis->dz = q.z - p.z;
+
+    ls.root = p;
+    ls.tip = q;
+
+    ls.b_updated = true; // do not update
+
+    //
+    long xs, xe, ys, ye, zs, ze;
+
+    if(p.x>q.x)
+    {
+        xs = q.x;
+        xe = p.x;
+    }
+    else
+    {
+        xs = p.x;
+        xe = q.x;
+    }
+
+    if(p.y>q.y)
+    {
+        ys = q.y;
+        ye = p.y;
+    }
+    else
+    {
+        ys = p.y;
+        ye = q.y;
+    }
+
+    if(p.z>q.z)
+    {
+        zs = q.z;
+        ze = p.z;
+    }
+    else
+    {
+        zs = p.z;
+        ze = q.z;
+    }
+
+    for(long z=zs; z<ze; z++)
+    {
+        long ofz = z*sx*sy;
+        for(long y=ys; y<ye; y++)
+        {
+            long ofy = ofz + y*sx;
+            for(long x=xs; x<xe; x++)
+            {
+                long idx = ofy + x;
+                Point m;
+                m.x = x;
+                m.y = y;
+                m.z = z;
+
+                if(ls.onSegment(m))
+                {
+                    meanVal += pImg[idx];
+                    n++;
+                }
+            }
+        }
+    }
+
+
+    //
+    if(meanVal)
+    {
+        return meanVal/n;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 

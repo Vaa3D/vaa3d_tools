@@ -1160,7 +1160,7 @@ float NCPointCloud::distP2L(Point p, LineSegment line)
 }
 
 //
-int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh, bool rmNoise)
+int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh, bool rmNoise, unsigned char *pImg, long sx, long sy, long sz)
 {
     // load point cloud save as a .apo file
 
@@ -1221,7 +1221,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
         removeNoise();
 
     // connect points into lines
-    connectPoints(k,angle,m);
+    connectPoints(k,angle,m, pImg, sx, sy, sz);
 
     //
     if(rmNoise)
@@ -1819,7 +1819,7 @@ int NCPointCloud::assembleFragments(int k)
 }
 
 //
-int NCPointCloud::connectPoints(int k, float maxAngle, float m)
+int NCPointCloud::connectPoints(int k, float maxAngle, float m, unsigned char *pImg, long sx, long sy, long sz)
 {
     //
     float distThresh1, distThresh2;
@@ -1887,7 +1887,9 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
 
                         float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
 
-                        float meanintensity = (p.val + p_next.val + p_next_next.val)/3 + 1e-6;
+                        //float meanintensity = (p.val + p_next.val + p_next_next.val)/3 + 1e-6;
+
+                        float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2;
 
                         if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                         {
