@@ -14,7 +14,6 @@
 #include "../../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include "../../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 #include "../../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
-#include "../../../../released_plugins/v3d_plugins/terastitcher/src/core/imagemanager/VirtualVolume.h"
 #include "../../../xiaoxiaol/consensus_skeleton_2/mst_boost_prim.h"
 #include "../../APP2_large_scale/readRawfile_func.h"
 
@@ -27,7 +26,6 @@
 
 
 using namespace std;
-using namespace iim;
 using namespace boost;
 
 double vectorDistance(std::vector<float> v1, std::vector<float> v2)
@@ -1031,10 +1029,15 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             P = in_sz[2];
         }else
         {
-            VirtualVolume* aVolume = VirtualVolume::instance(inimg_file.toStdString().c_str());
-            N = aVolume->getDIM_H();
-            M = aVolume->getDIM_V();
-            P = aVolume->getDIM_D();
+            V3DLONG *in_zz = 0;
+            if(!callback.getDimTeraFly(inimg_file.toStdString(),in_zz))
+            {
+                return false;
+            }
+
+            N = in_zz[0];
+            M = in_zz[1];
+            P = in_zz[2];
         }
 
         NeuronTree nt = readSWC_file(SWCfileName);
@@ -1085,8 +1088,9 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             }else
             {
                 unsigned char *im_cropped_3D = 0;
-                VirtualVolume* aVolume = VirtualVolume::instance(inimg_file.toStdString().c_str());
-                im_cropped_3D = aVolume->loadSubvolume_to_UINT8(yb,ye+1,xb,xe+1,zb,ze+1);
+                im_cropped_3D = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,
+                                                                  yb,ye+1,zb, ze+1);
+
                 for(V3DLONG iz = 0; iz <= ze-zb; iz++)
                 {
                     V3DLONG offsetk = iz*im_cropped_sz[0]*im_cropped_sz[1];
@@ -1729,10 +1733,11 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 
         for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
         {
-#if  defined(Q_OS_LINUX)
 
             V3DLONG yb = iy;
             V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+#if  defined(Q_OS_LINUX)
+
             printf("number of threads for iy = %d\n", omp_get_num_threads());
 
 #pragma omp parallel for

@@ -46,7 +46,11 @@ win32 {
     LIBS += -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61 -lboost_python-vc120-mt-1_61 -lboost_filesystem-vc120-mt-1_61
 }
 
-unix {
+unix:!macx {
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -fopenmp
+    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+
     LIBS += -L/local2/zhi/caffe/build/lib
     LIBS += -lcaffe
 
@@ -72,15 +76,24 @@ unix {
 
 
 macx{
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
-}
 
-unix:!macx {
-    QMAKE_CXXFLAGS += -fopenmp
-    LIBS += -fopenmp
-    LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
+    INCLUDEPATH	+= /Users/zhiz/Documents/work/caffe/include
+    INCLUDEPATH	+= /Users/zhiz/Documents/work/caffe/build/include
+    INCLUDEPATH	+= /Users/zhiz/Documents/work/caffe/.build_release/src
+    INCLUDEPATH	+= /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers/
 
+    LIBS += -L ../../zhi/deep_learning/caffe/lib_mac -Wl,-all_load -lcaffe
+    LIBS += -L/usr/local/lib
+    LIBS += -lglog -lgflags -lprotobuf -llmdb  -lcblas -lm -lhdf5 -lsz  -lz -lhdf5_hl
+    LIBS += -lsnappy
+    LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_videoio -lopencv_imgcodecs
+    LIBS += -lboost_system -lboost_filesystem -lboost_thread-mt
+
+    DEFINES += USE_OPENCV CPU_ONLY
 }
 
 

@@ -6,6 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 
 #include <algorithm>
 #include <iosfwd>
@@ -37,6 +38,7 @@ Classifier::Classifier(const string& model_file,
 
     /* Load the network. */
     batch_size_=1000;
+    new Net<float>(model_file, TEST);
     net_.reset(new Net<float>(model_file, TEST));
     net_->CopyTrainedLayersFrom(trained_file);
     CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";
@@ -48,7 +50,11 @@ Classifier::Classifier(const string& model_file,
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
     /* Load the binaryproto mean file. */
     if(!mean_file.empty()) SetMean(mean_file);
+#if  defined(Q_OS_MAC)
+    Caffe::set_mode(Caffe::CPU);
+#else
     Caffe::set_mode(Caffe::GPU);
+#endif
     /* Load labels. */
 }
 

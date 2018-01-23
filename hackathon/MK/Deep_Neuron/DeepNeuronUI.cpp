@@ -63,24 +63,24 @@ void DeepNeuronUI::okClicked()
 
 	if (ui->lineEdit->text() != ".prototxt")
 	{
-		this->deployDisplay = ui->lineEdit->text();
-		this->curImgDLProcessor->deployName = ui->lineEdit->text().toStdString();
+        this->deployDisplay = ui->lineEdit->text();
+        this->curImgDLProcessor->deployName = ui->lineEdit->text().toUtf8().constData();
 	}
-	else this->curImgDLProcessor->deployName = deployDisplay.toStdString();
+    else this->curImgDLProcessor->deployName = deployDisplay.toUtf8().constData();
 
 	if (ui->lineEdit_2->text() != ".caffemodel")
 	{
 		this->modelDisplay = ui->lineEdit_2->text();
-		this->curImgDLProcessor->modelName = ui->lineEdit_2->text().toStdString();
+        this->curImgDLProcessor->modelName = ui->lineEdit_2->text().toUtf8().constData();
 	}
-	else this->curImgDLProcessor->modelName = modelDisplay.toStdString();
+    else this->curImgDLProcessor->modelName = modelDisplay.toUtf8().constData();
 
 	if (ui->lineEdit_3->text() != ".binaryproto")
 	{
 		this->meanDisplay = ui->lineEdit_3->text();
-		this->curImgDLProcessor->meanName = ui->lineEdit_3->text().toStdString();
+        this->curImgDLProcessor->meanName = ui->lineEdit_3->text().toUtf8().constData();
 	}
-	else this->curImgDLProcessor->meanName = meanDisplay.toStdString();
+    else this->curImgDLProcessor->meanName = meanDisplay.toUtf8().constData();
 
 	if (this->deployDisplay == "")
 	{
