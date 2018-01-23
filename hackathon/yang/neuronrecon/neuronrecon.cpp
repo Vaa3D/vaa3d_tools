@@ -1242,9 +1242,10 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
         QList<NeuronSWC> neuron, result;
         NeuronTree nt = readSWC_file(outfile);
         neuron = nt.listNeuron;
+        QString fileDefaultName;
         if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
         {
-            QString fileDefaultName = outfile+QString("_sorted.swc");
+            fileDefaultName = outfile.left(outfile.lastIndexOf(".")).append("_sorted.swc");
             //write new SWC to file
             if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
             {
@@ -1252,6 +1253,18 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
                 return -1;
             }
         }
+
+        //
+        QStringList files;
+        files << fileDefaultName;
+
+        NCPointCloud pc;
+        pc.getPointCloud(files);
+
+        vector<LineSegment> lines = separate(pc);
+        pc = combinelines(lines);
+
+        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_traced.swc"));
     }
 
     //
@@ -1360,9 +1373,10 @@ int NCPointCloud::tracing2(QString infile, QString outfile, int k, float angle, 
         QList<NeuronSWC> neuron, result;
         NeuronTree nt = readSWC_file(outfile);
         neuron = nt.listNeuron;
+        QString fileDefaultName;
         if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
         {
-            QString fileDefaultName = outfile+QString("_sorted.swc");
+            fileDefaultName = outfile.left(outfile.lastIndexOf(".")).append("_sorted.swc");
             //write new SWC to file
             if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
             {
@@ -1370,6 +1384,18 @@ int NCPointCloud::tracing2(QString infile, QString outfile, int k, float angle, 
                 return -1;
             }
         }
+
+        //
+        QStringList files;
+        files << fileDefaultName;
+
+        NCPointCloud pc;
+        pc.getPointCloud(files);
+
+        vector<LineSegment> lines = separate(pc);
+        pc = combinelines(lines);
+
+        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_traced.swc"));
     }
 
     //

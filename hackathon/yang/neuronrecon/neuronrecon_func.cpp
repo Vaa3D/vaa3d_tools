@@ -1482,7 +1482,6 @@ bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     }
 
     //parsing input
-    char * paras = NULL;
     long xstep = 512;
     long ystep = 512;
     long zstep = 512;
@@ -1527,60 +1526,98 @@ bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 
     if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".V3DRAW"))
     {
+        cout<<"loading image ...\n";
         Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(filename.toStdString().c_str()) );
         if (!p4dImage || !p4dImage->valid())
         {
             cout<<"fail to load image!\n";
             return false;
         }
+        cout<<"... image is loaded\n";
 
         //
-        unsigned char *p=NULL;
         unsigned char *pImg = p4dImage->getRawData();
         long sx = p4dImage->getXDim(), sy = p4dImage->getYDim(), sz = p4dImage->getZDim();
+        long szblock = xstep*ystep*zstep;
 
         for(long z=0; z<sz; z+=zstep)
         {
-            n++;
-            QString outFileName = filename.left(filename.lastIndexOf(".")).append(QString("_block%1.tif").arg(n));
-
-            long zs = (n-1)*zstep;
+            long zs = z;
             long ze = z+zstep-1;
+            if(ze>sz-1) ze=sz-1;
 
-            long ofz = z*sx*sy;
+            cout<<"z ... "<<zs<<" "<<ze<<endl;
 
             for(long y=0; y<sy; y+=ystep)
             {
-                long ys = (n-1)*ystep;
+                long ys = y;
                 long ye = y+ystep-1;
+                if(ye>sy-1) ye=sy-1;
 
-                long ofy = ofz + y*sx;
+                cout<<"y ... "<<ys<<" "<<ye<<endl;
 
                 for(long x=0; x<sx; x+=xstep)
                 {
-                    long xs = (n-1)*xstep;
+                    long xs = x;
                     long xe = x+xstep-1;
+                    if(xe>sx-1) xe=sx-1;
+
+                    cout<<"x ... "<<xs<<" "<<xe<<endl;
 
                     //
-                    y_new1dp<unsigned char, long>(p, xstep*ystep*zstep);
+                    unsigned char *p=NULL;
+                    y_new1dp<unsigned char, long>(p, szblock);
+
+                    cout<<"new a pointer for a block \n";
 
                     //
-                    for(long k=0; k<zstep; k++)
+                    n++;
+                    QString outFileName = filename.left(filename.lastIndexOf(".")).append(QString("_block%1.tif").arg(n));
+
+                    cout<<"output block image name "<<outFileName.toStdString()<<endl;
+
+                    //
+                    for(long k=zs; k<ze; k++)
                     {
-                        for(long j=0; j<ystep; j++)
+                        //cout<<"k "<<k<<endl;
+                        long ofk = (k-zs)*xstep*ystep;
+                        long ofz = k*sx*sy;
+                        for(long j=ys; j<ye; j++)
                         {
-                            for(long i=0; i<xstep; i++)
+                            //cout<<"j "<<j<<endl;
+                            long ofj = ofk + (j-ys)*xstep;
+                            long ofy = ofz + j*sx;
+                            for(long i=xs; i<xe; i++)
                             {
-
+                                p[ofj + i-xs] = pImg[ofy + i];
                             }
                         }
                     }
 
+                    cout<<"done with block image copy\n";
 
+                    //
+                    Image4DSimple p4dimg;
 
-                    Image4DSimple * p4dimg;
-                    p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());
-                    p4dImage->saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+                    p4dimg.setDatatype(V3D_UINT8);
+                    p4dimg.setXDim(xstep);
+                    p4dimg.setYDim(ystep);
+                    p4dimg.setZDim(zstep);
+                    p4dimg.setCDim(1);
+                    p4dimg.setTDim(1);
+
+                    cout<<"set pointer to image4dsimple class"<<endl;
+
+                    p4dimg.setNewRawDataPointer(p);
+
+                    cout<<"save block image to "<<outFileName.toStdString()<<endl;
+
+                    p4dimg.saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+
+                    cout<<"block image is saved\n";
+
+                    //
+                    //y_del1dp<unsigned char>(p);
 
                 }
             }
@@ -2178,7 +2215,6 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
     
     //parsing input
-    char * paras = NULL;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -2247,8 +2283,8 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         p2.is_gsdt = true;
         p2.is_coverage_prune = true;
         p2.is_break_accept = true;
-        p2.bkg_thresh = 55;
-        p2.length_thresh = 15;
+        p2.bkg_thresh = 45; // 55
+        p2.length_thresh = 10; // 15
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;
@@ -2269,29 +2305,29 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         proc_app2(callback, p2, versionStr);
         
         // method #1 parameters set #2
-        p2.is_gsdt = true;
-        p2.is_coverage_prune = true;
-        p2.is_break_accept = true;
-        p2.bkg_thresh = 10;
-        p2.length_thresh = 5;
-        p2.cnn_type = 2;
-        p2.channel = 0;
-        p2.SR_ratio = 3.0/9.9;
-        p2.b_256cube = false;
-        p2.b_RadiusFrom2D = true;
-        p2.b_resample = 1;
-        p2.b_intensity = 0;
-        p2.b_brightfiled = 0;
-        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+//        p2.is_gsdt = true;
+//        p2.is_coverage_prune = true;
+//        p2.is_break_accept = true;
+//        p2.bkg_thresh = 10;
+//        p2.length_thresh = 5;
+//        p2.cnn_type = 2;
+//        p2.channel = 0;
+//        p2.SR_ratio = 3.0/9.9;
+//        p2.b_256cube = false;
+//        p2.b_RadiusFrom2D = true;
+//        p2.b_resample = 1;
+//        p2.b_intensity = 0;
+//        p2.b_brightfiled = 0;
+//        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
         
-        p2.p4dImage = p4dImage;
-        p2.xc0 = p2.yc0 = p2.zc0 = 0;
-        p2.xc1 = p2.p4dImage->getXDim()-1;
-        p2.yc1 = p2.p4dImage->getYDim()-1;
-        p2.zc1 = p2.p4dImage->getZDim()-1;
+//        p2.p4dImage = p4dImage;
+//        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+//        p2.xc1 = p2.p4dImage->getXDim()-1;
+//        p2.yc1 = p2.p4dImage->getYDim()-1;
+//        p2.zc1 = p2.p4dImage->getZDim()-1;
         
-        p2.outswc_file = neuronTraced2;
-        proc_app2(callback, p2, versionStr);bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+//        p2.outswc_file = neuronTraced2;
+//        proc_app2(callback, p2, versionStr);
         
         // method2 ...
         
@@ -2307,7 +2343,7 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     
     QStringList files;
     files.push_back(neuronTraced1);
-    files.push_back(neuronTraced2);
+//    files.push_back(neuronTraced2);
     
     //
     pointcloud.getPointCloud(files);
