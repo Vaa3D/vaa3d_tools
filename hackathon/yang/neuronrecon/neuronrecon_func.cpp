@@ -1565,6 +1565,10 @@ bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 
                     //
                     unsigned char *p=NULL;
+                    long bsx = xe-xs+1;
+                    long bsy = ye-ys+1;
+                    long bsz = ze-zs+1;
+                    szblock=bsx*bsy*bsz;
                     y_new1dp<unsigned char, long>(p, szblock);
 
                     cout<<"new a pointer for a block \n";
@@ -1579,12 +1583,12 @@ bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
                     for(long k=zs; k<ze; k++)
                     {
                         //cout<<"k "<<k<<endl;
-                        long ofk = (k-zs)*xstep*ystep;
+                        long ofk = (k-zs)*bsx*bsy;
                         long ofz = k*sx*sy;
                         for(long j=ys; j<ye; j++)
                         {
                             //cout<<"j "<<j<<endl;
-                            long ofj = ofk + (j-ys)*xstep;
+                            long ofj = ofk + (j-ys)*bsx;
                             long ofy = ofz + j*sx;
                             for(long i=xs; i<xe; i++)
                             {
@@ -1599,9 +1603,9 @@ bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
                     Image4DSimple p4dimg;
 
                     p4dimg.setDatatype(V3D_UINT8);
-                    p4dimg.setXDim(xstep);
-                    p4dimg.setYDim(ystep);
-                    p4dimg.setZDim(zstep);
+                    p4dimg.setXDim(bsx);
+                    p4dimg.setYDim(bsy);
+                    p4dimg.setZDim(bsz);
                     p4dimg.setCDim(1);
                     p4dimg.setTDim(1);
 
@@ -2282,8 +2286,8 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         p2.is_gsdt = true;
         p2.is_coverage_prune = true;
         p2.is_break_accept = true;
-        p2.bkg_thresh = 10; // 55
-        p2.length_thresh = 5; // 15
+        p2.bkg_thresh = 72; // 55
+        p2.length_thresh = 10; // 15
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;
@@ -3351,7 +3355,7 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             p2.is_coverage_prune = true;
             p2.is_break_accept = true;
             p2.bkg_thresh = thresh;
-            p2.length_thresh = 5;
+            p2.length_thresh = 10;
             p2.cnn_type = 2;
             p2.channel = 0;
             p2.SR_ratio = 3.0/9.9;
