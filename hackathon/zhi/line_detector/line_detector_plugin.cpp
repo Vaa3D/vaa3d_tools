@@ -19,6 +19,9 @@
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 #include <iostream>
+#include "../resample_swc/resampling.h"
+
+
 
 #include <fstream>
 
@@ -80,6 +83,7 @@ QStringList line_detector::funclist() const
         <<tr("shift_swc")
         <<tr("blocks_steps")
         <<tr("check_tips")
+        <<tr("generate_training_unet")
         <<tr("help");
 }
 
@@ -980,6 +984,111 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 //        QString swcString = marker_name + "_cropped.v3draw_manual.swc";
 //        writeSWC_file(swcString,nt);
 
+
+    }else if (func_name == tr("generate_training_unet"))
+    {
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        QString inimg_file = infiles[0];
+        int k=0;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") swc_name = ""; k++;
+
+        unsigned char* data1d = 0;
+        V3DLONG in_sz[4];
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",inimg_file.toStdString().c_str());
+            return -1;
+        }
+
+
+        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(marker_name)));
+        V3DLONG soma_x = file_inmarkers.at(0).x;
+        V3DLONG soma_y = file_inmarkers.at(0).y;
+        V3DLONG soma_z = file_inmarkers.at(0).z;
+
+        NeuronTree nt_manual = readSWC_file(swc_name);
+        for(V3DLONG d = 0; d <nt_manual.listNeuron.size(); d++)
+        {
+            if(NTDIS(nt_manual.listNeuron.at(d),file_inmarkers.at(0))>150)
+            {
+                V3DLONG start_x = nt_manual.listNeuron.at(d).x - 64;
+                V3DLONG end_x = start_x + 128 - 1;
+                V3DLONG start_y = nt_manual.listNeuron.at(d).y - 64;
+                V3DLONG end_y = start_y + 128 - 1;
+                V3DLONG start_z = nt_manual.listNeuron.at(d).z - 64;
+                V3DLONG end_z = start_z + 128 - 1;
+
+                if(start_x < 0 || start_y < 0 || start_z < 0 || end_x>=in_sz[0] || end_y >= in_sz[1] || end_z >= in_sz[2])
+                    continue;
+
+                V3DLONG mysz[4];
+                mysz[0] = end_x -start_x +1;
+                mysz[1] = end_y - start_y +1;
+                mysz[2] = end_z - start_z +1;
+                mysz[3] = 1;
+                unsigned char* data1d_crop = 0;
+                V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
+                try {data1d_crop = new unsigned char [pagesz];}
+                catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+                V3DLONG i = 0;
+                for(V3DLONG iz = start_z; iz <= end_z; iz++)
+                {
+                    V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
+                    for(V3DLONG iy = start_y; iy <= end_y; iy++)
+                    {
+                        V3DLONG offsetj = iy*in_sz[0];
+                        for(V3DLONG ix = start_x; ix <= end_x; ix++)
+                        {
+                            data1d_crop[i] = data1d[offsetk + offsetj + ix];
+                            i++;
+                        }
+                    }
+                }
+
+                QString imageSaveString = inimg_file + ".tif";
+                simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)data1d_crop, mysz, 1);
+
+                NeuronTree nt_crop;
+                QList <NeuronSWC> & listNeuron = nt_crop.listNeuron;
+
+                NeuronTree nt = resample(nt_manual,1);
+                for(V3DLONG i =0; i < nt.listNeuron.size();i++)
+                {
+                    nt.listNeuron[i].x -= start_x;
+                    nt.listNeuron[i].y -= start_y;
+                    nt.listNeuron[i].z -= start_z;
+                    if(nt.listNeuron[i].x  >= 0 && nt.listNeuron[i].x  < mysz[0] && nt.listNeuron[i].y  >= 0 && nt.listNeuron[i].y  < mysz[1] && nt.listNeuron[i].z >=0 && nt.listNeuron[i].z < mysz[2])
+                        listNeuron << nt.listNeuron.at(i);
+                }
+
+                NeuronTree nt_crop_sorted;
+                SortSWC(nt_crop.listNeuron, nt_crop_sorted.listNeuron ,VOID, VOID);
+
+                QString swcSaveString = inimg_file + ".swc";
+                writeSWC_file(swcSaveString,nt_crop_sorted);
+
+                unsigned char* data1d_mask = 0;
+                data1d_mask = new unsigned char [pagesz];
+                memset(data1d_mask,0,pagesz*sizeof(unsigned char));
+                double margin=1;//by PHC 20170531
+                ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2], margin);
+//                for(V3DLONG i = 0; i < pagesz; i++)
+//                    if(data1d_mask[i] > 0) data1d_mask[i] = 1;
+
+                QString labelSaveString = inimg_file + "_label.tif";
+                simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
+                return true;
+            }
+        }
 
     }else if (func_name == tr("shift_swc"))
     {
