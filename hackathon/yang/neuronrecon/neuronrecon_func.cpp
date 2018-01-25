@@ -1056,8 +1056,8 @@ bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             Point p;
 
             p.n = i+1; // # assigned
-            p.x = cell.x;
-            p.y = cell.y;
+            p.x = cell.x + x;
+            p.y = cell.y + y;
             p.z = cell.z + z;
             p.radius = 0.5*cell.volsize;
             p.parents.push_back(-1);
@@ -1076,6 +1076,8 @@ bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
 
         for(long i=0; i<pc.points.size(); i++)
         {
+            pc.points[i].x += x;
+            pc.points[i].y += y;
             pc.points[i].z += z;
         }
     }
@@ -1223,7 +1225,6 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     }
     
     //parsing input
-    char * paras = NULL;
     vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
     if (inlist->size()==0)
     {
@@ -1253,13 +1254,17 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     // delete duplicated points
     pointcloud.delDuplicatedPoints();
     
-    // sort
-    NCPointCloud pcsorted;
-    pcsorted.ksort(pointcloud, 10);
-    
+
     // output .apo file (point cloud)
     QString outfileName;
     outfileName = QString(outlist->at(0));
+
+    //
+    pointcloud.savePointCloud(outfileName.left(outfileName.lastIndexOf(".")).append("_wodup.apo"));
+
+    // sort
+    NCPointCloud pcsorted;
+    pcsorted.ksort(pointcloud, 10);
     
     pcsorted.savePointCloud(outfileName);
     

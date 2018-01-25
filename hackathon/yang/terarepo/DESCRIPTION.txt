@@ -1,0 +1,5 @@
+TeraStitcher is a free tool that enables the stitching of Teravoxel-sized tiled microscopy images even on workstations with relatively limited resources of memory (<8 GB) and processing power. It exploits the knowledge of approximate tile positions and uses ad-hoc strategies and algorithms designed for such very large datasets. The produced images can be saved into a multiresolution representation to be efficiently visualized (e.g. Vaa3D-TeraFly) and processed.
+
+More information can be found on the GitHub website http://abria.github.io/TeraStitcher/ .
+
+Images for this research were produced by the Biophisics lab of LENS. The software was developed by the Integrated Research Centre of University Campus Bio-Medico of Rome (Italy).
