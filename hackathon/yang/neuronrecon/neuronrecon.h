@@ -355,6 +355,7 @@ public:
     void info();
     bool isSmooth();
     float maxradius();
+    float length(float vx, float vy, float vz, NCPointCloud pc);
 
 public:
     float meanval_adjangles, stddev_adjangles; //

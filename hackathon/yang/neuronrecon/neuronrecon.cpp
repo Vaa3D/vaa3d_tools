@@ -4183,6 +4183,78 @@ float LineSegment::maxradius()
     return radius;
 }
 
+float LineSegment::length(float vx, float vy, float vz, NCPointCloud pc)
+{
+    //
+    float len = 0;
+
+    cout<<"voxel size: "<<vx<<" "<<vy<<" "<<vz<<endl;
+
+    //
+    resetVisitStatus();
+
+    vector<Point> leaves;
+    for(long i=0; i<points.size(); i++)
+    {
+        Point p = points[i];
+
+        if(p.hasChildren()==false)
+        {
+            leaves.push_back(p);
+        }
+    }
+
+    cout<<"find "<<leaves.size()<<" leaves"<<endl;
+
+    //
+    for(long i=0; i<leaves.size(); i++)
+    {
+        Point p = leaves[i];
+
+        points[indexofpoint(p.n)].visited = true;
+
+        long pn = p.parents[0];
+
+        while(pn!=-1)
+        {
+            long cur = indexofpoint(pn);
+            Point q = points[cur];
+
+            cout<<"cur "<<cur<<endl;
+
+            if(points[cur].visited)
+                break;
+
+            points[cur].visited = true;
+
+            p.info();
+            q.info();
+
+            float x = p.x - q.x;
+            float y = p.y - q.y;
+            float z = p.z - q.z;
+
+            x*=vx;
+            y*=vy;
+            z*=vz;
+
+            cout<<"dx "<<x<<" dy "<<y<<" dz "<<z<<endl;
+
+            float dist = sqrt(x*x + y*y + z*z);
+            cout<<dist<<endl;
+
+            len += dist;
+
+            p = q;
+            pn = p.parents[0];
+        }
+    }
+    cout<<"length of this filament is "<<len<<endl;
+
+    //
+    return len;
+}
+
 //
 vector<LineSegment> separate(NCPointCloud pc)
 {
