@@ -3289,10 +3289,10 @@ bool estradius_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             }
         }
 
-        unsigned char *dt=NULL;
-        y_new1dp<unsigned char, long>(dt, sx*sy*sz);
+        float *dt=NULL;
+        y_new1dp<float, long>(dt, sx*sy*sz);
 
-        distanceTransformL2(dt, p, sx, sy, sz);
+        distanceTransformL2<float>(dt, p, sx, sy, sz);
 
         //
         V3DLONG in_sz[4];
@@ -3314,7 +3314,7 @@ bool estradius_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                     nt.listNeuron[k].r = dt[ long(nt.listNeuron[k].z)*sx*sy + long(nt.listNeuron[k].y)*sx + long(nt.listNeuron[k].x) ];
                 }
             }
-            y_del1dp<unsigned char>(dt);
+            y_del1dp<float>(dt);
 
             //
             writeSWC_file(fnoutput, nt);
