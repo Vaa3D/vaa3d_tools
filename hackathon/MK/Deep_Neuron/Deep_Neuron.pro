@@ -10,9 +10,10 @@ INCLUDEPATH += ../../../released_plugins/v3d_plugins/mean_shift_center
 win32 {
     DEFINES += "CMAKE_WINDOWS_BUILD"
     CAFFEPATH = $$(CAFFE_PATH)
-    CUDAPATH  = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
+    CUDAPATH  = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0" 
     USERPATH = $$(USERPROFILE)
     OTHERINCLUDEPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include
+    BOOSTPATH = $$(BOOST_PATH)
     OTHERLIBPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries
 
     INCLUDEPATH += $$OTHERINCLUDEPATH
@@ -39,7 +40,7 @@ win32 {
     LIBS += -lopencv_core310 -lopencv_imgproc310 -lopencv_highgui310 -lopencv_imgcodecs310 
 
     # other dependencies
-    INCLUDEPATH += $$OTHERINCLUDEPATH\\boost-1_61  
+    INCLUDEPATH += $$BOOSTPATH 
     LIBS += -L3rdPartyLibs_win
     LIBS += -L$$OTHERLIBPATH\\lib
     LIBS += -llibprotobuf -lcaffehdf5 -lcaffehdf5_hl -llibopenblas -lglog -lgflags -llmdb -lleveldb -lntdll 
