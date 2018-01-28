@@ -9,8 +9,7 @@ INCLUDEPATH += ../../../released_plugins/v3d_plugins/mean_shift_center
 
 win32 {
     DEFINES += "CMAKE_WINDOWS_BUILD"
-    CAFFEPATH = $$(CAFFE_PATH)
-    CUDAPATH  = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0" 
+    CAFFEPATH = $$(CAFFE_PATH) 
     USERPATH = $$(USERPROFILE)
     OTHERINCLUDEPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include
     BOOSTPATH = $$(BOOST_PATH)
@@ -28,10 +27,17 @@ win32 {
     LIBS += -lcaffe -lcaffeproto
 
     # cuda
-    INCLUDEPATH += $$CUDAPATH\\include
-    LIBS += -L$$CUDAPATH\\lib\\x64
-    LIBS += -lcudart -lcublas -lcurand
-
+    CUDACHECK = $$(CUDA_PATH)
+    defined(CUDACHECK) {
+        CUDAPATH = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
+        INCLUDEPATH += $$CUDAPATH\\include
+        LIBS += -L$$CUDAPATH\\lib\\x64
+        LIBS += -lcudart -lcublas -lcurand
+    } else {
+        DEFINES += "CPU_ONLY"
+        DEFINES += "GLOG_NO_ABBREVIATED_SEVERITIES"
+    }
+    
     # opencv
     INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv
     INCLUDEPATH += $$OTHERINCLUDEPATH\\opencv2
@@ -41,10 +47,20 @@ win32 {
 
     # other dependencies
     INCLUDEPATH += $$BOOSTPATH 
+   
+    MSVCVERSION = $$(QMAKESPEC)
+    equals(MSVCVERSION, "win32-msvc2013") {
+		LIBS += -L$$BOOSTPATH\\lib64-msvc-12.0
+        LIBS += -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61 -lboost_python-vc120-mt-1_61 -lboost_filesystem-vc120-mt-1_61
+	}
+	equals(MSVCVERSION, "win32-msvc2010") {
+		LIBS += -L$$BOOSTPATH\\lib64-msvc-10.0
+        LIBS += -lboost_system-vc100-mt-1_61 -lboost_thread-vc100-mt-1_61 -lboost_python-vc100-mt-1_61 -lboost_filesystem-vc100-mt-1_61
+	}
     LIBS += -L3rdPartyLibs_win
-    LIBS += -L$$OTHERLIBPATH\\lib
+    LIBS += -LcaffeLibs_win
     LIBS += -llibprotobuf -lcaffehdf5 -lcaffehdf5_hl -llibopenblas -lglog -lgflags -llmdb -lleveldb -lntdll 
-    LIBS += -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61 -lboost_python-vc120-mt-1_61 -lboost_filesystem-vc120-mt-1_61
+    
 }
 
 unix:!macx {

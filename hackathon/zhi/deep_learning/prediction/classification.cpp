@@ -16,6 +16,8 @@
 #include <vector>
 #include "../../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 
+using namespace std;
+
 //#define PI 3.14159265359
 //#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 //#define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
@@ -50,10 +52,23 @@ Classifier::Classifier(const string& model_file,
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
     /* Load the binaryproto mean file. */
     if(!mean_file.empty()) SetMean(mean_file);
+
 #if  defined(Q_OS_MAC)
     Caffe::set_mode(Caffe::CPU);
-#else
-    Caffe::set_mode(Caffe::GPU);
+#endif
+
+#if defined(Q_OS_WIN) // MK, 2018, Jan. Automatic GPU/CPU selection on Windows
+	char* CUDA = getenv("CUDA_PATH");
+	if (CUDA != NULL)
+	{
+		cout << "Caffe classifier operating mode: GPU" << endl;
+		Caffe::set_mode(Caffe::GPU);
+	}
+	else
+	{
+		cout << "Caffe classifier operation mode: CPU" << endl;
+		Caffe::set_mode(Caffe::CPU);
+	}
 #endif
     /* Load labels. */
 }
