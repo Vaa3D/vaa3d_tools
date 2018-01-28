@@ -50,15 +50,16 @@ win32 {
    
     MSVCVERSION = $$(QMAKESPEC)
     equals(MSVCVERSION, "win32-msvc2013") {
+        LIBS += -LcaffeLibs_win_VS2013
 		LIBS += -L$$BOOSTPATH\\lib64-msvc-12.0
         LIBS += -lboost_system-vc120-mt-1_61 -lboost_thread-vc120-mt-1_61 -lboost_python-vc120-mt-1_61 -lboost_filesystem-vc120-mt-1_61
 	}
 	equals(MSVCVERSION, "win32-msvc2010") {
+        LIBS += -LcaffeLibs_win_VS2010
 		LIBS += -L$$BOOSTPATH\\lib64-msvc-10.0
         LIBS += -lboost_system-vc100-mt-1_61 -lboost_thread-vc100-mt-1_61 -lboost_python-vc100-mt-1_61 -lboost_filesystem-vc100-mt-1_61
 	}
     LIBS += -L3rdPartyLibs_win
-    LIBS += -LcaffeLibs_win
     LIBS += -llibprotobuf -lcaffehdf5 -lcaffehdf5_hl -llibopenblas -lglog -lgflags -llmdb -lleveldb -lntdll 
     
 }
