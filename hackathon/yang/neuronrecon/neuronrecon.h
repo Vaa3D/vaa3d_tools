@@ -535,8 +535,8 @@ template<class T>
 float estimateRadius(T* &inimg1d, V3DLONG *sz, float mx, float my, float mz, float thresh)
 {
     //
-    double max_r = max(max(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
-    double r;
+    float max_r = max(max(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
+    float r;
     double tol_num, bak_num;
 
     //

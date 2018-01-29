@@ -3289,10 +3289,10 @@ bool estradius_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             }
         }
 
-        float *dt=NULL;
-        y_new1dp<float, long>(dt, sx*sy*sz);
+        //float *dt=NULL;
+        //y_new1dp<float, long>(dt, sx*sy*sz);
 
-        distanceTransformL2<float>(dt, p, sx, sy, sz);
+        //distanceTransformL2<float>(dt, p, sx, sy, sz);
 
         //
         V3DLONG in_sz[4];
@@ -3310,11 +3310,19 @@ bool estradius_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
             {
                 for(size_t k=0; k<nt.listNeuron.size(); k++)
                 {
-                    //nt.listNeuron[k].r = estimateRadius<unsigned char>(p, in_sz, nt.listNeuron[k].x, nt.listNeuron[k].y, nt.listNeuron[k].z, thresh);
-                    nt.listNeuron[k].r = dt[ long(nt.listNeuron[k].z)*sx*sy + long(nt.listNeuron[k].y)*sx + long(nt.listNeuron[k].x) ];
+                    float r = estimateRadius<unsigned char>(p, in_sz, nt.listNeuron[k].x, nt.listNeuron[k].y, nt.listNeuron[k].z, thresh);
+
+                    if(r<1)
+                        r = 1;
+                    if(r>10)
+                        r = 10;
+
+                    nt.listNeuron[k].r = r;
+
+                    //nt.listNeuron[k].r = dt[ long(nt.listNeuron[k].z)*sx*sy + long(nt.listNeuron[k].y)*sx + long(nt.listNeuron[k].x) ];
                 }
             }
-            y_del1dp<float>(dt);
+            //y_del1dp<float>(dt);
 
             //
             writeSWC_file(fnoutput, nt);
