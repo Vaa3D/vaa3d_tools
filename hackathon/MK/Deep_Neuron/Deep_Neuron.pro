@@ -11,10 +11,13 @@ win32 {
     DEFINES += "CMAKE_WINDOWS_BUILD"
     CAFFEPATH = $$(CAFFE_PATH) 
     USERPATH = $$(USERPROFILE)
-    OTHERINCLUDEPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include
+    CUDACHECK = $$(CUDA_PATH)
     BOOSTPATH = $$(BOOST_PATH)
+    MSVCVERSION = $$(QMAKESPEC)
+    OTHERINCLUDEPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries\\include
     OTHERLIBPATH = $$USERPATH\\.caffe\\dependencies\\libraries_v120_x64_py27_1.1.0\\libraries
 
+    INCLUDEPATH += $$BOOSTPATH
     INCLUDEPATH += $$OTHERINCLUDEPATH
     INCLUDEPATH	+= $$CAFFEPATH\\include
     INCLUDEPATH += $$CAFFEPATH\\include\\caffe\\util
@@ -27,15 +30,16 @@ win32 {
     LIBS += -lcaffe -lcaffeproto
 
     # cuda
-    CUDACHECK = $$(CUDA_PATH)
-    defined(CUDACHECK) {
+    equals(CUDACHECK, "") {
+        message(No CUDA detected in the system. Building with CPU_ONLY flag)
+        DEFINES += "CPU_ONLY"
+        DEFINES += "GLOG_NO_ABBREVIATED_SEVERITIES"
+    } else {
+        message(CUDA detected. Path:$$(CUDA_PATH))
         CUDAPATH = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
         INCLUDEPATH += $$CUDAPATH\\include
         LIBS += -L$$CUDAPATH\\lib\\x64
-        LIBS += -lcudart -lcublas -lcurand
-    } else {
-        DEFINES += "CPU_ONLY"
-        DEFINES += "GLOG_NO_ABBREVIATED_SEVERITIES"
+        LIBS += -lcudart -lcublas -lcurand     
     }
     
     # opencv
@@ -46,9 +50,6 @@ win32 {
     LIBS += -lopencv_core310 -lopencv_imgproc310 -lopencv_highgui310 -lopencv_imgcodecs310 
 
     # other dependencies
-    INCLUDEPATH += $$BOOSTPATH 
-   
-    MSVCVERSION = $$(QMAKESPEC)
     equals(MSVCVERSION, "win32-msvc2013") {
         LIBS += -LcaffeLibs_win_VS2013
 		LIBS += -L$$BOOSTPATH\\lib64-msvc-12.0
