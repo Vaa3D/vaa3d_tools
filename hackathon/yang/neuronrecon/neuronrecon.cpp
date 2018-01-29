@@ -4211,21 +4211,21 @@ float LineSegment::length(float vx, float vy, float vz, NCPointCloud pc)
     {
         Point p = leaves[i];
 
-        points[indexofpoint(p.n)].visited = true;
+        pc.points[pc.indexofpoint(p.n)].visited = true;
 
         long pn = p.parents[0];
 
         while(pn!=-1)
         {
-            long cur = indexofpoint(pn);
-            Point q = points[cur];
+            long cur = pc.indexofpoint(pn);
+            Point q = pc.points[cur];
 
             cout<<"cur "<<cur<<endl;
 
-            if(points[cur].visited)
+            if(pc.points[cur].visited)
                 break;
 
-            points[cur].visited = true;
+            pc.points[cur].visited = true;
 
             p.info();
             q.info();
