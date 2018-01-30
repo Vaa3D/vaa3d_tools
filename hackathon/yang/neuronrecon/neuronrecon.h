@@ -24,6 +24,7 @@
 #include <string>
 #include <tuple>
 #include <stack>
+#include <fstream>
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
