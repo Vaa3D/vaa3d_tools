@@ -1238,6 +1238,13 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     {
         saveNeuronTree(*this, outfile);
 
+        if(!rmNoise)
+        {
+            removeRedundant();
+            saveNeuronTree(*this, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+        }
+
+
         // assemble fragments into trees
         QList<NeuronSWC> neuron, result;
         NeuronTree nt = readSWC_file(outfile);
@@ -1956,9 +1963,13 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m, unsigned char *p
                     distThresh1 = 2*m*(p_pre.radius + p.radius);
                     distThresh2 = 2*m*(p_next.radius + p.radius);
 
+                    float meanradius = (p_pre.radius + p.radius + p_next.radius)/3 + 1e-6;
+
+                    float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_pre, p) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next))/2;
+
                     if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                     {
-                        candidates.push_back(make_tuple(dist, angle, i));
+                        candidates.push_back(make_tuple(dist*angle, 1/meanradius/meanintensity, i));
                     }
                 }
 
