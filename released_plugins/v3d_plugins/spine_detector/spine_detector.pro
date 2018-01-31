@@ -7,8 +7,8 @@ V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += $$VDMAINPATH/jba/newmat11
-INCLUDEPATH += ../../../released_plugins/v3d_plugins/neurontracing_vn2
-INCLUDEPATH += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
+INCLUDEPATH += ../neurontracing_vn2
+INCLUDEPATH += ../neurontracing_vn2/app2
 
 macx{
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
@@ -43,11 +43,11 @@ HEADERS	+= spine_detector_plugin.h \
     spine_detector_dialog.h \
     detect_fun.h \
     spine_extr_template.h \
-    #../../../released_plugins/v3d_plugins/neurontracing_vn2/vn.h \
-    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/heap.h \
-    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h \
-    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h \
-    #../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.h \
+    #../neurontracing_vn2/vn.h \
+    ../neurontracing_vn2/app2/heap.h \
+    ../neurontracing_vn2/app2/fastmarching_dt.h \
+    ../neurontracing_vn2/app2/fastmarching_tree.h \
+    #../neurontracing_vn2/vn_imgpreprocess.h \
     spine_fun.h \
     manual_correct_dialog.h \
     read_raw_file.h \
@@ -56,8 +56,8 @@ HEADERS	+= spine_detector_plugin.h \
 SOURCES	+= spine_detector_plugin.cpp \
     spine_detector_dialog.cpp \
     detect_fun.cpp \
-    #../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.cpp \
-    #../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp \
+    #../neurontracing_vn2/vn_imgpreprocess.cpp \
+    #../neurontracing_vn2/app2/my_surf_objs.cpp \
     spine_fun.cpp \
     manual_correct_dialog.cpp \
     read_raw_file.cpp \

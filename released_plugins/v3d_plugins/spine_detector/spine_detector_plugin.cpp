@@ -8,7 +8,7 @@
 #include "learning.h"
 #include "file_io_dialog.h"
 #include "manual_proofread_dialog.h"
-#include "manual_proof_is.h"
+//#include "manual_proof_is.h"
 //#include "spine_detector_dialog.h"
 #include "combiner.h"
 
