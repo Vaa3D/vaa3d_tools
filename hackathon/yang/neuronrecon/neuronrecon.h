@@ -236,7 +236,7 @@ public:
     int assembleFragments(int k);
 
     //
-    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
+    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, float rmNoiseDistFac=20, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     //
     int tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);

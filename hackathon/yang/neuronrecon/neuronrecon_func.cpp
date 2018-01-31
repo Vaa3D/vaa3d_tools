@@ -841,7 +841,7 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     int k=6;
     float m = 3;
     double distthresh = 15;
-    bool removeNoise = true;
+    float rmNoiseDistFac = 20;
     float adjintthresh = 0.5;
     if (input.size()>1)
     {
@@ -868,8 +868,8 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
                         if (paras->size() >= 5)
                         {
-                            removeNoise = atoi(paras->at(4))==0?false:true;
-                            cout<<"remove noise: "<<removeNoise<<endl;
+                            rmNoiseDistFac = atof(paras->at(4));
+                            cout<<"dist thresh for removing noise points: "<<rmNoiseDistFac<<endl;
 
                             if (paras->size() >= 6)
                             {
@@ -975,7 +975,7 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
         // load
         NCPointCloud pointcloud;
-        pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, removeNoise, p, sx, sy, sz);
+        pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, rmNoiseDistFac, p, sx, sy, sz);
     }
 
     //

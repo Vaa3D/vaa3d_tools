@@ -1161,7 +1161,7 @@ float NCPointCloud::distP2L(Point p, LineSegment line)
 }
 
 //
-int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh, bool rmNoise, unsigned char *pImg, long sx, long sy, long sz)
+int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
 {
     // load point cloud save as a .apo file
 
@@ -1222,7 +1222,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
 
     cout<<"before removing noise points: "<<points.size()<<endl;
 
-    removeNoise();
+    removeNoise(rmNoiseDistFac);
 
     cout<<"after removing noise points: "<<points.size()<<endl;
 
@@ -1232,7 +1232,7 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     //
     //if(rmNoise)
 
-    removeRedundant();
+    //removeRedundant();
 
     // merge lines
     // mergeLines(angle);
@@ -1245,13 +1245,14 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     {
         saveNeuronTree(*this, outfile);
 
-        if(!rmNoise)
+        bool saveCleanedLines = true;
+        if(saveCleanedLines)
         {
-            //removeRedundant();
+            removeRedundant();
             vector<LineSegment> lines = separate(*this);
-            cout<<"lines "<<lines.size()<<endl;
+            //cout<<"lines "<<lines.size()<<endl;
             NCPointCloud pc = combinelines(lines, 2);
-            cout<<"points "<<pc.points.size()<<endl;
+            //cout<<"points "<<pc.points.size()<<endl;
             saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
         }
 
