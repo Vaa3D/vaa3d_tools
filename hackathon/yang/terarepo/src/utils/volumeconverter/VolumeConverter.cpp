@@ -75,8 +75,12 @@
 #include "iomanager.config.h"
 #include <math.h>
 #include <string>
+#include <chrono>
+#include <iostream>
 
 #include <stdarg.h>
+
+using namespace std;
 
 #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
 #include <QElapsedTimer>
@@ -272,6 +276,9 @@ void vcDriver (
 			}
 		}
 		else if ( dst_format == iim::TILED_TIF3D_FORMAT || dst_format == iim::TIF3D_FORMAT) {
+
+            cout<<"convert to tiled 3D tiff "<<(timeseries?"timeseries":"not time series")<<" "<<(makeDirs?"makeDirs":"not makeDirs")<<" "<<(metaData?"metaData":"Not metaData")<<endl;
+
 			if ( timeseries ) {
 				vc.convertTo(dst_root_dir.c_str(),dst_format,8*vc.getVolume()->getBYTESxCHAN(),true,resolutions,
 					slice_height,slice_width,slice_depth,halving_method,isotropic);
@@ -378,6 +385,9 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 								   bool time_series /* = false */, int downsamplingFactor /* = 1 */,
 								   std::string chanlist /* = ""*/, int _res /* = 0*/, int _timepoint /* = 0*/) throw (IOException, iom::exception)
 {
+
+    auto start = std::chrono::high_resolution_clock::now();
+
     /**/iim::debug(iim::LEV3, strprintf("_root_dir = %s, _fmt = %s, _out_fmt = %s, time_series = %s",
                                          _root_dir, _fmt, _out_fmt, time_series ? "true" : "false").c_str(), __iim__current__function__);
 
@@ -453,6 +463,10 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 	V1 = volume->getDIM_V(); 
 	H1 = volume->getDIM_H();
 	D1 = volume->getDIM_D();
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    cout<<"setSrcVolume takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<endl;
 }
 
 // additional setSrcVolume @ADDED by Alessandro on 2014-04-18: takes an external vm::VirtualVolume in input
@@ -1881,6 +1895,34 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                 if(resolutions[i])
                     resolutions_size = std::max(resolutions_size, i+1);
 
+    cout<<"size ... "<<width<<" "<<height<<" "<<depth<<endl;
+    cout<<"block size ... "<<block_width<<" "<<block_height<<" "<<block_depth<<endl;
+    cout<<"resolution size ... "<<resolutions_size<<endl;
+
+    float w = width;
+    float h = height;
+    float d = depth;
+    long n = 1;
+    for(size_t i=0; i<resolutions_size; i++)
+    {
+        w *= 0.5;
+        h *= 0.5;
+        d *= 0.5;
+
+        if(w>=1 && h>=1 && d>=1)
+        {
+            n++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    resolutions_size = n;
+
+    cout<<"adjusted resolution size ... "<<resolutions_size<<endl;
+
 	//2016-04-13. Giulio. set the halving rules 
 	if ( isotropic ) {
 		// an isotropic image must be generated
@@ -2057,13 +2099,24 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         #endif
 
 		// fill one slice block
+        cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
+
 		if ( internal_rep == REAL_INTERNAL_REP )
             rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
             // 2015-12-19. Giulio. @ADDED Subvolume conversion     
 			//ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
             ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
-			if ( org_channels != channels ) {
+
+            auto end = std::chrono::high_resolution_clock::now();
+
+            cout<<"loadSubvolume_to_UINT8 takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
+
+
+            if ( org_channels != channels ) {
 				char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"in generateTilesVaa3DRaw(...): the volume contains images with a different number of channels (%d,%d)", org_channels, channels);
                 throw IOException(err_msg);
