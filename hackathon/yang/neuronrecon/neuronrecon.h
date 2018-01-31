@@ -224,7 +224,7 @@ public:
     int connect(Point p);
 
     //
-    int removeNoise();
+    int removeNoise(float distfactor=20);
 
     //
     int removeRedundant();
@@ -370,7 +370,7 @@ public:
 
 //
 vector<LineSegment> separate(NCPointCloud pc);
-NCPointCloud combinelines(vector<LineSegment> lines);
+NCPointCloud combinelines(vector<LineSegment> lines, long thresh=3);
 
 //
 template <typename T>

@@ -962,11 +962,12 @@ int NCPointCloud::knn(int k, float radius)
 }
 
 //
-int NCPointCloud::removeNoise()
+int NCPointCloud::removeNoise(float distfactor)
 {
     //
     knn(3);
 
+    //
     NCPointCloud pc;
     for(size_t i=0; i<points.size(); i++)
     {
@@ -976,7 +977,7 @@ int NCPointCloud::removeNoise()
         {
             Point q = points[p.nn[1]];
 
-            if(distance(p,q)<10*p.radius)
+            if(distance(p,q)<distfactor*p.radius)
             {
                 pc.points.push_back(p);
             }
@@ -1217,15 +1218,21 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     }
 
     //
-    if(rmNoise)
-        removeNoise();
+    //if(rmNoise)
+
+    cout<<"before removing noise points: "<<points.size()<<endl;
+
+    removeNoise();
+
+    cout<<"after removing noise points: "<<points.size()<<endl;
 
     // connect points into lines
     connectPoints(k,angle,m, pImg, sx, sy, sz);
 
     //
-    if(rmNoise)
-        removeRedundant();
+    //if(rmNoise)
+
+    removeRedundant();
 
     // merge lines
     // mergeLines(angle);
@@ -1240,8 +1247,12 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
 
         if(!rmNoise)
         {
-            removeRedundant();
-            saveNeuronTree(*this, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+            //removeRedundant();
+            vector<LineSegment> lines = separate(*this);
+            cout<<"lines "<<lines.size()<<endl;
+            NCPointCloud pc = combinelines(lines, 2);
+            cout<<"points "<<pc.points.size()<<endl;
+            saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
         }
 
 
@@ -4324,12 +4335,10 @@ vector<LineSegment> separate(NCPointCloud pc)
     return lines;
 }
 
-NCPointCloud combinelines(vector<LineSegment> lines)
+NCPointCloud combinelines(vector<LineSegment> lines, long thresh)
 {
     //
     NCPointCloud pc;
-
-    long thresh = 3;
 
     //
     for(long i=0; i<lines.size(); i++)
