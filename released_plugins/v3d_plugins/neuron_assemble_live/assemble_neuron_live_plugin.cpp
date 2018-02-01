@@ -17,7 +17,7 @@ QStringList neuron_assembler_live::menulist() const
 {
 	return QStringList() 
 		<<tr("assemble_neuron_live")
-       // <<tr("load_new_stack")
+        <<tr("load_new_stack")
 		<<tr("about");
 }
 
