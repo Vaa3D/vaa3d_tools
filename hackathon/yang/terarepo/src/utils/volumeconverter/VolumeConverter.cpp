@@ -1946,12 +1946,19 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			halve_pow2[i] = i;
 	}
 
+    for ( int i=0; i<resolutions_size; i++ )
+        cout<<" halve_pow2 "<<halve_pow2[i]<<" at "<<resolutions[i]<<endl;
+
     //computing tiles dimensions at each resolution and initializing volume directories
     for(int res_i=0; res_i< resolutions_size; res_i++)
 	{
         n_stacks_V[res_i] = (int) ceil ( (height/powInt(2,res_i)) / (float) block_height );
         n_stacks_H[res_i] = (int) ceil ( (width/powInt(2,res_i))  / (float) block_width  );
         n_stacks_D[res_i] = (int) ceil ( (depth/powInt(2,halve_pow2[res_i]))  / (float) block_depth  );
+
+        cout<<"res "<<res_i<<endl;
+        cout<<"n_stacks "<<n_stacks_V[res_i]<<" "<<n_stacks_H[res_i]<<" "<<n_stacks_D[res_i]<<endl;
+
         stacks_height[res_i] = new int **[n_stacks_V[res_i]];
         stacks_width[res_i]  = new int **[n_stacks_V[res_i]]; 
         stacks_depth[res_i]  = new int **[n_stacks_V[res_i]]; 
@@ -1973,9 +1980,19 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                         ((int)(width/powInt(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/powInt(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
 					stacks_depth[res_i][stack_row][stack_col][stack_sli] = 
                         ((int)(depth/powInt(2,halve_pow2[res_i])))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/powInt(2,halve_pow2[res_i])))  % n_stacks_D[res_i] ? 1:0);
+
+
+                    if(stack_row==0 && stack_col==0 && stack_sli==0)
+                    {
+                        cout<<"res "<<res_i<<" "<<stack_row<<" "<<stack_col<<" "<<stack_sli<<endl;
+                        cout<<"stacks "<<stacks_height[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_width[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_depth[res_i][stack_row][stack_col][stack_sli]<<endl;
+                    }
 				}
             }
         }
+
+        cout<<"par_mode "<<(par_mode?"true":"false")<<endl;
+
         //creating volume directory iff current resolution is selected and test mode is disabled
         if(resolutions[res_i] == true)
         {
@@ -2009,6 +2026,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
             }
         }
 	}
+
+    cout<<"created top resolution folders \n";
 
 	/* The following check verifies that the numeber of slices in the buffer is not higher than the number of slices in a block file
 	 * (excluding the last block in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
@@ -2250,6 +2269,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					}
 				}
 
+                cout<<"base_path "<<base_path.str()<<endl;
+
 				//looping on new stacks
 				for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
 				{
@@ -2259,6 +2280,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					//computing V_DIR_path and creating the directory the first time it is needed
 					std::stringstream V_DIR_path;
 					V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
+
+                    cout<<"V_DIR_path "<<V_DIR_path.str()<<endl;
+
                     if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 					{
                         char err_msg[STATIC_STRINGS_SIZE];
@@ -2273,6 +2297,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 						//computing H_DIR_path and creating the directory the first time it is needed
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
+
+                        cout<<"H_DIR_path "<<H_DIR_path.str()<<endl;
+
 						if ( z==D0 ) {
 							if(!check_and_make_dir(H_DIR_path.str().c_str()))
 							{
@@ -2359,6 +2386,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
  						std::stringstream img_path;
 						img_path << partial_img_path.str() << abs_pos_z.str();
 
+                        cout<<"img_path "<<img_path.str()<<endl;
+
 						/* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
 						 * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations, 
 						 * all slices of a group to be appended to the same block file are appended leaving the file open and positioned at 
@@ -2422,6 +2451,12 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 										(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth,fhandle,n_pages_block,false);
+
+                                    //(int slice, std::string img_path, uint8** raw_ch, int n_chans, sint64 offset,
+                                    // int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
+                                    // int end_width, const char* img_format, int img_depth, void *fhandle, int n_pages, bool do_open )
+                                    cout<<"saved ... "<<img_path.str()<<" offset "<<buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan<<" "<<slice_ind<<" "
+                                       <<start_height<<" "<<end_height<<" "<<start_width<<" "<<end_width<<" "<<n_pages_block<<" "<<saved_img_depth<<endl;
 								}
 								else { // can be only Vaa3DRaw
 									VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
