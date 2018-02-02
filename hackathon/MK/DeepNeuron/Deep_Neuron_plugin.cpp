@@ -14,21 +14,41 @@
 #include "tester.h"
 #include "../../zhi/deep_learning/prediction/classification.h"
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
+#include "../../../xiaoxiaol/consensus_skeleton_2/mst_boost_prim.h"
 
 
 using namespace std;
+using namespace boost;
+
+double vectorDistance(std::vector<float> v1, std::vector<float> v2)
+{
+  double ret = 0.0;
+  for(int i = 0; i< v1.size();i++)
+  {
+      double dist = (v1.at(i) - v2.at(i));
+      ret += dist * dist;
+  }
+  return ret > 0.0 ? sqrt(ret) : 0.0;
+}
+
+template <class T> T pow2(T a)
+{
+    return a*a;
+
+}
+
 
 Q_EXPORT_PLUGIN2(Deep_Neuron, DeepNeuron_plugin);
  
 QStringList DeepNeuron_plugin::menulist() const
 {
-	return QStringList() 
+    return QStringList()
             <<tr("Neurite Signal Detection")
            <<tr("Neurite Connection")
           <<tr("Smart Pruning")
          <<tr("Reconstruction Evaluation")
         <<tr("Classification of Dendrites and Axons")
-		<<tr("about");
+       <<tr("about");
 }
 
 QStringList DeepNeuron_plugin::funclist() const
@@ -226,6 +246,202 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         writeSWC_file(swc_processed,nt);
         v3d_msg(QString("Neurite signal detection result is saved in %1").arg(swc_processed));
 	}
+    else if (menu_name == tr("Neurite Connection"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        QString SWCfileName;
+        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                                                   "",
+                                                   QObject::tr("Supported file (*.swc *.eswc)"
+                                                               ";;Neuron structure	(*.swc)"
+                                                               ";;Extended neuron structure (*.eswc)"
+                                                               ));
+        if(SWCfileName.isEmpty())
+            return;
+
+        unsigned char* data1d = p4DImage->getRawData();
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        QString model_file = "/local1/work/caffe/examples/siamese/mnist_siamese.prototxt";
+        QString trained_file = "/local1/work/caffe/examples/siamese/full_siamese_iter_450000.caffemodel";
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(),"");
+        std::vector<cv::Mat> imgs;
+
+        int Wx = 60, Wy = 60, Wz = 5;
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = nt.listNeuron.at(i).y;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
+
+            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+            V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
+            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+            V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
+            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+            V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
+
+            V3DLONG im_cropped_sz[4];
+            im_cropped_sz[0] = xe - xb + 1;
+            im_cropped_sz[1] = ye - yb + 1;
+            im_cropped_sz[2] = 1;
+            im_cropped_sz[3] = sc;
+
+            unsigned char *im_cropped = 0;
+
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            try {im_cropped = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+            memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+            for(V3DLONG iz = zb; iz <= ze; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                V3DLONG j = 0;
+                for(V3DLONG iy = yb; iy <= ye; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    {
+                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                            im_cropped[j] = data1d[offsetk + offsetj + ix];
+                        j++;
+                    }
+                }
+            }
+
+            cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+            imgs.push_back(img);
+
+            if(num_patches >=5000)
+            {
+                outputs = classifier.extractFeature_siamese(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
+        }
+        if(imgs.size()>0)
+        {
+            outputs = classifier.extractFeature_siamese(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
+        imgs.clear();
+
+        cerr<<"MST generating ..."<<endl;
+
+        UndirectedGraph g(nt.listNeuron.size());
+        for (int i=0;i<nt.listNeuron.size()-1;i++)
+        {
+            for (int j=i+1;j<nt.listNeuron.size();j++)
+            {
+                V3DLONG x1 = nt.listNeuron.at(i).x;
+                V3DLONG y1 = nt.listNeuron.at(i).y;
+                V3DLONG z1 = nt.listNeuron.at(i).z;
+                V3DLONG x2 = nt.listNeuron.at(j).x;
+                V3DLONG y2 = nt.listNeuron.at(j).y;
+                V3DLONG z2 = nt.listNeuron.at(j).z;
+                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + pow2(z1-z2));
+
+                EdgeQuery edgeq = edge(i, j, *&g);
+                if (!edgeq.second && i!=j && dis <=1000)
+                {
+                    double Vedge;
+                    std::vector<float> v1 = outputs_overall[i];
+                    std::vector<float> v2 = outputs_overall[j];
+                    Vedge = vectorDistance(v1, v2)*dis;
+                    add_edge(i, j, LastVoted(i, Weight(Vedge)), *&g);
+                }
+            }
+        }
+
+        vector < graph_traits < UndirectedGraph >::vertex_descriptor > p(num_vertices(*&g));
+        prim_minimum_spanning_tree(*&g, &p[0]);
+
+        NeuronTree marker_MST;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        for (std::size_t i = 0; i != p.size(); ++i)
+        {
+            NeuronSWC S;
+            int pn;
+            if(p[i] == i)
+                pn = -1;
+            else
+                pn = p[i] + 1;
+
+            S.n 	= i+1;
+            S.type 	= 7;
+            S.x 	= nt.listNeuron.at(i).x;
+            S.y 	= nt.listNeuron.at(i).y;
+            S.z 	= nt.listNeuron.at(i).z;;
+            S.r 	= 1;
+            S.pn 	= pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+
+        marker_MST.n = -1;
+        marker_MST.on = true;
+        marker_MST.listNeuron = listNeuron;
+        marker_MST.hashNeuron = hashNeuron;
+
+
+        for (int i=1;i<marker_MST.listNeuron.size()-1;i++)
+        {
+            if(marker_MST.listNeuron.at(i).parent>0)
+            {
+                V3DLONG x1 = marker_MST.listNeuron.at(i).x;
+                V3DLONG y1 = marker_MST.listNeuron.at(i).y;
+                V3DLONG z1 = marker_MST.listNeuron.at(i).z;
+                V3DLONG x2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).x;
+                V3DLONG y2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).y;
+                V3DLONG z2 = marker_MST.listNeuron.at(marker_MST.listNeuron.at(i).parent-1).z;
+                double dis = sqrt(pow2(x1-x2) + pow2(y1-y2) + 4*pow2(z1-z2));
+                if(dis>80)
+                    marker_MST.listNeuron[i].parent = -1;
+            }
+        }
+
+        QString outfilename = SWCfileName + "_connection.swc";
+        writeSWC_file(outfilename,marker_MST);
+        v3d_msg(QString("The output file is [%1]").arg(outfilename));
+
+    }
     else if (menu_name == tr("Classification of Dendrites and Axons"))
 	{
         DeepNeuronUI* inputForm = new DeepNeuronUI(parent, &callback);
