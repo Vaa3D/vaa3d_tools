@@ -2,7 +2,7 @@
 
 #include <caffe/caffe.hpp>
 
-#include "../../../MK/Deep_Neuron/Deep_Neuron_plugin.h"
+#include "../../../MK/DeepNeuron/Deep_Neuron_plugin.h"
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
