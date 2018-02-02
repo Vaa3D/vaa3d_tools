@@ -20,7 +20,11 @@ Q_EXPORT_PLUGIN2(Deep_Neuron, DeepNeuron_plugin);
 QStringList DeepNeuron_plugin::menulist() const
 {
 	return QStringList() 
-		<<tr("start Deep Neuron application")
+            <<tr("Neurite Signal Detection")
+           <<tr("Neurite Connection")
+          <<tr("Smart Pruning")
+         <<tr("Reconstruction Evaluation")
+        <<tr("Classification of Dendrites and Axons")
 		<<tr("about");
 }
 
@@ -34,7 +38,7 @@ QStringList DeepNeuron_plugin::funclist() const
 
 void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("start Deep Neuron application"))
+    if (menu_name == tr("Classification of Dendrites and Axons"))
 	{
 		DeepNeuronUI* inputForm = new DeepNeuronUI(parent, &callback);
 		inputForm->setWindowModality(Qt::NonModal);
@@ -47,8 +51,8 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by MK, 2017-12-12"));
+        v3d_msg(tr("This is a DeepNeuron plugin including five modules "
+            "Developed by ZZ and MK, 2017-12-12"));
 	}
 }
 

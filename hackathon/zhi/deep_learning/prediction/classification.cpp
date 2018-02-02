@@ -6,7 +6,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
+#if  defined(Q_OS_MAC)
+    #include <opencv2/imgcodecs/imgcodecs.hpp>
+#endif
 
 #include <algorithm>
 #include <iosfwd>
