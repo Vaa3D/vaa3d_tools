@@ -155,5 +155,20 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
  * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file
  */
 
+char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype, unsigned char *img);
+
+/* writes a 3D volume to a file containing a 3D image
+ *
+ * fhandler:   handler of the file to be modified
+ * img:        pointer to the slice (2D buffer of (img_width * img_height * spp * (bpp/8)) bytes)
+ * img_width:  width of the slice
+ * img_height: height of the slice
+ * spp:        samples per pixel (channels)
+ * bpp:        bits per pixel (pixel depth)
+ * NPages:     total number of pages of the file
+ *
+ * WARNING: the file is already open and it is not closed after data have been read
+ */
+
  #endif
  

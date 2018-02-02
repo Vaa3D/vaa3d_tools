@@ -290,6 +290,13 @@ class VolumeConverter
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false, 
             bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
             std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
+
+
+        // similar to generateTilesVaa3DRaw but save a volume directly instead of slices
+        void generate3DTiles(std::string output_path, bool* resolutions = NULL,
+            int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false,
+            bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
 		
 
         /*************************************************************************************************************
