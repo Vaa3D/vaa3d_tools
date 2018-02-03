@@ -574,6 +574,10 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         writeSWC_file(outswc_file, nt_DL_sort);
         v3d_msg(QString("Smart pruning result is saved in %1").arg(outswc_file));
     }
+    else if (menu_name == tr("Reconstruction Evaluation"))
+    {
+
+    }
     else if (menu_name == tr("Classification of Dendrites and Axons"))
     {
         DeepNeuronUI* inputForm = new DeepNeuronUI(parent, &callback);
