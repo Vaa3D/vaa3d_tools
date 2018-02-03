@@ -3307,7 +3307,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         for(int buffer_z=0; buffer_z<z_size/(powInt(2,halve_pow2[i])); buffer_z++, slice_ind++)
                         {
 
-                            cout<<"compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
+                            cout<<"buffer_z "<<buffer_z<<" compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
 
                             // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
                             if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
