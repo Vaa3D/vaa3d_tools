@@ -570,8 +570,12 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 
         NeuronTree nt_DL = DL_eliminate_swc(nt,marklist);
         NeuronTree nt_DL_sort = SortSWC_pipeline(nt_DL.listNeuron,VOID, 10);
+        NeuronTree nt_DL_sort_pruned = remove_swc(nt_DL_sort,50);
+
         QString outswc_file = SWCfileName + "_pruned.swc";
-        writeSWC_file(outswc_file, nt_DL_sort);
+        writeSWC_file(outswc_file, nt_DL_sort_pruned);
+        outputs_overall.clear();
+        imgs.clear();
         v3d_msg(QString("Smart pruning result is saved in %1").arg(outswc_file));
     }
     else if (menu_name == tr("Reconstruction Evaluation"))
