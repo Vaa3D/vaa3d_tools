@@ -15,6 +15,7 @@
 #include "../../zhi/deep_learning/prediction/classification.h"
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 #include "../../../xiaoxiaol/consensus_skeleton_2/mst_boost_prim.h"
+#include "../../zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 
 
 using namespace std;
@@ -29,12 +30,6 @@ double vectorDistance(std::vector<float> v1, std::vector<float> v2)
       ret += dist * dist;
   }
   return ret > 0.0 ? sqrt(ret) : 0.0;
-}
-
-template <class T> T pow2(T a)
-{
-    return a*a;
-
 }
 
 
@@ -442,13 +437,150 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         v3d_msg(QString("The output file is [%1]").arg(outfilename));
 
     }
-    else if (menu_name == tr("Classification of Dendrites and Axons"))
+    else if (menu_name == tr("Smart Pruning"))
 	{
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+
+        QString SWCfileName;
+        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+                                                   "",
+                                                   QObject::tr("Supported file (*.swc *.eswc)"
+                                                               ";;Neuron structure	(*.swc)"
+                                                               ";;Extended neuron structure (*.eswc)"
+                                                               ));
+        if(SWCfileName.isEmpty())
+            return;
+
+        QString model_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/deploy.prototxt";
+        QString trained_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/caffenet_train_iter_270000.caffemodel";
+        QString mean_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/imagenet_mean.binaryproto";
+
+        unsigned char* data1d = p4DImage->getRawData();
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        NeuronTree nt = readSWC_file(SWCfileName);
+        unsigned int Wx=15, Wy=15, Wz=15;
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+        std::vector<cv::Mat> imgs;
+        V3DLONG num_patches = 0;
+        std::vector<std::vector<float> > outputs_overall;
+        std::vector<std::vector<float> > outputs;
+        for (V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            V3DLONG tmpx = nt.listNeuron.at(i).x;
+            V3DLONG tmpy = nt.listNeuron.at(i).y;
+            V3DLONG tmpz = nt.listNeuron.at(i).z;
+
+            V3DLONG xb = tmpx-1-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+            V3DLONG xe = tmpx-1+Wx; if(xe>=N-1) xe = N-1;
+            V3DLONG yb = tmpy-1-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+            V3DLONG ye = tmpy-1+Wy; if(ye>=M-1) ye = M-1;
+            V3DLONG zb = tmpz-1-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+            V3DLONG ze = tmpz-1+Wz; if(ze>=P-1) ze = P-1;
+
+            V3DLONG im_cropped_sz[4];
+            im_cropped_sz[0] = xe - xb + 1;
+            im_cropped_sz[1] = ye - yb + 1;
+            im_cropped_sz[2] = 1;
+            im_cropped_sz[3] = sc;
+
+            unsigned char *im_cropped = 0;
+
+            V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+            try {im_cropped = new unsigned char [pagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+            memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+            for(V3DLONG iz = zb; iz <= ze; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                V3DLONG j = 0;
+                for(V3DLONG iy = yb; iy <= ye; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix <= xe; ix++)
+                    {
+                        if(data1d[offsetk + offsetj + ix] >= im_cropped[j])
+                            im_cropped[j] = data1d[offsetk + offsetj + ix];
+                        j++;
+                    }
+                }
+            }
+
+            cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+            imgs.push_back(img);
+
+            if(num_patches >=10000)
+            {
+                outputs = classifier.Predict(imgs);
+                for(V3DLONG d = 0; d<outputs.size();d++)
+                    outputs_overall.push_back(outputs[d]);
+                outputs.clear();
+                imgs.clear();
+                num_patches = 0;
+            }else
+                num_patches++;
+        }
+
+        if(imgs.size()>0)
+        {
+            outputs = classifier.Predict(imgs);
+            for(V3DLONG d = 0; d<outputs.size();d++)
+                outputs_overall.push_back(outputs[d]);
+        }
+
+        double p_num = 0;
+        double n_num = 0;
+        QList <ImageMarker> marklist;
+        for (V3DLONG j=0;j<nt.listNeuron.size();j++)
+        {
+            std::vector<float> output = outputs_overall[j];
+            if(output.at(0) > output.at(1))
+            {
+                ImageMarker S;
+                S.x = nt.listNeuron.at(j).x;
+                S.y = nt.listNeuron.at(j).y;
+                S.z = nt.listNeuron.at(j).z;
+                marklist.append(S);
+                n_num++;
+            }
+            else
+                p_num++;
+        }
+
+        NeuronTree nt_DL = DL_eliminate_swc(nt,marklist);
+        NeuronTree nt_DL_sort = SortSWC_pipeline(nt_DL.listNeuron,VOID, 10);
+        QString outswc_file = SWCfileName + "_pruned.swc";
+        writeSWC_file(outswc_file, nt_DL_sort);
+        v3d_msg(QString("Smart pruning result is saved in %1").arg(outswc_file));
+    }
+    else if (menu_name == tr("Classification of Dendrites and Axons"))
+    {
         DeepNeuronUI* inputForm = new DeepNeuronUI(parent, &callback);
         inputForm->setWindowModality(Qt::NonModal);
         inputForm->setWindowFlags(Qt::WindowStaysOnTopHint);
         inputForm->show();
-	}
+    }
 	else
 	{
         v3d_msg(tr("This is a DeepNeuron plugin including five modules "
