@@ -975,7 +975,8 @@ bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
         // load
         NCPointCloud pointcloud;
-        pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, rmNoiseDistFac, p, sx, sy, sz);
+        //pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, rmNoiseDistFac, p, sx, sy, sz);
+        pointcloud.trace(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, rmNoiseDistFac, p, sx, sy, sz);
     }
 
     //
