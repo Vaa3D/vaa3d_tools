@@ -2174,7 +2174,14 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
             local_ntList->push_back(local_nt);
             V3dR_MainWindow * local3dwin = callback->find3DViewerByName(winname_roi);
             if(local3dwin)
+			{
                 callback->update_3DViewer(local3dwin);
+				callback->openVRWindow(local3dwin);
+			}
+			else
+			{
+				callback->openVRWindowV2(localwin);
+			}
         }
     }
 }

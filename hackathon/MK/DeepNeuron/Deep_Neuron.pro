@@ -66,11 +66,16 @@ win32 {
 }
 
 unix:!macx {
+    INCLUDEPATH	+= /local1/work/caffe/include
+    INCLUDEPATH	+= /local1/cuda-8.0/include/
+    INCLUDEPATH	+= /local1/work/caffe/.build_release/src
+
     QMAKE_CXXFLAGS += -fopenmp
     LIBS += -fopenmp
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
 
-    LIBS += -L/local2/zhi/caffe/build/lib
+  #  LIBS += -L/local2/zhi/caffe/build/lib
+    LIBS += -L/local1/work/caffe/build/lib
     LIBS += -lcaffe
 
     # cuda
@@ -79,16 +84,24 @@ unix:!macx {
     LIBS += -lcudart -lcublas -lcurand
     
     # opencv
-    INCLUDEPATH += /local2/zhi/opencv-2.4.12/include/opencv
-    LIBS += -L/local2/zhi/opencv-2.4.12/release/lib
+   # INCLUDEPATH += /local2/zhi/opencv-2.4.12/include/opencv
+   # LIBS += -L/local2/zhi/opencv-2.4.12/release/lib
+    INCLUDEPATH += /local1/Downloads/opencv-2.4.12/include/opencv
+    LIBS += -L/local1/Downloads/opencv-2.4.12/release/lib
     LIBS += -lopencv_core -lopencv_imgproc -lopencv_highgui
 
     # other dependencies
-    INCLUDEPATH += /local2/zhi/boost_1_63_0
-    LIBS += -L/local2/zhi/boost_1_63_0/stage/lib
+   # INCLUDEPATH += /local2/zhi/boost_1_63_0
+   # LIBS += -L/local2/zhi/boost_1_63_0/stage/lib
+   # LIBS += -L/local2/cuda/cuda-8.0/lib64
+   # LIBS += -L/local2/zhi/caffe/.build_release/lib
+
+    INCLUDEPATH += /local1/Downloads/boost_1_63_0
+    LIBS += -L/local1/Downloads/boost_1_63_0/stage/lib
+    LIBS += -L/local1/Downloads/cuda/lib64
+    LIBS += -L/local1/work/caffe/.build_release/lib
+
     LIBS += -L/usr/lib64/atlas
-    LIBS += -L/local2/cuda/cuda-8.0/lib64
-    LIBS += -L/local2/zhi/caffe/.build_release/lib
     LIBS += -L/usr/local/lib
     LIBS += -lglog -lgflags -lprotobuf -lboost_system -lboost_thread -llmdb -lleveldb -lstdc++ -lcblas -latlas
 }
@@ -138,4 +151,4 @@ SOURCES += DLOperator.cpp
 FORMS += DeepNeuronForm.ui
 
 TARGET	= $$qtLibraryTarget(Deep_Neuron)
-DESTDIR	= ../../../../v3d_external/bin/plugins/Deep_Neuron/
+DESTDIR	= ../../../../v3d_external/bin/plugins/DeepNeuron_toolbox/
