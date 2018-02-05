@@ -150,6 +150,7 @@ SOURCES += tester.cpp
 SOURCES += DeepNeuronUI.cpp
 SOURCES += imgOperator.cpp
 SOURCES += DLOperator.cpp
+SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp
 
 FORMS += DeepNeuronForm.ui
 
