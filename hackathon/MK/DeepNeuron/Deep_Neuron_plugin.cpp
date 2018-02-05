@@ -73,10 +73,16 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             return;
         }
 
+        DNInputDialog * openDlg = new DNInputDialog(&callback,parent);
+        openDlg->m_pLineEdit_swcfile->setEnabled(false);
+        openDlg->pPushButton_openFileDlg_swcfile->setEnabled(false);
 
-        QString model_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/deploy.prototxt";
-        QString trained_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/caffenet_train_iter_270000.caffemodel";
-        QString mean_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/imagenet_mean.binaryproto";
+        if (!openDlg->exec())
+            return;
+
+        QString model_file = openDlg->model_file;
+        QString trained_file = openDlg->trained_file;
+        QString mean_file = openDlg->mean_file;
 
         int Sxy = 10;
         int Ws = 512;
@@ -258,16 +264,6 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             return;
         }
 
-        QString SWCfileName;
-        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
-                                                   "",
-                                                   QObject::tr("Supported file (*.swc *.eswc)"
-                                                               ";;Neuron structure	(*.swc)"
-                                                               ";;Extended neuron structure (*.eswc)"
-                                                               ));
-        if(SWCfileName.isEmpty())
-            return;
-
         unsigned char* data1d = p4DImage->getRawData();
         V3DLONG N = p4DImage->getXDim();
         V3DLONG M = p4DImage->getYDim();
@@ -277,8 +273,16 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         V3DLONG in_sz[4];
         in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
-        QString model_file = "/local1/work/caffe/examples/siamese/mnist_siamese.prototxt";
-        QString trained_file = "/local1/work/caffe/examples/siamese/full_siamese_iter_450000.caffemodel";
+        DNInputDialog * openDlg = new DNInputDialog(&callback,parent);
+        openDlg->m_pLineEdit_meanfile->setEnabled(false);
+        openDlg->pPushButton_openFileDlg_meanfile->setEnabled(false);
+
+        if (!openDlg->exec())
+            return;
+
+        QString model_file = openDlg->model_file;
+        QString trained_file = openDlg->trained_file;
+        QString SWCfileName = openDlg->swc_file;
 
         NeuronTree nt = readSWC_file(SWCfileName);
         Classifier classifier(model_file.toStdString(), trained_file.toStdString(),"");
@@ -454,19 +458,15 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             return;
         }
 
-        QString SWCfileName;
-        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
-                                                   "",
-                                                   QObject::tr("Supported file (*.swc *.eswc)"
-                                                               ";;Neuron structure	(*.swc)"
-                                                               ";;Extended neuron structure (*.eswc)"
-                                                               ));
-        if(SWCfileName.isEmpty())
+
+        DNInputDialog * openDlg = new DNInputDialog(&callback,parent);
+        if (!openDlg->exec())
             return;
 
-        QString model_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/deploy.prototxt";
-        QString trained_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/caffenet_train_iter_270000.caffemodel";
-        QString mean_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/imagenet_mean.binaryproto";
+        QString model_file = openDlg->model_file;
+        QString trained_file = openDlg->trained_file;
+        QString mean_file = openDlg->mean_file;
+        QString SWCfileName = openDlg->swc_file;
 
         unsigned char* data1d = p4DImage->getRawData();
 
@@ -595,19 +595,14 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
             return;
         }
 
-        QString SWCfileName;
-        SWCfileName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
-                                                   "",
-                                                   QObject::tr("Supported file (*.swc *.eswc)"
-                                                               ";;Neuron structure	(*.swc)"
-                                                               ";;Extended neuron structure (*.eswc)"
-                                                               ));
-        if(SWCfileName.isEmpty())
+        DNInputDialog * openDlg = new DNInputDialog(&callback,parent);
+        if (!openDlg->exec())
             return;
 
-        QString model_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/deploy.prototxt";
-        QString trained_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/caffenet_train_iter_270000.caffemodel";
-        QString mean_file = "/local4/DeepNeuron/2_labels/2D_CNN_5_layers/imagenet_mean.binaryproto";
+        QString model_file = openDlg->model_file;
+        QString trained_file = openDlg->trained_file;
+        QString mean_file = openDlg->mean_file;
+        QString SWCfileName = openDlg->swc_file;
 
         unsigned char* data1d = p4DImage->getRawData();
 
