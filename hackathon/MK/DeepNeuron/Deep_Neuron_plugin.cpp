@@ -667,7 +667,6 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         double p_num = 0;
         double n_num = 0;
         QList <ImageMarker> marklist;
-        QString markerpath =  SWCfileName + QString("_fp.marker");
         for (V3DLONG j=0;j<nt.listNeuron.size();j++)
         {
             std::vector<float> output = outputs[j];
@@ -684,8 +683,7 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
                 p_num++;
 
         }
-        writeMarker_file(markerpath.toStdString().c_str(),marklist);
-        cout<<"\positive rate: "<<p_num/outputs.size()<<" and negative rate: "<<n_num/outputs.size()<<endl;
+        v3d_msg(QString("Evaluation score is %1").arg(p_num/outputs.size()));
         imgs.clear();
         return;
     }

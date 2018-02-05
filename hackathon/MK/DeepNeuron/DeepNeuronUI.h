@@ -68,7 +68,7 @@ class DNInputDialog : public QDialog
             pPushButton_openFileDlg_trainedfile = new QPushButton(QObject::tr("..."));
             layout->addWidget(pPushButton_openFileDlg_trainedfile,2,6,1,7);
 
-            layout->addWidget(new QLabel(QObject::tr("Database Mean file:")),3,1);
+            layout->addWidget(new QLabel(QObject::tr("Database mean file:")),3,1);
             m_pLineEdit_meanfile = new QLineEdit();
             layout->addWidget(m_pLineEdit_meanfile,3,2,1,3);
             pPushButton_openFileDlg_meanfile = new QPushButton(QObject::tr("..."));
@@ -84,7 +84,7 @@ class DNInputDialog : public QDialog
             QPushButton * cancel = new QPushButton("Cancel");
             ok->setDefault(true);
             layout->addWidget(ok, 5, 0, 1, 3);
-            layout->addWidget(cancel, 5, 3, 1, 3);
+            layout->addWidget(cancel, 5, 6, 1, 3);
             this->setLayout(layout);
 
             connect(pPushButton_openFileDlg_modelfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_modelfile()));
