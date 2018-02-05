@@ -126,6 +126,9 @@ macx{
     LIBS += -lboost_system -lboost_filesystem -lboost_thread-mt
 
     DEFINES += USE_OPENCV CPU_ONLY
+    HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h
+    SOURCES += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp
+
 }
 
 
