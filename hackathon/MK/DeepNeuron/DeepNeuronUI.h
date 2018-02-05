@@ -60,31 +60,31 @@ class DNInputDialog : public QDialog
             m_pLineEdit_modelfile = new QLineEdit();
             layout->addWidget(m_pLineEdit_modelfile,1,2,1,3);
             pPushButton_openFileDlg_modelfile = new QPushButton(QObject::tr("..."));
-            layout->addWidget(pPushButton_openFileDlg_modelfile,1,6,1,7);
+            layout->addWidget(pPushButton_openFileDlg_modelfile,1,6,1,2);
 
             layout->addWidget(new QLabel(QObject::tr("Trained model file:")),2,1);
             m_pLineEdit_trainedfile = new QLineEdit();
             layout->addWidget(m_pLineEdit_trainedfile,2,2,1,3);
             pPushButton_openFileDlg_trainedfile = new QPushButton(QObject::tr("..."));
-            layout->addWidget(pPushButton_openFileDlg_trainedfile,2,6,1,7);
+            layout->addWidget(pPushButton_openFileDlg_trainedfile,2,6,1,2);
 
             layout->addWidget(new QLabel(QObject::tr("Database mean file:")),3,1);
             m_pLineEdit_meanfile = new QLineEdit();
             layout->addWidget(m_pLineEdit_meanfile,3,2,1,3);
             pPushButton_openFileDlg_meanfile = new QPushButton(QObject::tr("..."));
-            layout->addWidget(pPushButton_openFileDlg_meanfile,3,6,1,7);
+            layout->addWidget(pPushButton_openFileDlg_meanfile,3,6,1,2);
 
             layout->addWidget(new QLabel(QObject::tr("SWC file:")),4,1);
             m_pLineEdit_swcfile = new QLineEdit();
             layout->addWidget(m_pLineEdit_swcfile,4,2,1,3);
             pPushButton_openFileDlg_swcfile = new QPushButton(QObject::tr("..."));
-            layout->addWidget(pPushButton_openFileDlg_swcfile,4,6,1,7);
+            layout->addWidget(pPushButton_openFileDlg_swcfile,4,6,1,2);
 
             QPushButton * ok = new QPushButton("Ok");
             QPushButton * cancel = new QPushButton("Cancel");
             ok->setDefault(true);
-            layout->addWidget(ok, 5, 0, 1, 3);
-            layout->addWidget(cancel, 5, 6, 1, 3);
+            layout->addWidget(ok, 5, 0, 1, 2);
+            layout->addWidget(cancel, 5, 6, 1, 2);
             this->setLayout(layout);
 
             QSettings settings("Allen Institute", "Deep Neuron");
