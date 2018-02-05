@@ -14,7 +14,7 @@ DeepNeuronUI::DeepNeuronUI(QWidget* parent, V3DPluginCallback2* callback) : QDia
 	ui->setupUi(this);
 	this->mainCallBack = callback;
 
-    QSettings settings("Allen Institute", "DeepNeuron");
+    QSettings settings("Allen Institute", "Deep Neuron");
 	QString savedDeploy = settings.value("deploy file").toString();
 	QString savedModel = settings.value("trained model file").toString();
 	QString savedMean = settings.value("database mean file").toString();

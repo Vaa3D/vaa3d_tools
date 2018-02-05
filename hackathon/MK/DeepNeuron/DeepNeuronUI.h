@@ -87,6 +87,14 @@ class DNInputDialog : public QDialog
             layout->addWidget(cancel, 5, 6, 1, 3);
             this->setLayout(layout);
 
+            QSettings settings("Allen Institute", "Deep Neuron");
+            QString savedDeploy = settings.value("deploy file").toString();
+            QString savedModel = settings.value("trained model file").toString();
+            QString savedMean = settings.value("database mean file").toString();
+            m_pLineEdit_modelfile->setText(savedDeploy);
+            m_pLineEdit_trainedfile->setText(savedModel);
+            m_pLineEdit_meanfile->setText(savedMean);
+
             connect(pPushButton_openFileDlg_modelfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_modelfile()));
             connect(pPushButton_openFileDlg_trainedfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_trainedfile()));
             connect(pPushButton_openFileDlg_meanfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_meanfile()));
@@ -167,6 +175,10 @@ class DNInputDialog : public QDialog
         {
             update();
             accept();
+            QSettings settings("Allen Institute", "Deep Neuron");
+            settings.setValue("deploy file", model_file);
+            settings.setValue("trained model file", trained_file);
+            settings.setValue("database mean file", mean_file);
         }
 
     public:
