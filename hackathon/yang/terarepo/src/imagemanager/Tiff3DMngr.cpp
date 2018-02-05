@@ -1110,6 +1110,8 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
     }
 
     //
+    uint32 szPage = XSIZE * YSIZE * spp * (bpp/8);
+
     for(int slice=0; slice<Npages; slice++)
     {
         TIFFSetDirectory(output,slice);
@@ -1133,7 +1135,9 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
         // the file has been already opened: rowsPerStrip it is not too large for this image width
         if ( rowsPerStrip == -1 )
         {
-            TIFFWriteEncodedStrip(output, 0, img, XSIZE * YSIZE * spp * (bpp/8));
+            TIFFWriteEncodedStrip(output, 0, img, szPage);
+
+            img += szPage;
         }
         else
         {
