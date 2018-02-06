@@ -3301,13 +3301,15 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         cout<<"adjusted img_path "<<filename<<endl;
                         p = new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]*datatype];
 
-                        cout<<"size ... "<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<sz[3]<<" datatype "<<datatype<<endl;
+                        //cout<<"size ... "<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<sz[3]<<" datatype "<<datatype<<endl;
+
+                        cout<<"reinit pointer ... p "<<&p<<endl;
 
                         // WARNING: assumes that block size along z is not less that z_size/(powInt(2,i))
                         for(int buffer_z=0; buffer_z<z_size/(powInt(2,halve_pow2[i])); buffer_z++, slice_ind++)
                         {
 
-                            cout<<"buffer_z "<<buffer_z<<" compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
+                            cout<<"buffer_z "<<buffer_z<<" "<<z_size/(powInt(2,halve_pow2[i]))<<" compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
 
                             // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
                             if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
@@ -3350,7 +3352,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                             if ( datatype == 1 ) {
                                 for(sint64 i=0; i<sz[1]; i++)
                                 {
-                                    uint8* row_data_8bit = p + i*sz[0]*channels;
+                                    uint8* row_data_8bit = p + (i*sz[0] + buffer_z*sz[0]*sz[1])*channels;
                                     for(sint64 j=0; j<sz[0]; j++) {
                                         for ( int c=0; c<channels; c++ ) {
                                             row_data_8bit[j*channels + c] = raw_ch[c][(i+start_height)*(raw_img_width) + (j+start_width)];
@@ -3359,7 +3361,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                                 }
                             }
                             else {
-                                uint16  *imageData16   = (uint16 *) p;
+                                uint16  *imageData16   = (uint16 *) p + buffer_z*sz[0]*sz[1]*channels;
                                 uint16 **raw_ch16 = (uint16 **) raw_ch;
 
                                 //
@@ -3376,6 +3378,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         }
 
                         if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
+                            cout<<"size ... "<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<sz[3]<<" datatype "<<datatype<<" "<<start_width<<" "<<start_height<<" "<<&p<<" "<<((uint16 *)p)[261100]<<endl;
                             writeTiff3DFile(filename, sz[0], sz[1], sz[2], sz[3], datatype, p);
                         }
                         else

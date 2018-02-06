@@ -53,6 +53,9 @@
 #endif
 #include "IM_config.h"
 
+#include <iostream>
+using namespace std;
+
 #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
 #include <QElapsedTimer>
 #include "PLog.h"
@@ -982,6 +985,10 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
 
     uint16 bpp=8 * datatype;
 
+    printf("size ... %d %d %d %d %x %d\n", XSIZE, YSIZE, Npages, spp, img, ((uint16 *)img)[261100]);
+
+    cout<<"passing pointer ... "<<&img<<endl;
+
     int check;
 
     if ( sz3 == 1 )
@@ -1110,7 +1117,7 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
     }
 
     //
-    uint32 szPage = XSIZE * YSIZE * spp * (bpp/8);
+    uint32 szPage = XSIZE * YSIZE * spp * datatype;
 
     for(int slice=0; slice<Npages; slice++)
     {
@@ -1135,9 +1142,19 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
         // the file has been already opened: rowsPerStrip it is not too large for this image width
         if ( rowsPerStrip == -1 )
         {
-            TIFFWriteEncodedStrip(output, 0, img, szPage);
+            //printf("offset ... %ld\n",  slice*szPage);
+            TIFFWriteEncodedStrip(output, 0, img + slice*szPage, szPage);
 
-            img += szPage;
+//            for ( unsigned int ih = 0; ih < YSIZE; ih++ )
+//            {
+//                //cout<<"row ... "<<ih<<endl;
+//                if ( TIFFWriteScanline(output, img, ih, 0) < 0 )
+//                {
+//                    printf("Error out of disk space.\n");
+//                    break;
+//                }
+//                img += XSIZE*datatype;
+//            }
         }
         else
         {
@@ -1161,9 +1178,6 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
 
         //
         TIFFWriteDirectory(output);
-
-        //
-        img +=  XSIZE * YSIZE * spp * (bpp/8);
     }
 
     //

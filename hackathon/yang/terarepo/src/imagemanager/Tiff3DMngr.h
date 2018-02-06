@@ -69,7 +69,7 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
  *    b_swap:   a 0/1 value that indicates if endianness of the file is the same (0) or 
  *              is different (1) from the one of the current machine
  *    fhandle:  a pointer to a FILE structure associated to the file which is left opened
- *
+ *Npages
  * the file is not closed
  *
  * if some exception occurs, returns a string describing the exception; returns a NULL pointer
