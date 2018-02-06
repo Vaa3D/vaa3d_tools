@@ -16,6 +16,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cstdlib>
+#include <string>
 #include "../../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 
 using namespace std;
@@ -61,16 +63,8 @@ Classifier::Classifier(const string& model_file,
 
 #if defined(Q_OS_WIN) // MK, 2018, Jan. Automatic GPU/CPU selection on Windows
 	char* CUDA = getenv("CUDA_PATH");
-	if (CUDA != NULL)
-	{
-		cout << "Caffe classifier operating mode: GPU" << endl;
-		Caffe::set_mode(Caffe::GPU);
-	}
-	else
-	{
-		cout << "Caffe classifier operation mode: CPU" << endl;
-		Caffe::set_mode(Caffe::CPU);
-	}
+	if (CUDA == NULL) Caffe::set_mode(Caffe::CPU);
+	else Caffe::set_mode(Caffe::GPU);
 #endif
     /* Load labels. */
 }
