@@ -1,5 +1,5 @@
 
-set(PLUGIN_HEADERS swc_to_maskimage.h )
+set(PLUGIN_HEADERS swc_to_maskimage.h filter_dialog.h )
 set(PLUGIN_SOURCES 
     swc_to_maskimage.cpp
     filter_dialog.cpp
