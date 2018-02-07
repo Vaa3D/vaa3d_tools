@@ -306,7 +306,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 
     /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
 
-    cout<<"SimpleVolume::loadSubvolume_to_UINT8 "<<V0<<" "<<V1<<" "<<H0<<" "<<H1<<" "<<D0<<" "<<D1<<" "<<(channels ? *channels : -1)<<endl;
+    //cout<<"SimpleVolume::loadSubvolume_to_UINT8 "<<V0<<" "<<V1<<" "<<H0<<" "<<H1<<" "<<D0<<" "<<D1<<" "<<(channels ? *channels : -1)<<endl;
 
 	//throw IOException("in SimpleVolume::loadSubvolume_to_UINT8(...): disabled to remove dependence from openCV"); // Giulio_CV
 

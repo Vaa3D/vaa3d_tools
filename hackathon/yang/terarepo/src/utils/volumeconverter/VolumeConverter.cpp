@@ -277,7 +277,7 @@ void vcDriver (
 		}
 		else if ( dst_format == iim::TILED_TIF3D_FORMAT || dst_format == iim::TIF3D_FORMAT) {
 
-            cout<<"convert to tiled 3D tiff "<<(timeseries?"timeseries":"not time series")<<" "<<(makeDirs?"makeDirs":"not makeDirs")<<" "<<(metaData?"metaData":"Not metaData")<<endl;
+            //cout<<"convert to tiled 3D tiff "<<(timeseries?"timeseries":"not time series")<<" "<<(makeDirs?"makeDirs":"not makeDirs")<<" "<<(metaData?"metaData":"Not metaData")<<endl;
 
 			if ( timeseries ) {
 				vc.convertTo(dst_root_dir.c_str(),dst_format,8*vc.getVolume()->getBYTESxCHAN(),true,resolutions,
@@ -294,9 +294,9 @@ void vcDriver (
 					show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
 			}
 			else {
-                //vc.generateTilesVaa3DRaw(dst_root_dir.c_str(),resolutions,
-                //	slice_height,slice_width,slice_depth,halving_method,isotropic,
-                //	show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
+//                vc.generateTilesVaa3DRaw(dst_root_dir.c_str(),resolutions,
+//                    slice_height,slice_width,slice_depth,halving_method,isotropic,
+//                    show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
 
                 vc.generate3DTiles(dst_root_dir.c_str(),resolutions,
                                     slice_height,slice_width,slice_depth,halving_method,isotropic,
@@ -470,7 +470,7 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    cout<<"setSrcVolume takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<endl;
+    //cout<<"setSrcVolume takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<endl;
 }
 
 // additional setSrcVolume @ADDED by Alessandro on 2014-04-18: takes an external vm::VirtualVolume in input
@@ -1749,11 +1749,11 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 				bool show_progress_bar, const char* saved_img_format, 
                 int saved_img_depth, std::string frame_dir, bool par_mode)	throw (IOException, iom::exception)
 {
-    printf("in VolumeConverter::generateTilesVaa3DRaw(path = \"%s\", resolutions = ", output_path.c_str());
-    for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
-        printf("%d", resolutions[i]);
-    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
-           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
+//    printf("in VolumeConverter::generateTilesVaa3DRaw(path = \"%s\", resolutions = ", output_path.c_str());
+//    for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
+//        printf("%d", resolutions[i]);
+//    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
+//           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
 	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
@@ -1899,9 +1899,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                 if(resolutions[i])
                     resolutions_size = std::max(resolutions_size, i+1);
 
-    cout<<"size ... "<<width<<" "<<height<<" "<<depth<<endl;
-    cout<<"block size ... "<<block_width<<" "<<block_height<<" "<<block_depth<<endl;
-    cout<<"resolution size ... "<<resolutions_size<<endl;
+    //cout<<"size ... "<<width<<" "<<height<<" "<<depth<<endl;
+    //cout<<"block size ... "<<block_width<<" "<<block_height<<" "<<block_depth<<endl;
+    //cout<<"resolution size ... "<<resolutions_size<<endl;
 
     float w = width;
     float h = height;
@@ -1925,7 +1925,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 
     resolutions_size = n;
 
-    cout<<"adjusted resolution size ... "<<resolutions_size<<endl;
+    //cout<<"adjusted resolution size ... "<<resolutions_size<<endl;
 
 	//2016-04-13. Giulio. set the halving rules 
 	if ( isotropic ) {
@@ -1950,8 +1950,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			halve_pow2[i] = i;
 	}
 
-    for ( int i=0; i<resolutions_size; i++ )
-        cout<<" halve_pow2 "<<halve_pow2[i]<<" at "<<resolutions[i]<<endl;
+//    for ( int i=0; i<resolutions_size; i++ )
+//        cout<<" halve_pow2 "<<halve_pow2[i]<<" at "<<resolutions[i]<<endl;
 
     //computing tiles dimensions at each resolution and initializing volume directories
     for(int res_i=0; res_i< resolutions_size; res_i++)
@@ -1960,8 +1960,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         n_stacks_H[res_i] = (int) ceil ( (width/powInt(2,res_i))  / (float) block_width  );
         n_stacks_D[res_i] = (int) ceil ( (depth/powInt(2,halve_pow2[res_i]))  / (float) block_depth  );
 
-        cout<<"res "<<res_i<<endl;
-        cout<<"n_stacks "<<n_stacks_V[res_i]<<" "<<n_stacks_H[res_i]<<" "<<n_stacks_D[res_i]<<endl;
+        //cout<<"res "<<res_i<<endl;
+        //cout<<"n_stacks "<<n_stacks_V[res_i]<<" "<<n_stacks_H[res_i]<<" "<<n_stacks_D[res_i]<<endl;
 
         stacks_height[res_i] = new int **[n_stacks_V[res_i]];
         stacks_width[res_i]  = new int **[n_stacks_V[res_i]]; 
@@ -1986,16 +1986,16 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                         ((int)(depth/powInt(2,halve_pow2[res_i])))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/powInt(2,halve_pow2[res_i])))  % n_stacks_D[res_i] ? 1:0);
 
 
-                    if(stack_row==0 && stack_col==0 && stack_sli==0)
-                    {
-                        cout<<"res "<<res_i<<" "<<stack_row<<" "<<stack_col<<" "<<stack_sli<<endl;
-                        cout<<"stacks "<<stacks_height[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_width[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_depth[res_i][stack_row][stack_col][stack_sli]<<endl;
-                    }
+//                    if(stack_row==0 && stack_col==0 && stack_sli==0)
+//                    {
+//                        cout<<"res "<<res_i<<" "<<stack_row<<" "<<stack_col<<" "<<stack_sli<<endl;
+//                        cout<<"stacks "<<stacks_height[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_width[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_depth[res_i][stack_row][stack_col][stack_sli]<<endl;
+//                    }
 				}
             }
         }
 
-        cout<<"par_mode "<<(par_mode?"true":"false")<<endl;
+        //cout<<"par_mode "<<(par_mode?"true":"false")<<endl;
 
         //creating volume directory iff current resolution is selected and test mode is disabled
         if(resolutions[res_i] == true)
@@ -2031,7 +2031,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         }
 	}
 
-    cout<<"created top resolution folders \n";
+    //cout<<"created top resolution folders \n";
 
 	/* The following check verifies that the numeber of slices in the buffer is not higher than the number of slices in a block file
 	 * (excluding the last block in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
@@ -2122,7 +2122,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         #endif
 
 		// fill one slice block
-        cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
+        //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
 
 		if ( internal_rep == REAL_INTERNAL_REP )
             rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
@@ -2137,7 +2137,6 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
             auto end = std::chrono::high_resolution_clock::now();
 
             cout<<"loadSubvolume_to_UINT8 takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
-
 
             if ( org_channels != channels ) {
 				char err_msg[STATIC_STRINGS_SIZE];
@@ -2185,6 +2184,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		}
 
 		//saving current buffer data at selected resolutions and in multitile format
+        auto start = std::chrono::high_resolution_clock::now();
+
 		for(int i=0; i< resolutions_size; i++)
 		{
 			if(show_progress_bar)
@@ -2273,7 +2274,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					}
 				}
 
-                cout<<"base_path "<<base_path.str()<<endl;
+                //cout<<"base_path "<<base_path.str()<<endl;
 
 				//looping on new stacks
 				for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
@@ -2285,7 +2286,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					std::stringstream V_DIR_path;
 					V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
 
-                    cout<<"V_DIR_path "<<V_DIR_path.str()<<endl;
+                    //cout<<"V_DIR_path "<<V_DIR_path.str()<<endl;
 
                     if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 					{
@@ -2302,7 +2303,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 
-                        cout<<"H_DIR_path "<<H_DIR_path.str()<<endl;
+                        //cout<<"H_DIR_path "<<H_DIR_path.str()<<endl;
 
 						if ( z==D0 ) {
 							if(!check_and_make_dir(H_DIR_path.str().c_str()))
@@ -2390,7 +2391,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
  						std::stringstream img_path;
 						img_path << partial_img_path.str() << abs_pos_z.str();
 
-                        cout<<"img_path "<<img_path.str()<<endl;
+                        //cout<<"img_path "<<img_path.str()<<endl;
 
 						/* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
 						 * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations, 
@@ -2459,8 +2460,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                                     //(int slice, std::string img_path, uint8** raw_ch, int n_chans, sint64 offset,
                                     // int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
                                     // int end_width, const char* img_format, int img_depth, void *fhandle, int n_pages, bool do_open )
-                                    cout<<"saved ... "<<img_path.str()<<" offset "<<buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan<<" "<<slice_ind<<" "
-                                       <<start_height<<" "<<end_height<<" "<<start_width<<" "<<end_width<<" "<<n_pages_block<<" "<<saved_img_depth<<endl;
+                                    //cout<<"saved ... "<<img_path.str()<<" offset "<<buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan<<" "<<slice_ind<<" "
+                                    //   <<start_height<<" "<<end_height<<" "<<start_width<<" "<<end_width<<" "<<n_pages_block<<" "<<saved_img_depth<<endl;
 								}
 								else { // can be only Vaa3DRaw
 									VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
@@ -2496,6 +2497,11 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			delete rbuffer;
 		else // internal_rep == UINT8_INTERNAL_REP
 			delete ubuffer[0]; // other buffer pointers are only offsets
+
+        //
+        auto end = std::chrono::high_resolution_clock::now();
+
+        cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
 	}
 		
 	// save last group data
@@ -2632,11 +2638,11 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                                       bool show_progress_bar, const char* saved_img_format,
                                       int saved_img_depth, std::string frame_dir, bool par_mode)	throw (IOException, iom::exception)
 {
-    printf("in VolumeConverter::generateTilesVaa3DRaw(path = \"%s\", resolutions = ", output_path.c_str());
-    for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
-        printf("%d", resolutions[i]);
-    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
-           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
+//    printf("in VolumeConverter::generateTilesVaa3DRaw(path = \"%s\", resolutions = ", output_path.c_str());
+//    for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
+//        printf("%d", resolutions[i]);
+//    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
+//           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
     if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
         saved_img_depth = volume->getBYTESxCHAN() * 8;
@@ -2782,9 +2788,9 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                 if(resolutions[i])
                     resolutions_size = std::max(resolutions_size, i+1);
 
-    cout<<"size ... "<<width<<" "<<height<<" "<<depth<<endl;
-    cout<<"block size ... "<<block_width<<" "<<block_height<<" "<<block_depth<<endl;
-    cout<<"resolution size ... "<<resolutions_size<<endl;
+    //cout<<"size ... "<<width<<" "<<height<<" "<<depth<<endl;
+    //cout<<"block size ... "<<block_width<<" "<<block_height<<" "<<block_depth<<endl;
+    //cout<<"resolution size ... "<<resolutions_size<<endl;
 
     float w = width;
     float h = height;
@@ -2808,7 +2814,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
 
     resolutions_size = n;
 
-    cout<<"adjusted resolution size ... "<<resolutions_size<<endl;
+    //cout<<"adjusted resolution size ... "<<resolutions_size<<endl;
 
     //2016-04-13. Giulio. set the halving rules
     if ( isotropic ) {
@@ -2833,8 +2839,8 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
             halve_pow2[i] = i;
     }
 
-    for ( int i=0; i<resolutions_size; i++ )
-        cout<<" halve_pow2 "<<halve_pow2[i]<<" at "<<resolutions[i]<<endl;
+//    for ( int i=0; i<resolutions_size; i++ )
+//        cout<<" halve_pow2 "<<halve_pow2[i]<<" at "<<resolutions[i]<<endl;
 
     //computing tiles dimensions at each resolution and initializing volume directories
     for(int res_i=0; res_i< resolutions_size; res_i++)
@@ -2843,8 +2849,8 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
         n_stacks_H[res_i] = (int) ceil ( (width/powInt(2,res_i))  / (float) block_width  );
         n_stacks_D[res_i] = (int) ceil ( (depth/powInt(2,halve_pow2[res_i]))  / (float) block_depth  );
 
-        cout<<"res "<<res_i<<endl;
-        cout<<"n_stacks "<<n_stacks_V[res_i]<<" "<<n_stacks_H[res_i]<<" "<<n_stacks_D[res_i]<<endl;
+        //cout<<"res "<<res_i<<endl;
+        //cout<<"n_stacks "<<n_stacks_V[res_i]<<" "<<n_stacks_H[res_i]<<" "<<n_stacks_D[res_i]<<endl;
 
         stacks_height[res_i] = new int **[n_stacks_V[res_i]];
         stacks_width[res_i]  = new int **[n_stacks_V[res_i]];
@@ -2869,16 +2875,16 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         ((int)(depth/powInt(2,halve_pow2[res_i])))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/powInt(2,halve_pow2[res_i])))  % n_stacks_D[res_i] ? 1:0);
 
 
-                    if(stack_row==0 && stack_col==0 && stack_sli==0)
-                    {
-                        cout<<"res "<<res_i<<" "<<stack_row<<" "<<stack_col<<" "<<stack_sli<<endl;
-                        cout<<"stacks "<<stacks_height[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_width[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_depth[res_i][stack_row][stack_col][stack_sli]<<endl;
-                    }
+//                    if(stack_row==0 && stack_col==0 && stack_sli==0)
+//                    {
+//                        cout<<"res "<<res_i<<" "<<stack_row<<" "<<stack_col<<" "<<stack_sli<<endl;
+//                        cout<<"stacks "<<stacks_height[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_width[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_depth[res_i][stack_row][stack_col][stack_sli]<<endl;
+//                    }
                 }
             }
         }
 
-        cout<<"par_mode "<<(par_mode?"true":"false")<<endl;
+        //cout<<"par_mode "<<(par_mode?"true":"false")<<endl;
 
         //creating volume directory iff current resolution is selected and test mode is disabled
         if(resolutions[res_i] == true)
@@ -2914,7 +2920,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
         }
     }
 
-    cout<<"created top resolution folders \n";
+    //cout<<"created top resolution folders \n";
 
     /* The following check verifies that the numeber of slices in the buffer is not higher than the number of slices in a block file
      * (excluding the last block in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
@@ -3005,7 +3011,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
         #endif
 
         // fill one slice block
-        cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
+        //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
 
         if ( internal_rep == REAL_INTERNAL_REP )
             rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
@@ -3068,6 +3074,8 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
         }
 
         //saving current buffer data at selected resolutions and in multitile format
+        auto start = std::chrono::high_resolution_clock::now();
+
         for(int i=0; i< resolutions_size; i++)
         {
             if(show_progress_bar)
@@ -3159,7 +3167,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                     }
                 }
 
-                cout<<"base_path "<<base_path.str()<<endl;
+                //cout<<"base_path "<<base_path.str()<<endl;
 
                 //looping on new stacks
                 for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
@@ -3171,7 +3179,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                     std::stringstream V_DIR_path;
                     V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
 
-                    cout<<"V_DIR_path "<<V_DIR_path.str()<<endl;
+                    //cout<<"V_DIR_path "<<V_DIR_path.str()<<endl;
 
                     if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
                     {
@@ -3188,7 +3196,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         std::stringstream H_DIR_path;
                         H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 
-                        cout<<"H_DIR_path "<<H_DIR_path.str()<<endl;
+                        //cout<<"H_DIR_path "<<H_DIR_path.str()<<endl;
 
                         if ( z==D0 ) {
                             if(!check_and_make_dir(H_DIR_path.str().c_str()))
@@ -3272,7 +3280,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         std::stringstream img_path;
                         img_path << partial_img_path.str() << abs_pos_z.str();
 
-                        cout<<"img_path "<<img_path.str()<<endl;
+                        //cout<<"img_path "<<img_path.str()<<endl;
 
                         /* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
                          * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations,
@@ -3298,18 +3306,16 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         unsigned char *p = NULL;
                         char filename[2048];
                         sprintf(filename, "%s.%s", img_path.str().c_str(), TIFF3D_SUFFIX);
-                        cout<<"adjusted img_path "<<filename<<endl;
+                        //cout<<"adjusted img_path "<<filename<<endl;
                         p = new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]*datatype];
 
                         //cout<<"size ... "<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<sz[3]<<" datatype "<<datatype<<endl;
-
-                        cout<<"reinit pointer ... p "<<&p<<endl;
 
                         // WARNING: assumes that block size along z is not less that z_size/(powInt(2,i))
                         for(int buffer_z=0; buffer_z<z_size/(powInt(2,halve_pow2[i])); buffer_z++, slice_ind++)
                         {
 
-                            cout<<"buffer_z "<<buffer_z<<" "<<z_size/(powInt(2,halve_pow2[i]))<<" compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
+                            //cout<<"buffer_z "<<buffer_z<<" "<<z_size/(powInt(2,halve_pow2[i]))<<" compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
 
                             // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
                             if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
@@ -3378,7 +3384,7 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
                         }
 
                         if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
-                            cout<<"size ... "<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<sz[3]<<" datatype "<<datatype<<" "<<start_width<<" "<<start_height<<" "<<&p<<" "<<((uint16 *)p)[261100]<<endl;
+                            //cout<<"size ... "<<sz[0]<<" "<<sz[1]<<" "<<sz[2]<<" "<<sz[3]<<" datatype "<<datatype<<" "<<start_width<<" "<<start_height<<" "<<&p<<" "<<((uint16 *)p)[261100]<<endl;
                             writeTiff3DFile(filename, sz[0], sz[1], sz[2], sz[3], datatype, p);
                         }
                         else
@@ -3407,6 +3413,11 @@ void VolumeConverter::generate3DTiles(std::string output_path, bool* resolutions
             delete rbuffer;
         else // internal_rep == UINT8_INTERNAL_REP
             delete ubuffer[0]; // other buffer pointers are only offsets
+
+        //
+        auto end = std::chrono::high_resolution_clock::now();
+
+        cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
     }
 
     // save last group data

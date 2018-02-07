@@ -985,10 +985,6 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
 
     uint16 bpp=8 * datatype;
 
-    printf("size ... %d %d %d %d %x %d\n", XSIZE, YSIZE, Npages, spp, img, ((uint16 *)img)[261100]);
-
-    cout<<"passing pointer ... "<<&img<<endl;
-
     int check;
 
     if ( sz3 == 1 )
@@ -1147,7 +1143,6 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
 
 //            for ( unsigned int ih = 0; ih < YSIZE; ih++ )
 //            {
-//                //cout<<"row ... "<<ih<<endl;
 //                if ( TIFFWriteScanline(output, img, ih, 0) < 0 )
 //                {
 //                    printf("Error out of disk space.\n");
