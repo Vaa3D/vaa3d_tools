@@ -83,8 +83,8 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         QString model_file = openDlg->model_file;
         QString trained_file = openDlg->trained_file;
         QString mean_file = openDlg->mean_file;
+        int Sxy = openDlg->step_size;
 
-        int Sxy = 10;
         int Ws = 512;
 
         unsigned char* data1d = p4DImage->getRawData();
@@ -178,7 +178,7 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         LandmarkList marklist_2D_shifted;
         vector<V3DLONG> poss_landmark;
         vector<float> mass_center;
-        double windowradius = Sxy+5;
+        double windowradius = Sxy*1.5;
 
         V3DLONG sz_img[4];
         sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
@@ -189,7 +189,16 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         {
             mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-            marklist_2D_shifted.append(tmp);
+            bool flag_dual = false;
+            for(V3DLONG jj = 0; jj < marklist_2D_shifted.size();jj++)
+            {
+                if(NTDIS(tmp,marklist_2D_shifted.at(jj)) == 0)
+                {
+                    flag_dual = true;
+                    break;
+                }
+            }
+            if(!flag_dual) marklist_2D_shifted.append(tmp);
 
         }
 
@@ -276,6 +285,7 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         DNInputDialog * openDlg = new DNInputDialog(&callback,parent);
         openDlg->m_pLineEdit_meanfile->setEnabled(false);
         openDlg->pPushButton_openFileDlg_meanfile->setEnabled(false);
+        openDlg->stepsize_spinbox->setEnabled(false);
 
         if (!openDlg->exec())
             return;
@@ -467,6 +477,7 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         QString trained_file = openDlg->trained_file;
         QString mean_file = openDlg->mean_file;
         QString SWCfileName = openDlg->swc_file;
+        openDlg->stepsize_spinbox->setEnabled(false);
 
         unsigned char* data1d = p4DImage->getRawData();
 
@@ -603,6 +614,8 @@ void DeepNeuron_plugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         QString trained_file = openDlg->trained_file;
         QString mean_file = openDlg->mean_file;
         QString SWCfileName = openDlg->swc_file;
+
+        openDlg->stepsize_spinbox->setEnabled(false);
 
         unsigned char* data1d = p4DImage->getRawData();
 

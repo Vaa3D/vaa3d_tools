@@ -74,17 +74,25 @@ class DNInputDialog : public QDialog
             pPushButton_openFileDlg_meanfile = new QPushButton(QObject::tr("..."));
             layout->addWidget(pPushButton_openFileDlg_meanfile,3,6,1,2);
 
-            layout->addWidget(new QLabel(QObject::tr("SWC file:")),4,1);
+
+            layout->addWidget(new QLabel(QObject::tr("Step size:")),4,1);
+            stepsize_spinbox = new QSpinBox();
+            stepsize_spinbox->setRange(1,20);
+            stepsize_spinbox->setValue(10);
+            layout->addWidget(stepsize_spinbox,4,2,1,3);
+
+
+            layout->addWidget(new QLabel(QObject::tr("SWC file:")),5,1);
             m_pLineEdit_swcfile = new QLineEdit();
-            layout->addWidget(m_pLineEdit_swcfile,4,2,1,3);
+            layout->addWidget(m_pLineEdit_swcfile,5,2,1,3);
             pPushButton_openFileDlg_swcfile = new QPushButton(QObject::tr("..."));
-            layout->addWidget(pPushButton_openFileDlg_swcfile,4,6,1,2);
+            layout->addWidget(pPushButton_openFileDlg_swcfile,5,6,1,2);
 
             QPushButton * ok = new QPushButton("Ok");
             QPushButton * cancel = new QPushButton("Cancel");
             ok->setDefault(true);
-            layout->addWidget(ok, 5, 0, 1, 2);
-            layout->addWidget(cancel, 5, 6, 1, 2);
+            layout->addWidget(ok, 6, 0, 1, 2);
+            layout->addWidget(cancel, 6, 6, 1, 2);
             this->setLayout(layout);
 
             QSettings settings("Allen Institute", "Deep Neuron");
@@ -100,6 +108,8 @@ class DNInputDialog : public QDialog
             connect(pPushButton_openFileDlg_meanfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_meanfile()));
             connect(pPushButton_openFileDlg_swcfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_swcfile()));
 
+            connect(stepsize_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
+
             connect(ok, SIGNAL(clicked()), this, SLOT(_slot_start()));
             connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
         }
@@ -113,6 +123,7 @@ class DNInputDialog : public QDialog
             trained_file = m_pLineEdit_trainedfile->text();
             mean_file = m_pLineEdit_meanfile->text();
             swc_file = m_pLineEdit_swcfile->text();
+            step_size = stepsize_spinbox->text().toInt();
         }
 
         void _slots_openFileDlg_modelfile()
@@ -186,6 +197,7 @@ class DNInputDialog : public QDialog
         QString trained_file;
         QString mean_file;
         QString swc_file;
+        int step_size;
 
         QLineEdit *m_pLineEdit_modelfile;
         QLineEdit *m_pLineEdit_trainedfile;
@@ -196,6 +208,8 @@ class DNInputDialog : public QDialog
         QPushButton *pPushButton_openFileDlg_trainedfile;
         QPushButton *pPushButton_openFileDlg_meanfile;
         QPushButton *pPushButton_openFileDlg_swcfile;
+
+        QSpinBox * stepsize_spinbox;
 
 
     };
