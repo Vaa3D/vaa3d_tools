@@ -541,7 +541,7 @@ template<class T> bool perturb_linker(const vector<MyMarker *> &inswc, T * inimg
     for(int nid=0; nid<inswc.size()-1; nid++){
         MyMarker* current = inswc.at(nid);
         MyMarker* parent = current->parent;
-        if(parent<=0){
+        if(parent<= (MyMarker *)0){
             continue; //continue if it has no parent
         }
 
