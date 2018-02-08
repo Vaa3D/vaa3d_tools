@@ -99,9 +99,9 @@ class DNInputDialog : public QDialog
             QString savedDeploy = settings.value("deploy file").toString();
             QString savedModel = settings.value("trained model file").toString();
             QString savedMean = settings.value("database mean file").toString();
-            m_pLineEdit_modelfile->setText(savedDeploy);
-            m_pLineEdit_trainedfile->setText(savedModel);
-            m_pLineEdit_meanfile->setText(savedMean);
+            if(QFile(savedDeploy).exists()) m_pLineEdit_modelfile->setText(savedDeploy);
+            if(QFile(savedModel).exists()) m_pLineEdit_trainedfile->setText(savedModel);
+            if(QFile(savedMean).exists()) m_pLineEdit_meanfile->setText(savedMean);
 
             connect(pPushButton_openFileDlg_modelfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_modelfile()));
             connect(pPushButton_openFileDlg_trainedfile, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_trainedfile()));
