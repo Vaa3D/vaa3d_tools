@@ -81,6 +81,11 @@
 #include <string>
 #include <math.h>
 
+#include <thread>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
 #include "../imagemanager/VirtualVolume.h"
 
 // possible output format
@@ -96,7 +101,51 @@
 
 #define STANDARD_BLOCK_DEPTH   64      // standard block to be used when converting to tiled format (introduced for efficiency)
 
+// thread-safe queue
+template <typename T>
+class Queue
+{
+public:
 
+    T pop()
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        while (queue_.empty())
+        {
+            cond_.wait(mlock);
+        }
+        auto val = queue_.front();
+        queue_.pop();
+        return val;
+    }
+
+    void pop(T& item)
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        while (queue_.empty())
+        {
+            cond_.wait(mlock);
+        }
+        item = queue_.front();
+        queue_.pop();
+    }
+
+    void push(const T& item)
+    {
+        std::unique_lock<std::mutex> mlock(mutex_);
+        queue_.push(item);
+        mlock.unlock();
+        cond_.notify_one();
+    }
+    Queue()=default;
+    Queue(const Queue&) = delete;            // disable copying
+    Queue& operator=(const Queue&) = delete; // disable assignment
+
+private:
+    std::queue<T> queue_;
+    std::mutex mutex_;
+    std::condition_variable cond_;
+};
 
 // 2017-04-23. Giulio. @ADDED auxiliary function to call format conversion
 void vcDriver (
@@ -294,6 +343,12 @@ class VolumeConverter
 
         // similar to generateTilesVaa3DRaw but save a volume directly instead of slices
         void generate3DTiles(std::string output_path, bool* resolutions = NULL,
+            int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false,
+            bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
+
+        // multithreaded generate tiles and save
+        void generateTilesMT(std::string output_path, bool* resolutions = NULL,
             int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false,
             bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
             std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
