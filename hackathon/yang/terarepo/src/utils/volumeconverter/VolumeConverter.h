@@ -88,6 +88,8 @@
 
 #include "../imagemanager/VirtualVolume.h"
 
+#include <omp.h>
+
 // possible output format
 #define REAL_REPRESENTATION      "intensity"  // images are managed internally with REAL_INTERNAL_REP representation
                                               // and saved as graylevel images
@@ -347,6 +349,12 @@ class VolumeConverter
             bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
             std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
 
+        // multithreaded for-loop using openmp
+        void generate3DTilesMT(std::string output_path, bool* resolutions = NULL,
+            int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false,
+            bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
+
         // multithreaded generate tiles and save
         void generateTilesMT(std::string output_path, bool* resolutions = NULL,
             int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false,
@@ -409,7 +417,7 @@ class VolumeConverter
 
       /*************************************************************************************************************
         * NEW FORMAT SUPPORTING BDV HDF5 custom format
-        **************************************************************************************************************/
+        **************************************ubuffer************************************************************************/
 
 	   /*************************************************************************************************************
 		* Method to be called for tile generation. <> parameters are mandatory, while [] are optional.
