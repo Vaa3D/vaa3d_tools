@@ -298,7 +298,7 @@ void vcDriver (
 //                                     slice_height,slice_width,slice_depth,halving_method,isotropic,
 //                                     show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
 
-            vc.generate3DTiles(dst_root_dir.c_str(),resolutions,
+            vc.generate3DTilesMT(dst_root_dir.c_str(),resolutions,
                                slice_height,slice_width,slice_depth,halving_method,isotropic,
                                show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
         }
@@ -5042,9 +5042,9 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
         // WARNING: should check that buffer has been actually allocated
 
         // 2017-05-25. Giulio. Added code for simple lossy compression (suggested by Hanchuan Peng)
-        auto start_nbits = std::chrono::high_resolution_clock::now();
+        //auto start_nbits = std::chrono::high_resolution_clock::now();
         if ( nbits ) {
-            printf("----> lossy compression nbits = %d\n",nbits);
+            //printf("----> lossy compression nbits = %d\n",nbits);
             iim::sint64 tot_size = (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res))) * channels;
             if ( bytes_chan == 1 ) {
                 iim::uint8 *ptr = ubuffer[0];
@@ -5059,14 +5059,14 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                     iim::uint16 *ptr = (iim::uint16 *) ubuffer[0];
                     #pragma omp for
                     for ( iim::sint64 i=0; i<tot_size; i++ ) {
-                        ptr[i] = ptr[i] >> nbits << nbits;
+                        ptr[i] = ptr[i] >> nbits;
                     }
                 }
             }
         }
 
-        auto end_nbits = std::chrono::high_resolution_clock::now();
-        cout<<"nbits takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end_nbits - start_nbits).count()<<" ms."<<endl;
+        //auto end_nbits = std::chrono::high_resolution_clock::now();
+        //cout<<"nbits takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end_nbits - start_nbits).count()<<" ms."<<endl;
 
         // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
         #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
@@ -5096,8 +5096,11 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                 ts::ProgressBar::getInstance()->display();
             }
 
-            int datatype;
+            int datatype, datatype_out;
             int *sz = new int [4];
+
+            if(nbits==4)
+                datatype_out = 1;
 
             // check if current block is changed
             // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
@@ -5287,7 +5290,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                         sprintf(filename, "%s.%s", img_path.str().c_str(), TIFF3D_SUFFIX);
                         //cout<<"adjusted img_path "<<filename<<endl;
 
-                        long szChunk = sz[0]*sz[1]*sz[2]*sz[3]*datatype;
+                        long szChunk = sz[0]*sz[1]*sz[2]*sz[3]*datatype_out;
                         try
                         {
                             p = new unsigned char [szChunk];
@@ -5337,8 +5340,18 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                 saveChunkImage = false;
 
                                 sz[2] = n_pages_block;
-                                delete [] p;
-                                p = new unsigned char [sz[0]*sz[1]*sz[2]*sz[3]*datatype];
+                                if(p)
+                                    delete [] p;
+                                long szChunk = sz[0]*sz[1]*sz[2]*sz[3]*datatype_out;
+                                try
+                                {
+                                    p = new unsigned char [szChunk];
+                                    memset(p, 0, szChunk);
+                                }
+                                catch(...)
+                                {
+                                    cout<<"fail to alloc memory \n";
+                                }
                             }
 
                             sint64 raw_img_width = width/(powInt(2,i));
@@ -5355,44 +5368,42 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                     uint8* row_data_8bit = p + (i*sz[0] + buffer_z*sz[0]*sz[1])*channels;
                                     for(sint64 j=0; j<sz[0]; j++) {
                                         for ( int c=0; c<channels; c++ ) {
-                                            uint8 val = raw_ch[c][(i+start_height)*(raw_img_width) + (j+start_width)];
-
-                                            if(saveChunkImage==false)
-                                            {
-                                                if(val>0)
-                                                    numNonZeros++;
-
-                                                if(numNonZeros>saveVoxelThresh)
-                                                    saveChunkImage = true;
-                                            }
-
-                                            row_data_8bit[j*channels + c] = val;
+                                            row_data_8bit[j*channels + c] = raw_ch[c][(i+start_height)*(raw_img_width) + (j+start_width)];
                                         }
                                     }
                                 }
                             }
                             else {
-                                uint16  *imageData16   = (uint16 *) p + buffer_z*sz[0]*sz[1]*channels;
-                                uint16 **raw_ch16 = (uint16 **) raw_ch;
 
-                                //
-                                for(sint64 i=0; i<sz[1]; i++)
+                                if(datatype_out == 1)
                                 {
-                                    uint16* row_data_16bit = imageData16 + i*sz[0]*channels;
-                                    for(sint64 j=0; j<sz[0]; j++) { //
-                                        for ( int c=0; c<channels; c++ ) {
-//                                            uint16 val = raw_ch16[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                    uint8  *imageData = p + buffer_z*sz[0]*sz[1]*channels;
+                                    uint16 **raw_ch16 = (uint16 **) raw_ch;
 
-//                                            if(saveChunkImage==false)
-//                                            {
-//                                                if(val>0)
-//                                                    numNonZeros++;
+                                    //
+                                    for(sint64 i=0; i<sz[1]; i++)
+                                    {
+                                        uint8* row_data_8bit = imageData + i*sz[0]*channels;
+                                        for(sint64 j=0; j<sz[0]; j++) { //
+                                            for ( int c=0; c<channels; c++ ) {
+                                                row_data_8bit[j*channels + c] = raw_ch16[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    uint16  *imageData16   = (uint16 *) p + buffer_z*sz[0]*sz[1]*channels;
+                                    uint16 **raw_ch16 = (uint16 **) raw_ch;
 
-//                                                if(numNonZeros>saveVoxelThresh)
-//                                                    saveChunkImage = true;
-//                                            }
-
-                                            row_data_16bit[j*channels + c] = raw_ch16[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                    //
+                                    for(sint64 i=0; i<sz[1]; i++)
+                                    {
+                                        uint16* row_data_16bit = imageData16 + i*sz[0]*channels;
+                                        for(sint64 j=0; j<sz[0]; j++) { //
+                                            for ( int c=0; c<channels; c++ ) {
+                                                row_data_16bit[j*channels + c] = raw_ch16[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                            }
                                         }
                                     }
                                 }
@@ -5403,18 +5414,12 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                             {
                                 if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
 
-
-                                    #pragma omp parallel
+                                    int szchunk = sz[0]*sz[1]*sz[2]*sz[3];
+                                    #pragma omp parallel for reduction(+:numNonZeros)
+                                    for(int i=0; i<szchunk; i++)
                                     {
-                                        int szchunk = sz[0]*sz[1]*sz[2]*sz[3];
-                                        uint16  *imageData16   = (uint16 *) p;
-                                        #pragma omp for
-                                        for(int i=0; i<szchunk; i++)
-                                        {
-                                            if(imageData16[0]>0)
-                                                numNonZeros++;
-                                        }
-
+                                        if(p[i]>0)
+                                            numNonZeros++;
                                     }
 
                                     if(numNonZeros>saveVoxelThresh)
@@ -5433,7 +5438,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                             }
                                         }
 
-                                        writeTiff3DFile(filename, sz[0], sz[1], sz[2], sz[3], datatype, p);
+                                        writeTiff3DFile(filename, sz[0], sz[1], sz[2], sz[3], datatype_out, p);
                                     }
                                     else
                                     {
@@ -5448,24 +5453,22 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                 {
                                     // save to vaa3draw
                                 }
+
+                                numNonZeros = 0;
                             }
 
                         }
 
-//                        if(saveCount == 0)
-//                        {
-//                            emptyDirs.push_back(H_DIR_path.str());
-//                        }
-
                         //
-                        delete [] p;
+                        if(p)
+                            delete [] p;
 
                         start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 
                         // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+                        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
                         TERAFLY_TIME_STOP(ConverterWriteBlockOperation, tf::ALL_COMPS, terafly::strprintf("converter: written multiresolution image block x(%d-%d), y(%d-%d), z(%d-%d)",start_width, end_width, start_height, end_height, ((iim::uint32)(z-D0)),((iim::uint32)(z-D0+z_max_res-1))));
-#endif
+                        #endif
                     }
                     start_height += stacks_height[i][stack_row][0][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
                 }
@@ -5483,7 +5486,6 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
 
         //
         auto end = std::chrono::high_resolution_clock::now();
-
         cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
     }
 
