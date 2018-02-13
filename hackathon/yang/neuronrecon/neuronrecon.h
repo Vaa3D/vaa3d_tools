@@ -160,6 +160,22 @@ public:
     vector<PointPair> pairs;
 };
 
+class Node
+{
+public:
+    Node();
+    ~Node();
+
+public:
+    long pre, n, next; // index of points
+    float weight;
+};
+
+typedef vector<Node> Filament;
+
+// vetex with <pre, next, weight>
+typedef vector<tuple<long,long,float>> Vertex;
+
 //
 class NCPointCloud
 {
@@ -323,8 +339,9 @@ public:
     float maxDistNN, threshDistNN;
     vector<size_t> somas;
 
-    list<long> *adj;
-    vector<long> filament;
+    list<Vertex> *adj;
+    Filament fila;
+    vector<Filament> filas;
 };
 
 class Quadruple

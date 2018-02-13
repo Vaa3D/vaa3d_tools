@@ -269,6 +269,19 @@ void Pairs::appendPair(Point a, Point b)
 }
 
 //
+Node::Node()
+{
+    pre = -1;
+    n = -1;
+    next = -1;
+    weight = 0;
+}
+
+Node::~Node()
+{
+}
+
+//
 NCPointCloud::NCPointCloud()
 {
     points.clear();
@@ -3694,18 +3707,33 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
 void NCPointCloud::dfs(long v)
 {
     //
-    points[v].visited = true;
-    filament.push_back(v);
-
-    cout<<v<<" ";
-
-    //
-    list<long>::iterator i;
-    for(i = adj[v].begin(); i!=adj[v].end(); ++i)
+    if(fila.empty())
     {
-        if(points[*i].visited==false)
+        points[v].visited = true;
+        fila.push_back(adj[v]);
+
+        cout<<v<<" ";
+    }
+    else
+    {
+        long n = fila[fila.size()-1].n;
+
+        if(adj[v].pre == n)
         {
-            dfs(*i);
+            points[v].visited = true;
+            fila.push_back(v);
+
+            cout<<v<<" ";
+
+            //
+            list<Node>::iterator i;
+            for(i = adj[v].begin(); i!=adj[v].end(); ++i)
+            {
+                if(points[(*i).n].visited==false)
+                {
+                    dfs((*i).n);
+                }
+            }
         }
     }
 }
@@ -3713,23 +3741,24 @@ void NCPointCloud::dfs(long v)
 int NCPointCloud::reconstruct()
 {
     //
-    if(filament.size()<=1)
+    if(fila.size()<=1)
     {
         cout<<"Less than 2 points in this filament"<<endl;
         return -1;
     }
 
     //
-    cout<<endl<<"root ... "<<filament[0]<<" "<<points[filament[0]].parents.size()<<endl;
-    points[filament[0]].parents.push_back(-1);
-    for(long i=1; i<filament.size(); i++)
+    cout<<endl<<"root ... "<<fila[0].n<<endl;
+    points[fila[0].n].parents.push_back(-1);
+    for(long i=1; i<fila.size(); i++)
     {
-        points[filament[i]].parents.push_back(points[filament[i-1]].n);
-        points[filament[i-1]].children.push_back(points[filament[i]].n);
+        points[fila[i].n].parents.push_back(points[fila[i-1].n].n);
+        points[fila[i-1].n].children.push_back(points[fila[i].n].n);
     }
 
     //
-    filament.clear();
+    //filas.push_back(fila);
+    fila.clear();
 
     //
     return 0;
@@ -3808,7 +3837,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     removeNoise(rmNoiseDistFac);
 
     // init adjacency list
-    adj = new list<long> [ points.size() ];
+    adj = new list<Node> [ points.size() ];
 
     // compare each point's possible connections with our proposed cost func
 
@@ -3823,7 +3852,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
         Point p = points[v];
 
         //
-        vector<tuple<float,float,long,long>> candidates;
+        vector<tuple<float,long,long>> candidates;
 
         //
         for(long i=0; i<p.nn.size(); i++)
@@ -3863,11 +3892,11 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
 
                 float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
 
-                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2;
+                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2 + 1e-6;
 
                 if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                 {
-                    candidates.push_back(make_tuple(dist*angle, 1/meanradius/meanintensity, i, j));
+                    candidates.push_back(make_tuple(dist*angle/meanradius/meanintensity, i, j));
                 }
             }
         }
@@ -3877,16 +3906,24 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
         {
             cout<<"candidates "<<candidates.size()<<endl;
 
-            sort(candidates.begin(), candidates.end(), [](const tuple<float,float,long,long>& a, const tuple<float,float,long,long>& b) -> bool
+            sort(candidates.begin(), candidates.end(), [](const tuple<float,long,long>& a, const tuple<float,long,long>& b) -> bool
             {
-                return get<0>(a)*get<1>(a) < get<0>(b)*get<1>(b); // area as likelihood func
+                return get<0>(a) < get<0>(b); // area as likelihood func
             });
 
             //
-            for(vector<tuple<float,float,long,long>>::iterator i=candidates.begin(); i!=candidates.end(); ++i)
+            for(vector<tuple<float,long,long>>::iterator i=candidates.begin(); i!=candidates.end(); ++i)
             {
-                adj[v].push_back(p.nn[get<2>(*i)]);
-                cout<<"push_back "<<p.nn[get<2>(*i)]<<" "<<points[p.nn[get<2>(*i)]].nn[get<3>(*i)]<<" -> "<<v<<endl;
+                Node node;
+
+                node.pre = v;
+                node.n = p.nn[get<1>(*i)];
+                node.next = points[p.nn[get<1>(*i)]].nn[get<2>(*i)];
+                node.weight = get<0>(*i);
+
+                adj[node.n].push_back(node);
+
+                //cout<<"push_back "<<p.nn[get<2>(*i)]<<" "<<points[p.nn[get<2>(*i)]].nn[get<3>(*i)]<<" -> "<<v<<endl;
             }
         }
     }
@@ -3894,7 +3931,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     cout<<"adjacency list"<<endl;
     for(long v=0; v<points.size(); v++)
     {
-        list<long>::iterator i;
+        list<Node>::iterator i;
         for(i = adj[v].begin(); i != adj[v].end(); ++i)
             cout<<*i<<" ";
         cout<<endl;
