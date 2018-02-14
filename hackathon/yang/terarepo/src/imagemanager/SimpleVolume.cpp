@@ -33,6 +33,7 @@
 * 2014-11-22 Giulio.      @CHANGED code using OpenCV has been commente. It can be found searching comments containing 'Giulio_CV'
 */
 
+#include <chrono>
 #include <iostream>
 #include "SimpleVolume.h"
 #include "Stack.h"
@@ -415,12 +416,18 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 																												rows, cols, sbv_height, sbv_width, downsamplingFactor), __iom__current__function__);
 					}
 
+                    auto start = std::chrono::high_resolution_clock::now();
+
 					uint8 *slice = ( DIM_C == 1 ) ? subvol + (k*sbv_height*sbv_width*bytes_x_chan) : new uint8[sbv_height * sbv_width * channels * bytes_x_chan]; // sbv variable should be used here
 
 					// cols and rows should be passed here because sbv variables have a different value when a subregion is to be loaded
 					if ( (err_Tiff3Dfmt = readTiff3DFile2Buffer((char *)slice_fullpath,slice,cols,rows,0,0,downsamplingFactor,V0,V1-1,H0,H1-1)) != 0 ) {
 						throw iom::exception(iom::strprintf("unable to read tiff file (%s)",err_Tiff3Dfmt), __iom__current__function__);
 					}
+
+                    auto end = std::chrono::high_resolution_clock::now();
+
+                    cout<<"load slice "<<k<<" takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
 
 					/* Giulio_CV 
 

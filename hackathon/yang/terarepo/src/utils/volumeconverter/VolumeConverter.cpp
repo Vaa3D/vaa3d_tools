@@ -4872,18 +4872,9 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                             ((int)(width/powInt(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/powInt(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
                     stacks_depth[res_i][stack_row][stack_col][stack_sli] =
                             ((int)(depth/powInt(2,halve_pow2[res_i])))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/powInt(2,halve_pow2[res_i])))  % n_stacks_D[res_i] ? 1:0);
-
-
-                    //                    if(stack_row==0 && stack_col==0 && stack_sli==0)
-                    //                    {
-                    //                        cout<<"res "<<res_i<<" "<<stack_row<<" "<<stack_col<<" "<<stack_sli<<endl;
-                    //                        cout<<"stacks "<<stacks_height[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_width[res_i][stack_row][stack_col][stack_sli]<<" "<<stacks_depth[res_i][stack_row][stack_col][stack_sli]<<endl;
-                    //                    }
                 }
             }
         }
-
-        //cout<<"par_mode "<<(par_mode?"true":"false")<<endl;
 
         //creating volume directory iff current resolution is selected and test mode is disabled
         if(resolutions[res_i] == true)
@@ -5026,7 +5017,6 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
 
             cout<<"loadSubvolume_to_UINT8 takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
 
-
             if ( org_channels != channels ) {
                 char err_msg[STATIC_STRINGS_SIZE];
                 sprintf(err_msg,"in generateTilesVaa3DRaw(...): the volume contains images with a different number of channels (%d,%d)", org_channels, channels);
@@ -5059,7 +5049,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                     iim::uint16 *ptr = (iim::uint16 *) ubuffer[0];
                     #pragma omp for
                     for ( iim::sint64 i=0; i<tot_size; i++ ) {
-                        ptr[i] = ptr[i] >> nbits;
+                        ptr[i] = ptr[i] >> nbits << 1;
                     }
                 }
             }
@@ -5109,6 +5099,8 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                 slice_start[i] = slice_end[i] + 1;
                 slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
             }
+
+            cout<<"i "<<i<<" slice_end "<<slice_end[i]<<endl;
 
             // find abs_pos_z at resolution i
             std::stringstream abs_pos_z;
@@ -5217,11 +5209,6 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                         TERAFLY_TIME_START(ConverterWriteBlockOperation);
                         #endif
 
-                        //
-//                        sz[0] = stacks_width[i][stack_row][stack_column][0];
-//                        sz[1] = stacks_height[i][stack_row][stack_column][0];
-//                        sz[3] = channels;
-
                         if ( internal_rep == REAL_INTERNAL_REP )
                         {
                             datatype = 4;
@@ -5246,7 +5233,6 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                         }
 
                         //saving HERE
-
                         bool folderCreated = false;
 
                         // 2015-02-10. Giulio. @CHANGED changed how img_path is constructed
@@ -5311,10 +5297,12 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                         for(int buffer_z=0; buffer_z<z_size/(powInt(2,halve_pow2[i])); buffer_z++, slice_ind++)
                         {
 
-                            //cout<<"buffer_z "<<buffer_z<<" "<<z_size/(powInt(2,halve_pow2[i]))<<" compare "<<((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z)<<" > "<<slice_end[i]<<endl;
+                            long chunk_z = ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z);
+
+                            cout<<"buffer_z "<<buffer_z<<" "<<z_size/(powInt(2,halve_pow2[i]))<<" compare "<<chunk_z<<" > "<<slice_end[i]<<" "<<slice_ind<<endl;
 
                             // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
-                            if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
+                            if ( chunk_z > slice_end[i] && !block_changed) { // start a new block along z
                                 std::stringstream abs_pos_z_next;
                                 abs_pos_z_next.width(6);
                                 abs_pos_z_next.fill('0');
@@ -5325,7 +5313,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                 img_path << partial_img_path.str() << abs_pos_z_next.str();
 
                                 sprintf(filename, "%s.%s", img_path.str().c_str(), TIFF3D_SUFFIX);
-                                //cout<<"... adjusted img_path ... "<<filename<<endl;
+                                cout<<"... adjusted img_path ... "<<filename<<endl;
 
                                 slice_ind = 0; // 2015-02-10. Giulio. @CHANGED (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
 
@@ -5365,7 +5353,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                             if ( datatype == 1 ) {
                                 for(sint64 i=0; i<sz[1]; i++)
                                 {
-                                    uint8* row_data_8bit = p + (i*sz[0] + buffer_z*sz[0]*sz[1])*channels;
+                                    uint8* row_data_8bit = p + (i*sz[0] + slice_ind*sz[0]*sz[1])*channels;
                                     for(sint64 j=0; j<sz[0]; j++) {
                                         for ( int c=0; c<channels; c++ ) {
                                             row_data_8bit[j*channels + c] = raw_ch[c][(i+start_height)*(raw_img_width) + (j+start_width)];
@@ -5377,7 +5365,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
 
                                 if(datatype_out == 1)
                                 {
-                                    uint8  *imageData = p + buffer_z*sz[0]*sz[1]*channels;
+                                    uint8  *imageData = p + slice_ind*sz[0]*sz[1]*channels;
                                     uint16 **raw_ch16 = (uint16 **) raw_ch;
 
                                     //
@@ -5393,7 +5381,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                 }
                                 else
                                 {
-                                    uint16  *imageData16   = (uint16 *) p + buffer_z*sz[0]*sz[1]*channels;
+                                    uint16  *imageData16   = (uint16 *) p + slice_ind*sz[0]*sz[1]*channels;
                                     uint16 **raw_ch16 = (uint16 **) raw_ch;
 
                                     //
@@ -5410,7 +5398,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                             }
 
                             //
-                            if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) == slice_end[i] )
+                            if ( chunk_z == slice_end[i] )
                             {
                                 if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
 
@@ -5438,6 +5426,7 @@ void VolumeConverter::generate3DTilesMT(std::string output_path, bool* resolutio
                                             }
                                         }
 
+                                        cout<<"write image ... "<<filename<<endl;
                                         writeTiff3DFile(filename, sz[0], sz[1], sz[2], sz[3], datatype_out, p);
                                     }
                                     else
