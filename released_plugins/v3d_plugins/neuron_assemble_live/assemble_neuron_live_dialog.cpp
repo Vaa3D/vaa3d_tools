@@ -1168,8 +1168,8 @@ void assemble_neuron_live_dialog::findTips()
                 utTip.y = nt_original.listNeuron.at(i).y+1;
                 utTip.z = nt_original.listNeuron.at(i).z+1;
                 utTip.color.r = 0;
-                utTip.color.g = 255;
-                utTip.color.b = 0;
+                utTip.color.g = 0;
+                utTip.color.b = 255;
                 listTips.push_back(utTip);
             }
         }
@@ -1211,8 +1211,10 @@ void assemble_neuron_live_dialog::findTips()
         QListWidgetItem *listItem = new QListWidgetItem;
         if(mList->at(i).color.r == 255 && mList->at(i).color.g == 0 && mList->at(i).color.b ==0)
             listItem->setCheckState(Qt::Checked);
-        else
+        else if(mList->at(i).color.r == 0 && mList->at(i).color.g == 255 && mList->at(i).color.b ==0)
             listItem->setCheckState(Qt::Unchecked);
+        else
+            listItem->setCheckState(Qt::PartiallyChecked);
 
         listItem->setText(tmp_display);
         list_tips->addItem(listItem);
@@ -1247,11 +1249,16 @@ void assemble_neuron_live_dialog::syncTips()
                 local_landmark[i].color.r = 255;
                 local_landmark[i].color.g = 0;
                 local_landmark[i].color.b = 0;
-            }else
+            }else if(list_tips->item(i)->checkState() == Qt::Unchecked)
             {
                 local_landmark[i].color.r = 0;
                 local_landmark[i].color.g = 255;
                 local_landmark[i].color.b = 0;
+            }else
+            {
+                local_landmark[i].color.r = 0;
+                local_landmark[i].color.g = 0;
+                local_landmark[i].color.b = 255;
             }
         }
         callback->setLandmark(localwin, local_landmark);
@@ -1272,13 +1279,19 @@ void assemble_neuron_live_dialog::syncTips()
         {
             t.color.r = 255;
             t.color.g = 0;
+            t.color.b = 0;
         }
-        else
+        else if(list_tips->item(i)->checkState() == Qt::Unchecked)
         {
             t.color.r = 0;
             t.color.g = 255;
+            t.color.b = 0;
         }
-        t.color.b = 0;
+        {
+            t.color.r = 0;
+            t.color.g = 0;
+            t.color.b = 255;
+        }
         mlist_updated.push_back(t);
     }
 
@@ -1332,7 +1345,7 @@ void assemble_neuron_live_dialog::saveTips()
     LandmarkList mList_checked;
     for(V3DLONG i = 0; i < mList->size(); i++)
     {
-        if(list_tips->item(i)->checkState() == Qt::Checked)
+        if(list_tips->item(i)->checkState() == Qt::Unchecked)
         {
 //            CellAPO t;
 //            t.x = mList->at(i).x+1;
@@ -2100,12 +2113,26 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
             SP.name=mList->at(i).name;
             SP.color.r=mList->at(i).color.r;
             SP.color.g=mList->at(i).color.g;
-            if(tab->currentIndex() == 3 && list_tips->item(i)->checkState() == Qt::Checked)
+            if(tab->currentIndex() == 3)
             {
-                SP.color.r=255;
-                SP.color.g=0;
+                if(list_tips->item(i)->checkState() == Qt::Checked)
+                {
+                    SP.color.r=255;
+                    SP.color.g=0;
+                    SP.color.b=0;
+                }else if(list_tips->item(i)->checkState() == Qt::Unchecked)
+                {
+                    SP.color.r=0;
+                    SP.color.g=255;
+                    SP.color.b=0;
+                }else
+                {
+                    SP.color.r=0;
+                    SP.color.g=0;
+                    SP.color.b=255;
+                }
+
             }
-            SP.color.b=mList->at(i).color.b;
             SP.color.a=mList->at(i).color.a;
             local_landmark.append(SP);
         }
@@ -2147,7 +2174,14 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
             local_ntList->push_back(local_nt);
             V3dR_MainWindow * local3dwin = callback->find3DViewerByName(winname_roi);
             if(local3dwin)
+			{
                 callback->update_3DViewer(local3dwin);
+				callback->openVRWindow(local3dwin);
+			}
+			else
+			{
+				callback->openVRWindowV2(localwin);
+			}
         }
     }
 }

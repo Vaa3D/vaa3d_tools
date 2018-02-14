@@ -23,6 +23,8 @@
 #include <chrono>
 #include <string>
 #include <tuple>
+#include <stack>
+#include <fstream>
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -49,6 +51,9 @@ using namespace nanoflann;
 
 //
 typedef tuple<float,float,long,long> PairCompareType;
+
+//
+class LineSegment;
 
 //
 class Plane
@@ -155,6 +160,22 @@ public:
     vector<PointPair> pairs;
 };
 
+class Node
+{
+public:
+    Node();
+    ~Node();
+
+public:
+    long pre, n, next; // index of points
+    float weight;
+};
+
+typedef vector<Node> Filament;
+
+// vetex with <pre, next, weight>
+typedef vector<tuple<long,long,float>> Vertex;
+
 //
 class NCPointCloud
 {
@@ -179,6 +200,9 @@ public:
     //
     int addPointFromNeuronTree(NeuronTree nt);
 
+    bool childrenVisited(long n);
+    long nextUnvisitedChild();
+
     int getBranchPoints(QString filename);
     int getNeurites(QString filename);
 
@@ -195,6 +219,9 @@ public:
     // shortest distance between point p and line segment (a, b)
     float distPoint2LineSegment(Point a, Point b, Point p);
 
+    //
+    float distP2L(Point p, LineSegment line);
+
     // judge whether a point important
     bool isConsidered(unsigned long &index, float m);
 
@@ -205,7 +232,7 @@ public:
     int connectPoints2Lines(QString infile, QString outfile, int k, float angle, float m);
 
     //
-    int connectPoints(int k, float maxAngle, float m);
+    int connectPoints(int k, float maxAngle, float m, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     //
     int connectPoints2(int k, float maxAngle, float m);
@@ -213,16 +240,25 @@ public:
     int connect(Point p);
 
     //
-    int removeNoise();
+    int removeNoise(float distfactor=20);
+
+    //
+    int removeRedundant();
+
+    //
+    int shift(float *p, long sx, long sy, long sz, long nstep, Point &pt);
 
     //
     int assembleFragments(int k);
 
     //
-    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15);
+    int tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, float rmNoiseDistFac=20, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     //
-    int trace();
+    int tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
+
+    //
+    int trace(QString infile, QString outfile, int k, float maxAngle, float m, double distthresh=15, float rmNoiseDistFac=20, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     // cost func
     int minAngle(unsigned long &loc, float maxAngle);
@@ -244,6 +280,9 @@ public:
 
     //
     int resetVisitStatus();
+
+    //
+    int reverseVisitStatus();
 
     //
     int reverseLineSegment(long idx, long size);
@@ -291,11 +330,18 @@ public:
     long indexofpoint(long n);
     int isolatedPoints();
 
+    void dfs(long v);
+    int reconstruct();
+
 public:
     vector<Point> points; // data
     Pairs skipConnecting; // for connecting line segments
     float maxDistNN, threshDistNN;
     vector<size_t> somas;
+
+    list<Vertex> *adj;
+    Filament fila;
+    vector<Filament> filas;
 };
 
 class Quadruple
@@ -332,6 +378,8 @@ public:
     bool sidebyside(LineSegment ls);
     void info();
     bool isSmooth();
+    float maxradius();
+    float length(float vx, float vy, float vz, NCPointCloud pc);
 
 public:
     float meanval_adjangles, stddev_adjangles; //
@@ -345,6 +393,7 @@ public:
 
 //
 vector<LineSegment> separate(NCPointCloud pc);
+NCPointCloud combinelines(vector<LineSegment> lines, long thresh=3);
 
 //
 template <typename T>
@@ -510,8 +559,8 @@ template<class T>
 float estimateRadius(T* &inimg1d, V3DLONG *sz, float mx, float my, float mz, float thresh)
 {
     //
-    double max_r = max(max(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
-    double r;
+    float max_r = max(max(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
+    float r;
     double tol_num, bak_num;
 
     //
@@ -720,5 +769,198 @@ int points2maskimage(T * &img1d, NCPointCloud pc, long sz0, long sz1, long sz2, 
     //
     return 0;
 }
+
+template<class T>
+int sortByRadiusIntensity(T *data1d, long sx, long sy, long sz, NCPointCloud &pc, float adjintthresh=0.5)
+{
+    //
+    float thresh;
+    estimateIntensityThreshold(data1d, sx*sy*sz, thresh);
+    thresh *= adjintthresh;
+
+    //
+    NCPointCloud pointcloud;
+
+    //
+    for(size_t i=0; i<pc.points.size(); i++)
+    {
+        Point p = pc.points[i];
+
+        long z = long(p.z);
+
+        if(z>sz-1) continue;
+
+        long y = long(p.y);
+
+        if(y>sy-1) continue;
+
+        long x = long(p.x);
+
+        if(x>sx-1) continue;
+
+
+        long xpre = x-1, xnext = x+1;
+
+        if(xpre<0) xpre=0;
+        if(xnext>sx-1) xnext = sx-1;
+
+        long ypre = y-1, ynext = y+1;
+
+        if(ypre<0) ypre=0;
+        if(ynext>sy-1) ynext = sy-1;
+
+        long zpre = z-1, znext = z+1;
+
+        if(zpre<0) zpre=0;
+        if(znext>sz-1) znext = sz-1;
+
+        float maxval = 0;
+
+        for(long zz=zpre; zz<=znext; zz++)
+        {
+            long ofz = zz*sx*sy;
+            for(long yy=ypre; yy<=ynext; yy++)
+            {
+                long ofy = ofz + yy*sx;
+                for(long xx=xpre; xx<=xnext; xx++)
+                {
+                    if(float(data1d[ofy + xx]) > maxval)
+                    {
+                        maxval = float(data1d[ofy + xx]);
+                        x = xx;
+                        y = yy;
+                        z = zz;
+                    }
+                }
+            }
+        }
+
+        if(z>sz-1) continue;
+        if(y>sy-1) continue;
+        if(x>sx-1) continue;
+
+        //
+        if(maxval>thresh)
+        {
+            p.x = x;
+            p.y = y;
+            p.z = z;
+            p.val = maxval;
+
+            pointcloud.points.push_back(p);
+        }
+    }
+
+    //
+    pc.copy(pointcloud);
+
+    //
+    sort(pc.points.begin(), pc.points.end(), [](const Point& a, const Point& b) -> bool
+    {
+        return a.val*a.radius > b.val*b.radius;
+    });
+
+    //
+    return 0;
+}
+
+template<class T>
+float meanIntensityValueLineSegment(T *pImg, long sx, long sy, long sz, Point p, Point q)
+{
+    //
+    float meanVal = 0;
+    long n=0;
+
+    //
+    LineSegment ls;
+    ls.points.push_back(p);
+    ls.points.push_back(q);
+
+    ls.origin = new Point;
+    ls.origin->x = p.x;
+    ls.origin->y = p.y;
+    ls.origin->z = p.z;
+
+    ls.axis = new Vector;
+    ls.axis->dx = q.x - p.x;
+    ls.axis->dy = q.y - p.y;
+    ls.axis->dz = q.z - p.z;
+
+    ls.root = p;
+    ls.tip = q;
+
+    ls.b_updated = true; // do not update
+
+    //
+    long xs, xe, ys, ye, zs, ze;
+
+    if(p.x>q.x)
+    {
+        xs = q.x;
+        xe = p.x;
+    }
+    else
+    {
+        xs = p.x;
+        xe = q.x;
+    }
+
+    if(p.y>q.y)
+    {
+        ys = q.y;
+        ye = p.y;
+    }
+    else
+    {
+        ys = p.y;
+        ye = q.y;
+    }
+
+    if(p.z>q.z)
+    {
+        zs = q.z;
+        ze = p.z;
+    }
+    else
+    {
+        zs = p.z;
+        ze = q.z;
+    }
+
+    for(long z=zs; z<ze; z++)
+    {
+        long ofz = z*sx*sy;
+        for(long y=ys; y<ye; y++)
+        {
+            long ofy = ofz + y*sx;
+            for(long x=xs; x<xe; x++)
+            {
+                long idx = ofy + x;
+                Point m;
+                m.x = x;
+                m.y = y;
+                m.z = z;
+
+                if(ls.onSegment(m))
+                {
+                    meanVal += pImg[idx];
+                    n++;
+                }
+            }
+        }
+    }
+
+
+    //
+    if(meanVal)
+    {
+        return meanVal/n;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 
 #endif // _NEURONRECON_H_

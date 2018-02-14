@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include "../IVSCC_sort_swc/openSWCDialog.h"
+#include "../APP2_large_scale/readRawfile_func.h"
 
 
 using namespace std;
@@ -117,25 +118,61 @@ void flip_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QW
 
 bool flip_swc::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    vector<char*> infiles, paras, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) paras = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else return false;
+    if (func_name == tr("flip_y"))
+    {
+        if(infiles.empty())
+        {
+            cerr<<"Need input image folder"<<endl;
+            return false;
+        }
+        QString   inimg_file =  infiles[0];
+        QString   outswc_file =  outfiles[0];
+        int k=0;
 
-	return true;
+        QString inputswc_file = paras.empty() ? "" : paras[k]; if(inputswc_file == "NULL") inputswc_file = ""; k++;
+
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+
+        int datatype;
+
+        if (!loadRawRegion(const_cast<char *>(inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return false;
+        }
+
+        if(datald) {delete []datald; datald = 0;}
+
+        NeuronTree nt = readSWC_file(inputswc_file);
+        for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
+        {
+            nt.listNeuron[i].y = in_zz[1] - nt.listNeuron[i].y -1;
+
+        }
+        if (!export_list2file(nt.listNeuron,outswc_file,inputswc_file))
+        {
+            v3d_msg("fail to write the output swc file.",0);
+            return false;
+        }
+
+
+    }
+    else if (func_name == tr("func2"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("help"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else return false;
+
+    return true;
 }
 

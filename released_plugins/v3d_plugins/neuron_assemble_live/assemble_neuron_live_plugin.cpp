@@ -11,11 +11,13 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(assemble_neuron_live, neuron_assembler_live);
+assemble_neuron_live_dialog * assemDlg;
  
 QStringList neuron_assembler_live::menulist() const
 {
 	return QStringList() 
 		<<tr("assemble_neuron_live")
+        <<tr("load_new_stack")
 		<<tr("about");
 }
 
@@ -32,11 +34,19 @@ void neuron_assembler_live::domenu(const QString &menu_name, V3DPluginCallback2 
         OpenSWCDialog * openDlg = new OpenSWCDialog(parent, &callback);
         if(!openDlg->exec())
             return;
-        assemble_neuron_live_dialog * assemDlg = NULL;
+        assemDlg = NULL;
         assemDlg = new assemble_neuron_live_dialog(&callback, openDlg->ntList, openDlg->p_img4d, parent);
         assemDlg->show();
-    }
-	else
+    }else if (menu_name == tr("load_new_stack"))
+    {
+        if(assemDlg)
+        {
+            int current_row = assemDlg->list_tips->currentRow();
+            assemDlg->list_tips->setCurrentRow(current_row+1);
+            assemDlg->zoomin();
+        }
+
+    }else
 	{
 		v3d_msg(tr("This plugin will connect fragments, break loop, and combine neuron files in live.. "
 			"Developed by Hanbo Chen, 2015-7-8"));

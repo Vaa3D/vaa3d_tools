@@ -42,7 +42,6 @@ QStringList neurontracer::funclist() const
             <<tr("trace_APP2")
            <<tr("trace_APP2_GD")
           <<tr("trace_MOST")
-         <<tr("")
         <<tr("trace_SNAKE")
        <<tr("trace_NeuroGPSTree")
       <<tr("trace_TReMAP")
@@ -202,7 +201,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }
-    else if (menu_name == tr(""))
+    else if (menu_name == tr("trace_NEUTUBE"))
     {
         TRACE_LS_PARA P;
         bool bmenu = true;
@@ -298,7 +297,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -337,7 +336,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -376,7 +375,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -415,7 +414,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -454,7 +453,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -493,7 +492,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty())
+        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
         {
             v3d_msg("Please select the image file.");
             return;
@@ -646,7 +645,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.global_name = true;
         P.method = app2;
         crawler_raw_app(callback,parent,P,bmenu);
-        extract_tips(callback,parent,P);
+        //extract_tips(callback,parent,P);
 
     }
     else if (func_name == tr("trace_NEUTUBE"))

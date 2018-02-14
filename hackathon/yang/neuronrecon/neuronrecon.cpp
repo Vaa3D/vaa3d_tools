@@ -269,6 +269,19 @@ void Pairs::appendPair(Point a, Point b)
 }
 
 //
+Node::Node()
+{
+    pre = -1;
+    n = -1;
+    next = -1;
+    weight = 0;
+}
+
+Node::~Node()
+{
+}
+
+//
 NCPointCloud::NCPointCloud()
 {
     points.clear();
@@ -384,6 +397,32 @@ int NCPointCloud::addPointFromNeuronTree(NeuronTree nt)
     return 0;
 }
 
+bool NCPointCloud::childrenVisited(long n)
+{
+    bool visited = true;
+    if(points[n].hasChildren())
+    {
+        for(long i=0; i<points[n].children.size(); i++)
+        {
+            if(points[indexofpoint(points[n].children[i])].visited==false)
+            {
+                visited = false;
+                break;
+            }
+        }
+    }
+
+    return visited;
+}
+
+long NCPointCloud::nextUnvisitedChild()
+{
+    long j;
+
+
+    return j;
+}
+
 int NCPointCloud::savePointCloud(QString filename, int format)
 {
     //
@@ -399,7 +438,7 @@ int NCPointCloud::savePointCloud(QString filename, int format)
         {
             Point p = points[i];
 
-            if(p.radius > 2.5)
+            //if(p.radius > 2.5)
             {
                 CellAPO cell;
 
@@ -936,11 +975,12 @@ int NCPointCloud::knn(int k, float radius)
 }
 
 //
-int NCPointCloud::removeNoise()
+int NCPointCloud::removeNoise(float distfactor)
 {
     //
     knn(3);
 
+    //
     NCPointCloud pc;
     for(size_t i=0; i<points.size(); i++)
     {
@@ -950,7 +990,7 @@ int NCPointCloud::removeNoise()
         {
             Point q = points[p.nn[1]];
 
-            if(distance(p,q)<10*p.radius)
+            if(distance(p,q)<distfactor*p.radius)
             {
                 pc.points.push_back(p);
             }
@@ -967,8 +1007,174 @@ int NCPointCloud::removeNoise()
     return 0;
 }
 
+int NCPointCloud::removeRedundant()
+{
+    cout<<"remove redundant points: "<<points.size()<<endl;
+    vector<LineSegment> lines = separate(*this);
+    NCPointCloud pc;
+
+    float distthresh;
+    reverseVisitStatus();
+
+    for(long j=0; j<lines.size(); j++)
+    {
+        LineSegment line = lines[j];
+
+        for(long k=0; k<line.points.size(); k++)
+        {
+            long idx = indexofpoint(line.points[k].n);
+            points[idx].visited = true;
+        }
+    }
+
+    for(long j=0; j<lines.size(); j++)
+    {
+        LineSegment line = lines[j];
+
+        for(long i=0; i<points.size(); i++)
+        {
+            Point p = points[i];
+
+            if(p.visited==false)
+            {
+                distthresh = 2*max(p.radius, line.maxradius());
+
+                float dist = distP2L(p, line);
+                if(dist<distthresh)
+                {
+                    points[i].visited = true;
+                }
+            }
+        }
+    }
+
+    for(long j=0; j<lines.size(); j++)
+    {
+        LineSegment line = lines[j];
+
+        for(long k=0; k<line.points.size(); k++)
+        {
+            long idx = indexofpoint(line.points[k].n);
+            points[idx].visited = false;
+        }
+    }
+
+    for(long i=0; i<points.size(); i++)
+    {
+        Point p = points[i];
+        if(p.visited==false)
+            pc.points.push_back(p);
+
+    }
+
+    //
+    this->copy(pc);
+
+    cout<<"after clean: "<<points.size()<<endl;
+
+    //
+    return 0;
+}
+
+int NCPointCloud::shift(float *p, long sx, long sy, long sz, long nstep, Point &pt)
+{
+    long i = pt.x;
+    long j = pt.y;
+    long k = pt.z;
+
+    //
+    long xb = i - nstep;
+    long xe = i + nstep;
+
+    if(xb<0)
+        xb = 0;
+    if(xe>sx)
+        xe = sx;
+
+    long yb = j - nstep;
+    long ye = j + nstep;
+
+    if(yb<0)
+        yb = 0;
+    if(ye>sy)
+        ye = sy;
+
+    long zb = k - nstep;
+    long ze = k + nstep;
+
+    if(zb<0)
+        zb = 0;
+    if(ze>sz)
+        ze = sz;
+
+    float maxval = p[k*sx*sy + j*sx + i];
+
+    //
+    for(long kk=zb; kk<ze; kk++)
+    {
+        long ofkk = kk*sx*sy;
+        for(long jj=yb; jj<ye; jj++)
+        {
+            long ofjj = ofkk + jj*sx;
+            for(long ii=xb; ii<xe; ii++)
+            {
+                long idx = ofjj + ii;
+
+                if(p[idx]>maxval)
+                {
+                    maxval = p[idx];
+
+                    pt.x = ii;
+                    pt.y = jj;
+                    pt.z = kk;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+float NCPointCloud::distP2L(Point p, LineSegment line)
+{
+    float d = 1e6;
+
+    for(long i=0; i<line.points.size(); i++)
+    {
+        Point q1 = line.points[i];
+
+        if(q1.parents[0]==-1)
+        {
+            if(q1.hasChildren())
+            {
+                Point q2 = points[indexofpoint(q1.children[0])];
+
+                float dist = distPoint2LineSegment(q1,q2,p);
+
+                if(dist<d)
+                {
+                    d = dist;
+                }
+            }
+        }
+        else
+        {
+            Point q2 = points[indexofpoint(q1.parents[0])];
+
+            float dist = distPoint2LineSegment(q1,q2,p);
+
+            if(dist<d)
+            {
+                d = dist;
+            }
+        }
+    }
+
+    return d;
+}
+
 //
-int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh)
+int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, float m, double distthresh, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
 {
     // load point cloud save as a .apo file
 
@@ -1025,10 +1231,21 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     }
 
     //
-    removeNoise();
+    //if(rmNoise)
+
+    cout<<"before removing noise points: "<<points.size()<<endl;
+
+    removeNoise(rmNoiseDistFac);
+
+    cout<<"after removing noise points: "<<points.size()<<endl;
 
     // connect points into lines
-    connectPoints(k,angle,m);
+    connectPoints(k,angle,m, pImg, sx, sy, sz);
+
+    //
+    //if(rmNoise)
+
+    //removeRedundant();
 
     // merge lines
     // mergeLines(angle);
@@ -1040,21 +1257,177 @@ int NCPointCloud::tracing(QString infile, QString outfile, int k, float angle, f
     if(!outfile.isEmpty())
     {
         saveNeuronTree(*this, outfile);
+
+        bool saveCleanedLines = true;
+        if(saveCleanedLines)
+        {
+            removeRedundant();
+            vector<LineSegment> lines = separate(*this);
+            //cout<<"lines "<<lines.size()<<endl;
+            NCPointCloud pc = combinelines(lines, 2);
+            //cout<<"points "<<pc.points.size()<<endl;
+            saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+        }
+
+
+        // assemble fragments into trees
+        QList<NeuronSWC> neuron, result;
+        NeuronTree nt = readSWC_file(outfile);
+        neuron = nt.listNeuron;
+        QString fileDefaultName;
+        if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
+        {
+            fileDefaultName = outfile.left(outfile.lastIndexOf(".")).append("_sorted.swc");
+            //write new SWC to file
+            if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
+            {
+                cout<<"fail to write the output result"<<endl;
+                return -1;
+            }
+        }
+
+        //
+        QStringList files;
+        files << fileDefaultName;
+
+        NCPointCloud pc;
+        pc.getPointCloud(files);
+
+        vector<LineSegment> lines = separate(pc);
+        pc = combinelines(lines);
+
+        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_traced.swc"));
     }
 
-    // assemble fragments into trees
-    QList<NeuronSWC> neuron, result;
-    NeuronTree nt = readSWC_file(outfile);
-    neuron = nt.listNeuron;
-    if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
+    //
+    return 0;
+}
+
+//
+int NCPointCloud::tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh, bool rmNoise)
+{
+    // load point cloud save as a .apo file
+
+    if(infile.toUpper().endsWith(".APO"))
     {
-        QString fileDefaultName = outfile+QString("_sorted.swc");
-        //write new SWC to file
-        if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
+        QList <CellAPO> inputPoints = readAPO_file(infile);
+
+        long n = inputPoints.size();
+
+        //
+        for(long i=0; i<n; i++)
         {
-            cout<<"fail to write the output result"<<endl;
-            return -1;
+            CellAPO cell = inputPoints[i];
+
+            //
+            Point p;
+
+            p.n = i+1; // # assigned
+            p.x = cell.x;
+            p.y = cell.y;
+            p.z = cell.z;
+            p.radius = 0.5*cell.volsize;
+
+            points.push_back(p);
         }
+    }
+    else if(infile.toUpper().endsWith(".MARKER"))
+    {
+        QList<ImageMarker> file_inmarkers = readMarker_file(infile);;
+
+        long n = file_inmarkers.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            //
+            Point p;
+
+            p.n = file_inmarkers.at(i).n;
+
+            p.x = file_inmarkers.at(i).x;
+            p.y = file_inmarkers.at(i).y;
+            p.z = file_inmarkers.at(i).z;
+
+            p.radius = file_inmarkers.at(i).radius;
+
+            points.push_back(p);
+        }
+    }
+    else
+    {
+        cout<<"Invalid input"<<endl;
+        return -1;
+    }
+
+    //
+    if(rmNoise)
+        removeNoise();
+
+    // connect points into lines
+    connectPoints(2*k,2*angle,2*m);
+
+    //
+    NCPointCloud pc;
+    //pc.copy(*this);
+
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].parents[0]!=-1 || points[i].hasChildren())
+        {
+            continue;
+        }
+
+        pc.points.push_back(points[i]);
+    }
+
+    pc.connectPoints(k,angle,m);
+
+    saveNeuronTree(pc, outfile+QString("_2nd.swc"));
+
+
+    //
+    if(rmNoise)
+        removeRedundant();
+
+    // merge lines
+    // mergeLines(angle);
+
+    // assemble fragments into trees
+    //assembleFragments(k);
+
+    // save connected results into a .swc file
+    if(!outfile.isEmpty())
+    {
+        saveNeuronTree(*this, outfile);
+
+        // assemble fragments into trees
+        QList<NeuronSWC> neuron, result;
+        NeuronTree nt = readSWC_file(outfile);
+        neuron = nt.listNeuron;
+        QString fileDefaultName;
+        if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
+        {
+            fileDefaultName = outfile.left(outfile.lastIndexOf(".")).append("_sorted.swc");
+            //write new SWC to file
+            if (!sortswc::export_list2file<long>(result,fileDefaultName,outfile))
+            {
+                cout<<"fail to write the output result"<<endl;
+                return -1;
+            }
+        }
+
+        //
+        QStringList files;
+        files << fileDefaultName;
+
+        NCPointCloud pc;
+        pc.getPointCloud(files);
+
+        vector<LineSegment> lines = separate(pc);
+        pc = combinelines(lines);
+
+        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_traced.swc"));
     }
 
     //
@@ -1478,7 +1851,7 @@ int NCPointCloud::assembleFragments(int k)
 }
 
 //
-int NCPointCloud::connectPoints(int k, float maxAngle, float m)
+int NCPointCloud::connectPoints(int k, float maxAngle, float m, unsigned char *pImg, long sx, long sy, long sz)
 {
     //
     float distThresh1, distThresh2;
@@ -1544,9 +1917,15 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
                         distThresh1 = 2*m*(p.radius + p_next.radius);
                         distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
 
+                        float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
+
+                        //float meanintensity = (p.val + p_next.val + p_next_next.val)/3 + 1e-6;
+
+                        float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2;
+
                         if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                         {
-                            candidates.push_back(make_tuple(dist*angle, 1/p.radius, i, j));
+                            candidates.push_back(make_tuple(dist*angle, 1/meanradius/meanintensity, i, j));
                         }
                     }
                 }
@@ -1609,9 +1988,13 @@ int NCPointCloud::connectPoints(int k, float maxAngle, float m)
                     distThresh1 = 2*m*(p_pre.radius + p.radius);
                     distThresh2 = 2*m*(p_next.radius + p.radius);
 
+                    float meanradius = (p_pre.radius + p.radius + p_next.radius)/3 + 1e-6;
+
+                    float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_pre, p) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next))/2;
+
                     if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
                     {
-                        candidates.push_back(make_tuple(dist, angle, i));
+                        candidates.push_back(make_tuple(dist*angle, 1/meanradius/meanintensity, i));
                     }
                 }
 
@@ -2097,6 +2480,25 @@ int NCPointCloud::resetVisitStatus()
     for(std::vector<Point>::iterator it = points.begin(); it != points.end(); ++it)
     {
         it->visited = false;
+    }
+
+    //
+    return 0;
+}
+
+int NCPointCloud::reverseVisitStatus()
+{
+    //
+    for(std::vector<Point>::iterator it = points.begin(); it != points.end(); ++it)
+    {
+        if(it->visited == false)
+        {
+            it->visited = true;
+        }
+        else
+        {
+            it->visited = false;
+        }
     }
 
     //
@@ -3302,17 +3704,275 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
     return m/n;
 }
 
-// method to publish
-int NCPointCloud::trace()
+void NCPointCloud::dfs(long v)
 {
-    // input: detected points w/ radius info
-    // output: traced neuron trees
+    //
+    if(fila.empty())
+    {
+        points[v].visited = true;
+        fila.push_back(adj[v]);
 
-    // 1. connect points into lines
+        cout<<v<<" ";
+    }
+    else
+    {
+        long n = fila[fila.size()-1].n;
 
-    // 2. merge lines
+        if(adj[v].pre == n)
+        {
+            points[v].visited = true;
+            fila.push_back(v);
 
-    // 3. connect lines into trees
+            cout<<v<<" ";
+
+            //
+            list<Node>::iterator i;
+            for(i = adj[v].begin(); i!=adj[v].end(); ++i)
+            {
+                if(points[(*i).n].visited==false)
+                {
+                    dfs((*i).n);
+                }
+            }
+        }
+    }
+}
+
+int NCPointCloud::reconstruct()
+{
+    //
+    if(fila.size()<=1)
+    {
+        cout<<"Less than 2 points in this filament"<<endl;
+        return -1;
+    }
+
+    //
+    cout<<endl<<"root ... "<<fila[0].n<<endl;
+    points[fila[0].n].parents.push_back(-1);
+    for(long i=1; i<fila.size(); i++)
+    {
+        points[fila[i].n].parents.push_back(points[fila[i-1].n].n);
+        points[fila[i-1].n].children.push_back(points[fila[i].n].n);
+    }
+
+    //
+    //filas.push_back(fila);
+    fila.clear();
+
+    //
+    return 0;
+}
+
+// method to publish
+int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, float m, double distthresh, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
+{
+    // 1. create an adjacency list with our proposed cost func (angle*dist/radius/intensity)
+    // 2. dfs reconstruct trees
+
+    //
+    if(pImg==NULL)
+    {
+        cout<<"need an image to compute mean intensity through connected path"<<endl;
+        return -1;
+    }
+
+    // load a point cloud
+    if(infile.toUpper().endsWith(".APO"))
+    {
+        QList <CellAPO> inputPoints = readAPO_file(infile);
+
+        long n = inputPoints.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            CellAPO cell = inputPoints[i];
+
+            //
+            Point p;
+
+            p.n = i+1; // # assigned
+            p.x = cell.x;
+            p.y = cell.y;
+            p.z = cell.z;
+            p.radius = 0.5*cell.volsize;
+            p.visited = false;
+
+            points.push_back(p);
+        }
+    }
+    else if(infile.toUpper().endsWith(".MARKER"))
+    {
+        QList<ImageMarker> file_inmarkers = readMarker_file(infile);;
+
+        long n = file_inmarkers.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            //
+            Point p;
+
+            p.n = file_inmarkers.at(i).n;
+
+            p.x = file_inmarkers.at(i).x;
+            p.y = file_inmarkers.at(i).y;
+            p.z = file_inmarkers.at(i).z;
+
+            p.radius = file_inmarkers.at(i).radius;
+
+            p.visited = false;
+
+            points.push_back(p);
+        }
+    }
+    else
+    {
+        cout<<"Invalid input"<<endl;
+        return -1;
+    }
+
+    //
+    removeNoise(rmNoiseDistFac);
+
+    // init adjacency list
+    adj = new list<Node> [ points.size() ];
+
+    // compare each point's possible connections with our proposed cost func
+
+    //
+    knn(k);
+
+    //
+    float distThresh1, distThresh2;
+
+    for(long v=0; v<points.size(); v++)
+    {
+        Point p = points[v];
+
+        //
+        vector<tuple<float,long,long>> candidates;
+
+        //
+        for(long i=0; i<p.nn.size(); i++)
+        {
+            Point p_next = points[p.nn[i]];
+
+            if(p_next.visited || p_next.isSamePoint(p))
+            {
+                continue;
+            }
+
+            //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
+
+            for(long j=0; j<p_next.nn.size(); j++)
+            {
+                Point p_next_next = points[p_next.nn[j]];
+
+                if(p_next_next.visited || p_next_next.isSamePoint(p_next) || p_next_next.isSamePoint(p))
+                {
+                    continue;
+                }
+
+                //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
+
+                float angle = getAngle(p, p_next, p_next_next);
+                float dist1 = distance(p,p_next);
+                float dist2 = distance(p_next, p_next_next);
+                float dist = dist1 + dist2;
+
+                distThresh1 = 2*m*(p.radius + p_next.radius);
+                distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
+
+                cout<<"v nn nnnn "<<v<<" "<<p.nn[i]<<" "<<p_next.nn[j]<<" "<<dist1<<" < "<<distThresh1<<" "<<dist2<<" < "<<distThresh2<<endl;
+                p.info();
+                p_next.info();
+                p_next_next.info();
+
+                float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
+
+                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2 + 1e-6;
+
+                if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
+                {
+                    candidates.push_back(make_tuple(dist*angle/meanradius/meanintensity, i, j));
+                }
+            }
+        }
+
+        //
+        if(candidates.size()>0)
+        {
+            cout<<"candidates "<<candidates.size()<<endl;
+
+            sort(candidates.begin(), candidates.end(), [](const tuple<float,long,long>& a, const tuple<float,long,long>& b) -> bool
+            {
+                return get<0>(a) < get<0>(b); // area as likelihood func
+            });
+
+            //
+            for(vector<tuple<float,long,long>>::iterator i=candidates.begin(); i!=candidates.end(); ++i)
+            {
+                Node node;
+
+                node.pre = v;
+                node.n = p.nn[get<1>(*i)];
+                node.next = points[p.nn[get<1>(*i)]].nn[get<2>(*i)];
+                node.weight = get<0>(*i);
+
+                adj[node.n].push_back(node);
+
+                //cout<<"push_back "<<p.nn[get<2>(*i)]<<" "<<points[p.nn[get<2>(*i)]].nn[get<3>(*i)]<<" -> "<<v<<endl;
+            }
+        }
+    }
+
+    cout<<"adjacency list"<<endl;
+    for(long v=0; v<points.size(); v++)
+    {
+        list<Node>::iterator i;
+        for(i = adj[v].begin(); i != adj[v].end(); ++i)
+            cout<<*i<<" ";
+        cout<<endl;
+    }
+
+    // connection
+    cout<<"points "<<points.size()<<endl;
+
+    for(long i=0; i<points.size(); i++)
+    {
+        points[i].parents.clear();
+        points[i].children.clear();
+    }
+
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].visited == false)
+        {
+            cout<<"filament "<<i<<endl;
+            dfs(i);
+            reconstruct();
+        }
+    }
+
+    // save reconstruction
+    if(!outfile.isEmpty())
+    {
+        saveNeuronTree(*this, outfile);
+
+        //
+        QStringList files;
+        files << outfile;
+
+        NCPointCloud pc;
+        pc.getPointCloud(files);
+
+        vector<LineSegment> lines = separate(pc);
+        pc = combinelines(lines);
+
+        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+    }
 
     //
     return 0;
@@ -3804,6 +4464,91 @@ bool LineSegment::isSmooth()
     return true;
 }
 
+float LineSegment::maxradius()
+{
+    float radius = 0;
+
+    for(long i=0; i<points.size(); i++)
+    {
+        if(points[i].radius > radius)
+            radius = points[i].radius;
+    }
+
+    return radius;
+}
+
+float LineSegment::length(float vx, float vy, float vz, NCPointCloud pc)
+{
+    //
+    float len = 0;
+
+    cout<<"voxel size: "<<vx<<" "<<vy<<" "<<vz<<endl;
+
+    //
+    resetVisitStatus();
+
+    vector<Point> leaves;
+    for(long i=0; i<points.size(); i++)
+    {
+        Point p = points[i];
+
+        if(p.hasChildren()==false)
+        {
+            leaves.push_back(p);
+        }
+    }
+
+    cout<<"find "<<leaves.size()<<" leaves"<<endl;
+
+    //
+    for(long i=0; i<leaves.size(); i++)
+    {
+        Point p = leaves[i];
+
+        pc.points[pc.indexofpoint(p.n)].visited = true;
+
+        long pn = p.parents[0];
+
+        while(pn!=-1)
+        {
+            long cur = pc.indexofpoint(pn);
+            Point q = pc.points[cur];
+
+            cout<<"cur "<<cur<<endl;
+
+            if(pc.points[cur].visited)
+                break;
+
+            pc.points[cur].visited = true;
+
+            p.info();
+            q.info();
+
+            float x = p.x - q.x;
+            float y = p.y - q.y;
+            float z = p.z - q.z;
+
+            x*=vx;
+            y*=vy;
+            z*=vz;
+
+            cout<<"dx "<<x<<" dy "<<y<<" dz "<<z<<endl;
+
+            float dist = sqrt(x*x + y*y + z*z);
+            cout<<dist<<endl;
+
+            len += dist;
+
+            p = q;
+            pn = p.parents[0];
+        }
+    }
+    cout<<"length of this filament is "<<len<<endl;
+
+    //
+    return len;
+}
+
 //
 vector<LineSegment> separate(NCPointCloud pc)
 {
@@ -3817,20 +4562,36 @@ vector<LineSegment> separate(NCPointCloud pc)
         {
             if(pc.points[i].children.size()>0 && pc.points[i].visited==false)
             {
+                // dfs
                 LineSegment ls;
+                stack<long> stack;
 
-                long j=i;
-                while(pc.points[j].children.size()>0)
+                //
+                stack.push(i);
+
+                while(!stack.empty())
                 {
-                    ls.points.push_back(pc.points[j]);
-                    pc.points[j].visited = true;
+                    long j = stack.top();
+                    stack.pop();
 
-                    j = pc.indexofpoint(pc.points[j].children[0]);
+                    if(pc.points[j].visited==false)
+                    {
+                        ls.points.push_back(pc.points[j]);
+                        pc.points[j].visited = true;
 
-                    if(j<0)
-                        break;
+                        if(pc.points[j].children.size()>0)
+                        {
+                            for(long k=0; k<pc.points[j].children.size(); k++)
+                            {
+                                long m = pc.indexofpoint(pc.points[j].children[k]);
+                                if(pc.points[m].visited==false)
+                                {
+                                    stack.push(m);
+                                }
+                            }
+                        }
+                    }
                 }
-                ls.points.push_back(pc.points[j]); // tip point
 
                 //
                 if(ls.points.size()>2)
@@ -3842,5 +4603,29 @@ vector<LineSegment> separate(NCPointCloud pc)
         }
     }
 
+    //
     return lines;
+}
+
+NCPointCloud combinelines(vector<LineSegment> lines, long thresh)
+{
+    //
+    NCPointCloud pc;
+
+    //
+    for(long i=0; i<lines.size(); i++)
+    {
+        LineSegment line = lines[i];
+
+        if(line.points.size()>thresh)
+        {
+            for(long j=0; j<line.points.size(); j++)
+            {
+                pc.points.push_back(line.points[j]);
+            }
+        }
+    }
+
+    //
+    return pc;
 }

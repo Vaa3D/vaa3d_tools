@@ -33,11 +33,12 @@ HEADERS += $$TERASTITCHERPATH/src/core/iomanager/iomanager.config.h
 HEADERS += $$TERASTITCHERPATH/src/core/iomanager/IOPluginAPI.h
 HEADERS += $$TERASTITCHERPATH/src/core/iomanager/plugins/tiff2D/tiff2D.h
 HEADERS += $$TERASTITCHERPATH/src/core/iomanager/plugins/tiff3D/tiff3D.h
+HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 HEADERS	+= Dataset_Generator_plugin.h
 HEADERS += datasetGeneratorUI.h
 HEADERS += Operator.h
+HEADERS += Analyzer.h
 HEADERS += NeuronStructNavigator.h
-HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 
 SOURCES += $$TERASTITCHERPATH/src/core/imagemanager/IM_config.cpp
 SOURCES += $$TERASTITCHERPATH/src/core/imagemanager/imBlock.cpp
@@ -58,12 +59,13 @@ SOURCES += $$TERASTITCHERPATH/src/core/imagemanager/VirtualVolume.cpp
 SOURCES += $$TERASTITCHERPATH/src/core/iomanager/iomanager.config.cpp
 SOURCES += $$TERASTITCHERPATH/src/core/iomanager/plugins/tiff2D/tiff2D.cpp
 SOURCES += $$TERASTITCHERPATH/src/core/iomanager/plugins/tiff3D/tiff3D.cpp
-SOURCES	+= Dataset_Generator_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= Dataset_Generator_plugin.cpp
 SOURCES += datasetGeneratorUI.cpp
 SOURCES += Operator.cpp
 SOURCES += NeuronStructNavigator.cpp
-SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES += Analyzer.cpp
 
 win32 {
     LIBS += -L$$VAA3DPATH\\v3d_main\\common_lib\\winlib64

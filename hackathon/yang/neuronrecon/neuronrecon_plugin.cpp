@@ -39,11 +39,19 @@ QStringList NeuReconPlugin::funclist() const
     <<tr("mergelines")
     <<tr("findpeaks")
     <<tr("trace")
+    <<tr("neutrace")
     <<tr("attrace")
     <<tr("samplepc")
     <<tr("imagecheck")
     <<tr("ushort2ubyte")
     <<tr("maskmeandev")
+    <<tr("swcsplit")
+    <<tr("translate")
+    <<tr("rmisolatepoints")
+    <<tr("dfsconnect")
+    <<tr("leng")
+    <<tr("estradius")
+    <<tr("crop")
     <<tr("test")
     <<tr("help");
 }
@@ -140,6 +148,10 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     {
         return trace_func(input, output, callback);
     }
+    else if (func_name == tr("neutrace"))
+    {
+        return neutrace_func(input, output, callback);
+    }
     else if (func_name == tr("attrace"))
     {
         return attrace_func(input, output, callback);
@@ -159,6 +171,34 @@ bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
     else if (func_name == tr("maskmeandev"))
     {
         return maskmeandev_func(input, output, callback);
+    }
+    else if (func_name == tr("swcsplit"))
+    {
+        return swcsplit_func(input, output, callback);
+    }
+    else if (func_name == tr("rmisolatepoints"))
+    {
+        return rmisolatepoints_func(input, output, callback);
+    }
+    else if (func_name == tr("translate"))
+    {
+        return translate_func(input, output, callback);
+    }
+    else if (func_name == tr("dfsconnect"))
+    {
+        return dfsconnect_func(input, output, callback);
+    }
+    else if (func_name == tr("crop"))
+    {
+        return crop_func(input, output, callback);
+    }
+    else if (func_name == tr("estradius"))
+    {
+        return estradius_func(input, output, callback);
+    }
+    else if (func_name == tr("leng"))
+    {
+        return leng_func(input, output, callback);
     }
     else if (func_name == tr("test"))
     {

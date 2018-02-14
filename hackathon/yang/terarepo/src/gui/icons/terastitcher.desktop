@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=TeraStitcher
+Comment=3D stitching tool
+Exec=terastitcher-gui
+Icon=terastitcher
+Terminal=false
+Type=Application
+Categories=Qt;Science;Chemistry;Physics;
+StartupNotify=true

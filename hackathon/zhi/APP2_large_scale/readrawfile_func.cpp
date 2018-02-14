@@ -8,6 +8,8 @@
 #include <iostream>
 #include "basic_surf_objs.h"
 #include "stackutil.h"
+#include <cstdio>
+#include <cstdlib>
 
 
 
@@ -34,8 +36,17 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
         return 0;
     }
 
-    fseek (fid, 0, SEEK_END);
-    V3DLONG fileSize = ftell(fid);
+#if defined (Q_OS_WIN32)
+    _fseeki64(fid, 0, SEEK_END);
+    V3DLONG fileSize = _ftelli64(fid);
+#endif
+
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
+	fseek(fid, 0, SEEK_END);
+	V3DLONG fileSize = ftell(fid);
+#endif
+
+	std::cout << "file size: " << fileSize << endl;
     rewind(fid);
 /*
 #endif
@@ -128,7 +139,8 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
     V3DLONG unitSize = datatype; // temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future.
 
     BIT32_UNIT mysz[4];
-    mysz[0]=mysz[1]=mysz[2]=mysz[3]=0;
+	//long int mysz[4];
+	mysz[0]=mysz[1]=mysz[2]=mysz[3]=0;
     int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read.
     if (tmpn!=4) {
         if (keyread) {delete []keyread; keyread=0;}
@@ -200,6 +212,7 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
     }
 
     //V3DLONG count=0; // unused
+#if defined (Q_OS_WIN32)
     V3DLONG c,j,k;
     for (c = 0; c < sz[3]; c++)
     {
@@ -208,12 +221,30 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
             for (j = starty; j< endy; j++)
             {
                 rewind(fid);
-                fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-                int dummy = ftell(fid);
+				_fseeki64(fid, (V3DLONG)(head + (c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
+                int dummy = _ftelli64(fid);
                 dummy = fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
             }
         }
     }
+#endif
+
+#if defined (Q_OS_MAC) || defined (Q_OS_LINUX)
+	V3DLONG c,j,k;
+	for (c = 0; c < sz[3]; c++)
+	{
+		for (k = startz; k < endz; k++)
+		{
+			for (j = starty; j< endy; j++)
+			{
+				rewind(fid);
+				fseek(fid, (V3DLONG)(head + (c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
+				int dummy = ftell(fid);
+				dummy = fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
+			}
+		}
+	}
+#endif
     // swap the data bytes if necessary
 
     if (b_swap==1)

@@ -13,6 +13,7 @@
 #include <QDir>
 
 #include "Operator.h"
+#include "Analyzer.h"
 
 using namespace std;
 using namespace iim;
@@ -739,10 +740,7 @@ NeuronTree Operator::cropSWCfile3D(NeuronTree nt, int xb, int xe, int yb, int ye
 
 void Operator::getImageFolders()
 {
-	const char* swcD;
 	const char* imgD;
-	string s1 = this->inputSWCdir.toStdString();
-	swcD = s1.c_str();
 	string s2 = this->inputImagedir.toStdString();
 	imgD = s2.c_str();
 

@@ -36,7 +36,6 @@ class assemble_neuron_live_dialog : public QDialog
 public:
     assemble_neuron_live_dialog(V3DPluginCallback2 * callback, QList<NeuronTree> &ntList, Image4DSimple * p_img4d,QWidget *parent = 0);
 
-private:
     V3DPluginCallback2 * callback;
     NeuronTree nt;
     NeuronTree nt_original;

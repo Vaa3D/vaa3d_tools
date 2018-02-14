@@ -764,6 +764,7 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     int k=6;
     float m = 3;
     double distthresh = 15;
+    bool removeNoise=true;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -786,6 +787,12 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
                     {
                         distthresh = double(atof(paras->at(3)));
                         cout<<"dist: "<<distthresh<<endl;
+
+                        if (paras->size() >= 5)
+                        {
+                            removeNoise = atoi(paras->at(4))==0?false:true;
+                            cout<<"remove noise: "<<removeNoise<<endl;
+                        }
                     }
                 }
             }
@@ -814,7 +821,422 @@ bool trace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
 
     // load
     NCPointCloud pointcloud;
-    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, distthresh);
+    pointcloud.tracing(QString(inlist->at(0)), QString(outlist->at(0)), k, maxAngle, m, distthresh, removeNoise);
+
+    //
+    return true;
+}
+
+bool neutrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1)
+    {
+        cout<<"Need at least one input and one output filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    float maxAngle = 0.942; // threshold 60 degree (120 degree)
+    int k=6;
+    float m = 3;
+    double distthresh = 15;
+    float rmNoiseDistFac = 20;
+    float adjintthresh = 0.5;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            maxAngle = atof(paras->at(0));
+            cout<<"threshold(angle): "<<maxAngle<<endl;
+
+            if (paras->size() >= 2)
+            {
+                k = atoi(paras->at(1));
+                cout<<"k(nn): "<<k<<endl;
+
+                if (paras->size() >= 3)
+                {
+                    m = atof(paras->at(2));
+                    cout<<"dist(p2ls): "<<m<<endl;
+
+                    if (paras->size() >= 4)
+                    {
+                        distthresh = double(atof(paras->at(3)));
+                        cout<<"dist: "<<distthresh<<endl;
+
+                        if (paras->size() >= 5)
+                        {
+                            rmNoiseDistFac = atof(paras->at(4));
+                            cout<<"dist thresh for removing noise points: "<<rmNoiseDistFac<<endl;
+
+                            if (paras->size() >= 6)
+                            {
+                                adjintthresh = atof(paras->at(5));
+                                cout<<"adjintthresh: "<<adjintthresh<<endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    //
+    QString fnimage = QString(inlist->at(0));
+    QString fnpointcloud = fnimage.left(fnimage.lastIndexOf(".")).append(".apo");
+
+    //
+    if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnimage.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        long sx = p4dImage->getXDim();
+        long sy = p4dImage->getYDim();
+        long sz = p4dImage->getZDim();
+        long size = sx*sy*sz;
+        unsigned char *p = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        //
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                p = puint8;
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+
+        //
+        NCPointCloud pc;
+
+        QStringList files;
+        for (int i=1;i<inlist->size();i++)
+        {
+            files.push_back(QString(inlist->at(i)));
+        }
+
+        //
+        pc.getPointCloud(files);
+        pc.delDuplicatedPoints();
+        sortByRadiusIntensity<unsigned char>(p, sx, sy, sz, pc, adjintthresh);
+        pc.savePointCloud(fnpointcloud);
+
+        // load
+        NCPointCloud pointcloud;
+        //pointcloud.tracing(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, rmNoiseDistFac, p, sx, sy, sz);
+        pointcloud.trace(fnpointcloud, QString(outlist->at(0)), k, maxAngle, m, distthresh, rmNoiseDistFac, p, sx, sy, sz);
+    }
+
+    //
+    return true;
+}
+
+bool translate_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0 || output.size() != 1)
+    {
+        cout<<"Need at least one input and one output filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    long z = 0;
+    long y = 0;
+    long x = 0;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            z = atoi(paras->at(0));
+            cout<<"translate (z): "<<z<<endl;
+            if (paras->size() >= 2)
+            {
+                y = atoi(paras->at(1));
+                cout<<"translate (y): "<<z<<endl;
+                if (paras->size() >= 3)
+                {
+                    x = atoi(paras->at(2));
+                    cout<<"translate (x): "<<z<<endl;
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Invalid parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //parsing output
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
+    //
+    QString fninput = QString(inlist->at(0));
+    QString fnoutput = QString(outlist->at(0));
+
+    //
+    NCPointCloud pc;
+    if(fninput.toUpper().endsWith(".APO"))
+    {
+        QList <CellAPO> inputPoints = readAPO_file(fninput);
+
+        long n = inputPoints.size();
+
+        //
+        for(long i=0; i<n; i++)
+        {
+            CellAPO cell = inputPoints[i];
+
+            //
+            Point p;
+
+            p.n = i+1; // # assigned
+            p.x = cell.x + x;
+            p.y = cell.y + y;
+            p.z = cell.z + z;
+            p.radius = 0.5*cell.volsize;
+            p.parents.push_back(-1);
+
+            pc.points.push_back(p);
+        }
+    }
+
+    if(fninput.toUpper().endsWith(".SWC"))
+    {
+        QStringList files;
+        files.push_back(fninput);
+
+        //
+        pc.getPointCloud(files);
+
+        for(long i=0; i<pc.points.size(); i++)
+        {
+            pc.points[i].x += x;
+            pc.points[i].y += y;
+            pc.points[i].z += z;
+        }
+    }
+
+    //
+    if(fnoutput.toUpper().endsWith(".APO"))
+    {
+        pc.savePointCloud(fnoutput);
+    }
+
+    if(fnoutput.toUpper().endsWith(".SWC"))
+    {
+        pc.saveNeuronTree(pc,fnoutput);
+    }
+
+    //
+    return true;
+}
+
+bool leng_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0)
+    {
+        cout<<"Need at least one input filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    float z = 1;
+    float y = 1;
+    float x = 1;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            z = atof(paras->at(0));
+            cout<<"voxelsize (z): "<<z<<endl;
+            if (paras->size() >= 2)
+            {
+                y = atof(paras->at(1));
+                cout<<"voxelsize (y): "<<z<<endl;
+                if (paras->size() >= 3)
+                {
+                    x = atof(paras->at(2));
+                    cout<<"voxelsize (x): "<<z<<endl;
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Invalid parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //
+    QString fninput = QString(inlist->at(0));
+
+    //
+    NCPointCloud pc;
+    if(fninput.toUpper().endsWith(".SWC"))
+    {
+        QStringList files;
+        files.push_back(fninput);
+
+        //
+        pc.getPointCloud(files);
+    }
+
+    //
+    vector<LineSegment> lines = separate(pc);
+
+    float length = 0;
+    for(size_t i=0; i<lines.size(); i++)
+    {
+        LineSegment line = lines[i];
+        length += line.length(x,y,z,pc);
+    }
+
+    //
+    cout<<"totoal length of this swc is "<<length<<endl;
+
+    //
+    return true;
+}
+
+bool dfsconnect_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()==0)
+    {
+        cout<<"Need at least one input filename specified\n";
+        return false;
+    }
+
+    //parsing input
+    long distthresh = 5;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            distthresh = atoi(paras->at(0));
+            cout<<"distthresh: "<<distthresh<<endl;
+        }
+        else
+        {
+            cerr<<"Invalid parameters"<<endl;
+            return false;
+        }
+    }
+
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()==0)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    //
+    QString fninput = QString(inlist->at(0));
+
+    // assemble fragments into trees
+    QList<NeuronSWC> neuron, result;
+    NeuronTree nt = readSWC_file(fninput);
+    neuron = nt.listNeuron;
+    QString fileDefaultName;
+    if (sortswc::SortSWC<long>(neuron, result, VOID, distthresh))
+    {
+        fileDefaultName = fninput+QString("_sorted.swc");
+        //write new SWC to file
+        if (!sortswc::export_list2file<long>(result,fileDefaultName,fninput))
+        {
+            cout<<"fail to write the output result"<<endl;
+            return -1;
+        }
+    }
+
+    //
+    QStringList files;
+    files << fileDefaultName;
+
+    NCPointCloud pc;
+    pc.getPointCloud(files);
+
+    vector<LineSegment> lines = separate(pc);
+    pc = combinelines(lines);
+
+    pc.saveNeuronTree(pc, fninput + QString("_cleaned.swc"));
 
     //
     return true;
@@ -830,7 +1252,6 @@ bool anisotropicimagefilter_func(const V3DPluginArgList & input, V3DPluginArgLis
     }
     
     //parsing input
-    char * paras = NULL;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -881,7 +1302,6 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     }
     
     //parsing input
-    char * paras = NULL;
     vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
     if (inlist->size()==0)
     {
@@ -911,13 +1331,17 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     // delete duplicated points
     pointcloud.delDuplicatedPoints();
     
-    // sort
-    NCPointCloud pcsorted;
-    pcsorted.ksort(pointcloud, 10);
-    
+
     // output .apo file (point cloud)
     QString outfileName;
     outfileName = QString(outlist->at(0));
+
+    //
+    pointcloud.savePointCloud(outfileName.left(outfileName.lastIndexOf(".")).append("_wodup.apo"));
+
+    // sort
+    NCPointCloud pcsorted;
+    pcsorted.ksort(pointcloud, 10);
     
     pcsorted.savePointCloud(outfileName);
     
@@ -1118,6 +1542,171 @@ bool test_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         //
         p4dImage->setData(p, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype());
         p4dImage->saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+    }
+    else
+    {
+        cout<<"Current only support TIFF/V3DRAW image as input file\n";
+        return -1;
+    }
+
+    //
+    return true;
+}
+
+bool crop_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file\n";
+        return false;
+    }
+
+    //parsing input
+    long xstep = 512;
+    long ystep = 512;
+    long zstep = 512;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+            xstep = atoi(paras->at(0));
+
+            if (paras->size() >= 2)
+            {
+                ystep = atoi(paras->at(1));
+
+                if (paras->size() >= 3)
+                {
+                    zstep = atoi(paras->at(2));
+                }
+            }
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must specify input linker or swc files"<<endl;
+        return false;
+    }
+
+    long n = 0;
+
+    //
+    QString filename = QString(inlist->at(0));
+
+
+    if(filename.toUpper().endsWith(".TIF") || filename.toUpper().endsWith(".V3DRAW"))
+    {
+        cout<<"loading image ...\n";
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(filename.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+        cout<<"... image is loaded\n";
+
+        //
+        unsigned char *pImg = p4dImage->getRawData();
+        long sx = p4dImage->getXDim(), sy = p4dImage->getYDim(), sz = p4dImage->getZDim();
+        long szblock = xstep*ystep*zstep;
+
+        for(long z=0; z<sz; z+=zstep)
+        {
+            long zs = z;
+            long ze = z+zstep-1;
+            if(ze>sz-1) ze=sz-1;
+
+            cout<<"z ... "<<zs<<" "<<ze<<endl;
+
+            for(long y=0; y<sy; y+=ystep)
+            {
+                long ys = y;
+                long ye = y+ystep-1;
+                if(ye>sy-1) ye=sy-1;
+
+                cout<<"y ... "<<ys<<" "<<ye<<endl;
+
+                for(long x=0; x<sx; x+=xstep)
+                {
+                    long xs = x;
+                    long xe = x+xstep-1;
+                    if(xe>sx-1) xe=sx-1;
+
+                    cout<<"x ... "<<xs<<" "<<xe<<endl;
+
+                    //
+                    unsigned char *p=NULL;
+                    long bsx = xe-xs+1;
+                    long bsy = ye-ys+1;
+                    long bsz = ze-zs+1;
+                    szblock=bsx*bsy*bsz;
+                    y_new1dp<unsigned char, long>(p, szblock);
+
+                    cout<<"new a pointer for a block \n";
+
+                    //
+                    n++;
+                    QString outFileName = filename.left(filename.lastIndexOf(".")).append(QString("_block%1.tif").arg(n));
+
+                    cout<<"output block image name "<<outFileName.toStdString()<<endl;
+
+                    //
+                    for(long k=zs; k<ze; k++)
+                    {
+                        //cout<<"k "<<k<<endl;
+                        long ofk = (k-zs)*bsx*bsy;
+                        long ofz = k*sx*sy;
+                        for(long j=ys; j<ye; j++)
+                        {
+                            //cout<<"j "<<j<<endl;
+                            long ofj = ofk + (j-ys)*bsx;
+                            long ofy = ofz + j*sx;
+                            for(long i=xs; i<xe; i++)
+                            {
+                                p[ofj + i-xs] = pImg[ofy + i];
+                            }
+                        }
+                    }
+
+                    cout<<"done with block image copy\n";
+
+                    //
+                    Image4DSimple p4dimg;
+
+                    p4dimg.setDatatype(V3D_UINT8);
+                    p4dimg.setXDim(bsx);
+                    p4dimg.setYDim(bsy);
+                    p4dimg.setZDim(bsz);
+                    p4dimg.setCDim(1);
+                    p4dimg.setTDim(1);
+
+                    cout<<"set pointer to image4dsimple class"<<endl;
+
+                    p4dimg.setNewRawDataPointer(p);
+
+                    cout<<"save block image to "<<outFileName.toStdString()<<endl;
+
+                    p4dimg.saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+
+                    cout<<"block image is saved\n";
+
+                    //
+                    //y_del1dp<unsigned char>(p);
+
+                }
+            }
+        }
     }
     else
     {
@@ -1579,17 +2168,11 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
         V3DLONG i,j,k, idx, nn;
 
         // estimate the radius with distance transform
-        unsigned char *dt=NULL;
-        try
-        {
-            dt = new unsigned char [volsz];
-        }
-        catch(...)
-        {
-            cout<<"fail to alloc memory for out image\n";
-            return false;
-        }
-        distanceTransformL2(dt, p1dImg, dimx, dimy, dimz);
+        float *dt=NULL;
+        y_new1dp<float, long>(dt, volsz);
+
+        //
+        distanceTransformL2<float>(dt, p1dImg, dimx, dimy, dimz);
 
         // estimate threshold
         float threshold;
@@ -1652,10 +2235,20 @@ bool findpeaks_func(const V3DPluginArgList & input, V3DPluginArgList & output, V
                     p.z = k;
 
                     //
+                    pointcloud.shift(dt, dimx, dimy, dimz, max(3.0f, p.radius), p);
+
+                    if(p.radius<1.5)
+                    {
+                        continue;
+                    }
+
+                    //
                     pointcloud.append(p);
                 }
             }
         }
+        //
+        y_del1dp<float>(dt);
 
         //
         pointcloud.delDuplicatedPoints();
@@ -1707,7 +2300,6 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
     
     //parsing input
-    char * paras = NULL;
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
@@ -1776,8 +2368,8 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         p2.is_gsdt = true;
         p2.is_coverage_prune = true;
         p2.is_break_accept = true;
-        p2.bkg_thresh = 55;
-        p2.length_thresh = 15;
+        p2.bkg_thresh = 72; // 55
+        p2.length_thresh = 10; // 15
         p2.cnn_type = 2;
         p2.channel = 0;
         p2.SR_ratio = 3.0/9.9;
@@ -1798,29 +2390,29 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         proc_app2(callback, p2, versionStr);
         
         // method #1 parameters set #2
-        p2.is_gsdt = true;
-        p2.is_coverage_prune = true;
-        p2.is_break_accept = true;
-        p2.bkg_thresh = 10;
-        p2.length_thresh = 5;
-        p2.cnn_type = 2;
-        p2.channel = 0;
-        p2.SR_ratio = 3.0/9.9;
-        p2.b_256cube = false;
-        p2.b_RadiusFrom2D = true;
-        p2.b_resample = 1;
-        p2.b_intensity = 0;
-        p2.b_brightfiled = 0;
-        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+//        p2.is_gsdt = true;
+//        p2.is_coverage_prune = true;
+//        p2.is_break_accept = true;
+//        p2.bkg_thresh = 10;
+//        p2.length_thresh = 5;
+//        p2.cnn_type = 2;
+//        p2.channel = 0;
+//        p2.SR_ratio = 3.0/9.9;
+//        p2.b_256cube = false;
+//        p2.b_RadiusFrom2D = true;
+//        p2.b_resample = 1;
+//        p2.b_intensity = 0;
+//        p2.b_brightfiled = 0;
+//        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
         
-        p2.p4dImage = p4dImage;
-        p2.xc0 = p2.yc0 = p2.zc0 = 0;
-        p2.xc1 = p2.p4dImage->getXDim()-1;
-        p2.yc1 = p2.p4dImage->getYDim()-1;
-        p2.zc1 = p2.p4dImage->getZDim()-1;
+//        p2.p4dImage = p4dImage;
+//        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+//        p2.xc1 = p2.p4dImage->getXDim()-1;
+//        p2.yc1 = p2.p4dImage->getYDim()-1;
+//        p2.zc1 = p2.p4dImage->getZDim()-1;
         
-        p2.outswc_file = neuronTraced2;
-        proc_app2(callback, p2, versionStr);bool lmpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+//        p2.outswc_file = neuronTraced2;
+//        proc_app2(callback, p2, versionStr);
         
         // method2 ...
         
@@ -1836,7 +2428,7 @@ bool bnpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     
     QStringList files;
     files.push_back(neuronTraced1);
-    files.push_back(neuronTraced2);
+//    files.push_back(neuronTraced2);
     
     //
     pointcloud.getPointCloud(files);
@@ -2063,7 +2655,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             }
 
             // y proj
-            pagesz_mip = N*P;
+            pagesz_mip = N*M*P;
             try {data1d_ymip = new unsigned char [pagesz_mip];}
             catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
             for(V3DLONG iz = 0; iz < P; iz++)
@@ -2077,7 +2669,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                         V3DLONG offsetj = iy*N;
                         if(data1d[offsetk + offsetj + ix] >= max_mip)
                         {
-                            data1d_ymip[iz*N + ix] = data1d[offsetk + offsetj + ix];
+                            data1d_ymip[offsetk + ix] = data1d[offsetk + offsetj + ix];
                             max_mip = data1d[offsetk + offsetj + ix];
                         }
                     }
@@ -2085,7 +2677,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
             }
 
             // x proj
-            pagesz_mip = M*P;
+            pagesz_mip = N*M*P;
             try {data1d_xmip = new unsigned char [pagesz_mip];}
             catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
             for(V3DLONG iz = 0; iz < P; iz++)
@@ -2099,7 +2691,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     {
                         if(data1d[offsetk + offsetj + ix] >= max_mip)
                         {
-                            data1d_xmip[iz*M + iy] = data1d[offsetk + offsetj + ix];
+                            data1d_xmip[offsetk + iy] = data1d[offsetk + offsetj + ix];
                             max_mip = data1d[offsetk + offsetj + ix];
                         }
                     }
@@ -2251,7 +2843,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     offsetj = iiy*N;
                     for(iix = xb; iix < xe+1; iix++)
                     {
-                        blockarea[i] = data1d_ymip[offsetj + iix];
+                        blockarea[i] = data1d_ymip[iiy*M*N + iix];
                         i++;
                     }
                 }
@@ -2303,7 +2895,7 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
                     offsetj = iiy*N;
                     for(iix = xb; iix < xe+1; iix++)
                     {
-                        blockarea[i] = data1d_xmip[offsetj + iix];
+                        blockarea[i] = data1d_xmip[iiy*M*N + iix];
                         i++;
                     }
                 }
@@ -2359,7 +2951,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         fun_objz.pushNewData<unsigned char>((unsigned char*)data1d_zmip, sz_img);
         poss_landmark=landMarkList2poss(marklist_2Dz, sz_img[0], sz_img[0]*sz_img[1]);
 
-        cout<<"z "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objz.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2372,33 +2963,18 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         fun_objy.pushNewData<unsigned char>((unsigned char*)data1d_ymip, sz_img);
         poss_landmark=landMarkList2poss(marklist_2Dy, sz_img[0], sz_img[0]*sz_img[1]);
 
-        cout<<"y "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
-            cout<<j<<endl;
-
             mass_center=fun_objy.mean_shift_center_mass(poss_landmark[j],windowradius);
-
-            cout<<"test -1"<<endl;
-
             LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
-
-            cout<<"test -2"<<endl;
-
             marklist_2D_shiftedy.append(tmp);
         }
-
-        cout<<"test 0"<<endl;
 
         // x proj
         sz_img[0] = 1; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
         fun_objx.pushNewData<unsigned char>((unsigned char*)data1d_xmip, sz_img);
-
-        cout<<"test 1"<<endl;
-
         poss_landmark=landMarkList2poss(marklist_2Dx, sz_img[0], sz_img[0]*sz_img[1]);
 
-        cout<<"x "<<poss_landmark.size()<<endl;
         for (V3DLONG j=0;j<poss_landmark.size();j++)
         {
             mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
@@ -2451,7 +3027,6 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     }
     else
     {
-        cout << "add "<<marklist_2D_shiftedz.size()<<" "<<marklist_2D_shiftedy.size()<<" "<<marklist_2D_shiftedx.size()<<endl;
         // z proj
         for(V3DLONG i = 0; i < marklist_2D_shiftedz.size(); i++)
         {
@@ -2528,6 +3103,48 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     // delete false detections
     QList <ImageMarker> marklist_3D_pruned = batch_deletion(data1d,classifier,marklist_3D,N,M,P);
 
+    //    cout<<"test 01 "<<marklist_3D.size()<<" "<<marklist_3D_pruned.size()<<endl;
+
+    //    //
+    //    LandmarkList marklist_3D_pruned1,marklist_3D_pruned_shifted;
+    //    for(long i=0; i<marklist_3D_pruned.size(); i++)
+    //    {
+    //        ImageMarker m = marklist_3D_pruned[i];
+    //        LocationSimple s;
+    //        s.x = m.x;
+    //        s.y = m.y;
+    //        s.z = m.z;
+
+    //        if(s.x<0 || s.y<0 || s.z<0 || s.x>N-2 || s.y>M-2 || s.z>P-2)
+    //        {
+    //            cout<<"odd"<<endl;
+    //        }
+    //        else
+    //        {
+    //            marklist_3D_pruned1.append(s);
+    //        }
+    //    }
+
+    //    cout<<"test 02\n";
+
+    //    sz_img[0] = N; sz_img[1] = M; sz_img[2] = P; sz_img[3] = 1;
+    //    fun_objx.pushNewData<unsigned char>((unsigned char*)data1d, sz_img);
+
+    //    cout<<"test 021\n";
+
+    //    poss_landmark=landMarkList2poss(marklist_3D_pruned1, sz_img[0], sz_img[0]*sz_img[1]);
+
+    //    cout<<"test 022 "<<poss_landmark.size()<<endl;
+
+    //    for (V3DLONG j=0;j<poss_landmark.size();j++)
+    //    {
+    //        mass_center=fun_objx.mean_shift_center_mass(poss_landmark[j],windowradius);
+    //        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+    //        marklist_3D_pruned_shifted.append(tmp);
+    //    }
+
+    //    cout<<"test 03\n";
+
     // estimate radius
     for(V3DLONG i = 0; i < marklist_3D_pruned.size(); i++)
     {
@@ -2562,18 +3179,156 @@ bool dlpipeline_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     //
     pointcloud.getPointCloud(files);
     pointcloud.delDuplicatedPoints();
-    pcsorted.ksort(pointcloud, 10);
-    pcsorted.savePointCloud(cnvtPoints);
+    //pcsorted.ksort(pointcloud, 10);
+    //pcsorted.savePointCloud(cnvtPoints);
+
+    pointcloud.sortbyradius();
+    pointcloud.savePointCloud(cnvtPoints);
 
     // step 3. lines constructed
     float maxAngle = 0.942; // threshold 60 degree (120 degree)
     int knn=6;
     float m = 8;
 
-    NCPointCloud lines;
-    lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
+    //NCPointCloud lines;
+    //lines.connectPoints2Lines(cnvtPoints, linesTraced, knn, maxAngle, m);
 
     // step 4.
+
+    //
+    return true;
+}
+
+bool estradius_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file and a marker file\n";
+        return false;
+    }
+
+    //parsing input
+    float thresh = 40;
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+            thresh = atof(paras->at(0));
+            cout<<"thresh "<<thresh<<endl;
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<2)
+    {
+        cerr<<"You must specify input tiff and swc files"<<endl;
+        return false;
+    }
+
+    //
+    QString fnimage = QString(inlist->at(0));
+    QString fnswc = QString(inlist->at(1));
+    QString fnoutput = fnswc.left(fnswc.lastIndexOf(".")).append("_wr.swc");
+
+    //
+    if(fnimage.toUpper().endsWith(".V3DRAW") || fnimage.toUpper().endsWith(".TIF"))
+    {
+        Image4DSimple * p4dImage = callback.loadImage( const_cast<char *>(fnimage.toStdString().c_str()) );
+        if (!p4dImage || !p4dImage->valid())
+        {
+            cout<<"fail to load image!\n";
+            return false;
+        }
+
+        long sx = p4dImage->getXDim();
+        long sy = p4dImage->getYDim();
+        long sz = p4dImage->getZDim();
+        long size = sx*sy*sz;
+        unsigned char *p = p4dImage->getRawData();
+        unsigned char *puint8 = NULL;
+
+        //
+        if(p4dImage->getDatatype()!=V3D_UINT8)
+        {
+            // convert 16-bit to 8-bit
+            if(p4dImage->getDatatype()==V3D_UINT16)
+            {
+                unsigned short *p1d = (unsigned short *)(p4dImage->getRawData());
+
+                float maxval = 0;
+                for(long i=0; i<size; i++)
+                {
+                    if(maxval<p1d[i])
+                    {
+                        maxval = p1d[i];
+                    }
+                }
+
+                maxval = 255 / maxval;
+
+                y_new1dp<unsigned char, long>(puint8, size);
+                for(long i=0; i<size; i++)
+                {
+                    puint8[i] = maxval * p1d[i];
+                }
+
+                p = puint8;
+            }
+            else
+            {
+                cout<<"datatype is not supported\n";
+                return false;
+            }
+        }
+
+        //float *dt=NULL;
+        //y_new1dp<float, long>(dt, sx*sy*sz);
+
+        //distanceTransformL2<float>(dt, p, sx, sy, sz);
+
+        //
+        V3DLONG in_sz[4];
+        in_sz[0] = sx;
+        in_sz[1] = sy;
+        in_sz[2] = sz;
+        in_sz[3] = 1;
+
+        //
+        if(fnswc.toUpper().endsWith(".SWC"))
+        {
+            NeuronTree nt = readSWC_file(fnswc);
+
+            if(nt.listNeuron.size()>0)
+            {
+                for(size_t k=0; k<nt.listNeuron.size(); k++)
+                {
+                    float r = estimateRadius<unsigned char>(p, in_sz, nt.listNeuron[k].x, nt.listNeuron[k].y, nt.listNeuron[k].z, thresh);
+
+                    if(r<1)
+                        r = 1;
+                    if(r>10)
+                        r = 10;
+
+                    nt.listNeuron[k].r = r;
+
+                    //nt.listNeuron[k].r = dt[ long(nt.listNeuron[k].z)*sx*sy + long(nt.listNeuron[k].y)*sx + long(nt.listNeuron[k].x) ];
+                }
+            }
+            //y_del1dp<float>(dt);
+
+            //
+            writeSWC_file(fnoutput, nt);
+        }
+    }
 
     //
     return true;
@@ -2817,7 +3572,7 @@ bool attrace_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             p2.is_coverage_prune = true;
             p2.is_break_accept = true;
             p2.bkg_thresh = thresh;
-            p2.length_thresh = 5;
+            p2.length_thresh = 10;
             p2.cnn_type = 2;
             p2.channel = 0;
             p2.SR_ratio = 3.0/9.9;
@@ -3233,6 +3988,113 @@ bool maskmeandev_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         //
         p4dImage->setData(mask, p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, V3D_UINT8);
         p4dImage->saveImage(const_cast<char *>(outFileName.toStdString().c_str()));
+    }
+
+    //
+    return true;
+}
+
+bool swcsplit_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file and a swc file\n";
+        return false;
+    }
+
+    //parsing input
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must input a swc file"<<endl;
+        return false;
+    }
+
+    //
+    QString fnswc = QString(inlist->at(0));
+
+    //
+    NCPointCloud pc;
+    vector<LineSegment> lines;
+    if(fnswc.toUpper().endsWith(".SWC"))
+    {
+        NeuronTree nt = readSWC_file(fnswc);
+        pc.addPointFromNeuronTree(nt);
+        lines = separate(pc);
+    }
+    long n = lines.size();
+
+    //
+    for(long i=0; i<n; i++)
+    {
+        QString separateswc = fnswc.left(fnswc.lastIndexOf(".")).append(QString("_part%1.swc").arg(i));
+        pc.saveNeuronTree(lines[i], separateswc);
+    }
+
+    //
+    return true;
+}
+
+bool rmisolatepoints_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+{
+    //
+    if(input.size()<1)
+    {
+        cout<<"please input a TIFF file and a swc file\n";
+        return false;
+    }
+
+    //parsing input
+    if (input.size()>1)
+    {
+        vector<char*> * paras = (vector<char*> *)(input.at(1).p);
+        if (paras->size() >= 1)
+        {
+            // parameters
+        }
+        else
+        {
+            cerr<<"Too many parameters"<<endl;
+            return false;
+        }
+    }
+
+    //
+    vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
+    if (inlist->size()<1)
+    {
+        cerr<<"You must input a swc file"<<endl;
+        return false;
+    }
+
+    //
+    QString fnswc = QString(inlist->at(0));
+    QString fnout = fnswc.left(fnswc.lastIndexOf(".")).append("_woisolated.swc");
+
+    //
+    NCPointCloud pc;
+    if(fnswc.toUpper().endsWith(".SWC"))
+    {
+        NeuronTree nt = readSWC_file(fnswc);
+        pc.addPointFromNeuronTree(nt);
+        pc.isolatedPoints();
+        pc.saveNeuronTree(pc,fnout);
     }
 
     //

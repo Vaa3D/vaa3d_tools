@@ -1,7 +1,7 @@
 #ifndef __CLASSIFICATION_H__
 #define __CLASSIFICATION_H__
 
-#include "../../../MK/Deep_Neuron/Deep_Neuron_plugin.h"
+#include "../../../MK/DeepNeuron/Deep_Neuron_plugin.h"
 #include "prediction_caffe_plugin.h"
 
 #include <opencv2/core/core.hpp>
