@@ -56,6 +56,8 @@ Classifier::Classifier(const string& model_file,
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
     /* Load the binaryproto mean file. */
     if(!mean_file.empty()) SetMean(mean_file);
+    Caffe::set_mode(Caffe::CPU);
+
 
 #if  defined(Q_OS_MAC)
     Caffe::set_mode(Caffe::CPU);
@@ -423,55 +425,54 @@ std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classi
         {
             for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
             {
+                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
 
-                V3DLONG xb = ix-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
-                V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
-                V3DLONG yb = iy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
-                V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
-                V3DLONG zb = iz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
-                V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+                    V3DLONG im_cropped_sz[4];
+                    im_cropped_sz[0] = xe - xb + 1;
+                    im_cropped_sz[1] = ye - yb + 1;
+                    im_cropped_sz[2] = 1;
+                    im_cropped_sz[3] = 1;
 
-                V3DLONG im_cropped_sz[4];
-                im_cropped_sz[0] = xe - xb + 1;
-                im_cropped_sz[1] = ye - yb + 1;
-                im_cropped_sz[2] = 1;
-                im_cropped_sz[3] = 1;
+                    unsigned char *im_cropped = 0;
 
-                unsigned char *im_cropped = 0;
+                    V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                    try {im_cropped = new unsigned char [pagesz];}
+                    catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return outputs_overall;}
+                    memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
 
-                V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
-                try {im_cropped = new unsigned char [pagesz];}
-                catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return outputs_overall;}
-                memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
-
-                for(V3DLONG iiz = zb; iiz <= ze; iiz++)
-                {
-                    V3DLONG offsetk = iiz*M*N;
-                    V3DLONG j = 0;
-                    for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
                     {
-                        V3DLONG offsetj = iiy*N;
-                        for(V3DLONG iix = xb; iix <= xe; iix++)
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
                         {
-                            if(data1d[offsetk + offsetj + iix] >= im_cropped[j])
-                                im_cropped[j] = data1d[offsetk + offsetj + iix];
-                            j++;
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                if(data1d[offsetk + offsetj + iix] >= im_cropped[j])
+                                    im_cropped[j] = data1d[offsetk + offsetj + iix];
+                                j++;
+                            }
                         }
                     }
-                }
-                cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
-                imgs.push_back(img);
+                    cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+                    imgs.push_back(img);
 
-                if(num_patches >= 5000)
-                {
-                    outputs = classifier.Predict(imgs);
-                    for(V3DLONG d = 0; d<outputs.size();d++)
-                        outputs_overall.push_back(outputs[d]);
-                    outputs.clear();
-                    imgs.clear();
-                    num_patches = 0;
-                }else
-                    num_patches++;
+                    if(num_patches >= 5000)
+                    {
+                        outputs = classifier.Predict(imgs);
+                        for(V3DLONG d = 0; d<outputs.size();d++)
+                            outputs_overall.push_back(outputs[d]);
+                        outputs.clear();
+                        imgs.clear();
+                        num_patches = 0;
+                    }else
+                        num_patches++;
             }
         }
     }
@@ -483,9 +484,93 @@ std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classi
             outputs_overall.push_back(outputs[d]);
     }
 
-   imgs.clear();
-   outputs.clear();
-   return outputs_overall;
+    imgs.clear();
+    outputs.clear();
+
+    return outputs_overall;
+}
+
+std::vector<std::vector<float> > batch_detection_ref(unsigned char * & data1d,unsigned char * & data1d_ref,Classifier classifier, int N, int M, int P, int Sxy)
+{
+    std::vector<cv::Mat> imgs;
+    int Wx = 30, Wy = 30, Wz = 1;
+    int Sz = (int)Sxy;
+
+    V3DLONG num_patches = 0;
+    std::vector<std::vector<float> > outputs_overall;
+    std::vector<std::vector<float> > outputs;
+    for(V3DLONG iz = 0; iz < P; iz = iz+Sz)
+    {
+        for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+        {
+            for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+            {
+                if(data1d_ref[iy*N +ix]>0)
+                {
+                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;if(xb>=N-1) xb = N-1;
+                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;if(yb>=M-1) yb = M-1;
+                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;if(zb>=P-1) zb = P-1;
+                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+
+                    V3DLONG im_cropped_sz[4];
+                    im_cropped_sz[0] = xe - xb + 1;
+                    im_cropped_sz[1] = ye - yb + 1;
+                    im_cropped_sz[2] = 1;
+                    im_cropped_sz[3] = 1;
+
+                    unsigned char *im_cropped = 0;
+
+                    V3DLONG pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2]*im_cropped_sz[3];
+                    try {im_cropped = new unsigned char [pagesz];}
+                    catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return outputs_overall;}
+                    memset(im_cropped, 0, sizeof(unsigned char)*pagesz);
+
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                if(data1d[offsetk + offsetj + iix] >= im_cropped[j])
+                                    im_cropped[j] = data1d[offsetk + offsetj + iix];
+                                j++;
+                            }
+                        }
+                    }
+                    cv::Mat img(im_cropped_sz[1], im_cropped_sz[0], CV_8UC1, im_cropped);
+                    imgs.push_back(img);
+
+                    if(num_patches >= 5000)
+                    {
+                        outputs = classifier.Predict(imgs);
+                        for(V3DLONG d = 0; d<outputs.size();d++)
+                            outputs_overall.push_back(outputs[d]);
+                        outputs.clear();
+                        imgs.clear();
+                        num_patches = 0;
+                    }else
+                        num_patches++;
+                }
+            }
+        }
+    }
+
+    if(imgs.size()>0)
+    {
+        outputs = classifier.Predict(imgs);
+        for(V3DLONG d = 0; d<outputs.size();d++)
+            outputs_overall.push_back(outputs[d]);
+    }
+
+    imgs.clear();
+    outputs.clear();
+
+    return outputs_overall;
 }
 
 QList <ImageMarker> batch_deletion(unsigned char * & data1d,Classifier classifier, QList <ImageMarker> input_markerlist, int N, int M, int P)

@@ -94,6 +94,8 @@ QStringList prediction_caffe::funclist() const
        <<tr("3D_Axon_detection")
       <<tr("3D_Axon_detection_subRegion")
      <<tr("3D_Axon_detection_raw")
+    <<tr("2D_Axon_detection")
+    <<tr("2D_Axon_refining")
     <<tr("Feature_Extraction")
     <<tr("Connection")
     <<tr("swc_extraction")
@@ -2455,6 +2457,392 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //        }
 
 //        writeSWC_file(swc_processed,nt);
+        return true;
+    }else if(func_name == tr("2D_Axon_detection"))
+    {
+        cout<<"Welcome to Caffe 2D axon detection plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        if(outfiles.empty())
+        {
+            cerr<<"Need output swc file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        QString  outswc_file =  outfiles[0];
+
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
+        int Ws = paras.empty() ? 512 : atoi(paras[k]);k++;
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+        cout<<"image_size = "<<Ws<<endl;
+
+        unsigned char *data1d_mip=0;
+        int datatype;
+        V3DLONG N,M,P;
+        V3DLONG in_mip_sz[4];
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+        N = in_mip_sz[0];
+        M = in_mip_sz[1];
+
+        std::vector<std::vector<float> > detection_results;
+        LandmarkList marklist_2D;
+
+        unsigned int numOfThreads = 2; // default value for number of theads
+#if  defined(Q_OS_LINUX)
+
+        omp_set_num_threads(numOfThreads);
+
+#pragma omp parallel for
+
+#endif
+
+        for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+        {
+
+            V3DLONG yb = iy;
+            V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+#if  defined(Q_OS_LINUX)
+
+            printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+#pragma omp parallel for
+#endif
+            for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix;
+                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+                unsigned char *blockarea=0;
+                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+
+                blockarea = new unsigned char [blockpagesz];
+                V3DLONG i = 0;
+                for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                {
+                    V3DLONG offsetj = iiy*N;
+                    for(V3DLONG iix = xb; iix < xe+1; iix++)
+                    {
+
+                        blockarea[i] = data1d_mip[offsetj + iix];
+                        i++;
+                    }
+                }
+                Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+                if(detection_results.size() >0)
+                {
+                    V3DLONG d = 0;
+                    for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                    {
+                        for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                        {
+                                std::vector<float> output = detection_results[d];
+                                if(output.at(1) > output.at(0))
+                                {
+                                    LocationSimple S;
+                                    S.x = iix;
+                                    S.y = iiy;
+                                    S.z = 1;
+                                    marklist_2D.push_back(S);
+                                }
+                                d++;
+                        }
+                    }
+                }
+                if(blockarea) {delete []blockarea; blockarea =0;}
+
+            }
+        }
+
+        cerr<<"mean shifting ..."<<endl;
+
+        //mean shift
+        mean_shift_fun fun_obj;
+        LandmarkList marklist_2D_shifted;
+        vector<V3DLONG> poss_landmark;
+        vector<float> mass_center;
+        double windowradius = Sxy+5;
+
+        V3DLONG sz_img[4];
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            bool flag_dual = false;
+            for(V3DLONG jj = 0; jj < marklist_2D_shifted.size();jj++)
+            {
+                if(NTDIS(tmp,marklist_2D_shifted.at(jj)) == 0)
+                {
+                    flag_dual = true;
+                    break;
+                }
+            }
+            if(!flag_dual) marklist_2D_shifted.append(tmp);
+        }
+
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+        for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shifted.at(i).x;
+            V3DLONG iy = marklist_2D_shifted.at(i).y;
+
+            NeuronSWC n;
+            n.x = ix-1;
+            n.y = iy-1;
+            n.z = 0;
+            n.n = i+1;
+            n.type = 2;
+            n.r = 1;
+            n.pn = -1; //so the first one will be root
+            listNeuron << n;
+        }
+
+        QString  swc_processed = inimg_file + "_detection.swc";
+        writeSWC_file(swc_processed,nt);
+
+        return true;
+    }else if(func_name == tr("2D_Axon_refining"))
+    {
+        cout<<"Welcome to Caffe 2D axon refining plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+//        if(outfiles.empty())
+//        {
+//            cerr<<"Need output swc file"<<endl;
+//            return false;
+//        }
+        QString  inimg_file =  infiles[0];
+//        QString  outswc_file =  outfiles[0];
+
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
+        int Ws = paras.empty() ? 512 : atoi(paras[k]);k++;
+        QString refimg_file = (paras.size() >= k+1) ? paras[k]:""; if(refimg_file == "NULL") refimg_file = "";
+
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+//        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+        cout<<"image_size = "<<Ws<<endl;
+        cout<<"refernce_image = "<<refimg_file.toStdString()<<endl;
+
+        unsigned char *data1d_mip=0;
+        int datatype;
+        V3DLONG N,M,P;
+        V3DLONG in_mip_sz[4];
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+        N = in_mip_sz[0];
+        M = in_mip_sz[1];
+
+        unsigned char *data1d_ref=0;
+        V3DLONG data1d_ref_sz[4];
+        if(!simple_loadimage_wrapper(callback, refimg_file.toStdString().c_str(), data1d_ref, data1d_ref_sz, datatype))
+        {
+            cerr<<"load image "<<refimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        std::vector<std::vector<float> > detection_results;
+        LandmarkList marklist_2D;
+
+        unsigned int numOfThreads = 2; // default value for number of theads
+#if  defined(Q_OS_LINUX)
+
+        omp_set_num_threads(numOfThreads);
+
+#pragma omp parallel for
+
+#endif
+
+        for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+        {
+
+            V3DLONG yb = iy;
+            V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+#if  defined(Q_OS_LINUX)
+
+            printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+#pragma omp parallel for
+#endif
+            for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix;
+                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+                unsigned char *blockarea=0;
+                unsigned char *blockarea_ref=0;
+
+                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+
+                blockarea = new unsigned char [blockpagesz];
+                blockarea_ref = new unsigned char [blockpagesz];
+
+                V3DLONG i = 0;
+                for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                {
+                    V3DLONG offsetj = iiy*N;
+                    for(V3DLONG iix = xb; iix < xe+1; iix++)
+                    {
+
+                        blockarea[i] = data1d_mip[offsetj + iix];
+                        blockarea_ref[i] = data1d_ref[offsetj + iix];
+
+                        i++;
+                    }
+                }
+                Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+                detection_results = batch_detection_ref(blockarea,blockarea_ref,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+                if(detection_results.size() >0)
+                {
+                    V3DLONG d = 0;
+                    for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                    {
+                        for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                        {
+                            if(data1d_ref[iiy*N +iix]>0)
+                            {
+                                std::vector<float> output = detection_results[d];
+                                if(output.at(1) > 0.995)
+                                {
+                                    LocationSimple S;
+                                    S.x = iix;
+                                    S.y = iiy;
+                                    S.z = 1;
+                                    marklist_2D.push_back(S);
+                                }
+                                d++;
+                            }
+                        }
+                    }
+                }
+                if(blockarea) {delete []blockarea; blockarea =0;}
+
+            }
+        }
+
+        cerr<<"mean shifting ..."<<endl;
+
+        //mean shift
+        mean_shift_fun fun_obj;
+        LandmarkList marklist_2D_shifted;
+        vector<V3DLONG> poss_landmark;
+        vector<float> mass_center;
+        double windowradius = Sxy+5;
+
+        V3DLONG sz_img[4];
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            bool flag_dual = false;
+            for(V3DLONG jj = 0; jj < marklist_2D_shifted.size();jj++)
+            {
+                if(NTDIS(tmp,marklist_2D_shifted.at(jj)) == 0)
+                {
+                    flag_dual = true;
+                    break;
+                }
+            }
+            if(!flag_dual) marklist_2D_shifted.append(tmp);
+        }
+
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+        for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shifted.at(i).x;
+            V3DLONG iy = marklist_2D_shifted.at(i).y;
+
+            NeuronSWC n;
+            n.x = ix-1;
+            n.y = iy-1;
+            n.z = 0;
+            n.n = i+1;
+            n.type = 2;
+            n.r = 1;
+            n.pn = -1; //so the first one will be root
+            listNeuron << n;
+        }
+
+        QString  swc_processed = inimg_file + "_detection.swc";
+        writeSWC_file(swc_processed,nt);
+
         return true;
     }
     else if(func_name == tr("Feature_Extraction"))
