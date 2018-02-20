@@ -155,6 +155,9 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
  * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file
  */
 
+
+char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype);
+
 char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype, unsigned char *img);
 
 /* writes a 3D volume to a file containing a 3D image

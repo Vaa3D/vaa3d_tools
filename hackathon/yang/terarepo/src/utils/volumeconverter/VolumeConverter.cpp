@@ -298,7 +298,7 @@ void vcDriver (
 //                                     slice_height,slice_width,slice_depth,halving_method,isotropic,
 //                                     show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
 
-            vc.generate3DTilesMT(dst_root_dir.c_str(),resolutions,
+            vc.generateTilesVaa3DRawMT(dst_root_dir.c_str(),resolutions,
                                slice_height,slice_width,slice_depth,halving_method,isotropic,
                                show_progress_bar,"Tiff3D",8*vc.getVolume()->getBYTESxCHAN(),"",parallel);
         }
@@ -2510,6 +2510,1029 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         //
         auto end = std::chrono::high_resolution_clock::now();
 
+        cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
+    }
+
+    // save last group data
+    saveVCResumerState(fhandle,resolutions_size,stack_block,slice_start,slice_end,z+z_max_res,z_parts+1);
+
+    int n_err = 0; // used to trigger exception in case the .bin file cannot be generated
+
+    if ( !par_mode ) {
+        // 2016-04-13. Giulio. @ADDED close resume
+        closeVCResumer(fhandle,output_path.c_str());
+
+        // reloads created volumes to generate .bin file descriptors at all resolutions
+        ref_sys reference(axis(1),axis(2),axis(3));
+        TiledMCVolume *mcprobe;
+        TiledVolume   *tprobe;
+        StackedVolume *sprobe;
+        sprobe = dynamic_cast<StackedVolume *>(volume);
+        if ( sprobe ) {
+            reference.first  = sprobe->getAXS_1();
+            reference.second = sprobe->getAXS_2();
+            reference.third  = sprobe->getAXS_3();
+        }
+        else {
+            tprobe = dynamic_cast<TiledVolume *>(volume);
+            if ( tprobe ) {
+                reference.first  = tprobe->getAXS_1();
+                reference.second = tprobe->getAXS_2();
+                reference.third  = tprobe->getAXS_3();
+            }
+            else {
+                mcprobe = dynamic_cast<TiledMCVolume *>(volume);
+                if ( mcprobe ) {
+                    reference.first  = mcprobe->getAXS_1();
+                    reference.second = mcprobe->getAXS_2();
+                    reference.third  = mcprobe->getAXS_3();
+                }
+            }
+        }
+
+        // 2016-10-12. Giulio. when axes are negative this should be propagated to generated image
+        if ( volume->getAXS_1() < 0 ) {
+            if ( volume->getAXS_1() == vertical )
+                reference.first = axis(-1);
+            else // volume->getAXS_1() == horizontal
+                reference.second = axis(-2);
+        }
+        if ( volume->getAXS_2() < 0 ) {
+            if ( volume->getAXS_2() == horizontal )
+                reference.second = axis(-2);
+            else // volume->getAXS_2() == vertical
+                reference.first = axis(-1);
+        }
+
+        // 2016-04-10. Giulio. @ADDED the TiledVolume constructor may change the input plugin if it is wrong
+        save_imin_plugin = iom::IMIN_PLUGIN; // save current input plugin
+        // 2016-04-28. Giulio. Now the generated image should be read: use the output plugin
+        iom::IMIN_PLUGIN = iom::IMOUT_PLUGIN;
+
+        for(int res_i=0; res_i< resolutions_size; res_i++)
+        {
+            if(resolutions[res_i])
+            {
+                //---- Alessandro 2013-04-22 partial fix: wrong voxel size computation. In addition, the predefined reference system {1,2,3} may not be the right
+                //one when dealing with CLSM data. The right reference system is stored in the <StackedVolume> object. A possible solution to implement
+                //is to check whether <volume> is a pointer to a <StackedVolume> object, then specialize it to <StackedVolume*> and get its reference
+                //system.
+                try {
+                    TiledVolume temp_vol(file_path[res_i].str().c_str(),reference,
+                                         volume->getVXL_V()*pow(2.0f,res_i), volume->getVXL_H()*pow(2.0f,res_i),volume->getVXL_D()*pow(2.0f,halve_pow2[res_i]));
+                    //volume->getVXL_V()*pow(2.0f,res_i), volume->getVXL_H()*pow(2.0f,res_i),volume->getVXL_D()*pow(2.0f,res_i));
+                }
+                catch (IOException & ex)
+                {
+                    printf("in VolumeConverter::generateTilesVaa3DRaw: cannot create file mdata.bin in %s [reason: %s]\n\n",file_path[res_i].str().c_str(), ex.what());
+                    n_err++;
+                }
+                catch ( ... )
+                {
+                    printf("in VolumeConverter::generateTilesVaa3DRaw: cannot create file mdata.bin in %s [no reason available]\n\n",file_path[res_i].str().c_str());
+                    n_err++;
+                }
+
+                //          StackedVolume temp_vol(file_path[res_i].str().c_str(),ref_sys(axis(1),axis(2),axis(3)), volume->getVXL_V()*(res_i+1),
+                //                      volume->getVXL_H()*(res_i+1),volume->getVXL_D()*(res_i+1));
+            }
+        }
+
+        // restore input plugin
+        iom::IMIN_PLUGIN = save_imin_plugin;
+    }
+    else { // par mode
+        // 2016-04-13. Giulio. @ADDED close resume in par mode
+        closeVCResumer(fhandle,output_path_par.str().c_str());
+        // WARNINIG --- the directory should be removed
+        bool res = remove_dir(output_path_par.str().c_str());
+    }
+
+    // restore the output plugin
+    iom::IMOUT_PLUGIN = save_imout_plugin;
+
+    // ubuffer allocated anyway
+    delete ubuffer;
+
+    // deallocate memory
+    for(int res_i=0; res_i< resolutions_size; res_i++)
+    {
+        for(int stack_row = 0; stack_row < n_stacks_V[res_i]; stack_row++)
+        {
+            for(int stack_col = 0; stack_col < n_stacks_H[res_i]; stack_col++)
+            {
+                delete []stacks_height[res_i][stack_row][stack_col];
+                delete []stacks_width [res_i][stack_row][stack_col];
+                delete []stacks_depth [res_i][stack_row][stack_col];
+            }
+            delete []stacks_height[res_i][stack_row];
+            delete []stacks_width [res_i][stack_row];
+            delete []stacks_depth [res_i][stack_row];
+        }
+        delete []stacks_height[res_i];
+        delete []stacks_width[res_i];
+        delete []stacks_depth[res_i];
+    }
+
+    if ( n_err ) { // errors in mdat.bin creation
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: %d errors in creating mdata.bin files", n_err);
+        throw IOException(err_msg);
+    }
+}
+
+void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* resolutions,
+                                            int block_height, int block_width, int block_depth, int method, bool isotropic,
+                                            bool show_progress_bar, const char* saved_img_format,
+                                            int saved_img_depth, std::string frame_dir, bool par_mode)	throw (IOException, iom::exception)
+{
+    if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
+        saved_img_depth = volume->getBYTESxCHAN() * 8;
+
+    if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
+                volume->getBYTESxCHAN() * 8, saved_img_depth);
+        throw IOException(err_msg);
+    }
+
+    //LOCAL VARIABLES
+    sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
+    real32* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
+    iim::uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
+    int bytes_chan = volume->getBYTESxCHAN();
+    //iim::uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
+    //iim::uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
+    int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
+    //real32* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
+    sint64 z_ratio, z_max_res;
+    int n_stacks_V[TMITREE_MAX_HEIGHT];        //arrays of number of tiles along V, H and D directions respectively at i-th resolution
+    int n_stacks_H[TMITREE_MAX_HEIGHT];
+    int n_stacks_D[TMITREE_MAX_HEIGHT];
+    int ***stacks_height[TMITREE_MAX_HEIGHT];   //array of matrices of tiles dimensions at i-th resolution
+    int ***stacks_width[TMITREE_MAX_HEIGHT];
+    int ***stacks_depth[TMITREE_MAX_HEIGHT];
+    std::stringstream file_path[TMITREE_MAX_HEIGHT];  //array of root directory name at i-th resolution
+    int resolutions_size = 0;
+
+    std::string save_imin_plugin; // to be used for restoring the input plugin after a change
+    std::string save_imout_plugin; // to be used for restoring the output plugin after a change
+
+    sint64 whole_height; // 2016-04-13. Giulio. to be used only if par_mode is set to store the height of the whole volume
+    sint64 whole_width;  // 2016-04-13. Giulio. to be used only if par_mode is set to store the width of the whole volume
+    sint64 whole_depth;  // 2016-04-13. Giulio. to be used only if par_mode is set to store the depth of the whole volume
+    std::stringstream output_path_par; // used if parallel option is set
+    int halve_pow2[TMITREE_MAX_HEIGHT];
+
+    /* DEFINITIONS OF VARIABILES THAT MANAGE TILES (BLOCKS) ALONG D-direction
+     * In the following the term 'group' means the groups of slices that are
+     * processed together to generate slices of all resolution requested
+     */
+
+    /* stack_block[i] is the index of current block along z (it depends on the resolution i)
+     * current block is the block in which falls the first slice of the group
+     * of slices that is currently being processed, i.e. from z to z+z_max_res-1
+     */
+    int stack_block[TMITREE_MAX_HEIGHT];
+
+    /* these arrays are the indices of first and last slice of current block at resolution i
+     * WARNING: the slice index refers to the index of the slice in the volume at resolution i
+     */
+    int slice_start[TMITREE_MAX_HEIGHT];
+    int slice_end[TMITREE_MAX_HEIGHT];
+
+    /* the number of slice of already processed groups at current resolution
+     * the index of the slice to be saved at current resolution is:
+     *
+     *      n_slices_pred + z_buffer
+     */
+    sint64 n_slices_pred;
+
+    if ( volume == 0 ) {
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: undefined source volume");
+        throw IOException(err_msg);
+    }
+
+    // 2017-04-24. Giulio. @CHANGED the way the output pluging is set
+    save_imout_plugin = iom::IMOUT_PLUGIN;
+    iom::IMOUT_PLUGIN = "tiff3D";
+
+    //// 2015-03-03. Giulio. @ADDED selection of IO plugin if not provided.
+    //if(iom::IMOUT_PLUGIN.compare("empty") == 0)
+    //{
+    //	iom::IMOUT_PLUGIN = "tiff3D";
+    //}
+
+    //initializing the progress bar
+    char progressBarMsg[200];
+
+    if ( par_mode ) // in parallel mode never show the progress bar
+        show_progress_bar = false;
+
+    if(show_progress_bar)
+    {
+        ts::ProgressBar::getInstance()->start("Multiresolution tile generation");
+        ts::ProgressBar::getInstance()->setProgressValue(0,"Initializing...");
+        ts::ProgressBar::getInstance()->display();
+    }
+
+    //computing dimensions of volume to be stitched
+    if ( par_mode ) {
+        // 2016-04-13. Giulio. whole_depth is the depth of the whole volume
+        whole_height = this->volume->getDIM_V();
+        whole_width  = this->volume->getDIM_H();
+        whole_depth  = this->volume->getDIM_D();
+    }
+    else {
+        // 2016-04-13. Giulio. whole_depth should not be used
+        whole_depth = -1;
+    }
+
+    //computing dimensions of volume to be stitched
+    //this->computeVolumeDims(exclude_nonstitchable_stacks, _ROW_START, _ROW_END, _COL_START, _COL_END, _D0, _D1);
+    width = this->H1-this->H0;
+    height = this->V1-this->V0;
+    depth = this->D1-this->D0;
+
+    // code for testing
+    //iim::uint8 *temp = volume->loadSubvolume_to_UINT8(
+    //	10,height-10,10,width-10,10,depth-10,
+    //	&channels);
+
+    // test, if any, should be done on V0, V1, ...
+    //if(par_mode && block_depth == -1) // 2016-04-13. Giulio. if conversion is parallelized, option --slicedepth must be used to set block_depth
+    //{
+    //   char err_msg[5000];
+    //    sprintf(err_msg,"in VolumeConverter::generateTilesVaa3DRaw(...): block_depth is not set in parallel mode");
+    //    throw iom::exception(err_msg);
+    //}
+
+    //activating resolutions
+    block_height = (block_height == -1 ? (int)height : block_height);
+    block_width  = (block_width  == -1 ? (int)width  : block_width);
+    block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
+    if(block_height < TMITREE_MIN_BLOCK_DIM || block_width < TMITREE_MIN_BLOCK_DIM /* 2014-11-10. Giulio. @REMOVED (|| block_depth < TMITREE_MIN_BLOCK_DIM) */)
+    {
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"in VolumeConverter::generateTilesVaa3DRaw(...): the minimum dimension for block height and width is %d", TMITREE_MIN_BLOCK_DIM);
+        throw IOException(err_msg);
+    }
+
+    if(resolutions == NULL)
+    {
+        resolutions = new bool;
+        *resolutions = true;
+        resolutions_size = 1;
+    }
+    else
+    {
+        for(int i=0; i<TMITREE_MAX_HEIGHT; i++)
+        {
+            if(resolutions[i])
+            {
+                resolutions_size = std::max(resolutions_size, i+1);
+            }
+        }
+    }
+
+    //cout<<"size ... "<<width<<" "<<height<<" "<<depth<<endl;
+    //cout<<"block size ... "<<block_width<<" "<<block_height<<" "<<block_depth<<endl;
+    //cout<<"resolution size ... "<<resolutions_size<<endl;
+
+    // for the case with small z
+    float w = width;
+    float h = height;
+    float d = depth;
+    long n = 1;
+    for(size_t i=0; i<resolutions_size; i++)
+    {
+        w *= 0.5;
+        h *= 0.5;
+        d *= 0.5;
+
+        if(w>=1 && h>=1 && d>=1)
+        {
+            n++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if(n<resolutions_size)
+        resolutions_size = n;
+
+    //cout<<"adjusted resolution size ... "<<resolutions_size<<endl;
+
+    //2016-04-13. Giulio. set the halving rules
+    if ( isotropic ) {
+        // an isotropic image must be generated
+        float vxlsz_Vx2 = 2*(volume->getVXL_V() > 0 ? volume->getVXL_V() : -volume->getVXL_V());
+        float vxlsz_Hx2 = 2*(volume->getVXL_H() > 0 ? volume->getVXL_H() : -volume->getVXL_H());
+        float vxlsz_D = volume->getVXL_D();
+        halve_pow2[0] = 0;
+        for ( int i=1; i<resolutions_size; i++ ) {
+            halve_pow2[i] = halve_pow2[i-1];
+            if ( vxlsz_D < std::max<float>(vxlsz_Vx2,vxlsz_Hx2) ) {
+                halve_pow2[i]++;
+                vxlsz_D   *= 2;
+            }
+            vxlsz_Vx2 *= 2;
+            vxlsz_Hx2 *= 2;
+        }
+    }
+    else {
+        // halving along D dimension must be always performed
+        for ( int i=0; i<resolutions_size; i++ )
+            halve_pow2[i] = i;
+    }
+
+    //    for ( int i=0; i<resolutions_size; i++ )
+    //        cout<<" halve_pow2 "<<halve_pow2[i]<<" at "<<resolutions[i]<<endl;
+
+    //computing tiles dimensions at each resolution and initializing volume directories
+    for(int res_i=0; res_i< resolutions_size; res_i++)
+    {
+        n_stacks_V[res_i] = (int) ceil ( (height/powInt(2,res_i)) / (float) block_height );
+        n_stacks_H[res_i] = (int) ceil ( (width/powInt(2,res_i))  / (float) block_width  );
+        n_stacks_D[res_i] = (int) ceil ( (depth/powInt(2,halve_pow2[res_i]))  / (float) block_depth  );
+
+        //cout<<"res "<<res_i<<endl;
+        //cout<<"n_stacks "<<n_stacks_V[res_i]<<" "<<n_stacks_H[res_i]<<" "<<n_stacks_D[res_i]<<endl;
+
+        stacks_height[res_i] = new int **[n_stacks_V[res_i]];
+        stacks_width[res_i]  = new int **[n_stacks_V[res_i]];
+        stacks_depth[res_i]  = new int **[n_stacks_V[res_i]];
+        for(int stack_row = 0; stack_row < n_stacks_V[res_i]; stack_row++)
+        {
+            stacks_height[res_i][stack_row] = new int *[n_stacks_H[res_i]];
+            stacks_width [res_i][stack_row] = new int *[n_stacks_H[res_i]];
+            stacks_depth [res_i][stack_row] = new int *[n_stacks_H[res_i]];
+            for(int stack_col = 0; stack_col < n_stacks_H[res_i]; stack_col++)
+            {
+                stacks_height[res_i][stack_row][stack_col] = new int[n_stacks_D[res_i]];
+                stacks_width [res_i][stack_row][stack_col] = new int[n_stacks_D[res_i]];
+                stacks_depth [res_i][stack_row][stack_col] = new int[n_stacks_D[res_i]];
+                for(int stack_sli = 0; stack_sli < n_stacks_D[res_i]; stack_sli++)
+                {
+                    stacks_height[res_i][stack_row][stack_col][stack_sli] =
+                            ((int)(height/powInt(2,res_i))) / n_stacks_V[res_i] + (stack_row < ((int)(height/powInt(2,res_i))) % n_stacks_V[res_i] ? 1:0);
+                    stacks_width[res_i][stack_row][stack_col][stack_sli] =
+                            ((int)(width/powInt(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/powInt(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
+                    stacks_depth[res_i][stack_row][stack_col][stack_sli] =
+                            ((int)(depth/powInt(2,halve_pow2[res_i])))  / n_stacks_D[res_i] + (stack_sli < ((int)(depth/powInt(2,halve_pow2[res_i])))  % n_stacks_D[res_i] ? 1:0);
+                }
+            }
+        }
+
+        //creating volume directory iff current resolution is selected and test mode is disabled
+        if(resolutions[res_i] == true)
+        {
+            if ( par_mode ) { // 2016-04-13. Giulio. uses the depth of the whole volume to generate the directory name
+                //creating directory that will contain image data at current resolution
+                file_path[res_i]<<output_path<<"/RES("<<whole_height/powInt(2,res_i)<<"x"<<whole_width/powInt(2,res_i)<<"x"<<whole_depth/powInt(2,halve_pow2[res_i])<<")";
+            }
+            else {
+                //creating directory that will contain image data at current resolution
+                file_path[res_i]<<output_path<<"/RES("<<height/powInt(2,res_i)<<"x"<<width/powInt(2,res_i)<<"x"<<depth/powInt(2,halve_pow2[res_i])<<")";
+                //if(make_dir(file_path[res_i].str().c_str())!=0)
+                if(!check_and_make_dir(file_path[res_i].str().c_str())) // HP 130914
+                {
+                    char err_msg[STATIC_STRINGS_SIZE];
+                    sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
+                    throw IOException(err_msg);
+                }
+            }
+
+            //if frame_dir not empty must create frame directory (@FIXED by Alessandro on 2014-02-25)
+            if ( frame_dir != "" ) {
+                file_path[res_i] << "/" << frame_dir << "/";
+                if ( !par_mode ) { // 2016-04-13. Giulio. the directory should be created only in non-parallel mode
+                    if(!check_and_make_dir(file_path[res_i].str().c_str()))
+                    {
+                        char err_msg[STATIC_STRINGS_SIZE];
+                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
+                        throw IOException(err_msg);
+                    }
+                }
+            }
+        }
+    }
+
+    //cout<<"created top resolution folders \n";
+
+    /* The following check verifies that the numeber of slices in the buffer is not higher than the number of slices in a block file
+     * (excluding the last block in a stack). Indeed if D is the maximum number of slices in a block file (i.e. the value of block_depth)
+     * and H is the total number of slices at resolution i (i.e. floor(depth/2^i)), the actual minumum number of slices B in a block
+     * file at that resolution as computed by the above code is:
+     *
+     *                                                B = floor( H / ceil( H/D ) )
+     * Now, assuming that at resolution i there is more than one block, it is H > D and hence:
+     *
+     *                                                  D >= B >= floor(D/2)
+     * since it is:
+     *
+     *                               1/ceil(H/D) = 1/(H/D + alpha) = D/(H + alpha * D) > D/(2 * H)
+     * where alpha<1.
+     */
+
+    //ALLOCATING  the MEMORY SPACE for image buffer
+    z_max_res = std::max(std::min(STANDARD_BLOCK_DEPTH,block_depth/2),powInt(2,halve_pow2[resolutions_size-1]));
+    if ( (z_max_res > 1) && z_max_res > block_depth/2 ) {
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
+        throw IOException(err_msg);
+    }
+    z_ratio=depth/z_max_res;
+
+    //allocated even if not used
+    ubuffer = new iim::uint8 *[channels];
+    memset(ubuffer,0,channels*sizeof(iim::uint8 *));
+    org_channels = channels; // save for checks
+
+    FILE *fhandle;
+    sint64 z;
+    sint64 z_parts;
+
+    // WARNING: uses saved_img_format to check that the operation has been resumed withe the sae parameters
+    if ( par_mode ) {
+        output_path_par << output_path << "/" << "V_" << this->V0 << "-" << this->V1<< "_H_" << this->H0 << "-" << this->H1<< "_D_" << this->D0 << "-" << this->D1;
+        if(!check_and_make_dir(output_path_par.str().c_str())) {  // the directory does nor exist or cannot be created
+            char err_msg[STATIC_STRINGS_SIZE];
+            sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", output_path_par.str().c_str());
+            throw IOException(err_msg);
+        }
+        if ( initVCResumer(saved_img_format,output_path_par.str().c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,method,saved_img_format,saved_img_depth,fhandle) ) { // halve_pow2 is not saved
+            readVCResumerState(fhandle,output_path_par.str().c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts); // halve_pow2 is not saved
+        }
+        else { // halve_pow2 is not saved: start form the first slice
+            //slice_start and slice_end of current block depend on the resolution
+            for(int res_i=0; res_i< resolutions_size; res_i++) {
+                stack_block[res_i] = 0;
+                slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning
+                slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+            }
+            // z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
+            z = this->D0;
+            z_parts = 1;
+        }
+    }
+    else { // not in parallel mode: use output_path to maintain resume status
+        if ( initVCResumer(saved_img_format,output_path.c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,method,saved_img_format,saved_img_depth,fhandle) ) {
+            readVCResumerState(fhandle,output_path.c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts);
+        }
+        else {
+            //slice_start and slice_end of current block depend on the resolution
+            for(int res_i=0; res_i< resolutions_size; res_i++) {
+                stack_block[res_i] = 0;
+                slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning
+                slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+            }
+            z = this->D0;
+            z_parts = 1;
+        }
+    }
+
+    // z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
+    for(/* sint64 z = this->D0, z_parts = 1 */; z < this->D1; z += z_max_res, z_parts++)
+    {
+        // save previous group data
+        saveVCResumerState(fhandle,resolutions_size,stack_block,slice_start,slice_end,z,z_parts);
+
+        //if ( z > (this->D1/2) ) {
+        //	closeResumer(fhandle);
+        //	throw IOExcpetion("interruption for test");
+        //}
+
+        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+        TERAFLY_TIME_START(ConverterLoadBlockOperation);
+        #endif
+
+        // fill one slice block
+        //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
+
+        if ( internal_rep == REAL_INTERNAL_REP )
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
+        else { // internal_rep == UINT8_INTERNAL_REP
+            // 2015-12-19. Giulio. @ADDED Subvolume conversion
+            //ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
+
+            auto start = std::chrono::high_resolution_clock::now();
+
+            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
+
+            auto end = std::chrono::high_resolution_clock::now();
+
+            cout<<"loadSubvolume_to_UINT8 takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
+
+            if ( org_channels != channels ) {
+                char err_msg[STATIC_STRINGS_SIZE];
+                sprintf(err_msg,"in generateTilesVaa3DRaw(...): the volume contains images with a different number of channels (%d,%d)", org_channels, channels);
+                throw IOException(err_msg);
+            }
+
+            for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
+                // offsets have to be computed taking into account that buffer size along D may be different
+                // WARNING: the offset must be of tipe sint64
+                ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
+            }
+        }
+        // WARNING: should check that buffer has been actually allocated
+
+        // 2017-05-25. Giulio. Added code for simple lossy compression (suggested by Hanchuan Peng)
+        if ( nbits ) {
+            //printf("----> lossy compression nbits = %d\n",nbits);
+            iim::sint64 tot_size = (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res))) * channels;
+            if ( bytes_chan == 1 ) {
+                iim::uint8 *ptr = ubuffer[0];
+                for ( iim::sint64 i=0; i<tot_size; i++, ptr++ ) {
+                    *ptr = *ptr >> nbits << nbits;
+                }
+            }
+            else if ( bytes_chan == 2 ) {
+
+                #pragma omp parallel
+                {
+                    iim::uint16 *ptr = (iim::uint16 *) ubuffer[0];
+                    #pragma omp for
+                    for ( iim::sint64 i=0; i<tot_size; i++ ) {
+                        ptr[i] = ptr[i] >> nbits << 1;
+                    }
+                }
+            }
+        }
+
+        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+        TERAFLY_TIME_STOP(ConverterLoadBlockOperation, tf::ALL_COMPS, terafly::strprintf("converter: loaded image block x(%d-%d), y(%d-%d), z(%d-%d)",H0, H1, V0, V1, ((iim::uint32)(z-D0)),((iim::uint32)(z-D0+z_max_res-1))));
+        #endif
+
+        //updating the progress bar
+        if(show_progress_bar)
+        {
+            sprintf(progressBarMsg, "Generating slices from %d to %d og %d",((iim::uint32)(z-D0)),((iim::uint32)(z-D0+z_max_res-1)),(iim::uint32)depth);
+            ts::ProgressBar::getInstance()->setProgressValue(((float)(z-D0+z_max_res-1)*100/(float)depth), progressBarMsg);
+            ts::ProgressBar::getInstance()->display();
+        }
+
+        //saving current buffer data at selected resolutions and in multitile format
+        auto start = std::chrono::high_resolution_clock::now();
+
+        for(int i=0; i< resolutions_size; i++)
+        {
+            if(show_progress_bar)
+            {
+                sprintf(progressBarMsg, "Generating resolution %d of %d",i+1,std::max(resolutions_size, resolutions_size));
+                ts::ProgressBar::getInstance()->setProgressInfo(progressBarMsg);
+                ts::ProgressBar::getInstance()->display();
+            }
+
+            // check if current block is changed
+            // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+            if ( ((z - this->D0) / powInt(2,halve_pow2[i])) > slice_end[i] ) {
+                stack_block[i]++;
+                slice_start[i] = slice_end[i] + 1;
+                slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
+            }
+
+            // find abs_pos_z at resolution i
+            std::stringstream abs_pos_z;
+            abs_pos_z.width(6);
+            abs_pos_z.fill('0');
+            // 2015-12-19. Giulio. @ADDED Subvolume conversion
+            // 2015-12-20. Giulio. @FIXED file name generation (scale of some absolute coordinates was in 1 um and not in 0.1 um
+            abs_pos_z << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+                               (powInt(2,halve_pow2[i])*slice_start[i]) * volume->getVXL_D() * 10);
+            //abs_pos_z << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+            //					- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
+            //                  (powInt(2,i)*slice_start[i]) * volume->getVXL_D());
+
+            //compute the number of slice of previous groups at resolution i
+            //note that z_parts in the number and not an index (starts from 1)
+            n_slices_pred  = (z_parts - 1) * z_max_res / powInt(2,halve_pow2[i]);
+
+            //buffer size along D is different when the remainder of the subdivision by z_max_res is considered
+            sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
+
+            //halvesampling resolution if current resolution is not the deepest one
+            if(i!=0) {
+                if ( halve_pow2[i] == (halve_pow2[i-1]+1) ) { // *modified*
+                    // also D dimension has to be halvesampled
+                    if ( internal_rep == REAL_INTERNAL_REP )
+                        VirtualVolume::halveSample(rbuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,halve_pow2[i-1])),method);
+                    else  // internal_rep == UINT8_INTERNAL_REP
+                        VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,halve_pow2[i-1])),channels,method,bytes_chan);
+                }
+                else if ( halve_pow2[i] == halve_pow2[i-1] ) {// *modified*
+                    if ( internal_rep == REAL_INTERNAL_REP )
+                        VirtualVolume::halveSample2D(rbuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,halve_pow2[i-1])),method);
+                    else  // internal_rep == UINT8_INTERNAL_REP
+                        VirtualVolume::halveSample2D_UINT8(ubuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,halve_pow2[i-1])),channels,method,bytes_chan);
+                }
+                else {
+                    char err_msg[STATIC_STRINGS_SIZE];
+                    sprintf(err_msg, "in generateTilesVaa3DRaw(...): halve sampling level %d not supported at resolution %d\n", halve_pow2[i], i);
+                    throw iom::exception(err_msg);
+                }
+            }
+
+            //saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
+            if(resolutions[i] && (z_size/(powInt(2,halve_pow2[i]))) > 0)
+            {
+                if(show_progress_bar)
+                {
+                    sprintf(progressBarMsg, "Saving to disc resolution %d",i+1);
+                    ts::ProgressBar::getInstance()->setProgressInfo(progressBarMsg);
+                    ts::ProgressBar::getInstance()->display();
+                }
+
+                //storing in 'base_path' the absolute path of the directory that will contain all stacks
+                std::stringstream base_path;
+                if ( par_mode ) // 2016-04-12. Giulio. directory name depends on the depth of the whole volume
+                    base_path << output_path << "/RES(" << (int)(whole_height/powInt(2,i)) << "x" <<
+                                 (int)(whole_width/powInt(2,i)) << "x" << (int)(whole_depth/powInt(2,halve_pow2[i])) << ")/";
+                else
+                    base_path << output_path << "/RES(" << (int)(height/powInt(2,i)) << "x" <<
+                                 (int)(width/powInt(2,i)) << "x" << (int)(depth/powInt(2,halve_pow2[i])) << ")/";
+
+                //if frame_dir not empty must create frame directory
+                if ( frame_dir != "" ) {
+                    base_path << frame_dir << "/";
+                    if(!check_and_make_dir(base_path.str().c_str()))
+                    {
+                        char err_msg[STATIC_STRINGS_SIZE];
+                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", base_path.str().c_str());
+                        throw IOException(err_msg);
+                    }
+                }
+
+                //cout<<"base_path "<<base_path.str()<<endl;
+
+                //looping on new stacks
+                for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
+                {
+                    //incrementing end_height
+                    end_height = start_height + stacks_height[i][stack_row][0][0]-1;
+
+                    //computing V_DIR_path and creating the directory the first time it is needed
+                    std::stringstream V_DIR_path;
+                    V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
+
+                    //cout<<"V_DIR_path "<<V_DIR_path.str()<<endl;
+
+                    if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
+                    {
+                        char err_msg[STATIC_STRINGS_SIZE];
+                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
+                        throw IOException(err_msg);
+                    }
+
+                    int sz[4];
+                    int datatype;
+
+                    int datatype_out;
+                    if(nbits==4)
+                        datatype_out = 1;
+
+                    for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
+                    {
+                        end_width  = start_width  + stacks_width [i][stack_row][stack_column][0]-1;
+
+                        //computing H_DIR_path and creating the directory the first time it is needed
+                        std::stringstream H_DIR_path;
+                        H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
+
+                        //cout<<"H_DIR_path "<<H_DIR_path.str()<<endl;
+
+                        if ( z==D0 )
+                        {
+                            if(!check_and_make_dir(H_DIR_path.str().c_str()))
+                            {
+                                char err_msg[STATIC_STRINGS_SIZE];
+                                sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
+                                throw IOException(err_msg);
+                            }
+                            else { // the directory has been created for the first time
+                                // initialize block files
+
+                                char *err_rawfmt;
+
+                                sz[0] = stacks_width[i][stack_row][stack_column][0];
+                                sz[1] = stacks_height[i][stack_row][stack_column][0];
+                                sz[3] = channels;
+
+                                if ( internal_rep == REAL_INTERNAL_REP )
+                                    datatype = 4;
+                                else if ( internal_rep == UINT8_INTERNAL_REP ) {
+                                    if ( saved_img_depth == 16 )
+                                        datatype = 2;
+                                    else if ( saved_img_depth == 8 )
+                                        datatype = 1;
+                                    else {
+                                        char err_msg[STATIC_STRINGS_SIZE];
+                                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
+                                        throw IOException(err_msg);
+                                    }
+                                }
+                                else {
+                                    char err_msg[STATIC_STRINGS_SIZE];
+                                    sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown internal representation (%d)", internal_rep);
+                                    throw IOException(err_msg);
+                                }
+
+                                int slice_start_temp = 0;
+                                for ( int j=0; j < n_stacks_D[i]; j++ ) {
+                                    sz[2] = stacks_depth[i][stack_row][stack_column][j];
+
+                                    std::stringstream abs_pos_z_temp;
+                                    abs_pos_z_temp.width(6);
+                                    abs_pos_z_temp.fill('0');
+                                    // 2015-12-20. Giulio. @FIXED file name generation (scale of some absolute coordinates was in 1 um and not in 0.1 um
+                                    abs_pos_z_temp << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+                                                            (powInt(2,halve_pow2[i])*(slice_start_temp)) * volume->getVXL_D() * 10);
+
+                                    std::stringstream img_path_temp;
+                                    img_path_temp << H_DIR_path.str() << "/"
+                                                  << this->getMultiresABS_V_string(i,start_height) << "_"
+                                                  << this->getMultiresABS_H_string(i,start_width) << "_"
+                                                  << abs_pos_z_temp.str();
+
+                                    cout<<"z "<<z<<" ("<<sz[0]<<", "<<sz[1]<<", "<<sz[2]<<") "<<abs_pos_z_temp.str()<<endl;
+
+                                    auto start_init = std::chrono::high_resolution_clock::now();
+                                    if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
+                                           ( (err_rawfmt = initTiffFile((char *)img_path_temp.str().c_str(),(int)sz[0],(int)sz[1],(int)sz[2],(int)sz[3],datatype_out)) != 0 ) :
+                                           ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),(long *)sz,datatype)) != 0 ) ) ) {
+                                        char err_msg[STATIC_STRINGS_SIZE];
+                                        sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
+                                        throw IOException(err_msg);
+                                    };
+
+                                    //
+                                    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                                    //
+                                    auto end_init = std::chrono::high_resolution_clock::now();
+                                    cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end_init - start_init).count()<<" ms."<<endl;
+
+                                    //
+                                    slice_start_temp += (int)sz[2];
+                                } // j
+                            } // after create H_DIR
+                        } // z
+
+                        //saving HERE
+
+                        // 2015-02-10. Giulio. @CHANGED changed how img_path is constructed
+                        std::stringstream partial_img_path;
+                        partial_img_path << H_DIR_path.str() << "/"
+                                         << this->getMultiresABS_V_string(i,start_height) << "_"
+                                         << this->getMultiresABS_H_string(i,start_width) << "_";
+
+                        int slice_ind = (int)(n_slices_pred - slice_start[i]);
+
+                        std::stringstream img_path;
+                        img_path << partial_img_path.str() << abs_pos_z.str();
+
+                        //cout<<"img_path "<<img_path.str()<<endl;
+
+                        /* 2015-02-06. Giulio. @ADDED optimization to reduce the number of open/close operations in append operations
+                         * Since slices of the same block in a group are appended in sequence, to minimize the overhead of append operations,
+                         * all slices of a group to be appended to the same block file are appended leaving the file open and positioned at
+                         * end of the file.
+                         * The number of pages of block files of interest can be easily computed as:
+                         *
+                         *    number of slice of current block = stacks_depth[i][0][0][stack_block[i]]
+                         *    number of slice of next block    = stacks_depth[i][0][0][stack_block[i]+1]
+                         */
+
+                        void *fhandle = 0;
+                        int  n_pages_block = stacks_depth[i][0][0][stack_block[i]]; // number of pages of current block
+                        bool block_changed = false;                                 // true if block is changed executing the next for cycle
+                        // fhandle = open file corresponding to current block
+                        if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+                            openTiff3DFile((char *)img_path.str().c_str(),(char *)(slice_ind ? "a" : "w"),fhandle,true);
+
+                        //
+                        sz[0] = end_width - start_width + 1;
+                        sz[1] = end_height - start_height + 1;
+                        sz[2] = n_pages_block;
+                        sz[3] = channels;
+                        long szChunk = sz[0]*sz[1]*sz[3]*datatype_out;
+                        unsigned char *p = NULL;
+                        try
+                        {
+                            p = new unsigned char [szChunk];
+                            memset(p, 0, szChunk);
+                        }
+                        catch(...)
+                        {
+                            cout<<"fail to alloc memory \n";
+                        }
+
+                        // WARNING: assumes that block size along z is not less that z_size/(powInt(2,i))
+                        for(int buffer_z=0; buffer_z<z_size/(powInt(2,halve_pow2[i])); buffer_z++, slice_ind++)
+                        {
+                            // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+                            if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
+                                std::stringstream abs_pos_z_next;
+                                abs_pos_z_next.width(6);
+                                abs_pos_z_next.fill('0');
+                                // 2015-12-20. Giulio. @FIXED file name generation (scale of some absolute coordinates was in 1 um and not in 0.1 um
+                                abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+                                                        (powInt(2,halve_pow2[i])*(slice_end[i]+1)) * volume->getVXL_D() * 10);
+                                img_path.str("");
+                                img_path << partial_img_path.str() << abs_pos_z_next.str();
+
+                                slice_ind = 0; // 2015-02-10. Giulio. @CHANGED (int)(n_slices_pred - (slice_end[i]+1)) + buffer_z;
+
+                                // close(fhandle) i.e. file corresponding to current block
+                                if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+                                    closeTiff3DFile(fhandle);
+                                // fhandle = open file corresponding to next block
+                                if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+                                    openTiff3DFile((char *)img_path.str().c_str(),(char *)"w",fhandle,true);
+                                n_pages_block = stacks_depth[i][0][0][stack_block[i]+1];
+                                block_changed = true;
+
+                                //
+                                if(!p)
+                                {
+                                    try
+                                    {
+                                        p = new unsigned char [szChunk];
+                                        memset(p, 0, szChunk);
+                                    }
+                                    catch(...)
+                                    {
+                                        cout<<"fail to alloc memory \n";
+                                    }
+                                }
+                                else
+                                {
+                                    memset(p, 0, szChunk);
+                                }
+                            }
+
+                            if ( internal_rep == REAL_INTERNAL_REP )
+                                VirtualVolume::saveImage_to_Vaa3DRaw(
+                                            slice_ind,
+                                            img_path.str(),
+                                            rbuffer + buffer_z*(height/powInt(2,i))*(width/powInt(2,i)), // adds the stride
+                                            (int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+                                            start_height,end_height,start_width,end_width,
+                                            saved_img_format, saved_img_depth
+                                            );
+                            else // internal_rep == UINT8_INTERNAL_REP
+                                if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
+
+                                    //cout<<"work on the slice #"<<slice_ind<<endl;
+
+                                    //
+                                    sint64 raw_img_width = width/(powInt(2,i));
+                                    long offset = buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan;
+
+                                    uint8** raw_ch = new uint8 *[channels];
+                                    for (int i=0; i<channels; i++)
+                                        raw_ch[i] = ubuffer[i] + offset;
+
+                                    //
+                                    if ( datatype == 1 ) {
+                                        for(sint64 i=0; i<sz[1]; i++)
+                                        {
+                                            uint8* row_data_8bit = p + i*sz[0]*channels;
+                                            for(sint64 j=0; j<sz[0]; j++) {
+                                                for ( int c=0; c<channels; c++ ) {
+                                                    row_data_8bit[j*channels + c] = raw_ch[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+
+                                        if(datatype_out == 1)
+                                        {
+                                            //
+                                            uint16 **raw_ch16 = (uint16 **) raw_ch;
+
+                                            //
+                                            if(channels==1)
+                                            {
+                                                for(sint64 i=0; i<sz[1]; i++)
+                                                {
+                                                    uint8* row_data_8bit = p + i*sz[0];
+                                                    for(sint64 j=0; j<sz[0]; j++)
+                                                    {
+                                                        row_data_8bit[j] = raw_ch16[0][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                for(sint64 i=0; i<sz[1]; i++)
+                                                {
+                                                    uint8* row_data_8bit = p + i*sz[0]*channels;
+                                                    for(sint64 j=0; j<sz[0]; j++) { //
+                                                        for ( int c=0; c<channels; c++ ) {
+                                                            row_data_8bit[j*channels + c] = raw_ch16[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            //
+                                            int numNonZeros = 0;
+                                            int saveVoxelThresh = 1;
+
+                                            #pragma omp parallel for reduction(+:numNonZeros)
+                                            for(int i=0; i<szChunk; i++)
+                                            {
+                                                if(p[i]>0)
+                                                    numNonZeros++;
+                                            }
+
+                                            if(numNonZeros>saveVoxelThresh)
+                                            {
+                                                int temp_n_chans = channels;
+                                                if(temp_n_chans==2)
+                                                    temp_n_chans++;
+
+                                                appendSlice2Tiff3DFile(fhandle,slice_ind,(unsigned char *)p,sz[0],sz[1],temp_n_chans,8,sz[2]);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            uint16  *imageData16   = (uint16 *) p;
+                                            uint16 **raw_ch16 = (uint16 **) raw_ch;
+
+                                            //
+                                            for(sint64 i=0; i<sz[1]; i++)
+                                            {
+                                                uint16* row_data_16bit = imageData16 + i*sz[0]*channels;
+                                                for(sint64 j=0; j<sz[0]; j++) { //
+                                                    for ( int c=0; c<channels; c++ ) {
+                                                        row_data_16bit[j*channels + c] = raw_ch16[c][(i+start_height)*(raw_img_width) + (j+start_width)];
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+//                                    VirtualVolume::saveImage_from_UINT8_to_Tiff3D(
+//                                                slice_ind,
+//                                                img_path.str(),
+//                                                ubuffer,
+//                                                channels,
+//                                                buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+//                                                (int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+//                                                start_height,end_height,start_width,end_width,
+//                                                saved_img_format, saved_img_depth,fhandle,n_pages_block,false);
+
+                                }
+                                else { // can be only Vaa3DRaw
+                                    VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
+                                                slice_ind,
+                                                img_path.str(),
+                                                ubuffer,
+                                                channels,
+                                                buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+                                                (int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+                                                start_height,end_height,start_width,end_width,
+                                                saved_img_format, saved_img_depth);
+                                }
+                        }
+
+                        //
+                        if(p)
+                            delete [] p;
+
+                        // close(fhandle) i.e. currently opened file
+                        if ( strcmp(saved_img_format,"Tiff3D") == 0 )
+                            closeTiff3DFile(fhandle);
+
+                        start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
+
+                        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
+                        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+                        TERAFLY_TIME_STOP(ConverterWriteBlockOperation, tf::ALL_COMPS, terafly::strprintf("converter: written multiresolution image block x(%d-%d), y(%d-%d), z(%d-%d)",start_width, end_width, start_height, end_height, ((iim::uint32)(z-D0)),((iim::uint32)(z-D0+z_max_res-1))))
+                        #endif
+                    }
+                    start_height += stacks_height[i][stack_row][0][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
+                }
+            }
+        }
+
+        //releasing allocated memory
+        if ( internal_rep == REAL_INTERNAL_REP )
+            delete rbuffer;
+        else // internal_rep == UINT8_INTERNAL_REP
+            delete ubuffer[0]; // other buffer pointers are only offsets
+
+        //
+        auto end = std::chrono::high_resolution_clock::now();
         cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
     }
 
