@@ -3080,9 +3080,11 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
 
         //saving current buffer data at selected resolutions and in multitile format
         auto start = std::chrono::high_resolution_clock::now();
-
         for(int i=0; i< resolutions_size; i++)
         {
+            long nCopies = 0;
+            string srcFile;
+
             if(show_progress_bar)
             {
                 sprintf(progressBarMsg, "Generating resolution %d of %d",i+1,std::max(resolutions_size, resolutions_size));
@@ -3260,19 +3262,40 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                                   << this->getMultiresABS_H_string(i,start_width) << "_"
                                                   << abs_pos_z_temp.str();
 
-                                    cout<<"z "<<z<<" ("<<sz[0]<<", "<<sz[1]<<", "<<sz[2]<<") "<<abs_pos_z_temp.str()<<endl;
+                                    //cout<<"z "<<z<<" ("<<sz[0]<<", "<<sz[1]<<", "<<sz[2]<<") "<<abs_pos_z_temp.str()<<endl;
+
+                                    string fn = img_path_temp.str();
+                                    if(!strcmp(saved_img_format,"Tiff3D"))
+                                    {
+                                        fn.append(".tif");
+                                    }
+                                    else
+                                    {
+                                        fn.append(".v3draw");
+                                    }
 
                                     auto start_init = std::chrono::high_resolution_clock::now();
-                                    if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
-                                           ( (err_rawfmt = initTiffFile((char *)img_path_temp.str().c_str(),(int)sz[0],(int)sz[1],(int)sz[2],(int)sz[3],datatype_out)) != 0 ) :
-                                           ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),(long *)sz,datatype)) != 0 ) ) ) {
-                                        char err_msg[STATIC_STRINGS_SIZE];
-                                        sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
-                                        throw IOException(err_msg);
-                                    };
+
+                                    if(nCopies==0)
+                                    {
+                                        if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
+                                               ( (err_rawfmt = initTiffFile((char *)fn.c_str(),(int)sz[0],(int)sz[1],(int)sz[2],(int)sz[3],datatype_out)) != 0 ) :
+                                               ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),(long *)sz,datatype)) != 0 ) ) ) {
+                                            char err_msg[STATIC_STRINGS_SIZE];
+                                            sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
+                                            throw IOException(err_msg);
+                                        };
+
+                                        srcFile = fn;
+                                    }
+                                    else
+                                    {
+                                        copyFile(srcFile.c_str(), fn.c_str());
+                                    }
+                                    nCopies++;
 
                                     //
-                                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                                    //std::this_thread::sleep_for(std::chrono::seconds(4));
 
                                     //
                                     auto end_init = std::chrono::high_resolution_clock::now();
@@ -3337,7 +3360,8 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                         for(int buffer_z=0; buffer_z<z_size/(powInt(2,halve_pow2[i])); buffer_z++, slice_ind++)
                         {
                             // D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
-                            if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed) { // start a new block along z
+                            if ( ((z - this->D0) / powInt(2,halve_pow2[i]) + buffer_z) > slice_end[i] && !block_changed)
+                            { // start a new block along z
                                 std::stringstream abs_pos_z_next;
                                 abs_pos_z_next.width(6);
                                 abs_pos_z_next.fill('0');
@@ -3358,6 +3382,9 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                 n_pages_block = stacks_depth[i][0][0][stack_block[i]+1];
                                 block_changed = true;
 
+                                sz[2] = n_pages_block;
+                                szChunk = sz[0]*sz[1]*sz[3]*datatype_out;
+
                                 //
                                 if(!p)
                                 {
@@ -3377,6 +3404,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                 }
                             }
 
+                            //
                             if ( internal_rep == REAL_INTERNAL_REP )
                                 VirtualVolume::saveImage_to_Vaa3DRaw(
                                             slice_ind,

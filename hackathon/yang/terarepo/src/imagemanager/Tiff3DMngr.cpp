@@ -54,6 +54,7 @@
 #include "IM_config.h"
 
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
@@ -560,7 +561,9 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
     return (char *) 0;
 }
 
-char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height, int spp, int bpp, int NPages ) {
+char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height, int spp, int bpp, int NPages )
+{
+    //
     TIFF *output = (TIFF *) fhandler;
 
     TIFFSetDirectory(output,slice); // WARNING: slice must be the first page after the last, otherwise the file can be corrupted
@@ -585,7 +588,7 @@ char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, un
     if ( rowsPerStrip == -1 )
         TIFFWriteEncodedStrip(output, 0, img, img_width * img_height * spp * (bpp/8));
     else {
-        int check,StripsPerImage,LastStripSize;
+        int StripsPerImage,LastStripSize;
         uint32 rps = (uint32)rowsPerStrip;
         unsigned char *buf = img;
 
@@ -602,7 +605,6 @@ char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, un
         TIFFWriteEncodedStrip(output, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
         buf = buf + spp * LastStripSize * img_width * (bpp/8);
     }
-    //img +=  img_width * img_height;
 
     TIFFWriteDirectory(output);
 
@@ -983,11 +985,10 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
     return (char *) 0;
 }
 
-
 // save a chunk image as a tif file
 char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype)
 {
-    cout<<"initTiffFile"<<endl;
+    cout<<"initTiffFile "<<filename<<endl;
 
     //
     uint32 XSIZE  = sz0;
@@ -1004,22 +1005,6 @@ char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned
     else
         return ((char *) "More than 3 channels in Tiff files.");
 
-    char *completeFilename = NULL;
-    int fname_len = (int) strlen(filename);
-    char *suffix = strstr(filename,".tif");
-    while ( suffix && (fname_len - (suffix-filename) > 5) )
-        suffix = strstr(suffix+4,".tif");
-    if ( suffix ) { // a substring ".tif is already at the very end of the filename
-        completeFilename = new char[fname_len+1];
-        strcpy(completeFilename,filename);
-    }
-    else {
-        completeFilename = new char[fname_len+4+1];
-        strcpy(completeFilename,filename);
-        strcat(completeFilename,".");
-        strcat(completeFilename,TIFF3D_SUFFIX);
-    }
-
     //
     TIFF *output = NULL;
 
@@ -1027,19 +1012,17 @@ char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned
 
     if ( bigtiff || expectedSize > (4*GBSIZE) ) {
         if ( (rowsPerStrip == -1 && (((iim::sint64) sz0) * ((iim::sint64) sz1)) > (4*GBSIZE)) || ((rowsPerStrip * ((iim::sint64) sz0)) > (4*GBSIZE)) )
-            // one strip is larger than 4GB
             return ((char *) "Too many rows per strip for this image width.");
         else
-            output = TIFFOpen(completeFilename,"w8");
+            output = TIFFOpen(filename,"w8");
     }
     else
     {
-        output = TIFFOpen(completeFilename,"w");
+        output = TIFFOpen(filename,"w");
     }
 
-
-    if (!output) {
-        delete completeFilename;
+    if (!output)
+    {
         return ((char *) "Cannot open the file.");
     }
 
@@ -1057,18 +1040,12 @@ char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned
         return ((char *)"fail to alloc memory");
     }
 
-    cout<<"saving "<<Npages<<" slices to "<<filename<<endl;
-    cout<<"size "<<XSIZE<<" "<<YSIZE<<" "<<spp<<" "<<datatype<<endl;
-    printf("image[1] = %d\n", img[1]);
-
     // the file has been already opened: rowsPerStrip it is not too large for this image width
     if ( rowsPerStrip == -1 )
     {
         //
         for(int slice=0; slice<Npages; slice++)
         {
-            cout<<"slice #"<<slice<<endl;
-
             TIFFSetDirectory(output,slice);
 
             TIFFSetField(output, TIFFTAG_IMAGEWIDTH, XSIZE);
@@ -1116,18 +1093,35 @@ char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned
     }
 
     //
-    if(img)
-        delete [] img;
-
-
-    //
-    delete completeFilename;
-
-    //
     TIFFClose(output);
 
     //
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    cout<<"save "<<filename<<" with the size "<<in.tellg()<<endl;
+
+    //
+    if(img)
+        delete [] img;
+
+    //
     return (char *) 0;
+}
+
+char *copyFile(const char *srcFile, const char *dstFile)
+{
+    std::ifstream in(srcFile, std::ifstream::ate | std::ifstream::binary);
+    cout<<"read "<<srcFile<<" with the size "<<in.tellg()<<endl;
+
+    cout<<"cp "<<srcFile<<" -> "<<dstFile<<endl;
+
+    std::ifstream  src(srcFile, std::ios::binary);
+    std::ofstream  dst(dstFile, std::ios::binary);
+
+    dst << src.rdbuf();
+
+    //
+    return (char *) 0;
+
 }
 
 // save a chunk image as a tif file

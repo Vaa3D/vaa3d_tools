@@ -158,6 +158,8 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
 
 char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype);
 
+char *copyFile(const char *srcFile, const char *dstFile);
+
 char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype, unsigned char *img);
 
 /* writes a 3D volume to a file containing a 3D image
