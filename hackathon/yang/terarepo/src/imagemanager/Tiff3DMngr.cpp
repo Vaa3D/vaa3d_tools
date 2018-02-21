@@ -988,8 +988,6 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
 // save a chunk image as a tif file
 char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype)
 {
-    cout<<"initTiffFile "<<filename<<endl;
-
     //
     uint32 XSIZE  = sz0;
     uint32 YSIZE  = sz1;
@@ -1095,9 +1093,24 @@ char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned
     //
     TIFFClose(output);
 
+////    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+////    cout<<"save "<<filename<<" with the size "<<in.tellg()<<endl;
+
     //
-    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-    cout<<"save "<<filename<<" with the size "<<in.tellg()<<endl;
+//    long szStack = sz0*sz1*sz2*sz3*datatype;
+//    unsigned char *img = NULL;
+//    try
+//    {
+//        img = new unsigned char [szStack];
+//        memset(img, 0, szStack);
+//    }
+//    catch(...)
+//    {
+//        return ((char *)"fail to alloc memory");
+//    }
+
+//    //
+//    writeTiff3DFile(filename, sz0, sz1, sz2, sz3, datatype, img);
 
     //
     if(img)
@@ -1109,15 +1122,23 @@ char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned
 
 char *copyFile(const char *srcFile, const char *dstFile)
 {
-    std::ifstream in(srcFile, std::ifstream::ate | std::ifstream::binary);
-    cout<<"read "<<srcFile<<" with the size "<<in.tellg()<<endl;
+//    std::ifstream in(srcFile, std::ifstream::ate | std::ifstream::binary);
+//    cout<<"read "<<srcFile<<" with the size "<<in.tellg()<<endl;
 
-    cout<<"cp "<<srcFile<<" -> "<<dstFile<<endl;
+//    cout<<"cp "<<srcFile<<" -> "<<dstFile<<endl;
 
     std::ifstream  src(srcFile, std::ios::binary);
     std::ofstream  dst(dstFile, std::ios::binary);
 
     dst << src.rdbuf();
+
+//    istreambuf_iterator<char> begin_source(src);
+//    istreambuf_iterator<char> end_source;
+//    ostreambuf_iterator<char> begin_dest(dst);
+//    copy(begin_source, end_source, begin_dest);
+
+//    src.close();
+//    dst.close();
 
     //
     return (char *) 0;

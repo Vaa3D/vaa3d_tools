@@ -3078,6 +3078,27 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
             ts::ProgressBar::getInstance()->display();
         }
 
+        //
+        int datatype;
+        if ( internal_rep == REAL_INTERNAL_REP )
+            datatype = 4;
+        else if ( internal_rep == UINT8_INTERNAL_REP ) {
+            if ( saved_img_depth == 16 )
+                datatype = 2;
+            else if ( saved_img_depth == 8 )
+                datatype = 1;
+            else {
+                char err_msg[STATIC_STRINGS_SIZE];
+                sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
+                throw IOException(err_msg);
+            }
+        }
+        else {
+            char err_msg[STATIC_STRINGS_SIZE];
+            sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown internal representation (%d)", internal_rep);
+            throw IOException(err_msg);
+        }
+
         //saving current buffer data at selected resolutions and in multitile format
         auto start = std::chrono::high_resolution_clock::now();
         for(int i=0; i< resolutions_size; i++)
@@ -3193,8 +3214,6 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                     }
 
                     int sz[4];
-                    int datatype;
-
                     int datatype_out;
                     if(nbits==4)
                         datatype_out = 1;
@@ -3226,24 +3245,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                 sz[1] = stacks_height[i][stack_row][stack_column][0];
                                 sz[3] = channels;
 
-                                if ( internal_rep == REAL_INTERNAL_REP )
-                                    datatype = 4;
-                                else if ( internal_rep == UINT8_INTERNAL_REP ) {
-                                    if ( saved_img_depth == 16 )
-                                        datatype = 2;
-                                    else if ( saved_img_depth == 8 )
-                                        datatype = 1;
-                                    else {
-                                        char err_msg[STATIC_STRINGS_SIZE];
-                                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
-                                        throw IOException(err_msg);
-                                    }
-                                }
-                                else {
-                                    char err_msg[STATIC_STRINGS_SIZE];
-                                    sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown internal representation (%d)", internal_rep);
-                                    throw IOException(err_msg);
-                                }
+
 
                                 int slice_start_temp = 0;
                                 for ( int j=0; j < n_stacks_D[i]; j++ ) {
@@ -3295,7 +3297,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                     nCopies++;
 
                                     //
-                                    //std::this_thread::sleep_for(std::chrono::seconds(4));
+                                    //std::this_thread::sleep_for(std::chrono::seconds(1));
 
                                     //
                                     auto end_init = std::chrono::high_resolution_clock::now();
@@ -3337,7 +3339,10 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                         bool block_changed = false;                                 // true if block is changed executing the next for cycle
                         // fhandle = open file corresponding to current block
                         if ( strcmp(saved_img_format,"Tiff3D") == 0 )
-                            openTiff3DFile((char *)img_path.str().c_str(),(char *)(slice_ind ? "a" : "w"),fhandle,true);
+                        {
+                            //openTiff3DFile((char *)img_path.str().c_str(),(char *)(slice_ind ? "a" : "w"),fhandle,true);
+                            openTiff3DFile((char *)img_path.str().c_str(),(char *)("a"),fhandle,true);
+                        }
 
                         //
                         sz[0] = end_width - start_width + 1;
