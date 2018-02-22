@@ -3710,29 +3710,24 @@ void NCPointCloud::dfs(long v)
     if(fila.empty())
     {
         points[v].visited = true;
-        fila.push_back(adj[v]);
+        fila.push_back(*(adj[v].begin()));
 
         cout<<v<<" ";
     }
     else
     {
-        long n = fila[fila.size()-1].n;
+        long n = get<0>(fila[fila.size()-1]);
 
-        if(adj[v].pre == n)
+        Vertices::iterator i;
+        for(i=adj[v].begin(); i!=adj[v].end(); ++i)
         {
-            points[v].visited = true;
-            fila.push_back(v);
+            Vertex ver = *i;
 
-            cout<<v<<" ";
-
-            //
-            list<Node>::iterator i;
-            for(i = adj[v].begin(); i!=adj[v].end(); ++i)
+            if(get<1>(ver)==n || points[v].visited==false) // pre
             {
-                if(points[(*i).n].visited==false)
-                {
-                    dfs((*i).n);
-                }
+                points[v].visited=true;
+                fila.push_back(ver);
+                dfs(get<2>(ver)); // next
             }
         }
     }
@@ -3741,24 +3736,27 @@ void NCPointCloud::dfs(long v)
 int NCPointCloud::reconstruct()
 {
     //
-    if(fila.size()<=1)
+    if(filas.size()<=1)
     {
         cout<<"Less than 2 points in this filament"<<endl;
         return -1;
     }
 
-    //
-    cout<<endl<<"root ... "<<fila[0].n<<endl;
-    points[fila[0].n].parents.push_back(-1);
-    for(long i=1; i<fila.size(); i++)
+    for(long i=0; i<filas.size(); i++)
     {
-        points[fila[i].n].parents.push_back(points[fila[i-1].n].n);
-        points[fila[i-1].n].children.push_back(points[fila[i].n].n);
-    }
+        fila = filas[i];
 
-    //
-    //filas.push_back(fila);
-    fila.clear();
+        points[get<0>(fila[0])].parents.push_back(-1);
+        for(long j=1; j<fila.size(); j++)
+        {
+            long pre = get<0>(fila[j-1]);
+            long cur = get<0>(fila[j]);
+
+            points[cur].parents.push_back(points[pre].n);
+            points[pre].children.push_back(points[cur].n);
+        }
+
+    }
 
     //
     return 0;
@@ -3837,7 +3835,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     removeNoise(rmNoiseDistFac);
 
     // init adjacency list
-    adj = new list<Node> [ points.size() ];
+    adj = new Vertices [ points.size() ];
 
     // compare each point's possible connections with our proposed cost func
 
@@ -3902,59 +3900,52 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
         }
 
         //
-        if(candidates.size()>0)
+        if(candidates.size()>1)
         {
             cout<<"candidates "<<candidates.size()<<endl;
 
             sort(candidates.begin(), candidates.end(), [](const tuple<float,long,long>& a, const tuple<float,long,long>& b) -> bool
             {
-                return get<0>(a) < get<0>(b); // area as likelihood func
+                return get<0>(a) < get<0>(b); // weight
             });
 
             //
             for(vector<tuple<float,long,long>>::iterator i=candidates.begin(); i!=candidates.end(); ++i)
             {
-                Node node;
-
-                node.pre = v;
-                node.n = p.nn[get<1>(*i)];
-                node.next = points[p.nn[get<1>(*i)]].nn[get<2>(*i)];
-                node.weight = get<0>(*i);
-
-                adj[node.n].push_back(node);
-
-                //cout<<"push_back "<<p.nn[get<2>(*i)]<<" "<<points[p.nn[get<2>(*i)]].nn[get<3>(*i)]<<" -> "<<v<<endl;
+                adj[ p.nn[get<1>(*i)] ].push_back(make_tuple( p.nn[get<1>(*i)], v, points[p.nn[get<1>(*i)]].nn[get<2>(*i)], get<0>(*i) ));
             }
         }
     }
 
-    cout<<"adjacency list"<<endl;
-    for(long v=0; v<points.size(); v++)
-    {
-        list<Node>::iterator i;
-        for(i = adj[v].begin(); i != adj[v].end(); ++i)
-            cout<<*i<<" ";
-        cout<<endl;
-    }
-
-    // connection
-    cout<<"points "<<points.size()<<endl;
-
+    //
     for(long i=0; i<points.size(); i++)
     {
+        // clean
         points[i].parents.clear();
         points[i].children.clear();
+
+        // sort
+        if(adj[i].size()>1)
+        {
+            sort(adj[i].begin(), adj[i].end(), [](const Vertex& a, const Vertex& b) -> bool
+            {
+                return get<3>(a) < get<3>(b); // weight
+            });
+        }
     }
 
+    //
     for(long i=0; i<points.size(); i++)
     {
         if(points[i].visited == false)
         {
             cout<<"filament "<<i<<endl;
             dfs(i);
-            reconstruct();
+            filas.push_back(fila);
+            fila.clear();
         }
     }
+    reconstruct();
 
     // save reconstruction
     if(!outfile.isEmpty())

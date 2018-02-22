@@ -173,8 +173,9 @@ public:
 
 typedef vector<Node> Filament;
 
-// vetex with <pre, next, weight>
-typedef vector<tuple<long,long,float>> Vertex;
+// vertex with <n, pre, next, weight>
+typedef tuple<long, long,long,float> Vertex;
+typedef vector<Vertex> Vertices;
 
 //
 class NCPointCloud
@@ -339,9 +340,9 @@ public:
     float maxDistNN, threshDistNN;
     vector<size_t> somas;
 
-    list<Vertex> *adj;
-    Filament fila;
-    vector<Filament> filas;
+    Vertices *adj;
+    Vertices fila;
+    vector<Vertices> filas;
 };
 
 class Quadruple
