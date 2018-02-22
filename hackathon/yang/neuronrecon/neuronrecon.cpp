@@ -3706,13 +3706,18 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
 
 void NCPointCloud::dfs(long v)
 {
+    cout<<v<<" ";
+
     //
     if(fila.empty())
     {
         points[v].visited = true;
-        fila.push_back(*(adj[v].begin()));
 
-        cout<<v<<" ";
+        Vertex ver = *(adj[v].begin());
+
+        fila.push_back(ver);
+
+        dfs(get<2>(ver));
     }
     else
     {
@@ -3742,6 +3747,7 @@ int NCPointCloud::reconstruct()
         return -1;
     }
 
+    //
     for(long i=0; i<filas.size(); i++)
     {
         fila = filas[i];
@@ -3883,10 +3889,10 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
                 distThresh1 = 2*m*(p.radius + p_next.radius);
                 distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
 
-                cout<<"v nn nnnn "<<v<<" "<<p.nn[i]<<" "<<p_next.nn[j]<<" "<<dist1<<" < "<<distThresh1<<" "<<dist2<<" < "<<distThresh2<<endl;
-                p.info();
-                p_next.info();
-                p_next_next.info();
+//                cout<<"v nn nnnn "<<v<<" "<<p.nn[i]<<" "<<p_next.nn[j]<<" "<<dist1<<" < "<<distThresh1<<" "<<dist2<<" < "<<distThresh2<<endl;
+//                p.info();
+//                p_next.info();
+//                p_next_next.info();
 
                 float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
 
@@ -3915,6 +3921,17 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
                 adj[ p.nn[get<1>(*i)] ].push_back(make_tuple( p.nn[get<1>(*i)], v, points[p.nn[get<1>(*i)]].nn[get<2>(*i)], get<0>(*i) ));
             }
         }
+    }
+
+    //
+    for(long i=0; i<points.size(); i++)
+    {
+        cout<<i<<endl;
+        for(Vertices::iterator j=adj[i].begin(); j!=adj[i].end(); ++j)
+        {
+            cout<<"("<<get<0>(*j)<<", "<<get<1>(*j)<<", "<<get<2>(*j)<<") ";
+        }
+        cout<<endl;
     }
 
     //
