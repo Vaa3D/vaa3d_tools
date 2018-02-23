@@ -490,7 +490,7 @@ int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
 
     for(long i=0; i<pc.points.size(); i++)
     {
-        if(pc.points[i].isolated)
+        if(pc.points[i].isolated || pc.points[i].parents.empty())
         {
             continue;
         }
@@ -3706,33 +3706,40 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
 
 void NCPointCloud::dfs(long v)
 {
-    cout<<v<<" ";
+    //
+    cout<<v;
+    cout<<" ("<<points[v].visited<<") ";
 
     //
-    if(fila.empty())
+    if(points[v].visited == false && !adj[v].empty())
     {
-        points[v].visited = true;
-
-        Vertex ver = *(adj[v].begin());
-
-        fila.push_back(ver);
-
-        dfs(get<2>(ver));
-    }
-    else
-    {
-        long n = get<0>(fila[fila.size()-1]);
-
-        Vertices::iterator i;
-        for(i=adj[v].begin(); i!=adj[v].end(); ++i)
+        if(fila.empty())
         {
-            Vertex ver = *i;
+            points[v].visited = true;
 
-            if(get<1>(ver)==n || points[v].visited==false) // pre
+            Vertex ver = *(adj[v].begin());
+
+            fila.push_back(ver);
+
+            dfs(get<2>(ver));
+        }
+        else
+        {
+            Vertex prev = fila[fila.size()-1];
+            long n = get<0>(prev);
+            long next = get<2>(prev);
+
+            Vertices::iterator i;
+            for(i=adj[v].begin(); i!=adj[v].end(); ++i)
             {
-                points[v].visited=true;
-                fila.push_back(ver);
-                dfs(get<2>(ver)); // next
+                Vertex ver = *i;
+
+                if(get<1>(ver)==n && get<0>(ver)==next && points[v].visited==false) // pre
+                {
+                    points[v].visited=true;
+                    fila.push_back(ver);
+                    dfs(get<2>(ver)); // next
+                }
             }
         }
     }
@@ -3740,28 +3747,33 @@ void NCPointCloud::dfs(long v)
 
 int NCPointCloud::reconstruct()
 {
-    //
-    if(filas.size()<=1)
-    {
-        cout<<"Less than 2 points in this filament"<<endl;
-        return -1;
-    }
+    cout<<"\n reconstruct \n";
 
     //
-    for(long i=0; i<filas.size(); i++)
+    if(filas.size()>1)
     {
-        fila = filas[i];
-
-        points[get<0>(fila[0])].parents.push_back(-1);
-        for(long j=1; j<fila.size(); j++)
+        for(long i=0; i<filas.size(); i++)
         {
-            long pre = get<0>(fila[j-1]);
-            long cur = get<0>(fila[j]);
+            fila = filas[i];
 
-            points[cur].parents.push_back(points[pre].n);
-            points[pre].children.push_back(points[cur].n);
+            cout<<fila.size()<<endl;
+
+            points[get<0>(fila[0])].parents.push_back(-1);
+            for(long j=1; j<fila.size(); j++)
+            {
+                long pre = get<0>(fila[j-1]);
+                long cur = get<0>(fila[j]);
+
+                points[cur].parents.push_back(points[pre].n);
+                points[pre].children.push_back(points[cur].n);
+            }
+
         }
-
+    }
+    else
+    {
+        cout<<"No filament found"<<endl;
+        return -1;
     }
 
     //
@@ -3937,9 +3949,10 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     //
     for(long i=0; i<points.size(); i++)
     {
-        // clean
+        // reset
         points[i].parents.clear();
         points[i].children.clear();
+        points[i].visited = false;
 
         // sort
         if(adj[i].size()>1)
@@ -3957,29 +3970,47 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
         if(points[i].visited == false)
         {
             cout<<"filament "<<i<<endl;
-            dfs(i);
-            filas.push_back(fila);
-            fila.clear();
+
+            if(!adj[i].empty())
+            {
+                for(Vertices::iterator iter=adj[i].begin(); iter!=adj[i].end(); ++iter)
+                {
+                    dfs(get<0>(*iter));
+                    cout<<"\n filament size "<<fila.size()<<endl;
+                    //if(!fila.empty())
+                    if(fila.size()>2) // at least 2 vertices to connect
+                    {
+                        filas.push_back(fila);
+                    }
+                    fila.clear();
+                }
+            }
         }
     }
-    reconstruct();
 
-    // save reconstruction
-    if(!outfile.isEmpty())
+    cout<<" found "<<filas.size()<<" filaments "<<endl;
+
+    if(reconstruct()==0)
     {
-        saveNeuronTree(*this, outfile);
+        cout<<"save reconstruction \n";
+        // save reconstruction
+        if(!outfile.isEmpty())
+        {
+            saveNeuronTree(*this, outfile);
 
-        //
-        QStringList files;
-        files << outfile;
+            //
+            QStringList files;
+            files << outfile;
 
-        NCPointCloud pc;
-        pc.getPointCloud(files);
+            NCPointCloud pc;
+            pc.getPointCloud(files);
 
-        vector<LineSegment> lines = separate(pc);
-        pc = combinelines(lines);
+            vector<LineSegment> lines = separate(pc);
+            pc = combinelines(lines);
 
-        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+            pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+        }
+
     }
 
     //
