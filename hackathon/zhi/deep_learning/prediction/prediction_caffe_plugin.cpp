@@ -197,14 +197,14 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         double overall_mean, overall_std;
         mean_and_std(data1d, N*M*P, overall_mean, overall_std);
 
-        signed char*im_seg = 0;
-        try {im_seg = new signed char[N*M*P];}
-        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+        short int*im_label = 0;
+        try {im_label = new short int[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_label."); return;}
         for(V3DLONG i=0; i<N*M*P;i++)
-            im_seg[i]=0;
+            im_label[i]=0;
 
         string model_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt";
-        string trained_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/snapshot/HVSMR_iter_42000.caffemodel";
+        string trained_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel";
         Classifier classifier(model_file, trained_file,"");
         int patchSize = 64;
         int ita = 4;
@@ -214,13 +214,15 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         int y_ovlap = ceil((double(y_fold)*patchSize - M)/(double(y_fold)-1));
         int z_fold = P/patchSize + ita;
         int z_ovlap = ceil((double(z_fold)*patchSize - P)/(double(z_fold)-1));
+        int ita_x = (patchSize-x_ovlap)>0?patchSize-x_ovlap:1;
+        int ita_y = (patchSize-y_ovlap)>0?patchSize-y_ovlap:1;
+        int ita_z = (patchSize-z_ovlap)>0?patchSize-z_ovlap:1;
 
-        int count=1;
-        for(V3DLONG iz = 0; iz < P; iz = iz+(patchSize-z_ovlap))
+        for(V3DLONG iz = 0; iz < P; iz = iz+ita_z)
         {
-            for(V3DLONG iy = 0; iy < M; iy = iy+(patchSize-y_ovlap))
+            for(V3DLONG iy = 0; iy < M; iy = iy+ita_y)
             {
-                for(V3DLONG ix = 0; ix < N; ix = ix+(patchSize-x_ovlap))
+                for(V3DLONG ix = 0; ix < N; ix = ix+ita_x)
                 {
                     V3DLONG xb = ix;
                     V3DLONG xe = ix+patchSize-1; if(xe>=N) continue;
@@ -228,8 +230,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                     V3DLONG ye = iy+patchSize-1; if(ye>=M) continue;
                     V3DLONG zb = iz;
                     V3DLONG ze = iz+patchSize-1; if(ze>=P) continue;
-                    printf("%d:(xe:%d,ye:%d,ze:%d\n",count,xe,ye,ze);
-                    count++;
+
                     V3DLONG tile_N = xe-xb+1;
                     V3DLONG tile_M = ye-yb+1;
                   //  V3DLONG tile_P = ze-zb+1;
@@ -266,7 +267,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                             for(V3DLONG iix = xb; iix <= xe; iix++)
                             {
                                 int tmp_score = (outputs[j]>0.005)? 1:-1;
-                                im_seg[offsetk + offsetj + iix] += tmp_score;
+                                im_label[offsetk + offsetj + iix] += tmp_score;
                                 j++;
                             }
                         }
@@ -277,8 +278,12 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
             }
         }
 
-        for(V3DLONG i=0 ; i<N*M*P; i++)
-            im_seg[i] = (im_seg[i]>0)?255:0;
+        unsigned char*im_seg = 0;
+        try {im_seg = new unsigned char[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_seg[i]=(im_label[i]>0)?255:0;
+        if(im_label) {delete []im_label;im_label=0;}
 
         Image4DSimple * new4DImage = new Image4DSimple();
         new4DImage->setData((unsigned char *)im_seg, N, M, P, 1, V3D_UINT8);
