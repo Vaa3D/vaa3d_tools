@@ -909,21 +909,30 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
         QString inimg_file = infiles[0];
         int k=0;
-        QString apo_name = paras.empty() ? "" : paras[k]; if(apo_name == "NULL") apo_name = ""; k++;
-        QList<CellAPO> file_inmarkers;
-        file_inmarkers = readAPO_file(apo_name);
-        V3DLONG start_x = file_inmarkers.at(0).x - 512;
-        V3DLONG end_x = start_x + 1024 - 1;
-        V3DLONG start_y = file_inmarkers.at(0).y - 512;
-        V3DLONG end_y = start_y + 1024 - 1;
-        V3DLONG start_z = file_inmarkers.at(0).z - 256;
-        V3DLONG end_z = start_z + 512 - 1;
+//        QString apo_name = paras.empty() ? "" : paras[k]; if(apo_name == "NULL") apo_name = ""; k++;
+//        QList<CellAPO> file_inmarkers;
+//        file_inmarkers = readAPO_file(apo_name);
+//        V3DLONG start_x = file_inmarkers.at(0).x - 64;
+//        V3DLONG end_x = start_x + 128 - 1;
+//        V3DLONG start_y = file_inmarkers.at(0).y - 64;
+//        V3DLONG end_y = start_y + 128 - 1;
+//        V3DLONG start_z = file_inmarkers.at(0).z - 64;
+//        V3DLONG end_z = start_z + 128 - 1;
 
 
-//        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
-//        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") swc_name = ""; k++;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") swc_name = ""; k++;
 
-//        NeuronTree nt = readSWC_file(swc_name);
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(marker_name)));
+        V3DLONG start_x = file_inmarkers.at(0).x - 64;
+        V3DLONG end_x = start_x + 128 - 1;
+        V3DLONG start_y = file_inmarkers.at(0).y - 64;
+        V3DLONG end_y = start_y + 128 - 1;
+        V3DLONG start_z = file_inmarkers.at(0).z - 64;
+        V3DLONG end_z = start_z + 128 - 1;
+
+        NeuronTree nt = readSWC_file(swc_name);
 //        V3DLONG start_x = nt.listNeuron.at(0).x;
 //        V3DLONG end_x = nt.listNeuron.at(0).x;
 //        V3DLONG start_y = nt.listNeuron.at(0).y;
@@ -952,18 +961,18 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         mysz[1] = end_y - start_y +1;
         mysz[2] = end_z - start_z +1;
         mysz[3] = 1;
-        QString imageSaveString = apo_name + "_cropped.v3dpbd";
+        QString imageSaveString = marker_name + "_128.v3draw";
         simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
 
-        vector<MyMarker> marker_inmarkers;
-        QString shifted_marker_name = apo_name + "_cropped.marker";
-        ImageMarker outputMarker;
-        QList<ImageMarker> seedsToSave;
-        outputMarker.x = file_inmarkers.at(0).x - start_x;
-        outputMarker.y = file_inmarkers.at(0).y - start_y;
-        outputMarker.z = file_inmarkers.at(0).z - start_z;
-        seedsToSave.append(outputMarker);
-        writeMarker_file(shifted_marker_name, seedsToSave);
+//        vector<MyMarker> marker_inmarkers;
+//        QString shifted_marker_name = apo_name + "_cropped.marker";
+//        ImageMarker outputMarker;
+//        QList<ImageMarker> seedsToSave;
+//        outputMarker.x = file_inmarkers.at(0).x - start_x;
+//        outputMarker.y = file_inmarkers.at(0).y - start_y;
+//        outputMarker.z = file_inmarkers.at(0).z - start_z;
+//        seedsToSave.append(outputMarker);
+//        writeMarker_file(shifted_marker_name, seedsToSave);
 
 //        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(marker_name)));
 
@@ -1019,7 +1028,8 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
         NeuronTree nt_manual = readSWC_file(swc_name);
         for(V3DLONG d = 0; d <nt_manual.listNeuron.size(); d++)
         {
-            if(NTDIS(nt_manual.listNeuron.at(d),file_inmarkers.at(0))>150)
+          //  if(NTDIS(nt_manual.listNeuron.at(d),file_inmarkers.at(0))>150)
+            if(d==0)
             {
                 V3DLONG start_x = nt_manual.listNeuron.at(d).x - 64;
                 V3DLONG end_x = start_x + 128 - 1;
