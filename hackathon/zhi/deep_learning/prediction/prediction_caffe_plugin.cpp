@@ -18,6 +18,8 @@
 #include "../../APP2_large_scale/readRawfile_func.h"
 
 #include "../../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "volimg_proc.h"
+
 
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
@@ -75,12 +77,13 @@ QStringList prediction_caffe::menulist() const
 {
     return QStringList()
             <<tr("Prediction")
-           <<tr("Quality_Assess")
-          <<tr("Detection")
-         <<tr("Feature_Extraction")
-        <<tr("Connection")
-       <<tr("Local_Maximum")
-       <<tr("about");
+           <<tr("Prediction_3D")
+          <<tr("Quality_Assess")
+         <<tr("Detection")
+        <<tr("Feature_Extraction")
+       <<tr("Connection")
+      <<tr("Local_Maximum")
+     <<tr("about");
 }
 
 QStringList prediction_caffe::funclist() const
@@ -164,6 +167,120 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         printf("Positive rate is %.2f, and negative rate is %.2f\n",p_rate,n_rate);
         imgs.clear();
+    }else if (menu_name == tr("Prediction_3D(unet)"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imagename = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        double overall_mean, overall_std;
+        mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+
+        unsigned char*im_seg = 0;
+        try {im_seg = new unsigned char[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_seg[i]=0;
+
+        string model_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt";
+        string trained_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/snapshot/HVSMR_iter_42000.caffemodel";
+        Classifier classifier(model_file, trained_file,"");
+        int Wx=32,Wy=32,Wz=32;
+        int Sxy = 16;
+
+        for(V3DLONG iz = Sxy; iz < P; iz = iz+Sxy)
+        {
+            for(V3DLONG iy = Sxy; iy < M; iy = iy+Sxy)
+            {
+                for(V3DLONG ix = Sxy; ix < N; ix = ix+Sxy)
+                {
+                    V3DLONG xb = ix-Wx; if(xb<0) continue;
+                    V3DLONG xe = ix+Wx-1; if(xe>=N) continue;
+                    V3DLONG yb = iy-Wy; if(yb<0) continue;
+                    V3DLONG ye = iy+Wy-1; if(ye>=M) continue;
+                    V3DLONG zb = iz-Wz; if(zb<0) continue;
+                    V3DLONG ze = iz+Wz-1; if(ze>=P) continue;
+
+                    V3DLONG tile_N = xe-xb+1;
+                    V3DLONG tile_M = ye-yb+1;
+                    V3DLONG tile_P = ze-zb+1;
+                    std::vector<cv::Mat> imgs;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        float*im_cropped = 0;
+                        try {im_cropped = new float [tile_N*tile_M];}
+                        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                im_cropped[j] = (data1d[offsetk + offsetj + iix]-overall_mean)/overall_std;
+                                j++;
+                            }
+                        }
+                        cv::Mat img(tile_N, tile_M, CV_32FC1, im_cropped);
+                        imgs.push_back(img);
+                    }
+
+                    std::vector<float> outputs = classifier.Predict_3D(imgs);
+                    V3DLONG j=0;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                int tmp_score = (outputs[j]>0.005)? 1:0;
+                                im_seg[offsetk + offsetj + iix] += tmp_score;
+                                j++;
+                            }
+                        }
+                    }
+                    imgs.clear();
+                    outputs.clear();
+                }
+            }
+        }
+
+        for(V3DLONG i=0 ; i<N*M*P; i++)
+            im_seg[i] = (im_seg[i]>4)?255:0;
+
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)im_seg, N, M, P, 1, V3D_UINT8);
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "unet");
+        callback.updateImageWindow(newwin);
+        return;
+
+
     }else if (menu_name == tr("Quality_Assess"))
     {
         v3dhandle curwin = callback.currentImageWindow();

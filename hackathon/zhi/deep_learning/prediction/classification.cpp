@@ -56,20 +56,20 @@ Classifier::Classifier(const string& model_file,
     input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
     /* Load the binaryproto mean file. */
     if(!mean_file.empty()) SetMean(mean_file);
-    Caffe::set_mode(Caffe::CPU);
-
+    Caffe::set_mode(Caffe::GPU);
 
 #if  defined(Q_OS_MAC)
     Caffe::set_mode(Caffe::CPU);
 #endif
 
 #if defined(Q_OS_WIN) // MK, 2018, Jan. Automatic GPU/CPU selection on Windows
-	char* CUDA = getenv("CUDA_PATH");
-	if (CUDA == NULL) Caffe::set_mode(Caffe::CPU);
-	else Caffe::set_mode(Caffe::GPU);
+    char* CUDA = getenv("CUDA_PATH");
+    if (CUDA == NULL) Caffe::set_mode(Caffe::CPU);
+    else Caffe::set_mode(Caffe::GPU);
 #endif
     /* Load labels. */
 }
+
 
 /* Load the mean file in binaryproto format. */
 void Classifier::SetMean(const string& mean_file) {
@@ -111,7 +111,7 @@ std::vector<std::vector<float> > Classifier::Predict(const std::vector<cv::Mat>&
         WrapInputLayer(&input_channels, i);
         Preprocess(imgs[i], &input_channels);
     }
-    net_->Forward();
+    net_->ForwardPrefilled();
     std::vector<std::vector<float> > outputs;
     Blob<float>* output_layer = net_->output_blobs()[0];
     for (int i = 0; i < output_layer->num(); ++i) {
@@ -121,6 +121,24 @@ std::vector<std::vector<float> > Classifier::Predict(const std::vector<cv::Mat>&
         outputs.push_back(std::vector<float>(begin, end));
     }
     return outputs;
+}
+
+std::vector<float> Classifier::Predict_3D(const std::vector<cv::Mat>& imgs) {
+    Blob<float>* input_layer = net_->input_blobs()[0];
+    input_layer->Reshape(1, num_channels_,imgs.size(),
+                         input_geometry_.height, input_geometry_.width);
+    /* Forward dimension change to all layers. */
+    net_->Reshape();
+    for (int i = 0; i < imgs.size(); ++i) {
+        std::vector<cv::Mat> input_channels;
+        WrapInputLayer(&input_channels, i);
+        Preprocess(imgs[i], &input_channels);
+    }
+    net_->ForwardPrefilled();
+    Blob<float>* output_layer = net_->output_blobs()[0];
+    const float* begin = output_layer->cpu_data()+imgs.size()*input_geometry_.height* input_geometry_.width;
+    const float* end = begin + imgs.size()*input_geometry_.height* input_geometry_.width;
+    return std::vector<float>(begin, end);
 }
 
 std::vector<std::vector<float> > Classifier::extractFeature_siamese(const std::vector<cv::Mat>& imgs) {
@@ -134,7 +152,7 @@ std::vector<std::vector<float> > Classifier::extractFeature_siamese(const std::v
         WrapInputLayer(&input_channels, i);
         Preprocess(imgs[i], &input_channels);
     }
-    net_->Forward();
+    net_->ForwardPrefilled();
 
     std::vector<std::vector<float> > outputs;
     Blob<float>* output_layer = net_->output_blobs()[0];
@@ -192,7 +210,7 @@ void Classifier::Preprocess(const cv::Mat& img,
     if(!mean_.empty())
         cv::subtract(sample_float, mean_, sample_normalized);
     else
-        sample_normalized = sample_float * 0.00390625;
+        sample_normalized = sample_float;// * 0.00390625;
     /* This operation will write the separate BGR planes directly to the
 * input layer of the network because it is wrapped by the cv::Mat
 * objects in input_channels. */

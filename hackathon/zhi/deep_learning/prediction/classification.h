@@ -28,6 +28,8 @@ public:
                const string& trained_file,
                const string& mean_file);
     std::vector<std::vector<float> > Predict(const std::vector<cv::Mat>& imgs);
+    std::vector<float> Predict_3D(const std::vector<cv::Mat>& imgs);
+
     std::vector< float > PredictBatch(const vector< cv::Mat > imgs);
 
     std::vector<std::vector<float> > extractFeature_siamese(const std::vector<cv::Mat>& imgs);
