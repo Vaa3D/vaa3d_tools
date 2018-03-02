@@ -779,7 +779,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
         }
     }
 
-    //ALLOCATING  the MEMORY SPACE for image buffer
+    //ALLOCATING the MEMORY SPACE for image buffer
     z_max_res = powInt(2,halve_pow2[resolutions_size-1]);
     z_ratio=depth/z_max_res;
 
@@ -2062,9 +2062,17 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
         throw IOException(err_msg);
     }
-    z_ratio=depth/z_max_res;
 
     cout<<"z_max_res "<<z_max_res<<endl;
+
+    if(z_max_res > 32)
+        z_max_res = 32;
+
+    cout<<"... z_max_res "<<z_max_res<<endl;
+
+    z_ratio=depth/z_max_res;
+
+
 
     //allocated even if not used
     ubuffer = new iim::uint8 *[channels];
@@ -2945,6 +2953,14 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
         sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
         throw IOException(err_msg);
     }
+
+    cout<<"z_max_res "<<z_max_res<<endl;
+
+    if(z_max_res > 32)
+        z_max_res = 32;
+
+    cout<<"... z_max_res "<<z_max_res<<endl;
+
     z_ratio=depth/z_max_res;
 
     //allocated even if not used
@@ -3276,8 +3292,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                         fn.append(".v3draw");
                                     }
 
-                                    auto start_init = std::chrono::high_resolution_clock::now();
-
+                                    //auto start_init = std::chrono::high_resolution_clock::now();
                                     if(nCopies==0)
                                     {
                                         if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
@@ -3300,8 +3315,8 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                     //std::this_thread::sleep_for(std::chrono::seconds(1));
 
                                     //
-                                    auto end_init = std::chrono::high_resolution_clock::now();
-                                    cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end_init - start_init).count()<<" ms."<<endl;
+                                    //auto end_init = std::chrono::high_resolution_clock::now();
+                                    //cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end_init - start_init).count()<<" ms."<<endl;
 
                                     //
                                     slice_start_temp += (int)sz[2];
