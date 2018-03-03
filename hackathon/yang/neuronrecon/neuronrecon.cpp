@@ -3708,7 +3708,7 @@ void NCPointCloud::dfs(long v)
 {
     //
     cout<<v;
-    cout<<" ("<<points[v].visited<<") ";
+    cout<<" ("<<points[v].visited<<", "<<points[v].n<<") ";
 
     //
     if(points[v].visited == false && !adj[v].empty())
@@ -3781,10 +3781,18 @@ int NCPointCloud::reconstruct()
 }
 
 // method to publish
-int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, float m, double distthresh, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
+int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, float maxRadius, double maxDist, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
 {
+    // cost func: alpha*angle + beta*dist - gamma*intensity - delta*radius
+    //
     // 1. create an adjacency list with our proposed cost func (angle*dist/radius/intensity)
     // 2. dfs reconstruct trees
+
+    // weight for angle, distance, intensity, radius
+    float alpha = 1.0;
+    float beta = 1.0;
+    float gamma = 1.0;
+    float delta = 1.0;
 
     //
     if(pImg==NULL)
@@ -3861,8 +3869,6 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     knn(k);
 
     //
-    float distThresh1, distThresh2;
-
     for(long v=0; v<points.size(); v++)
     {
         Point p = points[v];
@@ -3880,8 +3886,6 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
                 continue;
             }
 
-            //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
-
             for(long j=0; j<p_next.nn.size(); j++)
             {
                 Point p_next_next = points[p_next.nn[j]];
@@ -3891,28 +3895,31 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
                     continue;
                 }
 
-                //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
-
                 float angle = getAngle(p, p_next, p_next_next);
                 float dist1 = distance(p,p_next);
                 float dist2 = distance(p_next, p_next_next);
                 float dist = dist1 + dist2;
 
-                distThresh1 = 2*m*(p.radius + p_next.radius);
-                distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
+                float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3;
+                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2;
 
-//                cout<<"v nn nnnn "<<v<<" "<<p.nn[i]<<" "<<p_next.nn[j]<<" "<<dist1<<" < "<<distThresh1<<" "<<dist2<<" < "<<distThresh2<<endl;
-//                p.info();
-//                p_next.info();
-//                p_next_next.info();
-
-                float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
-
-                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2 + 1e-6;
-
-                if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
+                //
+                if(dist<maxDist && angle<maxAngle)
                 {
-                    candidates.push_back(make_tuple(dist*angle/meanradius/meanintensity, i, j));
+                    //normalize
+                    angle /= 3.14159265;
+                    dist /= maxDist;
+                    meanradius /= maxRadius;
+                    meanintensity /= 255;
+
+                    alpha = 0.1;
+                    beta = 0.01;
+                    float costfunc = (alpha*angle + beta*dist) / (gamma*meanintensity + delta*meanradius + 1e-6);
+
+                    cout<<"-> costfunc: "<<costfunc<<" "<<angle<<" "<<dist<<" "<<meanintensity<<" "<<meanradius<<endl;
+
+                    //
+                    candidates.push_back(make_tuple(costfunc, i, j));
                 }
             }
         }
@@ -3920,7 +3927,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
         //
         if(candidates.size()>1)
         {
-            cout<<"candidates "<<candidates.size()<<endl;
+            cout<<"found "<<candidates.size()<<" candidates"<<endl;
 
             sort(candidates.begin(), candidates.end(), [](const tuple<float,long,long>& a, const tuple<float,long,long>& b) -> bool
             {
@@ -3969,7 +3976,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     {
         if(points[i].visited == false)
         {
-            cout<<"filament "<<i<<endl;
+            cout<<"filament #"<<i<<endl;
 
             if(!adj[i].empty())
             {

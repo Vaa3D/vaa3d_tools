@@ -259,7 +259,7 @@ public:
     int tracing2(QString infile, QString outfile, int k, float angle, float m, double distthresh=15, bool rmNoise=true);
 
     //
-    int trace(QString infile, QString outfile, int k, float maxAngle, float m, double distthresh=15, float rmNoiseDistFac=20, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
+    int trace(QString infile, QString outfile, int k, float maxAngle, float maxRadius, double maxDist=15, float rmNoiseDistFac=20, unsigned char *pImg=NULL, long sx=1, long sy=1, long sz=1);
 
     // cost func
     int minAngle(unsigned long &loc, float maxAngle);
@@ -928,9 +928,10 @@ float meanIntensityValueLineSegment(T *pImg, long sx, long sy, long sz, Point p,
         ze = q.z;
     }
 
-    for(long z=zs; z<ze; z++)
+    if(zs==ze)
     {
-        long ofz = z*sx*sy;
+        // 2D
+        long ofz = zs*sx*sy;
         for(long y=ys; y<ye; y++)
         {
             long ofy = ofz + y*sx;
@@ -940,7 +941,7 @@ float meanIntensityValueLineSegment(T *pImg, long sx, long sy, long sz, Point p,
                 Point m;
                 m.x = x;
                 m.y = y;
-                m.z = z;
+                m.z = zs;
 
                 if(ls.onSegment(m))
                 {
@@ -950,7 +951,33 @@ float meanIntensityValueLineSegment(T *pImg, long sx, long sy, long sz, Point p,
             }
         }
     }
+    else
+    {
+        // 3D
+        for(long z=zs; z<ze; z++)
+        {
+            long ofz = z*sx*sy;
+            for(long y=ys; y<ye; y++)
+            {
+                long ofy = ofz + y*sx;
+                for(long x=xs; x<xe; x++)
+                {
+                    long idx = ofy + x;
+                    Point m;
+                    m.x = x;
+                    m.y = y;
+                    m.z = z;
 
+                    if(ls.onSegment(m))
+                    {
+                        meanVal += pImg[idx];
+                        n++;
+                    }
+                }
+            }
+        }
+
+    }
 
     //
     if(meanVal)
