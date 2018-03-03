@@ -2062,17 +2062,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
         throw IOException(err_msg);
     }
-
-    cout<<"z_max_res "<<z_max_res<<endl;
-
-    if(z_max_res > 32)
-        z_max_res = 32;
-
-    cout<<"... z_max_res "<<z_max_res<<endl;
-
     z_ratio=depth/z_max_res;
-
-
 
     //allocated even if not used
     ubuffer = new iim::uint8 *[channels];
@@ -2953,14 +2943,6 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
         sprintf(err_msg, "in generateTilesVaa3DRaw(...): too much resolutions(%d): too much slices (%lld) in the buffer \n", resolutions_size, z_max_res);
         throw IOException(err_msg);
     }
-
-    cout<<"z_max_res "<<z_max_res<<endl;
-
-    if(z_max_res > 32)
-        z_max_res = 32;
-
-    cout<<"... z_max_res "<<z_max_res<<endl;
-
     z_ratio=depth/z_max_res;
 
     //allocated even if not used
