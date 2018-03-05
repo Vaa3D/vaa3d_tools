@@ -666,7 +666,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                }
 
                fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
-               smooth_curve(outswc,5);
+             //  smooth_curve(outswc,5);
 
 
                for(V3DLONG d = 0; d <outswc.size(); d++)
@@ -731,7 +731,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                 }
 
                fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
-               smooth_curve(outswc,5);
+             //  smooth_curve(outswc,5);
 
 
                for(V3DLONG d = 0; d <outswc.size(); d++)
@@ -1042,7 +1042,7 @@ void autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2
                 }
 
                 fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
-                smooth_curve(outswc,5);
+             //   smooth_curve(outswc,5);
 
                 for(V3DLONG d = 0; d <outswc.size(); d++)
                 {
@@ -1095,7 +1095,7 @@ void autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP2
                 }
 
                 fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
-                smooth_curve(outswc,5);
+               // smooth_curve(outswc,5);
 
 
                 for(V3DLONG d = 0; d <outswc.size(); d++)
