@@ -2970,6 +2970,8 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             n.pn = -1; //so the first one will be root
             listNeuron << n;
         }
+        if(data1d_mip) {delete []data1d_mip; data1d_mip=0;}
+        if(data1d_ref) {delete []data1d_ref; data1d_ref=0;}
 
         QString  swc_processed = inimg_file + "_detection.swc";
         writeSWC_file(swc_processed,nt);
