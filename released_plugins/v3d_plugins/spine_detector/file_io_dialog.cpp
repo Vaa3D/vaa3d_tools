@@ -447,6 +447,7 @@ void file_io_dialog::get_para_is()
     all_para_is.spine_channel = channel_menu->currentIndex();
     all_para_is.min_voxel =spin_min_pixel->value();
     all_para_is.max_dis= spin_max_dis->value();
+    all_para_is.max_voxel = 8000; //tmp added Apr 6th 2017 by Yujie Li
 }
 
 int file_io_dialog::maybe_proofread_is()

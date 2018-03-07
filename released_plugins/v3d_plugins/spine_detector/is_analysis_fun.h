@@ -14,6 +14,7 @@ struct is_parameters{
     int is_bgthr;
     int max_dis;
     int min_voxel;
+    int max_voxel;
     int spine_channel;
     int is_channel;
     int halfwindowsize;

@@ -652,6 +652,7 @@ bool spine_fun::reverse_dst_grow()
     sort(voxels.begin(), voxels.end(), sortfunc_dst_ascend);
     vector<VOI*> cur_layer,seeds,seeds_next;
     int dst_floor = voxels.front()->dst;
+    qDebug()<<"dst floor"<<dst_floor;
     int vid_begin,vid_end;
     vid_begin=vid_end=0;
     float sum_x,sum_y,sum_z,center_x,center_y,center_z;
@@ -661,6 +662,7 @@ bool spine_fun::reverse_dst_grow()
         continue;
     }
     //qDebug()<<"vid end:"<<vid_end;
+
     seeds.clear();
     for(V3DLONG vid=vid_begin; vid<vid_end; vid++)
     {
@@ -670,6 +672,9 @@ bool spine_fun::reverse_dst_grow()
             voxels[vid]->dst_label=0;
         }
     }
+
+
+
     //dst_label=-1 not touched
     //dst_label=1 candidate for curr layer
     //dst_label=0 discard
@@ -766,7 +771,7 @@ bool spine_fun::reverse_dst_grow()
         seeds=seeds_next;
         //qDebug()<<"seeds next size:"<<seeds_next.size();
         seeds_next.clear();
-//        if (dst_floor%4==0)
+//        if (true) //(dst_floor%2==0)
 //        {
 //            V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
 //            unsigned char *tmp_label = new unsigned char[sz_page*2];
@@ -777,17 +782,16 @@ bool spine_fun::reverse_dst_grow()
 //            label_sz[1]=sz_img[1];
 //            label_sz[2]=sz_img[2];
 //            label_sz[3]=2;
-//            //qDebug()<<"1";
+
 //            for (V3DLONG i=0;i<voxels.size();i++)
 //            {
 //                //qDebug()<<"i:"<<i<<":"<<voxels[i]->dst_label;
-//                if (voxels[i]->dst_label==0)
+//                if (voxels[i]->dst_label==2)
 //                {
 //                    tmp_label[voxels.at(i)->pos+sz_page]=255;
 //                    //tmp_label[voxels.at(i)->pos]=voxels[i]->intensity;
 //                }
 //            }
-//            qDebug()<<"2";
 //            QString local_fn=QString::number(dst_floor)+".v3draw";
 //            simple_saveimage_wrapper(*callback, local_fn.toStdString().c_str(), (unsigned char *)tmp_label, label_sz, 1);
 
@@ -802,6 +806,18 @@ bool spine_fun::reverse_dst_grow()
     dst_groups.clear();
     GOV tmp_group;
     int spine_id=3;
+
+    V3DLONG sz_page=sz_img[0]*sz_img[1]*sz_img[2];
+    unsigned char *tmp_label = new unsigned char[sz_page*2];
+    memset(tmp_label,0,sz_page*2*sizeof(unsigned char));
+    memcpy(tmp_label,p_img1D,sz_page);
+
+    label_sz[0]=sz_img[0];
+    label_sz[1]=sz_img[1];
+    label_sz[2]=sz_img[2];
+    label_sz[3]=2;
+
+
     for (V3DLONG i=vid_end;i<voxels.size();i++)
     {
         if (voxels[i]->dst_label==0 || voxels[i]->dst_label>=3) continue;
@@ -824,6 +840,7 @@ bool spine_fun::reverse_dst_grow()
                     tmp_group.push_back(tmp_seed);
                     seeds.push_back(tmp_seed);
                     tmp_seed->dst_label=spine_id;
+                    tmp_label[tmp_seed->pos+sz_page]=255;
                 }
             }
             //qDebug()<<"seeds size:"<<seeds.size();
@@ -834,6 +851,7 @@ bool spine_fun::reverse_dst_grow()
             for (int j=0;j<tmp_group.size();j++)
             {
                 tmp_group[j]->dst_label=0;
+                tmp_label[tmp_group[j]->pos+sz_page]=0;
             }
             continue;
         }
@@ -843,18 +861,22 @@ bool spine_fun::reverse_dst_grow()
             for (int j=0;j<tmp_group.size();j++)
             {
                 tmp_group[j]->dst_label=0;
+                tmp_label[tmp_group[j]->pos+sz_page]=0;
             }
             qDebug()<<"too flat:"<<tmp_group.front()->dst;
             continue;
         }
         dst_groups.push_back(tmp_group);
         spine_id++;
+
     }
     if (dst_groups.size()<=0)
     {
         return false;
     }
 
+    QString local_fn ="final.v3draw";
+    simple_saveimage_wrapper(*callback, local_fn.toStdString().c_str(), (unsigned char *)tmp_label, label_sz, 1);
     return true;
     qDebug()<<"dst_groups grow finished~~~~~~  dst_group size:"<<dst_groups.size()<<"spine id:"<<spine_id;
 }

@@ -5,10 +5,9 @@
  
 #include "spine_detector_plugin.h"
 #include "manual_correct_dialog.h"
-#include "learning.h"
 #include "file_io_dialog.h"
 #include "manual_proofread_dialog.h"
-//#include "manual_proof_is.h"
+#include "manual_proof_is.h"
 //#include "spine_detector_dialog.h"
 #include "combiner.h"
 
@@ -125,7 +124,7 @@ void spine_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     }
     else
         v3d_msg(tr("This tool is designed for spine morphology reconstructions. "
-            "Developed by Yujie Li, 2015-3-11"));
+            "Developed by Yujie Li, 2015-3-11, reviewed 2017-03-07"));
 }
 
 bool spine_detector::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)

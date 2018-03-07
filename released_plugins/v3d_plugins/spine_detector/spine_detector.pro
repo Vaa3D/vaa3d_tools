@@ -7,8 +7,8 @@ V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += $$VDMAINPATH/jba/newmat11
-INCLUDEPATH += ../neurontracing_vn2
-INCLUDEPATH += ../neurontracing_vn2/app2
+INCLUDEPATH += ../../../released_plugins/v3d_plugins/neurontracing_vn2
+INCLUDEPATH += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 
 macx{
     LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
@@ -40,28 +40,22 @@ HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h \
     manual_proof_is.h
 
 HEADERS	+= spine_detector_plugin.h \
-    spine_detector_dialog.h \
-    detect_fun.h \
+    #spine_detector_dialog.h \
+    #detect_fun.h \
     spine_extr_template.h \
-    #../neurontracing_vn2/vn.h \
-    ../neurontracing_vn2/app2/heap.h \
-    ../neurontracing_vn2/app2/fastmarching_dt.h \
-    ../neurontracing_vn2/app2/fastmarching_tree.h \
-    #../neurontracing_vn2/vn_imgpreprocess.h \
+    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/heap.h \
+    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h \
+    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h \
     spine_fun.h \
     manual_correct_dialog.h \
-    read_raw_file.h \
-    learning.h
+    read_raw_file.h
 
 SOURCES	+= spine_detector_plugin.cpp \
-    spine_detector_dialog.cpp \
-    detect_fun.cpp \
-    #../neurontracing_vn2/vn_imgpreprocess.cpp \
-    #../neurontracing_vn2/app2/my_surf_objs.cpp \
+    #spine_detector_dialog.cpp \
+    #detect_fun.cpp \
     spine_fun.cpp \
     manual_correct_dialog.cpp \
     read_raw_file.cpp \
-    learning.cpp \
     file_io_dialog.cpp \
     manual_proofread_dialog.cpp \
     common.cpp \
@@ -77,20 +71,3 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp \
 
 TARGET	= $$qtLibraryTarget(spine_detector)
 DESTDIR	= $$VAA3DPATH/bin/plugins/spine_detector/
-
-#===============mRMR================================================
-HEADERS += mrmr/gnu_getline.h \
-    mrmr/nrutil.h \
-    mrmr/mrmr.h
-
-SOURCES += mrmr/sort2.cpp \
-    mrmr/crank.cpp \
-    mrmr/gnu_getline.c \
-    mrmr/mrmr.cpp \
-    mrmr/nrutil.cpp \
-    mrmr/pbetai.cpp
-
-#===============SVM=================================================
-SOURCES += svm/svm.cpp
-
-HEADERS += svm/svm.h

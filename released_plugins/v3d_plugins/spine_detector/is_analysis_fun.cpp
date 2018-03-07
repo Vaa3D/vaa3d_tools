@@ -15,6 +15,7 @@ is_analysis_fun::is_analysis_fun(V3DPluginCallback2 *cb, QStringList name_list,Q
     param.is_bgthr=para_list[1];
     param.min_voxel=para_list[2];
     param.max_dis=para_list[3];
+    param.max_voxel=8000;  //Apr 6th 2017 by Yujie Li
 
     param.halfwindowsize=30;
     basedir=name_list[2];
@@ -147,6 +148,8 @@ void is_analysis_fun::connected_components()
             //qDebug()<<"small group:"<<seeds.size();
             continue;
         }
+        if (seeds.size()>param.max_voxel)
+            continue;
 
         GOI one_group = GOI(seeds,label_id);
         voxel_groups.push_back(one_group);
