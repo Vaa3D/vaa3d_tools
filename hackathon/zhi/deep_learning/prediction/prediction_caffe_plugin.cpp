@@ -2918,6 +2918,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                     }
                 }
                 if(blockarea) {delete []blockarea; blockarea =0;}
+                if(blockarea_ref) {delete []blockarea_ref; blockarea_ref =0;}
 
             }
         }
