@@ -1699,4 +1699,5 @@ int findingtipsmain()
 
 	clock_t end_clock = clock();
 	std::cout<< (double) difftime(end_clock, start_clock) / (double) CLOCKS_PER_SEC <<'\n';
+    return 1;
 }
