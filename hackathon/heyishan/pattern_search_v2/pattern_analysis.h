@@ -19,7 +19,7 @@ struct Boundary
 
 double dist_p2p(double x1, double y1, double z1, double x2, double y2, double z2);
 
-bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<double> & pt_lens,vector<int>& pt_nums, V3DPluginCallback2 &callback);
+bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<double> & pt_lens, vector<int>& pt_nums);
 NeuronTree fill_boundary(const NeuronTree &nt, const Boundary & b);
 NeuronTree rmSmallPart(NeuronTree & nt_sorted);
 #endif // PATTERN_ANALYSIS_H

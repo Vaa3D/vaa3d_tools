@@ -39,6 +39,7 @@ QStringList pattern_search_v2::funclist() const
 {
 	return QStringList()
 		<<tr("tracing_func")
+        <<tr("batch_search")
 		<<tr("help");
 }
 
@@ -74,6 +75,104 @@ bool pattern_search_v2::dofunc(const QString & func_name, const V3DPluginArgList
 
         ml_func(callback,parent,PARA,bmenu);
 	}
+
+    else if (func_name == tr("batch_search"))
+    {
+        vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+        vector<char*>* outlist = NULL;
+        vector<char*>* paralist = NULL;
+        QString folderPath;
+        QString searchName;
+        QString areaofinterest;
+        QString result_folder;
+        if(inlist->size()==3)
+        {
+            areaofinterest = QString(inlist->at(0));
+            searchName = QString(inlist->at(1));
+            folderPath = QString(inlist->at(2));
+        }
+        else{printf("You need input a boundary, a neuron and search folder path.\n"); return false;}
+
+        if(input.size()==2)
+        {
+            paralist=(vector<char*>*)(input.at(1).p);
+        }
+        else{printf("You need input retrieve number as parameter.\n"); return false;}
+
+        if (output.size()==1)
+        {
+            outlist = (vector<char*>*)(output.at(0).p);
+            result_folder = QString(outlist->at(0));
+        }
+        else{printf("Please specify one output directory.\n");return false;}
+
+        // get pattern
+        vector<double> pt_lens;
+        vector<NeuronTree> pt_list;
+        NeuronTree pt;
+        int pt_len;
+        vector<int> pt_nums;
+        NeuronTree nt_search = readSWC_file(searchName);
+        NeuronTree nt_pattern = readSWC_file(areaofinterest);
+        if(!pattern_analysis(nt_search,nt_pattern,pt_list,pt_lens,pt_nums))
+        {
+            cout<<"something wrong is in pattern_analysis"<<endl;
+            return false;
+        }
+        if(pt_list.size()>=0)
+        {
+            pt = pt_list[0];
+            pt_len = pt_lens[0];
+        }
+        else {printf("Here is no pattern generated!"); return false;}
+        QString savename_pt =  result_folder + "/pt.swc";
+        writeSWC_file(savename_pt,pt);
+        // read files from a folder
+        QStringList swcList = importFileList_addnumbersort(QString(folderPath));
+
+        // main function for batch_search
+        vector<NeuronTree> all_subTrees;
+        QMap<V3DLONG, V3DLONG> subTree2nt;
+        if (!subTree2nt.isEmpty()) {printf("map isn't empty.\n");return false;}
+        for(V3DLONG i = 2; i < swcList.size(); i++)     // the first two are not files
+        {
+            QString curPathSWC = swcList.at(i);
+            int cut1 = curPathSWC.lastIndexOf("/");
+            QString title_0 = curPathSWC.right(curPathSWC.size()-cut1-1);
+            int cut2 = title_0.lastIndexOf(".");
+            QString title_1 = title_0.left(cut2);
+            QString fileName = title_1;          // need to be revised
+            V3DLONG nt_id = fileName.toLongLong();
+
+            NeuronTree nt_temp = readSWC_file(curPathSWC);
+            vector<NeuronTree> subtrees;
+            vector<vector<V3DLONG> > p_to_tree;
+            int pt_num;
+            if(pt_nums.size()>=1) pt_num=pt_nums[0];
+            get_subtrees(nt_temp,subtrees,pt_len,pt_num,p_to_tree);
+
+            // build a map
+           for(int j=0; j<subtrees.size(); j++)
+           {
+               all_subTrees.push_back(subtrees[j]);
+               subTree2nt.insert(all_subTrees.size()-1,nt_id);
+            }
+        }
+
+
+        // retrieve similar subtrees in all neurons
+        vector<V3DLONG> selected_trees;
+        trees_retrieve(all_subTrees,pt,selected_trees);
+        for(V3DLONG i=0; i<selected_trees.size(); i++)
+        {
+            V3DLONG subtree_id = selected_trees[i];
+            NeuronTree tree_temp = all_subTrees[subtree_id];
+            V3DLONG tree_id = subTree2nt[subtree_id];
+            QString subtreeName = result_folder + "/subtree_" +  QString::number(i+1) +"_" + QString::number(tree_id)+".swc";
+            writeSWC_file(subtreeName,tree_temp);
+        }
+        subTree2nt.clear();
+    }
     else if (func_name == tr("help"))
     {
         printf("**** Usage of pattern_search tracing **** \n");
@@ -82,8 +181,13 @@ bool pattern_search_v2::dofunc(const QString & func_name, const V3DPluginArgList
         printf("pattern_file      The input pattern boundary swc\n");
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
         //printf("outmarker_file   Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
-	}
-	else return false;
+        printf("**** Usage of batch search **** \n");
+        printf("vaa3d -x pattern_search -f batch_search -i <areaofinterest.swc> <pattern_file> <folder_path> -o <result_folder> -p 10\n");
+        printf("folder_path       The input folder with search neurons swc\n");
+        printf("pattern_file       The neuron where the pattern on\n");
+        printf("result_folder     The folder store the retrieved subtrees.\n");
+    }
+    else return false;
 
 	return true;
 }
@@ -105,7 +209,7 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     vector<int> pt_nums;
     vector<NeuronTree> pt_list;
     vector<V3DLONG> result_points;
-    if(!pattern_analysis(PARA.nt_search,PARA.nt_pattern,pt_list,pt_lens,pt_nums,callback))
+    if(!pattern_analysis(PARA.nt_search,PARA.nt_pattern,pt_list,pt_lens,pt_nums))
     {
         cout<<"something wrong is in pattern_analysis"<<endl;
         return;
@@ -180,20 +284,33 @@ void ml_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bo
     for(V3DLONG i =0; i<result_points.size();i++)
     {
         V3DLONG id=result_points[i];
-        list_search.listNeuron[id].type =7;    // type=7 means the color is green
+        list_search.listNeuron[id].type =2;    // type=7 means the color is green
     }
     writeSWC_file("updated_vr_neuron.swc",list_search);
     return;
 }
 
 
+//  reference:  combine_file
+QStringList importFileList_addnumbersort(const QString & curFilePath)
+{
+    QStringList myList;
+    myList.clear();
+    // get the iamge files namelist in the directory
+    QStringList imgSuffix;
+    imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
 
-
-
-
-
-
-
-
-
-
+    QDir dir(curFilePath);
+    if(!dir.exists())
+    {
+        cout <<"Cannot find the directory";
+        return myList;
+    }
+    foreach(QString file, dir.entryList()) // (imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+    //print filenames
+    foreach(QString qs, myList) qDebug() << qs;
+    return myList;
+}

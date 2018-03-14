@@ -42,8 +42,6 @@ bool NeuronROIProfiler::nodeROIMIP()
 
 void NeuronROIProfiler::createAugmentedROIList_binMaskBased(string swcMasksPath, string FGpath)
 {
-	
-
 	// ------- Locate every white pixel in each binary mask and push them back into the nodeROI queu
 	int sliceCount = 0;
 	for (directory_iterator itr(swcMasksPath); itr != directory_iterator(); ++itr)

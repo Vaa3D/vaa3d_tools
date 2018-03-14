@@ -257,6 +257,7 @@ bool OpenSWCDialog::chooseNeuronTF()
 {
     NeuronTree nt = callback->getSWCTeraFly();
     ntList.append(nt);
+    markerlist =  callback->getLandmarkTeraFly();
 
     //get neuron
 //    QFileInfo fileinfo(file);
