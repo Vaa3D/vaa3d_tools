@@ -116,6 +116,9 @@ class iim::TiledMCVolume : public iim::VirtualVolume
         iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
                                                    int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException, iom::exception);
 
+        iim::uint8 *loadSubvolume_to_UINT8_MT(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                   int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException, iom::exception);
+
         // moved to VirtualVolume.h by Alessandro on 2014-02-20
 //		//sets active channels
 //        void setActiveChannels ( iim::uint32 *_active, int _n_active );

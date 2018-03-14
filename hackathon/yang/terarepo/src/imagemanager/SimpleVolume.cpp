@@ -35,6 +35,8 @@
 
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "SimpleVolume.h"
 #include "Stack.h"
 #ifdef _WIN32
@@ -566,4 +568,199 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 	}
 
 	return subvol;
+}
+
+uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException, iom::exception)
+{
+    cout<<"SimpleVolume::loadSubvolume_to_UINT8_MT "<<V0<<" "<<V1<<" "<<H0<<" "<<H1<<" "<<D0<<" "<<D1<<" "<<(channels ? *channels : -1)<<endl;
+
+    //checking for non implemented features
+    if( this->BYTESxCHAN > 2 ) {
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN);
+        throw IOException(err_msg);
+    }
+
+    if ( (ret_type != iim::NATIVE_RTYPE) && (ret_type != iim::DEF_IMG_DEPTH) ) {
+        // return type should be converted, but not to 8 bits per channel
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN);
+        throw IOException(err_msg);
+    }
+
+    // reduction factor to be applied to the loaded buffer
+    int red_factor = (ret_type == iim::NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
+
+    cout<< "red_factor ... "<<red_factor<<endl;
+    return NULL;
+
+    char *err_rawfmt;
+
+    //initializations
+    V0 = (V0 == -1 ? 0	     : V0);
+    V1 = (V1 == -1 ? DIM_V   : V1);
+    H0 = (H0 == -1 ? 0	     : H0);
+    H1 = (H1 == -1 ? DIM_H   : H1);
+    D0 = (D0 == -1 ? 0		 : D0);
+    D1 = (D1 == -1 ? DIM_D	 : D1);
+
+    //allocation
+    sint64 sbv_height = V1 - V0;
+    sint64 sbv_width  = H1 - H0;
+    sint64 sbv_depth  = D1 - D0;
+
+    uint8 *subvol = 0;
+
+    bool whole_slices = (V0 == 0 && V1 == DIM_V && H0 == 0 && H1 == DIM_H);
+
+    if ( DIM_C == 1 )
+    {
+        try
+        {
+            subvol = new uint8[sbv_height * sbv_width * sbv_depth * BYTESxCHAN];
+        }
+        catch(...)
+        {
+            cout<<"failed to alloc memory\n";
+            return NULL;
+        }
+    }
+
+    //initializing the number of channels with an undefined value (it will be detected from the first slice read)
+    sint64 sbv_channels = -1;
+
+    //scanning of stacks matrix for data loading and storing into subvol
+    Rect_t subvol_area;
+    subvol_area.H0 = H0;
+    subvol_area.V0 = V0;
+    subvol_area.H1 = H1;
+    subvol_area.V1 = V1;
+
+    //
+    //Rect_t *intersect_area = STACKS[row][col]->Intersects(subvol_area);
+    //
+
+    int bytes_x_chan = getBYTESxCHAN();
+
+    // fstream TIFFs from disk to memory
+    vector<stringstream*> dataInMemory;
+    vector<uint8*> imgList;
+
+    int k;
+    for( k=0; k<sbv_depth; k++)
+    {
+        //building image path
+        char slice_fullpath[STATIC_STRINGS_SIZE];
+
+        int trueSliceIndex = downsamplingFactor * (D0+k);
+        sprintf(slice_fullpath, "%s/%s/%s", root_dir,
+                STACKS[0][0]->getDIR_NAME(),
+                STACKS[0][0]->getFILENAMES()[trueSliceIndex]);
+
+        //
+        ifstream inFile;
+        inFile.open(slice_fullpath);
+        if (!inFile) {
+            cerr << "Unable to open file "<<slice_fullpath<<endl;
+            return NULL;
+        }
+
+        //
+        dataInMemory.push_back(new stringstream);
+        *dataInMemory[k] << inFile.rdbuf();
+
+        //
+        inFile.close();
+
+        //
+        uint8 *slice = subvol + (k*sbv_height*sbv_width*bytes_x_chan);
+        imgList.push_back(slice);
+    }
+
+    // multithreaded read TIFFs from memory
+    omp_set_num_threads(omp_get_max_threads());
+
+    #pragma omp parallel
+    {
+        #pragma omp for
+        for(k=0; k<sbv_depth; k++)
+        {
+            unsigned int sx, sy;
+            readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,downsamplingFactor,V0,V1-1,H0,H1-1);
+        }
+    }
+
+
+
+
+
+//    for(int k=0; k<sbv_depth; k++)
+//    {
+//        //building image path
+//        int trueSliceIndex = downsamplingFactor * (D0+k);
+//        sprintf(slice_fullpath, "%s/%s/%s", root_dir,
+//                STACKS[row][col]->getDIR_NAME(),
+//                STACKS[row][col]->getFILENAMES()[trueSliceIndex]);
+//        //loading image
+
+//        char *err_Tiff3Dfmt;
+
+//        unsigned int rows;
+//        unsigned int cols;
+//        unsigned int n_slices;
+//        unsigned int channels;
+//        int bytes_x_chan;
+//        int swap;
+//        void *dummy;
+//        int dummy_len;
+
+//        if ( (err_Tiff3Dfmt = loadTiff3D2Metadata((char *)slice_fullpath,cols,rows,n_slices,channels,bytes_x_chan,swap,dummy,dummy_len)) != 0 ) {
+//            throw iom::exception(iom::strprintf("unable to read tiff file (%s)",err_Tiff3Dfmt), __iom__current__function__);
+//        }
+//        closeTiff3DFile(dummy);
+
+//        // resize cols and rows
+//        cols = (int)ceil((double)cols/downsamplingFactor);
+//        rows = (int)ceil((double)rows/downsamplingFactor);
+
+//        if ( whole_slices && (rows != sbv_height || cols != sbv_width) ) {
+//            throw iom::exception(iom::strprintf("whole slices to be read: mismatch in slice dimensions ([rows,cols]=%dx%d, [sbv_height,sbv_width]=%dx%d, downsampling factor=%d)",
+//                                                rows, cols, sbv_height, sbv_width, downsamplingFactor), __iom__current__function__);
+//        }
+
+//        auto start = std::chrono::high_resolution_clock::now();
+
+//        uint8 *slice = ( DIM_C == 1 ) ? subvol + (k*sbv_height*sbv_width*bytes_x_chan) : new uint8[sbv_height * sbv_width * channels * bytes_x_chan]; // sbv variable should be used here
+
+//        // cols and rows should be passed here because sbv variables have a different value when a subregion is to be loaded
+//        if ( (err_Tiff3Dfmt = readTiff3DFile2Buffer((char *)slice_fullpath,slice,cols,rows,0,0,downsamplingFactor,V0,V1-1,H0,H1-1)) != 0 ) {
+//            throw iom::exception(iom::strprintf("unable to read tiff file (%s)",err_Tiff3Dfmt), __iom__current__function__);
+//        }
+
+//        auto end = std::chrono::high_resolution_clock::now();
+
+//        cout<<"load slice "<<k<<" takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
+
+//        //computing offsets
+//        sint64 slice_step = sbv_width * bytes_x_chan * channels; // Giulio_CV slice->widthStep / sizeof(uint8); // widthStep takes already into account the number of bytes per channel
+//        int ABS_V_offset = V0 - STACKS[0][0]->getABS_V();
+//        int ABS_H_offset = (H0 - STACKS[0][0]->getABS_H())*((int)sbv_channels);
+
+//        if ( whole_slices && (ABS_V_offset != 0 || ABS_H_offset != 0) ) {
+//            throw iom::exception(iom::strprintf("ABS_V_offset=%d, ABS_H_offset=%d when extracting whole slices",ABS_V_offset,ABS_H_offset), __iom__current__function__);
+//        }
+
+//        //different procedures for 1 and 3 channels images
+//        int istart, iend, jstart, jend;
+//        istart  = intersect_area->V0-V0;
+//        iend    = intersect_area->V1-V0;
+//        jstart  = intersect_area->H0-H0;
+//        jend    = intersect_area->H1-H0;
+
+//        if ( istart !=0 || iend != sbv_height || jstart != 0 || jend != sbv_width ) {
+//            throw iom::exception(iom::strprintf("istart=%d, iend=%d, jstart=%d, jend=%d",istart,iend,jstart,jend), __iom__current__function__);
+//        }
+//    }
+
+    return subvol;
 }

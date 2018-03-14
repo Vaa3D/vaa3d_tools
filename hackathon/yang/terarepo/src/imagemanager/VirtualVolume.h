@@ -42,6 +42,8 @@
 #include <string>
 #include <algorithm>
 
+#include <omp.h>
+
 #include "IM_config.h"
 #include "iomanager.config.h"
 
@@ -129,6 +131,9 @@ public:
      *          number of channels that have been previously set to be returned by method 'setActiveChannels'
      */
     virtual iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                               int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException, iom::exception) = 0;
+
+    virtual iim::uint8 *loadSubvolume_to_UINT8_MT(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
                                                int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException, iom::exception) = 0;
 
     // ******GET METHODS******

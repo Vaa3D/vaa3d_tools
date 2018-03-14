@@ -2124,15 +2124,15 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         //}
 
         // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-        TERAFLY_TIME_START(ConverterLoadBlockOperation)
+        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+        TERAFLY_TIME_START(ConverterLoadBlockOperation);
         #endif
 
-                // fill one slice block
-                //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
+        // fill one slice block
+        //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
 
-                if ( internal_rep == REAL_INTERNAL_REP )
-                rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
+        if ( internal_rep == REAL_INTERNAL_REP )
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
         else { // internal_rep == UINT8_INTERNAL_REP
             // 2015-12-19. Giulio. @ADDED Subvolume conversion
             //ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
@@ -3020,7 +3020,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
 
             auto start = std::chrono::high_resolution_clock::now();
 
-            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
+            ubuffer[0] = volume->loadSubvolume_to_UINT8_MT(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
 
             auto end = std::chrono::high_resolution_clock::now();
 
