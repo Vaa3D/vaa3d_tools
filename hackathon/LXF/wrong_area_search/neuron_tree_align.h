@@ -1,0 +1,4 @@
+#ifndef NEURON_TREE_ALIGN_H
+#define NEURON_TREE_ALIGN_H
+
+#endif // NEURON_TREE_ALIGN_H

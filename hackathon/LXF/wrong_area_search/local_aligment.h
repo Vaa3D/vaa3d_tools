@@ -1,0 +1,4 @@
+#ifndef LOCAL_ALIGMENT_H
+#define LOCAL_ALIGMENT_H
+
+#endif // LOCAL_ALIGMENT_H

@@ -1,0 +1,4 @@
+#ifndef FIND_WRONG_AREA_H
+#define FIND_WRONG_AREA_H
+
+#endif // FIND_WRONG_AREA_H
