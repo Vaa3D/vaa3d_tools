@@ -35,7 +35,7 @@ void neuron_assembler_live::domenu(const QString &menu_name, V3DPluginCallback2 
         if(!openDlg->exec())
             return;
         assemDlg = NULL;
-        assemDlg = new assemble_neuron_live_dialog(&callback, openDlg->ntList, openDlg->p_img4d, parent);
+        assemDlg = new assemble_neuron_live_dialog(&callback, openDlg->ntList, openDlg->p_img4d, openDlg->markerlist, parent);
         assemDlg->show();
     }else if (menu_name == tr("load_new_stack"))
     {
