@@ -14,6 +14,7 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(blastneuron_bjut, blastneuron_bjutPlugin);
  
+
 QStringList blastneuron_bjutPlugin::menulist() const
 {
 	return QStringList() 

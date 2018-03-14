@@ -86,8 +86,8 @@ bool get_subtrees(const NeuronTree &nt, vector<NeuronTree> &sub_trees, double bo
     // get subtrees
     double step_radio= 0.05;
     int search_step = int(boundary_length * step_radio);
-    //int search_step = 5;
     if(search_step<4)   search_step=4;
+    search_step = 6;
     cout<<"search_step="<<search_step<<endl;
 
     // get subtrees in whole nt
