@@ -986,12 +986,9 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
     return (char *) 0;
 }
 
-void readTiff( stringstream *dataStreamInMemory, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last,
+void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last,
                 int downsamplingFactor, int starti, int endi, int startj, int endj )
 {
-
-    cout<<"readTiff ... downsamplingFactor "<<downsamplingFactor<<endl;
-
     //
     TIFF* input = TIFFStreamOpen("MemTIFF", (istream *)dataStreamInMemory);
 

@@ -589,12 +589,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
     }
 
     // reduction factor to be applied to the loaded buffer
-    int red_factor = (ret_type == iim::NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
-
-    cout<< "red_factor ... "<<red_factor<<endl;
-    return NULL;
-
-    char *err_rawfmt;
+    // int red_factor = (ret_type == iim::NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
 
     //initializations
     V0 = (V0 == -1 ? 0	     : V0);
@@ -611,7 +606,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
 
     uint8 *subvol = 0;
 
-    bool whole_slices = (V0 == 0 && V1 == DIM_V && H0 == 0 && H1 == DIM_H);
+    //bool whole_slices = (V0 == 0 && V1 == DIM_V && H0 == 0 && H1 == DIM_H);
 
     if ( DIM_C == 1 )
     {
@@ -627,7 +622,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
     }
 
     //initializing the number of channels with an undefined value (it will be detected from the first slice read)
-    sint64 sbv_channels = -1;
+    //sint64 sbv_channels = -1;
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;
@@ -689,9 +684,6 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
             readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,downsamplingFactor,V0,V1-1,H0,H1-1);
         }
     }
-
-
-
 
 
 //    for(int k=0; k<sbv_depth; k++)
