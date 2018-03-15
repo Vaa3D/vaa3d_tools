@@ -647,7 +647,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
         //building image path
         char slice_fullpath[STATIC_STRINGS_SIZE];
 
-        int trueSliceIndex = downsamplingFactor * (D0+k);
+        int trueSliceIndex = (D0+k);
         sprintf(slice_fullpath, "%s/%s/%s", root_dir,
                 STACKS[0][0]->getDIR_NAME(),
                 STACKS[0][0]->getFILENAMES()[trueSliceIndex]);
@@ -681,78 +681,9 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
         for(k=0; k<sbv_depth; k++)
         {
             unsigned int sx, sy;
-            readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,downsamplingFactor,V0,V1-1,H0,H1-1);
+            readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,V0,V1-1,H0,H1-1);
         }
     }
-
-
-//    for(int k=0; k<sbv_depth; k++)
-//    {
-//        //building image path
-//        int trueSliceIndex = downsamplingFactor * (D0+k);
-//        sprintf(slice_fullpath, "%s/%s/%s", root_dir,
-//                STACKS[row][col]->getDIR_NAME(),
-//                STACKS[row][col]->getFILENAMES()[trueSliceIndex]);
-//        //loading image
-
-//        char *err_Tiff3Dfmt;
-
-//        unsigned int rows;
-//        unsigned int cols;
-//        unsigned int n_slices;
-//        unsigned int channels;
-//        int bytes_x_chan;
-//        int swap;
-//        void *dummy;
-//        int dummy_len;
-
-//        if ( (err_Tiff3Dfmt = loadTiff3D2Metadata((char *)slice_fullpath,cols,rows,n_slices,channels,bytes_x_chan,swap,dummy,dummy_len)) != 0 ) {
-//            throw iom::exception(iom::strprintf("unable to read tiff file (%s)",err_Tiff3Dfmt), __iom__current__function__);
-//        }
-//        closeTiff3DFile(dummy);
-
-//        // resize cols and rows
-//        cols = (int)ceil((double)cols/downsamplingFactor);
-//        rows = (int)ceil((double)rows/downsamplingFactor);
-
-//        if ( whole_slices && (rows != sbv_height || cols != sbv_width) ) {
-//            throw iom::exception(iom::strprintf("whole slices to be read: mismatch in slice dimensions ([rows,cols]=%dx%d, [sbv_height,sbv_width]=%dx%d, downsampling factor=%d)",
-//                                                rows, cols, sbv_height, sbv_width, downsamplingFactor), __iom__current__function__);
-//        }
-
-//        auto start = std::chrono::high_resolution_clock::now();
-
-//        uint8 *slice = ( DIM_C == 1 ) ? subvol + (k*sbv_height*sbv_width*bytes_x_chan) : new uint8[sbv_height * sbv_width * channels * bytes_x_chan]; // sbv variable should be used here
-
-//        // cols and rows should be passed here because sbv variables have a different value when a subregion is to be loaded
-//        if ( (err_Tiff3Dfmt = readTiff3DFile2Buffer((char *)slice_fullpath,slice,cols,rows,0,0,downsamplingFactor,V0,V1-1,H0,H1-1)) != 0 ) {
-//            throw iom::exception(iom::strprintf("unable to read tiff file (%s)",err_Tiff3Dfmt), __iom__current__function__);
-//        }
-
-//        auto end = std::chrono::high_resolution_clock::now();
-
-//        cout<<"load slice "<<k<<" takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
-
-//        //computing offsets
-//        sint64 slice_step = sbv_width * bytes_x_chan * channels; // Giulio_CV slice->widthStep / sizeof(uint8); // widthStep takes already into account the number of bytes per channel
-//        int ABS_V_offset = V0 - STACKS[0][0]->getABS_V();
-//        int ABS_H_offset = (H0 - STACKS[0][0]->getABS_H())*((int)sbv_channels);
-
-//        if ( whole_slices && (ABS_V_offset != 0 || ABS_H_offset != 0) ) {
-//            throw iom::exception(iom::strprintf("ABS_V_offset=%d, ABS_H_offset=%d when extracting whole slices",ABS_V_offset,ABS_H_offset), __iom__current__function__);
-//        }
-
-//        //different procedures for 1 and 3 channels images
-//        int istart, iend, jstart, jend;
-//        istart  = intersect_area->V0-V0;
-//        iend    = intersect_area->V1-V0;
-//        jstart  = intersect_area->H0-H0;
-//        jend    = intersect_area->H1-H0;
-
-//        if ( istart !=0 || iend != sbv_height || jstart != 0 || jend != sbv_width ) {
-//            throw iom::exception(iom::strprintf("istart=%d, iend=%d, jstart=%d, jend=%d",istart,iend,jstart,jend), __iom__current__function__);
-//        }
-//    }
 
     return subvol;
 }

@@ -986,8 +986,7 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
     return (char *) 0;
 }
 
-void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last,
-                int downsamplingFactor, int starti, int endi, int startj, int endj )
+void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int starti, int endi, int startj, int endj )
 {
     //
     TIFF* input = TIFFStreamOpen("MemTIFF", (istream *)dataStreamInMemory);
@@ -1154,173 +1153,104 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
     unsigned char *buf = img;
     int page=0;
 
-    if ( downsamplingFactor == 1 ) { // read without downsampling
+    if ( starti < 0 || endi >= img_height || startj < 0 || endj >= img_width || starti >= endi || startj >= endj )
+    {
+        cout<<"Wrong substack indices."<<endl;
+        return;
+    }
 
-        if ( starti < 0 || endi >= img_height || startj < 0 || endj >= img_width || starti >= endi || startj >= endj )
+    if ( starti == 0 && endi == (img_height-1) && startj == 0 && endj == (img_width-1) ) { // read whole images from files
+
+        if (!TIFFSetDirectory(input, first))
         {
-            cout<<"Wrong substack indices."<<endl;
+            TIFFClose(input);
+            dataStreamInMemory->clear();
             return;
         }
 
-        if ( starti == 0 && endi == (img_height-1) && startj == 0 && endj == (img_width-1) ) { // read whole images from files
+        do{
 
-            if (!TIFFSetDirectory(input, first))
+            for (int i=0; i < StripsPerImage-1; i++){
+                if (comp==1) {
+                    TIFFReadRawStrip(input, i, buf, spp * rps * img_width * (bpp/8));
+                    buf = buf + spp * rps * img_width * (bpp/8);
+                }
+                else{
+                    TIFFReadEncodedStrip(input, i, buf, spp * rps * img_width * (bpp/8));
+                    buf = buf + spp * rps * img_width * (bpp/8);
+                }
+            }
+
+            if (comp==1) {
+                TIFFReadRawStrip(input, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
+            }
+            else{
+                TIFFReadEncodedStrip(input, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
+            }
+            buf = buf + spp * LastStripSize * img_width * (bpp/8);
+
+            page++;
+
+        }while ( page < static_cast<int>(last-first+1) && TIFFReadDirectory(input));//while (TIFFReadDirectory(input));
+
+    }
+    else { // read only a subregion of images from files
+
+        unsigned int XSIZE = img_width;
+
+        unsigned char *rowbuf = new unsigned char[spp * rps * XSIZE * (bpp/8)];
+        unsigned char *bufptr;
+
+        do{
+            if (!TIFFSetDirectory(input, first + page))
             {
                 TIFFClose(input);
                 dataStreamInMemory->clear();
                 return;
             }
 
-            do{
-
-                for (int i=0; i < StripsPerImage-1; i++){
+            int stripIndex = (starti / rps) - 1; // the strip preceeding the first one
+            for (int i=starti; i <= endi; i++) {
+                if ( floor((double)i / rps) > stripIndex ) { // read a new strip
+                    stripIndex = (int)floor((double)i / rps);
                     if (comp==1) {
-                        TIFFReadRawStrip(input, i, buf, spp * rps * img_width * (bpp/8));
-                        buf = buf + spp * rps * img_width * (bpp/8);
+                        TIFFReadRawStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
                     }
                     else{
-                        TIFFReadEncodedStrip(input, i, buf, spp * rps * img_width * (bpp/8));
-                        buf = buf + spp * rps * img_width * (bpp/8);
+                        TIFFReadEncodedStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
                     }
                 }
-
-                if (comp==1) {
-                    TIFFReadRawStrip(input, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
-                }
-                else{
-                    TIFFReadEncodedStrip(input, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
-                }
-                buf = buf + spp * LastStripSize * img_width * (bpp/8);
-
-                page++;
-
-            }while ( page < static_cast<int>(last-first+1) && TIFFReadDirectory(input));//while (TIFFReadDirectory(input));
-
-        }
-        else { // read only a subregion of images from files
-
-            unsigned int XSIZE = img_width;
-
-            unsigned char *rowbuf = new unsigned char[spp * rps * XSIZE * (bpp/8)];
-            unsigned char *bufptr;
-
-            do{
-                if (!TIFFSetDirectory(input, first + page))
-                {
-                    TIFFClose(input);
-                    dataStreamInMemory->clear();
-                    return;
-                }
-
-                int stripIndex = (starti / rps) - 1; // the strip preceeding the first one
-                for (int i=starti; i <= endi; i++) {
-                    if ( floor((double)i / rps) > stripIndex ) { // read a new strip
-                        stripIndex = (int)floor((double)i / rps);
-                        if (comp==1) {
-                            TIFFReadRawStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
-                        }
-                        else{
-                            TIFFReadEncodedStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
+                bufptr = rowbuf + (i % rps) * (spp * XSIZE * (bpp/8));
+                if ( bpp == 8 )
+                    for (int j=0, j1=startj; j<=(endj-startj); j++, j1++) {
+                        for (int c=0; c<spp; c++) {
+                            buf[j * spp + c] = bufptr[j1 * spp + c];
                         }
                     }
-                    bufptr = rowbuf + (i % rps) * (spp * XSIZE * (bpp/8));
-                    if ( bpp == 8 )
-                        for (int j=0, j1=startj; j<=(endj-startj); j++, j1++) {
-                            for (int c=0; c<spp; c++) {
-                                buf[j * spp + c] = bufptr[j1 * spp + c];
-                            }
+                else
+                    for (int j=0 , j1=startj; j<=(endj-startj); j++, j1++) {
+                        for (int c=0; c<spp; c++) {
+                            ((uint16 *)buf)[j * spp + c] = ((uint16 *)bufptr)[j1 * spp + c];
                         }
-                    else
-                        for (int j=0 , j1=startj; j<=(endj-startj); j++, j1++) {
-                            for (int c=0; c<spp; c++) {
-                                ((uint16 *)buf)[j * spp + c] = ((uint16 *)bufptr)[j1 * spp + c];
-                            }
-                        }
-                    buf = buf + spp * (endj-startj+1) * (bpp/8);
-                }
+                    }
+                buf = buf + spp * (endj-startj+1) * (bpp/8);
+            }
 
-                page++;
+            page++;
 
-            }while ( page < static_cast<int>(last-first+1) );
+        }while ( page < static_cast<int>(last-first+1) );
 
-            delete []rowbuf;
+        delete []rowbuf;
 
-        }
-
-        if ( page < static_cast<int>(last-first+1) ){
-            return;
-        }
     }
-    else { // read with downsampling
 
-//        // preliminary checks
-//        if ( starti != 0 || endi != (img_height-1) || startj != 0 || endj != (img_width-1) ) { // a subregion has been requested
-//           cout<< "Subregion extraction not supported with downsampling."<<endl;
-//           return;
-//        }
-//        check=TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &XSIZE);
-//        if (!check)
-//        {
-//            return ((char *) "Image width of undefined.");
-//        }
-//        check=TIFFGetField(input, TIFFTAG_IMAGELENGTH, &YSIZE);
-//        if (!check)
-//        {
-//            return ((char *) "Image length of undefined.");
-//        }
-
-//        if ( (int)ceil((double)XSIZE/downsamplingFactor) < img_width )
-//        {
-//            return ((char *) "Requested image width too large.");
-//        }
-//        if ( (int)ceil((double)YSIZE/downsamplingFactor) < img_height )
-//        {
-//            return ((char *) "Requested image height too large.");
-//        }
-
-//        unsigned char *rowbuf = new unsigned char[spp * rps * XSIZE * (bpp/8)];
-//        unsigned char *bufptr;
-
-//        do{
-//            check=TIFFSetDirectory(input, ((first + page) * downsamplingFactor));
-//            if (!check)
-//            {
-//                return ((char *) "Cannot open next requested strip.");
-//            }
-
-//            int stripIndex = -1; // the strip preceeding the first one
-//            for (int i=0; i < img_height; i++) {
-//                if ( floor(i * downsamplingFactor / (double)rps) > stripIndex ) { // read a new strip
-//                    stripIndex = (int)floor(i * downsamplingFactor / (double)rps);
-//                    if (comp==1) {
-//                        TIFFReadRawStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
-//                    }
-//                    else{
-//                        TIFFReadEncodedStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
-//                    }
-//                }
-//                bufptr = rowbuf + ((i * downsamplingFactor) % rps) * (spp * XSIZE * (bpp/8));
-//                if ( bpp == 8 )
-//                    for (int j=0; j<img_width; j++) {
-//                        for (int c=0; c<spp; c++) {
-//                            buf[j * spp + c] = bufptr[j * spp * downsamplingFactor + c];
-//                        }
-//                    }
-//                else
-//                    for (int j=0; j<img_width; j++) {
-//                        for (int c=0; c<spp; c++) {
-//                            ((uint16 *)buf)[j * spp + c] = ((uint16 *)bufptr)[j * spp * downsamplingFactor + c];
-//                        }
-//                    }
-//                buf = buf + spp * img_width * (bpp/8);
-//            }
-
-//            page++;
-
-//        }while ( page < static_cast<int>(last-first+1) );
-
-//        delete []rowbuf;
+    if ( page < static_cast<int>(last-first+1) ){
+        return;
     }
+
+    //
+    TIFFClose(input);
+    dataStreamInMemory->clear();
 
     // swap the data bytes if necessary
     if (b_swap)
