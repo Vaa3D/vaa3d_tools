@@ -48,6 +48,9 @@
 // Giulio_CV #include <cxcore.h>
 // Giulio_CV #include <cv.h>
 // Giulio_CV #include <highgui.h>
+#include <unistd.h>
+#include <memory>
+
 #include "Tiff3DMngr.h"
 #include "RawFmtMngr.h"
 
@@ -55,6 +58,29 @@
 
 using namespace std;
 using namespace iim;
+
+
+//
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+    vm_usage     = 0.0;
+    resident_set = 0.0;
+
+    // the two fields we want
+    unsigned long vsize;
+    long rss;
+    {
+        std::string ignore;
+        std::ifstream ifs("/proc/self/stat", std::ios_base::in);
+        ifs >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> vsize >> rss;
+    }
+
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+    vm_usage = vsize / 1024.0;
+    resident_set = rss * page_size_kb;
+}
 
 // 2015-04-15. Alessandro. @ADDED definition for default constructor.
 SimpleVolume::SimpleVolume(void) : VirtualVolume()
@@ -641,6 +667,10 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
     vector<stringstream*> dataInMemory;
     vector<uint8*> imgList;
 
+//    double vm, rss;
+//    process_mem_usage(vm, rss);
+//    cout << "0: VM: " << vm << "; RSS: " << rss << endl;
+
     int k;
     for( k=0; k<sbv_depth; k++)
     {
@@ -685,5 +715,6 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, in
         }
     }
 
+    //
     return subvol;
 }

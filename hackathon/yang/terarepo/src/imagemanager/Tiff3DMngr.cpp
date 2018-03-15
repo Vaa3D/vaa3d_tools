@@ -986,6 +986,13 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
     return (char *) 0;
 }
 
+void ssclear(stringstream *stringStreamInMemory)
+{
+    stringStreamInMemory->clear();
+    stringStreamInMemory->str(string());
+    delete stringStreamInMemory;
+}
+
 void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int starti, int endi, int startj, int endj )
 {
     //
@@ -1000,21 +1007,21 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
     if (!TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &img_width))
     {
         TIFFClose(input);
-        dataStreamInMemory->clear();
+        ssclear(dataStreamInMemory);
         return;
     }
 
     if (!TIFFGetField(input, TIFFTAG_IMAGELENGTH, &img_height))
     {
         TIFFClose(input);
-        dataStreamInMemory->clear();
+        ssclear(dataStreamInMemory);
         return;
     }
 
     if (!TIFFGetField(input, TIFFTAG_BITSPERSAMPLE, &bpp))
     {
         TIFFClose(input);
-        dataStreamInMemory->clear();
+        ssclear(dataStreamInMemory);
         return;
     }
 
@@ -1029,21 +1036,21 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
     if (!TIFFGetField(input, TIFFTAG_PHOTOMETRIC, &photo))
     {
         TIFFClose(input);
-        dataStreamInMemory->clear();
+        ssclear(dataStreamInMemory);
         return;
     }
 
     if (!TIFFGetField(input, TIFFTAG_COMPRESSION, &comp))
     {
         TIFFClose(input);
-        dataStreamInMemory->clear();
+        ssclear(dataStreamInMemory);
         return;
     }
 
     if (!TIFFGetField(input, TIFFTAG_PLANARCONFIG, &planar_config))
     {
         TIFFClose(input);
-        dataStreamInMemory->clear();
+        ssclear(dataStreamInMemory);
         return;
     }
 
@@ -1142,6 +1149,7 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
     {
         TIFFClose(input);
         dataStreamInMemory->clear();
+        dataStreamInMemory->str(string());
         return;
     }
 
@@ -1165,6 +1173,7 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
         {
             TIFFClose(input);
             dataStreamInMemory->clear();
+            dataStreamInMemory->str(string());
             return;
         }
 
@@ -1205,7 +1214,7 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
             if (!TIFFSetDirectory(input, first + page))
             {
                 TIFFClose(input);
-                dataStreamInMemory->clear();
+                ssclear(dataStreamInMemory);
                 return;
             }
 
@@ -1250,7 +1259,7 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
 
     //
     TIFFClose(input);
-    dataStreamInMemory->clear();
+    ssclear(dataStreamInMemory);
 
     // swap the data bytes if necessary
     if (b_swap)

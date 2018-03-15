@@ -17,11 +17,7 @@ include_directories (${TeraStitcher_SOURCE_DIR}/3rdparty/tinyxml)
 # add STATIC library from all .h and .cpp files
 file(GLOB imagemanager_headers *.h *.hxx)
 file(GLOB imagemanager_sources *.cpp *.cxx *.c)
-
 list(APPEND imagemanager_sources ${CMAKE_SOURCE_DIR}/3rdparty/libtiff/tif_stream.cxx )
-
-message(${imagemanager_sources})
-
 add_library(imagemanager STATIC ${imagemanager_headers} ${imagemanager_sources})
 set_target_properties(imagemanager PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_library(imagemanager_obj OBJECT ${imagemanager_headers} ${imagemanager_sources})
