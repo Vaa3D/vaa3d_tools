@@ -39,6 +39,9 @@ public:
 	template<class T1, class T2>
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 	/******************************************/
+
+	/********* Other utilities *********/
+	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 };
 
 template<class T1, class T2>

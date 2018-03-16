@@ -32,7 +32,7 @@ public:
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[4], int datatype);
 	/**********************/
 
-	/********* Functionalities for generating binary masks from SWC files *********/
+	/********* Methods for generating binary masks from SWC files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
 	bool getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, MyMarker m2);
 
@@ -71,8 +71,7 @@ inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char* p
 		return false;
 	}
 	outimg->saveImage(filename);
-	delete outimg;
-
+	
 	return true;
 }
 

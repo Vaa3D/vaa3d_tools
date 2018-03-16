@@ -54,6 +54,9 @@ Label_error_simple_loadimage_wrapper:
 
 void ImgManager::MaskMIPfrom2Dseries(string path)
 {
+	// -- Generate MIP of a series of SWC binary masks.
+	// path: the directory in which SWC binary masks are stored.
+
 	vector<string> maskName;
 	for (directory_iterator itr(path); itr != directory_iterator(); ++itr)
 	{
@@ -102,6 +105,10 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 
 void ImgManager::swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D)
 {
+	// -- This is function is borrowed and modified from Hanchuan's swc2mask functionalities. 
+	//    It create a corresponding binary mask of a given SWC file with image size specified.
+	// dims: image dimension
+
 	long int tol_sz = dims[0] * dims[1];
 	if (mask1D == 0) mask1D = new unsigned char[tol_sz]; 
 	for (long i = 0; i < tol_sz; ++i) mask1D[i] = 0;
@@ -135,6 +142,8 @@ void ImgManager::swc2Mask_2D(string swcFileName, long int dims[2], unsigned char
 
 bool ImgManager::getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, MyMarker m2)
 {
+	// This is function is borrowed from Hanchuan's swc2mask functionalities. It create binary area between nodes by interpolating the radius.
+
 	double A = m2.x - m1.x;
 	double B = m2.y - m1.y;
 	double C = m2.z - m1.z;
@@ -173,7 +182,6 @@ bool ImgManager::getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, My
 					if (i * i + j * j + k * k > radius2) continue;
 					double x = i, y = j, z = k;
 					double x1, y1, z1;
-
 
 					//rotate_coordinate_z_clockwise(ctz, stz, x, y, z);
 					//rotate_along_y_clockwise     (cty, sty, x, y, z);

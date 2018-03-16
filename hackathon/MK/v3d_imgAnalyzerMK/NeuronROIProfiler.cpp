@@ -42,7 +42,8 @@ bool NeuronROIProfiler::nodeROIMIP()
 
 void NeuronROIProfiler::createAugmentedROIList_binMaskBased(string swcMasksPath, string FGpath)
 {
-	// ------- Locate every white pixel in each binary mask and push them back into the nodeROI queu
+	// -- This method generate nodeROIs of every single voxel from tubular SWC binary masks.
+
 	int sliceCount = 0;
 	for (directory_iterator itr(swcMasksPath); itr != directory_iterator(); ++itr)
 	{
@@ -68,7 +69,7 @@ void NeuronROIProfiler::createAugmentedROIList_binMaskBased(string swcMasksPath,
 			cout << "[mask slice No:" << zSliceNum << " count: " << sliceCount << "] ";
 
 			int nodeROIcount = 0;
-			if (FGpath.compare("none") != 0)
+			if (FGpath.compare("none") != 0) // If FGPath is specified, nodeROI will be selected under foreground masks's constraint.
 			{
 				string prefix;
 				if (zSliceNum < 10) prefix = "_0000";
@@ -124,7 +125,7 @@ void NeuronROIProfiler::createAugmentedROIList_binMaskBased(string swcMasksPath,
 			delete swcMaskPtr;
 		}
 	}	
-	// - END of [Locate every white pixel in each binary mask and push them back into the nodeROI queu]
+	
 	cout << endl;
 }
 

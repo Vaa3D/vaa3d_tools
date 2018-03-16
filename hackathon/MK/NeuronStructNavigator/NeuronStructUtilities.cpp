@@ -1,17 +1,24 @@
 #include <iostream>
 #include <list>
 #include <deque>
+#include <string>
+#include <iterator>
 #include <ctime>
+
+#include <boost\filesystem.hpp>
 
 #include "NeuronStructUtilities.h"
 
 using namespace std;
+using namespace boost;
 
 void swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)
 {
+	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
+
 	QList<NeuronSWC> inputList = inputTreePtr->listNeuron;
 	int zMax = 0;
-	ptrdiff_t thicknessPtrDiff = ptrdiff_t(thickness); // Determining how many z sections to be included in 1 single slize.
+	ptrdiff_t thicknessPtrDiff = ptrdiff_t(thickness); // Determining how many z sections to be included in 1 single slice.
 	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
 	{
 		it->z = round(it->z);
@@ -62,11 +69,48 @@ void swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int
 		outputTreesPtr->push_back(*it);
 }
 
-void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance)
+void swcSliceAssembler(string swcPath)
 {
+	// This function only puts [SLICED SWC files] together without touching any topological structures.
+	// z coordinates are adjusted based on the slice number specified in each SWC file name.
+
+	NeuronTree outputTree;
+	for (filesystem::directory_iterator itr(swcPath); itr != filesystem::directory_iterator(); ++itr)
+	{
+		string fileName = itr->path().filename().string();
+
+		string fileExtCheck = fileName.substr(fileName.length() - 3, 3);
+		if (fileExtCheck.compare("swc") != 0) continue;
+
+		string sliceNumString = fileName.substr(1, 5);
+		int sliceNum = stoi(sliceNumString);
+
+		string currentSWCfullName = swcPath + "\\" + fileName;
+		QString currentSWCfullNameQ = QString::fromStdString(currentSWCfullName);
+		NeuronTree currentTree = readSWC_file(currentSWCfullNameQ);
+		for (QList<NeuronSWC>::iterator nodeIt = currentTree.listNeuron.begin(); nodeIt != currentTree.listNeuron.end(); ++nodeIt)
+		{
+			nodeIt->z = sliceNum;
+			outputTree.listNeuron.push_back(*nodeIt);
+		}
+	}
+
+	QString outputFileName = QString::fromStdString(swcPath) + "\\assembledSWC.swc";
+	writeSWC_file(outputFileName, outputTree);
+}
+
+/* =================================== Volumetric SWC sampling methods =================================== */
+void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance) 
+{
+	// -- Randomly generate signal patches within given distance range
+	// ratio:    the ratio of targeted number of patches to the number of nodes in the inputTree
+	// distance: the radius allowed with SWC node centered
+
+	cout << "target signal patch number: " << int(inputTreePtr->listNeuron.size() * ratio) << endl;
 	int nodeCount = 0;
 	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
 	{
+		outputTreePtr->listNeuron.push_back(*it);
 		int foldCount = 0;
 		while (foldCount <= ratio)
 		{
@@ -89,76 +133,23 @@ void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float rati
 			++foldCount;
 		}
 	}
-
-
-	/*deque<NeuronSWC> swcQueu;
-	float xMin = 10000, xMax = 0;
-	float yMin = 10000, yMax = 0;
-	float zMin = 10000, zMax = 0;
-	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-	{
-		if (it->x <= xMin) xMin = it->x;
-		if (it->x >= xMax) xMax = it->x;
-		if (it->y <= yMin) yMin = it->y;
-		if (it->y >= yMax) yMax = it->y;
-		if (it->z <= zMin) zMin = it->z;
-		if (it->z >= zMax) zMax = it->z;
-		swcQueu.push_back(*it);
-	}*/
-
-	//int targetNodeNum = int(inputTreePtr->listNeuron.size() * ratio);
-	//int nodeCount = 0;
-	//while (nodeCount <= targetNodeNum)
-	//{
-		
-
-		/*int randNumX = rand() % int(xMax - xMin + 1) + int(xMin);
-		int randNumY = rand() % int(yMax - yMin + 1) + int(yMin);
-		int randNumZ = rand() % int(zMax - zMin + 1) + int(zMin);
-
-		bool flag = false;
-		for (deque<NeuronSWC>::iterator it = swcQueu.begin(); it != swcQueu.end(); ++it)
-		{
-			float distSqr;
-			float diffx = float(randNumX) - it->x;
-			float diffy = float(randNumY) - it->y;
-			float diffz = float(randNumZ) - it->z;
-			distSqr = diffx * diffx + diffy * diffy + diffz * diffz;
-
-			if (distSqr >= distance * distance)
-			{
-				flag = true;
-				break;
-			}
-		}
-
-		if (flag == false)
-		{
-			++nodeCount;
-			if (nodeCount % 10000 == 0) cout << nodeCount << " signal nodes generated." << endl;
-
-			NeuronSWC newNode;
-			newNode.x = randNumX;
-			newNode.y = randNumY;
-			newNode.z = randNumZ;
-			newNode.type = 2;
-			newNode.radius = 1;
-			newNode.parent = -1;
-			outputTreePtr->listNeuron.push_back(newNode);
-		}*/
-	//}
 }
 
 void bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int dims[], float ratio, float distance)
 {
+	// -- Randomly generate background patches away from the forbidden distance
+	// dims:     image stack dimension
+	// ratio:    the ratio of targeted number of patches to the number of nodes in the inputTree
+	// distance: the forbidden distance from each SWC node
+
 	QList<NeuronSWC> neuronList = inputTreePtr->listNeuron;
 	int targetBkgNodeNum = int(neuronList.size() * ratio);
 	cout << targetBkgNodeNum << " targeted bkg nodes to ge generated." << endl;
 	int bkgNodeCount = 0;
 	while (bkgNodeCount <= targetBkgNodeNum)
 	{
-		int randNumX = rand() % (dims[0] - 200) + 200;
-		int randNumY = rand() % (dims[1] - 200) + 200;
+		int randNumX = rand() % (dims[0] - 400) + 200;
+		int randNumY = rand() % (dims[1] - 400) + 200;
 		int randNumZ = rand() % dims[2];
 
 		bool flag = false;
@@ -196,6 +187,11 @@ void bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int d
 
 void bkgNode_Gen_somaArea(NeuronTree* intputTreePtr, NeuronTree* outputTreePtr, int xLength, int yLength, int zLength, float ratio, float distance)
 {
+	// -- Randomly generate background patches away from the forbidden distance. This method aims to reinforce the background recognition near soma area.
+	// xLength, yLength, zLength: decide the range to apply with soma centered
+	// ratio:    the ratio of targeted number of patches to the number of nodes in the inputTree
+	// distance: the forbidden distance from each SWC node
+
 	NeuronSWC somaNode;
 	for (QList<NeuronSWC>::iterator it = intputTreePtr->listNeuron.begin(); it != intputTreePtr->listNeuron.end(); ++it)
 	{
@@ -257,3 +253,4 @@ void bkgNode_Gen_somaArea(NeuronTree* intputTreePtr, NeuronTree* outputTreePtr, 
 		}
 	}
 }
+/* =================================== Volumetric SWC sampling methods =================================== */

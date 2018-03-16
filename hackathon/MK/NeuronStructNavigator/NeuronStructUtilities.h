@@ -11,8 +11,9 @@
 
 using namespace std;
 
-// ------- swcSlicer disembles SWC into "SWC slices" based on z coordinates ------- //
+// ------- swcSlicer dissembles SWC into "SWC slices" based on z coordinates ------- //
 void swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness = 0);
+void swcSliceAssembler(string swcPath);
 
 void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance);
 
