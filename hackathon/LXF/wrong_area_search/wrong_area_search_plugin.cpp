@@ -54,9 +54,7 @@ bool wrong_area_searchPlugin::dofunc(const QString & func_name, const V3DPluginA
 
     if (func_name == tr("wrong_area_search"))
 	{
-       // v3d_msg("This is find wrong area.");
-        find_wrong_area(input,output);
-
+        find_wrong_area(input,output,callback);
     }
 	else if (func_name == tr("help"))
 	{
