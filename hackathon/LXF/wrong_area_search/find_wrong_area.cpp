@@ -358,21 +358,15 @@ bool find_wrong_area(const V3DPluginArgList & input, V3DPluginArgList & output,V
     QString name_rec = "_point_not_rec_3";
     QString name_gold = "_point_not_gold_1";
     if(!simple_loadimage_wrapper(callback,(char *)img.c_str(), data1d, in_sz, datatype))  {cout<<"load img wrong"<<endl;  return false;}
-    cout<<"in_sz2 = "<<in_sz[2]<<endl;
+    //cout<<"in_sz2 = "<<in_sz[2]<<endl;
 
 
     get_subimg(raw_img,name_little,fourcood[0],data1d,in_sz,callback);
-   // get_subimg(raw_img,name_middle,fourcood[1],data1d,in_sz,callback);
-   // get_subimg(raw_img,name_rec,fourcood[2],data1d,in_sz,callback);
+    get_subimg(raw_img,name_middle,fourcood[1],data1d,in_sz,callback);
+    get_subimg(raw_img,name_rec,fourcood[2],data1d,in_sz,callback);
     get_subimg(raw_img,name_gold,fourcood[3],data1d,in_sz,callback);
 
-
-
-
-    for (int i=0;i<neuron_m.size();i++)
-        if (neuron_m[i]) {delete(neuron_m[i]); neuron_m[i]=NULL;}
-    for (int i=0;i<neuron2.size();i++)
-        if (neuron_gold[i]) {delete(neuron_gold[i]); neuron_gold[i]=NULL;}
+    cout<<"out"<<endl;
     for (int i=0;i<map_swc.size();i++)
         if (map_swc[i]) {delete(map_swc[i]); map_swc[i]=NULL;}
 
@@ -384,7 +378,6 @@ bool find_wrong_area(const V3DPluginArgList & input, V3DPluginArgList & output,V
 }
 bool make_coodinate(vector<vector<Coodinate> > &four_cood,vector<FourType> &four_type,V3DLONG length)
 {
-    //cout<<four_type[0].little.size()<<endl;
     Coodinate cood;
     vector<Coodinate> vec_cood;
     for(V3DLONG i=0;i<four_type[0].little.size();i++)
@@ -394,8 +387,6 @@ bool make_coodinate(vector<vector<Coodinate> > &four_cood,vector<FourType> &four
         cood.z = four_type[0].little[i].z;
         cood.lens = 2*length/3;
         vec_cood.push_back(cood);
-        //cout<<"cood.x = "<<cood.x<<endl;
-
     }
     four_cood.push_back(vec_cood);
     vec_cood.clear();
@@ -406,9 +397,9 @@ bool make_coodinate(vector<vector<Coodinate> > &four_cood,vector<FourType> &four
         cood.z = four_type[0].middle[i].z;
         cood.lens = 2*length/3;
         vec_cood.push_back(cood);
-       // cout<<"cood.x = "<<cood.x<<endl;
-
     }
+    four_cood.push_back(vec_cood);
+    vec_cood.clear();
     for(V3DLONG i=0;i<four_type[0].point_rec.size();i++)
     {
         cood.x = four_type[0].point_rec[i].x;
@@ -433,31 +424,6 @@ bool make_coodinate(vector<vector<Coodinate> > &four_cood,vector<FourType> &four
 
 
 }
-//QList<NeuronSWC> match_point(QList<NeuronSWC> &swc1,QList<NeuronSWC> &swc2)
-//{
-//    int ind1;
-//    QList<NeuronSWC> swc3,swc4;
-//    for(V3DLONG i=0;i<swc1.size();i++)
-//    {
-//        ind1=0;
-//        for(V3DLONG j=0;j<swc2.size();j++)
-//        {
-//            if(NTDIS(swc1[i],swc2[j])<0.1)
-//            {
-//                ind1++;
-//            }
-
-//        }
-//        cout<<"ind1 = "<<ind1<<endl;
-//        if(ind1==1)
-//        {
-//            swc3.push_back(swc1[i]);
-//        }
-
-
-//    }
-//    return swc3;
-//}
 
 QList<NeuronSWC> match_point(QList<NeuronSWC> &swc1,QList<NeuronSWC> &swc2)
 {
@@ -521,15 +487,24 @@ bool get_subimg(QString raw_img,QString name,vector<Coodinate> &mean,unsigned ch
      V3DLONG sc = in_sz[3];
      V3DLONG xe,xb,ye,yb,ze,zb;
      unsigned char *im_cropped = 0;
+     cout<<"img_size = "<<mean.size()<<endl;
     for(V3DLONG i =0;i<mean.size();i++)
-    {
-        cout<<"img_size = "<<mean.size()<<endl;
+    {        
+        if(xb<0) xb = 0;
+        if(xe>=N-1) xe = N-1;
+        if(yb<0) yb = 0;
+        if(ye>=M-1) ye = M-1;
+        if(zb<0) zb = 0;
+        if(ze>=N-1) ze = P-1;
+
+        cout<<mean[i].lens<<endl;
         xe=mean[i].x+mean[i].lens;
         xb=mean[i].x -mean[i].lens;
         ye=mean[i].y+mean[i].lens;
         yb=mean[i].y-mean[i].lens;
         ze=mean[i].z+mean[i].lens;
         zb=mean[i].z-mean[i].lens;
+
         im_cropped_sz[0] = xe - xb + 1;
         im_cropped_sz[1] = ye - yb + 1;
         im_cropped_sz[2] = ze - zb + 1;
@@ -555,7 +530,6 @@ bool get_subimg(QString raw_img,QString name,vector<Coodinate> &mean,unsigned ch
             }
 
         }
-        cout<<"kkkkkk"<<endl;
         QString outimg_file;
         outimg_file = raw_img + name+QString::number(i+1)+".tif";
 
