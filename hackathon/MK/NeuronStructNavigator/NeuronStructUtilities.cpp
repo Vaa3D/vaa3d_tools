@@ -111,7 +111,7 @@ void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float rati
 	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
 	{
 		outputTreePtr->listNeuron.push_back(*it);
-		int foldCount = 0;
+		int foldCount = 2;
 		while (foldCount <= ratio)
 		{
 			int randNumX = rand() % int(distance * 2) + int(it->x - distance);
@@ -148,8 +148,8 @@ void bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int d
 	int bkgNodeCount = 0;
 	while (bkgNodeCount <= targetBkgNodeNum)
 	{
-		int randNumX = rand() % (dims[0] - 400) + 200;
-		int randNumY = rand() % (dims[1] - 400) + 200;
+		int randNumX = rand() % (dims[0] - 20) + 10;
+		int randNumY = rand() % (dims[1] - 20) + 10;
 		int randNumZ = rand() % dims[2];
 
 		bool flag = false;
