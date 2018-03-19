@@ -10,29 +10,30 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(wrong_area_search, wrong_area_searchPlugin);
 //bool find_wrong_area(const V3DPluginArgList & input, V3DPluginArgList & output);
-
- 
 QStringList wrong_area_searchPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+        <<tr("find_wrong_area")
+        <<tr("menu2")
 		<<tr("about");
 }
 
 QStringList wrong_area_searchPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("find_wrong_area")
+        <<tr("func2")
 		<<tr("help");
 }
 
 void wrong_area_searchPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+    if (menu_name == tr("find_wrong_area"))
 	{
-		v3d_msg("To be implemented.");
+        bool bmenu = true;
+        Input_para PARA;
+        find_wrong_area(PARA,callback,bmenu,parent);
+        v3d_msg("find_wrong_area_done.");
 	}
 	else if (menu_name == tr("menu2"))
 	{
@@ -51,10 +52,33 @@ bool wrong_area_searchPlugin::dofunc(const QString & func_name, const V3DPluginA
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    Input_para PARA;
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+    vector<char*>* outlist = NULL;
+    vector<char*>* paralist = NULL;
+    if(input.size() != 1)
+    {
+        printf("Please specify both input file and step length parameter.\n");
+        return false;
+    }
+//    paralist = (vector<char*>*)(input.at(1).p);
+//    if(paralist->size()!=2)
+//    {
+//        printf("Please specify two parameter -  the resampling step length and ...");
+//        return false;
+//    }
 
-    if (func_name == tr("wrong_area_search"))
+    QString fileOpenName = QString(inlist->at(0));
+    QString fileOpenName2 = QString(inlist->at(1));
+    QString raw_img = QString(inlist->at(2));
+
+    PARA.filename1 = fileOpenName;
+    PARA.filename2 = fileOpenName2;
+    PARA.filename3=raw_img;
+    if (func_name == tr("find_wrong_area"))
 	{
-        find_wrong_area(input,output,callback);
+        bool bmenu = false;
+        find_wrong_area(PARA,callback,bmenu,parent);
     }
 	else if (func_name == tr("help"))
 	{
