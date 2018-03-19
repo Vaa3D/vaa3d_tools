@@ -27,9 +27,6 @@ public:
 	template<class T1, class T2>
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
 
-	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[], 
-		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
-
 	template <class T1, class T2>
 	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the greater pixel. 
 
@@ -38,9 +35,15 @@ public:
 
 	template<class T1, class T2>
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
+
+	template<class T>
+	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
 	/******************************************/
 
 	/********* Other utilities *********/
+	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
+		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
+
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 };
 
@@ -87,6 +90,23 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 		for (int i = 0; i < xLength; ++i)
 		{
 			output[xLength*j + i] = input[xLength*(yLength - j - 1) + i];
+		}
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor)
+{
+	long int outi = 0;
+	int newXDim = imgDims[0] / downSampFactor;
+	int newYDim = imgDims[1] / downSampFactor;
+	cout << "output x Dim: " << newXDim << endl << "output y Dim: " << newYDim << endl;
+	for (int y = 0; y < newYDim; ++y)
+	{
+		for (int x = 0; x < newXDim; ++x)
+		{
+			outputImgPtr[outi] = inputImgPtr[(imgDims[0] * downSampFactor) * y + (x * downSampFactor)];
+			++outi;
 		}
 	}
 }

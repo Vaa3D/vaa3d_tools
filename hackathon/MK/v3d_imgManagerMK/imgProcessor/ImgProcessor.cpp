@@ -29,21 +29,3 @@ void ImgProcessor::maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputI
 	}
 }
 
-void ImgProcessor::shapeMask2D(int imgDims[2], unsigned char* outputMask1D, int coords[2], int regionDims[2], string shape) // need revision
-{
-	outputMask1D = new unsigned char[imgDims[0] * imgDims[1]];
-	int xlb = coords[0] - regionDims[0] / 2;
-	int xhb = coords[0] + regionDims[0] / 2;
-	int ylb = coords[1] - regionDims[1] / 2;
-	int yhb = coords[2] + regionDims[1] / 2;
-
-	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputMask1D[i] = 0;
-	
-	for (int j = ylb - 1; j < yhb; ++j)
-	{
-		for (int i = xlb - 1; i < xhb; ++i)
-		{
-			outputMask1D[imgDims[0] * (j - 1) + (i - 1)] = 255;
-		}
-	}
-}
