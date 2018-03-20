@@ -100,7 +100,7 @@ inline void ImgProcessor::imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int
 	long int outi = 0;
 	int newXDim = imgDims[0] / downSampFactor;
 	int newYDim = imgDims[1] / downSampFactor;
-	cout << "output x Dim: " << newXDim << endl << "output y Dim: " << newYDim << endl;
+	cout << "output x Dim: " << newXDim << "  " << "output y Dim: " << newYDim << endl;
 	for (int y = 0; y < newYDim; ++y)
 	{
 		for (int x = 0; x < newXDim; ++x)

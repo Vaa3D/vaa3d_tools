@@ -7,7 +7,9 @@
 
 #include <boost\filesystem.hpp>
 
+#include "basic_4dimage.h"
 #include "NeuronStructUtilities.h"
+#include "AnalysisExplorer.h"
 
 using namespace std;
 using namespace boost;
@@ -99,6 +101,28 @@ void swcSliceAssembler(string swcPath)
 	writeSWC_file(outputFileName, outputTree);
 }
 
+void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
+{
+	if (zlb == 0 && zhb == 0)
+	{
+		for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
+		{
+			if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb) continue;
+			else
+			{
+				NeuronSWC newNode;
+				newNode.x = it->x - (xlb - 1);
+				newNode.y = it->y - (ylb - 1);
+				newNode.z = it->z;
+				newNode.type = it->type;
+				newNode.n = it->n;
+				newNode.parent = it->parent;
+				outputTreePtr->listNeuron.push_back(newNode);
+			}
+		}
+	}
+}
+
 /* =================================== Volumetric SWC sampling methods =================================== */
 void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance) 
 {
@@ -110,6 +134,8 @@ void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float rati
 	int nodeCount = 0;
 	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
 	{
+		it->parent = -1;
+		it->type = 2;
 		outputTreePtr->listNeuron.push_back(*it);
 		int foldCount = 2;
 		while (foldCount <= ratio)

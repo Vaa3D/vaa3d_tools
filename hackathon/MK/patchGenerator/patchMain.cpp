@@ -9,6 +9,7 @@
 #include "NeuronStructUtilities.h"
 #include "ImgProcessor.h"
 #include "ImgManager.h"
+#include "AnalysisExplorer.h"
 
 using namespace std;
 
@@ -45,16 +46,16 @@ int main()
 
 	if (useDefault == true)
 	{
-		caseRoot = "C:\\Users\\King Mars\\Desktop\\477315958";
-		tiffRoot = "C:\\Users\\King Mars\\Desktop\\477315958\\testSlices_down2";
+		caseRoot = "C:\\Users\\hsienchik\\Desktop\\test";
+		tiffRoot = "C:\\Users\\hsienchik\\Desktop\\test\\original_down2Cropped";
 		segRoot = "";
-		sigPatchRoot = "C:\\Users\\King Mars\\Desktop\\477315958\\sigPatches_down2";
-		bkgPatchRoot = "C:\\Users\\King Mars\\Desktop\\477315958\\bkgPatches_down2";
-		manualSWCName = "C:\\Users\\King Mars\\Desktop\\477315958\\test_down2.swc";
-		dims[0] = 258;
-		dims[1] = 219;
+		sigPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalSigPatches_down2";
+		bkgPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalBkgPathces_down2";
+		manualSWCName = "C:\\Users\\hsienchik\\Desktop\\test\\477315958_3D_scaled_cropped.swc";
+		dims[0] = 2872;
+		dims[1] = 2868;
 		dims[2] = 366;
-		somaBkg = false;
+		somaBkg = true;
 		FG = false;
 
 		cout << "half side length: ";
@@ -82,26 +83,26 @@ int main()
 	secondSoma[0] = inputTree.listNeuron.at(0).x;
 	secondSoma[1] = inputTree.listNeuron.at(0).y;
 	secondSoma[2] = inputTree.listNeuron.at(0).z;
-	bkgNode_Gen(&inputTree, &bkgTree, dims, 60, 10);
-	sigNode_Gen(&inputTree, &signalTree, 20, 2);
+	bkgNode_Gen(&inputTree, &bkgTree, dims, 20, 10);
+	sigNode_Gen(&inputTree, &signalTree, 20, 3);
 	string outbkgSWCName = caseRoot + "\\bkg_test_down2.swc";
 	string outSWCsigName = caseRoot + "\\signal_test_down2.swc";
 
-	const char* outbkgSWCNameC = outbkgSWCName.c_str();
-	writeSWC_file(outbkgSWCNameC, bkgTree);
-
 	const char* outSWCsigNameC = outSWCsigName.c_str();
-	writeSWC_file(outSWCsigNameC, signalTree);
+	//writeSWC_file(outSWCsigNameC, signalTree);
+
+	const char* outbkgSWCNameC = outbkgSWCName.c_str();
+	//writeSWC_file(outbkgSWCNameC, bkgTree);
 
 	if (somaBkg == true)
 	{
-		bkgNode_Gen_somaArea(&inputTree, &somaBkgTree, 800, 800, 100, 0.001, 30);
+		bkgNode_Gen_somaArea(&inputTree, &somaBkgTree, 400, 180, 100, 0.05, 20);
 		for (QList<NeuronSWC>::iterator bkgIt = somaBkgTree.listNeuron.begin(); bkgIt != somaBkgTree.listNeuron.end(); ++bkgIt)
 			bkgTree.listNeuron.push_back(*bkgIt);
 
 		string outSomaBkgSWCName = caseRoot + "\\somaAreaBkg.swc";
 		const char* outSomaBkgSWCNameC = outSomaBkgSWCName.c_str();
-		writeSWC_file(outSomaBkgSWCNameC, somaBkgTree);
+		//writeSWC_file(outSomaBkgSWCNameC, somaBkgTree);
 	}
 	
 	V3DLONG patchsz[4];
@@ -109,13 +110,20 @@ int main()
 	patchsz[1] = halfSideLength * 2 + 1;
 	patchsz[2] = 1;
 	patchsz[3] = 1;
-	
+	AnalysisExplorer patchChecker;
+	vector<int> patchVec;
 	int count = 0;
-	for (QList<NeuronSWC>::iterator it = signalTree.listNeuron.begin(); it != signalTree.listNeuron.end(); ++it)
+	/*for (QList<NeuronSWC>::iterator it = signalTree.listNeuron.begin(); it != signalTree.listNeuron.end(); ++it)
 	{
 		int xCoord = int(it->x);
 		int yCoord = int(it->y);
 		int zCoord = int(it->z);
+		if (xCoord <= 0) xCoord = 1;
+		if (yCoord <= 0) yCoord = 1;
+		if (zCoord <= 0) zCoord = 1;
+		QString outimg_file = QString::fromStdString(sigPatchRoot) + QString("\\x%1_y%2_z%3.tif").arg(xCoord).arg(yCoord).arg(zCoord);
+		string filename = outimg_file.toStdString();
+		cout << filename << endl;
 
 		string prefix;
 		if (zCoord < 10) prefix = "\\0000";
@@ -161,6 +169,7 @@ int main()
 		memcpy(tiffSlice1D, tiffPtr->getRawData(), totalbyteTiff);
 		int xDim = tiffPtr->getXDim();
 		int yDim = tiffPtr->getYDim();
+		
 		unsigned char* sigPatch = new unsigned char[(halfSideLength * 2 + 1) * (halfSideLength * 2 + 1)];
 		int xlb, xhb, ylb, yhb;
 		if (xCoord - halfSideLength <= 0) xlb = 1; else xlb = xCoord - halfSideLength;
@@ -168,17 +177,36 @@ int main()
 		if (yCoord - halfSideLength <= 0) ylb = 1; else ylb = yCoord - halfSideLength;
 		if (yCoord + halfSideLength >= yDim) yhb = yDim; else yhb = yCoord + halfSideLength;
 		ImgProcessor::cropImg2D(tiffSlice1D, sigPatch, xlb, xhb, ylb, yhb, xDim, yDim);
-		QString outimg_file = QString::fromStdString(sigPatchRoot) + QString("\\x%1_y%2_z%3.tif").arg(int(it->x)).arg(int(it->y)).arg(int(it->z));
-		string filename = outimg_file.toStdString();
+		
+		for (int i = 0; i < (xhb - xlb + 1) * (yhb - ylb + 1); ++i) patchVec.push_back(int(sigPatch[i]));
+		patchChecker.getHist2D(&patchVec, 256);
+		int centerVal;
+		if ((halfSideLength * 2 + 1) * halfSideLength + halfSideLength >= patchVec.size())
+			centerVal = patchVec.at((halfSideLength * 2 + 1) * halfSideLength + halfSideLength);
+		else centerVal = 255;
+		cout << "patch center: " << centerVal;
+		if (centerVal < patchChecker.mean)
+		{
+			cout << endl << ": skip" << endl;
+			patchChecker.mean = 0;
+			tiffPtr->~Image4DSimple();
+			operator delete(tiffPtr);
+			if (tiffSlice1D) { delete[] tiffSlice1D; tiffSlice1D = 0; }
+			if (sigPatch) { delete[] sigPatch; sigPatch = 0; }
+			patchVec.clear();
+			continue;
+		}
+		
 		const char* filenameC = filename.c_str();
-		cout << filename << endl;
 		ImgManager::saveimage_wrapper(filenameC, sigPatch, patchsz, 1);
+		cout << endl;
 
+		patchVec.clear();
 		tiffPtr->~Image4DSimple();
 		operator delete(tiffPtr);
 		if (tiffSlice1D) { delete[] tiffSlice1D; tiffSlice1D = 0; }
 		if (sigPatch) { delete[] sigPatch; sigPatch = 0; }
-	}
+	}*/
 
 	count = 0;
 	for (QList<NeuronSWC>::iterator it = bkgTree.listNeuron.begin(); it != bkgTree.listNeuron.end(); ++it)
@@ -186,6 +214,9 @@ int main()
 		int xCoord = int(it->x);
 		int yCoord = int(it->y);
 		int zCoord = int(it->z);
+		if (xCoord <= 0) xCoord = 1;
+		if (yCoord <= 0) yCoord = 1;
+		if (zCoord <= 0) zCoord = 1;
 
 		string prefix;
 		if (zCoord < 10) prefix = "\\0000";
@@ -209,7 +240,7 @@ int main()
 		if (yCoord - halfSideLength <= 0) ylb = 1; else ylb = yCoord - halfSideLength;
 		if (yCoord + halfSideLength >= yDim) yhb = yDim; else yhb = yCoord + halfSideLength;
 		ImgProcessor::cropImg2D(slice1D, bkgPatch, xlb, xhb, ylb, yhb, xDim, yDim);
-		QString outimg_file = QString::fromStdString(bkgPatchRoot) + QString("\\x%1_y%2_z%3.tif").arg(int(it->x)).arg(int(it->y)).arg(int(it->z));
+		QString outimg_file = QString::fromStdString(bkgPatchRoot) + QString("\\x%1_y%2_z%3.tif").arg(xCoord).arg(yCoord).arg(zCoord);
 		string filename = outimg_file.toStdString();
 		const char* filenameC = filename.c_str();
 		cout << filename << endl;

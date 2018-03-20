@@ -156,7 +156,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.h" />
-    <ClInclude Include="AnalysisExplorer.h" />
     <ClInclude Include="NeuronROIProfiler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
