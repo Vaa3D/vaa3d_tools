@@ -2124,15 +2124,15 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
         //}
 
         // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-        TERAFLY_TIME_START(ConverterLoadBlockOperation)
+        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+        TERAFLY_TIME_START(ConverterLoadBlockOperation);
         #endif
 
-                // fill one slice block
-                //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
+        // fill one slice block
+        //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
 
-                if ( internal_rep == REAL_INTERNAL_REP )
-                rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
+        if ( internal_rep == REAL_INTERNAL_REP )
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1);
         else { // internal_rep == UINT8_INTERNAL_REP
             // 2015-12-19. Giulio. @ADDED Subvolume conversion
             //ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
@@ -3004,11 +3004,6 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
         //	throw IOExcpetion("interruption for test");
         //}
 
-        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
-        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-        TERAFLY_TIME_START(ConverterLoadBlockOperation);
-        #endif
-
         // fill one slice block
         //cout<<"REAL_INTERNAL_REP "<<(internal_rep == REAL_INTERNAL_REP?"true":"false")<<endl;
 
@@ -3020,7 +3015,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
 
             auto start = std::chrono::high_resolution_clock::now();
 
-            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
+            ubuffer[0] = volume->loadSubvolume_to_UINT8_MT(V0,V1,H0,H1,(int)z,(z+z_max_res <= D1) ? (int)(z+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
 
             auto end = std::chrono::high_resolution_clock::now();
 
@@ -3062,11 +3057,6 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                 }
             }
         }
-
-        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
-        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-        TERAFLY_TIME_STOP(ConverterLoadBlockOperation, tf::ALL_COMPS, terafly::strprintf("converter: loaded image block x(%d-%d), y(%d-%d), z(%d-%d)",H0, H1, V0, V1, ((iim::uint32)(z-D0)),((iim::uint32)(z-D0+z_max_res-1))));
-        #endif
 
         //updating the progress bar
         if(show_progress_bar)
@@ -3380,7 +3370,7 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
                                     closeTiff3DFile(fhandle);
                                 // fhandle = open file corresponding to next block
                                 if ( strcmp(saved_img_format,"Tiff3D") == 0 )
-                                    openTiff3DFile((char *)img_path.str().c_str(),(char *)"w",fhandle,true);
+                                    openTiff3DFile((char *)img_path.str().c_str(),(char *)"a",fhandle,true);
                                 n_pages_block = stacks_depth[i][0][0][stack_block[i]+1];
                                 block_changed = true;
 
@@ -3545,10 +3535,6 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
 
                         start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 
-                        // 2015-01-30. Alessandro. @ADDED performance (time) measurement in 'generateTilesVaa3DRaw()' method.
-                        #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-                        TERAFLY_TIME_STOP(ConverterWriteBlockOperation, tf::ALL_COMPS, terafly::strprintf("converter: written multiresolution image block x(%d-%d), y(%d-%d), z(%d-%d)",start_width, end_width, start_height, end_height, ((iim::uint32)(z-D0)),((iim::uint32)(z-D0+z_max_res-1))))
-                        #endif
                     }
                     start_height += stacks_height[i][stack_row][0][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
                 }
@@ -3564,6 +3550,13 @@ void VolumeConverter::generateTilesVaa3DRawMT(std::string output_path, bool* res
         //
         auto end = std::chrono::high_resolution_clock::now();
         cout<<"writing chunk images takes "<<std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<<" ms."<<endl;
+
+        // debug and fix stringstream memory leaks
+//        while(true)
+//        {
+//            string input = "";
+//            getline(cin, input);
+//        }
     }
 
     // save last group data

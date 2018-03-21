@@ -38,6 +38,8 @@
 
 #define TIFF3D_SUFFIX   "tif"
 
+#include <sstream>
+using namespace std;
 
 void setLibTIFFcfg ( bool cmprssd = true, bool _bigtiff = false, int rps = 1 );
 /* the interface to LibTIFF can be configured once to:
@@ -155,6 +157,7 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
  * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file
  */
 
+void readTiff(stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int starti = -1, int endi = -1, int startj = -1, int endj = -1);
 
 char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype);
 

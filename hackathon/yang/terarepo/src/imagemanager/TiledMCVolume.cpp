@@ -884,6 +884,15 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     return subvol;
 }
 
+
+uint8* TiledMCVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException, iom::exception)
+{
+    cout<<"TODO: TiledMCVolume::loadSubvolume_to_UINT8_MT\n";
+
+    //
+    return NULL;
+}
+
 // moved to VirtualVolume.cpp by Alessandro on 2014-02-20
 //void TiledMCVolume::setActiveChannels ( uint32 *_active, int _n_active )
 //{

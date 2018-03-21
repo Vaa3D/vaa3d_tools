@@ -482,20 +482,18 @@ string TemplateCLI::getHelpText()
 {
 	stringstream helptext;
 
-	helptext << "TeraConverter " << terastitcher::teraconverter_version << "\n";
-	helptext << "  developed at University Campus Bio-Medico of Rome by:\n";
-	helptext << "   -\tAlessandro Bria (email: a.bria@unicas.it)                            ";
-	helptext << "    \tPhD student at Departement of Electrical and Information Engineering";
-	helptext << "    \tFaculty of Engineering of University of Cassino\n";
-	helptext << "   -\tGiulio Iannello, Ph.D. (email: g.iannello@unicampus.it)              ";
-	helptext << "    \tFull Professor of Computer Science and Computer Engineering          ";
-	helptext << "    \tFaculty of Engineering of University Campus Bio-Medico of Rome\n";
-	helptext << "  Official website/repo: http://abria.github.io/TeraStitcher";
-	
-	return helptext.str();
 
-	//helptext << "TeraConverter v3.1.0\n";
-	//return helptext.str();
+    helptext << "BIConverter " << "1.0.2" << "\n";
+    helptext << "  developed at Allen Institute for Brain Science by:\n";
+    helptext << "   -\tYang Yu (email: yangy@alleninstitute.org)                            ";
+    helptext << "   -\tHanchuan Peng (email: hanchuanp@alleninstitute.org)              ";
+    helptext << "   -\tAlessandro Bria (email: a.bria@unicas.it)                            ";
+    helptext << "   -\tGiulio Iannello, Ph.D. (email: g.iannello@unicampus.it)              ";
+	
+    return helptext.str();
+
+    //helptext << "TeraConverter v3.1.0\n";
+    //return helptext.str();
 }
 
 //print all arguments

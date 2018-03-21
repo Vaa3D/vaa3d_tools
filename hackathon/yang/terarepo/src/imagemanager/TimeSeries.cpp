@@ -308,3 +308,8 @@ iim::uint8 * TimeSeries::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, i
 
     return subvol_data;
 }
+
+iim::uint8 * TimeSeries::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels /*=0*/, int ret_type /*=iim::DEF_IMG_DEPTH*/) throw (iim::IOException)
+{
+    return NULL;
+}

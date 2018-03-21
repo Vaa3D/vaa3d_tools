@@ -2,9 +2,11 @@
 #include "../../../hackathon/zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 #include <map>
 
+
 using namespace std;
 
-assemble_neuron_live_dialog::assemble_neuron_live_dialog(V3DPluginCallback2 * cb, QList<NeuronTree> &ntList, Image4DSimple * p_img4d_in, QWidget *parent) :
+assemble_neuron_live_dialog::assemble_neuron_live_dialog(V3DPluginCallback2 * cb, QList<NeuronTree> &ntList, Image4DSimple * p_img4d_in,
+                                                         LandmarkList markerlit_in, QWidget *parent) :
     QDialog(parent)
 {
     callback = cb;
@@ -13,6 +15,7 @@ assemble_neuron_live_dialog::assemble_neuron_live_dialog(V3DPluginCallback2 * cb
     winname_roi = WINNAME_ASSEM;
 
     p_img4d = p_img4d_in;
+    marklist = markerlit_in;
 
     noffset=0;
     coffset=0;
@@ -1738,6 +1741,7 @@ V3dR_MainWindow * assemble_neuron_live_dialog::update3DWindow()
     QList<NeuronTree> * tmp_ntList = callback->getHandleNeuronTrees_Any3DViewer(_3dwin);
     tmp_ntList->clear();
     tmp_ntList->push_back(nt);
+    if(marklist.size() >0) callback->setHandleLandmarkList_Any3DViewer(_3dwin,marklist);
     callback->update_3DViewer(_3dwin);
     callback->update_NeuronBoundingBox(_3dwin);
 

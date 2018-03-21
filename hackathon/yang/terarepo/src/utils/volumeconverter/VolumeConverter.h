@@ -88,8 +88,6 @@
 
 #include "../imagemanager/VirtualVolume.h"
 
-#include <omp.h>
-
 // possible output format
 #define REAL_REPRESENTATION      "intensity"  // images are managed internally with REAL_INTERNAL_REP representation
                                               // and saved as graylevel images

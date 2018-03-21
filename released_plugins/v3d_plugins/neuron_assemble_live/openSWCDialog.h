@@ -16,6 +16,7 @@ public:
     QList<NeuronTree>  ntList;
     QString file_name;
     Image4DSimple * p_img4d;
+    LandmarkList markerlist;
 
 	OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * callback);
 private:
