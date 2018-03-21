@@ -33,6 +33,7 @@ struct FourType
     QList<NeuronSWC> point_rec;
     QList<NeuronSWC> point_gold;
 };
+
 void processImage(V3DPluginCallback2 &callback,vector<Coodinate> &fourcood_each);
 bool get_subarea(QList<NeuronSWC> &nt,vector<Coodinate> &fourcood,vector<QList<NeuronSWC> >&subarea);
 bool get_subarea_in_nt(vector<FourType> &fourtype,V3DLONG length,QList<NeuronSWC> &little,QList<NeuronSWC> &middle,QList<NeuronSWC> &point_rec,QList<NeuronSWC> &point_gold);
@@ -72,9 +73,9 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 {
     if(bmenu)
     {
-        PARA.filename1 = "/home/hys/Desktop/3.19/test/reconstruction.swc";
-        PARA.filename2 = "/home/hys/Desktop/3.19/test/gold.swc";
-        PARA.filename3 = "/home/hys/Desktop/3.19/test/img.v3dpbd";
+        PARA.filename1 = "/home/hys/Desktop/3.19/test2/reconstruction.swc";
+        PARA.filename2 = "/home/hys/Desktop/3.19/test2/gold.swc";
+        PARA.filename3 = "/home/hys/Desktop/3.19/test2/img.v3dpbd";
     }
     else
     {
@@ -409,14 +410,14 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
     QString name_little = "_"+name_temp+"_little_1";
     QString name_middle = "_"+name_temp+"_middle_2";
     QString name_rec = "_"+name_temp+"_point_not_rec_3";
-    QString name_gold = "_"+name_temp+"_point_not_gold_1";
+    QString name_gold = "_"+name_temp+"_point_not_gold_4";
     if(!simple_loadimage_wrapper(callback,(char *)img.c_str(), data1d, in_sz, datatype))  {cout<<"load img wrong"<<endl;  return false;}
 
 
-    get_subimg(image,name_little,fourcood[0],data1d,in_sz,callback);
-    get_subimg(image,name_middle,fourcood[1],data1d,in_sz,callback);
-    get_subimg(image,name_rec,fourcood[2],data1d,in_sz,callback);
-    get_subimg(image,name_gold,fourcood[3],data1d,in_sz,callback);
+    //get_subimg(image,name_little,fourcood[0],data1d,in_sz,callback);
+    //get_subimg(image,name_middle,fourcood[1],data1d,in_sz,callback);
+    //get_subimg(image,name_rec,fourcood[2],data1d,in_sz,callback);
+    //get_subimg(image,name_gold,fourcood[3],data1d,in_sz,callback);
 
     //processImage(callback,fourcood[0]);
     //processImage(callback,fourcood[1]);
@@ -553,12 +554,6 @@ bool get_subimg(QString raw_img,QString name,vector<Coodinate> &mean,unsigned ch
      cout<<"img_size = "<<mean.size()<<endl;
     for(V3DLONG i =0;i<mean.size();i++)
     {        
-        if(xb<0) xb = 0;
-        if(xe>=N-1) xe = N-1;
-        if(yb<0) yb = 0;
-        if(ye>=M-1) ye = M-1;
-        if(zb<0) zb = 0;
-        if(ze>=N-1) ze = P-1;
 
         cout<<mean[i].lens<<endl;
         xe=mean[i].x+mean[i].lens;
@@ -567,6 +562,14 @@ bool get_subimg(QString raw_img,QString name,vector<Coodinate> &mean,unsigned ch
         yb=mean[i].y-mean[i].lens;
         ze=mean[i].z+mean[i].lens;
         zb=mean[i].z-mean[i].lens;
+
+
+        if(xb<0) xb = 0;
+        if(xe>=N-1) xe = N-1;
+        if(yb<0) yb = 0;
+        if(ye>=M-1) ye = M-1;
+        if(zb<0) zb = 0;
+        if(ze>=N-1) ze = P-1;
 
         im_cropped_sz[0] = xe - xb + 1;
         im_cropped_sz[1] = ye - yb + 1;
