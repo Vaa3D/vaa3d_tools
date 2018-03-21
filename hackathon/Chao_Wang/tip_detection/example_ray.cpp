@@ -11,7 +11,7 @@ using namespace std;
 
 float square(float x){return x*x;}
 
-void ray_shooting(int m, int n,vector<vector<float>> ray_x,vector<vector<float>> ray_y)
+void ray_shooting(int m, int n,vector<vector<float> > ray_x,vector<vector<float> > ray_y)
 	{
 
 		int num = n-1;
@@ -30,7 +30,7 @@ void ray_shooting(int m, int n,vector<vector<float>> ray_x,vector<vector<float>>
 			}
 	}
  
-void rayinten_2D(int point_x,int point_y,int point_z,int m,int n,int threshold, vector<vector<float>> ray_x,vector<vector<float>> ray_y, Image4DSimple *p4DImage, int &count, float &max_ang)
+void rayinten_2D(int point_x,int point_y,int point_z,int m,int n,int threshold, vector<vector<float> > ray_x,vector<vector<float> > ray_y, Image4DSimple *p4DImage, int &count, float &max_ang)
 {
 	int point[3] = {point_x,point_y,point_z};
 	count = max_ang = 0;  //初始化输出，因为这里使用的引用，不初始化的话会变成累加
@@ -193,7 +193,7 @@ float interp_2d(float point_x,float point_y,int point_z, Image4DSimple *p4DImage
 	}
 }
 
-bool get_slice_flag(int i,int j,int k,int nembers_2d,int length_2d,double angle_2d,double count_2d_thre,int slice_number,int threshold, vector<vector<float>> ray_x,vector<vector<float>> ray_y, Image4DSimple *p4DImage, int &count_2d, float &max_ang_2d)
+bool get_slice_flag(int i,int j,int k,int nembers_2d,int length_2d,double angle_2d,double count_2d_thre,int slice_number,int threshold, vector<vector<float> > ray_x,vector<vector<float> > ray_y, Image4DSimple *p4DImage, int &count_2d, float &max_ang_2d)
 {
 	max_ang_2d = 0.0;
 	count_2d = 0;

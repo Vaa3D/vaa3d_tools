@@ -256,9 +256,9 @@ int tipdetection(V3DPluginCallback2 &callback, QWidget *parent)
 	LandmarkList curlist;
 	LocationSimple s;
 
-	vector<vector<int>> candidate_tip; 
+    //vector<vector<int>> candidate_tip;
 	//vector<int> one_tip(3);
-	vector<double> angle;
+    //vector<double> angle;
 
 	for(long k=0;k<sz[2];k++)
 	{

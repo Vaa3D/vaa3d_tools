@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
 #set the Vaa3D main path
-V3DMAINPATH     =  ../../../v3d_external/v3d_main
+V3DMAINPATH     =  ../../../../v3d_external/v3d_main
 
 #include necessary paths
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
@@ -29,4 +29,4 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 #specify target name and directory
 TARGET	= $$qtLibraryTarget(example)
-DESTDIR	= $$VAA3DPATH/bin/plugins/Terminations/tip_detection/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/Terminations/tip_detection/
