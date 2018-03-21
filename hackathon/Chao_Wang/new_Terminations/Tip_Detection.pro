@@ -2,10 +2,11 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_external
+V3DMAINPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/v3d_main/common_lib/include
-LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/v3d_main/common_lib/winlib
+#LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/v3d_main/common_lib/winlib
+LIBS         += -L$$V3DMAINPATH/v3d_main/common_lib/lib -lv3dtiff
 
 
 HEADERS	+= Tip_Detection_plugin.h
