@@ -1,6 +1,6 @@
 #include "manual_proofread_dialog.h"
 #include "common.h"
-#include <Qset>
+#include <QSet>
 
 #define MAINWINNAME "spineDetector_Proofread"
 #define SPINE_VIEW "proofread by spine"
