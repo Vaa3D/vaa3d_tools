@@ -14,7 +14,11 @@ HEADERS	+= wrong_area_search_plugin.h \
     local_aligment.h \
     seq_weight.h \
     neuron_tree_align.h \
-    swc_utils.h
+    swc_utils.h \
+    data_training.h \
+    get_sample_area.h \
+    node.h \
+    graph.h
 SOURCES	+= wrong_area_search_plugin.cpp \
     sort_swc.cpp \
     resampling.cpp \
@@ -22,7 +26,9 @@ SOURCES	+= wrong_area_search_plugin.cpp \
     my_surf_objs.cpp \
     local_alignment.cpp \
     seq_weight.cpp \
-    swc_utils.cpp
+    swc_utils.cpp \
+    data_training.cpp \
+    get_sample_area.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
