@@ -2,7 +2,7 @@
 #define COMMON_H
 
 //#include "v3d_interface.h"
-#include <spine_fun.h>
+#include "spine_fun.h"
 
 using namespace std;
 

@@ -62,7 +62,7 @@ bool write_marker_file(QString filename,LandmarkList listmarkers)
     }
     if (listmarkers.size()==0)
         return false;
-    fprintf(fp, "##x,y,z,name,comment,color_r,color_g,color_b,category\n");
+    fprintf(fp, "##x,y,z,radius,shape,name,comment,color_r,color_g,color_b,category\n");
     for (int i=0;i<listmarkers.size();i++)
     {
         fprintf(fp,"%d,%d,%d,0,0,%s,%s,%d,%d,%d,%d\n",(int)listmarkers[i].x,(int)listmarkers[i].y,
