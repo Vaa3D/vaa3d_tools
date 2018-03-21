@@ -18,7 +18,7 @@ class crop_dialog:public QDialog
      Q_OBJECT
 public:
     crop_dialog(V3DPluginCallback2 *cb);
-    crop_dialog::~crop_dialog();
+    ~crop_dialog();
     void getData();
 
 private:
