@@ -83,7 +83,7 @@ static inline void ImgManager::imgStackSlicer(T1 inputImg1DPtr[], T2 imgX, T2 im
 	}
 }
 
-inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[4], int datatype)
+inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[4], int datatype)
 {
 	if (!filename || !sz || !pdata)
 	{

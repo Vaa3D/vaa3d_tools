@@ -50,7 +50,7 @@ int main()
 		tiffRoot = "C:\\Users\\hsienchik\\Desktop\\test\\original_down2Cropped";
 		segRoot = "";
 		sigPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalSigPatches_down2";
-		bkgPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalBkgPathces_down2";
+		bkgPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalBkgPatches_down2";
 		manualSWCName = "C:\\Users\\hsienchik\\Desktop\\test\\477315958_3D_scaled_cropped.swc";
 		dims[0] = 2872;
 		dims[1] = 2868;
@@ -105,6 +105,7 @@ int main()
 		//writeSWC_file(outSomaBkgSWCNameC, somaBkgTree);
 	}
 	
+
 	V3DLONG patchsz[4];
 	patchsz[0] = halfSideLength * 2 + 1;
 	patchsz[1] = halfSideLength * 2 + 1;
@@ -126,10 +127,10 @@ int main()
 		cout << filename << endl;
 
 		string prefix;
-		if (zCoord < 10) prefix = "\\0000";
-		else if (zCoord < 100) prefix = "\\000";
-		else if (zCoord < 1000) prefix = "\\00";
-		string sliceNo = to_string(zCoord);
+		if (zCoord -1 < 10) prefix = "\\0000";
+		else if (zCoord -1 < 100) prefix = "\\000";
+		else if (zCoord -1 < 1000) prefix = "\\00";
+		string sliceNo = to_string(zCoord - 1);
 		string tiffSliceName = tiffRoot + prefix + sliceNo + ".tif";
 		string segSliceName = segRoot + prefix + sliceNo + "_Seg.tif";
 		const char* segSliceNameC = segSliceName.c_str();
@@ -176,18 +177,18 @@ int main()
 		if (xCoord + halfSideLength >= xDim) xhb = xDim; else xhb = xCoord + halfSideLength;
 		if (yCoord - halfSideLength <= 0) ylb = 1; else ylb = yCoord - halfSideLength;
 		if (yCoord + halfSideLength >= yDim) yhb = yDim; else yhb = yCoord + halfSideLength;
-		ImgProcessor::cropImg2D(tiffSlice1D, sigPatch, xlb, xhb, ylb, yhb, xDim, yDim);
 		
-		for (int i = 0; i < (xhb - xlb + 1) * (yhb - ylb + 1); ++i) patchVec.push_back(int(sigPatch[i]));
+		if ((xhb - xlb + 1) * (yhb - ylb + 1) < ((halfSideLength * 2 + 1) * (halfSideLength * 2 + 1) / 2)) continue;
+		
+		ImgProcessor::cropImg2D(tiffSlice1D, sigPatch, xlb, xhb, ylb, yhb, xDim, yDim);		
+		for (int i = 0; i < (xhb - xlb + 1) * (yhb - ylb + 1); ++i) patchVec.push_back(int(sigPatch[i]));			
 		patchChecker.getHist2D(&patchVec, 256);
-		int centerVal;
-		if ((halfSideLength * 2 + 1) * halfSideLength + halfSideLength >= patchVec.size())
-			centerVal = patchVec.at((halfSideLength * 2 + 1) * halfSideLength + halfSideLength);
-		else centerVal = 255;
-		cout << "patch center: " << centerVal;
-		if (centerVal < patchChecker.mean)
+	
+		int centerVal = patchVec[(halfSideLength * 2 + 1) * halfSideLength + halfSideLength];		
+		cout << "patch center: " << centerVal << endl;
+		if (centerVal < patchChecker.mean - patchChecker.std)
 		{
-			cout << endl << ": skip" << endl;
+			cout << "-- skip" << endl;
 			patchChecker.mean = 0;
 			tiffPtr->~Image4DSimple();
 			operator delete(tiffPtr);
@@ -219,10 +220,10 @@ int main()
 		if (zCoord <= 0) zCoord = 1;
 
 		string prefix;
-		if (zCoord < 10) prefix = "\\0000";
-		else if (zCoord < 100) prefix = "\\000";
-		else if (zCoord < 1000) prefix = "\\00";
-		string sliceNo = to_string(zCoord);
+		if (zCoord - 1 < 10) prefix = "\\0000";
+		else if (zCoord - 1 < 100) prefix = "\\000";
+		else if (zCoord - 1 < 1000) prefix = "\\00";
+		string sliceNo = to_string(zCoord - 1);
 		string tiffSliceName = tiffRoot + prefix + sliceNo + ".tif";
 		const char* tiffSliceNameC = tiffSliceName.c_str();
 
@@ -235,10 +236,11 @@ int main()
 		int yDim = bkg4DPtr->getYDim();
 		unsigned char* bkgPatch = new unsigned char[(halfSideLength * 2 + 1) * (halfSideLength * 2 + 1)];
 		int xlb, xhb, ylb, yhb;
-		if (xCoord - halfSideLength <= 0) xlb = 1; else xlb = xCoord - halfSideLength;
-		if (xCoord + halfSideLength >= xDim) xhb = xDim; else xhb = xCoord + halfSideLength;
-		if (yCoord - halfSideLength <= 0) ylb = 1; else ylb = yCoord - halfSideLength;
-		if (yCoord + halfSideLength >= yDim) yhb = yDim; else yhb = yCoord + halfSideLength;
+		if (xCoord - halfSideLength <= 0) continue; else xlb = xCoord - halfSideLength;
+		if (xCoord + halfSideLength >= xDim) continue; else xhb = xCoord + halfSideLength;
+		if (yCoord - halfSideLength <= 0) continue; else ylb = yCoord - halfSideLength;
+		if (yCoord + halfSideLength >= yDim) continue; else yhb = yCoord + halfSideLength;
+
 		ImgProcessor::cropImg2D(slice1D, bkgPatch, xlb, xhb, ylb, yhb, xDim, yDim);
 		QString outimg_file = QString::fromStdString(bkgPatchRoot) + QString("\\x%1_y%2_z%3.tif").arg(xCoord).arg(yCoord).arg(zCoord);
 		string filename = outimg_file.toStdString();
