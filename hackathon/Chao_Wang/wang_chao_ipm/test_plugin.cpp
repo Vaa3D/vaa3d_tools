@@ -27,11 +27,12 @@ QStringList TestPlugin::funclist() const
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
  {
     TestPlugin p;
-    if(!p.dialog())
-        return ;
+    v3dhandle curwin = callback.currentImageWindow();
+    Image4DSimple *p4dImage=callback.getImage(curwin);
+    int chn_num =p4dImage->getCDim();
     if (menu_name == tr("segment"))
 	{
-
+       p.dialog();
        image_threshold(callback, parent, p);
        v3d_msg("to be implemented.");
 	}
@@ -166,9 +167,8 @@ void couthelp()
 void dialog()
 {
 
-        v3dhandle curwin = callback.currentImageWindow();
-        p4dImage = callback.getImage(curwin);
-        int chn_num = p4dImage->getCDim();
+
+
 
 
             //set update the dialog

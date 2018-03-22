@@ -5,7 +5,8 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = F:/newv3dcode/v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
-HEADERS	+= test_plugin.h
+HEADERS	+= test_plugin.h \
+    test1.h
 SOURCES	+= test_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
