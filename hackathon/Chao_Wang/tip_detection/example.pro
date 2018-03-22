@@ -23,10 +23,6 @@ unix:!macx {
 
 }
 
-
-
-#LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib
-
 #include the headers used in the project
 HEADERS	+= example_plugin.h
 HEADERS	+= example_func.h
