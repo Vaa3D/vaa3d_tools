@@ -2904,7 +2904,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                             if(data1d_ref[iiy*N +iix]>0)
                             {
                                 std::vector<float> output = detection_results[d];
-                                if(output.at(1) > 0.997)
+                                if(output.at(1) > 0.95)
                                 {
                                     LocationSimple S;
                                     S.x = iix;

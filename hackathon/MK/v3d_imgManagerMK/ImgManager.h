@@ -85,7 +85,13 @@ static inline void ImgManager::imgStackSlicer(T1 inputImg1DPtr[], T2 imgX, T2 im
 
 inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[4], int datatype)
 {
-	if (!filename || !sz || !pdata)
+	if (!pdata)
+	{
+		cerr << "input array not valid" << endl;
+		return false;
+	}
+
+	if (!filename || !sz)
 	{
 		v3d_msg("some of the parameters for simple_saveimage_wrapper() are not valid.", 0);
 		return false;

@@ -48,8 +48,7 @@ public:
 };
 
 template<class T1, class T2>
-inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], 
-	T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
+inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
 {
 	int OutputArrayi = 0;
 	for (T2 yi = ylb; yi <= yhb; ++yi)
