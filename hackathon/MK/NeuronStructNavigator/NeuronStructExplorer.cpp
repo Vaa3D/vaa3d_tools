@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 #include "basic_4dimage.h"
 #include "NeuronStructExplorer.h"
@@ -102,8 +103,39 @@ void NeuronStructExplorer::swcZcleanup(unordered_map<string, unordered_map<int, 
 					maxProbZ = *checkIt;
 					maxProb = it->second[*checkIt];
 				}
-				
 			}
 		}
 	}
+}
+
+void NeuronStructExplorer::swcDetectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2)
+{
+	vector<float> minDists;
+	long int count = 1;
+	for (QList<NeuronSWC>::iterator it1 = inputTreePtr1->listNeuron.begin(); it1 != inputTreePtr1->listNeuron.end(); ++it1)
+	{
+		++count;
+		cout << "node No. " << count << ".." << endl;
+		float minDist = 10000;
+		for (QList<NeuronSWC>::iterator it2 = inputTreePtr2->listNeuron.begin(); it2 != inputTreePtr2->listNeuron.end(); ++it2)
+		{
+			float xSquare = ((it2->x) - (it1->x)) * ((it2->x) - (it1->x));
+			float ySquare = ((it2->y) - (it1->y)) * ((it2->y) - (it1->y));
+			float zSquare = ((it2->z) - (it1->z)) * ((it2->z) - (it1->z));
+			float currDist = sqrtf(xSquare + ySquare + zSquare);
+
+			if (currDist <= minDist) minDist = currDist;
+		}
+		minDists.push_back(minDist);
+	}
+
+	float distSum = 0;
+	for (vector<float>::iterator it = minDists.begin(); it != minDists.end(); ++it) distSum = distSum + *it;
+	float distMean = distSum / minDists.size();
+	float varSum = 0;
+	for (int i = 0; i < minDists.size(); ++i) varSum = varSum + (minDists[i] - distMean) * (minDists[i] - distMean);
+	float distVar = varSum / minDists.size();
+	float distStd = sqrtf(distVar);
+	
+	cout << distMean << " " << distStd << endl;
 }

@@ -30,6 +30,8 @@ public:
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
 	void swcXYprofile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
 	void swcZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
+
+	void swcDetectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2);
 };
 
 #endif
