@@ -123,6 +123,41 @@ void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, flo
 	}
 }
 
+void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength)
+{
+	float yMiddle = float(yLength + 1) / 2;
+	for (QList<NeuronSWC>::const_iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
+	{
+		NeuronSWC flippedNode = *it;
+		if (it->y > yMiddle) flippedNode.y = (yMiddle - (it->y - yMiddle));
+		else if (it->y < yMiddle) flippedNode.y = (yMiddle + (yMiddle - it->y));
+	}
+}
+
+void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor)
+{
+	// -- Downsample swc in z dimension with the given factor.
+
+	QList<NeuronSWC> inputList = inputTreePtr->listNeuron;
+	outputTreePtr->listNeuron.clear();
+	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+		if (int(it->z) % factor == 0) outputTreePtr->listNeuron.push_back(*it);
+}
+
+void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold)
+{
+	// -- Filter detected nodes with the given threshold. 
+	// -- Currently SWC dtat structure only has [radius] member that could be used as auto-detection output probability.
+	
+	QList<NeuronSWC> inputList = inputTreePtr->listNeuron;
+	outputTreePtr->listNeuron.clear();
+	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+	{
+		if (it->radius < threshold) continue;
+		else outputTreePtr->listNeuron.push_back(*it);
+	}
+}
+
 /* =================================== Volumetric SWC sampling methods =================================== */
 void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance) 
 {

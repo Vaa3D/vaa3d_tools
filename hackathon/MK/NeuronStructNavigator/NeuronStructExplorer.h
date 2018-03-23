@@ -2,6 +2,7 @@
 #define NEURONSTRUCTEXPLORER_H
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 
 #include <qlist.h>
@@ -26,9 +27,9 @@ public:
 	vector<NeuronTree>* treeVectorPtr;
 	QString neuronFileName;
 
-	/********* Neuron structure file basic operations *********/
-	static void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength);
-	/**********************************************************/
+	unordered_map<string, unordered_map<int, float>> zProfileMap;
+	void swcXYprofile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
+	void swcZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
 };
 
 #endif
