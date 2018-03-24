@@ -31,8 +31,10 @@ NeuronStructExplorer::NeuronStructExplorer(string inputFileName)
 	}
 }
 
-void NeuronStructExplorer::swcXYprofile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr)
+void NeuronStructExplorer::detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr)
 {
+	// -- This method creates a z-frequency profile on the xy plane for the image stack.
+
 	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
 	{
 		int xCoord = int(it->x);
@@ -45,8 +47,13 @@ void NeuronStructExplorer::swcXYprofile(NeuronTree* inputTreePtr, NeuronTree* ou
 	}
 }
 
-void NeuronStructExplorer::swcZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold)
+void NeuronStructExplorer::pixelStackZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold)
 {
+	// -- Using the z-frequency profile created by this->zProfileMap, eliminate redundant nodes in the z direction that share the same x-y coordinates.
+	// minSecNum: minimum number of consecutive nodes in z to be processed.
+	// max: true  - Keep the nodes with the maximum probablity among the consecutive z nodes.
+	//      false - threshold needs to be specified if max == false. Use the threshold instead. 
+
 	outputTreePtr->listNeuron.clear();
 	for (unordered_map<string, unordered_map<int, float>>::iterator it = zProfileMap.begin(); it != zProfileMap.end(); ++it)
 	{
@@ -108,7 +115,43 @@ void NeuronStructExplorer::swcZcleanup(unordered_map<string, unordered_map<int, 
 	}
 }
 
-void NeuronStructExplorer::swcDetectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2)
+void NeuronStructExplorer::falseDetectionList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
+{
+	long int nodeCount = 1;
+	for (QList<NeuronSWC>::iterator it = detectedTreePtr->listNeuron.begin(); it != detectedTreePtr->listNeuron.end(); ++it)
+	{
+		cout << "Scanning detected node " << nodeCount << ".." << endl;
+		++nodeCount;
+
+		QList<NeuronSWC>::iterator checkIt = manualTreePtr->listNeuron.begin();
+		while (checkIt != manualTreePtr->listNeuron.end())
+		{
+			float xSquare = (it->x - checkIt->x) * (it->x - checkIt->x);
+			float ySquare = (it->y - checkIt->y) * (it->y - checkIt->y);
+			float zSquare = (it->z - checkIt->z) * (it->z - checkIt->z);
+			float thisNodeDist = sqrtf(xSquare + ySquare + zSquare);
+
+			if (thisNodeDist < distThreshold)
+			{
+				this->processedTree.listNeuron.push_back(*it);
+				break;
+			}
+
+			++checkIt;
+			if (checkIt == manualTreePtr->listNeuron.end())
+			{
+				vector<float> FPcoords;
+				FPcoords.push_back(it->x);
+				FPcoords.push_back(it->y);
+				FPcoords.push_back(it->z);
+				this->FPsList.push_back(FPcoords);
+				FPcoords.clear();
+			}
+		}
+	}
+}
+
+void NeuronStructExplorer::detectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2)
 {
 	vector<float> minDists;
 	long int count = 1;

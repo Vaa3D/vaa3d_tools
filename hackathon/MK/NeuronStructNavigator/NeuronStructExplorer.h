@@ -24,14 +24,21 @@ public:
 
 	NeuronTree* singleTreePtr;
 	NeuronTree singleTree;
+	NeuronTree processedTree;
 	vector<NeuronTree>* treeVectorPtr;
 	QString neuronFileName;
 
+	/********* Pixel based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
-	void swcXYprofile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
-	void swcZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
+	void detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
+	void pixelStackZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
+	/****************************************************************************/
 
-	void swcDetectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2);
+	/********* Some analysis *********/
+	vector<vector<float>> FPsList;
+	void falseDetectionList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
+	void detectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2);
+	/*********************************/
 };
 
 #endif
