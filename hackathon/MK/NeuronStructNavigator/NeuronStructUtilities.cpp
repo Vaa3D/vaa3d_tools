@@ -14,7 +14,7 @@
 using namespace std;
 using namespace boost;
 
-void swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)
+void NeuronStructUtil::swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)
 {
 	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
 
@@ -71,7 +71,7 @@ void swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int
 		outputTreesPtr->push_back(*it);
 }
 
-void swcSliceAssembler(string swcPath)
+void NeuronStructUtil::swcSliceAssembler(string swcPath)
 {
 	// This function only puts [SLICED SWC files] together without touching any topological structures.
 	// z coordinates are adjusted based on the slice number specified in each SWC file name.
@@ -101,7 +101,7 @@ void swcSliceAssembler(string swcPath)
 	writeSWC_file(outputFileName, outputTree);
 }
 
-void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
+void NeuronStructUtil::swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
 {
 	if (zlb == 0 && zhb == 0)
 	{
@@ -123,7 +123,7 @@ void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, flo
 	}
 }
 
-void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength)
+void NeuronStructUtil::swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength)
 {
 	float yMiddle = float(yLength + 1) / 2;
 	for (QList<NeuronSWC>::const_iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
@@ -134,7 +134,7 @@ void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long i
 	}
 }
 
-void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor)
+void NeuronStructUtil::swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor)
 {
 	// -- Downsample swc in z dimension with the given factor.
 
@@ -144,7 +144,7 @@ void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int fac
 		if (int(it->z) % factor == 0) outputTreePtr->listNeuron.push_back(*it);
 }
 
-void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold)
+void NeuronStructUtil::detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold)
 {
 	// -- Filter detected nodes with the given threshold. 
 	// -- Currently SWC dtat structure only has [radius] member that could be used as auto-detection output probability.
@@ -159,7 +159,7 @@ void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, 
 }
 
 /* =================================== Volumetric SWC sampling methods =================================== */
-void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance) 
+void NeuronStructUtil::sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance)
 {
 	// -- Randomly generate signal patches within given distance range
 	// ratio:    the ratio of targeted number of patches to the number of nodes in the inputTree
@@ -196,7 +196,7 @@ void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float rati
 	}
 }
 
-void bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int dims[], float ratio, float distance)
+void NeuronStructUtil::bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int dims[], float ratio, float distance)
 {
 	// -- Randomly generate background patches away from the forbidden distance
 	// dims:     image stack dimension
@@ -246,7 +246,7 @@ void bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int d
 	}
 }
 
-void bkgNode_Gen_somaArea(NeuronTree* intputTreePtr, NeuronTree* outputTreePtr, int xLength, int yLength, int zLength, float ratio, float distance)
+void NeuronStructUtil::bkgNode_Gen_somaArea(NeuronTree* intputTreePtr, NeuronTree* outputTreePtr, int xLength, int yLength, int zLength, float ratio, float distance)
 {
 	// -- Randomly generate background patches away from the forbidden distance. This method aims to reinforce the background recognition near soma area.
 	// xLength, yLength, zLength: decide the range to apply with soma centered

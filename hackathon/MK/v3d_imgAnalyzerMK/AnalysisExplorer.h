@@ -21,8 +21,7 @@ public:
 	float std;
 	unordered_map<int, float> stackMeanMap;
 
-	vector<int>* getHist2D(vector<int>* inputImgVecPtr, int binNum);
-	unordered_map<int, float> sliceMeanMapper(string slicePath);
+	inline vector<int>* getHist2D(vector<int>* inputImgVecPtr, int binNum);
 };
 
 inline vector<int>* AnalysisExplorer::getHist2D(vector<int>* inputImgVecPtr, int binNum)

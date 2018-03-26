@@ -79,8 +79,8 @@ int main()
 	NeuronTree inputTree = readSWC_file(manualSWCNameQ);
 	NeuronTree bkgTree, somaBkgTree, signalTree, combinedBkgTree;
 
-	bkgNode_Gen(&inputTree, &bkgTree, dims, 20, 10);
-	sigNode_Gen(&inputTree, &signalTree, 20, 3);
+	NeuronStructUtil::bkgNode_Gen(&inputTree, &bkgTree, dims, 20, 10);
+	NeuronStructUtil::sigNode_Gen(&inputTree, &signalTree, 20, 3);
 	string outbkgSWCName = caseRoot + "\\bkg_test_down2.swc";
 	string outSWCsigName = caseRoot + "\\signal_test_down2.swc";
 
@@ -92,7 +92,7 @@ int main()
 
 	if (somaBkg == true)
 	{
-		bkgNode_Gen_somaArea(&inputTree, &somaBkgTree, 200, 170, 100, 0.05, 20);
+		NeuronStructUtil::bkgNode_Gen_somaArea(&inputTree, &somaBkgTree, 200, 170, 100, 0.05, 20);
 		for (QList<NeuronSWC>::iterator bkgIt = somaBkgTree.listNeuron.begin(); bkgIt != somaBkgTree.listNeuron.end(); ++bkgIt)
 			bkgTree.listNeuron.push_back(*bkgIt);
 
