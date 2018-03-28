@@ -3018,7 +3018,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
         cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
 
-        int Wx = 60, Wy = 60, Wz = 5;
+        int Wx = 95, Wy = 95, Wz = 5;
 
         unsigned char * data1d = 0;
         V3DLONG in_sz[4];
@@ -3188,7 +3188,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
             }
         }
 
-        QString outfilename = swc_file + "_connected_60_z.swc";
+        QString outfilename = swc_file + "_connected_95_z.swc";
         writeSWC_file(outfilename,marker_MST);
         v3d_msg(QString("The output file is [%1]").arg(outfilename),0);
         return true;

@@ -38,6 +38,9 @@ public:
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
 	bool getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, MyMarker m2);
 
+	void detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D);
+	/**********************************************************************/
+
 	/********* Assemble all SWC masks together as an "SWC mip mask." *********/
 	void MaskMIPfrom2Dseries(string path);                       
 	/*************************************************************************/

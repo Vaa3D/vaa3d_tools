@@ -16,13 +16,47 @@ public:
 
 	AnalysisExplorer() {};
 	
+	/********* Histogram analysis *********/
 	float mean;
 	float variance;
 	float std;
 	unordered_map<int, float> stackMeanMap;
 
 	inline vector<int>* getHist2D(vector<int>* inputImgVecPtr, int binNum);
+	/**************************************/
+
+	static inline void correlation2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], double& corrCoeff);
+	static inline void autoCorr2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], vector<double>*& corrCoeffs);
 };
+
+inline void AnalysisExplorer::correlation2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], double& corrCoeff)
+{
+	float* selfCorr = new float[dims[0] * dims[1]];
+	float* crossCorr = new float[dims[0] * dims[1]];
+	float selfCorrSum = 0;
+	float crossCorrSum = 0;
+	for (size_t i = 0; i < dims[0] * dims[1]; ++i)
+	{
+		selfCorr[i] = (float(input1D_1[i]) / 255) * (float(input1D_1[i]) / 255);
+		selfCorrSum = selfCorrSum + selfCorr[i];
+
+		crossCorr[i] = (float(input1D_1[i]) / 255) * (float(input1D_2[i]) / 255);
+		crossCorrSum = crossCorrSum + crossCorr[i];
+	}
+	cout << selfCorrSum << " " << crossCorrSum << endl;
+
+	if (selfCorrSum == 0)
+	{
+		cerr << "No signal. Return." << endl;
+		return;
+	}
+	corrCoeff = crossCorrSum / selfCorrSum;
+}
+
+inline void AnalysisExplorer::autoCorr2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], vector<double>*& corrCoeffs)
+{
+
+}
 
 inline vector<int>* AnalysisExplorer::getHist2D(vector<int>* inputImgVecPtr, int binNum)
 {

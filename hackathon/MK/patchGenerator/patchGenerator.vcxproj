@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{35062BAD-B3A6-4B91-995C-8C9F14B00B8C}</ProjectGuid>
+    <ProjectGuid>{D869781D-593C-41A3-A5D5-2C9A246FBFBE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>patchGenerator</RootNamespace>
   </PropertyGroup>
