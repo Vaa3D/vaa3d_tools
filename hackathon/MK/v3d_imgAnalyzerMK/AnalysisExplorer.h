@@ -25,8 +25,11 @@ public:
 	inline vector<int>* getHist2D(vector<int>* inputImgVecPtr, int binNum);
 	/**************************************/
 
+	/********* Detection / manual correlation functionalities *********/
+	vector<double> corrScores;
 	static inline void correlation2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], double& corrCoeff);
-	static inline void autoCorr2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], vector<double>*& corrCoeffs);
+	void localCrossCorr(unsigned char testing1D[], unsigned char ref1D[], long int dims[2], int range = 3);
+	/******************************************************************/
 };
 
 inline void AnalysisExplorer::correlation2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], double& corrCoeff)
@@ -51,11 +54,6 @@ inline void AnalysisExplorer::correlation2D(unsigned char input1D_1[], unsigned 
 		return;
 	}
 	corrCoeff = crossCorrSum / selfCorrSum;
-}
-
-inline void AnalysisExplorer::autoCorr2D(unsigned char input1D_1[], unsigned char input1D_2[], long int dims[2], vector<double>*& corrCoeffs)
-{
-
 }
 
 inline vector<int>* AnalysisExplorer::getHist2D(vector<int>* inputImgVecPtr, int binNum)
