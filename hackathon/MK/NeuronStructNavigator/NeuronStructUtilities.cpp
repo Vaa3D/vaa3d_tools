@@ -17,6 +17,7 @@ using namespace boost;
 void NeuronStructUtil::swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)
 {
 	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
+	// thickness * 2 + 1 = the number of consecutive z slices for one SWC node to appear. This is for the purpose producing continous masks.
 
 	QList<NeuronSWC> inputList = inputTreePtr->listNeuron;
 	int zMax = 0;

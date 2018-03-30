@@ -19,7 +19,7 @@ public:
 	ImgManager(string wholeImgName);
 	/********************************/
 
-	/********* Acquiring target image data *********/
+	/********* Acquiring target image information *********/
 	string wholeImgName;	
 	Image4DSimple* wholeImg4DPtr;
 	unsigned char* imgData1D;

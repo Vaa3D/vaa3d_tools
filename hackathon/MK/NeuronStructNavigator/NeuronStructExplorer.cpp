@@ -115,12 +115,12 @@ void NeuronStructExplorer::pixelStackZcleanup(unordered_map<string, unordered_ma
 	}
 }
 
-void NeuronStructExplorer::falseDetectionList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
+void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
 {
 	long int nodeCount = 1;
 	for (QList<NeuronSWC>::iterator it = detectedTreePtr->listNeuron.begin(); it != detectedTreePtr->listNeuron.end(); ++it)
 	{
-		cout << "Scanning detected node " << nodeCount << ".." << endl;
+		cout << "Scanning detected node " << nodeCount << ".. " << endl;
 		++nodeCount;
 
 		QList<NeuronSWC>::iterator checkIt = manualTreePtr->listNeuron.begin();
@@ -151,14 +151,47 @@ void NeuronStructExplorer::falseDetectionList(NeuronTree* detectedTreePtr, Neuro
 	}
 }
 
+void NeuronStructExplorer::falseNegativeList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
+{
+	long int nodeCount = 1;
+	for (QList<NeuronSWC>::iterator it = manualTreePtr->listNeuron.begin(); it != manualTreePtr->listNeuron.end(); ++it)
+	{
+		cout << "Scanning detected node " << nodeCount << ".. " << endl;
+		++nodeCount;
+
+		QList<NeuronSWC>::iterator checkIt = detectedTreePtr->listNeuron.begin();
+		while (checkIt != detectedTreePtr->listNeuron.end())
+		{
+			float xSquare = (it->x - checkIt->x) * (it->x - checkIt->x);
+			float ySquare = (it->y - checkIt->y) * (it->y - checkIt->y);
+			float zSquare = (it->z - checkIt->z) * (it->z - checkIt->z);
+			float thisNodeDist = sqrtf(xSquare + ySquare + zSquare);
+
+			++checkIt;
+			if (checkIt == detectedTreePtr->listNeuron.end())
+			{
+				vector<float> FNcoords;
+				FNcoords.push_back(it->x);
+				FNcoords.push_back(it->y);
+				FNcoords.push_back(it->z);
+				this->FNsList.push_back(FNcoords);
+				FNcoords.clear();
+			}
+		}
+	}
+}
+
 void NeuronStructExplorer::detectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2)
 {
+	// -- Compute the shortest distance of each node from input structure (inputTreePtr1) to refernce structure (inputTreePtr2) 
+	// -- The order of inputTreePtr1 and inputTreePtr2 represent the distances from opposite comparing directions.
+
 	vector<float> minDists;
 	long int count = 1;
 	for (QList<NeuronSWC>::iterator it1 = inputTreePtr1->listNeuron.begin(); it1 != inputTreePtr1->listNeuron.end(); ++it1)
 	{
 		++count;
-		cout << "node No. " << count << ".." << endl;
+		//cout << "node No. " << count << ".." << endl;
 		float minDist = 10000;
 		for (QList<NeuronSWC>::iterator it2 = inputTreePtr2->listNeuron.begin(); it2 != inputTreePtr2->listNeuron.end(); ++it2)
 		{

@@ -44,7 +44,7 @@ public:
 	NeuronTree* treeFromNeuStructExplorer_Ptr;
 	// -------------------------------------------------------------------------- //
 
-	// create VOIs/ROIs based on neuron structure file
+	// --------- create VOIs/ROIs based on neuron structure file (THESE METHODS ARE DEPRECATED) --------- //
 	long long xLength, yLength, zLength; // VOI/ROI size
 	unsigned char* cropped1D; // The largest VOI size allowed is 256*256*256.
 	long long croppedSz[4];
@@ -69,7 +69,7 @@ public:
 
 	deque<deque<nodeROI>> allROIs_binMask;			
 	void createAugmentedROIList_binMaskBased(string swcMasksPath, string foregroundMask = "none"); // generate ROIs from SWC binary masks (deque<nodeROI>)
-	
+	// ---------------------------------------------------------------------------------------------------//
 };
 
 template<class T> bool NeuronROIProfiler::cropNodeVOI(T x, T y, T z)

@@ -36,7 +36,9 @@ public:
 
 	/********* Some analysis *********/
 	vector<vector<float>> FPsList;
-	void falseDetectionList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
+	vector<vector<float>> FNsList;
+	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
+	void falseNegativeList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
 	void detectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2);
 	/*********************************/
 };
