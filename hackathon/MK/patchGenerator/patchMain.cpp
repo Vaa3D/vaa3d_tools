@@ -46,15 +46,15 @@ int main()
 
 	if (useDefault == true)
 	{
-		caseRoot = "C:\\Users\\hsienchik\\Desktop\\test";
-		tiffRoot = "C:\\Users\\hsienchik\\Desktop\\test\\original_down2Cropped";
+		caseRoot = "C:\\Users\\hsienchik\\Desktop\\397462955";
+		tiffRoot = "C:\\Users\\hsienchik\\Desktop\\397462955\\croppedSlices_down2";
 		segRoot = "";
-		sigPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalSigPatches_down2";
-		bkgPatchRoot = "C:\\Users\\hsienchik\\Desktop\\test\\originalBkgPatches_down2";
-		manualSWCName = "C:\\Users\\hsienchik\\Desktop\\test\\477315958_3D_scaled_cropped.swc";
-		dims[0] = 2872;
-		dims[1] = 2868;
-		dims[2] = 366;
+		sigPatchRoot = "C:\\Users\\hsienchik\\Desktop\\397462955\\originalSigPatches_down2";
+		bkgPatchRoot = "C:\\Users\\hsienchik\\Desktop\\397462955\\originalBkgPatches_down2";
+		manualSWCName = "C:\\Users\\hsienchik\\Desktop\\397462955\\397462955_3D_scaled_cropped.swc";
+		dims[0] = 1401;
+		dims[1] = 1615;
+		dims[2] = 374;
 		somaBkg = true;
 		FG = false;
 
@@ -79,12 +79,8 @@ int main()
 	NeuronTree inputTree = readSWC_file(manualSWCNameQ);
 	NeuronTree bkgTree, somaBkgTree, signalTree, combinedBkgTree;
 
-	float secondSoma[3];
-	secondSoma[0] = inputTree.listNeuron.at(0).x;
-	secondSoma[1] = inputTree.listNeuron.at(0).y;
-	secondSoma[2] = inputTree.listNeuron.at(0).z;
-	bkgNode_Gen(&inputTree, &bkgTree, dims, 20, 10);
-	sigNode_Gen(&inputTree, &signalTree, 20, 3);
+	NeuronStructUtil::bkgNode_Gen(&inputTree, &bkgTree, dims, 20, 10);
+	NeuronStructUtil::sigNode_Gen(&inputTree, &signalTree, 20, 3);
 	string outbkgSWCName = caseRoot + "\\bkg_test_down2.swc";
 	string outSWCsigName = caseRoot + "\\signal_test_down2.swc";
 
@@ -96,7 +92,7 @@ int main()
 
 	if (somaBkg == true)
 	{
-		bkgNode_Gen_somaArea(&inputTree, &somaBkgTree, 400, 180, 100, 0.05, 20);
+		NeuronStructUtil::bkgNode_Gen_somaArea(&inputTree, &somaBkgTree, 200, 170, 100, 0.05, 20);
 		for (QList<NeuronSWC>::iterator bkgIt = somaBkgTree.listNeuron.begin(); bkgIt != somaBkgTree.listNeuron.end(); ++bkgIt)
 			bkgTree.listNeuron.push_back(*bkgIt);
 
@@ -173,12 +169,10 @@ int main()
 		
 		unsigned char* sigPatch = new unsigned char[(halfSideLength * 2 + 1) * (halfSideLength * 2 + 1)];
 		int xlb, xhb, ylb, yhb;
-		if (xCoord - halfSideLength <= 0) xlb = 1; else xlb = xCoord - halfSideLength;
-		if (xCoord + halfSideLength >= xDim) xhb = xDim; else xhb = xCoord + halfSideLength;
-		if (yCoord - halfSideLength <= 0) ylb = 1; else ylb = yCoord - halfSideLength;
-		if (yCoord + halfSideLength >= yDim) yhb = yDim; else yhb = yCoord + halfSideLength;
-		
-		if ((xhb - xlb + 1) * (yhb - ylb + 1) < ((halfSideLength * 2 + 1) * (halfSideLength * 2 + 1) / 2)) continue;
+		if (xCoord - halfSideLength <= 1) continue; else xlb = xCoord - halfSideLength;
+		if (xCoord + halfSideLength >= xDim - 1) continue; else xhb = xCoord + halfSideLength;
+		if (yCoord - halfSideLength <= 1) continue; else ylb = yCoord - halfSideLength;
+		if (yCoord + halfSideLength >= yDim + 1) continue; else yhb = yCoord + halfSideLength;
 		
 		ImgProcessor::cropImg2D(tiffSlice1D, sigPatch, xlb, xhb, ylb, yhb, xDim, yDim);		
 		for (int i = 0; i < (xhb - xlb + 1) * (yhb - ylb + 1); ++i) patchVec.push_back(int(sigPatch[i]));			
@@ -236,10 +230,10 @@ int main()
 		int yDim = bkg4DPtr->getYDim();
 		unsigned char* bkgPatch = new unsigned char[(halfSideLength * 2 + 1) * (halfSideLength * 2 + 1)];
 		int xlb, xhb, ylb, yhb;
-		if (xCoord - halfSideLength <= 0) continue; else xlb = xCoord - halfSideLength;
-		if (xCoord + halfSideLength >= xDim) continue; else xhb = xCoord + halfSideLength;
-		if (yCoord - halfSideLength <= 0) continue; else ylb = yCoord - halfSideLength;
-		if (yCoord + halfSideLength >= yDim) continue; else yhb = yCoord + halfSideLength;
+		if (xCoord - halfSideLength <= 1) continue; else xlb = xCoord - halfSideLength;
+		if (xCoord + halfSideLength >= xDim - 1) continue; else xhb = xCoord + halfSideLength;
+		if (yCoord - halfSideLength <= 1) continue; else ylb = yCoord - halfSideLength;
+		if (yCoord + halfSideLength >= yDim + 1) continue; else yhb = yCoord + halfSideLength;
 
 		ImgProcessor::cropImg2D(slice1D, bkgPatch, xlb, xhb, ylb, yhb, xDim, yDim);
 		QString outimg_file = QString::fromStdString(bkgPatchRoot) + QString("\\x%1_y%2_z%3.tif").arg(xCoord).arg(yCoord).arg(zCoord);

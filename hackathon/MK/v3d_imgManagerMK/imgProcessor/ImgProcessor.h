@@ -28,7 +28,7 @@ public:
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
 
 	template <class T1, class T2>
-	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the greater pixel. 
+	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the one with greater value. 
 
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
@@ -48,10 +48,9 @@ public:
 };
 
 template<class T1, class T2>
-inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], 
-	T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
+inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
 {
-	int OutputArrayi = 0;
+	long int OutputArrayi = 0;
 	for (T2 yi = ylb; yi <= yhb; ++yi)
 	{
 		for (T2 xi = xlb; xi <= xhb; ++xi)

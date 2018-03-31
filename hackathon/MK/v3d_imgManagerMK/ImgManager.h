@@ -19,7 +19,7 @@ public:
 	ImgManager(string wholeImgName);
 	/********************************/
 
-	/********* Acquiring target image data *********/
+	/********* Acquiring target image information *********/
 	string wholeImgName;	
 	Image4DSimple* wholeImg4DPtr;
 	unsigned char* imgData1D;
@@ -37,6 +37,9 @@ public:
 	/********* Methods for generating binary masks from SWC files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
 	bool getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, MyMarker m2);
+
+	void detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D);
+	/**********************************************************************/
 
 	/********* Assemble all SWC masks together as an "SWC mip mask." *********/
 	void MaskMIPfrom2Dseries(string path);                       
@@ -85,7 +88,13 @@ static inline void ImgManager::imgStackSlicer(T1 inputImg1DPtr[], T2 imgX, T2 im
 
 inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[4], int datatype)
 {
-	if (!filename || !sz || !pdata)
+	if (!pdata)
+	{
+		cerr << "input array not valid" << endl;
+		return false;
+	}
+
+	if (!filename || !sz)
 	{
 		v3d_msg("some of the parameters for simple_saveimage_wrapper() are not valid.", 0);
 		return false;

@@ -2,6 +2,7 @@
 #define NEURONSTRUCTEXPLORER_H
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 
 #include <qlist.h>
@@ -23,12 +24,23 @@ public:
 
 	NeuronTree* singleTreePtr;
 	NeuronTree singleTree;
+	NeuronTree processedTree;
 	vector<NeuronTree>* treeVectorPtr;
 	QString neuronFileName;
 
-	/********* Neuron structure file basic operations *********/
-	static void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength);
-	/**********************************************************/
+	/********* Pixel based deep neural network result refining/cleaning *********/
+	unordered_map<string, unordered_map<int, float>> zProfileMap;
+	void detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
+	void pixelStackZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
+	/****************************************************************************/
+
+	/********* Some analysis *********/
+	vector<vector<float>> FPsList;
+	vector<vector<float>> FNsList;
+	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
+	void falseNegativeList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
+	void detectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2);
+	/*********************************/
 };
 
 #endif

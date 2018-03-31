@@ -52,6 +52,22 @@ Label_error_simple_loadimage_wrapper:
 	return false;
 }
 
+void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)
+{
+	// -- Generate 2D masks based on each detected "SWC signal slice". 
+	// -- Note, since the detected signal does not contain topological information (all parents = -1), no cross z section node appearace is allowed as oppose to NeuronStructUtil::swcSlicer.
+
+	mask1D = new unsigned char[dims[0] * dims[1]];
+	for (size_t i = 0; i < (dims[0] * dims[1]); ++i) mask1D[i] = 0;
+	for (QList<NeuronSWC>::iterator it = nodeListPtr->begin(); it != nodeListPtr->end(); ++it)
+	{
+		int xCoord = int(it->x);
+		int yCoord = int(it->y);
+
+		mask1D[dims[0] * (yCoord - 1) + (xCoord - 1)] = 255;
+	}
+}
+
 void ImgManager::MaskMIPfrom2Dseries(string path)
 {
 	// -- Generate MIP of a series of SWC binary masks.
