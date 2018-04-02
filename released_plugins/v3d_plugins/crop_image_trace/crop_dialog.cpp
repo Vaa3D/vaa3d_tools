@@ -120,11 +120,11 @@ bool crop_dialog::csv_out()
         // This fix is done by PHC, 2015May14. This should work in most cases. However
         //if a user choose a strange tmp folder with the name "/abc/abc/abc" then this fix
         //will wrongly go to the parent folder "abc/abc".
-        QDir tmp1(fileSaveDir);
+        QDir tmp1(tmp_dir);
         QString tmp2 = tmp1.dirName();
-        if (fileSaveDir.endsWith(tmp2+'/'+tmp2))
+        if (tmp_dir.endsWith(tmp2+'/'+tmp2))
         {
-            fileSaveDir = fileSaveDir.left(fileSaveDir.size() - tmp2.size() - 1);
+            tmp_dir = tmp_dir.left(fileSaveDir.size() - tmp2.size() - 1);
         }
 #endif
         if(tmp_dir.isEmpty())
