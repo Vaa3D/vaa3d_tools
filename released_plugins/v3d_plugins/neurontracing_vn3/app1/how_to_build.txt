@@ -1,5 +1,0 @@
-To build, you need to first build Vaa3D which will create the necessary library and include files in the respective folders.
-
--Hanchuan Peng
-2012-02-01
-

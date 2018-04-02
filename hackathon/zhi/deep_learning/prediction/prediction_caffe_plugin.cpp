@@ -77,7 +77,7 @@ QStringList prediction_caffe::menulist() const
 {
     return QStringList()
             <<tr("Prediction")
-           <<tr("Prediction_3D_unet")
+           <<tr("Prediction_3D(unet)")
           <<tr("Quality_Assess")
          <<tr("Detection")
         <<tr("Feature_Extraction")
