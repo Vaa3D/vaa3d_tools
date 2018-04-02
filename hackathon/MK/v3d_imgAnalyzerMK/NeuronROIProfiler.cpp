@@ -12,13 +12,13 @@
 using namespace std;
 using namespace boost::filesystem;
 
-NeuronROIProfiler::NeuronROIProfiler(QString neuronFileName, string wholeImgName) : NeuronStructExplorer(neuronFileName), ImgManager(wholeImgName)
+/*NeuronROIProfiler::NeuronROIProfiler(QString neuronFileName, string wholeImgName) : NeuronStructExplorer(neuronFileName), ImgManager(wholeImgName)
 {
 	this->img1DfromManager = imgData1D;
 	this->treeFromNeuStructExplorer_Ptr = &singleTree;
 	this->img4DFromManager_Ptr = wholeImg4DPtr;
 	imgSz[0] = dims[0]; imgSz[1] = dims[1]; imgSz[2] = dims[2]; imgSz[3] = dims[3];
-}
+}*/
 
 bool NeuronROIProfiler::nodeROIMIP()
 {

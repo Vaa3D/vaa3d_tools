@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 
 enum MIPOrientation {Mxy, Myz, Mxz};
@@ -16,8 +18,8 @@ struct morphStructElement
 	int xLength, yLength;
 
 	morphStructElement();
-	morphStructElement(std::string shape);
-	morphStructElement(std::string shape, int length1, int length2);
+	morphStructElement(string shape);
+	morphStructElement(string shape, int length1, int length2);
 
 	vector<vector<int>> structEle2D;
 	vector<vector<vector<int>>> structEle3D;
@@ -61,7 +63,7 @@ public:
 	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
 		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
 
-	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], std::string shape = "square");
+	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 };
 
 template<class T1, class T2>

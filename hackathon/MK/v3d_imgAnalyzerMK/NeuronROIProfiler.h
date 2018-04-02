@@ -28,10 +28,10 @@ class NeuronROIProfiler : public NeuronStructExplorer, ImgManager
 public:
 	/********* Constructors ********/
 	NeuronROIProfiler() {};
-	NeuronROIProfiler(QString neuronFileName) : NeuronStructExplorer(neuronFileName) 
+	/*NeuronROIProfiler(QString neuronFileName) : NeuronStructExplorer(neuronFileName) 
 		{ this->treeFromNeuStructExplorer_Ptr = &singleTree; }
 
-	NeuronROIProfiler(QString neuronFileName, string wholeImgName);
+	NeuronROIProfiler(QString neuronFileName, string wholeImgName);*/
 	/*******************************/
 
 	// ------- Variables inherited from parent class ImgManager ------- //
