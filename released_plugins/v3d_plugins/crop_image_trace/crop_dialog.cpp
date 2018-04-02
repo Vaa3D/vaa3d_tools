@@ -124,7 +124,7 @@ bool crop_dialog::csv_out()
         QString tmp2 = tmp1.dirName();
         if (tmp_dir.endsWith(tmp2+'/'+tmp2))
         {
-            tmp_dir = tmp_dir.left(fileSaveDir.size() - tmp2.size() - 1);
+            tmp_dir = tmp_dir.left(tmp_dir.size() - tmp2.size() - 1);
         }
 #endif
         if(tmp_dir.isEmpty())
