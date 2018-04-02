@@ -2,7 +2,7 @@
 #define IMGMANAGER_H
 
 #include <string>
-#include <string.h>
+#include <unordered_map>
 
 #include <boost\filesystem.hpp>
 
@@ -10,6 +10,18 @@
 #include "my_surf_objs.h"
 #include "basic_4dimage.h"
 #include "v3d_interface.h"
+
+struct registeredImg
+{
+	registeredImg(string imgFullName);
+
+	string imgAlias;
+	string imgFullPathName;
+	Image4DSimple* thisImg4DPtr;
+	unsigned char* imgData1D;
+	long int dims[4];
+	int datatype;
+};
 
 class ImgManager
 {
@@ -19,19 +31,11 @@ public:
 	ImgManager(string wholeImgName);
 	/********************************/
 
-	/********* Acquiring target image information *********/
-	string wholeImgName;	
-	Image4DSimple* wholeImg4DPtr;
-	unsigned char* imgData1D;
-	long int dims[4];
-	int datatype;
-	
-	// ------- Convert input image into 1D unsigned char array. Note, this function does NOT release Image4DSimple pointer ------- //
-	static bool img1Ddumpster(Image4DSimple* imgPtr, unsigned char*& data1D, long int dims[4], int datatype);
-	// --------------------------------------------------------------------------------------------------------------------------- //
-
 	/********* IO *********/
+	static bool img1Ddumpster(Image4DSimple* imgPtr, unsigned char*& data1D, long int dims[4], int datatype);
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[4], int datatype);
+	
+	unordered_map<string, registeredImg> imgDataBase;
 	/**********************/
 
 	/********* Methods for generating binary masks from SWC files *********/

@@ -2,13 +2,26 @@
 #define IMGPROCESSOR_H
 
 #include <iostream>
-
-using namespace std;
+#include <string>
+#include <vector>
 
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 
 enum MIPOrientation {Mxy, Myz, Mxz};
 enum mipOrientation {mxy, myz, mxz};
+
+struct morphStructElement
+{
+	std::string eleShape;
+	int xLength, yLength;
+
+	morphStructElement();
+	morphStructElement(std::string shape);
+	morphStructElement(std::string shape, int length1, int length2);
+
+	vector<vector<int>> structEle2D;
+	vector<vector<vector<int>>> structEle3D;
+};
 
 class ImgProcessor 
 {
@@ -27,7 +40,7 @@ public:
 	template<class T1, class T2>
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
 
-	template <class T1, class T2>
+	template<class T1, class T2>
 	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the one with greater value. 
 
 	template<class T>
@@ -40,11 +53,15 @@ public:
 	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
 	/******************************************/
 
+	/********* Morphological Operations *********/
+	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
+	/********************************************/
+
 	/********* Other utilities *********/
 	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
 		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
 
-	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
+	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], std::string shape = "square");
 };
 
 template<class T1, class T2>

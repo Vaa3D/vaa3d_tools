@@ -11,14 +11,14 @@
 using namespace std;
 using namespace boost::filesystem;
 
-ImgManager::ImgManager(string inputImgName)
+registeredImg::registeredImg(string inputImgName)
 {
-	this->wholeImgName = inputImgName;
+	this->imgFullPathName = inputImgName;
 	const char* imgName = inputImgName.c_str();
-	this->wholeImg4DPtr = new Image4DSimple;
-	this->wholeImg4DPtr->loadImage(imgName);
+	this->thisImg4DPtr = new Image4DSimple;
+	this->thisImg4DPtr->loadImage(imgName);
 	this->imgData1D = new unsigned char;
-	ImgManager::img1Ddumpster(this->wholeImg4DPtr, this->imgData1D, this->dims, this->datatype);
+	ImgManager::img1Ddumpster(this->thisImg4DPtr, this->imgData1D, this->dims, this->datatype);
 }
 
 bool ImgManager::img1Ddumpster(Image4DSimple* inputImgPtr, unsigned char*& data1D, long int dims[4], int datatype)
@@ -52,6 +52,7 @@ Label_error_simple_loadimage_wrapper:
 	return false;
 }
 
+// ================= Methods for generating binary masks from SWC files ================= //
 void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)
 {
 	// -- Generate 2D masks based on each detected "SWC signal slice". 
@@ -219,6 +220,7 @@ bool ImgManager::getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, My
 	allmarkers.insert(allmarkers.end(), marker_set.begin(), marker_set.end());
 	return true;
 }
+// ================ END of [Methods for generating binary masks from SWC files] ================ //
 
 void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 {
