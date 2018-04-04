@@ -117,6 +117,9 @@ void NeuronStructExplorer::pixelStackZcleanup(unordered_map<string, unordered_ma
 
 void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
 {
+	// -- Determing false positives out of the detected structure by the threshold of specified distance to the manual structure.
+	// -- if (the shortest distance of node i from detectedTree to manualTree > distThreshold) node i is deemed false positive.
+
 	long int nodeCount = 1;
 	for (QList<NeuronSWC>::iterator it = detectedTreePtr->listNeuron.begin(); it != detectedTreePtr->listNeuron.end(); ++it)
 	{
@@ -153,6 +156,9 @@ void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, Neuron
 
 void NeuronStructExplorer::falseNegativeList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
 {
+	// -- False negavies are selected out of the manual structure if none of detected nodes are close enough to them.
+	// -- if (the shortest distance of node i from manualTree to detectedTree > distThreshold) node i is deemed false negative.
+
 	long int nodeCount = 1;
 	for (QList<NeuronSWC>::iterator it = manualTreePtr->listNeuron.begin(); it != manualTreePtr->listNeuron.end(); ++it)
 	{
@@ -167,8 +173,7 @@ void NeuronStructExplorer::falseNegativeList(NeuronTree* detectedTreePtr, Neuron
 			float zSquare = (it->z - checkIt->z) * (it->z - checkIt->z);
 			float thisNodeDist = sqrtf(xSquare + ySquare + zSquare);
 
-			++checkIt;
-			if (checkIt == detectedTreePtr->listNeuron.end())
+			if (thisNodeDist > distThreshold)
 			{
 				vector<float> FNcoords;
 				FNcoords.push_back(it->x);
@@ -176,7 +181,11 @@ void NeuronStructExplorer::falseNegativeList(NeuronTree* detectedTreePtr, Neuron
 				FNcoords.push_back(it->z);
 				this->FNsList.push_back(FNcoords);
 				FNcoords.clear();
+
+				break;
 			}
+
+			++checkIt;
 		}
 	}
 }
@@ -214,4 +223,39 @@ void NeuronStructExplorer::detectedDist(NeuronTree* inputTreePtr1, NeuronTree* i
 	float distStd = sqrtf(distVar);
 	
 	cout << distMean << " " << distStd << endl;
+}
+
+void NeuronStructExplorer::shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum)
+{
+	// -- Compute the PDF and CDF of shortest distance of detected nodes to manual nodes.
+
+	float interval = float(upperBound) / float(binNum);
+	vector<float> shortestDists;
+	for (QList<NeuronSWC>::iterator it1 = inputTreePtr1->listNeuron.begin(); it1 != inputTreePtr1->listNeuron.end(); ++it1)
+	{
+		float minDist = 10000;
+		for (QList<NeuronSWC>::iterator it2 = inputTreePtr2->listNeuron.begin(); it2 != inputTreePtr2->listNeuron.end(); ++it2)
+		{
+			float xSquare = ((it2->x) - (it1->x)) * ((it2->x) - (it1->x));
+			float ySquare = ((it2->y) - (it1->y)) * ((it2->y) - (it1->y));
+			float zSquare = ((it2->z) - (it1->z)) * ((it2->z) - (it1->z));
+			float currDist = sqrtf(xSquare + ySquare + zSquare);
+
+			if (currDist <= minDist) minDist = currDist;
+		}
+		shortestDists.push_back(minDist);
+	}
+
+	for (int i = 0; i < binNum; ++i)
+	{
+		this->nodeDistPDF[i] = 0;
+		this->nodeDistPDF[i] = 0;
+	}
+	for (vector<float>::iterator distIt = shortestDists.begin(); distIt != shortestDists.end(); ++distIt)
+	{
+		int binNo = (*distIt) / interval;
+		++(this->nodeDistPDF[binNo]);
+	}
+	this->nodeDistCDF[0] = this->nodeDistPDF[0];
+	for (int i = 1; i < binNum; ++i) this->nodeDistCDF[i] = this->nodeDistCDF[i - 1] + nodeDistPDF[i];
 }

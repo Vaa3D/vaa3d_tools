@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <string>
 
 #include <qlist.h>
@@ -34,12 +35,16 @@ public:
 	void pixelStackZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
 	/****************************************************************************/
 
-	/********* Some analysis *********/
+	/********* Distance based analysis *********/
 	vector<vector<float>> FPsList;
 	vector<vector<float>> FNsList;
 	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
 	void falseNegativeList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
 	void detectedDist(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2);
+
+	map<int, long int> nodeDistCDF;
+	map<int, long int> nodeDistPDF;
+	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
 	/*********************************/
 };
 
