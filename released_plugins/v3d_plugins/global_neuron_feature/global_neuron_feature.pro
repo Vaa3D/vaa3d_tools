@@ -8,7 +8,7 @@ HEADERS      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
 HEADERS      += global_neuron_feature.h
 
 HEADERS      += Nfmain.h
-HEADERS      += compute.h
+HEADERS      += $$V3DMAINPATH/../v3d_main/neuron_editing/global_feature_compute.h
 
 HEADERS      += ../sort_neuron_swc/openSWCDialog.h
 
@@ -17,7 +17,7 @@ SOURCES      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES      += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES      += global_neuron_feature.cpp
 SOURCES      += Nfmain.cpp
-SOURCES      += compute.cpp
+SOURCES      += $$V3DMAINPATH/../v3d_main/neuron_editing/global_feature_compute.cpp
 SOURCES      += ../sort_neuron_swc/openSWCDialog.cpp
 
 
