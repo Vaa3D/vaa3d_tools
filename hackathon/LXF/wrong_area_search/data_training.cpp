@@ -64,21 +64,6 @@ int split(const char *paras, char ** &args)
 
 
 bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,QVector<QVector<int> > &hist_vec,vector<double> &entrople);
-//template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
-//{
-//    // init hist
-//    hist = QVector<int>(histscale, 0);
-
-//    for (V3DLONG i=0;i<datalen;i++)
-//    {
-//        V3DLONG ind = pdata1d[i]/max_value * histscale;
-//        //V3DLONG ind = pdata1d[i];
-//        hist[ind] ++;
-//    }
-
-//    return true;
-
-//}
 
 
 int data_training(V3DPluginCallback2 &callback, QWidget *parent)
@@ -184,28 +169,57 @@ bool data_training(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
     each_class(callback,folder_path_2,outfile_2,hist_vec_2,entrople_2);
     each_class(callback,folder_path_3,outfile_3,hist_vec_3,entrople_3);
     each_class(callback,folder_path_4,outfile_4,hist_vec_4,entrople_4);
-
+    double sum1=0;
+    double sum2=0;
+    double sum3=0;
     for(V3DLONG i=0;i<entrople_1.size();i++)
     {
-        cout<<"entrople = "<<entrople_1[i]<<endl;
+        cout<<"entrople_1 = "<<entrople_1[i]<<endl;
+        sum1 = sum1 + entrople_1[i];
     }
-    cout<<"entrople.size = "<<entrople_1.size()<<endl;
+    for(V3DLONG i=0;i<entrople_2.size();i++)
+    {
+        //cout<<"entrople_2 = "<<entrople_2[i]<<endl;
+        sum2 = sum2 + entrople_2[i];
+    }
+    for(V3DLONG i=0;i<entrople_3.size();i++)
+    {
+        sum3 = sum3 + entrople_3[i];
+    }
+    sum1 = sum1/entrople_1.size();
+    sum2 = sum2/entrople_2.size();
+    sum3 = sum3/entrople_3.size();
+    cout<<"sum1 = "<<sum1<<endl;
+    cout<<"sum2 = "<<sum2<<endl;
+    cout<<"sum3 = "<<sum3<<endl;
+    cout<<"entrople1.size = "<<entrople_1.size()<<endl;
+    cout<<"entrople2.size = "<<entrople_2.size()<<endl;
+    cout<<"entrople3.size = "<<entrople_3.size()<<endl;
+
+    cout<<"entrople1 = "<<entrople_1[0]<<endl;
+    cout<<"entrople2 = "<<entrople_2[0]<<endl;
+    cout<<"entrople3 = "<<entrople_3[0]<<endl;
     return true;
 
 }
+bool KNN()
+{
 
+}
 bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,QVector<QVector<int> > &hist_vec,vector<double> &entrople)
 {
     unsigned char * inimg1d = NULL;
     QVector<int> tmp;
     QStringList tifList = importFileList_addnumbersort(QString(folder_path));
     cout<<"tiflist_size = "<<tifList.size()<<endl;
+
     for(V3DLONG i=2;i<tifList.size();i++)
     {
+        //cout<<"name = "<<tifList.at(i)<<endl;
        char *infile;
        QByteArray ba = tifList.at(i).toLatin1();
        infile = ba.data();
-        //cout<<"input file: "<<infile<<endl;
+        cout<<"input file: "<<infile<<endl;
 
         V3DLONG sz[4];
         int datatype;
@@ -227,11 +241,12 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
 
 
         int nChannel = sz[3];
+        cout<<"nchannel = "<<nChannel<<endl;
         tmp.clear();
         for (int c=0;c<nChannel;c++)
         {
 
-            getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
+            getHistogram(inimg1d, sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
             hist_vec.append(tmp);
         }
     }
@@ -263,7 +278,7 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
     for(V3DLONG i=0;i<hist_vec.size();i++)
     {
         sum_temp=0;
-           int  count=0;
+        int  count=0;
         for(V3DLONG j=0;j<hist_vec[i].size();j++)
         {
             sum_temp = hist_vec[i][j]+sum_temp;
@@ -285,15 +300,15 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
         {
             double tmp_=hist_vec[i][j];
             //cout<<"count_all = "<<count_all[i]<<endl;
-            p=tmp_/count_all[i];
+            p=tmp_/sum_entr[i];
 
             if(p!=0)
             {
-                //cout<<"p = "<<p<<endl;
-                sum_temp = sum_temp - p*log2(p);
+                cout<<"p = "<<p<<endl;
+                sum_temp = sum_temp + p*log2(p);
             }
         }
-        entrople.push_back(sum_temp);
+        entrople.push_back(-sum_temp);
     }
 
 

@@ -8,7 +8,7 @@ template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2,
     map<SetIndexPair, vector<pair<int, int> > >  results;
     clock_t time_start, time_end;
     time_start = clock();
-    double time_limit = 30.0;
+    double time_limit = 300.0;
     int nrows = tree1.size();
     int ncols = tree2.size();
     map<T*, long> ind_map1, ind_map2;
@@ -20,14 +20,12 @@ template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2,
         int child_num1 = node1->child_list.size();
         time_end = clock();
         double run_time = (double)(time_end - time_start) / CLOCKS_PER_SEC;
-
         if(run_time>=time_limit) return 0;
         for(long ind2 = 0; ind2 < tree2.size(); ind2++)
         {
            if(run_time>=time_limit) return 0;
             T * node2 = tree2[ind2];
             int child_num2 = node2->child_list.size();
-
             SetIndexPair sip;
             sip.ind1 = ind1;
             sip.ind2 = ind2;
@@ -145,6 +143,7 @@ template<class T> double neuron_tree_align(vector<T*> &tree1, vector<T*> &tree2,
     root_sip.set1 = 1ll << tree1[root_sip.ind1]->child_list.size();
     root_sip.set2 = 1ll << tree2[root_sip.ind2]->child_list.size();
     result = results[root_sip];
+    cout<<"weight = "<<weights[root_sip]<<endl;
     return weights[root_sip];
 }
 
@@ -232,6 +231,9 @@ bool neuron_mapping_dynamic(vector<MyMarker*> &inswc1, vector<MyMarker*> & inswc
 //			reroot(inswc2, ends2[itj]);
             swc_to_segments(inswc1, tree1); // convert to post order
             swc_to_segments(inswc2, tree2); // convert to post order
+
+            //inswc1.clear();
+            //inswc2.clear();                //change by liu
             cout<<"convert to post order done"<<endl;
             cout<<"tree 1 seg num: "<<tree1.size()<<endl;
             cout<<"tree 2 seg num: "<<tree2.size()<<endl;
@@ -266,6 +268,7 @@ bool neuron_mapping_dynamic(vector<MyMarker*> &inswc1, vector<MyMarker*> & inswc
                 printf("neuron_tree_align time out.\n");
                 return false;
             }
+
             if (score >= max_score)
             {
                 max_score = score;

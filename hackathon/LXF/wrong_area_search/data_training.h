@@ -4,6 +4,8 @@
 #include <QtGui>
 #include <vector>
 #include <v3d_interface.h>
+#include <iostream>
+using namespace std;
 
 class histogramDialog : public QDialog
 {
@@ -28,15 +30,19 @@ public slots:
 template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
 {
     // init hist
+   // cout<<"datalen = "<<datalen<<endl;
     hist = QVector<int>(histscale, 0);
-
+    //cout<<"max_valve = "<<max_value<<endl;
+    //cout<<"histscale = "<<histscale<<endl;
     for (V3DLONG i=0;i<datalen;i++)
     {
+        //std::cout<<"pdata1d[i] = "<<int(pdata1d[i])<<endl;
         V3DLONG ind = pdata1d[i]/max_value * histscale;
         //V3DLONG ind = pdata1d[i];
+        //std::cout<<"ind = "<<ind<<endl;
         hist[ind] ++;
     }
-
+    //std::cout<<"hist = "<<hist[0]<<endl;
     return true;
 
 }

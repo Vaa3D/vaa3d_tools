@@ -1,6 +1,6 @@
-
+#include <iostream>
 #include"resampling.h"
-
+using namespace std;
 void resample_path(Segment * seg, double step)
 {
     char c;
@@ -44,6 +44,7 @@ void resample_path(Segment * seg, double step)
 
 NeuronTree resample(NeuronTree input, double step)
 {
+    cout<<"come into resample"<<endl;
     NeuronTree result;
     V3DLONG siz = input.listNeuron.size();
     Tree tree;
@@ -84,13 +85,14 @@ NeuronTree resample(NeuronTree input, double step)
             seg_list.push_back(seg);
         }
     }
-//	printf("segment list constructed.\n");
+    printf("segment list constructed.\n");
+    cout<<"seg_list.size = "<<seg_list.size()<<endl;
     for (V3DLONG i=0;i<seg_list.size();i++)
     {
         resample_path(seg_list[i], step);
     }
 
-//	printf("resample done.\n");
+    printf("resample done.\n");
     tree.clear();
     map<Point*, V3DLONG> index_map;
     for (V3DLONG i=0;i<seg_list.size();i++)
