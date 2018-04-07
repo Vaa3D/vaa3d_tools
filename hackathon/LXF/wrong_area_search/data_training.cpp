@@ -18,7 +18,7 @@
 //#include "stackutil.h"
 #include <math.h>
 #define INF 1.0e300
-
+#define DIS(a,b) (sqrt(((a)-(b))*((a)-(b))))
 using namespace std;
 
 const QString title = QObject::tr("Histogram");
@@ -199,12 +199,195 @@ bool data_training(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
     cout<<"entrople1 = "<<entrople_1[0]<<endl;
     cout<<"entrople2 = "<<entrople_2[0]<<endl;
     cout<<"entrople3 = "<<entrople_3[0]<<endl;
+
+    vector<double> entrople_sample;
+    int N = 1;
+    int count_all1=0;
+    int count_all2=0;
+    double count_all;
+
+
+    QMap<double,int> sample,predict;
+    for(V3DLONG i=0;i<entrople_3.size();i++)
+    {
+        predict[entrople_3[i]]=1;
+    }
+    for(V3DLONG i=0;i<entrople_4.size();i++)
+    {
+        predict[entrople_4[i]]=0;
+    }
+
+
+    for(V3DLONG i=0;i<entrople_3.size();i++)
+    {
+        entrople_sample.push_back(entrople_3[i]);
+    }
+    for(V3DLONG i=0;i<entrople_4.size();i++)
+    {
+        entrople_sample.push_back(entrople_4[i]);
+    }
+
+    sample = KNN(entrople_1,entrople_2,entrople_sample,N);
+    cout<<"111sample = "<<sample.size()<<endl;
+    for(V3DLONG i=0;i<entrople_3.size();i++)
+    {
+        if(sample[entrople_3[i]] == 1)
+        {
+            count_all1++;
+            cout<<"count_all1 = "<<count_all1<<endl;
+        }
+    }
+    cout<<"222sample = "<<sample.size()<<endl;
+    for(V3DLONG i=0;i<entrople_4.size();i++)
+    {
+        if(sample[entrople_4[i]] == 0)
+        {
+            count_all2++;
+            //cout<<"count_all2 = "<<count_all2<<endl;
+        }
+    }
+    cout<<"333sample = "<<sample.size()<<endl;
+    count_all = count_all1+count_all2;
+    cout<<"count_all2 = "<<count_all2<<endl;
+    cout<<count_all<<endl;
+    double per = count_all/sample.size();
+
+
+    cout<<"% = "<<per<<endl;
+
     return true;
 
 }
-bool KNN()
+QMap<double,int> KNN(vector<double> &entrople_1,vector<double> &entrople_2,vector<double> &entrople_sample,int N)
+{
+    cout<<"this is knn"<<endl;
+    bool label;
+
+
+    vector<double> dis_v;
+
+    double dis1,min_dis1,dis2,min_dis2;
+    min_dis1 = 100000;
+    min_dis2 = 100000;
+    
+    QMap<double,int> training,sample;
+    QMap<double,double> mark;
+    for(V3DLONG i=0;i<entrople_1.size();i++)
+    {
+        training[entrople_1[i]]=1;
+    }
+    for(V3DLONG i=0;i<entrople_2.size();i++)
+    {
+        training[entrople_2[i]]=0;
+    }
+    for(V3DLONG i=0;i<entrople_sample.size();i++)
+    {
+
+        dis_v.clear();
+        V3DLONG count1=0;
+        V3DLONG count2=0;
+        QMap<double,int>::iterator it;
+        for(it = training.begin();it != training.end();++it)
+        {
+            dis1 = DIS(entrople_sample[i],it.key());
+            mark.insert(dis1,it.key());
+            dis_v.push_back(dis1);
+
+        }
+
+       bubble_sort(dis_v);
+
+      // cout<<dis_v[0]<<"     "<<dis_v[dis_v.size()-1]<<endl;
+
+        for(int k=0;k<N;k++)
+        {
+            double this_dis = dis_v[k];
+            //cout<<this_dis<<endl;
+            double u = mark[this_dis];
+            if(training[u] == 1)
+            {
+                count1++;
+            }
+            else if(training[u] == 0)
+            {
+                count2++;
+            }
+
+        }
+        if(count1>count2)
+        {
+            sample[entrople_sample[i]]=1;
+        }
+        else
+        {
+
+            sample[entrople_sample[i]]=0;
+        }
+        dis_v.clear();
+}
+
+
+
+    cout<<"out of knn"<<endl;
+    return sample;
+
+    
+    
+
+}
+void bubble_sort(double* dis_v,int v_size)
 {
 
+    int i,j;
+    double t;
+    for(i=0;i<v_size-1;i++)
+    {
+
+        //temp = dis_v[i];
+        for(j = 0;j<v_size-1-i;j++)
+        {
+            if(dis_v[j]<dis_v[j+1])
+            {
+
+                t = dis_v[j];
+                dis_v[j] = dis_v[j+1];
+                dis_v[j+1] = t;
+            }
+
+        }
+        //cout<<"out_first_for"<<endl;
+
+    }
+    //cout<<"out_bubble"<<endl;
+    //return dis_v;
+
+}
+
+
+void bubble_sort(vector<double> &dis_v)
+{
+    //cout<<"bubble"<<endl;
+    int i,j;
+    double t;
+    int v_size = dis_v.size();
+    for(i=0;i<v_size-1;i++)
+    {
+        for(j = 0;j<v_size-1-i;j++)
+        {
+            if(dis_v[j]>dis_v[j+1])
+            {
+
+                t = dis_v[j];
+                dis_v[j] = dis_v[j+1];
+                dis_v[j+1] = t;
+            }
+
+        }
+        //cout<<"out_first_for"<<endl;
+
+
+    }
+    //cout<<"out of bubble"<<endl;
 }
 bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,QVector<QVector<int> > &hist_vec,vector<double> &entrople)
 {
@@ -219,7 +402,7 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
        char *infile;
        QByteArray ba = tifList.at(i).toLatin1();
        infile = ba.data();
-        cout<<"input file: "<<infile<<endl;
+        //cout<<"input file: "<<infile<<endl;
 
         V3DLONG sz[4];
         int datatype;
@@ -241,7 +424,7 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
 
 
         int nChannel = sz[3];
-        cout<<"nchannel = "<<nChannel<<endl;
+       // cout<<"nchannel = "<<nChannel<<endl;
         tmp.clear();
         for (int c=0;c<nChannel;c++)
         {
@@ -253,8 +436,8 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
     //output histogram to csv file
     FILE *fp;
     fp = fopen(outfile, "w");
-    cout<<"hang = "<<hist_vec.size()<<endl;
-    cout<<"lie = "<<hist_vec[0].size()<<endl;
+ //   cout<<"hang = "<<hist_vec.size()<<endl;
+  //  cout<<"lie = "<<hist_vec[0].size()<<endl;
     for (int i=0;i<hist_vec.size();i++)
     {
 
@@ -304,7 +487,7 @@ bool each_class(V3DPluginCallback2 & callback,char * folder_path,char* outfile,Q
 
             if(p!=0)
             {
-                cout<<"p = "<<p<<endl;
+             //   cout<<"p = "<<p<<endl;
                 sum_temp = sum_temp + p*log2(p);
             }
         }

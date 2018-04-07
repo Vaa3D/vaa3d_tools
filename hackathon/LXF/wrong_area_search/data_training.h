@@ -50,6 +50,9 @@ template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double 
 QImage drawBarFigure(QVector<int>& vec, QColor barColor=QColor(100,100,100));
 int data_training(V3DPluginCallback2 &callback, QWidget *parent);
 bool data_training(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+void bubble_sort(vector<double> &dis_v);
+void bubble_sort(double* dis_v,int v_size);
+QMap<double,int> KNN(vector<double> &entrople_1,vector<double> &entrople_2,vector<double> &entrople_sample,int N);
 
 QStringList importFileList_addnumbersort(const QString & curFilePath);
 
