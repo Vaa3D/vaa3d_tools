@@ -202,6 +202,7 @@ bool data_training(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
 
     vector<double> entrople_sample;
     int N = 1;
+    int M = 100;
     int count_all1=0;
     int count_all2=0;
     double count_all;
@@ -227,26 +228,23 @@ bool data_training(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
         entrople_sample.push_back(entrople_4[i]);
     }
 
-    sample = KNN(entrople_1,entrople_2,entrople_sample,N);
+    //sample = KNN(entrople_1,entrople_2,entrople_sample,N);
+    sample = neural_network(entrople_1,entrople_2,entrople_sample,M);
     cout<<"111sample = "<<sample.size()<<endl;
     for(V3DLONG i=0;i<entrople_3.size();i++)
     {
         if(sample[entrople_3[i]] == 1)
         {
             count_all1++;
-            cout<<"count_all1 = "<<count_all1<<endl;
         }
     }
-    cout<<"222sample = "<<sample.size()<<endl;
     for(V3DLONG i=0;i<entrople_4.size();i++)
     {
         if(sample[entrople_4[i]] == 0)
         {
             count_all2++;
-            //cout<<"count_all2 = "<<count_all2<<endl;
         }
     }
-    cout<<"333sample = "<<sample.size()<<endl;
     count_all = count_all1+count_all2;
     cout<<"count_all2 = "<<count_all2<<endl;
     cout<<count_all<<endl;
@@ -257,6 +255,111 @@ bool data_training(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
 
     return true;
 
+}
+QMap<double,int> neural_network(vector<double> &entrople_1,vector<double> &entrople_2,vector<double> &entrople_sample,int N)
+{
+    cout<<"this is neural_network"<<endl;
+    QMap<double,int> training,sample;
+    //QMap<double,double> mark;
+    for(V3DLONG i=0;i<entrople_1.size();i++)
+    {
+        training[entrople_1[i]]=1;
+    }
+    for(V3DLONG i=0;i<entrople_2.size();i++)
+    {
+        training[entrople_2[i]]=0;
+    }
+    int w_size = entrople_sample.size();
+    double w_each = 0.5;
+    double learn_rate = 0.5;
+    double value = 0.5;
+    vector<double> w(w_size,w_each);
+//    for(V3DLONG i=0;i<entrople_sample.size();i++)
+//    {
+
+//        w.push_back(w_each);
+//        cout<<"w[i] = "<<w[i]<<endl;
+//    }
+    //double sum_wx;
+    vector<double> sum_wx;
+    vector<double> y;
+
+    cout<<"w[0] = "<<w[0]<<endl;
+    each_network(training,entrople_sample,y,entrople_sample,w,sum_wx,value,learn_rate,N);
+    for(V3DLONG i=0;i<y.size();i++)
+    {
+        if(y[i]>value)
+        {
+
+            sample[entrople_sample[i]]=1;
+        }
+        else
+        {
+
+            sample[entrople_sample[i]]=0;
+        }
+    }
+    return sample;
+
+
+
+
+
+}
+void each_network(QMap<double,int> &training,vector<double> &entrople_sample,vector<double> &y,vector<double> &x,vector<double>&w,vector<double> &sum_wx,double &value,double &learn_rate,int &N)
+{
+    y.clear();
+    cout<<"w[i] = "<<w[0]<<endl;
+    cout<<"x[i] = "<<x[0]<<endl;
+    vector<double> w_temp;
+
+    for(V3DLONG i=0;i<x.size();i++)
+    {
+
+        double t = w[i]*x[i];
+        sum_wx.push_back(t);
+    }
+
+    for(V3DLONG i=0;i<x.size();i++)
+    {
+        y.push_back( sigmoid(sum_wx[i]-value) );
+    }
+    cout<<" y[0] = "<<y[0]<<endl;
+    if(N==0)
+    {
+        return;
+    }
+    else
+    {
+
+        cout<<"lalalalalallalaql"<<endl;
+        for(V3DLONG i=0;i<x.size();i++)
+        {
+            double u = w[i] + ( learn_rate*(training[entrople_sample[i]] - y[i])*x[i] );
+            w_temp.push_back(u);
+        }
+        sum_wx.clear();
+        x.clear();
+        w.clear();
+        for(V3DLONG i=0;i<y.size();i++)
+        {
+            x.push_back(y[i]);
+            w.push_back(w_temp[i]);
+        }
+        N=N-1;
+        each_network(training,entrople_sample,y,x,w,sum_wx,value,learn_rate,N);
+
+    }
+    return;
+
+
+
+
+}
+double sigmoid(double x)
+{
+   // cout<<(1/(1+exp(-x)))<<endl;
+    return (1/(1+exp(-x)));
 }
 QMap<double,int> KNN(vector<double> &entrople_1,vector<double> &entrople_2,vector<double> &entrople_sample,int N)
 {

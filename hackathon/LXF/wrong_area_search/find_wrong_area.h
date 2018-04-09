@@ -11,13 +11,13 @@ struct Input_para
     QString filename1;
     QString filename2;
     QString filename3;
-    V3DLONG para1=10;     //resample para
+    V3DLONG para1=3;     //resample para
     V3DLONG para2=5;        //lens para
     V3DLONG para3=1;        //step para
     V3DLONG para4=0;        //prune para
-    bool model1 = 0;       //1 for.v3dpbd,0 for terafly
+    bool model1 = 1;       //1 for.v3dpbd,0 for terafly
     bool model2 = 1;        //1 for choose point ,0 for local alignment
-    V3DLONG model3 = 1;      //0 for 1 class.1 for 2 class,2 for 3 class
+    V3DLONG model3 = 0;      //0 for 1 class.1 for 2 class,2 for 3 class
 };
 bool sort_with_standard(QList<NeuronSWC> & neuron1, QList<NeuronSWC>  & neuron2,QList<NeuronSWC> &result);
 vector<MyMarker*> nt2mm(QList<NeuronSWC> & inswc, QString fileSaveName);

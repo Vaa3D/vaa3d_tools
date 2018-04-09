@@ -7,8 +7,8 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 {
 
     QString inimg_file = "/media/lxf/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
-    QString pattern = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023 final.ano.swc";
-    QString pattern2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023_x_7522.77_y_13532.6_y_2019.19.swc";
+    QString pattern = "/media/lxf/8213-B4FE/3.19/Data/finished_11/finished_11/005.swc";
+    QString pattern2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/005_x_8584.04_y_8184.8_y_1458.26.swc";
     NeuronTree nt,nt_p,bt,bt_p;
     if (pattern.toUpper().endsWith(".SWC") ||pattern.toUpper().endsWith(".ESWC"))
         nt_p = readSWC_file(pattern);

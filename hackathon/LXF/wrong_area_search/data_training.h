@@ -54,6 +54,11 @@ void bubble_sort(vector<double> &dis_v);
 void bubble_sort(double* dis_v,int v_size);
 QMap<double,int> KNN(vector<double> &entrople_1,vector<double> &entrople_2,vector<double> &entrople_sample,int N);
 
+
+void each_network(QMap<double,int> &training,vector<double> &entrople_sample,vector<double> &y,vector<double> &x,vector<double> &w,vector<double> &sum_wx,double &value,double &learn_rate,int &N);
+QMap<double,int> neural_network(vector<double> &entrople_1,vector<double> &entrople_2,vector<double> &entrople_sample,int N);
+double sigmoid(double x);
+
 QStringList importFileList_addnumbersort(const QString & curFilePath);
 
 #endif // DATA_TRAINING_H

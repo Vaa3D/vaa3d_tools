@@ -82,22 +82,21 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
         if(!type)
         {
             //PARA.filename1 = "/home/penglab/Data/xuefeng/023_x_7522.77_y_13532.6_y_2019.19.swc";
-                        //PARA.filename2 = "/home/penglab/Data/xuefeng/023 final.ano.swc";
+            //PARA.filename2 = "/home/penglab/Data/xuefeng/023 final.ano.swc";
+            //PARA.filename3 = "/run/media/penglab/WS5/mouseID_321237-17302/RES(54600x34412x9847)";
 
-                        //PARA.filename3 = "/run/media/penglab/WS5/mouseID_321237-17302/RES(54600x34412x9847)";
-
-            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/029_x_8969.08_y_9020.6_y_1273.9.swc";
-            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/029.ano.swc";
+            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/auto_tracing/048_x_10403.7_y_10027.7_y_2484.61.swc";;
+            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/finished_11/finished_11/048.swc";
             PARA.filename3 = "/media/lxf/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
         }
         else
         {
-//            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/reconstruction.swc";
-//            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/gold.swc";
-//            PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/img.v3dpbd";
-            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp1.swc";
-            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp2.swc";
-            PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/test1156.v3dpbd";
+            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/reconstruction.swc";
+            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/gold.swc";
+            PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/img.v3dpbd";
+//            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp1.swc";
+//            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp2.swc";
+//            PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/test1156.v3dpbd";
         }
     }
     else
@@ -245,10 +244,9 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
             aligned_choosen.push_back(nt_for_choose.listNeuron[i]);
 
         }
-        cout<<"hahahahahahahhaha"<<endl;
         QList<NeuronSWC> gold,not_in_gold,gold_little,gold_middle,little_all,middle_all;
-        little_aligned = choose_alignment(aligned_choosen,gold_little,0,20);
-        middle_aligned = choose_alignment(aligned_choosen,gold_middle,20,20000);
+        little_aligned = choose_alignment(aligned_choosen,gold_little,0,5);
+        middle_aligned = choose_alignment(aligned_choosen,gold_middle,5,20000);
         for(V3DLONG i=0;i<gold_little.size();i++)
         {
             gold.push_back(gold_little[i]);
@@ -510,11 +508,30 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
          if(!simple_loadimage_wrapper(callback,(char *)img.c_str(), data1d, in_sz, datatype))  {cout<<"load img wrong"<<endl;  return false;}
 
 
-         get_subimg(image,name_little,fourcood[0],data1d,in_sz,callback);
-         //get_subimg(image,name_middle,fourcood[1],data1d,in_sz,callback);
-         //get_subimg(image,name_rec,fourcood[2],data1d,in_sz,callback);
-         //get_subimg(image,name_gold,fourcood[3],data1d,in_sz,callback);
-         processImage(callback,fourcood[0]);
+
+         if(PARA.model3 == 0)
+         {
+             cout<<"***************model 1*************************"<<endl;
+             get_subimg(image,name_little,fourcood[0],data1d,in_sz,callback);
+             processImage(callback,fourcood[0]);
+         }
+         else if(PARA.model3 == 1)
+         {
+             cout<<"***************model 2*************************"<<endl;
+             get_subimg(image,name_middle,fourcood[1],data1d,in_sz,callback);
+             processImage(callback,fourcood[1]);
+         }
+         else if(PARA.model3 == 2)
+         {
+             cout<<"***************model 3*************************"<<endl;
+             get_subimg(image,name_gold,fourcood[3],data1d,in_sz,callback);
+             processImage(callback,fourcood[3]);
+         }
+         else
+         {
+             v3d_msg("please input 0,1,2 as correct input");
+             return false;
+         }
 
      }
      else
@@ -1010,9 +1027,10 @@ QList<NeuronSWC> choose_alignment(QList<NeuronSWC> &neuron,QList<NeuronSWC> &gol
     double dist;
     for(V3DLONG i=0; i<siz-1;i=i+2)
     {
-        dist = sqrt((neuron[i].x-neuron[i+1].x)*(neuron[i].x-neuron[i+1].x)
-                +(neuron[i].y-neuron[i+1].y)*(neuron[i].y-neuron[i+1].y)
-                +(neuron[i].z-neuron[i+1].z)*(neuron[i].z-neuron[i+1].z));
+        dist = MHDIS(neuron[i],neuron[i+1]);
+//        dist = sqrt((neuron[i].x-neuron[i+1].x)*(neuron[i].x-neuron[i+1].x)
+//                +(neuron[i].y-neuron[i+1].y)*(neuron[i].y-neuron[i+1].y)
+//                +(neuron[i].z-neuron[i+1].z)*(neuron[i].z-neuron[i+1].z));
         cout<<"dist = "<<dist<<endl;
         if(dist >= thres1 && dist < thres2)
         {

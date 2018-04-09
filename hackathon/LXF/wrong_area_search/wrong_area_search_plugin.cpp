@@ -74,12 +74,15 @@ bool wrong_area_searchPlugin::dofunc(const QString & func_name, const V3DPluginA
         Input_para PARA;
         vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
         vector<char*>* outlist = NULL;
-        vector<char*>* paralist = NULL;
-        if(input.size() != 1)
-        {
-            printf("Please make sure there is just one input.\n");
-            return false;
-        }
+        vector<char*>* paralist = (vector<char*>*)(input.at(1).p);
+
+
+
+//        if(input.size() != 1)
+//        {
+//            printf("Please make sure there is just one input.\n");
+//            return false;
+//        }
 //        paralist = (vector<char*>*)(input.at(1).p);
 //        if(paralist->size()!=2)
 //        {
@@ -91,15 +94,19 @@ bool wrong_area_searchPlugin::dofunc(const QString & func_name, const V3DPluginA
         QString fileOpenName2 = QString(inlist->at(1));
         QString raw_img = QString(inlist->at(2));
 
+
+
         PARA.filename1 = fileOpenName;
         PARA.filename2 = fileOpenName2;
         PARA.filename3 = raw_img;
         PARA.para1 = atof(paralist->at(0));
+        cout<<"hahahahahahahha"<<endl;
         PARA.para2 = atof(paralist->at(1));
         PARA.para3 = atof(paralist->at(2));
         PARA.para4 = atof(paralist->at(3));
         PARA.model1 = atof(paralist->at(4));
         PARA.model2 = atof(paralist->at(5));
+        PARA.model3 = atof(paralist->at(6));
         bool bmenu = false;
         find_wrong_area(PARA,callback,bmenu,parent);
     }
