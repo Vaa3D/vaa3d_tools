@@ -10,4 +10,4 @@ SOURCES	+= AverageFilter_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(AverageFilter)
-DESTDIR	= $$VAA3DPATH/bin/plugins/AverageFilter/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_filters/AverageFilter
