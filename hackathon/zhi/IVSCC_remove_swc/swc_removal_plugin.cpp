@@ -59,6 +59,7 @@ QStringList swc_removal::menulist() const
 {
 	return QStringList() 
 		<<tr("remove_swc")
+        <<tr("eliminate_swc")
 		<<tr("about");
 }
 
@@ -161,6 +162,81 @@ void swc_removal::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                  return;
              }
 
+        }
+    }else   if (menu_name == tr("eliminate_swc"))
+    {
+        QString targetname;
+        targetname = QFileDialog::getOpenFileName(0, QObject::tr("Open Reference File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(targetname.isEmpty())
+            return;
+        NeuronTree nt_target;
+        if (targetname.toUpper().endsWith(".SWC") || targetname.toUpper().endsWith(".ESWC"))
+        {
+            nt_target = readSWC_file(targetname);
+
+        }
+
+        QString subjectname;
+        subjectname = QFileDialog::getOpenFileName(0, QObject::tr("Open Subject File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(subjectname.isEmpty())
+            return;
+        NeuronTree nt_subject;
+        if (subjectname.toUpper().endsWith(".SWC") || subjectname.toUpper().endsWith(".ESWC"))
+        {
+            nt_subject = readSWC_file(subjectname);
+        }
+
+        bool ok;
+        double disthr=QInputDialog::getDouble(parent,"Distance threshold","Please specificy a distance threshold for elimination.",10,0,2147483647,1,&ok);
+        if(!ok)
+            return;
+
+
+        NeuronTree result;
+        V3DLONG target_size = nt_target.listNeuron.size();
+        for(V3DLONG i = 0; i < nt_subject.listNeuron.size();i++)
+        {
+            NeuronSWC S = nt_subject.listNeuron[i];
+            int flag_prun = 0;
+            for(int jj = 0; jj < target_size;jj++)
+            {
+                 NeuronSWC S2 = nt_target.listNeuron[jj];
+                int dis_prun = sqrt(pow(S.x - S2.x,2) + pow(S.y - S2.y,2) + pow(S.z-S2.z,2));
+                if( dis_prun <= disthr)
+                {
+                    flag_prun = 1;
+                    break;
+                }
+
+            }
+            if(flag_prun == 1)
+            {
+                result.listNeuron.push_back(S);
+            }
+
+        }
+
+        QString fileDefaultName = subjectname+QString("_eliminated_th%1.swc").arg(disthr);
+        //write new SWC to file
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                fileDefaultName,
+                QObject::tr("Supported file (*.swc)"
+                    ";;Neuron structure	(*.swc)"
+                    ));
+        if (!export_list2file(result.listNeuron,fileSaveName,fileDefaultName))
+        {
+            v3d_msg("fail to write the output swc file.");
+            return;
         }
     }
 	else
