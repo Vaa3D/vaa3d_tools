@@ -1,4 +1,4 @@
-
+﻿
 
 /* resample_swc_func.cpp
  * This is a plugin to resample neuron swc subject to a fixed step length.
@@ -20,6 +20,8 @@
 
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define MHDIS(a,b) ( (fabs((a).x-(b).x)) + (fabs((a).y-(b).y)) + (fabs((a).z-(b).z)) )
+#define MHDIS_xy(a,b) ( (fabs((a).x-(b).x)) + (fabs((a).y-(b).y)) )
+#define VOID 1000000000
 struct Coodinate
 {
     V3DLONG x;
@@ -34,7 +36,7 @@ struct FourType
     QList<NeuronSWC> point_rec;
     QList<NeuronSWC> point_gold;
 };
-QList<NeuronSWC>choose_point(QList<NeuronSWC> &neuron1,QList<NeuronSWC> &neuron2,int thre1,int thre2);
+QList<NeuronSWC>choose_point(QList<NeuronSWC> &neuron1,QList<NeuronSWC> &neuron2,int thre1,int thre2,int model);
 void processImage(V3DPluginCallback2 &callback,vector<Coodinate> &fourcood_each);
 bool get_subarea(QList<NeuronSWC> &nt,vector<Coodinate> &fourcood,vector<QList<NeuronSWC> >&subarea);
 bool get_subarea_in_nt(vector<FourType> &fourtype,V3DLONG length,QList<NeuronSWC> &little,QList<NeuronSWC> &middle,QList<NeuronSWC> &point_rec,QList<NeuronSWC> &point_gold);
@@ -94,9 +96,9 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
             PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/reconstruction.swc";
             PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/gold.swc";
             PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/img.v3dpbd";
-//            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp1.swc";
-//            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp2.swc";
-//            PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/test1156.v3dpbd";
+            //            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp1.swc";
+            //            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/exp2.swc";
+            //            PARA.filename3 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/test/test1156.v3dpbd";
         }
     }
     else
@@ -104,111 +106,189 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
         printf("In to dofunc.\n");
     }
 
+    vector<FourType> fourtype;
+    vector<vector<Coodinate> > fourcood;
 
+    int model= PARA.model2;  //2 for choose piont_xy ,1 for choose point_xyz ,0 for local alignment
 
-       /*****************************resample************************************************/
-    cout<<"this is resample "<<endl;
-    NeuronTree nt_p,nt,temp_neuron_p,temp_neuron;
-    double prune_size = PARA.para4;
-    if (PARA.filename1.toUpper().endsWith(".SWC") || PARA.filename1.toUpper().endsWith(".ESWC"))
-        nt_p = readSWC_file(PARA.filename1);
-
-    prune_branch(nt_p,nt,prune_size);
-    NeuronTree resample_result = resample(nt,PARA.para1);
-
-
-    //  find the nearest point as new root node calculated between input_1's all node  and input_2's root node
-    cout<<"find_roodID begin.";
-    QList<NeuronSWC> neuron1,neuron2;
-
-    neuron1 = resample_result.listNeuron;
-
-    if (PARA.filename2.toUpper().endsWith(".SWC") || PARA.filename2.toUpper().endsWith(".ESWC"))
+    if(model==1||model==2)
     {
 
-        temp_neuron_p = readSWC_file(PARA.filename2);
-        neuron2 = readSWC_file(PARA.filename2).listNeuron;
-    }
-    prune_branch(temp_neuron_p,temp_neuron,prune_size);
-    NeuronTree resample_gold = resample(temp_neuron,PARA.para1);
+        /*****************************resample************************************************/
+        cout<<"this is resample "<<endl;
+        NeuronTree nt_p,nt,temp_neuron_p,temp_neuron,bound_neuron;
+        double prune_size = PARA.para4;
+        //  find the nearest point as new root node calculated between input_1's all node  and input_2's root node
+        cout<<"find_roodID begin.";
+        QList<NeuronSWC> neuron1,neuron2;
+        if (PARA.filename2.toUpper().endsWith(".SWC") || PARA.filename2.toUpper().endsWith(".ESWC"))
+        {
 
-    QList<NeuronSWC> result,result_2;
+            temp_neuron_p = readSWC_file(PARA.filename2);
+            neuron2 = readSWC_file(PARA.filename2).listNeuron;
+        }
+        prune_branch(temp_neuron_p,temp_neuron,prune_size);
+
+
+        if (PARA.filename1.toUpper().endsWith(".SWC") || PARA.filename1.toUpper().endsWith(".ESWC"))
+        {
+            nt_p = readSWC_file(PARA.filename1);
+        }
+
+        prune_branch(nt_p,nt,prune_size);
+
+        double maxx=-VOID;
+        double maxy=-VOID;
+        double maxz=-VOID;
+        double minx= VOID;
+        double miny= VOID;
+        double minz= VOID;
+        double add_num = 10;
+
+        for(V3DLONG i=0;i<neuron2.size();i++)
+        {
+            if(neuron2[i].x>maxx)
+            {
+                maxx = neuron2[i].x+add_num;
+            }
+            if(neuron2[i].y>maxy)
+            {
+                maxy = neuron2[i].y+add_num;
+            }
+            if(neuron2[i].z>maxz)
+            {
+                maxz = neuron2[i].z+add_num;
+            }
+
+            if(neuron2[i].x<minx)
+            {
+                minx = neuron2[i].x-add_num;
+            }
+            if(neuron2[i].y<miny)
+            {
+                miny = neuron2[i].y-add_num;
+            }
+            if(neuron2[i].z<minz)
+            {
+                minz = neuron2[i].z-add_num;
+            }
+        }
+
+        cout<<"nt.size = "<<nt.listNeuron.size()<<endl;
+
+
+        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            if( (nt.listNeuron[i].x<maxx)&&(nt.listNeuron[i].y<maxy)&&(nt.listNeuron[i].z<maxz)&&(nt.listNeuron[i].x>minx)&&(nt.listNeuron[i].y>miny)&&(nt.listNeuron[i].z>minz) )
+            {
+
+
+                bound_neuron.listNeuron.push_back(nt.listNeuron[i]);
+            }
+        }
+       cout<<"(bound_neuron.size = "<<bound_neuron.listNeuron.size()<<endl;
+
+        neuron1 = bound_neuron.listNeuron;
+
+
+
+        cout<<"neuron1.size = "<<neuron1.size()<<endl;
+
+
+        QList<NeuronSWC> result,result_2;
         QString fileSaveName;
         QString fileSaveName_gold;
         fileSaveName = PARA.filename1 + "_sort.swc";
         fileSaveName_gold = PARA.filename2 + "_sort.swc";
 
-    /******************************sort******************************************************/
-    cout<<"this is sort "<<endl;
-    sort_with_standard(neuron1,neuron2,result);
-    cout<<"first sort done "<<endl;
-    sort_with_standard(resample_gold.listNeuron,neuron2,result_2);
-    cout<<"result.size = "<<result.size()<<endl;
-    cout<<"result_2.size = "<<result_2.size()<<endl;
-    if (!export_list2file(result, fileSaveName, PARA.filename1))
-    {
-        printf("fail to write the output swc file.\n");
-        return false;
-    }
-    if (!export_list2file(result_2, fileSaveName_gold, PARA.filename2))
-    {
-        printf("fail to write the output swc file.\n");
-        return false;
-    }
+        /******************************sort******************************************************/
+        cout<<"this is sort "<<endl;
+
+        double thres = 10000;
+
+        if(!SortSWC(neuron1,result,neuron1[0].n,thres))
+        {
+            cout<<"Error in sorting swc"<<endl;
+            return false;
+        }
+
+        if(!SortSWC(temp_neuron.listNeuron,result_2,temp_neuron.listNeuron[0].n,thres))
+        {
+            cout<<"Error in sorting swc"<<endl;
+            return false;
+        }
 
 
-    vector<MyMarker *> neuron_m;
-    vector<MyMarker *> neuron_gold;
-    neuron_m = nt2mm(result,fileSaveName);
-
-    cout<<"size_nt = "<<result.size()<<endl;
-    cout<<"size_marker = "<<neuron_m.size()<<endl;
-    neuron_gold = nt2mm(result_2,PARA.filename2);
-    string name1 = PARA.filename1.toStdString();
-    string name2 = PARA.filename2.toStdString();
-    cout<<"name1 = "<<name1<<endl;
-    cout<<"name2 = "<<name2<<endl;
-
-    cout<<"neuron_m_size = "<<neuron_m.size()<<endl;
-    cout<<"neuron_gold_size = "<<neuron_gold.size()<<endl;
-
-    vector<FourType> fourtype;
-    vector<vector<Coodinate> > fourcood;
-
-    bool model= PARA.model2;  //1 for choose point ,0 for local alignment
-    if(model)
-    {
-        /********************************choose point***********************************/
+        //sort_with_standard(neuron1,neuron2,result);
+        //cout<<"first sort done "<<endl;
+        //sort_with_standard(temp_neuron.listNeuron,neuron2,result_2);
+        cout<<"result.size = "<<result.size()<<endl;
+        cout<<"result_2.size = "<<result_2.size()<<endl;
+        if (!export_list2file(result, fileSaveName, PARA.filename1))
+        {
+            printf("fail to write the output swc file.\n");
+            return false;
+        }
+        if (!export_list2file(result_2, fileSaveName_gold, PARA.filename2))
+        {
+            printf("fail to write the output swc file.\n");
+            return false;
+        }
 
 
-        QList<NeuronSWC> choose_rec1,choose_rec2,choose_gold1,choose_gold2,output_result;
-        choose_rec1 = choose_point(result,result_2,0,4);
-        choose_rec2 = choose_point(result,result_2,4,10000);
-        choose_gold1 = choose_point(result_2,result,0,4);
-        choose_gold2 = choose_point(result_2,result,4,10000);
+        vector<MyMarker *> neuron_m;
+        vector<MyMarker *> neuron_gold;
+        neuron_m = nt2mm(result,fileSaveName);
+
+        cout<<"size_nt = "<<result.size()<<endl;
+        cout<<"size_marker = "<<neuron_m.size()<<endl;
+        neuron_gold = nt2mm(result_2,PARA.filename2);
+        string name1 = PARA.filename1.toStdString();
+        string name2 = PARA.filename2.toStdString();
+        cout<<"name1 = "<<name1<<endl;
+        cout<<"name2 = "<<name2<<endl;
+
+        cout<<"neuron_m_size = "<<neuron_m.size()<<endl;
+        cout<<"neuron_gold_size = "<<neuron_gold.size()<<endl;
+
+
+
+
+
+
+
+
+        /********************************choose point  ***********************************/
+
+
+
+        cout<<"this is model "<<model<<endl;
+
+        QList<NeuronSWC> choose_rec1,choose_rec2,choose_gold1,choose_gold2,output_result1,output_result2;
+        choose_rec1 = choose_point(result,result_2,0,7,model);
+        choose_rec2 = choose_point(result,result_2,7,10000,model);
+        choose_gold1 = choose_point(result_2,result,0,7,model);
+        choose_gold2 = choose_point(result_2,result,7,10000,model);
 
         QString fileSaveName2 = "temp1.swc";
         QString fileSaveName3 = "temp2.swc";
-        QString fileSaveName4 = "temp3.swc";
-     //   cout<<""
-        //    for(V3DLONG i=0;i<choose_rec1.size();i++)
 
 
-        if (!export_list2file(choose_rec1,fileSaveName2, fileSaveName2))
-        {
-            printf("fail to write the output swc file.\n");
-            return false;
-        }
-        if (!export_list2file(choose_rec2, fileSaveName3, fileSaveName2))
-        {
-            printf("fail to write the output swc file.\n");
-            return false;
-        }
-        if (!export_list2file(choose_gold2, fileSaveName4, fileSaveName2))
-        {
-            printf("fail to write the output swc file.\n");
-            return false;
-        }
+        SortSWC(choose_rec1,output_result1,choose_rec1[0].n,VOID);
+                cout<<"hahahhhhah"<<endl;
+        SortSWC(choose_rec2,output_result2,choose_rec2[0].n,VOID);
+
+
+//        if (!export_list2file(output_result1,fileSaveName2, fileSaveName2))
+//        {
+//            printf("fail to write the output swc file.\n");
+//            return false;
+//        }
+//        if (!export_list2file(output_result2, fileSaveName3, fileSaveName2))
+//        {
+//            printf("fail to write the output swc file.\n");
+//            return false;
+//        }
 
 
         V3DLONG lens=PARA.para2;
@@ -219,8 +299,138 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 
 
     }
-    else
+    else if(model==0)
     {
+
+        cout<<"this is resample "<<endl;
+        NeuronTree nt_p,nt,temp_neuron_p,temp_neuron,bound_neuron;
+        QList<NeuronSWC> bound_neuron_p;
+        double prune_size = PARA.para4;
+        //  find the nearest point as new root node calculated between input_1's all node  and input_2's root node
+        cout<<"find_roodID begin.";
+        QList<NeuronSWC> neuron1,neuron2;
+        if (PARA.filename2.toUpper().endsWith(".SWC") || PARA.filename2.toUpper().endsWith(".ESWC"))
+        {
+
+            temp_neuron_p = readSWC_file(PARA.filename2);
+            neuron2 = readSWC_file(PARA.filename2).listNeuron;
+        }
+        prune_branch(temp_neuron_p,temp_neuron,prune_size);
+        NeuronTree resample_gold = resample(temp_neuron,PARA.para1);
+
+
+
+        if (PARA.filename1.toUpper().endsWith(".SWC") || PARA.filename1.toUpper().endsWith(".ESWC"))
+        {
+            nt_p = readSWC_file(PARA.filename1);
+        }
+
+        prune_branch(nt_p,nt,prune_size);
+
+        double maxx=-VOID;
+        double maxy=-VOID;
+        double maxz=-VOID;
+        double minx= VOID;
+        double miny= VOID;
+        double minz= VOID;
+        double add_num = 10;
+
+        for(V3DLONG i=0;i<neuron2.size();i++)
+        {
+            if(neuron2[i].x>maxx)
+            {
+                maxx = neuron2[i].x+add_num;
+            }
+            if(neuron2[i].y>maxy)
+            {
+                maxy = neuron2[i].y+add_num;
+            }
+            if(neuron2[i].z>maxz)
+            {
+                maxz = neuron2[i].z+add_num;
+            }
+
+            if(neuron2[i].x<minx)
+            {
+                minx = neuron2[i].x-add_num;
+            }
+            if(neuron2[i].y<miny)
+            {
+                miny = neuron2[i].y-add_num;
+            }
+            if(neuron2[i].z<minz)
+            {
+                minz = neuron2[i].z-add_num;
+            }
+        }
+
+
+
+
+        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            if( (nt.listNeuron[i].x<maxx)&&(nt.listNeuron[i].y<maxy)&&(nt.listNeuron[i].z<maxz)&&(nt.listNeuron[i].x>minx)&&(nt.listNeuron[i].y>miny)&&(nt.listNeuron[i].z>minz) )
+            {
+
+
+                bound_neuron.listNeuron.push_back(nt.listNeuron[i]);
+            }
+        }
+       cout<<"(bound_neuron.size = "<<bound_neuron.listNeuron.size()<<endl;
+
+        //NeuronTree resample_result = resample(bound_neuron,PARA.para1);
+        neuron1 = bound_neuron.listNeuron;
+
+
+
+        cout<<"neuron1.size = "<<neuron1.size()<<endl;
+
+
+        QList<NeuronSWC> result,result_2;
+        QString fileSaveName;
+        QString fileSaveName_gold;
+        fileSaveName = PARA.filename1 + "_sort.swc";
+        fileSaveName_gold = PARA.filename2 + "_sort.swc";
+
+        /******************************sort******************************************************/
+        cout<<"this is sort "<<endl;
+        sort_with_standard(neuron1,neuron2,result);
+        cout<<"first sort done "<<endl;
+        sort_with_standard(resample_gold.listNeuron,neuron2,result_2);
+        cout<<"result.size = "<<result.size()<<endl;
+        cout<<"result_2.size = "<<result_2.size()<<endl;
+        if (!export_list2file(result, fileSaveName, PARA.filename1))
+        {
+            printf("fail to write the output swc file.\n");
+            return false;
+        }
+        if (!export_list2file(result_2, fileSaveName_gold, PARA.filename2))
+        {
+            printf("fail to write the output swc file.\n");
+            return false;
+        }
+
+
+        vector<MyMarker *> neuron_m;
+        vector<MyMarker *> neuron_gold;
+        neuron_m = nt2mm(result,fileSaveName);
+
+        cout<<"size_nt = "<<result.size()<<endl;
+        cout<<"size_marker = "<<neuron_m.size()<<endl;
+        neuron_gold = nt2mm(result_2,PARA.filename2);
+        string name1 = PARA.filename1.toStdString();
+        string name2 = PARA.filename2.toStdString();
+        cout<<"name1 = "<<name1<<endl;
+        cout<<"name2 = "<<name2<<endl;
+
+        cout<<"neuron_m_size = "<<neuron_m.size()<<endl;
+        cout<<"neuron_gold_size = "<<neuron_gold.size()<<endl;
+
+
+
+
+
+
 
         /*******************************local_alignment*********************************/
         cout<<"local alignment"<<endl;
@@ -475,7 +685,12 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
         //     export_list2file(subarea_gold_final, temp_point_gold,temp_point_gold);
         for (int i=0;i<map_swc.size();i++)
             if (map_swc[i]) {delete(map_swc[i]); map_swc[i]=NULL;}
-}
+    }
+    else
+    {
+        cout<<"please input correct model number"<<endl;
+    }
+
      cout<<"**************************img part********************"<<endl;
 
      vector<string> v,v_rec;
@@ -495,10 +710,6 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
      V3DLONG in_sz[4];
      unsigned char * data1d = 0;
      int datatype;
-     //QString temp_name;
-     //QString a=PARA.filename1.split("/");
-
-
 
 
      if(type)
@@ -575,8 +786,58 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 
      return true;
 }
+bool export_TXT(QVector<QVector<int> > &img_vec,QString fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
 
 
+    for (int i=0;i<img_vec.size();i++)
+    {
+
+        for (int j=0;j<img_vec[i].size();j++)
+             myfile << img_vec[i][j] <<"    ";
+        cout<<endl;
+            //fprintf(file, "%d,", img_vec[i][j]);
+        //fprintf(file,"\n");
+    }
+
+
+
+//    for (V3DLONG i=0;i<lN.size();i++)
+//        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
+
+    file.close();
+    cout<<"txt file "<<fileSaveName.toStdString()<<" has been generated, size: "<<img_vec.size()<<endl;
+    return true;
+}
+
+
+bool export_1dtxt(unsigned char *im_cropped ,QString fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
+
+
+    for (int i=0;i<64*64;i++)
+    {
+             myfile << im_cropped[i] <<"    ";
+
+    }
+
+
+
+//    for (V3DLONG i=0;i<lN.size();i++)
+//        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
+
+    file.close();
+    //cout<<"txt file "<<fileSaveName.toStdString()<<" has been generated, size: "<<img_vec.size()<<endl;
+    return true;
+}
 
 bool prune_branch(NeuronTree &nt, NeuronTree & result, double prune_size)
 {
@@ -645,7 +906,7 @@ bool prune_branch(NeuronTree &nt, NeuronTree & result, double prune_size)
 
     return true;
 }
-QList<NeuronSWC>choose_point(QList<NeuronSWC> &neuron1,QList<NeuronSWC> &neuron2,int thre1,int thre2)
+QList<NeuronSWC>choose_point(QList<NeuronSWC> &neuron1,QList<NeuronSWC> &neuron2,int thre1,int thre2,int model)
 {
     //vector<V3DLONG> mark;
     V3DLONG ind;
@@ -660,13 +921,20 @@ QList<NeuronSWC>choose_point(QList<NeuronSWC> &neuron1,QList<NeuronSWC> &neuron2
         min_dis = 10000000;
         for(V3DLONG j=0;j<neuron2.size();j++)
         {
-
-            dis = MHDIS(neuron1[i],neuron2[j]);
+            if(model==1)
+            {
+                dis = MHDIS(neuron1[i],neuron2[j]);
+            }
+            else if(model==2)
+            {
+                dis = MHDIS_xy(neuron1[i],neuron2[j]);
+            }
             if(dis<min_dis)
             {
                 min_dis = dis;
 
             }
+
 
         }
 
@@ -795,6 +1063,28 @@ QList<NeuronSWC> match_point(QList<NeuronSWC> &swc1,QList<NeuronSWC> &swc2)
     }
     return swc3;
 }
+
+NeuronTree match_point_nt(QList<NeuronSWC> &swc1,QList<NeuronSWC> &swc2)
+{
+    int ind1;
+    NeuronTree swc3;
+    for(V3DLONG i=0;i<swc1.size();i++)
+    {
+        ind1=0;
+        for(V3DLONG j=i+1;j<swc2.size();j++)
+        {
+            if(NTDIS(swc1[i],swc2[j])<0.00001)
+            { ind1=1;
+            }
+            continue;
+        }
+        if(ind1==0)
+        {
+            swc3.listNeuron.push_back(swc1[i]);
+        }
+    }
+    return swc3;
+}
 bool get_subarea_in_nt(vector<FourType> &fourtype,V3DLONG length,QList<NeuronSWC> &little,QList<NeuronSWC> &middle,QList<NeuronSWC> &point_rec,QList<NeuronSWC> &point_gold)
 {
     V3DLONG i=0;
@@ -901,7 +1191,9 @@ bool get_subimg_terafly(QString inimg_file,QString name,vector<Coodinate> &mean,
     cout<<"enter into get subimg for terafly"<<endl;
     V3DLONG im_cropped_sz[4];
     V3DLONG im_cropped_sz2[4];
+    V3DLONG im_cropped_sz3[3];
     V3DLONG pagesz;
+    V3DLONG pagesz_2d;
     //V3DLONG M = in_sz[0];
     //V3DLONG N = in_sz[1];
     //V3DLONG P = in_sz[2];
@@ -911,6 +1203,7 @@ bool get_subimg_terafly(QString inimg_file,QString name,vector<Coodinate> &mean,
     V3DLONG xee,xbb,yee,ybb,zee,zbb;
     unsigned char *im_cropped = 0;
     unsigned char *im_cropped2 = 0;
+    unsigned char *im_cropped3 = 0;
     cout<<"img_size = "<<mean.size()<<endl;
     for(V3DLONG i =0;i<mean.size();i++)
     {
@@ -948,12 +1241,20 @@ bool get_subimg_terafly(QString inimg_file,QString name,vector<Coodinate> &mean,
         im_cropped_sz2[2] = zee - zbb + 1;
         im_cropped_sz2[3] = sc;
 
+        im_cropped_sz3[0]=36;
+        im_cropped_sz3[1]=36;
+        im_cropped_sz3[2]=sc;
+
         pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2];
+        pagesz_2d = im_cropped_sz3[0]* im_cropped_sz3[1]* im_cropped_sz[2];
 
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
 
         try {im_cropped2 = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+
+        try {im_cropped3 = new unsigned char [pagesz_2d];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
 
 
@@ -970,15 +1271,78 @@ bool get_subimg_terafly(QString inimg_file,QString name,vector<Coodinate> &mean,
         //im_cropped2 = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xbb,xee+1,ybb,yee+1,zbb,zee+1);
         QString outimg_file;
         QString outimg_file2;
+        QString outimg_file3;
         outimg_file = name+QString::number(i)+".tif";
         outimg_file2 = "big_"+QString::number(i)+".tif";
 
-       simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
+        outimg_file3 = name+QString::number(i)+".txt";
+
+//        int new_lens = 36;
+//        QVector<QVector<int> > img_vec;
+//        QVector<int> tmp;
+//        int l=0;
+//        for(V3DLONG i=0;i<new_lens;i++)
+//        {
+//            for(V3DLONG j=0;j<new_lens;j++)
+//            {
+//                tmp.push_back(im_cropped[l]);
+//                l++;
+//            }
+//            img_vec.push_back(tmp);
+//            tmp.clear();
+//        }
+
+        //export_TXT(img_vec,outimg_file3);
+
+
+
+
+
+       // export_2dtif(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz3,1);
+
+         export_1dtxt(im_cropped,outimg_file3);
+
+
+
+
+      // simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
      //  simple_saveimage_wrapper(callback, outimg_file2.toStdString().c_str(),(unsigned char *)im_cropped2,im_cropped_sz2,1);
        if(im_cropped) {delete []im_cropped; im_cropped = 0;}
 
     }
     return true;
+}
+bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * pdata, V3DLONG sz[3], int datatype)
+{
+    if (!filename || !sz || !pdata)
+    {
+        v3d_msg("some of the parameters for simple_saveimage_wrapper() are not valid.", 0);
+        return false;
+    }
+
+    ImagePixelType dt;
+    if (datatype==1)
+        dt = V3D_UINT8;
+    else if (datatype==2)
+        dt = V3D_UINT16;
+    else if (datatype==4)
+        dt = V3D_FLOAT32;
+    else
+    {
+        v3d_msg(QString("the specified save data type in simple_saveimage_wrapper() is not valid, dt=[%1].").arg(datatype), 0);
+        return false;
+    }
+
+    Image4DSimple * outimg = new Image4DSimple;
+    if (outimg)
+        outimg->setData(pdata, sz[0], sz[1], 0 ,sz[3], dt);
+    else
+    {
+        v3d_msg("Fail to new Image3DSimple for outimg.");
+        return false;
+    }
+
+    return cb.saveImage(outimg, (char *)filename);
 }
 bool get_subarea(QList<NeuronSWC> &nt,vector<Coodinate> &fourcood,vector<QList<NeuronSWC> > &subarea)
 {

@@ -8,7 +8,7 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
     QString inimg_file = "/media/lxf/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
     QString pattern = "/media/lxf/8213-B4FE/3.19/Data/finished_11/finished_11/005.swc";
-    QString pattern2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/005_x_8584.04_y_8184.8_y_1458.26.swc";
+    QString pattern2 = "/media/lxf/8213-B4FE/3.19/Data/auto_tracing/005_x_8584.04_y_8184.8_y_1458.26.swc";
     NeuronTree nt,nt_p,bt,bt_p;
     if (pattern.toUpper().endsWith(".SWC") ||pattern.toUpper().endsWith(".ESWC"))
         nt_p = readSWC_file(pattern);
@@ -54,15 +54,15 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
 
 
-    bool model=0;   //1 for whole img,0 for sub img
+    bool model=1;   //1 for whole img,0 for sub img
     if(model)
     {
 
 
         V3DLONG im_cropped_sz[4];
-        im_cropped_sz[0] = 511;
-        im_cropped_sz[1] = 511;
-        im_cropped_sz[2] = 511;
+        im_cropped_sz[0] = 400;
+        im_cropped_sz[1] = 400;
+        im_cropped_sz[2] = 400;
         im_cropped_sz[3] = 1;
         double sum_x=0;
         double sum_y=0;
@@ -75,9 +75,13 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
             sum_z = sum_z+nt.listNeuron[i].z;
         }
         double mean_x,mean_y,mean_z;
-        mean_x = sum_x/nt.listNeuron.size();
-        mean_y = sum_y/nt.listNeuron.size();
-        mean_z = sum_z/nt.listNeuron.size();
+//        mean_x = sum_x/nt.listNeuron.size();
+//        mean_y = sum_y/nt.listNeuron.size();
+//        mean_z = sum_z/nt.listNeuron.size();
+
+        mean_x = 17161;
+        mean_y = 16429;
+        mean_z = 2911;
         NeuronSWC S;
         S.x = mean_x;
         S.y = mean_y;
@@ -99,12 +103,12 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = 511*511*511;
+        pagesz = 400*400*400;
 
 
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-        max_c = 255;
+        max_c = 200;
         V3DLONG xb = mean_x-max_c;
         V3DLONG xe = mean_x+max_c;
         V3DLONG yb = mean_y-max_c;
@@ -113,12 +117,6 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
         V3DLONG ze = mean_z+max_c;
 
 
-//        if(xb<0) xb = 0;
-//        if(xe>=511-1) xe = 511-1;
-//        if(yb<0) yb = 0;
-//        if(ye>=511-1) ye = 511-1;
-//        if(zb<0) zb = 0;
-//        if(ze>=511-1) ze = 511-1;
 
         cout<<"hahahahhahahaha"<<endl;
         im_cropped = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,
@@ -126,7 +124,7 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
 
         QString outimg_file;
-        outimg_file = "test.v3dpbd";
+        outimg_file = "test.tif";
 
 
         simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
@@ -157,9 +155,12 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
             try {im_cropped = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
 
-            V3DLONG mean_x = nt.listNeuron[i].x;
-            V3DLONG mean_y = nt.listNeuron[i].y;
-            V3DLONG mean_z = nt.listNeuron[i].z;
+//            V3DLONG mean_x = nt.listNeuron[i].x;
+//            V3DLONG mean_y = nt.listNeuron[i].y;
+//            V3DLONG mean_z = nt.listNeuron[i].z;
+            V3DLONG mean_x = 17161;
+            V3DLONG mean_y = 16429;
+            V3DLONG mean_z = 2911;
 
 
             V3DLONG xb = mean_x-lens;
