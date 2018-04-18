@@ -9,6 +9,7 @@
 #include "basic_surf_objs.h"
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../sort_neuron_swc/openSWCDialog.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(combine_file, combine_file);
@@ -51,7 +52,8 @@ QStringList combine_file::menulist() const
 	return QStringList() 
         << tr("combine all SWC files under a directory")
         << tr("combine all marker files under a directory")
-        << tr("separate all neuron trees from a single SWC file");
+        << tr("separate a SWC file by type");
+    //    << tr("separate all neuron trees from a single SWC file");
     //	<<tr("about");
 }
 
@@ -72,49 +74,79 @@ void combine_file::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	{
         generatorcombined4FilesInDir(callback, parent, 2);
     }
-    else if (menu_name == tr("separate all neuron trees from a single SWC file"))
+    else if (menu_name == tr("separate a SWC file by type"))
     {
         QString fileOpenName;
-        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-                "",
-                QObject::tr("Supported file (*.swc *.eswc)"
-                    ";;Neuron structure	(*.swc)"
-                    ";;Extended neuron structure (*.eswc)"
-                    ));
-        if(fileOpenName.isEmpty())
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
             return;
-
-        QString m_folderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory to save all swc files "),
-                                                                      QDir::currentPath(),
-                                                                      QFileDialog::ShowDirsOnly);
+        fileOpenName = openDlg->file_name;
         NeuronTree nt;
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
-             nt = readSWC_file(fileOpenName);
-             int start_node = 0;
-             int end_node = 0;
-
-             for (int i=1;i<nt.listNeuron.size();i++)
-             {
-                 if(nt.listNeuron[i].pn <0 || i == nt.listNeuron.size()-1)
-                 {
-                    end_node = i-1;
-                    if(i == nt.listNeuron.size()-1) end_node = i;
-                    NeuronSWC each_branch = nt.listNeuron.at(start_node);
-                    QString branch_swc_name =  m_folderName+QString("/x_%1_y_%2_z_%3.swc").arg(each_branch.x).arg(each_branch.y).arg(each_branch.z);
-                    NeuronTree nt_branches;
-                    QList <NeuronSWC> & listNeuron = nt_branches.listNeuron;
-                    for(int dd = start_node; dd <= end_node; dd++)
-                    {
-                        listNeuron << nt.listNeuron.at(dd);
-                    }
-                    writeSWC_file(branch_swc_name,nt_branches);
-                    listNeuron.clear();
-                    start_node = i;
-                 }
-             }
+            nt = openDlg->nt;
         }
+
+        map<int, QList<NeuronSWC> > multi_neurons;
+        for(V3DLONG i = 0; i<nt.listNeuron.size(); i++)
+        {
+            multi_neurons[nt.listNeuron[i].type].append(nt.listNeuron[i]);
+        }
+        for (map<int, QList<NeuronSWC> >::iterator it=multi_neurons.begin(); it!=multi_neurons.end(); ++it)
+        {
+            NeuronTree nt_trees;
+            nt_trees.listNeuron = it->second;
+            QString fileSaveName = fileOpenName + QString("_type_%1.swc").arg(it->first);
+            writeSWC_file(fileSaveName,nt_trees);
+            nt_trees.listNeuron.clear();
+        }
+        v3d_msg("Done with SWC separation!");
+
     }
+
+//    else if (menu_name == tr("separate all neuron trees from a single SWC file"))
+//    {
+//        QString fileOpenName;
+//        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+//                "",
+//                QObject::tr("Supported file (*.swc *.eswc)"
+//                    ";;Neuron structure	(*.swc)"
+//                    ";;Extended neuron structure (*.eswc)"
+//                    ));
+//        if(fileOpenName.isEmpty())
+//            return;
+
+//        QString m_folderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory to save all swc files "),
+//                                                                      QDir::currentPath(),
+//                                                                      QFileDialog::ShowDirsOnly);
+//        NeuronTree nt;
+//        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+//        {
+//             nt = readSWC_file(fileOpenName);
+//             int start_node = 0;
+//             int end_node = 0;
+
+//             for (int i=1;i<nt.listNeuron.size();i++)
+//             {
+//                 if(nt.listNeuron[i].pn <0 || i == nt.listNeuron.size()-1)
+//                 {
+//                    end_node = i-1;
+//                    if(i == nt.listNeuron.size()-1) end_node = i;
+//                    NeuronSWC each_branch = nt.listNeuron.at(start_node);
+//                    QString branch_swc_name =  m_folderName+QString("/x_%1_y_%2_z_%3.swc").arg(each_branch.x).arg(each_branch.y).arg(each_branch.z);
+//                    NeuronTree nt_branches;
+//                    QList <NeuronSWC> & listNeuron = nt_branches.listNeuron;
+//                    for(int dd = start_node; dd <= end_node; dd++)
+//                    {
+//                        listNeuron << nt.listNeuron.at(dd);
+//                    }
+//                    writeSWC_file(branch_swc_name,nt_branches);
+//                    listNeuron.clear();
+//                    start_node = i;
+//                 }
+//             }
+//        }
+//    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
