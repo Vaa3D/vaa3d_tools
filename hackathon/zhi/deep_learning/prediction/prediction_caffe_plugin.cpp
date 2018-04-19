@@ -89,7 +89,8 @@ QStringList prediction_caffe::menulist() const
 QStringList prediction_caffe::funclist() const
 {
     return QStringList()
-            <<tr("Prediction")
+              <<tr("Prediction")
+             <<tr("Prediction_3D")
            <<tr("Quality_Assess")
           <<tr("Detection")
          <<tr("Prediction_type")
@@ -281,8 +282,21 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         unsigned char*im_seg = 0;
         try {im_seg = new unsigned char[N*M*P];}
         catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return;}
-        for(V3DLONG i=0; i<N*M*P;i++)
-            im_seg[i]=(im_label[i]>0)?255:0;
+        for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+
+            for(V3DLONG iy = ita+1; iy < M-ita-1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
+                {
+                    im_seg[offsetk + offsetj + ix]=(im_label[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
+                }
+            }
+        }
+//        for(V3DLONG i=0; i<N*M*P;i++)
+//            im_seg[i]=(im_label[i]>0)?data1d[i]:0;
         if(im_label) {delete []im_label;im_label=0;}
 
         Image4DSimple * new4DImage = new Image4DSimple();
@@ -292,7 +306,6 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         callback.setImageName(newwin, "unet");
         callback.updateImageWindow(newwin);
         return;
-
 
     }else if (menu_name == tr("Quality_Assess"))
     {
@@ -1097,6 +1110,166 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
         cout << "time elapsed: " << elapsed_secs << "sec" << endl;
+
+        return true;
+    }
+    else if (func_name == tr("Segmentation_3D"))
+    {
+        cout<<"Welcome to Caffe 3D segmentation plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        if(outfiles.empty())
+        {
+            cerr<<"Need output image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        QString  ouimg_file =  outfiles[0];
+
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG sc = in_sz[3];
+
+        double overall_mean, overall_std;
+        mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+
+        short int*im_label = 0;
+        try {im_label = new short int[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_label."); return false;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_label[i]=0;
+
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(),"");
+        int patchSize = 64;
+        int ita = 4;
+        int x_fold = N/patchSize + ita;
+        int x_ovlap = ceil((double(x_fold)*patchSize - N)/(double(x_fold)-1));
+        int y_fold = M/patchSize + ita;
+        int y_ovlap = ceil((double(y_fold)*patchSize - M)/(double(y_fold)-1));
+        int z_fold = P/patchSize + ita;
+        int z_ovlap = ceil((double(z_fold)*patchSize - P)/(double(z_fold)-1));
+        int ita_x = (patchSize-x_ovlap)>0?patchSize-x_ovlap:1;
+        int ita_y = (patchSize-y_ovlap)>0?patchSize-y_ovlap:1;
+        int ita_z = (patchSize-z_ovlap)>0?patchSize-z_ovlap:1;
+
+        for(V3DLONG iz = 0; iz < P; iz = iz+ita_z)
+        {
+            for(V3DLONG iy = 0; iy < M; iy = iy+ita_y)
+            {
+                for(V3DLONG ix = 0; ix < N; ix = ix+ita_x)
+                {
+                    V3DLONG xb = ix;
+                    V3DLONG xe = ix+patchSize-1; if(xe>=N) continue;
+                    V3DLONG yb = iy;
+                    V3DLONG ye = iy+patchSize-1; if(ye>=M) continue;
+                    V3DLONG zb = iz;
+                    V3DLONG ze = iz+patchSize-1; if(ze>=P) continue;
+
+                    V3DLONG tile_N = xe-xb+1;
+                    V3DLONG tile_M = ye-yb+1;
+                    //  V3DLONG tile_P = ze-zb+1;
+                    std::vector<cv::Mat> imgs;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        float*im_cropped = 0;
+                        try {im_cropped = new float [tile_N*tile_M];}
+                        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
+
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                im_cropped[j] = (data1d[offsetk + offsetj + iix]-overall_mean)/overall_std;
+                                j++;
+                            }
+                        }
+                        cv::Mat img(tile_N, tile_M, CV_32FC1, im_cropped);
+                        imgs.push_back(img);
+                    }
+
+                    std::vector<float> outputs = classifier.Predict_3D(imgs);
+                    V3DLONG j=0;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                int tmp_score = (outputs[j]>0.005)? 1:-1;
+                                im_label[offsetk + offsetj + iix] += tmp_score;
+                                j++;
+                            }
+                        }
+                    }
+                    imgs.clear();
+                    outputs.clear();
+                }
+            }
+        }
+
+        unsigned char*im_seg = 0;
+        try {im_seg = new unsigned char[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return false;}
+        for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+
+            for(V3DLONG iy = ita+1; iy < M-ita-1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
+                {
+                    im_seg[offsetk + offsetj + ix]=(im_label[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
+                }
+            }
+        }
+
+        // save image
+        in_sz[3]=1;
+        simple_saveimage_wrapper(callback, ouimg_file.toStdString().c_str(), (unsigned char *)im_seg, in_sz, datatype);
+
+        if(im_label) {delete []im_label;im_label=0;}
+        if(data1d) {delete []data1d; data1d = 0;}
+        if(im_seg) {delete []im_seg; im_seg = 0;}
 
         return true;
     }
