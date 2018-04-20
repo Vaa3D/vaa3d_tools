@@ -87,8 +87,8 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
             //PARA.filename2 = "/home/penglab/Data/xuefeng/023 final.ano.swc";
             //PARA.filename3 = "/run/media/penglab/WS5/mouseID_321237-17302/RES(54600x34412x9847)";
 
-            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/auto_tracing/048_x_10403.7_y_10027.7_y_2484.61.swc";;
-            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/finished_11/finished_11/048.swc";
+            PARA.filename1 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023_x_7522.77_y_13532.6_y_2019.19.swc";
+            PARA.filename2 = "/media/lxf/8213-B4FE/3.19/Data/xuefeng/023 final.ano.swc";
             PARA.filename3 = "/media/lxf/zhang/mouseID_321237-17302/RES(54600x34412x9847)";
         }
         else
@@ -272,23 +272,42 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
 
         QString fileSaveName2 = "temp1.swc";
         QString fileSaveName3 = "temp2.swc";
+        QString fileSaveName4 = "final.swc";
 
 
         SortSWC(choose_rec1,output_result1,choose_rec1[0].n,VOID);
                 cout<<"hahahhhhah"<<endl;
         SortSWC(choose_rec2,output_result2,choose_rec2[0].n,VOID);
 
+        QList<NeuronSWC> final;
 
-//        if (!export_list2file(output_result1,fileSaveName2, fileSaveName2))
-//        {
-//            printf("fail to write the output swc file.\n");
-//            return false;
-//        }
-//        if (!export_list2file(output_result2, fileSaveName3, fileSaveName2))
-//        {
-//            printf("fail to write the output swc file.\n");
-//            return false;
-//        }
+        for(V3DLONG i=0;i<choose_rec1.size();i++)
+        {
+            output_result1[i].type = 3;
+            final.push_back(output_result1[i]);
+        }
+        for(V3DLONG i=0;i<choose_rec2.size();i++)
+        {
+            output_result2[i].type = 2;
+            final.push_back(output_result2[i]);
+        }
+
+        if (!export_list2file(output_result1,fileSaveName2, fileSaveName2))
+        {
+            printf("fail to write the output swc file.\n");
+            return false;
+        }
+        if (!export_list2file(output_result2, fileSaveName3, fileSaveName2))
+        {
+            printf("fail to write the output swc file.\n");
+            return false;
+        }
+
+                if (!export_list2file(final,fileSaveName4 , fileSaveName4))
+                {
+                    printf("fail to write the output swc file.\n");
+                    return false;
+                }
 
 
         V3DLONG lens=PARA.para2;
@@ -699,8 +718,9 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
      SplitString(name_temp_,v_rec,"/");
      int size = v_rec.size();
      cout<<"size = "<<v_rec.size()<<endl;
-     cout<<"size2 = "<<v.size()<<endl;
+
      SplitString(img,v,"/");
+     cout<<"size2 = "<<v.size()<<endl;
 
      QString name_temp= QString::fromStdString(v_rec[size-1]);
      QString name_little = "_"+name_temp+"_little_1_";
@@ -710,11 +730,11 @@ bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QW
      V3DLONG in_sz[4];
      unsigned char * data1d = 0;
      int datatype;
-
-
+    QString image =QString::fromStdString(v[v.size()-1]);
+     cout<<image.toStdString()<<endl;
      if(type)
      {
-         QString image =QString::fromStdString(v[6]);
+         //QString image =QString::fromStdString(v[6]);
          cout<<"v3dpbd"<<endl;
          if(!simple_loadimage_wrapper(callback,(char *)img.c_str(), data1d, in_sz, datatype))  {cout<<"load img wrong"<<endl;  return false;}
 
@@ -1130,7 +1150,7 @@ bool get_subimg(QString raw_img,QString name,vector<Coodinate> &mean,unsigned ch
     for(V3DLONG i =0;i<mean.size();i++)
     {        
 
-        cout<<mean[i].lens<<endl;
+        //cout<<mean[i].lens<<endl;
         xe=mean[i].x+mean[i].lens;
         xb=mean[i].x-mean[i].lens;
         ye=mean[i].y+mean[i].lens;
@@ -1245,6 +1265,8 @@ bool get_subimg_terafly(QString inimg_file,QString name,vector<Coodinate> &mean,
         im_cropped_sz3[1]=36;
         im_cropped_sz3[2]=sc;
 
+
+
         pagesz = im_cropped_sz[0]* im_cropped_sz[1]* im_cropped_sz[2];
         pagesz_2d = im_cropped_sz3[0]* im_cropped_sz3[1]* im_cropped_sz[2];
 
@@ -1265,7 +1287,8 @@ bool get_subimg_terafly(QString inimg_file,QString name,vector<Coodinate> &mean,
         //    mysz[3] = 1;
         //    unsigned char* data1d_crop = 0;
         //V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
-
+cout<<xb<<"   "<<xe<<"   "<<yb<<"   "<<ye<<"   "<<zb<<"   "<<ze<<endl;
+cout<<inimg_file.toStdString()<<endl;
         im_cropped = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
 
         //im_cropped2 = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xbb,xee+1,ybb,yee+1,zbb,zee+1);

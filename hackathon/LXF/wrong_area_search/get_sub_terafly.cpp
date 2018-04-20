@@ -158,7 +158,7 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 //            V3DLONG mean_x = nt.listNeuron[i].x;
 //            V3DLONG mean_y = nt.listNeuron[i].y;
 //            V3DLONG mean_z = nt.listNeuron[i].z;
-            V3DLONG mean_x = 17161;
+            V3DLONG mean_x = 17160;
             V3DLONG mean_y = 16429;
             V3DLONG mean_z = 2911;
 

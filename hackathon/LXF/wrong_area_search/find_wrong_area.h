@@ -15,7 +15,7 @@ struct Input_para
     V3DLONG para2=5;        //lens para
     V3DLONG para3=1;        //step para
     V3DLONG para4=0;        //prune para
-    bool model1 = 1;       //1 for.v3dpbd,0 for terafly
+    bool model1 = 0;       //1 for.v3dpbd,0 for terafly
     int model2 = 1;        //2 for choose piont_xy ,1 for choose point_xyz ,0 for local alignment
     V3DLONG model3 = 0;      //0 for 1 class.1 for 2 class,2 for 3 class
 };
