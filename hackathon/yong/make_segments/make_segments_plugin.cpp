@@ -54,6 +54,30 @@ void make_segments_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &
         swc_to_segments(APP2,tree);
 
 	}
+    else if (menu_name == tr("snake_swc_to_segments"))
+    {
+        bool bmenu = true;
+        input_PARA PARA;
+
+        QString snake_path = PARA.inimg_file + "_snake_tracing.swc";
+        vector<MyMarker*> snake = readSWC_file(snake_path.toStdString());
+        vector<NeuronSegment*> tree;
+
+        swc_to_segments(snake,tree);
+
+    }
+    else if (menu_name == tr("neuTube_swc_to_segments"))
+    {
+        bool bmenu = true;
+        input_PARA PARA;
+
+        QString neuTube_path = PARA.inimg_file + "_neutube.swc";
+        vector<MyMarker*> neuTube = readSWC_file(neuTube_path.toStdString());
+        vector<NeuronSegment*> tree;
+
+        swc_to_segments(neuTube,tree);
+
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
