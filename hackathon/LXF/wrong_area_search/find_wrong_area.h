@@ -115,6 +115,9 @@ double calculate_diameter(NeuronTree nt, vector<V3DLONG> branches);
 bool prune_branch(NeuronTree &nt, NeuronTree & result, double prune_size);
 bool export_TXT(QVector<QVector<int> > &img_vec,QString fileSaveName);
 bool export_1dtxt(unsigned char *im_cropped ,QString fileSaveName);
+void getChildNum(const NeuronTree &nt, vector<vector<V3DLONG> > &childs);
+V3DLONG down_child(NeuronTree &nt,vector<vector<V3DLONG> > &childs,V3DLONG node,QList<NeuronSWC> &other_point);
+NeuronTree get_right_area(NeuronTree &nt,vector<vector<V3DLONG> > &childs,QList<NeuronSWC> &other_point,QList<NeuronSWC> &wrong_point);
 
 QList<NeuronSWC> match_point(QList<NeuronSWC> &swc1,QList<NeuronSWC> &swc2);
 NeuronTree match_point_nt(QList<NeuronSWC> &swc1,QList<NeuronSWC> &swc2);
