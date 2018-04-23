@@ -1513,6 +1513,67 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
 
+    qDebug()<<scanDataFileString;
+    QFile saveTextFile;
+    saveTextFile.setFileName(scanDataFileString);// add currentScanFile
+    if (!saveTextFile.isOpen()){
+        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
+            qDebug()<<"unable to save file!";
+            return false;}     }
+    QTextStream outputStream;
+    outputStream.setDevice(&saveTextFile);
+    outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
+    saveTextFile.close();
+
+    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+    // call unet segmentation
+    if(1)
+    {
+        V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
+
+        QString full_plugin_name;
+        QString func_name;
+
+        arg.type = "random";std::vector<char*> arg_input;
+        std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input.push_back(fileName_string);
+        arg.p = (void *) & arg_input; input<< arg;
+
+        QString imageUnetString = imageSaveString + "unet.v3draw";
+        arg.type = "random";std::vector<char*> arg_output;
+        std:: string unetName_Qstring(imageUnetString.toStdString());char* char_imageout =  new char[unetName_Qstring.length() + 1];strcpy(char_imageout, unetName_Qstring.c_str());
+        arg_output.push_back(char_imageout); arg.p = (void *) & arg_output; output<< arg;
+
+        std::vector<char*> arg_para;
+        arg_para.push_back("/local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt");
+        arg_para.push_back("/local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel");
+
+        full_plugin_name = "prediction_caffe";
+        func_name =  "Segmentation_3D";
+
+        arg.p = (void *) & arg_para; input << arg;
+        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+        {
+            printf("Can not find unet segmentation plugin!\n");
+            return false;
+        }
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, imageUnetString.toStdString().c_str(), total1dData, in_sz, datatype))
+        {
+            cerr<<"load image "<<imageUnetString.toStdString()<<" error!"<<endl;
+            return false;
+        }
+        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+
+
+    }
+
+    if(in_sz) {delete []in_sz; in_sz =0;}
+
+
     PARA_APP1 p1;
     PARA_APP2 p2;
     QString versionStr = "v0.001";
@@ -1558,22 +1619,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     NeuronTree nt;
-    qDebug()<<scanDataFileString;
-    QFile saveTextFile;
-    saveTextFile.setFileName(scanDataFileString);// add currentScanFile
-    if (!saveTextFile.isOpen()){
-        if (!saveTextFile.open(QIODevice::Text|QIODevice::Append  )){
-            qDebug()<<"unable to save file!";
-            return false;}     }
-    QTextStream outputStream;
-    outputStream.setDevice(&saveTextFile);
-    outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<< (int) total4DImage->getOriginZ()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<" "<< (int) in_sz[2]<<"\n";
-    saveTextFile.close();
-
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
-
-    if(in_sz) {delete []in_sz; in_sz =0;}
-
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
 

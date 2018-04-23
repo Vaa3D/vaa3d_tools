@@ -146,6 +146,97 @@ template<class T> bool swc2topo_segs(vector<MyMarker*> & inswc, vector<Hierarchy
 	return true;
 }
 
+bool swc2topo_segs_noImg(vector<MyMarker*> & inswc, vector<HierarchySegment*> & topo_segs)
+{
+    // 1. calc distance for every nodes
+    V3DLONG tol_num = inswc.size();
+    map<MyMarker*, V3DLONG> swc_map; for(V3DLONG i = 0; i < tol_num; i++) swc_map[inswc[i]] = i;
+
+    vector<MyMarker*> leaf_markers;
+    //GET_LEAF_MARKERS(leaf_markers, inswc);
+    vector<V3DLONG> childs_num(tol_num);
+    {
+        for(V3DLONG i = 0; i < tol_num; i++) childs_num[i]=0;
+        for(V3DLONG m1 = 0; m1 < tol_num; m1++)
+        {
+            if(!inswc[m1]->parent) continue;
+            V3DLONG m2 = swc_map[inswc[m1]->parent];
+            childs_num[m2]++;
+        }
+        for(V3DLONG i = 0; i < tol_num; i++) if(childs_num[i] == 0) leaf_markers.push_back(inswc[i]);
+    }
+    V3DLONG leaf_num = leaf_markers.size();
+    vector<double> topo_dists(tol_num, 0.0);  // furthest leaf distance for each tree node
+    vector<MyMarker*> topo_leafs(tol_num, (MyMarker*)0);
+
+    for(V3DLONG i = 0; i < leaf_num; i++)
+    {
+        MyMarker * leaf_marker = leaf_markers[i];
+        MyMarker * child_node = leaf_markers[i];
+        MyMarker * parent_node = child_node->parent;
+        int cid = swc_map[child_node];
+        topo_leafs[cid] = leaf_marker;
+        topo_dists[cid] =  0;
+        while(parent_node)
+        {
+            V3DLONG pid = swc_map[parent_node];
+            double tmp_dst = dist(*child_node, *parent_node) + topo_dists[cid];
+            if(tmp_dst >= topo_dists[pid])   // >= instead of >
+            {
+                topo_dists[pid] = tmp_dst;
+                topo_leafs[pid] = topo_leafs[cid];
+            }
+            else break;
+            child_node = parent_node;
+            cid = pid;
+            parent_node = parent_node->parent;
+        }
+    }
+    // 2. create Hierarchy Segments
+    topo_segs.resize(leaf_num);
+    map<MyMarker *, int> leaf_ind_map;
+    for(V3DLONG i = 0; i < leaf_num; i++)
+    {
+        topo_segs[i] = new HierarchySegment();
+        leaf_ind_map[leaf_markers[i]] = i;
+    }
+
+    for(V3DLONG i = 0; i < leaf_num; i++)
+    {
+        MyMarker * leaf_marker = leaf_markers[i];
+        MyMarker * root_marker = leaf_marker;
+        MyMarker * root_parent = root_marker->parent;
+        int level = 1;
+        while(root_parent && topo_leafs[swc_map[root_parent]] == leaf_marker)
+        {
+            if(childs_num[swc_map[root_marker]] >= 2) level++;
+            root_marker = root_parent;
+            root_parent = root_marker->parent;
+        }
+
+        double dst = topo_dists[swc_map[root_marker]];
+
+        HierarchySegment * topo_seg = topo_segs[i];
+        *topo_seg = HierarchySegment(leaf_marker, root_marker, dst, level);
+
+        if(root_parent == 0) topo_seg->parent = 0;
+        else
+        {
+            MyMarker * leaf_marker2 = topo_leafs[swc_map[root_parent]];
+            int leaf_ind2 = leaf_ind_map[leaf_marker2];
+            topo_seg->parent = topo_segs[leaf_ind2];
+        }
+    }
+
+    swc_map.clear();
+    leaf_markers.clear();
+    leaf_ind_map.clear();
+    topo_dists.clear();
+    topo_leafs.clear();
+    return true;
+}
+
+
 // 1. will change the type of each segment
 // swc_type : 0 for length heatmap, 1 for level heatmap
 bool topo_segs2swc(vector<HierarchySegment*> & topo_segs, vector<MyMarker*> & outmarkers, int swc_type = 1) 

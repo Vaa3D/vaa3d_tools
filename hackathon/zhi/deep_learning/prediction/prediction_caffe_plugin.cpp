@@ -90,7 +90,7 @@ QStringList prediction_caffe::funclist() const
 {
     return QStringList()
               <<tr("Prediction")
-             <<tr("Prediction_3D")
+             <<tr("Segmentation_3D")
            <<tr("Quality_Assess")
           <<tr("Detection")
          <<tr("Prediction_type")
@@ -282,6 +282,8 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
         unsigned char*im_seg = 0;
         try {im_seg = new unsigned char[N*M*P];}
         catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_seg[i]= 0;
         for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
         {
             V3DLONG offsetk = iz*M*N;
@@ -1249,6 +1251,9 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         unsigned char*im_seg = 0;
         try {im_seg = new unsigned char[N*M*P];}
         catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return false;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_seg[i]= 0;
+
         for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
         {
             V3DLONG offsetk = iz*M*N;
