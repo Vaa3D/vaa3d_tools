@@ -528,7 +528,7 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         topo_segs2swc(topo_segs, inswc, 0); // no resampling
 
         saveSWC_file(outswc_file, inswc);
-        QMessageBox::information(0,"", string("neuron radius is calculated successfully. \n\nThe output swc is saved to " +outswc_file).c_str(),0);
+        v3d_msg(QString("neuron radius is calculated successfully. \n\nThe output swc is saved to %1").arg(outswc_file.c_str()),0);
         for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 
     }
