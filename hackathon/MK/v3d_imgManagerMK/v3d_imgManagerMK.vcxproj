@@ -126,6 +126,7 @@
       <PreprocessorDefinitions>TEEM_STATIC;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\swc2mask_cylinder;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\io;C:\opencv-3.4.0\VS2013_build\install\include;C:\boostLibs\boost_1_61_0;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\common_lib\include;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgProcessor;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -53,6 +54,9 @@ public:
 
 	template<class T>
 	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
+
+	template<class T>
+	static inline void imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
 	/******************************************/
 
 	/********* Morphological Operations *********/
@@ -124,6 +128,36 @@ inline void ImgProcessor::imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int
 		for (int x = 0; x < newXDim; ++x)
 		{
 			outputImgPtr[outi] = inputImgPtr[(imgDims[0] * downSampFactor) * y + (x * downSampFactor)];
+			++outi;
+		}
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor)
+{
+	long int outi = 0;
+	int newXDim = imgDims[0] / downSampFactor;
+	int newYDim = imgDims[1] / downSampFactor;
+	cout << "output x Dim: " << newXDim << "  " << "output y Dim: " << newYDim << endl;
+
+	vector<int> dnSampBlock;
+	T maxValue = 0;
+	for (int y = 0; y < newYDim; ++y)
+	{
+		for (int x = 0; x < newXDim; ++x)
+		{
+			dnSampBlock.clear();
+			maxValue = 0;
+			for (int j = 0; j < downSampFactor; ++j)
+			{
+				for (int i = 0; i < downSampFactor; ++i)
+				{
+					T value = inputImgPtr[(imgDims[0] * downSampFactor * y + j) + (x * downSampFactor + i)];
+					if (value > maxValue) maxValue = value;
+				}
+			}
+			outputImgPtr[outi] = maxValue;
 			++outi;
 		}
 	}
