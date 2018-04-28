@@ -1,3 +1,13 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+* This library intends to fascilitate basic image operations
+
+*/
+
 #ifndef IMGPROCESSOR_H
 #define IMGPROCESSOR_H
 
@@ -43,20 +53,23 @@ public:
 	template<class T1, class T2>
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
 
-	template<class T1, class T2>
-	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the one with greater value. 
-
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
 
 	template<class T1, class T2>
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
+	template<class T1, class T2>
+	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the one with greater value. 
+
 	template<class T>
 	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
 
 	template<class T>
 	static inline void imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
+
+	template<class T>
+	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
 	/******************************************/
 
 	/********* Morphological Operations *********/
@@ -114,6 +127,28 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 			output[xLength*j + i] = input[xLength*(yLength - j - 1) + i];
 		}
 	}
+}
+
+template<class T>
+vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
+{
+	vector<vector<T>> outputSlices;
+	for (int k = 0; k < imgDims[2]; ++k)
+	{
+		vector<T> thisSlice;
+		long int outi = 0;
+		for (int j = 0; j < imgDims[1]; ++j)
+		{
+			for (int i = 0; i < imgDims[0]; ++i)
+			{
+				thisSlice.push_back(inputImgPtr[(imgDims[0] * imgDims[1] * k) + (imgDims[0] * j) + i]);
+			}
+		}
+		outputSlices.push_back(thisSlice);
+		thisSlice.clear();
+	}
+
+	return outputSlices;
 }
 
 template<class T>
