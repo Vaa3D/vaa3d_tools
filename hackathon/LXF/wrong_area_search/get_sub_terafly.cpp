@@ -60,9 +60,9 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
 
         V3DLONG im_cropped_sz[4];
-        im_cropped_sz[0] = 400;
-        im_cropped_sz[1] = 400;
-        im_cropped_sz[2] = 400;
+        im_cropped_sz[0] = 300;
+        im_cropped_sz[1] = 300;
+        im_cropped_sz[2] = 300;
         im_cropped_sz[3] = 1;
         double sum_x=0;
         double sum_y=0;
@@ -79,9 +79,9 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 //        mean_y = sum_y/nt.listNeuron.size();
 //        mean_z = sum_z/nt.listNeuron.size();
 
-        mean_x = 17161;
-        mean_y = 16429;
-        mean_z = 2911;
+        mean_x = 9018.6;
+        mean_y = 10475.9;
+        mean_z = 2851.6;
         NeuronSWC S;
         S.x = mean_x;
         S.y = mean_y;
@@ -103,12 +103,12 @@ bool get_sub_terafly(V3DPluginCallback2 &callback,QWidget *parent)
 
         unsigned char * im_cropped = 0;
         V3DLONG pagesz;
-        pagesz = 400*400*400;
+        pagesz = 300*300*300;
 
 
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-        max_c = 200;
+        max_c = 150;
         V3DLONG xb = mean_x-max_c;
         V3DLONG xe = mean_x+max_c;
         V3DLONG yb = mean_y-max_c;

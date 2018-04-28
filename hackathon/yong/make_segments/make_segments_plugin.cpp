@@ -9,8 +9,8 @@
 #include <iostream>
 #include <map>
 #include <stack>
-#include <my_surf_objs.h>
-#include <swc_utils.h>
+#include "my_surf_objs.h"
+#include "swc_utils.h"
 
 #include "make_segments_plugin.h"
 Q_EXPORT_PLUGIN2(make_segments, make_segments_Plugin);
@@ -23,7 +23,7 @@ struct input_PARA
     V3DLONG channel;
 };
 
-bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree);
+bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree,input_PARA &PARA);
  
 QStringList make_segments_Plugin::menulist() const
 {
@@ -41,7 +41,7 @@ QStringList make_segments_Plugin::funclist() const
 
 void make_segments_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("swc_to_segments"))
+    if (menu_name == tr("APP2_swc_to_segments"))
 	{
         bool bmenu = true;
         input_PARA PARA;
@@ -145,7 +145,7 @@ bool make_segments_Plugin::dofunc(const QString & func_name, const V3DPluginArgL
         vector<NeuronSegment*> tree;
         cout << "over" << endl;
 
-        swc_to_segments(APP2,tree);
+        swc_to_segments(APP2,tree,PARA);
 
     }
 
@@ -161,7 +161,7 @@ bool make_segments_Plugin::dofunc(const QString & func_name, const V3DPluginArgL
         vector<NeuronSegment*> tree;
         cout << "over" << endl;
 
-        swc_to_segments(snake,tree);
+        swc_to_segments(snake,tree,PARA);
 
     }
     else if (func_name == tr("neuTube_swc_to_segments"))
@@ -176,7 +176,7 @@ bool make_segments_Plugin::dofunc(const QString & func_name, const V3DPluginArgL
         vector<NeuronSegment*> tree;
         cout << "over" << endl;
 
-        swc_to_segments(neuTube,tree);
+        swc_to_segments(neuTube,tree,PARA);
 
     }
     else if (func_name == tr("help"))
@@ -199,7 +199,7 @@ bool make_segments_Plugin::dofunc(const QString & func_name, const V3DPluginArgL
 }
 
 // convert to post_order tree
-bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree)
+bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree,input_PARA &PARA)
 {
     map<MyMarker *, int>  childs_num;
     getLeaf_markers(inmarkers, childs_num);
@@ -284,8 +284,10 @@ bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree
     }
     NeuronTree seg_nt;
     seg_nt.listNeuron = seg_result;
-    QString path_out = "/home/yong/Desktop/treafly/segments.swc";
-    writeSWC_file(path_out,seg_nt);
+
+    QString filename = PARA.inimg_file + "_segments.swc";
+    writeSWC_file(filename,seg_nt);
+
     return true;
 }
 
