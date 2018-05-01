@@ -35,6 +35,8 @@
 
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "SimpleVolume.h"
 #include "Stack.h"
 #ifdef _WIN32
@@ -46,6 +48,9 @@
 // Giulio_CV #include <cxcore.h>
 // Giulio_CV #include <cv.h>
 // Giulio_CV #include <highgui.h>
+#include <unistd.h>
+#include <memory>
+
 #include "Tiff3DMngr.h"
 #include "RawFmtMngr.h"
 
@@ -53,6 +58,29 @@
 
 using namespace std;
 using namespace iim;
+
+
+//
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+    vm_usage     = 0.0;
+    resident_set = 0.0;
+
+    // the two fields we want
+    unsigned long vsize;
+    long rss;
+    {
+        std::string ignore;
+        std::ifstream ifs("/proc/self/stat", std::ios_base::in);
+        ifs >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> vsize >> rss;
+    }
+
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+    vm_usage = vsize / 1024.0;
+    resident_set = rss * page_size_kb;
+}
 
 // 2015-04-15. Alessandro. @ADDED definition for default constructor.
 SimpleVolume::SimpleVolume(void) : VirtualVolume()
@@ -566,4 +594,127 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 	}
 
 	return subvol;
+}
+
+uint8 *SimpleVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException, iom::exception)
+{
+    cout<<"SimpleVolume::loadSubvolume_to_UINT8_MT "<<V0<<" "<<V1<<" "<<H0<<" "<<H1<<" "<<D0<<" "<<D1<<" "<<(channels ? *channels : -1)<<endl;
+
+    //checking for non implemented features
+    if( this->BYTESxCHAN > 2 ) {
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN);
+        throw IOException(err_msg);
+    }
+
+    if ( (ret_type != iim::NATIVE_RTYPE) && (ret_type != iim::DEF_IMG_DEPTH) ) {
+        // return type should be converted, but not to 8 bits per channel
+        char err_msg[STATIC_STRINGS_SIZE];
+        sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN);
+        throw IOException(err_msg);
+    }
+
+    // reduction factor to be applied to the loaded buffer
+    // int red_factor = (ret_type == iim::NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
+
+    //initializations
+    V0 = (V0 == -1 ? 0	     : V0);
+    V1 = (V1 == -1 ? DIM_V   : V1);
+    H0 = (H0 == -1 ? 0	     : H0);
+    H1 = (H1 == -1 ? DIM_H   : H1);
+    D0 = (D0 == -1 ? 0		 : D0);
+    D1 = (D1 == -1 ? DIM_D	 : D1);
+
+    //allocation
+    sint64 sbv_height = V1 - V0;
+    sint64 sbv_width  = H1 - H0;
+    sint64 sbv_depth  = D1 - D0;
+
+    uint8 *subvol = 0;
+
+    //bool whole_slices = (V0 == 0 && V1 == DIM_V && H0 == 0 && H1 == DIM_H);
+
+    if ( DIM_C == 1 )
+    {
+        try
+        {
+            subvol = new uint8[sbv_height * sbv_width * sbv_depth * BYTESxCHAN];
+        }
+        catch(...)
+        {
+            cout<<"failed to alloc memory\n";
+            return NULL;
+        }
+    }
+
+    //initializing the number of channels with an undefined value (it will be detected from the first slice read)
+    //sint64 sbv_channels = -1;
+
+    //scanning of stacks matrix for data loading and storing into subvol
+    Rect_t subvol_area;
+    subvol_area.H0 = H0;
+    subvol_area.V0 = V0;
+    subvol_area.H1 = H1;
+    subvol_area.V1 = V1;
+
+    //
+    //Rect_t *intersect_area = STACKS[row][col]->Intersects(subvol_area);
+    //
+
+    int bytes_x_chan = getBYTESxCHAN();
+
+    // fstream TIFFs from disk to memory
+    vector<stringstream*> dataInMemory;
+    vector<uint8*> imgList;
+
+//    double vm, rss;
+//    process_mem_usage(vm, rss);
+//    cout << "0: VM: " << vm << "; RSS: " << rss << endl;
+
+    int k;
+    for( k=0; k<sbv_depth; k++)
+    {
+        //building image path
+        char slice_fullpath[STATIC_STRINGS_SIZE];
+
+        int trueSliceIndex = (D0+k);
+        sprintf(slice_fullpath, "%s/%s/%s", root_dir,
+                STACKS[0][0]->getDIR_NAME(),
+                STACKS[0][0]->getFILENAMES()[trueSliceIndex]);
+
+        //
+        ifstream inFile;
+        inFile.open(slice_fullpath);
+        if (!inFile) {
+            cerr << "Unable to open file "<<slice_fullpath<<endl;
+            return NULL;
+        }
+
+        //
+        dataInMemory.push_back(new stringstream);
+        *dataInMemory[k] << inFile.rdbuf();
+
+        //
+        inFile.close();
+
+        //
+        uint8 *slice = subvol + (k*sbv_height*sbv_width*bytes_x_chan);
+        imgList.push_back(slice);
+    }
+
+    // multithreaded read TIFFs from memory
+    omp_set_num_threads(omp_get_max_threads());
+
+    #pragma omp parallel
+    {
+        #pragma omp for
+        for(k=0; k<sbv_depth; k++)
+        {
+            unsigned int sx, sy;
+            readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,V0,V1-1,H0,H1-1);
+        }
+    }
+
+    //
+    return subvol;
 }

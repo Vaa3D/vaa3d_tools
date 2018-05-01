@@ -280,7 +280,7 @@ bool nt_selfcorrect_func::getTrainingSample()
         MyMarker* current = ntmarkers.at(nid);
         if(nid==0) minScore=score_map[current]+1;
         float tmp;
-        if(current->parent<=0){
+        if(current->parent<=(MyMarker*)0){
             tmp=score_map[current];
         }else{
             tmp=MAX(score_map[current],score_map[current->parent]);
@@ -297,7 +297,7 @@ bool nt_selfcorrect_func::getTrainingSample()
     for(V3DLONG nid=0; nid<ntmarkers.size(); nid++){
         MyMarker* current = ntmarkers.at(nid);
         MyMarker* parent = current->parent;
-        if(parent<=0){
+        if(parent<=(MyMarker*)0){
             continue; //continue if it has not parent
         }
         double xf,yf,zf,rf;
@@ -344,7 +344,7 @@ bool nt_selfcorrect_func::getTrainingSample()
     for(V3DLONG nid=0; nid<ntmarkers.size(); nid++){
         MyMarker* current = ntmarkers.at(nid);
         MyMarker* parent = current->parent;
-        if(parent<=0){
+        if(parent<=(MyMarker*)0){
             continue; //continue if it has not parent
         }
         if(score_map[current]>param.sample_scoreThr || score_map[parent]>param.sample_scoreThr){
@@ -1010,7 +1010,7 @@ bool nt_selfcorrect_func::smartTracing_regionstart(){
     for(V3DLONG nid=0; nid<ntmarkers.size(); nid++){
         MyMarker* current = ntmarkers.at(nid);
         MyMarker* parent = current->parent;
-        if(parent<=0){
+        if(parent<=(MyMarker*)0){
             continue; //continue if it has not parent
         }
         if(score_map[current]>param.sample_scoreThr || score_map[parent]>param.sample_scoreThr){

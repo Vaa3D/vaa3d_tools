@@ -510,3 +510,11 @@ uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, in
 
 	return subvol;
 }
+
+uint8* SimpleVolumeRaw::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException, iom::exception)
+{
+    //cout<<"TODO: SimpleVolumeRaw::loadSubvolume_to_UINT8\n";
+
+    //
+    return NULL;
+}

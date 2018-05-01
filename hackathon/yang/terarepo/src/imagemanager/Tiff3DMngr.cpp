@@ -48,12 +48,14 @@
 #include <stdlib.h> // needed by clang: defines size_t
 #include <string.h>
 #include "tiffio.h"
+#include "tiffio.hxx"
 #ifndef _VAA3D_TERAFLY_PLUGIN_MODE
 #include "tiffiop.h"
 #endif
 #include "IM_config.h"
 
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
@@ -103,11 +105,11 @@ void resetLibTIFFcfg ( bool cmprssd,  bool _bigtiff,  int rps ) {
 char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &sz1, unsigned int  &sz2, unsigned int  &sz3, int &datatype, int &b_swap, void * &fhandle, int &header_len ) {
 
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_START(TiffLoadMetadata)
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_START(TiffLoadMetadata);
+    #endif
 
-            uint32 XSIZE;
+    uint32 XSIZE;
     uint32 YSIZE;
     uint16 bpp;
     uint16 spp;
@@ -185,11 +187,11 @@ char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &s
     //TIFFClose(input);
 
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_STOP(TiffLoadMetadata, tf::IO, tf::strprintf("successfully loaded metadata from file \"%s\"", filename))
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_STOP(TiffLoadMetadata, tf::IO, tf::strprintf("successfully loaded metadata from file \"%s\"", filename));
+    #endif
 
-            return ((char *) 0);
+    return ((char *) 0);
 }
 
 char *openTiff3DFile ( char *filename, char *mode, void *&fhandle, bool reopen ) {
@@ -255,15 +257,16 @@ void closeTiff3DFile ( void *fhandle ) {
     TIFFClose((TIFF *) fhandle);
 }
 
+// modify initTiff3DFile to save a chunk tif image with all zeros by YY 2/14
 char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsigned int sz2, unsigned int sz3, int datatype ) {
     //int initTiff3DFile ( char *filename, uint32 XSIZE, uint32 YSIZE, uint16 spp, uint16 Npages, int datatype){
 
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_START(TiffInitData)
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_START(TiffInitData);
+    #endif
 
-            uint32 XSIZE  = sz0;
+    uint32 XSIZE  = sz0;
     uint32 YSIZE  = sz1;
     uint16 Npages = sz2;
     uint16 spp    = sz3;
@@ -279,7 +282,18 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
     else
         return ((char *) "More than 3 channels in Tiff files.");
 
-    unsigned char *fakeData=new unsigned char[((iim::sint64) XSIZE) * ((iim::sint64) YSIZE) * spp * (bpp/8)];
+    //
+    long szSlice = ((iim::sint64) XSIZE) * ((iim::sint64) YSIZE) * spp * (bpp/8);
+    unsigned char *fakeData=NULL;
+    try
+    {
+        fakeData = new unsigned char[ szSlice ];
+        memset(fakeData,0,szSlice);
+    }
+    catch(...)
+    {
+        return ((char *)"Fail to alloc memory\n");
+    }
 
     char *completeFilename = (char *) 0;
     int fname_len = (int) strlen(filename);
@@ -300,13 +314,13 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 
 
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_STOP(TiffInitData, tf::CPU, tf::strprintf("generated fake data for 3D tiff \"%s\"", completeFilename))
-            TERAFLY_TIME_RESTART(TiffInitData)
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_STOP(TiffInitData, tf::CPU, tf::strprintf("generated fake data for 3D tiff \"%s\"", completeFilename));
+    TERAFLY_TIME_RESTART(TiffInitData);
+    #endif
 
-            //disable warning and error handlers to avoid messages on unrecognized tags
-            TIFFSetWarningHandler(0);
+    //disable warning and error handlers to avoid messages on unrecognized tags
+    TIFFSetWarningHandler(0);
     TIFFSetErrorHandler(0);
 
     TIFF *output;
@@ -399,7 +413,6 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
         return ((char *) "Cannot set the page number.");
     }
 
-
     //check = (int)TIFFWriteEncodedStrip(output, 0, fakeData, XSIZE * YSIZE);
     //if (!check) {
     //	delete completeFilename;
@@ -407,7 +420,8 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
     //   }
 
     if ( rowsPerStrip == -1 ) {
-        check = TIFFWriteEncodedStrip(output, 0, fakeData, XSIZE * YSIZE * spp * (bpp/8));
+        TIFFSetDirectory(output,0);
+        check = TIFFWriteEncodedStrip(output, 0, fakeData, szSlice);
         if (!check) {
             delete completeFilename;
             return ((char *) "Cannot write encoded strip to file.");
@@ -441,7 +455,8 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
         buf = buf + spp * LastStripSize * XSIZE * (bpp/8);
     }
 
-    delete[] fakeData;
+    if(fakeData)
+        delete[] fakeData;
 
     check = TIFFWriteDirectory(output);
     if (!check) {
@@ -452,22 +467,22 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
     TIFFClose(output);
 
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_STOP(TiffInitData, tf::IO, tf::strprintf("written initialized 3D tiff \"%s\"", completeFilename))
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_STOP(TiffInitData, tf::IO, tf::strprintf("written initialized 3D tiff \"%s\"", completeFilename));
+    #endif
 
-            delete completeFilename;
+    delete completeFilename;
 
     return (char *) 0;
 }
 
 char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, unsigned int img_width, unsigned int img_height ) {
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_START(TiffAppendData)
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_START(TiffAppendData);
+    #endif
 
-            TIFF *output;
+    TIFF *output;
     uint16 spp, bpp, NPages, pg0;
     uint32 rperstrip;
     uint16 cmprssd;
@@ -540,14 +555,16 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
     TIFFClose(output);
 
     // 2015-01-30. Alessandro. @ADDED performance (time) measurement in all most time-consuming methods.
-#ifdef _VAA3D_TERAFLY_PLUGIN_MODE
-    TERAFLY_TIME_STOP(TiffAppendData, tf::IO, tf::strprintf("appended slice %d x %d to 3D tiff \"%s\"", img_width, img_height, filename))
-        #endif
+    #ifdef _VAA3D_TERAFLY_PLUGIN_MODE
+    TERAFLY_TIME_STOP(TiffAppendData, tf::IO, tf::strprintf("appended slice %d x %d to 3D tiff \"%s\"", img_width, img_height, filename));
+    #endif
 
-            return (char *) 0;
+    return (char *) 0;
 }
 
-char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height, int spp, int bpp, int NPages ) {
+char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height, int spp, int bpp, int NPages )
+{
+    //
     TIFF *output = (TIFF *) fhandler;
 
     TIFFSetDirectory(output,slice); // WARNING: slice must be the first page after the last, otherwise the file can be corrupted
@@ -572,7 +589,7 @@ char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, un
     if ( rowsPerStrip == -1 )
         TIFFWriteEncodedStrip(output, 0, img, img_width * img_height * spp * (bpp/8));
     else {
-        int check,StripsPerImage,LastStripSize;
+        int StripsPerImage,LastStripSize;
         uint32 rps = (uint32)rowsPerStrip;
         unsigned char *buf = img;
 
@@ -589,7 +606,6 @@ char *appendSlice2Tiff3DFile ( void *fhandler, int slice, unsigned char *img, un
         TIFFWriteEncodedStrip(output, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
         buf = buf + spp * LastStripSize * img_width * (bpp/8);
     }
-    //img +=  img_width * img_height;
 
     TIFFWriteDirectory(output);
 
@@ -630,7 +646,7 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
             return err_msg;
 }
 
-char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, 
+char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last,
                               int b_swap, int downsamplingFactor, int starti, int endi, int startj, int endj ) {
     uint32 rps;
     uint16 spp, bpp, orientation, photo, comp, planar_config;
@@ -970,6 +986,466 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
     return (char *) 0;
 }
 
+void ssclear(stringstream *stringStreamInMemory)
+{
+    stringStreamInMemory->clear();
+    stringStreamInMemory->str(string());
+    delete stringStreamInMemory;
+}
+
+void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int starti, int endi, int startj, int endj )
+{
+    //
+    TIFF* input = TIFFStreamOpen("MemTIFF", (istream *)dataStreamInMemory);
+
+    //
+    uint32 rps;
+    uint16 spp, bpp, photo, comp, planar_config;
+    int StripsPerImage,LastStripSize;
+
+    //
+    if (!TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &img_width))
+    {
+        TIFFClose(input);
+        ssclear(dataStreamInMemory);
+        return;
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_IMAGELENGTH, &img_height))
+    {
+        TIFFClose(input);
+        ssclear(dataStreamInMemory);
+        return;
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_BITSPERSAMPLE, &bpp))
+    {
+        TIFFClose(input);
+        ssclear(dataStreamInMemory);
+        return;
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_SAMPLESPERPIXEL, &spp))
+    {
+        spp = 1;
+    }
+
+    int b_swap=TIFFIsByteSwapped(input);
+
+    //
+    if (!TIFFGetField(input, TIFFTAG_PHOTOMETRIC, &photo))
+    {
+        TIFFClose(input);
+        ssclear(dataStreamInMemory);
+        return;
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_COMPRESSION, &comp))
+    {
+        TIFFClose(input);
+        ssclear(dataStreamInMemory);
+        return;
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_PLANARCONFIG, &planar_config))
+    {
+        TIFFClose(input);
+        ssclear(dataStreamInMemory);
+        return;
+    }
+
+    //
+    starti = (starti == -1) ? 0 : starti;
+    endi   = (endi == -1) ? img_height-1 : endi;
+    startj = (startj == -1) ? 0 : startj;
+    endj   = (endj == -1) ? img_width-1 : endj;
+
+    // file is internally tiled
+    if (TIFFIsTiled(input))
+    {
+        uint32 tilewidth;
+        uint32 tilelength;
+        uint32 tiledepth;
+        tsize_t tilenum;
+        tsize_t tilesize;
+        tsize_t tilenum_width;
+        tsize_t tilenum_length;
+        ttile_t tile;
+        tdata_t data;
+        unsigned char *psrc; // pointer in the tile buffer to the top left pixel of the current block to be copied
+        unsigned char *pdst; // pointer in the image buffer to the top left pixel of the current block to be filled
+        uint32 stride_src;
+        uint32 stride_dst;
+        int i; // row index in the slice of the top left pixel of the current block to be filled
+        int j; // column index in the slice of the top left pixel of the current block to be filled
+        uint32 width; // width of the current block to be filled (in pixels)
+        uint32 len; // length of the current block to be filled (in pixels)
+        int page;
+
+        // checks
+        if ( TIFFGetField(input, TIFFTAG_TILEDEPTH, &tiledepth) )
+        {
+            cout<<"Tiling among slices (z direction) not supported."<<endl;
+            return;
+        }
+        if ( spp > 1 )
+        {
+            if ( TIFFGetField(input, TIFFTAG_PLANARCONFIG, &planar_config) )
+            {
+                if ( planar_config > 1 )
+                {
+                    cout<<"Non-interleaved multiple channels not supported with tiling."<<endl;
+                    return;
+                }
+            }
+        }
+
+        // tiling is in x,y only
+        TIFFGetField(input, TIFFTAG_TILEWIDTH, &tilewidth);
+        TIFFGetField(input, TIFFTAG_TILELENGTH, &tilelength);
+        tilenum = TIFFNumberOfTiles(input);
+        tilesize = TIFFTileSize(input);
+        tilenum_width  = (img_width % tilewidth) ? (img_width / tilewidth) + 1 : img_width / tilewidth;
+        tilenum_length = (img_height % tilelength) ? (img_height / tilelength) + 1 : img_height / tilelength;
+
+        data = new unsigned char[tilesize];
+        stride_src = tilewidth * spp; // width of tile (in bytes)
+        stride_dst = (endj - startj + 1) * spp; // width of subregion (in bytes)
+
+        page = 0;
+        do {
+
+            psrc = ((unsigned char *)data) + ((starti % tilelength)*tilewidth + (startj % tilewidth)) * spp; // in the first tile skip (starti % tilelength) rows plus (startj % tilewidth) pixels
+            pdst = img; // the buffer has the size of the subregion
+            len = tilelength - (starti % tilelength); // rows to be copied for the first row of tiles
+            tile = TIFFComputeTile(input,startj,starti,0,0); // index of the first tile to be copied in the current row of tiles
+            for ( i=starti; i<=endi; ) {
+                width = tilewidth - (startj%tilewidth); // width of the first block to be copied/filled
+                for ( j=startj; j<=endj; ) {
+                    TIFFReadEncodedTile(input,tile,data,(tsize_t) -1); // read tile into tile buffer
+                    copydata (psrc,stride_src,pdst,stride_dst,(width * spp),len); // copy the block
+                    j += width;
+                    tile++; // index of the next tile in the same row of tiles
+                    psrc = ((unsigned char *)data) + ((i % tilelength)*tilewidth) * spp; // the block in the next tile begins just after (i % tilelength) rows
+                    pdst += width * spp; // the block in the image buffer move forward of width pixels
+                    width = (((tile%tilenum_width) + 1) * tilewidth <= (endj+1)) ? tilewidth : ((endj+1)%tilewidth); // if the next tile in the row is all within the subregion, width is tilewidth otherwise it is shorter
+                }
+                i += len;
+                tile = TIFFComputeTile(input,startj,i,0,0); // index of the first tile to be copied in the current row of tiles
+                psrc = ((unsigned char *)data) + ((i % tilelength)*tilewidth + (startj % tilewidth)) * spp; // in the first tile of the next row of tiles skip (i % tilelength) rows plus (startj % tilewidth) pixels
+                pdst = img + ((i-starti) * stride_dst); // the block in the image buffer begin after (i-starti) rows
+                len = (((tile/tilenum_width) + 1) * tilelength <= (endi+1)) ? tilelength : ((endi+1)%tilelength); // if the next row of tiles is all within the subregion, len is tilelength otherwise it is shorter
+            }
+
+            page++;
+
+        }while ( page < static_cast<int>(last-first+1) && TIFFReadDirectory(input));
+
+        return;
+    }
+
+    //
+    if (!TIFFGetField(input, TIFFTAG_ROWSPERSTRIP, &rps))
+    {
+        TIFFClose(input);
+        dataStreamInMemory->clear();
+        dataStreamInMemory->str(string());
+        return;
+    }
+
+    StripsPerImage =  (img_height + rps - 1) / rps;
+    LastStripSize = img_height % rps;
+    if (LastStripSize==0)
+        LastStripSize=rps;
+
+    unsigned char *buf = img;
+    int page=0;
+
+    if ( starti < 0 || endi >= img_height || startj < 0 || endj >= img_width || starti >= endi || startj >= endj )
+    {
+        cout<<"Wrong substack indices."<<endl;
+        return;
+    }
+
+    if ( starti == 0 && endi == (img_height-1) && startj == 0 && endj == (img_width-1) ) { // read whole images from files
+
+        if (!TIFFSetDirectory(input, first))
+        {
+            TIFFClose(input);
+            dataStreamInMemory->clear();
+            dataStreamInMemory->str(string());
+            return;
+        }
+
+        do{
+
+            for (int i=0; i < StripsPerImage-1; i++){
+                if (comp==1) {
+                    TIFFReadRawStrip(input, i, buf, spp * rps * img_width * (bpp/8));
+                    buf = buf + spp * rps * img_width * (bpp/8);
+                }
+                else{
+                    TIFFReadEncodedStrip(input, i, buf, spp * rps * img_width * (bpp/8));
+                    buf = buf + spp * rps * img_width * (bpp/8);
+                }
+            }
+
+            if (comp==1) {
+                TIFFReadRawStrip(input, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
+            }
+            else{
+                TIFFReadEncodedStrip(input, StripsPerImage-1, buf, spp * LastStripSize * img_width * (bpp/8));
+            }
+            buf = buf + spp * LastStripSize * img_width * (bpp/8);
+
+            page++;
+
+        }while ( page < static_cast<int>(last-first+1) && TIFFReadDirectory(input));//while (TIFFReadDirectory(input));
+
+    }
+    else { // read only a subregion of images from files
+
+        unsigned int XSIZE = img_width;
+
+        unsigned char *rowbuf = new unsigned char[spp * rps * XSIZE * (bpp/8)];
+        unsigned char *bufptr;
+
+        do{
+            if (!TIFFSetDirectory(input, first + page))
+            {
+                TIFFClose(input);
+                ssclear(dataStreamInMemory);
+                return;
+            }
+
+            int stripIndex = (starti / rps) - 1; // the strip preceeding the first one
+            for (int i=starti; i <= endi; i++) {
+                if ( floor((double)i / rps) > stripIndex ) { // read a new strip
+                    stripIndex = (int)floor((double)i / rps);
+                    if (comp==1) {
+                        TIFFReadRawStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
+                    }
+                    else{
+                        TIFFReadEncodedStrip(input, stripIndex, rowbuf, spp * ((stripIndex < StripsPerImage) ? rps :LastStripSize) * XSIZE * (bpp/8));
+                    }
+                }
+                bufptr = rowbuf + (i % rps) * (spp * XSIZE * (bpp/8));
+                if ( bpp == 8 )
+                    for (int j=0, j1=startj; j<=(endj-startj); j++, j1++) {
+                        for (int c=0; c<spp; c++) {
+                            buf[j * spp + c] = bufptr[j1 * spp + c];
+                        }
+                    }
+                else
+                    for (int j=0 , j1=startj; j<=(endj-startj); j++, j1++) {
+                        for (int c=0; c<spp; c++) {
+                            ((uint16 *)buf)[j * spp + c] = ((uint16 *)bufptr)[j1 * spp + c];
+                        }
+                    }
+                buf = buf + spp * (endj-startj+1) * (bpp/8);
+            }
+
+            page++;
+
+        }while ( page < static_cast<int>(last-first+1) );
+
+        delete []rowbuf;
+
+    }
+
+    if ( page < static_cast<int>(last-first+1) ){
+        return;
+    }
+
+    //
+    TIFFClose(input);
+    ssclear(dataStreamInMemory);
+
+    // swap the data bytes if necessary
+    if (b_swap)
+    {
+        int i;
+        size_t total = img_width * img_height * spp * (last-first+1);
+        if (bpp/8 == 2)
+        {
+            for (i=0;i<total; i++)
+            {
+                iim::swap2bytes((void *)(img+2*i));
+            }
+        }
+        else if (bpp/8 == 4)
+        {
+            for (i=0;i<total; i++)
+            {
+                iim::swap4bytes((void *)(img+4*i));
+            }
+        }
+    }
+
+    //
+    return;
+}
+
+// save a chunk image as a tif file
+char *initTiffFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype)
+{
+    //
+    uint32 XSIZE  = sz0;
+    uint32 YSIZE  = sz1;
+    uint16 Npages = sz2;
+    uint16 spp    = sz3;
+
+    uint16 bpp=8 * datatype;
+
+    if ( sz3 == 1 )
+        spp = sz3;
+    else if ( sz3 < 4 )
+        spp = 3;
+    else
+        return ((char *) "More than 3 channels in Tiff files.");
+
+    //
+    TIFF *output = NULL;
+
+    iim::sint64 expectedSize = ((iim::sint64) sz0) * ((iim::sint64) sz1) * ((iim::sint64) sz2) * ((iim::sint64) sz3) * ((iim::sint64) datatype);
+
+    if ( bigtiff || expectedSize > (4*GBSIZE) ) {
+        if ( (rowsPerStrip == -1 && (((iim::sint64) sz0) * ((iim::sint64) sz1)) > (4*GBSIZE)) || ((rowsPerStrip * ((iim::sint64) sz0)) > (4*GBSIZE)) )
+            return ((char *) "Too many rows per strip for this image width.");
+        else
+            output = TIFFOpen(filename,"w8");
+    }
+    else
+    {
+        output = TIFFOpen(filename,"w");
+    }
+
+    if (!output)
+    {
+        return ((char *) "Cannot open the file.");
+    }
+
+    //
+    uint32 szPage = XSIZE * YSIZE * spp * datatype;
+
+    unsigned char *img = NULL;
+    try
+    {
+        img = new unsigned char [szPage];
+        memset(img, 0, szPage);
+    }
+    catch(...)
+    {
+        return ((char *)"fail to alloc memory");
+    }
+
+    // the file has been already opened: rowsPerStrip it is not too large for this image width
+    if ( rowsPerStrip == -1 )
+    {
+        //
+        for(int slice=0; slice<Npages; slice++)
+        {
+            TIFFSetDirectory(output,slice);
+
+            TIFFSetField(output, TIFFTAG_IMAGEWIDTH, XSIZE);
+            TIFFSetField(output, TIFFTAG_IMAGELENGTH, YSIZE);
+            TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)bpp);
+            TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, (uint16)spp);
+            TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, (rowsPerStrip == -1) ? YSIZE : (uint32)rowsPerStrip);
+            TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+            TIFFSetField(output, TIFFTAG_COMPRESSION, compressed ? COMPRESSION_LZW : COMPRESSION_NONE);
+            TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+            if ( spp == 1 )
+                TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+            else // spp == 3
+                TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+
+            // We are writing single page of the multipage file
+            TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+            TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, (uint16)Npages);
+
+            //
+            TIFFWriteEncodedStrip(output, 0, img, szPage);
+
+            //
+            TIFFWriteDirectory(output);
+        }
+    }
+    else
+    {
+        int StripsPerImage,LastStripSize;
+        uint32 rps = (uint32)rowsPerStrip;
+        unsigned char *buf = img;
+
+        StripsPerImage =  (YSIZE + rps - 1) / rps;
+        LastStripSize = YSIZE % rps;
+        if (LastStripSize==0)
+            LastStripSize=rps;
+
+        for (int i=0; i < StripsPerImage-1; i++){
+            TIFFWriteEncodedStrip(output, i, buf, spp * rps * XSIZE * (bpp/8));
+            buf = buf + spp * rps * XSIZE * (bpp/8);
+        }
+
+        TIFFWriteEncodedStrip(output, StripsPerImage-1, buf, spp * LastStripSize * XSIZE * (bpp/8));
+        buf = buf + spp * LastStripSize * XSIZE * (bpp/8);
+    }
+
+    //
+    TIFFClose(output);
+
+////    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+////    cout<<"save "<<filename<<" with the size "<<in.tellg()<<endl;
+
+    //
+//    long szStack = sz0*sz1*sz2*sz3*datatype;
+//    unsigned char *img = NULL;
+//    try
+//    {
+//        img = new unsigned char [szStack];
+//        memset(img, 0, szStack);
+//    }
+//    catch(...)
+//    {
+//        return ((char *)"fail to alloc memory");
+//    }
+
+//    //
+//    writeTiff3DFile(filename, sz0, sz1, sz2, sz3, datatype, img);
+
+    //
+    if(img)
+        delete [] img;
+
+    //
+    return (char *) 0;
+}
+
+char *copyFile(const char *srcFile, const char *dstFile)
+{
+//    std::ifstream in(srcFile, std::ifstream::ate | std::ifstream::binary);
+//    cout<<"read "<<srcFile<<" with the size "<<in.tellg()<<endl;
+
+//    cout<<"cp "<<srcFile<<" -> "<<dstFile<<endl;
+
+    std::ifstream  src(srcFile, std::ios::binary);
+    std::ofstream  dst(dstFile, std::ios::binary);
+
+    dst << src.rdbuf();
+
+//    istreambuf_iterator<char> begin_source(src);
+//    istreambuf_iterator<char> end_source;
+//    ostreambuf_iterator<char> begin_dest(dst);
+//    copy(begin_source, end_source, begin_dest);
+
+    src.close();
+    dst.close();
+
+    //
+    return (char *) 0;
+
+}
+
 // save a chunk image as a tif file
 char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype, unsigned char *img)
 {
@@ -1087,7 +1563,7 @@ char *writeTiff3DFile(char *filename, unsigned int sz0, unsigned int  sz1, unsig
     check = TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
     if (!check) {
         delete completeFilename;
-        return ((char *) "Cannot set the planarconfig tag.");
+        return ((char *) "Cannot set the planarconfig tTIFFSetDirectoryag.");
     }
 
     if ( spp == 1 )

@@ -1198,6 +1198,14 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     return subvol;
 }
 
+uint8* StackedVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException, iom::exception)
+{
+    cout<<"TODO: StackedVolume::loadSubvolume_to_UINT8_MT\n";
+
+    //
+    return NULL;
+}
+
 //releases allocated memory of stacks
 void StackedVolume::releaseStacks(int first_file, int last_file)
 {

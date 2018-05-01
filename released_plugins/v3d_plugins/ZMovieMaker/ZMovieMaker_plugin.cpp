@@ -404,7 +404,7 @@ void MyComboBox::updateList()
             break;
         }
 
-    if (curDisplayIndex>=0)
+    if (curDisplayIndex=0)
         setCurrentIndex(curDisplayIndex);
 
     //
@@ -426,6 +426,8 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_Load = new QPushButton("Load Anchor-point file");
     QPushButton* btn_Up = new QPushButton("Move Up");
     QPushButton* btn_Down = new QPushButton("Move Down");
+    QPushButton* btn_Snapshot = new QPushButton("Snapshot");
+
 
     box_SampleRate = new QSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr("Sampling Rate:"));
@@ -446,6 +448,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(btn_Up, 8,2,1,1);
     gridLayout->addWidget(btn_Down, 8,4,1,1);
     gridLayout->addWidget(btn_Preview,5,6,1,3);
+    gridLayout->addWidget(btn_Snapshot,6,6,1,3);
     gridLayout->addWidget(btn_Show,10,0,1,2);
     gridLayout->addWidget(btn_Delete,9,0,1,2);
     gridLayout->addWidget(btn_Save,9,2,1,3);
@@ -475,6 +478,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(box_SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
     connect(btn_Up, SIGNAL(clicked()), this, SLOT(_slot_up()));
     connect(btn_Down, SIGNAL(clicked()), this, SLOT(_slot_down()));
+    connect(btn_Snapshot, SIGNAL(clicked()), this, SLOT(_slot_snapshot()));
 
 
     connect(list_anchors, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(_slot_show_item(QListWidgetItem *)));
@@ -523,6 +527,20 @@ void controlPanel::_slot_record()
     list_anchors->addItem(new QListWidgetItem(curstr));
 }
 
+void controlPanel::_slot_snapshot()
+{
+    CHECK_WINDOWS;
+    QString BMPfilename = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                       "snapshot",
+                                                       QObject::tr("Supported file (*.*)"
+
+                                                                   ));
+    if(curwin)
+        m_v3d.screenShot3DWindow(curwin, BMPfilename);
+    else
+        m_v3d.screenShot_Any3DViewer(surface_win, BMPfilename);
+    v3d_msg(QString("Snapshot is saved in %1.BMP").arg(BMPfilename.toStdString().c_str()));
+}
 
 void controlPanel::_slot_preview()
 {

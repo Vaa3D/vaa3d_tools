@@ -26,3 +26,47 @@ public:
 
 #endif
 
+class MyComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * m_v3d;
+    MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
+
+    void enterEvent(QEvent * event);
+
+public slots:
+    void updateList();
+};
+
+
+
+class controlPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    controlPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~controlPanel();
+
+public:
+    v3dhandle curwin;
+    V3dR_MainWindow *surface_win;
+    View3DControl *view;
+
+    QList <V3dR_MainWindow *> list_3dviewer;
+    v3dhandleList list_triview;
+    QGridLayout *gridLayout;
+    V3DPluginCallback2 & m_v3d;
+
+    MyComboBox* combo_surface;
+    QLabel* label_surface;
+
+private slots:
+     void _slot_prune();
+     void _slot_save();
+     void reject();
+
+
+};

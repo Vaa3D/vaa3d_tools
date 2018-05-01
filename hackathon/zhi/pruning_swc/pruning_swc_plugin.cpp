@@ -143,13 +143,18 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                 QString fileOpenName = openDlg->file_name;
 
                 double length = 0;
+                int type = 0;
                 NeuronTree nt;
                 if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
                 {
-                     bool ok;
+                     bool ok, ok1;
                      nt = openDlg->nt;
                      length = QInputDialog::getDouble(parent, "Please specify the maximum prunned segment length","segment length:",1,0,2147483647,0.1,&ok);
                      if (!ok)
+                         return;
+
+                     type = QInputDialog::getInt(parent, "Please specify the prunned segment type","neuron type:",1,0,255,0.1,&ok1);
+                     if (!ok1)
                          return;
                 }
 
@@ -173,7 +178,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                 for (int i=0;i<list.size();i++)
                 {
-                    if (childs[i].size()==0 && list.at(i).parent >=0)
+                    if (childs[i].size()==0 && list.at(i).parent >=0 && list.at(i).type == type)
                     {
                         int index_tip = 0;
                         int parent_tip = getParent(i,nt);

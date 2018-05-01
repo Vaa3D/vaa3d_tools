@@ -88,8 +88,6 @@
 
 #include "../imagemanager/VirtualVolume.h"
 
-#include <omp.h>
-
 // possible output format
 #define REAL_REPRESENTATION      "intensity"  // images are managed internally with REAL_INTERNAL_REP representation
                                               // and saved as graylevel images
@@ -101,7 +99,7 @@
 #define REAL_INTERNAL_REP      1      // gray level images, pixels are represented ad real numbers in [0,1]
 #define UINT8_INTERNAL_REP     2      // multi-channel images, pixels are represented as 8 bit integers
 
-#define STANDARD_BLOCK_DEPTH   64      // standard block to be used when converting to tiled format (introduced for efficiency)
+#define STANDARD_BLOCK_DEPTH   32      // standard block to be used when converting to tiled format (introduced for efficiency)
 
 // thread-safe queue
 template <typename T>
@@ -339,6 +337,11 @@ class VolumeConverter
 		**************************************************************************************************************/
 		void generateTilesVaa3DRaw(std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false, 
+            bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
+
+        void generateTilesVaa3DRawMT(std::string output_path, bool* resolutions = NULL,
+            int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool isotropic=false,
             bool show_progress_bar = true, const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
             std::string frame_dir = "", bool par_mode=false) throw (iim::IOException, iom::exception);
 

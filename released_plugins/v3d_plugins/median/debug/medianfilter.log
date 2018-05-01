@@ -1,0 +1,22 @@
+﻿生成启动时间为 2018/3/14 星期三 08:39:53。
+     1>项目“F:\newv3dcode\vaa3d_tools\released_plugins\v3d_plugins\median\medianfilter.vcxproj”在节点 2 上(rebuild 个目标)。
+     1>InitializeBuildStatus:
+         正在创建“debug\medianfilter.unsuccessfulbuild”，因为已指定“AlwaysCreate”。
+       CustomBuild:
+         MOC Medianfilter_plugin.h
+       ClCompile:
+         G:\vs2010\VC\bin\CL.exe /c /If:\Qt\4.7.2\include\QtCore /If:\Qt\4.7.2\include\QtGui /If:\Qt\4.7.2\include /I..\..\..\v3d_main\basic_c_fun /I..\..\..\v3d_main\common_lib\include /If:\Qt\4.7.2\include\ActiveQt /Idebug /I"f:\Qt\4.7.2\mkspecs\win32-msvc2010" /Zi /nologo /W0 /WX- /Od /Oy- /D _WINDOWS /D UNICODE /D WIN32 /D QT_LARGEFILE_SUPPORT /D QT_DLL /D QT_PLUGIN /D QT_GUI_LIB /D QT_CORE_LIB /D QT_HAVE_MMX /D QT_HAVE_3DNOW /D QT_HAVE_SSE /D QT_HAVE_MMXEXT /D QT_HAVE_SSE2 /D QT_THREAD_SUPPORT /D _WINDLL /Gm- /EHsc /MDd /GS- /fp:precise /Zc:wchar_t- /Zc:forScope /GR /Fo"debug\\" /Fd".\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt Medianfilter_plugin.cpp ..\..\..\v3d_main\basic_c_fun\v3d_message.cpp debug\moc_Medianfilter_plugin.cpp -Zm200 
+         Medianfilter_plugin.cpp
+         v3d_message.cpp
+         moc_Medianfilter_plugin.cpp
+         正在生成代码...
+       Link:
+         G:\vs2010\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\..\..\bin\plugins\image_filters\median_filter\medianfilterd.dll" /NOLOGO /LIBPATH:f:\Qt\4.7.2\lib f:\Qt\4.7.2\lib\QtGuid4.lib f:\Qt\4.7.2\lib\QtCored4.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"debug\medianfilterd.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"F:\newv3dcode\vaa3d_tools\bin\plugins\image_filters\median_filter\medianfilterd.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X86 /DLL debug\Medianfilter_plugin.obj
+         debug\v3d_message.obj
+         debug\moc_Medianfilter_plugin.obj
+     1>QtGuid4.lib(QtGuid4.dll) : fatal error LNK1112: 模块计算机类型“x64”与目标计算机类型“X86”冲突
+     1>已完成生成项目“F:\newv3dcode\vaa3d_tools\released_plugins\v3d_plugins\median\medianfilter.vcxproj”(rebuild 个目标)的操作 - 失败。
+
+生成失败。
+
+已用时间 00:00:12.36

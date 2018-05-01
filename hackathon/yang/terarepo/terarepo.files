@@ -2754,3 +2754,5 @@ src/volumemanager/vmVirtualVolume.cpp
 src/volumemanager/vmVirtualVolume.h
 src/volumemanager/volumemanager.config.cpp
 src/volumemanager/volumemanager.config.h
+src/imagemanager/CMakeLists.txt
+src/CMakeLists.txt

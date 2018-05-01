@@ -490,7 +490,7 @@ int NCPointCloud::saveNeuronTree(NCPointCloud pc, QString filename)
 
     for(long i=0; i<pc.points.size(); i++)
     {
-        if(pc.points[i].isolated)
+        if(pc.points[i].isolated || pc.points[i].parents.empty())
         {
             continue;
         }
@@ -3707,31 +3707,38 @@ float NCPointCloud::meandistance(NeuronTree a, NeuronTree b)
 void NCPointCloud::dfs(long v)
 {
     //
-    if(fila.empty())
-    {
-        points[v].visited = true;
-        fila.push_back(adj[v]);
+    cout<<v;
+    cout<<" ("<<points[v].visited<<", "<<points[v].n<<") ";
 
-        cout<<v<<" ";
-    }
-    else
+    //
+    if(points[v].visited == false && !adj[v].empty())
     {
-        long n = fila[fila.size()-1].n;
-
-        if(adj[v].pre == n)
+        if(fila.empty())
         {
             points[v].visited = true;
-            fila.push_back(v);
 
-            cout<<v<<" ";
+            Vertex ver = *(adj[v].begin());
 
-            //
-            list<Node>::iterator i;
-            for(i = adj[v].begin(); i!=adj[v].end(); ++i)
+            fila.push_back(ver);
+
+            dfs(get<2>(ver));
+        }
+        else
+        {
+            Vertex prev = fila[fila.size()-1];
+            long n = get<0>(prev);
+            long next = get<2>(prev);
+
+            Vertices::iterator i;
+            for(i=adj[v].begin(); i!=adj[v].end(); ++i)
             {
-                if(points[(*i).n].visited==false)
+                Vertex ver = *i;
+
+                if(get<1>(ver)==n && get<0>(ver)==next && points[v].visited==false) // pre
                 {
-                    dfs((*i).n);
+                    points[v].visited=true;
+                    fila.push_back(ver);
+                    dfs(get<2>(ver)); // next
                 }
             }
         }
@@ -3740,35 +3747,52 @@ void NCPointCloud::dfs(long v)
 
 int NCPointCloud::reconstruct()
 {
+    cout<<"\n reconstruct \n";
+
     //
-    if(fila.size()<=1)
+    if(filas.size()>1)
     {
-        cout<<"Less than 2 points in this filament"<<endl;
+        for(long i=0; i<filas.size(); i++)
+        {
+            fila = filas[i];
+
+            cout<<fila.size()<<endl;
+
+            points[get<0>(fila[0])].parents.push_back(-1);
+            for(long j=1; j<fila.size(); j++)
+            {
+                long pre = get<0>(fila[j-1]);
+                long cur = get<0>(fila[j]);
+
+                points[cur].parents.push_back(points[pre].n);
+                points[pre].children.push_back(points[cur].n);
+            }
+
+        }
+    }
+    else
+    {
+        cout<<"No filament found"<<endl;
         return -1;
     }
-
-    //
-    cout<<endl<<"root ... "<<fila[0].n<<endl;
-    points[fila[0].n].parents.push_back(-1);
-    for(long i=1; i<fila.size(); i++)
-    {
-        points[fila[i].n].parents.push_back(points[fila[i-1].n].n);
-        points[fila[i-1].n].children.push_back(points[fila[i].n].n);
-    }
-
-    //
-    //filas.push_back(fila);
-    fila.clear();
 
     //
     return 0;
 }
 
 // method to publish
-int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, float m, double distthresh, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
+int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, float maxRadius, double maxDist, float rmNoiseDistFac, unsigned char *pImg, long sx, long sy, long sz)
 {
+    // cost func: alpha*angle + beta*dist - gamma*intensity - delta*radius
+    //
     // 1. create an adjacency list with our proposed cost func (angle*dist/radius/intensity)
     // 2. dfs reconstruct trees
+
+    // weight for angle, distance, intensity, radius
+    float alpha = 1.0;
+    float beta = 1.0;
+    float gamma = 1.0;
+    float delta = 1.0;
 
     //
     if(pImg==NULL)
@@ -3837,7 +3861,7 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     removeNoise(rmNoiseDistFac);
 
     // init adjacency list
-    adj = new list<Node> [ points.size() ];
+    adj = new Vertices [ points.size() ];
 
     // compare each point's possible connections with our proposed cost func
 
@@ -3845,8 +3869,6 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
     knn(k);
 
     //
-    float distThresh1, distThresh2;
-
     for(long v=0; v<points.size(); v++)
     {
         Point p = points[v];
@@ -3864,8 +3886,6 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
                 continue;
             }
 
-            //cout<<"next ... "<<p_next.x<<" "<<p_next.y<<" "<<p_next.z<<endl;
-
             for(long j=0; j<p_next.nn.size(); j++)
             {
                 Point p_next_next = points[p_next.nn[j]];
@@ -3875,103 +3895,129 @@ int NCPointCloud::trace(QString infile, QString outfile, int k, float maxAngle, 
                     continue;
                 }
 
-                //cout<<"next next ... "<<p_next_next.x<<" "<<p_next_next.y<<" "<<p_next_next.z<<endl;
-
                 float angle = getAngle(p, p_next, p_next_next);
                 float dist1 = distance(p,p_next);
                 float dist2 = distance(p_next, p_next_next);
                 float dist = dist1 + dist2;
 
-                distThresh1 = 2*m*(p.radius + p_next.radius);
-                distThresh2 = 2*m*(p_next.radius + p_next_next.radius);
+                float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3;
+                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2;
 
-                cout<<"v nn nnnn "<<v<<" "<<p.nn[i]<<" "<<p_next.nn[j]<<" "<<dist1<<" < "<<distThresh1<<" "<<dist2<<" < "<<distThresh2<<endl;
-                p.info();
-                p_next.info();
-                p_next_next.info();
-
-                float meanradius = (p.radius + p_next.radius + p_next_next.radius)/3 + 1e-6;
-
-                float meanintensity = (meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p, p_next) + meanIntensityValueLineSegment<unsigned char>(pImg, sx, sy, sz, p_next, p_next_next))/2 + 1e-6;
-
-                if(dist1<distThresh1 && dist2<distThresh2 && angle<maxAngle)
+                //
+                if(dist<maxDist && angle<maxAngle)
                 {
-                    candidates.push_back(make_tuple(dist*angle/meanradius/meanintensity, i, j));
+                    //normalize
+                    angle /= 3.14159265;
+                    dist /= maxDist;
+                    meanradius /= maxRadius;
+                    meanintensity /= 255;
+
+                    alpha = 0.1;
+                    beta = 0.01;
+                    float costfunc = (alpha*angle + beta*dist) / (gamma*meanintensity + delta*meanradius + 1e-6);
+
+                    cout<<"-> costfunc: "<<costfunc<<" "<<angle<<" "<<dist<<" "<<meanintensity<<" "<<meanradius<<endl;
+
+                    //
+                    candidates.push_back(make_tuple(costfunc, i, j));
                 }
             }
         }
 
         //
-        if(candidates.size()>0)
+        if(candidates.size()>1)
         {
-            cout<<"candidates "<<candidates.size()<<endl;
+            cout<<"found "<<candidates.size()<<" candidates"<<endl;
 
             sort(candidates.begin(), candidates.end(), [](const tuple<float,long,long>& a, const tuple<float,long,long>& b) -> bool
             {
-                return get<0>(a) < get<0>(b); // area as likelihood func
+                return get<0>(a) < get<0>(b); // weight
             });
 
             //
             for(vector<tuple<float,long,long>>::iterator i=candidates.begin(); i!=candidates.end(); ++i)
             {
-                Node node;
-
-                node.pre = v;
-                node.n = p.nn[get<1>(*i)];
-                node.next = points[p.nn[get<1>(*i)]].nn[get<2>(*i)];
-                node.weight = get<0>(*i);
-
-                adj[node.n].push_back(node);
-
-                //cout<<"push_back "<<p.nn[get<2>(*i)]<<" "<<points[p.nn[get<2>(*i)]].nn[get<3>(*i)]<<" -> "<<v<<endl;
+                adj[ p.nn[get<1>(*i)] ].push_back(make_tuple( p.nn[get<1>(*i)], v, points[p.nn[get<1>(*i)]].nn[get<2>(*i)], get<0>(*i) ));
             }
         }
     }
 
-    cout<<"adjacency list"<<endl;
-    for(long v=0; v<points.size(); v++)
+    //
+    for(long i=0; i<points.size(); i++)
     {
-        list<Node>::iterator i;
-        for(i = adj[v].begin(); i != adj[v].end(); ++i)
-            cout<<*i<<" ";
+        cout<<i<<endl;
+        for(Vertices::iterator j=adj[i].begin(); j!=adj[i].end(); ++j)
+        {
+            cout<<"("<<get<0>(*j)<<", "<<get<1>(*j)<<", "<<get<2>(*j)<<") ";
+        }
         cout<<endl;
     }
 
-    // connection
-    cout<<"points "<<points.size()<<endl;
-
+    //
     for(long i=0; i<points.size(); i++)
     {
+        // reset
         points[i].parents.clear();
         points[i].children.clear();
+        points[i].visited = false;
+
+        // sort
+        if(adj[i].size()>1)
+        {
+            sort(adj[i].begin(), adj[i].end(), [](const Vertex& a, const Vertex& b) -> bool
+            {
+                return get<3>(a) < get<3>(b); // weight
+            });
+        }
     }
 
+    //
     for(long i=0; i<points.size(); i++)
     {
         if(points[i].visited == false)
         {
-            cout<<"filament "<<i<<endl;
-            dfs(i);
-            reconstruct();
+            cout<<"filament #"<<i<<endl;
+
+            if(!adj[i].empty())
+            {
+                for(Vertices::iterator iter=adj[i].begin(); iter!=adj[i].end(); ++iter)
+                {
+                    dfs(get<0>(*iter));
+                    cout<<"\n filament size "<<fila.size()<<endl;
+                    //if(!fila.empty())
+                    if(fila.size()>2) // at least 2 vertices to connect
+                    {
+                        filas.push_back(fila);
+                    }
+                    fila.clear();
+                }
+            }
         }
     }
 
-    // save reconstruction
-    if(!outfile.isEmpty())
+    cout<<" found "<<filas.size()<<" filaments "<<endl;
+
+    if(reconstruct()==0)
     {
-        saveNeuronTree(*this, outfile);
+        cout<<"save reconstruction \n";
+        // save reconstruction
+        if(!outfile.isEmpty())
+        {
+            saveNeuronTree(*this, outfile);
 
-        //
-        QStringList files;
-        files << outfile;
+            //
+            QStringList files;
+            files << outfile;
 
-        NCPointCloud pc;
-        pc.getPointCloud(files);
+            NCPointCloud pc;
+            pc.getPointCloud(files);
 
-        vector<LineSegment> lines = separate(pc);
-        pc = combinelines(lines);
+            vector<LineSegment> lines = separate(pc);
+            pc = combinelines(lines);
 
-        pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+            pc.saveNeuronTree(pc, outfile.left(outfile.lastIndexOf(".")).append("_cleaned.swc"));
+        }
+
     }
 
     //

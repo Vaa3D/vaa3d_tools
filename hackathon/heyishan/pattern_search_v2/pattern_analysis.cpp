@@ -57,7 +57,7 @@ NeuronTree rmSmallPart(NeuronTree & nt_sorted)
     return nt_res;
 }
 
-bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<double> & pt_lens, vector<int>& pt_nums, V3DPluginCallback2 &callback)
+bool pattern_analysis(const NeuronTree &nt,const NeuronTree &boundary,vector<NeuronTree> & pt_list, vector<double> & pt_lens, vector<int>& pt_nums)
 {
     V3DLONG boundary_size = boundary.listNeuron.size();
     V3DLONG nt_size= nt.listNeuron.size();

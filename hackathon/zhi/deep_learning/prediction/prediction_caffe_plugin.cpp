@@ -18,6 +18,8 @@
 #include "../../APP2_large_scale/readRawfile_func.h"
 
 #include "../../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "volimg_proc.h"
+
 
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
@@ -75,18 +77,20 @@ QStringList prediction_caffe::menulist() const
 {
     return QStringList()
             <<tr("Prediction")
-           <<tr("Quality_Assess")
-          <<tr("Detection")
-         <<tr("Feature_Extraction")
-        <<tr("Connection")
-       <<tr("Local_Maximum")
-       <<tr("about");
+           <<tr("Prediction_3D(unet)")
+          <<tr("Quality_Assess")
+         <<tr("Detection")
+        <<tr("Feature_Extraction")
+       <<tr("Connection")
+      <<tr("Local_Maximum")
+     <<tr("about");
 }
 
 QStringList prediction_caffe::funclist() const
 {
     return QStringList()
-            <<tr("Prediction")
+              <<tr("Prediction")
+             <<tr("Segmentation_3D")
            <<tr("Quality_Assess")
           <<tr("Detection")
          <<tr("Prediction_type")
@@ -94,6 +98,8 @@ QStringList prediction_caffe::funclist() const
        <<tr("3D_Axon_detection")
       <<tr("3D_Axon_detection_subRegion")
      <<tr("3D_Axon_detection_raw")
+    <<tr("2D_Axon_detection")
+    <<tr("2D_Axon_refining")
     <<tr("Feature_Extraction")
     <<tr("Connection")
     <<tr("swc_extraction")
@@ -162,6 +168,166 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         printf("Positive rate is %.2f, and negative rate is %.2f\n",p_rate,n_rate);
         imgs.clear();
+    }else if (menu_name == tr("Prediction_3D(unet)"))
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
+        unsigned char* data1d = p4DImage->getRawData();
+        QString imagename = callback.getImageName(curwin);
+
+        V3DLONG N = p4DImage->getXDim();
+        V3DLONG M = p4DImage->getYDim();
+        V3DLONG P = p4DImage->getZDim();
+        V3DLONG sc = p4DImage->getCDim();
+
+        V3DLONG in_sz[4];
+        in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+        double overall_mean, overall_std;
+        mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+
+        short int*im_label = 0;
+        try {im_label = new short int[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_label."); return;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_label[i]=0;
+
+        string model_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt";
+        string trained_file = "/local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel";
+        Classifier classifier(model_file, trained_file,"");
+        int patchSize = 64;
+        int ita = 4;
+        int x_fold = N/patchSize + ita;
+        int x_ovlap = ceil((double(x_fold)*patchSize - N)/(double(x_fold)-1));
+        int y_fold = M/patchSize + ita;
+        int y_ovlap = ceil((double(y_fold)*patchSize - M)/(double(y_fold)-1));
+        int z_fold = P/patchSize + ita;
+        int z_ovlap = ceil((double(z_fold)*patchSize - P)/(double(z_fold)-1));
+        int ita_x = (patchSize-x_ovlap)>0?patchSize-x_ovlap:1;
+        int ita_y = (patchSize-y_ovlap)>0?patchSize-y_ovlap:1;
+        int ita_z = (patchSize-z_ovlap)>0?patchSize-z_ovlap:1;
+
+        for(V3DLONG iz = 0; iz < P; iz = iz+ita_z)
+        {
+            for(V3DLONG iy = 0; iy < M; iy = iy+ita_y)
+            {
+                for(V3DLONG ix = 0; ix < N; ix = ix+ita_x)
+                {
+                    V3DLONG xb = ix;
+                    V3DLONG xe = ix+patchSize-1; if(xe>=N) continue;
+                    V3DLONG yb = iy;
+                    V3DLONG ye = iy+patchSize-1; if(ye>=M) continue;
+                    V3DLONG zb = iz;
+                    V3DLONG ze = iz+patchSize-1; if(ze>=P) continue;
+
+//                    double std = 0;
+//                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+//                    {
+//                        double stdSum = 0;
+//                        V3DLONG offsetk = iiz*M*N;
+//                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+//                        {
+//                            V3DLONG offsetj = iiy*N;
+//                            for(V3DLONG iix = xb; iix <= xe; iix++)
+//                            {
+//                                double PixelVaule = data1d[offsetk + offsetj + iix];
+//                                stdSum = stdSum + pow(PixelVaule-overall_mean,2);
+//                            }
+//                        }
+//                        std += stdSum/(M*N*P);
+//                    }
+
+//                    if(std<0.01) continue;
+
+                    V3DLONG tile_N = xe-xb+1;
+                    V3DLONG tile_M = ye-yb+1;
+                  //  V3DLONG tile_P = ze-zb+1;
+                    std::vector<cv::Mat> imgs;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        float*im_cropped = 0;
+                        try {im_cropped = new float [tile_N*tile_M];}
+                        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return;}
+
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                im_cropped[j] = (data1d[offsetk + offsetj + iix]-overall_mean)/overall_std;
+                                j++;
+                            }
+                        }
+                        cv::Mat img(tile_N, tile_M, CV_32FC1, im_cropped);
+                        imgs.push_back(img);
+                    }
+
+                    std::vector<float> outputs = classifier.Predict_3D(imgs);
+                    V3DLONG j=0;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                int tmp_score = (outputs[j]>0.05)? 1:-1;  //0.01 for testing on ultratracer
+                                im_label[offsetk + offsetj + iix] += tmp_score;
+                                j++;
+                            }
+                        }
+                    }
+                    imgs.clear();
+                    outputs.clear();
+                }
+            }
+        }
+
+        unsigned char*im_seg = 0;
+        try {im_seg = new unsigned char[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_seg[i]= 0;
+        for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+
+            for(V3DLONG iy = ita+1; iy < M-ita-1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
+                {
+                    im_seg[offsetk + offsetj + ix]=(im_label[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
+                }
+            }
+        }
+//        for(V3DLONG i=0; i<N*M*P;i++)
+//            im_seg[i]=(im_label[i]>0)?data1d[i]:0;
+        if(im_label) {delete []im_label;im_label=0;}
+
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)im_seg, N, M, P, 1, V3D_UINT8);
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "unet");
+        callback.updateImageWindow(newwin);
+        return;
+
     }else if (menu_name == tr("Quality_Assess"))
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -965,6 +1131,169 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
         clock_t end = clock();
         double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
         cout << "time elapsed: " << elapsed_secs << "sec" << endl;
+
+        return true;
+    }
+    else if (func_name == tr("Segmentation_3D"))
+    {
+        cout<<"Welcome to Caffe 3D segmentation plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        if(outfiles.empty())
+        {
+            cerr<<"Need output image file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        QString  ouimg_file =  outfiles[0];
+
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+
+        unsigned char * data1d = 0;
+        V3DLONG in_sz[4];
+
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        V3DLONG sc = in_sz[3];
+
+        double overall_mean, overall_std;
+        mean_and_std(data1d, N*M*P, overall_mean, overall_std);
+
+        short int*im_label = 0;
+        try {im_label = new short int[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_label."); return false;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_label[i]=0;
+
+        Classifier classifier(model_file.toStdString(), trained_file.toStdString(),"");
+        int patchSize = 64;
+        int ita = 4;
+        int x_fold = N/patchSize + ita;
+        int x_ovlap = ceil((double(x_fold)*patchSize - N)/(double(x_fold)-1));
+        int y_fold = M/patchSize + ita;
+        int y_ovlap = ceil((double(y_fold)*patchSize - M)/(double(y_fold)-1));
+        int z_fold = P/patchSize + ita;
+        int z_ovlap = ceil((double(z_fold)*patchSize - P)/(double(z_fold)-1));
+        int ita_x = (patchSize-x_ovlap)>0?patchSize-x_ovlap:1;
+        int ita_y = (patchSize-y_ovlap)>0?patchSize-y_ovlap:1;
+        int ita_z = (patchSize-z_ovlap)>0?patchSize-z_ovlap:1;
+
+        for(V3DLONG iz = 0; iz < P; iz = iz+ita_z)
+        {
+            for(V3DLONG iy = 0; iy < M; iy = iy+ita_y)
+            {
+                for(V3DLONG ix = 0; ix < N; ix = ix+ita_x)
+                {
+                    V3DLONG xb = ix;
+                    V3DLONG xe = ix+patchSize-1; if(xe>=N) continue;
+                    V3DLONG yb = iy;
+                    V3DLONG ye = iy+patchSize-1; if(ye>=M) continue;
+                    V3DLONG zb = iz;
+                    V3DLONG ze = iz+patchSize-1; if(ze>=P) continue;
+
+                    V3DLONG tile_N = xe-xb+1;
+                    V3DLONG tile_M = ye-yb+1;
+                    //  V3DLONG tile_P = ze-zb+1;
+                    std::vector<cv::Mat> imgs;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        V3DLONG j = 0;
+                        float*im_cropped = 0;
+                        try {im_cropped = new float [tile_N*tile_M];}
+                        catch(...)  {v3d_msg("cannot allocate memory for im_cropped."); return false;}
+
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                im_cropped[j] = (data1d[offsetk + offsetj + iix]-overall_mean)/overall_std;
+                                j++;
+                            }
+                        }
+                        cv::Mat img(tile_N, tile_M, CV_32FC1, im_cropped);
+                        imgs.push_back(img);
+                    }
+
+                    std::vector<float> outputs = classifier.Predict_3D(imgs);
+                    V3DLONG j=0;
+                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+                    {
+                        V3DLONG offsetk = iiz*M*N;
+                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+                        {
+                            V3DLONG offsetj = iiy*N;
+                            for(V3DLONG iix = xb; iix <= xe; iix++)
+                            {
+                                int tmp_score = (outputs[j]>0.05)? 1:-1;  //0.01 for testing on ultratracer
+                                im_label[offsetk + offsetj + iix] += tmp_score;
+                                j++;
+                            }
+                        }
+                    }
+                    imgs.clear();
+                    outputs.clear();
+                }
+            }
+        }
+
+        unsigned char*im_seg = 0;
+        try {im_seg = new unsigned char[N*M*P];}
+        catch(...)  {v3d_msg("cannot allocate memory for im_seg."); return false;}
+        for(V3DLONG i=0; i<N*M*P;i++)
+            im_seg[i]= 0;
+
+        for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+
+            for(V3DLONG iy = ita+1; iy < M-ita-1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
+                {
+                    im_seg[offsetk + offsetj + ix]=(im_label[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
+                }
+            }
+        }
+
+        // save image
+        in_sz[3]=1;
+        simple_saveimage_wrapper(callback, ouimg_file.toStdString().c_str(), (unsigned char *)im_seg, in_sz, datatype);
+
+        if(im_label) {delete []im_label;im_label=0;}
+        if(data1d) {delete []data1d; data1d = 0;}
+        if(im_seg) {delete []im_seg; im_seg = 0;}
 
         return true;
     }
@@ -2455,6 +2784,395 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
 //        }
 
 //        writeSWC_file(swc_processed,nt);
+        return true;
+    }else if(func_name == tr("2D_Axon_detection"))
+    {
+        cout<<"Welcome to Caffe 2D axon detection plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+        if(outfiles.empty())
+        {
+            cerr<<"Need output swc file"<<endl;
+            return false;
+        }
+        QString  inimg_file =  infiles[0];
+        QString  outswc_file =  outfiles[0];
+
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
+        int Ws = paras.empty() ? 512 : atoi(paras[k]);k++;
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+        cout<<"image_size = "<<Ws<<endl;
+
+        unsigned char *data1d_mip=0;
+        int datatype;
+        V3DLONG N,M,P;
+        V3DLONG in_mip_sz[4];
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+        N = in_mip_sz[0];
+        M = in_mip_sz[1];
+
+        std::vector<std::vector<float> > detection_results;
+        LandmarkList marklist_2D;
+
+        unsigned int numOfThreads = 2; // default value for number of theads
+#if  defined(Q_OS_LINUX)
+
+        omp_set_num_threads(numOfThreads);
+
+#pragma omp parallel for
+
+#endif
+
+        for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+        {
+
+            V3DLONG yb = iy;
+            V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+#if  defined(Q_OS_LINUX)
+
+            printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+#pragma omp parallel for
+#endif
+            for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix;
+                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+                unsigned char *blockarea=0;
+                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+
+                blockarea = new unsigned char [blockpagesz];
+                V3DLONG i = 0;
+                for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                {
+                    V3DLONG offsetj = iiy*N;
+                    for(V3DLONG iix = xb; iix < xe+1; iix++)
+                    {
+
+                        blockarea[i] = data1d_mip[offsetj + iix];
+                        i++;
+                    }
+                }
+                Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+                detection_results = batch_detection(blockarea,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+                if(detection_results.size() >0)
+                {
+                    V3DLONG d = 0;
+                    for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                    {
+                        for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                        {
+                                std::vector<float> output = detection_results[d];
+                                if(output.at(1) > output.at(0))
+                                {
+                                    LocationSimple S;
+                                    S.x = iix;
+                                    S.y = iiy;
+                                    S.z = 1;
+                                    marklist_2D.push_back(S);
+                                }
+                                d++;
+                        }
+                    }
+                }
+                if(blockarea) {delete []blockarea; blockarea =0;}
+
+            }
+        }
+
+        cerr<<"mean shifting ..."<<endl;
+
+        //mean shift
+        mean_shift_fun fun_obj;
+        LandmarkList marklist_2D_shifted;
+        vector<V3DLONG> poss_landmark;
+        vector<float> mass_center;
+        double windowradius = Sxy+5;
+
+        V3DLONG sz_img[4];
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            bool flag_dual = false;
+            for(V3DLONG jj = 0; jj < marklist_2D_shifted.size();jj++)
+            {
+                if(NTDIS(tmp,marklist_2D_shifted.at(jj)) == 0)
+                {
+                    flag_dual = true;
+                    break;
+                }
+            }
+            if(!flag_dual) marklist_2D_shifted.append(tmp);
+        }
+
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+        for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shifted.at(i).x;
+            V3DLONG iy = marklist_2D_shifted.at(i).y;
+
+            NeuronSWC n;
+            n.x = ix-1;
+            n.y = iy-1;
+            n.z = 0;
+            n.n = i+1;
+            n.type = 2;
+            n.r = 1;
+            n.pn = -1; //so the first one will be root
+            listNeuron << n;
+        }
+
+        QString  swc_processed = inimg_file + "_detection.swc";
+        writeSWC_file(swc_processed,nt);
+
+        return true;
+    }else if(func_name == tr("2D_Axon_refining"))
+    {
+        cout<<"Welcome to Caffe 2D axon refining plugin"<<endl;
+        if(infiles.empty())
+        {
+            cerr<<"Need input image file"<<endl;
+            return false;
+        }
+//        if(outfiles.empty())
+//        {
+//            cerr<<"Need output swc file"<<endl;
+//            return false;
+//        }
+        QString  inimg_file =  infiles[0];
+//        QString  outswc_file =  outfiles[0];
+
+        int k=0;
+
+        QString model_file = paras.empty() ? "" : paras[k]; if(model_file == "NULL") model_file = ""; k++;
+        if(model_file.isEmpty())
+        {
+            cerr<<"Need a model_file"<<endl;
+            return false;
+        }
+
+        QString trained_file = paras.empty() ? "" : paras[k]; if(trained_file == "NULL") trained_file = ""; k++;
+        if(trained_file.isEmpty())
+        {
+            cerr<<"Need a trained_file"<<endl;
+            return false;
+        }
+
+        QString mean_file = paras.empty() ? "" : paras[k]; if(mean_file == "NULL") mean_file = ""; k++;
+        if(mean_file.isEmpty())
+        {
+            cerr<<"Need a mean_file"<<endl;
+            return false;
+        }
+
+        int Sxy = paras.empty() ? 10 : atoi(paras[k]);k++;
+        int Ws = paras.empty() ? 512 : atoi(paras[k]);k++;
+        QString refimg_file = (paras.size() >= k+1) ? paras[k]:""; if(refimg_file == "NULL") refimg_file = "";
+
+
+        cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+//        cout<<"outswc_file = "<<outswc_file.toStdString().c_str()<<endl;
+        cout<<"model_file = "<<model_file.toStdString().c_str()<<endl;
+        cout<<"trained_file = "<<trained_file.toStdString().c_str()<<endl;
+        cout<<"mean_file = "<<mean_file.toStdString().c_str()<<endl;
+        cout<<"sample_size = "<<Sxy<<endl;
+        cout<<"image_size = "<<Ws<<endl;
+        cout<<"refernce_image = "<<refimg_file.toStdString()<<endl;
+
+        unsigned char *data1d_mip=0;
+        int datatype;
+        V3DLONG N,M,P;
+        V3DLONG in_mip_sz[4];
+        if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), data1d_mip, in_mip_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+        N = in_mip_sz[0];
+        M = in_mip_sz[1];
+
+        unsigned char *data1d_ref=0;
+        V3DLONG data1d_ref_sz[4];
+        if(!simple_loadimage_wrapper(callback, refimg_file.toStdString().c_str(), data1d_ref, data1d_ref_sz, datatype))
+        {
+            cerr<<"load image "<<refimg_file.toStdString().c_str()<<" error!"<<endl;
+            return false;
+        }
+
+        std::vector<std::vector<float> > detection_results;
+        LandmarkList marklist_2D;
+
+        unsigned int numOfThreads = 2; // default value for number of theads
+#if  defined(Q_OS_LINUX)
+
+        omp_set_num_threads(numOfThreads);
+
+#pragma omp parallel for
+
+#endif
+
+        for(V3DLONG iy = 0; iy < M; iy = iy+Ws)
+        {
+
+            V3DLONG yb = iy;
+            V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+#if  defined(Q_OS_LINUX)
+
+            printf("number of threads for iy = %d\n", omp_get_num_threads());
+
+#pragma omp parallel for
+#endif
+            for(V3DLONG ix = 0; ix < N; ix = ix+Ws)
+            {
+                V3DLONG xb = ix;
+                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+                unsigned char *blockarea=0;
+                unsigned char *blockarea_ref=0;
+
+                V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*1;
+
+                blockarea = new unsigned char [blockpagesz];
+                blockarea_ref = new unsigned char [blockpagesz];
+
+                V3DLONG i = 0;
+                for(V3DLONG iiy = yb; iiy < ye+1; iiy++)
+                {
+                    V3DLONG offsetj = iiy*N;
+                    for(V3DLONG iix = xb; iix < xe+1; iix++)
+                    {
+
+                        blockarea[i] = data1d_mip[offsetj + iix];
+                        blockarea_ref[i] = data1d_ref[offsetj + iix];
+
+                        i++;
+                    }
+                }
+                Classifier classifier(model_file.toStdString(), trained_file.toStdString(), mean_file.toStdString());
+                detection_results = batch_detection_ref(blockarea,blockarea_ref,classifier,xe-xb+1,ye-yb+1,1,Sxy);
+                if(detection_results.size() >0)
+                {
+                    V3DLONG d = 0;
+                    for(V3DLONG iiy = yb+Sxy; iiy < ye+1; iiy = iiy+Sxy)
+                    {
+                        for(V3DLONG iix = xb+Sxy; iix < xe+1; iix = iix+Sxy)
+                        {
+                            if(data1d_ref[iiy*N +iix]>0)
+                            {
+                                std::vector<float> output = detection_results[d];
+                                if(output.at(1) > 0.995)
+                                {
+                                    LocationSimple S;
+                                    S.x = iix;
+                                    S.y = iiy;
+                                    S.z = 1;
+                                    marklist_2D.push_back(S);
+                                }
+                                d++;
+                            }
+                        }
+                    }
+                }
+                if(blockarea) {delete []blockarea; blockarea =0;}
+                if(blockarea_ref) {delete []blockarea_ref; blockarea_ref =0;}
+
+            }
+        }
+
+        cerr<<"mean shifting ..."<<endl;
+
+        //mean shift
+        mean_shift_fun fun_obj;
+        LandmarkList marklist_2D_shifted;
+        vector<V3DLONG> poss_landmark;
+        vector<float> mass_center;
+        double windowradius = Sxy+5;
+
+        V3DLONG sz_img[4];
+        sz_img[0] = N; sz_img[1] = M; sz_img[2] = 1; sz_img[3] = 1;
+        fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_mip, sz_img);
+        poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+        for (V3DLONG j=0;j<poss_landmark.size();j++)
+        {
+            mass_center=fun_obj.mean_shift_center_mass(poss_landmark[j],windowradius);
+            LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+            bool flag_dual = false;
+            for(V3DLONG jj = 0; jj < marklist_2D_shifted.size();jj++)
+            {
+                if(NTDIS(tmp,marklist_2D_shifted.at(jj)) == 0)
+                {
+                    flag_dual = true;
+                    break;
+                }
+            }
+            if(!flag_dual) marklist_2D_shifted.append(tmp);
+        }
+
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
+        for(V3DLONG i = 0; i < marklist_2D_shifted.size(); i++)
+        {
+            V3DLONG ix = marklist_2D_shifted.at(i).x;
+            V3DLONG iy = marklist_2D_shifted.at(i).y;
+
+            NeuronSWC n;
+            n.x = ix-1;
+            n.y = iy-1;
+            n.z = 0;
+            n.n = i+1;
+            n.type = 2;
+            n.r = 1;
+            n.pn = -1; //so the first one will be root
+            listNeuron << n;
+        }
+        if(data1d_mip) {delete []data1d_mip; data1d_mip=0;}
+        if(data1d_ref) {delete []data1d_ref; data1d_ref=0;}
+
+        QString  swc_processed = inimg_file + "_detection.swc";
+        writeSWC_file(swc_processed,nt);
+
         return true;
     }
     else if(func_name == tr("Feature_Extraction"))

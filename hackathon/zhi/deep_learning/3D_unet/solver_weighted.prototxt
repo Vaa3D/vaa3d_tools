@@ -1,0 +1,16 @@
+net: "./train_weighted.prototxt"
+base_lr: 0.01
+lr_policy: "poly"
+stepsize: 3000
+gamma: 0.1
+power: 0.9
+iter_size: 1 
+display: 10
+average_loss:10
+max_iter: 450000
+momentum: 0.9
+weight_decay: 0.0005
+snapshot: 3000
+snapshot_prefix: "./snapshot/HVSMR"
+solver_mode: GPU
+random_seed: 831486

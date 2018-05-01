@@ -50,7 +50,7 @@ bool trees_retrieve(vector<NeuronTree> & sub_trees, const NeuronTree & pt_consen
         double * feature_gmi = new double[14];
         computeFeature(tmp, feature_morph);
         computeGMI(tmp, feature_gmi);
-        feature_morph[19]=0;    feature_morph[20]=0;
+//        feature_morph[19]=0;    feature_morph[20]=0;
         morph_list.append(feature_morph);
         gmi_list.append(feature_gmi);
 

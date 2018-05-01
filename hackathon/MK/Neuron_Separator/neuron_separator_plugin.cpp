@@ -82,18 +82,19 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		QList<ImageMarker> somas = readMarker_file(inputSomas);
 		this->childsTable = childIndexTable(inputSWCTree);
 		
+        long distth = 4;
 		for (QList<ImageMarker>::iterator it=somas.begin(); it!=somas.end(); ++it)  // collecting all soma locations
 		{
 			for (QList<NeuronSWC>::iterator nodeIt=nodeList.begin(); nodeIt!=nodeList.end(); ++nodeIt)
 			{
-				if (nodeIt->x==it->x-1 && nodeIt->y==it->y-1 && nodeIt->z==it->z-1)
+                if (abs(long(nodeIt->x-it->x-1))<4 && abs(long(nodeIt->y-it->y-1))<4 && abs(long(nodeIt->z-it->z-1))<4)
 				{
 					this->somaIDs.push_back(nodeIt->n);
 					break;
 				}
 			}
 		}
-		//cout << "number of somas: " << this->somaIDs.size() << endl;
+        cout << "number of somas: " << this->somaIDs.size() << endl;
 
 		// ------------ Identify the path of any pair of given soma locations and merge the paths -------------
 		long int wishedID, excludedID;

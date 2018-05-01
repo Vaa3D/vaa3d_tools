@@ -260,6 +260,13 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 	return subvol;
 }
 
+uint8 *RawVolume::loadSubvolume_to_UINT8_MT(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException, iom::exception)
+{
+    //cout<<"TODO: RawVolume::loadSubvolume_to_UINT8_MT\n";
+
+    //
+    return NULL;
+}
 
 
 # define PATH_BUF_LEN   5000

@@ -34,11 +34,11 @@ unix:!macx {
     LIBS += -fopenmp
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
 
-    INCLUDEPATH	+= /local1/work/caffe/include
+    INCLUDEPATH	+= /local1/work/caffe_unet/3D-Caffe/include
     INCLUDEPATH	+= /local1/cuda-8.0/include/
-    INCLUDEPATH	+= /local1/work/caffe/.build_release/src
+    INCLUDEPATH	+= /local1/work/caffe_unet/3D-Caffe/.build_release/src
 
-    LIBS += -L/local1/work/caffe/build/lib
+    LIBS += -L/local1/work/caffe_unet/3D-Caffe/build/lib
     LIBS += -lcaffe
 
     # cuda
@@ -56,7 +56,7 @@ unix:!macx {
     LIBS += -L/local1/Downloads/boost_1_63_0/stage/lib
     LIBS += -L/usr/lib64/atlas
     LIBS += -L/local1/Downloads/cuda/lib64
-    LIBS += -L/local1/work/caffe/.build_release/lib
+    LIBS += -L/local1/work/caffe_unet/3D-Caffe/.build_release/lib
     LIBS += -L/usr/local/lib
     LIBS += -lglog -lgflags -lprotobuf -lboost_system -lboost_thread -llmdb -lleveldb -lstdc++ -lcudnn -lcblas -latlas
 
