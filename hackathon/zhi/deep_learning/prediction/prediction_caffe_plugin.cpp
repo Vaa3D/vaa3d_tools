@@ -232,6 +232,25 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                     V3DLONG zb = iz;
                     V3DLONG ze = iz+patchSize-1; if(ze>=P) continue;
 
+//                    double std = 0;
+//                    for(V3DLONG iiz = zb; iiz <= ze; iiz++)
+//                    {
+//                        double stdSum = 0;
+//                        V3DLONG offsetk = iiz*M*N;
+//                        for(V3DLONG iiy = yb; iiy <= ye; iiy++)
+//                        {
+//                            V3DLONG offsetj = iiy*N;
+//                            for(V3DLONG iix = xb; iix <= xe; iix++)
+//                            {
+//                                double PixelVaule = data1d[offsetk + offsetj + iix];
+//                                stdSum = stdSum + pow(PixelVaule-overall_mean,2);
+//                            }
+//                        }
+//                        std += stdSum/(M*N*P);
+//                    }
+
+//                    if(std<0.01) continue;
+
                     V3DLONG tile_N = xe-xb+1;
                     V3DLONG tile_M = ye-yb+1;
                   //  V3DLONG tile_P = ze-zb+1;
@@ -267,7 +286,7 @@ void prediction_caffe::domenu(const QString &menu_name, V3DPluginCallback2 &call
                             V3DLONG offsetj = iiy*N;
                             for(V3DLONG iix = xb; iix <= xe; iix++)
                             {
-                                int tmp_score = (outputs[j]>0.005)? 1:-1;
+                                int tmp_score = (outputs[j]>0.05)? 1:-1;  //0.01 for testing on ultratracer
                                 im_label[offsetk + offsetj + iix] += tmp_score;
                                 j++;
                             }
@@ -1236,7 +1255,7 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                             V3DLONG offsetj = iiy*N;
                             for(V3DLONG iix = xb; iix <= xe; iix++)
                             {
-                                int tmp_score = (outputs[j]>0.005)? 1:-1;
+                                int tmp_score = (outputs[j]>0.05)? 1:-1;  //0.01 for testing on ultratracer
                                 im_label[offsetk + offsetj + iix] += tmp_score;
                                 j++;
                             }
