@@ -738,7 +738,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 
 		cout << "--------------------------------------------------------------" << endl;
 		cout << "teraflyCombine: This function assembles tera-cubes under the same resolution level to a single image stack (.tif)" << endl;
-		cout << "Usage: v3d -x dllname -f teraflyCombine -i <selected teraFly resolution folder> -o <output path>";
+		cout << "Usage: v3d -x dllname -f teraflyCombine -i <selected teraFly resolution folder> -o <output path>" << endl << endl;
 	}
     else
         return false;
