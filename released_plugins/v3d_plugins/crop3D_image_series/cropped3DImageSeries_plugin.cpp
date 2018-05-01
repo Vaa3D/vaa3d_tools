@@ -616,6 +616,9 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		
 		QString m_InputfolderName = infiles.at(0);
 		QString savePath = outfiles.at(0);
+		QString outputFileName = "combinedStack.tif";
+		if (inparas.size() > 0) outputFileName = inparas.at(0);
+		qDebug() << outputFileName;
 
 		V3DLONG* dims;
 		if (!callback.getDimTeraFly(m_InputfolderName.toStdString(), dims))
@@ -625,10 +628,10 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		}
 		
 		unsigned char* cropped_image = 0;
-		cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(), 0, dims[0] - 1, 0, dims[1] - 1, 0, dims[2] - 1);
+		cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(), 0, dims[0], 0, dims[1], 0, dims[2]);
 		Image4DSimple* new4DImage = new Image4DSimple();
 		new4DImage->createImage(dims[0], dims[1], dims[2], dims[3], V3D_UINT8);
-		QString saveName = savePath + "\\test.tif";
+		QString saveName = savePath + "\\" + outputFileName;
 		const char* fileName = saveName.toAscii();
 
 		simple_saveimage_wrapper(callback, fileName, cropped_image, dims, 1);
@@ -732,6 +735,10 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 			 << "\n\nUsage : v3d -x dllname -f cropTerafly -i <teraFly image folder> <the list file that has soma locations> <save folder of cropped images> -p <cube x side lenth> <cube y side length> <cube z side length>" << endl;
         cout << endl;
         cout << "All folders and files specification require full path input.\n\n";
+
+		cout << "--------------------------------------------------------------" << endl;
+		cout << "teraflyCombine: This function assembles tera-cubes under the same resolution level to a single image stack (.tif)";
+		cout << "Usage: v3d -x dllname -f teraflyCombine -i <selected teraFly resolution folder> -p <output file name> -o <output path>";
 	}
     else
         return false;
