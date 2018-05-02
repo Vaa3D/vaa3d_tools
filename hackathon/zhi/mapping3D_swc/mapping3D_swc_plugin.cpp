@@ -27,9 +27,10 @@ QStringList mapping3D_swc::menulist() const
 
 QStringList mapping3D_swc::funclist() const
 {
-	return QStringList()
-		<<tr("func1")
-		<<tr("help");
+    return QStringList()
+            <<tr("mapping")
+           <<tr("map")
+          <<tr("help");
 }
 struct Point;
 struct Point
@@ -38,6 +39,7 @@ struct Point
     V3DLONG type;
     Point* p;
     V3DLONG childNum;
+    int n,pn;
 };
 
 
@@ -46,6 +48,7 @@ typedef vector<Point*> Tree;
 
 bool map3Dfunc(NeuronTree nt,unsigned char * &data1d, V3DLONG N, V3DLONG M,V3DLONG P,vector<MyMarker*> & outswc_final);
 bool map3Dfunc_raw(NeuronTree nt,string &image_name,vector<MyMarker*> & outswc_final);
+bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & outswc_final,string inswcfn,string outswcfn);
 
 
 void mapping3D_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -357,6 +360,35 @@ bool mapping3D_swc::dofunc(const QString & func_name, const V3DPluginArgList & i
     //    if(inimg1d) {delete []inimg1d; inimg1d=0;}
         return true;
 	}
+    else if (func_name == tr("map"))
+    {
+        if(infiles.size() != 2 && infiles.size() != 3)
+        {
+            cerr<<"Invalid input"<<endl;
+            return false;
+        }
+        string inimg_file = infiles[0];
+        string inswc_file = infiles[1];
+        string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
+        if(outswc_file == "") outswc_file = inswc_file + "_3D.swc";
+
+        cout<<"inimg_file = "<<inimg_file<<endl;
+        cout<<"inswc_file = "<<inswc_file<<endl;
+        cout<<"outswc_file = "<<outswc_file<<endl;
+
+        NeuronTree nt = readSWC_file(QString(inswc_file.c_str()));
+        vector<MyMarker*> outswc_final;
+
+        //
+        if(map3Dfunc_raw_save(nt, inimg_file,outswc_final,inswc_file,outswc_file))
+        {
+            saveSWC_file(outswc_file, outswc_final);
+            v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file.c_str()),0);
+        }
+
+        //
+        return true;
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
@@ -439,7 +471,7 @@ bool map3Dfunc(NeuronTree nt,unsigned char * &data1d, V3DLONG N, V3DLONG M,V3DLO
             }
 
             fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
-            smooth_curve(outswc,5);
+            smooth_curve_zhi(outswc,5);
 
 
             for(V3DLONG d = 0; d <outswc.size(); d++)
@@ -504,7 +536,7 @@ bool map3Dfunc(NeuronTree nt,unsigned char * &data1d, V3DLONG N, V3DLONG M,V3DLO
              }
 
             fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
-            smooth_curve(outswc,5);
+            smooth_curve_zhi(outswc,5);
 
 
             for(V3DLONG d = 0; d <outswc.size(); d++)
@@ -620,7 +652,7 @@ bool map3Dfunc_raw(NeuronTree nt,string &image_name,vector<MyMarker*> & outswc_f
             }
 
             fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
-            smooth_curve(outswc,5);
+            smooth_curve_zhi(outswc,5);
 
             for(V3DLONG d = 0; d <outswc.size(); d++)
             {
@@ -673,7 +705,7 @@ bool map3Dfunc_raw(NeuronTree nt,string &image_name,vector<MyMarker*> & outswc_f
             }
 
             fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
-            smooth_curve(outswc,5);
+            smooth_curve_zhi(outswc,5);
 
 
             for(V3DLONG d = 0; d <outswc.size(); d++)
@@ -684,6 +716,214 @@ bool map3Dfunc_raw(NeuronTree nt,string &image_name,vector<MyMarker*> & outswc_f
                 outswc[d]->y = outswc[d]->y + yb;
                 outswc_final.push_back(outswc[d]);
             }
+            if(data1d) {delete []data1d; data1d = 0;}
+            outswc.clear();
+        }
+    }
+
+    return true;
+
+}
+
+bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & outswc_final,string inswcfn,string outswcfn)
+{
+    V3DLONG siz = nt.listNeuron.size();
+    Tree tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        Point* pt = new Point;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->r = s.r;
+        pt ->type = s.type;
+        pt->p = NULL;
+        pt->childNum = 0;
+        pt->n = s.n;
+        pt->pn = s.pn;
+        tree.push_back(pt);
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (nt.listNeuron[i].pn<0) continue;
+        V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
+        tree[i]->p = tree[pid];
+        tree[pid]->childNum++;
+    }
+
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->childNum!=1)//tip or branch point
+        {
+            Segment* seg = new Segment;
+            Point* cur = tree[i];
+
+            NeuronTree fragment;
+
+            do
+            {
+                NeuronSWC S;
+                S.n = cur->n;
+                S.type = 3;
+                S.x = cur->x;
+                S.y = cur->y;
+                S.z = cur->z;
+                S.r = cur->r;
+                S.pn = cur->pn;
+
+                fragment.listNeuron.append(S);
+                fragment.hashNeuron.insert(S.n, fragment.listNeuron.size()-1);
+
+                seg->push_back(cur);
+                cur = cur->p;
+            }
+            while(cur && cur->childNum==1);
+            seg_list.push_back(seg);
+
+            QString inputfn = QString::fromStdString(inswcfn);
+
+            QString inputfragment = inputfn.left(inputfn.lastIndexOf(".")).append(QString("_manualtraced%1.swc").arg(i));
+            writeSWC_file(inputfragment,fragment);
+        }
+    }
+
+    vector<MyMarker*> outswc;
+
+    unsigned char * data1d = 0;
+    V3DLONG *im3D_zz = 0;
+    V3DLONG *im3D_sz = 0;
+
+    int datatype;
+    if (!loadRawRegion(const_cast<char *>(image_name.c_str()), data1d, im3D_zz, im3D_sz,datatype,0,0,0,1,1,1))
+    {
+        return false;
+    }
+
+    if(data1d) {delete []data1d; data1d = 0;}
+    V3DLONG N = im3D_zz[0];
+    V3DLONG M = im3D_zz[1];
+    V3DLONG P = im3D_zz[2];
+    for (V3DLONG i=0;i<seg_list.size();i++)
+    {
+        V3DLONG xb = N-1;
+        V3DLONG xe = 0;
+        V3DLONG yb = M-1;
+        V3DLONG ye = 0;
+
+        for (V3DLONG j=0;j<seg_list[i]->size();j++)
+        {
+            Point* node = seg_list[i]->at(j);
+            if(node->x < xb) xb = node->x;
+            if(node->x > xe) xe = node->x;
+            if(node->y < yb) yb = node->y;
+            if(node->y > ye) ye = node->y;
+        }
+
+        vector<MyMarker> nearpos_vec, farpos_vec; // for near/far locs testing
+        nearpos_vec.clear();
+        farpos_vec.clear();
+        if(seg_list[i]->size() > 2)
+        {
+            for (V3DLONG j=0;j<seg_list[i]->size();j++)
+            {
+                Point* node = seg_list[i]->at(j);
+                XYZ loc0_t, loc1_t;
+                loc0_t = XYZ(node->x, node->y,  0); // node->z
+                loc1_t = XYZ(node->x, node->y,  P-1);
+                XYZ loc0 = loc0_t;
+                XYZ loc1 = loc1_t;
+
+                nearpos_vec.push_back(MyMarker(loc0.x - xb, loc0.y - yb, loc0.z));
+                farpos_vec.push_back(MyMarker(loc1.x - xb, loc1.y - yb, loc1.z));
+            }
+
+            if (!loadRawRegion(const_cast<char *>(image_name.c_str()), data1d, im3D_zz, im3D_sz,datatype,xb,yb,0,xe+1,ye+1,P))
+            {
+                printf("can not load the region");
+                if(data1d) {delete []data1d; data1d = 0;}
+                return false;
+            }
+
+            fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
+            smooth_curve_zhi(outswc,5);
+
+            for(V3DLONG d = 0; d <outswc.size(); d++)
+            {
+                outswc[d]->radius = 2;
+                outswc[d]->type = 2;
+                outswc[d]->x = outswc[d]->x + xb;
+                outswc[d]->y = outswc[d]->y + yb;
+                outswc_final.push_back(outswc[d]);
+            }
+
+            //
+            QString outputfn = QString::fromStdString(outswcfn);
+            QString outseg = outputfn.left(outputfn.lastIndexOf(".")).append(QString("_seg%1.swc").arg(i));
+            saveSWC_file(outseg.toStdString(), outswc);
+
+            //
+            if(data1d) {delete []data1d; data1d = 0;}
+            outswc.clear();
+        }
+        else if(seg_list[i]->size() == 2)
+        {
+            Point* node1 = seg_list[i]->at(0);
+            Point* node2 = seg_list[i]->at(1);
+
+            for (V3DLONG j=0;j<3;j++)
+            {
+                XYZ loc0_t, loc1_t;
+                if(j ==0)
+                {
+                    loc0_t = XYZ(node1->x, node1->y,  node1->z);
+                    loc1_t = XYZ(node1->x, node1->y,  P-1);
+                }
+                else if(j ==1)
+                {
+                    loc0_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  0.5*(node1->z + node2->z));
+                    loc1_t = XYZ(0.5*(node1->x + node2->x),  0.5*(node1->y + node2->y),  P-1);
+
+                }
+                else
+                {
+                    loc0_t = XYZ(node2->x, node2->y,  node2->z);
+                    loc1_t = XYZ(node2->x, node2->y,  P-1);
+                }
+
+                XYZ loc0 = loc0_t;
+                XYZ loc1 = loc1_t;
+
+                nearpos_vec.push_back(MyMarker(loc0.x - xb, loc0.y - yb, loc0.z));
+                farpos_vec.push_back(MyMarker(loc1.x - xb, loc1.y - yb, loc1.z));
+             }
+
+            if (!loadRawRegion(const_cast<char *>(image_name.c_str()), data1d, im3D_zz, im3D_sz,datatype,xb,yb,0,xe+1,ye+1,P))
+            {
+                printf("can not load the region");
+                if(data1d) {delete []data1d; data1d = 0;}
+                return false;
+            }
+
+            fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
+            smooth_curve_zhi(outswc,5);
+
+            for(V3DLONG d = 0; d <outswc.size(); d++)
+            {
+                outswc[d]->radius = 2;
+                outswc[d]->type = 2;
+                outswc[d]->x = outswc[d]->x + xb;
+                outswc[d]->y = outswc[d]->y + yb;
+                outswc_final.push_back(outswc[d]);
+            }
+
+            //
+            QString outputfn = QString::fromStdString(outswcfn);
+            QString outseg = outputfn.left(outputfn.lastIndexOf(".")).append(QString("_seg%1.swc").arg(i));
+            saveSWC_file(outseg.toStdString(), outswc);
+
+            //
             if(data1d) {delete []data1d; data1d = 0;}
             outswc.clear();
         }
