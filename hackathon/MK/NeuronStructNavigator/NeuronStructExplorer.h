@@ -2,32 +2,48 @@
 #define NEURONSTRUCTEXPLORER_H
 
 #include <vector>
-#include <unordered_map>
+#include <list>
 #include <map>
+#include <unordered_map>
 #include <string>
 
 #include <qlist.h>
 #include <qstring.h>
 #include <qstringlist.h>
 
+#include "v_neuronswc.h"
+
 #include "basic_surf_objs.h"
 
 using namespace std;
 
+struct segProfile
+{
+	segProfile() { hierarchy = 0; }
+
+	vector<NeuronSWC> seg;
+	long segID;
+	long nodeCount;
+	bool refine;
+
+	int branchID, paBranchID;
+	int hierarchy;
+};
+
 class NeuronStructExplorer
 {
 public:
-	/********* Constructors *********/
+	/********* Constructors and basic data members *********/
 	NeuronStructExplorer() {};
 	NeuronStructExplorer(QString neuronFileName);
 	NeuronStructExplorer(string neuronFileName);
-	/********************************/
 
 	NeuronTree* singleTreePtr;
 	NeuronTree singleTree;
 	NeuronTree processedTree;
 	vector<NeuronTree>* treeVectorPtr;
 	QString neuronFileName;
+	/*******************************************************/
 
 	/********* Pixel based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
@@ -46,6 +62,11 @@ public:
 	map<int, long int> nodeDistPDF;
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
 	/*********************************/
+
+	/********* Segment - Image assessment functionalities *********/
+	V_NeuronSWC_list segmentList;
+	void segmentDecompose(NeuronTree* inputTreePtr);
+	/**************************************************************/
 };
 
 #endif

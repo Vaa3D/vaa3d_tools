@@ -3,6 +3,8 @@
 #include <cmath>
 
 #include "basic_4dimage.h"
+#include "neuron_format_converter.h"
+
 #include "NeuronStructExplorer.h"
 
 using namespace std;
@@ -258,4 +260,12 @@ void NeuronStructExplorer::shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree
 	}
 	this->nodeDistCDF[0] = this->nodeDistPDF[0];
 	for (int i = 1; i < binNum; ++i) this->nodeDistCDF[i] = this->nodeDistCDF[i - 1] + nodeDistPDF[i];
+}
+
+void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
+{
+	// -- This function used 
+
+	this->segmentList.clear();
+	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
 }
