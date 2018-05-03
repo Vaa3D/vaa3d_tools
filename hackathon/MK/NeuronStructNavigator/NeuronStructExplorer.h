@@ -17,19 +17,6 @@
 
 using namespace std;
 
-struct segProfile
-{
-	segProfile() { hierarchy = 0; }
-
-	vector<NeuronSWC> seg;
-	long segID;
-	long nodeCount;
-	bool refine;
-
-	int branchID, paBranchID;
-	int hierarchy;
-};
-
 class NeuronStructExplorer
 {
 public:
