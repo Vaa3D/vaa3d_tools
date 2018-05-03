@@ -369,7 +369,7 @@ bool mapping3D_swc::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
-        string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
+        string outswc_file = outfiles[0];
         if(outswc_file == "") outswc_file = inswc_file + "_3D.swc";
 
         cout<<"inimg_file = "<<inimg_file<<endl;
@@ -753,6 +753,7 @@ bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & out
     }
 
     vector<Segment*> seg_list;
+    long n=0;
     for (V3DLONG i=0;i<siz;i++)
     {
         if (tree[i]->childNum!=1)//tip or branch point
@@ -784,7 +785,7 @@ bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & out
 
             QString inputfn = QString::fromStdString(inswcfn);
 
-            QString inputfragment = inputfn.left(inputfn.lastIndexOf(".")).append(QString("_manualtraced%1.swc").arg(i));
+            QString inputfragment = inputfn.left(inputfn.lastIndexOf(".")).append(QString("_manualtraced%1.swc").arg(n++));
             writeSWC_file(inputfragment,fragment);
         }
     }
@@ -845,6 +846,7 @@ bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & out
                 if(data1d) {delete []data1d; data1d = 0;}
                 return false;
             }
+
 
             fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, xe-xb+1,ye-yb+1,P, 1, 5);
             smooth_curve_zhi(outswc,5);
