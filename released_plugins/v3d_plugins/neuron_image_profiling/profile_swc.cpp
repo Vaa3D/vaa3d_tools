@@ -9,7 +9,7 @@
 #include "profile_swc.h"
 #include <vector>
 #include <iostream>
-#include "eswc_core.h"
+//#include "eswc_core.h"
 #include <math.h>
 #include <numeric>
 #include <algorithm>
