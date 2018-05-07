@@ -913,7 +913,7 @@ bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & out
 
             for(V3DLONG d = 0; d <outswc.size(); d++)
             {
-                outswc[d]->radius = 2;
+                outswc[d]->radius = 1;
                 outswc[d]->type = 2;
                 outswc[d]->x = outswc[d]->x + xb;
                 outswc[d]->y = outswc[d]->y + yb;
