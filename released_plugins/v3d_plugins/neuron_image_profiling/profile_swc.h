@@ -5,7 +5,11 @@
 #ifndef __PROFILE_SWC_H_
 #define __PROFILE_SWC_H__
 
+#include <vector>
+
 #include <v3d_interface.h>
+
+using namespace std;
 
 struct IMAGE_METRICS {
     int type; // segment type: 2-- soma;  2 -- dendrite;3--axon ;4--apical dendrite;  -1 --- not-defined/all types
@@ -49,6 +53,8 @@ IMAGE_METRICS compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegm
 bool flip_y (Image4DSimple * image);
 bool invert_intensity(Image4DSimple * image);
 bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_file);
+
+IMAGE_METRICS compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, float dilate_ratio, float cut_off_ratio, V3DPluginCallback2& callback);
 
 
 #endif

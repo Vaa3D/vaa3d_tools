@@ -9,18 +9,6 @@
 
 using namespace std;
 
-NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
-{
-	QStringList fileNameParse = inputFileName.split(".");
-	if (fileNameParse.back() == "swc")
-	{	
-		this->neuronFileName = inputFileName;
-		NeuronTree inputSWC = readSWC_file(inputFileName);
-		this->singleTree = inputSWC;
-		this->singleTreePtr = &(this->singleTree);
-	}
-}
-
 NeuronStructExplorer::NeuronStructExplorer(string inputFileName)
 {
 	this->neuronFileName = QString::fromStdString(inputFileName);
@@ -264,7 +252,7 @@ void NeuronStructExplorer::shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree
 
 void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
 {
-	// -- This function used 
+	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
 
 	this->segmentList.clear();
 	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);

@@ -22,7 +22,6 @@ class NeuronStructExplorer
 public:
 	/********* Constructors and basic data members *********/
 	NeuronStructExplorer() {};
-	NeuronStructExplorer(QString neuronFileName);
 	NeuronStructExplorer(string neuronFileName);
 
 	NeuronTree* singleTreePtr;
@@ -32,13 +31,13 @@ public:
 	QString neuronFileName;
 	/*******************************************************/
 
-	/********* Pixel based deep neural network result refining/cleaning *********/
+	/********* Pixel-based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
 	void detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
 	void pixelStackZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
 	/****************************************************************************/
 
-	/********* Distance based analysis *********/
+	/********* Distance-based SWC analysis *********/
 	vector<vector<float>> FPsList;
 	vector<vector<float>> FNsList;
 	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
@@ -50,7 +49,7 @@ public:
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
 	/*********************************/
 
-	/********* Segment - Image assessment functionalities *********/
+	/********* Segment <-> Image assessment functionalities *********/
 	V_NeuronSWC_list segmentList;
 	void segmentDecompose(NeuronTree* inputTreePtr);
 	/**************************************************************/
