@@ -737,7 +737,7 @@ bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & out
         pt->y = s.y;
         pt->z = s.z;
         pt->r = s.r;
-        pt ->type = s.type;
+        pt->type = s.type;
         pt->p = NULL;
         pt->childNum = 0;
         pt->n = s.n;
@@ -767,7 +767,7 @@ bool map3Dfunc_raw_save(NeuronTree nt,string &image_name,vector<MyMarker*> & out
             {
                 NeuronSWC S;
                 S.n = cur->n;
-                S.type = 3;
+                S.type = cur->type;
                 S.x = cur->x;
                 S.y = cur->y;
                 S.z = cur->z;
