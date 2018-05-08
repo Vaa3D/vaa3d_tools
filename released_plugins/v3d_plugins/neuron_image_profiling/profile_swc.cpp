@@ -448,6 +448,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     int height = max_y - min_y + 1;
     int depth =  max_z - min_z + 1;
 
+	cout << "ROI dimension: " << width << " x " << height << " x " << depth << endl;
+
 
     if (image->getZDim() == 1)
     {
@@ -530,6 +532,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         ye = boundValue(node.y + fuzzy_r_ratio*r + 0.5, 0,image->getYDim()-1 );
         zb = boundValue(node.z - fuzzy_r_ratio*r + 0.5, 0,image->getZDim()-1 );
         ze = boundValue(node.z + fuzzy_r_ratio*r + 0.5, 0,image->getZDim()-1 );
+		
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -555,7 +558,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         ye = boundValue(node.y + r + dilate_radius + 0.5, 0,image->getYDim()-1 );
         zb = boundValue(node.z - r - dilate_radius + 0.5, 0,image->getZDim()-1 );
         ze = boundValue(node.z + r + dilate_radius + 0.5, 0,image->getZDim()-1 );
-
+		//cout << node.x << " " << xb << " " << xe;
 
 
         for (V3DLONG z = zb; z <= ze; z++)
@@ -566,6 +569,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
                 {
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
+					//cout << int(roi_1d_visited[roi_index]) << " ";
                     if  ( roi_1d_visited[roi_index] != FG  &&  roi_1d_visited[roi_index] != FUZZY )
                     {
                         roi_1d_visited[roi_index] = BG;
@@ -606,7 +610,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
 
     }
     cout << "number of fg pixels:" << fg_1d.size() <<endl;
-    cout << "number of bg pixels:" << bg_1d.size() <<endl;
+	cout << "number of bg pixels:" << bg_1d.size() << endl << endl;
 
    /*for debug purpose only
     Image4DSimple * new4DImage = new Image4DSimple();
@@ -827,7 +831,31 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 }
 
 
+/*******************************************/
 
+vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback)
+{
+	vector<basicSegmentROIStats> segmentProfiles;
+	QList<IMAGE_METRICS> segMetrics;
+	for (vector<QList<NeuronSWC>>::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)
+	{
+		NeuronTree segTree;
+		segTree.listNeuron = *it;
+		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, 1, 0.05, callback);
+		basicSegmentROIStats curROIStats;
+		curROIStats.fgMean = curSegMetrics.fg_mean;
+		curROIStats.bgMean = curSegMetrics.bg_mean;
+		curROIStats.fgStd = curSegMetrics.fg_std;
+		curROIStats.bgStd = curSegMetrics.bg_std;
+		curROIStats.SNR = curSegMetrics.snr;
+		curROIStats.CNR = curSegMetrics.cnr;
+		curROIStats.tubularityMean = curSegMetrics.tubularity_mean;
+		curROIStats.tubularityStd = curSegMetrics.tubularity_std;
 
+		segmentProfiles.push_back(curROIStats);
+	}
+
+	return segmentProfiles;
+}
 
 

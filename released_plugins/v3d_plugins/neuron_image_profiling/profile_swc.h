@@ -40,6 +40,16 @@ struct ENSEMBLE_METRICS {
     double std_fg;
 };
 
+struct basicSegmentROIStats
+{
+	double fgMean, bgMean;
+	double fgStd, bgStd;
+	double CNR, SNR;
+	int dims[3];
+	
+	double tubularityMean, tubularityStd;
+};
+
 bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent);
 bool profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip,int invert, float cut_off_ratio, V3DPluginCallback2 &callback);
@@ -54,7 +64,7 @@ bool flip_y (Image4DSimple * image);
 bool invert_intensity(Image4DSimple * image);
 bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_file);
 
-IMAGE_METRICS compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, float dilate_ratio, float cut_off_ratio, V3DPluginCallback2& callback);
+vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback);
 
 
 #endif
