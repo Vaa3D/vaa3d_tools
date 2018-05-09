@@ -19,6 +19,8 @@
 #include "v3d_message.h"
 #include "compute_tubularity.h"
 
+#include "neuron_image_profiling_plugin.h"
+
 using namespace std;
 
 const QString title = QObject::tr("Image Profile with SWC ROI");
@@ -417,6 +419,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
            r = node.radius;
        }
 
+	   //r = 2; //cout << r << endl;
+
        float dilate_radius = dilate_ratio * r;
        V3DLONG node_x_min = node.x - r - dilate_radius + 0.5; // with rounding
        V3DLONG node_y_min = node.y - r - dilate_radius + 0.5;
@@ -448,7 +452,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     int height = max_y - min_y + 1;
     int depth =  max_z - min_z + 1;
 
-	cout << "ROI dimension: " << width << " x " << height << " x " << depth << endl;
+	//cout << "ROI dimension: " << width << " x " << height << " x " << depth << endl;
 
 
     if (image->getZDim() == 1)
@@ -609,8 +613,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         }
 
     }
-    cout << "number of fg pixels:" << fg_1d.size() <<endl;
-	cout << "number of bg pixels:" << bg_1d.size() << endl << endl;
+    //cout << "number of fg pixels:" << fg_1d.size() <<endl;
+	//cout << "number of bg pixels:" << bg_1d.size() << endl << endl;
 
    /*for debug purpose only
     Image4DSimple * new4DImage = new Image4DSimple();
@@ -841,7 +845,7 @@ vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vec
 	{
 		NeuronTree segTree;
 		segTree.listNeuron = *it;
-		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, 1, 0.05, callback);
+		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, 3, 0.05, callback);
 		basicSegmentROIStats curROIStats;
 		curROIStats.fgMean = curSegMetrics.fg_mean;
 		curROIStats.bgMean = curSegMetrics.bg_mean;
