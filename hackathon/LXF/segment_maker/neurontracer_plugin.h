@@ -962,6 +962,23 @@ class neurontracer_neutube_raw : public QDialog
         QString teraflyfilename;
 
     };
+class lookPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~lookPanel();
+
+    QGridLayout *gridLayout;
+    V3DPluginCallback2 & m_v3d;
+
+
+private slots:
+    void _slot_sync_onetime();
+    void _slot_set_markers();
+
+};
 
 #endif
 

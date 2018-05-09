@@ -78,5 +78,5 @@ SOURCES += $$$$VAA3DPATH/neuron_editing/v_neuronswc.cpp \
 HEADERS += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
 SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 
-TARGET	= $$qtLibraryTarget(ultratracer_for_segment)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/ultratracer_for_segment/
+TARGET	= $$qtLibraryTarget(segment_maker)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/segment_maker/

@@ -10,6 +10,7 @@
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 enum tracingMethod {app1, app2, neutube,snake,most,mst, neurogpstree,rivulet2,tremap,gd,advantra,neuronchaser};
 
+
 struct TRACE_LS_PARA
 {
     int is_gsdt;
@@ -27,6 +28,8 @@ struct TRACE_LS_PARA
     int tracing_comb;
     int grid_trace;
     int global_name;
+    double o_x,o_y,o_z;
+    double ratio_x,ratio_y,ratio_z;
 
     V3DLONG in_sz[3];
 
@@ -88,6 +91,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
 
 vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString& filename,NeuronTree nt);
+
 
 #endif
 

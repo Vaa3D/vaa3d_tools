@@ -15,7 +15,8 @@
 using namespace std;
 
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
-
+static lookPanel *panel = 0;
+NeuronTree nt;
  
 QStringList neurontracer::menulist() const
 {
@@ -204,45 +205,76 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     else if (menu_name == tr("trace_NEUTUBE"))
     {
         TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
+        bool bmenu = false;
+        //int curr_model=0;
+        if(bmenu)
         {
-            v3d_msg("Please select the image file.");
-            return;
+            neurontracer_neutube_raw dialog(callback, parent);
+
+            if (dialog.image && dialog.listLandmarks.size()==0)
+                return;
+
+            if (dialog.exec()!=QDialog::Accepted)
+                return;
+
+            if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
+            {
+                v3d_msg("Please select the image file.");
+                return;
+            }
+
+            if(dialog.markerfilename.isEmpty() && ! dialog.image)
+            {
+                v3d_msg("Please select the marker file.");
+                return;
+            }
+
+            if(!dialog.image)
+            {
+                P.markerfilename = dialog.markerfilename;
+                P.image = 0;
+            }else
+            {
+                P.image = dialog.image;
+                P.listLandmarks = dialog.listLandmarks;
+            }
+            if(dialog.teraflyfilename.isEmpty())
+                P.inimg_file = dialog.rawfilename;
+            else
+                P.inimg_file = dialog.teraflyfilename;
+            P.block_size = dialog.block_size;
+            //  P.adap_win = dialog.adap_win;
+
+            // P.tracing_3D = dialog.tracing_3D;
         }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        if(dialog.teraflyfilename.isEmpty())
-            P.inimg_file = dialog.rawfilename;
-        else
-            P.inimg_file = dialog.teraflyfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
         P.method = neutube;
-        P.tracing_3D = dialog.tracing_3D;
         grid_raw_all(callback,parent,P,bmenu);
+
+        QString name = P.inimg_file+"_neutube.swc";
+        nt = readSWC_file(name);
+        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            nt.listNeuron[i].x = nt.listNeuron[i].x*P.ratio_x +P.o_x;
+            nt.listNeuron[i].y = nt.listNeuron[i].y*P.ratio_y+P.o_y;
+            nt.listNeuron[i].z = nt.listNeuron[i].z*P.ratio_z+P.o_z;
+        }
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
+
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
     }else if (menu_name == tr("trace_SNAKE"))
     {
         TRACE_LS_PARA P;
@@ -765,7 +797,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
         printf("vaa3d -x plugin_name -f trace_MOST -i <inimg_file> -p <inmarker_file> <block_size> <adaptive_win> <channel> <bkg_thresh> <seed> <slip>\n");
-        printf("inimg_file       Should be 8 bit image\n");
+        printf("inimg_file  }     Should be 8 bit image\n");
         printf("inmarker_file    Please specify the path of the marker file\n");
         printf("block_size       Default 1024\n");
         printf("adaptive_win     If use adaptive block size (1 for yes and 0 for no. Default 0.)\n");
@@ -781,5 +813,129 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 	else return false;
 
 	return true;
+}
+lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
+    QDialog(parent), m_v3d(_v3d)
+{
+
+    gridLayout = new QGridLayout();
+    QPushButton* sync     = new QPushButton("Sync (one shot)");
+    QPushButton* set_markers     = new QPushButton("Set Annotations");
+    gridLayout->addWidget(sync, 0,0);
+    gridLayout->addWidget(set_markers, 1,0);
+    setLayout(gridLayout);
+    setWindowTitle(QString("Synchronize annotation "));
+    connect(sync,     SIGNAL(clicked()), this, SLOT(_slot_sync_onetime()));
+    connect(set_markers,     SIGNAL(clicked()), this, SLOT(_slot_set_markers()));
+
+}
+
+lookPanel::~lookPanel()
+{
+}
+
+
+void lookPanel::_slot_sync_onetime()
+{
+    cout<<"this is slot sync onetime"<<endl;
+    NeuronTree nt_p = m_v3d.getSWCTeraFly();
+    NeuronTree  resultTree;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    V3DLONG max_id=0;
+
+    for(int j = 0; j < nt_p.listNeuron.size(); j++)
+    {
+        listNeuron.append(nt_p.listNeuron.at(j));
+        hashNeuron.insert(nt_p.listNeuron.at(j).n, listNeuron.size()-1);
+    }
+    for(V3DLONG i=0;i<nt_p.listNeuron.size();i++)
+    {
+        if(nt_p.listNeuron[i].n>max_id)
+        {
+            max_id = nt_p.listNeuron[i].n;
+        }
+    }
+    resultTree.listNeuron = listNeuron;
+    resultTree.hashNeuron = hashNeuron;
+    resultTree.color.r = 0;
+    resultTree.color.g = 0;
+    resultTree.color.b = 0;
+    resultTree.color.a = 0;
+    QString namelxf = "jjjjjjjjjjjjjjj.swc";
+    writeSWC_file(namelxf,resultTree);
+    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+    {
+        nt.listNeuron[i].n = nt.listNeuron[i].n + max_id;
+        if(nt.listNeuron[i].pn!=-1)
+        {
+            nt.listNeuron[i].pn = nt.listNeuron[i].pn + max_id;
+        }
+        resultTree.listNeuron.push_back(nt.listNeuron[i]);
+    }
+    QString outname = "hahhaah.swc";
+    writeSWC_file(outname,resultTree);
+    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
+    int current_index = -1;
+    for(int i=0; i<list_3dviewer.size();i++)
+    {
+        if(m_v3d.getImageName(list_3dviewer[i]) == "3D View [Annotations in TeraFly]")
+        {
+            current_index = i;
+         }
+    }
+
+    LandmarkList terafly_landmarks = m_v3d.getLandmarkTeraFly();
+    if(current_index == -1)
+    {
+        V3dR_MainWindow * new3DWindow = NULL;
+        new3DWindow = m_v3d.createEmpty3DViewer();
+        QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
+        treeList->push_back(resultTree);
+        m_v3d.setWindowDataTitle(new3DWindow, "Annotations in TeraFly");
+        m_v3d.setHandleLandmarkList_Any3DViewer(new3DWindow,terafly_landmarks);
+        m_v3d.update_NeuronBoundingBox(new3DWindow);
+        m_v3d.setSWCTeraFly(resultTree);
+
+    }else
+    {
+        V3dR_MainWindow *surface_win = m_v3d.getListAll3DViewers()[current_index];
+        QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (surface_win);
+        treeList->clear();
+        treeList->push_back(resultTree);
+        m_v3d.setHandleLandmarkList_Any3DViewer(surface_win,terafly_landmarks);
+        m_v3d.update_NeuronBoundingBox(surface_win);
+        m_v3d.setSWCTeraFly(resultTree);
+    }
+}
+
+void lookPanel::_slot_set_markers()
+{
+    cout<<"this is slot set markers"<<endl;
+    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
+    int current_index = -1;
+    for(int i=0; i<list_3dviewer.size();i++)
+    {
+        if(m_v3d.getImageName(list_3dviewer[i]) == "3D View [Annotations in TeraFly]")
+        {
+            current_index = i;
+         }
+    }
+    if(current_index != -1)
+    {
+        V3dR_MainWindow *surface_win = m_v3d.getListAll3DViewers()[current_index];
+        LandmarkList* updated_landmarks = m_v3d.getHandleLandmarkList_Any3DViewer(surface_win);
+        QList<NeuronTree> * updated_treeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+        m_v3d.setLandmarkTeraFly(*updated_landmarks);
+        if(updated_treeList->size()>0){
+            NeuronTree updated_nt = updated_treeList->at(0);
+            m_v3d.setSWCTeraFly(updated_nt);
+
+        }
+
+    }
+
 }
 
