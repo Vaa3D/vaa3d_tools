@@ -47,7 +47,7 @@ struct basicSegmentROIStats
 	double CNR, SNR;
 	int dims[3];
 	
-	double tubularityMean, tubularityStd;
+	double tubularityMean, tubularityStd, segTub;
 };
 
 bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent);
@@ -66,6 +66,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
 
 vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback);
 
+void findSegLowerBound(QList<NeuronSWC>* segPtr, Image4DSimple* image4DPtr, V3DLONG lBounds[]);
 
 
 #endif

@@ -73,8 +73,7 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 		string caseNum = folderPath.substr(folderPath.length() - 9, 9);
 		//cout << caseNum << endl;
-		string inputImgName = "Y:\\mips\\";
-		inputImgName = inputImgName + caseNum + "_ds4.v3draw";
+		string inputImgName = folderPath + "\\" + caseNum + "_ds4.v3draw";
 		const char* inputImgNameC = inputImgName.c_str();
 		char* inputImgNameChar = new char[inputImgName.length()];
 		strcpy(inputImgNameChar, inputImgNameC);
@@ -115,6 +114,9 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
 				if (nt.listNeuron.at(0).type == 2) segmentListAxonMan.push_back(nt.listNeuron);
 				else if (nt.listNeuron.at(0).type == 3) segmentListDendriteMan.push_back(nt.listNeuron);
+
+				for (QList<NeuronSWC>::iterator it = nt.listNeuron.begin(); it != nt.listNeuron.end(); ++it)
+					it->radius = 2;
 			}
 		}
 
@@ -123,12 +125,12 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 		vector<basicSegmentROIStats> axonManProfiles;
 		vector<basicSegmentROIStats> dendriteManProfiles;
 
-		vector<double> axonTubMeans, axonTubStds, axonSegSNRs, axonSegCNRs;
-		vector<double> denTubMeans, denTubStds, denSegSNRs, denSegCNRs;
-		string saveRootEst = "Y:\\caseSummary_est\\";
+		vector<double> axonTubMeans, axonTubStds, axonTubSegMeans, axonSegSNRs, axonSegCNRs;
+		vector<double> denTubMeans, denTubStds, denTubSegMeans, denSegSNRs, denSegCNRs;
+		string saveRootEst = "D:\\Work\\IVSCC\\caseSummary_est\\";
 		string saveFilePathEst = saveRootEst + caseNum + ".csv";
 		ofstream outputFileEst(saveFilePathEst);
-		string saveRootMan = "Y:\\caseSummary_manual\\";
+		string saveRootMan = "D:\\Work\\IVSCC\\caseSummary_manual\\";
 		string saveFilePathMan = saveRootMan + caseNum + ".csv";
 		ofstream outputFileMan(saveFilePathMan);
 		if (segmentListAxonEst.size() > 0)
@@ -138,12 +140,14 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			
 			axonTubMeans.clear();
 			axonTubStds.clear();
+			axonTubSegMeans.clear();
 			axonSegSNRs.clear();
 			axonSegCNRs.clear();
 			for (vector<basicSegmentROIStats>::iterator it = axonEstProfiles.begin(); it != axonEstProfiles.end(); ++it)
 			{
 				axonTubMeans.push_back(it->tubularityMean);
 				axonTubStds.push_back(it->tubularityStd);
+				axonTubSegMeans.push_back(it->segTub);
 				axonSegSNRs.push_back(it->SNR);
 				axonSegCNRs.push_back(it->CNR);
 			}
@@ -153,6 +157,12 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			for (vector<double>::iterator it = axonTubMeans.begin(); it != axonTubMeans.end(); ++it)
 				axonEstTubStdAll = axonEstTubStdAll + (*it - axonEstTubMeanAll) * (*it - axonEstTubMeanAll);
 			axonEstTubStdAll = axonEstTubStdAll / axonTubMeans.size();
+
+			double axonEstTubMeanSegs = accumulate(axonTubSegMeans.begin(), axonTubSegMeans.end(), 0.0) / axonTubSegMeans.size();
+			double axonEstTubStdSegs = 0;
+			for (vector<double>::iterator it = axonTubSegMeans.begin(); it != axonTubSegMeans.end(); ++it)
+				axonEstTubStdSegs = axonEstTubStdSegs + (*it - axonEstTubMeanSegs) * (*it - axonEstTubMeanSegs);
+			axonEstTubStdSegs = axonEstTubStdSegs / axonTubSegMeans.size();
 
 			double axonEstSNRmean = accumulate(axonSegSNRs.begin(), axonSegSNRs.end(), 0.0) / axonSegSNRs.size();
 			double axonEstSNRstd = 0;
@@ -166,7 +176,8 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 				axonEstCNRstd = axonEstCNRstd + (*it - axonEstCNRmean) * (*it - axonEstCNRmean);
 			axonEstCNRstd = axonEstCNRstd / axonSegCNRs.size();
 
-			outputFileEst << axonEstTubMeanAll << "," << axonEstTubStdAll << "," << axonEstSNRmean << "," << axonEstSNRstd << "," << axonEstCNRmean << "," << axonEstCNRstd << endl;
+			outputFileEst << axonEstTubMeanAll << "," << axonEstTubStdAll << "," << axonEstTubMeanSegs << "," << axonEstTubStdSegs << ","
+				<< axonEstSNRmean << "," << axonEstSNRstd << "," << axonEstCNRmean << "," << axonEstCNRstd << endl;
 		}
 		
 		if (segmentListDendriteEst.size() > 0)
@@ -176,12 +187,14 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 			denTubMeans.clear();
 			denTubStds.clear();
+			denTubSegMeans.clear();
 			denSegSNRs.clear();
 			denSegCNRs.clear();
 			for (vector<basicSegmentROIStats>::iterator it = dendriteEstProfiles.begin(); it != dendriteEstProfiles.end(); ++it)
 			{
 				denTubMeans.push_back(it->tubularityMean);
 				denTubStds.push_back(it->tubularityStd);
+				denTubSegMeans.push_back(it->segTub);
 				denSegSNRs.push_back(it->SNR);
 				denSegCNRs.push_back(it->CNR);
 			}
@@ -191,6 +204,12 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			for (vector<double>::iterator it = denTubMeans.begin(); it != denTubMeans.end(); ++it)
 				denEstTubStdAll = denEstTubStdAll + (*it - denEstTubMeanAll) * (*it - denEstTubMeanAll);
 			denEstTubStdAll = denEstTubStdAll / denTubMeans.size();
+
+			double denEstTubMeanSegs = accumulate(denTubSegMeans.begin(), denTubSegMeans.end(), 0.0) / denTubSegMeans.size();
+			double denEstTubStdSegs = 0;
+			for (vector<double>::iterator it = denTubSegMeans.begin(); it != denTubSegMeans.end(); ++it)
+				denEstTubStdSegs = denEstTubStdSegs + (*it - denEstTubMeanSegs) * (*it - denEstTubMeanSegs);
+			denEstTubStdSegs = denEstTubStdSegs / denTubSegMeans.size();
 
 			double denEstSNRmean = accumulate(axonSegSNRs.begin(), denSegSNRs.end(), 0.0) / denSegSNRs.size();
 			double denEstSNRstd = 0;
@@ -204,7 +223,8 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 				denEstCNRstd = denEstCNRstd + (*it - denEstCNRmean) * (*it - denEstCNRmean);
 			denEstCNRstd = denEstCNRstd / denSegCNRs.size();
 
-			outputFileEst << denEstTubMeanAll << "," << denEstTubStdAll << "," << denEstSNRmean << "," << denEstSNRstd << "," << denEstCNRmean << "," << denEstCNRstd << endl;
+			outputFileEst << denEstTubMeanAll << "," << denEstTubStdAll << "," << denEstTubMeanSegs << "," << denEstTubStdSegs << ","
+				<< denEstSNRmean << "," << denEstSNRstd << "," << denEstCNRmean << "," << denEstCNRstd << endl;
 		}
 
 		if (segmentListAxonMan.size() > 0)
@@ -214,12 +234,14 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 			axonTubMeans.clear();
 			axonTubStds.clear();
+			axonTubSegMeans.clear();
 			axonSegSNRs.clear();
 			axonSegCNRs.clear();
 			for (vector<basicSegmentROIStats>::iterator it = axonManProfiles.begin(); it != axonManProfiles.end(); ++it)
 			{
 				axonTubMeans.push_back(it->tubularityMean);
 				axonTubStds.push_back(it->tubularityStd);
+				axonTubSegMeans.push_back(it->segTub);
 				axonSegSNRs.push_back(it->SNR);
 				axonSegCNRs.push_back(it->CNR);
 			}
@@ -229,6 +251,12 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			for (vector<double>::iterator it = axonTubMeans.begin(); it != axonTubMeans.end(); ++it)
 				axonManTubStdAll = axonManTubStdAll + (*it - axonManTubMeanAll) * (*it - axonManTubMeanAll);
 			axonManTubStdAll = axonManTubStdAll / axonTubMeans.size();
+
+			double axonManTubMeanSegs = accumulate(axonTubSegMeans.begin(), axonTubSegMeans.end(), 0.0) / axonTubSegMeans.size();
+			double axonManTubStdSegs = 0;
+			for (vector<double>::iterator it = axonTubSegMeans.begin(); it != axonTubSegMeans.end(); ++it)
+				axonManTubStdSegs = axonManTubStdSegs + (*it - axonManTubMeanSegs) * (*it - axonManTubMeanSegs);
+			axonManTubStdSegs = axonManTubStdSegs / axonTubSegMeans.size();
 
 			double axonManSNRmean = accumulate(axonSegSNRs.begin(), axonSegSNRs.end(), 0.0) / axonSegSNRs.size();
 			double axonManSNRstd = 0;
@@ -242,7 +270,8 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 				axonManCNRstd = axonManCNRstd + (*it - axonManCNRmean) * (*it - axonManCNRmean);
 			axonManCNRstd = axonManCNRstd / axonSegCNRs.size();
 
-			outputFileMan << axonManTubMeanAll << "," << axonManTubStdAll << "," << axonManSNRmean << "," << axonManSNRstd << "," << axonManCNRmean << "," << axonManCNRstd << endl;
+			outputFileMan << axonManTubMeanAll << "," << axonManTubStdAll << "," << axonManTubMeanSegs << "," << axonManTubStdSegs << ","
+				<< axonManSNRmean << "," << axonManSNRstd << "," << axonManCNRmean << "," << axonManCNRstd << endl;
 		}
 
 		if (segmentListDendriteMan.size() > 0)
@@ -252,12 +281,14 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 			denTubMeans.clear();
 			denTubStds.clear();
+			denTubSegMeans.clear();
 			denSegSNRs.clear();
 			denSegCNRs.clear();
 			for (vector<basicSegmentROIStats>::iterator it = dendriteManProfiles.begin(); it != dendriteManProfiles.end(); ++it)
 			{
 				denTubMeans.push_back(it->tubularityMean);
 				denTubStds.push_back(it->tubularityStd);
+				denTubSegMeans.push_back(it->segTub);
 				denSegSNRs.push_back(it->SNR);
 				denSegCNRs.push_back(it->CNR);
 			}
@@ -267,6 +298,12 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			for (vector<double>::iterator it = denTubMeans.begin(); it != denTubMeans.end(); ++it)
 				denManTubStdAll = denManTubStdAll + (*it - denManTubMeanAll) * (*it - denManTubMeanAll);
 			denManTubStdAll = denManTubStdAll / denTubMeans.size();
+
+			double denManTubMeanSegs = accumulate(denTubSegMeans.begin(), denTubSegMeans.end(), 0.0) / denTubSegMeans.size();
+			double denManTubStdSegs = 0;
+			for (vector<double>::iterator it = denTubSegMeans.begin(); it != denTubSegMeans.end(); ++it)
+				denManTubStdSegs = denManTubStdSegs + (*it - denManTubMeanSegs) * (*it - denManTubMeanSegs);
+			denManTubStdSegs = denManTubStdSegs / denTubSegMeans.size();
 
 			double denManSNRmean = accumulate(denSegSNRs.begin(), denSegSNRs.end(), 0.0) / denSegSNRs.size();
 			double denManSNRstd = 0;
@@ -280,7 +317,8 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 				denManCNRstd = denManCNRstd + (*it - denManCNRmean) * (*it - denManCNRmean);
 			denManCNRstd = denManCNRstd / denSegCNRs.size();
 
-			outputFileMan << denManTubMeanAll << "," << denManTubStdAll << "," << denManSNRmean << "," << denManSNRstd << "," << denManCNRmean << "," << denManCNRstd << endl;
+			outputFileMan << denManTubMeanAll << "," << denManTubStdAll << "," << denManTubMeanSegs << "," << denManTubStdSegs << ","
+				<< denManSNRmean << "," << denManSNRstd << "," << denManCNRmean << "," << denManCNRstd << endl;
 		}
 	}
 	else if (func_name == tr("help"))

@@ -839,13 +839,14 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback)
 {
+	float dilate_ratio = 1;
 	vector<basicSegmentROIStats> segmentProfiles;
 	QList<IMAGE_METRICS> segMetrics;
 	for (vector<QList<NeuronSWC>>::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)
 	{
 		NeuronTree segTree;
 		segTree.listNeuron = *it;
-		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, 3, 0.05, callback);
+		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, dilate_ratio, 0.05, callback);
 		basicSegmentROIStats curROIStats;
 		curROIStats.fgMean = curSegMetrics.fg_mean;
 		curROIStats.bgMean = curSegMetrics.bg_mean;
@@ -856,10 +857,33 @@ vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vec
 		curROIStats.tubularityMean = curSegMetrics.tubularity_mean;
 		curROIStats.tubularityStd = curSegMetrics.tubularity_std;
 
+		V3DLONG ROIlowerBound[3];
+		findSegLowerBound(&segTree.listNeuron, img4DPtr, ROIlowerBound);
+		double tubuV = compute_anisotropy_sphere(img4DPtr->getRawData(), img4DPtr->getXDim(), img4DPtr->getYDim(), img4DPtr->getZDim(), 0, ROIlowerBound[0], ROIlowerBound[1], ROIlowerBound[2], 2 + 2 * dilate_ratio);
+		curROIStats.segTub = tubuV;
+		
 		segmentProfiles.push_back(curROIStats);
+
+		segTree.listNeuron.clear();
 	}
 
 	return segmentProfiles;
 }
 
+void findSegLowerBound(QList<NeuronSWC>* segPtr, Image4DSimple* image4DPtr, V3DLONG lBounds[])
+{
+	float segLowerBound[3];
+	segLowerBound[0] = 10000;
+	segLowerBound[1] = 10000;
+	segLowerBound[2] = 10000;
+	for (QList<NeuronSWC>::iterator it = segPtr->begin(); it != segPtr->end(); ++it)
+	{
+		if (it->x < segLowerBound[0]) segLowerBound[0] = it->x;
+		if (it->y < segLowerBound[1]) segLowerBound[1] = it->y;
+		if (it->z < segLowerBound[2]) segLowerBound[2] = it->z;
+	}
 
+	lBounds[0] = boundValue(segLowerBound[0], 0, image4DPtr->getXDim() - 1);
+	lBounds[1] = boundValue(segLowerBound[1], 0, image4DPtr->getYDim() - 1);
+	lBounds[2] = boundValue(segLowerBound[2], 0, image4DPtr->getZDim() - 1);
+}
