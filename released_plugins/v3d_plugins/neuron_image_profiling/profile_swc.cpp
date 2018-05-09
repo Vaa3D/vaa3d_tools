@@ -419,7 +419,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
            r = node.radius;
        }
 
-	   //r = 2; //cout << r << endl;
+	   //cout << r << endl;
 
        float dilate_radius = dilate_ratio * r;
        V3DLONG node_x_min = node.x - r - dilate_radius + 0.5; // with rounding
@@ -839,7 +839,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback)
 {
-	float dilate_ratio = 1;
+	float dilate_ratio = 2;
 	vector<basicSegmentROIStats> segmentProfiles;
 	QList<IMAGE_METRICS> segMetrics;
 	for (vector<QList<NeuronSWC>>::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)

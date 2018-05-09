@@ -9,6 +9,7 @@
 #include "neuron_image_profiling_plugin.h"
 #include "profile_swc.h"
 #include <iostream>
+#include <sstream>
 
 #include <fstream>
 #include <string>
@@ -103,20 +104,35 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 			if (!swcFileBaseName.compare(13, 14, "_estimated_seg"))
 			{
-				cout << swcFileBaseName << endl;
+				stringstream numStrStream;
+				int chari = 27;
+				while (chari <= swcFileBaseName.length() - 1)
+				{	
+					numStrStream << swcFileBaseName[chari];
+					//cout << swcFileBaseName[chari] << endl;
+					++chari;
+				}
+				string segNum;
+				numStrStream >> segNum;
+				//cout << segNum << endl;
+
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
-				if (nt.listNeuron.at(0).type == 2) segmentListAxonEst.push_back(nt.listNeuron);
-				else if (nt.listNeuron.at(0).type == 3) segmentListDendriteEst.push_back(nt.listNeuron);
+				string manualFileName = swcList.at(i).absolutePath().toStdString();
+				manualFileName = manualFileName + "\\" + caseNum + "_ds4_resampled_manualtraced" + segNum + ".swc";
+				QString manualFileNameQ = QString::fromStdString(manualFileName);
+				NeuronTree typeCheckNt = readSWC_file(manualFileNameQ);
+
+				if (typeCheckNt.listNeuron.at(0).type == 2) segmentListAxonEst.push_back(nt.listNeuron);
+				else if (typeCheckNt.listNeuron.at(0).type == 3) segmentListDendriteEst.push_back(nt.listNeuron);
 			}
 			else if (!swcFileBaseName.compare(14, 9, "resampled"))
 			{
-				cout << swcFileBaseName << endl;
+				//cout << swcFileBaseName << endl;
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
+				for (QList<NeuronSWC>::iterator it = nt.listNeuron.begin(); it != nt.listNeuron.end(); ++it) it->radius = 2;
+
 				if (nt.listNeuron.at(0).type == 2) segmentListAxonMan.push_back(nt.listNeuron);
 				else if (nt.listNeuron.at(0).type == 3) segmentListDendriteMan.push_back(nt.listNeuron);
-
-				for (QList<NeuronSWC>::iterator it = nt.listNeuron.begin(); it != nt.listNeuron.end(); ++it)
-					it->radius = 2;
 			}
 		}
 
@@ -127,10 +143,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 		vector<double> axonTubMeans, axonTubStds, axonTubSegMeans, axonSegSNRs, axonSegCNRs;
 		vector<double> denTubMeans, denTubStds, denTubSegMeans, denSegSNRs, denSegCNRs;
-		string saveRootEst = "D:\\Work\\IVSCC\\caseSummary_est\\";
+		string saveRootEst = "Y:\\caseSummary_est\\";
 		string saveFilePathEst = saveRootEst + caseNum + ".csv";
 		ofstream outputFileEst(saveFilePathEst);
-		string saveRootMan = "D:\\Work\\IVSCC\\caseSummary_manual\\";
+		string saveRootMan = "Y:\\caseSummary_manual\\";
 		string saveFilePathMan = saveRootMan + caseNum + ".csv";
 		ofstream outputFileMan(saveFilePathMan);
 		if (segmentListAxonEst.size() > 0)
@@ -177,7 +193,7 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			axonEstCNRstd = axonEstCNRstd / axonSegCNRs.size();
 
 			outputFileEst << axonEstTubMeanAll << "," << axonEstTubStdAll << "," << axonEstTubMeanSegs << "," << axonEstTubStdSegs << ","
-				<< axonEstSNRmean << "," << axonEstSNRstd << "," << axonEstCNRmean << "," << axonEstCNRstd << endl;
+				<< axonEstSNRmean << "," << axonEstSNRstd << "," << axonEstCNRmean << "," << axonEstCNRstd << "," << ",";
 		}
 		
 		if (segmentListDendriteEst.size() > 0)
@@ -271,7 +287,7 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			axonManCNRstd = axonManCNRstd / axonSegCNRs.size();
 
 			outputFileMan << axonManTubMeanAll << "," << axonManTubStdAll << "," << axonManTubMeanSegs << "," << axonManTubStdSegs << ","
-				<< axonManSNRmean << "," << axonManSNRstd << "," << axonManCNRmean << "," << axonManCNRstd << endl;
+				<< axonManSNRmean << "," << axonManSNRstd << "," << axonManCNRmean << "," << axonManCNRstd << "," << ",";
 		}
 
 		if (segmentListDendriteMan.size() > 0)
