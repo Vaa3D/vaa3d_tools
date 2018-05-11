@@ -64,7 +64,7 @@ bool flip_y (Image4DSimple * image);
 bool invert_intensity(Image4DSimple * image);
 bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_file);
 
-vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback);
+vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC> >* segmentsPtr, V3DPluginCallback2& callback);
 
 void findSegLowerBound(QList<NeuronSWC>* segPtr, Image4DSimple* image4DPtr, V3DLONG lBounds[]);
 

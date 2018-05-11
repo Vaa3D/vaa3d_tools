@@ -837,12 +837,12 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 /*******************************************/
 
-vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC>>* segmentsPtr, V3DPluginCallback2& callback)
+vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC> >* segmentsPtr, V3DPluginCallback2& callback)
 {
 	float dilate_ratio = 2;
 	vector<basicSegmentROIStats> segmentProfiles;
 	QList<IMAGE_METRICS> segMetrics;
-	for (vector<QList<NeuronSWC>>::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)
+    for (vector<QList<NeuronSWC> >::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)
 	{
 		NeuronTree segTree;
 		segTree.listNeuron = *it;
