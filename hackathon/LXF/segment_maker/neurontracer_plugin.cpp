@@ -59,7 +59,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     if (menu_name == tr("trace_APP2"))
 	{
         TRACE_LS_PARA P;
-        bool bmenu = true;
+        bool bmenu = false;
         neurontracer_app2_raw dialog(callback, parent);
 
         if (dialog.image && dialog.listLandmarks.size()==0)
@@ -68,11 +68,11 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if (dialog.exec()!=QDialog::Accepted)
             return;
 
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
+//        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
+//        {
+//            v3d_msg("Please select the image file.");
+//            return;
+//        }
 
         if(dialog.markerfilename.isEmpty() && ! dialog.image)
         {
@@ -109,6 +109,32 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.tracing_3D = dialog.tracing_3D;
         P.tracing_comb = dialog.tracing_comb;
         crawler_raw_app(callback,parent,P,bmenu);
+
+        QString name = P.inimg_file+"_app2.swc";
+        nt = readSWC_file(name);
+        for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+        {
+            nt.listNeuron[i].x = nt.listNeuron[i].x*P.ratio_x +P.o_x;
+            nt.listNeuron[i].y = nt.listNeuron[i].y*P.ratio_y+P.o_y;
+            nt.listNeuron[i].z = nt.listNeuron[i].z*P.ratio_z+P.o_z;
+        }
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
+
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
 
     }else if (menu_name == tr("trace_APP1"))
 	{
@@ -202,11 +228,10 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         P.tracing_3D = dialog.tracing_3D;
         crawler_raw_all(callback,parent,P,bmenu);
     }
-    else if (menu_name == tr("trace_NEUTUBE"))
+    else if (menu_name == tr("trace_NEUTUBE"))  //finished
     {
         TRACE_LS_PARA P;
         bool bmenu = false;
-        //int curr_model=0;
         if(bmenu)
         {
             neurontracer_neutube_raw dialog(callback, parent);
@@ -864,8 +889,8 @@ void lookPanel::_slot_sync_onetime()
     resultTree.color.g = 0;
     resultTree.color.b = 0;
     resultTree.color.a = 0;
-    QString namelxf = "jjjjjjjjjjjjjjj.swc";
-    writeSWC_file(namelxf,resultTree);
+//    QString namelxf = "jjjjjjjjjjjjjjj.swc";
+//    writeSWC_file(namelxf,resultTree);
     for(V3DLONG i=0;i<nt.listNeuron.size();i++)
     {
         nt.listNeuron[i].n = nt.listNeuron[i].n + max_id;
@@ -875,8 +900,8 @@ void lookPanel::_slot_sync_onetime()
         }
         resultTree.listNeuron.push_back(nt.listNeuron[i]);
     }
-    QString outname = "hahhaah.swc";
-    writeSWC_file(outname,resultTree);
+//    QString outname = "hahhaah.swc";
+//    writeSWC_file(outname,resultTree);
     QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
     int current_index = -1;
     for(int i=0; i<list_3dviewer.size();i++)
@@ -898,6 +923,7 @@ void lookPanel::_slot_sync_onetime()
         m_v3d.setHandleLandmarkList_Any3DViewer(new3DWindow,terafly_landmarks);
         m_v3d.update_NeuronBoundingBox(new3DWindow);
         m_v3d.setSWCTeraFly(resultTree);
+        resultTree.listNeuron.clear();
 
     }else
     {
@@ -908,6 +934,7 @@ void lookPanel::_slot_sync_onetime()
         m_v3d.setHandleLandmarkList_Any3DViewer(surface_win,terafly_landmarks);
         m_v3d.update_NeuronBoundingBox(surface_win);
         m_v3d.setSWCTeraFly(resultTree);
+        resultTree.listNeuron.clear();
     }
 }
 

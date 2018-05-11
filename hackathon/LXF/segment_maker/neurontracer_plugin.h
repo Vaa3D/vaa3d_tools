@@ -85,14 +85,14 @@ class neurontracer_app2_raw : public QDialog
             terafly_filepath = new QLineEdit();
             openteraflyFile = new QPushButton(QObject::tr("..."));
 
-            if(curwin)
-            {
-                raw_filepath->setText(cb.getImageName(curwin));
-                raw_filepath->setDisabled(true);
-                openrawFile->setDisabled(true);
-                terafly_filepath->setDisabled(true);
-                openteraflyFile->setDisabled(true);
-            }
+//            if(curwin)
+//            {
+//                raw_filepath->setText(cb.getImageName(curwin));
+//                raw_filepath->setDisabled(true);
+//                openrawFile->setDisabled(true);
+//                terafly_filepath->setDisabled(true);
+//                openteraflyFile->setDisabled(true);
+//            }
 
             marker_filepath = new QLineEdit();
             openmarkerFile = new QPushButton(QObject::tr("..."));
