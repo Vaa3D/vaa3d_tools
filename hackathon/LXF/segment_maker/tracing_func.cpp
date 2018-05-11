@@ -176,244 +176,183 @@ int region_groupfusing(SDATATYPE *pVImg, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG,
 
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
 {
+    cout<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%crawler raw app&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
     QElapsedTimer timer1;
     timer1.start();
 
-    P.listLandmarks.clear();
 
-    QString fileOpenName = P.inimg_file;
-    if(P.image)
+
+
+    QString outimg_file = "test.v3draw";
+    QString imageSaveString = "test_app2.v3draw";
+    QString swcString = outimg_file + "_app2.swc";
+    QString outmarker_file = "test.marker";
+    V3DLONG data1d_sz[4];
+    if(bmenu)
     {
-        P.in_sz[0] = P.image->getXDim();
-        P.in_sz[1] = P.image->getYDim();
-        P.in_sz[2] = P.image->getZDim();
-    }else
-    {
-        if(fileOpenName.endsWith(".tc",Qt::CaseSensitive))
+        double center_x,center_y,center_z;
+        V3DLONG xe,xb,ye,yb,ze,zb;
+        V3DLONG sc = 1;
+        LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
+        if(P.markerfilename.isEmpty())
         {
-            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
-
-            if( !vim.y_load( P.inimg_file.toStdString()) )
+            for(V3DLONG i=0;i<terafly_landmarks.size();i++)
             {
-                printf("Wrong stitching configuration file to be load!\n");
-                return false;
+                center_x = terafly_landmarks[i].x;
+                center_y = terafly_landmarks[i].y;
+                center_z = terafly_landmarks[i].z;
             }
-
-            P.in_sz[0] = vim.sz[0];
-            P.in_sz[1] = vim.sz[1];
-            P.in_sz[2] = vim.sz[2];
-
-        }else if (fileOpenName.endsWith(".raw",Qt::CaseSensitive) || fileOpenName.endsWith(".v3draw",Qt::CaseSensitive))
-        {
-            unsigned char * datald = 0;
-            V3DLONG *in_zz = 0;
-            V3DLONG *in_sz = 0;
-            int datatype;
-            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
-            {
-                return false;
-            }
-            if(datald) {delete []datald; datald = 0;}
-            P.in_sz[0] = in_zz[0];
-            P.in_sz[1] = in_zz[1];
-            P.in_sz[2] = in_zz[2];
-        }else
-        {
-            V3DLONG *in_zz = 0;
-            if(!callback.getDimTeraFly(fileOpenName.toStdString(),in_zz))
-            {
-                return false;
-            }
-            P.in_sz[0] = in_zz[0];
-            P.in_sz[1] = in_zz[1];
-            P.in_sz[2] = in_zz[2];
-        }
-
-        LocationSimple t;
-        if(P.markerfilename.endsWith(".marker",Qt::CaseSensitive))
-        {
-            vector<MyMarker> file_inmarkers;
-            file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
-            for(int i = 0; i < file_inmarkers.size(); i++)
-            {
-                t.x = file_inmarkers[i].x + 1;
-                t.y = file_inmarkers[i].y + 1;
-                t.z = file_inmarkers[i].z + 1;
-                P.listLandmarks.push_back(t);
-            }
-        }else
-        {
-            QList<CellAPO> file_inmarkers;
-            file_inmarkers = readAPO_file(P.markerfilename);
-            for(int i = 0; i < file_inmarkers.size(); i++)
-            {
-                t.x = file_inmarkers[i].x;
-                t.y = file_inmarkers[i].y;
-                t.z = file_inmarkers[i].z;
-                P.listLandmarks.push_back(t);
-            }
-        }
-    }
-
-    LandmarkList allTargetList;
-    QList<LandmarkList> allTipsList;
-
-    LocationSimple tileLocation;
-    tileLocation.x = P.listLandmarks[0].x;
-    tileLocation.y = P.listLandmarks[0].y;
-    tileLocation.z = P.listLandmarks[0].z;
-
-    LandmarkList inputRootList;
-    if(P.method != gd )inputRootList.push_back(tileLocation);
-
-    allTipsList.push_back(inputRootList);
-
-    tileLocation.x = tileLocation.x -int(P.block_size/2);
-    tileLocation.y = tileLocation.y -int(P.block_size/2);
-    if(P.tracing_3D)
-        tileLocation.z = tileLocation.z -int(P.block_size/2);
-    else
-        tileLocation.z = 0;
-
-    tileLocation.ev_pc1 = P.block_size;
-    tileLocation.ev_pc2 = P.block_size;
-    tileLocation.ev_pc3 = P.block_size;
-
-    tileLocation.category = 1;
-    allTargetList.push_back(tileLocation);
-
-    QString tmpfolder;
-    if(P.tracing_comb)
-        tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-    else
-    {
-        if(P.method == app1)
-            tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
-        else if (P.method == app2)
-            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-        else
-            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-    }
-
-    if(!tmpfolder.isEmpty())
-       system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
-
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-        printf("Can not create a tmp folder!\n");
-        return false;
-    }
-
-    LandmarkList newTargetList;
-    QList<LandmarkList> newTipsList;
-    bool flag = true;
-    while(allTargetList.size()>0)
-    {
-        newTargetList.clear();
-        newTipsList.clear();
-        if(P.tracing_comb)
-        {
-            P.seed_win = 5;
-            P.slip_win = 5;
-            if(P.tracing_3D)
-                combo_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-            else
-                combo_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
         }
         else
         {
-            if(P.adap_win)
+            if(P.markerfilename.endsWith(".marker",Qt::CaseSensitive))
             {
-                if(P.tracing_3D)
-                    app_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-                else
-                    app_tracing_ada_win(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-            }
-            else
-            {
-                app_tracing(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
-            }
-        }
-        allTipsList.removeAt(0);
-        allTargetList.removeAt(0);
-        if(newTipsList.size()>0)
-        {
-            for(int i = 0; i < newTipsList.size(); i++)
-            {
-                allTargetList.push_back(newTargetList.at(i));
-                allTipsList.push_back(newTipsList.at(i));
-            }
 
-            for(int i = 0; i < allTargetList.size();i++)
-            {
-                for(int j = 0; j < allTargetList.size();j++)
+                vector<MyMarker> markers;
+                markers = readMarker_file(string(qPrintable(P.markerfilename)));
+                for(int i = 0; i < markers.size(); i++)
                 {
-                    if(allTargetList.at(i).radius > allTargetList.at(j).radius)
-                    {
-                        allTargetList.swap(i,j);
-                        allTipsList.swap(i,j);
-                    }
+                    center_x = markers[i].x;
+                    center_y = markers[i].y;
+                    center_z = markers[i].z;
+                }
+            }
+            else
+            {
+                QList<CellAPO> markers;
+                markers = readAPO_file(P.markerfilename);
+                for(int i = 0; i < markers.size(); i++)
+                {
+                    center_x = markers[i].x;
+                    center_y = markers[i].y;
+                    center_z = markers[i].z;
                 }
             }
         }
+
+        V3DLONG lens_x=P.block_size;
+        V3DLONG lens_y=P.block_size;
+        V3DLONG lens_z=P.block_size;
+        xb = center_x-lens_x;
+        xe = center_x+lens_x;
+        yb = center_y-lens_y;
+        ye = center_y+lens_y;
+        zb = center_z-lens_z;
+        ze = center_z+lens_z;
+        data1d_sz[0] = xe - xb + 1;
+        data1d_sz[1] = ye - yb + 1;
+        data1d_sz[2] = ze - zb + 1;
+        data1d_sz[3] = sc;
+        P.o_x = xb;
+        P.o_y = yb;
+        P.o_z = zb;
+        unsigned char *data1d=0;
+        data1d = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
+        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)data1d,data1d_sz,1);
+    }
+    else
+    {
+        cout<<"$$$$$$$$$$$$$$$$$$$$$$get into curr window$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
+        P.inimg_file = outimg_file;
+        const Image4DSimple *curr_block = callback.getImageTeraFly();
+        data1d_sz[0] = curr_block->getXDim();
+        data1d_sz[1] = curr_block->getYDim();
+        data1d_sz[2] = curr_block->getZDim();
+        data1d_sz[3] = curr_block->getCDim();
+
+        P.ratio_x = curr_block->getRezX()/curr_block->getXDim();
+        P.ratio_y = curr_block->getRezY()/curr_block->getYDim();
+        P.ratio_z = curr_block->getRezZ()/curr_block->getZDim();
+        P.o_x=curr_block->getOriginX();
+        P.o_y=curr_block->getOriginY();
+        P.o_z=curr_block->getOriginZ();
+
+
+        LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
+        int mark_num = terafly_landmarks.size();
+
+        LocationSimple t;
+        t.x = terafly_landmarks[mark_num-1].x;//mark_num-1
+        t.y = terafly_landmarks[mark_num-1].y;
+        t.z = terafly_landmarks[mark_num-1].z;
+
+        t.x = t.x-P.o_x;
+        t.y = t.y-P.o_y;
+        t.z = t.z-P.o_z;
+        t.x = t.x/P.ratio_x;
+        t.y = t.y/P.ratio_y;
+        t.z = t.z/P.ratio_z;
+        P.listLandmarks.push_back(t);
+        QList<ImageMarker> marker;
+        ImageMarker markerlist;
+        markerlist.x = t.x;
+        markerlist.y = t.y;
+        markerlist.z = t.z;
+        marker.push_back(markerlist);
+
+        writeMarker_file(outmarker_file,marker);
+
+
+
+        Image4DSimple *data = new Image4DSimple;
+        data->setData((unsigned char *)curr_block->getRawData(),curr_block->getXDim(),curr_block->getYDim(),curr_block->getZDim(),curr_block->getCDim(),V3D_UINT8);
+        data1d_sz[0] = data->getXDim();
+        data1d_sz[1] = data->getYDim();
+        data1d_sz[2] = data->getZDim();
+        data1d_sz[3] = data->getCDim();
+
+        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)data->getRawData(),data1d_sz,1);
+
+        PARA_APP2 p2;
+        QString versionStr = "v0.001";
+        p2.inmarker_file = outmarker_file;
+        p2.inimg_file = outimg_file;
+        //p2.landmarks = P.listLandmarks;
+        p2.is_gsdt = P.is_gsdt;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = P.is_break_accept;
+        p2.bkg_thresh = P.bkg_thresh;
+        //p2.bkg_thresh = 50;
+        p2.length_thresh = P.length_thresh;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 3.0/9.9;
+        p2.b_256cube = P.b_256cube;
+        p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
+        p2.b_resample = 1;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+  //      p2.p4dImage = data;
+//        p2.p4dImage = callback.loadImage((char *)(qPrintable(outimg_file)));
+//        p2.p4dImage->setFileName(outimg_file.toStdString().c_str());
+//        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+//        p2.xc1 = p2.p4dImage->getXDim()-1;
+//        p2.yc1 = p2.p4dImage->getYDim()-1;
+//        p2.zc1 = p2.p4dImage->getZDim()-1;
+        p2.outswc_file =swcString;
+        proc_app2(callback, p2, versionStr);
+
     }
 
-    qint64 etime1 = timer1.elapsed();
 
-    list<string> infostring;
-    string tmpstr; QString qtstr;
-    if(P.method==app1)
-    {
-        tmpstr =  qPrintable( qtstr.prepend("## UT_APP1")); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.visible_thresh).prepend("#visible_thresh = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-
-    }
-    else if(P.method==app2)
-    {
-        tmpstr =  qPrintable( qtstr.prepend("## UT_APP2")); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
-
-        tmpstr =  qPrintable( qtstr.setNum(P.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-    }
-
-    if(P.method != gd)
-    {
-        if(P.tracing_3D)
-            processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
-        else
-            processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
-    }else
-        processSmartScan_3D_wofuison(callback,infostring,tmpfolder +"/scanData.txt");
+    v3d_msg("app2_done");
 
 
 
 
-    v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
-                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), bmenu);
+
+
+
+
+
+
 
     return true;
 }
 
 bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
-
     QString saveDirString;
     if(P.method == app1)
         saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
@@ -431,7 +370,14 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     end_y = tileLocation.y+P.block_size;
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
-
+    cout<<"tileLocation.x = "<<tileLocation.x<<endl;
+    cout<<"tileLocation.y = "<<tileLocation.y<<endl;
+    cout<<"P.in_sz[0] = "<<P.in_sz[0]<<endl;
+    cout<<"P.in_sz[1] = "<<P.in_sz[1]<<endl;
+    cout<<"start_x = "<<start_x<<endl;
+    cout<<"start_y = "<<start_y<<endl;
+    cout<<"end_x = "<<end_x<<endl;
+    cout<<"end_y = "<<end_y<<endl;
     if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || end_x <= 0 || end_y <= 0 )
     {
         printf("hit the boundary");
@@ -441,31 +387,31 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
 
-    if(P.image)
-    {
-        in_sz = new V3DLONG[4];
-        in_sz[0] = end_x - start_x;
-        in_sz[1] = end_y - start_y;
-        in_sz[2] = P.in_sz[2];
-        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
-        try {total1dData = new unsigned char [pagesz];}
-        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-        V3DLONG i = 0;
-        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
-        {
-            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
-            for(V3DLONG iy = start_y; iy < end_y; iy++)
-            {
-                V3DLONG offsetj = iy*P.in_sz[0];
-                for(V3DLONG ix = start_x; ix < end_x; ix++)
-                {
-                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
-                    i++;
-                }
-            }
-        }
-    }else
-    {
+//    if(P.image)
+//    {
+//        in_sz = new V3DLONG[4];
+//        in_sz[0] = end_x - start_x;
+//        in_sz[1] = end_y - start_y;
+//        in_sz[2] = P.in_sz[2];
+//        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+//        try {total1dData = new unsigned char [pagesz];}
+//        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
+//        V3DLONG i = 0;
+//        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
+//        {
+//            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
+//            for(V3DLONG iy = start_y; iy < end_y; iy++)
+//            {
+//                V3DLONG offsetj = iy*P.in_sz[0];
+//                for(V3DLONG ix = start_x; ix < end_x; ix++)
+//                {
+//                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
+//                    i++;
+//                }
+//            }
+//        }
+//    }else
+//    {
         if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
         {
             in_sz = new V3DLONG[4];
@@ -490,6 +436,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
         }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
+            cout<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<endl;
             V3DLONG *in_zz = 0;
             int datatype;
             if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,tileLocation.z,
@@ -526,13 +473,18 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             }
             if(total1dDataTerafly) {delete []total1dDataTerafly; total1dDataTerafly = 0;}
         }
-    }
+//    }
 
     Image4DSimple* total4DImage = new Image4DSimple;
     total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+    cout<<"in_sz[0] = "<<in_sz[0]<<endl;
+    cout<<"in_sz[1] = "<<in_sz[1]<<endl;
+    cout<<"in_sz[2] = "<<in_sz[2]<<endl;
+    cout<<"total4DImage->getDatatype 444444444444444444() = "<<total4DImage->getDatatype()<<endl;
     total4DImage->setOriginX(start_x);
     total4DImage->setOriginY(start_y);
     total4DImage->setOriginZ(tileLocation.z);
+    cout<<"total4DImage->getDatatype ---------------------() = "<<total4DImage->getDatatype()<<endl;
 
     V3DLONG mysz[4];
     mysz[0] = total4DImage->getXDim();
@@ -606,7 +558,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         outputStream.setDevice(&saveTextFile);
         outputStream<< (int) total4DImage->getOriginX()<<" "<< (int) total4DImage->getOriginY()<<" "<<swcString<<" "<< (int) in_sz[0]<<" "<< (int) in_sz[1]<<"\n";
         saveTextFile.close();
-
+        cout<<"total4DImage->getDatatype() = "<<total4DImage->getDatatype()<<endl;
         simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
 
         if(P.method == app1)
@@ -671,7 +623,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                         proc_app2(callback, p2, versionStr);
                         p2.landmarks.clear();
                     }
-
+                    cout<<"LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL"<<endl;
                     vector<MyMarker*> inputswc = readSWC_file(poutswc_file.toStdString());
                     for(V3DLONG d = 0; d < inputswc.size(); d++)
                     {
@@ -680,7 +632,9 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
                 }
             }
             saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
+            cout<<"eeeeeeeeeeeeeeeeeeeeeeeeeeee"<<endl;
             nt = readSWC_file(swcString);
+            cout<<"tttttttttttttttttttttttttt"<<endl;
         }
 
     }else
@@ -753,7 +707,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
         }
 
     }
-
+    cout<<"zzzzzzzzzzzzzzzzzzzzzzzzz"<<endl;
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
@@ -852,6 +806,8 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
 bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
+    cout<<"filename = "<<P.inimg_file.toStdString()<<endl;
+    cout<<"ddddddddddddddddddddddddddddddddddddddd"<<endl;
     QString saveDirString;
     QString finaloutputswc;
 
@@ -882,6 +838,10 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
     end_y = tileLocation.y+tileLocation.ev_pc2;
     if(end_x > P.in_sz[0]) end_x = P.in_sz[0];
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
+
+    cout<<"tileLocation.x = "<<tileLocation.x <<endl;
+    cout<<"tileLocation.y = "<<tileLocation.y <<endl;
+    cout<<"tileLocation.z = "<<tileLocation.z <<endl;
 
     if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || end_x <= 0 || end_y <= 0 )
     {
@@ -1332,6 +1292,7 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
 bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
+    cout<<"rrrrrrrrrrrrrrrrrrrrrrrr"<<endl;
     QString saveDirString;
     QString finaloutputswc;
 
@@ -2186,6 +2147,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
 void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
 {
+    cout<<"processSmartScan"<<endl;
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY,sizeX, sizeY;
@@ -2343,6 +2305,7 @@ void processSmartScan(V3DPluginCallback2 &callback, list<string> & infostring, Q
 
 void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
 {
+    cout<<"processSmartScan_3D"<<endl;
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     int offsetX, offsetY,offsetZ,sizeX, sizeY, sizeZ;
@@ -2512,6 +2475,7 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
 void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
 {
+    cout<<"processSmartScan_3D_wofuison "<<endl;
     ifstream ifs(fileWithData.toLatin1());
     string info_swc;
     string swcfilepath;
@@ -4583,6 +4547,7 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
 
 bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
+    cout<<"wwwwwwwwwwwwwwwwwwwwwwwwww"<<endl;
 
     QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
     QString finaloutputswc = P.inimg_file + ("_nc_combo.swc");
@@ -5162,7 +5127,6 @@ bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Land
             in_sz[0] = end_x - start_x;
             in_sz[1] = end_y - start_y;
             in_sz[2] = end_z - start_z;
-
             V3DLONG *in_zz = 0;
             if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
             {
@@ -6015,9 +5979,8 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
     QElapsedTimer timer1;
     timer1.start();
 
-    QString outimg_file = "test_test.v3draw";
+    QString outimg_file = "test.v3draw";
     V3DLONG data1d_sz[4];
-    //int model=0; //  0 for current block ,1 for marker
     if(bmenu)
     {
         double center_x,center_y,center_z;
@@ -6146,106 +6109,46 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         P.in_sz[2] = in_zz[2];
     }
 
-//    LocationSimple t;
-//    if(P.markerfilename.endsWith(".marker",Qt::CaseSensitive))
+
+
+
+//    QString tmpfolder;
+//    if(P.method == neutube)
+//       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE_LXF");
+//    else if(P.method == snake)
+//       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE_LXF");
+//    else if(P.method == most)
+//       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST_LXF");
+
+
+//    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+//    if(tmpfolder.isEmpty())
 //    {
-//        vector<MyMarker> file_inmarkers;
-//        file_inmarkers = readMarker_file(string(qPrintable(P.markerfilename)));
-//        for(int i = 0; i < file_inmarkers.size(); i++)
-//        {
-//            t.x = file_inmarkers[i].x + 1;
-//            t.y = file_inmarkers[i].y + 1;
-//            t.z = file_inmarkers[i].z + 1;
-//            P.listLandmarks.push_back(t);
-//        }
-//    }else
-//    {
-//        QList<CellAPO> file_inmarkers;
-//        file_inmarkers = readAPO_file(P.markerfilename);
-//        for(int i = 0; i < file_inmarkers.size(); i++)
-//        {
-//            t.x = file_inmarkers[i].x;
-//            t.y = file_inmarkers[i].y;
-//            t.z = file_inmarkers[i].z;
-//            P.listLandmarks.push_back(t);
-//        }
+//        printf("Can not create a tmp folder!\n");
+//        return false;
 //    }
-
-
-    QString tmpfolder;
-    if(P.method == neutube)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE_LXF");
-    else if(P.method == snake)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE_LXF");
-    else if(P.method == most)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST_LXF");
-
-
-    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-    if(tmpfolder.isEmpty())
-    {
-        printf("Can not create a tmp folder!\n");
-        return false;
-    }
 
     unsigned int numOfThreads = 16; // default value for number of theads
     P.inimg_file = outimg_file;
     all_tracing_grid(callback,P,P.in_sz[0],P.in_sz[1],P.in_sz[2]);
     //all_tracing_grid(callback,P,data1d_sz[0],data1d_sz[1],data1d_sz[2]);
 
-//#if  defined(Q_OS_LINUX)
-
-//    omp_set_num_threads(numOfThreads);
-
-//#pragma omp parallel for
-
-//#endif
-
-
-//    //for(V3DLONG ix = (int)P.listLandmarks[0].x; ix<= (int)P.listLandmarks[1].x; ix += P.block_size)
-//    for(V3DLONG ix = 0; ix < P.in_sz[0]; ix += P.block_size)
-//    {
-//#if  defined(Q_OS_LINUX)
-
-//        printf("number of threads for iy = %d\n", omp_get_num_threads());
-
-//#pragma omp parallel for
-//#endif
-
-       // for(V3DLONG iy = (int)P.listLandmarks[0].y; iy<= (int)P.listLandmarks[1].y; iy += P.block_size)
-//        for(V3DLONG iy = 0; iy < P.in_sz[1]; iy += P.block_size)
-//        {
-//#if  defined(Q_OS_LINUX)
-
-//            printf("number of threads for iz = %d\n", omp_get_num_threads());
-
-//#pragma omp parallel for
-//#endif
-
-//         //   for(V3DLONG iz = (int)P.listLandmarks[0].z; iz<= (int)P.listLandmarks[1].z; iz += P.block_size)
-//            for(V3DLONG iz = 0; iz< P.in_sz[2]; iz += P.block_size)
-//            {
-
-//                    all_tracing_grid(callback,P,ix,iy,iz);
-//            }
-//        }
-//    }
 
     return true;
 }
 
 bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy, V3DLONG iz)
 {
-    cout<<"name = "<<P.inimg_file.toStdString()<<endl;
+//    cout<<"name = "<<P.inimg_file.toStdString()<<endl;
     QString saveDirString;
-    if(P.method == neutube)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE_LXF");
-    else if (P.method == snake)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE_LXF");
-    else if (P.method == most)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST_LXF");
-    else if (P.method == app2)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED_LXF");
+//    if(P.method == neutube)
+//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE_LXF");
+//    else if (P.method == snake)
+//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE_LXF");
+//    else if (P.method == most)
+//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST_LXF");
+//    else if (P.method == app2)
+//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED_LXF");
 
     QString imageSaveString = saveDirString;
 
@@ -6309,7 +6212,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
             }
         }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
         {
-            cout<<"v3draw_LXF"<<endl;
+            //cout<<"v3draw_LXF"<<endl;
             V3DLONG *in_zz = 0;
             int datatype;
             if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,start_x,
@@ -6356,11 +6259,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     mysz[1] = P.in_sz[1];
     mysz[2] = P.in_sz[2];
     mysz[3] = 1;
-//    mysz[0] = in_sz[0];
-//    mysz[1] = in_sz[1];
-//    mysz[2] = in_sz[2];
-//    mysz[3] = 1;
-    cout<<mysz[0]<<"  "<<mysz[1]<<"  "<<mysz[2]<<"  "<<endl;
 
     double PixelSum = 0;
     for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
@@ -6377,14 +6275,14 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
         return true;
     }
 
-    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z).append(".v3draw"));
-    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+//    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z).append(".v3draw"));
+//    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
 
     if(total1dData) {delete []total1dData; total1dData = 0;}
     if(in_sz) {delete []in_sz; in_sz =0;}
 
     QString swcString = saveDirString;
-    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
+//    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
 
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -6449,23 +6347,18 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     }
 
     arg.p = (void *) & arg_para; input << arg;
-    cout<<"LXF"<<endl;
     if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
     {
         printf("Can not find the tracing plugin!\n");
         return false;
     }
-    for(V3DLONG i=0;i<output.size();i++)
-    {
-        cout<<"          &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&out = "<<output.at(0).p<<endl;
-    }
     QString swcNEUTUBE = saveDirString;
-    if(P.method == neutube || P.method == app2)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
-    else if (P.method == snake)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
-    else if (P.method == most)
-        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
+//    if(P.method == neutube || P.method == app2)
+//        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
+//    else if (P.method == snake)
+//        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
+//    else if (P.method == most)
+//        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
 
     vector<MyMarker*> inputswc;
     inputswc = readSWC_file(swcNEUTUBE.toStdString());;
