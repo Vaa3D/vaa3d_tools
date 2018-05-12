@@ -588,10 +588,10 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         V3DLONG yy = boundValue(node.y, 0,image->getYDim()-1 );
         V3DLONG zz = boundValue(node.z, 0,image->getZDim()-1 );
         double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 0, xx,yy,zz, r + dilate_radius);
-
+		//cout << tubuV << " ";
         tubularities.push_back(tubuV);
     }
-
+	//cout << endl;
     //collect labled pixel data into bg and fg vectors
     for (V3DLONG i = 0; i < size_1d ; i++)
     {

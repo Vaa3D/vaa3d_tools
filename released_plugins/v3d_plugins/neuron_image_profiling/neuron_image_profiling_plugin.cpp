@@ -34,6 +34,7 @@ QStringList image_profiling::funclist() const
 {
 	return QStringList()
 		<<tr("profile_swc")
+		<< tr("seg_separate")
 		<< tr("segmentBasedProfile")
 		<<tr("help");
 }
@@ -59,6 +60,114 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 	{	
                     profile_swc_func(callback,input, output);
 	}
+	else if (func_name == tr("seg_separate"))
+	{
+		vector<char*> infiles, inparas, outfiles;
+		if (input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+		if (input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+		if (output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+		QString folderPathQ = infiles.at(0);
+		string folderPath = folderPathQ.toStdString();
+		QDir directory;
+		directory.setPath(folderPathQ);
+		QFileInfoList swcList = directory.entryInfoList();
+
+		string saveRoot;
+		if (outfiles.size() > 0) saveRoot = outfiles.at(0);
+
+		string caseNum = folderPath.substr(folderPath.length() - 9, 9);
+		//cout << caseNum << endl;
+		string imageRoot = "Y:\\mips\\";
+		string inputImgName = imageRoot + caseNum + "_ds4.v3draw";
+		const char* inputImgNameC = inputImgName.c_str();
+		char* inputImgNameChar = new char[inputImgName.length()];
+		strcpy(inputImgNameChar, inputImgNameC);
+		Image4DSimple* inputImgPtr = callback.loadImage(inputImgNameChar);
+		if (!inputImgPtr->convert_to_UINT8())
+		{
+			cout << "Error in converting data into  UINT8 type." << endl;
+			return false;
+		}
+
+		for (int i = 0; i < swcList.size(); ++i)
+		{
+			string swcFileBaseName = swcList.at(i).baseName().toStdString();
+			string swcFileSuffix = swcList.at(i).suffix().toStdString();
+
+			if (!swcFileBaseName.compare("") || !swcFileBaseName.compare(".") || !swcFileBaseName.compare("..")) continue;
+			if (!swcFileBaseName.compare(swcFileBaseName.length() - 3, 3, "ds4") || !swcFileSuffix.compare("v3draw")) continue;
+
+			if (!swcFileBaseName.compare(10, 8, "axon_bad"))
+			{
+				string saveRoot = "Y:\\forComputeScores\\axon_bad";
+				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
+				ofstream outputFileEst(saveRootEst);
+
+				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
+				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+				segmentListEst.push_back(nt.listNeuron);
+
+				vector<basicSegmentROIStats> segProfiles;
+				vector<double> tubMeans, tubStds, tubSegMeans, segSNRs, segCNRs;
+				segProfiles = compute_metricsSegment(inputImgPtr, &segmentListEst, callback);
+				//cout << axonEstProfiles.size() << endl;
+
+				outputFileEst << segProfiles.at(0).segTub << "," << segProfiles.at(0).SNR << "," << segProfiles.at(0).CNR << endl;
+			}
+			else if (!swcFileBaseName.compare(10, 9, "axon_good"))
+			{
+				string saveRoot = "Y:\\forComputeScores\\axon_good";
+				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
+				ofstream outputFileEst(saveRootEst);
+
+				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
+				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+				segmentListEst.push_back(nt.listNeuron);
+
+				vector<basicSegmentROIStats> segProfiles;
+				vector<double> tubMeans, tubStds, tubSegMeans, segSNRs, segCNRs;
+				segProfiles = compute_metricsSegment(inputImgPtr, &segmentListEst, callback);
+				//cout << axonEstProfiles.size() << endl;
+
+				outputFileEst << segProfiles.at(0).segTub << "," << segProfiles.at(0).SNR << "," << segProfiles.at(0).CNR << endl;
+			}
+			else if (!swcFileBaseName.compare(10, 13, "dendrite_good"))
+			{
+				string saveRoot = "Y:\\forComputeScores\\dendrite_good";
+				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
+				ofstream outputFileEst(saveRootEst);
+
+				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
+				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+				segmentListEst.push_back(nt.listNeuron);
+
+				vector<basicSegmentROIStats> segProfiles;
+				vector<double> tubMeans, tubStds, tubSegMeans, segSNRs, segCNRs;
+				segProfiles = compute_metricsSegment(inputImgPtr, &segmentListEst, callback);
+				//cout << axonEstProfiles.size() << endl;
+
+				outputFileEst << segProfiles.at(0).segTub << "," << segProfiles.at(0).SNR << "," << segProfiles.at(0).CNR << endl;
+			}
+			else if (!swcFileBaseName.compare(10, 12, "dendrite_bad"))
+			{
+				string saveRoot = "Y:\\forComputeScores\\dendrite_bad";
+				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
+				ofstream outputFileEst(saveRootEst);
+
+				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
+				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+				segmentListEst.push_back(nt.listNeuron);
+
+				vector<basicSegmentROIStats> segProfiles;
+				vector<double> tubMeans, tubStds, tubSegMeans, segSNRs, segCNRs;
+				segProfiles = compute_metricsSegment(inputImgPtr, &segmentListEst, callback);
+				//cout << axonEstProfiles.size() << endl;
+
+				outputFileEst << segProfiles.at(0).segTub << "," << segProfiles.at(0).SNR << "," << segProfiles.at(0).CNR << endl;
+			}
+		}
+	}
 	else if (func_name == tr("segmentBasedProfile"))
 	{
 		vector<char*> infiles, inparas, outfiles;
@@ -71,6 +180,9 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 		QDir directory;
 		directory.setPath(folderPathQ);
 		QFileInfoList swcList = directory.entryInfoList();
+
+		string saveRoot;
+		if (outfiles.size() > 0) saveRoot = outfiles.at(0);
 
 		string caseNum = folderPath.substr(folderPath.length() - 9, 9);
 		//cout << caseNum << endl;
@@ -102,7 +214,7 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			if (!swcFileBaseName.compare("") || !swcFileBaseName.compare(".") || !swcFileBaseName.compare("..")) continue;
 			if (!swcFileBaseName.compare(swcFileBaseName.length() - 3, 3, "ds4") || !swcFileSuffix.compare("v3draw")) continue;
 
-			if (!swcFileBaseName.compare(13, 14, "_estimated_seg"))
+			if (!swcFileBaseName.compare(10, 14, "_estimated_seg"))
 			{
 				stringstream numStrStream;
 				int chari = 27;
@@ -143,10 +255,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 
 		vector<double> axonTubMeans, axonTubStds, axonTubSegMeans, axonSegSNRs, axonSegCNRs;
 		vector<double> denTubMeans, denTubStds, denTubSegMeans, denSegSNRs, denSegCNRs;
-		string saveRootEst = "Y:\\caseSummary_est\\";
+		string saveRootEst = saveRoot + "\\caseSummary_est\\";
 		string saveFilePathEst = saveRootEst + caseNum + ".csv";
 		ofstream outputFileEst(saveFilePathEst);
-		string saveRootMan = "Y:\\caseSummary_manual\\";
+		string saveRootMan = saveRoot + "\\caseSummary_manual\\";
 		string saveFilePathMan = saveRootMan + caseNum + ".csv";
 		ofstream outputFileMan(saveFilePathMan);
 		if (segmentListAxonEst.size() > 0)
@@ -253,14 +365,30 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			axonTubSegMeans.clear();
 			axonSegSNRs.clear();
 			axonSegCNRs.clear();
+
+			double tubeMeanSum = 0;
+			double tubeMax = 0;
+			int segNum = 1;
 			for (vector<basicSegmentROIStats>::iterator it = axonManProfiles.begin(); it != axonManProfiles.end(); ++it)
 			{
+				cout << "seg #:" << segNum << " ";
+
 				axonTubMeans.push_back(it->tubularityMean);
 				axonTubStds.push_back(it->tubularityStd);
 				axonTubSegMeans.push_back(it->segTub);
 				axonSegSNRs.push_back(it->SNR);
 				axonSegCNRs.push_back(it->CNR);
+
+				tubeMeanSum += it->tubularityMean;
+
+				if (it->tubularityMean > tubeMax) tubeMax = it->tubularityMean;
+
+				cout << it->tubularityMean << endl;
+				++segNum;
 			}
+			cout << "max tubularity: " << tubeMax << endl;
+			cout << "tube sum: " << tubeMeanSum << endl;
+			cout << "number of tube means: " << axonManProfiles.size() << endl;
 
 			double axonManTubMeanAll = accumulate(axonTubMeans.begin(), axonTubMeans.end(), 0.0) / axonTubMeans.size();
 			double axonManTubStdAll = 0;
