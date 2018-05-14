@@ -78,7 +78,7 @@ bool sort_with_standard(QList<NeuronSWC>  & neuron1, QList<NeuronSWC> & neuron2,
 bool find_wrong_area(Input_para &PARA,V3DPluginCallback2 &callback,bool bmenu,QWidget *parent)
 {
     bool type=PARA.model1;  //1 for.v3dpbd,0 for terafly
-    if(bmenu)     //0 for dofunc,1 for domenu
+    if(bmenu)     //0 for dofunc,1 for domenutrace_result
     {
 
         if(!type)

@@ -13,11 +13,11 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 using namespace std;
-
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
-NeuronTree trace_result,resultTree_rebase;
-NeuronTree resultTree;
+NeuronTree trace_result,resultTree_rebase,resultTree;
+
 int thresh=40;
 int func_name;
 //struct ratio
@@ -123,8 +123,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         }
         P.method = app2;
         func_name = app2;
-//        v3d_msg("kkkkkkkkkkkkkkk");
-        crawler_raw_app(callback,parent,P,bmenu);
+        if(!crawler_raw_app(callback,parent,P,bmenu))return;
 
         QString name = P.inimg_file+"_app2.swc";
         trace_result = readSWC_file(name);
@@ -135,24 +134,25 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             trace_result.listNeuron[i].z = trace_result.listNeuron[i].z*P.ratio_z + P.o_z;
         }
 
-        NeuronTree curr_window_nt = callback.getSWCTeraFly();
-
+        const Image4DSimple *curr = callback.getImageTeraFly();
+        NeuronTree curr_win_nt = callback.getSWCTeraFly();
+        NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
+        NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
         QHash <int, int>  hashNeuron;
         listNeuron.clear();
         hashNeuron.clear();
         V3DLONG max_id=0;
-
-        for(int j = 0; j < curr_window_nt.listNeuron.size(); j++)
+        for(int j = 0; j < curr_win_nt.listNeuron.size(); j++)
         {
-            listNeuron.append(curr_window_nt.listNeuron.at(j));
-            hashNeuron.insert(curr_window_nt.listNeuron.at(j).n, listNeuron.size()-1);
+            listNeuron.append(curr_win_nt.listNeuron.at(j));
+            hashNeuron.insert(curr_win_nt.listNeuron.at(j).n, listNeuron.size()-1);
         }
-        for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
+        for(V3DLONG i=0;i<curr_win_nt.listNeuron.size();i++)
         {
-            if(curr_window_nt.listNeuron[i].n>max_id)
+            if(curr_win_nt.listNeuron[i].n>max_id)
             {
-                max_id = curr_window_nt.listNeuron[i].n;
+                max_id = curr_win_nt.listNeuron[i].n;
             }
         }
         resultTree.listNeuron = listNeuron;
@@ -168,44 +168,40 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         resultTree_rebase.color.b = 0;
         resultTree_rebase.color.a = 0;
 
-        for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
+        for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
         {
-            trace_result.listNeuron[i].n = trace_result.listNeuron[i].n + max_id;
-            if(trace_result.listNeuron[i].pn!=-1)
+            curr_window_nt.listNeuron[i].n = curr_window_nt.listNeuron[i].n + max_id;
+            if(curr_window_nt.listNeuron[i].pn!=-1)
             {
-                trace_result.listNeuron[i].pn = trace_result.listNeuron[i].pn + max_id;
+                curr_window_nt.listNeuron[i].pn = curr_window_nt.listNeuron[i].pn + max_id;
             }
-            resultTree.listNeuron.push_back(trace_result.listNeuron[i]);
+            resultTree.listNeuron.push_back(curr_window_nt.listNeuron[i]);
         }
         for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)
         {
             resultTree.listNeuron[i].type = 10;
-//            resultTree.listNeuron[i].n = resultTree.listNeuron[i].n + max_id;
-//            if(resultTree.listNeuron[i].pn!=-1)
-//            {
-//                resultTree.listNeuron[i].pn = resultTree.listNeuron[i].pn + max_id;
-//            }
-//            resultTree.listNeuron.push_back(tresultTree.listNeuron[i]);
         }
         callback.setSWCTeraFly(resultTree);
+        QString final_name = "result.swc";
+        writeSWC_file(final_name,resultTree);
 
-//        if (panel)
-//        {
-//            panel->show();
-//            return;
-//        }
-//        else
-//        {
-//            panel = new lookPanel(callback, parent);
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
 
-//            if (panel)
-//            {
-//                panel->show();
-//                panel->raise();
-//                panel->move(100,100);
-//                panel->activateWindow();
-//            }
-//        }
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
 
     }else if (menu_name == tr("trace_APP1"))
 	{
@@ -666,6 +662,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	}
 }
 
+
 bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     TRACE_LS_PARA P;
@@ -916,18 +913,74 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 {
 
     gridLayout = new QGridLayout();
-    QPushButton* sync     = new QPushButton("Sync (one shot)");
-    QPushButton* set_markers     = new QPushButton("Set Annotations");
+ //   QPushButton* sync     = new QPushButton("Sync (one shot)");
+ //   QPushButton* set_markers     = new QPushButton("Set Annotations");
     QPushButton* set_thresh     = new QPushButton("Set Thresh");
-    gridLayout->addWidget(sync, 0,0);
-    gridLayout->addWidget(set_markers, 1,0);
-    gridLayout->addWidget(set_thresh, 2,0);
+    gridLayout->addWidget(set_thresh, 0,0);
+ //   gridLayout->addWidget(set_markers, 1,0);
+ //   gridLayout->addWidget(set_thresh, 2,0);
     setLayout(gridLayout);
     setWindowTitle(QString("Synchronize annotation "));
-    connect(sync,     SIGNAL(clicked()), this, SLOT(_slot_sync_onetime()));
-    connect(set_markers,     SIGNAL(clicked()), this, SLOT(_slot_set__slot_set_annotation()));
+ //   connect(sync,     SIGNAL(clicked()), this, SLOT(_slot_sync_onetime()));
+ //   connect(set_markers,     SIGNAL(clicked()), this, SLOT(_slot_set_annotation()));
     connect(set_thresh,     SIGNAL(clicked()), this, SLOT(_slot_set_thresh()));
 
+}
+NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,NeuronTree &trace_result,NeuronTree &curr_win_nt)
+{
+    NeuronTree curr_swc,updated_nt,result;
+    double ox = curr->getOriginX();
+    double oy = curr->getOriginY();
+    double oz = curr->getOriginZ();
+    double lx = curr->getRezX();
+    double ly = curr->getRezY();
+    double lz = curr->getRezZ();
+
+    if(curr_win_nt.listNeuron.size()>0)
+    {
+        for(V3DLONG i=0;i<curr_win_nt.listNeuron.size();i++)
+        {
+            NeuronSWC s = curr_win_nt.listNeuron[i];
+            if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
+            {
+                curr_swc.listNeuron.push_back(s);
+            }
+            else
+            {
+                updated_nt.listNeuron.push_back(s);
+            }
+        }
+        QString name = "lllll.swc";
+        writeSWC_file(name,curr_swc);
+        //cout<<"trace = "<<trace_result.listNeuron.size()<<endl;
+
+        for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
+        {
+            double dis=0;
+            double min_dis=100000000000;
+            for(V3DLONG j=0;j<curr_swc.listNeuron.size();j++)
+            {
+                dis = NTDIS(trace_result.listNeuron[i],curr_swc.listNeuron[j]);
+                if(dis<min_dis)
+                {
+                    min_dis = dis;
+                }
+
+            }
+            //cout<<"dis = "<<min_dis<<endl;
+            if(min_dis>30)
+            {
+                result.listNeuron.push_back(trace_result.listNeuron[i]);
+            }
+            //cout<<"result = "<<result.listNeuron.size()<<endl;
+
+        }
+    }
+    else
+    {
+        result = trace_result;
+    }
+    return result;
 }
 
 lookPanel::~lookPanel()
@@ -937,6 +990,7 @@ lookPanel::~lookPanel()
 
 void lookPanel::_slot_sync_onetime()
 {
+
     cout<<"this is slot sync onetime"<<endl;
     NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
 
@@ -981,47 +1035,13 @@ void lookPanel::_slot_sync_onetime()
         resultTree.listNeuron.push_back(trace_result.listNeuron[i]);
     }
     m_v3d.setSWCTeraFly(resultTree);
-//    resultTree.listNeuron.clear();
-//    resultTree.hashNeuron.clear();
+    resultTree.listNeuron.clear();
+    resultTree.hashNeuron.clear();
 
     //v3d_msg("show_done");
 
 
 
-//    QList <V3dR_MainWindow *> list_3dviewer = m_v3d.getListAll3DViewers();
-//    int current_index = -1;
-//    for(int i=0; i<list_3dviewer.size();i++)
-//    {
-//        if(m_v3d.getImageName(list_3dviewer[i]) == "3D View [Annotations in TeraFly]")
-//        {
-//            current_index = i;
-//         }
-//    }
-
-//    LandmarkList terafly_landmarks = m_v3d.getLandmarkTeraFly();
-//    if(current_index == -1)
-//    {
-//        V3dR_MainWindow * new3DWindow = NULL;
-//        new3DWindow = m_v3d.createEmpty3DViewer();
-//        QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (new3DWindow);
-//        treeList->push_back(resultTree);
-//        m_v3d.setWindowDataTitle(new3DWindow, "Annotations in TeraFly");
-//        m_v3d.setHandleLandmarkList_Any3DViewer(new3DWindow,terafly_landmarks);
-//        m_v3d.update_NeuronBoundingBox(new3DWindow);
-//        m_v3d.setSWCTeraFly(resultTree);
-//        resultTree.listNeuron.clear();
-
-//    }else
-//    {
-//        V3dR_MainWindow *surface_win = m_v3d.getListAll3DViewers()[current_index];resultTree
-//        QList<NeuronTree> * treeList = m_v3d.getHandleNeuronTrees_Any3DViewer (surface_win);
-//        treeList->clear();
-//        treeList->push_back(resultTree);
-//        m_v3d.setHandleLandmarkList_Any3DViewer(surface_win,terafly_landmarks);
-//        m_v3d.update_NeuronBoundingBox(surface_win);
-//        m_v3d.setSWCTeraFly(resultTree);
-//        resultTree.listNeuron.clear();
-//    }
 }
 
 
@@ -1055,6 +1075,7 @@ void lookPanel::_slot_set_thresh()
 
 void lookPanel::_slot_set_annotation()
 {
+
     cout<<"this is slot set markers"<<endl;
     NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
     m_v3d.setSWCTeraFly(curr_window_nt);
@@ -1069,56 +1090,9 @@ void lookPanel::_slot_set_annotation()
     cout<<"resultTree = "<<resultTree.listNeuron.size()<<endl;
 
 
-//    m_v3d.setSWCTeraFly(resultTree_rebase);
-//    resultTree_rebase.listNeuron.clear();
-//    resultTree_rebase.hashNeuron.clear();
 
 
 
 
 }
-//void updated_curr_win(const Image4DSimple* curr)
-//{
-//    cout<<"this is slot set markers"<<endl;
-//    NeuronTree nt_k,updated_nt;
-//    //const Image4DSimple* curr = m_v3d.getImageTeraFly();
-//    //curr = ;
-//    double ox = curr->getOriginX();
-//    double oy = curr->getOriginY();
-//    double oz = curr->getOriginZ();    resultTree.listNeuron.clear();
-
-//    double lx = curr->getRezX();
-//    double ly = curr->getRezY();
-//    double lz = curr->getRezZ();
-//    NeuronSWC s;
-//    cout<<"trace_result.listNeuron.size() = "<<trace_result.listNeuron.size()<<endl;
-//    for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
-//    {
-//        s = trace_result.listNeuron[i];
-//        if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
-//        {
-//            nt_k.listNeuron.push_back(s);
-//        }
-//        else
-//        {
-//            updated_nt.listNeuron.push_back(s);
-//        }
-//    }
-//    QString name = "hahaha.swc";
-//    QString name1 = "yyyyyyyyyyyyyy.swc";
-//    writeSWC_file(name,nt_k);
-//    writeSWC_file(name1,updated_nt);
-
-//    cout<<"updated_nt = "<<updated_nt.listNeuron.size()<<endl;
-//    cout<<"resultTree_rebase = "<<resultTree_rebase.listNeuron.size()<<endl;
-//    for(V3DLONG i=0;i<resultTree_rebase.listNeuron.size();i++)
-//    {
-//        updated_nt.listNeuron.push_back(resultTree_rebase.listNeuron[i]);
-//    }
-
-//    m_v3d.setSWCTeraFly(updated_nt);
-//    v3d_msg("yyyyy");
-//    updated_nt.listNeuron.clear();
-//    nt_k.listNeuron.clear();
-//}
 

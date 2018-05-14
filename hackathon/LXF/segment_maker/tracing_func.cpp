@@ -215,6 +215,7 @@ void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d)
 
 
 
+
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
 {
     cout<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%crawler raw app&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
@@ -297,8 +298,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.inimg_file = outimg_file;
         const Image4DSimple *curr_block = callback.getImageTeraFly();
         LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
-
-        updated_curr_win(curr_block,callback); //add here
+        if(terafly_landmarks.isEmpty())return false;
+        //terafly_landmarks.at(0).color.
+        //updated_curr_win(curr_block,callback); //add here
         data1d_sz[0] = curr_block->getXDim();
         data1d_sz[1] = curr_block->getYDim();
         data1d_sz[2] = curr_block->getZDim();
@@ -314,11 +316,12 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         //LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
         int mark_num = terafly_landmarks.size();
+        cout<<"mark_num = "<<mark_num<<endl;
 
         LocationSimple t;
-        t.x = terafly_landmarks[mark_num-1].x;//mark_num-1
-        t.y = terafly_landmarks[mark_num-1].y;
-        t.z = terafly_landmarks[mark_num-1].z;
+        t.x = terafly_landmarks[0].x;//mark_num-1
+        t.y = terafly_landmarks[0].y;
+        t.z = terafly_landmarks[0].z;
 
 
         t.x = t.x-P.o_x;
@@ -328,6 +331,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         t.y = t.y/P.ratio_y;
         t.z = t.z/P.ratio_z;
         P.listLandmarks.push_back(t);
+        cout<<"P = "<<P.listLandmarks.size()<<endl;
 
         QList<ImageMarker> marker;
         ImageMarker markerlist;
@@ -338,6 +342,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         writeMarker_file(outmarker_file,marker);
 
+//        terafly_landmarks.clear();                             //delete markers
+//        callback.setLandmarkTeraFly(terafly_landmarks);
 
         Image4DSimple *data = new Image4DSimple;
         data->setData((unsigned char *)curr_block->getRawData(),curr_block->getXDim(),curr_block->getYDim(),curr_block->getZDim(),curr_block->getCDim(),V3D_UINT8);
@@ -351,13 +357,15 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         PARA_APP2 p2;
         QString versionStr = "v0.001";
         p2.inmarker_file = outmarker_file;
+        cout<<"p2"<<p2.inmarker_file.size()<<endl;
         p2.inimg_file = outimg_file;
+        p2.bkg_thresh = thresh;
         //p2.landmarks = P.listLandmarks;
 //        p2.is_gsdt = P.is_gsdt;
 //        p2.is_coverage_prune = true;
 //        p2.is_break_accept = P.is_break_accept;
 //        p2.bkg_thresh = P.bkg_thresh;
-        p2.bkg_thresh = thresh;
+
 //        p2.length_thresh = P.length_thresh;
 //        p2.cnn_type = 2;
 //        p2.channel = 0;
@@ -376,14 +384,13 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //        p2.yc1 = p2.p4dImage->getYDim()-1;
 //        p2.zc1 = p2.p4dImage->getZDim()-1;
         cout<<" iiiiiiiiiiiiiiiiiiiiii = "<<thresh<<endl;
-        v3d_msg("done");
         p2.outswc_file =swcString;
         proc_app2(callback, p2, versionStr);
 
     }
 
 
-    v3d_msg("app2_done");
+    //v3d_msg("app2_done");
 
 
 
