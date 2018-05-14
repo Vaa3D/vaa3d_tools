@@ -66,8 +66,12 @@ QStringList neurontracer::funclist() const
 
 void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
+
+
     if (menu_name == tr("trace_APP2"))
 	{
+
+
         TRACE_LS_PARA P;
         bool bmenu = false;
         if(bmenu)
@@ -181,27 +185,65 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         {
             resultTree.listNeuron[i].type = 10;
         }
+//        for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)
+//        {
+//            resultTree_rebase.listNeuron[i].type = 10;
+//        }
         callback.setSWCTeraFly(resultTree);
         QString final_name = "result.swc";
         writeSWC_file(final_name,resultTree);
 
-        if (panel)
-        {
-            panel->show();
-            return;
-        }
-        else
-        {
-            panel = new lookPanel(callback, parent);
 
-            if (panel)
-            {
-                panel->show();
-                panel->raise();
-                panel->move(100,100);
-                panel->activateWindow();
-            }
+        if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)&&QApplication::keyboardModifiers().testFlag(Qt::AltModifier))
+
+        bool miok;
+        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+        if(miok)
+        {
+            cout<<"input number is "<<thresh<<endl;
         }
+
+        cout<<"resultTree_rebase.listNeuron.size() = "<<resultTree_rebase.listNeuron.size()<<endl;
+        QString final_name1 = "result.swc";
+        writeSWC_file(final_name1,resultTree_rebase);
+
+
+        if(resultTree_rebase.listNeuron.size()>0)
+        {
+            v3d_msg("hahahah");
+            NeuronTree nt = resultTree_rebase;
+            m_v3d.setSWCTeraFly(nt);
+            cout<<"ssssssssssssssssssssssss"<<endl;
+            resultTree_rebase.listNeuron.clear();
+            resultTree_rebase.hashNeuron.clear();
+
+        }
+        v3d_msg("rebase_show");
+
+//        QString namep = "result.swc";
+//            resultTree_rebase = readSWC_file(namep);
+        callback.setSWCTeraFly(resultTree_rebase);
+        v3d_msg("check!");
+
+
+
+//        if (panel)
+//        {
+//            panel->show();
+//            return;
+//        }
+//        else
+//        {
+//            panel = new lookPanel(callback, parent);
+
+//            if (panel)
+//            {
+//                panel->show();
+//                panel->raise();
+//                panel->move(100,100);
+//                panel->activateWindow();
+//            }
+//        }
 
     }else if (menu_name == tr("trace_APP1"))
 	{
@@ -909,7 +951,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 	return true;
 }
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
-    QDialog(parent), m_v3d(_v3d)
+    QDialog(parent)
 {
 
     gridLayout = new QGridLayout();
@@ -968,7 +1010,7 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
             }
             //cout<<"dis = "<<min_dis<<endl;
-            if(min_dis>30)
+            if(min_dis>100)
             {
                 result.listNeuron.push_back(trace_result.listNeuron[i]);
             }
@@ -987,112 +1029,112 @@ lookPanel::~lookPanel()
 {
 }
 
-
-void lookPanel::_slot_sync_onetime()
-{
-
-    cout<<"this is slot sync onetime"<<endl;
-    NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
-
-    QList <NeuronSWC> listNeuron;
-    QHash <int, int>  hashNeuron;
-    listNeuron.clear();
-    hashNeuron.clear();
-    V3DLONG max_id=0;
-
-    for(int j = 0; j < curr_window_nt.listNeuron.size(); j++)
-    {
-        listNeuron.append(curr_window_nt.listNeuron.at(j));
-        hashNeuron.insert(curr_window_nt.listNeuron.at(j).n, listNeuron.size()-1);
-    }
-    for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
-    {
-        if(curr_window_nt.listNeuron[i].n>max_id)
-        {
-            max_id = curr_window_nt.listNeuron[i].n;
-        }
-    }
-    resultTree.listNeuron = listNeuron;
-    resultTree.hashNeuron = hashNeuron;
-    resultTree.color.r = 0;
-    resultTree.color.g = 0;
-    resultTree.color.b = 0;
-    resultTree.color.a = 0;
-    resultTree_rebase.listNeuron = listNeuron;
-    resultTree_rebase.hashNeuron = hashNeuron;
-    resultTree_rebase.color.r = 0;
-    resultTree_rebase.color.g = 0;
-    resultTree_rebase.color.b = 0;
-    resultTree_rebase.color.a = 0;
-
-    for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
-    {
-        trace_result.listNeuron[i].n = trace_result.listNeuron[i].n + max_id;
-        if(trace_result.listNeuron[i].pn!=-1)
-        {
-            trace_result.listNeuron[i].pn = trace_result.listNeuron[i].pn + max_id;
-        }
-        resultTree.listNeuron.push_back(trace_result.listNeuron[i]);
-    }
-    m_v3d.setSWCTeraFly(resultTree);
-    resultTree.listNeuron.clear();
-    resultTree.hashNeuron.clear();
-
-    //v3d_msg("show_done");
-
-
-
-}
-
-
 void lookPanel::_slot_set_thresh()
 {
     cout<<"this is slot set thresh"<<endl;
-    if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)&&QApplication::keyboardModifiers().testFlag(Qt::AltModifier))
+    //  if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)&&QApplication::keyboardModifiers().testFlag(Qt::AltModifier))
+
+    bool miok;
+    thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+    if(miok)
     {
-        bool miok;
-        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
-        if(miok)
-        {
-            cout<<"input number is "<<thresh<<endl;
-        }
+        cout<<"input number is "<<thresh<<endl;
     }
-//    if(func_name = app2)
-//    {
+
     cout<<"resultTree_rebase.listNeuron.size() = "<<resultTree_rebase.listNeuron.size()<<endl;
-    v3d_msg("reset_done");
+    QString final_name1 = "result.swc";
+    writeSWC_file(final_name1,resultTree_rebase);
+
+
     if(resultTree_rebase.listNeuron.size()>0)
     {
-        m_v3d.setSWCTeraFly(resultTree_rebase);
+        v3d_msg("hahahah");
+        NeuronTree nt = resultTree_rebase;
+        callback.setSWCTeraFly(nt);
+        cout<<"ssssssssssssssssssssssss"<<endl;
         resultTree_rebase.listNeuron.clear();
         resultTree_rebase.hashNeuron.clear();
 
     }
+    v3d_msg("rebase_show");
 
 
 }
+//void lookPanel::_slot_sync_onetime()
+//{
+
+//    cout<<"this is slot sync onetime"<<endl;
+//    NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
+
+//    QList <NeuronSWC> listNeuron;
+//    QHash <int, int>  hashNeuron;
+//    listNeuron.clear();
+//    hashNeuron.clear();
+//    V3DLONG max_id=0;
+
+//    for(int j = 0; j < curr_window_nt.listNeuron.size(); j++)
+//    {
+//        listNeuron.append(curr_window_nt.listNeuron.at(j));
+//        hashNeuron.insert(curr_window_nt.listNeuron.at(j).n, listNeuron.size()-1);
+//    }
+//    for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
+//    {
+//        if(curr_window_nt.listNeuron[i].n>max_id)
+//        {
+//            max_id = curr_window_nt.listNeuron[i].n;
+//        }
+//    }
+//    resultTree.listNeuron = listNeuron;
+//    resultTree.hashNeuron = hashNeuron;
+//    resultTree.color.r = 0;
+//    resultTree.color.g = 0;
+//    resultTree.color.b = 0;
+//    resultTree.color.a = 0;
+//    resultTree_rebase.listNeuron = listNeuron;
+//    resultTree_rebase.hashNeuron = hashNeuron;
+//    resultTree_rebase.color.r = 0;
+//    resultTree_rebase.color.g = 0;
+//    resultTree_rebase.color.b = 0;
+//    resultTree_rebase.color.a = 0;
+
+//    for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
+//    {
+//        trace_result.listNeuron[i].n = trace_result.listNeuron[i].n + max_id;
+//        if(trace_result.listNeuron[i].pn!=-1)
+//        {
+//            trace_result.listNeuron[i].pn = trace_result.listNeuron[i].pn + max_id;
+//        }
+//        resultTree.listNeuron.push_back(trace_result.listNeuron[i]);
+//    }
+//    m_v3d.setSWCTeraFly(resultTree);
+//    resultTree.listNeuron.clear();
+//    resultTree.hashNeuron.clear();
+
+//    //v3d_msg("show_done");
 
 
-void lookPanel::_slot_set_annotation()
-{
 
-    cout<<"this is slot set markers"<<endl;
-    NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
-    m_v3d.setSWCTeraFly(curr_window_nt);
-    resultTree_rebase.listNeuron.clear();
-    resultTree_rebase.hashNeuron.clear();
-    resultTree.listNeuron.clear();
-    resultTree.hashNeuron.clear();
-    resultTree_rebase = curr_window_nt;
-    resultTree = curr_window_nt;
-    v3d_msg("resultTree_rebase.size");
-    cout<<"resultTree_rebase = "<<resultTree_rebase.listNeuron.size()<<endl;
-    cout<<"resultTree = "<<resultTree.listNeuron.size()<<endl;
+//}
+//void lookPanel::_slot_set_annotation()
+//{
 
-
-
-
+//    cout<<"this is slot set markers"<<endl;
+//    NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
+//    m_v3d.setSWCTeraFly(curr_window_nt);
+//    resultTree_rebase.listNeuron.clear();
+//    resultTree_rebase.hashNeuron.clear();
+//    resultTree.listNeuron.clear();
+//    resultTree.hashNeuron.clear();
+//    resultTree_rebase = curr_window_nt;
+//    resultTree = curr_window_nt;
+//    v3d_msg("resultTree_rebase.size");
+//    cout<<"resultTree_rebase = "<<resultTree_rebase.listNeuron.size()<<endl;
+//    cout<<"resultTree = "<<resultTree.listNeuron.size()<<endl;
 
 
-}
+
+
+
+
+//}
 

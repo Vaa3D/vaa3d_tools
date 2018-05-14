@@ -971,12 +971,12 @@ public:
     ~lookPanel();
 
     QGridLayout *gridLayout;
-    V3DPluginCallback2 & m_v3d;
+    V3DPluginCallback2 & callback;
 
 
 private slots:
-    void _slot_sync_onetime();
-    void _slot_set_annotation();
+   // void _slot_sync_onetime();
+   // void _slot_set_annotation();
     void _slot_set_thresh();
 
 };
