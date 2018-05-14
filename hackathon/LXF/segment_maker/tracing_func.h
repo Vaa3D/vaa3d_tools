@@ -9,7 +9,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 enum tracingMethod {app1, app2, neutube,snake,most,mst, neurogpstree,rivulet2,tremap,gd,advantra,neuronchaser};
-
+void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d);
 
 struct TRACE_LS_PARA
 {
@@ -30,6 +30,7 @@ struct TRACE_LS_PARA
     int global_name;
     double o_x,o_y,o_z;
     double ratio_x,ratio_y,ratio_z;
+
 
     V3DLONG in_sz[3];
 

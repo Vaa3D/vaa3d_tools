@@ -976,7 +976,8 @@ public:
 
 private slots:
     void _slot_sync_onetime();
-    void _slot_set_markers();
+    void _slot_set_annotation();
+    void _slot_set_thresh();
 
 };
 

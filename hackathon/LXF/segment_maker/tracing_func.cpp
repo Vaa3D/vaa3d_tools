@@ -19,8 +19,8 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../hackathon/zhi/branch_point_detection/branch_pt_detection_func.h"
 bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * pdata, V3DLONG sz[3], int datatype);
-
-
+extern int thresh;
+extern NeuronTree trace_result,resultTree_rebase,resultTree;
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
 #endif
@@ -171,6 +171,47 @@ int region_groupfusing(SDATATYPE *pVImg, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG,
 
     return true;
 }
+void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d)
+{
+    cout<<"this is slot set markers"<<endl;
+    NeuronTree nt_k,updated_nt;
+    double ox = curr->getOriginX();
+    double oy = curr->getOriginY();
+    double oz = curr->getOriginZ();
+    double lx = curr->getRezX();
+    double ly = curr->getRezY();
+    double lz = curr->getRezZ();
+    NeuronSWC s;
+    QString NNN= "NNN.swc";
+    writeSWC_file(NNN,trace_result);
+ //   v3d_msg("resultTree_rebase.size");
+    cout<<"resultTree_rebase = "<<resultTree_rebase.listNeuron.size()<<endl;
+    cout<<"resultTree = "<<resultTree.listNeuron.size()<<endl;
+
+    for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)
+    {
+        s = resultTree.listNeuron[i];
+        if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
+        {
+            nt_k.listNeuron.push_back(s);
+        }
+        else
+        {
+            updated_nt.listNeuron.push_back(s);
+        }
+    }
+    QString name = "hahaha.swc";
+    QString name1 = "yyyyyyyyyyyyyy.swc";
+    writeSWC_file(name,nt_k);
+    writeSWC_file(name1,updated_nt);
+    resultTree.listNeuron.clear();
+    resultTree.hashNeuron.clear();
+
+    m_v3d.setSWCTeraFly(updated_nt);
+ //   v3d_msg("yyyyy");
+    updated_nt.listNeuron.clear();
+    nt_k.listNeuron.clear();
+}
 
 
 
@@ -255,6 +296,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<"$$$$$$$$$$$$$$$$$$$$$$get into curr window$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
         P.inimg_file = outimg_file;
         const Image4DSimple *curr_block = callback.getImageTeraFly();
+        LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
+
+        updated_curr_win(curr_block,callback); //add here
         data1d_sz[0] = curr_block->getXDim();
         data1d_sz[1] = curr_block->getYDim();
         data1d_sz[2] = curr_block->getZDim();
@@ -268,13 +312,14 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.o_z=curr_block->getOriginZ();
 
 
-        LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
+        //LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
         int mark_num = terafly_landmarks.size();
 
         LocationSimple t;
         t.x = terafly_landmarks[mark_num-1].x;//mark_num-1
         t.y = terafly_landmarks[mark_num-1].y;
         t.z = terafly_landmarks[mark_num-1].z;
+
 
         t.x = t.x-P.o_x;
         t.y = t.y-P.o_y;
@@ -283,6 +328,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         t.y = t.y/P.ratio_y;
         t.z = t.z/P.ratio_z;
         P.listLandmarks.push_back(t);
+
         QList<ImageMarker> marker;
         ImageMarker markerlist;
         markerlist.x = t.x;
@@ -291,7 +337,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         marker.push_back(markerlist);
 
         writeMarker_file(outmarker_file,marker);
-
 
 
         Image4DSimple *data = new Image4DSimple;
@@ -312,7 +357,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //        p2.is_coverage_prune = true;
 //        p2.is_break_accept = P.is_break_accept;
 //        p2.bkg_thresh = P.bkg_thresh;
-        p2.bkg_thresh = 50;
+        p2.bkg_thresh = thresh;
 //        p2.length_thresh = P.length_thresh;
 //        p2.cnn_type = 2;
 //        p2.channel = 0;
@@ -330,6 +375,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //        p2.xc1 = p2.p4dImage->getXDim()-1;
 //        p2.yc1 = p2.p4dImage->getYDim()-1;
 //        p2.zc1 = p2.p4dImage->getZDim()-1;
+        cout<<" iiiiiiiiiiiiiiiiiiiiii = "<<thresh<<endl;
+        v3d_msg("done");
         p2.outswc_file =swcString;
         proc_app2(callback, p2, versionStr);
 

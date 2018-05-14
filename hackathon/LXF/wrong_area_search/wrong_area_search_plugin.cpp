@@ -39,7 +39,7 @@ void wrong_area_searchPlugin::domenu(const QString &menu_name, V3DPluginCallback
         bool bmenu = true;
         Input_para PARA;
         find_wrong_area(PARA,callback,bmenu,parent);
-        v3d_msg("find_wrong_area_done.");
+        v3d_msg("find_wrong_area_done.");wrong_area_searchPlugin
 	}
     else if (menu_name == tr("data_training"))
 	{
