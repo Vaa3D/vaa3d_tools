@@ -220,7 +220,7 @@ bool match_marker(vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimpl
 {
     vector<int> loc;
     loc.clear();
-    v3d_msg("check1");
+    //v3d_msg("check1");
     if(terafly_landmarks.size()==1)
     {
         t.x = terafly_landmarks[0].x;
@@ -229,7 +229,7 @@ bool match_marker(vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimpl
     }
     else
     {
-        v3d_msg("check_1");
+        //v3d_msg("check_1");
         if(ind.size()==1)
         {
             t.x = terafly_landmarks[ind[0]].x;
@@ -261,18 +261,18 @@ bool match_marker(vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimpl
                 }
                 if(min_dis>300)
                 {
-                    v3d_msg("terafly_landmarks fit");
+                    //v3d_msg("terafly_landmarks fit");
                     cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
                     loc.push_back(i);
                 }
                 else
                 {
-                    v3d_msg("terafly_landmarks don't fit");
+                    //v3d_msg("terafly_landmarks don't fit");
                     cout<<"terafly_landmarks_don't fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
                     //return true;
                 }
                 cout<<"loc.size() = "<<loc.size()<<endl;
-                v3d_msg("in 1");
+                //v3d_msg("in 1");
             }
 
             if(loc.size()!=1)
@@ -428,7 +428,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                     }
 
                 }
-                v3d_msg("out_1");
+                //v3d_msg("out_1");
                 if(min_dis>0.0001)
                 {
                     ind.push_back(i);
@@ -445,7 +445,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                 v3d_msg("abort");
                 return false;
             }
-            v3d_msg("out_2");
+            //v3d_msg("out_2");
 //        }
 
         if(marker_rebase.size() == terafly_landmarks.size())
