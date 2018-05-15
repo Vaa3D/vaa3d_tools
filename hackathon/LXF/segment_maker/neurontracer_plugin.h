@@ -971,7 +971,7 @@ public:
     ~lookPanel();
 
     QGridLayout *gridLayout;
-    V3DPluginCallback2 & callback;
+    V3DPluginCallback2 & m_v3d;
 
 
 private slots:

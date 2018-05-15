@@ -7,6 +7,8 @@
 #include <vector>
 #include "neurontracer_plugin.h"
 #include "tracing_func.h"
+#include "stdio.h"
+
 
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
@@ -17,7 +19,8 @@ using namespace std;
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
 NeuronTree trace_result,resultTree_rebase,resultTree;
-
+bool change = true;
+//bool change == true;
 int thresh=40;
 int func_name;
 //struct ratio
@@ -46,7 +49,6 @@ QStringList neurontracer::menulist() const
       //   <<tr("trace_NeuronChaser")
     <<tr("about");
 }
-
 QStringList neurontracer::funclist() const
 {
     return QStringList()
@@ -141,7 +143,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
         NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
-        NeuronTree resultTree;
+        //NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
         QHash <int, int>  hashNeuron;
         listNeuron.clear();
@@ -159,21 +161,31 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                 max_id = curr_win_nt.listNeuron[i].n;
             }
         }
+        resultTree.listNeuron.clear();
+        resultTree.hashNeuron.clear();
+//        resultTree_rebase.listNeuron.clear();
+//        resultTree_rebase.hashNeuron.clear();
         resultTree.listNeuron = listNeuron;
         resultTree.hashNeuron = hashNeuron;
         resultTree.color.r = 0;
         resultTree.color.g = 0;
         resultTree.color.b = 0;
         resultTree.color.a = 0;
-        resultTree_rebase.listNeuron = listNeuron;
-        resultTree_rebase.hashNeuron = hashNeuron;
-        resultTree_rebase.color.r = 0;
-        resultTree_rebase.color.g = 0;
-        resultTree_rebase.color.b = 0;
-        resultTree_rebase.color.a = 0;
-
+        if(change)
+        {
+            //v3d_msg("enter into resultTree_rebase");
+            resultTree_rebase.listNeuron = listNeuron;
+            resultTree_rebase.hashNeuron = hashNeuron;
+            resultTree_rebase.color.r = 0;
+            resultTree_rebase.color.g = 0;
+            resultTree_rebase.color.b = 0;
+            resultTree_rebase.color.a = 0;
+            //cout<<"resultTree_rebase.listNeuron.size = "<<resultTree_rebase.listNeuron.size()<<endl;
+        }
+        change = true;
         for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
         {
+            curr_window_nt.listNeuron[i].type = 10;
             curr_window_nt.listNeuron[i].n = curr_window_nt.listNeuron[i].n + max_id;
             if(curr_window_nt.listNeuron[i].pn!=-1)
             {
@@ -181,69 +193,12 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             }
             resultTree.listNeuron.push_back(curr_window_nt.listNeuron[i]);
         }
-        for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)
-        {
-            resultTree.listNeuron[i].type = 10;
-        }
-//        for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)
-//        {
-//            resultTree_rebase.listNeuron[i].type = 10;
-//        }
+
         callback.setSWCTeraFly(resultTree);
         QString final_name = "result.swc";
         writeSWC_file(final_name,resultTree);
 
 
-        if(QApplication::keyboardModifiers().testFlag(Qt::ShiftModifier)&&QApplication::keyboardModifiers().testFlag(Qt::AltModifier))
-
-        bool miok;
-        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
-        if(miok)
-        {
-            cout<<"input number is "<<thresh<<endl;
-        }
-
-        cout<<"resultTree_rebase.listNeuron.size() = "<<resultTree_rebase.listNeuron.size()<<endl;
-        QString final_name1 = "result.swc";
-        writeSWC_file(final_name1,resultTree_rebase);
-
-
-        if(resultTree_rebase.listNeuron.size()>0)
-        {
-            v3d_msg("hahahah");
-            NeuronTree nt = resultTree_rebase;
-            m_v3d.setSWCTeraFly(nt);
-            cout<<"ssssssssssssssssssssssss"<<endl;
-            resultTree_rebase.listNeuron.clear();
-            resultTree_rebase.hashNeuron.clear();
-
-        }
-        v3d_msg("rebase_show");
-
-//        QString namep = "result.swc";
-//            resultTree_rebase = readSWC_file(namep);
-        callback.setSWCTeraFly(resultTree_rebase);
-        v3d_msg("check!");
-
-
-
-//        if (panel)
-//        {
-//            panel->show();
-//            return;
-//        }
-//        else
-//        {
-//            panel = new lookPanel(callback, parent);
-
-//            if (panel)
-//            {
-//                panel->show();
-//                panel->raise();
-//                panel->move(100,100);
-//                panel->activateWindow();
-//            }
-//        }
 
     }else if (menu_name == tr("trace_APP1"))
 	{
@@ -951,7 +906,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 	return true;
 }
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
-    QDialog(parent)
+    QDialog(parent),m_v3d(_v3d)
 {
 
     gridLayout = new QGridLayout();
@@ -1050,7 +1005,7 @@ void lookPanel::_slot_set_thresh()
     {
         v3d_msg("hahahah");
         NeuronTree nt = resultTree_rebase;
-        callback.setSWCTeraFly(nt);
+        m_v3d.setSWCTeraFly(nt);
         cout<<"ssssssssssssssssssssssss"<<endl;
         resultTree_rebase.listNeuron.clear();
         resultTree_rebase.hashNeuron.clear();

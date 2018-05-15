@@ -21,6 +21,10 @@
 bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * pdata, V3DLONG sz[3], int datatype);
 extern int thresh;
 extern NeuronTree trace_result,resultTree_rebase,resultTree;
+LandmarkList marker_rebase;
+V3DLONG marker_num_rebase=0;
+V3DLONG thres_rebase=40;
+extern bool change;
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
 #endif
@@ -184,7 +188,6 @@ void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d)
     NeuronSWC s;
     QString NNN= "NNN.swc";
     writeSWC_file(NNN,trace_result);
- //   v3d_msg("resultTree_rebase.size");
     cout<<"resultTree_rebase = "<<resultTree_rebase.listNeuron.size()<<endl;
     cout<<"resultTree = "<<resultTree.listNeuron.size()<<endl;
 
@@ -208,12 +211,76 @@ void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d)
     resultTree.hashNeuron.clear();
 
     m_v3d.setSWCTeraFly(updated_nt);
- //   v3d_msg("yyyyy");
     updated_nt.listNeuron.clear();
     nt_k.listNeuron.clear();
 }
 
+bool match_marker(vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimple &t)
+{
+    vector<int> loc;
+   if(ind.size()==1)
+   {
+       t.x = terafly_landmarks[ind[0]].x;
+       t.y = terafly_landmarks[ind[0]].y;
+       t.z = terafly_landmarks[ind[0]].z;
+   }
+   else
+   {
 
+       for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+       {
+           double dis;double min_dis=100000000000;
+           //cout<<"resultTree.listNeuron.size() = "<<resultTree.listNeuron.size()<<endl;
+           for(V3DLONG j=0;j<resultTree.listNeuron.size();j++)
+           {
+               cout<<resultTree.listNeuron[j].x<<"  "<<terafly_landmarks[i].x<<endl;
+               dis = sqrt( (resultTree.listNeuron[j].x - terafly_landmarks[i].x)*(resultTree.listNeuron[j].x - terafly_landmarks[i].x) + (resultTree.listNeuron[j].y - terafly_landmarks[i].y)*(resultTree.listNeuron[j].y - terafly_landmarks[i].y)+(resultTree.listNeuron[j].z - terafly_landmarks[i].z)*(resultTree.listNeuron[j].z - terafly_landmarks[i].z) );
+               if(min_dis>dis)
+               {
+                   min_dis = dis;
+               }
+           }
+           //cout<<"min_dis = "<<min_dis<<endl;
+           //v3d_msg("min_dis");
+           //cout<<"resultTree.listNeuron.size = "<<resultTree.listNeuron.size()<<endl;
+           if(min_dis==100000000000)
+           {
+               v3d_msg("resultTree is void");
+               return false;
+           }
+           if(min_dis>300)
+           {
+               v3d_msg("terafly_landmarks fit");
+               cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
+               loc.push_back(i);
+           }
+           else
+           {
+               v3d_msg("terafly_landmarks don't fit");
+               cout<<"terafly_landmarks_don't fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
+           }
+           //v3d_msg("in 1");
+       }
+
+       if(loc.size()!=1)
+       {
+           if(loc.size()==0)return true;
+           cout<<"loc.size = "<<loc.size()<<endl;
+           v3d_msg("there is a problem about markers");
+           return false;
+       }
+       else
+       {
+           cout<<"loc[0] = "<<loc[0]<<endl;
+           t.x = terafly_landmarks[ind[loc[0]]].x;
+           t.y = terafly_landmarks[ind[loc[0]]].y;
+           t.z = terafly_landmarks[ind[loc[0]]].z;
+       }
+       //v3d_msg("in 2");.
+       return true;
+   }
+
+}
 
 
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
@@ -298,9 +365,19 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.inimg_file = outimg_file;
         const Image4DSimple *curr_block = callback.getImageTeraFly();
         LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
+        LocationSimple t;
+        QList<ImageMarker> listmarker;
+        for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+        {
+            ImageMarker u;
+            u.x = terafly_landmarks[i].x;
+            u.y = terafly_landmarks[i].y;
+            u.z = terafly_landmarks[i].z;
+            listmarker.push_back(u);
+        }
+        writeMarker_file(QString("all.marker"),listmarker);
         if(terafly_landmarks.isEmpty())return false;
-        //terafly_landmarks.at(0).color.
-        //updated_curr_win(curr_block,callback); //add here
+
         data1d_sz[0] = curr_block->getXDim();
         data1d_sz[1] = curr_block->getYDim();
         data1d_sz[2] = curr_block->getZDim();
@@ -312,16 +389,63 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.o_x=curr_block->getOriginX();
         P.o_y=curr_block->getOriginY();
         P.o_z=curr_block->getOriginZ();
+        vector<int> ind;
+        for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+        {
+            double dis;
+            double min_dis = 10000000000;
+            for(V3DLONG j=0;j<marker_rebase.size();j++)
+            {
+                dis = (terafly_landmarks[i].x-marker_rebase[j].x)*(terafly_landmarks[i].x-marker_rebase[j].x)+(terafly_landmarks[i].y-marker_rebase[j].y)*(terafly_landmarks[i].y-marker_rebase[j].y)+(terafly_landmarks[i].z-marker_rebase[j].z)*(terafly_landmarks[i].z-marker_rebase[j].z);
+                if(dis<min_dis)
+                {
+                    min_dis = dis;
+                }
 
+            }
+            //v3d_msg("out_1");
+            if(min_dis>0.0001)
+            {
+                ind.push_back(i);
+            }
+        }
+        callback.setLandmarkTeraFly(marker_rebase);
+        marker_rebase = terafly_landmarks;
+        if(!match_marker(ind,terafly_landmarks,t))
+        {
+            v3d_msg("abort");
+            return false;
+        }
+        //v3d_msg("out_2");
 
-        //LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
-        int mark_num = terafly_landmarks.size();
-        cout<<"mark_num = "<<mark_num<<endl;
+        if(marker_num_rebase == terafly_landmarks.size())
+        {
+            change = false;
+            //v3d_msg("change thres!");
+            bool miok;
+            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+            if(miok)
+            {
+                cout<<"input number is "<<thresh<<endl;
+            }
+            //v3d_msg("thresh");
+            cout<<"thresh = "<<thres_rebase<<endl;
+            if(thresh != thres_rebase)
+            {
+                callback.setSWCTeraFly(resultTree_rebase);
 
-        LocationSimple t;
-        t.x = terafly_landmarks[0].x;//mark_num-1
-        t.y = terafly_landmarks[0].y;
-        t.z = terafly_landmarks[0].z;
+            }
+            thres_rebase = thresh;
+        }
+        else
+        {
+            resultTree_rebase.listNeuron.clear();
+            resultTree_rebase.hashNeuron.clear();
+        }
+//        marker_num_rebase = terafly_landmarks.size();
+//        cout<<"marker_num_rebase = "<<marker_num_rebase<<endl;
+        cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
+        v3d_msg("show_marker");
 
 
         t.x = t.x-P.o_x;
@@ -330,6 +454,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         t.x = t.x/P.ratio_x;
         t.y = t.y/P.ratio_y;
         t.z = t.z/P.ratio_z;
+        P.listLandmarks.clear();
         P.listLandmarks.push_back(t);
         cout<<"P = "<<P.listLandmarks.size()<<endl;
 
@@ -343,7 +468,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         writeMarker_file(outmarker_file,marker);
 
 //        terafly_landmarks.clear();                             //delete markers
-//        callback.setLandmarkTeraFly(terafly_landmarks);
+
 
         Image4DSimple *data = new Image4DSimple;
         data->setData((unsigned char *)curr_block->getRawData(),curr_block->getXDim(),curr_block->getYDim(),curr_block->getZDim(),curr_block->getCDim(),V3D_UINT8);
@@ -390,7 +515,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     }
 
 
-    //v3d_msg("app2_done");
+    v3d_msg("app2_done");
 
 
 
