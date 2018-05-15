@@ -22,6 +22,7 @@ bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * 
 extern int thresh;
 extern NeuronTree trace_result,resultTree_rebase,resultTree;
 LandmarkList marker_rebase;
+LocationSimple simple_rebase;
 V3DLONG marker_num_rebase=0;
 V3DLONG thres_rebase=40;
 extern bool change;
@@ -218,68 +219,89 @@ void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d)
 bool match_marker(vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimple &t)
 {
     vector<int> loc;
-   if(ind.size()==1)
-   {
-       t.x = terafly_landmarks[ind[0]].x;
-       t.y = terafly_landmarks[ind[0]].y;
-       t.z = terafly_landmarks[ind[0]].z;
-   }
-   else
-   {
+    loc.clear();
+    v3d_msg("check1");
+    if(terafly_landmarks.size()==1)
+    {
+        t.x = terafly_landmarks[0].x;
+        t.y = terafly_landmarks[0].y;
+        t.z = terafly_landmarks[0].z;
+    }
+    else
+    {
+        v3d_msg("check_1");
+        if(ind.size()==1)
+        {
+            t.x = terafly_landmarks[ind[0]].x;
+            t.y = terafly_landmarks[ind[0]].y;
+            t.z = terafly_landmarks[ind[0]].z;
+        }
+        else
+        {
 
-       for(V3DLONG i=0;i<terafly_landmarks.size();i++)
-       {
-           double dis;double min_dis=100000000000;
-           //cout<<"resultTree.listNeuron.size() = "<<resultTree.listNeuron.size()<<endl;
-           for(V3DLONG j=0;j<resultTree.listNeuron.size();j++)
-           {
-               cout<<resultTree.listNeuron[j].x<<"  "<<terafly_landmarks[i].x<<endl;
-               dis = sqrt( (resultTree.listNeuron[j].x - terafly_landmarks[i].x)*(resultTree.listNeuron[j].x - terafly_landmarks[i].x) + (resultTree.listNeuron[j].y - terafly_landmarks[i].y)*(resultTree.listNeuron[j].y - terafly_landmarks[i].y)+(resultTree.listNeuron[j].z - terafly_landmarks[i].z)*(resultTree.listNeuron[j].z - terafly_landmarks[i].z) );
-               if(min_dis>dis)
-               {
-                   min_dis = dis;
-               }
-           }
-           //cout<<"min_dis = "<<min_dis<<endl;
-           //v3d_msg("min_dis");
-           //cout<<"resultTree.listNeuron.size = "<<resultTree.listNeuron.size()<<endl;
-           if(min_dis==100000000000)
-           {
-               v3d_msg("resultTree is void");
-               return false;
-           }
-           if(min_dis>300)
-           {
-               v3d_msg("terafly_landmarks fit");
-               cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
-               loc.push_back(i);
-           }
-           else
-           {
-               v3d_msg("terafly_landmarks don't fit");
-               cout<<"terafly_landmarks_don't fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
-           }
-           //v3d_msg("in 1");
-       }
+            for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+            {
+                double dis;double min_dis=100000000000;
+                for(V3DLONG j=0;j<resultTree.listNeuron.size();j++)
+                {
+                    cout<<resultTree.listNeuron[j].x<<"  "<<terafly_landmarks[i].x<<endl;
+                    dis = sqrt( (resultTree.listNeuron[j].x - terafly_landmarks[i].x)*(resultTree.listNeuron[j].x - terafly_landmarks[i].x) + (resultTree.listNeuron[j].y - terafly_landmarks[i].y)*(resultTree.listNeuron[j].y - terafly_landmarks[i].y)+(resultTree.listNeuron[j].z - terafly_landmarks[i].z)*(resultTree.listNeuron[j].z - terafly_landmarks[i].z) );
+                    if(min_dis>dis)
+                    {
+                        min_dis = dis;
+                    }
+                }
+                //cout<<"min_dis = "<<min_dis<<endl;
+                //v3d_msg("min_dis");
+                //cout<<"resultTree.listNeuron.size = "<<resultTree.listNeuron.size()<<endl;
+                if(min_dis==100000000000)
+                {
+                    v3d_msg("resultTree is void");
+                    return false;
+                }
+                if(min_dis>300)
+                {
+                    v3d_msg("terafly_landmarks fit");
+                    cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
+                    loc.push_back(i);
+                }
+                else
+                {
+                    v3d_msg("terafly_landmarks don't fit");
+                    cout<<"terafly_landmarks_don't fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
+                    //return true;
+                }
+                cout<<"loc.size() = "<<loc.size()<<endl;
+                v3d_msg("in 1");
+            }
 
-       if(loc.size()!=1)
-       {
-           if(loc.size()==0)return true;
-           cout<<"loc.size = "<<loc.size()<<endl;
-           v3d_msg("there is a problem about markers");
-           return false;
-       }
-       else
-       {
-           cout<<"loc[0] = "<<loc[0]<<endl;
-           t.x = terafly_landmarks[ind[loc[0]]].x;
-           t.y = terafly_landmarks[ind[loc[0]]].y;
-           t.z = terafly_landmarks[ind[loc[0]]].z;
-       }
-       //v3d_msg("in 2");.
-       return true;
-   }
+            if(loc.size()!=1)
+            {
+                if(loc.size()==0)
+                {
+                    t = simple_rebase;
+                    return true;
+                }
+                else
+                {
+                    cout<<"loc.size = "<<loc.size()<<endl;
+                    v3d_msg("there is a problem about markers");
+                    return false;
+                }
+            }
+            else
+            {
+                cout<<"loc[0] = "<<loc[0]<<endl;
+                t.x = terafly_landmarks[ind[loc[0]]].x;
+                t.y = terafly_landmarks[ind[loc[0]]].y;
+                t.z = terafly_landmarks[ind[loc[0]]].z;
+            }
+            //v3d_msg("in 2");.
 
+        }
+    }
+    simple_rebase = t;
+    return true;
 }
 
 
@@ -389,46 +411,52 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.o_x=curr_block->getOriginX();
         P.o_y=curr_block->getOriginY();
         P.o_z=curr_block->getOriginZ();
-        vector<int> ind;
-        for(V3DLONG i=0;i<terafly_landmarks.size();i++)
-        {
-            double dis;
-            double min_dis = 10000000000;
-            for(V3DLONG j=0;j<marker_rebase.size();j++)
+
+//        if(marker_rebase.size() != terafly_landmarks.size())
+//        {
+            vector<int> ind;
+            for(V3DLONG i=0;i<terafly_landmarks.size();i++)
             {
-                dis = (terafly_landmarks[i].x-marker_rebase[j].x)*(terafly_landmarks[i].x-marker_rebase[j].x)+(terafly_landmarks[i].y-marker_rebase[j].y)*(terafly_landmarks[i].y-marker_rebase[j].y)+(terafly_landmarks[i].z-marker_rebase[j].z)*(terafly_landmarks[i].z-marker_rebase[j].z);
-                if(dis<min_dis)
+                double dis;
+                double min_dis = 10000000000;
+                for(V3DLONG j=0;j<marker_rebase.size();j++)
                 {
-                    min_dis = dis;
+                    dis = (terafly_landmarks[i].x-marker_rebase[j].x)*(terafly_landmarks[i].x-marker_rebase[j].x)+(terafly_landmarks[i].y-marker_rebase[j].y)*(terafly_landmarks[i].y-marker_rebase[j].y)+(terafly_landmarks[i].z-marker_rebase[j].z)*(terafly_landmarks[i].z-marker_rebase[j].z);
+                    if(dis<min_dis)
+                    {
+                        min_dis = dis;
+                    }
+
                 }
-
+                v3d_msg("out_1");
+                if(min_dis>0.0001)
+                {
+                    ind.push_back(i);
+                }
             }
-            //v3d_msg("out_1");
-            if(min_dis>0.0001)
+            //        callback.setLandmarkTeraFly(marker_rebase);
+            //        marker_rebase = terafly_landmarks;
+            //        if(marker_num_rebase == terafly_landmarks.size())
+            //        {
+
+            //        }
+            if(!match_marker(ind,terafly_landmarks,t))
             {
-                ind.push_back(i);
+                v3d_msg("abort");
+                return false;
             }
-        }
-        callback.setLandmarkTeraFly(marker_rebase);
-        marker_rebase = terafly_landmarks;
-        if(!match_marker(ind,terafly_landmarks,t))
-        {
-            v3d_msg("abort");
-            return false;
-        }
-        //v3d_msg("out_2");
+            v3d_msg("out_2");
+//        }
 
-        if(marker_num_rebase == terafly_landmarks.size())
+        if(marker_rebase.size() == terafly_landmarks.size())
         {
             change = false;
-            //v3d_msg("change thres!");
             bool miok;
             thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
             if(miok)
             {
                 cout<<"input number is "<<thresh<<endl;
             }
-            //v3d_msg("thresh");
             cout<<"thresh = "<<thres_rebase<<endl;
             if(thresh != thres_rebase)
             {
@@ -437,16 +465,15 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             }
             thres_rebase = thresh;
         }
-        else
-        {
-            resultTree_rebase.listNeuron.clear();
-            resultTree_rebase.hashNeuron.clear();
-        }
-//        marker_num_rebase = terafly_landmarks.size();
-//        cout<<"marker_num_rebase = "<<marker_num_rebase<<endl;
+//        else
+//        {
+//            resultTree_rebase.listNeuron.clear();
+//            resultTree_rebase.hashNeuron.clear();
+//        }
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
-        v3d_msg("show_marker");
-
+        //v3d_msg("show_marker");
+        //callback.setLandmarkTeraFly(marker_rebase);
+        marker_rebase = terafly_landmarks;
 
         t.x = t.x-P.o_x;
         t.y = t.y-P.o_y;
@@ -511,11 +538,12 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<" iiiiiiiiiiiiiiiiiiiiii = "<<thresh<<endl;
         p2.outswc_file =swcString;
         proc_app2(callback, p2, versionStr);
+        thres_rebase=40;
 
     }
 
 
-    v3d_msg("app2_done");
+    //v3d_msg("app2_done");
 
 
 
@@ -940,6 +968,7 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             }
         }
     }
+    //newTarget.x = tileLocation.x;
     double overlap = 0.1;
     LocationSimple newTarget;
     if(tip_left.size()>0)
