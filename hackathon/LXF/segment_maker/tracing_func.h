@@ -10,7 +10,7 @@
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 enum tracingMethod {app1, app2, neutube,snake,most,mst, neurogpstree,rivulet2,tremap,gd,advantra,neuronchaser};
 void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d);
-bool match_marker(vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimple &t);
+bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimple &t);
 struct TRACE_LS_PARA
 {
     int is_gsdt;

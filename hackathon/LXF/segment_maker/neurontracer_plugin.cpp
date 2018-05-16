@@ -19,6 +19,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
 NeuronTree trace_result,resultTree_rebase,resultTree;
+extern LandmarkList marker_rebase,marker_rebase2;
 bool change = true;
 //bool change == true;
 int thresh=40;
@@ -133,6 +134,10 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         QString name = P.inimg_file+"_app2.swc";
         trace_result = readSWC_file(name);
+        if(trace_result.listNeuron.size()!=0)
+        {
+            marker_rebase = marker_rebase2;
+        }
         for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
         {
             trace_result.listNeuron[i].x = trace_result.listNeuron[i].x*P.ratio_x + P.o_x;
