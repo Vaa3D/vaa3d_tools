@@ -218,6 +218,12 @@ void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d)
 
 bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimple &t)
 {
+    for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+    {
+        cout<<"new marker is "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<"  "<<terafly_landmarks[i].z<<"  "<<endl;
+    }
+    const Image4DSimple* curr = callback.getImageTeraFly();
+    double para_ratio = curr->getRezX()/curr->getXDim();
     vector<int> loc;
     NeuronTree resultTree_2;
     loc.clear();
@@ -262,7 +268,10 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
                     v3d_msg("resultTree_2 is void");
                     return false;
                 }
-                if(min_dis>300)
+                cout<<"min______________________dis = "<<min_dis<<endl;
+
+                cout<<"min_dis/para = "<<min_dis/para_ratio<<endl;
+                if(min_dis/para_ratio>5)
                 {
                     //v3d_msg("terafly_landmarks fit");
                     cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
@@ -465,7 +474,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             //v3d_msg("out_2");
 //        }
             cout<<marker_rebase.size()<<"  "<<terafly_landmarks.size()<<endl;
-            v3d_msg("check two size");
+            //v3d_msg("check two size");
         if(marker_rebase.size() == terafly_landmarks.size())
         {
             change = false;
@@ -489,7 +498,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //            resultTree_rebase.hashNeuron.clear();
 //        }
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
-        //v3d_msg("show_marker");
+        v3d_msg("show_marker");
         //callback.setLandmarkTeraFly(marker_rebase);
         marker_rebase2 = terafly_landmarks;
 

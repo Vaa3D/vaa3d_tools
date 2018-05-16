@@ -1038,7 +1038,7 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
             double para = curr->getRezX()/curr->getXDim();
             cout<<"min_dis/para = "<<min_dis/para<<endl;
-            if(min_dis/para>4)  //rebase 5
+            if(min_dis/para>5)  //rebase 5
             {
                 result.listNeuron.push_back(trace_result.listNeuron[i]);
             }
