@@ -232,7 +232,7 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
     }
     else
     {
-        //v3d_msg("check_1");
+        //v3d_msg("check_1");40
         if(ind.size()==1)
         {
             t.x = terafly_landmarks[ind[0]].x;
