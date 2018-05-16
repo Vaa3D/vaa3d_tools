@@ -138,6 +138,11 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         {
             marker_rebase = marker_rebase2;
         }
+        else
+        {
+            v3d_msg("this tracing has no result");
+            return;
+        }
         for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
         {
             trace_result.listNeuron[i].x = trace_result.listNeuron[i].x*P.ratio_x + P.o_x;
@@ -969,8 +974,8 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
                 }
 
             }
-            //cout<<"dis = "<<min_dis<<endl;
-            if(min_dis>100)
+            cout<<"min______________________dis = "<<min_dis<<endl;
+            if(min_dis>20)
             {
                 result.listNeuron.push_back(trace_result.listNeuron[i]);
             }

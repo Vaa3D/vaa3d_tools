@@ -556,7 +556,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         //v3d_msg("start app2");
         p2.outswc_file =swcString;
         proc_app2(callback, p2, versionStr);
-        thres_rebase=40;
+        thresh=40;
 
     }
 
