@@ -464,7 +464,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             }
             //v3d_msg("out_2");
 //        }
-
+            cout<<marker_rebase.size()<<"  "<<terafly_landmarks.size()<<endl;
+            v3d_msg("check two size");
         if(marker_rebase.size() == terafly_landmarks.size())
         {
             change = false;

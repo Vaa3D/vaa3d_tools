@@ -20,6 +20,7 @@ Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
 NeuronTree trace_result,resultTree_rebase,resultTree;
 extern LandmarkList marker_rebase,marker_rebase2;
+extern V3DLONG thres_rebase;
 bool change = true;
 //bool change == true;
 int thresh=40;
@@ -141,7 +142,26 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         else
         {
             v3d_msg("this tracing has no result");
-            return;
+            thresh = thresh - 20 ;
+//            LandmarkList terafly_marks = callback.getLandmarkTeraFly();
+//            if(marker_rebase.size() == terafly_marks.size())
+//            {
+//                change = false;
+//                bool miok;
+//                thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+//                if(miok)
+//                {
+//                    cout<<"input number is "<<thresh<<endl;
+//                }
+//                cout<<"thresh = "<<thres_rebase<<endl;
+//                if(thresh != thres_rebase)
+//                {
+//                    callback.setSWCTeraFly(resultTree_rebase);
+
+//                }
+//                thres_rebase = thresh;
+//            }
+            //return;
         }
         for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
         {
@@ -975,7 +995,10 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
             }
             cout<<"min______________________dis = "<<min_dis<<endl;
-            if(min_dis>20)
+
+            double para = curr->getRezX()/curr->getXDim();
+            cout<<"min_dis/para = "<<min_dis/para<<endl;
+            if(min_dis/para>4)  //rebase 5
             {
                 result.listNeuron.push_back(trace_result.listNeuron[i]);
             }
