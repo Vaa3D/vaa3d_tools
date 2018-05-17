@@ -22,6 +22,7 @@ NeuronTree trace_result,resultTree_rebase,resultTree;
 extern LandmarkList marker_rebase,marker_rebase2;
 extern V3DLONG thres_rebase;
 bool change = true;
+int check_void=0;
 //bool change == true;
 int thresh=40;
 int func_name;
@@ -141,9 +142,13 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         }
         else
         {
-            v3d_msg("this tracing has no result");
+            check_void++;
+            cout<<"check  "<<check_void<<endl;
+            v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
             thresh = thresh - 20 ;
-            //return;
+            //if()
+
+
         }
         for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
         {
@@ -1038,7 +1043,7 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
             double para = curr->getRezX()/curr->getXDim();
             cout<<"min_dis/para = "<<min_dis/para<<endl;
-            if(min_dis/para>5)  //rebase 5
+            if(min_dis/para>8)  //rebase 5
             {
                 result.listNeuron.push_back(trace_result.listNeuron[i]);
             }

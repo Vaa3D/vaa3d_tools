@@ -271,7 +271,7 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
                 cout<<"min______________________dis = "<<min_dis<<endl;
 
                 cout<<"min_dis/para = "<<min_dis/para_ratio<<endl;
-                if(min_dis/para_ratio>5)
+                if(min_dis/para_ratio>4)
                 {
                     //v3d_msg("terafly_landmarks fit");
                     cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
@@ -408,20 +408,41 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<"$$$$$$$$$$$$$$$$$$$$$$get into curr window$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
         P.inimg_file = outimg_file;
         const Image4DSimple *curr_block = callback.getImageTeraFly();
-        LandmarkList terafly_landmarks = callback.getLandmarkTeraFly();
+        LandmarkList terafly_landmarks_terafly = callback.getLandmarkTeraFly();//terafly_landmarks
         LandmarkList new_marker;
         LocationSimple t;
+        double ox = curr_block->getOriginX();
+        double oy = curr_block->getOriginY();
+        double oz = curr_block->getOriginZ();
+        double lx = curr_block->getRezX();
+        double ly = curr_block->getRezY();
+        double lz = curr_block->getRezZ();
+
+
         QList<ImageMarker> listmarker;
-        for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+        for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
         {
             ImageMarker u;
-            u.x = terafly_landmarks[i].x;
-            u.y = terafly_landmarks[i].y;
-            u.z = terafly_landmarks[i].z;
+            u.x = terafly_landmarks_terafly[i].x;
+            u.y = terafly_landmarks_terafly[i].y;
+            u.z = terafly_landmarks_terafly[i].z;
             listmarker.push_back(u);
         }
         writeMarker_file(QString("all.marker"),listmarker);
-        if(terafly_landmarks.isEmpty())return false;
+        if(terafly_landmarks_terafly.isEmpty())return false;
+        LandmarkList terafly_landmarks,other_marker;
+        for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
+        {
+            LocationSimple s = terafly_landmarks_terafly[i];
+            if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
+            {
+                terafly_landmarks.push_back(s);
+            }
+            else
+            {
+                other_marker.push_back(s);
+            }
+        }
 
         data1d_sz[0] = curr_block->getXDim();
         data1d_sz[1] = curr_block->getYDim();
@@ -473,9 +494,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             }
             //v3d_msg("out_2");
 //        }
-            cout<<marker_rebase.size()<<"  "<<terafly_landmarks.size()<<endl;
+            cout<<marker_rebase.size()<<"  "<<terafly_landmarks_terafly.size()<<endl;
             //v3d_msg("check two size");
-        if(marker_rebase.size() == terafly_landmarks.size())
+        if(marker_rebase.size() == terafly_landmarks_terafly.size())
         {
             change = false;
             bool miok;
@@ -500,7 +521,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
         v3d_msg("show_marker");
         //callback.setLandmarkTeraFly(marker_rebase);
-        marker_rebase2 = terafly_landmarks;
+        marker_rebase2 = terafly_landmarks_terafly;
 
         t.x = t.x-P.o_x;
         t.y = t.y-P.o_y;
