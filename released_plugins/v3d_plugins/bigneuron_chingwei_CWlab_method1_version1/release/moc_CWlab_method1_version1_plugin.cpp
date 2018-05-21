@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'CWlab_method1_version1_plugin.h'
 **
-** Created: Tue May 8 18:39:12 2018
+** Created: Thu May 7 17:50:33 2015
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.2)
 **
 ** WARNING! All changes made in this file will be lost!
