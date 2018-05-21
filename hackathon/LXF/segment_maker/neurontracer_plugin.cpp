@@ -146,7 +146,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             cout<<"check  "<<check_void<<endl;
             v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
             thresh = thresh - 20 ;
-            //if()
 
 
         }
@@ -1043,10 +1042,19 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
             double para = curr->getRezX()/curr->getXDim();
             cout<<"min_dis/para = "<<min_dis/para<<endl;
-            if(min_dis/para>8)  //rebase 5
+            if(min_dis/para>1)  //rebase 5
             {
-                result.listNeuron.push_back(trace_result.listNeuron[i]);
+                if(point_at_boundry(m_v3d,trace_result.listNeuron[i]))
+                {
+                    //trace_result.listNeuron[i].type = 10;
+                    result.listNeuron.push_back(trace_result.listNeuron[i]);
+                }
             }
+//            else  //check
+//            {
+//                trace_result.listNeuron[i].type = 7;
+//                result.listNeuron.push_back(trace_result.listNeuron[i]);
+//            }
             //cout<<"result = "<<result.listNeuron.size()<<endl;
 
         }
@@ -1093,81 +1101,38 @@ void lookPanel::_slot_set_thresh()
 
 
 }
-//void lookPanel::_slot_sync_onetime()
-//{
 
-//    cout<<"this is slot sync onetime"<<endl;
-//    NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
+bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s)
+{
+    const Image4DSimple *curr = callback.getImageTeraFly();
+    double ox = curr->getOriginX();
+    double oy = curr->getOriginY();
+    double oz = curr->getOriginZ();
+    double lx = curr->getRezX();
+    double ly = curr->getRezY();
+    double lz = curr->getRezZ();
+    double min_dis = 1000000000000;
+    double dis_x1 = s.x-ox;
+    if(dis_x1<min_dis)min_dis = dis_x1;
+    double dis_x2 = ox+lx-s.x;
+    if(dis_x2<min_dis)min_dis = dis_x2;
+    double dis_y1 = s.y-oy;
+    if(dis_y1<min_dis)min_dis = dis_y1;
+    double dis_y2 = oy+ly-s.y;
+    if(dis_y2<min_dis)min_dis = dis_y2;
+    double dis_z1 = s.z-oz;
+    if(dis_z1<min_dis)min_dis = dis_z1;
+    double dis_z2 = oz+lz-s.z;
+    if(dis_z2<min_dis)min_dis = dis_z2;
 
-//    QList <NeuronSWC> listNeuron;
-//    QHash <int, int>  hashNeuron;
-//    listNeuron.clear();
-//    hashNeuron.clear();
-//    V3DLONG max_id=0;
-
-//    for(int j = 0; j < curr_window_nt.listNeuron.size(); j++)
-//    {
-//        listNeuron.append(curr_window_nt.listNeuron.at(j));
-//        hashNeuron.insert(curr_window_nt.listNeuron.at(j).n, listNeuron.size()-1);
-//    }
-//    for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
-//    {
-//        if(curr_window_nt.listNeuron[i].n>max_id)
-//        {
-//            max_id = curr_window_nt.listNeuron[i].n;
-//        }
-//    }
-//    resultTree.listNeuron = listNeuron;
-//    resultTree.hashNeuron = hashNeuron;
-//    resultTree.color.r = 0;
-//    resultTree.color.g = 0;
-//    resultTree.color.b = 0;
-//    resultTree.color.a = 0;
-//    resultTree_rebase.listNeuron = listNeuron;
-//    resultTree_rebase.hashNeuron = hashNeuron;
-//    resultTree_rebase.color.r = 0;
-//    resultTree_rebase.color.g = 0;
-//    resultTree_rebase.color.b = 0;
-//    resultTree_rebase.color.a = 0;
-
-//    for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
-//    {
-//        trace_result.listNeuron[i].n = trace_result.listNeuron[i].n + max_id;
-//        if(trace_result.listNeuron[i].pn!=-1)
-//        {
-//            trace_result.listNeuron[i].pn = trace_result.listNeuron[i].pn + max_id;
-//        }
-//        resultTree.listNeuron.push_back(trace_result.listNeuron[i]);
-//    }
-//    m_v3d.setSWCTeraFly(resultTree);
-//    resultTree.listNeuron.clear();
-//    resultTree.hashNeuron.clear();
-
-//    //v3d_msg("show_done");
+    if(min_dis<5)return false;
+    else return true;
 
 
 
-//}
-//void lookPanel::_slot_set_annotation()
-//{
-
-//    cout<<"this is slot set markers"<<endl;
-//    NeuronTree curr_window_nt = m_v3d.getSWCTeraFly();
-//    m_v3d.setSWCTeraFly(curr_window_nt);
-//    resultTree_rebase.listNeuron.clear();
-//    resultTree_rebase.hashNeuron.clear();
-//    resultTree.listNeuron.clear();
-//    resultTree.hashNeuron.clear();
-//    resultTree_rebase = curr_window_nt;
-//    resultTree = curr_window_nt;
-//    v3d_msg("resultTree_rebase.size");
-//    cout<<"resultTree_rebase = "<<resultTree_rebase.listNeuron.size()<<endl;
-//    cout<<"resultTree = "<<resultTree.listNeuron.size()<<endl;
+    v3d_msg("check inside2");
 
 
+}
 
-
-
-
-//}
 

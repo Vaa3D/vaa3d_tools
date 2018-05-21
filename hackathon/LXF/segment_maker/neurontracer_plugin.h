@@ -982,6 +982,7 @@ private slots:
 };
 
 NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,NeuronTree &trace_result,NeuronTree &curr_win_swc);
+bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s);
 
 
 #endif
