@@ -587,7 +587,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         //v3d_msg("start app2");
         p2.outswc_file =swcString;
         proc_app2(callback, p2, versionStr);
-        thresh=40;
+        thresh=30;
 
     }
 
@@ -6398,14 +6398,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 {
 //    cout<<"name = "<<P.inimg_file.toStdString()<<endl;
     QString saveDirString;
-//    if(P.method == neutube)
-//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE_LXF");
-//    else if (P.method == snake)
-//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE_LXF");
-//    else if (P.method == most)
-//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST_LXF");
-//    else if (P.method == app2)
-//        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED_LXF");
+
 
     QString imageSaveString = saveDirString;
 
@@ -6418,128 +6411,7 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
     end_z = iz + P.block_size; if(end_z > P.in_sz[2]) end_z = P.in_sz[2];
 
 
-    unsigned char * total1dData = 0;
-    V3DLONG *in_sz = 0;
-    if(P.image)
-    {
-        in_sz = new V3DLONG[4];
-        in_sz[0] = end_x - start_x;
-        in_sz[1] = end_y - start_y;
-        in_sz[2] = end_z - start_z;
-        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
-        try {total1dData = new unsigned char [pagesz];}
-        catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-        V3DLONG i = 0;
-        for(V3DLONG iz = 0; iz < P.in_sz[2]; iz++)
-        {
-            V3DLONG offsetk = iz*P.in_sz[1]*P.in_sz[0];
-            for(V3DLONG iy = start_y; iy < end_y; iy++)
-            {
-                V3DLONG offsetj = iy*P.in_sz[0];
-                for(V3DLONG ix = start_x; ix < end_x; ix++)
-                {
-                    total1dData[i] = P.image->getRawData()[offsetk + offsetj + ix];
-                    i++;
-                }
-            }
-        }
-    }else
-    {
-        cout<<QFileInfo(P.inimg_file).completeSuffix().toStdString()<<endl;
-        if(QFileInfo(P.inimg_file).completeSuffix() == "tc")
-        {
-            in_sz = new V3DLONG[4];
-            in_sz[0] = end_x - start_x;
-            in_sz[1] = end_y - start_y;
-            in_sz[2] = end_z - start_z;
-
-            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
-
-            if( !vim.y_load( P.inimg_file.toStdString()) )
-            {
-                printf("Wrong stitching configuration file to be load!\n");
-                return false;
-            }
-
-            if (!load_region_tc(callback,P.inimg_file,vim,total1dData,start_x,start_y,end_z,end_x-1,end_y-1,end_z-1))
-            {
-                printf("can not load the region");
-                if(total1dData) {delete []total1dData; total1dData = 0;}
-                return false;
-            }
-        }else if ((QFileInfo(P.inimg_file).completeSuffix() == "raw") || (QFileInfo(P.inimg_file).completeSuffix() == "v3draw"))
-        {
-            //cout<<"v3draw_LXF"<<endl;
-            V3DLONG *in_zz = 0;
-            int datatype;
-            if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), total1dData, in_zz, in_sz,datatype,start_x,start_y,start_x,
-                               end_x,end_y,end_z))
-            {
-                printf("can not load the region");
-                if(total1dData) {delete []total1dData; total1dData = 0;}
-                return false;
-            }
-        }else
-        {
-            in_sz = new V3DLONG[4];
-            in_sz[0] = end_x - start_x;
-            in_sz[1] = end_y - start_y;
-            in_sz[2] = end_z - start_z;
-
-            V3DLONG *in_zz = 0;
-            if(!callback.getDimTeraFly(P.inimg_file.toStdString(),in_zz))
-            {
-                return false;
-            }
-
-            V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
-            try {total1dData = new unsigned char [pagesz];}
-            catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > in_zz[3])
-               P.channel = 1;
-            unsigned char * total1dDataTerafly = 0;
-            total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
-                                                              start_y,end_y,start_z,end_z);
-
-            for(V3DLONG i=0; i<pagesz; i++)
-            {
-                total1dData[i] = total1dDataTerafly[pagesz*(P.channel-1)+i];
-            }
-            if(total1dDataTerafly) {delete []total1dDataTerafly; total1dDataTerafly = 0;}
-        }
-
-    }
-
-
-    V3DLONG mysz[4];
-    mysz[0] = P.in_sz[0];
-    mysz[1] = P.in_sz[1];
-    mysz[2] = P.in_sz[2];
-    mysz[3] = 1;
-
-    double PixelSum = 0;
-    for(V3DLONG i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
-    {
-        double PixelVaule = total1dData[i];
-        PixelSum = PixelSum + PixelVaule;
-    }
-
-    double PixelMean = PixelSum/(in_sz[0]*in_sz[1]*in_sz[2]);
-    if(PixelMean < 10)
-    {
-        if(total1dData) {delete []total1dData; total1dData = 0;}
-        if(in_sz) {delete []in_sz; in_sz =0;}
-        return true;
-    }
-
-//    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z).append(".v3draw"));
-//    simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
-
-    if(total1dData) {delete []total1dData; total1dData = 0;}
-    if(in_sz) {delete []in_sz; in_sz =0;}
-
     QString swcString = saveDirString;
-//    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
 
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -6564,7 +6436,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 
     arg.type = "random";
     std::vector<char*> arg_para;
-
     if(P.method == neutube || P.method == app2)
     {
         arg_para.push_back("1");
@@ -6610,12 +6481,6 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
         return false;
     }
     QString swcNEUTUBE = saveDirString;
-//    if(P.method == neutube || P.method == app2)
-//        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_neutube.swc");
-//    else if (P.method == snake)
-//        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_snake.swc");
-//    else if (P.method == most)
-//        swcNEUTUBE.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw_MOST.swc");
 
     vector<MyMarker*> inputswc;
     inputswc = readSWC_file(swcNEUTUBE.toStdString());;

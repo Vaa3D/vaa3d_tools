@@ -24,7 +24,7 @@ extern V3DLONG thres_rebase;
 bool change = true;
 int check_void=0;
 //bool change == true;
-int thresh=40;
+int thresh=30;
 int func_name;
 //struct ratio
 //{
@@ -145,7 +145,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             check_void++;
             cout<<"check  "<<check_void<<endl;
             v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
-            thresh = thresh - 20 ;
+            thresh = thresh - 10 ;
 
 
         }
@@ -310,6 +310,8 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     }
     else if (menu_name == tr("trace_NEUTUBE"))  //finished
     {
+
+        v3d_msg("success");
         TRACE_LS_PARA P;
         bool bmenu = false;
         if(bmenu)
