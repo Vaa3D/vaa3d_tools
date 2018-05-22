@@ -22,7 +22,7 @@ bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * 
 extern int thresh;
 extern NeuronTree trace_result,resultTree_rebase,resultTree;
 LandmarkList marker_rebase,marker_rebase2;
-LocationSimple simple_rebase;
+LocationSimple simple_rebase,true_rebase;
 V3DLONG marker_num_rebase=0;
 V3DLONG thres_rebase=40;
 extern bool change;
@@ -281,7 +281,6 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
                 {
                     //v3d_msg("terafly_landmarks don't fit");
                     cout<<"terafly_landmarks_don't fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
-                    //return true;
                 }
                 cout<<"loc.size() = "<<loc.size()<<endl;
                 //v3d_msg("in 1");
@@ -496,11 +495,17 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //        }
             cout<<marker_rebase.size()<<"  "<<terafly_landmarks_terafly.size()<<endl;
             //v3d_msg("check two size");
-        if(marker_rebase.size() == terafly_landmarks_terafly.size())
+        //if(marker_rebase.size() == terafly_landmarks_terafly.size())
+            cout<<"t = "<<t.x<<"  "<<t.y<<"  "<<t.z<<"  "<<endl;
+            cout<<"simple_rebase = "<<true_rebase.x<<"  "<<true_rebase.y<<"  "<<true_rebase.z<<"  "<<endl;
+        double diff = (t.x-true_rebase.x)*(t.x-true_rebase.x)+(t.y-true_rebase.y)*(t.y-true_rebase.y)+(t.z-true_rebase.z)*(t.z-true_rebase.z);
+        cout<<"diff = "<<diff<<endl;
+        true_rebase = t;
+        if(diff<0.001)
         {
             change = false;
             bool miok;
-            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",35,1,200,5,&miok);
             if(miok)
             {
                 cout<<"input number is "<<thresh<<endl;
@@ -519,7 +524,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //            resultTree_rebase.hashNeuron.clear();
 //        }
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
-        v3d_msg("show_marker");
+        //v3d_msg("show_marker");
         //callback.setLandmarkTeraFly(marker_rebase);
         marker_rebase2 = terafly_landmarks_terafly;
 
@@ -586,8 +591,11 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<" iiiiiiiiiiiiiiiiiiiiii = "<<thresh<<endl;
         //v3d_msg("start app2");
         p2.outswc_file =swcString;
-        proc_app2(callback, p2, versionStr);
-        thresh=30;
+        if(!proc_app2(callback, p2, versionStr))
+        {
+            return false;
+        }
+        //thresh=30;
 
     }
 
@@ -6366,26 +6374,6 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         P.in_sz[2] = in_zz[2];
     }
 
-
-
-
-//    QString tmpfolder;
-//    if(P.method == neutube)
-//       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE_LXF");
-//    else if(P.method == snake)
-//       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE_LXF");
-//    else if(P.method == most)
-//       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST_LXF");
-
-
-//    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
-//    if(tmpfolder.isEmpty())
-//    {
-//        printf("Can not create a tmp folder!\n");
-//        return false;
-//    }
-
-    unsigned int numOfThreads = 16; // default value for number of theads
     P.inimg_file = outimg_file;
     all_tracing_grid(callback,P,P.in_sz[0],P.in_sz[1],P.in_sz[2]);
     //all_tracing_grid(callback,P,data1d_sz[0],data1d_sz[1],data1d_sz[2]);

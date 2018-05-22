@@ -18,13 +18,13 @@ using namespace std;
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
-NeuronTree trace_result,resultTree_rebase,resultTree;
+NeuronTree trace_result_p,trace_result,resultTree_rebase,resultTree;
 extern LandmarkList marker_rebase,marker_rebase2;
 extern V3DLONG thres_rebase;
 bool change = true;
 int check_void=0;
 //bool change == true;
-int thresh=30;
+int thresh=35;
 int func_name;
 //struct ratio
 //{
@@ -32,21 +32,21 @@ int func_name;
 //    double r_y;
 //    double r_z;
 //}
-
+void sort_bubble(vector<double> &min_dis_v);
  
 QStringList neurontracer::menulist() const
 {
     return QStringList()
             <<tr("trace_APP2")
-           <<tr("trace_APP1")
-          <<tr("trace_MOST")
+     //      <<tr("trace_APP1")
+      //    <<tr("trace_MOST")
          <<tr("trace_NEUTUBE")
-        <<tr("trace_SNAKE")
-       <<tr("trace_MST")
-      <<tr("trace_NeuroGPSTree")
-     <<tr("trace_Rivulet2")
-    <<tr("trace_TReMAP")
-   <<tr("generate_final_result(3D)")
+    //    <<tr("trace_SNAKE")
+    //   <<tr("trace_MST")
+   //   <<tr("trace_NeuroGPSTree")
+  //   <<tr("trace_Rivulet2")
+  //  <<tr("trace_TReMAP")
+ //  <<tr("generate_final_result(3D)")
 
       //     <<tr("trace_Advantra")
       //   <<tr("trace_NeuronChaser")
@@ -135,8 +135,10 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if(!crawler_raw_app(callback,parent,P,bmenu))return;
 
         QString name = P.inimg_file+"_app2.swc";
-        trace_result = readSWC_file(name);
-        if(trace_result.listNeuron.size()!=0)
+        trace_result_p = readSWC_file(name);
+
+
+        if(trace_result_p.listNeuron.size()!=0)   //check if the tracing result is void
         {
             marker_rebase = marker_rebase2;
         }
@@ -145,16 +147,27 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             check_void++;
             cout<<"check  "<<check_void<<endl;
             v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
-            thresh = thresh - 10 ;
-
+            thresh = thresh - 15 ;
+            return;
 
         }
-        for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
+        for(V3DLONG i=0;i<trace_result_p.listNeuron.size();i++)   //use ratio to update the coordinate
         {
-            trace_result.listNeuron[i].x = trace_result.listNeuron[i].x*P.ratio_x + P.o_x;
-            trace_result.listNeuron[i].y = trace_result.listNeuron[i].y*P.ratio_y + P.o_y;
-            trace_result.listNeuron[i].z = trace_result.listNeuron[i].z*P.ratio_z + P.o_z;
+            trace_result_p.listNeuron[i].x = trace_result_p.listNeuron[i].x*P.ratio_x + P.o_x;
+            trace_result_p.listNeuron[i].y = trace_result_p.listNeuron[i].y*P.ratio_y + P.o_y;
+            trace_result_p.listNeuron[i].z = trace_result_p.listNeuron[i].z*P.ratio_z + P.o_z;
         }
+
+
+        for(V3DLONG i=0;i<trace_result_p.listNeuron.size();i++)  //remove point ant boundry
+        {
+            if(point_at_boundry(callback,trace_result_p.listNeuron[i]))
+            {
+                trace_result.listNeuron.push_back(trace_result_p.listNeuron[i]);
+            }
+        }
+        cout<<"trace_result_p = "<<trace_result_p.listNeuron.size()<<endl;
+        cout<<"trace_result = "<<trace_result.listNeuron.size()<<endl;
 
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
@@ -213,7 +226,25 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         callback.setSWCTeraFly(resultTree);
         QString final_name = "result.swc";
         writeSWC_file(final_name,resultTree);
+        v3d_msg("check");
+        LocationSimple next_m;
+        next_m = next_marker(callback,curr_window_nt);
+        QList<ImageMarker> listmarker;
+        ImageMarker m;
+        m.x = next_m.x;
+        m.y = next_m.y;
+        m.z = next_m.z;
+        m.color.r  = 0;
+        m.color.g  = 0;
+        m.color.b  = 0;
+        m.color.a  = 0;
 
+        QString hahaha = "next.marker";
+        listmarker.push_back(m);
+        writeMarker_file(hahaha,listmarker);
+        LandmarkList all_marker = callback.getLandmarkTeraFly();
+        all_marker.push_back(next_m);
+        callback.setLandmarkTeraFly(all_marker);
 
 
     }else if (menu_name == tr("trace_APP1"))
@@ -350,9 +381,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             else
                 P.inimg_file = dialog.teraflyfilename;
             P.block_size = dialog.block_size;
-            //  P.adap_win = dialog.adap_win;
-
-            // P.tracing_3D = dialog.tracing_3D;
         }
         P.method = neutube;
         func_name = neutube;
@@ -363,7 +391,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
 
-
         if(trace_result.listNeuron.size()!=0)
         {
             marker_rebase = marker_rebase2;
@@ -371,8 +398,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         else
         {
             v3d_msg("this tracing has no result");
-            //thresh = thresh - 20 ;
-            //return;
         }
         for(V3DLONG i=0;i<trace_result.listNeuron.size();i++)
         {
@@ -404,8 +429,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         }
         resultTree.listNeuron.clear();
         resultTree.hashNeuron.clear();
-//        resultTree_rebase.listNeuron.clear();
-//        resultTree_rebase.hashNeuron.clear();
         resultTree.listNeuron = listNeuron;
         resultTree.hashNeuron = hashNeuron;
         resultTree.color.r = 0;
@@ -731,7 +754,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2016-2-16"));
+            "Developed by LXF, 2018-5-21"));
 	}
 }
 
@@ -750,7 +773,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 	{
         if(infiles.empty())
         {
-            cerr<<"Need input image"<<endl;
+            cout<<"Need input image"<<endl;
             return false;
         }
 
@@ -761,7 +784,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         if(inmarker_file.isEmpty())
         {
-            cerr<<"Need a marker file"<<endl;
+            cout<<"Need a marker file"<<endl;
             return false;
         }else
             P.markerfilename = inmarker_file;
@@ -786,7 +809,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 	{
         if(infiles.empty())
         {
-            cerr<<"Need input image"<<endl;
+            cout<<"Need input image"<<endl;
             return false;
         }
 
@@ -797,7 +820,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         if(inmarker_file.isEmpty())
         {
-            cerr<<"Need a marker file"<<endl;
+            cout<<"Need a marker file"<<endl;
             return false;
         }else
             P.markerfilename = inmarker_file;
@@ -810,7 +833,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
     {
         if(infiles.empty())
         {
-            cerr<<"Need input image"<<endl;
+            cout<<"Need input image"<<endl;
             return false;
         }
 
@@ -1040,11 +1063,12 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
                 }
 
             }
+
             cout<<"min______________________dis = "<<min_dis<<endl;
 
             double para = curr->getRezX()/curr->getXDim();
             cout<<"min_dis/para = "<<min_dis/para<<endl;
-            if(min_dis/para>1)  //rebase 5
+            if(min_dis/para>4)  //rebase 5
             {
                 if(point_at_boundry(m_v3d,trace_result.listNeuron[i]))
                 {
@@ -1052,12 +1076,7 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
                     result.listNeuron.push_back(trace_result.listNeuron[i]);
                 }
             }
-//            else  //check
-//            {
-//                trace_result.listNeuron[i].type = 7;
-//                result.listNeuron.push_back(trace_result.listNeuron[i]);
-//            }
-            //cout<<"result = "<<result.listNeuron.size()<<endl;
+
 
         }
     }
@@ -1127,14 +1146,111 @@ bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s)
     double dis_z2 = oz+lz-s.z;
     if(dis_z2<min_dis)min_dis = dis_z2;
 
-    if(min_dis<5)return false;
-    else return true;
-
-
-
+    cout<<"min_dis = "<<min_dis<<endl;
     v3d_msg("check inside2");
 
+    if(min_dis<4)    //5
+        return false;
+    else
+        return true;
 
+
+
+
+
+
+}
+
+LocationSimple next_marker(V3DPluginCallback2 &callback,NeuronTree &trace_result_part)
+{
+    LocationSimple point;
+    const Image4DSimple *curr = callback.getImageTeraFly();
+    double ox = curr->getOriginX();
+    double oy = curr->getOriginY();
+    double oz = curr->getOriginZ();
+    double lx = curr->getRezX();
+    double ly = curr->getRezY();
+    double lz = curr->getRezZ();
+    vector<double> min_dis_v;
+    for(V3DLONG i=0;i<trace_result_part.listNeuron.size();i++)
+    {
+        double min_dis = 1000000000000;
+        NeuronSWC s = trace_result_part.listNeuron[i];
+        double dis_x1 = s.x-ox;
+        if(dis_x1<min_dis)min_dis = dis_x1;
+        double dis_x2 = ox+lx-s.x;
+        if(dis_x2<min_dis)min_dis = dis_x2;
+        double dis_y1 = s.y-oy;
+        if(dis_y1<min_dis)min_dis = dis_y1;
+        double dis_y2 = oy+ly-s.y;
+        if(dis_y2<min_dis)min_dis = dis_y2;
+        double dis_z1 = s.z-oz;
+        if(dis_z1<min_dis)min_dis = dis_z1;
+        double dis_z2 = oz+lz-s.z;
+        if(dis_z2<min_dis)min_dis = dis_z2;
+        min_dis_v.push_back(min_dis);
+    }
+
+
+//    sort_bubble(min_dis_v);
+//    for(V3DLONG i=0;i<min_dis_v.size();i++)
+//    {
+//        cout<<min_dis_v[i]<<endl;
+//    }
+//    point.x = trace_result_part.listNeuron[1].x;
+//    point.y = trace_result_part.listNeuron[1].y;
+//    point.z = trace_result_part.listNeuron[1].z;
+
+
+
+
+    double min_dis_in_v=100000000000;
+    int ind;
+    cout<<"oooooooooooo"<<min_dis_v.size()<<endl;
+    for(V3DLONG i=0;i<min_dis_v.size();i++)
+    {
+        if(min_dis_v[i]<min_dis_in_v)
+        {
+            min_dis_in_v = min_dis_v[i];
+            ind = i;
+        }
+    }
+//    min_dis_v.erase(min_dis_v.begin()+ind-1);
+//    min_dis_in_v=100000000000;
+//    //ind = 0;
+//    cout<<"zzzzzzzzzzzzz"<<min_dis_v.size()<<endl;
+//    for(V3DLONG i=0;i<min_dis_v.size();i++)
+//    {
+//        if(min_dis_v[i]<min_dis_in_v)
+//        {
+//            min_dis_in_v = min_dis_v[i];
+//            ind = i;
+//        }
+//    }
+//    v3d_msg("check inside2");
+    point.x = trace_result_part.listNeuron[ind].x;
+    point.y = trace_result_part.listNeuron[ind].y;
+    point.z = trace_result_part.listNeuron[ind].z;
+
+    return point;
+
+}
+void sort_bubble(vector<double> &min_dis_v)
+{
+    int len = min_dis_v.size();
+    double tmp;
+    for(V3DLONG i=0;i<len-1;i++)
+    {
+        for(V3DLONG j=0;j<len-i-1;j++)
+        {
+            if(min_dis_v[j]>min_dis_v[j+1])
+            {
+                tmp = min_dis_v[j];
+                min_dis_v[j] = min_dis_v[j+1];
+                min_dis_v[j+1] = tmp;
+            }
+        }
+    }
 }
 
 
