@@ -85,7 +85,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         {
             newrootid=i;
         }
-        qDebug()<<neuron.at(i).n<<newrootid;
+        //qDebug()<<neuron.at(i).n<<newrootid;
     }
     for(V3DLONG i=0;i<neuron.size();i++)
     {
