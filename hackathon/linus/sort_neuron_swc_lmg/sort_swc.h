@@ -74,26 +74,41 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
     //get all root ids and parents of each node
     QList<V3DLONG> rootlist;
     vector<long> parents;
+    vector<long> ids;
     QList<V3DLONG> tips;
     //QList<NeuronSWC> neuron = neurons;
+    //get ids and reorder tree with ids following list
     for(V3DLONG i=0;i<neuron.size();i++)
     {
-        parents.push_back(neuron.at(i).pn-1);
+        ids.push_back(neuron.at(i).n);
+        if(neuron.at(i).n==newrootid)
+        {
+            newrootid=i;
+        }
+        qDebug()<<neuron.at(i).n<<newrootid;
+    }
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        neuron[i].n=i+1;
         if(neuron.at(i).pn ==-1)
         {
             rootlist.push_back(i);//neuron.at(i).n-1);
         }
-        //qDebug()<<neuron.at(i).n<<neuron.at(i).pn;
+        else
+        {
+            neuron[i].pn=find(ids.begin(), ids.end(),neuron.at(i).pn) - ids.begin()+1;
+            parents.push_back(neuron.at(i).pn);
+        }
     }
     qDebug()<<"Root ids and parents found";
 
     //check if new root id is valid and take first root in the list otherwise
     if(newrootid!=VOID)
     {
-        newrootid = newrootid-1;
+        //newrootid = newrootid;
         if(neuron.at(newrootid).pn==-1)
         {
-            qDebug()<<"New root id is:" << newrootid +1;
+            qDebug()<<"New root id is:" << ids.at(newrootid);
         }
     }
     else
@@ -121,7 +136,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
     QList<V3DLONG>  child_num;
     for(V3DLONG i=0;i<neuron.size();i++)// 0 or 1? check!
     {
-        child_num.push_back(count(parents.begin(),parents.end(),i));
+        child_num.push_back(count(parents.begin(),parents.end(),neuron.at(i).n));
     }
 
     //assign segids
@@ -136,7 +151,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
             neuron[walknode].seg_id = segid;
             while(neuron.at(walknode).pn!=-1)
             {
-                walknode = neuron.at(walknode).pn-1;
+                walknode = neuron.at(walknode).pn-1;//find(ids.begin(), ids.end(),neuron.at(walknode).pn) - ids.begin();
                 neuron[walknode].seg_id = segid;
                 //qDebug()<<walknode<<segid;
             }
@@ -235,23 +250,24 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
             {
                 if(neuron.at(cid).pn==-1)// && neuron[pid].pn=!-1)//child node is root
                 {
-                    neuron[cid].pn = pid+1;
+                    neuron[cid].pn = neuron.at(pid).n;
                     //qDebug()<<"Child node is a root";
                 }
-                else //if(child_num.at(cid)==0) //the child is a tip or a lonely root, if a top the branch has to be reordered
+                else //if(child_num.at(cid)==0) //the child is a tip or a lonely root, if a tip the branch has to be reordered
                 {
                     int walknode1 = pid;
                     int maxit = 0;
                     int walknode2 = cid;
-                    int walknode3 = neuron.at(walknode2).pn-1;
+                    ptrdiff_t walknode3 = neuron.at(walknode2).pn-1;//find(ids.begin(), ids.end(),neuron.at(walknode2).pn) - ids.begin();
                     //neuron[walknode2].pn = walknode1+1;
                     //qDebug()<<walknode1+1<<walknode2+1<<walknode3+1;
                     while(neuron.at(walknode3).pn!=-1 && neuron.at(walknode3).seg_id==neuron.at(cid).seg_id && maxit<neuron.size())// && neuron.at(walknode3).seg_id==segid) //is last condition necessary?
                     {
                         walknode1 = walknode2;
                         walknode2 = walknode3;
-                        walknode3 = neuron.at(walknode2).pn-1;
-                        neuron[walknode2].pn = walknode1+1;
+                        walknode3 = neuron.at(walknode2).pn-1;//find(ids.begin(), ids.end(), neuron.at(walknode2).pn) - ids.begin();
+                        //walknode3 = neuron.at(walknode2).pn-1;
+                        neuron[walknode2].pn = walknode1+1;//neuron.at(walknode1).n;
                         //qDebug()<<walknode1+1<<walknode2+1<<walknode3+1;
                         maxit++;
                     }
@@ -261,9 +277,9 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
                     }
                     if(walknode3!=newrootid)// && neuron.at(walknode3).seg_id==segid)//is this condition necessary?
                     {
-                        neuron[walknode3].pn = walknode2+1;
+                        neuron[walknode3].pn = walknode2+1;//neuron.at(walknode2).n;
                     }
-                    neuron[cid].pn = pid+1;
+                    neuron[cid].pn = pid+1;//neuron.at(pid).n;
 
                 }
                 int parentsegid = neuron.at(pid).seg_id;
@@ -274,6 +290,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
                         neuron[i].seg_id=parentsegid;
                     }
                 }
+                //qDebug()<<parentsegid;
             }
         }
     }
@@ -287,6 +304,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
     }
     if(rootnum!=1)
     {
+        qDebug()<<rootnum;
         v3d_msg("Error, 0 or more than 1 root!");
         return(false);
     }
@@ -295,7 +313,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         //QList<V3DLONG> nodestoremove;
         for(V3DLONG i=0;i<neuron.size();i++)// 0 or 1? check!
         {
-            child_num[i] = count(parents.begin(),parents.end(),i);
+            child_num[i] = count(parents.begin(),parents.end(),neuron.at(i).n);
         }
         //get path lengths and topological distances
         //walk down from each node to root and get topological path distance
@@ -303,14 +321,15 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         QList<V3DLONG> lo;
         for(V3DLONG i=0;i<neuron.size();i++) // 0 or 1? check!
         {
-            V3DLONG walknode = i;
+            ptrdiff_t walknode = i;
             pl.push_back(0);
             lo.push_back(0);
             int maxit=0;
             //qDebug()<<"it's the while";
             while(walknode!=newrootid && maxit<neuron.size())
             {
-                walknode = neuron.at(walknode).pn-1;
+                walknode = neuron.at(walknode).pn-1;//find(ids.begin(), ids.end(), neuron.at(walknode).pn) - ids.begin();
+                //walknode = neuron.at(walknode).pn-1;
                 pl[i]++;
                 //cout << "it's the child number " << walknode << " " << newrootid << " " << neuron.at(walknode).seg_id << "\n";
                 if(child_num.at(walknode)>1)
@@ -323,7 +342,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
             if(maxit==neuron.size())
             {
                 neuron[walknode].pn = -1;
-                qDebug()<<"Careful, while broken"<<walknode;
+                qDebug()<<"Careful, while broke"<<neuron.at(walknode).n;
             }
         }
         qDebug()<< "Sorting..." <<"Path and topological lengths obtained";

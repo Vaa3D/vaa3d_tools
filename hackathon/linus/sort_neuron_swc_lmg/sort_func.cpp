@@ -34,15 +34,15 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	V3DLONG thres;
     V3DLONG root_dist_thres;
 	bool ok;
-	rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
+    rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,2147483647,1,&ok);
 	if (!ok)
 		rootid = VOID;
 	thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
 	if (!ok)
 		thres = VOID;
-    root_dist_thres = QInputDialog::getDouble(0, "Would you like to set a threshold for connecting roots to soma?","threshold: If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
+    root_dist_thres = QInputDialog::getDouble(0, "Would you like to set a threshold for connecting roots to soma?","threshold:(If you set '0', no new link will be generated. If set, all the roots within the distance of the new root id will be directly connected to it)",0,0,2147483647,1,&ok);
     if (!ok)
-        root_dist_thres = VOID;
+        root_dist_thres = 0;
 
 	QList<NeuronSWC> result;
 	QString fileOpenName = openDlg->file_name;
