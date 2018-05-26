@@ -229,17 +229,7 @@ int tipdetection(V3DPluginCallback2 &callback, QWidget *parent)
 
 	vector<vector<float> > ray_x(numbers_2d,vector<float>(length_2d)), ray_y(numbers_2d,vector<float>(length_2d));
 
-	//float **ray_x,**ray_y;
-	/*
-	float** ray_x = (float**)new float(numbers_2d);
-	float** ray_y = (float**)new float(numbers_2d);
 
-	for(int i = 0;i<numbers_2d;i++)
-	{
-		ray_x[i] = new float(length_2d);
-		ray_y[i] = new float(length_2d);
-	}
-	*/
 
 	float   max_ang_2d,max_ang_3d,rayintensity[512][8], ray_X[512][8], ray_Y[512][8], ray_Z[512][8];
 	int count_2d,count_3d;
@@ -313,7 +303,7 @@ int tipdetection(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			for(long j=0;j<sz[1];j++)
 			{
-				int pie=p4DImage->getValueUINT8(i,j,k,0);   //这里千万注意getValueUINT8返回的是一个char变量，要转换为它所对应的ASCII码
+                int pie=p4DImage->getValueUINT8(i,j,k,0);
 			
 				if(pie > 20&&pie < 80)
 					{
@@ -327,11 +317,11 @@ int tipdetection(V3DPluginCallback2 &callback, QWidget *parent)
 					//		if (count_3d < 192 && count_3d > 10 && max_ang_3d > -0.766 && max_ang_3d < 1)
 						//	candidate_tip.push_back({i,j,k});
 							{
-								s.x = i + 1;  //注意这里需要给坐标加一，因为V3D坐标是从1开始而不是0
+                                s.x = i + 1;
 								s.y = j + 1;
 								s.z = k + 1;
 								s.radius = 1;
-								s.color = random_rgba8(255);//为标记点的随机分配颜色
+                                s.color = random_rgba8(255);
 								curlist << s;
 							}
 							}
