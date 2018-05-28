@@ -20,7 +20,7 @@ include_directories(${V3DMAINDIR}/jba/newmat11)
 configure_v3d_plugin(principalskeleton_detection)
 target_link_libraries(principalskeleton_detection ${TIFF_LIBRARY})
 find_library(newmat_LIBRARY newmat11 PATH ${V3D_PLUGIN_LIBRARIES_PATH} REQUIRED)
-target_link_libraries(principalskeleton_detection ${newmat_LIBRARY})
+target_link_libraries(principalskeleton_detection newmat11)
 
 
 # TEMPLATE      = lib

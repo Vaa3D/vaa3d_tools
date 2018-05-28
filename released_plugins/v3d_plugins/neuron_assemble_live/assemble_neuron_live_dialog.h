@@ -1,12 +1,15 @@
 #ifndef ASSEMBEL_NEURON_LIVE_DIALOG_H
 #define ASSEMBEL_NEURON_LIVE_DIALOG_H
 
+#ifndef __ALLOW_VR_FUNCS__
+#define __ALLOW_VR_FUNCS__
+#endif
+
 #include <QDialog>
 #include <QtGui>
 #include "v3d_interface.h"
 #include <map>
 #include "../terastitcher/src/core/imagemanager/VirtualVolume.h"
-
 
 #define WINNAME_ASSEM "assemble_swc_file"
 

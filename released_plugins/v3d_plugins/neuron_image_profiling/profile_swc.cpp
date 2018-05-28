@@ -9,7 +9,7 @@
 #include "profile_swc.h"
 #include <vector>
 #include <iostream>
-#include "eswc_core.h"
+//#include "eswc_core.h"
 #include <math.h>
 #include <numeric>
 #include <algorithm>
@@ -18,6 +18,8 @@
 #include <QInputDialog>
 #include "v3d_message.h"
 #include "compute_tubularity.h"
+
+#include "neuron_image_profiling_plugin.h"
 
 using namespace std;
 
@@ -417,6 +419,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
            r = node.radius;
        }
 
+	   //cout << r << endl;
+
        float dilate_radius = dilate_ratio * r;
        V3DLONG node_x_min = node.x - r - dilate_radius + 0.5; // with rounding
        V3DLONG node_y_min = node.y - r - dilate_radius + 0.5;
@@ -447,6 +451,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     int width =  max_x - min_x + 1;
     int height = max_y - min_y + 1;
     int depth =  max_z - min_z + 1;
+
+	//cout << "ROI dimension: " << width << " x " << height << " x " << depth << endl;
 
 
     if (image->getZDim() == 1)
@@ -530,6 +536,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         ye = boundValue(node.y + fuzzy_r_ratio*r + 0.5, 0,image->getYDim()-1 );
         zb = boundValue(node.z - fuzzy_r_ratio*r + 0.5, 0,image->getZDim()-1 );
         ze = boundValue(node.z + fuzzy_r_ratio*r + 0.5, 0,image->getZDim()-1 );
+		
         for (V3DLONG z = zb; z <= ze; z++)
         {
             for ( V3DLONG y = yb; y <= ye; y++)
@@ -555,7 +562,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         ye = boundValue(node.y + r + dilate_radius + 0.5, 0,image->getYDim()-1 );
         zb = boundValue(node.z - r - dilate_radius + 0.5, 0,image->getZDim()-1 );
         ze = boundValue(node.z + r + dilate_radius + 0.5, 0,image->getZDim()-1 );
-
+		//cout << node.x << " " << xb << " " << xe;
 
 
         for (V3DLONG z = zb; z <= ze; z++)
@@ -566,6 +573,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
                 {
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
+					//cout << int(roi_1d_visited[roi_index]) << " ";
                     if  ( roi_1d_visited[roi_index] != FG  &&  roi_1d_visited[roi_index] != FUZZY )
                     {
                         roi_1d_visited[roi_index] = BG;
@@ -580,10 +588,10 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         V3DLONG yy = boundValue(node.y, 0,image->getYDim()-1 );
         V3DLONG zz = boundValue(node.z, 0,image->getZDim()-1 );
         double tubuV = compute_anisotropy_sphere(image->getRawData(), image->getXDim(), image->getYDim(), image->getZDim(), 0, xx,yy,zz, r + dilate_radius);
-
+		//cout << tubuV << " ";
         tubularities.push_back(tubuV);
     }
-
+	//cout << endl;
     //collect labled pixel data into bg and fg vectors
     for (V3DLONG i = 0; i < size_1d ; i++)
     {
@@ -605,8 +613,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
         }
 
     }
-    cout << "number of fg pixels:" << fg_1d.size() <<endl;
-    cout << "number of bg pixels:" << bg_1d.size() <<endl;
+    //cout << "number of fg pixels:" << fg_1d.size() <<endl;
+	//cout << "number of bg pixels:" << bg_1d.size() << endl << endl;
 
    /*for debug purpose only
     Image4DSimple * new4DImage = new Image4DSimple();
@@ -827,7 +835,55 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 }
 
 
+/*******************************************/
 
+vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC> >* segmentsPtr, V3DPluginCallback2& callback)
+{
+	float dilate_ratio = 2;
+	vector<basicSegmentROIStats> segmentProfiles;
+	QList<IMAGE_METRICS> segMetrics;
+    for (vector<QList<NeuronSWC> >::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)
+	{
+		NeuronTree segTree;
+		segTree.listNeuron = *it;
+		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, dilate_ratio, 0.05, callback);
+		basicSegmentROIStats curROIStats;
+		curROIStats.fgMean = curSegMetrics.fg_mean;
+		curROIStats.bgMean = curSegMetrics.bg_mean;
+		curROIStats.fgStd = curSegMetrics.fg_std;
+		curROIStats.bgStd = curSegMetrics.bg_std;
+		curROIStats.SNR = curSegMetrics.snr;
+		curROIStats.CNR = curSegMetrics.cnr;
+		curROIStats.tubularityMean = curSegMetrics.tubularity_mean;
+		curROIStats.tubularityStd = curSegMetrics.tubularity_std;
 
+		V3DLONG ROIlowerBound[3];
+		findSegLowerBound(&segTree.listNeuron, img4DPtr, ROIlowerBound);
+		double tubuV = compute_anisotropy_sphere(img4DPtr->getRawData(), img4DPtr->getXDim(), img4DPtr->getYDim(), img4DPtr->getZDim(), 0, ROIlowerBound[0], ROIlowerBound[1], ROIlowerBound[2], 2 + 2 * dilate_ratio);
+		curROIStats.segTub = tubuV;
+		
+		segmentProfiles.push_back(curROIStats);
 
+		segTree.listNeuron.clear();
+	}
 
+	return segmentProfiles;
+}
+
+void findSegLowerBound(QList<NeuronSWC>* segPtr, Image4DSimple* image4DPtr, V3DLONG lBounds[])
+{
+	float segLowerBound[3];
+	segLowerBound[0] = 10000;
+	segLowerBound[1] = 10000;
+	segLowerBound[2] = 10000;
+	for (QList<NeuronSWC>::iterator it = segPtr->begin(); it != segPtr->end(); ++it)
+	{
+		if (it->x < segLowerBound[0]) segLowerBound[0] = it->x;
+		if (it->y < segLowerBound[1]) segLowerBound[1] = it->y;
+		if (it->z < segLowerBound[2]) segLowerBound[2] = it->z;
+	}
+
+	lBounds[0] = boundValue(segLowerBound[0], 0, image4DPtr->getXDim() - 1);
+	lBounds[1] = boundValue(segLowerBound[1], 0, image4DPtr->getYDim() - 1);
+	lBounds[2] = boundValue(segLowerBound[2], 0, image4DPtr->getZDim() - 1);
+}

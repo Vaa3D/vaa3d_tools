@@ -1,7 +1,7 @@
 #define FNUM 22
 
 #include "Nfmain.h"
-#include "compute.h"
+#include "../neuron_editing/global_feature_compute.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <math.h>

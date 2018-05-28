@@ -2180,17 +2180,17 @@ void assemble_neuron_live_dialog::updateROIWindow(const QList<V3DLONG>& pids)
             if(local3dwin)
             {
                 callback->update_3DViewer(local3dwin);
-#if defined(Q_OS_WIN)
-                callback->openVRWindow(local3dwin);
-#endif
+//#if defined(Q_OS_WIN)
+//                callback->openVRWindow(local3dwin);
+//#endif
             }
-            else
-            {
-#if defined(Q_OS_WIN)
+//            else
+//            {
+//#if defined(Q_OS_WIN)
 
-                callback->openVRWindowV2(localwin);
-#endif
-			}
+//                callback->openVRWindowV2(localwin);
+//#endif
+//			}
         }
     }
 }

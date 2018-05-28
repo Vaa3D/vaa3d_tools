@@ -236,7 +236,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     Print_Trace_Workspace(tracer.getTraceWorkspace());
     tracer.initConnectionTestWorkspace();
     ZSwcTree *tree = tracer.trace(&stack, true);
-
+ cout << "Total tracing time: ///////"<<endl;
     std::cout << "Total tracing time: " << timer.elapsed() << std::endl;
     QString swc_name = PARA.inimg_file + "_neutube.swc";
 

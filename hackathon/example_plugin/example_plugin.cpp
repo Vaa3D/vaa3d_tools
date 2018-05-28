@@ -60,5 +60,6 @@ bool ExamplePlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	{
 		printHelp();
 	}
+    return 1;
 }
 

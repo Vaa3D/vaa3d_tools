@@ -64,9 +64,10 @@ QStringList cropped3DImageSeries::menulist() const
 QStringList cropped3DImageSeries::funclist() const
 {
 	return QStringList()
-        <<tr("crop3DImageSeries")
+		<<tr("crop3DImageSeries")
 		<<tr("help")
-		<<tr("cropTeraFly");
+		<<tr("cropTeraFly")
+		<< tr("teraflyCompine");
 }
 
 void cropped3DImageSeries::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -552,7 +553,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		QString savePath = infiles.at(2);
 		
         V3DLONG *in_zz;
-        if(!callback.getDimTeraFly(m_InputfolderName.toStdString(),in_zz))
+        if(!callback.getDimTeraFly(m_InputfolderName.toStdString(), in_zz))
         {
             v3d_msg("Cannot load terafly images.",0);
             return false;
@@ -605,6 +606,38 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		inputFile.close();
 
         return true;
+	}
+	else if (func_name == tr("teraflyCombine"))
+	{
+		vector<char*> infiles, inparas, outfiles;
+		if (input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p); 
+		if (input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+		if (output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+		
+		QString m_InputfolderName = infiles.at(0);
+		QString savePath = outfiles.at(0);
+		//QString outputFileName = "combinedStack.tif";
+		//if (inparas.size() > 0) outputFileName = inparas.at(0);
+		//qDebug() << outputFileName;
+
+		V3DLONG* dims;
+		if (!callback.getDimTeraFly(m_InputfolderName.toStdString(), dims))
+		{
+			v3d_msg("Cannot load terafly images.", 0);
+			return false;
+		}
+		
+		unsigned char* cropped_image = 0;
+		cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(), 0, dims[0], 0, dims[1], 0, dims[2]);
+		Image4DSimple* new4DImage = new Image4DSimple();
+		new4DImage->createImage(dims[0], dims[1], dims[2], dims[3], V3D_UINT8);
+		QString saveName = savePath;
+		const char* fileName = saveName.toAscii();
+
+		simple_saveimage_wrapper(callback, fileName, cropped_image, dims, 1);
+
+		return true;
+		
 	}
 	/*else if (func_name == tr("markerCube_apoWhole"))
 	{
@@ -698,10 +731,14 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		
 		cout << "--------------------------------------------------------------" << endl;
 		cout << "cropTerafly: This function allows cropping image volumes out of terafly images based on user specified locations. " 
-			 << "The input requires a .apo file in which all seed points supposed to be centered in the cropped image cubes are stored."
+			 << "The input requires a .apo file in which all seed points are supposed to be the centers of cropped image cubes."
 			 << "\n\nUsage : v3d -x dllname -f cropTerafly -i <teraFly image folder> <the list file that has soma locations> <save folder of cropped images> -p <cube x side lenth> <cube y side length> <cube z side length>" << endl;
         cout << endl;
         cout << "All folders and files specification require full path input.\n\n";
+
+		cout << "--------------------------------------------------------------" << endl;
+		cout << "teraflyCombine: This function assembles tera-cubes under the same resolution level to a single image stack (.tif)" << endl;
+		cout << "Usage: v3d -x dllname -f teraflyCombine -i <selected teraFly resolution folder> -o <output path>" << endl << endl;
 	}
     else
         return false;

@@ -11,7 +11,7 @@ struct NeuronSegment
 
 // convert inmarkers to many connected neuron structure
 void swc_decompose(vector<MyMarker*> & inmarkers, vector<vector<MyMarker*> > & out_segs);
-bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<vector<MyMarker*> > & outsegs, vector<int> & seg_par);
+//bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<vector<MyMarker*> > & outsegs, vector<int> & seg_par);
 bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree);
 vector<MyMarker*> getRoots(vector<MyMarker*> & inswc);
 bool reroot(vector<MyMarker*> & sbjswc, MyMarker* new_root);

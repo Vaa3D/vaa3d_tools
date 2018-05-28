@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /home/hys/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 
@@ -18,7 +18,8 @@ HEADERS	+= wrong_area_search_plugin.h \
     data_training.h \
     get_sample_area.h \
     node.h \
-    graph.h
+    graph.h \
+    get_sub_terafly.h
 SOURCES	+= wrong_area_search_plugin.cpp \
     sort_swc.cpp \
     resampling.cpp \
@@ -28,7 +29,8 @@ SOURCES	+= wrong_area_search_plugin.cpp \
     seq_weight.cpp \
     swc_utils.cpp \
     data_training.cpp \
-    get_sample_area.cpp
+    get_sample_area.cpp \
+    get_sub_terafly.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 

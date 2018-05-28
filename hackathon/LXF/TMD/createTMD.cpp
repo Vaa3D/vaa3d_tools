@@ -230,7 +230,7 @@ bool createTMD(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 
 
-    for(V3DLONG i=0;i<childs2[temp_par2].size();i++)
+    for(V3DLONG i=0;i<childs2[temp_par2&].size();i++)
     {
         //pruned2.listNeuron[childs2[temp_par2][i]].pn = -1;
     }

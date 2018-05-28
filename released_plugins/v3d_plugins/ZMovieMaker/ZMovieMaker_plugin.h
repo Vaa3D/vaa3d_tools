@@ -80,6 +80,7 @@ private slots:
     void _slot_up();
     void _slot_down();
     void _slot_batch();
+    void _slot_snapshot();
 
 };
 

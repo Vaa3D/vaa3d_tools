@@ -4,6 +4,7 @@
 #ifndef ABS
 #define ABS(x) ((x) > 0 ? (x) : (-(x)))
 #endif
+#define WINNAME_LOCAL "Cropped Image and Trace"
 
 crop_dialog::crop_dialog(V3DPluginCallback2 *cb)
 {
@@ -119,11 +120,11 @@ bool crop_dialog::csv_out()
         // This fix is done by PHC, 2015May14. This should work in most cases. However
         //if a user choose a strange tmp folder with the name "/abc/abc/abc" then this fix
         //will wrongly go to the parent folder "abc/abc".
-        QDir tmp1(fileSaveDir);
+        QDir tmp1(tmp_dir);
         QString tmp2 = tmp1.dirName();
-        if (fileSaveDir.endsWith(tmp2+'/'+tmp2))
+        if (tmp_dir.endsWith(tmp2+'/'+tmp2))
         {
-            fileSaveDir = fileSaveDir.left(fileSaveDir.size() - tmp2.size() - 1);
+            tmp_dir = tmp_dir.left(tmp_dir.size() - tmp2.size() - 1);
         }
 #endif
         if(tmp_dir.isEmpty())
@@ -252,14 +253,6 @@ void crop_dialog::crop()
 
     unsigned char *image_tmp= new unsigned char [size_page*crop_sz[3]];
     memcpy(image_tmp,cropped_image,size_page*crop_sz[3]);
-    //visualize image as well as neurontree
-    Image4DSimple image4d;
-    image4d.setData(image_tmp,crop_sz[0],crop_sz[1],crop_sz[2],crop_sz[3],V3D_UINT8);
-    v3dhandle window=callback->newImageWindow("Cropped Image and Trace");
-    callback->setImage(window,&image4d);
-    callback->open3DWindow(window);
-    callback->setSWC(window,neuron);
-    callback->pushObjectIn3DWindow(window);
 
     //save image
     //QString image_name=callback->getImageName(curwin);
@@ -270,8 +263,8 @@ void crop_dialog::crop()
         v3d_msg("Errors occur when saving the image");
         return;
     }
+    qDebug()<<"--------image generation sucess";
     //save eswc
-
     if (eswc_flag)
     {
         QString swc_name=QDir(folder_output).filePath("cropped_trace.eswc");
@@ -284,6 +277,26 @@ void crop_dialog::crop()
         if (!writeSWC_file(swc_name,neuron))
             return;
     }
+    //qDebug()<<"--------swc generation sucess";
+
+    //visualize image as well as neurontree
+    Image4DSimple image4d;
+    image4d.setData(image_tmp,crop_sz[0],crop_sz[1],crop_sz[2],crop_sz[3],V3D_UINT8);
+    v3dhandle window=callback->newImageWindow(WINNAME_LOCAL);
+    callback->setImage(window,&image4d);
+    callback->open3DWindow(window);
+    QList<NeuronTree> * local_ntList = callback->getHandleNeuronTrees_3DGlobalViewer(window);
+    local_ntList->clear();
+    local_ntList->push_back(neuron);
+    V3dR_MainWindow * local3dwin = callback->find3DViewerByName(WINNAME_LOCAL);
+    if(local3dwin)
+        callback->update_3DViewer(local3dwin);
+
+//    callback->open3DWindow(window);
+//    callback->setSWC(window,neuron);
+    //callback->pushObjectIn3DWindow(window);
+    //qDebug()<<"--------cropped image visualization sucess";
+
     if (cropped_image!=0)
     {
         delete[] cropped_image;

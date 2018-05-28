@@ -4,6 +4,49 @@
 
 using namespace std;
 
+morphStructElement::morphStructElement() : eleShape("square"), xLength(3), yLength(3)
+{
+	vector<int> array1(3, 1);
+	this->structEle2D.push_back(array1);
+	this->structEle2D.push_back(array1);
+	this->structEle2D.push_back(array1);
+}
+
+morphStructElement::morphStructElement(string shape) : eleShape(shape)
+{
+	if (this->eleShape.compare("square") == 0)
+	{
+		vector<int> array1(3, 1);
+		this->structEle2D.push_back(array1);
+		this->structEle2D.push_back(array1);
+		this->structEle2D.push_back(array1);
+	}
+	else if (this->eleShape.compare("circle") == 0)
+	{
+		this->xLength = 7;
+		this->yLength = 7;
+
+		vector<int> array1(7, 1);
+		vector<int> array2(7, 1);
+		vector<int> array3(7, 1);
+		array1.at(0) = 0; array1.at(1) = 0; array1.at(5) = 0; array1.at(6) = 0;
+		array2.at(0) = 0; array2.at(6) = 0;
+
+		this->structEle2D.push_back(array1);
+		this->structEle2D.push_back(array2);
+		this->structEle2D.push_back(array3);
+		this->structEle2D.push_back(array3);
+		this->structEle2D.push_back(array3);
+		this->structEle2D.push_back(array2);
+		this->structEle2D.push_back(array1);
+	}
+}
+
+morphStructElement::morphStructElement(string shape, int length1, int length2) : eleShape(shape), xLength(length1), yLength(length2)
+{
+
+}
+
 ImgProcessor::ImgProcessor(MIPOrientation MIP_Direction)
 {
 	this->MIPDirection = MIP_Direction;
