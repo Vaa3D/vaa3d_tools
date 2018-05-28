@@ -8,7 +8,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h"
 #include "swc_surf_objs.h"
 #include "stack"
-
+#include "neurontracer_plugin.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
@@ -22,9 +22,12 @@ bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * 
 extern int thresh;
 extern NeuronTree trace_result,resultTree_rebase,resultTree;
 LandmarkList marker_rebase,marker_rebase2;
+LandmarkList marker_rebase3;  //original marker
 LocationSimple simple_rebase,true_rebase;
+extern LocationSimple next_m;
 V3DLONG marker_num_rebase=0;
-V3DLONG thres_rebase=40;
+V3DLONG thres_rebase=35;
+QString outimg_file;
 extern bool change;
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
@@ -238,7 +241,7 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
     }
     else
     {
-        //v3d_msg("check_1");40
+        //v3d_msg("check_1");
         if(ind.size()==1)
         {
             t.x = terafly_landmarks[ind[0]].x;
@@ -271,7 +274,7 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
                 cout<<"min______________________dis = "<<min_dis<<endl;
 
                 cout<<"min_dis/para = "<<min_dis/para_ratio<<endl;
-                if(min_dis/para_ratio>4)
+                if(min_dis/para_ratio>3)  //4
                 {
                     //v3d_msg("terafly_landmarks fit");
                     cout<<"terafly_landmarks fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
@@ -335,7 +338,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
 
 
-    QString outimg_file = "test.v3draw";
+    outimg_file = "test.v3draw";
     QString imageSaveString = "test_app2.v3draw";
     QString swcString = outimg_file + "_app2.swc";
     QString outmarker_file = "test.marker";
@@ -406,6 +409,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {
         cout<<"$$$$$$$$$$$$$$$$$$$$$$get into curr window$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
         P.inimg_file = outimg_file;
+        //callback.setLandmarkTeraFly(marker_rebase3);   //0522
         const Image4DSimple *curr_block = callback.getImageTeraFly();
         LandmarkList terafly_landmarks_terafly = callback.getLandmarkTeraFly();//terafly_landmarks
         LandmarkList new_marker;
@@ -418,23 +422,16 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         double lz = curr_block->getRezZ();
 
 
-        QList<ImageMarker> listmarker;
-        for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
-        {
-            ImageMarker u;
-            u.x = terafly_landmarks_terafly[i].x;
-            u.y = terafly_landmarks_terafly[i].y;
-            u.z = terafly_landmarks_terafly[i].z;
-            listmarker.push_back(u);
-        }
-        writeMarker_file(QString("all.marker"),listmarker);
         if(terafly_landmarks_terafly.isEmpty())return false;
-        LandmarkList terafly_landmarks,other_marker;
+        LandmarkList terafly_landmarks;
+        LandmarkList other_marker;
+        //set<LocationSimple> terafly_landmarks;
         for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
         {
             LocationSimple s = terafly_landmarks_terafly[i];
             if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
             {
+                //terafly_landmarks.insert(s);
                 terafly_landmarks.push_back(s);
             }
             else
@@ -455,10 +452,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.o_y=curr_block->getOriginY();
         P.o_z=curr_block->getOriginZ();
 
-//        if(marker_rebase.size() != terafly_landmarks.size())
-//        {
         cout<<"marker rebase num = "<<marker_rebase.size()<<endl;
-        //v3d_msg("marker_rebase");
             vector<int> ind;
             for(V3DLONG i=0;i<terafly_landmarks.size();i++)
             {
@@ -480,29 +474,44 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                     new_marker.push_back(terafly_landmarks[i]);
                 }
             }
-            //        callback.setLandmarkTeraFly(marker_rebase);
-            //        marker_rebase = terafly_landmarks;
-            //        if(marker_num_rebase == terafly_landmarks.size())
-            //        {
 
-            //        }
             if(!match_marker(callback,ind,new_marker,t))
             {
                 v3d_msg("abort");
                 return false;
             }
-            //v3d_msg("out_2");
-//        }
-            cout<<marker_rebase.size()<<"  "<<terafly_landmarks_terafly.size()<<endl;
-            //v3d_msg("check two size");
+            marker_rebase3.clear();
+            for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
+            {
+                if((t.x-terafly_landmarks_terafly[i].x)*(t.x-terafly_landmarks_terafly[i].x)+(t.y-terafly_landmarks_terafly[i].y)*(t.y-terafly_landmarks_terafly[i].y)+(t.z-terafly_landmarks_terafly[i].z)*(t.z-terafly_landmarks_terafly[i].z)>0.001)
+                {
+                    marker_rebase3.push_back(terafly_landmarks_terafly[i]);
+                }
+            }
+            cout<<marker_rebase3.size()<<"  "<<terafly_landmarks_terafly.size()<<endl;
+            v3d_msg("check two size");
         //if(marker_rebase.size() == terafly_landmarks_terafly.size())
+
+//            if(next_m.x==0&&next_m.y==0)
+//            {
+//                v3d_msg("1");
+//                LandmarkList tmp;
+//                tmp = callback.getLandmarkTeraFly();
+//                t = tmp[0];
+//            }
+//            else
+//            {
+//                v3d_msg("2");
+//                t = next_m;
+//            }
             cout<<"t = "<<t.x<<"  "<<t.y<<"  "<<t.z<<"  "<<endl;
             cout<<"simple_rebase = "<<true_rebase.x<<"  "<<true_rebase.y<<"  "<<true_rebase.z<<"  "<<endl;
-        double diff = (t.x-true_rebase.x)*(t.x-true_rebase.x)+(t.y-true_rebase.y)*(t.y-true_rebase.y)+(t.z-true_rebase.z)*(t.z-true_rebase.z);
+        double diff = (t.x-true_rebase.x)*(t.x-true_rebase.x)+(t.y-true_rebase.y)*(t.y-true_rebase.y)+(t.z-true_rebase.z)*(t.z-true_rebase.z);//0524
         cout<<"diff = "<<diff<<endl;
-        true_rebase = t;
+        true_rebase = t;//0524
         if(diff<0.001)
         {
+            v3d_msg("the same marker!");
             change = false;
             bool miok;
             thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",35,1,200,5,&miok);
@@ -510,11 +519,20 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             {
                 cout<<"input number is "<<thresh<<endl;
             }
+            else
+            {
+                return false;
+                //callback.setSWCTeraFly(resultTree_rebase);
+            }
             cout<<"thresh = "<<thres_rebase<<endl;
             if(thresh != thres_rebase)
             {
                 callback.setSWCTeraFly(resultTree_rebase);
-
+            }
+            else
+            {
+                v3d_msg("the same thresh,please try again!");
+                return false;
             }
             thres_rebase = thresh;
         }
@@ -524,9 +542,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //            resultTree_rebase.hashNeuron.clear();
 //        }
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
-        //v3d_msg("show_marker");
+        v3d_msg("show_marker");
         //callback.setLandmarkTeraFly(marker_rebase);
-        marker_rebase2 = terafly_landmarks_terafly;
+        marker_rebase2 = terafly_landmarks_terafly;   // 20180522
 
         t.x = t.x-P.o_x;
         t.y = t.y-P.o_y;
@@ -547,8 +565,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         writeMarker_file(outmarker_file,marker);
 
-//        terafly_landmarks.clear();                             //delete markers
-
 
         Image4DSimple *data = new Image4DSimple;
         data->setData((unsigned char *)curr_block->getRawData(),curr_block->getXDim(),curr_block->getYDim(),curr_block->getZDim(),curr_block->getCDim(),V3D_UINT8);
@@ -565,29 +581,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<"p2"<<p2.inmarker_file.size()<<endl;
         p2.inimg_file = outimg_file;
         p2.bkg_thresh = thresh;
-        //p2.landmarks = P.listLandmarks;
-//        p2.is_gsdt = P.is_gsdt;
-//        p2.is_coverage_prune = true;
-//        p2.is_break_accept = P.is_break_accept;
-//        p2.bkg_thresh = P.bkg_thresh;
-
-//        p2.length_thresh = P.length_thresh;
-//        p2.cnn_type = 2;
-//        p2.channel = 0;
-//        p2.SR_ratio = 3.0/9.9;
-//        p2.b_256cube = P.b_256cube;
-//        p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
-//        p2.b_resample = 1;
-//        p2.b_intensity = 0;
-//        p2.b_brightfiled = 0;
-//        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
-  //      p2.p4dImage = data;
-//        p2.p4dImage = callback.loadImage((char *)(qPrintable(outimg_file)));
-//        p2.p4dImage->setFileName(outimg_file.toStdString().c_str());
-//        p2.xc0 = p2.yc0 = p2.zc0 = 0;
-//        p2.xc1 = p2.p4dImage->getXDim()-1;
-//        p2.yc1 = p2.p4dImage->getYDim()-1;
-//        p2.zc1 = p2.p4dImage->getZDim()-1;
+        p2.is_gsdt = true;
+        p2.b_resample = 0;
         cout<<" iiiiiiiiiiiiiiiiiiiiii = "<<thresh<<endl;
         //v3d_msg("start app2");
         p2.outswc_file =swcString;

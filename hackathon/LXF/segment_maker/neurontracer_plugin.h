@@ -8,7 +8,7 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-//#include <vector>
+//#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 class neurontracer : public QObject, public V3DPluginInterface2_1
 {
@@ -979,12 +979,14 @@ private slots:
    // void _slot_sync_onetime();
    // void _slot_set_annotation();
     void _slot_set_thresh();
+    void _slot_move_block();
 
 };
 
 NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,NeuronTree &trace_result,NeuronTree &curr_win_swc);
-bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s);
+
 LocationSimple next_marker(V3DPluginCallback2 &callback,NeuronTree &trace_result_part);
+bool mean_shift_marker(V3DPluginCallback2 &callback,LocationSimple &next_m,LocationSimple &next);
 
 
 #endif

@@ -30,7 +30,8 @@ unix:!macx {
 
 
 
-HEADERS	+= neurontracer_plugin.h
+HEADERS	+= neurontracer_plugin.h \
+    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
 HEADERS	+= tracing_func.h
 
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h
