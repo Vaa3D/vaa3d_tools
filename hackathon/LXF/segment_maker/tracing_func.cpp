@@ -26,7 +26,7 @@ LandmarkList marker_rebase3;  //original marker
 LocationSimple simple_rebase,true_rebase;
 extern LocationSimple next_m;
 V3DLONG marker_num_rebase=0;
-V3DLONG thres_rebase=35;
+V3DLONG thres_rebase=40;
 QString outimg_file;
 extern bool change;
 #if  defined(Q_OS_LINUX)
@@ -489,7 +489,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                 }
             }
             cout<<marker_rebase3.size()<<"  "<<terafly_landmarks_terafly.size()<<endl;
-            v3d_msg("check two size");
+        //    v3d_msg("check two size");
         //if(marker_rebase.size() == terafly_landmarks_terafly.size())
 
 //            if(next_m.x==0&&next_m.y==0)
@@ -514,7 +514,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             v3d_msg("the same marker!");
             change = false;
             bool miok;
-            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",35,1,200,5,&miok);
+            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
             if(miok)
             {
                 cout<<"input number is "<<thresh<<endl;
@@ -542,7 +542,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //            resultTree_rebase.hashNeuron.clear();
 //        }
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
-        v3d_msg("show_marker");
+      //  v3d_msg("show_marker");
         //callback.setLandmarkTeraFly(marker_rebase);
         marker_rebase2 = terafly_landmarks_terafly;   // 20180522
 

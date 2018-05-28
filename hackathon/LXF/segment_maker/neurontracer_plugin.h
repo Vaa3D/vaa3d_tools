@@ -972,7 +972,7 @@ public:
     ~lookPanel();
 
     QGridLayout *gridLayout;
-    V3DPluginCallback2 & m_v3d;
+    V3DPluginCallback2 & callback;
 
 
 private slots:
