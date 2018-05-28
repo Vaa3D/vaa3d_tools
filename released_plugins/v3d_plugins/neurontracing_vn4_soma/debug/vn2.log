@@ -1,0 +1,54 @@
+﻿生成启动时间为 2018/3/14 星期三 11:29:18。
+     1>项目“F:\Qt\v3dcode\v3d_external\released_plugins_more\v3d_plugins\neurontracing_vn2FirstTest_plus confidence\vn2.vcxproj”在节点 2 上(rebuild 个目标)。
+     1>InitializeBuildStatus:
+         正在创建“debug\vn2.unsuccessfulbuild”，因为已指定“AlwaysCreate”。
+       CustomBuild:
+         MOC vaa3dneuron2_plugin.h
+       ClCompile:
+         G:\vs2010\VC\bin\CL.exe /c /If:\Qt\4.7.2\include\QtCore /If:\Qt\4.7.2\include\QtGui /If:\Qt\4.7.2\include /I..\..\..\v3d_main\basic_c_fun /I..\..\..\v3d_main\common_lib\include /Iapp2 /Iapp1 /I..\..\..\v3d_main\neuron_editing /I..\..\..\v3d_main\worm_straighten_c /If:\Qt\4.7.2\include\ActiveQt /Idebug /I"f:\Qt\4.7.2\mkspecs\win32-msvc2010" /Zi /nologo /W0 /WX- /Od /Oy- /D _WINDOWS /D UNICODE /D WIN32 /D QT_LARGEFILE_SUPPORT /D QT_DLL /D QT_PLUGIN /D QT_GUI_LIB /D QT_CORE_LIB /D QT_HAVE_MMX /D QT_HAVE_3DNOW /D QT_HAVE_SSE /D QT_HAVE_MMXEXT /D QT_HAVE_SSE2 /D QT_THREAD_SUPPORT /D _WINDLL /Gm- /EHsc /MDd /GS- /fp:precise /Zc:wchar_t- /Zc:forScope /GR /Fo"debug\\" /Fd".\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt app1_connector.cpp app2_connector.cpp ..\..\..\v3d_main\basic_c_fun\basic_4dimage_create.cpp ..\..\..\v3d_main\basic_c_fun\basic_surf_objs.cpp ..\..\..\v3d_main\worm_straighten_c\bdb_minus.cpp ..\..\..\v3d_main\worm_straighten_c\bfs_1root.cpp app1\calculate_cover_scores.cpp ..\..\..\v3d_main\graph\dijk.cpp app1\gd.cpp ..\..\..\v3d_main\worm_straighten_c\mst_prim_c.cpp app2\my_surf_objs.cpp ..\..\..\v3d_main\neuron_editing\neuron_sim_scores.cpp swc_convert.cpp ..\..\..\v3d_main\basic_c_fun\v3d_message.cpp app1\v3dneuron_gd_tracing.cpp ..\..\..\v3d_main\neuron_editing\v_neuronswc.cpp vaa3dneuron2_plugin.cpp vn_imgpreprocess.cpp debug\moc_vaa3dneuron2_plugin.cpp -Zm200 
+         app1_connector.cpp
+         app2_connector.cpp
+         basic_4dimage_create.cpp
+         basic_surf_objs.cpp
+         bdb_minus.cpp
+         bfs_1root.cpp
+         calculate_cover_scores.cpp
+         dijk.cpp
+         gd.cpp
+         mst_prim_c.cpp
+         my_surf_objs.cpp
+         neuron_sim_scores.cpp
+         swc_convert.cpp
+         v3d_message.cpp
+         v3dneuron_gd_tracing.cpp
+         v_neuronswc.cpp
+         vaa3dneuron2_plugin.cpp
+         vn_imgpreprocess.cpp
+         moc_vaa3dneuron2_plugin.cpp
+         正在生成代码...
+       Link:
+         G:\vs2010\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\..\..\bin\plugins\neuron_tracing\Vaa3D_Neuron2\vn2d.dll" /NOLOGO /LIBPATH:f:\Qt\4.7.2\lib /LIBPATH:../../../v3d_main/common_lib/winlib64 ../../../v3d_main/common_lib/winlib64\libnewmat.lib f:\Qt\4.7.2\lib\QtGuid4.lib f:\Qt\4.7.2\lib\QtCored4.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"debug\vn2d.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"F:\Qt\v3dcode\v3d_external\bin\plugins\neuron_tracing\Vaa3D_Neuron2\vn2d.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X86 /DLL debug\app1_connector.obj
+         debug\app2_connector.obj
+         debug\basic_4dimage_create.obj
+         debug\basic_surf_objs.obj
+         debug\bdb_minus.obj
+         debug\bfs_1root.obj
+         debug\calculate_cover_scores.obj
+         debug\dijk.obj
+         debug\gd.obj
+         debug\mst_prim_c.obj
+         debug\my_surf_objs.obj
+         debug\neuron_sim_scores.obj
+         debug\swc_convert.obj
+         debug\v3d_message.obj
+         debug\v3dneuron_gd_tracing.obj
+         debug\v_neuronswc.obj
+         debug\vaa3dneuron2_plugin.obj
+         debug\vn_imgpreprocess.obj
+         debug\moc_vaa3dneuron2_plugin.obj
+     1>QtCored4.lib(QtCored4.dll) : fatal error LNK1112: 模块计算机类型“x64”与目标计算机类型“X86”冲突
+     1>已完成生成项目“F:\Qt\v3dcode\v3d_external\released_plugins_more\v3d_plugins\neurontracing_vn2FirstTest_plus confidence\vn2.vcxproj”(rebuild 个目标)的操作 - 失败。
+
+生成失败。
+
+已用时间 00:00:42.86
