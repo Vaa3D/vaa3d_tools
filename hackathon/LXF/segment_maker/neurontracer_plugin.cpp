@@ -287,22 +287,22 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
 
-        if (panel)
-        {
-            panel->show();
-            return;
-        }
-        else
-        {
-            panel = new lookPanel(callback, parent);
-            if (panel)
-            {
-                panel->show();
-                panel->raise();
-                panel->move(100,100);
-                panel->activateWindow();
-            }
-        }
+//        if (panel)
+//        {
+//            panel->show();
+//            return;
+//        }
+//        else
+//        {
+//            panel = new lookPanel(callback, parent);
+//            if (panel)
+//            {
+//                panel->show();
+//                panel->raise();
+//                panel->move(100,100);
+//                panel->activateWindow();
+//            }
+//        }
 
 
         /******************************next marker*************************/
@@ -1163,7 +1163,7 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
             cout<<"min_dis/para = "<<min_dis/para<<endl;
             vector<int> count_v;
             vector<NeuronSWC> point_b;
-            if(min_dis/para>15)  //rebase 5
+            if(min_dis/para>10)  //rebase 15
             {
 
                 if(point_at_boundry(m_v3d,trace_result.listNeuron[i],count_v,point_b))
@@ -1209,7 +1209,6 @@ void lookPanel::_slot_set_thresh()
         v3d_msg("hahahah");
         NeuronTree nt = resultTree_rebase;
         callback.setSWCTeraFly(nt);
-        cout<<"ssssssssssssssssssssssss"<<endl;
         resultTree_rebase.listNeuron.clear();
         resultTree_rebase.hashNeuron.clear();
 
