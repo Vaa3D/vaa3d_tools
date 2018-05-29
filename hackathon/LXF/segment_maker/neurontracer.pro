@@ -31,9 +31,7 @@ unix:!macx {
 
 
 HEADERS	+= neurontracer_plugin.h \
-    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h \
-    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/marker_radius.h \
-    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h
+    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
 HEADERS	+= tracing_func.h
 
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h
@@ -43,7 +41,6 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h
 
-HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
 HEADERS += ../../../released_plugins/v3d_plugins/neuron_image_profiling/openSWCDialog.h
