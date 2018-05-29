@@ -980,6 +980,7 @@ private slots:
    // void _slot_sync_onetime();
    // void _slot_set_annotation();
     void _slot_set_thresh();
+    void _slot_use_landmarker();
     void _slot_move_block();
 
 };
@@ -991,7 +992,7 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
 LocationSimple next_marker(V3DPluginCallback2 &callback,NeuronTree &trace_result_part);
 bool mean_shift_marker(V3DPluginCallback2 &callback,LocationSimple &next_m,LocationSimple &next);
-
+bool next_landmarker(V3DPluginCallback2 &callback,LocationSimple &next);
 
 #endif
 
