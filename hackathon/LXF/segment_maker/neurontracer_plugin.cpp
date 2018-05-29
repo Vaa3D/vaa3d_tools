@@ -13,7 +13,7 @@
 
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+//#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 using namespace std;
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
@@ -26,15 +26,8 @@ extern V3DLONG thres_rebase;
 bool change = true;
 int check_void=0;
 extern QString outimg_file;
-//bool change == true;
 int thresh=40;
 int func_name;
-//struct ratio
-//{
-//    double r_x;
-//    double r_y;
-//    double r_z;
-//}
 struct relationship
 {
     double datald;
@@ -179,33 +172,21 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         {
             if(point_at_boundry(callback,trace_result_p.listNeuron[i],count_v,point_b))
             {
-                cout<<"1111111111111111"<<endl;
                 if(trace_result_p.listNeuron[i].pn!=-1)
                 {
-                    cout<<"2222222222222222"<<endl;
                     trace_result.listNeuron.push_back(trace_result_p.listNeuron[i]);
                 }
             }
         }
-        cout<<"out"<<endl;
         double min_count = 1000000000;
         int ind_count;
-        cout<<"count_v.size = "<<count_v.size()<<endl;
         for(V3DLONG i=0;i<count_v.size();i++)
-        {cout<<"count_v[i] = "<<count_v[i]<<endl;
+        {
             if(min_count>count_v[i])
             {
                 min_count = count_v[i];
                 ind_count = i;
             }
-        }
-        //v3d_msg("fffffffff");
-        cout<<"point_b.size = "<<point_b.size()<<endl;
-        cout<<"count_v.size = "<<count_v.size()<<endl;
-        for(V3DLONG i=0;i<point_b.size();i++)
-        {
-            cout<<"point_b = "<<point_b[i].x<<endl;
-            cout<<"count_v = "<<count_v[i]<<endl;
         }
 
         if(count_v.size()!=0)
@@ -218,14 +199,12 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             next_m.color.g = 0;
             next_m.color.r = 0;
         }
-        //v3d_msg("uuuuuuuuuuu");
         cout<<"trace_result_p = "<<trace_result_p.listNeuron.size()<<endl;
         cout<<"trace_result = "<<trace_result.listNeuron.size()<<endl;
 
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
         NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
-        //NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
         QHash <int, int>  hashNeuron;
         listNeuron.clear();
@@ -254,9 +233,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         resultTree.color.a = 0;
         if(change)
         {
-//                    resultTree_rebase.listNeuron.clear();
-//                    resultTree_rebase.hashNeuron.clear();
-            //v3d_msg("enter into resultTree_rebase");
             resultTree_rebase.listNeuron = listNeuron;
             resultTree_rebase.hashNeuron = hashNeuron;
             resultTree_rebase.color.r = 0;
@@ -265,7 +241,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             resultTree_rebase.color.a = 0;
             QString outname = "resulttree_rebase.swc";
             writeSWC_file(outname,resultTree_rebase);
-            //cout<<"resultTree_rebase.listNeuron.size = "<<resultTree_rebase.listNeuron.size()<<endl;
         }
         change = true;
         for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
@@ -287,22 +262,22 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
 
-//        if (panel)
-//        {
-//            panel->show();
-//            return;
-//        }
-//        else
-//        {
-//            panel = new lookPanel(callback, parent);
-//            if (panel)
-//            {
-//                panel->show();
-//                panel->raise();
-//                panel->move(100,100);
-//                panel->activateWindow();
-//            }
-//        }
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
 
 
         /******************************next marker*************************/
@@ -850,14 +825,13 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             next_m_rebase.y = next.y;
             next_m_rebase.z = next.z;
         }
-//        LandmarkList m = callback.getLandmarkTeraFly();
 
 
     }
     else if(menu_name == tr("set_thresh"))
     {
         bool miok;
-        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",35,1,200,5,&miok);
+        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
         if(miok)
         {
             cout<<"input number is "<<thresh<<endl;
@@ -1291,8 +1265,7 @@ bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &cou
         else
         {
             point_b.push_back(s);
-            int b_size = 15;
-
+            int b_size = 30;     //thresh for avoid marker move back
             int count = 0;
             for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)   //need to modify
             {
@@ -1481,7 +1454,7 @@ bool mean_shift_marker(V3DPluginCallback2 &callback,LocationSimple &next_m,Locat
 
     try {im_cropped = new unsigned char [pagesz];}
     catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-//    v3d_msg("kkkkkkkkkkkkkk");
+    v3d_msg("kkkkkkkkkkkkkk");
      vector<relationship> relation;
      V3DLONG j = 0;
      for(V3DLONG iz = zb; iz <= ze; iz++)

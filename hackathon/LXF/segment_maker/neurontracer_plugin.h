@@ -968,7 +968,8 @@ class lookPanel: public QDialog
     Q_OBJECT
 
 public:
-    lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    lookPanel(V3DPluginCallback2 &callback, QWidget *parent);
+
     ~lookPanel();
 
     QGridLayout *gridLayout;
@@ -982,6 +983,9 @@ private slots:
     void _slot_move_block();
 
 };
+
+
+
 
 NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,NeuronTree &trace_result,NeuronTree &curr_win_swc);
 
