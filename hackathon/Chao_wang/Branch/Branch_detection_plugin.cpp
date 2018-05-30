@@ -8,7 +8,7 @@
 #include <vector>
 #include "Branch_detection_plugin.h"
 #include "new_ray-shooting.h"
-#include "../zhi/APP2_large_scale/my_surf_objs.h"
+#include "../../zhi/APP2_large_scale/my_surf_objs.h"
 #define PI 3.1415926
 using namespace std;
 Q_EXPORT_PLUGIN2(Branch_detection, TestPlugin)
