@@ -26,7 +26,7 @@ LandmarkList marker_rebase3;  //original marker
 LocationSimple simple_rebase,true_rebase;
 extern LocationSimple next_m;
 V3DLONG marker_num_rebase=0;
-V3DLONG thres_rebase=40;
+V3DLONG thres_rebase=42;
 QString outimg_file;
 extern bool change;
 #if  defined(Q_OS_LINUX)
@@ -241,7 +241,6 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
     }
     else
     {
-        //v3d_msg("check_1");
         if(ind.size()==1)
         {
             t.x = terafly_landmarks[ind[0]].x;
@@ -271,9 +270,9 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
                     v3d_msg("resultTree_2 is void");
                     return false;
                 }
-                cout<<"min______________________dis = "<<min_dis<<endl;
+                //cout<<"min______________________dis = "<<min_dis<<endl;
 
-                cout<<"min_dis/para = "<<min_dis/para_ratio<<endl;
+                //cout<<"min_dis/para = "<<min_dis/para_ratio<<endl;
                 if(min_dis/para_ratio>3)  //4
                 {
                     //v3d_msg("terafly_landmarks fit");
@@ -286,7 +285,6 @@ bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &te
                     cout<<"terafly_landmarks_don't fit = "<<terafly_landmarks[i].x<<"  "<<terafly_landmarks[i].y<<endl;
                 }
                 cout<<"loc.size() = "<<loc.size()<<endl;
-                //v3d_msg("in 1");
             }
 
             if(loc.size()!=1)
@@ -335,8 +333,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     QElapsedTimer timer1;
     timer1.start();
 
-
-
+    if(resultTree_rebase.listNeuron.size()==0)
+    {
+        resultTree_rebase = callback.getSWCTeraFly();
+    }
 
     outimg_file = "test.v3draw";
     QString imageSaveString = "test_app2.v3draw";
@@ -409,7 +409,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {
         cout<<"$$$$$$$$$$$$$$$$$$$$$$get into curr window$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
         P.inimg_file = outimg_file;
-        //callback.setLandmarkTeraFly(marker_rebase3);   //0522
         const Image4DSimple *curr_block = callback.getImageTeraFly();
         LandmarkList terafly_landmarks_terafly = callback.getLandmarkTeraFly();//terafly_landmarks
         LandmarkList new_marker;
@@ -514,7 +513,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             v3d_msg("the same marker!");
             change = false;
             bool miok;
-            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+            thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",42,1,200,5,&miok);
             if(miok)
             {
                 cout<<"input number is "<<thresh<<endl;
@@ -536,11 +535,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             }
             thres_rebase = thresh;
         }
-//        else
-//        {
-//            resultTree_rebase.listNeuron.clear();
-//            resultTree_rebase.hashNeuron.clear();
-//        }
         cout<<t.x<<"  "<<t.y<<"  "<<t.z<<endl;
       //  v3d_msg("show_marker");
         //callback.setLandmarkTeraFly(marker_rebase);
@@ -574,6 +568,29 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         data1d_sz[3] = data->getCDim();
 
         simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)data->getRawData(),data1d_sz,1);
+
+
+
+        V3DLONG all_volume = data1d_sz[0]*data1d_sz[1]*data1d_sz[2];
+        cout<<"all_volume = "<<all_volume<<endl;
+        //v3d_msg("check all volume!");
+        double c = 0;
+        for(V3DLONG i=0;i<all_volume;i++)
+        {
+
+            if((int)curr_block->getRawData()[i]>thresh)
+            {
+                //cout<<"(int)curr_block->getRawData()[i] = "<<(int)curr_block->getRawData()[i]<<endl;
+                c++;
+            }
+        }
+        cout<<"c/all_volume = "<<c/all_volume<<endl;
+        //v3d_msg("check!");
+        if(c/all_volume>0.3)
+        {
+            v3d_msg("thresh is too low!");
+            return false;
+        }
 
         PARA_APP2 p2;
         QString versionStr = "v0.001";
@@ -3321,7 +3338,7 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
             system(qPrintable(cmd_tremap));
         #else
             v3d_msg("The OS is not Linux or Mac. Do nothing.");
-            return;
+            return false;
         #endif
 
         }else

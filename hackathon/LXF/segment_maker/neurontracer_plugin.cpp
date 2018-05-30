@@ -13,7 +13,7 @@
 
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+//#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 using namespace std;
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
@@ -26,15 +26,8 @@ extern V3DLONG thres_rebase;
 bool change = true;
 int check_void=0;
 extern QString outimg_file;
-//bool change == true;
-int thresh=40;
+int thresh=42;
 int func_name;
-//struct ratio
-//{
-//    double r_x;
-//    double r_y;
-//    double r_z;
-//}
 struct relationship
 {
     double datald;
@@ -160,7 +153,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             check_void++;
             cout<<"check  "<<check_void<<endl;
             v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
-            thresh = thresh - 15 ;
+            //thresh = thresh - 15 ;
             return;
 
         }
@@ -179,33 +172,21 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         {
             if(point_at_boundry(callback,trace_result_p.listNeuron[i],count_v,point_b))
             {
-                cout<<"1111111111111111"<<endl;
                 if(trace_result_p.listNeuron[i].pn!=-1)
                 {
-                    cout<<"2222222222222222"<<endl;
                     trace_result.listNeuron.push_back(trace_result_p.listNeuron[i]);
                 }
             }
         }
-        cout<<"out"<<endl;
         double min_count = 1000000000;
         int ind_count;
-        cout<<"count_v.size = "<<count_v.size()<<endl;
         for(V3DLONG i=0;i<count_v.size();i++)
-        {cout<<"count_v[i] = "<<count_v[i]<<endl;
+        {
             if(min_count>count_v[i])
             {
                 min_count = count_v[i];
                 ind_count = i;
             }
-        }
-        //v3d_msg("fffffffff");
-        cout<<"point_b.size = "<<point_b.size()<<endl;
-        cout<<"count_v.size = "<<count_v.size()<<endl;
-        for(V3DLONG i=0;i<point_b.size();i++)
-        {
-            cout<<"point_b = "<<point_b[i].x<<endl;
-            cout<<"count_v = "<<count_v[i]<<endl;
         }
 
         if(count_v.size()!=0)
@@ -218,14 +199,12 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             next_m.color.g = 0;
             next_m.color.r = 0;
         }
-        //v3d_msg("uuuuuuuuuuu");
         cout<<"trace_result_p = "<<trace_result_p.listNeuron.size()<<endl;
         cout<<"trace_result = "<<trace_result.listNeuron.size()<<endl;
 
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
         NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
-        //NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
         QHash <int, int>  hashNeuron;
         listNeuron.clear();
@@ -243,8 +222,8 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                 max_id = curr_win_nt.listNeuron[i].n;
             }
         }
-        resultTree.listNeuron.clear();
-        resultTree.hashNeuron.clear();
+//        resultTree.listNeuron.clear();
+//        resultTree.hashNeuron.clear();
 
         resultTree.listNeuron = listNeuron;
         resultTree.hashNeuron = hashNeuron;
@@ -254,9 +233,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         resultTree.color.a = 0;
         if(change)
         {
-//                    resultTree_rebase.listNeuron.clear();
-//                    resultTree_rebase.hashNeuron.clear();
-            //v3d_msg("enter into resultTree_rebase");
             resultTree_rebase.listNeuron = listNeuron;
             resultTree_rebase.hashNeuron = hashNeuron;
             resultTree_rebase.color.r = 0;
@@ -265,7 +241,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             resultTree_rebase.color.a = 0;
             QString outname = "resulttree_rebase.swc";
             writeSWC_file(outname,resultTree_rebase);
-            //cout<<"resultTree_rebase.listNeuron.size = "<<resultTree_rebase.listNeuron.size()<<endl;
         }
         change = true;
         for(V3DLONG i=0;i<curr_window_nt.listNeuron.size();i++)
@@ -287,22 +262,22 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
 
-//        if (panel)
-//        {
-//            panel->show();
-//            return;
-//        }
-//        else
-//        {
-//            panel = new lookPanel(callback, parent);
-//            if (panel)
-//            {
-//                panel->show();
-//                panel->raise();
-//                panel->move(100,100);
-//                panel->activateWindow();
-//            }
-//        }
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
 
 
         /******************************next marker*************************/
@@ -818,46 +793,78 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     else if(menu_name == tr("move_to_another_block_with_marker"))
     {
 
-       resultTree_rebase = callback.getSWCTeraFly();
+        resultTree_rebase = callback.getSWCTeraFly();
 
         cout<<"next_m ="<<next_m.x<<"  "<<next_m.y<<"  "<<next_m.z<<endl;
-        LocationSimple next;
-        mean_shift_marker(callback,next_m,next);
-        cout<<"next = "<<next.x<<"  "<<next.y<<"  "<<next.z<<endl;
-       //  v3d_msg("check next MARKER");
-        LandmarkList all_marker;
-        for(V3DLONG i=0;i<marker_rebase3.size();i++)
+        //v3d_msg("check next_m");
+        if(next_m.x == 0&&next_m.y == 0&&next_m.z == 0)
         {
-            all_marker.push_back(marker_rebase3[i]);
-        }
-        all_marker.push_back(next);
-        callback.setLandmarkTeraFly(all_marker);
-        //v3d_msg("move_to_another_block_with_marker");
+            //v3d_msg("use landmark");
+            LocationSimple next;
+            next_landmarker(callback,next);
+            //mean_shift_marker(callback,next_m,next);
+            LandmarkList all_marker;
+            for(V3DLONG i=0;i<marker_rebase3.size();i++)
+            {
+                all_marker.push_back(marker_rebase3[i]);
+            }
+            all_marker.push_back(next);
+            callback.setLandmarkTeraFly(all_marker);
+            cout<<"next = "<<next.x<<"  "<<next.y<<"  "<<next.z<<endl;
 
+            double dif = (next.x - next_m_rebase.x)*(next.x - next_m_rebase.x) +(next.y - next_m_rebase.y)*(next.y - next_m_rebase.y)+(next.z - next_m_rebase.z)*(next.z - next_m_rebase.z);
+            if(dif<0.001)
+            {
+                v3d_msg("the same next marker");
 
-        double dif = (next.x - next_m_rebase.x)*(next.x - next_m_rebase.x) +(next.y - next_m_rebase.y)*(next.y - next_m_rebase.y)+(next.z - next_m_rebase.z)*(next.z - next_m_rebase.z);
-        if(dif<0.001)
-        {
-            v3d_msg("the same next marker");
+                return;
+            }
+            else
+            {
 
-            return;
+                //v3d_msg("about to move");
+                callback.setImageTeraFly(next.x,next.y,next.z);
+                next_m_rebase.x = next.x;
+                next_m_rebase.y = next.y;
+                next_m_rebase.z = next.z;
+            }
         }
         else
         {
-            //v3d_msg("about to move");
-            callback.setImageTeraFly(next.x,next.y,next.z);
-            next_m_rebase.x = next.x;
-            next_m_rebase.y = next.y;
-            next_m_rebase.z = next.z;
+            LocationSimple next;
+            mean_shift_marker(callback,next_m,next);
+            cout<<"next = "<<next.x<<"  "<<next.y<<"  "<<next.z<<endl;
+            LandmarkList all_marker;
+            for(V3DLONG i=0;i<marker_rebase3.size();i++)
+            {
+                all_marker.push_back(marker_rebase3[i]);
+            }
+            all_marker.push_back(next);
+            callback.setLandmarkTeraFly(all_marker);
+
+            double dif = (next.x - next_m_rebase.x)*(next.x - next_m_rebase.x) +(next.y - next_m_rebase.y)*(next.y - next_m_rebase.y)+(next.z - next_m_rebase.z)*(next.z - next_m_rebase.z);
+            if(dif<0.001)
+            {
+                v3d_msg("the same next marker");
+
+                return;
+            }
+            else
+            {
+                //v3d_msg("about to move");
+                callback.setImageTeraFly(next.x,next.y,next.z);
+                next_m_rebase.x = next.x;
+                next_m_rebase.y = next.y;
+                next_m_rebase.z = next.z;
+            }
         }
-//        LandmarkList m = callback.getLandmarkTeraFly();
 
 
     }
     else if(menu_name == tr("set_thresh"))
     {
         bool miok;
-        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",35,1,200,5,&miok);
+        thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
         if(miok)
         {
             cout<<"input number is "<<thresh<<endl;
@@ -1106,12 +1113,17 @@ lookPanel::lookPanel(V3DPluginCallback2 &callback, QWidget *parent) :
     gridLayout = new QGridLayout();
     QPushButton* set_thresh     = new QPushButton("Set Thresh");
     QPushButton* move_block     = new QPushButton("move_block");
+    QPushButton* use_landmark     = new QPushButton("use_landmark");
     gridLayout->addWidget(set_thresh, 0,0);
-    gridLayout->addWidget(move_block, 1,0);
+    gridLayout->addWidget(use_landmark, 1,0);
+    gridLayout->addWidget(move_block, 2,0);
+
     setLayout(gridLayout);
     setWindowTitle(QString("Synchronize annotation "));
     connect(set_thresh,     SIGNAL(clicked()), this, SLOT(_slot_set_thresh()));
     connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
+    connect(use_landmark,     SIGNAL(clicked()), this, SLOT(_slot_use_landmarker()));
+
 
 }
 NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,NeuronTree &trace_result,NeuronTree &curr_win_nt)
@@ -1193,27 +1205,11 @@ void lookPanel::_slot_set_thresh()
     cout<<"this is slot set thresh"<<endl;
 
     bool miok;
-    thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",40,1,200,5,&miok);
+    thresh = QInputDialog::getInt(0,"Intensity Threshold 1%-99%","please input your number",42,1,200,5,&miok);
     if(miok)
     {
         cout<<"input number is "<<thresh<<endl;
     }
-
-    cout<<"resultTree_rebase.listNeuron.size() = "<<resultTree_rebase.listNeuron.size()<<endl;
-    QString final_name1 = "result.swc";
-    writeSWC_file(final_name1,resultTree_rebase);
-
-
-    if(resultTree_rebase.listNeuron.size()>0)
-    {
-        v3d_msg("hahahah");
-        NeuronTree nt = resultTree_rebase;
-        callback.setSWCTeraFly(nt);
-        resultTree_rebase.listNeuron.clear();
-        resultTree_rebase.hashNeuron.clear();
-
-    }
-    v3d_msg("rebase_show");
 
 
 }
@@ -1247,6 +1243,13 @@ void lookPanel::_slot_move_block()
         next_m_rebase.y = next_m.y;
         next_m_rebase.z = next_m.z;
     }
+}
+void lookPanel::_slot_use_landmarker()
+{
+        next_m.x = 0;
+        next_m.y = 0;
+        next_m.z = 0;
+
 }
 bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &count_v,vector<NeuronSWC> &point_b)
 {
@@ -1291,8 +1294,7 @@ bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &cou
         else
         {
             point_b.push_back(s);
-            int b_size = 15;
-
+            int b_size = 30;     //thresh for avoid marker move back
             int count = 0;
             for(V3DLONG i=0;i<resultTree.listNeuron.size();i++)   //need to modify
             {
@@ -1319,7 +1321,75 @@ bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &cou
 
 
 }
+bool next_landmarker(V3DPluginCallback2 &callback,LocationSimple &next)
+{
+    //v3d_msg("get next landmarker");
+    V3DLONG data1d_sz[4];
+    const Image4DSimple *curr_block = callback.getImageTeraFly();
+    LandmarkList terafly_landmarks_terafly = callback.getLandmarkTeraFly();
+    LandmarkList new_marker;
+    LocationSimple t;
+    double ox = curr_block->getOriginX();
+    double oy = curr_block->getOriginY();
+    double oz = curr_block->getOriginZ();
+    double lx = curr_block->getRezX();
+    double ly = curr_block->getRezY();
+    double lz = curr_block->getRezZ();
 
+
+    if(terafly_landmarks_terafly.isEmpty())return false;
+    LandmarkList terafly_landmarks;
+    LandmarkList other_marker;
+    cout<<"terafly_landmarks_terafly.size() = "<<terafly_landmarks_terafly.size()<<endl;
+    //v3d_msg("check size");
+    for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
+    {
+        LocationSimple s = terafly_landmarks_terafly[i];
+        if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
+        {
+            terafly_landmarks.push_back(s);
+        }
+        else
+        {
+            other_marker.push_back(s);
+        }
+    }
+
+    data1d_sz[0] = curr_block->getXDim();
+    data1d_sz[1] = curr_block->getYDim();
+    data1d_sz[2] = curr_block->getZDim();
+    data1d_sz[3] = curr_block->getCDim();
+
+
+    cout<<"marker rebase num = "<<marker_rebase.size()<<endl;
+        vector<int> ind;
+        for(V3DLONG i=0;i<terafly_landmarks.size();i++)
+        {
+            double dis;
+            double min_dis = 10000000000;
+            for(V3DLONG j=0;j<marker_rebase.size();j++)
+            {
+                dis = (terafly_landmarks[i].x-marker_rebase[j].x)*(terafly_landmarks[i].x-marker_rebase[j].x)+(terafly_landmarks[i].y-marker_rebase[j].y)*(terafly_landmarks[i].y-marker_rebase[j].y)+(terafly_landmarks[i].z-marker_rebase[j].z)*(terafly_landmarks[i].z-marker_rebase[j].z);
+                if(dis<min_dis)
+                {
+                    min_dis = dis;
+                }
+
+            }
+            if(min_dis>0.0001)
+            {
+                ind.push_back(i);
+                new_marker.push_back(terafly_landmarks[i]);
+            }
+        }
+
+        if(!match_marker(callback,ind,new_marker,t))
+        {
+            v3d_msg("abort");
+            return false;
+        }
+        next = t;
+}
 LocationSimple next_marker(V3DPluginCallback2 &callback,NeuronTree &trace_result_part)
 {
     LocationSimple point;
@@ -1481,7 +1551,7 @@ bool mean_shift_marker(V3DPluginCallback2 &callback,LocationSimple &next_m,Locat
 
     try {im_cropped = new unsigned char [pagesz];}
     catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
-//    v3d_msg("kkkkkkkkkkkkkk");
+    //v3d_msg("kkkkkkkkkkkkkk");
      vector<relationship> relation;
      V3DLONG j = 0;
      for(V3DLONG iz = zb; iz <= ze; iz++)

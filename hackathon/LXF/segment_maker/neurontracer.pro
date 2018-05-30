@@ -41,9 +41,11 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app2.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/vn_app1.h
 
-HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
+HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h
+HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/marker_radius.h
+HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h
 HEADERS += ../../../released_plugins/v3d_plugins/neuron_image_profiling/openSWCDialog.h
 
 SOURCES	+= neurontracer_plugin.cpp
