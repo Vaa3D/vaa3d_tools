@@ -6,16 +6,18 @@ VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH  += $$VAA3DPATH/basic_c_fun
 INCLUDEPATH  += $$VAA3DPATH/common_lib/include
 INCLUDEPATH  += $$VAA3DPATH/common_lib/include/hdf5
-INCLUDEPATH     += ../neurontracing_vn2
-INCLUDEPATH     += ../neurontracing_vn2/app2
-INCLUDEPATH     += ../neurontracing_vn2/app1
-INCLUDEPATH     += ../neuron_image_profiling
-INCLUDEPATH	+= ../eswc_converter
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1
+INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neuron_image_profiling
+INCLUDEPATH	+= ../../../released_plugins/v3d_plugins/eswc_converter
 INCLUDEPATH	+= $$VAA3DPATH/jba/newmat11
 
 INCLUDEPATH     += $$VAA3DPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DPATH/worm_straighten_c
-
+win32 {
+    LIBS += -L$$VAA3DPATH/common_lib/winlib64 -llibtiff
+}
 macx{
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
