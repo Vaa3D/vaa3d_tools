@@ -215,7 +215,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
        vector<NeuronSWC *> point_pool;
       // vector<point_pool *> point_p;
-       for(V3DLONG k=0;k<nz;k++)
+       for(V3DLONG k=1;k<nz;k++)
        {
           for(V3DLONG j=1;j<ny-1;j++)
           {
@@ -230,11 +230,13 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
                   if((sum>1)&&(sum<5))
                   {
-                      v3d_msg("is ok");
+
+                     v3d_msg(QString("x is %1,y is %2, z is %3").arg(i).arg(j).arg(k));
                      NeuronSWC *pp;
                      pp->x=i;
                      pp->y=j;
                      pp->z=k;
+
                      v3d_msg(QString("z is %1").arg(pp->z));
                      point_pool.push_back(pp);
 
@@ -245,8 +247,6 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        }
       v3d_msg("2D cureve points were complete");
       v3d_msg(QString("sum is %1").arg(point_pool.size()));
-
-      v3d_msg("2D cureve points were complete");
 
       cout<<"all the curve point in the pool_points"<<endl;
       cout<<"2D cureve points were complete"<<endl;
@@ -279,8 +279,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        cout<<"create 2D_ray success"<<endl;
 
 
-
-       cout<<"mip"<<endl;
+       v3d_msg("mip");
        V3DLONG M=sz[1]; //y
        V3DLONG N=sz[0]; //x
        V3DLONG P=sz[2]; //z
@@ -307,7 +306,6 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                }
            }
        }
-       cout<<"mip was complete "<<endl;
 
 
        cout<<"begin circle "<<endl;
@@ -326,15 +324,14 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                    //v3d_msg(QString("y is %1,x is %2").arg(k).arg(i));
                    if(project_value > thres_2d)
                        {
-
                            bool flag=rayinten_2D(k,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, image_binary,sz[0],sz[1]);
                           // v3d_msg(QString("flag is %1").arg(flag));
                            if (flag==true)
                            {
                                    for(V3DLONG bb=0;bb<point_pool.size();bb++)
                                    {
-                                       // v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
-                                       if(k==point_pool[bb]->y&&i==point_pool[bb]->x)
+                                        v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
+                                       if((k==point_pool[bb]->y)&&(i==point_pool[bb]->x))
                                        {
 
                                            s.x=i+1;
@@ -343,7 +340,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                                            s.radius=1;
                                            s.color = random_rgba8(255);
                                            curlist << s;
-                                           v3d_msg(QString("z is %1").arg(point_pool[bb]->z));
+                                           //v3d_msg(QString("z is %1").arg(point_pool[bb]->z));
                                        }
                                    }
 
