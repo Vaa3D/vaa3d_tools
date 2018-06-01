@@ -213,7 +213,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 //       };
 
 
-       vector<NeuronSWC *> point_pool;
+       vector<NeuronSWC> point_pool;
       // vector<point_pool *> point_p;
        for(V3DLONG k=1;k<nz;k++)
        {
@@ -231,16 +231,16 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                   if((sum>1)&&(sum<5))
                   {
 
-                     v3d_msg(QString("x is %1,y is %2, z is %3").arg(i).arg(j).arg(k));
-                     NeuronSWC *pp;
-                     pp->x=i;
-                     pp->y=j;
-                     pp->z=k;
+//                     v3d_msg(QString("x is %1,y is %2, z is %3").arg(i).arg(j).arg(k));
+                     NeuronSWC pp;
+                     pp.x=i;
+                     pp.y=j;
+                     pp.z=k;
 
-                     v3d_msg(QString("z is %1").arg(pp->z));
+//                     v3d_msg(QString("z is %1").arg(pp.z));
                      point_pool.push_back(pp);
 
-                   v3d_msg(QString("x is %1,y is %2, z is %3").arg(pp->x).arg(pp->y).arg(pp->z));
+//                   v3d_msg(QString("x is %1,y is %2, z is %3").arg(pp.x).arg(pp.y).arg(pp.z));
                   }
               }
           }
@@ -331,12 +331,12 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                                    for(V3DLONG bb=0;bb<point_pool.size();bb++)
                                    {
                                         v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
-                                       if((k==point_pool[bb]->y)&&(i==point_pool[bb]->x))
+                                       if((k==point_pool[bb].y)&&(i==point_pool[bb].x))
                                        {
 
                                            s.x=i+1;
                                            s.y=k+1;
-                                           s.z=point_pool[bb]->z;
+                                           s.z=point_pool[bb].z;
                                            s.radius=1;
                                            s.color = random_rgba8(255);
                                            curlist << s;
