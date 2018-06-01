@@ -9,7 +9,6 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 enum tracingMethod {app1, app2, neutube,snake,most,mst, neurogpstree,rivulet2,tremap,gd,advantra,neuronchaser};
-void updated_curr_win(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d);
 bool match_marker(V3DPluginCallback2 &callback,vector<int> &ind,LandmarkList &terafly_landmarks,LocationSimple &t);
 struct TRACE_LS_PARA
 {
@@ -46,52 +45,10 @@ struct TRACE_LS_PARA
     QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd;
 };
 
-
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
-bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-
-bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-
-
-bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
-bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-
-bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-
-bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
-bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
-bool ada_win_finding_3D_GD(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
-
-QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
-NeuronTree sort_eliminate_swc(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
-LandmarkList eliminate_seed(NeuronTree nt,LandmarkList inputRootList,Image4DSimple* total4DImage);
-bool combine_list2file(QList<NeuronSWC> & lN, QString fileSaveName);
-
-void processSmartScan(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
-void processSmartScan_3D(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
-void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback,list<string> & infostring,QString fileWithData);
-
-NeuronTree neuron_sub(NeuronTree nt_total, NeuronTree nt);
-
-bool load_region_tc(V3DPluginCallback2 &callback,QString &tcfile, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim,unsigned char * & img,
-                    V3DLONG startx, V3DLONG starty, V3DLONG startz, V3DLONG endx, V3DLONG endy, V3DLONG endz);
-
 
 bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
 bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, V3DLONG iy,V3DLONG iz);
-
-bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &p,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
-
-NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist);
-NeuronTree pruning_cross_swc(NeuronTree nt);
-
-bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P);
-bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
-
-vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString& filename,NeuronTree nt);
 
 
 #endif

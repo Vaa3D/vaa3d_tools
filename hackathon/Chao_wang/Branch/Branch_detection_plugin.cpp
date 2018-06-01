@@ -238,7 +238,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                      v3d_msg(QString("z is %1").arg(pp->z));
                      point_pool.push_back(pp);
 
-                   v3d_msg(QString("flag1 is %1,flag2 is %2, flag3 is %3").arg(pp->x).arg(pp->y).arg(pp->z));
+                   v3d_msg(QString("x is %1,y is %2, z is %3").arg(pp->x).arg(pp->y).arg(pp->z));
                   }
               }
           }
