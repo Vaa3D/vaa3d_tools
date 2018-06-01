@@ -33,12 +33,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
         if (menu_name == tr("Branch_detection"))
        {
-		v3d_msg("To be implemented.");
+
                 int flag=branch_detection(callback,parent);
                 if (flag==1)
                 {
                     v3d_msg(tr("branch detection completed!"));
-                    v3d_msg(tr("Chao Wang is 棒棒哒!"));
+
                  }
                  else
                 {
@@ -52,7 +52,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             int flag= raymodel(callback,parent);
             if(flag=1)
-            v3d_msg("Chao wang ray-shooting model creat.");
+            v3d_msg("ray-shooting model creat.");
         }
 
 	else
@@ -169,8 +169,6 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
         ray_numbers_2d = ray_numbers_2d_spinbox->value();
         thres_2d = thres_2d_spinbox->value();
         ray_length_2d = ray_length_2d_spinbox->value();
-
-
         if (dialog)
             {
                     delete dialog;
@@ -180,31 +178,87 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
             }
 
-
        V3DLONG sz[3];
        sz[0] = p4DImage->getXDim();
        sz[1] = p4DImage->getYDim();
        sz[2] = p4DImage->getZDim();
 
        unsigned char* datald=0;
-       V3DLONG pagesz_mip = sz[0]*sz[1];
-
        datald = p4DImage->getRawData();
+       V3DLONG size_image=sz[0]*sz[1]*sz[2];
+
+       cout<<"segment"<<endl;
+
+       unsigned char *image_binary=0;
+       try{image_binary=new unsigned char [size_image];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+       for(V3DLONG i = 0; i < size_image; i++)
+       {
+           if(datald[i] > thres_2d)
+               image_binary[i] = 255;
+           else
+               image_binary[i] = 0;
+       }
+       v3d_msg("segment was complete");
+
+       v3d_msg("start find 2D cureve points");
+       V3DLONG nx=sz[0];
+       V3DLONG ny=sz[1];
+       V3DLONG nz=sz[2];
+//       struct point_pool
+//       {
+//           float x_point;
+//           float y_point;
+//           float z_point;
+//       };
 
 
- //      cout<<"find 2D cureve points "<<endl;
- //      int slice=sz[2];
- //      for(long j=0;j<slice;j++)
- //          {
-  //               for(long k=0;k<sz[0];k++)
- //                       for(long i=0;i<sz[1];i++) 在此处加上高曲率点检测代码
+       vector<NeuronSWC *> point_pool;
+      // vector<point_pool *> point_p;
+       for(V3DLONG k=0;k<nz;k++)
+       {
+          for(V3DLONG j=1;j<ny-1;j++)
+          {
+              for(V3DLONG i=1;i<nx-1;i++)
+              {
+                  bool flag1=image_binary[k*nx*ny+nx*j+i-1];
+                  bool flag4=image_binary[k*nx*ny+nx*j+i+1];
+                  bool flag2=image_binary[k*nx*ny+nx*(j-1)+i];
+                  bool flag3=image_binary[k*nx*ny+nx*(j+1)+i];
+                  bool flag5=image_binary[k*nx*ny+nx*j+i];
+                  int sum=flag1+flag2+flag3+flag4+flag5;
+
+                  if((sum>1)&&(sum<5))
+                  {
+                      v3d_msg("is ok");
+                     NeuronSWC *pp;
+                     pp->x=i;
+                     pp->y=j;
+                     pp->z=k;
+                     v3d_msg(QString("z is %1").arg(pp->z));
+                     point_pool.push_back(pp);
+
+                   v3d_msg(QString("flag1 is %1,flag2 is %2, flag3 is %3").arg(pp->x).arg(pp->y).arg(pp->z));
+                  }
+              }
+          }
+       }
+      v3d_msg("2D cureve points were complete");
+      v3d_msg(QString("sum is %1").arg(point_pool.size()));
+
+      v3d_msg("2D cureve points were complete");
+
+      cout<<"all the curve point in the pool_points"<<endl;
+      cout<<"2D cureve points were complete"<<endl;
+
+
+
+
 
 
        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(ray_length_2d)), ray_y(ray_numbers_2d,vector<float>(ray_length_2d));
-      // float  rayintensity[512][8], ray_X[512][16], ray_Y[512][16], ray_Z[512][16];
-       //int count_2d;
 
-       cout<<"begin"<<endl;
+
 
        cout<<"create 2D_ray"<<endl;
 
@@ -231,7 +285,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        V3DLONG N=sz[0]; //x
        V3DLONG P=sz[2]; //z
        V3DLONG pagesz=M*N*P;
-       v3d_msg(QString("sz[0] is %1,sz[1] is %2, sz[2] is %3").arg(N).arg(M).arg(P));
+      // v3d_msg(QString("sz[0] is %1,sz[1] is %2, sz[2] is %3").arg(N).arg(M).arg(P));
        unsigned char *image_mip=0;
        try{image_mip=new unsigned char [pagesz];}
        catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
@@ -244,10 +298,10 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                for(V3DLONG iz = 0; iz < P; iz++)
                {
                    V3DLONG offsetk = iz*M*N;
-                   if(datald[offsetk + offsetj + ix] >= max_mip)
+                   if(image_binary[offsetk + offsetj + ix] >= max_mip)
                    {
-                       image_mip[iy*N + ix] = datald[offsetk + offsetj + ix];
-                       max_mip = datald[offsetk + offsetj + ix];
+                       image_mip[iy*N + ix] = image_binary[offsetk + offsetj + ix];
+                       max_mip = image_binary[offsetk + offsetj + ix];
                       // v3d_msg(QString("max_mip is %1").arg(max_mip));
                    }
                }
@@ -255,56 +309,51 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        }
        cout<<"mip was complete "<<endl;
 
-        cout<<"segment"<<endl;
-        unsigned char *image_binary=0;
-        try{image_binary=new unsigned char [pagesz];}
-        catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-        for(V3DLONG i = 0; i < pagesz_mip; i++)
-        {
-            if(image_mip[i] > thres_2d)
-                image_binary[i] = 255;
-            else
-                image_binary[i] = 0;
-        }
-        cout<<"segment was complete "<<endl;
 
-
-        cout<<"begin circle "<<endl;
+       cout<<"begin circle "<<endl;
 
         LandmarkList curlist;
         LocationSimple s;
 
 
-       for(V3DLONG k=0;k<sz[0];k++)
+       for(V3DLONG k=1;k<sz[1]-1;k++)
        {
-           for(V3DLONG i=0;i<sz[1];i++)
+           for(V3DLONG i=1;i<sz[0]-1;i++)
            {
 
                    int project_value=get_2D_ValueUINT8(k, i,image_binary,sz[0],sz[1]);
                    //v3d_msg(QString("project_value is %1").arg(project_value));
-
+                   //v3d_msg(QString("y is %1,x is %2").arg(k).arg(i));
                    if(project_value > thres_2d)
                        {
 
                            bool flag=rayinten_2D(k,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, image_binary,sz[0],sz[1]);
-                           //v3d_msg(QString("flag is %1").arg(flag));
+                          // v3d_msg(QString("flag is %1").arg(flag));
                            if (flag==true)
                            {
+                                   for(V3DLONG bb=0;bb<point_pool.size();bb++)
+                                   {
+                                       // v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
+                                       if(k==point_pool[bb]->y&&i==point_pool[bb]->x)
+                                       {
+
+                                           s.x=i+1;
+                                           s.y=k+1;
+                                           s.z=point_pool[bb]->z;
+                                           s.radius=1;
+                                           s.color = random_rgba8(255);
+                                           curlist << s;
+                                           v3d_msg(QString("z is %1").arg(point_pool[bb]->z));
+                                       }
+                                   }
 
 
-                               {
-                                   s.x = k + 1;
-                                   s.y = i + 1;
-                                   s.z = (sz[2]/2);  // because this is 2D branch detection , z轴坐标位于中间
-                                   s.radius = 1;
-                                   s.color = random_rgba8(255);
-                                   curlist << s;
-                               }
                            }
 
                        }
              }
          }
+       v3d_msg("okoko");
 
        for(int i=0;i<curlist.size();i++)
            for(int j=i+1;j<curlist.size();j++)
@@ -323,6 +372,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
        if(image_binary) {delete []image_binary; image_binary = 0;}
        if(image_mip) {delete []image_mip; image_mip = 0;}
+       if(datald){delete []datald;datald=0;}
 
        return 1;
    }
@@ -482,7 +532,7 @@ int raymodel(V3DPluginCallback2 &callback, QWidget *parent)
     for(V3DLONG i=0;i<x_lac.size();i++)
     {
         NeuronSWC s;
-        s.x=x_lac[i];
+        s.x=  x_lac[i];
         s.y = y_lac[i];
         s.z = sz[2]/2;
         s.radius = 1;
@@ -490,13 +540,15 @@ int raymodel(V3DPluginCallback2 &callback, QWidget *parent)
         listNeuron.append(s);
         hashNeuron.insert(s.n, listNeuron.size()-1);
     }
+
     nt.n = -1;
     nt.on = true;
     nt.listNeuron = listNeuron;
     nt.hashNeuron = hashNeuron;
-
-    QString raynkdh = QString ("ray-shooting.swc");
-    writeSWC_file(raynkdh,nt);
+    QString outswc_file;
+    outswc_file = QString(p4DImage->getFileName())  + "ray_model.swc";
+    //QString raynkdh = QString ("ray-shooting.swc");
+    writeSWC_file(outswc_file,nt);
 
    // v3d_msg(QString("okokookokokoko"));
 }

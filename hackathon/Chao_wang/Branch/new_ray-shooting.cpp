@@ -38,10 +38,10 @@ void ray_shooting(int m, int n,vector<vector<float> > ray_x,vector<vector<float>
     return;
 }
 
-bool rayinten_2D(int point_x,int point_y,int m,int n, vector<vector<float> > ray_x,vector<vector<float> > ray_y, unsigned char * P,V3DLONG sz0,V3DLONG sz1 )
+bool rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_x,vector<vector<float> > ray_y, unsigned char * P,V3DLONG sz0,V3DLONG sz1 )
 {
     int count=0;
-    int point[2] = {point_x,point_y};
+    int point[2] = {point_y,point_x};
     //int  point_coordinate[3];
     float pixe = 0.0;
     //vector<int> indd[m],ind1[m];
@@ -54,7 +54,7 @@ bool rayinten_2D(int point_x,int point_y,int m,int n, vector<vector<float> > ray
                  pixe = 0.0;
 
                 {
-                    pixe = interp_2d(point[0]+ray_x[i][j], point[1]+ray_y[i][j], P, sz0,sz1 );
+                    pixe = interp_2d(point[1]+ray_x[i][j], point[0]+ray_y[i][j], P, sz0,sz1 );
                     //v3d_msg(QString("pixe is %1").arg(pixe));
                     if (j<=n/4||j>=0)
                     {
@@ -128,23 +128,23 @@ bool rayinten_2D(int point_x,int point_y,int m,int n, vector<vector<float> > ray
 
 }
 
-float interp_2d(float point_x,float point_y,unsigned char * PP,V3DLONG sz0,V3DLONG sz1)
+float interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLONG sz1)
 {
     float result;
 
-    if(point_x < 0||point_y < 0||point_x > sz0-1||point_y > sz1-1)
+    if(point_y < 0||point_x < 0||point_y > sz1-1||point_x > sz0-1)
         return 0.0;
     else if(point_x < 1||point_y < 1||point_x > sz0-2||point_y > sz1-2)
     {
-        result = get_2D_ValueUINT8(point_x,point_y,PP, sz0, sz1);
+        result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
         return result;
     }
     else
     {
-        int y1 = get_2D_ValueUINT8(ceil(point_x), ceil(point_y),PP,sz0,sz1);
-        int y0 = get_2D_ValueUINT8(floor(point_x), ceil(point_y),PP, sz0,sz1);
-        int x1 = get_2D_ValueUINT8(ceil(point_x), floor(point_y),PP, sz0,sz1);
-        int x0 = get_2D_ValueUINT8(floor(point_x), floor(point_y),PP, sz0,sz1);
+        int y1 = get_2D_ValueUINT8(ceil(point_y), ceil(point_x),PP,sz0,sz1);
+        int y0 = get_2D_ValueUINT8(floor(point_y), ceil(point_x),PP, sz0,sz1);
+        int x1 = get_2D_ValueUINT8(ceil(point_y), floor(point_x),PP, sz0,sz1);
+        int x0 = get_2D_ValueUINT8(floor(point_y), floor(point_x),PP, sz0,sz1);
 
         result = x0*(point_x-floor(point_x))*(point_y-floor(point_y))+x1*(ceil(point_x)-point_x)*(point_y-floor(point_y))
             +y0*(point_x-floor(point_x))*(ceil(point_y)-point_y)+y1*(ceil(point_x)-point_x)*(ceil(point_y)-point_y);
@@ -153,7 +153,7 @@ float interp_2d(float point_x,float point_y,unsigned char * PP,V3DLONG sz0,V3DLO
 }
 
 
-v3d_uint8  get_2D_ValueUINT8(V3DLONG  x,  V3DLONG  y, unsigned char * T, V3DLONG  sz0, V3DLONG  sz1)
+v3d_uint8  get_2D_ValueUINT8(V3DLONG  y,  V3DLONG  x, unsigned char * T, V3DLONG  sz0, V3DLONG  sz1)
 {
 
     V3DLONG im_total_sz = sz0*sz1;
