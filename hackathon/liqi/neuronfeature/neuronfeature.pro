@@ -21,5 +21,5 @@ SOURCES      += openSWCDialog.cpp
 
 
 
-TARGET	= $$qtLibraryTarget(neuronfeature)
-DESTDIR	= $$VAA3DPATH/bin/plugins/neuronfeature/
+TARGET	= $$qtLibraryTarget(VRneuronFeature)
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/VR_neuron_feature/

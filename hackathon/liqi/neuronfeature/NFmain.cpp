@@ -1,5 +1,5 @@
 #include "NFmain.h"
-#include "global_feature_compute.h"
+#include "../../../../v3d_external/v3d_main/neuron_editing/global_feature_compute.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <math.h>
