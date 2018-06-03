@@ -84,28 +84,37 @@ float mean_distance(){
 
 		float sum_x=0,sum_y=0,sum_z=0;
 		float sum_distance=0;
+		QList<float> mean_x,mean_y,mean_z;
 		/*求虚拟中心*/
 		for(int i =0;i<mylist.size();i++){
 			sum_x=sum_x+mylist.at(i).x;
 			sum_y=sum_y+mylist.at(i).y;
 			sum_z=sum_z+mylist.at(i).z;
+			if((i+1)%5==0){
+				mean_x.append(sum_x/5);
+				mean_y.append(sum_y/5);
+				mean_z.append(sum_z/5);
+				sum_x=0;sum_y=0;sum_z=0;
+			}
 		}
-		float mean_x = sum_x/mylist.size();
-		float mean_y = sum_y/mylist.size();
-		float mean_z = sum_z/mylist.size();
 
 	
 		/*求平均距离*/
 		for(int i = 0;i<mylist.size();i++){
-			sum_distance = sum_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
-			//sum_y_distance = sum_y_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
-			//sum_z_distance = sum_z_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+			cout<<"\ndistance"<<i+1<<"="<<sqrt(pow(mylist.at(i).x-mean_x.at(i/5),2)+pow(mylist.at(i).y-mean_y.at(i/5),2)+pow(mylist.at(i).z-mean_z.at(i/5),2))<<endl;
+			sum_distance = sum_distance + sqrt(pow(mylist.at(i).x-mean_x.at(i/5),2)+pow(mylist.at(i).y-mean_y.at(i/5),2)+pow(mylist.at(i).z-mean_z.at(i/5),2));
+			if((i+1)%5==0){
+				float mean_distance = sum_distance/5;
+				cout<<"\nThe mean distance is:"<<mean_distance<<endl;
+				cout<<"*********************************************"<<endl;
+				sum_distance=0;
+			}
 		}
-		float mean_distance = sum_distance/mylist.size();
+		float mean_distance5 = sum_distance/tmp_list.size();
 
-		cout<<"\nThe mean distance is:"<<mean_distance<<endl;
+		//cout<<"\nThe mean distance is:"<<mean_distance<<endl;
 
-		return mean_distance;
+		return mean_distance5;
 
 	}else if(fileOpenName.endsWith(".marker") || fileOpenName.endsWith(".MARKER")){
 		tmp_list = readMarker_file(fileOpenName);
@@ -121,28 +130,37 @@ float mean_distance(){
 
 		float sum_x=0,sum_y=0,sum_z=0;
 		float sum_distance=0;
+		QList<float> mean_x,mean_y,mean_z;
 		/*求虚拟中心*/
 		for(int i =0;i<tmp_list.size();i++){
 			sum_x=sum_x+tmp_list.at(i).x;
 			sum_y=sum_y+tmp_list.at(i).y;
 			sum_z=sum_z+tmp_list.at(i).z;
+			if((i+1)%5==0){
+				mean_x.append(sum_x/5);
+				mean_y.append(sum_y/5);
+				mean_z.append(sum_z/5);
+				sum_x=0;sum_y=0;sum_z=0;
+			}
 		}
-		float mean_x = sum_x/tmp_list.size();
-		float mean_y = sum_y/tmp_list.size();
-		float mean_z = sum_z/tmp_list.size();
-
+		
 	
 		/*求平均距离*/
 		for(int i = 0;i<tmp_list.size();i++){
-			sum_distance = sum_distance + sqrt(pow(tmp_list.at(i).x-mean_x,2)+pow(tmp_list.at(i).y-mean_y,2)+pow(tmp_list.at(i).z-mean_z,2));
-			//sum_y_distance = sum_y_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
-			//sum_z_distance = sum_z_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+			cout<<"\ndistance"<<i+1<<"="<<sqrt(pow(tmp_list.at(i).x-mean_x.at(i/5),2)+pow(tmp_list.at(i).y-mean_y.at(i/5),2)+pow(tmp_list.at(i).z-mean_z.at(i/5),2))<<endl;
+			sum_distance = sum_distance + sqrt(pow(tmp_list.at(i).x-mean_x.at(i/5),2)+pow(tmp_list.at(i).y-mean_y.at(i/5),2)+pow(tmp_list.at(i).z-mean_z.at(i/5),2));
+			if((i+1)%5==0){
+				float mean_distance = sum_distance/5;
+				cout<<"\nThe mean distance is:"<<mean_distance<<endl;
+				cout<<"*********************************************"<<endl;
+				sum_distance=0;
+			}
 		}
-		float mean_distance = sum_distance/tmp_list.size();
+		float mean_distance5 = sum_distance/tmp_list.size();
 
-		cout<<"\nThe mean distance is:"<<mean_distance<<endl;
+		//cout<<"\nThe mean distance is:"<<mean_distance<<endl;
 
-		return mean_distance;
+		return mean_distance5;
 	}
 	else {
 #ifndef DISABLE_V3D_MSG
