@@ -55,8 +55,9 @@ float mean_distance(){
 	QString fileOpenName;
 	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
 		"",
-		QObject::tr("Supported file (*.apo)"
+		QObject::tr("Supported file (*.apo *.marker)"
 		";;Point Cloud		(*.apo)"
+		";;Landmarks		(*.marker)"
 		));
 	if(fileOpenName.isEmpty()) 
 	{
@@ -64,11 +65,84 @@ float mean_distance(){
 	}
 
 	QList <CellAPO> mylist;
+	QList <ImageMarker> tmp_list;
 	//vector<V3DLONG> segment_id, segment_layer;
 	if (fileOpenName.endsWith(".apo") || fileOpenName.endsWith(".APO"))
 	{
 		mylist = readAPO_file(fileOpenName);
 
+
+		if(mylist.size()==0)
+		{
+			cout<<"\nread failed\n"<<endl;
+		}
+		else
+		{
+			cout<<"\nread successed\n"<<endl;
+		}
+		cout<<"\nThis is a demo plugin to show how to read apo data."<<endl;
+
+		float sum_x=0,sum_y=0,sum_z=0;
+		float sum_distance=0;
+		/*求虚拟中心*/
+		for(int i =0;i<mylist.size();i++){
+			sum_x=sum_x+mylist.at(i).x;
+			sum_y=sum_y+mylist.at(i).y;
+			sum_z=sum_z+mylist.at(i).z;
+		}
+		float mean_x = sum_x/mylist.size();
+		float mean_y = sum_y/mylist.size();
+		float mean_z = sum_z/mylist.size();
+
+	
+		/*求平均距离*/
+		for(int i = 0;i<mylist.size();i++){
+			sum_distance = sum_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+			//sum_y_distance = sum_y_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+			//sum_z_distance = sum_z_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+		}
+		float mean_distance = sum_distance/mylist.size();
+
+		cout<<"\nThe mean distance is:"<<mean_distance<<endl;
+
+		return mean_distance;
+
+	}else if(fileOpenName.endsWith(".marker") || fileOpenName.endsWith(".MARKER")){
+		tmp_list = readMarker_file(fileOpenName);
+		if(tmp_list.size()==0)
+		{
+			cout<<"\nread failed\n"<<endl;
+		}
+		else
+		{
+			cout<<"\nread successed\n"<<endl;
+		}
+		cout<<"\nThis is a demo plugin to show how to read apo data."<<endl;
+
+		float sum_x=0,sum_y=0,sum_z=0;
+		float sum_distance=0;
+		/*求虚拟中心*/
+		for(int i =0;i<tmp_list.size();i++){
+			sum_x=sum_x+tmp_list.at(i).x;
+			sum_y=sum_y+tmp_list.at(i).y;
+			sum_z=sum_z+tmp_list.at(i).z;
+		}
+		float mean_x = sum_x/tmp_list.size();
+		float mean_y = sum_y/tmp_list.size();
+		float mean_z = sum_z/tmp_list.size();
+
+	
+		/*求平均距离*/
+		for(int i = 0;i<tmp_list.size();i++){
+			sum_distance = sum_distance + sqrt(pow(tmp_list.at(i).x-mean_x,2)+pow(tmp_list.at(i).y-mean_y,2)+pow(tmp_list.at(i).z-mean_z,2));
+			//sum_y_distance = sum_y_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+			//sum_z_distance = sum_z_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
+		}
+		float mean_distance = sum_distance/tmp_list.size();
+
+		cout<<"\nThe mean distance is:"<<mean_distance<<endl;
+
+		return mean_distance;
 	}
 	else {
 #ifndef DISABLE_V3D_MSG
@@ -76,38 +150,5 @@ float mean_distance(){
 #endif
 		return a;
 	}
-	if(mylist.size()==0)
-	{
-		cout<<"\nread failed\n"<<endl;
-	}
-	else
-	{
-		cout<<"\nread successed\n"<<endl;
-	}
-	cout<<"\nThis is a demo plugin to show how to read apo data."<<endl;
-
-	float sum_x=0,sum_y=0,sum_z=0;
-	float sum_distance=0;
-	/*求虚拟中心*/
-	for(int i =0;i<mylist.size();i++){
-		sum_x=sum_x+mylist.at(i).x;
-		sum_y=sum_y+mylist.at(i).y;
-		sum_z=sum_z+mylist.at(i).z;
-	}
-	float mean_x = sum_x/mylist.size();
-	float mean_y = sum_y/mylist.size();
-	float mean_z = sum_z/mylist.size();
-
 	
-	/*求平均距离*/
-	for(int i = 0;i<mylist.size();i++){
-		sum_distance = sum_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
-		//sum_y_distance = sum_y_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
-		//sum_z_distance = sum_z_distance + sqrt(pow(mylist.at(i).x-mean_x,2)+pow(mylist.at(i).y-mean_y,2)+pow(mylist.at(i).z-mean_z,2));
-	}
-	float mean_distance = sum_distance/mylist.size();
-
-	cout<<"\nThe mean distance is:"<<mean_distance<<endl;
-
-	return mean_distance;
 }
