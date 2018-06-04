@@ -151,9 +151,9 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         else
         {
             check_void++;
-            cout<<"check  "<<check_void<<endl;
+            //cout<<"check  "<<check_void<<endl;
             v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
-            //thresh = thresh - 15 ;
+            thresh = thres_rebase ;
             return;
 
         }
@@ -631,16 +631,16 @@ lookPanel::lookPanel(V3DPluginCallback2 &callback, QWidget *parent) :
 
     gridLayout = new QGridLayout();
     QPushButton* set_thresh     = new QPushButton("Set Thresh");
-    QPushButton* move_block     = new QPushButton("move_block");
+   // QPushButton* move_block     = new QPushButton("move_block");
     QPushButton* use_landmark     = new QPushButton("use_landmark");
     gridLayout->addWidget(set_thresh, 0,0);
     gridLayout->addWidget(use_landmark, 1,0);
-    gridLayout->addWidget(move_block, 2,0);
+    //gridLayout->addWidget(move_block, 2,0);
 
     setLayout(gridLayout);
     setWindowTitle(QString("Synchronize annotation "));
     connect(set_thresh,     SIGNAL(clicked()), this, SLOT(_slot_set_thresh()));
-    connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
+    //connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
     connect(use_landmark,     SIGNAL(clicked()), this, SLOT(_slot_use_landmarker()));
 
 
