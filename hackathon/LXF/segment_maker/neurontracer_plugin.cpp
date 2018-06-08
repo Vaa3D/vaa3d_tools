@@ -19,13 +19,14 @@ using namespace std;
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
 LocationSimple next_m,next_m_rebase;
-NeuronTree trace_result_p,trace_result,resultTree_rebase,resultTree;
+NeuronTree trace_result_pp,trace_result_p,trace_result,resultTree_rebase,resultTree;
 extern LandmarkList marker_rebase,marker_rebase2; //original marker and marker which use for app2
 extern LandmarkList marker_rebase3; //only original marker
 extern V3DLONG thres_rebase;
 bool change = true;
 int check_void=0;
 extern QString outimg_file;
+extern bool is_soma;
 int thresh=42;
 int func_name;
 struct relationship
@@ -79,8 +80,27 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 {
 
 
+
     if (menu_name == tr("trace_APP2"))     //finished
 	{
+
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
+        return;
 
 
         TRACE_LS_PARA P;
@@ -141,10 +161,10 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if(!crawler_raw_app(callback,parent,P,bmenu))return;
 
         QString name = P.inimg_file+"_app2.swc";
-        trace_result_p = readSWC_file(name);
+        trace_result_pp = readSWC_file(name);
 
 
-        if(trace_result_p.listNeuron.size()!=0)   //check if the tracing result is void
+        if(trace_result_pp.listNeuron.size()!=0)   //check if the tracing result is void
         {
             marker_rebase = marker_rebase2;
         }
@@ -157,17 +177,19 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             return;
 
         }
-        for(V3DLONG i=0;i<trace_result_p.listNeuron.size();i++)   //use ratio to update the coordinate
+        for(V3DLONG i=0;i<trace_result_pp.listNeuron.size();i++)   //use ratio to update the coordinate
         {
-            trace_result_p.listNeuron[i].x = trace_result_p.listNeuron[i].x*P.ratio_x + P.o_x;
-            trace_result_p.listNeuron[i].y = trace_result_p.listNeuron[i].y*P.ratio_y + P.o_y;
-            trace_result_p.listNeuron[i].z = trace_result_p.listNeuron[i].z*P.ratio_z + P.o_z;
+            trace_result_pp.listNeuron[i].x = trace_result_pp.listNeuron[i].x*P.ratio_x + P.o_x;
+            trace_result_pp.listNeuron[i].y = trace_result_pp.listNeuron[i].y*P.ratio_y + P.o_y;
+            trace_result_pp.listNeuron[i].z = trace_result_pp.listNeuron[i].z*P.ratio_z + P.o_z;
         }
 
         trace_result.listNeuron.clear();
         vector<int> count_v;
         vector<NeuronSWC> point_b;
         //v3d_msg("remove point at boundry");
+        trace_result_p = trace_result_pp; //tmp need to be modified&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
         for(V3DLONG i=0;i<trace_result_p.listNeuron.size();i++)  //remove point at boundry
         {
             if(point_at_boundry(callback,trace_result_p.listNeuron[i],count_v,point_b))
@@ -198,6 +220,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             next_m.color.b = 0;
             next_m.color.g = 0;
             next_m.color.r = 0;
+            next_m.comments = "a";
         }
         cout<<"trace_result_p = "<<trace_result_p.listNeuron.size()<<endl;
         cout<<"trace_result = "<<trace_result.listNeuron.size()<<endl;
@@ -262,22 +285,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
 
-        if (panel)
-        {
-            panel->show();
-            return;
-        }
-        else
-        {
-            panel = new lookPanel(callback, parent);
-            if (panel)
-            {
-                panel->show();
-                panel->raise();
-                panel->move(100,100);
-                panel->activateWindow();
-            }
-        }
+
 
 
         /******************************next marker*************************/
@@ -418,7 +426,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         resultTree_rebase = callback.getSWCTeraFly();
 
-        cout<<"next_m ="<<next_m.x<<"  "<<next_m.y<<"  "<<next_m.z<<endl;
+        cout<<"next_m ="<<next_m.x<<"  "<<next_m.y<<"  "<<next_m.z<<"  "<<next_m.comments<<endl;
         //v3d_msg("check next_m");
         if(next_m.x == 0&&next_m.y == 0&&next_m.z == 0)
         {
@@ -630,11 +638,15 @@ lookPanel::lookPanel(V3DPluginCallback2 &callback, QWidget *parent) :
 {
 
     gridLayout = new QGridLayout();
-    QPushButton* set_thresh     = new QPushButton("Set Thresh");
+    QPushButton* set_thresh     = new QPushButton("                  Set Thresh                  ");
+    QPushButton* blank1     = new QPushButton("                                              ");
+    QPushButton* blank2     = new QPushButton("                                              ");
    // QPushButton* move_block     = new QPushButton("move_block");
-    QPushButton* use_landmark     = new QPushButton("use_landmark");
+    QPushButton* use_landmark     = new QPushButton("                use_landmark                ");
     gridLayout->addWidget(set_thresh, 0,0);
-    gridLayout->addWidget(use_landmark, 1,0);
+    gridLayout->addWidget(set_thresh, 1,0);
+    //gridLayout->addWidget(blank2, 2,0);
+    gridLayout->addWidget(use_landmark, 2,0);
     //gridLayout->addWidget(move_block, 2,0);
 
     setLayout(gridLayout);
@@ -863,7 +875,12 @@ bool next_landmarker(V3DPluginCallback2 &callback,LocationSimple &next)
     //v3d_msg("check size");
     for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
     {
+        //LocationSimple n;
         LocationSimple s = terafly_landmarks_terafly[i];
+        if(s.comments == "a")
+        {
+            next = s;return true;
+        }
         if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
         {
             terafly_landmarks.push_back(s);
@@ -1128,6 +1145,7 @@ bool mean_shift_marker(V3DPluginCallback2 &callback,LocationSimple &next_m,Locat
      next.color.g = 0;
      next.color.b = 0;
      next.color.a = 0;
+     next.comments = "a";
 
 
            if(datald) {delete []datald; datald = 0;}

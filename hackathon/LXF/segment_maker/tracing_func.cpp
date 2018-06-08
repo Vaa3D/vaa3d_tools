@@ -23,12 +23,13 @@ extern int thresh;
 extern NeuronTree trace_result,resultTree_rebase,resultTree;
 LandmarkList marker_rebase,marker_rebase2;
 LandmarkList marker_rebase3;  //original marker
-LocationSimple simple_rebase,true_rebase;
+LocationSimple simple_rebase,true_rebase,LXF;
 extern LocationSimple next_m;
 V3DLONG marker_num_rebase=0;
 V3DLONG thres_rebase=42;
 QString outimg_file;
 extern bool change;
+bool is_soma =false;
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
 #endif
@@ -240,6 +241,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     cout<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%crawler raw app&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
     QElapsedTimer timer1;
     timer1.start();
+    bool use_comment = false;
 
     if(resultTree_rebase.listNeuron.size()==0)
     {
@@ -327,31 +329,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         double lx = curr_block->getRezX();
         double ly = curr_block->getRezY();
         double lz = curr_block->getRezZ();
-
-
-        if(terafly_landmarks_terafly.isEmpty())return false;
-        LandmarkList terafly_landmarks;
-        LandmarkList other_marker;
-        //set<LocationSimple> terafly_landmarks;
-        for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
-        {
-            LocationSimple s = terafly_landmarks_terafly[i];
-            if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
-            {
-                //terafly_landmarks.insert(s);
-                terafly_landmarks.push_back(s);
-            }
-            else
-            {
-                other_marker.push_back(s);
-            }
-        }
-
-        data1d_sz[0] = curr_block->getXDim();
-        data1d_sz[1] = curr_block->getYDim();
-        data1d_sz[2] = curr_block->getZDim();
-        data1d_sz[3] = curr_block->getCDim();
-
         P.ratio_x = curr_block->getRezX()/curr_block->getXDim();
         P.ratio_y = curr_block->getRezY()/curr_block->getYDim();
         P.ratio_z = curr_block->getRezZ()/curr_block->getZDim();
@@ -359,7 +336,45 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         P.o_y=curr_block->getOriginY();
         P.o_z=curr_block->getOriginZ();
 
-        cout<<"marker rebase num = "<<marker_rebase.size()<<endl;
+
+        if(terafly_landmarks_terafly.isEmpty())return false;
+        LandmarkList terafly_landmarks;
+        LandmarkList other_marker;
+        //set<LocationSimple> terafly_landmarks;
+        for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++) //rebase one is t,add in 0607,if it doesn't work or don't need it,just delete this;
+        {
+            LocationSimple s = terafly_landmarks_terafly[i];
+            if(s.comments == "a")
+            {
+                t = s;
+                use_comment = true;
+            }
+        }
+        if(use_comment == false)
+        {
+            for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
+            {
+                LocationSimple s = terafly_landmarks_terafly[i];
+                if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
+                {
+                    //terafly_landmarks.insert(s);
+                    //   s.comments
+                    terafly_landmarks.push_back(s);
+                }
+                else
+                {
+                    other_marker.push_back(s);
+                }
+            }
+
+            data1d_sz[0] = curr_block->getXDim();
+            data1d_sz[1] = curr_block->getYDim();
+            data1d_sz[2] = curr_block->getZDim();
+            data1d_sz[3] = curr_block->getCDim();
+
+
+
+            cout<<"marker rebase num = "<<marker_rebase.size()<<endl;
             vector<int> ind;
             for(V3DLONG i=0;i<terafly_landmarks.size();i++)
             {
@@ -396,21 +411,9 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                 }
             }
             cout<<marker_rebase3.size()<<"  "<<terafly_landmarks_terafly.size()<<endl;
-        //    v3d_msg("check two size");
-        //if(marker_rebase.size() == terafly_landmarks_terafly.size())
+            //    v3d_msg("check two size");
+        }
 
-//            if(next_m.x==0&&next_m.y==0)
-//            {
-//                v3d_msg("1");
-//                LandmarkList tmp;
-//                tmp = callback.getLandmarkTeraFly();
-//                t = tmp[0];
-//            }
-//            else
-//            {
-//                v3d_msg("2");
-//                t = next_m;
-//            }
             cout<<"t = "<<t.x<<"  "<<t.y<<"  "<<t.z<<"  "<<endl;
             cout<<"simple_rebase = "<<true_rebase.x<<"  "<<true_rebase.y<<"  "<<true_rebase.z<<"  "<<endl;
         double diff = (t.x-true_rebase.x)*(t.x-true_rebase.x)+(t.y-true_rebase.y)*(t.y-true_rebase.y)+(t.z-true_rebase.z)*(t.z-true_rebase.z);//0524
@@ -483,6 +486,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<"all_volume = "<<all_volume<<endl;
         //v3d_msg("check all volume!");
         double c = 0;
+        double d = 0;
         for(V3DLONG i=0;i<all_volume;i++)
         {
 
@@ -491,15 +495,36 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                 //cout<<"(int)curr_block->getRawData()[i] = "<<(int)curr_block->getRawData()[i]<<endl;
                 c++;
             }
+            if((int)curr_block->getRawData()[i]>60)
+            {
+                //cout<<"(int)curr_block->getRawData()[i] = "<<(int)curr_block->getRawData()[i]<<endl;
+                d++;
+            }
         }
         cout<<"c/all_volume = "<<c/all_volume<<endl;
+        cout<<"d        /all_volume = "<<d/all_volume<<endl;
         //v3d_msg("check!");
-        if(c/all_volume>0.3)
+        if(c/all_volume>0.2)
         {
             v3d_msg("thresh is too low!");
             return false;
         }
+        if(d/all_volume>0.3)
+        {
+            is_soma = true;
+        }
+//        for(V3DLONG i=0;i<all_volume;i++)
+//        {
+//            if((int)curr_block->getRawData()[i]<10)
+//            {
+//                int last_point1 = curr_block->getRawData()[i-1];
+//                int next_point1 = curr_block->getRawData()[i+1];
+//                int last_point2 = curr_block->getRawData()[i-2];
+//                int next_point2 = curr_block->getRawData()[i+2];
+//                int average = (last_point1+last_point2+next_point1+next_point2)/4;
+//            }
 
+//        }
         PARA_APP2 p2;
         QString versionStr = "v0.001";
         p2.inmarker_file = outmarker_file;
