@@ -163,7 +163,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
         int xRez_o=deskRect.width()/col;
         int yRez_o=deskRect.height()/row;
-        yRez_o=yRez_o*3/4;
+        yRez_o=yRez_o/2;
         qDebug("every col size is %d",xRez_o);
         qDebug("every row size is %d",yRez_o);
 
