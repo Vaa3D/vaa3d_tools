@@ -184,11 +184,13 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
 
         QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
+        QRect deskRect = QApplication::desktop()->availableGeometry();
+        qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
         for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
         {
             if( (i%col)*xRez ==0)
                 offsety++;
-            callback.moveWindow(cur_list_3dviewer.at(i),(i%col+row-1)*xRez,offsety*yRez);
+            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*xRez,offsety*yRez);
             callback.resizeWindow(cur_list_3dviewer.at(i),xRez,yRez);
         }
 
