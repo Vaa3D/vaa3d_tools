@@ -139,6 +139,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
                     offsety++;
                 callback.moveWindow(cur_list_3dviewer.at(i),(i%col+row-1)*xRez,offsety*yRez);
                 callback.resizeWindow(cur_list_3dviewer.at(i),xRez,yRez);
+
             }
         }
 
@@ -157,6 +158,14 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         row = settings.value("multi_windows_row").toInt(); if(row<1) row = 1;
         xRez = settings.value("multi_windows_xRez").toInt();if(xRez<1) xRez = 1;
         yRez = settings.value("multi_windows_yRez").toInt();if(yRez<1) yRez = 1;
+
+        QRect deskRect = QApplication::desktop()->availableGeometry();
+        qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
+        int xRez_o=deskRect.width()/col;
+        int yRez_o=deskRect.height()/row;
+        yRez_o=yRez_o*3/4;
+        qDebug("every col size is %d",xRez_o);
+        qDebug("every row size is %d",yRez_o);
 
         QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1);
         QStringList imagelist = importFileList_addnumbersort(m_InputfolderName, 3);
@@ -184,15 +193,14 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
 
         QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
-        QRect deskRect = QApplication::desktop()->availableGeometry();
-        qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
         for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
         {
             if( (i%col)*xRez ==0)
                 offsety++;
-            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*xRez,offsety*yRez);
-            callback.resizeWindow(cur_list_3dviewer.at(i),xRez,yRez);
+            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+            callback.resizeWindow(cur_list_3dviewer.at(i),xRez_o,yRez_o);
         }
+
 
     }
     else if (menu_name == tr("set configuration (tile_multi_windows options only)"))
@@ -217,7 +225,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
              {
                  xRez = QInputDialog::getInteger(parent, " ",
                                                "offset X:",
-                                               1, 1, 10000, 1, &ok3);
+                                               1, -10000, 10000, 1, &ok3);
              }
              else
                  return;
@@ -226,7 +234,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
              {
                  yRez = QInputDialog::getInteger(parent, " ",
                                                "offset Y:",
-                                               1, 1, 10000, 1, &ok4);
+                                               1, -10000, 10000, 1, &ok4);
              }
              else
                  return;
