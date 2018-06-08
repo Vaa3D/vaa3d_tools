@@ -100,8 +100,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                 panel->activateWindow();
             }
         }
-        return;
-
 
         TRACE_LS_PARA P;
         bool bmenu = false;
