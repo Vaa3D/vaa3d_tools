@@ -18,6 +18,8 @@ QStringList TestPlugin::menulist() const
 	return QStringList() 
         <<tr("Branch_detection")
         <<tr("creat_ray-shooting_model")
+        <<tr("curve points detection")
+        <<tr(" Gaussian Filtering ")
 		<<tr("about");
 }
 
@@ -32,27 +34,30 @@ QStringList TestPlugin::funclist() const
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
         if (menu_name == tr("Branch_detection"))
-       {
-
-                int flag=branch_detection(callback,parent);
-                if (flag==1)
-                {
-                    v3d_msg(tr("branch detection completed!"));
-
-                 }
-                 else
-                {
-
-                      v3d_msg(tr("branch detection not completed!"));
-                 }
-
-
-       }
+        {
+           int flag=branch_detection(callback,parent);
+           if (flag==1)
+           {
+              v3d_msg(tr("branch detection completed!"));
+           }
+        }
         else if (menu_name == tr("creat_ray-shooting_model"))
         {
             int flag= raymodel(callback,parent);
             if(flag=1)
             v3d_msg("ray-shooting model creat.");
+        }
+        else if (menu_name == tr("curve points detection"))
+        {
+            int flag= curve_detection(callback,parent);
+            if(flag=1)
+            v3d_msg("curve points detection was ok ");
+        }
+        else if (menu_name == tr(" Gaussian Filtering "))
+        {
+            int flag= gassion_filter(callback,parent);
+            if(flag=1)
+            v3d_msg("Gaussian Filtering was ok ");
         }
 
 	else
@@ -205,54 +210,45 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        V3DLONG nx=sz[0];
        V3DLONG ny=sz[1];
        V3DLONG nz=sz[2];
-//       struct point_pool
-//       {
-//           float x_point;
-//           float y_point;
-//           float z_point;
-//       };
-
 
        vector<NeuronSWC> point_pool;
-      // vector<point_pool *> point_p;
+
        for(V3DLONG k=1;k<nz;k++)
        {
           for(V3DLONG j=1;j<ny-1;j++)
           {
               for(V3DLONG i=1;i<nx-1;i++)
               {
-                  bool flag1=image_binary[k*nx*ny+nx*j+i-1];
-                  bool flag4=image_binary[k*nx*ny+nx*j+i+1];
-                  bool flag2=image_binary[k*nx*ny+nx*(j-1)+i];
-                  bool flag3=image_binary[k*nx*ny+nx*(j+1)+i];
+
+
                   bool flag5=image_binary[k*nx*ny+nx*j+i];
-                  int sum=flag1+flag2+flag3+flag4+flag5;
-
-                  if((sum>1)&&(sum<5))
+                  if (flag5)
                   {
+                      bool flag1=image_binary[k*nx*ny+nx*j+i-1];
+                      bool flag4=image_binary[k*nx*ny+nx*j+i+1];
+                      bool flag2=image_binary[k*nx*ny+nx*(j-1)+i];
+                      bool flag3=image_binary[k*nx*ny+nx*(j+1)+i];
+                      int sum=flag1+flag2+flag3+flag4;
+                      if((sum>0)&&(sum<4))
+                      {
 
-//                     v3d_msg(QString("x is %1,y is %2, z is %3").arg(i).arg(j).arg(k));
-                     NeuronSWC pp;
-                     pp.x=i;
-                     pp.y=j;
-                     pp.z=k;
+    //                   v3d_msg(QString("x is %1,y is %2, z is %3").arg(i).arg(j).arg(k));
+                         NeuronSWC pp;
+                         pp.x=i;
+                         pp.y=j;
+                         pp.z=k;
+                         point_pool.push_back(pp);
+    //                   v3d_msg(QString("x is %1,y is %2, z is %3").arg(pp.x).arg(pp.y).arg(pp.z));
+                      }
 
-//                     v3d_msg(QString("z is %1").arg(pp.z));
-                     point_pool.push_back(pp);
-
-//                   v3d_msg(QString("x is %1,y is %2, z is %3").arg(pp.x).arg(pp.y).arg(pp.z));
                   }
+
+
               }
           }
        }
       v3d_msg("2D cureve points were complete");
       v3d_msg(QString("sum is %1").arg(point_pool.size()));
-
-      cout<<"all the curve point in the pool_points"<<endl;
-      cout<<"2D cureve points were complete"<<endl;
-
-
-
 
 
 
@@ -310,8 +306,8 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
        cout<<"begin circle "<<endl;
 
-        LandmarkList curlist;
-        LocationSimple s;
+       LandmarkList curlist;
+       LocationSimple s;
 
 
        for(V3DLONG k=1;k<sz[1]-1;k++)
@@ -328,21 +324,28 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                           // v3d_msg(QString("flag is %1").arg(flag));
                            if (flag==true)
                            {
-                                   for(V3DLONG bb=0;bb<point_pool.size();bb++)
-                                   {
-                                        v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
-                                       if((k==point_pool[bb].y)&&(i==point_pool[bb].x))
-                                       {
+//                                   for(V3DLONG bb=0;bb<point_pool.size();bb++)
+//                                   {
+//                                        //v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
+//                                       if((k==point_pool[bb].y)&&(i==point_pool[bb].x))
+//                                       {
 
-                                           s.x=i+1;
-                                           s.y=k+1;
-                                           s.z=point_pool[bb].z;
-                                           s.radius=1;
-                                           s.color = random_rgba8(255);
-                                           curlist << s;
-                                           //v3d_msg(QString("z is %1").arg(point_pool[bb]->z));
-                                       }
-                                   }
+//                                           s.x=i+1;
+//                                           s.y=k+1;
+//                                           s.z=point_pool[bb].z;
+//                                           s.radius=1;
+//                                           s.color = random_rgba8(255);
+//                                           curlist << s;
+//                                           //v3d_msg(QString("z is %1").arg(point_pool[bb]->z));
+//                                       }
+//                                   }
+
+                                   s.x=i+1;
+                                   s.y=k+1;
+                                   s.z=10;
+                                   s.radius=1;
+                                   s.color = random_rgba8(255);
+                                   curlist << s;
 
 
                            }
@@ -350,8 +353,8 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                        }
              }
          }
-       v3d_msg("okoko");
 
+       //v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
        for(int i=0;i<curlist.size();i++)
            for(int j=i+1;j<curlist.size();j++)
        {
@@ -364,12 +367,13 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                    }
            }
        }
-       //v3d_msg(QString("project_value is %1").arg(project_value));
+       v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+       v3d_msg("express marker");
        callback.setLandmark(curwin, curlist);
 
        if(image_binary) {delete []image_binary; image_binary = 0;}
        if(image_mip) {delete []image_mip; image_mip = 0;}
-       if(datald){delete []datald;datald=0;}
+       //if(datald){delete []datald;datald=0;}
 
        return 1;
    }
@@ -407,8 +411,6 @@ int raymodel(V3DPluginCallback2 &callback, QWidget *parent)
     int length_numble=8;
 
     QDialog * dialog = new QDialog();
-
-
     QGridLayout * layout = new QGridLayout();
 
     QSpinBox * X_point_spinbox = new QSpinBox();
@@ -431,17 +433,7 @@ int raymodel(V3DPluginCallback2 &callback, QWidget *parent)
     length_ray_spinbox->setRange(1,100);
     length_ray_spinbox->setValue(length_numble);
 
-//    if(p4DImage->getZDim() > 1)
-//    {
-//        QSpinBox * slice_number_spinbox = new QSpinBox();
-//        slice_number_spinbox->setRange(0, p4DImage->getZDim()/2);
-//        slice_number_spinbox->setValue(slice_number);
 
-//        layout->addWidget(new QLabel("slice number"),5,0);
-//        layout->addWidget(slice_number_spinbox, 5,1,1,5);
-
-//        slice_number = slice_number_spinbox->value();
-//    }
 
     layout->addWidget(new QLabel("x laction "),0,0);
     layout->addWidget(X_point_spinbox, 0,1,1,5);
@@ -550,6 +542,320 @@ int raymodel(V3DPluginCallback2 &callback, QWidget *parent)
    // v3d_msg(QString("okokookokokoko"));
 }
 
+int curve_detection(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if(!curwin)
+    {
+            v3d_msg("No image is open.");
+            return -1;
+    }
 
+    Image4DSimple *p4DImage = callback.getImage(curwin);
+    V3DLONG sz[3];
+    sz[0] = p4DImage->getXDim();
+    sz[1] = p4DImage->getYDim();
+    sz[2] = p4DImage->getZDim();
+
+
+    //int ray_numbers_2d = 128;
+    int thres_2d = 45;
+    //int ray_length_2d = 16;
+
+
+    //set update the dialog
+    QDialog * dialog = new QDialog();
+
+
+    if(p4DImage->getZDim() > 1)
+            dialog->setWindowTitle("3D neuron image tip point detection Based on Ray-shooting algorithm");
+    else
+            dialog->setWindowTitle("2D neuron image tip point detection Based on Ray-shooting algorithm");
+
+QGridLayout * layout = new QGridLayout();
+
+//QSpinBox * ray_numbers_2d_spinbox = new QSpinBox();
+//ray_numbers_2d_spinbox->setRange(1,1000);
+//ray_numbers_2d_spinbox->setValue(ray_numbers_2d);
+
+QSpinBox * thres_2d_spinbox = new QSpinBox();
+thres_2d_spinbox->setRange(-1, 255);
+thres_2d_spinbox->setValue(thres_2d);
+
+//QSpinBox * ray_length_2d_spinbox = new QSpinBox();
+//ray_length_2d_spinbox->setRange(1,p4DImage->getXDim());
+//ray_length_2d_spinbox->setValue(ray_length_2d);
+
+
+//layout->addWidget(new QLabel("ray numbers"),0,0);
+//layout->addWidget(ray_numbers_2d_spinbox, 0,1,1,5);
+
+layout->addWidget(new QLabel("intensity threshold"),1,0);
+layout->addWidget(thres_2d_spinbox, 1,1,1,5);
+
+//layout->addWidget(new QLabel("ray length"),2,0);
+//layout->addWidget(ray_length_2d_spinbox, 2,1,1,5);
+
+
+QHBoxLayout * hbox2 = new QHBoxLayout();
+QPushButton * ok = new QPushButton(" ok ");
+ok->setDefault(true);
+QPushButton * cancel = new QPushButton("cancel");
+hbox2->addWidget(cancel);
+hbox2->addWidget(ok);
+
+layout->addLayout(hbox2,6,0,1,6);
+dialog->setLayout(layout);
+QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+//run the dialog
+
+if(dialog->exec() != QDialog::Accepted)
+    {
+            if (dialog)
+            {
+                    delete dialog;
+                    dialog=0;
+                    cout<<"delete dialog"<<endl;
+            }
+            return -1;
+    }
+
+//get the dialog return values
+//ray_numbers_2d = ray_numbers_2d_spinbox->value();
+thres_2d = thres_2d_spinbox->value();
+//ray_length_2d = ray_length_2d_spinbox->value();
+if (dialog)
+    {
+            delete dialog;
+            dialog=0;
+            cout<<"delete dialog"<<endl;
+
+
+    }
+
+    if (dialog)
+    {
+        delete dialog;
+        dialog=0;
+        cout<<"delete dialog"<<endl;
+    }
+
+    unsigned char* datald=0;
+    datald = p4DImage->getRawData();
+    V3DLONG size_image=sz[0]*sz[1]*sz[2];
+
+    v3d_msg("start complete");
+    unsigned char *image_binary=0;
+    try{image_binary=new unsigned char [size_image];}
+    catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+    for(V3DLONG i = 0; i < size_image; i++)
+    {
+        if(datald[i] > thres_2d)
+            image_binary[i] = 255;
+        else
+            image_binary[i] = 0;
+    }
+    v3d_msg("segment was complete");
+
+    v3d_msg("start find 2D cureve points");
+    V3DLONG nx=sz[0];
+    V3DLONG ny=sz[1];
+    V3DLONG nz=sz[2];
+
+     LandmarkList curlist;
+     LocationSimple s;
+              unsigned char *new_datald=new unsigned char [nx*ny];
+              unsigned char *imagesobelx=new unsigned char [nx*ny];
+              unsigned char *imagesobely=new unsigned char [nx*ny];
+              float  *xx=new float[nx*ny];
+              float *yy=new float[nx*ny];
+              float *xy=new float[nx*ny];
+              float *Gxx=new float[nx*ny];
+              float *Gyy=new float[nx*ny];
+              float *Gxy=new float[nx*ny];
+              float *Hresult=new float[nx*ny];
+     for(int z_size=0;z_size<nz;z_size++)
+     {
+         for (int i = 0; i < ny ; i++)
+         {
+             for (int j = 1; j < nx ; j++)
+             {
+                  new_datald[i*nx+j]=image_binary[z_size*nx*ny+i*nx+j];
+
+
+             }
+         }
+         for (int i = 1; i < ny - 1; i++)
+                 {
+                      for (int j = 1; j < nx - 1; j++)
+                       {
+                               //通过指针遍历图像上每一个像素
+                               double gradY = new_datald[(i + 1)*nx + j - 1] + new_datald[(i + 1)*nx + j] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[(i - 1)*nx + j] * 2 - new_datald[(i - 1)*nx + j + 1];
+                               imagesobelx[i*nx + j] = abs(gradY);
+                               //v3d_msg(QString("clone is %1").arg(dst[200]));
+                              // v3d_msg(QString("imagesobelx is %1").arg(dst[200]));
+
+                               double gradX = new_datald[(i - 1)*nx + j + 1] + new_datald[i*nx + j + 1] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[i*nx + j - 1] * 2 - new_datald[(i + 1)*nx + j - 1];
+                               imagesobely[i*nx + j] = abs(gradX);
+                       }
+                 }
+//         v3d_msg(QString("new_datald is %1").arg(new_datald[200]));
+//         v3d_msg(QString("imagesobelx is %1").arg(imagesobelx[200]));
+//         v3d_msg(QString("imagesobely is %1").arg(imagesobely[200]));
+                        //将梯度数组转换成8位无符号整型
+                       //convertScaleAbs(imageSobelX, imageSobelX);
+                       //convertScaleAbs(imageSobelY, imageSobelY);
+
+
+                        for (int i = 0; i < ny; i++)
+                         {
+                              for (int j = 0; j < nx; j++)
+                              {
+                                   xx[i*nx+j] = imagesobelx[i*nx+j]*imagesobelx[i*nx+j];
+                              }
+                         }
+
+                        for (int i = 0; i < ny; i++)
+                         {
+                              for (int j = 0; j < nx; j++)
+                              {
+                                   yy[i*nx+j] = imagesobely[i*nx+j]*imagesobely[i*nx+j];
+                              }
+                         }
+
+                        for (int i = 0; i < ny; i++)
+                         {
+                              for (int j = 0; j < nx; j++)
+                              {
+                                   xy[i*nx+j] = imagesobelx[i*nx+j]*imagesobely[i*nx+j];
+                              }
+                         }
+
+                        MyGaussianBlur(xx,Gxx,3,sz[0],sz[1]);
+                        MyGaussianBlur(yy,Gyy,3,sz[0],sz[1]);
+                        MyGaussianBlur(xy,Gxy,3,sz[0],sz[1]);
+                        harrisResponse(Gxx,Gyy,Gxy,Hresult,0.05,sz[0],sz[1]);
+
+                        int r = 3 / 2;
+
+                        for (int i = r; i < ny-r; i++)
+                        {
+                            for (int j = r; j < nx - r; j++)
+                            {
+                                if (
+                                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j] &&
+                                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j-1] &&
+                                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j+1] &&
+                                    Hresult[i*nx+j] > Hresult[i*nx+j-1] &&
+                                    Hresult[i*nx+j] > Hresult[i*nx+j+1] &&
+                                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j-1] &&
+                                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j] &&
+                                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j+1])
+                                {
+
+                                    //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
+                                    if (Hresult[i*nx+j] > 10000)
+                                    {
+                                        s.x=j+1;
+                                        s.y=i+1;
+                                        s.z=z_size;
+                                        s.radius=1;
+                                        s.color = random_rgba8(255);
+                                        curlist << s;
+                                    }
+                                }
+
+                            }
+                        }
+
+     }
+  v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+  v3d_msg("2D cureve points were complete");
+//  for(int i=0;i<curlist.size();i++)
+//      for(int j=i+1;j<curlist.size();j++)
+//  {
+
+//      {
+//          if(square(curlist[j].x-curlist[i].x)+square(curlist[j].y-curlist[i].y)+square(curlist[j].z-curlist[i].z)<150)
+//              {
+//                  curlist.removeAt(j);
+//                  j = j - 1;
+//              }
+//      }
+//  }
+
+  callback.setLandmark(curwin, curlist);
+  if(image_binary) {delete []image_binary; image_binary = 0;}
+  return 1;
+
+
+
+}
+int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent)
+{
+
+                  v3dhandle curwin = callback.currentImageWindow();
+                  if(!curwin)
+                  {
+                                  v3d_msg("No image is open.");
+                                  return -1;
+                  }
+
+                                        Image4DSimple *p4DImage = callback.getImage(curwin);
+                                        V3DLONG sz[3];
+                                        sz[0] = p4DImage->getXDim();
+                                        sz[1] = p4DImage->getYDim();
+                                        sz[2] = p4DImage->getZDim();
+                                        V3DLONG nx=sz[0],ny=sz[1],nz=sz[2];
+
+                                        unsigned char* datald=0;
+                                        datald = p4DImage->getRawData();
+                                        unsigned char *new_new_datald=new unsigned char[nx*ny*nz];
+                                        unsigned char *new_datald=new unsigned char[nx*ny*nz];
+                                        unsigned char *Gxx=new unsigned char[nx*ny*nz];
+
+
+                         for(V3DLONG k=0;k<nz;k++)
+                            {
+
+                                    for(V3DLONG j=0;j<ny;j++)
+                                       {
+                                           for(V3DLONG i=0;i<nx;i++)
+                                               {
+                                                 new_datald[j*nx+i]=datald[k*nx*ny+j*nx+i];
+
+                                               }
+                                       }
+
+
+                                    // MyGaussianBlur(new_datald,Gxx,5,sz[0],sz[1]);
+                                    // v3d_msg(QString("new guassion is %1").arg(Gxx[200]));
+
+                                        for(V3DLONG j=0;j<ny;j++)
+                                           {
+                                               for(V3DLONG i=0;i<nx;i++)
+                                                   {
+                                                       new_new_datald[k*nx*ny+j*nx+i]=Gxx[j*nx+i];
+                                                   }
+
+                                           }
+
+                             }
+
+                         v3d_msg("display the filer result");
+                         ImagePixelType pixeltype = p4DImage->getDatatype();
+                         Image4DSimple * new4DImage = new Image4DSimple();
+                         new4DImage->setData((unsigned char *)new_new_datald, sz[0], sz[1], sz[2], 1, pixeltype);
+                         v3dhandle newwin = callback.newImageWindow();
+                         callback.setImage(newwin, new4DImage);
+                         callback.setImageName(newwin, "3D adaptive enhancement result");
+                         callback.updateImageWindow(newwin);
+                         v3d_msg("free memory");
+                         if(Gxx[0]) {delete []Gxx; Gxx = 0;}
+                         if(new_datald[0]) {delete []new_datald; new_datald = 0;}
+                         return 1;
+  }
 
 

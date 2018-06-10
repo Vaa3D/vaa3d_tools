@@ -27,6 +27,8 @@ public:
 
 int branch_detection(V3DPluginCallback2 &callback, QWidget *parent);
 int raymodel(V3DPluginCallback2 &callback, QWidget *parent);
+int curve_detection(V3DPluginCallback2 &callback, QWidget *parent);
+int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent);
 void printHelp();
 
 #endif
