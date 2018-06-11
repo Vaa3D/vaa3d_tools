@@ -249,6 +249,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
     for(V3DLONG i=0; i<seg_list.size();i++)
     {
         Segment* seg = seg_list[i];
+
         start_x = seg->at(0)->x;
         end_x = seg->at(0)->x;
         start_y = seg->at(0)->y;
@@ -265,6 +266,13 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             if(end_z<seg->at(j)->z)  end_z = seg->at(j)->z;
         }
 
+        start_x -= 10;
+        end_x   +=10;
+        start_y -= 10;
+        end_y   +=10;
+        start_z -= 10;
+        end_z   +=10;
+
         unsigned char * total1dData = 0;
         total1dData = callback.getSubVolumeTeraFly(fname_img.toStdString(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
         V3DLONG mysz[4];
@@ -279,6 +287,10 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             seg->at(j)->y -= start_y;
             seg->at(j)->z -= start_z;
         }
+
+//        QString imageSaveString = fname_img + QString("/x_%1_y%2_z%3.v3draw").arg(seg->at(0)->x).arg(seg->at(0)->y).arg(seg->at(0)->z);
+//        simple_saveimage_wrapper(callback, "test.v3draw",(unsigned char *)total1dData, mysz, 1);
+
 
         map<MyMarker*, double> score_map;
         topology_analysis_perturb_intense(total1dData, *seg, score_map, radius_factor, mysz[0], mysz[1], mysz[2], 0);
@@ -295,8 +307,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
 //        QString fname_tmp = fname_img+"/scored.swc";
 //        saveSWC_file(fname_tmp.toStdString(), *seg);
 
-//        QString imageSaveString = fname_img + QString("/x_%1_y%2_z%3.v3draw").arg(seg->at(0)->x).arg(seg->at(0)->y).arg(seg->at(0)->z);
-//        simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+
     }
 
     tree.clear();
