@@ -54,7 +54,7 @@ bool rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray
                  pixe = 0.0;
 
                 {
-                    pixe = interp_2d(point[1]+ray_x[i][j], point[0]+ray_y[i][j], P, sz0,sz1 );
+                    pixe = interp_2d(point[1]+ray_y[i][j], point[0]+ray_x[i][j], P, sz0,sz1 );
                     //v3d_msg(QString("pixe is %1").arg(pixe));
                     if (j<=n/4||j>=0)
                     {
@@ -169,4 +169,102 @@ v3d_uint8  get_2D_ValueUINT8(V3DLONG  y,  V3DLONG  x, unsigned char * T, V3DLONG
         return 0;
     }
 }
+
+double *getOneGuassionArray(int size, double sigma)
+{
+    double sum = 0.0;
+    //定义高斯核半径
+    int R = size / 2;
+
+    //建立一个size大小的动态一维数组
+    double *arr = new double[size];
+    for (int i = 0; i < size; i++)
+    {
+
+        // 高斯函数前的常数可以不用计算，会在归一化的过程中给消去
+        arr[i] = exp(-((i - R)*(i - R)) / (2 * sigma*sigma));
+        sum += arr[i];//将所有的值进行相加
+
+    }
+    //进行归一化
+    for (int i = 0; i < size; i++)
+    {
+        arr[i] /= sum;
+        cout << arr[i] << endl;
+    }
+    return arr;
+}
+
+void MyGaussianBlur(   float * & srcimgae , float* & dst, int size,V3DLONG x1,V3DLONG y1)
+{
+       int R = size / 2;
+       dst=srcimgae;
+
+       double* arr=0;
+       arr = getOneGuassionArray(size, 1);//先求出高斯数组
+
+       //遍历图像 水平方向的卷积
+       for (int i = R; i < y1 - R; i++)
+       {
+           for (int j = R; j < x1 - R; j++)
+           {
+               float GuassionSum[3] = { 0 };
+
+
+               //滑窗搜索完成高斯核平滑
+               for (int k = -R; k <= R; k++)
+               {
+                       GuassionSum[0] += arr[R + k] *dst[(i+k)*x1+j];
+                       //行不变，列变换，先做水平方向的卷积
+               }
+                   if (GuassionSum[0] < 0)
+                       GuassionSum[0] = 0;
+                   else if (GuassionSum[0] > 255)
+                       GuassionSum[0] = 255;
+                   dst[i*x1+j]=GuassionSum[0];
+
+           }
+       }
+
+
+       //竖直方向
+       for (int i = R; i < y1-R; i++)
+       {
+           for (int j = R; j < x1-R; j++)
+           {
+               float GuassionSum[3] = { 0 };
+               //滑窗搜索完成高斯核平滑
+
+               for (int k = -R; k <= R; k++)
+               {
+                       GuassionSum[0] += arr[R + k] * dst[i*x1+j+k];//行变，列不换，再做竖直方向的卷积
+               }
+                   if (GuassionSum[0] < 0)
+                       GuassionSum[0] = 0;
+                   else if (GuassionSum[0] > 255)
+                       GuassionSum[0] = 255;
+                   dst[i*x1+j]=GuassionSum[0];
+
+           }
+       }
+       //v3d_msg(QString("new dst is %1").arg(dst[200]));
+       delete[] arr;
+}
+void harrisResponse(float* & Gxx, float* & Gyy, float* & Gxy, float*  & Hresult, float k,V3DLONG x1,V3DLONG y1)
+{
+
+    for (int i = 0; i < y1; i++)
+    {
+        for (int j = 0; j < x1; j++)
+        {
+
+            float a = Gxx[i*x1+j];
+            float b = Gyy[i*x1+j];
+            float c = Gxy[i*x1+j];
+            Hresult[i*x1+j] = a*b - c*c - k*(a + b)*(a + b);
+        }
+
+    }
+}
+
 

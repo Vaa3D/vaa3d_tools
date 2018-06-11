@@ -8,6 +8,8 @@
 #include <QStringList>
 #include <QMap>
 
+#include "basic_surf_objs.h"
+
 #define PORT 1234
 
 
@@ -18,6 +20,8 @@ public:
     void sendUserList();
     void sendToAll(const QString&);
 	void sendColorMsg();
+	void AddToNTList(QString &msg, int type);
+	bool DeleteSegment(QString segName);
 public slots:
     void onNewConnection();
     void onDisconnect();
@@ -26,6 +30,9 @@ private:
     QTcpServer* server;
     QMap<QTcpSocket*,QString> clients;
 	int clientNum;
+	NeuronTree wholeNT;
+	QList<NeuronTree> NeuronList;
+	int sketchNum;
 };
 
 struct clientproperty{
