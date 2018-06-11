@@ -349,6 +349,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
                 t = s;
                 use_comment = true;
             }
+            else
+            {
+                marker_rebase3.push_back(s);
+            }
         }
         if(use_comment == false)
         {

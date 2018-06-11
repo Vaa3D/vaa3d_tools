@@ -485,6 +485,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                 next_m_rebase.x = next.x;
                 next_m_rebase.y = next.y;
                 next_m_rebase.z = next.z;
+              //  callback.setLandmarkTeraFly(marker_rebase3);       //20180610
             }
         }
 
