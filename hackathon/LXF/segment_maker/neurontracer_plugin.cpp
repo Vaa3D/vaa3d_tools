@@ -84,22 +84,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     if (menu_name == tr("trace_APP2"))     //finished
 	{
 
-        if (panel)
-        {
-            panel->show();
-            return;
-        }
-        else
-        {
-            panel = new lookPanel(callback, parent);
-            if (panel)
-            {
-                panel->show();
-                panel->raise();
-                panel->move(100,100);
-                panel->activateWindow();
-            }
-        }
+
 
         TRACE_LS_PARA P;
         bool bmenu = false;
@@ -281,7 +266,22 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         writeSWC_file(final_name,resultTree);
 
 
-
+        if (panel)
+        {
+            panel->show();
+            return;
+        }
+        else
+        {
+            panel = new lookPanel(callback, parent);
+            if (panel)
+            {
+                panel->show();
+                panel->raise();
+                panel->move(100,100);
+                panel->activateWindow();
+            }
+        }
 
 
 
