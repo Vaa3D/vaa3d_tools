@@ -95,6 +95,36 @@ bool neuronScore::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
         doCalculateScore(callback, infiles[0],infiles[1],outfiles[0],scoreType,radiusFactor,0);
 	}
+    else if (func_name == tr("calculate_score_terafly"))
+    {
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+
+        if(infiles.size()<2)
+        {
+            fprintf (stderr, "Need input image and swc. \n");
+            printHelp();
+            return false;
+        }
+
+        if(outfiles.empty())
+        {
+            fprintf (stderr, "Need output file name. \n");
+            printHelp();
+            return false;
+        }
+
+        int k=0;
+        int scoreType = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        float radiusFactor = (paras.size() >= k+1) ? atof(paras[k]) : 2;  k++;
+        NeuronTree nt = readSWC_file(QString(infiles[1]));
+        NeuronTree nt_scored = calculateScoreTerafly(callback,infiles[0],nt,scoreType,radiusFactor);
+        writeSWC_file(QString(outfiles[0]),nt_scored);
+    }
 	else if (func_name == tr("help"))
 	{
         printHelp();
@@ -319,7 +349,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             index_map.insert(pair<MyMarker*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
         }
 
-    v3d_msg(QString("tree size is %1").arg(tree.size()));
+//    v3d_msg(QString("tree size is %1").arg(tree.size()));
 
     for (V3DLONG i=0;i<tree.size();i++)
     {

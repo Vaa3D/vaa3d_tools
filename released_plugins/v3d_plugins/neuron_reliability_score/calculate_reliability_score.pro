@@ -25,6 +25,7 @@ unix:!macx {
 
 HEADERS	+= calculate_reliability_score_plugin.h
 SOURCES	+= calculate_reliability_score_plugin.cpp
+SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 HEADERS += src/common_macro.h
