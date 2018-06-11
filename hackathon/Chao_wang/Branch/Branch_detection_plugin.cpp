@@ -813,8 +813,8 @@ int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent)
                                         unsigned char* datald=0;
                                         datald = p4DImage->getRawData();
                                         unsigned char *new_new_datald=new unsigned char[nx*ny*nz];
-                                        unsigned char *new_datald=new unsigned char[nx*ny*nz];
-                                        unsigned char *Gxx=new unsigned char[nx*ny*nz];
+                                        float *new_datald=new float[nx*ny*nz];
+                                        float *Gxx=new float [nx*ny*nz];
 
 
                          for(V3DLONG k=0;k<nz;k++)
@@ -830,7 +830,7 @@ int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent)
                                        }
 
 
-                                    // MyGaussianBlur(new_datald,Gxx,5,sz[0],sz[1]);
+                                     MyGaussianBlur(new_datald,Gxx,5,sz[0],sz[1]);
                                     // v3d_msg(QString("new guassion is %1").arg(Gxx[200]));
 
                                         for(V3DLONG j=0;j<ny;j++)

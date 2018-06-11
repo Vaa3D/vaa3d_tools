@@ -11,10 +11,14 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(calculate_reliability_score, neuronScore);
  
+typedef vector<MyMarker*> Segment;
+typedef vector<MyMarker*> Tree;
+
 QStringList neuronScore::menulist() const
 {
 	return QStringList() 
 		<<tr("calculate_score")
+        <<tr("calculate_score_terafly")
 		<<tr("about");
 }
 
@@ -41,6 +45,13 @@ void neuronScore::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
             v3d_msg("Done! files saved to "+fname_output+"_score.txt");
         }
 	}
+    else if (menu_name == tr("calculate_score_terafly"))
+    {
+        QString imagePath = callback.getPathTeraFly();
+        NeuronTree nt = callback.getSWCTeraFly();
+        NeuronTree nt_scored = calculateScoreTerafly(callback,imagePath,nt,1,2);
+        callback.setSWCTeraFly(nt_scored);
+    }
 	else
 	{
 		v3d_msg(tr("This plugin will generate the reliability score of neuron reconstruction.. "
@@ -184,6 +195,147 @@ void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString f
     saveSWC_file(fname_outswc.toStdString(), neuronTree);
 
     qDebug()<<"Done!";
+}
+
+NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt, int score_type=1, float radius_factor=2)
+{
+    NeuronTree result;
+    V3DLONG siz = nt.listNeuron.size();
+    QHash <int, int>  hashNeuron;
+    hashNeuron.clear();
+    Tree tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        MyMarker* pt = new MyMarker;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->radius = s.r;
+        pt->type = s.type;
+        pt->parent = NULL;
+        pt->degree = 0;
+        tree.push_back(pt);
+        hashNeuron.insert(s.n, i);
+    }
+    nt.hashNeuron = hashNeuron;
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (nt.listNeuron[i].pn<0) continue;
+        V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
+        tree[i]->parent = tree[pid];
+        tree[pid]->degree++;
+    }
+    //	printf("tree constructed.\n");
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->degree!=1)//tip or branch point
+        {
+            Segment* seg = new Segment;
+            MyMarker* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->parent;
+            }
+            while(cur && cur->degree==1);
+            seg_list.push_back(seg);
+        }
+    }
+
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+    for(V3DLONG i=0; i<seg_list.size();i++)
+    {
+        Segment* seg = seg_list[i];
+        start_x = seg->at(0)->x;
+        end_x = seg->at(0)->x;
+        start_y = seg->at(0)->y;
+        end_y = seg->at(0)->y;
+        start_z = seg->at(0)->z;
+        end_z = seg->at(0)->z;
+        for(V3DLONG j=1; j<seg->size();j++)
+        {
+            if(start_x>seg->at(j)->x)  start_x = seg->at(j)->x;
+            if(end_x<seg->at(j)->x)  end_x = seg->at(j)->x;
+            if(start_y>seg->at(j)->y)  start_y = seg->at(j)->y;
+            if(end_y<seg->at(j)->y)  end_y = seg->at(j)->y;
+            if(start_z>seg->at(j)->z)  start_z = seg->at(j)->z;
+            if(end_z<seg->at(j)->z)  end_z = seg->at(j)->z;
+        }
+
+        unsigned char * total1dData = 0;
+        total1dData = callback.getSubVolumeTeraFly(fname_img.toStdString(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
+        V3DLONG mysz[4];
+        mysz[0] = end_x-start_x+1;
+        mysz[1] = end_y-start_y+1;
+        mysz[2] = end_z-start_z+1;
+        mysz[3] = 1;
+
+        for(V3DLONG j=0; j<seg->size();j++)
+        {
+            seg->at(j)->x -= start_x;
+            seg->at(j)->y -= start_y;
+            seg->at(j)->z -= start_z;
+        }
+
+        map<MyMarker*, double> score_map;
+        topology_analysis_perturb_intense(total1dData, *seg, score_map, radius_factor, mysz[0], mysz[1], mysz[2], 0);
+        for(V3DLONG i = 0; i<seg->size(); i++){
+            MyMarker * marker = seg->at(i);
+            double tmp = score_map[marker] * 120 +19;
+            marker->type = tmp > 255 ? 255 : tmp;
+            marker->x += start_x;           ;
+            marker->y += start_y;
+            marker->z += start_z;
+        }
+
+        if(total1dData) {delete [] total1dData; total1dData=0;}
+//        QString fname_tmp = fname_img+"/scored.swc";
+//        saveSWC_file(fname_tmp.toStdString(), *seg);
+
+//        QString imageSaveString = fname_img + QString("/x_%1_y%2_z%3.v3draw").arg(seg->at(0)->x).arg(seg->at(0)->y).arg(seg->at(0)->z);
+//        simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+    }
+
+    tree.clear();
+    map<MyMarker*, V3DLONG> index_map;
+    for (V3DLONG i=0;i<seg_list.size();i++)
+        for (V3DLONG j=0;j<seg_list[i]->size();j++)
+        {
+            tree.push_back(seg_list[i]->at(j));
+            index_map.insert(pair<MyMarker*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
+        }
+
+    v3d_msg(QString("tree size is %1").arg(tree.size()));
+
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        NeuronSWC S;
+        MyMarker* p = tree[i];
+        S.n = i+1;
+        if (p->parent==NULL) S.pn = -1;
+        else
+            S.pn = index_map[p->parent]+1;
+        if (p->parent==p) printf("There is loop in the tree!\n");
+        S.x = p->x;
+        S.y = p->y;
+        S.z = p->z;
+        S.r = p->radius;
+        S.type = p->type;
+        result.listNeuron.push_back(S);
+    }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        if (tree[i]) {delete tree[i]; tree[i]=NULL;}
+    }
+    for (V3DLONG j=0;j<seg_list.size();j++)
+        if (seg_list[j]) {delete seg_list[j]; seg_list[j] = NULL;}
+    for (V3DLONG i=0;i<result.listNeuron.size();i++)
+        result.hashNeuron.insert(result.listNeuron[i].n, i);
+
+    return result;
 }
 
 void printHelp()
