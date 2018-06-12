@@ -8,6 +8,8 @@
 #include "calculate_reliability_score_plugin.h"
 #include "src/topology_analysis.h"
 #include <fstream>
+#include "neuron_format_converter.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(calculate_reliability_score, neuronScore);
  
@@ -122,7 +124,9 @@ bool neuronScore::dofunc(const QString & func_name, const V3DPluginArgList & inp
         int scoreType = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         float radiusFactor = (paras.size() >= k+1) ? atof(paras[k]) : 2;  k++;
         NeuronTree nt = readSWC_file(QString(infiles[1]));
-        NeuronTree nt_scored = calculateScoreTerafly(callback,infiles[0],nt,scoreType,radiusFactor);
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        NeuronTree nt_new = V_NeuronSWC_list__2__NeuronTree(nt_decomposed);
+        NeuronTree nt_scored = calculateScoreTerafly(callback,infiles[0],nt_new,scoreType,radiusFactor);
         writeSWC_file(QString(outfiles[0]),nt_scored);
     }
 	else if (func_name == tr("help"))
@@ -274,6 +278,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             seg_list.push_back(seg);
         }
     }
+    
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     for(V3DLONG i=0; i<seg_list.size();i++)
