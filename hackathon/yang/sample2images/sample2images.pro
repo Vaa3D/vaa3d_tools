@@ -1,7 +1,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-QMAKE_CXXFLAGS += -std=c++11
+#QMAKE_CXXFLAGS += -std=c++11
 
 VAA3DMAINPATH = ../../../../v3d_external/v3d_main
 VAA3DPLUGINPATH = ../../../released_plugins/v3d_plugins

@@ -5,7 +5,6 @@
 
 #include "sample2images_plugin.h"
 #include "sample2images_func.h"
-#include "sample2images.h"
 
 
 Q_EXPORT_PLUGIN2(neurontree_construct, NeuReconPlugin);

@@ -151,8 +151,8 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                     for(long x=0; x<sx; x++)
                     {
                         //
-                        A = p1[ofy1 + 2*x];
-                        B = p1[ofy1 + 2*x+1];
+                        unsigned short A = p1[ofy1 + 2*x];
+                        unsigned short B = p1[ofy1 + 2*x+1];
                         if ( B > A ) A = B;
 
                         B = p1[ofy2 + 2*x];
