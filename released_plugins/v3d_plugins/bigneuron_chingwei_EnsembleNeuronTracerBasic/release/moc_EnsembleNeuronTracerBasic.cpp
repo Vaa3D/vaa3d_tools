@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'EnsembleNeuronTracerBasic.h'
 **
-** Created: Mon Aug 31 11:52:35 2015
+** Created: Sun Jun 10 22:02:32 2018
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.2)
 **
 ** WARNING! All changes made in this file will be lost!

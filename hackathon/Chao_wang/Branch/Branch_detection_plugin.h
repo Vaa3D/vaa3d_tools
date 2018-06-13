@@ -26,9 +26,12 @@ public:
 };
 
 int branch_detection(V3DPluginCallback2 &callback, QWidget *parent);
-int raymodel(V3DPluginCallback2 &callback, QWidget *parent);
+int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent);
 int curve_detection(V3DPluginCallback2 &callback, QWidget *parent);
 int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent);
+int MIPZSlices( V3DPluginCallback2 &callback, QWidget *parent);
+bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
+             V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
 void printHelp();
 
 #endif

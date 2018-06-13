@@ -268,3 +268,111 @@ void harrisResponse(float* & Gxx, float* & Gyy, float* & Gxy, float*  & Hresult,
 }
 
 
+void mul(unsigned char * & G, float * &GG,V3DLONG x1,V3DLONG y1)
+{
+    for (int i = 0; i < y1; i++)
+     {
+          for (int j = 0; j < x1; j++)
+          {
+               GG[i*x1+j] = G[i*x1+j]*G[i*x1+j];
+          }
+     }
+}
+
+void mul(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3DLONG y1)
+{
+    for (int i = 0; i < y1; i++)
+     {
+          for (int j = 0; j < x1; j++)
+          {
+               Gxy[i*x1+j] = Gx[i*x1+j]*Gy[i*x1+j];
+          }
+     }
+}
+
+bool mip_z_slices(Image4DSimple * pp, Image4DSimple & outImage,
+             V3DLONG startnum, V3DLONG increment, V3DLONG endnum)
+{
+    if (!pp|| !pp->valid())
+        return false;
+
+    V3DLONG sz0 = pp->getXDim();
+    V3DLONG sz1 = pp->getYDim();
+    V3DLONG sz2 = pp->getZDim();
+    V3DLONG sz3 = pp->getCDim();
+
+    //
+    V3DLONG sz2_new = 1;
+
+//    outImage.createBlankImage(sz0, sz1, sz2_new, sz3, subject->getDatatype());
+//    if (!outImage.valid())
+//        return false;
+
+    V3DLONG c, pagesz;
+    for (V3DLONG i=startnum; i<=endnum; i+=increment)
+    {
+            pagesz = sz0*sz1;
+            for (c=0;c<sz3;c++)
+            {
+                unsigned char *dst = outImage.getRawDataAtChannel(c);
+                unsigned char *src = pp->getRawDataAtChannel(c) + i*pagesz;
+                if (i==startnum)
+                {
+                    memcpy(dst, src, pagesz);
+                }
+                else
+                {
+                    for (V3DLONG j=0; j<pagesz; j++)
+                        if (dst[j]<src[j]) dst[j] = src[j];
+                }
+            }
+
+    }
+
+    return true;
+}
+bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2)
+{
+    if (sz2<=0)
+        return false;
+
+    QStringList list = t.split(":");
+    if (list.size()<2)
+        return false;
+
+    bool ok;
+
+    startnum = list.at(0).toLong(&ok)-1;
+    if (!ok)
+        startnum = 0;
+
+    if (list.size()==2)
+    {
+        increment = 1;
+        endnum = list.at(1).toLong(&ok);
+        if (!ok)
+            endnum = sz2-1;
+    }
+    else
+    {
+        increment = list.at(1).toLong(&ok);
+        if (!ok) increment = 1;
+        endnum = list.at(2).toLong(&ok);
+        if (!ok) endnum = sz2-1;
+    }
+
+    if (increment<0) //this will not reverse the order of all z slices in a stack. This can be enhanced later.
+        increment = -increment;
+    if (endnum>=sz2)
+        endnum = sz2-1;
+    if (startnum<0)
+        startnum = 0;
+    if (startnum>endnum)
+    {
+        V3DLONG tmp=endnum; endnum=startnum; startnum=tmp;
+    }
+
+    qDebug() << " start=" << startnum << " increment=" << increment << " end=" << endnum;
+    return true;
+}
+
