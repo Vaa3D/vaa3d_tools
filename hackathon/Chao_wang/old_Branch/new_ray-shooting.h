@@ -11,9 +11,4 @@ v3d_uint8  get_2D_ValueUINT8(V3DLONG  x,  V3DLONG  y, unsigned char * T, V3DLONG
 double *getOneGuassionArray(int size, double sigma);
 void MyGaussianBlur(  float*  & srcimgae , float* & dst, int size, V3DLONG x1,V3DLONG y1) ;
 void harrisResponse(float* & Gxx, float* & Gyy, float* & Gxy, float* & Hresult, float k,V3DLONG x1,V3DLONG y1)  ;
-void mul(unsigned char * & G, float * &GG,V3DLONG x1,V3DLONG y1);
-void mul(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3DLONG y1);
-bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
-             V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
-bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);
 #endif // NEW_RAYSHOOTING_H
