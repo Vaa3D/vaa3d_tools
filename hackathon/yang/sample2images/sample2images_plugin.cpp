@@ -7,24 +7,22 @@
 #include "sample2images_func.h"
 
 
-Q_EXPORT_PLUGIN2(neurontree_construct, NeuReconPlugin);
+Q_EXPORT_PLUGIN2(sample2images, Sample2ImagesPlugin);
 
-ControlPanel* ControlPanel::m_controlpanel = 0;
-
-QStringList NeuReconPlugin::menulist() const
+QStringList Sample2ImagesPlugin::menulist() const
 {
     return QStringList()
             <<tr("about");
 }
 
-QStringList NeuReconPlugin::funclist() const
+QStringList Sample2ImagesPlugin::funclist() const
 {
     return QStringList()
             <<tr("sample2images")
            <<tr("help");
 }
 
-void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void Sample2ImagesPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     //
     if (menu_name == tr("about"))
@@ -37,7 +35,7 @@ void NeuReconPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     }
 }
 
-bool NeuReconPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool Sample2ImagesPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     //
     if (func_name == tr("sample2images"))

@@ -37,6 +37,13 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
         }
     }
 
+    vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
+    if (outlist->size()>1)
+    {
+        cerr << "You cannot specify more than 1 output files"<<endl;
+        return false;
+    }
+
     //
     vector<char *> * inlist =  (vector<char*> *)(input.at(0).p);
     if (inlist->size()<1)
@@ -51,8 +58,8 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
     // load images
     unsigned char * pImg1, *pImg2, *p;
-    long sx1, sx2, sy1, sy2, sz1, sz2, sc1, sc2;
-    long imgsz, outsz;
+    long sx1, sx2, sy1, sy2, sz1, sz2, sx, sy;
+    long imgsz;
     long datatype1, datatype2;
 
     // load image1
@@ -128,8 +135,8 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 //
                 unsigned char *p=NULL;
 
-                long sx = sx1 / 2;
-                long sy = sy1 / 2;
+                sx = sx1 / 2;
+                sy = sy1 / 2;
 
                 try
                 {
@@ -212,7 +219,7 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
         } // image2
     } // image1
-       
+
     //
     return true;
 }

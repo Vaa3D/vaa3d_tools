@@ -8,7 +8,6 @@ VAA3DPLUGINPATH = ../../../released_plugins/v3d_plugins
 
 #
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
-INCLUDEPATH	+= $$VAA3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include/boost/graph
 INCLUDEPATH     += $$VAA3DMAINPATH/common_lib/include
 
@@ -20,8 +19,6 @@ HEADERS += $$VAA3DMAINPATH/basic_c_fun/mg_utilities.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/stackutil.h
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/imageio_mylib.h
-HEADERS += $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.h
-HEADERS	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.h
 
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_4dimage.cpp
@@ -31,9 +28,6 @@ SOURCES += $$VAA3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$VAA3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 SOURCES += $$VAA3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
-SOURCES	+= $$VAA3DMAINPATH/neuron_editing/neuron_sim_scores.cpp
-SOURCES	+= $$VAA3DMAINPATH/neuron_editing/v_neuronswc.cpp
-SOURCES	+= $$VAA3DMAINPATH/graph/dijk.cpp
 
 # sample 2 images
 HEADERS	+= sample2images_plugin.h
@@ -63,5 +57,5 @@ unix:!macx {
     LIBS += -lOpenCL
 }
 
-TARGET	= $$qtLibraryTarget(neurontree_construct)
+TARGET	= $$qtLibraryTarget(sample2images)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/image_filters/sample2images/
