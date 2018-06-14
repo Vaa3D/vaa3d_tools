@@ -17,8 +17,9 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("Branch_detection")
+        <<tr("mip_corner_detection")
         <<tr("creat_ray-shooting_model")
-        <<tr("curve points detection")
+        <<tr("corner_detection")
         <<tr(" Gaussian Filtering ")
         <<tr("calculate the MIP of a subset of Z slices")
 		<<tr("about");
@@ -50,7 +51,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         }
         else if (menu_name == tr("curve points detection"))
         {
-            int flag= curve_detection(callback,parent);
+            int flag= corner_detection(callback,parent);
             if(flag==1)
             v3d_msg("curve points detection was ok ");
         }
@@ -66,6 +67,14 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             if(flag==1)
             v3d_msg("MIP was ok ");
         }
+        else if(menu_name==tr("mip_corner_detection"))
+        {
+            int flag=mip_corner_detection(callback,parent);
+            if(flag==1)
+            v3d_msg("MIP was ok ");
+
+        }
+
 
 	else
 	{
@@ -228,125 +237,125 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        V3DLONG nz=sz[2];
        V3DLONG spage=nx*ny*nz;
 
-       vector<NeuronSWC> point_pool;
-       unsigned char *new_datald=0;
-       try{new_datald=new unsigned char [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       vector<NeuronSWC> point_pool;
+//       unsigned char *new_datald=0;
+//       try{new_datald=new unsigned char [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       unsigned char *imagesobelx=0;
-       try{imagesobelx=new unsigned char [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       unsigned char *imagesobelx=0;
+//       try{imagesobelx=new unsigned char [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       unsigned char *imagesobely=0;
-       try{imagesobely=new unsigned char [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       unsigned char *imagesobely=0;
+//       try{imagesobely=new unsigned char [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *xx=0;
-       try{xx=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       float *xx=0;
+//       try{xx=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *yy=0;
-       try{yy=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       float *yy=0;
+//       try{yy=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *xy=0;
-       try{xy=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       float *xy=0;
+//       try{xy=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *Gxx=0;
-       try{Gxx=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       float *Gxx=0;
+//       try{Gxx=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *Gyy=0;
-       try{Gyy=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       float *Gyy=0;
+//       try{Gyy=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *Gxy=0;
-       try{Gxy=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       float *Gxy=0;
+//       try{Gxy=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       float *Hresult=0;
-       try{Hresult=new float [spage];}
-       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-       v3d_msg("allocate the memory");
+//       float *Hresult=0;
+//       try{Hresult=new float [spage];}
+//       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//       v3d_msg("allocate the memory");
 
 
-    for(V3DLONG z_size=0;z_size<nz;z_size++)
-    {
+//    for(V3DLONG z_size=0;z_size<nz;z_size++)
+//    {
 
-                  for (V3DLONG i = 0; i < ny ; i++)
-                  {
-                      for (V3DLONG j = 1; j < nx ; j++)
-                      {
-                           new_datald[i*nx+j]=image_binary[z_size*nx*ny+i*nx+j];
+//                  for (V3DLONG i = 0; i < ny ; i++)
+//                  {
+//                      for (V3DLONG j = 1; j < nx ; j++)
+//                      {
+//                           new_datald[i*nx+j]=image_binary[z_size*nx*ny+i*nx+j];
 
-                      }
-                  }
+//                      }
+//                  }
 
-                  for (V3DLONG i = 1; i < ny - 1; i++)
-                  {
-                       for (V3DLONG j = 1; j < nx - 1; j++)
-                        {
-                                //通过指针遍历图像上每一个像素
-                                double gradY = new_datald[(i + 1)*nx + j - 1] + new_datald[(i + 1)*nx + j] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[(i - 1)*nx + j] * 2 - new_datald[(i - 1)*nx + j + 1];
-                                imagesobelx[i*nx + j] = abs(gradY);
+//                  for (V3DLONG i = 1; i < ny - 1; i++)
+//                  {
+//                       for (V3DLONG j = 1; j < nx - 1; j++)
+//                        {
+//                                //通过指针遍历图像上每一个像素
+//                                double gradY = new_datald[(i + 1)*nx + j - 1] + new_datald[(i + 1)*nx + j] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[(i - 1)*nx + j] * 2 - new_datald[(i - 1)*nx + j + 1];
+//                                imagesobelx[i*nx + j] = abs(gradY);
 
-                                double gradX = new_datald[(i - 1)*nx + j + 1] + new_datald[i*nx + j + 1] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[i*nx + j - 1] * 2 - new_datald[(i + 1)*nx + j - 1];
-                                imagesobely[i*nx + j] = abs(gradX);
-                        }
-                  }
+//                                double gradX = new_datald[(i - 1)*nx + j + 1] + new_datald[i*nx + j + 1] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[i*nx + j - 1] * 2 - new_datald[(i + 1)*nx + j - 1];
+//                                imagesobely[i*nx + j] = abs(gradX);
+//                        }
+//                  }
 
-                     //将梯度数组转换成8位无符号整型
-                    //convertScaleAbs(imageSobelX, imageSobelX);
-                    //convertScaleAbs(imageSobelY, imageSobelY);
+//                     //将梯度数组转换成8位无符号整型
+//                    //convertScaleAbs(imageSobelX, imageSobelX);
+//                    //convertScaleAbs(imageSobelY, imageSobelY);
 
-                     mul(imagesobelx,xx,nx,ny);  //x方向梯度的平方
-                     mul(imagesobely,yy,nx,ny);  //y方向梯度的平方
-                     mul(imagesobelx,imagesobely,xy,nx,ny);  //xy方向梯度的平方
+//                     mul(imagesobelx,xx,nx,ny);  //x方向梯度的平方
+//                     mul(imagesobely,yy,nx,ny);  //y方向梯度的平方
+//                     mul(imagesobelx,imagesobely,xy,nx,ny);  //xy方向梯度的平方
 
-                     //gaussion filter
-                     MyGaussianBlur(xx,Gxx,size_gaussion,sz[0],sz[1]);
-                     MyGaussianBlur(yy,Gyy,size_gaussion,sz[0],sz[1]);
-                     MyGaussianBlur(xy,Gxy,size_gaussion,sz[0],sz[1]);
+//                     //gaussion filter
+//                     float max_result=0.0;
+//                     MyGaussianBlur(xx,Gxx,size_gaussion,sz[0],sz[1]);
+//                     MyGaussianBlur(yy,Gyy,size_gaussion,sz[0],sz[1]);
+//                     MyGaussianBlur(xy,Gxy,size_gaussion,sz[0],sz[1]);
+//                     harrisResponse(Gxx,Gyy,Gxy,Hresult,0.05,sz[0],sz[1],max_result);
 
-                     harrisResponse(Gxx,Gyy,Gxy,Hresult,0.05,sz[0],sz[1]);
+//                     int r = size_gaussion / 2;
 
-                     int r = size_gaussion / 2;
+//                     for (int i = r; i < ny-r; i++)
+//                     {
+//                         for (int j = r; j < nx - r; j++)
+//                         {
+//                             if (
+//                                 Hresult[i*nx+j] > Hresult[(i-1)*nx+j] &&
+//                                 Hresult[i*nx+j] > Hresult[(i-1)*nx+j-1] &&
+//                                 Hresult[i*nx+j] > Hresult[(i-1)*nx+j+1] &&
+//                                 Hresult[i*nx+j] > Hresult[i*nx+j-1] &&
+//                                 Hresult[i*nx+j] > Hresult[i*nx+j+1] &&
+//                                 Hresult[i*nx+j] > Hresult[(i+1)*nx+j-1] &&
+//                                 Hresult[i*nx+j] > Hresult[(i+1)*nx+j] &&
+//                                 Hresult[i*nx+j] > Hresult[(i+1)*nx+j+1])
+//                             {
 
-                     for (int i = r; i < ny-r; i++)
-                     {
-                         for (int j = r; j < nx - r; j++)
-                         {
-                             if (
-                                 Hresult[i*nx+j] > Hresult[(i-1)*nx+j] &&
-                                 Hresult[i*nx+j] > Hresult[(i-1)*nx+j-1] &&
-                                 Hresult[i*nx+j] > Hresult[(i-1)*nx+j+1] &&
-                                 Hresult[i*nx+j] > Hresult[i*nx+j-1] &&
-                                 Hresult[i*nx+j] > Hresult[i*nx+j+1] &&
-                                 Hresult[i*nx+j] > Hresult[(i+1)*nx+j-1] &&
-                                 Hresult[i*nx+j] > Hresult[(i+1)*nx+j] &&
-                                 Hresult[i*nx+j] > Hresult[(i+1)*nx+j+1])
-                             {
+//                                 //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
+//                                 if (Hresult[i*nx+j] > 10000)
+//                                 {
+//                                     NeuronSWC pp;
+//                                     pp.x=j+1;
+//                                     pp.y=i+1;
+//                                     pp.z=z_size;
+//                                     pp.radius=1;
+//                                     pp.color = random_rgba8(255);
+//                                     point_pool.push_back(pp);
+//                                 }
+//                             }
 
-                                 //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
-                                 if (Hresult[i*nx+j] > 10000)
-                                 {
-                                     NeuronSWC pp;
-                                     pp.x=j+1;
-                                     pp.y=i+1;
-                                     pp.z=z_size;
-                                     pp.radius=1;
-                                     pp.color = random_rgba8(255);
-                                     point_pool.push_back(pp);
-                                 }
-                             }
+//                         }
+//                     }
 
-                         }
-                     }
-
-    }
-    v3d_msg(QString("numble of marker is %1").arg(point_pool.size()));
-    v3d_msg("2D cureve points were complete");
+//    }
+//    v3d_msg(QString("numble of marker is %1").arg(point_pool.size()));
+//    v3d_msg("2D cureve points were complete");
 
 
        vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(ray_length_2d)), ray_y(ray_numbers_2d,vector<float>(ray_length_2d));
@@ -371,52 +380,170 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
 
        v3d_msg("mip");
-
-      // v3d_msg(QString("sz[0] is %1,sz[1] is %2, sz[2] is %3").arg(N).arg(M).arg(P));
        unsigned char *image_mip=0;
        try{image_mip=new unsigned char [spage];}
        catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
-       for(V3DLONG iy = 0; iy < ny; iy++)
-       {
-           V3DLONG offsetj = iy*nx;
-           for(V3DLONG ix = 0; ix < nx; ix++)
-           {
-               int max_mip = 0;
-               for(V3DLONG iz = 0; iz < nz; iz++)
-               {
-                   V3DLONG offsetk = iz*nx*ny;
-                   if(image_binary[offsetk + offsetj + ix] >= max_mip)
-                   {
-                       image_mip[iy*nx + ix] = image_binary[offsetk + offsetj + ix];
-                       max_mip = image_binary[offsetk + offsetj + ix];
-                   //    v3d_msg(QString("max_mip is %1").arg(max_mip));
-                   }
-               }
-           }
-       }
-
+       Z_mip(nx,ny,nz,datald,image_mip);
        v3d_msg("mip have complete");
 
-       cout<<"begin circle "<<endl;
+       v3d_msg("2D segment");
+       unsigned char *mip_binary=0;
+       try{mip_binary=new unsigned char [size_image];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+       thres_segment(size_image,image_mip,mip_binary,thres_2d);
 
        LandmarkList curlist;
        LocationSimple s;
 
+       unsigned char *imagesobelx_mip=0;
+       try{imagesobelx_mip=new unsigned char [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       for(V3DLONG k=1;k<sz[1]-1;k++)
+       unsigned char *imagesobely_mip=0;
+       try{imagesobely_mip=new unsigned char [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *xx_mip=0;
+       try{xx_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *yy_mip=0;
+       try{yy_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *xy_mip=0;
+       try{xy_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *Gxx_mip=0;
+       try{Gxx_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *Gyy_mip=0;
+       try{Gyy_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *Gxy_mip=0;
+       try{Gxy_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+       float *Hresult_mip=0;
+       try{Hresult_mip=new float [spage];}
+       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+       v3d_msg("allocate the memory");
+
+         for (V3DLONG i = 1; i < ny - 1; i++)
+         {
+              for (V3DLONG j = 1; j < nx - 1; j++)
+               {
+                       //通过指针遍历图像上每一个像素
+                       double gradY = mip_binary[(i + 1)*nx + j - 1] + mip_binary[(i + 1)*nx + j] * 2 + mip_binary[(i + 1)*nx + j + 1] - mip_binary[(i - 1)*nx + j - 1] - mip_binary[(i - 1)*nx + j] * 2 - mip_binary[(i - 1)*nx + j + 1];
+                       imagesobelx_mip[i*nx + j] = abs(gradY);
+
+                       double gradX = mip_binary[(i - 1)*nx + j + 1] + mip_binary[i*nx + j + 1] * 2 + mip_binary[(i + 1)*nx + j + 1] - mip_binary[(i - 1)*nx + j - 1] - mip_binary[i*nx + j - 1] * 2 - mip_binary[(i + 1)*nx + j - 1];
+                       imagesobely_mip[i*nx + j] = abs(gradX);
+               }
+         }
+
+        mul(imagesobelx_mip,xx_mip,nx,ny);  //x方向梯度的平方
+        mul(imagesobely_mip,yy_mip,nx,ny);  //y方向梯度的平方
+        mul(imagesobelx_mip,imagesobely_mip,xy_mip,nx,ny);  //xy方向梯度的平方
+
+        //gaussion filter
+        float max_result=0.0;
+        MyGaussianBlur(xx_mip,Gxx_mip,size_gaussion,sz[0],sz[1]);
+        MyGaussianBlur(yy_mip,Gyy_mip,size_gaussion,sz[0],sz[1]);
+        MyGaussianBlur(xy_mip,Gxy_mip,size_gaussion,sz[0],sz[1]);
+        harrisResponse(Gxx_mip,Gyy_mip,Gxy_mip,Hresult_mip,0.05,sz[0],sz[1],max_result);
+        v3d_msg(QString("max_result is %1").arg(max_result));
+
+        int r = size_gaussion / 2;
+        int num=0;
+
+        for (int i = r; i < ny-r; i++)
+        {
+            for (int j = r; j < nx - r; j++)
+            {
+                if (
+                    Hresult_mip[i*nx+j] > Hresult_mip[(i-1)*nx+j] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[(i-1)*nx+j-1] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[(i-1)*nx+j+1] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[i*nx+j-1] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[i*nx+j+1] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[(i+1)*nx+j-1] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[(i+1)*nx+j] &&
+                    Hresult_mip[i*nx+j] > Hresult_mip[(i+1)*nx+j+1])
+                {
+
+                    //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
+                    if (Hresult_mip[i*nx+j] > 8000)
+                    {
+                        int flag=rayinten_2D(i,j,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, mip_binary,sz[0],sz[1]);
+                        //v3d_msg(QString("flag is %1").arg(flag));
+                        if(flag==1)
+                        {
+                            s.x=j+1;
+                            s.y=i+1;
+                            unsigned char max_z=0;
+                            int loc_z;
+                            for(int k=0;k<nz-1;k++)
+                            {
+                                if(datald[k*nx*ny+i*nx+j]>max_z)
+                                {
+                                    max_z=datald[k*nx*ny+i*nx+j];
+                                    loc_z=k;
+                                    s.z=k;
+                                }
+                            }
+                            s.radius=1;
+                            s.color = random_rgba8(255);
+                            curlist << s;
+                            num++;
+
+                        }
+
+                    }
+
+              }
+
+            }
+        }
+       v3d_msg(QString("num is %1").arg(num));
+       for(int i=0;i<curlist.size();i++)
+           for(int j=i+1;j<curlist.size();j++)
        {
-           for(V3DLONG i=1;i<sz[0]-1;i++)
-           {
 
-                   int project_value=get_2D_ValueUINT8(k, i,image_binary,sz[0],sz[1]);
-                   //v3d_msg(QString("project_value is %1").arg(project_value));
-                   //v3d_msg(QString("y is %1,x is %2").arg(k).arg(i));
-                   if(project_value > thres_2d)
-                       {
-                           bool flag=rayinten_2D(k,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, image_binary,sz[0],sz[1]);
-                          // v3d_msg(QString("flag is %1").arg(flag));
-                           if (flag==true)
-                           {
+           {
+               if(square(curlist[j].x-curlist[i].x)+square(curlist[j].y-curlist[i].y)+square(curlist[j].z-curlist[i].z)<150)
+                   {
+                       curlist.removeAt(j);
+                       j = j - 1;
+                   }
+           }
+       }
+        Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
+        v3dhandle newwin = callback.newImageWindow();
+        //v3dhandle newwin = callback.currentImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "maximum intensity projection image");
+        callback.updateImageWindow(newwin);
+        v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+        callback.setLandmark(newwin, curlist);
+//       for(V3DLONG k=1;k<sz[1]-1;k++)
+//       {
+//           for(V3DLONG i=1;i<sz[0]-1;i++)
+//           {
+
+//                   int project_value=get_2D_ValueUINT8(k, i,mip_binary,sz[0],sz[1]);
+//                   //v3d_msg(QString("project_value is %1").arg(project_value));
+//                   //v3d_msg(QString("y is %1,x is %2").arg(k).arg(i));
+//                   if(project_value > thres_2d)
+//                       {
+//                           bool flag=rayinten_2D(k,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, mip_binary,sz[0],sz[1]);
+//                          // v3d_msg(QString("flag is %1").arg(flag));
+//                           if (flag==true)
+//                           {
 //                                   for(V3DLONG bb=0;bb<point_pool.size();bb++)
 //                                   {
 //                                        //v3d_msg(QString("pool_size is %1").arg(point_pool.size()));
@@ -433,44 +560,302 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 //                                       }
 //                                   }
 
-                                   s.x=i+1;
-                                   s.y=k+1;
-                                   s.z=10;
-                                   s.radius=1;
-                                   s.color = random_rgba8(255);
-                                   curlist << s;
+//                                   s.x=i+1;
+//                                   s.y=k+1;
+//                                   s.z=10;
+//                                   s.radius=1;
+//                                   s.color = random_rgba8(255);
+//                                   curlist << s;
 
 
-                           }
+//                           }
 
-                       }
-             }
-         }
+//                       }
+//             }
+//         }
 
-       //v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
-       for(int i=0;i<curlist.size();i++)
-           for(int j=i+1;j<curlist.size();j++)
-       {
+//       //v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+//       for(int i=0;i<curlist.size();i++)
+//           for(int j=i+1;j<curlist.size();j++)
+//       {
 
-           {
-               if(square(curlist[j].x-curlist[i].x)+square(curlist[j].y-curlist[i].y)+square(curlist[j].z-curlist[i].z)<150)
-                   {
-                       curlist.removeAt(j);
-                       j = j - 1;
-                   }
-           }
-       }
-       v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
-       v3d_msg("express marker");
-       callback.setLandmark(curwin, curlist);
+//           {
+//               if(square(curlist[j].x-curlist[i].x)+square(curlist[j].y-curlist[i].y)+square(curlist[j].z-curlist[i].z)<150)
+//                   {
+//                       curlist.removeAt(j);
+//                       j = j - 1;
+//                   }
+//           }
+//       }
+//       v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+//       v3d_msg("express marker");
+//       callback.setLandmark(curwin, curlist);
 
-       if(image_binary) {delete []image_binary; image_binary = 0;}
-       if(image_mip) {delete []image_mip; image_mip = 0;}
-       //if(datald){delete []datald;datald=0;}
+//       if(image_binary) {delete []image_binary; image_binary = 0;}
+//       if(image_mip) {delete []image_mip; image_mip = 0;}
+//       if(datald){delete []datald;datald=0;}
 
        return 1;
    }
+int mip_corner_detection(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    // 1 - Obtain the current 4D image pointer
+    v3dhandle curwin = callback.currentImageWindow();
+    if(!curwin)
+    {
+            v3d_msg("No image is open.");
+            return -1;
+    }
+    Image4DSimple *p4DImage = callback.getImage(curwin);
 
+            // 2 - Ask for parameters
+            // asking for the subject channel
+
+
+
+    int ray_numbers_2d = 128;
+    int thres_2d = 45;
+    int ray_length_2d = 16;
+    int size_gaussion=3;
+
+
+    //set update the dialog
+    QDialog * dialog = new QDialog();
+
+
+    if(p4DImage->getZDim() > 1)
+            dialog->setWindowTitle("3D neuron image tip point detection Based on Ray-shooting algorithm");
+    else
+            dialog->setWindowTitle("2D neuron image tip point detection Based on Ray-shooting algorithm");
+
+QGridLayout * layout = new QGridLayout();
+
+QSpinBox * ray_numbers_2d_spinbox = new QSpinBox();
+ray_numbers_2d_spinbox->setRange(1,1000);
+ray_numbers_2d_spinbox->setValue(ray_numbers_2d);
+
+QSpinBox * thres_2d_spinbox = new QSpinBox();
+thres_2d_spinbox->setRange(-1, 255);
+thres_2d_spinbox->setValue(thres_2d);
+
+QSpinBox * ray_length_2d_spinbox = new QSpinBox();
+ray_length_2d_spinbox->setRange(1,p4DImage->getXDim());
+ray_length_2d_spinbox->setValue(ray_length_2d);
+
+QSpinBox * size_gaussion_spinbox = new QSpinBox();
+size_gaussion_spinbox->setRange(1,255);
+size_gaussion_spinbox->setValue(size_gaussion);
+
+layout->addWidget(new QLabel("ray numbers"),0,0);
+layout->addWidget(ray_numbers_2d_spinbox, 0,1,1,5);
+
+layout->addWidget(new QLabel("intensity threshold"),1,0);
+layout->addWidget(thres_2d_spinbox, 1,1,1,5);
+
+layout->addWidget(new QLabel("ray length"),2,0);
+layout->addWidget(ray_length_2d_spinbox, 2,1,1,5);
+
+layout->addWidget(new QLabel("size of guassion window"),3,0);
+layout->addWidget(size_gaussion_spinbox, 3,1,1,5);
+
+
+QHBoxLayout * hbox2 = new QHBoxLayout();
+QPushButton * ok = new QPushButton(" ok ");
+ok->setDefault(true);
+QPushButton * cancel = new QPushButton("cancel");
+hbox2->addWidget(cancel);
+hbox2->addWidget(ok);
+
+layout->addLayout(hbox2,6,0,1,6);
+dialog->setLayout(layout);
+QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+//run the dialog
+
+if(dialog->exec() != QDialog::Accepted)
+    {
+            if (dialog)
+            {
+                    delete dialog;
+                    dialog=0;
+                    cout<<"delete dialog"<<endl;
+            }
+            return -1;
+    }
+
+//get the dialog return values
+ray_numbers_2d = ray_numbers_2d_spinbox->value();
+thres_2d = thres_2d_spinbox->value();
+ray_length_2d = ray_length_2d_spinbox->value();
+size_gaussion = size_gaussion_spinbox->value();
+
+if (dialog)
+    {
+            delete dialog;
+            dialog=0;
+            cout<<"delete dialog"<<endl;
+
+
+    }
+
+V3DLONG sz[3];
+sz[0] = p4DImage->getXDim();
+sz[1] = p4DImage->getYDim();
+sz[2] = p4DImage->getZDim();
+
+unsigned char* datald=0;
+datald = p4DImage->getRawData();
+V3DLONG size_image=sz[0]*sz[1]*sz[2];
+
+
+V3DLONG nx=sz[0];
+V3DLONG ny=sz[1];
+V3DLONG nz=sz[2];
+V3DLONG spage=nx*ny*nz;
+
+
+v3d_msg("mip");
+unsigned char *image_mip=0;
+try{image_mip=new unsigned char [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+Z_mip(nx,ny,nz,datald,image_mip);
+v3d_msg("mip have complete");
+
+v3d_msg("2D segment");
+unsigned char *mip_binary=0;
+try{mip_binary=new unsigned char [size_image];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+thres_segment(size_image,image_mip,mip_binary,thres_2d);
+
+LandmarkList curlist;
+LocationSimple s;
+
+unsigned char *imagesobelx_mip=0;
+try{imagesobelx_mip=new unsigned char [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+unsigned char *imagesobely_mip=0;
+try{imagesobely_mip=new unsigned char [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *xx_mip=0;
+try{xx_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *yy_mip=0;
+try{yy_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *xy_mip=0;
+try{xy_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *Gxx_mip=0;
+try{Gxx_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *Gyy_mip=0;
+try{Gyy_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *Gxy_mip=0;
+try{Gxy_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+
+float *Hresult_mip=0;
+try{Hresult_mip=new float [spage];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+v3d_msg("allocate the memory");
+
+ for (V3DLONG i = 1; i < ny - 1; i++)
+ {
+      for (V3DLONG j = 1; j < nx - 1; j++)
+       {
+               //通过指针遍历图像上每一个像素
+               double gradY = mip_binary[(i + 1)*nx + j - 1] + mip_binary[(i + 1)*nx + j] * 2 + mip_binary[(i + 1)*nx + j + 1] - mip_binary[(i - 1)*nx + j - 1] - mip_binary[(i - 1)*nx + j] * 2 - mip_binary[(i - 1)*nx + j + 1];
+               imagesobelx_mip[i*nx + j] = abs(gradY);
+
+               double gradX = mip_binary[(i - 1)*nx + j + 1] + mip_binary[i*nx + j + 1] * 2 + mip_binary[(i + 1)*nx + j + 1] - mip_binary[(i - 1)*nx + j - 1] - mip_binary[i*nx + j - 1] * 2 - mip_binary[(i + 1)*nx + j - 1];
+               imagesobely_mip[i*nx + j] = abs(gradX);
+       }
+ }
+
+mul(imagesobelx_mip,xx_mip,nx,ny);  //x方向梯度的平方
+mul(imagesobely_mip,yy_mip,nx,ny);  //y方向梯度的平方
+mul(imagesobelx_mip,imagesobely_mip,xy_mip,nx,ny);  //xy方向梯度的平方
+
+//gaussion filter
+float max_result=0.0;
+MyGaussianBlur(xx_mip,Gxx_mip,size_gaussion,sz[0],sz[1]);
+MyGaussianBlur(yy_mip,Gyy_mip,size_gaussion,sz[0],sz[1]);
+MyGaussianBlur(xy_mip,Gxy_mip,size_gaussion,sz[0],sz[1]);
+harrisResponse(Gxx_mip,Gyy_mip,Gxy_mip,Hresult_mip,0.05,sz[0],sz[1],max_result);
+v3d_msg(QString("max_result is %1").arg(max_result));
+
+int r = size_gaussion / 2;
+
+for (int i = r; i < ny-r; i++)
+{
+    for (int j = r; j < nx - r; j++)
+    {
+        if (
+            Hresult_mip[i*nx+j] > Hresult_mip[(i-1)*nx+j] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[(i-1)*nx+j-1] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[(i-1)*nx+j+1] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[i*nx+j-1] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[i*nx+j+1] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[(i+1)*nx+j-1] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[(i+1)*nx+j] &&
+            Hresult_mip[i*nx+j] > Hresult_mip[(i+1)*nx+j+1])
+        {
+
+            //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
+            if (Hresult_mip[i*nx+j] > 8000)
+            {
+                    s.x=j+1;
+                    s.y=i+1;
+                    s.z=1;
+                    s.radius=1;
+                    s.color = random_rgba8(255);
+                    curlist << s;
+
+            }
+
+      }
+
+    }
+}
+
+for(int i=0;i<curlist.size();i++)
+   for(int j=i+1;j<curlist.size();j++)
+{
+
+   {
+       if(square(curlist[j].x-curlist[i].x)+square(curlist[j].y-curlist[i].y)+square(curlist[j].z-curlist[i].z)<150)
+           {
+               curlist.removeAt(j);
+               j = j - 1;
+           }
+   }
+}
+Image4DSimple * new4DImage = new Image4DSimple();
+new4DImage->setData((unsigned char *)mip_binary, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
+//v3dhandle newwin = callback.newImageWindow();
+//v3dhandle newwin = callback.currentImageWindow();
+callback.setImage(curwin, new4DImage);
+callback.setImageName(curwin, "maximum intensity projection image");
+callback.updateImageWindow(curwin);
+v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+callback.setLandmark(curwin, curlist);
+
+//       if(image_binary) {delete []image_binary; image_binary = 0;}
+//       if(image_mip) {delete []image_mip; image_mip = 0;}
+//       if(datald){delete []datald;datald=0;}
+
+return 1;
+
+}
 void printHelp()
 {
     cout<<"\nThis is a demo plugin to detect tip point in an image. by Keran Lin 2017-04"<<endl;
@@ -499,7 +884,6 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
     sz[2] = p4DImage->getZDim();
     V3DLONG nx=sz[0],ny=sz[1],nz=sz[2];
     V3DLONG size_image=nx*ny*nz;
-
 
     float x_point=0,y_point=0;
     int ray_numble=64;
@@ -594,39 +978,14 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char *image_mip=0;
     try{image_mip=new unsigned char [size_image];}
     catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
-    for(V3DLONG iy = 0; iy < ny; iy++)
-    {
-        V3DLONG offsetj = iy*nx;
-        for(V3DLONG ix = 0; ix < nx; ix++)
-        {
-            int max_mip = 0;
-            for(V3DLONG iz = 0; iz < nz; iz++)
-            {
-                V3DLONG offsetk = iz*nx*ny;
-                if(datald[offsetk + offsetj + ix] >= max_mip)
-                {
-                    image_mip[iy*nx + ix] = datald[offsetk + offsetj + ix];
-                    max_mip = datald[offsetk + offsetj + ix];
-                //    v3d_msg(QString("max_mip is %1").arg(max_mip));
-                }
-            }
-        }
-    }
-   // v3d_msg("mip have complete");
+    Z_mip(nx,ny,nz,datald,image_mip);
 
-
-    //v3d_msg("segment");
+    v3d_msg("segment");
     unsigned char *image_binary=0;
     try{image_binary=new unsigned char [size_image];}
     catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-    for(V3DLONG i = 0; i < nx*ny; i++)
-    {
-        if(image_mip[i] > thres)
-            image_binary[i] = 255;
-        else
-            image_binary[i] = 0;
-    }
-   // v3d_msg("segment was complete");
+    thres_segment(size_image,image_mip,image_binary,thres);
+
 
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)image_binary, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
@@ -646,7 +1005,6 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 //    callback.setImage(newwin, &p4DImage);
 //    callback.setImageName(newwin, m_InputFileName + "_mip_"  + ".v3draw");
 //    callback.updateImageWindow(newwin);
-// v3d_msg("mip have complete");
 
     cout<<"start the ray-shooting model"<<endl;
 
@@ -679,7 +1037,7 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 
     for(int i=0;i<num_points;i++)
     {
-       // v3d_msg(QString("pixel is %1,y is %2,pixel is %3").arg(x_lac[i]).arg(y_lac[i]).arg(pixel[i]));
+        v3d_msg(QString("pixel is %1,y is %2,pixel is %3").arg(x_lac[i]).arg(y_lac[i]).arg(pixel[i]));
     }
 
     //get the sum of pixel of length
@@ -829,7 +1187,7 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 
 }
 
-int curve_detection(V3DPluginCallback2 &callback, QWidget *parent)
+int corner_detection(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if(!curwin)
@@ -845,9 +1203,9 @@ int curve_detection(V3DPluginCallback2 &callback, QWidget *parent)
     sz[2] = p4DImage->getZDim();
 
 
-    //int ray_numbers_2d = 128;
+    int window_size = 3;
     int thres_2d = 45;
-    //int ray_length_2d = 16;
+    int K_harris = 1;
 
 
     //set update the dialog
@@ -861,27 +1219,27 @@ int curve_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
 QGridLayout * layout = new QGridLayout();
 
-//QSpinBox * ray_numbers_2d_spinbox = new QSpinBox();
-//ray_numbers_2d_spinbox->setRange(1,1000);
-//ray_numbers_2d_spinbox->setValue(ray_numbers_2d);
+QSpinBox * window_size_spinbox = new QSpinBox();
+window_size_spinbox->setRange(1,1000);
+window_size_spinbox->setValue(window_size);
 
 QSpinBox * thres_2d_spinbox = new QSpinBox();
 thres_2d_spinbox->setRange(-1, 255);
 thres_2d_spinbox->setValue(thres_2d);
 
-//QSpinBox * ray_length_2d_spinbox = new QSpinBox();
-//ray_length_2d_spinbox->setRange(1,p4DImage->getXDim());
-//ray_length_2d_spinbox->setValue(ray_length_2d);
+QSpinBox * K_harris_spinbox = new QSpinBox();
+K_harris_spinbox->setRange(1,10);
+K_harris_spinbox->setValue(K_harris);
 
 
-//layout->addWidget(new QLabel("ray numbers"),0,0);
-//layout->addWidget(ray_numbers_2d_spinbox, 0,1,1,5);
+layout->addWidget(new QLabel("guassion size"),0,0);
+layout->addWidget(window_size_spinbox, 0,1,1,5);
 
 layout->addWidget(new QLabel("intensity threshold"),1,0);
 layout->addWidget(thres_2d_spinbox, 1,1,1,5);
 
-//layout->addWidget(new QLabel("ray length"),2,0);
-//layout->addWidget(ray_length_2d_spinbox, 2,1,1,5);
+layout->addWidget(new QLabel("k thres"),2,0);
+layout->addWidget(K_harris_spinbox, 2,1,1,5);
 
 
 QHBoxLayout * hbox2 = new QHBoxLayout();
@@ -909,9 +1267,9 @@ if(dialog->exec() != QDialog::Accepted)
             return -1;
     }
 //get the dialog return values
-//ray_numbers_2d = ray_numbers_2d_spinbox->value();
+window_size = window_size_spinbox->value();
 thres_2d = thres_2d_spinbox->value();
-//ray_length_2d = ray_length_2d_spinbox->value();
+K_harris = K_harris_spinbox->value();
 if (dialog)
     {
             delete dialog;
@@ -952,9 +1310,9 @@ if (dialog)
      LandmarkList curlist;
      LocationSimple s;
               unsigned char *new_datald=new unsigned char [nx*ny];
-              unsigned char *imagesobelx=new unsigned char [nx*ny];
-              unsigned char *imagesobely=new unsigned char [nx*ny];
-              float  *xx=new float[nx*ny];
+              float *imagesobelx=new float [nx*ny];
+              float *imagesobely=new float [nx*ny];
+              float *xx=new float[nx*ny];
               float *yy=new float[nx*ny];
               float *xy=new float[nx*ny];
               float *Gxx=new float[nx*ny];
@@ -967,25 +1325,25 @@ if (dialog)
          {
              for (int j = 1; j < nx ; j++)
              {
-                  new_datald[i*nx+j]=image_binary[z_size*nx*ny+i*nx+j];
+                  new_datald[i*nx+j]=datald[z_size*nx*ny+i*nx+j];
 
 
              }
          }
          for (int i = 1; i < ny - 1; i++)
-                 {
-                      for (int j = 1; j < nx - 1; j++)
-                       {
-                               //通过指针遍历图像上每一个像素
-                               double gradY = new_datald[(i + 1)*nx + j - 1] + new_datald[(i + 1)*nx + j] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[(i - 1)*nx + j] * 2 - new_datald[(i - 1)*nx + j + 1];
-                               imagesobelx[i*nx + j] = abs(gradY);
-                               //v3d_msg(QString("clone is %1").arg(dst[200]));
-                              // v3d_msg(QString("imagesobelx is %1").arg(dst[200]));
+         {
+              for (int j = 1; j < nx - 1; j++)
+               {
+                       //通过指针遍历图像上每一个像素
+                       double gradY = new_datald[(i + 1)*nx + j - 1] + new_datald[(i + 1)*nx + j] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[(i - 1)*nx + j] * 2 - new_datald[(i - 1)*nx + j + 1];
+                       imagesobelx[i*nx + j] = abs(gradY);
+                       //v3d_msg(QString("clone is %1").arg(dst[200]));
+                      // v3d_msg(QString("imagesobelx is %1").arg(dst[200]));
 
-                               double gradX = new_datald[(i - 1)*nx + j + 1] + new_datald[i*nx + j + 1] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[i*nx + j - 1] * 2 - new_datald[(i + 1)*nx + j - 1];
-                               imagesobely[i*nx + j] = abs(gradX);
-                       }
-                 }
+                       double gradX = new_datald[(i - 1)*nx + j + 1] + new_datald[i*nx + j + 1] * 2 + new_datald[(i + 1)*nx + j + 1] - new_datald[(i - 1)*nx + j - 1] - new_datald[i*nx + j - 1] * 2 - new_datald[(i + 1)*nx + j - 1];
+                       imagesobely[i*nx + j] = abs(gradX);
+               }
+         }
 //         v3d_msg(QString("new_datald is %1").arg(new_datald[200]));
 //         v3d_msg(QString("imagesobelx is %1").arg(imagesobelx[200]));
 //         v3d_msg(QString("imagesobely is %1").arg(imagesobely[200]));
@@ -994,66 +1352,68 @@ if (dialog)
                        //convertScaleAbs(imageSobelY, imageSobelY);
 
 
-                        for (int i = 0; i < ny; i++)
-                         {
-                              for (int j = 0; j < nx; j++)
-                              {
-                                   xx[i*nx+j] = imagesobelx[i*nx+j]*imagesobelx[i*nx+j];
-                              }
-                         }
+        for (int i = 0; i < ny; i++)
+         {
+              for (int j = 0; j < nx; j++)
+              {
+                   xx[i*nx+j] = imagesobelx[i*nx+j]*imagesobelx[i*nx+j];
+              }
+         }
 
-                        for (int i = 0; i < ny; i++)
-                         {
-                              for (int j = 0; j < nx; j++)
-                              {
-                                   yy[i*nx+j] = imagesobely[i*nx+j]*imagesobely[i*nx+j];
-                              }
-                         }
+        for (int i = 0; i < ny; i++)
+         {
+              for (int j = 0; j < nx; j++)
+              {
+                   yy[i*nx+j] = imagesobely[i*nx+j]*imagesobely[i*nx+j];
+              }
+         }
 
-                        for (int i = 0; i < ny; i++)
-                         {
-                              for (int j = 0; j < nx; j++)
-                              {
-                                   xy[i*nx+j] = imagesobelx[i*nx+j]*imagesobely[i*nx+j];
-                              }
-                         }
+        for (int i = 0; i < ny; i++)
+         {
+              for (int j = 0; j < nx; j++)
+              {
+                   xy[i*nx+j] = imagesobelx[i*nx+j]*imagesobely[i*nx+j];
+              }
+         }
+        float max_hresult=0.0;
+        MyGaussianBlur(xx,Gxx,window_size,sz[0],sz[1]);
+        MyGaussianBlur(yy,Gyy,window_size,sz[0],sz[1]);
+        MyGaussianBlur(xy,Gxy,window_size,sz[0],sz[1]);
+        harrisResponse(Gxx,Gyy,Gxy,Hresult,0.06,sz[0],sz[1],max_hresult);
+        v3d_msg(QString("max_hr is %1").arg(max_hresult));
 
-                        MyGaussianBlur(xx,Gxx,3,sz[0],sz[1]);
-                        MyGaussianBlur(yy,Gyy,3,sz[0],sz[1]);
-                        MyGaussianBlur(xy,Gxy,3,sz[0],sz[1]);
-                        harrisResponse(Gxx,Gyy,Gxy,Hresult,0.05,sz[0],sz[1]);
 
-                        int r = 3 / 2;
+        int r = window_size / 2;
 
-                        for (int i = r; i < ny-r; i++)
-                        {
-                            for (int j = r; j < nx - r; j++)
-                            {
-                                if (
-                                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j] &&
-                                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j-1] &&
-                                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j+1] &&
-                                    Hresult[i*nx+j] > Hresult[i*nx+j-1] &&
-                                    Hresult[i*nx+j] > Hresult[i*nx+j+1] &&
-                                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j-1] &&
-                                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j] &&
-                                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j+1])
-                                {
+        for (int i = r; i < ny-r; i++)
+        {
+            for (int j = r; j < nx - r; j++)
+            {
+                if (
+                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j] &&
+                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j-1] &&
+                    Hresult[i*nx+j] > Hresult[(i-1)*nx+j+1] &&
+                    Hresult[i*nx+j] > Hresult[i*nx+j-1] &&
+                    Hresult[i*nx+j] > Hresult[i*nx+j+1] &&
+                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j-1] &&
+                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j] &&
+                    Hresult[i*nx+j] > Hresult[(i+1)*nx+j+1])
+                {
 
-                                    //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
-                                    if (Hresult[i*nx+j] > 10000)
-                                    {
-                                        s.x=j+1;
-                                        s.y=i+1;
-                                        s.z=z_size;
-                                        s.radius=1;
-                                        s.color = random_rgba8(255);
-                                        curlist << s;
-                                    }
-                                }
+                    //v3d_msg(QString("Hresult[i*nx+j] is %1").arg(Hresult[i*nx+j]));
+                   // if (Hresult[i*nx+j] > (18000))
+                    //{
+                        s.x=j+1;
+                        s.y=i+1;
+                        s.z=z_size;
+                        s.radius=1;
+                        s.color = random_rgba8(255);
+                        curlist << s;
+                   // }
+                }
 
-                            }
-                        }
+            }
+        }
 
      }
   v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
@@ -1183,7 +1543,138 @@ int MIPZSlices( V3DPluginCallback2 &callback, QWidget *parent)
         callback.updateImageWindow(newwin);
         return 1;
 }
+int new_branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if(!curwin)
+    {
+            v3d_msg("No image is open.");
+            return -1;
+    }
+    Image4DSimple *p4DImage = callback.getImage(curwin);
 
+            // 2 - Ask for parameters
+            // asking for the subject channel
+
+
+
+    int ray_numbers_2d = 128;
+    int thres_2d = 45;
+    int ray_length_2d = 16;
+    int size_gaussion=3;
+
+
+    //set update the dialog
+    QDialog * dialog = new QDialog();
+
+
+    if(p4DImage->getZDim() > 1)
+            dialog->setWindowTitle("3D neuron image tip point detection Based on Ray-shooting algorithm");
+    else
+            dialog->setWindowTitle("2D neuron image tip point detection Based on Ray-shooting algorithm");
+
+QGridLayout * layout = new QGridLayout();
+
+QSpinBox * ray_numbers_2d_spinbox = new QSpinBox();
+ray_numbers_2d_spinbox->setRange(1,1000);
+ray_numbers_2d_spinbox->setValue(ray_numbers_2d);
+
+QSpinBox * thres_2d_spinbox = new QSpinBox();
+thres_2d_spinbox->setRange(-1, 255);
+thres_2d_spinbox->setValue(thres_2d);
+
+QSpinBox * ray_length_2d_spinbox = new QSpinBox();
+ray_length_2d_spinbox->setRange(1,p4DImage->getXDim());
+ray_length_2d_spinbox->setValue(ray_length_2d);
+
+QSpinBox * size_gaussion_spinbox = new QSpinBox();
+size_gaussion_spinbox->setRange(1,255);
+size_gaussion_spinbox->setValue(size_gaussion);
+
+layout->addWidget(new QLabel("ray numbers"),0,0);
+layout->addWidget(ray_numbers_2d_spinbox, 0,1,1,5);
+
+layout->addWidget(new QLabel("intensity threshold"),1,0);
+layout->addWidget(thres_2d_spinbox, 1,1,1,5);
+
+layout->addWidget(new QLabel("ray length"),2,0);
+layout->addWidget(ray_length_2d_spinbox, 2,1,1,5);
+
+layout->addWidget(new QLabel("size of guassion window"),3,0);
+layout->addWidget(size_gaussion_spinbox, 3,1,1,5);
+
+
+QHBoxLayout * hbox2 = new QHBoxLayout();
+QPushButton * ok = new QPushButton(" ok ");
+ok->setDefault(true);
+QPushButton * cancel = new QPushButton("cancel");
+hbox2->addWidget(cancel);
+hbox2->addWidget(ok);
+
+layout->addLayout(hbox2,6,0,1,6);
+dialog->setLayout(layout);
+QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+//run the dialog
+
+if(dialog->exec() != QDialog::Accepted)
+    {
+            if (dialog)
+            {
+                    delete dialog;
+                    dialog=0;
+                    cout<<"delete dialog"<<endl;
+            }
+            return -1;
+    }
+
+//get the dialog return values
+ray_numbers_2d = ray_numbers_2d_spinbox->value();
+thres_2d = thres_2d_spinbox->value();
+ray_length_2d = ray_length_2d_spinbox->value();
+size_gaussion = size_gaussion_spinbox->value();
+
+if (dialog)
+    {
+            delete dialog;
+            dialog=0;
+            cout<<"delete dialog"<<endl;
+
+
+    }
+
+V3DLONG sz[3];
+sz[0] = p4DImage->getXDim();
+sz[1] = p4DImage->getYDim();
+sz[2] = p4DImage->getZDim();
+
+unsigned char* datald=0;
+datald = p4DImage->getRawData();
+V3DLONG size_image=sz[0]*sz[1]*sz[2];
+
+cout<<"segment"<<endl;
+
+unsigned char *image_binary=0;
+try{image_binary=new unsigned char [size_image];}
+catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+for(V3DLONG i = 0; i < size_image; i++)
+{
+   if(datald[i] > thres_2d)
+       image_binary[i] = 255;
+   else
+       image_binary[i] = 0;
+}
+v3d_msg("segment was complete");
+
+v3d_msg("start find 2D cureve points");
+V3DLONG nx=sz[0];
+V3DLONG ny=sz[1];
+V3DLONG nz=sz[2];
+V3DLONG spage=nx*ny*nz;
+
+
+}
 
 
 

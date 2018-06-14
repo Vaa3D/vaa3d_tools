@@ -8,6 +8,8 @@
 #include "calculate_reliability_score_plugin.h"
 #include "src/topology_analysis.h"
 #include <fstream>
+#include "neuron_format_converter.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(calculate_reliability_score, neuronScore);
  
@@ -95,6 +97,38 @@ bool neuronScore::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
         doCalculateScore(callback, infiles[0],infiles[1],outfiles[0],scoreType,radiusFactor,0);
 	}
+    else if (func_name == tr("calculate_score_terafly"))
+    {
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+
+        if(infiles.size()<2)
+        {
+            fprintf (stderr, "Need input image and swc. \n");
+            printHelp();
+            return false;
+        }
+
+        if(outfiles.empty())
+        {
+            fprintf (stderr, "Need output file name. \n");
+            printHelp();
+            return false;
+        }
+
+        int k=0;
+        int scoreType = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        float radiusFactor = (paras.size() >= k+1) ? atof(paras[k]) : 2;  k++;
+        NeuronTree nt = readSWC_file(QString(infiles[1]));
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        NeuronTree nt_new = V_NeuronSWC_list__2__NeuronTree(nt_decomposed);
+        NeuronTree nt_scored = calculateScoreTerafly(callback,infiles[0],nt_new,scoreType,radiusFactor);
+        writeSWC_file(QString(outfiles[0]),nt_scored);
+    }
 	else if (func_name == tr("help"))
 	{
         printHelp();
@@ -244,11 +278,13 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             seg_list.push_back(seg);
         }
     }
+    
 
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
     for(V3DLONG i=0; i<seg_list.size();i++)
     {
         Segment* seg = seg_list[i];
+
         start_x = seg->at(0)->x;
         end_x = seg->at(0)->x;
         start_y = seg->at(0)->y;
@@ -265,6 +301,13 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             if(end_z<seg->at(j)->z)  end_z = seg->at(j)->z;
         }
 
+        start_x -= 10;
+        end_x   +=10;
+        start_y -= 10;
+        end_y   +=10;
+        start_z -= 10;
+        end_z   +=10;
+
         unsigned char * total1dData = 0;
         total1dData = callback.getSubVolumeTeraFly(fname_img.toStdString(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
         V3DLONG mysz[4];
@@ -279,6 +322,10 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             seg->at(j)->y -= start_y;
             seg->at(j)->z -= start_z;
         }
+
+//        QString imageSaveString = fname_img + QString("/x_%1_y%2_z%3.v3draw").arg(seg->at(0)->x).arg(seg->at(0)->y).arg(seg->at(0)->z);
+//        simple_saveimage_wrapper(callback, "test.v3draw",(unsigned char *)total1dData, mysz, 1);
+
 
         map<MyMarker*, double> score_map;
         topology_analysis_perturb_intense(total1dData, *seg, score_map, radius_factor, mysz[0], mysz[1], mysz[2], 0);
@@ -295,8 +342,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
 //        QString fname_tmp = fname_img+"/scored.swc";
 //        saveSWC_file(fname_tmp.toStdString(), *seg);
 
-//        QString imageSaveString = fname_img + QString("/x_%1_y%2_z%3.v3draw").arg(seg->at(0)->x).arg(seg->at(0)->y).arg(seg->at(0)->z);
-//        simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+
     }
 
     tree.clear();
@@ -308,7 +354,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             index_map.insert(pair<MyMarker*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
         }
 
-    v3d_msg(QString("tree size is %1").arg(tree.size()));
+//    v3d_msg(QString("tree size is %1").arg(tree.size()));
 
     for (V3DLONG i=0;i<tree.size();i++)
     {

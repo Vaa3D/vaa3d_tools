@@ -1,16 +1,21 @@
-#include "new_ray-shooting.h"
+
 #include "v3d_message.h"
-#include "stackutil.h"
-#include "Branch_detection_plugin.h"
+//#include "stackutil.h"
+//#include "Branch_c_plugin.h"
 #include <iostream>
-#include <cmath>
+#include <math.h>
 #include <vector>
 #include "v3d_basicdatatype.h"
 #include <stdio.h>
-#include "new_ray-shooting.h"
+#include "rayshooting_func.h"
+
+
+
 
 using namespace std;
 #define PI 3.1415926
+#define EXP 2.71828
+
 
 float square(float x){return x*x;}
 
@@ -33,47 +38,66 @@ void ray_shooting(int m, int n,vector<vector<float> > ray_x,vector<vector<float>
     return;
 }
 
-int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_x,vector<vector<float> > ray_y, unsigned char * P,V3DLONG sz0,V3DLONG sz1 )
+bool rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_x,vector<vector<float> > ray_y, unsigned char * P,V3DLONG sz0,V3DLONG sz1 )
 {
-
     int count=0;
     int point[2] = {point_y,point_x};
+    //int  point_coordinate[3];
     float pixe = 0.0;
-    vector<int> indd,ind1;
+    //vector<int> indd[m],ind1[m];
+     vector<int> indd,ind1;
     for(int i = 0; i < m; i++)   //m is the numble of the ray
         {
          float sum=0;
          for(int j = 0; j<n; j++)   // n is the numble of the points of the each ray
             {
                  pixe = 0.0;
+
                 {
                     pixe = interp_2d(point[1]+ray_y[i][j], point[0]+ray_x[i][j], P, sz0,sz1 );
-                    pixe=exp(0.05*j)*pixe;
                     //v3d_msg(QString("pixe is %1").arg(pixe));
+                    if (j<=n/4||j>=0)
+                    {
+                      pixe=2*pixe;
+                    }
+                    else if (j>n/4||j<=n/2)
+                    {
+                       pixe=1*pixe;
+                    }
+                    else if ((j>n/2)||j<=(3*n/4))
+                    {
+                       pixe=1*pixe;
+                    }
+                    else
+                    {
+                       pixe=2*pixe;
+                    }
+
                 }
                 sum=sum+pixe;
+
             }
            ind1.push_back(sum);
           //ind1[i]=sum; //i is the numble of the ray
           // v3d_msg(QString("indli is %1").arg(ind1[i]));
         }
-
-    //find the max piexs of the ray
-    float max_indd=0;
+    float max_indd=10;
     for(int s=0;s<m;s++)
     {
+
         if(ind1[s]>max_indd)
         {
             max_indd=ind1[s];
         }
 
     }
-   // v3d_msg(QString("max_indd is %1").arg(max_indd));
+    //v3d_msg(QString("max_indd is %1").arg(max_indd));
 
     for (int i = 0;i < m;i++)
     {
         if (ind1[i] >= max_indd*0.4)
             {
+                //indd[count] = i;
                  indd.push_back(i);
                   count++;
             }
@@ -100,15 +124,7 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
     //v3d_msg(QString("branch flag is %1").arg(branch_flag));
 
     if(branch_flag>2)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-
-
+        return true;
 
 }
 
@@ -135,6 +151,7 @@ float interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLO
         return result;
     }
 }
+
 
 v3d_uint8  get_2D_ValueUINT8(V3DLONG  y,  V3DLONG  x, unsigned char * T, V3DLONG  sz0, V3DLONG  sz1)
 {
@@ -233,7 +250,7 @@ void MyGaussianBlur(   float * & srcimgae , float* & dst, int size,V3DLONG x1,V3
        //v3d_msg(QString("new dst is %1").arg(dst[200]));
        delete[] arr;
 }
-void harrisResponse(float* & Gxx, float* & Gyy, float* & Gxy, float*  & Hresult, float k,V3DLONG x1,V3DLONG y1,float &max_hresult)
+void harrisResponse(float* & Gxx, float* & Gyy, float* & Gxy, float*  & Hresult, float k,V3DLONG x1,V3DLONG y1)
 {
 
     for (int i = 0; i < y1; i++)
@@ -245,151 +262,7 @@ void harrisResponse(float* & Gxx, float* & Gyy, float* & Gxy, float*  & Hresult,
             float b = Gyy[i*x1+j];
             float c = Gxy[i*x1+j];
             Hresult[i*x1+j] = a*b - c*c - k*(a + b)*(a + b);
-            if(Hresult[i*x1+j]>max_hresult)
-            {
-                max_hresult=Hresult[i*x1+j];
-            }
         }
 
-    }
-}
-
-void mul(unsigned char * & G, float * &GG,V3DLONG x1,V3DLONG y1)
-{
-    for (int i = 0; i < y1; i++)
-     {
-          for (int j = 0; j < x1; j++)
-          {
-               GG[i*x1+j] = G[i*x1+j]*G[i*x1+j];
-          }
-     }
-}
-
-void mul(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3DLONG y1)
-{
-    for (int i = 0; i < y1; i++)
-     {
-          for (int j = 0; j < x1; j++)
-          {
-               Gxy[i*x1+j] = Gx[i*x1+j]*Gy[i*x1+j];
-          }
-     }
-}
-
-bool mip_z_slices(Image4DSimple * pp, Image4DSimple & outImage,
-             V3DLONG startnum, V3DLONG increment, V3DLONG endnum)
-{
-    if (!pp|| !pp->valid())
-        return false;
-
-    V3DLONG sz0 = pp->getXDim();
-    V3DLONG sz1 = pp->getYDim();
-    V3DLONG sz2 = pp->getZDim();
-    V3DLONG sz3 = pp->getCDim();
-
-    //
-    V3DLONG sz2_new = 1;
-
-//    outImage.createBlankImage(sz0, sz1, sz2_new, sz3, subject->getDatatype());
-//    if (!outImage.valid())
-//        return false;
-
-    V3DLONG c, pagesz;
-    for (V3DLONG i=startnum; i<=endnum; i+=increment)
-    {
-            pagesz = sz0*sz1;
-            for (c=0;c<sz3;c++)
-            {
-                unsigned char *dst = outImage.getRawDataAtChannel(c);
-                unsigned char *src = pp->getRawDataAtChannel(c) + i*pagesz;
-                if (i==startnum)
-                {
-                    memcpy(dst, src, pagesz);
-                }
-                else
-                {
-                    for (V3DLONG j=0; j<pagesz; j++)
-                        if (dst[j]<src[j]) dst[j] = src[j];
-                }
-            }
-
-    }
-
-    return true;
-}
-bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2)
-{
-    if (sz2<=0)
-        return false;
-
-    QStringList list = t.split(":");
-    if (list.size()<2)
-        return false;
-
-    bool ok;
-
-    startnum = list.at(0).toLong(&ok)-1;
-    if (!ok)
-        startnum = 0;
-
-    if (list.size()==2)
-    {
-        increment = 1;
-        endnum = list.at(1).toLong(&ok);
-        if (!ok)
-            endnum = sz2-1;
-    }
-    else
-    {
-        increment = list.at(1).toLong(&ok);
-        if (!ok) increment = 1;
-        endnum = list.at(2).toLong(&ok);
-        if (!ok) endnum = sz2-1;
-    }
-
-    if (increment<0) //this will not reverse the order of all z slices in a stack. This can be enhanced later.
-        increment = -increment;
-    if (endnum>=sz2)
-        endnum = sz2-1;
-    if (startnum<0)
-        startnum = 0;
-    if (startnum>endnum)
-    {
-        V3DLONG tmp=endnum; endnum=startnum; startnum=tmp;
-    }
-
-    qDebug() << " start=" << startnum << " increment=" << increment << " end=" << endnum;
-    return true;
-}
-void Z_mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char * &image_mip)
-{
-    for(V3DLONG iy = 0; iy < ny; iy++)
-    {
-        V3DLONG offsetj = iy*nx;
-        for(V3DLONG ix = 0; ix < nx; ix++)
-        {
-            int max_mip = 0;
-            for(V3DLONG iz = 0; iz < nz; iz++)
-            {
-                V3DLONG offsetk = iz*nx*ny;
-                if(datald[offsetk + offsetj + ix] >= max_mip)
-                {
-                    image_mip[iy*nx + ix] = datald[offsetk + offsetj + ix];
-                    max_mip = datald[offsetk + offsetj + ix];
-                //    v3d_msg(QString("max_mip is %1").arg(max_mip));
-                }
-            }
-        }
-    }
-
-}
-void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char * &binary_image,int thres)
-{
-    for(V3DLONG i = 0; i < size_image; i++)
-    {
-        if(old_image[i] > thres)
-            binary_image[i] = 255;
-        else
-            binary_image[i] = 0;
     }
 }
