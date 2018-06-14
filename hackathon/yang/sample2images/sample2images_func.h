@@ -10,7 +10,6 @@
 #include <QtGlobal>
 #include <vector>
 #include "v3d_interface.h"
-#include "basic_surf_objs.h"
 #include "v3d_message.h"
 #include <iostream>
 #include "basic_4dimage.h"
@@ -25,6 +24,9 @@
 #include <tuple>
 #include <stack>
 #include <fstream>
+#include <iostream>
+
+#include "tiffio.h"
 
 using namespace std;
 
@@ -32,6 +34,9 @@ using namespace std;
 
 // functions
 bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);
+
+char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype, uint16 &comp);
+char *tiffwrite(char* filename, unsigned char *p, uint32 sz0, uint32  sz1, uint32  sz2, uint16 datatype, uint16 comp);
 
 #endif
 
