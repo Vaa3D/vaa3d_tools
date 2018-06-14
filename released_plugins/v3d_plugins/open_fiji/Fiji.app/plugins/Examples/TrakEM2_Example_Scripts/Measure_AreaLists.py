@@ -19,6 +19,12 @@
 # Built as requested by Jean-Yves Tinevez on 20081204 on fiji-devel mailing list
 # 
 
+from ij import IJ, ImageJ, ImagePlus
+from ij.gui import ShapeRoi
+from ij.measure import Calibration, Measurements, ResultsTable
+
+from ini.trakem2.display import Display
+
 from java.awt.geom import AffineTransform
 
 """
