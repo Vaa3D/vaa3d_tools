@@ -119,7 +119,7 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
         buf = buf + LastStripSize * sz0 * datatype;
 
     }
-    while (TIFFReadDirectory(input));// while (TIFFReadDirectory(input));
+    while (TIFFReadDirectory(input)); // while (TIFFReadDirectory(input));
 
     //
     TIFFClose(input);
@@ -131,31 +131,50 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
 //
 char *tiffwrite(char* filename, unsigned char *p, uint32 sz0, uint32  sz1, uint32  sz2, uint16 datatype, uint16 comp)
 {
+    cout<<"tiffwrite "<<sz0<<" "<<sz1<<" "<<sz2<<" "<<datatype<<" "<<comp<<endl;
+
     TIFF *output = TIFFOpen(filename,"w");
 
-    for(long slice=0; slice<sz2; slice++)
-    {
-        TIFFSetDirectory(output,slice);
+//    for(long slice=0; slice<sz2; slice++)
+//    {
+//        TIFFSetDirectory(output,slice);
 
-        TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
-        TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
-        TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
-        TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
-        TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
-        TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-        TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
-        TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
-        TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+//        TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
+//        TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
+//        TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
+//        TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
+//        TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
+//        TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+//        TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
+//        TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+//        //TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+//        TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
 
-        // We are writing single page of the multipage file
-        TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-        TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, (uint16)sz2);
+//        // We are writing single page of the multipage file
+//        TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+//        TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, (uint16)sz2);
 
-        // the file has been already opened: rowsPerStrip it is not too large for this image width
-        TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
+//        // the file has been already opened: rowsPerStrip it is not too large for this image width
+//        TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
 
-        TIFFWriteDirectory(output);
-    }
+//        TIFFWriteDirectory(output);
+//    }
+
+    TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
+    TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
+    TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
+    TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
+    TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
+    TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+    TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
+    TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+    TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+
+    // the file has been already opened: rowsPerStrip it is not too large for this image width
+    TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
+
+    //
+    TIFFWriteDirectory(output);
 
     //
     TIFFClose(output);
@@ -211,7 +230,7 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     // load images
     unsigned char *pImg1, *pImg2, *p;
     uint32 sx1, sx2, sy1, sy2, sz1, sz2, sx, sy;
-    long imgsz;
+    long imgsz, outsz;
     uint16 datatype1, datatype2;
     uint16 comp;
 
@@ -435,14 +454,14 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 unsigned short *p2 = (unsigned short *) (pImg2);
 
                 //
-                unsigned char *p=NULL;
-
                 sx = sx1 / 2;
                 sy = sy1 / 2;
 
                 try
                 {
-                    p = new unsigned char [sx*sy];
+                    outsz = sx*sy;
+                    p = new unsigned char [outsz];
+                    memset(p, 0, outsz);
                 }
                 catch(...)
                 {
@@ -457,11 +476,15 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
 
                     long ofy1 = 2*y*sx1;
                     long ofy2 = (2*y+1)*sx1;
+
                     for(long x=0; x<sx; x++)
                     {
                         //
-                        unsigned short A = p1[ofy1 + 2*x];
-                        unsigned short B = p1[ofy1 + 2*x+1];
+                        int A = p1[ofy1 + 2*x];
+                        int B = p1[ofy1 + 2*x+1];
+
+                        //cout<<"... "<<x<<" "<<y<<" "<<A<<" "<<B<<endl;
+
                         if ( B > A ) A = B;
 
                         B = p1[ofy2 + 2*x];
@@ -483,7 +506,7 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                         if ( B > A ) A = B;
 
                         // computing max
-                        p[ofy + x] = (unsigned char) round(A);
+                        p[ofy + x] = (unsigned char)(A);
                     }
                 }
             }
@@ -501,8 +524,6 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
             QString outFileName = QString(outlist->at(0));
 
             //
-            Image4DSimple p4dimg;
-
             char *error_check = tiffwrite(const_cast<char *>(outFileName.toStdString().c_str()), p, sx, sy, 1, 1, comp);
             if(error_check)
             {
@@ -511,13 +532,20 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
             }
 
             //
+            if(pImg1)
+            {
+                delete []pImg1;
+            }
+
+            if(pImg2)
+            {
+                delete []pImg2;
+            }
+
             if(p)
             {
                 delete []p;
             }
-
-
-
         }
     }
 
