@@ -131,50 +131,57 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
 //
 char *tiffwrite(char* filename, unsigned char *p, uint32 sz0, uint32  sz1, uint32  sz2, uint16 datatype, uint16 comp)
 {
-    cout<<"tiffwrite "<<sz0<<" "<<sz1<<" "<<sz2<<" "<<datatype<<" "<<comp<<endl;
 
     TIFF *output = TIFFOpen(filename,"w");
 
-//    for(long slice=0; slice<sz2; slice++)
-//    {
-//        TIFFSetDirectory(output,slice);
-
-//        TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
-//        TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
-//        TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
-//        TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
-//        TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
-//        TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-//        TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
-//        TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
-//        //TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-//        TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-
-//        // We are writing single page of the multipage file
-//        TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-//        TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, (uint16)sz2);
-
-//        // the file has been already opened: rowsPerStrip it is not too large for this image width
-//        TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
-
-//        TIFFWriteDirectory(output);
-//    }
-
-    TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
-    TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
-    TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
-    TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
-    TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
-    TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-    TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
-    TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
-    TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-
-    // the file has been already opened: rowsPerStrip it is not too large for this image width
-    TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
-
     //
-    TIFFWriteDirectory(output);
+    if(sz2>1)
+    {
+        // 3D TIFF
+        for(long slice=0; slice<sz2; slice++)
+        {
+            TIFFSetDirectory(output,slice);
+
+            TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
+            TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
+            TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
+            TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
+            TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
+            TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+            TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
+            TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+            //TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+            TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+
+            // We are writing single page of the multipage file
+            TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+            TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, (uint16)sz2);
+
+            // the file has been already opened: rowsPerStrip it is not too large for this image width
+            TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
+
+            TIFFWriteDirectory(output);
+        }
+    }
+    else
+    {
+        // 2D TIFF
+        TIFFSetField(output, TIFFTAG_IMAGEWIDTH, sz0);
+        TIFFSetField(output, TIFFTAG_IMAGELENGTH, sz1);
+        TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, (uint16)(datatype*8));
+        TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, 1);
+        TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, sz1);
+        TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+        TIFFSetField(output, TIFFTAG_COMPRESSION, comp);
+        TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+        TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+
+        // the file has been already opened: rowsPerStrip it is not too large for this image width
+        TIFFWriteEncodedStrip(output, 0, p, sz0 * sz1 * datatype);
+
+        //
+        TIFFWriteDirectory(output);
+    }
 
     //
     TIFFClose(output);
@@ -448,26 +455,28 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
             }
 
             // downsample
+
+            //
+            sx = sx1 / 2;
+            sy = sy1 / 2;
+
+            try
+            {
+                outsz = sx*sy;
+                p = new unsigned char [outsz];
+                memset(p, 0, outsz);
+            }
+            catch(...)
+            {
+                cout<<"fail to alloc memory for out image\n";
+                return false;
+            }
+
+            //
             if(datatype1 == V3D_UINT16)
             {
                 unsigned short *p1 = (unsigned short *) (pImg1);
                 unsigned short *p2 = (unsigned short *) (pImg2);
-
-                //
-                sx = sx1 / 2;
-                sy = sy1 / 2;
-
-                try
-                {
-                    outsz = sx*sy;
-                    p = new unsigned char [outsz];
-                    memset(p, 0, outsz);
-                }
-                catch(...)
-                {
-                    cout<<"fail to alloc memory for out image\n";
-                    return false;
-                }
 
                 // computing max of 8-neighbours
                 for(long y=0; y<sy; y++)
@@ -482,9 +491,6 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                         //
                         int A = p1[ofy1 + 2*x];
                         int B = p1[ofy1 + 2*x+1];
-
-                        //cout<<"... "<<x<<" "<<y<<" "<<A<<" "<<B<<endl;
-
                         if ( B > A ) A = B;
 
                         B = p1[ofy2 + 2*x];
@@ -512,7 +518,46 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
             }
             else if(datatype1 == V3D_UINT8)
             {
+                unsigned char *p1 = (unsigned char *) (pImg1);
+                unsigned char *p2 = (unsigned char *) (pImg2);
 
+                // computing max of 8-neighbours
+                for(long y=0; y<sy; y++)
+                {
+                    long ofy = y*sx;
+
+                    long ofy1 = 2*y*sx1;
+                    long ofy2 = (2*y+1)*sx1;
+
+                    for(long x=0; x<sx; x++)
+                    {
+                        //
+                        int A = p1[ofy1 + 2*x];
+                        int B = p1[ofy1 + 2*x+1];
+                        if ( B > A ) A = B;
+
+                        B = p1[ofy2 + 2*x];
+                        if ( B > A ) A = B;
+
+                        B = p1[ofy2 + 2*x+1];
+                        if ( B > A ) A = B;
+
+                        B = p2[ofy1 + 2*x];
+                        if ( B > A ) A = B;
+
+                        B = p2[ofy1 + 2*x+1];
+                        if ( B > A ) A = B;
+
+                        B = p2[ofy2 + 2*x];
+                        if ( B > A ) A = B;
+
+                        B = p2[ofy2 + 2*x+1];
+                        if ( B > A ) A = B;
+
+                        // computing max
+                        p[ofy + x] = (unsigned char)(A);
+                    }
+                }
             }
             else
             {
