@@ -341,6 +341,8 @@ int tipdetection(V3DPluginCallback2 &callback, QWidget *parent)
 			}
 		}
 
+
+
 	for(int i=0;i<curlist.size();i++)
 		for(int j=i+1;j<curlist.size();j++)
 	{

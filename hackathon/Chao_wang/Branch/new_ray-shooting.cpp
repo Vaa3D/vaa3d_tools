@@ -39,12 +39,8 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
     int count=0;
     int point[2] = {point_y,point_x};
     float pixe = 0.0;
-<<<<<<< HEAD
-    vector<int> indd,ind1;
-=======
-     vector<int> indd,ind1;//ind1 is the all piex of each ray
+    vector<int> indd,ind1;//ind1 is the all piex of each ray
                            //indd
->>>>>>> 461364c9fc3928d5c97cae41750e2ecd8f0cacf3
     for(int i = 0; i < m; i++)   //m is the numble of the ray
         {
          float sum=0;
@@ -53,12 +49,12 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
                  pixe = 0.0;
                 {
                     pixe = interp_2d(point[1]+ray_y[i][j], point[0]+ray_x[i][j], P, sz0,sz1 );
-<<<<<<< HEAD
+
                     pixe=exp(0.05*j)*pixe;
                     //v3d_msg(QString("pixe is %1").arg(pixe));
-=======
+
                     pixe=exp(0.05*pixe);
->>>>>>> 461364c9fc3928d5c97cae41750e2ecd8f0cacf3
+
                 }
                 sum=sum+pixe;
             }
@@ -66,15 +62,11 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
           // v3d_msg(QString("indli is %1").arg(ind1[i]));
         }
 
-<<<<<<< HEAD
-    //find the max piexs of the ray
-    float max_indd=0;
-    for(int s=0;s<m;s++)
-=======
-    //get the max_piex of the ray
+
+
     float max_indd=10;
     for(int s=0;s<ind1.size();s++)
->>>>>>> 461364c9fc3928d5c97cae41750e2ecd8f0cacf3
+
     {
         if(ind1[s]>max_indd)
         {
@@ -280,7 +272,7 @@ void mul(unsigned char * & G, float * &GG,V3DLONG x1,V3DLONG y1)
      }
 }
 
-void mul(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3DLONG y1)
+void mul_xy(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3DLONG y1)
 {
     for (int i = 0; i < y1; i++)
      {
@@ -291,31 +283,7 @@ void mul(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3D
      }
 }
 
-<<<<<<< HEAD
-=======
-void mul(unsigned char * & G, float * &GG,V3DLONG x1,V3DLONG y1)
-{
-    for (int i = 0; i < y1; i++)
-     {
-          for (int j = 0; j < x1; j++)
-          {
-               GG[i*x1+j] = G[i*x1+j]*G[i*x1+j];
-          }
-     }
-}
 
-void mul(unsigned char * & Gx, unsigned char * &Gy, float *& Gxy, V3DLONG x1,V3DLONG y1)
-{
-    for (int i = 0; i < y1; i++)
-     {
-          for (int j = 0; j < x1; j++)
-          {
-               Gxy[i*x1+j] = Gx[i*x1+j]*Gy[i*x1+j];
-          }
-     }
-}
-
->>>>>>> 461364c9fc3928d5c97cae41750e2ecd8f0cacf3
 bool mip_z_slices(Image4DSimple * pp, Image4DSimple & outImage,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum)
 {
@@ -401,7 +369,7 @@ bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLO
     qDebug() << " start=" << startnum << " increment=" << increment << " end=" << endnum;
     return true;
 }
-<<<<<<< HEAD
+
 void Z_mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char * &image_mip)
 {
     for(V3DLONG iy = 0; iy < ny; iy++)
@@ -434,6 +402,4 @@ void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char 
             binary_image[i] = 0;
     }
 }
-=======
 
->>>>>>> 461364c9fc3928d5c97cae41750e2ecd8f0cacf3

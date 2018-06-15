@@ -26,14 +26,11 @@ public:
 };
 
 int branch_detection(V3DPluginCallback2 &callback, QWidget *parent);
-<<<<<<< HEAD
 int mip_corner_detection(V3DPluginCallback2 &callback, QWidget *parent);
 int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent);
 int corner_detection(V3DPluginCallback2 &callback, QWidget *parent);
-=======
 int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent);
 int curve_detection(V3DPluginCallback2 &callback, QWidget *parent);
->>>>>>> 461364c9fc3928d5c97cae41750e2ecd8f0cacf3
 int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent);
 int MIPZSlices( V3DPluginCallback2 &callback, QWidget *parent);
 bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
