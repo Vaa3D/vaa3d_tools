@@ -13,6 +13,26 @@ using namespace std;
 #define VOID 1000000000
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 
+int calSmoothedPN(int pn,NeuronTree & nt_ori,SWCsegment &segm )
+{
+	if(pn==-1) return -1;
+	NeuronSWC s_temp= nt_ori.listNeuron.at(pn-1);
+	//qDebug()<<s_temp.n<<"		"<<s_temp.pn<<"type="<<s_temp.type;
+	segm.push_back(s_temp.n);
+	if(s_temp.type==528)
+	{
+		if(s_temp.pn==-1) return s_temp.n;
+		//528 means  s_temp is a normal node,so search s_temp's parent node
+		return calSmoothedPN(s_temp.pn,nt_ori,segm);
+	}
+	else if(s_temp.type==825)
+	{
+		//825 means  s_temp is a key node in this segment,so return s_temp's n
+
+		return s_temp.n;
+	}
+	return -1;
+}
 
 
 void test_func(int aaa, double bbb)
@@ -22,12 +42,12 @@ void test_func(int aaa, double bbb)
 
 void nf__main(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    qDebug()<<"This is a test by binWW";
     OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
     if (!openDlg->exec())
         return;
 
     NeuronTree nt = openDlg->nt;
+	NeuronTree nt2 = openDlg->nt;
 
 	double lengthinVR[5] = {}, lengthin3DView[5] = {};
 	int segNuminVR[5] = {}, segNumin3DView[5] = {};
@@ -35,7 +55,7 @@ void nf__main(V3DPluginCallback2 &callback, QWidget *parent)
 	{
 		NeuronSWC curr = nt.listNeuron.at(i);
 		int parent = getParent(i,nt);
-		qDebug()<<parent;
+		//qDebug()<<parent;
 		if (parent==VOID)
 		{
 			switch(curr.type)
@@ -137,9 +157,122 @@ void nf__main(V3DPluginCallback2 &callback, QWidget *parent)
 				default:
 					break;
 			}
-			//qDebug()<<"3D View:    length = "<<lengthVR;
 		}
 	}
+
+	NeuronTree keyPoint_list;
+	NeuronTree normalpoint_list;
+	QList<SWCsegment> seg_list;
+	
+	
+
+	//output segments
+	vector <int> childnum(nt.listNeuron.size());
+	for(int i=0;i<nt.listNeuron.size();i++)
+	{
+		if (nt.listNeuron[i].parent != -1) 
+			childnum[nt.listNeuron[i].parent-1]++;
+	}
+	qDebug("run child num");
+	for(int i=0;i<nt.listNeuron.size();i++)
+	{
+		NeuronSWC ss = nt.listNeuron.at(i);
+		//SWCsegment seg;
+		if(ss.pn==-1)
+		{
+			//root node ,must be key node(key point)
+			nt.listNeuron[i].type=825;//825 means keypoint, 528 means normalpoint
+			keyPoint_list.listNeuron.append(ss);
+			keyPoint_list.hashNeuron.insert(ss.n, keyPoint_list.listNeuron.size()-1);
+		}
+		else
+		{
+			//QList<int> nkeys= neuron.hashNeuron.keys(ss.n);
+			int nkeys = childnum.at(i);
+			if(nkeys==1)
+			{
+				normalpoint_list.listNeuron.append(ss);
+				normalpoint_list.hashNeuron.insert(ss.n,normalpoint_list.listNeuron.size()-1);
+				nt.listNeuron[i].type=528;//set normal node's type as 528
+			}
+			else if((nkeys>=2)||(nkeys==0))
+			{
+				nt.listNeuron[i].type=825;
+				keyPoint_list.listNeuron.append(ss);
+				keyPoint_list.hashNeuron.insert(ss.n, keyPoint_list.listNeuron.size()-1);
+			}
+		}
+	}
+	qDebug("run child num");
+	for(int i=0,nkeypoint=0;i<nt.listNeuron.size();i++)
+	{
+		NeuronSWC s1 = nt.listNeuron.at(i);
+		if(s1.pn==-1)
+		{
+			nkeypoint++;
+		}
+		else if(s1.type==528) 
+		{
+		}
+		else if(s1.type==825)
+		{			
+			int parent=0;
+			SWCsegment segment;
+			segment.push_back(s1.n);
+			parent = calSmoothedPN(s1.pn,nt,segment);
+			keyPoint_list.listNeuron[nkeypoint].pn = parent;
+			seg_list.push_back(segment);
+			nkeypoint++;
+		}
+	}
+	childnum.clear();
+
+	int branchNuminVR[5] = {}, branchNumin3DView[5] = {};
+
+	for(int i=0;i<seg_list.size();i++){
+		if((nt.listNeuron.at(seg_list.at(i)[0]-1).radius - 0.618f < 0.001f)||(nt.listNeuron.at(seg_list.at(i)[0]-1).radius - 0.666f < 0.001f)){
+			branchNuminVR[0]++;
+
+			switch(nt2.listNeuron.at(seg_list.at(i)[0]-1).type){
+				case 2:// type ==2
+						branchNuminVR[1]++;
+					break;
+				case 3://type == 3
+						branchNuminVR[2]++;
+					break;
+				case 4:// type ==4
+						branchNuminVR[3]++;
+					break;
+				case 5://type == 5
+						branchNuminVR[4]++;
+					break;
+				default:
+					break;
+			}
+			continue;
+
+		} 
+		else {
+			branchNumin3DView[0]++;
+			switch(nt2.listNeuron.at(seg_list.at(i)[0]-1).type){
+				case 2:// type ==2
+						branchNumin3DView[1]++;
+					break;
+				case 3://type == 3
+						branchNumin3DView[2]++;
+					break;
+				case 4:// type ==4
+						branchNumin3DView[3]++;
+					break;
+				case 5://type == 5
+						branchNumin3DView[4]++;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	//qDebug("feature done");
 
 	QMessageBox infoBox;
 	infoBox.setText("Global features of VR & 3D View:");
@@ -163,7 +296,17 @@ void nf__main(V3DPluginCallback2 &callback, QWidget *parent)
 				"			Segments in Area1 : %17	<br>"
 				"			Segments in Area2 : %18	<br>"
 				"			Segments in Area3 : %19	<br>"
-				"			Segments in Area4 : %20	</font></pre>")
+				"			Segments in Area4 : %20	<br><br>"
+				"Branch Number in VR			: %21	<br>"
+				"			Segments in Area1 : %22	<br>"
+				"			Segments in Area2 : %23	<br>"
+				"			Segments in Area3 : %24	<br>"
+				"			Segments in Area4 : %25	<br><br>"
+				"Branch Number in 3D View 		: %26	<br>"
+				"			Segments in Area1 : %27	<br>"
+				"			Segments in Area2 : %28	<br>"
+				"			Segments in Area3 : %29	<br>"
+				"			Segments in Area4 : %30	</font></pre>")
 				.arg(lengthinVR[0])
 				.arg(lengthinVR[1])
 				.arg(lengthinVR[2])
@@ -183,7 +326,17 @@ void nf__main(V3DPluginCallback2 &callback, QWidget *parent)
 				.arg(segNumin3DView[1])
 				.arg(segNumin3DView[2])
 				.arg(segNumin3DView[3])
-				.arg(segNumin3DView[4]));
+				.arg(segNumin3DView[4])
+				.arg(branchNuminVR[0])
+				.arg(branchNuminVR[1])
+				.arg(branchNuminVR[2])
+				.arg(branchNuminVR[3])
+				.arg(branchNuminVR[4])
+				.arg(branchNumin3DView[0])
+				.arg(branchNumin3DView[1])
+				.arg(branchNumin3DView[2])
+				.arg(branchNumin3DView[3])
+				.arg(branchNumin3DView[4]));
 
 	infoBox.exec();
 
