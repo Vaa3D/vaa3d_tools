@@ -104,4 +104,7 @@ venv.bak/
 .mypy_cache/
 
 # data
-*.swc.idea/
+*.swc
+
+# pycharm
+.idea/
