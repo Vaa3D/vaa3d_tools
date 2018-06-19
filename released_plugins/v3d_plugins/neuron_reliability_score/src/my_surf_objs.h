@@ -61,6 +61,7 @@ struct MyMarker
 #endif
 		double radius;
 	};
+    int level;
 	int type;
 	MyMarker* parent;
 	MyMarker(){x=y=z=radius=0.0; type = 3; parent=0;}

@@ -127,7 +127,7 @@ bool neuronScore::dofunc(const QString & func_name, const V3DPluginArgList & inp
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
         NeuronTree nt_new = V_NeuronSWC_list__2__NeuronTree(nt_decomposed);
         NeuronTree nt_scored = calculateScoreTerafly(callback,infiles[0],nt_new,scoreType,radiusFactor);
-        writeSWC_file(QString(outfiles[0]),nt_scored);
+        writeESWC_file(QString(outfiles[0]),nt_scored);
     }
 	else if (func_name == tr("help"))
 	{
@@ -248,7 +248,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
         pt->radius = s.r;
         pt->type = s.type;
         pt->parent = NULL;
-        pt->degree = 0;
+        pt->level = 0;
         tree.push_back(pt);
         hashNeuron.insert(s.n, i);
     }
@@ -259,13 +259,13 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
         if (nt.listNeuron[i].pn<0) continue;
         V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
         tree[i]->parent = tree[pid];
-        tree[pid]->degree++;
+        tree[pid]->level++;
     }
     //	printf("tree constructed.\n");
     vector<Segment*> seg_list;
     for (V3DLONG i=0;i<siz;i++)
     {
-        if (tree[i]->degree!=1)//tip or branch point
+        if (tree[i]->level!=1)//tip or branch point
         {
             Segment* seg = new Segment;
             MyMarker* cur = tree[i];
@@ -274,7 +274,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
                 seg->push_back(cur);
                 cur = cur->parent;
             }
-            while(cur && cur->degree==1);
+            while(cur && cur->level==1);
             seg_list.push_back(seg);
         }
     }
@@ -332,8 +332,9 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
         for(V3DLONG i = 0; i<seg->size(); i++){
             MyMarker * marker = seg->at(i);
             double tmp = score_map[marker] * 120 +19;
-            marker->type = tmp > 255 ? 255 : tmp;
-            marker->x += start_x;           ;
+//            marker->type = tmp > 255 ? 255 : tmp;
+            marker->level = tmp > 255 ? 255 : tmp;
+            marker->x += start_x;
             marker->y += start_y;
             marker->z += start_z;
         }
@@ -370,6 +371,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
         S.z = p->z;
         S.r = p->radius;
         S.type = p->type;
+        S.level = p->level;
         result.listNeuron.push_back(S);
     }
     for (V3DLONG i=0;i<tree.size();i++)
