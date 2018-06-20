@@ -5,5 +5,6 @@
 
 void test_func(int aaa, double bbbb);
 void nf__main(V3DPluginCallback2 &callback, QWidget *parent);
-
+typedef std::vector<int> SWCsegment;
+int calSmoothedPN(int pn,NeuronTree & nt_ori,SWCsegment &segm );
 #endif
