@@ -392,7 +392,8 @@ void Z_mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char
     }
 
 }
-void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char * &binary_image,int thres)
+
+void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char * &binary_image,unsigned char thres)
 {
     for(V3DLONG i = 0; i < size_image; i++)
     {

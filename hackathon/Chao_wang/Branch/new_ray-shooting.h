@@ -18,5 +18,5 @@ bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);
 void Z_mip(V3DLONG ix,V3DLONG iy,V3DLONG iz,unsigned char * datald,unsigned char * &image_mip);
-void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char * &binary_image,int thres);
+void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char * &binary_image,unsigned char thres);
 #endif // NEW_RAYSHOOTING_H

@@ -22,7 +22,9 @@ QStringList TestPlugin::menulist() const
         <<tr("corner_detection")
         <<tr(" Gaussian Filtering ")
         <<tr("calculate the MIP of a subset of Z slices")
-		<<tr("about");
+        <<tr("about")
+        <<tr("skeletonization");
+
 }
 
 QStringList TestPlugin::funclist() const
@@ -75,6 +77,14 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             int flag=mip_corner_detection(callback,parent);
             if(flag==1)
             v3d_msg("MIP was ok ");
+
+        }
+
+        else if(menu_name==tr("skeletonization"))
+        {
+            int flag=skeletonization(callback,parent);
+            if(flag==1)
+            v3d_msg("skeletonization was ok ");
 
         }
 
@@ -1359,6 +1369,191 @@ int MIPZSlices( V3DPluginCallback2 &callback, QWidget *parent)
         return 1;
 }
 
+int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if(!curwin)
+    {
+                    v3d_msg("No image is open.");
+                    return -1;
+    }
+
+      Image4DSimple *p4DImage = callback.getImage(curwin);
+      V3DLONG sz[3];
+      sz[0] = p4DImage->getXDim();
+      sz[1] = p4DImage->getYDim();
+      sz[2] = p4DImage->getZDim();
+      V3DLONG nx=sz[0],ny=sz[1],nz=sz[2];
+      V3DLONG size_image=nx*ny*nz;
+
+      unsigned char* datald=0;
+      datald = p4DImage->getRawData();
+      struct delete_piont
+      {
+          V3DLONG xx;
+          V3DLONG yy;
+      };
+      vector<delete_piont> delete_list;
+      int neighbor[8];
+      int sum_points;
+
+      v3d_msg("mip");
+      unsigned char *image_mip=0;
+      try{image_mip=new unsigned char [size_image];}
+      catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+      Z_mip(nx,ny,nz,datald,image_mip);
+      v3d_msg("mip have complete");
+
+      v3d_msg("segment");
+      unsigned char *image_binary=0;
+      try{image_binary=new unsigned char [size_image];}
+      catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+      thres_segment(size_image,image_mip,image_binary,70);
+
+      while(true)
+      {
+          for(V3DLONG j=1;j<ny;j++)
+          {
+              for(V3DLONG i=1;i<nx;i++)
+              {
+                  if(image_binary[j*nx+i]==255)
+                  {
+                      //v3d_msg(QString(" j*nx+i is %1").arg(image_binary[j*nx+i]));
+                      neighbor[0] = 1;
+                      if (image_binary[(j+1)*nx+i] == 255) neighbor[1] = 1;
+                      else  neighbor[1] = 0;
+                      if (image_binary[(j+1)*nx+i + 1] == 255) neighbor[2] = 1;
+                      else  neighbor[2] = 0;
+                      if (image_binary[j*nx+i + 1] == 255) neighbor[3] = 1;
+                      else  neighbor[3] = 0;
+                      if (image_binary[(j-1)*nx+i + 1] == 255) neighbor[4] = 1;
+                      else  neighbor[4] = 0;
+                      if (image_binary[(j-1)*nx+i] == 255) neighbor[5] = 1;
+                      else  neighbor[5] = 0;
+                      if (image_binary[(j-1)*nx+i - 1] == 255) neighbor[6] = 1;
+                      else  neighbor[6] = 0;
+                      if (image_binary[j*nx+i - 1] == 255) neighbor[7] = 1;
+                      else  neighbor[7] = 0;
+                      if (image_binary[(j+1)*nx+i - 1] == 255) neighbor[8] = 1;
+                      else  neighbor[8] = 0;
+
+                      sum_points=0;
+                      for (int k = 1; k < 9; k++)
+                         {
+                             sum_points = sum_points + neighbor[k];
+                         }
+                      //v3d_msg(QString(" sum_points is %1").arg(sum_points));
+                      if ((sum_points >= 2) && (sum_points <= 6))
+                      {
+                          int ap = 0;
+                          if ((neighbor[1] == 0) && (neighbor[2] == 1)) ap++;
+                          if ((neighbor[2] == 0) && (neighbor[3] == 1)) ap++;
+                          if ((neighbor[3] == 0) && (neighbor[4] == 1)) ap++;
+                          if ((neighbor[4] == 0) && (neighbor[5] == 1)) ap++;
+                          if ((neighbor[5] == 0) && (neighbor[6] == 1)) ap++;
+                          if ((neighbor[6] == 0) && (neighbor[7] == 1)) ap++;
+                          if ((neighbor[7] == 0) && (neighbor[8] == 1)) ap++;
+                          if ((neighbor[8] == 0) && (neighbor[1] == 1)) ap++;
+                          if (ap == 1)
+                          {
+                              if ((neighbor[1] * neighbor[3] * neighbor[5] == 0) && (neighbor[3] * neighbor[5] * neighbor[7] == 0))
+                              {
+                                  delete_piont pp;
+                                  pp.xx=i;
+                                  pp.yy=j;
+                                  delete_list.push_back(pp);
+                                 // v3d_msg(QString("x is %1").arg(i));
+                              }
+                          }
+                      }
+                   }
+
+              }
+          }
+
+          if (delete_list.size() == 0) break;
+          for (size_t i = 0; i < delete_list.size(); i++)
+          {
+             image_binary[delete_list[i].xx+delete_list[i].yy*nx]=0;
+          }
+          delete_list.clear();
+
+          for(V3DLONG j=1;j<ny;j++)
+          {
+              for(V3DLONG i=1;i<nx;i++)
+              {
+                  if(image_binary[j*nx+i]==255)
+                  {
+                      neighbor[0] = 1;
+                      if (image_binary[(j+1)*nx+i] == 255) neighbor[1] = 1;
+                      else  neighbor[1] = 0;
+                      if (image_binary[(j+1)*nx+i + 1] == 255) neighbor[2] = 1;
+                      else  neighbor[2] = 0;
+                      if (image_binary[j*nx+i + 1] == 255) neighbor[3] = 1;
+                      else  neighbor[3] = 0;
+                      if (image_binary[(j-1)*nx+i + 1] == 255) neighbor[4] = 1;
+                      else  neighbor[4] = 0;
+                      if (image_binary[(j-1)*nx+i] == 255) neighbor[5] = 1;
+                      else  neighbor[5] = 0;
+                      if (image_binary[(j-1)*nx+i - 1] == 255) neighbor[6] = 1;
+                      else  neighbor[6] = 0;
+                      if (image_binary[j*nx+i - 1] == 255) neighbor[7] = 1;
+                      else  neighbor[7] = 0;
+                      if (image_binary[(j+1)*nx+i - 1] == 255) neighbor[8] = 1;
+                      else  neighbor[8] = 0;
+
+                  for (int k = 1; k < 9; k++)
+                     {
+                         sum_points = sum_points + neighbor[k];
+                     }
+                  if ((sum_points >= 2) && (sum_points <= 6))
+                      {
+                          int ap = 0;
+                          if ((neighbor[1] == 0) && (neighbor[2] == 1)) ap++;
+                          if ((neighbor[2] == 0) && (neighbor[3] == 1)) ap++;
+                          if ((neighbor[3] == 0) && (neighbor[4] == 1)) ap++;
+                          if ((neighbor[4] == 0) && (neighbor[5] == 1)) ap++;
+                          if ((neighbor[5] == 0) && (neighbor[6] == 1)) ap++;
+                          if ((neighbor[6] == 0) && (neighbor[7] == 1)) ap++;
+                          if ((neighbor[7] == 0) && (neighbor[8] == 1)) ap++;
+                          if ((neighbor[8] == 0) && (neighbor[1] == 1)) ap++;
+                          if (ap == 1)
+                          {
+                              if ((neighbor[1] * neighbor[3] * neighbor[7] == 0) && (neighbor[5] * neighbor[1] * neighbor[7] == 0))
+                              {
+                                  delete_piont pp;
+                                  pp.xx=i;
+                                  pp.yy=j;
+                                  delete_list.push_back(pp);
+                              }
+                          }
+                      }
+                  }
+
+              }
+          }
+          if (delete_list.size() == 0) break;
+          for (size_t i = 0; i < delete_list.size(); i++)
+          {
+             image_binary[delete_list[i].xx+delete_list[i].yy*nx]=0;
+          }
+          delete_list.clear();
+
+      }
+      Image4DSimple * new4DImage = new Image4DSimple();
+      new4DImage->setData((unsigned char *)image_binary, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
+      //v3dhandle newwin = callback.newImageWindow();
+      //v3dhandle newwin = callback.currentImageWindow();
+      callback.setImage(curwin, new4DImage);
+      callback.setImageName(curwin, "maximum intensity projection image");
+      callback.updateImageWindow(curwin);
+      //v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+      //callback.setLandmark(curwin, curlist);
+
+
+
+
+}
 
 
 

@@ -37,6 +37,7 @@ bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
 void printHelp();
 int new_branch_detection(V3DPluginCallback2 &callback, QWidget *parent);
+int skeletonization(V3DPluginCallback2 &callback, QWidget *parent);
 
 #endif
 
