@@ -66,13 +66,25 @@ def swc_to_dframe(swc_abspath):
     df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "x","y","z"], index_col=0, usecols=(0,2,3,4), dtype={"node_id": int, "x": float, "y": float, "z":float})
     return df
 
-def resample_swc(input_path, output_dir=):
+def resample_swc(input_fname, input_path, output_dir="../data/04_human_branches_upsampled/"):
     """
     sometimes, inter-node distances can be v large, which is bad for subsampling.
     this is a wrapper to call Vaa3D's resample_swc script
     """
-    
     raise Exception("not implemented")
+    input = open(input_path, "r")
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    #outfile = os.path.join(output_dir, input_fname)
+    #output = open(outfile, "w+")
+
+    # TODO: call C plug-in here
+
+    input.close()
+    #output.close()
+    
+    
     
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
