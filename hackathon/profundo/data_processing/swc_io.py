@@ -65,14 +65,21 @@ def swc_to_dframe(swc_abspath):
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
     df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "x","y","z"], index_col=0, usecols=(0,2,3,4), dtype={"node_id": int, "x": float, "y": float, "z":float})
     return df
+
+def resample_swc(input_path, output_dir=):
+    """
+    sometimes, inter-node distances can be v large, which is bad for subsampling.
+    this is a wrapper to call Vaa3D's resample_swc script
+    """
+    
+    raise Exception("not implemented")
     
 
-def save_branch_as_swc(branch: list, branch_name: str):
+def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
     """
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
     assert(isinstance(branch, list))
-    outdir = "../data/03_human_branches_splitted/"
     outdir = os.path.abspath(outdir)
     if not os.path.exists(outdir):
         os.mkdir(outdir)
