@@ -64,6 +64,8 @@ bool OpenSWCDialog::setTree(const QString & file)
 {
 	nt = readSWC_file(file);
 	file_name = file;
+    QString mk_filename = file.left(file.length() - 4) + QString(".apo");
+    mk = readAPO_file(mk_filename); // LMG 12-06-2018 in order to read markers if available
 	
 	accept();
 	return true;

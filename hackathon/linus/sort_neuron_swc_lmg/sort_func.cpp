@@ -29,11 +29,13 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     NeuronTree nt = openDlg->nt;
     QList<NeuronSWC> neuron = nt.listNeuron;
+    QList<CellAPO> markers = openDlg->mk;
 
     V3DLONG rootid;
 	V3DLONG thres;
     V3DLONG root_dist_thres;
-	bool ok;
+
+    bool ok;
     rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,2147483647,1,&ok);
 	if (!ok)
 		rootid = VOID;
@@ -46,7 +48,7 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
 	QList<NeuronSWC> result;
 	QString fileOpenName = openDlg->file_name;
-    if (SortSWC(neuron, result ,rootid, thres, root_dist_thres))
+    if (SortSWC(neuron, result ,rootid, thres, root_dist_thres,markers))
 	{
 		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
 		//write new SWC to file
@@ -71,12 +73,13 @@ void sort_toolbox(const V3DPluginArgList & input)
 	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input.at(0).p);
 	NeuronTree nt(paras->nt);
 	QList<NeuronSWC> neuron = nt.listNeuron;
+    QList<CellAPO> markers; // LMG 12-06-2018, to be defined in order to work properly
 
 	V3DLONG rootid;
 	V3DLONG thres;
     V3DLONG root_dist_thres;
 	bool ok;
-	rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
+    rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in fileor the linked marker is set as default)",1,1,neuron.size(),1,&ok);
 	if (!ok)
 		rootid = VOID;
 	thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
@@ -88,7 +91,7 @@ void sort_toolbox(const V3DPluginArgList & input)
 
 	QList<NeuronSWC> result;
 	QString fileOpenName = nt.file;
-    if (SortSWC(neuron, result ,rootid, thres, root_dist_thres))
+    if (SortSWC(neuron, result ,rootid, thres, root_dist_thres,markers))
 	{
 		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
 		//write new SWC to file
@@ -120,6 +123,7 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 
     NeuronTree nt;
     QList<NeuronSWC> neuron, result;
+    QList<CellAPO> markers; // LMG 12-06-2018, to be defined in order to work properly
 	bool hasPara, hasOutput;
 	if (input.size()==1) 
 	{
@@ -156,16 +160,17 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 	{
 		if (paralist->size()==0)
 		{
-			cout<< "Threshold not set: All points will connected automatically." << endl;
-			cout<<"No root ID is specified: by default will use the first root in the file."  <<endl;
+            cout<< "Root threshold not set: no local branches will be connected." << endl;
+            cout<< "Threshold not set: All points will be connected automatically." << endl;
+            cout<< "No root ID is specified: by default will use the first root in the file."  <<endl;
 			rootid = VOID;
 			thres = VOID;
             root_dist_thres = VOID;
 		}
 		else if (paralist->size() >= 1)
 		{
-            rootid = atoi(paralist->at(1));
-            cout<<"root id: "<<rootid<<endl;
+            root_dist_thres = atoi(paralist->at(0));
+            cout<<"root threshold distance: "<<root_dist_thres<<endl;
 			if (paralist->size() ==2 )
 			{
                 thres = atof(paralist->at(0));
@@ -173,8 +178,8 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 			}
             else if (paralist->size() ==3 )
             {
-                root_dist_thres = atoi(paralist->at(1));
-                cout<<"root threshold distance: "<<root_dist_thres<<endl;
+                rootid = atoi(paralist->at(1));
+                cout<<"root id: "<<rootid<<endl;
             }
             else if (paralist->size() >3)
 			{
@@ -199,8 +204,11 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 	}
 
 	if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
+    {
 		neuron = readSWC_file(fileOpenName).listNeuron;
-	else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
+        markers = readAPO_file(fileOpenName.left(fileOpenName.length() - 4) + QString(".apo"));
+    }
+    else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
 	{
 		P_ObjectFileType linker_object;
 		if (!loadAnoFile(fileOpenName,linker_object))
@@ -209,12 +217,15 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 			return false;
 		}
 		QStringList nameList = linker_object.swc_file_list;
+        QStringList aponameList = linker_object.pointcloud_file_list;
 		V3DLONG neuronNum = nameList.size();
 		vector<QList<NeuronSWC> > nt_list;
 		for (V3DLONG i=0;i<neuronNum;i++)
 		{
 			QList<NeuronSWC> tmp = readSWC_file(nameList.at(i)).listNeuron;
 			nt_list.push_back(tmp);
+            QList<CellAPO> tmp2 = readAPO_file(aponameList.at(i));
+            markers.append(tmp2); //LMG 21-6-2018 not tested for multiple files yet
 		}
 		if (!combine_linker(nt_list, neuron))
 		{
@@ -228,7 +239,7 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 		return false;
 	}
 
-    if (!SortSWC(neuron, result , rootid, thres, root_dist_thres))
+    if (!SortSWC(neuron, result , rootid, thres, root_dist_thres, markers))
 	{
 		cout<<"Error in sorting swc"<<endl;
 		return false;
