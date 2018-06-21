@@ -1408,7 +1408,7 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
       unsigned char *image_binary=0;
       try{image_binary=new unsigned char [size_image];}
       catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-      thres_segment(size_image,image_mip,image_binary,70);
+      thres_segment(size_image,image_mip,image_binary,40);
 
       while(true)
       {
@@ -1416,25 +1416,27 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
           {
               for(V3DLONG i=1;i<nx;i++)
               {
-                  if(image_binary[j*nx+i]==255)
+                  if(image_binary[j*nx+i]>0)
                   {
-                      //v3d_msg(QString(" j*nx+i is %1").arg(image_binary[j*nx+i]));
+
+                      //v3d_msg(QString(" j is %1,i is %2,index is %3,pixel is %4").arg(j).arg(i).arg(j*nx+i).arg(image_binary[j*nx+i]));
+                      //v3d_msg(QString(" j*nx+i is %1,(j+1)*nx+i is %2,(j)*nx+i + 1 is %3，(j-1)*nx+i + 1 is %4 ").arg(j*nx+i).arg((j+1)*nx+i).arg((j)*nx+i + 1).arg((j-1)*nx+i + 1));
                       neighbor[0] = 1;
-                      if (image_binary[(j+1)*nx+i] == 255) neighbor[1] = 1;
+                      if (image_binary[(j-1)*nx+i] == 255) neighbor[1] = 1;
                       else  neighbor[1] = 0;
-                      if (image_binary[(j+1)*nx+i + 1] == 255) neighbor[2] = 1;
+                      if (image_binary[(j-1)*nx+i + 1] == 255) neighbor[2] = 1;
                       else  neighbor[2] = 0;
                       if (image_binary[j*nx+i + 1] == 255) neighbor[3] = 1;
                       else  neighbor[3] = 0;
-                      if (image_binary[(j-1)*nx+i + 1] == 255) neighbor[4] = 1;
+                      if (image_binary[(j+1)*nx+i + 1] == 255) neighbor[4] = 1;
                       else  neighbor[4] = 0;
-                      if (image_binary[(j-1)*nx+i] == 255) neighbor[5] = 1;
+                      if (image_binary[(j+1)*nx+i] == 255) neighbor[5] = 1;
                       else  neighbor[5] = 0;
-                      if (image_binary[(j-1)*nx+i - 1] == 255) neighbor[6] = 1;
+                      if (image_binary[(j+1)*nx+i - 1] == 255) neighbor[6] = 1;
                       else  neighbor[6] = 0;
                       if (image_binary[j*nx+i - 1] == 255) neighbor[7] = 1;
                       else  neighbor[7] = 0;
-                      if (image_binary[(j+1)*nx+i - 1] == 255) neighbor[8] = 1;
+                      if (image_binary[(j-1)*nx+i - 1] == 255) neighbor[8] = 1;
                       else  neighbor[8] = 0;
 
                       sum_points=0;
@@ -1462,7 +1464,7 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
                                   pp.xx=i;
                                   pp.yy=j;
                                   delete_list.push_back(pp);
-                                 // v3d_msg(QString("x is %1").arg(i));
+                                  //v3d_msg(QString("x is %1").arg(i));
                               }
                           }
                       }
@@ -1472,7 +1474,7 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
           }
 
           if (delete_list.size() == 0) break;
-          for (size_t i = 0; i < delete_list.size(); i++)
+          for (V3DLONG i = 0; i < delete_list.size(); i++)
           {
              image_binary[delete_list[i].xx+delete_list[i].yy*nx]=0;
           }
@@ -1482,26 +1484,27 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
           {
               for(V3DLONG i=1;i<nx;i++)
               {
-                  if(image_binary[j*nx+i]==255)
+                  if(image_binary[j*nx+i]>0)
                   {
                       neighbor[0] = 1;
-                      if (image_binary[(j+1)*nx+i] == 255) neighbor[1] = 1;
+                      if (image_binary[(j-1)*nx+i] == 255) neighbor[1] = 1;
                       else  neighbor[1] = 0;
-                      if (image_binary[(j+1)*nx+i + 1] == 255) neighbor[2] = 1;
+                      if (image_binary[(j-1)*nx+i + 1] == 255) neighbor[2] = 1;
                       else  neighbor[2] = 0;
                       if (image_binary[j*nx+i + 1] == 255) neighbor[3] = 1;
                       else  neighbor[3] = 0;
-                      if (image_binary[(j-1)*nx+i + 1] == 255) neighbor[4] = 1;
+                      if (image_binary[(j+1)*nx+i + 1] == 255) neighbor[4] = 1;
                       else  neighbor[4] = 0;
-                      if (image_binary[(j-1)*nx+i] == 255) neighbor[5] = 1;
+                      if (image_binary[(j+1)*nx+i] == 255) neighbor[5] = 1;
                       else  neighbor[5] = 0;
-                      if (image_binary[(j-1)*nx+i - 1] == 255) neighbor[6] = 1;
+                      if (image_binary[(j+1)*nx+i - 1] == 255) neighbor[6] = 1;
                       else  neighbor[6] = 0;
                       if (image_binary[j*nx+i - 1] == 255) neighbor[7] = 1;
                       else  neighbor[7] = 0;
-                      if (image_binary[(j+1)*nx+i - 1] == 255) neighbor[8] = 1;
+                      if (image_binary[(j-1)*nx+i - 1] == 255) neighbor[8] = 1;
                       else  neighbor[8] = 0;
 
+                    sum_points=0;
                   for (int k = 1; k < 9; k++)
                      {
                          sum_points = sum_points + neighbor[k];
@@ -1521,10 +1524,10 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
                           {
                               if ((neighbor[1] * neighbor[3] * neighbor[7] == 0) && (neighbor[5] * neighbor[1] * neighbor[7] == 0))
                               {
-                                  delete_piont pp;
-                                  pp.xx=i;
-                                  pp.yy=j;
-                                  delete_list.push_back(pp);
+                                  delete_piont p;
+                                  p.xx=i;
+                                  p.yy=j;
+                                  delete_list.push_back(p);
                               }
                           }
                       }
@@ -1533,7 +1536,7 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
               }
           }
           if (delete_list.size() == 0) break;
-          for (size_t i = 0; i < delete_list.size(); i++)
+          for (V3DLONG i = 0; i < delete_list.size(); i++)
           {
              image_binary[delete_list[i].xx+delete_list[i].yy*nx]=0;
           }
