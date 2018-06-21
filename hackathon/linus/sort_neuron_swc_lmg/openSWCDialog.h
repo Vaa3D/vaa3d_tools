@@ -11,6 +11,7 @@ public:
 	QListWidget * listWidget;
 	QList<NeuronTree> _3DViewerTreeList;
 	NeuronTree  nt;
+    QList<CellAPO>  mk;
 	QString file_name;
 
 	OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * callback);
