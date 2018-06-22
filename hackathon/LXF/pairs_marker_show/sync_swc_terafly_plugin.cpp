@@ -9,7 +9,7 @@
 #include "openSWCDialog.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(sync_swc_terafly, sync_swc_terafly);
-int i=1;
+int i=0;
 qint64 etime1, etime2;
 QElapsedTimer timer1;
 QString filename;
@@ -103,10 +103,9 @@ void lookPanel::_slot_set_markers()
     v3dhandle win = m_v3d.currentImageWindow();
     QList<ImageMarker> marker;
     marker = readMarker_file(filename);
-    if(i>marker.size())
+    if(i==marker.size())
     {
         QDateTime mytime = QDateTime::currentDateTime();
-        cout<<"out = "<<out.size()<<endl;
         QString outfile =filename + "_all_time_"+mytime.toString("yyyy_MM_dd_hh_mm")+".txt";
         export_txt(out,outfile);
         ind = false;
@@ -115,34 +114,25 @@ void lookPanel::_slot_set_markers()
     }
     LandmarkList ll;
     LocationSimple ls1,ls2;
-    bool ok;
-    for(V3DLONG j=0;j<marker.size();j++)
-    {
-        if(marker[j].comment.toInt(&ok,0)==i)
-        {
-            ls1.x = marker[j].x;
-            ls1.y = marker[j].y;
-            ls1.z = marker[j].z;
-            ls1.color.r = 255;
-            ls1.color.g = 0;
-            ls1.color.b = 0;
-            ls1.color.a = 0;
-        }
-        else if(marker[j].comment.toInt(&ok,0)==i+1)
-        {
 
-            ls2.x = marker[j].x;
-            ls2.y = marker[j].y;
-            ls2.z = marker[j].z;
-            ls2.color.r = 255;
-            ls2.color.g = 0;
-            ls2.color.b = 0;
-            ls2.color.a = 0;
-        }
-    }
+    ls1.x = marker[i].x;
+    ls1.y = marker[i].y;
+    ls1.z = marker[i].z;
+    ls1.color.r = 255;
+    ls1.color.g = 0;
+    ls1.color.b = 0;
+    ls1.color.a = 0;
+
+    ls2.x = marker[i+1].x;
+    ls2.y = marker[i+1].y;
+    ls2.z = marker[i+1].z;
+    ls2.color.r = 255;
+    ls2.color.g = 0;
+    ls2.color.b = 0;
+    ls2.color.a = 0;
+
     ll.push_back(ls1);
     ll.push_back(ls2);
-
 
     m_v3d.setLandmark(win,ll);
     m_v3d.updateImageWindow(win);
