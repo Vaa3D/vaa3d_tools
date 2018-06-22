@@ -105,8 +105,9 @@ void lookPanel::_slot_set_markers()
     marker = readMarker_file(filename);
     if(i>marker.size())
     {
+        QDateTime mytime = QDateTime::currentDateTime();
         cout<<"out = "<<out.size()<<endl;
-        QString outfile =filename + "_all_time.txt";
+        QString outfile =filename + "_all_time_"+mytime.toString("yyyy_MM_dd_hh_mm")+".txt";
         export_txt(out,outfile);
         ind = false;
         v3d_msg("there is no new marker any more!");
@@ -190,7 +191,7 @@ bool export_txt(QList<V3DLONG> &out,QString fileSaveName)
 
     for (int i=0;i<out.size();i++)
     {
-        myfile << out[i] <<"milliseconds"<<endl;
+        myfile << out[i] <<endl;
 
     }
 
