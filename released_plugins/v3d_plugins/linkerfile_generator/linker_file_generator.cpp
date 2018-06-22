@@ -24,7 +24,7 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code);
 QStringList LinkerPlugin::menulist() const
 {
     return QStringList()
-	<< tr("for all SWC (e.g. neuron) files under a directory")
+    << tr("for all SWC/ESWC (e.g. neuron) files under a directory")
 	<< tr("for all APO (point cloud) files under a directory")
 	<< tr("for all TIF images under a directory")
 	<< tr("for all LSM images under a directory")
@@ -36,7 +36,7 @@ QStringList LinkerPlugin::menulist() const
 
 void LinkerPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("for all SWC (e.g. neuron) files under a directory"))
+    if (menu_name == tr("for all SWC/ESWC (e.g. neuron) files under a directory"))
 		GeneratorAno4FilesInDir(callback, parent, 1);
 	else if (menu_name == tr("for all APO (point cloud) files under a directory"))
 		GeneratorAno4FilesInDir(callback, parent, 2);
@@ -77,7 +77,7 @@ bool LinkerPlugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
 		cout<<"in_folder    choose a directory that contain specified files"<<endl;
           cout<<"ano_file     specify the ano file name to be created" <<endl;
 		cout<<"method_code  ano options, default 1"<<endl;
-          cout<<"             1 for for all SWC (e.g. neuron) files under a directory"<< endl;
+          cout<<"             1 for for all SWC/ESWC (e.g. neuron) files under a directory"<< endl;
           cout<<"             2 for for all APO (point cloud) files under a directory"<< endl;
           cout<<"             3 for all TIF images under a directory"<< endl;
           cout<<"             4 for all LSM images under a directory"<< endl;
@@ -142,6 +142,7 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
 	{
 		case 1:
 			qsl_filters+="*.swc";
+            qsl_filters+="*.eswc";
 			break;
 		case 2:
 			qsl_filters+="*.apo";
@@ -170,6 +171,7 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
 			qsl_filters+="*.lsm";
 			qsl_filters+="*.raw";
 			qsl_filters+="*.swc";
+            qsl_filters+="*.eswc";
 			qsl_filters+="*.apo";
 			qsl_filters+="*.v3ds";
 			qsl_filters+="*.obj";
@@ -215,6 +217,8 @@ void createANO(QString qs_dir_swc, QString ano_file, int method_code)
 		QFileInfo curfile_info(qsl_filelist[i]);
 		if (curfile_info.suffix().toUpper()=="SWC")
 			temp = qsl_filelist[i].prepend("SWCFILE=");
+        else if (curfile_info.suffix().toUpper()=="ESWC")
+            temp = qsl_filelist[i].prepend("SWCFILE=");
 		else if (curfile_info.suffix().toUpper()=="APO")
 			temp = qsl_filelist[i].prepend("APOFILE=");
 		else if (curfile_info.suffix().toUpper()=="V3DS")
