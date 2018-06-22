@@ -13,8 +13,10 @@ int i=1;
 qint64 etime1, etime2;
 QElapsedTimer timer1;
 QString filename;
+bool ind = false;
+QList<V3DLONG> out;
 static lookPanel *panel = 0;
-
+bool export_txt(QList<V3DLONG> &out,QString fileSaveName);
  
 QStringList sync_swc_terafly::menulist() const
 {
@@ -68,16 +70,16 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 {
     gridLayout = new QGridLayout();
     QPushButton* show_markers     = new QPushButton("next pairs of markers");
-    QPushButton* start            = new QPushButton("     start time      ");
-    QPushButton* end              = new QPushButton("      end time       ");
+//    QPushButton* start            = new QPushButton("     start time      ");
+ //   QPushButton* end              = new QPushButton("      end time       ");
     gridLayout->addWidget(show_markers, 0,0);
-    gridLayout->addWidget(start, 0,1);
-    gridLayout->addWidget(end, 0,2);
+   // gridLayout->addWidget(start, 0,1);
+   // gridLayout->addWidget(end, 0,2);
     setLayout(gridLayout);
     setWindowTitle(QString("pairs_marker_show"));
     connect(show_markers,     SIGNAL(clicked()), this, SLOT(_slot_set_markers()));
-    connect(start,     SIGNAL(clicked()), this, SLOT(_start_time()));
-    connect(end,     SIGNAL(clicked()), this, SLOT(_end_time()));
+ //   connect(start,     SIGNAL(clicked()), this, SLOT(_start_time()));
+ //   connect(end,     SIGNAL(clicked()), this, SLOT(_end_time()));
 
 }
 
@@ -91,12 +93,22 @@ lookPanel::~lookPanel()
 void lookPanel::_slot_set_markers()
 {
 
+    if(ind)
+    {
+        etime1 = timer1.elapsed();
+        out.push_back(etime1);
+    }
+
+
     v3dhandle win = m_v3d.currentImageWindow();
-   // QString filename = "113.v3draw.marker";
     QList<ImageMarker> marker;
     marker = readMarker_file(filename);
     if(i>marker.size())
     {
+        cout<<"out = "<<out.size()<<endl;
+        QString outfile = "final_time.txt";
+        export_txt(out,outfile);
+        ind = false;
         v3d_msg("there is no new marker any more!");
         return;
     }
@@ -129,28 +141,21 @@ void lookPanel::_slot_set_markers()
     }
     ll.push_back(ls1);
     ll.push_back(ls2);
-    cout<<ls1.x<<"  "<<ls1.y<<"  "<<ls1.z<<"  "<<endl;
-    cout<<ls2.x<<"  "<<ls2.y<<"  "<<ls2.z<<"  "<<endl;
-    cout<<"ll = "<<ll.size()<<endl;
+
 
     m_v3d.setLandmark(win,ll);
     m_v3d.updateImageWindow(win);
     m_v3d.pushObjectIn3DWindow(win);
     i=i+2;
 
-
-
-
-
-
-
-
+    timer1.start();
+    ind = true;
 
 
 }
 void lookPanel::_start_time()
 {
-    timer1.start();
+
 }
 void lookPanel::_end_time()
 {
@@ -175,4 +180,20 @@ bool sync_swc_terafly::dofunc(const QString & func_name, const V3DPluginArgList 
 	return true;
 }
 
+bool export_txt(QList<V3DLONG> &out,QString fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
 
+
+    for (int i=0;i<out.size();i++)
+    {
+        myfile << out[i] <<"milliseconds"<<endl;
+
+    }
+
+    file.close();
+    return true;
+}
