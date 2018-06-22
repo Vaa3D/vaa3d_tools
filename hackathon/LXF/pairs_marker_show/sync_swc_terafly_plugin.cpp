@@ -106,7 +106,7 @@ void lookPanel::_slot_set_markers()
     if(i>marker.size())
     {
         cout<<"out = "<<out.size()<<endl;
-        QString outfile = "final_time.txt";
+        QString outfile =filename + "all_time.txt";
         export_txt(out,outfile);
         ind = false;
         v3d_msg("there is no new marker any more!");
