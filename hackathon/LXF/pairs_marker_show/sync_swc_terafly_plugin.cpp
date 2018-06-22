@@ -6,11 +6,13 @@
 #include "v3d_message.h"
 #include <vector>
 #include "sync_swc_terafly_plugin.h"
+#include "openSWCDialog.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(sync_swc_terafly, sync_swc_terafly);
 int i=1;
 qint64 etime1, etime2;
 QElapsedTimer timer1;
+QString filename;
 static lookPanel *panel = 0;
 
  
@@ -30,7 +32,11 @@ QStringList sync_swc_terafly::funclist() const
 void sync_swc_terafly::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("show_markers"))
-	{
+    {
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
+            return;
+        filename = openDlg->file_name;
         if (panel)
         {
             panel->show();
@@ -86,7 +92,7 @@ void lookPanel::_slot_set_markers()
 {
 
     v3dhandle win = m_v3d.currentImageWindow();
-    QString filename = "113.v3draw.marker";
+   // QString filename = "113.v3draw.marker";
     QList<ImageMarker> marker;
     marker = readMarker_file(filename);
     if(i>marker.size())
@@ -149,7 +155,9 @@ void lookPanel::_start_time()
 void lookPanel::_end_time()
 {
     etime1 = timer1.elapsed();
-    qDebug() << " **** connect preprocessing takes [" << etime1 << " milliseconds]";
+    qDebug() << " **** connect preprocessing takes [" << etime1 << " milliseconds]"<<endl;
+    QString timemsg = "connect preprocessing takes " + QString::number(etime1) + " milliseconds";
+    v3d_msg(timemsg);
 }
 bool sync_swc_terafly::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {

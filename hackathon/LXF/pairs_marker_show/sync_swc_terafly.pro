@@ -5,9 +5,11 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 
-HEADERS	+= sync_swc_terafly_plugin.h
+HEADERS	+= sync_swc_terafly_plugin.h \
+    openSWCDialog.h
 
-SOURCES	+= sync_swc_terafly_plugin.cpp
+SOURCES	+= sync_swc_terafly_plugin.cpp \
+    openSWCDialog.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
