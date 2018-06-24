@@ -107,10 +107,10 @@ void lookPanel::_slot_set_markers()
     if(i==marker.size())
     {
         QDateTime mytime = QDateTime::currentDateTime();
-//        QString outfile =filename + "_all_time_"+mytime.toString("yyyy_MM_dd_hh_mm")+".txt";
-//        QString outswcfile =filename + mytime.toString("yyyy_MM_dd_hh_mm")+".swc";
-        QString outfile = QCoreApplication::applicationDirPath()+"/["+filename+"]_3D_"+mytime.toString("yyyy_MM_dd_hh_mm")+".txt";
-        QString outswcfile = QCoreApplication::applicationDirPath()+"/["+filename+"]_3D_"+mytime.toString("yyyy_MM_dd_hh_mm")+".swc";
+        QString outfile =filename + "_3D_" + mytime.toString("yyyy_MM_dd_hh_mm")+".txt";
+        QString outswcfile =filename + "_3D_"+ mytime.toString("yyyy_MM_dd_hh_mm")+".swc";
+//        QString outfile = QCoreApplication::applicationDirPath()+"/["+filename+"]_3D_"+mytime.toString("yyyy_MM_dd_hh_mm")+".txt";
+//        QString outswcfile = QCoreApplication::applicationDirPath()+"/["+filename+"]_3D_"+mytime.toString("yyyy_MM_dd_hh_mm")+".swc";
         NeuronTree nt = m_v3d.getSWC(win);
         export_txt(out,outfile);
         writeSWC_file(outswcfile,nt);
