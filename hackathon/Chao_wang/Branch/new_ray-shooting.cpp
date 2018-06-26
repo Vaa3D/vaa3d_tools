@@ -37,7 +37,6 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
 {
 
     int count=0;
-    int point[2] = {point_y,point_x};
     float pixe = 0.0;
     vector<int> indd,ind1;//ind1 is the all piex of each ray
                            //indd
@@ -48,12 +47,10 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
             {
                  pixe = 0.0;
                 {
-                    pixe = interp_2d(point[1]+ray_y[i][j], point[0]+ray_x[i][j], P, sz0,sz1 );
+                    pixe = interp_2d(point_y+ray_y[i][j], point_x+ray_x[i][j], P, sz0,sz1 , point_x, point_y);
 
                     pixe=exp(0.05*j)*pixe;
                     //v3d_msg(QString("pixe is %1").arg(pixe));
-
-                    pixe=exp(0.05*pixe);
 
                 }
                 sum=sum+pixe;
@@ -119,13 +116,21 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
 
 }
 
-float interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLONG sz1)
+float interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLONG sz1,int old_x,int old_y)
 {
     float result;
 
     if(point_y < 0||point_x < 0||point_y > sz1-1||point_x > sz0-1)
         return 0.0;
     else if(point_x < 1||point_y < 1||point_x > sz0-2||point_y > sz1-2)
+    {
+        result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
+        return result;
+    }
+    else if((abs(point_x-old_x)==1)||(abs(point_x-old_x)==2)||(abs(point_x-old_x)==3)||(abs(point_x-old_x)==4)||(abs(point_x-old_x)==5)||(abs(point_x-old_x)==6)||(abs(point_x-old_x)==7)||(abs(point_x-old_x)==8)||
+            (abs(point_y-old_y)==1)||(abs(point_y-old_y)==2)||(abs(point_y-old_y)==3)||(abs(point_y-old_y)==4)||(abs(point_y-old_y)==5)||(abs(point_y-old_y)==6)||(abs(point_y-old_y)==7)||(abs(point_y-old_y)==8)||
+            (abs(point_x-old_x)==9)||(abs(point_x-old_x)==10)||(abs(point_x-old_x)==11)||(abs(point_x-old_x)==12)||(abs(point_x-old_x)==13)||(abs(point_x-old_x)==14)||(abs(point_x-old_x)==15)||(abs(point_x-old_x)==16)||
+            (abs(point_y-old_y)==9)||(abs(point_y-old_y)==10)||(abs(point_y-old_y)==11)||(abs(point_y-old_y)==12)||(abs(point_y-old_y)==13)||(abs(point_y-old_y)==14)||(abs(point_y-old_y)==15)||(abs(point_y-old_y)==16))
     {
         result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
         return result;
@@ -393,6 +398,29 @@ void Z_mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char
 
 }
 
+void mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char * &image_mip,int layer)
+{
+    for(V3DLONG iy = 0; iy < ny; iy++)
+    {
+        V3DLONG offsetj = iy*nx;
+        for(V3DLONG ix = 0; ix < nx; ix++)
+        {
+            int max_mip = 0;
+            for(V3DLONG iz = nz; iz < nz+layer; iz++)
+            {
+                V3DLONG offsetk = iz*nx*ny;
+                if(datald[offsetk + offsetj + ix] >= max_mip)
+                {
+                    image_mip[iy*nx + ix] = datald[offsetk + offsetj + ix];
+                    max_mip = datald[offsetk + offsetj + ix];
+                //    v3d_msg(QString("max_mip is %1").arg(max_mip));
+                }
+            }
+        }
+    }
+
+}
+
 void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char * &binary_image,unsigned char thres)
 {
     for(V3DLONG i = 0; i < size_image; i++)
@@ -403,4 +431,153 @@ void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char 
             binary_image[i] = 0;
     }
 }
+
+//set<int> GetAi(int a[], int length)//获取A0~A5
+//{
+//    set<int> vec;
+//    int neighbour[] = { 1,2,4,8,16,32,64,128,1,2,4,8,16,32,64 };
+//    for (int i = 0; i<length; i++)
+//        for (int j = 0; j<8; j++)
+//        {
+//            int sum = 0;
+//            for (int k = j; k <= j + a[i]; k++)
+//                sum += neighbour[k];
+//            vec.insert(sum);
+
+//            std::cout << sum << " ";
+//        }
+//    std::cout << std::endl;
+//    return vec;
+//}
+//bool erodephase(vector<border_point> &border, unsigned char * &Input, int neighbour[][3], const set<int>& A,V3DLONG ix,V3DLONG iy)
+//{
+//    auto pt = border.begin();
+//    bool result = false;
+//    while(pt!= border.end())
+//    {
+
+//        int weight = 0;
+//        for (int j = -1; j <= 1; ++j)
+//        for (int k = -1; k <= 1; k++)
+//        //weight += neighbour[j + 1][k + 1] * Input.at<uchar>(pt->y + j, pt->x + k);
+//        weight += neighbour[j + 1][k + 1] * Input[(pt->border_point.y_point+j)*ix+pt->border_point.x_point+k];
+//        if (std::find(A.begin(), A.end(), weight) != A.end())
+//        {
+//            Input[(pt->border_point.y_point)*ix+pt->border_point.x_point]= 0;
+//            pt=border.erase(pt);
+//            result = true;
+//        }
+//        else
+//            ++pt;
+//    }
+//    return result;
+
+//}
+
+//void findborder(vector<border_point>& border, const unsigned char * &Input,V3DLONG ix,V3DLONG iy)
+//{
+//    int cnt = 0;
+//    int rows = iy;
+//    int cols = ix;
+//    unsigned char *bordermat=new unsigned char [];
+//    bordermat=Input;
+//    //cv::Mat bordermat = Input.clone();
+//        for (int row = 1; row<rows - 1; ++row)
+//        for (int col = 1; col<cols - 1; ++col)
+//        {
+//            int weight = 0;
+//            for (int j = -1; j <= 1; ++j)
+//            for (int k = -1; k <= 1; k++)
+//                {
+//                    //if (Input.at<uchar>(row + j, col + k) == 1)
+//                    if (Input[(row+j)*ix+col+k] == 1)
+//                        ++cnt;
+//                }
+//            if (cnt == 9)
+//                bordermat[row*iy+col] = 0;
+//            cnt = 0;
+//        }
+
+//    for (int row = 1; row<rows - 1; ++row)
+//        for (int col = 1; col < cols - 1; ++col)
+//        {
+//            if (bordermat[row*iy+col] == 1)
+//                //border.push_back(cv::Point2i(col, row));
+//                border_point pp;
+//                pp.x_point=col;
+//                pp.y_point=row;
+//                border.push_back(pp);
+//        }
+
+//}
+
+//void finalerode( unsigned char * &Input ,int neighbour[][3], const set<int>& A,V3DLONG ix,V3DLONG iy)
+//{
+//    int rows = iy;
+//    int cols = ix;
+//    for (int m = 1; m<rows - 1; ++m)
+//        for (int n = 1; n<cols - 1; ++n)
+//        {
+//            int weight = 0;
+//            for (int j = -1; j <= 1; ++j)
+//                for (int k = -1; k <= 1; k++)
+//                {
+//                    //weight += neighbour[j + 1][k + 1] * Input.at<uchar>(m + j, n + k);
+//                    weight += neighbour[j + 1][k + 1] * Input[(m+j)*ix+n+k];
+//                }
+
+//            if (std::find(A.begin(), A.end(), weight) != A.end())
+//                //Input.at<uchar>(m, n) = 0;
+//                Input[m*ix+n] = 0;
+
+//        }
+//}
+
+//void thin(unsigned char* &Input) //Input是二值图像
+//{
+//    int a0[] = { 1,2,3,4,5,6 };
+//    int a1[] = { 2 };
+//    int a2[] = { 2,3 };
+//    int a3[] = { 2,3,4 };
+//    int a4[] = { 2,3,4,5 };
+//    int a5[] = { 2,3,4,5,6 };
+//    set<int> A0 = GetAi(a0, 6);
+//    set<int> A1 = GetAi(a1, 1);
+//    set<int> A2 = GetAi(a2, 2);
+//    set<int> A3 = GetAi(a3, 3);
+//    set<int> A4 = GetAi(a4, 4);
+//    set<int> A5 = GetAi(a5, 5);
+//    //list<cv::Point2i> border;
+//    struct border_point
+//    {
+//        V3DLONG x_point;
+//        V3DLONG y_point;
+//    };
+//    vector<border_point> border;
+//    bool continue_ = true;
+//    int neighbour[3][3] = {
+//        { 128,1,2 },
+//        { 64,0,4 },
+//        { 32,16,8 }
+//    };
+//    while (continue_)
+//    {
+//        //找边界，对原文方法做了小改变，但影响不大。
+//        continue_ = false;
+
+//        findborder(border, Input,nx,ny);//Phase0
+//        //可以在下面每一步打印结果，看每一步对提取骨架的贡献
+//        erodephase(border, Input, neighbour,A1);//Phase1
+//        erodephase(border, Input, neighbour, A2);//Phase2
+//        erodephase(border, Input, neighbour, A3);//Phase3
+//        erodephase(border, Input, neighbour, A4);//Phase4
+//        continue_ =erodephase(border, Input, neighbour, A5);//Phase5
+//        border.clear();
+
+//    }
+//    finalerode(Input,  neighbour, A0);//最后一步
+
+//}
+
+
 

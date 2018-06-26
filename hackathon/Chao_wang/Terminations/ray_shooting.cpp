@@ -218,3 +218,133 @@ bool get_slice_flag(int i,int j,int k,int nembers_2d,int length_2d,double angle_
 
 	return true;
 }
+
+bool erodephase(list<cv::Point> &border, cv::Mat&Input, int neighbour[][3], const set<int>& A)
+{
+    auto pt = border.begin();
+    bool result = false;
+    while(pt!= border.end())
+    {
+
+        int weight = 0;
+        for (int j = -1; j <= 1; ++j)
+        for (int k = -1; k <= 1; k++)
+        weight += neighbour[j + 1][k + 1] * Input.at<uchar>(pt->y + j, pt->x + k);
+
+        if (std::find(A.begin(), A.end(), weight) != A.end())
+        {
+            Input.at<uchar>(pt->y , pt->x ) = 0;
+            pt=border.erase(pt);
+            result = true;
+        }
+        else
+            ++pt;
+    }
+    return result;
+}
+
+void findborder(list<cv::Point2i>& border, const cv::Mat&Input)
+{
+    int cnt = 0;
+    int rows = Input.rows;
+    int cols = Input.cols;
+    cv::Mat bordermat = Input.clone();
+        for (int row = 1; row<rows - 1; ++row)
+        for (int col = 1; col<cols - 1; ++col)
+        {
+            int weight = 0;
+            for (int j = -1; j <= 1; ++j)
+            for (int k = -1; k <= 1; k++)
+                {
+                    if (Input.at<uchar>(row + j, col + k) == 1)
+                        ++cnt;
+                }
+            if (cnt == 9)
+                bordermat.at<uchar>(row, col) = 0;
+            cnt = 0;
+        }
+
+    for (int row = 1; row<rows - 1; ++row)
+        for (int col = 1; col < cols - 1; ++col)
+        {
+            if (bordermat.at<uchar>(row, col) == 1)
+                border.push_back(cv::Point2i(col, row));
+        }
+
+}
+
+void finalerode( cv::Mat&Input ,int neighbour[][3], const set<int>& A)
+{
+    int rows = Input.rows;
+    int cols = Input.cols;
+    for (int m = 1; m<rows - 1; ++m)
+        for (int n = 1; n<cols - 1; ++n)
+        {
+            int weight = 0;
+            for (int j = -1; j <= 1; ++j)
+                for (int k = -1; k <= 1; k++)
+                {
+                    weight += neighbour[j + 1][k + 1] * Input.at<uchar>(m + j, n + k);
+                }
+
+            if (std::find(A.begin(), A.end(), weight) != A.end())
+                Input.at<uchar>(m, n) = 0;
+        }
+}
+
+void thin(unsigned char* &Input) //Input?????
+{
+    int a0[] = { 1,2,3,4,5,6 };
+    int a1[] = { 2 };
+    int a2[] = { 2,3 };
+    int a3[] = { 2,3,4 };
+    int a4[] = { 2,3,4,5 };
+    int a5[] = { 2,3,4,5,6 };
+    set<int> A0 = GetAi(a0, 6);
+    set<int> A1 = GetAi(a1, 1);
+    set<int> A2 = GetAi(a2, 2);
+    set<int> A3 = GetAi(a3, 3);
+    set<int> A4 = GetAi(a4, 4);
+    set<int> A5 = GetAi(a5, 5);
+    list<cv::Point2i> border;
+    bool continue_ = true;
+    int neighbour[3][3] = {
+        { 128,1,2 },
+        { 64,0,4 },
+        { 32,16,8 }
+    };
+    while (continue_)
+    {
+        //?????????????????????
+        continue_ = false;
+
+        findborder(border, Input);//Phase0
+        //?????????????????????????
+        erodephase(border, Input, neighbour,A1);//Phase1
+        erodephase(border, Input, neighbour, A2);//Phase2
+        erodephase(border, Input, neighbour, A3);//Phase3
+        erodephase(border, Input, neighbour, A4);//Phase4
+        continue_ =erodephase(border, Input, neighbour, A5);//Phase5
+        border.clear();
+
+    }
+    finalerode(Input,  neighbour, A0);//????
+
+}
+
+set<int> GetAi(int a[], int length)//??A0~A5
+{
+    set<int> vec;
+    int neighbour[] = { 1,2,4,8,16,32,64,128,1,2,4,8,16,32,64 };
+    for (int i = 0; i<length; i++)
+        for (int j = 0; j<8; j++)
+        {
+            int sum = 0;
+            for (int k = j; k <= j + a[i]; k++)
+                sum += neighbour[k];
+            vec.insert(sum);
+            std::cout << sum << " ";
+        }
+    std::cout << std::endl;
+    return vec;
+}
