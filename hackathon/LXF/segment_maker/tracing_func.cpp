@@ -508,7 +508,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<"c/all_volume = "<<c/all_volume<<endl;
         cout<<"d        /all_volume = "<<d/all_volume<<endl;
         //v3d_msg("check!");
-        if(c/all_volume>0.2)
+        if(c/all_volume>0.3)
         {
             v3d_msg("thresh is too low!");
             return false;
