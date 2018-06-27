@@ -64,7 +64,7 @@ def swc_to_dframe(swc_abspath):
     # should make a pandas datafame with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
-    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], index_col=0, dtype={"node_id": int, "type": int, "x": float, "y": float, "z":float, "radius": float, "parent_node_id" = int})
+    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], index_col=0)#, dtype={"node_id": int, "type": int, "x": float, "y": float, "z":float, "radius": float, "parent_node_id": int})
     return df
 
 def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
@@ -80,7 +80,7 @@ def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     out_fpath = os.path.join(output_dir, fname+".swc")
     
     # make sure col order is preserved
-    df.to_csv(out_fpath, sep=' ', header=False, encoding='utf-8' \
+    df.to_csv(out_fpath, sep=' ', header=False, encoding='utf-8', \
              columns=["node_id", "type", "x", "y", "z", "radius", "parent"])   
     
     return out_fpath
