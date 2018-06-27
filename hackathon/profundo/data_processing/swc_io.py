@@ -64,11 +64,57 @@ def swc_to_dframe(swc_abspath):
     # should make a pandas datafame with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
-    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "x","y","z"], index_col=0, usecols=(0,2,3,4), dtype={"node_id": int, "x": float, "y": float, "z":float})
+    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], index_col=0, dtype={"node_id": int, "type": int, "x": float, "y": float, "z":float, "radius": float, "parent_node_id" = int})
     return df
 
-def dframe_to_swc(fname, dframe, output_dir="../data/05_sampled_cubes/"):
-    pass
+def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
+    """
+    SWC convention:
+    node_id type x_coordinate y_coordinate z_coordinate radius parent_node
+    """
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+        
+    default_radius = "1.0"
+    default_type = "3"
+    
+    df['type'] = default_type
+    df['radius'] = default_radius
+    
+    out_fname = os.path.join(output_dir, fname, ".swc")
+        
+    df.to_csv(file_name, sep=' ', header=False, encoding='utf-8' \
+             columns=["node_id", "type", "x", "y", "z", "radius", "])    
+    
+    outfile = os.path.join(outdir, branch_name+".swc")
+    #print("saving SWC {}".format(branch_name))
+    output = open(outfile, "w+")
+    
+    
+    
+    parent_node_id = "-1"
+    for i, node in enumerate(branch):
+        try:
+            child_node_id, x, y, z = node
+        except ValueError:
+            print("error in save-branch", len(node), node)
+            raise
+        # this is the SWC file convention
+        # \n is important to separate into new lines
+        swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
+        #swc_items = [str(item) for item in str_items]
+        try:
+            swc_line = " ".join(swc_items)
+        except:
+            print(swc_items)
+            for item in swc_items:
+                print(type(item))
+                raise
+        output.write(swc_line)
+        parent_node_id = child_node_id
+
+    output.close()
 
 def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
     pass
@@ -103,6 +149,7 @@ def resample_swc(input_fname, input_fpath, output_dir="../data/04_human_branches
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
     """
+    SWC convention:
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
     assert(isinstance(branch, list))
