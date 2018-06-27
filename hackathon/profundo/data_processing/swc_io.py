@@ -2,6 +2,7 @@ import os
 from collections import defaultdict
 import numpy as np
 import pandas as pd
+from subprocess import call
 
 
 def get_fnames_and_abspath_from_dir(reldir):
@@ -66,23 +67,36 @@ def swc_to_dframe(swc_abspath):
     df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "x","y","z"], index_col=0, usecols=(0,2,3,4), dtype={"node_id": int, "x": float, "y": float, "z":float})
     return df
 
-def resample_swc(input_fname, input_path, output_dir="../data/04_human_branches_upsampled/"):
+def dframe_to_swc(fname, dframe, output_dir="../data/05_sampled_cubes/"):
+    pass
+
+def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
+    pass
+
+def resample_swc(input_fname, input_fpath, output_dir="../data/04_human_branches_filtered_upsampled/"):
     """
     sometimes, inter-node distances can be v large, which is bad for subsampling.
     this is a wrapper to call Vaa3D's resample_swc script
     """
-    raise Exception("not implemented")
-    input = open(input_path, "r")
+    import tkinter as tk
+    from tkinter import filedialog
+
+    root = tk.Tk()
+    root.withdraw()
+
+    vaa3d_path = filedialog.askopenfilename(title='Select compiled Vaa3d binary')
+    
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    #outfile = os.path.join(output_dir, input_fname)
-    #output = open(outfile, "w+")
-
-    # TODO: call C plug-in here
-
-    input.close()
-    #output.close()
+        
+    outfile_fpath = os.path.join(output_dir, input_fname)
+    
+    # https://stackoverflow.com/a/4376421/4212158
+    v3d_plugin_name = "resample_swc"
+    call([vaa3d_path, "-x", v3d_plugin_name, "-f", v3d_plugin_name, "-i", input_fpath, "-o", outfile_fpath])
+    
+    return outfile_fpath
     
     
     
