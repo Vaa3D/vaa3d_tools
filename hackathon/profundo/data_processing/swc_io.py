@@ -117,7 +117,6 @@ def resample_swc(input_fname, input_fpath, output_dir="../data/04_human_branches
     return outfile_fpath
     
     
-    
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
     """
