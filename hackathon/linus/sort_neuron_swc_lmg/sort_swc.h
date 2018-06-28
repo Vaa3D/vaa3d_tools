@@ -73,10 +73,95 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
 
     //get all root ids and parents of each node
     QList<V3DLONG> rootlist;
+    vector<long> parents0;
     vector<long> parents;
+    vector<long> ids0;
     vector<long> ids;
     QList<V3DLONG> tips;
     //QList<NeuronSWC> neuron = neurons;
+
+    //Remove duplicated nodes
+    //get ids and reorder tree with ids following list
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        ids0.push_back(neuron.at(i).n);
+    }
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        neuron[i].n=i+1;
+        if(neuron.at(i).pn !=-1)
+        {
+            neuron[i].pn=find(ids0.begin(), ids0.end(),neuron.at(i).pn) - ids0.begin()+1;
+            parents0.push_back(neuron.at(i).pn);
+        }
+    }
+    QList<V3DLONG>  child_num0;
+    for(V3DLONG i=0;i<neuron.size();i++)// 0 or 1? check!
+    {
+        child_num0.push_back(count(parents0.begin(),parents0.end(),neuron.at(i).n));
+    }
+
+    vector<bool> dupnodes;
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        dupnodes.push_back(false);
+    }
+    for(V3DLONG h=0;h<neuron.size();h++)
+    {
+        for(V3DLONG i=h+1;i<neuron.size();i++)
+        {
+            if(neuron.at(h).x == neuron.at(i).x && neuron.at(h).y == neuron.at(i).y && neuron.at(h).z == neuron.at(i).z)
+            {
+                if(neuron.at(i).pn != -1)
+                {
+                    if(child_num0.at(i)!=0)
+                    {
+                        //find nodes that pointed to i and make them point to its parent node
+                        for(V3DLONG j=0;j<neuron.size();j++)
+                        {
+                            if(neuron.at(j).pn==neuron.at(i).n)
+                            {
+                                neuron[j].pn = neuron.at(i).pn;
+                            }
+                        }
+                    }
+                    dupnodes[i]=true;
+                }
+                else
+                {
+                    dupnodes[h]=true;
+                    dupnodes[i]=false;
+                    if(child_num0.at(h)!=0)
+                    {
+                        //find nodes that pointed to i-1 and make them point to its parent node
+                        for(V3DLONG j=0;j<neuron.size();j++)
+                        {
+                            if(neuron.at(j).pn==neuron.at(h).n)
+                            {
+                                neuron[j].pn = neuron.at(h).pn;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //dupnodes.push_back(false);
+                dupnodes[i]=false;
+            }
+        }
+    }
+    QList<NeuronSWC> neuron2;
+    neuron2.append(neuron.at(0));
+    for(V3DLONG i=1;i<neuron.size();i++)
+    {
+        if(dupnodes.at(i) == false) neuron2.append(neuron.at(i));
+        //else qDebug()<<i;
+    }
+    neuron = neuron2;
+    qDebug()<<"Removed" << count(dupnodes.begin(),dupnodes.end(),true) << " duplicated nodes";
+
+
     //get ids and reorder tree with ids following list
     for(V3DLONG i=0;i<neuron.size();i++)
     {
@@ -85,7 +170,6 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         {
             newrootid=i;
         }
-        //qDebug()<<neuron.at(i).n<<newrootid;
     }
     for(V3DLONG i=0;i<neuron.size();i++)
     {
