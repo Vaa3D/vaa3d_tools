@@ -38,71 +38,65 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
 
     int count=0;
     float pixe = 0.0;
-    vector<int> indd,ind1;//ind1 is the all piex of each ray
-                           //indd
-    for(int i = 0; i < m; i++)   //m is the numble of the ray
-        {
-         float sum=0;
-         for(int j = 0; j<n; j++)   // n is the numble of the points of the each ray
-            {
-                 pixe = 0.0;
-                {
-                    pixe = interp_2d(point_y+ray_y[i][j], point_x+ray_x[i][j], P, sz0,sz1 , point_x, point_y);
-
-                    pixe=exp(0.05*j)*pixe;
-                    //v3d_msg(QString("pixe is %1").arg(pixe));
-
-                }
-                sum=sum+pixe;
-            }
-           ind1.push_back(sum);
-          // v3d_msg(QString("indli is %1").arg(ind1[i]));
-        }
-
-
-
+    float sum=0;
     float max_indd=10;
-    for(int s=0;s<ind1.size();s++)
+    int branch_flag=0;
+    vector<int> indd,ind1;//ind1 is the all piex of each ray
 
+    for(int i = 0; i < m; i++)   //m is the numble of the ray
+    {
+     sum=0;
+     for(int j = 0; j<n; j++)   // n is the numble of the points of the each ray
+        {
+            pixe = interp_2d(point_y+ray_y[i][j], point_x+ray_x[i][j], P, sz0,sz1 , point_x, point_y);
+            pixe=exp(0.05*(j+1))*pixe;
+            sum=sum+pixe;
+        }
+        ind1.push_back(sum);
+    }
+
+    //find the max ray
+    for(int s=0;s<ind1.size();s++)
     {
         if(ind1[s]>max_indd)
         {
             max_indd=ind1[s];
         }
-
     }
-   // v3d_msg(QString("max_indd is %1").arg(max_indd));
 
-    for (int i = 0;i < ind1.size();i++)
+    if((max_indd/n)>30)
     {
-        if (ind1[i] >= max_indd*0.4)
-            {
-                 indd.push_back(i);
-                  count++;
-            }
-    }
-
-    //v3d_msg(QString("count is %1").arg(count));
-    //float dis=0,max_dis=0;
-    int ray_distance=0;
-    int branch_flag=0;
-    if (count > 1)
+        for(int num=0;num<ind1.size();num++)
         {
-            for (int i = 0;i < count - 1;i++)
-            {
-
-               ray_distance=abs(indd[i]-indd[i+1]);
-                       if(ray_distance>=2)
-               {
-                      branch_flag=branch_flag+1;
-               }
-            }
-            long dis=indd[1]-indd[count];
-            if(abs(dis)==(m-1))
-                branch_flag=branch_flag-1;
+            if (ind1[num] >= max_indd*0.5)
+                {
+                     indd.push_back(num);
+                     count++;
+                }
         }
-    //v3d_msg(QString("branch flag is %1").arg(branch_flag));
+        int ray_distance=0;
+        //v3d_msg(QString("count is %1").arg(count));
+        if (count > 1)
+            {
+                for (int i = 0;i < count - 1;i++)
+                {
 
+                   ray_distance=abs(indd[i]-indd[i+1]);
+                   if(ray_distance>=2)
+                   {
+                          branch_flag=branch_flag+1;
+                   }
+                }
+                long dis=indd[0]-indd[count];
+                if(abs(dis)==(m-1))
+                {
+                  branch_flag=branch_flag-1;
+                }
+
+            }
+
+    }
+    //v3d_msg(QString("flag is %1").arg(branch_flag));
     if(branch_flag>2)
     {
         return 1;
@@ -111,8 +105,6 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
     {
         return 0;
     }
-
-
 
 }
 

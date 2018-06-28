@@ -498,12 +498,16 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
         Image4DSimple * new4DImage = new Image4DSimple();
         new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
         v3dhandle newwin = callback.newImageWindow();
-        //v3dhandle newwin = callback.currentImageWindow();
         callback.setImage(newwin, new4DImage);
         callback.setImageName(newwin, "maximum intensity projection image");
         callback.updateImageWindow(newwin);
         v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
         callback.setLandmark(newwin, curlist);
+//       if(image_binary) {delete []image_binary; image_binary = 0;}
+//        if(image_mip) {delete []image_mip; image_mip = 0;}
+//        if(datald){delete []datald;datald=0;}
+       if(old_image_binary){delete []old_image_binary;old_image_binary=0;}
+
         return 1;
 }
 
@@ -1480,8 +1484,8 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
       datald = p4DImage->getRawData();
       bool ok1;
       int thres = QInputDialog::getInteger(parent, "threshold  of this image ",
-                                    "Enter radius (window size is 2*radius+1):",
-                                    1, 1, 255, 1, &ok1);
+                                    "Enter threshold ",
+                                    1, 1, 1000, 1, &ok1);
       struct delete_piont
       {
           V3DLONG xx;
@@ -1525,6 +1529,17 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
                           "e_binary."); return 0;}
       thres_segment(nx*ny*nz,image_mip,image_binary,thres);
       v3d_msg("segment have complete");
+
+      unsigned char *old_binary_image=0;
+      try{old_binary_image=new unsigned char [size_image];}
+      catch(...) {v3d_msg("cannot allocate memory for imag"
+                          "e_binary."); return 0;}
+      for(V3DLONG i=0;i<size_image;i++)
+      {
+          old_binary_image[i]=image_binary[i];
+      }
+
+
 
       //int flag=1;
       //V3DLONG num_point=0;
@@ -1725,22 +1740,10 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
 
           }
       }
-      //      v3d_msg(QString("num is %1").arg(size_point));
-      //      for(int i=0;i<curlist.size();i++)
-      //          for(int j=i+1;j<curlist.size();j++)
-      //      {
 
-      //          {
-      //              if(square(curlist[j].x-curlist[i].x)+square(curlist[j].y-curlist[i].y)+square(curlist[j].z-curlist[i].z)<150)
-      //                  {
-      //                      curlist.removeAt(j);
-      //                      j = j - 1;
-      //                  }
-      //          }
-      //      }
 
       Image4DSimple * new4DImage = new Image4DSimple();
-      new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
+      new4DImage->setData((unsigned char *)old_binary_image, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
       callback.setImage(curwin, new4DImage);
       callback.setImageName(curwin, "maximum intensity projection image");
       callback.updateImageWindow(curwin);
