@@ -173,12 +173,12 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
             cout<<"root threshold distance: "<<root_dist_thres<<endl;
 			if (paralist->size() ==2 )
 			{
-                thres = atof(paralist->at(0));
+                thres = atof(paralist->at(1));
                 cout<<"threshold: "<<thres<<endl;
 			}
             else if (paralist->size() ==3 )
             {
-                rootid = atoi(paralist->at(1));
+                rootid = atoi(paralist->at(2));
                 cout<<"root id: "<<rootid<<endl;
             }
             else if (paralist->size() >3)

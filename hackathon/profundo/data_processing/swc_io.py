@@ -63,32 +63,68 @@ def swc_to_dframe(swc_abspath):
     # should make a pandas datafame with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
-    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "x","y","z"], index_col=0, usecols=(0,2,3,4), dtype={"node_id": int, "x": float, "y": float, "z":float})
+    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], index_col=0)#, dtype={"node_id": int, "type": int, "x": float, "y": float, "z":float, "radius": float, "parent_node_id": int})
     return df
 
-def resample_swc(input_fname, input_path, output_dir="../data/04_human_branches_upsampled/"):
+def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     """
-    sometimes, inter-node distances can be v large, which is bad for subsampling.
-    this is a wrapper to call Vaa3D's resample_swc script
+    SWC convention:
+    node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
-    raise Exception("not implemented")
-    input = open(input_path, "r")
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    #outfile = os.path.join(output_dir, input_fname)
-    #output = open(outfile, "w+")
 
-    # TODO: call C plug-in here
-
-    input.close()
-    #output.close()
     
+    out_fpath = os.path.join(output_dir, fname+".swc")
+    
+    # make sure col order is preserved
+    df.to_csv(out_fpath, sep=' ', header=False, encoding='utf-8', \
+             columns=["node_id", "type", "x", "y", "z", "radius", "parent"])   
+    
+    return out_fpath
+
+
+def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
+    # TODO
+    pass
+
+
+def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, output_dir="../data/04_human_branches_filtered_upsampled/"):
+    """
+    sometimes, inter-node distances can be v large, which is bad for subsampling.
+    this is a wrapper to call Vaa3D's resample_swc script
+    
+    see https://github.com/Vaa3D/Vaa3D_Wiki/wiki/resample_swc.wiki
+    """
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+        
+    outfile_fpath = os.path.join(output_dir, input_fname)
+    
+    # https://stackoverflow.com/a/4376421/4212158
+    v3d_plugin_name = "resample_swc"
+    
+    cli_dict = {"v3d_bin": vaad3d_bin_path,
+               "plugin": v3d_plugin_name,
+               "in": input_fpath,
+               "out": outfile_fpath,
+               "step": step_length}
+    
+    print("running \n")
+    print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+    os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
+    
+    
+    
+    return outfile_fpath
     
     
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
     """
+    SWC convention:
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
     assert(isinstance(branch, list))

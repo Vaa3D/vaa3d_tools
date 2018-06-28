@@ -11,6 +11,12 @@
 //#include "../../zhi/APP2_large_scale/my_surf_objs.h"
 #define PI 3.1415926
 using namespace std;
+struct delete_piont
+{
+    V3DLONG xx;
+    V3DLONG yy;
+};
+
 Q_EXPORT_PLUGIN2(Branch_detection, TestPlugin)
  
 QStringList TestPlugin::menulist() const
@@ -262,11 +268,6 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
        try{old_image_binary=new unsigned char [size_image];}
        catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
 
-       struct delete_piont
-       {
-           V3DLONG xx;
-           V3DLONG yy;
-       };
        vector<delete_piont> delete_list;
        int neighbor[8];
        int sum_points;
@@ -1484,6 +1485,7 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
       datald = p4DImage->getRawData();
       bool ok1;
       int thres = QInputDialog::getInteger(parent, "threshold  of this image ",
+<<<<<<< HEAD
                                     "Enter threshold ",
                                     1, 1, 1000, 1, &ok1);
       struct delete_piont
@@ -1491,6 +1493,10 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
           V3DLONG xx;
           V3DLONG yy;
       };
+=======
+                                    "Enter radius (window size is 2*radius+1):",
+                                    1, 1, 255, 1, &ok1);
+>>>>>>> 700fa02627a86c8a085baba8f47db306de2ddca6
       vector<delete_piont> delete_list;
       int neighbor[8];
       int sum_points;
