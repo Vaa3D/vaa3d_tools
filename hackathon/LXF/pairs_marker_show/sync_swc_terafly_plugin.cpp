@@ -13,7 +13,8 @@ int i=0;
 qint64 etime1, etime2;
 QElapsedTimer timer1;
 QString filename;
-bool ind = false;
+bool notFirstTime = false;
+bool isAbandoned = false;
 QList<V3DLONG> out;
 static lookPanel *panel = 0;
 bool export_txt(QList<V3DLONG> &out,QString fileSaveName);
@@ -70,14 +71,18 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 {
     gridLayout = new QGridLayout();
     QPushButton* show_markers     = new QPushButton("next pairs of markers");
+    QPushButton* give_it_up       = new QPushButton("give up");
+    give_it_up->setFixedWidth(60);
 //    QPushButton* start            = new QPushButton("     start time      ");
  //   QPushButton* end              = new QPushButton("      end time       ");
     gridLayout->addWidget(show_markers, 0,0);
+    gridLayout->addWidget(give_it_up, 0,1);
    // gridLayout->addWidget(start, 0,1);
    // gridLayout->addWidget(end, 0,2);
     setLayout(gridLayout);
     setWindowTitle(QString("pairs_marker_show"));
     connect(show_markers,     SIGNAL(clicked()), this, SLOT(_slot_set_markers()));
+    connect(give_it_up,     SIGNAL(clicked()), this, SLOT(_slot_abandon()));
  //   connect(start,     SIGNAL(clicked()), this, SLOT(_start_time()));
  //   connect(end,     SIGNAL(clicked()), this, SLOT(_end_time()));
 
@@ -88,16 +93,43 @@ lookPanel::~lookPanel()
 }
 
 
+void lookPanel::_slot_abandon()
+{
+    // if already 180s, abandon current markers
+    if (!notFirstTime)
+        return;
 
+    qint64 curr_time = timer1.elapsed()/1000;
+    if (curr_time > 180)
+    {
+        isAbandoned = true;
+        _slot_set_markers();
+    }
+    else
+    {
+        QString qstr;
+        qstr = "Only " + QString::number(curr_time) + "s spent. Please at least work for 3 minutes!";
+        v3d_msg(qstr);
+    }
+}
 
 void lookPanel::_slot_set_markers()
 {
 
-    if(ind)
+    if(notFirstTime)
     {
-        etime1 = timer1.elapsed();
-        etime1 = etime1/1000.0;
-        out.push_back(etime1);
+        if (isAbandoned)
+        {
+            isAbandoned = false;
+            out.push_back(-999);
+        }
+        else
+        {
+            etime1 = timer1.elapsed();
+            etime1 = etime1/1000.0;
+            out.push_back(etime1);
+        }
+
     }
 
 
@@ -114,7 +146,7 @@ void lookPanel::_slot_set_markers()
         NeuronTree nt = m_v3d.getSWC(win);
         export_txt(out,outfile);
         writeSWC_file(outswcfile,nt);
-        ind = false;
+        notFirstTime = false;
         v3d_msg("there is no new marker any more!");
         return;
     }
@@ -145,11 +177,18 @@ void lookPanel::_slot_set_markers()
     m_v3d.pushObjectIn3DWindow(win);
     i=i+2;
 
+    QString dlgTitle = "now pair ";
+    dlgTitle += QString::number(i/2);
+    setWindowTitle(dlgTitle);
+
     timer1.start();
-    ind = true;
+    notFirstTime = true;
 
 
 }
+
+
+
 void lookPanel::_start_time()
 {
 
