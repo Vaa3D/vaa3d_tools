@@ -15,7 +15,8 @@ HEADERS	+= segment_profiling_plugin.h \
     get_sub_block.h \
     ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h \
     segment_mean_shift.h \
-    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
+    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h \
+    ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.h
 
 SOURCES	+= segment_profiling_plugin.cpp \
     openSWCDialog.cpp \
@@ -26,7 +27,8 @@ SOURCES	+= segment_profiling_plugin.cpp \
     ../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/swc_utils.cpp \
     get_sub_block.cpp \
     ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp \
-    segment_mean_shift.cpp
+    segment_mean_shift.cpp \
+    ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

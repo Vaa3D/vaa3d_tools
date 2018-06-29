@@ -2,7 +2,7 @@
 
 
 
-bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg_m,unsigned char * &data1d,V3DLONG im_cropped_sz[4],int n,double original_o[3])
+bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg_m,PARA &PA,int n)
 {
     cout<<"get_sub_block"<<endl;
 
@@ -39,19 +39,14 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
         double lenx = maxx - minx;
         double leny = maxy - miny;
         double lenz = maxz - minz;
-        int spacex = 0.1*lenx;
-        int spacey = 0.1*leny;
-        int spacez = 0.1*lenz;
+        int spacex = 0.4*lenx;
+        int spacey = 0.4*leny;
+        int spacez = 0.4*lenz;
         if(spacex<1)spacex=15;
         if(spacey<1)spacey=15;
         if(spacez<1)spacez=15;
 
 
-        cout<<"x = "<<maxx<<"  "<<minx<<endl;
-        cout<<"y = "<<maxy<<"  "<<miny<<endl;
-        cout<<"z = "<<maxz<<"  "<<minz<<endl;
-
-        cout<<"space "<<spacex<<"  "<<spacey<<"  "<<spacez<<"  "<<endl;
 
 
         unsigned char * im_cropped = 0;
@@ -65,19 +60,26 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
         V3DLONG yb = miny-spacey;
         V3DLONG ye = maxy+spacey;
         V3DLONG zb = minz-spacez;
-        V3DLONG ze = maxz-spacez;
-        original_o[0] = xb;
-        original_o[1] = yb;
-        original_o[2] = zb;
+        V3DLONG ze = maxz+spacez;
+        PA.original_o[0] = xb;
+        PA.original_o[1] = yb;
+        PA.original_o[2] = zb;
         pagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
-        im_cropped_sz[0] = xe-xb+1;
-        im_cropped_sz[1] = ye-yb+1;
-        im_cropped_sz[2] = ze-zb+1;
-        im_cropped_sz[3] = 1;
+        PA.im_cropped_sz[0] = xe-xb+1; //problem here
+        PA.im_cropped_sz[1] = ye-yb+1;
+        PA.im_cropped_sz[2] = ze-zb+1;
+        PA.im_cropped_sz[3] = 1;
+        cout<<"--------------------------------------PA.Z = "<<PA.im_cropped_sz[2]<<endl;
+
+        cout<<"x = "<<maxx-xb<<"  "<<minx-xb<<endl;
+        cout<<"y = "<<maxy-yb<<"  "<<miny-yb<<endl;
+        cout<<"z = "<<maxz-zb<<"  "<<minz-zb<<endl;
+
+        cout<<"space "<<spacex<<"  "<<spacey<<"  "<<spacez<<"  "<<endl;
 
         cout<<"begin ==================="<<xb<<"  "<<yb<<"  "<<zb<<endl;
         cout<<"end   ==================="<<xe<<"  "<<ye<<"  "<<ze<<endl;
-        v3d_msg("test!");
+        //v3d_msg("test!");
 
 
         try {im_cropped = new unsigned char [pagesz];}
@@ -95,10 +97,10 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
 
         QString outimg_file;
         outimg_file = "segment_profiling_"+ QString::number(n)+".tif";
+        PA.img_name = outimg_file;
 
-
-        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
-        data1d = im_cropped;
+        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
+        PA.data1d = im_cropped;
         return true;
         //if(im_cropped) {delete []im_cropped; im_cropped = 0;}
 

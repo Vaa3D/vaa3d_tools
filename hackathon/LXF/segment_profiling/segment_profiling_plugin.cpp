@@ -43,7 +43,6 @@ void segment_profilingPlugin::domenu(const QString &menu_name, V3DPluginCallback
         QString filename = openDlg->file_name;
         cout<<filename.toStdString()<<endl;
         SortSWC(nt_p.listNeuron,nt.listNeuron,nt_p.listNeuron[0].n,100000000);
-        qDebug() <<"check2"<<endl;
 
 
         segment_profiling_main(callback,nt,filename);
