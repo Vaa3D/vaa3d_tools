@@ -7,12 +7,12 @@ from gym.utils import seeding
 try:
     import hfo_py
 except ImportError as e:
-    raise error.DependencyNotInstalled("{}. (HINT: you can install HFO dependencies with 'pip install gym[soccer].)'".format(e))
+    raise error.DependencyNotInstalled("{}. (HINT: you can install HFO dependencies with 'pip install gym[profundo].)'".format(e))
 
 import logging
 logger = logging.getLogger(__name__)
 
-class SoccerEnv(gym.Env, utils.EzPickle):
+class ProfundoEnv(gym.Env, utils.EzPickle):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
@@ -103,7 +103,7 @@ class SoccerEnv(gym.Env, utils.EzPickle):
               " --connect --port %d" % (self.server_port)
         self.viewer = subprocess.Popen(cmd.split(' '), shell=False)
 
-    def _step(self, action):
+    def step(self, action):
         self._take_action(action)
         self.status = self.env.step()
         reward = self._get_reward()
@@ -131,7 +131,7 @@ class SoccerEnv(gym.Env, utils.EzPickle):
         else:
             return 0
 
-    def _reset(self):
+    def reset(self):
         """ Repeats NO-OP action until a new episode begins. """
         while self.status == hfo_py.IN_GAME:
             self.env.act(hfo_py.NOOP)
@@ -141,7 +141,7 @@ class SoccerEnv(gym.Env, utils.EzPickle):
             self.status = self.env.step()
         return self.env.getState()
 
-    def _render(self, mode='human', close=False):
+    def render(self, mode='human', close=False):
         """ Viewer only supports human mode currently. """
         if close:
             if self.viewer is not None:
