@@ -15,6 +15,9 @@ import numpy as np
 
 RAD2DEG = 57.29577951308232
 
+
+# TODO: add score counter
+
 class Viewer(object):
     def __init__(self, width, height, display=None):
 
@@ -30,13 +33,18 @@ class Viewer(object):
         self.agent_trajectory = [[], [], []]
         # internally, we call this "Gold standard data" because we don't actually
         # have ground truth, but this an easier
-        self.ground_truth = self._gen_rand_trajectory(100)
+        self.ground_truth = [self._gen_rand_trajectory(100) for _ in range(1)]
 
         #self.window = pyglet.window.Window(width=width, height=height, display=display)
         #self.window.on_close = self.window_closed_by_user
         self.isopen = True
         self.trajectories = []
         self.onetime_geoms = []
+
+    def plot_ground_truth(self):
+        for trajectory in self.ground_truth:
+            x, y, z = trajectory[0,:], trajectory[1,:], trajectory[2,:]
+            self.ax.plot(x, y, z, label='Ground Truth Trajectory')
 
 
     def close(self):
@@ -59,10 +67,6 @@ class Viewer(object):
         self.onetime_geoms.append(geom)
 
     def render(self, return_rgb_array=False):
-        self.window.clear()
-        self.window.switch_to()
-        self.window.dispatch_events()
-        self.transform.enable()
         for geom in self.geoms:
             geom.render()
         for geom in self.onetime_geoms:
