@@ -68,77 +68,46 @@ bool segment_mean_shift(unsigned char* &data1d,LandmarkList &LList,V3DLONG im_cr
 }
 LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA PA,int i,vector<MyMarker*> &nt_marker2)
 {
-    //v3d_msg("LXF");
-    //mean_shift_dialog *dialog=new mean_shift_dialog(&callback,0);
-    LandmarkList emptylist = LandmarkList();
+ //   LandmarkList emptylist = LandmarkList();
     mean_shift_fun mean_shift_obj;
     LandmarkList LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<float> mass_center;
-    unsigned char *data_1d;
-    V3DLONG in_sz[4];
-    int databyte;
-    if(!simple_loadimage_wrapper(callback,PA.img_name.toStdString().c_str(),data_1d,in_sz,databyte))
-    {
-        v3d_msg("something wrong with loading img!");
-        return emptylist;
-    }
-//    if (!load_data(callback,image1Dc_in,LList,pixeltype,sz_img,curwin))
+    int methodcode = 2;
+  //  unsigned char *data_1d;
+  //  V3DLONG in_sz[4];
+  //  int databyte;
+//    if(!simple_loadimage_wrapper(callback,PA.img_name.toStdString().c_str(),data_1d,in_sz,databyte))
+//    {
+//        v3d_msg("something wrong with loading img!");
 //        return emptylist;
-  //  V3DLONG size_tmp=sz_img[0]*sz_img[1]*sz_img[2]*sz_img[3];
-
-    if(1)//V3D_UNIT8
-    {
-        mean_shift_obj.pushNewData<unsigned char>((unsigned char*)data_1d, in_sz);
-    }
-
-//    else if (pixeltype == 2) //V3D_UINT16;
-//    {
-//        mean_shift_obj.pushNewData<unsigned short>((unsigned short*)image1Dc_in, sz_img);
-//        convert2UINT8_meanshift((unsigned short*)image1Dc_in, image1Dc_in, size_tmp);
 //    }
-//    else if(pixeltype == 4) //V3D_FLOAT32;
-//    {
-//        mean_shift_obj.pushNewData<float>((float*)image1Dc_in, sz_img);
-//        convert2UINT8_meanshift((float*)image1Dc_in, image1Dc_in, size_tmp);
-//    }
-//    else
-//    {
-//       QMessageBox::information(0,"","Currently this program only supports UINT8, UINT16, and FLOAT32 data type.");
-//       return(emptylist);
-//    }
-
+    mean_shift_obj.pushNewData<unsigned char>((unsigned char*)PA.data1d, PA.im_cropped_sz);
     //set parameter
-    int windowradius=30;
-
-
+    int windowradius=15;
     //start mean-shift
     poss_landmark.clear();
-    poss_landmark=landMarkList2poss(LList, in_sz[0],in_sz[0]*in_sz[1]);
-    cout<<"LList = "<<LList.size()<<endl;
-    cout<<"poss_landmark = "<<poss_landmark.size()<<endl;
-    cout<<"in_sz = "<<in_sz[0]<<"  "<<in_sz[1]<<"  "<<in_sz[2]<<endl;
-    double ratio = windowradius;
+    poss_landmark=landMarkList2poss(LList, PA.im_cropped_sz[0],PA.im_cropped_sz[0]*PA.im_cropped_sz[1]);
     for (int j=0;j<LList.size();j++)
     {
-        qDebug()<<"poss_landmark[j] = "<<poss_landmark[j];
+        if (methodcode==2)
+        mass_center=mean_shift_obj.mean_shift_with_constraint(poss_landmark[j],windowradius);
+        else
         mass_center=mean_shift_obj.mean_shift_center(poss_landmark[j],windowradius);
+
         LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
         if (!LList.at(j).name.empty()) tmp.name=LList.at(j).name;
         LList_new_center.append(tmp);
-
     }
 
     NeuronTree nt;
-    cout<<"LList_new_center.size() = "<<LList_new_center.size()<<endl;
     for(V3DLONG k = 0; k < LList_new_center.size(); k++)
     {
-        //cout<<"LList_new_center = "<<LList_new_center.at(k).x<<"  "<<LList_new_center.at(k).y<<"  "<<LList_new_center.at(k).z<<"  "<<endl;
+
         NeuronSWC S;
         S.x = LList_new_center.at(k).x;
         S.y = LList_new_center.at(k).y;
         S.z = LList_new_center.at(k).z;
-        //cout<<"hahahah"<<endl;
         S.n = k;
         S.r = 2;
         S.pn = k-1;
@@ -147,10 +116,6 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
     }
     QString swc_out_name = QString::number(i) + "_meanshifted.swc";
     writeSWC_file(swc_out_name,nt);
-    // v3d_msg(QString("Now you can drag and drop the meanshifted swc fle [%1] into Vaa3D.").arg(swc_out_name));
-
     return LList_new_center;
-    //dialog-> image1Dc_in = data1d;
-   // dialog->core();
 
 }

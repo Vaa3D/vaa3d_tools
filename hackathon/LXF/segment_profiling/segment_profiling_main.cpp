@@ -20,7 +20,7 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
         LandmarkList marker_v;
         cout<<"segment[i]->markers.size() = "<<segment[i]->markers.size()<<endl;
         NeuronTree outtree;
-        if(segment[i]->markers.size()<2)continue;
+        if(segment[i]->markers.size()<3)continue;
         for(V3DLONG k=0;k<segment[i]->markers.size();k++)
         {
             NeuronSWC S;
