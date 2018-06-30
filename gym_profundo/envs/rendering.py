@@ -41,10 +41,35 @@ class Viewer(object):
         TRAJECTORY_LEN = 1000
         starting_positions = np.random.random((N_TRAJECTORIES, 3))
 
+        # choose a different color for each trajectory
+        self.colors = plt.cm.jet(np.linspace(0, 1, N_TRAJECTORIES))
+
+        # set up lines and points
+        self.lines = sum([self.ax.plot([], [], [], '-', c=c)
+                     for c in self.colors], [])
+        self.pts = sum([self.ax.plot([], [], [], 'X', c=c)
+                   for c in self.colors], [])
+
+        # TODO turn into own func
+        # prepare the axes limits
+        self.ax.set_xlim((-25, 25))
+        self.ax.set_ylim((-35, 35))
+        self.ax.set_zlim((5, 55))
+
+        # set point-of-view: specified by (altitude degrees, azimuth degrees)
+        self.ax.view_init(30, 0)
+
 
         self.ground_truth = np.asarray([self._gen_rand_trajectory(x0i, TRAJECTORY_LEN) for x0i in starting_positions])
         self.plot_ground_truth()
 
+        # instantiate the animator.
+        anim = animation.FuncAnimation(self.fig, self.animate, init_func=self.init_background,
+                                       frames=TRAJECTORY_LEN, interval=30,
+                                       blit=True)
+
+        plt.show()
+        # FIXME These are left over
         #self.window = pyglet.window.Window(width=width, height=height, display=display)
         #self.window.on_close = self.window_closed_by_user
         self.isopen = True
@@ -59,6 +84,35 @@ class Viewer(object):
 
     def close(self):
         plt.close(self.fig)
+
+    # initialization function: plot the background of each frame
+    def init_background(self):
+        for line, pt in zip(self.lines, self.pts):
+            line.set_data([], [])
+            line.set_3d_properties([])
+
+            pt.set_data([], [])
+            pt.set_3d_properties([])
+        return self.lines + self.pts
+
+    # animation function.  This will be called sequentially with the frame number
+    def animate(self, i):
+        # we'll step two time-steps per frame.  This leads to nice results.
+        og_i = i
+        i = (2 * i) % self.ground_truth.shape[1]
+
+        for line, pt, xi in zip(self.lines, self.pts, self.ground_truth):
+            x, y, z = xi[:i].T
+            line.set_data(x, y)
+            line.set_3d_properties(z)
+
+            pt.set_data(x[-1:], y[-1:])
+            pt.set_3d_properties(z[-1:])
+
+        # rotate over time
+        self.ax.view_init(30, 0.3 * i)
+        self.fig.canvas.draw()
+        return self.lines + self.pts
 
     def window_closed_by_user(self):
         self.isopen = False
