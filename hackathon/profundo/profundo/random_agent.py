@@ -3,6 +3,8 @@ import sys
 
 import gym
 from gym import wrappers, logger
+import gym_profundo
+
 
 class RandomAgent(object):
     """The world's simplest agent!"""
@@ -13,15 +15,16 @@ class RandomAgent(object):
         return self.action_space.sample()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=None)
-    parser.add_argument('env_id', nargs='?', default='CartPole-v0', help='Select the environment to run')
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description=None)
+    # parser.add_argument('env_id', nargs='?', default='CartPole-v0', help='Select the environment to run')
+    # args = parser.parse_args()
 
     # You can set the level to logger.DEBUG or logger.WARN if you
     # want to change the amount of output.
     logger.set_level(logger.INFO)
 
-    env = gym.make(args.env_id)
+    #env = gym.make(args.env_id)
+    env = gym.make('Profundo-v0')
 
     # You provide the directory to write to (can be an existing
     # directory, including one with existing data -- all monitor files
