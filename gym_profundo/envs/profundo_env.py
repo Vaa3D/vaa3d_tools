@@ -11,8 +11,8 @@ class ProfundoEnv(gym.Env):
         self.agent_stepsize = 1.0
         self.viewer = None
         self.vaa3d_path = None # TODO
-        self.observation_space = spaces.Box(low=-1, high=1,
-                                            shape=(self.env.getStateSize()))
+        # TODO update obs space
+        self.observation_space = spaces.Box(low=-5, high=5)
         self.action_space = spaces.Discrete(6)
 
         self.seed()
@@ -76,9 +76,10 @@ class ProfundoEnv(gym.Env):
                 self._start_viewer()
 
 ACTION_LOOKUP = {
-    0 : game.DASH,
-    1 : game.TURN,
-    2 : game.KICK,
-    3 : game.TACKLE, # Used on defense to slide tackle the ball
-    4 : game.CATCH,  # Used only by goalie to catch the ball
+    0 : "up",
+    1 : "down",
+    2 : "left",
+    3 : "right",
+    4 : "up",
+    5 : "down"
 }
