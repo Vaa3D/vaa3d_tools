@@ -1,16 +1,10 @@
 """
 2D rendering framework
 """
-import os
-import six
-import sys
 
-from gym.utils import reraise
-from gym import error
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
-import math
 import numpy as np
 
 RAD2DEG = 57.29577951308232
@@ -21,7 +15,7 @@ RAD2DEG = 57.29577951308232
 # TODO:
 
 class Viewer(object):
-    def __init__(self, width, height, agent_starting_position, display=None):
+    def __init__(self, width, height, display=None):
 
         self.width = width
         self.height = height
@@ -31,15 +25,17 @@ class Viewer(object):
         self.ax = self.fig.add_axes([0, 0, 1, 1], projection='3d')
         self.ax.axis('off')
 
-        self.current_agent_position = agent_starting_position
+        N_TRAJECTORIES = 1
+        TRAJECTORY_LEN = 1000
+        starting_positions = np.zeros((N_TRAJECTORIES, 1))
+        self.current_agent_position = starting_positions
         # init with shape (3,0)
         # each list is for (x,y,z)
         self.agent_trajectory = [[], [], []]
         # internally, we call this "Gold standard data" because we don't actually
         # have ground truth, but this an easier
-        N_TRAJECTORIES = 3
-        TRAJECTORY_LEN = 1000
-        starting_positions = np.random.random((N_TRAJECTORIES, 3))
+
+
 
         # choose a different color for each trajectory
         self.colors = plt.cm.jet(np.linspace(0, 1, N_TRAJECTORIES))
@@ -58,7 +54,6 @@ class Viewer(object):
 
         # set point-of-view: specified by (altitude degrees, azimuth degrees)
         self.ax.view_init(30, 0)
-
 
         self.ground_truth = np.asarray([self._gen_rand_trajectory(x0i, TRAJECTORY_LEN) for x0i in starting_positions])
         self.plot_ground_truth()
@@ -163,41 +158,6 @@ class Viewer(object):
 
         return trajectory
 
-
-    def __del__(self):
-        self.close()
-
-class SimpleImageViewer(object):
-    def __init__(self, display=None):
-        self.window = None
-        self.isopen = False
-        self.display = display
-    def imshow(self, arr):
-        if self.window is None:
-            height, width, _channels = arr.shape
-            self.window = pyglet.window.Window(width=4*width, height=4*height, display=self.display, vsync=False, resizable=True)
-            self.width = width
-            self.height = height
-            self.isopen = True
-
-            @self.window.event
-            def on_resize(width, height):
-                self.width = width
-                self.height = height
-
-            @self.window.event
-            def on_close():
-                self.isopen = False
-
-        assert len(arr.shape) == 3, "You passed in an image with the wrong number shape"
-        self.window.clear()
-        self.window.switch_to()
-        self.window.dispatch_events()
-        self.window.flip()
-    def close(self):
-        if self.isopen:
-            self.window.close()
-            self.isopen = False
 
     def __del__(self):
         self.close()
