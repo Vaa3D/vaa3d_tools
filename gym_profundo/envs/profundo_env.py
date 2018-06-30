@@ -16,8 +16,16 @@ class ProfundoEnv(gym.Env):
         self.action_space = spaces.Discrete(6)
 
         self.seed()
-        self.viewer = None
-        self.state = None
+        self.origin = np.array([0., 0., 0.])
+        self.state = self.origin  # TODO: should state be the multichannel image?
+
+        self.n_steps_taken = 0
+        self.max_steps_per_episode = 100
+
+        self.out_of_bounds = False
+
+    def __init_env__(self):
+        # TODO:
 
 
     def seed(self, seed=None):
@@ -26,51 +34,60 @@ class ProfundoEnv(gym.Env):
         return [seed]
 
     def __del__(self):
-        self.env.act(game.QUIT)
-        self.env.step()
-        os.kill(self.server_process.pid, signal.SIGINT)
-        if self.viewer is not None:
-            os.kill(self.viewer.pid, signal.SIGKILL)
+        raise NotImplementedError
 
 
 
     def step(self, action):
-        self._take_action(action)
-        self.status = self.env.step()
-        reward = self._get_reward()
-        ob = self.env.getState()
-        episode_over = self.status != game.IN_GAME
-        return ob, reward, episode_over, {}
+        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-    def _take_action(self, action):
-        """ Converts the action space into an HFO action. """
-        action_type = ACTION_LOOKUP[action[0]]
-        if action_type == game.DASH:
-            self.env.act(action_type, action[1], action[2])
-        elif action_type == game.TURN:
-            self.env.act(action_type, action[3])
-        elif action_type == game.KICK:
-            self.env.act(action_type, action[4], action[5])
+        step = self._action_to_step(action)
+        self.state = self.state + step
+
+        self.n_steps_taken += 1
+        done = bool(self.n_steps_taken > self.max_steps_per_episode)
+
+        if not done:
+            reward = self._calc_reward()
+        elif self.out_of_bounds:
+            # Pole just fell!
+            self.steps_beyond_done = 0
+            reward = 1.0
         else:
-            print('Unrecognized action %d' % action_type)
-            self.env.act(game.NOOP)
+            if self.steps_beyond_done == 0:
+                logger.warn(
+                    "You are calling 'step()' even though this environment has already returned done = True. You should always call 'reset()' once you receive 'done = True' -- any further steps are undefined behavior.")
+            self.steps_beyond_done += 1
+            reward = 0.0
 
-    def _get_reward(self):
+        return self.state, reward, done, {}
+
+
+    def _action_to_step(self, action):
+        if action == 0:  # up
+            step = [0, self.agent_stepsize, 0]
+        elif action == 1:  # down
+            step = [0, -self.agent_stepsize, 0]
+        elif action == 2:  # left
+            step = [-self.agent_stepsize, 0, 0]
+        elif action == 3:  # right
+            step = [self.agent_stepsize, 0, 0]
+        elif action == 4:  # in
+            step = [0, 0, -self.agent_stepsize]
+        elif action == 5:  # out
+            step = [0, 0, self.agent_stepsize]
+        return np.array(step)
+
+
+    def _calc_reward(self):
         """ Reward is given for scoring a goal. """
-        if self.status == game.GOAL:
-            return 1
-        else:
-            return 0
+        # TODO: implement
+        return 0
 
     def reset(self):
-        """ Repeats NO-OP action until a new episode begins. """
-        while self.status == game.IN_GAME:
-            self.env.act(game.NOOP)
-            self.status = self.env.step()
-        while self.status != game.IN_GAME:
-            self.env.act(game.NOOP)
-            self.status = self.env.step()
-        return self.env.getState()
+        # assume we always start at origin
+        self.state = self.origin
+        return self.state
 
     def render(self, mode='human', close=False):
         """ Viewer only supports human mode currently. """
