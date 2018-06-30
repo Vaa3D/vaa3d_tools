@@ -5,26 +5,19 @@ from gym.utils import seeding
 import numpy as np
 
 class ProfundoEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human']}  # fps?
 
     def __init__(self):
+        self.agent_stepsize = 1.0
         self.viewer = None
-        self.server_process = None
-        self.server_port = None
-        self.hfo_path = game.get_hfo_path()
-        self._configure_environment()
-        self.env = game.HFOEnvironment()
-        self.env.connectToServer(config_dir=game.get_config_path())
+        self.vaa3d_path = None # TODO
         self.observation_space = spaces.Box(low=-1, high=1,
                                             shape=(self.env.getStateSize()))
-        # Action space omits the Tackle/Catch actions, which are useful on defense
-        self.action_space = spaces.Tuple((spaces.Discrete(3),
-                                          spaces.Box(low=0, high=100, shape=1),
-                                          spaces.Box(low=-180, high=180, shape=1),
-                                          spaces.Box(low=-180, high=180, shape=1),
-                                          spaces.Box(low=0, high=100, shape=1),
-                                          spaces.Box(low=-180, high=180, shape=1)))
-        self.status = game.IN_GAME
+        self.action_space = spaces.Discrete(6)
+
+        self.seed()
+        self.viewer = None
+        self.state = None
 
     def __del__(self):
         self.env.act(game.QUIT)
@@ -33,13 +26,7 @@ class ProfundoEnv(gym.Env):
         if self.viewer is not None:
             os.kill(self.viewer.pid, signal.SIGKILL)
 
-    def _configure_environment(self):
-        """
-        Provides a chance for subclasses to override this method and supply
-        a different server configuration. By default, we initialize one
-        offense agent against no defenders.
-        """
-        self._start_hfo_server() 
+
 
     def step(self, action):
         self._take_action(action)
