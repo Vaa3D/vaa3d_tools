@@ -17,9 +17,11 @@ RAD2DEG = 57.29577951308232
 
 
 # TODO: add score counter
+# TODO: show current agent position
+# TODO:
 
 class Viewer(object):
-    def __init__(self, width, height, display=None):
+    def __init__(self, width, height, agent_starting_position, display=None):
 
         self.width = width
         self.height = height
@@ -28,12 +30,14 @@ class Viewer(object):
         self.fig = plt.figure()
         self.ax = p3.Axes3D(self.fig)
 
+        self.current_agent_position = agent_starting_position
         # init with shape (3,0)
         # each list is for (x,y,z)
         self.agent_trajectory = [[], [], []]
         # internally, we call this "Gold standard data" because we don't actually
         # have ground truth, but this an easier
         self.ground_truth = [self._gen_rand_trajectory(100) for _ in range(1)]
+        self.plot_ground_truth()
 
         #self.window = pyglet.window.Window(width=width, height=height, display=display)
         #self.window.on_close = self.window_closed_by_user
@@ -75,7 +79,7 @@ class Viewer(object):
         arr = None
         return arr if return_rgb_array else self.isopen
 
-    def _gen_rand_trajectory(self, n_nodes, stepsize=0.1):
+    def _gen_rand_trajectory(self, starting_coords, n_nodes, stepsize=5):
         """
         Create a line using a random walk algorithm
 
@@ -83,9 +87,10 @@ class Viewer(object):
         dims is the number of dimensions the line has.
         """
         dims = 3
-        trajectory = np.empty((dims, n_nodes))
-        # replace first col with random numbers
-        trajectory[:, 0] = np.random.rand(dims)
+        trajectory = np.empty((n_nodes, dims))
+        # replace first col with starting coords
+        trajectory[0, :] = list(starting_coords)
+
         for index in range(1, n_nodes):
             # scaling the random numbers by 0.1 so
             # movement is small compared to position.
@@ -94,9 +99,10 @@ class Viewer(object):
             step = ((np.random.uniform(-1, 1, dims)) * stepsize)
             # replace only the  next col in the sequence
             # take last point and add step to it
-            trajectory[:, index] = trajectory[:, index - 1] + step
+            trajectory[index, :] = trajectory[index - 1, :] + step
 
         return trajectory
+
 
     def __del__(self):
         self.close()
@@ -127,7 +133,6 @@ class SimpleImageViewer(object):
         self.window.clear()
         self.window.switch_to()
         self.window.dispatch_events()
-        image.blit(0, 0, width=self.window.width, height=self.window.height)
         self.window.flip()
     def close(self):
         if self.isopen:
