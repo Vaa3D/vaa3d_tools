@@ -28,7 +28,8 @@ class Viewer(object):
 
         # Attaching 3D axis to the figure
         self.fig = plt.figure()
-        self.ax = p3.Axes3D(self.fig)
+        self.ax = self.fig.add_axes([0, 0, 1, 1], projection='3d')
+        self.ax.axis('off')
 
         self.current_agent_position = agent_starting_position
         # init with shape (3,0)
@@ -36,7 +37,12 @@ class Viewer(object):
         self.agent_trajectory = [[], [], []]
         # internally, we call this "Gold standard data" because we don't actually
         # have ground truth, but this an easier
-        self.ground_truth = [self._gen_rand_trajectory(100) for _ in range(1)]
+        N_TRAJECTORIES = 3
+        TRAJECTORY_LEN = 1000
+        starting_positions = np.random.random((N_TRAJECTORIES, 3))
+
+
+        self.ground_truth = np.asarray([self._gen_rand_trajectory(x0i, TRAJECTORY_LEN) for x0i in starting_positions])
         self.plot_ground_truth()
 
         #self.window = pyglet.window.Window(width=width, height=height, display=display)
