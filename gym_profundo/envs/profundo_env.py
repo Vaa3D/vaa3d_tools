@@ -19,6 +19,12 @@ class ProfundoEnv(gym.Env):
         self.viewer = None
         self.state = None
 
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+
+        return [seed]
+
     def __del__(self):
         self.env.act(game.QUIT)
         self.env.step()
