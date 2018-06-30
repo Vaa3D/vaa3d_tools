@@ -24,8 +24,11 @@ class ProfundoEnv(gym.Env):
 
         self.out_of_bounds = False
 
+        self.viewer = None
+
     def __init_env__(self):
         # TODO:
+        pass
 
 
     def seed(self, seed=None):
@@ -90,19 +93,16 @@ class ProfundoEnv(gym.Env):
         return self.state
 
     def render(self, mode='human', close=False):
-        """ Viewer only supports human mode currently. """
-        if close:
-            if self.viewer is not None:
-                os.kill(self.viewer.pid, signal.SIGKILL)
-        else:
-            if self.viewer is None:
-                self._start_viewer()
+        """ Viewer only supports human mode currently.
 
-ACTION_LOOKUP = {
-    0 : "up",
-    1 : "down",
-    2 : "left",
-    3 : "right",
-    4 : "up",
-    5 : "down"
-}
+        I don't want to reimplement animations to update frame by frame,
+        so only render if  done"""
+        if self.viewer is None:
+            from rendering import Viewer
+            self.viewer = Viewer()
+
+
+    def close(self):
+        if self.viewer:
+            self.view.close()
+
