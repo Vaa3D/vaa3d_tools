@@ -15,12 +15,22 @@ def rand_walk(starting_coords, length, stepsize=5):
     # replace first col with starting coords
     trajectory[0, :] = list(starting_coords)
 
+    # step in fixed directions
+    action_space = np.array([[0, 0, 1],
+                             [0, 1, 0],
+                             [1, 0, 0]], dtype=float)
+    action_space = np.concatenate([-1*action_space, action_space])
+    action_space = action_space * stepsize  ## scale steps
+
     for index in range(1, length):
         # scaling the random numbers by 0.1 so
         # movement is small compared to position.
-        # subtraction by 0.5 is to change the range to [-0.5, 0.5]
         # to allow a line to move backwards.
-        step = ((np.random.uniform(-1, 1, dims)) * stepsize)
+        #step = ((np.random.uniform(-1, 1, dims)) * stepsize)
+
+        # since action space is discrete, randomly select one a row
+        step = action_space[np.random.randint(0, action_space.shape[0])]
+
         # replace only the  next col in the sequence
         # take last point and add step to it
         trajectory[index, :] = trajectory[index - 1, :] + step
@@ -46,11 +56,18 @@ fig = plt.figure()
 ax = fig.add_axes([0, 0, 1, 1], projection='3d')
 ax.axis('off')
 
+theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+z = np.linspace(-10, 10, 100)
+r = z**2 + 1
+x = r * np.sin(theta)
+y = r * np.cos(theta)
+ax.plot(x, y, z, label='ground truth', c="black", linewidth=7.0)
+
 # choose a different color for each trajectory
-colors = plt.cm.jet(np.linspace(0, 1, N_trajectories))
+colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
 
 # set up lines and points
-lines = sum([ax.plot([], [], [], '-', c=c)
+lines = sum([ax.plot([], [], [], '-', c=c, linewidth=7.0, alpha = 0.5)
              for c in colors], [])
 pts = sum([ax.plot([], [], [], 'X', c=c)
            for c in colors], [])
