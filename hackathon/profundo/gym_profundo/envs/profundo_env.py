@@ -12,7 +12,8 @@ class ProfundoEnv(gym.Env):
         self.viewer = None
         self.vaa3d_path = None # TODO
         # TODO update obs space
-        self.observation_space = spaces.Box(low=-5, high=5)
+        self.observation_space = spaces.Box(np.array([-5, -5, -5]),
+                                            np.array([5, 5, 5]))
         self.action_space = spaces.Discrete(6)
 
         self.seed()
@@ -37,7 +38,7 @@ class ProfundoEnv(gym.Env):
         return [seed]
 
     def __del__(self):
-        raise NotImplementedError
+        pass
 
 
 
@@ -54,13 +55,13 @@ class ProfundoEnv(gym.Env):
             reward = self._calc_reward()
         elif self.out_of_bounds:
             # Pole just fell!
-            self.steps_beyond_done = 0
+            # self.steps_beyond_done = 0
             reward = 1.0
         else:
-            if self.steps_beyond_done == 0:
-                logger.warn(
-                    "You are calling 'step()' even though this environment has already returned done = True. You should always call 'reset()' once you receive 'done = True' -- any further steps are undefined behavior.")
-            self.steps_beyond_done += 1
+            # if self.steps_beyond_done == 0:
+            #     logger.warn(
+            #         "You are calling 'step()' even though this environment has already returned done = True. You should always call 'reset()' once you receive 'done = True' -- any further steps are undefined behavior.")
+            # self.steps_beyond_done += 1
             reward = 0.0
 
         return self.state, reward, done, {}
