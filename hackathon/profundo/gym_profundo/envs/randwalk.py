@@ -140,21 +140,21 @@ def animate(i):
         if og_i == 0:
             #print(np.shape(xi.T))
             pass
-        x, y, z = traj[:i].T
-        if len(np.concatenate([x,y,z])) == 6:
-            print(traj[:i])
-        line.set_data(x, y)
-        line.set_3d_properties(z)
+        xs, ys, zs = traj[:i].T
+        line.set_data(xs, ys)
+        line.set_3d_properties(zs)
 
         # [-1:] gets last row
-        pt.set_data(x[-1:], y[-1:])
-        pt.set_3d_properties(z[-1:])
+        pt.set_data(xs[-1:], ys[-1:])
+        pt.set_3d_properties(zs[-1:])
 
         # calculate if intersected
         if i == 0:  # skip first, there is no previous point
             continue
-        print(np.shape(np.concatenate([x,y,z])))
-        distance, close_index = targ_kdtree.query(np.concatenate([x,y,z]),
+
+        # TODO: flatten arrays, then ravel them? for query
+        print(np.shape(np.concatenate([xs,ys,zs])))
+        distance, close_index = targ_kdtree.query(np.concatenate([xs,ys,zs]),
                                                   distance_upper_bound=.5,
                                                   k = 1)  # n neighbors
 
