@@ -250,7 +250,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     QElapsedTimer timer1;
     timer1.start();
     bool use_comment = false;
-
     if(resultTree_rebase.listNeuron.size()==0)
     {
         resultTree_rebase = callback.getSWCTeraFly();
@@ -501,8 +500,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
          _file.open(str_outimg_filename.toStdString().c_str(),ios::in);
         if(!_file)
         {
+            //v3d_msg("gggggg");
             if(enhance)
             {
+                //v3d_msg("llllllllllll");
                 thresh = 30;
                 PARA.channel = 1;
                 anisodiff_func(callback,parent,PARA,bmenu);

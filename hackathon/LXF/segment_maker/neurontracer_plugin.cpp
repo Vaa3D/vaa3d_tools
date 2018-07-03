@@ -363,6 +363,9 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
+        cout<<"trace_result.size = "<<trace_result.listNeuron.size()<<endl;
+        cout<<"curr_window_nt.size = "<<curr_win_nt.listNeuron.size()<<endl;
+        v3d_msg("check_size");
         NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
         //NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
@@ -656,7 +659,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &callback, QWidget *parent) :
     setWindowTitle(QString("Synchronize annotation "));
     connect(set_thresh,     SIGNAL(clicked()), this, SLOT(_slot_set_thresh()));
     //connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
-    connect(enhance_img,     SIGNAL(clicked()), this, SLOT(_slot_use_landmarker()));
+    connect(enhance_img,     SIGNAL(clicked()), this, SLOT(_slot_enhance_img()));
 
 
 }

@@ -41,7 +41,7 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
             S.x = sketchedNTList[i].listNeuron[k].x-PA.original_o[0];
             S.y = sketchedNTList[i].listNeuron[k].y-PA.original_o[1];
             S.z = sketchedNTList[i].listNeuron[k].z-PA.original_o[2];
-            S.r = 2;
+            S.r = sketchedNTList[i].listNeuron[k].r;
             S.parent = k-1;
             S.type = 3;
             outtree.listNeuron.push_back(S);
@@ -63,6 +63,7 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
 
         //segment_mean_shift(data1d,marker_v,im_cropped_sz,i,segment[i]->markers);
         segment_mean_shift_v2(callback,marker_v,PA,i,sketchedNTList[i].listNeuron);
+        //profile_swc_menu()
         if(PA.data1d) {delete []PA.data1d; PA.data1d = 0;}
     }
 

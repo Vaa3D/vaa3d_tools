@@ -73,7 +73,7 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
     LandmarkList LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<float> mass_center;
-    int methodcode = 2;
+    int methodcode = 1;
   //  unsigned char *data_1d;
   //  V3DLONG in_sz[4];
   //  int databyte;
@@ -109,7 +109,7 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
         S.y = LList_new_center.at(k).y;
         S.z = LList_new_center.at(k).z;
         S.n = k;
-        S.r = 2;
+        S.r = LList_new_center.at(k).radius;
         S.pn = k-1;
         S.type = 2;
         nt.listNeuron.push_back(S);
