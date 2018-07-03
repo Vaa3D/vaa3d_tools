@@ -33,7 +33,13 @@ unix:!macx {
 
 
 HEADERS	+= neurontracer_plugin.h \
-    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
+    ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h \
+    ../anisodiffusion_LXF/src/q_imgaussian3D.h \
+    ../anisodiffusion_LXF/src/q_EigenVectors3D.h \
+    ../anisodiffusion_LXF/src/q_derivatives3D.h \
+    ../anisodiffusion_LXF/src/q_AnisoDiff3D.h \
+    ../anisodiffusion_LXF/src/EigenDecomposition3.h \
+    ../../../../v3d_external/v3d_main/basic_c_fun/stackutil.h
 HEADERS	+= tracing_func.h
 
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h
@@ -50,7 +56,12 @@ HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/marker_r
 HEADERS += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h
 HEADERS += ../../../released_plugins/v3d_plugins/neuron_image_profiling/openSWCDialog.h
 
-SOURCES	+= neurontracer_plugin.cpp
+SOURCES	+= neurontracer_plugin.cpp \
+    ../anisodiffusion_LXF/src/q_imgaussian3D.cpp \
+    ../anisodiffusion_LXF/src/q_EigenVectors3D.cpp \
+    ../anisodiffusion_LXF/src/q_derivatives3D.cpp \
+    ../anisodiffusion_LXF/src/q_AnisoDiff3D.cpp \
+    ../anisodiffusion_LXF/src/EigenDecomposition3.cpp
 SOURCES	+= tracing_func.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp

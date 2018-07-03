@@ -18,6 +18,13 @@
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../hackathon/zhi/branch_point_detection/branch_pt_detection_func.h"
+#include "../../../../v3d_external/v3d_main/basic_c_fun/stackutil.h"
+#include "../anisodiffusion_LXF/src/q_imgaussian3D.h"
+#include "../anisodiffusion_LXF/src/q_EigenVectors3D.h"
+#include "../anisodiffusion_LXF/src/q_derivatives3D.h"
+#include "../anisodiffusion_LXF/src/q_AnisoDiff3D.h"
+//#include "../anisodiffusion_LXF/src/EigenDecomposition3.h"
+//#include "../anisodiffusion_LXF/src/EigenDecomposition3.h"
 bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * pdata, V3DLONG sz[3], int datatype);
 extern int thresh;
 extern NeuronTree trace_result,resultTree_rebase,resultTree;
@@ -30,6 +37,7 @@ V3DLONG thres_rebase=42;
 QString outimg_file;
 extern bool change;
 bool is_soma =false;
+extern bool enhance;
 #if  defined(Q_OS_LINUX)
     #include <omp.h>
 #endif
@@ -247,11 +255,11 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {
         resultTree_rebase = callback.getSWCTeraFly();
     }
-
-    outimg_file = "test.v3draw";
+    const Image4DSimple *curr_block = callback.getImageTeraFly();
+    outimg_file = "X_"+QString::number(curr_block->getOriginX())+"Y_"+QString::number(curr_block->getOriginY())+"Z_"+QString::number(curr_block->getOriginZ())+".v3draw";
     QString imageSaveString = "test_app2.v3draw";
     QString swcString = outimg_file + "_app2.swc";
-    QString outmarker_file = "test.marker";
+    QString outmarker_file =outimg_file + ".marker";
     V3DLONG data1d_sz[4];
     if(bmenu)
     {
@@ -319,7 +327,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {
         cout<<"$$$$$$$$$$$$$$$$$$$$$$get into curr window$$$$$$$$$$$$$$$$$$$$$$$$"<<endl;
         P.inimg_file = outimg_file;
-        const Image4DSimple *curr_block = callback.getImageTeraFly();
+
         LandmarkList terafly_landmarks_terafly = callback.getLandmarkTeraFly();//terafly_landmarks
         LandmarkList new_marker;
         LocationSimple t;
@@ -484,6 +492,22 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
         simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)data->getRawData(),data1d_sz,1);
 
+        //bool menu_enhance = true;
+        input_PARA PARA;
+        QString coord_name = QString::number(curr_block->getOriginX())+QString::number(curr_block->getOriginY())+QString::number(curr_block->getOriginZ());
+        PARA.inimg_file = outimg_file;
+        QString str_outimg_filename = outimg_file + "_anisodiff.raw";
+         fstream _file;
+         _file.open(str_outimg_filename.toStdString().c_str(),ios::in);
+        if(!_file)
+        {
+            if(enhance)
+            {
+                thresh = 30;
+                PARA.channel = 1;
+                anisodiff_func(callback,parent,PARA,bmenu);
+            }
+        }
 
 
         V3DLONG all_volume = data1d_sz[0]*data1d_sz[1]*data1d_sz[2];
@@ -533,7 +557,14 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         QString versionStr = "v0.001";
         p2.inmarker_file = outmarker_file;
         cout<<"p2"<<p2.inmarker_file.size()<<endl;
-        p2.inimg_file = outimg_file;
+        if(enhance)
+        {
+            p2.inimg_file = str_outimg_filename;
+        }
+        else
+        {
+            p2.inimg_file = outimg_file;
+        }
         p2.bkg_thresh = thresh;
         p2.is_gsdt = true;
         p2.b_resample = 0;
@@ -547,7 +578,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         //thresh=30;
 
     }
-
+    enhance = false;
 
     //v3d_msg("app2_done");
 
@@ -875,4 +906,220 @@ bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * 
     }
 
     return cb.saveImage(outimg, (char *)filename);
+}
+bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+{
+    unsigned char* p_img_input = 0;
+    V3DLONG sz_img_input[4];
+    if(bmenu)
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return false;
+        }
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return false;
+        }
+        if(p4DImage->getDatatype()!=V3D_UINT8)
+        {
+            QMessageBox::information(0, "", "Please convert the image to be UINT8 and try again!");
+            return false;
+        }
+        if(p4DImage->getCDim()!=1)
+        {
+            QMessageBox::information(0, "", "The input image is not one channel image!");
+            return false;
+        }
+        p_img_input = p4DImage->getRawData();
+        sz_img_input[0] = p4DImage->getXDim();
+        sz_img_input[1] = p4DImage->getYDim();
+        sz_img_input[2] = p4DImage->getZDim();
+        sz_img_input[3] = 1;
+    }
+    else
+    {
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), p_img_input, sz_img_input, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return false;
+        }
+        if(PARA.channel < 1 || PARA.channel > sz_img_input[3])
+        {
+            fprintf (stderr, "Invalid channel number. \n");
+            return false;
+        }
+
+        if(datatype !=1)
+        {
+            fprintf (stderr, "Please convert the image to be UINT8 and try again!\n");
+            return false;
+        }
+    }
+
+    //-----------------------------------------------------------------------------------------
+    printf("1. Find the bounding box and crop image. \n");
+    long l_boundbox_min[3],l_boundbox_max[3];//xyz
+    V3DLONG sz_img_crop[4];
+    long l_npixels_crop;
+    unsigned char *p_img8u_crop=0;
+    {
+    //find bounding box
+    unsigned char ***p_img8u_3d=0;
+    if(!new3dpointer(p_img8u_3d,sz_img_input[0],sz_img_input[1],sz_img_input[2],p_img_input))
+    {
+        printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
+        if(p_img8u_3d) 				{delete3dpointer(p_img8u_3d,sz_img_input[0],sz_img_input[1],sz_img_input[2]);}
+        return false;
+    }
+
+    l_boundbox_min[0]=sz_img_input[0];	l_boundbox_min[1]=sz_img_input[1];	l_boundbox_min[2]=sz_img_input[2];
+    l_boundbox_max[0]=0;				l_boundbox_max[1]=0;				l_boundbox_max[2]=0;
+    for(long X=0;X<sz_img_input[0];X++)
+        for(long Y=0;Y<sz_img_input[1];Y++)
+            for(long Z=0;Z<sz_img_input[2];Z++)
+                if(p_img8u_3d[Z][Y][X]>0.1)
+                {
+                    if(l_boundbox_min[0]>X) l_boundbox_min[0]=X;	if(l_boundbox_max[0]<X) l_boundbox_max[0]=X;
+                    if(l_boundbox_min[1]>Y) l_boundbox_min[1]=Y;	if(l_boundbox_max[1]<Y) l_boundbox_max[1]=Y;
+                    if(l_boundbox_min[2]>Z) l_boundbox_min[2]=Z;	if(l_boundbox_max[2]<Z) l_boundbox_max[2]=Z;
+                }
+    printf(">>boundingbox: x[%ld~%ld],y[%ld~%ld],z[%ld~%ld]\n",l_boundbox_min[0],l_boundbox_max[0],
+                                                               l_boundbox_min[1],l_boundbox_max[1],
+                                                               l_boundbox_min[2],l_boundbox_max[2]);
+
+    //crop image
+    sz_img_crop[0]=l_boundbox_max[0]-l_boundbox_min[0]+1;
+    sz_img_crop[1]=l_boundbox_max[1]-l_boundbox_min[1]+1;
+    sz_img_crop[2]=l_boundbox_max[2]-l_boundbox_min[2]+1;
+    sz_img_crop[3]=1;
+    l_npixels_crop=sz_img_crop[0]*sz_img_crop[1]*sz_img_crop[2];
+
+    p_img8u_crop=new(std::nothrow) unsigned char[l_npixels_crop]();
+    if(!p_img8u_crop)
+    {
+        printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
+        if(p_img8u_3d) 				{delete3dpointer(p_img8u_3d,sz_img_input[0],sz_img_input[1],sz_img_input[2]);}
+        return false;
+    }
+    unsigned char *p_tmp=p_img8u_crop;
+    for(long Z=0;Z<sz_img_crop[2];Z++)
+        for(long Y=0;Y<sz_img_crop[1];Y++)
+            for(long X=0;X<sz_img_crop[0];X++)
+            {
+                *p_tmp = p_img8u_3d[Z+l_boundbox_min[2]][Y+l_boundbox_min[1]][X+l_boundbox_min[0]];
+                p_tmp++;
+            }
+    if(p_img8u_3d) 			{delete3dpointer(p_img8u_3d,sz_img_input[0],sz_img_input[1],sz_img_input[2]);}
+    }
+    //saveImage("d:/SVN/Vaa3D_source_code/v3d_external/released_plugins/v3d_plugins/anisodiffusion_littlequick/crop.raw",p_img8u_crop,sz_img_crop,1);
+
+    //-----------------------------------------------------------------------------------------
+    //convert image data type to float
+    printf("2. Convert image data to float and scale to [0~255]. \n");
+    float *p_img32f_crop=0;
+    {
+    p_img32f_crop=new(std::nothrow) float[l_npixels_crop]();
+    if(!p_img32f_crop)
+    {
+        printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
+        if(p_img8u_crop) 			{delete []p_img8u_crop;		p_img8u_crop=0;}
+        if(p_img32f_crop) 			{delete []p_img32f_crop;			p_img32f_crop=0;}
+        return false;
+    }
+    //find the maximal intensity value
+    float d_maxintensity_input=0.0;
+    for(long i=0;i<l_npixels_crop;i++)
+        if(p_img8u_crop[i]>d_maxintensity_input)
+            d_maxintensity_input=p_img8u_crop[i];
+    //convert and rescale
+    for(long i=0;i<l_npixels_crop;i++)
+        p_img32f_crop[i]=p_img8u_crop[i]/d_maxintensity_input*255.0;
+    printf(">>d_maxintensity=%.2f\n",d_maxintensity_input);
+    //free input image to save memory
+    //if(p_img_input) 			{delete []p_img_input;		p_img_input=0;}
+    if(p_img8u_crop) 			{delete []p_img8u_crop;		p_img8u_crop=0;}
+    }
+
+    //-----------------------------------------------------------------------------------------
+    //do anisotropic diffusion
+    printf("3. Do anisotropic diffusion... \n");
+    float *p_img32f_crop_output=0;
+    if(!q_AnisoDiff3D(p_img32f_crop,sz_img_crop,p_img32f_crop_output))
+    {
+        printf("ERROR: q_AnisoDiff3D() return false!\n");
+        if(p_img8u_crop) 			{delete []p_img8u_crop;		p_img8u_crop=0;}
+        if(p_img32f_crop) 				{delete []p_img32f_crop;		p_img32f_crop=0;}
+        if(p_img32f_crop_output) 		{delete []p_img32f_crop_output;	p_img32f_crop_output=0;}
+        return false;
+    }
+    if(p_img32f_crop) 				{delete []p_img32f_crop;		p_img32f_crop=0;}
+
+    //-----------------------------------------------------------------------------------------
+    printf("4. Reconstruct processed crop image back to original size. \n");
+    unsigned char *p_img8u_output=0;
+    long l_npixels=sz_img_input[0]*sz_img_input[1]*sz_img_input[2]*sz_img_input[3];
+    {
+    p_img8u_output=new(std::nothrow) unsigned char[l_npixels]();
+    if(!p_img8u_output)
+    {
+        printf("ERROR: Fail to allocate memory for p_img8u_output!\n");
+        if(p_img32f_crop_output) 		{delete []p_img32f_crop_output;	p_img32f_crop_output=0;}
+        return false;
+    }
+    //copy original image data to output image
+    for(long i=0;i<l_npixels;i++)
+        p_img8u_output[i]=p_img_input[i];
+
+    unsigned char ***p_img8u_3d=0;
+    if(!new3dpointer(p_img8u_3d,sz_img_input[0],sz_img_input[1],sz_img_input[2],p_img8u_output))
+    {
+        printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
+        if(p_img8u_output) 				{delete []p_img8u_output;	p_img8u_output=0;}
+        if(p_img32f_crop_output) 		{delete []p_img32f_crop_output;	p_img32f_crop_output=0;}
+        return false;
+    }
+
+    float *p_tmp=p_img32f_crop_output;
+    for(long Z=0;Z<sz_img_crop[2];Z++)
+        for(long Y=0;Y<sz_img_crop[1];Y++)
+            for(long X=0;X<sz_img_crop[0];X++)
+            {
+                p_img8u_3d[Z+l_boundbox_min[2]][Y+l_boundbox_min[1]][X+l_boundbox_min[0]]=(unsigned char)(*p_tmp);
+                p_tmp++;
+            }
+
+    if(p_img8u_3d) 	{delete3dpointer(p_img8u_3d,sz_img_input[0],sz_img_input[1],sz_img_input[2]);}
+    if(p_img32f_crop_output) 		{delete []p_img32f_crop_output;	p_img32f_crop_output=0;}
+    }
+
+    //-----------------------------------------------------------------------------------------
+    //save or display
+    if(bmenu)
+    {
+        printf("5. Display the processed image in Vaa3D. \n");
+        //push result image back to v3d
+        v3dhandle newwin=callback.newImageWindow("output");
+        Image4DSimple img4D_output;
+        img4D_output.setData(p_img8u_output,sz_img_input[0],sz_img_input[1],sz_img_input[2],1,V3D_UINT8);
+        callback.setImage(newwin,&img4D_output);
+        callback.updateImageWindow(newwin);
+        callback.open3DWindow(newwin);
+    }
+    else
+    {
+        printf("5. Save the processed image to file. \n");
+        QString str_outimg_filename = PARA.inimg_file + "_anisodiff.raw";
+        saveImage(qPrintable(str_outimg_filename),p_img8u_output,sz_img_input,1);
+
+        if(p_img8u_output) 		{delete []p_img8u_output;		p_img8u_output=0;}
+    }
+
+    printf(">>Program complete success!\n");
+    return true;
 }

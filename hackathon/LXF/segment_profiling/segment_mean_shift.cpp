@@ -66,7 +66,7 @@ bool segment_mean_shift(unsigned char* &data1d,LandmarkList &LList,V3DLONG im_cr
 
 
 }
-LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA PA,int i,vector<MyMarker*> &nt_marker2)
+LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA PA,int i,QList <NeuronSWC> &nt_marker2)
 {
  //   LandmarkList emptylist = LandmarkList();
     mean_shift_fun mean_shift_obj;

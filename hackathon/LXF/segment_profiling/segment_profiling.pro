@@ -16,7 +16,9 @@ HEADERS	+= segment_profiling_plugin.h \
     ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h \
     segment_mean_shift.h \
     ../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h \
-    ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.h
+    ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.h \
+    ../../../../v3d_external/v3d_main/neuron_editing/neuron_format_converter.h \
+    ../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.h
 
 SOURCES	+= segment_profiling_plugin.cpp \
     openSWCDialog.cpp \
@@ -28,7 +30,9 @@ SOURCES	+= segment_profiling_plugin.cpp \
     get_sub_block.cpp \
     ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp \
     segment_mean_shift.cpp \
-    ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.cpp
+    ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.cpp \
+    ../../../../v3d_external/v3d_main/neuron_editing/neuron_format_converter.cpp \
+    ../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
