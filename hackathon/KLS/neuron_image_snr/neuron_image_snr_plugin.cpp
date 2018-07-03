@@ -6,7 +6,7 @@
 
 #include "v3d_message.h"
 #include <vector>
-#include "neuron_image_profiling_plugin.h"
+#include "neuron_image_snr_plugin.h"
 #include "profile_swc.h"
 #include <iostream>
 #include <sstream>

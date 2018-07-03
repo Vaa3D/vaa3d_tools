@@ -20,9 +20,9 @@ unix:!macx {
 }
 
 
-HEADERS	+= neuron_image_profiling_plugin.h \
+HEADERS	+= neuron_image_snr_plugin.h \
     compute_tubularity.h
-SOURCES	+= neuron_image_profiling_plugin.cpp \
+SOURCES	+= neuron_image_snr_plugin.cpp \
     compute_tubularity.cpp
 SOURCES	+= profile_swc.cpp
 HEADERS	+= profile_swc.h

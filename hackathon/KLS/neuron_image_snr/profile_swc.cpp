@@ -19,7 +19,7 @@
 #include "v3d_message.h"
 #include "compute_tubularity.h"
 
-#include "neuron_image_profiling_plugin.h"
+#include "neuron_image_snr_plugin.h"
 
 using namespace std;
 
