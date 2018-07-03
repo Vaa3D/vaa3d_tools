@@ -3,9 +3,19 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib import animation
+from scipy.spatial import cKDTree
+from scipy import interpolate
 
 N_trajectories = 5
 TRAJECTORY_LEN = 1000
+
+
+def upsample_coords(coord_list):
+    # s is smoothness, set to zero
+    # k is degree of the spline. setting to 1 for linear spline
+    tck, u = interpolate.splprep(coord_list, k=1, s=0.0)
+    upsampled_coords = interpolate.splev(np.linspace(0, 1, 100), tck)
+    return upsampled_coords
 
 
 def rand_walk(starting_coords, length, stepsize=5):
@@ -57,20 +67,29 @@ ax = fig.add_axes([0, 0, 1, 1], projection='3d')
 ax.axis('off')
 
 theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
-z = np.linspace(-10, 10, 100)
-r = z**2 + 1
-x = r * np.sin(theta)
-y = r * np.cos(theta)
-ax.plot(x, y, z, label='ground truth', c="black", linewidth=7.0)
+z_targ = np.linspace(-10, 10, 100)
+r = z_targ ** 2 + 1
+x_targ = r * np.sin(theta)
+y_targ = r * np.cos(theta)
+ax.plot(x_targ, y_targ, z_targ, label='ground truth', c="black", linewidth=7.0)
+
+targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
+targ_coords = np.column_stack(targ_upsampled)
+
+
 
 # choose a different color for each trajectory
 colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
 
 # set up lines and points
-lines = sum([ax.plot([], [], [], '-', c=c, linewidth=7.0, alpha = 0.5)
+# each item in these lists is a separate list of points, one for each frame in the final animation
+# this is redundant, but we'll only animate pre-computed data this way
+lines = sum([ax.plot([], [], [], '-', c=c, linewidth=7.0, alpha = 0.3)
              for c in colors], [])
-pts = sum([ax.plot([], [], [], 'X', c=c)
+pts = sum([ax.plot([], [], [], 'X', c=c, markersize=20)
            for c in colors], [])
+intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=20)
+           for i in range(N_trajectories)], [])
 
 # prepare the axes limits
 ax.set_xlim((-25, 25))
@@ -94,15 +113,17 @@ def init():
 def animate(i):
     # we'll step two time-steps per frame.  This leads to nice results.
     og_i = i
-    i = (2 * i) % x_t.shape[1]
+    #i = (2 * i) % x_t.shape[1]
 
     for line, pt, xi in zip(lines, pts, x_t):
         if og_i == 0:
-            print(np.shape(xi.T))
+            #print(np.shape(xi.T))
+            pass
         x, y, z = xi[:i].T
         line.set_data(x, y)
         line.set_3d_properties(z)
 
+        # [-1:] gets last row
         pt.set_data(x[-1:], y[-1:])
         pt.set_3d_properties(z[-1:])
 
