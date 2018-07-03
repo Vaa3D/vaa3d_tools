@@ -2,7 +2,7 @@
 
 
 
-bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg_m,PARA &PA,int n)
+bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA &PA,int n)
 {
     cout<<"get_sub_block"<<endl;
 
@@ -16,25 +16,25 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
         double maxz = -100000000;
         QString inimg_file = callback.getPathTeraFly();
         cout<<"inimg = "<<inimg_file.toStdString()<<endl;
-        for(V3DLONG i = 0;i < seg_m.size();i++)
+        for(V3DLONG i = 0;i < seg_m.listNeuron.size();i++)
         {
-            MyMarker* curr = seg_m[i];
-            if(curr->x<minx)
-                minx = curr->x;
-            if(curr->y<miny)
-                miny = curr->y;
-            if(curr->z<minz)
-                minz = curr->z;
+            NeuronSWC curr = seg_m.listNeuron[i];
+            if(curr.x<minx)
+                minx = curr.x;
+            if(curr.y<miny)
+                miny = curr.y;
+            if(curr.z<minz)
+                minz = curr.z;
         }
-        for(V3DLONG i = 0;i < seg_m.size();i++)
+        for(V3DLONG i = 0;i < seg_m.listNeuron.size();i++)
         {
-            MyMarker *curr2 = seg_m[i];
-            if(curr2->x>maxx)
-                maxx = curr2->x;
-            if(curr2->y>maxy)
-                maxy = curr2->y;
-            if(curr2->z>maxz)
-                maxz = curr2->z;
+            NeuronSWC curr2 = seg_m.listNeuron[i];
+            if(curr2.x>maxx)
+                maxx = curr2.x;
+            if(curr2.y>maxy)
+                maxy = curr2.y;
+            if(curr2.z>maxz)
+                maxz = curr2.z;
         }
         double lenx = maxx - minx;
         double leny = maxy - miny;
@@ -101,10 +101,11 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
 
         simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
         PA.data1d = im_cropped;
-        return true;
+
         //if(im_cropped) {delete []im_cropped; im_cropped = 0;}
 
     }
+    return true;
 }
 
 

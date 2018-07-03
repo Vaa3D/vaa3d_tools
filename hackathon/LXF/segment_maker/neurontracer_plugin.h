@@ -982,6 +982,7 @@ private slots:
     void _slot_set_thresh();
     void _slot_use_landmarker();
     void _slot_move_block();
+    void _slot_enhance_img();
 
 };
 

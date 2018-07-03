@@ -44,7 +44,14 @@ struct TRACE_LS_PARA
     LandmarkList listLandmarks;
     QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd;
 };
+struct input_PARA
+{
+    QString inimg_file;
+    V3DLONG channel;
+};
 
+
+bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
 
 bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);

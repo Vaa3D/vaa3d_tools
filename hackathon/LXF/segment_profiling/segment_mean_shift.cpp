@@ -66,14 +66,14 @@ bool segment_mean_shift(unsigned char* &data1d,LandmarkList &LList,V3DLONG im_cr
 
 
 }
-LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA PA,int i,vector<MyMarker*> &nt_marker2)
+LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA PA,int i,QList <NeuronSWC> &nt_marker2)
 {
  //   LandmarkList emptylist = LandmarkList();
     mean_shift_fun mean_shift_obj;
     LandmarkList LList_new_center;
     vector<V3DLONG> poss_landmark;
     vector<float> mass_center;
-    int methodcode = 2;
+    int methodcode = 1;
   //  unsigned char *data_1d;
   //  V3DLONG in_sz[4];
   //  int databyte;
@@ -109,7 +109,7 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
         S.y = LList_new_center.at(k).y;
         S.z = LList_new_center.at(k).z;
         S.n = k;
-        S.r = 2;
+        S.r = LList_new_center.at(k).radius;
         S.pn = k-1;
         S.type = 2;
         nt.listNeuron.push_back(S);
