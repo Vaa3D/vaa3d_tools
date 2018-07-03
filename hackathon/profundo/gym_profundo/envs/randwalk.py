@@ -11,6 +11,15 @@ TRAJECTORY_LEN = 1000
 
 
 def upsample_coords(coord_list):
+    ## rand walk coord list is generated transposed
+    # make an exception block to transpose if necessary
+    try:
+        assert (np.shape(coord_list)[0] == 3)
+    except AssertionError:
+        if np.shape(coord_list)[1] == 3:
+            # transpose
+            coord_list = np.array(coord_list).T
+
     # s is smoothness, set to zero
     # k is degree of the spline. setting to 1 for linear spline
     tck, u = interpolate.splprep(coord_list, k=1, s=0.0)
@@ -30,7 +39,7 @@ def rand_walk(starting_coords, length, stepsize=5):
                              [0, 1, 0],
                              [1, 0, 0]], dtype=float)
     action_space = np.concatenate([-1*action_space, action_space])
-    action_space = action_space * stepsize  ## scale steps
+    action_space = action_space * stepsize  # scale steps
 
     for index in range(1, length):
         # scaling the random numbers by 0.1 so
@@ -40,7 +49,6 @@ def rand_walk(starting_coords, length, stepsize=5):
 
         # since action space is discrete, randomly select one a row
         step = action_space[np.random.randint(0, action_space.shape[0])]
-
         # replace only the  next col in the sequence
         # take last point and add step to it
         trajectory[index, :] = trajectory[index - 1, :] + step
@@ -48,24 +56,30 @@ def rand_walk(starting_coords, length, stepsize=5):
     return trajectory
 
 
+def find_crossings(target_trajectory_kdtree, trajectory_i):
+    pass
+
 # Choose random starting points, uniformly distributed from -15 to 15
-np.random.seed(1)
-x0 = np.random.random((N_trajectories, 3))
+starting_positions = np.random.random((N_trajectories, 3))
 
 
 # Solve for the trajectories
 # for starting point in x0
 # generate timeseries
 
-x_t = np.asarray([rand_walk(x0i, TRAJECTORY_LEN)
-                  for x0i in x0])
-print(np.shape(x_t))
+trajectories = np.asarray([rand_walk(start_pos, TRAJECTORY_LEN)
+                           for start_pos in starting_positions])
+
+trajectories_upsampled = [upsample_coords(t) for t in trajectories]
+trajectories_coords = np.column_stack(trajectories_upsampled)
+
 
 # Set up figure & 3D axis for animation
 fig = plt.figure()
 ax = fig.add_axes([0, 0, 1, 1], projection='3d')
 ax.axis('off')
 
+# plot ground truth and leave it up
 theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
 z_targ = np.linspace(-10, 10, 100)
 r = z_targ ** 2 + 1
@@ -75,6 +89,10 @@ ax.plot(x_targ, y_targ, z_targ, label='ground truth', c="black", linewidth=7.0)
 
 targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
 targ_coords = np.column_stack(targ_upsampled)
+
+# KD-tree for nearest neighbor search
+targ_kdtree = cKDTree(targ_coords)
+
 
 
 
@@ -101,12 +119,15 @@ ax.view_init(30, 0)
 
 # initialization function: plot the background of each frame
 def init():
-    for line, pt in zip(lines, pts):
+    for line, pt, inter in zip(lines, pts, intersections):
         line.set_data([], [])
         line.set_3d_properties([])
 
         pt.set_data([], [])
         pt.set_3d_properties([])
+
+        inter.set_data([], [])
+        inter.set_3d_properties([])
     return lines + pts
 
 # animation function.  This will be called sequentially with the frame number
@@ -115,17 +136,36 @@ def animate(i):
     og_i = i
     #i = (2 * i) % x_t.shape[1]
 
-    for line, pt, xi in zip(lines, pts, x_t):
+    for line, pt, inter, traj in zip(lines, pts, intersections, trajectories):
         if og_i == 0:
             #print(np.shape(xi.T))
             pass
-        x, y, z = xi[:i].T
+        x, y, z = traj[:i].T
+        if len(np.concatenate([x,y,z])) == 6:
+            print(traj[:i])
         line.set_data(x, y)
         line.set_3d_properties(z)
 
         # [-1:] gets last row
         pt.set_data(x[-1:], y[-1:])
         pt.set_3d_properties(z[-1:])
+
+        # calculate if intersected
+        if i == 0:  # skip first, there is no previous point
+            continue
+        print(np.shape(np.concatenate([x,y,z])))
+        distance, close_index = targ_kdtree.query(np.concatenate([x,y,z]),
+                                                  distance_upper_bound=.5,
+                                                  k = 1)  # n neighbors
+
+        # strangely, points infinitely far away are somehow within the upper bound
+        if np.isinf(distance):
+            continue
+
+        # plot ground truth that was activated
+        _x, _y, _z = targ_kdtree.data[close_index]
+        inter.set_data(_x, _y)
+        inter.set_3d_properties(_z)
 
     ax.view_init(30, 0.3 * i)
     fig.canvas.draw()
