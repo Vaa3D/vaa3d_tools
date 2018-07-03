@@ -6,7 +6,7 @@ from matplotlib import animation
 from scipy.spatial import cKDTree
 from scipy import interpolate
 
-N_trajectories = 5
+N_trajectories = 10
 TRAJECTORY_LEN = 1000
 
 
@@ -102,11 +102,11 @@ colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
 # set up lines and points
 # each item in these lists is a separate list of points, one for each frame in the final animation
 # this is redundant, but we'll only animate pre-computed data this way
-lines = sum([ax.plot([], [], [], '-', c=c, linewidth=7.0, alpha = 0.3)
+lines = sum([ax.plot([], [], [], '-', c=c, linewidth=7.0, alpha = 0.2)
              for c in colors], [])
-pts = sum([ax.plot([], [], [], 'X', c=c, markersize=20)
+pts = sum([ax.plot([], [], [], '*', c=c, markersize=15, alpha=0.2)
            for c in colors], [])
-intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=20)
+intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=30)
            for i in range(N_trajectories)], [])
 
 # prepare the axes limits
@@ -152,18 +152,20 @@ def animate(i):
         if i == 0:  # skip first, there is no previous point
             continue
 
-        # TODO: flatten arrays, then ravel them? for query
-        print(np.shape(np.concatenate([xs,ys,zs])))
-        distance, close_index = targ_kdtree.query(np.concatenate([xs,ys,zs]),
-                                                  distance_upper_bound=.5,
-                                                  k = 1)  # n neighbors
+        # FIXME this is very redundant and expensive, don't recompute whole
+        # trajectory in query every time
+        #print(np.shape(np.concatenate(list(zip(xs.ravel(),ys.ravel(),zs.ravel())))
+        distances, close_indexes = targ_kdtree.query(list(zip(xs.ravel(),ys.ravel(),zs.ravel())),
+                                                  distance_upper_bound=10)
 
         # strangely, points infinitely far away are somehow within the upper bound
-        if np.isinf(distance):
-            continue
+        inf_mask = np.ma.masked_invalid(distances)
+        masked_indexes = np.ma.masked_where(np.ma.getmask(inf_mask), close_indexes)
+        masked_indexes = np.ma.compressed(np.unique(masked_indexes))  # deduplicate
 
         # plot ground truth that was activated
-        _x, _y, _z = targ_kdtree.data[close_index]
+        intersection_coords = targ_kdtree.data[masked_indexes]
+        _x, _y, _z = intersection_coords.T
         inter.set_data(_x, _y)
         inter.set_3d_properties(_z)
 
@@ -173,7 +175,7 @@ def animate(i):
 
 # instantiate the animator.
 anim = animation.FuncAnimation(fig, animate, init_func=init,
-                               frames=TRAJECTORY_LEN, interval=30, blit=True)
+                               frames=TRAJECTORY_LEN, interval=10, blit=True)
 
 # Save as mp4. This requires mplayer or ffmpeg to be installed
 #anim.save('lorentz_attractor.mp4', fps=15, extra_args=['-vcodec', 'libx264'])
