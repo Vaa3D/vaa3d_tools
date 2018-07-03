@@ -8,6 +8,7 @@ class ProfundoEnv(gym.Env):
     metadata = {'render.modes': ['human']}  # fps?
 
     def __init__(self):
+        self.agent_position = None
         self.agent_stepsize = 1.0
         self.viewer = None
         self.vaa3d_path = None # TODO
@@ -90,8 +91,12 @@ class ProfundoEnv(gym.Env):
 
     def reset(self):
         # assume we always start at origin
-        self.state = self.origin
+        self.state =
         return self.state
+
+    def reset_agent_position(self):
+        # TODO reset to origin
+        self.agent_position = None
 
     def render(self, mode='human', close=False):
         """ Viewer only supports human mode currently.
