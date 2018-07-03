@@ -8,7 +8,15 @@ from scipy import interpolate
 
 N_trajectories = 10
 TRAJECTORY_LEN = 1000
+LINE_WIDTH = 15
+INTERSECTION_LEEWAY = 10.
 
+X_MAX = 25
+X_MIN = -X_MAX
+Y_MAX = 35
+Y_MIN = -Y_MAX
+Z_MAX = 55
+Z_MIN = 5
 
 def upsample_coords(coord_list):
     ## rand walk coord list is generated transposed
@@ -55,10 +63,6 @@ def rand_walk(starting_coords, length, stepsize=5):
 
     return trajectory
 
-
-def find_crossings(target_trajectory_kdtree, trajectory_i):
-    pass
-
 # Choose random starting points, uniformly distributed from -15 to 15
 starting_positions = np.random.random((N_trajectories, 3))
 
@@ -79,13 +83,25 @@ fig = plt.figure()
 ax = fig.add_axes([0, 0, 1, 1], projection='3d')
 ax.axis('off')
 
+# prepare the axes limits
+ax.set_xlim((X_MIN, X_MAX))
+ax.set_ylim((Y_MIN, Y_MAX))
+ax.set_zlim((Z_MIN, Z_MAX))
+
+# set point-of-view: specified by (altitude degrees, azimuth degrees)
+ax.view_init(30, 0)
+
+# add scoreboard
+scoreboard = ax.text(0.9*X_MIN, 0, 0.9*Z_MAX, s=" ", bbox={'facecolor':'w', 'alpha':0.5, 'pad': 5},
+                )
+
 # plot ground truth and leave it up
 theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
 z_targ = np.linspace(-10, 10, 100)
 r = z_targ ** 2 + 1
 x_targ = r * np.sin(theta)
 y_targ = r * np.cos(theta)
-ax.plot(x_targ, y_targ, z_targ, label='ground truth', c="black", linewidth=7.0)
+ax.plot(x_targ, y_targ, z_targ, label='ground truth', c="black", linewidth=LINE_WIDTH)
 
 targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
 targ_coords = np.column_stack(targ_upsampled)
@@ -102,20 +118,15 @@ colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
 # set up lines and points
 # each item in these lists is a separate list of points, one for each frame in the final animation
 # this is redundant, but we'll only animate pre-computed data this way
-lines = sum([ax.plot([], [], [], '-', c=c, linewidth=7.0, alpha = 0.2)
+lines = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha = 0.2)
              for c in colors], [])
 pts = sum([ax.plot([], [], [], '*', c=c, markersize=15, alpha=0.2)
            for c in colors], [])
-intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=30)
+intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=30, fillstyle='none', markeredgewidth=3)
            for i in range(N_trajectories)], [])
 
-# prepare the axes limits
-ax.set_xlim((-25, 25))
-ax.set_ylim((-35, 35))
-ax.set_zlim((5, 55))
 
-# set point-of-view: specified by (altitude degrees, azimuth degrees)
-ax.view_init(30, 0)
+
 
 # initialization function: plot the background of each frame
 def init():
@@ -136,7 +147,9 @@ def animate(i):
     og_i = i
     #i = (2 * i) % x_t.shape[1]
 
-    for line, pt, inter, traj in zip(lines, pts, intersections, trajectories):
+    scores_per_trajectory = []
+
+    for idx, (line, pt, inter, traj) in enumerate(zip(lines, pts, intersections, trajectories)):
         if og_i == 0:
             #print(np.shape(xi.T))
             pass
@@ -156,7 +169,7 @@ def animate(i):
         # trajectory in query every time
         #print(np.shape(np.concatenate(list(zip(xs.ravel(),ys.ravel(),zs.ravel())))
         distances, close_indexes = targ_kdtree.query(list(zip(xs.ravel(),ys.ravel(),zs.ravel())),
-                                                  distance_upper_bound=10)
+                                                  distance_upper_bound=INTERSECTION_LEEWAY)
 
         # strangely, points infinitely far away are somehow within the upper bound
         inf_mask = np.ma.masked_invalid(distances)
@@ -169,13 +182,32 @@ def animate(i):
         inter.set_data(_x, _y)
         inter.set_3d_properties(_z)
 
+        # calculating rewards
+        # if very last point in trajectory crosses the target trajectory,
+        # give reward; else give penalty
+        distances, close_indexes = targ_kdtree.query(traj[i].T, distance_upper_bound=INTERSECTION_LEEWAY)
+        inf_mask = np.ma.masked_invalid(distances)
+        masked_indexes = np.ma.masked_where(np.ma.getmask(inf_mask),
+                                            close_indexes)
+        masked_indexes = np.ma.compressed(
+            np.unique(masked_indexes))  # deduplicate
+        intersection_coords = targ_kdtree.data[masked_indexes]
+
+        try:
+            scores_per_trajectory[idx] = len(_z)
+        except IndexError:  # first pass through data
+            scores_per_trajectory.append(len(_z))
+
+        scoreboard.set_text("Current Score: {}".format(sum(scores_per_trajectory)))
+
+    # rotate the scene
     ax.view_init(30, 0.3 * i)
     fig.canvas.draw()
     return lines + pts
 
 # instantiate the animator.
 anim = animation.FuncAnimation(fig, animate, init_func=init,
-                               frames=TRAJECTORY_LEN, interval=10, blit=True)
+                               frames=TRAJECTORY_LEN, interval=30, blit=True)
 
 # Save as mp4. This requires mplayer or ffmpeg to be installed
 #anim.save('lorentz_attractor.mp4', fps=15, extra_args=['-vcodec', 'libx264'])
