@@ -52,10 +52,14 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
     }
     datatype /= 8;
 
+    //cout<<"test "<<sz0<<" "<<sz1<<" "<<sz2<<" "<<datatype<<endl;
+
+    long imgsz = (long)sz0*(long)sz1*(long)sz2*(long)datatype;
+
     //
     try
     {
-        p = new unsigned char [sz0*sz1*sz2*datatype];
+        p = new unsigned char [imgsz];
     }
     catch(...)
     {
@@ -93,7 +97,6 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
     unsigned char *buf = p;
 
     do{
-
         for (int i=0; i < StripsPerImage-1; i++)
         {
             if (comp==1)
