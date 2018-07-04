@@ -4,6 +4,23 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/eswc_converter
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/jba/newmat11
+
+
+
+macx{
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+#    CONFIG += x86_64
+}
+
+win32{
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
+}
+
+unix:!macx {
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+}
 
 HEADERS	+= segment_profiling_plugin.h \
     openSWCDialog.h \
@@ -19,7 +36,11 @@ HEADERS	+= segment_profiling_plugin.h \
     ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.h \
     ../../../../v3d_external/v3d_main/neuron_editing/neuron_format_converter.h \
     ../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.h \
-    profile_swc.h
+    ../../KLS/neuron_image_snr/profile_swc.h \
+    profile_snr.h \
+    ../../KLS/neuron_image_snr/compute_tubularity.h \
+    ../../../../v3d_external/v3d_main/jba/newmat11/newmatio.h \
+    ../../../../v3d_external/v3d_main/jba/newmat11/newmatap.h
 
 SOURCES	+= segment_profiling_plugin.cpp \
     openSWCDialog.cpp \
@@ -34,7 +55,9 @@ SOURCES	+= segment_profiling_plugin.cpp \
     ../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_dialog.cpp \
     ../../../../v3d_external/v3d_main/neuron_editing/neuron_format_converter.cpp \
     ../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.cpp \
-    profile_swc.cpp
+    ../../KLS/neuron_image_snr/profile_swc.cpp \
+    profile_snr.cpp \
+    ../../KLS/neuron_image_snr/compute_tubularity.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

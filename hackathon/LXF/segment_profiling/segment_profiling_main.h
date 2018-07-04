@@ -12,7 +12,8 @@ struct PARA
     unsigned char* data1d;
     V3DLONG im_cropped_sz[4];
     double original_o[3];
-    QString img_name,swc_name;
+    QString img_name,swc_name,img_name_meanshift;
+    NeuronTree nt_meanshift;
 
 };
 #endif // SEGMENT_PROFILING_MAIN_H
