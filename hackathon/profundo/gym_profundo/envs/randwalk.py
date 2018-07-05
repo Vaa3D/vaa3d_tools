@@ -10,6 +10,7 @@ N_trajectories = 10
 TRAJECTORY_LEN = 1000
 LINE_WIDTH = 15
 INTERSECTION_LEEWAY = 10.
+SAVE_VIDEO = True
 
 X_MAX = 25
 X_MIN = -X_MAX
@@ -210,6 +211,9 @@ anim = animation.FuncAnimation(fig, animate, init_func=init,
                                frames=TRAJECTORY_LEN, interval=30, blit=True)
 
 # Save as mp4. This requires mplayer or ffmpeg to be installed
-#anim.save('lorentz_attractor.mp4', fps=15, extra_args=['-vcodec', 'libx264'])
+if SAVE_VIDEO is True:
+    import string
+    tokens = list(string.ascii_lowercase + string.digits)
+    anim.save('trajectory {}.mp4'.format("".join(np.random.choice(tokens, size=6))), fps=15, extra_args=['-vcodec', 'libx264'])
 
 plt.show()
