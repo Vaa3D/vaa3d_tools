@@ -34,4 +34,5 @@ bool profile_swc(V3DPluginCallback2 &callback,PARA &PA)
 
 //    disp_text += "\n Segment type-specific screening metrics are exported in: \n "+ output_csv_file +"\n";
 //    v3d_msg(disp_text);
+    return true;
 }

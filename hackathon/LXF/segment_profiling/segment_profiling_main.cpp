@@ -68,5 +68,6 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
         profile_swc(callback,PA);
         if(PA.data1d) {delete []PA.data1d; PA.data1d = 0;}
     }
+    return true;
 
 }
