@@ -102,10 +102,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			{
 				string saveRoot = "Y:\\forComputeScores\\axon_bad";
 				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
-				ofstream outputFileEst(saveRootEst);
+                ofstream outputFileEst(saveRootEst.c_str());
 
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
-				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+                vector<QList<NeuronSWC> > segmentListEst;	 IMAGE_METRICS segEstMetrics;
 				segmentListEst.push_back(nt.listNeuron);
 
 				vector<basicSegmentROIStats> segProfiles;
@@ -119,10 +119,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			{
 				string saveRoot = "Y:\\forComputeScores\\axon_good";
 				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
-				ofstream outputFileEst(saveRootEst);
+                ofstream outputFileEst(saveRootEst.c_str());
 
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
-				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+                vector<QList<NeuronSWC> > segmentListEst;	 IMAGE_METRICS segEstMetrics;
 				segmentListEst.push_back(nt.listNeuron);
 
 				vector<basicSegmentROIStats> segProfiles;
@@ -136,10 +136,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			{
 				string saveRoot = "Y:\\forComputeScores\\dendrite_good";
 				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
-				ofstream outputFileEst(saveRootEst);
+                ofstream outputFileEst(saveRootEst.c_str());
 
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
-				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+                vector<QList<NeuronSWC> > segmentListEst;	 IMAGE_METRICS segEstMetrics;
 				segmentListEst.push_back(nt.listNeuron);
 
 				vector<basicSegmentROIStats> segProfiles;
@@ -153,10 +153,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			{
 				string saveRoot = "Y:\\forComputeScores\\dendrite_bad";
 				string saveRootEst = saveRoot + "\\" + caseNum + ".csv";
-				ofstream outputFileEst(saveRootEst);
+                ofstream outputFileEst(saveRootEst.c_str());
 
 				NeuronTree nt = readSWC_file(swcList.at(i).absoluteFilePath());
-				vector<QList<NeuronSWC>> segmentListEst;	 IMAGE_METRICS segEstMetrics;
+                vector<QList<NeuronSWC> > segmentListEst;	 IMAGE_METRICS segEstMetrics;
 				segmentListEst.push_back(nt.listNeuron);
 
 				vector<basicSegmentROIStats> segProfiles;
@@ -197,10 +197,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 			return false;
 		}
 
-		vector<QList<NeuronSWC>> segmentListAxonEst;	 IMAGE_METRICS axonEstMetrics;
-		vector<QList<NeuronSWC>> segmentListDendriteEst; IMAGE_METRICS dendriteEstMetrics;
-		vector<QList<NeuronSWC>> segmentListAxonMan;     IMAGE_METRICS axonManMetrics;
-		vector<QList<NeuronSWC>> segmentListDendriteMan; IMAGE_METRICS dendriteManMetrics;
+        vector<QList<NeuronSWC> > segmentListAxonEst;	 IMAGE_METRICS axonEstMetrics;
+        vector<QList<NeuronSWC> > segmentListDendriteEst; IMAGE_METRICS dendriteEstMetrics;
+        vector<QList<NeuronSWC> > segmentListAxonMan;     IMAGE_METRICS axonManMetrics;
+        vector<QList<NeuronSWC> > segmentListDendriteMan; IMAGE_METRICS dendriteManMetrics;
 
 		segmentListAxonEst.clear();
 		segmentListDendriteEst.clear();
@@ -257,10 +257,10 @@ bool image_profiling::dofunc(const QString & func_name, const V3DPluginArgList &
 		vector<double> denTubMeans, denTubStds, denTubSegMeans, denSegSNRs, denSegCNRs;
 		string saveRootEst = saveRoot + "\\caseSummary_est\\";
 		string saveFilePathEst = saveRootEst + caseNum + ".csv";
-		ofstream outputFileEst(saveFilePathEst);
+        ofstream outputFileEst(saveFilePathEst.c_str());
 		string saveRootMan = saveRoot + "\\caseSummary_manual\\";
 		string saveFilePathMan = saveRootMan + caseNum + ".csv";
-		ofstream outputFileMan(saveFilePathMan);
+        ofstream outputFileMan(saveFilePathMan.c_str());
 		if (segmentListAxonEst.size() > 0)
 		{
 			axonEstProfiles = compute_metricsSegment(inputImgPtr, &segmentListAxonEst, callback);

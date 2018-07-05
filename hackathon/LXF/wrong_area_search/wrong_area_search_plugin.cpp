@@ -38,6 +38,13 @@ void wrong_area_searchPlugin::domenu(const QString &menu_name, V3DPluginCallback
 	{
         bool bmenu = true;
         Input_para PARA;
+        PARA.para1=3;
+        PARA.para2=5;
+        PARA.para3=1;
+        PARA.para4=0;
+        PARA.model1 = 0;
+        PARA.model2 = 1;
+        PARA.model3 = 0;
         find_wrong_area(PARA,callback,bmenu,parent);
         v3d_msg("find_wrong_area_done.");
 	}

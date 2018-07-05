@@ -3,6 +3,7 @@
 #include "segment_mean_shift.h"
 #include "../../../../v3d_external/v3d_main/neuron_editing/neuron_format_converter.h"
 #include "../../../../v3d_external/v3d_main/neuron_editing/v_neuronswc.h"
+#include "profile_snr.h"
 
 bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString &filename)
 {
@@ -63,8 +64,10 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
 
         //segment_mean_shift(data1d,marker_v,im_cropped_sz,i,segment[i]->markers);
         segment_mean_shift_v2(callback,marker_v,PA,i,sketchedNTList[i].listNeuron);
-        //profile_swc_menu()
+
+        profile_swc(callback,PA);
         if(PA.data1d) {delete []PA.data1d; PA.data1d = 0;}
     }
+    return true;
 
 }

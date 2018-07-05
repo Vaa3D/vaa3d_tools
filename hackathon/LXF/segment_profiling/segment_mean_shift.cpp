@@ -1,5 +1,5 @@
 //#include "mean_shift_fun.h"
-#include "segment_profiling_main.h"
+
 #include "segment_mean_shift.h"
 
 bool segment_mean_shift(unsigned char* &data1d,LandmarkList &LList,V3DLONG im_cropped_sz[4],int i,vector<MyMarker*> &nt_marker2)
@@ -66,7 +66,7 @@ bool segment_mean_shift(unsigned char* &data1d,LandmarkList &LList,V3DLONG im_cr
 
 
 }
-LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA PA,int i,QList <NeuronSWC> &nt_marker2)
+LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LList,PARA &PA,int i,QList <NeuronSWC> &nt_marker2)
 {
  //   LandmarkList emptylist = LandmarkList();
     mean_shift_fun mean_shift_obj;
@@ -114,6 +114,7 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
         S.type = 2;
         nt.listNeuron.push_back(S);
     }
+    PA.nt_meanshift = nt;
     QString swc_out_name = QString::number(i) + "_meanshifted.swc";
     writeSWC_file(swc_out_name,nt);
     return LList_new_center;
