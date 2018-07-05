@@ -6,7 +6,9 @@
 #include "v3d_message.h"
 #include "../wrong_area_search/find_wrong_area.h"
 #include "../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/swc_utils.h"
+#include "../../KLS/neuron_image_snr/profile_swc.h"
 bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString &filename);
+bool writeCSV(QList<QList<IMAGE_METRICS> > &CSVlist, QString output_csv_file);
 struct PARA
 {
     unsigned char* data1d;
