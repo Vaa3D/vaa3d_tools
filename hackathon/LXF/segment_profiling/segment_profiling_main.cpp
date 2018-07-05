@@ -9,6 +9,10 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
 {
     //vector<MyMarker*> nt_marker;
     //vector<NeuronSegment*> segment;
+    QString path = QFileInfo(".").absolutePath();
+    int pos = path.lastIndexOf(QChar('/'));
+    //v3d_msg();
+    QString path_curr = path.left(pos+1);
     QList<NeuronTree> sketchedNTList;
     QList<QList<IMAGE_METRICS> > CSVlist;
     V_NeuronSWC_list testVNL = NeuronTree__2__V_NeuronSWC_list(nt);
@@ -31,6 +35,7 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
     {
         PARA PA;
         PA.data1d = 0;
+        PA.curr_path = path_curr;
 
         get_sub_block(callback,1,sketchedNTList[i],PA,i);
         LandmarkList marker_v;
@@ -48,7 +53,8 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
             S.type = 3;
             outtree.listNeuron.push_back(S);
         }
-        writeSWC_file(QString("outtree"+QString::number(i)+".swc"),outtree);
+        system("mkdir ori_swc");
+        writeSWC_file(QString("ori_swc/outtree"+QString::number(i)+".swc"),outtree);
         for(V3DLONG p=0;p<sketchedNTList[i].listNeuron.size();p++)
         {
             LocationSimple mm;
