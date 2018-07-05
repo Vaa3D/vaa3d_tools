@@ -50,7 +50,7 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
 QStringList combine_file::menulist() const
 {
 	return QStringList() 
-        << tr("combine all SWC files under a directory")
+        << tr("combine all SWC or ESWC files under a directory")
         << tr("combine all marker files under a directory")
         << tr("separate a SWC file by type");
     //    << tr("separate all neuron trees from a single SWC file");
@@ -66,7 +66,7 @@ QStringList combine_file::funclist() const
 
 void combine_file::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("combine all SWC files under a directory"))
+    if (menu_name == tr("combine all SWC or ESWC files under a directory"))
 	{
         generatorcombined4FilesInDir(callback, parent, 1);
 	}
@@ -181,7 +181,7 @@ void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent,
 {
     if(method_code == 1)
     {
-        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
+        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc and eswc files "),
                                                                       QDir::currentPath(),
                                                                       QFileDialog::ShowDirsOnly);
 
@@ -192,8 +192,8 @@ void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent,
         {
 
             QString curPathSWC = swcList.at(i);
-
-            vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
+            vector<MyMarker*> inputswc;
+            inputswc = readSWC_file(curPathSWC.toStdString());
 
             for(V3DLONG d = 0; d < inputswc.size(); d++)
             {
