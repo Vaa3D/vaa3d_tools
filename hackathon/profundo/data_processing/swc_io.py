@@ -64,7 +64,13 @@ def swc_to_dframe(swc_abspath):
     # note: by default, node_id is coerced from int to float
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
     # comment skips all commented lines
-    df = pd.read_table(swc_abspath, sep=' ', comment='#', names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], dtype={"node_id": int, "type": int, "x": float, "y": float, "z":float, "radius": float, "parent_node_id": int})
+    try:
+        df = pd.read_table(swc_abspath, sep=' ', comment='#', 
+                       names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], 
+                       dtype={"node_id": np.int32, "type": np.int32, "x": np.float64, "y": np.float64, "z":np.float64, "radius": np.float64, "parent_node_id": np.int32})
+    except ValueError:
+        #print("dframe conversion failed: \n", swc_abspath)
+        return
     return df
 
 def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
