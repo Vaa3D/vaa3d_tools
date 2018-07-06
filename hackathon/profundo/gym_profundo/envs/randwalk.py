@@ -1,23 +1,33 @@
+import faulthandler
+faulthandler.enable()
+
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import cnames
 from matplotlib import animation
 from scipy.spatial import cKDTree
 from scipy import interpolate
+from data_processing.swc_io import get_fnames_and_abspath_from_dir, swc_to_dframe
 
+
+DATA_DIR = "../../data/06_centered_cubes"
 N_trajectories = 10
 TRAJECTORY_LEN = 1000
-LINE_WIDTH = 15
-INTERSECTION_LEEWAY = 10.
-SAVE_VIDEO = True
+LINE_WIDTH = 1
+INTERSECTION_LEEWAY = 0.5
+SAVE_VIDEO = False
+RAND_WALK_STEPSIZE = INTERSECTION_LEEWAY
 
-X_MAX = 25
+X_MAX = 12
 X_MIN = -X_MAX
-Y_MAX = 35
+Y_MAX = 12
 Y_MIN = -Y_MAX
-Z_MAX = 55
-Z_MIN = 5
+Z_MAX = 12
+Z_MIN = -Z_MAX
+
 
 def upsample_coords(coord_list):
     ## rand walk coord list is generated transposed
@@ -36,7 +46,7 @@ def upsample_coords(coord_list):
     return upsampled_coords
 
 
-def rand_walk(starting_coords, length, stepsize=5):
+def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     """Compute the time-derivative of a Lorentz system."""
     dims = 3
     trajectory = np.empty((length, dims))
@@ -95,13 +105,21 @@ ax.view_init(30, 0)
 # add scoreboard
 scoreboard = ax.text(0.9*X_MIN, 0, 0.9*Z_MAX, s=" ", bbox={'facecolor':'w', 'alpha':0.5, 'pad': 5},
                 )
-
+_, training_fabspaths = get_fnames_and_abspath_from_dir(DATA_DIR)
+random_i = np.random.choice(range(len(training_fabspaths)))
+groundtruth_fabspath = training_fabspaths[random_i]
+groundtruth = swc_to_dframe(groundtruth_fabspath)
 # plot ground truth and leave it up
-theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
-z_targ = np.linspace(-10, 10, 100)
-r = z_targ ** 2 + 1
-x_targ = r * np.sin(theta)
-y_targ = r * np.cos(theta)
+
+# theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+# z_targ = np.linspace(-10, 10, 100)
+# r = z_targ ** 2 + 1
+# x_targ = r * np.sin(theta)
+# y_targ = r * np.cos(theta)
+x_targ = groundtruth.x
+y_targ = groundtruth.y
+z_targ = groundtruth.z
+#print(groundtruth)
 ax.plot(x_targ, y_targ, z_targ, label='ground truth', c="black", linewidth=LINE_WIDTH)
 
 targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
@@ -123,7 +141,7 @@ lines = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha = 0.2)
              for c in colors], [])
 pts = sum([ax.plot([], [], [], '*', c=c, markersize=15, alpha=0.2)
            for c in colors], [])
-intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=30, fillstyle='none', markeredgewidth=3)
+intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=10, fillstyle='none', markeredgewidth=3)
            for i in range(N_trajectories)], [])
 
 
