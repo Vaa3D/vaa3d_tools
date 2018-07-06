@@ -64,19 +64,22 @@ def swc_to_dframe(swc_abspath):
     # note: by default, node_id is coerced from int to float
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
     # comment skips all commented lines
-    df = pd.read_table(swc_abspath, sep=' ', 
-                       comment='#',
-                       header=None,
-                       names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], 
-                       dtype={"node_id": np.int32,
-                              "type": np.int32, 
-                              "x": np.float64, 
-                              "y": np.float64, 
-                              "z":np.float64, 
-                              "radius": np.float64, 
-                              "parent_node_id": np.int32})
-        
-    return df
+    try:
+        df = pd.read_table(swc_abspath, sep=' ',
+                           comment='#',
+                           header=None,
+                           names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], 
+                           dtype={"node_id": np.int32,
+                                  "type": np.int32, 
+                                  "x": np.float64, 
+                                  "y": np.float64, 
+                                  "z":np.float64, 
+                                  "radius": np.float64, 
+                                  "parent_node_id": np.int32})
+
+        return df
+    except:
+        print("reading swc failed. If getting dtype errors, check if swc has trailing spaces. see https://stackoverflow.com/questions/51214020/pandas-cannot-safely-convert-passed-user-dtype-of-int32-for-float64")
 
 def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     """
@@ -102,36 +105,51 @@ def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
     pass
 
 
-def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, output_dir="../data/04_human_branches_filtered_upsampled/"):
+def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, 
+                 output_dir="../data/04_human_branches_filtered_upsampled/"):
     """
     sometimes, inter-node distances can be v large, which is bad for subsampling.
     this is a wrapper to call Vaa3D's resample_swc script
     
     see https://github.com/Vaa3D/Vaa3D_Wiki/wiki/resample_swc.wiki
     """
+    vaa3d_bin_dir = os.path.abspath(os.path.join(vaad3d_bin_path, os.pardir))
+    libresample_swc_dir = os.path.join(vaa3d_bin_dir, "plugins/neuron_utilities/resample_swc/libresample_swc.so")
+    
+    assert os.path.isfile(libresample_swc_dir), """libresample_swc not found.
+      please go to /path/to/vaa3d_tools/released_plugins/v3d_plugins/resample_swc and run qmake and then make
+      note: if you get an error that says ‘resample’ was not declared in this scope,
+      make sure resampling.h is completely uncommented before running make
+      """
+    
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
         
     outfile_fpath = os.path.join(output_dir, input_fname)
     
-    # https://stackoverflow.com/a/4376421/4212158
-    v3d_plugin_name = "resample_swc"
-    
-    cli_dict = {"v3d_bin": vaad3d_bin_path,
-               "plugin": v3d_plugin_name,
-               "in": input_fpath,
-               "out": outfile_fpath,
-               "step": step_length}
-    
-    print("running \n")
-    print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
-    os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
-    
-    
-    
-    return outfile_fpath
-    
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath):
+
+        # https://stackoverflow.com/a/4376421/4212158
+        v3d_plugin_name = "resample_swc"
+
+        cli_dict = {"v3d_bin": vaad3d_bin_path,
+                   "plugin": v3d_plugin_name,
+                   "in": input_fpath,
+                   "out": outfile_fpath,
+                   "step": step_length}
+        
+        # TODO check plugin exists
+
+        #print("running \n")
+        #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
+
+
+
+        return outfile_fpath
+
     
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
