@@ -141,8 +141,6 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
                    "in": input_fpath,
                    "out": outfile_fpath,
                    "step": step_length}
-        
-        # TODO check plugin exists
 
         #print("running \n")
         #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
