@@ -80,6 +80,7 @@ def swc_to_dframe(swc_abspath):
         return df
     except:
         print("reading swc failed. If getting dtype errors, check if swc has trailing spaces. see https://stackoverflow.com/questions/51214020/pandas-cannot-safely-convert-passed-user-dtype-of-int32-for-float64")
+        raise
 
 def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     """
@@ -95,7 +96,8 @@ def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     
     # make sure col order is preserved
     df.to_csv(out_fpath, sep=' ', header=False, encoding='utf-8', \
-             columns=["node_id", "type", "x", "y", "z", "radius", "parent"])   
+             columns=["node_id", "type", "x", "y", "z", "radius", "parent_node_id"],
+             index=False)   # do not save the pandas index
     
     return out_fpath
 
@@ -162,31 +164,33 @@ def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     outfile = os.path.join(outdir, branch_name+".swc")
-    #print("saving SWC {}".format(branch_name))
-    output = open(outfile, "w+")
-    
-    default_radius = "1.0"
-    default_type = "3"
-    
-    parent_node_id = "-1"
-    for i, node in enumerate(branch):
-        try:
-            child_node_id, x, y, z = node
-        except ValueError:
-            print("error in save-branch", len(node), node)
-            raise
-        # this is the SWC file convention
-        # \n is important to separate into new lines
-        swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
-        #swc_items = [str(item) for item in str_items]
-        try:
-            swc_line = " ".join(swc_items)
-        except:
-            print(swc_items)
-            for item in swc_items:
-                print(type(item))
-                raise
-        output.write(swc_line)
-        parent_node_id = child_node_id
+    # don't overwrite
+    if not os.path.isfile(outfile):
+        #print("saving SWC {}".format(branch_name))
+        output = open(outfile, "w+")
 
-    output.close()
+        default_radius = "1.0"
+        default_type = "3"
+
+        parent_node_id = "-1"
+        for i, node in enumerate(branch):
+            try:
+                child_node_id, x, y, z = node
+            except ValueError:
+                print("error in save-branch", len(node), node)
+                raise
+            # this is the SWC file convention
+            # \n is important to separate into new lines
+            swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
+            #swc_items = [str(item) for item in str_items]
+            try:
+                swc_line = " ".join(swc_items)
+            except:
+                print(swc_items)
+                for item in swc_items:
+                    print(type(item))
+                    raise
+            output.write(swc_line)
+            parent_node_id = child_node_id
+
+        output.close()
