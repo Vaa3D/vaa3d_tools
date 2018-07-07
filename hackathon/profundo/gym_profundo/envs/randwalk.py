@@ -1,6 +1,3 @@
-import faulthandler
-faulthandler.enable()
-
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
@@ -15,10 +12,10 @@ from data_processing.swc_io import get_fnames_and_abspath_from_dir, swc_to_dfram
 
 DATA_DIR = "../../data/06_centered_cubes"
 N_trajectories = 10
-TRAJECTORY_LEN = 1000
-LINE_WIDTH = 1
+TRAJECTORY_LEN = 500
+LINE_WIDTH = 2
 INTERSECTION_LEEWAY = 0.5
-SAVE_VIDEO = False
+SAVE_VIDEO = True
 RAND_WALK_STEPSIZE = INTERSECTION_LEEWAY
 
 X_MAX = 12
@@ -51,7 +48,7 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     dims = 3
     trajectory = np.empty((length, dims))
     # replace first col with starting coords
-    trajectory[0, :] = list(starting_coords)
+    trajectory[0, :] = starting_coords
 
     # step in fixed directions
     action_space = np.array([[0, 0, 1],
@@ -74,19 +71,6 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
 
     return trajectory
 
-# Choose random starting points, uniformly distributed from -15 to 15
-starting_positions = np.random.random((N_trajectories, 3))
-
-
-# Solve for the trajectories
-# for starting point in x0
-# generate timeseries
-
-trajectories = np.asarray([rand_walk(start_pos, TRAJECTORY_LEN)
-                           for start_pos in starting_positions])
-
-trajectories_upsampled = [upsample_coords(t) for t in trajectories]
-trajectories_coords = np.column_stack(trajectories_upsampled)
 
 
 # Set up figure & 3D axis for animation
@@ -109,6 +93,7 @@ _, training_fabspaths = get_fnames_and_abspath_from_dir(DATA_DIR)
 random_i = np.random.choice(range(len(training_fabspaths)))
 groundtruth_fabspath = training_fabspaths[random_i]
 groundtruth = swc_to_dframe(groundtruth_fabspath)
+
 # plot ground truth and leave it up
 
 # theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
@@ -119,7 +104,7 @@ groundtruth = swc_to_dframe(groundtruth_fabspath)
 x_targ = groundtruth.x
 y_targ = groundtruth.y
 z_targ = groundtruth.z
-#print(groundtruth)
+
 ax.plot(x_targ, y_targ, z_targ, label='ground truth', c="black", linewidth=LINE_WIDTH)
 
 targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
@@ -128,7 +113,26 @@ targ_coords = np.column_stack(targ_upsampled)
 # KD-tree for nearest neighbor search
 targ_kdtree = cKDTree(targ_coords)
 
+# finding root node
+node_ids = set(groundtruth.node_id)
+parent_ids = set(groundtruth.parent_node_id)
+root_id = parent_ids - node_ids
+root_id = np.int32(next(iter(root_id)))  # convert set to int
 
+# Choose random starting points, uniformly distributed from -15 to 15
+starting_position = groundtruth[groundtruth.parent_node_id == root_id][["x", "y", "z"]]
+
+
+
+# Solve for the trajectories
+# for starting point in x0
+# generate timeseries
+
+trajectories = np.asarray([rand_walk(starting_position, TRAJECTORY_LEN)
+                           for _ in range(N_trajectories)])
+
+trajectories_upsampled = [upsample_coords(t) for t in trajectories]
+trajectories_coords = np.column_stack(trajectories_upsampled)
 
 
 # choose a different color for each trajectory
@@ -139,9 +143,9 @@ colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
 # this is redundant, but we'll only animate pre-computed data this way
 lines = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha = 0.2)
              for c in colors], [])
-pts = sum([ax.plot([], [], [], '*', c=c, markersize=15, alpha=0.2)
+pts = sum([ax.plot([], [], [], '*', c=c, markersize=10, alpha=0.5)
            for c in colors], [])
-intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=10, fillstyle='none', markeredgewidth=3)
+intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=4, fillstyle='none', markeredgewidth=1)
            for i in range(N_trajectories)], [])
 
 
@@ -164,7 +168,7 @@ def init():
 def animate(i):
     # we'll step two time-steps per frame.  This leads to nice results.
     og_i = i
-    #i = (2 * i) % x_t.shape[1]
+    i = (2 * i) % trajectories.shape[1]
 
     scores_per_trajectory = []
 
@@ -226,12 +230,16 @@ def animate(i):
 
 # instantiate the animator.
 anim = animation.FuncAnimation(fig, animate, init_func=init,
-                               frames=TRAJECTORY_LEN, interval=30, blit=True)
-
+                               frames=TRAJECTORY_LEN,
+                               interval=30,
+                               blit=True)
+#
 # Save as mp4. This requires mplayer or ffmpeg to be installed
 if SAVE_VIDEO is True:
     import string
     tokens = list(string.ascii_lowercase + string.digits)
-    anim.save('trajectory {}.mp4'.format("".join(np.random.choice(tokens, size=6))), fps=15, extra_args=['-vcodec', 'libx264'])
+    anim.save('trajectory {}.mp4'.format("".join(np.random.choice(tokens, size=6))),
+              fps=15,
+              extra_args=['-vcodec', 'libx264'])
 
 plt.show()
