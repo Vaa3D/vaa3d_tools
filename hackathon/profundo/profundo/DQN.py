@@ -26,6 +26,8 @@ from profundo.common import Evaluator, eval_model_multithread, play_n_episodes
 from profundo.DQNModel import Model3D as DQNModel
 from profundo.expreplay import ExpReplay
 
+import tensorflow.nn.leaky_relu as LeakyRelu
+
 from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
                         logger, TrainConfig, ModelSaver, PeriodicTrigger,
                         ScheduledHyperParamSetter, ObjAttrParam,
@@ -33,7 +35,6 @@ from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
                         FullyConnected, PReLU, SimpleTrainer,
                         launch_train_with_config)
 
-LeakyRelu = tf.nn.leaky_relu
 ###############################################################################
 # import your data here
 data_dir = "../../data/06_centered_cubes"
@@ -94,7 +95,7 @@ class Model(DQNModel):
         image = image / 255.0
 
         with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True), \
-                argscope(LeakyReLU, alpha=0.01):
+                argscope(LeakyRelu, alpha=0.01):
             # core layers of the network
             conv = (LinearWrap(image)
                  .Conv3D('conv0', out_channel=32,
