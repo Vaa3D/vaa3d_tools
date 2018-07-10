@@ -124,6 +124,8 @@ class ExpReplay(DataFlow, Callback):
     This implementation provides the interface as a :class:`DataFlow`.
     This DataFlow is __not__ fork-safe (thus doesn't support multiprocess prefetching).
 
+    See https://tensorpack.readthedocs.io/tutorial/dataflow.html
+
     This implementation assumes that state is
     batch-able, and the network takes batched inputs.
     """
@@ -248,6 +250,7 @@ class ExpReplay(DataFlow, Callback):
             view_state(sample[0])
 
     def get_data(self):
+
         # wait for memory to be initialized
         self._init_memory_flag.wait()
 
