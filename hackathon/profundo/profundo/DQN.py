@@ -36,7 +36,7 @@ from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
 LeakyRelu = tf.nn.leaky_relu
 ###############################################################################
 # import your data here
-data_dir = 'data_dir'
+data_dir = "../../data/06_centered_cubes"
 train_list = 'list_of_train_filenames.txt'
 test_list = 'list_of_test_filenames.txt'
 
@@ -48,8 +48,8 @@ BATCH_SIZE = 48
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
 IMAGE_SIZE = (45, 45, 45)
 # how many frames to keep
-# in other words, how many observations the network can see
-FRAME_HISTORY = 4
+# in other words, how many past observations the network can see
+FRAME_HISTORY = 1
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
