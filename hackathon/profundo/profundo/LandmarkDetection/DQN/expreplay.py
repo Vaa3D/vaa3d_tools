@@ -92,12 +92,12 @@ class ReplayMemory(object):
                 state = copy.deepcopy(state)
                 state[:k + 1].fill(0)
                 break
-        # tranpose state
-        if state.ndim==4: # 3d state
-            state = state.transpose(1,2,3,0)
-        else: # 2d states
-            state = state.transpose(1,2,0)
-        return (state, reward[-2], action[-2], isOver[-2])
+        # transpose state
+        if state.ndim == 4:  # 3d state
+            state = state.transpose(1, 2, 3, 0)
+        else:  # 2d states
+            state = state.transpose(1, 2, 0)
+        return state, reward[-2], action[-2], isOver[-2]
 
     def _slice(self, arr, start, end):
         s1 = arr[start:]
@@ -113,6 +113,7 @@ class ReplayMemory(object):
         self.action[pos] = exp.action
         self.isOver[pos] = exp.isOver
 
+
 ###############################################################################
 
 class ExpReplay(DataFlow, Callback):
@@ -123,8 +124,6 @@ class ExpReplay(DataFlow, Callback):
 
     This implementation provides the interface as a :class:`DataFlow`.
     This DataFlow is __not__ fork-safe (thus doesn't support multiprocess prefetching).
-
-    See https://tensorpack.readthedocs.io/tutorial/dataflow.html
 
     This implementation assumes that state is
     batch-able, and the network takes batched inputs.
@@ -174,6 +173,7 @@ class ExpReplay(DataFlow, Callback):
             self._populate_job_queue.get()
             for _ in range(self.update_frequency):
                 self._populate_exp()
+
         th = ShareSessionThread(LoopThread(populate_job_func, pausable=False))
         th.name = "SimulatorThread"
         return th
@@ -203,8 +203,8 @@ class ExpReplay(DataFlow, Callback):
         """ populate a transition by epsilon-greedy"""
         old_s = self._current_ob
 
-        # intialize q_values to zeros
-        q_values = [0,] * self.num_actions
+        # initialize q_values to zeros
+        q_values = [0, ] * self.num_actions
 
         if self.rng.rand() <= self.exploration or (len(self.mem) <= self.history_len):
             act = self.rng.choice(range(self.num_actions))
@@ -212,7 +212,7 @@ class ExpReplay(DataFlow, Callback):
             # build a history state
             history = self.mem.recent_state()
             history.append(old_s)
-            if (np.ndim(history)==4): # 3d states
+            if np.ndim(history) == 4:  # 3d states
                 history = np.stack(history, axis=3)
                 # assume batched network - this is the bottleneck
                 q_values = self.predictor(history[None, :, :, :, :])[0][0]
@@ -245,12 +245,12 @@ class ExpReplay(DataFlow, Callback):
             r = np.concatenate([r, r2], axis=0)
             cv2.imshow("state", r)
             cv2.waitKey()
+
         print("Act: ", sample[2], " reward:", sample[1], " isOver: ", sample[3])
         if sample[1] or sample[3]:
             view_state(sample[0])
 
     def get_data(self):
-
         # wait for memory to be initialized
         self._init_memory_flag.wait()
 
@@ -298,40 +298,18 @@ class ExpReplay(DataFlow, Callback):
         # monitor number of played games and successes of reaching the target
         if self.player.num_games.count:
             self.trainer.monitors.put_scalar('n_games',
-                                    np.asscalar(self.player.num_games.sum))
+                                             np.asscalar(self.player.num_games.sum))
         else:
             self.trainer.monitors.put_scalar('n_games', 0)
 
         if self.player.num_success.count:
             self.trainer.monitors.put_scalar('n_success',
-                                    np.asscalar(self.player.num_success.sum))
+                                             np.asscalar(self.player.num_success.sum))
             self.trainer.monitors.put_scalar('n_success_ratio',
-                        self.player.num_success.sum/self.player.num_games.sum)
+                                             self.player.num_success.sum / self.player.num_games.sum)
         else:
             self.trainer.monitors.put_scalar('n_success', 0)
-            self.trainer.monitors.put_scalar('n_success_ratio',0)
+            self.trainer.monitors.put_scalar('n_success_ratio', 0)
         # reset stats
         self.player.reset_stat()
 
-
-if __name__ == '__main__':
-    from .atari import AtariPlayer
-    import sys
-
-    def predictor(x):
-        np.array([1, 1, 1, 1])
-    player = AtariPlayer(sys.argv[1], viz=0, frame_skip=10, height_range=(36, 204))
-    E = ExpReplay(predictor,
-                  player=player,
-                  num_actions=player.action_space.n,
-                  populate_size=1001,
-                  history_len=4)
-    E._init_memory()
-
-    for k in E.get_data():
-        import IPython as IP
-        IP.embed(config=IP.terminal.ipapp.load_default_config())
-        pass
-        # import IPython;
-        # IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        # break
