@@ -115,7 +115,8 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
         nt.listNeuron.push_back(S);
     }
     PA.nt_meanshift = nt;
-    QString swc_out_name = QString::number(i) + "_meanshifted.swc";
+    system("mkdir meanshift_swc");
+    QString swc_out_name = "meanshift_swc/"+QString::number(i) + "_meanshifted.swc";
     writeSWC_file(swc_out_name,nt);
     return LList_new_center;
 

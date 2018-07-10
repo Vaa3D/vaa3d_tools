@@ -2,7 +2,7 @@
 #include "profile_snr.h"
 
 
-bool profile_swc(V3DPluginCallback2 &callback,PARA &PA)
+bool profile_swc(V3DPluginCallback2 &callback,PARA &PA,QList<QList<IMAGE_METRICS> > &CSVlist)
 {
     Image4DSimple * img = new Image4DSimple;;
     float dilate_ratio = 3;
@@ -18,9 +18,9 @@ bool profile_swc(V3DPluginCallback2 &callback,PARA &PA)
         return false;
     }
 
-
+    CSVlist.push_back(result_metrics);
     //output
-    writeMetrics2CSV(result_metrics, output_csv_file);
+   // writeMetrics2CSV(result_metrics, output_csv_file);
 //    IMAGE_METRICS m_stats = result_metrics[0];
 
 

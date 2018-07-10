@@ -97,9 +97,11 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA
 
         QString outimg_file;
         outimg_file = "segment_profiling_"+ QString::number(n)+".tif";
-        PA.img_name = outimg_file;
-
-        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
+        system("mkdir tmp_img");
+        QString outtif = "tmp_img/segment_profiling_"+ QString::number(n)+".tif";
+        PA.img_name = outtif;
+        //simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
+        simple_saveimage_wrapper(callback, outtif.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
         PA.data1d = im_cropped;
 
         //if(im_cropped) {delete []im_cropped; im_cropped = 0;}

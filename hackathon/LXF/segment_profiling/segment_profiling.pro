@@ -26,7 +26,6 @@ HEADERS	+= segment_profiling_plugin.h \
     openSWCDialog.h \
     segment_profiling_main.h \
     ../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/neuron_tree_align.h \
-    ../wrong_area_search/find_wrong_area.h \
     ../wrong_area_search/my_surf_objs.h \
     ../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/swc_utils.h \
     get_sub_block.h \
@@ -47,7 +46,6 @@ SOURCES	+= segment_profiling_plugin.cpp \
     segment_profiling_main.cpp \
     ../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/neuron_tree_align.cpp \
     ../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/seg_weight.cpp \
-    ../wrong_area_search/find_wrong_area.cpp \
     ../wrong_area_search/my_surf_objs.cpp \
     ../../../released_plugins/v3d_plugins/blastneuron_plugin/tree_matching/swc_utils.cpp \
     get_sub_block.cpp \
