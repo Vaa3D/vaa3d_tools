@@ -4,19 +4,27 @@ import numpy as np
 import pandas as pd
 
 
-def get_fnames_and_abspath_from_dir(reldir):
+def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
     """given relative directory, return all filenames and their full absolute paths"""
     fnames = []
     abs_paths = []
+    abs_path_dict = {}
     for root, dirs, fnames_ in os.walk(reldir):
-        fnames.extend(fnames_)
-        for f in fnames_:
-            relpath = os.path.join(root, f)
-            abs_path = os.path.abspath(relpath)
-            abs_paths.append(abs_path)
-            
-    return fnames, abs_paths
-    
+        if not as_dict:
+            fnames.extend(fnames_)
+            for f in fnames_:
+                relpath = os.path.join(root, f)
+                abs_path = os.path.abspath(relpath)
+                abs_paths.append(abs_path)
+            return fnames, abs_paths
+        else:
+            for f in fnames_:
+                relpath = os.path.join(root, f)
+                abs_path = os.path.abspath(relpath)
+                abs_path_dict[f] = abs_path
+            return abs_path_dict
+
+
 
 def remove_comments_from_swc(fpaths, fnames, outdir="../data/02_human_clean/"):
     """SWC files start with comments, remove before proceeding"""
