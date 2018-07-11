@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: medical_env.py
+# File: brain_env.py
 # Author: Amir Alansary <amiralansary@gmail.com>
 
 import csv
@@ -42,7 +42,7 @@ from tensorpack.utils.stats import StatCounter
 from IPython.core.debugger import set_trace
 from profundo.sampleTrain import *
 
-__all__ = ['MedicalPlayer', 'FrameStack']
+__all__ = ['Brain_Env', 'FrameStack']
 
 _ALE_LOCK = threading.Lock()
 
@@ -53,7 +53,7 @@ Rectangle = namedtuple('Rectangle', ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zm
 # =================== 3d medical environment ========================
 # ===================================================================
 
-class MedicalPlayer(gym.Env):
+class Brain_Env(gym.Env):
     """Class that provides 3D medical image environment.
     This is just an implementation of the classic "agent-environment loop".
     Each time-step, the agent chooses an action, and the environment returns
@@ -98,7 +98,7 @@ class MedicalPlayer(gym.Env):
         # self.total_loc = []
         # ######################################################################
 
-        super(MedicalPlayer, self).__init__()
+        super(Brain_Env, self).__init__()
 
         # inits stat counters
         self.reset_stat()
