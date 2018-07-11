@@ -35,16 +35,12 @@ import shutil
 import gym
 from gym import spaces
 
-try:
-    import pyglet
-except ImportError as e:
-    reraise(suffix="HINT: you can install pyglet directly via 'pip install pyglet'.")
-
 from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
 from IPython.core.debugger import set_trace
-from sampleTrain import *
+# TODO switch to data io
+from profundo.sampleTrain import *
 
 __all__ = ['MedicalPlayer', 'FrameStack']
 
@@ -596,102 +592,103 @@ class MedicalPlayer(gym.Env):
         self.num_games = StatCounter()
         self.num_success = StatCounter()
 
-    def display(self, return_rgb_array=False):
-        # pass
-        # get dimensions
-        current_point = self._location
-        target_point = self._target_loc
-        # get image and convert it to pyglet
-        plane = self.get_plane(current_point[2])  # z-plane
-        # plane = np.squeeze(self._current_state()[:,:,13])
-        img = cv2.cvtColor(plane, cv2.COLOR_GRAY2RGB)  # congvert to rgb
-        # rescale image
-        # INTER_NEAREST, INTER_LINEAR, INTER_AREA, INTER_CUBIC, INTER_LANCZOS4
-        scale_x = 1
-        scale_y = 1
-        #
-        # img = cv2.resize(img,
-        #                  (int(scale_x*img.shape[1]),int(scale_y*img.shape[0])),
-        #                  interpolation=cv2.INTER_LINEAR)
-        # skip if there is a viewer open
-        if (not self.viewer) and self.viz:
-            from viewer import SimpleImageViewer
-            self.viewer = SimpleImageViewer(arr=img,
-                                            scale_x=1,
-                                            scale_y=1,
-                                            filepath=self.filename)
-            self.gif_buffer = []
-        # display image
-        self.viewer.draw_image(img)
-        # draw a transparent circle around target point with variable radius
-        # based on the difference z-direction
-        diff_z = scale_x * abs(current_point[2] - target_point[2])
-        self.viewer.draw_circle(radius=diff_z,
-                                pos_x=scale_x * target_point[0],
-                                pos_y=scale_y * target_point[1],
-                                color=(1.0, 0.0, 0.0, 0.2))
-        # draw target point
-        self.viewer.draw_circle(radius=scale_x * 1,
-                                pos_x=scale_x * target_point[0],
-                                pos_y=scale_y * target_point[1],
-                                color=(1.0, 0.0, 0.0, 1.0))
-        # draw current point
-        self.viewer.draw_circle(radius=scale_x * 1,
-                                pos_x=scale_x * current_point[0],
-                                pos_y=scale_y * current_point[1],
-                                color=(0.0, 0.0, 1.0, 1.0))
-        # draw a box around the agent - what the network sees ROI
-        self.viewer.draw_rect(self.rectangle.xmin, self.rectangle.ymin,
-                              self.rectangle.xmax, self.rectangle.ymax)
-        self.viewer.display_text('Agent ', color=(204, 204, 0, 255),
-                                 x=self.rectangle.xmin - 15,
-                                 y=self.rectangle.ymin)
-        # display info
-        color = (0, 204, 0, 255) if self.reward > 0 else (204, 0, 0, 255)
-        text = 'Error ' + str(round(self.cur_dist, 3)) + 'mm'
-        self.viewer.display_text(text, color=color, x=10, y=20)
-        text = 'Spacing ' + str(self.xscale)
-        self.viewer.display_text(text, color=color,
-                                 x=10, y=self._image_dims[1] - 80)
-
-        # render and wait (viz) time between frames
-        self.viewer.render()
-        # time.sleep(self.viz)
-        # save gif
-        if self.saveGif:
-            image_data = pyglet.image.get_buffer_manager().get_color_buffer().get_image_data()
-            data = image_data.get_data('RGB', image_data.width * 3)
-            arr = np.array(bytearray(data)).astype('uint8')
-            arr = np.flip(np.reshape(arr, (image_data.height, image_data.width, -1)), 0)
-            im = Image.fromarray(arr)
-            self.gif_buffer.append(im)
-
-            if not self.terminal:
-                gifname = self.filename.split('.')[0] + '.gif'
-                self.viewer.saveGif(gifname, arr=self.gif_buffer,
-                                    duration=self.viz)
-        if self.saveVideo:
-            dirname = 'tmp_video'
-            if self.cnt <= 1:
-                if os.path.isdir(dirname):
-                    logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
-                    act = input("select action: d (delete) / q (quit): ").lower().strip()
-                    if act == 'd':
-                        shutil.rmtree(dirname, ignore_errors=True)
-                    else:
-                        raise OSError("Directory {} exits!".format(dirname))
-                os.mkdir(dirname)
-
-            frame = dirname + '/' + '%04d' % self.cnt + '.png'
-            pyglet.image.get_buffer_manager().get_color_buffer().save(frame)
-            if self.terminal:
-                resolution = str(3 * self.viewer.img_width) + 'x' + str(3 * self.viewer.img_height)
-                save_cmd = ['ffmpeg', '-f', 'image2', '-framerate', '30',
-                            '-pattern_type', 'sequence', '-start_number', '0', '-r',
-                            '6', '-i', dirname + '/%04d.png', '-s', resolution,
-                            '-vcodec', 'libx264', '-b:v', '2567k', self.filename + '.mp4']
-                subprocess.check_output(save_cmd)
-                shutil.rmtree(dirname, ignore_errors=True)
+    # TODO bring in mpl implementation
+    # def display(self, return_rgb_array=False):
+    #     # pass
+    #     # get dimensions
+    #     current_point = self._location
+    #     target_point = self._target_loc
+    #     # get image and convert it to pyglet
+    #     plane = self.get_plane(current_point[2])  # z-plane
+    #     # plane = np.squeeze(self._current_state()[:,:,13])
+    #     img = cv2.cvtColor(plane, cv2.COLOR_GRAY2RGB)  # congvert to rgb
+    #     # rescale image
+    #     # INTER_NEAREST, INTER_LINEAR, INTER_AREA, INTER_CUBIC, INTER_LANCZOS4
+    #     scale_x = 1
+    #     scale_y = 1
+    #     #
+    #     # img = cv2.resize(img,
+    #     #                  (int(scale_x*img.shape[1]),int(scale_y*img.shape[0])),
+    #     #                  interpolation=cv2.INTER_LINEAR)
+    #     # skip if there is a viewer open
+    #     if (not self.viewer) and self.viz:
+    #         from viewer import SimpleImageViewer
+    #         self.viewer = SimpleImageViewer(arr=img,
+    #                                         scale_x=1,
+    #                                         scale_y=1,
+    #                                         filepath=self.filename)
+    #         self.gif_buffer = []
+    #     # display image
+    #     self.viewer.draw_image(img)
+    #     # draw a transparent circle around target point with variable radius
+    #     # based on the difference z-direction
+    #     diff_z = scale_x * abs(current_point[2] - target_point[2])
+    #     self.viewer.draw_circle(radius=diff_z,
+    #                             pos_x=scale_x * target_point[0],
+    #                             pos_y=scale_y * target_point[1],
+    #                             color=(1.0, 0.0, 0.0, 0.2))
+    #     # draw target point
+    #     self.viewer.draw_circle(radius=scale_x * 1,
+    #                             pos_x=scale_x * target_point[0],
+    #                             pos_y=scale_y * target_point[1],
+    #                             color=(1.0, 0.0, 0.0, 1.0))
+    #     # draw current point
+    #     self.viewer.draw_circle(radius=scale_x * 1,
+    #                             pos_x=scale_x * current_point[0],
+    #                             pos_y=scale_y * current_point[1],
+    #                             color=(0.0, 0.0, 1.0, 1.0))
+    #     # draw a box around the agent - what the network sees ROI
+    #     self.viewer.draw_rect(self.rectangle.xmin, self.rectangle.ymin,
+    #                           self.rectangle.xmax, self.rectangle.ymax)
+    #     self.viewer.display_text('Agent ', color=(204, 204, 0, 255),
+    #                              x=self.rectangle.xmin - 15,
+    #                              y=self.rectangle.ymin)
+    #     # display info
+    #     color = (0, 204, 0, 255) if self.reward > 0 else (204, 0, 0, 255)
+    #     text = 'Error ' + str(round(self.cur_dist, 3)) + 'mm'
+    #     self.viewer.display_text(text, color=color, x=10, y=20)
+    #     text = 'Spacing ' + str(self.xscale)
+    #     self.viewer.display_text(text, color=color,
+    #                              x=10, y=self._image_dims[1] - 80)
+    #
+    #     # render and wait (viz) time between frames
+    #     self.viewer.render()
+    #     # time.sleep(self.viz)
+    #     # save gif
+    #     if self.saveGif:
+    #         image_data = pyglet.image.get_buffer_manager().get_color_buffer().get_image_data()
+    #         data = image_data.get_data('RGB', image_data.width * 3)
+    #         arr = np.array(bytearray(data)).astype('uint8')
+    #         arr = np.flip(np.reshape(arr, (image_data.height, image_data.width, -1)), 0)
+    #         im = Image.fromarray(arr)
+    #         self.gif_buffer.append(im)
+    #
+    #         if not self.terminal:
+    #             gifname = self.filename.split('.')[0] + '.gif'
+    #             self.viewer.saveGif(gifname, arr=self.gif_buffer,
+    #                                 duration=self.viz)
+    #     if self.saveVideo:
+    #         dirname = 'tmp_video'
+    #         if self.cnt <= 1:
+    #             if os.path.isdir(dirname):
+    #                 logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
+    #                 act = input("select action: d (delete) / q (quit): ").lower().strip()
+    #                 if act == 'd':
+    #                     shutil.rmtree(dirname, ignore_errors=True)
+    #                 else:
+    #                     raise OSError("Directory {} exits!".format(dirname))
+    #             os.mkdir(dirname)
+    #
+    #         frame = dirname + '/' + '%04d' % self.cnt + '.png'
+    #         pyglet.image.get_buffer_manager().get_color_buffer().save(frame)
+    #         if self.terminal:
+    #             resolution = str(3 * self.viewer.img_width) + 'x' + str(3 * self.viewer.img_height)
+    #             save_cmd = ['ffmpeg', '-f', 'image2', '-framerate', '30',
+    #                         '-pattern_type', 'sequence', '-start_number', '0', '-r',
+    #                         '6', '-i', dirname + '/%04d.png', '-s', resolution,
+    #                         '-vcodec', 'libx264', '-b:v', '2567k', self.filename + '.mp4']
+    #             subprocess.check_output(save_cmd)
+    #             shutil.rmtree(dirname, ignore_errors=True)
 
 
 # class DiscreteActionSpace(object):
