@@ -547,6 +547,7 @@ class Brain_Env(gym.Env):
     def _calc_reward(self, current_loc, next_loc):
         """ Calculate the new reward based on the decrease in euclidean distance to the target location
         """
+        # TODO: replace
         curr_dist = self.calcDistance(current_loc, self._target_loc,
                                       self.spacing)
         next_dist = self.calcDistance(next_loc, self._target_loc,
@@ -557,6 +558,7 @@ class Brain_Env(gym.Env):
     def _oscillate(self):
         """ Return True if the agent is stuck and oscillating
         """
+        # TODO: erase last few frames if oscillation is detected
         counter = Counter(self._loc_history)
         freq = counter.most_common()
 
@@ -614,6 +616,8 @@ class Brain_Env(gym.Env):
         #                  (int(scale_x*img.shape[1]),int(scale_y*img.shape[0])),
         #                  interpolation=cv2.INTER_LINEAR)
         # skip if there is a viewer open
+
+        # TODO: replace viewer code
         if (not self.viewer) and self.viz:
             from viewer import SimpleImageViewer
             self.viewer = SimpleImageViewer(arr=img,
