@@ -4,6 +4,7 @@
 # Author: Amir Alansary <amiralansary@gmail.com>
 
 import warnings
+
 warnings.simplefilter("ignore", category=ResourceWarning)
 
 import numpy as np
@@ -11,9 +12,8 @@ import SimpleITK as sitk
 from tensorpack import logger
 from IPython.core.debugger import set_trace
 
-
 __all__ = ['files', 'filesListBrainMRLandmark', 'filesListFetalUSLandmark',
-           'filesListCardioMRLandmark','NiftiImage']
+           'filesListCardioMRLandmark', 'NiftiImage']
 
 #######################################################################
 ## list file/directory names
@@ -21,17 +21,20 @@ import glob
 import os
 import re
 
+
 def alphanum_key(s):
     """ Turn a string into a list of string and number chunks.
         "z23a" -> ["z", 23, "a"]
     """
-    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+    return [tryint(c) for c in re.split('([0-9]+)', s)]
+
 
 def tryint(s):
     try:
         return int(s)
     except:
         return s
+
 
 def listFiles(dirpath, dirnames):
     curpath = os.getcwd()
@@ -46,8 +49,8 @@ def listFiles(dirpath, dirnames):
 ## extract points from xml file
 import xml.etree.ElementTree as ET
 
-def extractPointsXML(filename):
 
+def extractPointsXML(filename):
     tree = ET.parse(filename)
     root = tree.getroot()
 
@@ -60,7 +63,8 @@ def extractPointsXML(filename):
         y.append(float(point[3].text))
         z.append(float(point[4].text))
 
-    return x,y,z
+    return x, y, z
+
 
 #######################################################################
 ## extract points from txt file
@@ -75,7 +79,8 @@ def extractPointsTXT(filename):
             y.append(float(point[1]))
             z.append(float(point[2]))
 
-    return x,y,z
+    return x, y, z
+
 
 #######################################################################
 ## extract points from vtk file
@@ -94,9 +99,10 @@ def getLandmarksFromVTKFile(file):
             elif i == 6:
                 landmarks.append([float(k) for k in line.split()])
             elif i > 6:
-                landmarks = np.asarray(landmarks).reshape((-1,3))
-                landmarks[:,[0, 1]] = -landmarks[:,[0, 1]]
+                landmarks = np.asarray(landmarks).reshape((-1, 3))
+                landmarks[:, [0, 1]] = -landmarks[:, [0, 1]]
                 return landmarks
+
 
 #######################################################################
 ## extract points from txt file
@@ -116,8 +122,9 @@ def getLandmarksFromTXTFile(file):
         landmarks = []
         for i, line in enumerate(fp):
             landmarks.append([float(k) for k in line.split(',')])
-        landmarks = np.asarray(landmarks).reshape((-1,3))
+        landmarks = np.asarray(landmarks).reshape((-1, 3))
         return landmarks
+
 
 #######################################################################
 
@@ -139,55 +146,51 @@ class files(object):
         self.landmarks_list = self._listLandmarks()
         self.all_landmarks_list = self._listLandmarks_all()
 
-
     def _listImages(self):
 
-        childDirs = listFiles(self.dir,'*')
+        childDirs = listFiles(self.dir, '*')
 
         image_files = []
 
         for child in childDirs:
             dir_path = os.path.join(self.dir, child)
-            if not(os.path.isdir(dir_path)): continue
+            if not (os.path.isdir(dir_path)): continue
             # todo: extend to all nifti image extensions
-            file_name = listFiles(dir_path,'*.nii.gz')
+            file_name = listFiles(dir_path, '*.nii.gz')
             file_path = os.path.join(dir_path, file_name[0])
             image_files.append(file_path)
 
         return image_files
 
-
     def _listLandmarks(self):
 
-        childDirs = listFiles(self.dir,'*')
+        childDirs = listFiles(self.dir, '*')
         landmarks = []
 
         for child in childDirs:
             dir_path = os.path.join(self.dir, child)
-            if not(os.path.isdir(dir_path)): continue
-            file_name = listFiles(dir_path,'*.mps')
+            if not (os.path.isdir(dir_path)): continue
+            file_name = listFiles(dir_path, '*.mps')
             file_path = os.path.join(dir_path, file_name[0])
             points = np.array(extractPointsXML(file_path))
-            landmarks.append(np.array(points[:,2]))
+            landmarks.append(np.array(points[:, 2]))
 
         return landmarks
-
 
     def _listLandmarks_all(self):
         # extend directory path
         current_dir = self.dir + '/landmarks'
-        childDirs = listFiles(current_dir,'*.txt')
+        childDirs = listFiles(current_dir, '*.txt')
         landmarks = []
 
         for child in childDirs:
             file_name = os.path.join(current_dir, child)
             file_path = os.path.join(current_dir, file_name)
             points = np.array(extractPointsTXT(file_path))
-            landmark = np.array(points) # all landmark point
+            landmark = np.array(points)  # all landmark point
             landmarks.append(landmark)
 
         return landmarks
-
 
     def sample_random(self):
         """ return a random sampled ImageRecord from the list of files
@@ -198,12 +201,11 @@ class files(object):
         landmark = np.array(sitk_image.TransformPhysicalPointToIndex(self.landmarks_list[random_idx]))
         return image, landmark, random_idx
 
-
-    def sample_circular(self,shuffle=False):
+    def sample_circular(self, shuffle=False):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x,len(x),replace=False)
+            indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
@@ -218,6 +220,7 @@ class files(object):
     def num_files(self):
         return len(self.images_list)
 
+
 ###############################################################################
 
 class filesListBrainMRLandmark(files):
@@ -226,6 +229,7 @@ class filesListBrainMRLandmark(files):
         Attributes:
         directory: input data directo
     """
+
     def __init__(self, directory=None, files_list=None):
 
         assert directory, 'There is no directory containing training files given'
@@ -236,7 +240,6 @@ class filesListBrainMRLandmark(files):
         self.images_3d_list = self._listImages('/Normalized_MNI/')
         self.landmarks_list = self._listLandmarks('/LandmarksMAN/VoxelCoordinates/')
 
-
     @property
     def num_files(self):
         return len(self.files_list)
@@ -246,7 +249,7 @@ class filesListBrainMRLandmark(files):
         current_dir = self.dir + suffix
         image_files = []
         for filename in self.files_list:
-            file_path = os.path.join(current_dir, filename) #+ '.nii.gz')
+            file_path = os.path.join(current_dir, filename)  # + '.nii.gz')
             image_files.append(file_path)
 
         return image_files
@@ -274,11 +277,11 @@ class filesListBrainMRLandmark(files):
             landmark_files.append(file_path)
         return landmark_files
 
-    def sample_circular(self,shuffle=False):
+    def sample_circular(self, shuffle=False):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x,len(x),replace=False)
+            indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
@@ -289,20 +292,21 @@ class filesListBrainMRLandmark(files):
                 image_filename = self.images_3d_list[idx][:-7]
                 yield image, landmark, image_filename, sitk_image.GetSpacing()
 
-    def sample_circular_all_landmarks(self,shuffle=False):
+    def sample_circular_all_landmarks(self, shuffle=False):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x,len(x),replace=False)
+            indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
         while True:
             for idx in indexes:
-                sitk_image3d, _ =NiftiImage().decode(self.images_3d_list[idx])
+                sitk_image3d, _ = NiftiImage().decode(self.images_3d_list[idx])
                 landmarks = getLandmarksFromTXTFile(self.landmarks_list[idx])
                 filename = self.images_3d_list[idx][:-7]
                 yield sitk_image3d, landmarks, filename
+
 
 ###############################################################################
 
@@ -312,6 +316,7 @@ class filesListFetalUSLandmark(files):
         Attributes:
         directory: input data directo
     """
+
     def __init__(self, directory=None, files_list=None):
 
         assert directory, 'There is no directory containing training files given'
@@ -322,7 +327,6 @@ class filesListFetalUSLandmark(files):
         self.images_list = self._listImages()
         self.landmarks_list = self._listLandmarks()
         self.all_landmarks_list = self._listLandmarks_all()
-
 
     @property
     def num_files(self):
@@ -338,7 +342,6 @@ class filesListFetalUSLandmark(files):
 
         return image_files
 
-
     def _listLandmarks(self):
         # extend directory path
         current_dir = self.dir + '/landmarks'
@@ -347,7 +350,7 @@ class filesListFetalUSLandmark(files):
             file_path = os.path.join(current_dir, filename + '_ps.txt')
             points = np.array(extractPointsTXT(file_path))
             # landmark point 12 csp - 11 leftCerebellar - 10 rightCerebellar
-            landmark = np.array(points[:,12])
+            landmark = np.array(points[:, 12])
             landmarks.append(landmark)
 
         return landmarks
@@ -359,16 +362,16 @@ class filesListFetalUSLandmark(files):
         for filename in self.files_list:
             file_path = os.path.join(current_dir, filename + '_ps.txt')
             points = np.array(extractPointsTXT(file_path))
-            landmark = np.array(points) # all landmark point
+            landmark = np.array(points)  # all landmark point
             landmarks.append(landmark)
 
         return landmarks
 
-    def sample_circular(self,shuffle=False):
+    def sample_circular(self, shuffle=False):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x,len(x),replace=False)
+            indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
@@ -379,12 +382,11 @@ class filesListFetalUSLandmark(files):
                 image_filename = self.images_list[idx][:-7]
                 yield image, landmark, image_filename, sitk_image.GetSpacing()
 
-
-    def sample_circular_all_landmarks(self,shuffle=False):
+    def sample_circular_all_landmarks(self, shuffle=False):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x,len(x),replace=False)
+            indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
@@ -395,6 +397,7 @@ class filesListFetalUSLandmark(files):
                 image_filename = self.images_list[idx][:-7]
                 yield image, landmarks, image_filename
 
+
 ###############################################################################
 
 class filesListCardioMRLandmark(files):
@@ -403,6 +406,7 @@ class filesListCardioMRLandmark(files):
         Attributes:
         directory: input data directo
     """
+
     def __init__(self, directory=None, files_list=None):
 
         assert directory, 'There is no directory containing training files given'
@@ -417,7 +421,6 @@ class filesListCardioMRLandmark(files):
         self.images_4ch_list = self._listImages('/4CH_rreg_fix_orientation/')
         self.landmarks_list = self._listLandmarks('/landmarks_new/')
 
-
     @property
     def num_files(self):
         return len(self.files_list)
@@ -427,11 +430,10 @@ class filesListCardioMRLandmark(files):
         current_dir = self.dir + suffix
         image_files = []
         for filename in self.files_list:
-            file_path = os.path.join(current_dir, filename) #+ '.nii.gz')
+            file_path = os.path.join(current_dir, filename)  # + '.nii.gz')
             image_files.append(file_path)
 
         return image_files
-
 
     def _listLandmarks(self, suffix):
         # extend directory path
@@ -444,13 +446,11 @@ class filesListCardioMRLandmark(files):
 
         return landmark_files
 
-
-
-    def sample_circular(self,shuffle=False):
+    def sample_circular(self, shuffle=False):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x,len(x),replace=False)
+            indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
@@ -476,26 +476,27 @@ class filesListCardioMRLandmark(files):
 # ====================== Nifti Image Class ==========================
 # ===================================================================
 class ImageRecord(object):
-  '''image object to contain height,width, depth and name '''
-  pass
+    '''image object to contain height,width, depth and name '''
+    pass
 
 
 class NiftiImage(object):
     """Helper class that provides TensorFlow image coding utilities."""
+
     def __init__(self):
         pass
 
-    def _is_nifti(self,filename):
+    def _is_nifti(self, filename):
         """Determine if a file contains a nifti format image.
         Args
           filename: string, path of the image file
         Returns
           boolean indicating if the image is a nifti
         """
-        extensions = ['.nii','.nii.gz','.img','.hdr']
+        extensions = ['.nii', '.nii.gz', '.img', '.hdr']
         return any(i in filename for i in extensions)
 
-    def decode(self, filename,label=False):
+    def decode(self, filename, label=False):
         """ decode a single nifti image
         Args
           filename: string for input images
@@ -514,8 +515,8 @@ class NiftiImage(object):
             np_image = sitk.GetArrayFromImage(sitk_image)
             # threshold image between p10 and p98 then re-scale [0-255]
             p0 = np_image.min().astype('float')
-            p10 = np.percentile(np_image,10)
-            p99 = np.percentile(np_image,99)
+            p10 = np.percentile(np_image, 10)
+            p99 = np.percentile(np_image, 99)
             p100 = np_image.max().astype('float')
             # logger.info('p0 {} , p5 {} , p10 {} , p90 {} , p98 {} , p100 {}'.format(p0,p5,p10,p90,p98,p100))
             sitk_image = sitk.Threshold(sitk_image,
@@ -531,7 +532,7 @@ class NiftiImage(object):
                                                outputMaximum=255)
 
         # Convert from [depth, width, height] to [width, height, depth]
-        image.data = sitk.GetArrayFromImage(sitk_image).transpose(2,1,0)#.astype('uint8')
+        image.data = sitk.GetArrayFromImage(sitk_image).transpose(2, 1, 0)  # .astype('uint8')
         image.dims = np.shape(image.data)
 
         return sitk_image, image
