@@ -18,7 +18,8 @@ import argparse
 from collections import deque
 
 import tensorflow as tf
-from profundo.medical_env import MedicalPlayer, FrameStack
+import tensorflow.nn.leaky_relu as LeakyRelu
+from profundo.brain_env import Brain_Env, FrameStack
 from tensorpack.input_source import QueueInput
 from tensorpack_medical.models.conv3d import Conv3D
 from tensorpack_medical.models.pool3d import MaxPooling3D
@@ -26,7 +27,7 @@ from profundo.common import Evaluator, eval_model_multithread, play_n_episodes
 from profundo.DQNModel import Model3D as DQNModel
 from profundo.expreplay import ExpReplay
 
-import tensorflow.nn.leaky_relu as LeakyRelu
+
 
 from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
                         logger, TrainConfig, ModelSaver, PeriodicTrigger,
@@ -35,11 +36,16 @@ from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
                         FullyConnected, PReLU, SimpleTrainer,
                         launch_train_with_config)
 
+from data_processing.swc_io import get_fnames_and_abspath_from_dir
+from sklearn.model_selection import train_test_split
+
 ###############################################################################
 # import your data here
 data_dir = "../../data/06_centered_cubes"
-train_list = 'list_of_train_filenames.txt'
-test_list = 'list_of_test_filenames.txt'
+fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
+# FIXME eventually don't subsample
+abs_paths = np.random.choice(abs_paths, 10000, replace=False)
+train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
 
 logger_dir = os.path.join('train_log', 'expriment_1')
 
@@ -71,9 +77,9 @@ EVAL_EPISODE = 50
 def get_player(directory=None, files_list= None, viz=False,
                train=False, saveGif=False, saveVideo=False):
     # in atari paper, max_num_frames = 30000
-    env = MedicalPlayer(directory=directory, screen_dims=IMAGE_SIZE,
-                        viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                        train=train, files_list=files_list, max_num_frames=1500)
+    env = Brain_Env(directory=directory, screen_dims=IMAGE_SIZE,
+                    viz=viz, saveGif=saveGif, saveVideo=saveVideo,
+                    train=train, files_list=files_list, max_num_frames=1500)
     if not train:
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
@@ -91,6 +97,7 @@ class Model(DQNModel):
         """ image: [0,255]
 
         :returns predicted Q values"""
+        # FIXME norm not needed
         # normalize image values to [0, 1]
         image = image / 255.0
 
@@ -145,7 +152,7 @@ def get_config():
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(directory=data_dir, train=True,
-                          files_list=train_list),
+                          files_list=train_data_fpaths),
         state_shape=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
@@ -176,7 +183,7 @@ def get_config():
             PeriodicTrigger(
                 Evaluator(nr_eval=EVAL_EPISODE, input_names=['state'],
                           output_names=['Qvalue'], directory=data_dir,
-                          files_list=test_list, get_player_fn=get_player),
+                          files_list=test_data_fpaths, get_player_fn=get_player),
                 every_k_epochs=EPOCHS_PER_EVAL),
             HumanHyperParamSetter('learning_rate'),
         ],
@@ -212,9 +219,9 @@ if __name__ == '__main__':
 
     METHOD = args.algo
     # load files into env to set num_actions, num_validation_files
-    init_player = MedicalPlayer(directory=data_dir,
-                                files_list=test_list,
-                                screen_dims=IMAGE_SIZE)
+    init_player = Brain_Env(directory=data_dir,
+                            files_list=test_data_fpaths,
+                            screen_dims=IMAGE_SIZE)
     NUM_ACTIONS = init_player.action_space.n
     num_validation_files = init_player.files.num_files
 
@@ -228,7 +235,7 @@ if __name__ == '__main__':
         # demo pretrained model one episode at a time
         if args.task == 'play':
             play_n_episodes(get_player(directory=data_dir,
-                                       files_list=test_list, viz=0.01,
+                                       files_list=test_data_fpaths, viz=0.01,
                                        saveGif=args.saveGif,
                                        saveVideo=args.saveVideo),
                             pred, num_validation_files)
