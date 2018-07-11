@@ -60,7 +60,7 @@ class Brain_Env(gym.Env):
     an observation and a reward."""
 
     def __init__(self, directory=None, viz=False, train=False, files_list=None,
-                 screen_dims=(27, 27, 27), history_length=20, multiscale=True,
+                 screen_dims=(27, 27, 27), history_length=20, multiscale=False,
                  max_num_frames=0, saveGif=False, saveVideo=False):
         """
         :param train_directory: environment or game name
@@ -119,6 +119,8 @@ class Brain_Env(gym.Env):
         self.dims = len(self.screen_dims)
         # multi-scale agent
         self.multiscale = multiscale
+        # FIXME force multiscale false for now
+        self.multiscale = False
 
         # init env dimensions
         if self.dims == 2:
@@ -244,6 +246,7 @@ class Brain_Env(gym.Env):
         ## select random starting point
         # add padding to avoid start right on the border of the image
         if self.train:
+            # TODO: replace with thickness of our microscope data
             skip_thickness = (int(self._image_dims[0] / 5),
                               int(self._image_dims[1] / 5),
                               int(self._image_dims[2] / 5))
@@ -270,6 +273,7 @@ class Brain_Env(gym.Env):
 
     def calcDistance(self, points1, points2, spacing=(1, 1, 1)):
         """ calculate the distance between two points in mm"""
+        # TODO: understand what spacing is doing here
         spacing = np.array(spacing)
         points1 = spacing * np.array(points1)
         points2 = spacing * np.array(points2)
