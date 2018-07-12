@@ -37,7 +37,10 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
         PA.data1d = 0;
         PA.curr_path = path_curr;
 
-        get_sub_block(callback,1,sketchedNTList[i],PA,i);
+        if(!get_sub_block(callback,1,sketchedNTList[i],PA,i))
+        {
+            continue;
+        }
         LandmarkList marker_v;
         NeuronTree outtree;
         if(sketchedNTList[i].listNeuron.size()<3)continue;

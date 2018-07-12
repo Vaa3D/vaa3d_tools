@@ -71,6 +71,12 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA
         PA.im_cropped_sz[3] = 1;
         cout<<"--------------------------------------PA.Z = "<<PA.im_cropped_sz[2]<<endl;
 
+
+
+//        V3DLONG size = PA.im_cropped_sz[0]*PA.original_o[1]*PA.original_o[2];
+//        if(size>1760000000)
+//        {v3d_msg("img too big!"); return false;}
+
         cout<<"x = "<<maxx-xb<<"  "<<minx-xb<<endl;
         cout<<"y = "<<maxy-yb<<"  "<<miny-yb<<endl;
         cout<<"z = "<<maxz-zb<<"  "<<minz-zb<<endl;
