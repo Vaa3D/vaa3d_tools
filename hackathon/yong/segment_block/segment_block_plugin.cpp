@@ -69,6 +69,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             tree.push_back(pt);
 
         }
+        cout<<"tree.size="<<tree.size()<<endl;
+
         for(V3DLONG i=0;i<nt_p.listNeuron.size();i++)
         {
             if (nt_p.listNeuron[i].pn<0) continue;
