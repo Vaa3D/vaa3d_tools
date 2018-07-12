@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+//<<<<<<< HEAD
 #include "branch_tip_detection.h"
 #include <algorithm>
 
@@ -11,16 +11,16 @@ double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
     double zz = s1.z-s2.z;
     return (xx*xx+yy*yy+zz*zz);
 }
-=======
+//=======
 
-#include "branch_tip_detection.h"
-#include "basic_surf_objs.h"
-#include "my_surf_objs.h"
-#include "v3d_interface.h"
-#include <algorithm>
+//#include "branch_tip_detection.h"
+//#include "basic_surf_objs.h"
+//#include "my_surf_objs.h"
+//#include "v3d_interface.h"
+//#include <algorithm>
 
-#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
 
 bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result,QString fileOpenName,QWidget *parent)
 {
@@ -52,20 +52,20 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
     for(V3DLONG i=0;i<nt.listNeuron.size();i++)
     {
         NeuronSWC cur = nt.listNeuron[i];
-<<<<<<< HEAD
+//<<<<<<< HEAD
         child_num = childs[i].size();   //need check
         //child_num = childs[nt.listNeuron[i].n].size();
         if(child_num==2)
-=======
-        child_num = childs[i].size();
-        //cout<<"i="<<i<<" "<<"child_num="<<child_num<<endl;
-        if(child_num>=2)
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//=======
+//        child_num = childs[i].size();
+//        //cout<<"i="<<i<<" "<<"child_num="<<child_num<<endl;
+//        if(child_num>=2)
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
             branchpoints.push_back(cur);
         else if(child_num==0)
             tips.push_back(cur);
     }
-<<<<<<< HEAD
+//<<<<<<< HEAD
 
     for(V3DLONG i=0;i<tips.size();i++)
     {
@@ -95,27 +95,27 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
 
 
 //    //method2
-=======
-    //v3d_msg("check3");
+//=======
+//    //v3d_msg("check3");
 
 
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
-//    QList<NeuronSWC> branchpoints,tips;
-//    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
-//    {
-//        int n =0;
-//        for(V3DLONG j=0;j<nt.listNeuron.size();j++)
-//        {
-//            if(nt.listNeuron[i].n==nt.listNeuron[j].pn)
-//                n++;
-//        }
-//        if(n==0)
-//            tips.push_back(nt.listNeuron[i]);
-//        else if(n>=2)
-//            branchpoints.push_back(nt.listNeuron[i]);
-//    }
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
+////    QList<NeuronSWC> branchpoints,tips;
+////    for(V3DLONG i=0;i<nt.listNeuron.size();i++)
+////    {
+////        int n =0;
+////        for(V3DLONG j=0;j<nt.listNeuron.size();j++)
+////        {
+////            if(nt.listNeuron[i].n==nt.listNeuron[j].pn)
+////                n++;
+////        }
+////        if(n==0)
+////            tips.push_back(nt.listNeuron[i]);
+////        else if(n>=2)
+////            branchpoints.push_back(nt.listNeuron[i]);
+////    }
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
       //create .marker file
 //    QList<ImageMarker> branch_markerlist,tip_markerlist;
 //    QString filename1 =fileOpenName + "_branch_markerlist.marker";
@@ -157,52 +157,52 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
 //    Vsize = QInputDialog::getInteger(parent, "Volume size ",
 //                                  "Enter volume size:",
 //                                  50, 1, 1000, 1);
-=======
-    cout<<"branchpoints="<<branchpoints.size()<<endl;
-    cout<<"tips="<<tips.size()<<endl;
+//=======
+//    cout<<"branchpoints="<<branchpoints.size()<<endl;
+//    cout<<"tips="<<tips.size()<<endl;
 
-    //Output swc_to_marker_file
-    QList<ImageMarker> branch_markerlist,tip_markerlist;
-    QString filename1 =fileOpenName + "_branch_markerlist.marker";
-    QString filename2=fileOpenName + "_tip_markerlist.marker";
-    for(V3DLONG i=0;i<branchpoints.size();i++)
-    {
-        ImageMarker m;
-        m.x = branchpoints[i].x;
-        m.y = branchpoints[i].y;
-        m.z = branchpoints[i].z;
-        //m.radius = branchpoints[i].radius;
-        m.radius=0.001;
-        m.color.a = 0;
-        m.color.b = 0;
-        m.color.g = 0;
-        m.type = branchpoints[i].type;
-        branch_markerlist.push_back(m);
-    }
-    writeMarker_file(filename1,branch_markerlist);
+//    //Output swc_to_marker_file
+//    QList<ImageMarker> branch_markerlist,tip_markerlist;
+//    QString filename1 =fileOpenName + "_branch_markerlist.marker";
+//    QString filename2=fileOpenName + "_tip_markerlist.marker";
+//    for(V3DLONG i=0;i<branchpoints.size();i++)
+//    {
+//        ImageMarker m;
+//        m.x = branchpoints[i].x;
+//        m.y = branchpoints[i].y;
+//        m.z = branchpoints[i].z;
+//        //m.radius = branchpoints[i].radius;
+//        m.radius=0.001;
+//        m.color.a = 0;
+//        m.color.b = 0;
+//        m.color.g = 0;
+//        m.type = branchpoints[i].type;
+//        branch_markerlist.push_back(m);
+//    }
+//    writeMarker_file(filename1,branch_markerlist);
 
-    for(V3DLONG i=0;i<tips.size();i++)
-    {
-        ImageMarker m;
-        m.x = tips[i].x;
-        m.y = tips[i].y;
-        m.z = tips[i].z;
-        //m.radius = tips[i].radius;
-        m.radius=0.001;
-        m.color.a = 0;
-        m.color.b = 255;
-        m.color.g = 0;
-        m.type = tips[i].type;
-        tip_markerlist.push_back(m);
-    }
-    writeMarker_file(filename2,tip_markerlist);
+//    for(V3DLONG i=0;i<tips.size();i++)
+//    {
+//        ImageMarker m;
+//        m.x = tips[i].x;
+//        m.y = tips[i].y;
+//        m.z = tips[i].z;
+//        //m.radius = tips[i].radius;
+//        m.radius=0.001;
+//        m.color.a = 0;
+//        m.color.b = 255;
+//        m.color.g = 0;
+//        m.type = tips[i].type;
+//        tip_markerlist.push_back(m);
+//    }
+//    writeMarker_file(filename2,tip_markerlist);
 
-    //Output swc_to_apo_file
-    unsigned int Vsize;
-    Vsize = QInputDialog::getInteger(parent, "Volume size ",
-                                  "Enter volume size:",
-                                  50, 1, 1000, 1);
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//    //Output swc_to_apo_file
+//    unsigned int Vsize;
+//    Vsize = QInputDialog::getInteger(parent, "Volume size ",
+//                                  "Enter volume size:",
+//                                  50, 1, 1000, 1);
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
 
 
     QList<CellAPO> branchpoint_inmarkers,tip_inmarkers;
@@ -215,33 +215,33 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
         t.color.r=255;
         t.color.g=0;
         t.color.b=0;
-<<<<<<< HEAD
-=======
+//<<<<<<< HEAD
+//=======
 
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
         t.volsize = Vsize;
         branchpoint_inmarkers.push_back(t);
     }
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
     QString apo_name1 = fileOpenName + "_branchpiont.apo";
     writeAPO_file(apo_name1,branchpoint_inmarkers);
 
-=======
-    QString fileDefaultName1 = fileOpenName + "_branchpiont.apo";
-    writeAPO_file(fileDefaultName1,branchpoint_inmarkers);
+//=======
+//    QString fileDefaultName1 = fileOpenName + "_branchpiont.apo";
+//    writeAPO_file(fileDefaultName1,branchpoint_inmarkers);
 
-    //    QString fileSaveName1 = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-    //                                                        fileDefaultName1,
-    //                                                        QObject::tr("Supported file (*.apo)"));
-    //    if (fileSaveName1.isEmpty())
+//    //    QString fileSaveName1 = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+//    //                                                        fileDefaultName1,
+//    //                                                        QObject::tr("Supported file (*.apo)"));
+//    //    if (fileSaveName1.isEmpty())
     //        v3d_msg("return false");
     //    else
     //    {
     //        writeAPO_file(fileSaveName1,branchpoint_inmarkers);
     //        v3d_msg(QString("Point Cloud file is save as %1").arg(fileSaveName1.toStdString().c_str()));
     //    }
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
 
     for(V3DLONG i = 0; i <tips.size();i++)
     {
@@ -249,21 +249,21 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
         t.x = tips.at(i).x+1;
         t.y = tips.at(i).y+1;
         t.z = tips.at(i).z+1;
-<<<<<<< HEAD
+//<<<<<<< HEAD
         t.color.r=0;
         t.color.g=0;
         t.color.b=255;
-=======
-        t.color.r=255;
-        t.color.g=0;
-        t.color.b=0;
+//=======
+//        t.color.r=255;
+//        t.color.g=0;
+//        t.color.b=0;
 
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
         t.volsize = Vsize;
         tip_inmarkers.push_back(t);
     }
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
     QString apo_name2 = fileOpenName + "_tip.apo";
     writeAPO_file(apo_name2,tip_inmarkers);
     QString linker_name = fileOpenName + ".ano";
@@ -279,26 +279,26 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
     out << "APOFILE=" << QFileInfo(apo_name1).fileName()<<endl;
     out << "APOFILE=" << QFileInfo(apo_name2).fileName()<<endl;
     v3d_msg(QString("Save the linker file to: %1 Complete!").arg(linker_name));
-=======
-    QString fileDefaultName2 = fileOpenName + "_tip.apo";
-    writeAPO_file(fileDefaultName2,tip_inmarkers);
+//=======
+//    QString fileDefaultName2 = fileOpenName + "_tip.apo";
+//    writeAPO_file(fileDefaultName2,tip_inmarkers);
 
-//    QString fileSaveName2 = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-//                                                        fileDefaultName2,
-//                                                        QObject::tr("Supported file (*.apo)"));
-//    if (fileSaveName2.isEmpty())
-//        v3d_msg("return false");
-//    else
-//    {
-//        writeAPO_file(fileSaveName2,tip_inmarkers);
-//        v3d_msg(QString("Point Cloud file is save as %1").arg(fileSaveName2.toStdString().c_str()));
-//    }
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+////    QString fileSaveName2 = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+////                                                        fileDefaultName2,
+////                                                        QObject::tr("Supported file (*.apo)"));
+////    if (fileSaveName2.isEmpty())
+////        v3d_msg("return false");
+////    else
+////    {
+////        writeAPO_file(fileSaveName2,tip_inmarkers);
+////        v3d_msg(QString("Point Cloud file is save as %1").arg(fileSaveName2.toStdString().c_str()));
+////    }
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
 
     return true;
 }
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 QList<NeuronSWC> SortSWC(QList<NeuronSWC> & neuron,V3DLONG newrootid, double thres, double root_dist_thres, QList<CellAPO> markers,QString fileOpenName)
 {
 
@@ -314,14 +314,14 @@ QList<NeuronSWC> SortSWC(QList<NeuronSWC> & neuron,V3DLONG newrootid, double thr
 
     //Remove duplicated nodes
     //get ids and reorder tree with ids following list
-=======
-QList<NeuronSWC>  removedupSWC(QList<NeuronSWC> & neuron,QString fileOpenName)
-{
-    //Remove duplicated nodes
-    //get ids and reorder tree with ids following list
-    vector<long> parents0;
-    vector<long> ids0;
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//=======
+//QList<NeuronSWC>  removedupSWC(QList<NeuronSWC> & neuron,QString fileOpenName)
+//{
+//    //Remove duplicated nodes
+//    //get ids and reorder tree with ids following list
+//    vector<long> parents0;
+//    vector<long> ids0;
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
     for(V3DLONG i=0;i<neuron.size();i++)
     {
         ids0.push_back(neuron.at(i).n);
@@ -391,7 +391,7 @@ QList<NeuronSWC>  removedupSWC(QList<NeuronSWC> & neuron,QString fileOpenName)
             }
         }
     }
-<<<<<<< HEAD
+//<<<<<<< HEAD
     QList<NeuronSWC> neuron2;
     neuron2.append(neuron.at(0));
     for(V3DLONG i=1;i<neuron.size();i++)
@@ -962,24 +962,24 @@ QList<NeuronSWC>  removedupSWC(QList<NeuronSWC> & neuron,QString fileOpenName)
             result.append(neuron.at(i));
         }
     }
-=======
+//=======
 
-    QList<NeuronSWC> result;
-    result.append(neuron.at(0));
-    for(V3DLONG i=1;i<neuron.size();i++)
-    {
-        if(dupnodes.at(i) == false) result.append(neuron.at(i));
-        //else qDebug()<<i;
-    }
-    //neuron = neuron2;
-    qDebug()<<"Removed" << count(dupnodes.begin(),dupnodes.end(),true) << " duplicated nodes";
+//    QList<NeuronSWC> result;
+//    result.append(neuron.at(0));
+//    for(V3DLONG i=1;i<neuron.size();i++)
+//    {
+//        if(dupnodes.at(i) == false) result.append(neuron.at(i));
+//        //else qDebug()<<i;
+//    }
+//    //neuron = neuron2;
+//    qDebug()<<"Removed" << count(dupnodes.begin(),dupnodes.end(),true) << " duplicated nodes";
 
-    NeuronTree nt;
-    nt.listNeuron=result;
-    QString filename=fileOpenName+"_Remove_duplicated_nodes.swc";
-    writeSWC_file(filename,nt);
+//    NeuronTree nt;
+//    nt.listNeuron=result;
+//    QString filename=fileOpenName+"_Remove_duplicated_nodes.swc";
+//    writeSWC_file(filename,nt);
 
->>>>>>> af416b85e5de165d26027b426cefde182d44c722
+//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
     return result;
 }
 
