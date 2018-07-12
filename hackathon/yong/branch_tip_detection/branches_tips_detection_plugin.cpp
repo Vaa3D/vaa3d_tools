@@ -6,23 +6,12 @@
 #include "v3d_message.h"
 #include <vector>
 #include <iostream>
-//<<<<<<< HEAD
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
 #include "branches_tips_detection_plugin.h"
 #include "branch_tip_detection.h"
 
 Q_EXPORT_PLUGIN2(branches_tips_detection, TestPlugin);
 
-
-//=======
-////#include "basic_surf_objs.h"
-////#include "my_surf_objs.h"
-//#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
-//#include "branches_tips_detection_plugin.h"
-//#include "branch_tip_detection.h"
-//Q_EXPORT_PLUGIN2(branches_tips_detection, TestPlugin);
-
-//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
 using namespace std;
 
 struct input_PARA
@@ -48,29 +37,18 @@ QStringList TestPlugin::funclist() const
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("branch_tip_detection"))
-	{
-//        bool bmenu = true;
-//        OpenSWCDialog * openDlg=new OpenSWCDialog(0,&callback);
-//        if(!openDlg->exec())
-//            return;
-//        NeuronTree nt= openDlg->nt;
-//        QString filename = openDlg->file_name;
-//        cout<<filename.toStdString()<<endl;
+    {
         QString fileOpenName;
         fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
                                                     "",
-//<<<<<<< HEAD
-                                                    QObject::tr("Supported file (*.swc *.SWC *.eswc)"
-//=======
-//                                                    QObject::tr("Supported file (*.swc *.SWC)"
-//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
-                                                        ));
 
+                                                    QObject::tr("Supported file (*.swc *.SWC *.eswc)"
+
+                                                ));
         NeuronTree nt=readSWC_file(fileOpenName);
         QList<NeuronSWC> neuron=nt.listNeuron;
         cout<<fileOpenName.toStdString()<<endl;
 
-//<<<<<<< HEAD
         QList<CellAPO> markers;
         V3DLONG rootid,thres,root_dist_thres;
 
@@ -87,13 +65,6 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         QList<NeuronSWC> result=SortSWC(neuron,rootid,thres,root_dist_thres,markers,fileOpenName);
 
-        //QList<NeuronSWC> result=removedupSWC(neuron,fileOpenName);
-//=======
-//        QList<NeuronSWC> result=removedupSWC(neuron,fileOpenName);
-
-//        //cout<<"neuron.size="<<neuron.size()<<endl;
-//        //cout<<"result.size="<<result.size()<<endl;
-//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
 
         branch_tip_detection(callback,result,fileOpenName,parent);
 
@@ -117,14 +88,6 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
     {
         v3d_msg("To be implemented.");
     }
-//<<<<<<< HEAD
-
-//=======
-//    if (func_name == tr("func2"))
-//    {
-//        v3d_msg("To be implemented.");
-//    }
-//>>>>>>> af416b85e5de165d26027b426cefde182d44c722
     else if (func_name == tr("help"))
     {
 
