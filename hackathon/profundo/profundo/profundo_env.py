@@ -4,6 +4,8 @@ from gym import error, spaces, logger
 from gym.utils import seeding
 import numpy as np
 
+# TODO: port to brain_env
+
 class ProfundoEnv(gym.Env):
     metadata = {'render.modes': ['human']}  # fps?
 

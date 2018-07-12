@@ -162,6 +162,7 @@ class Model3D(ModelDesc):
         with tf.variable_scope('target'):
             targetQ_predict_value = self.get_DQN_prediction(next_state)  # NxA
 
+        # TODO disable other models
         if 'Double' not in self.method:
             # DQN or Dueling
             best_v = tf.reduce_max(targetQ_predict_value, 1)  # N,

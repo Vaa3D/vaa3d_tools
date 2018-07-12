@@ -4,19 +4,27 @@ import numpy as np
 import pandas as pd
 
 
-def get_fnames_and_abspath_from_dir(reldir):
+def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
     """given relative directory, return all filenames and their full absolute paths"""
     fnames = []
     abs_paths = []
+    abs_path_dict = {}
     for root, dirs, fnames_ in os.walk(reldir):
-        fnames.extend(fnames_)
-        for f in fnames_:
-            relpath = os.path.join(root, f)
-            abs_path = os.path.abspath(relpath)
-            abs_paths.append(abs_path)
-            
-    return fnames, abs_paths
-    
+        if not as_dict:
+            fnames.extend(fnames_)
+            for f in fnames_:
+                relpath = os.path.join(root, f)
+                abs_path = os.path.abspath(relpath)
+                abs_paths.append(abs_path)
+            return fnames, abs_paths
+        else:
+            for f in fnames_:
+                relpath = os.path.join(root, f)
+                abs_path = os.path.abspath(relpath)
+                abs_path_dict[f] = abs_path
+            return abs_path_dict
+
+
 
 def remove_comments_from_swc(fpaths, fnames, outdir="../data/02_human_clean/"):
     """SWC files start with comments, remove before proceeding"""
@@ -149,6 +157,37 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 
         return outfile_fpath
+    
+def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
+                 output_dir="../data/07_cube_TIFFs"):
+    
+    
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+        
+    outfile_fpath = os.path.join(output_dir, input_fname)
+    
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath):
+
+        # https://stackoverflow.com/a/4376421/4212158
+        v3d_plugin_name = "swc_to_maskimage_sphere_unit"
+
+        cli_dict = {"v3d_bin": vaad3d_bin_path,
+                   "plugin": v3d_plugin_name,
+                   "in": input_fpath,
+                   "out": outfile_fpath}
+                   #"step": step_length}
+
+        #print("running \n")
+        #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+
+
+
+        return outfile_fpath
+    
 
     
 

@@ -25,7 +25,7 @@ Y_MIN = -Y_MAX
 Z_MAX = X_MAX
 Z_MIN = -Z_MAX
 
-INTERSECTION_LEEWAY = (X_MAX - X_MIN)/50
+INTERSECTION_LEEWAY = (X_MAX - X_MIN) / 50
 RAND_WALK_STEPSIZE = INTERSECTION_LEEWAY
 
 
@@ -253,4 +253,4 @@ if SAVE_VIDEO is True:
               fps=15,
               extra_args=['-vcodec', 'libx264'])
 
-#plt.show()
+# plt.show()
