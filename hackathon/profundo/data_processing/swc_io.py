@@ -2,6 +2,7 @@ import os
 from collections import defaultdict
 import numpy as np
 import pandas as pd
+from skimage import io as tiff2array
 
 
 def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
@@ -22,9 +23,9 @@ def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
                 relpath = os.path.join(root, f)
                 abs_path = os.path.abspath(relpath)
                 abs_path_dict[f] = abs_path
+
             return abs_path_dict
-
-
+    
 
 def remove_comments_from_swc(fpaths, fnames, outdir="../data/02_human_clean/"):
     """SWC files start with comments, remove before proceeding"""
@@ -157,22 +158,24 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 
         return outfile_fpath
+<<<<<<< HEAD
     
 def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
                  output_dir="../data/07_cube_TIFFs"):
+    """note: swc2mask crops the """
     
     
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-        
-    outfile_fpath = os.path.join(output_dir, input_fname)
+    
+    outfile_fpath = os.path.join(output_dir, input_fname + ".tiff")
     
     # don't overwrite
     if not os.path.isfile(outfile_fpath):
 
         # https://stackoverflow.com/a/4376421/4212158
-        v3d_plugin_name = "swc_to_maskimage_sphere_unit"
+        v3d_plugin_name = "swc2mask"
 
         cli_dict = {"v3d_bin": vaad3d_bin_path,
                    "plugin": v3d_plugin_name,
@@ -188,6 +191,31 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
 
         return outfile_fpath
     
+def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):    
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    
+    outfile_fpath = os.path.join(output_dir, input_fname + ".npy")
+    
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath):
+        desired_len = 16
+        img_array = tiff2array.imread(input_fpath)
+        # make all arrays the same shape
+        # format: ((top, bottom), (left, right))
+        shp = img_array.shape
+        #print(shp, flush=True)
+        if shp != (desired_len, desired_len, desired_len):
+            try:
+                img_array = np.pad(img_array, ((0, desired_len-shp[0]), (0, desired_len-shp[1]), (0, desired_len-shp[2])), 'constant')
+            except ValueError:
+                raise
+                #print(shp, flush=True)  # don't wait for all threads to finish before printing
+                
+        np.save(outfile_fpath, img_array)
+=======
+>>>>>>> b8c060fad7a8fe3cd491875334664bdbf79e684d
 
     
 
