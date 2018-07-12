@@ -141,3 +141,4 @@ venv.bak/
 
 # pycharm
 .idea/
+*.mp4

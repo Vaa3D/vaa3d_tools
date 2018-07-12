@@ -4,19 +4,27 @@ import numpy as np
 import pandas as pd
 
 
-def get_fnames_and_abspath_from_dir(reldir):
+def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
     """given relative directory, return all filenames and their full absolute paths"""
     fnames = []
     abs_paths = []
+    abs_path_dict = {}
     for root, dirs, fnames_ in os.walk(reldir):
-        fnames.extend(fnames_)
-        for f in fnames_:
-            relpath = os.path.join(root, f)
-            abs_path = os.path.abspath(relpath)
-            abs_paths.append(abs_path)
-            
-    return fnames, abs_paths
-    
+        if not as_dict:
+            fnames.extend(fnames_)
+            for f in fnames_:
+                relpath = os.path.join(root, f)
+                abs_path = os.path.abspath(relpath)
+                abs_paths.append(abs_path)
+            return fnames, abs_paths
+        else:
+            for f in fnames_:
+                relpath = os.path.join(root, f)
+                abs_path = os.path.abspath(relpath)
+                abs_path_dict[f] = abs_path
+            return abs_path_dict
+
+
 
 def remove_comments_from_swc(fpaths, fnames, outdir="../data/02_human_clean/"):
     """SWC files start with comments, remove before proceeding"""
@@ -63,8 +71,24 @@ def swc_to_dframe(swc_abspath):
     # should make a pandas datafame with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
     #arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
-    df = pd.read_table(swc_abspath, sep=' ', names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], index_col=0)#, dtype={"node_id": int, "type": int, "x": float, "y": float, "z":float, "radius": float, "parent_node_id": int})
-    return df
+    # comment skips all commented lines
+    try:
+        df = pd.read_table(swc_abspath, sep=' ',
+                           comment='#',
+                           header=None,
+                           names=["node_id", "type", "x","y","z", "radius", "parent_node_id"], 
+                           dtype={"node_id": np.int32,
+                                  "type": np.int32, 
+                                  "x": np.float64, 
+                                  "y": np.float64, 
+                                  "z":np.float64, 
+                                  "radius": np.float64, 
+                                  "parent_node_id": np.int32})
+
+        return df
+    except:
+        print("reading swc failed. If getting dtype errors, check if swc has trailing spaces. see https://stackoverflow.com/questions/51214020/pandas-cannot-safely-convert-passed-user-dtype-of-int32-for-float64")
+        raise
 
 def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     """
@@ -80,7 +104,8 @@ def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     
     # make sure col order is preserved
     df.to_csv(out_fpath, sep=' ', header=False, encoding='utf-8', \
-             columns=["node_id", "type", "x", "y", "z", "radius", "parent"])   
+             columns=["node_id", "type", "x", "y", "z", "radius", "parent_node_id"],
+             index=False)   # do not save the pandas index
     
     return out_fpath
 
@@ -90,36 +115,80 @@ def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
     pass
 
 
-def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, output_dir="../data/04_human_branches_filtered_upsampled/"):
+def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, 
+                 output_dir="../data/04_human_branches_filtered_upsampled/"):
     """
     sometimes, inter-node distances can be v large, which is bad for subsampling.
     this is a wrapper to call Vaa3D's resample_swc script
     
     see https://github.com/Vaa3D/Vaa3D_Wiki/wiki/resample_swc.wiki
     """
+    vaa3d_bin_dir = os.path.abspath(os.path.join(vaad3d_bin_path, os.pardir))
+    libresample_swc_dir = os.path.join(vaa3d_bin_dir, "plugins/neuron_utilities/resample_swc/libresample_swc.so")
+    
+    assert os.path.isfile(libresample_swc_dir), """libresample_swc not found.
+      please go to /path/to/vaa3d_tools/released_plugins/v3d_plugins/resample_swc and run qmake and then make
+      note: if you get an error that says ‘resample’ was not declared in this scope,
+      make sure resampling.h is completely uncommented before running make
+      """
+    
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
         
     outfile_fpath = os.path.join(output_dir, input_fname)
     
-    # https://stackoverflow.com/a/4376421/4212158
-    v3d_plugin_name = "resample_swc"
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath):
+
+        # https://stackoverflow.com/a/4376421/4212158
+        v3d_plugin_name = "resample_swc"
+
+        cli_dict = {"v3d_bin": vaad3d_bin_path,
+                   "plugin": v3d_plugin_name,
+                   "in": input_fpath,
+                   "out": outfile_fpath,
+                   "step": step_length}
+
+        #print("running \n")
+        #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
+
+
+
+        return outfile_fpath
     
-    cli_dict = {"v3d_bin": vaad3d_bin_path,
-               "plugin": v3d_plugin_name,
-               "in": input_fpath,
-               "out": outfile_fpath,
-               "step": step_length}
-    
-    print("running \n")
-    print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
-    os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
+def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
+                 output_dir="../data/07_cube_TIFFs"):
     
     
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+        
+    outfile_fpath = os.path.join(output_dir, input_fname)
     
-    return outfile_fpath
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath):
+
+        # https://stackoverflow.com/a/4376421/4212158
+        v3d_plugin_name = "swc_to_maskimage_sphere_unit"
+
+        cli_dict = {"v3d_bin": vaad3d_bin_path,
+                   "plugin": v3d_plugin_name,
+                   "in": input_fpath,
+                   "out": outfile_fpath}
+                   #"step": step_length}
+
+        #print("running \n")
+        #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+
+
+
+        return outfile_fpath
     
+
     
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
@@ -132,31 +201,33 @@ def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     outfile = os.path.join(outdir, branch_name+".swc")
-    #print("saving SWC {}".format(branch_name))
-    output = open(outfile, "w+")
-    
-    default_radius = "1.0"
-    default_type = "3"
-    
-    parent_node_id = "-1"
-    for i, node in enumerate(branch):
-        try:
-            child_node_id, x, y, z = node
-        except ValueError:
-            print("error in save-branch", len(node), node)
-            raise
-        # this is the SWC file convention
-        # \n is important to separate into new lines
-        swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
-        #swc_items = [str(item) for item in str_items]
-        try:
-            swc_line = " ".join(swc_items)
-        except:
-            print(swc_items)
-            for item in swc_items:
-                print(type(item))
-                raise
-        output.write(swc_line)
-        parent_node_id = child_node_id
+    # don't overwrite
+    if not os.path.isfile(outfile):
+        #print("saving SWC {}".format(branch_name))
+        output = open(outfile, "w+")
 
-    output.close()
+        default_radius = "1.0"
+        default_type = "3"
+
+        parent_node_id = "-1"
+        for i, node in enumerate(branch):
+            try:
+                child_node_id, x, y, z = node
+            except ValueError:
+                print("error in save-branch", len(node), node)
+                raise
+            # this is the SWC file convention
+            # \n is important to separate into new lines
+            swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
+            #swc_items = [str(item) for item in str_items]
+            try:
+                swc_line = " ".join(swc_items)
+            except:
+                print(swc_items)
+                for item in swc_items:
+                    print(type(item))
+                    raise
+            output.write(swc_line)
+            parent_node_id = child_node_id
+
+        output.close()
