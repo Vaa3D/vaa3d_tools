@@ -157,6 +157,37 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 
         return outfile_fpath
+    
+def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
+                 output_dir="../data/07_cube_TIFFs"):
+    
+    
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+        
+    outfile_fpath = os.path.join(output_dir, input_fname)
+    
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath):
+
+        # https://stackoverflow.com/a/4376421/4212158
+        v3d_plugin_name = "swc_to_maskimage_sphere_unit"
+
+        cli_dict = {"v3d_bin": vaad3d_bin_path,
+                   "plugin": v3d_plugin_name,
+                   "in": input_fpath,
+                   "out": outfile_fpath}
+                   #"step": step_length}
+
+        #print("running \n")
+        #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
+
+
+
+        return outfile_fpath
+    
 
     
 
