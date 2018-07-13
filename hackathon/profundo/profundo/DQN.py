@@ -8,11 +8,14 @@ def warn(*args, **kwargs):
 import warnings
 warnings.warn = warn
 warnings.simplefilter("ignore", category=PendingDeprecationWarning)
-
+import faulthandler
+faulthandler.enable()
 import numpy as np
 
 import os
 import sys
+# get around module not found errors
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import time
 import argparse
 from collections import deque
@@ -40,10 +43,8 @@ from sklearn.model_selection import train_test_split
 
 ###############################################################################
 # import your data here
-data_dir = "../../data/06_centered_cubes"
+data_dir = "../data/08_cube_npy"
 fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
-# FIXME eventually don't subsample
-abs_paths = np.random.choice(abs_paths, 10000, replace=False)
 train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
 
 logger_dir = os.path.join('train_log', 'expriment_1')
