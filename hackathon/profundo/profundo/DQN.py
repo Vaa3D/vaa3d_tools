@@ -19,7 +19,7 @@ from collections import deque
 
 import tensorflow as tf
 from brain_env import Brain_Env, FrameStack
-from input_source import QueueInput
+from tensorpack.input_source import QueueInput
 from tensorpack_medical.models.conv3d import Conv3D
 from tensorpack_medical.models.pool3d import MaxPooling3D
 from common import Evaluator, eval_model_multithread, play_n_episodes
