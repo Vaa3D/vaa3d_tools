@@ -9,7 +9,6 @@ def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
     """given relative directory, return all filenames and their full absolute paths"""
     fnames = []
     abs_paths = []
-    abs_path_dict = {}
     for root, dirs, fnames_ in os.walk(reldir):
         if not as_dict:
             fnames.extend(fnames_)
@@ -19,11 +18,11 @@ def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
                 abs_paths.append(abs_path)
             return fnames, abs_paths
         else:
+            abs_path_dict = {}
             for f in fnames_:
                 relpath = os.path.join(root, f)
                 abs_path = os.path.abspath(relpath)
                 abs_path_dict[f] = abs_path
-
             return abs_path_dict
     
 
