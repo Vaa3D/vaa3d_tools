@@ -18,14 +18,13 @@ import argparse
 from collections import deque
 
 import tensorflow as tf
-import tensorflow.nn.leaky_relu as LeakyRelu
-from profundo.brain_env import Brain_Env, FrameStack
-from tensorpack.input_source import QueueInput
+from brain_env import Brain_Env, FrameStack
+from input_source import QueueInput
 from tensorpack_medical.models.conv3d import Conv3D
 from tensorpack_medical.models.pool3d import MaxPooling3D
-from profundo.common import Evaluator, eval_model_multithread, play_n_episodes
-from profundo.DQNModel import Model3D as DQNModel
-from profundo.expreplay import ExpReplay
+from common import Evaluator, eval_model_multithread, play_n_episodes
+from DQNModel import Model3D as DQNModel
+from expreplay import ExpReplay
 
 
 
@@ -102,7 +101,7 @@ class Model(DQNModel):
         image = image / 255.0
 
         with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True), \
-                argscope(LeakyRelu, alpha=0.01):
+                argscope(tf.nn.leaky_relu, alpha=0.01):
             # core layers of the network
             conv = (LinearWrap(image)
                  .Conv3D('conv0', out_channel=32,
