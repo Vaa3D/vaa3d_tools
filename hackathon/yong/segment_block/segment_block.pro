@@ -10,8 +10,7 @@ HEADERS	+= segment_block_plugin.h \
            my_surf_objs.h\
     ../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h \
     segment_block.h \
-    my_surf_objs.h \
-    ../../../released_plugins/v3d_plugins/resample_swc/resampling.h
+    my_surf_objs.h
 
 SOURCES	+= segment_block_plugin.cpp \
     ../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.cpp \

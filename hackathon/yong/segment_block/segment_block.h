@@ -4,7 +4,17 @@
 #include "basic_surf_objs.h"
 #include "my_surf_objs.h"
 #include "v3d_interface.h"
-#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
+
+struct Point;
+struct Point
+{
+    double x,y,z,r;
+    V3DLONG type;
+    Point* p;
+    V3DLONG childNum;
+};
+typedef vector<Point*> Segment;
+typedef vector<Point*> Tree;
 
 struct PARA
 {

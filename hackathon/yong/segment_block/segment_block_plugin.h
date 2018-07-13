@@ -1,6 +1,6 @@
 /* segment_block_plugin.h
  * This is a test plugin, you can use it as a demo.
- * 2018-7-1 : by YourName
+ * 2018-7-1 : by Yongzhang
  */
  
 #ifndef __SEGMENT_BLOCK_PLUGIN_H__

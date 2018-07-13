@@ -46,7 +46,6 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
         child_num = childs[i].size();   //need check
         //child_num = childs[nt.listNeuron[i].n].size();
         if(child_num==2)
-
             branchpoints.push_back(cur);
         else if(child_num==0)
             tips.push_back(cur);
@@ -137,9 +136,6 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
 //    Vsize = QInputDialog::getInteger(parent, "Volume size ",
 //                                  "Enter volume size:",
 //                                  50, 1, 1000, 1);
-
-    cout<<"branchpoints="<<branchpoints.size()<<endl;
-    cout<<"tips="<<tips.size()<<endl;
 
 
     QList<CellAPO> branchpoint_inmarkers,tip_inmarkers;
