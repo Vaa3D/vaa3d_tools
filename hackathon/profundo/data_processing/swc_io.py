@@ -158,8 +158,7 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 
         return outfile_fpath
-<<<<<<< HEAD
-    
+
 def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
                  output_dir="../data/07_cube_TIFFs"):
     """note: swc2mask crops the """
@@ -214,10 +213,7 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):
                 #print(shp, flush=True)  # don't wait for all threads to finish before printing
                 
         np.save(outfile_fpath, img_array)
-=======
->>>>>>> b8c060fad7a8fe3cd491875334664bdbf79e684d
 
-    
 
 def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
     """
