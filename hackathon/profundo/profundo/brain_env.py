@@ -40,7 +40,7 @@ from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
 from IPython.core.debugger import set_trace
-from profundo.sampleTrain import *
+from sampleTrain import *
 
 __all__ = ['Brain_Env', 'FrameStack']
 
