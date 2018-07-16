@@ -5,15 +5,20 @@
 
 def warn(*args, **kwargs):
     pass
+
+
 import warnings
+
 warnings.warn = warn
 warnings.simplefilter("ignore", category=PendingDeprecationWarning)
 import faulthandler
+
 faulthandler.enable()
 import numpy as np
 
 import os
 import sys
+
 # get around module not found errors
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import time
@@ -28,8 +33,6 @@ from tensorpack_medical.models.pool3d import MaxPooling3D
 from common import Evaluator, eval_model_multithread, play_n_episodes
 from DQNModel import Model3D as DQNModel
 from expreplay import ExpReplay
-
-
 
 from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
                         logger, TrainConfig, ModelSaver, PeriodicTrigger,
@@ -60,11 +63,11 @@ FRAME_HISTORY = 1
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
-GAMMA = 0.9 #0.99
+GAMMA = 0.9  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
-MEMORY_SIZE = 1e5#6
+MEMORY_SIZE = 1e5  # 6
 # consume at least 1e6 * 27 * 27 * 27 bytes
-INIT_MEMORY_SIZE = MEMORY_SIZE // 20 #5e4
+INIT_MEMORY_SIZE = MEMORY_SIZE // 20  # 5e4
 # each epoch is 100k played frames
 STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
 # num training epochs in between model evaluations
@@ -72,9 +75,10 @@ EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
 EVAL_EPISODE = 50
 
+
 ###############################################################################
 
-def get_player(directory=None, files_list= None, viz=False,
+def get_player(directory=None, files_list=None, viz=False,
                train=False, saveGif=False, saveVideo=False):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, screen_dims=IMAGE_SIZE,
@@ -86,6 +90,7 @@ def get_player(directory=None, files_list= None, viz=False,
         # otherwise, FrameStack modifies self.step to save observations into a queue
         env = FrameStack(env, FRAME_HISTORY)
     return env
+
 
 ###############################################################################
 
@@ -102,43 +107,43 @@ class Model(DQNModel):
         image = image / 255.0
 
         # FIXME figure out this argscope leaky_relu is not a registered layer
-        with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True): #, \
-               # argscope(tf.nn.leaky_relu, alpha=0.01):
+        with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):  # , \
+            # argscope(tf.nn.leaky_relu, alpha=0.01):
             # core layers of the network
             conv = (LinearWrap(image)
-                 .Conv3D('conv0', out_channel=32,
-                         kernel_shape=[5,5,5], stride=[1,1,1])
-                 .MaxPooling3D('pool0',2)
-                 .Conv3D('conv1', out_channel=32,
-                         kernel_shape=[5,5,5], stride=[1,1,1])
-                 .MaxPooling3D('pool1',2)
-                 .Conv3D('conv2', out_channel=64,
-                         kernel_shape=[4,4,4], stride=[1,1,1])
-                 .MaxPooling3D('pool2',2)
-                 .Conv3D('conv3', out_channel=64,
-                         kernel_shape=[3,3,3], stride=[1,1,1])
-                 # .MaxPooling3D('pool3',2)
-                 )
+                    .Conv3D('conv0', out_channel=32,
+                            kernel_shape=[5, 5, 5], stride=[1, 1, 1])
+                    .MaxPooling3D('pool0', 2)
+                    .Conv3D('conv1', out_channel=32,
+                            kernel_shape=[5, 5, 5], stride=[1, 1, 1])
+                    .MaxPooling3D('pool1', 2)
+                    .Conv3D('conv2', out_channel=64,
+                            kernel_shape=[4, 4, 4], stride=[1, 1, 1])
+                    .MaxPooling3D('pool2', 2)
+                    .Conv3D('conv3', out_channel=64,
+                            kernel_shape=[3, 3, 3], stride=[1, 1, 1])
+                    # .MaxPooling3D('pool3',2)
+                    )
 
         if 'Dueling' not in self.method:
             lq = (conv
-                 .FullyConnected('fc0', 512).tf.nn.leaky_relu(alpha=0.01)
-                 .FullyConnected('fc1', 256).tf.nn.leaky_relu(alpha=0.01)
-                 .FullyConnected('fc2', 128).tf.nn.leaky_relu(alpha=0.01)())
+                  .FullyConnected('fc0', 512).tf.nn.leaky_relu(alpha=0.01)
+                  .FullyConnected('fc1', 256).tf.nn.leaky_relu(alpha=0.01)
+                  .FullyConnected('fc2', 128).tf.nn.leaky_relu(alpha=0.01)())
             Q = FullyConnected('fct', lq, self.num_actions, nl=tf.identity)
         else:
             # Dueling DQN or Double Dueling
             # state value function
             lv = (conv
-                 .FullyConnected('fc0V', 512).tf.nn.leaky_relu(alpha=0.01)
-                 .FullyConnected('fc1V', 256).tf.nn.leaky_relu(alpha=0.01)
-                 .FullyConnected('fc2V', 128).tf.nn.leaky_relu(alpha=0.01)())
+                  .FullyConnected('fc0V', 512).tf.nn.leaky_relu(alpha=0.01)
+                  .FullyConnected('fc1V', 256).tf.nn.leaky_relu(alpha=0.01)
+                  .FullyConnected('fc2V', 128).tf.nn.leaky_relu(alpha=0.01)())
             V = FullyConnected('fctV', lv, 1, nl=tf.identity)
             # advantage value function
             la = (conv
-                 .FullyConnected('fc0A', 512).tf.nn.leaky_relu(alpha=0.01)
-                 .FullyConnected('fc1A', 256).tf.nn.leaky_relu(alpha=0.01)
-                 .FullyConnected('fc2A', 128).tf.nn.leaky_relu(alpha=0.01)())
+                  .FullyConnected('fc0A', 512).tf.nn.leaky_relu(alpha=0.01)
+                  .FullyConnected('fc1A', 256).tf.nn.leaky_relu(alpha=0.01)
+                  .FullyConnected('fc2A', 128).tf.nn.leaky_relu(alpha=0.01)())
             As = FullyConnected('fctA', la, self.num_actions, nl=tf.identity)
 
             Q = tf.add(As, V - tf.reduce_mean(As, 1, keepdims=True))
@@ -193,7 +198,6 @@ def get_config():
     )
 
 
-
 ###############################################################################
 ###############################################################################
 
@@ -207,7 +211,7 @@ if __name__ == '__main__':
     parser.add_argument('--task', help='task to perform. Must load a pretrained model if task is "play" or "eval"',
                         choices=['play', 'eval', 'train'], default='train')
     parser.add_argument('--algo', help='algorithm',
-                        choices=['DQN', 'Double', 'Dueling','DuelingDouble'],
+                        choices=['DQN', 'Double', 'Dueling', 'DuelingDouble'],
                         default='DQN')
     parser.add_argument('--saveGif', help='save gif image of the game',
                         action='store_true', default=False)
