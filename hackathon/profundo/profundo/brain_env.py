@@ -477,7 +477,6 @@ class Brain_Env(gym.Env):
         """
         # initialize screen with zeros - all background
         screen = np.zeros((self.screen_dims))
-        print("scr dims", self.screen_dims)
 
         # screen uses coordinate system relative to origin (0, 0, 0)
         screen_xmin, screen_ymin, screen_zmin = 0, 0, 0

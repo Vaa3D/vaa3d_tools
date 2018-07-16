@@ -56,10 +56,10 @@ logger_dir = os.path.join('train_log', 'expriment_1')
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
 BATCH_SIZE = 48
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
-IMAGE_SIZE = (3, 3, 3)
+IMAGE_SIZE = (11, 11, 11)
 # how many frames to keep
 # in other words, how many past observations the network can see
-FRAME_HISTORY = 1
+FRAME_HISTORY = 4
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
