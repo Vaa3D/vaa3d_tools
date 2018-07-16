@@ -39,9 +39,9 @@ from gym import spaces
 from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
-from IPython.core.debugger import set_trace
 from sampleTrain import FilesListCubeNPY
 from sklearn.metrics import jaccard_similarity_score
+from data_processing import save_branch_as_swc, swc_to_TIFF, TIFF_to_npy
 
 __all__ = ['Brain_Env', 'FrameStack']
 
@@ -527,9 +527,11 @@ class Brain_Env(gym.Env):
             zmax = self._image_dims[2]
             screen_zmax = len(np.arange(zmin, zmax, self.zscale))
 
-        # TODO: take image, mask it w agent trajectory
-        # agent_trajectory = self.trajectory_to_branch()
-        # self._state = np.copyto(self.original_state, agent_trajectory, where=True)
+        # take image, mask it w agent trajectory
+        agent_trajectory = self.trajectory_to_branch()
+        agent_trajectory *= 1  # agent trajectories are negative
+        # paste agent trajectory ontop of original state, but only when vals are not 0
+        self._state = np.copyto(self.original_state, agent_trajectory, where=agent_trajectory.astype(bool))
 
 
         # crop image data to update what network sees
@@ -550,8 +552,22 @@ class Brain_Env(gym.Env):
         return observation
 
     def trajectory_to_branch(self):
-        """take location histroy, generate connected branches"""
+        """take location history, generate connected branches
+        """
+
+        def normalize(arr):
+            arr_min = np.min(arr)
+            return (arr - arr_min) / (np.max(arr) - arr_min)
+
         locations = self._agent_nodes
+        output_swc = save_branch_as_swc(locations, "agent_trajectory", outdir="tmp", overwrite=True)
+        output_tiff = swc_to_TIFF("agent_trajectory", output_swc, outdir="tmp", overwrite=True)
+        output_npy = TIFF_to_npy("agent_trajectory", output_tiff, outdir="tmp", overwrite=True)
+        output_npy = np.load(output_npy)
+        output_npy = normalize(output_npy)
+        return output_npy
+
+
 
 
 
