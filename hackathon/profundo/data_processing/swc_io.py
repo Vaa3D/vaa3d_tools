@@ -64,6 +64,7 @@ def swc_to_linked_list(fpath: list):
 def swc_to_nparray(swc_abspath):
     # should make an np array with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
+    # TODO: use all cols
     arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
     return arr
 
@@ -108,11 +109,6 @@ def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
              index=False)   # do not save the pandas index
     
     return out_fpath
-
-
-def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
-    # TODO
-    pass
 
 
 def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, 
@@ -189,7 +185,7 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
 
         return outfile_fpath
     
-def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):    
+def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
