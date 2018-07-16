@@ -247,7 +247,6 @@ class Brain_Env(gym.Env):
         ## select random starting point
         # add padding to avoid start right on the border of the image
         if self.train:
-            # TODO: replace with thickness of our microscope data
             skip_thickness = (int(self._image_dims[0] / 5),
                               int(self._image_dims[1] / 5),
                               int(self._image_dims[2] / 5))
@@ -395,26 +394,26 @@ class Brain_Env(gym.Env):
 
         # check if agent oscillates
         if self._oscillate:
-            self._location = self.getBestLocation()
+            self._location = self.getBestLocation()  # TODO replace
             self._screen = self._current_state()
             self.cur_IOU = self.calc_IOU(self._location,
                                          self._target_loc,
                                          self.spacing)
             # multi-scale steps
-            if self.multiscale:
-                if self.xscale > 1:
-                    self.xscale -= 1
-                    self.yscale -= 1
-                    self.zscale -= 1
-                    self.action_step = int(self.action_step / 3)
-                    self._clear_history()
-                # terminate if scale is less than 1
-                else:
-                    self.terminal = True
-                    if self.cur_IOU <= 1: self.num_success.feed(1)
-            else:
-                self.terminal = True
-                if self.cur_IOU <= 1: self.num_success.feed(1)
+            # if self.multiscale:
+            #     if self.xscale > 1:
+            #         self.xscale -= 1
+            #         self.yscale -= 1
+            #         self.zscale -= 1
+            #         self.action_step = int(self.action_step / 3)
+            #         self._clear_history()
+            #     # terminate if scale is less than 1
+            #     else:
+            #         self.terminal = True
+            #         if self.cur_IOU >= 0.9: self.num_success.feed(1)
+            # else:
+            self.terminal = True
+            if self.cur_IOU >= 0.9: self.num_success.feed(1)
 
         # render screen if viz is on
         with _ALE_LOCK:
