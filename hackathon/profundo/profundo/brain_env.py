@@ -61,7 +61,7 @@ class Brain_Env(gym.Env):
     an observation and a reward."""
 
     def __init__(self, directory=None, viz=False, train=False, files_list=None,
-                 screen_dims=(27, 27, 27), multiscale=False,
+                 observation_dims=(27, 27, 27), multiscale=False,
                  max_num_frames=0, saveGif=False, saveVideo=False):
         """
         :param train_directory: environment or game name
@@ -69,7 +69,7 @@ class Brain_Env(gym.Env):
             set to 0 to disable
             set to +ve number to be the delay between frames to show
             set to a string to be the directory for storing frames
-        :param screen_dims: shape of the frame cropped from the image to feed
+        :param observation_dims: shape of the frame cropped from the image to feed
             it to dqn (d,w,h) - defaults (27,27,27)
         :param nullop_start: start with random number of null ops
         :param location_history_length: consider lost of lives as end of
@@ -116,8 +116,8 @@ class Brain_Env(gym.Env):
         # training flag
         self.train = train
         # image dimension (2D/3D)
-        self.screen_dims = screen_dims
-        self.dims = len(self.screen_dims)
+        self.observation_dims = observation_dims
+        self.dims = len(self.observation_dims)
         # multi-scale agent
         self.multiscale = multiscale
         # FIXME force multiscale false for now
@@ -125,9 +125,9 @@ class Brain_Env(gym.Env):
 
         # init env dimensions
         if self.dims == 2:
-            self.width, self.height = screen_dims
+            self.width, self.height = observation_dims
         else:
-            self.width, self.height, self.depth = screen_dims
+            self.width, self.height, self.depth = observation_dims
 
         with _ALE_LOCK:
             self.rng = get_rng(self)
@@ -147,7 +147,7 @@ class Brain_Env(gym.Env):
         self.action_space = spaces.Discrete(6)  # change number actions here
         self.actions = self.action_space.n
         self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=self.screen_dims)
+                                            shape=self.observation_dims)
         # history buffer for storing last locations to check oscilations
         self._history_length = max_num_frames
         # TODO initialize _observation_bounds limits from input image coordinates
@@ -370,7 +370,7 @@ class Brain_Env(gym.Env):
         if go_out:
             self.reward = -1
         else:
-            self.reward = self._calc_reward()
+            self.reward = self._calc_reward()  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
         self._location = next_location
         self._observation = self._observe()
@@ -392,7 +392,7 @@ class Brain_Env(gym.Env):
         # check if agent oscillates
         if self._oscillate:
             # TODO: rewind history, recalculate IOU
-            self._location = self.getBestLocation()  # TODO replace
+            self._location = self.get_best_node()  # TODO replace
             self._observation = self._observe()
             self.cur_IOU = self.calc_IOU()
             # multi-scale steps
@@ -442,6 +442,21 @@ class Brain_Env(gym.Env):
 
         return self._observe(), self.reward, self.terminal, info
 
+    def get_best_node(self):
+        ''' get best location with best qvalue from last for locations
+        stored in history
+
+        TODO: make sure nodes dont have overlap
+        '''
+        last_qvalues_history = self._qvalues_history[-4:]
+        last_loc_history = self._agent_nodes[-4:]
+        best_qvalues = np.max(last_qvalues_history, axis=1)
+        # best_idx = best_qvalues.argmax()
+        best_idx = best_qvalues.argmin()
+        best_location = last_loc_history[best_idx]
+
+        return best_location
+
 
     def _clear_history(self):
         """ clear history buffer with current state
@@ -469,11 +484,11 @@ class Brain_Env(gym.Env):
         :return: new state
         """
         # initialize screen with zeros - all background
-        observation = np.zeros((self.screen_dims))
+        observation = np.zeros((self.observation_dims))
 
         # screen uses coordinate system relative to origin (0, 0, 0)
         screen_xmin, screen_ymin, screen_zmin = 0, 0, 0
-        screen_xmax, screen_ymax, screen_zmax = self.screen_dims
+        screen_xmax, screen_ymax, screen_zmax = self.observation_dims
 
         # extract boundary locations using coordinate system relative to "global" image
         # width, height, depth in terms of screen coord system
@@ -536,17 +551,15 @@ class Brain_Env(gym.Env):
 
     def trajectory_to_branch(self):
         """take location histroy, generate connected branches"""
+        locations = self._agent_nodes
+
 
 
     def _calc_reward(self):
         """ Calculate the new reward based on the increase in IoU
-        TODO: move IOU update to updator
-        TODO use IOU history
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        next_IOU = self.calc_IOU()
-        IOU_difference = self.cur_IOU - next_IOU
-        self.cur_IOU = next_IOU
+        IOU_difference = self._IOU_history[self.cnt] - self._IOU_history[self.cnt-1]
         return IOU_difference
 
     @property
@@ -585,10 +598,6 @@ class Brain_Env(gym.Env):
         return screen dimensions
         """
         return (self.width, self.height, self.depth)
-
-    def _locations_to_branch(self):
-        # TODO implement
-        locs = self._location
 
     def lives(self):
         return None
