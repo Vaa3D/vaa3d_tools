@@ -523,9 +523,9 @@ class Brain_Env(gym.Env):
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
         screen[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._image.data[
-                                                                                            xmin:xmax:self.xscale,
-                                                                                            ymin:ymax:self.yscale,
-                                                                                            zmin:zmax:self.zscale]
+                                                                                            xmin:xmax,
+                                                                                            ymin:ymax,
+                                                                                            zmin:zmax]
 
         # update rectangle limits from input image coordinates
         # this is what the network sees
@@ -552,6 +552,7 @@ class Brain_Env(gym.Env):
     def _oscillate(self):
         """ Return True if the agent is stuck and oscillating
         """
+        # TODO reimplement
         # TODO: erase last few frames if oscillation is detected
         counter = Counter(self._IOU_history)
         freq = counter.most_common()
