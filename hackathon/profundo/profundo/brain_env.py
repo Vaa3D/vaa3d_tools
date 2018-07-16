@@ -41,6 +41,7 @@ from tensorpack.utils.stats import StatCounter
 
 from IPython.core.debugger import set_trace
 from sampleTrain import FilesListCubeNPY
+from sklearn.metrics import jaccard_similarity_score
 
 __all__ = ['Brain_Env', 'FrameStack']
 
@@ -101,6 +102,7 @@ class Brain_Env(gym.Env):
         super(Brain_Env, self).__init__()
 
         # inits stat counters
+        self._IOU = None
         self.reset_stat()
 
         # counter to limit number of steps per episodes
@@ -149,7 +151,7 @@ class Brain_Env(gym.Env):
                                             shape=self.screen_dims)
         # history buffer for storing last locations to check oscilations
         self._history_length = history_length
-        self._loc_history = [(0,) * self.dims] * self._history_length
+        self._IOU_history = [(0,) * self.dims] * self._history_length
         self._qvalues_history = [(0,) * self.actions] * self._history_length
         # initialize rectangle limits from input image coordinates
         self.rectangle = Rectangle(0, 0, 0, 0, 0, 0)
@@ -176,7 +178,7 @@ class Brain_Env(gym.Env):
         self.cnt = 0  # counter to limit number of steps per episodes
         self.num_games.feed(1)
         self.current_episode_score.reset()  # reset the stat counter
-        self._loc_history = [(0,) * self.dims] * self._history_length
+        self._IOU_history = [(0,) * self.dims] * self._history_length
         # list of q-value lists
         self._qvalues_history = [(0,) * self.actions] * self._history_length
         self.new_random_game()
@@ -267,21 +269,18 @@ class Brain_Env(gym.Env):
         self._start_location = (x, y, z)
         self._qvalues = [0, ] * self.actions
         self._screen = self._current_state()
-        self.cur_dist = self.calc_IOU(self._location,
-                                      self._target_loc,
-                                      self.spacing)
+        self.cur_IOU = 0.0
 
-    def calc_IOU(self, points1, points2, spacing=(1, 1, 1)):
+    def calc_IOU(self, img1, img2):
         """ calculate the Intersection over Union AKA Jaccard Index
         between two images
 
         https://en.wikipedia.org/wiki/Jaccard_index
         """
-        # TODO: understand what spacing is doing here
-        spacing = np.array(spacing)
-        points1 = spacing * np.array(points1)
-        points2 = spacing * np.array(points2)
-        return np.linalg.norm(points1 - points2)
+        img1 = np.array(img1).ravel()
+        img2 = np.array(img2).ravel()
+        iou = jaccard_similarity_score(img1, img2)
+        return iou
 
     def step(self, act, qvalues):
         """The environment's step function returns exactly what we need.
@@ -381,7 +380,7 @@ class Brain_Env(gym.Env):
 
         # terminate if the distance is less than 1 during trainig
         if self.train:
-            if self.cur_dist <= 1:
+            if self.cur_IOU <= 1:
                 self.terminal = True
                 self.num_success.feed(1)
 
@@ -390,18 +389,18 @@ class Brain_Env(gym.Env):
         if self.cnt >= self.max_num_frames: self.terminal = True
 
         # update history buffer with new location and qvalues
-        self.cur_dist = self.calc_IOU(self._location,
-                                      self._target_loc,
-                                      self.spacing)
+        self.cur_IOU = self.calc_IOU(self._location,
+                                     self._target_loc,
+                                     self.spacing)
         self._update_history()
 
         # check if agent oscillates
         if self._oscillate:
             self._location = self.getBestLocation()
             self._screen = self._current_state()
-            self.cur_dist = self.calc_IOU(self._location,
-                                          self._target_loc,
-                                          self.spacing)
+            self.cur_IOU = self.calc_IOU(self._location,
+                                         self._target_loc,
+                                         self.spacing)
             # multi-scale steps
             if self.multiscale:
                 if self.xscale > 1:
@@ -413,10 +412,10 @@ class Brain_Env(gym.Env):
                 # terminate if scale is less than 1
                 else:
                     self.terminal = True
-                    if self.cur_dist <= 1: self.num_success.feed(1)
+                    if self.cur_IOU <= 1: self.num_success.feed(1)
             else:
                 self.terminal = True
-                if self.cur_dist <= 1: self.num_success.feed(1)
+                if self.cur_IOU <= 1: self.num_success.feed(1)
 
         # render screen if viz is on
         with _ALE_LOCK:
@@ -424,7 +423,7 @@ class Brain_Env(gym.Env):
                 if isinstance(self.viz, float):
                     self.display()
 
-        distance_error = self.cur_dist
+        distance_error = self.cur_IOU
         self.current_episode_score.feed(self.reward)
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'distError': distance_error,
@@ -453,6 +452,7 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         ''' clear history buffer with current state
         '''
+        self._IOU_history = [(0,) * self.dims] * self._history_length
         self._loc_history = [(0,) * self.dims] * self._history_length
         self._qvalues_history = [(0,) * self.actions] * self._history_length
 
@@ -460,8 +460,12 @@ class Brain_Env(gym.Env):
         ''' update history buffer with current state
         '''
         # update location history
-        self._loc_history[:-1] = self._loc_history[1:]
+        self._loc_history[:-1] = self._loc_history[1:]  # shift values down 1 indx
         self._loc_history[-1] = self._location
+        # update jaccard index history
+        self._IOU_history[:-1] = self._IOU_history[1:]  # shift values down 1 indx
+        self._IOU_history[-1] = self._IOU
+
         # update q-value history
         self._qvalues_history[:-1] = self._qvalues_history[1:]
         self._qvalues_history[-1] = self._qvalues
@@ -538,20 +542,20 @@ class Brain_Env(gym.Env):
 
     def _calc_reward(self, current_loc, next_loc):
         """ Calculate the new reward based on the decrease in euclidean distance to the target location
+        TODO: move IOU update to updator
         """
-        # TODO: replace w IOU
-        curr_dist = self.calc_IOU(current_loc, self._target_loc,
+        next_IOU = self.calc_IOU(next_loc, self._target_loc,
                                   self.spacing)
-        next_dist = self.calc_IOU(next_loc, self._target_loc,
-                                  self.spacing)
-        return curr_dist - next_dist
+        IOU_difference = self.cur_IOU - next_IOU
+        self.cur_IOU = next_IOU
+        return IOU_difference
 
     @property
     def _oscillate(self):
         """ Return True if the agent is stuck and oscillating
         """
         # TODO: erase last few frames if oscillation is detected
-        counter = Counter(self._loc_history)
+        counter = Counter(self._IOU_history)
         freq = counter.most_common()
 
         if freq[0][0] == (0, 0, 0):
