@@ -38,7 +38,8 @@ void soma_removePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         in_sz[2] = img->getZDim();
         in_sz[3] = img->getCDim();
 
-        soma_remove_main(img->getRawData(),in_sz,callback);
+        //soma_remove_main(img->getRawData(),in_sz,callback);
+        soma_remove_main_2(img->getRawData(),in_sz,callback);
         //v3d_msg("To be implemented.");
 	}
 	else if (menu_name == tr("menu2"))

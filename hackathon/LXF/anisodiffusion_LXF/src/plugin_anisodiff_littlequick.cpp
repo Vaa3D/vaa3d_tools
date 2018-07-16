@@ -43,7 +43,7 @@ void AnisoDiffPlugin_littlequick::domenu(const QString &menu_name, V3DPluginCall
 	{
     	//do diffusion
 		cout<<"============== Welcome to anisodiff_littlequick ================="<<endl;
-
+        //v3d_msg("Lxf");
 		bool bmenu = true;
 		input_PARA PARA;
     	if(!anisodiff_func(callback,parent,PARA,bmenu))
@@ -144,6 +144,15 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
 		}
 	}
 
+    V3DLONG pagesz = sz_img_input[0]*sz_img_input[1]*sz_img_input[2];
+    for(V3DLONG i=0;i<pagesz;i++)         //need to be improve
+    {
+        if(int(p_img_input[i])<20)
+        {
+            p_img_input[i]=0;
+        }
+    }
+
 	//-----------------------------------------------------------------------------------------
 	printf("1. Find the bounding box and crop image. \n");
 	long l_boundbox_min[3],l_boundbox_max[3];//xyz
@@ -230,6 +239,7 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
 
 	//-----------------------------------------------------------------------------------------
 	//do anisotropic diffusion
+    //v3d_msg("kkkkk");
 	printf("3. Do anisotropic diffusion... \n");
 	float *p_img32f_crop_output=0;
 	if(!q_AnisoDiff3D(p_img32f_crop,sz_img_crop,p_img32f_crop_output))
