@@ -145,8 +145,8 @@ class FilesListCubeNPY(files):
 
         while True:  #
             for idx in indexes:
-                image = self.files_list[idx]
+                image_path = self.files_list[idx]
                 image_filename =self.files_list[idx] 
                 # x, y, file, ?
-                yield image, image_filename
+                yield image_path, image_filename
 

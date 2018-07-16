@@ -161,7 +161,7 @@ class Brain_Env(gym.Env):
         # self.files = filesListCardioMRLandmark(directory,files_list)
         # prepare file sampler
         self.filepath = None
-        self.sampled_files = self.files.sample_circular()
+        self.file_sampler = self.files.sample_circular()  # returns generator
         # reset buffer, terminal, counters, and init new_random_game
         self._restart_episode()
 
@@ -220,8 +220,8 @@ class Brain_Env(gym.Env):
         # ######################################################################
 
         # # sample a new image
-        self._image, self._target_loc, self.filepath, self.spacing = next(self.sampled_files)
-        self.filename = os.path.basename(self.filepath)
+        self.filepath, self.filename= next(self.file_sampler)
+        self._image = np.load(self.filepath)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
@@ -242,8 +242,7 @@ class Brain_Env(gym.Env):
             self.yscale = 1
             self.zscale = 1
         # image volume size
-        self._image_dims = self._image.dims
-
+        self._image_dims = np.shape(self._image)
         #######################################################################
         ## select random starting point
         # add padding to avoid start right on the border of the image
