@@ -80,8 +80,12 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA
         cout<<"begin ==================="<<xb<<"  "<<yb<<"  "<<zb<<endl;
         cout<<"end   ==================="<<xe<<"  "<<ye<<"  "<<ze<<endl;
         //v3d_msg("test!");
-
-
+		
+		V3DLONG size = (xe-xb)*(ye-yb)*(ze-zb);
+		if(size>1500000000) {
+			cout<<"too big to get!"<<endl;
+			return false;
+		}
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
 

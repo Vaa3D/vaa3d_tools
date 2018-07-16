@@ -2,7 +2,7 @@
 #include "profile_snr.h"
 
 
-bool profile_swc(V3DPluginCallback2 &callback,PARA &PA,QList<QList<IMAGE_METRICS> > &CSVlist)
+bool profile_swc(V3DPluginCallback2 &callback,int num,PARA &PA,QList<QList<IMAGE_METRICS> > &CSVlist)
 {
     Image4DSimple * img = new Image4DSimple;;
     float dilate_ratio = 3;
@@ -11,7 +11,7 @@ bool profile_swc(V3DPluginCallback2 &callback,PARA &PA,QList<QList<IMAGE_METRICS
     float cut_off_ratio = 0.05;
     QString output_csv_file = PA.img_name + QString(".csv");
     img->setData(PA.data1d,PA.im_cropped_sz[0],PA.im_cropped_sz[1],PA.im_cropped_sz[2],PA.im_cropped_sz[3],V3D_UINT8);
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(PA.nt_meanshift, img, dilate_ratio,flip,invert,cut_off_ratio,callback);
+    QList<IMAGE_METRICS> result_metrics = intensity_profile(PA.nt_meanshift,num, img, dilate_ratio,flip,invert,cut_off_ratio,callback);
     if (result_metrics.isEmpty())
     {
         cout<<"Error in intensity_profile() !"<<endl;

@@ -32,7 +32,6 @@ void segment_profilingPlugin::domenu(const QString &menu_name, V3DPluginCallback
 {
     if (menu_name == tr("segment_profiling"))
 	{
-
         OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
 
         if (!openDlg->exec())
