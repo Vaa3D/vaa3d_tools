@@ -61,7 +61,7 @@ class Brain_Env(gym.Env):
     an observation and a reward."""
 
     def __init__(self, directory=None, viz=False, train=False, files_list=None,
-                 screen_dims=(27, 27, 27), history_length=20, multiscale=False,
+                 screen_dims=(27, 27, 27), multiscale=False,
                  max_num_frames=0, saveGif=False, saveVideo=False):
         """
         :param train_directory: environment or game name
@@ -74,7 +74,7 @@ class Brain_Env(gym.Env):
         :param nullop_start: start with random number of null ops
         :param location_history_length: consider lost of lives as end of
             episode (useful for training)
-        :max_num_frames: maximum numbe0r of frames per episode.
+        :max_num_frames: maximum number of frames per episode.
         """
         # python DQN_midl2018.py --task play --gpu 0 --algo DuelingDouble --load train_log/DuelDoubleDQN_multiscale_brain_mri_point_ac_ROI_45_45_45_midl2018/model-350000
 
@@ -102,7 +102,6 @@ class Brain_Env(gym.Env):
         super(Brain_Env, self).__init__()
 
         # inits stat counters
-        self._IOU = None
         self.reset_stat()
 
         # counter to limit number of steps per episodes
@@ -150,9 +149,7 @@ class Brain_Env(gym.Env):
         self.observation_space = spaces.Box(low=0, high=255,
                                             shape=self.screen_dims)
         # history buffer for storing last locations to check oscilations
-        self._history_length = history_length
-        self._IOU_history = [(0,) * self.dims] * self._history_length
-        self._qvalues_history = [(0,) * self.actions] * self._history_length
+        self._history_length = max_num_frames
         # initialize rectangle limits from input image coordinates
         self.rectangle = Rectangle(0, 0, 0, 0, 0, 0)
         # add your data loader here
@@ -172,15 +169,13 @@ class Brain_Env(gym.Env):
 
     def _restart_episode(self):
         """
-        restart current episoide
+        restart current episode
         """
         self.terminal = False
         self.cnt = 0  # counter to limit number of steps per episodes
         self.num_games.feed(1)
         self.current_episode_score.reset()  # reset the stat counter
-        self._IOU_history = [(0,) * self.dims] * self._history_length
-        # list of q-value lists
-        self._qvalues_history = [(0,) * self.actions] * self._history_length
+        self._clear_history()
         self.new_random_game()
 
     def new_random_game(self):
@@ -222,6 +217,7 @@ class Brain_Env(gym.Env):
         # # sample a new image
         self.filepath, self.filename= next(self.file_sampler)
         self._image = np.load(self.filepath)
+        self.original_img = np.copy(self._image)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
@@ -269,15 +265,18 @@ class Brain_Env(gym.Env):
         self._screen = self._current_state()
         self.cur_IOU = 0.0
 
-    def calc_IOU(self, img1, img2):
+    def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
         between two images
 
         https://en.wikipedia.org/wiki/Jaccard_index
         """
-        img1 = np.array(img1).ravel()
-        img2 = np.array(img2).ravel()
-        iou = jaccard_similarity_score(img1, img2)
+        # flatten bc  jaccard_similarity_score expects 1D arrays
+        state = self._image.ravel()
+        state[state != -1] = 0  # mask out non-agent trajectory
+        state = state.astype(bool)  # everything non-zero = True
+        original_bool = self.original_img.astype(bool)
+        iou = jaccard_similarity_score(state, original_bool.ravel())
         return iou
 
     def step(self, act, qvalues):
@@ -371,7 +370,7 @@ class Brain_Env(gym.Env):
         if go_out:
             self.reward = -1
         else:
-            self.reward = self._calc_reward(current_loc, next_location)
+            self.reward = self._calc_reward()
         # update screen, reward ,location, terminal
         self._location = next_location
         self._screen = self._current_state()
@@ -387,18 +386,15 @@ class Brain_Env(gym.Env):
         if self.cnt >= self.max_num_frames: self.terminal = True
 
         # update history buffer with new location and qvalues
-        self.cur_IOU = self.calc_IOU(self._location,
-                                     self._target_loc,
-                                     self.spacing)
+        self.cur_IOU = self.calc_IOU()
         self._update_history()
 
         # check if agent oscillates
         if self._oscillate:
+            # TODO: rewind history, recalculate IOU
             self._location = self.getBestLocation()  # TODO replace
             self._screen = self._current_state()
-            self.cur_IOU = self.calc_IOU(self._location,
-                                         self._target_loc,
-                                         self.spacing)
+            self.cur_IOU = self.calc_IOU()
             # multi-scale steps
             # if self.multiscale:
             #     if self.xscale > 1:
@@ -448,25 +444,22 @@ class Brain_Env(gym.Env):
 
 
     def _clear_history(self):
-        ''' clear history buffer with current state
-        '''
-        self._IOU_history = [(0,) * self.dims] * self._history_length
-        self._loc_history = [(0,) * self.dims] * self._history_length
+        """ clear history buffer with current state
+        """
+        self._agent_nodes = [(0,) * self.dims] * self._history_length
+        self._IOU_history = np.zeros(self._history_length)
+        # list of q-value lists
         self._qvalues_history = [(0,) * self.actions] * self._history_length
 
     def _update_history(self):
-        ''' update history buffer with current state
-        '''
+        """ update history buffer with current state
+        """
         # update location history
-        self._loc_history[:-1] = self._loc_history[1:]  # shift values down 1 indx
-        self._loc_history[-1] = self._location
+        self._agent_nodes[self.cnt] = self._location
         # update jaccard index history
-        self._IOU_history[:-1] = self._IOU_history[1:]  # shift values down 1 indx
-        self._IOU_history[-1] = self._IOU
-
+        self._IOU_history[self.cnt] = self.curr_IOU
         # update q-value history
-        self._qvalues_history[:-1] = self._qvalues_history[1:]
-        self._qvalues_history[-1] = self._qvalues
+        self._qvalues_history[self.cnt] = self._qvalues
 
     def _current_state(self):
         """
@@ -519,6 +512,11 @@ class Brain_Env(gym.Env):
             zmax = self._image_dims[2]
             screen_zmax = len(np.arange(zmin, zmax, self.zscale))
 
+        # TODO: take image, mask it w agent trajectory
+        # agent_trajectory = self.trajectory_to_branch()
+        # self._image = np.copyto(self.original_img, agent_trajectory, where=True)
+
+
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
@@ -536,15 +534,17 @@ class Brain_Env(gym.Env):
 
         return screen
 
-    def get_plane(self, z=0):
-        return self._image.data[:, :, z]
+    def trajectory_to_branch(self):
+        """take location histroy, generate connected branches"""
 
-    def _calc_reward(self, current_loc, next_loc):
-        """ Calculate the new reward based on the decrease in euclidean distance to the target location
+
+    def _calc_reward(self):
+        """ Calculate the new reward based on the increase in IoU
         TODO: move IOU update to updator
+        TODO use IOU history
+        TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        next_IOU = self.calc_IOU(next_loc, self._target_loc,
-                                  self.spacing)
+        next_IOU = self.calc_IOU()
         IOU_difference = self.cur_IOU - next_IOU
         self.cur_IOU = next_IOU
         return IOU_difference
@@ -555,9 +555,10 @@ class Brain_Env(gym.Env):
         """
         # TODO reimplement
         # TODO: erase last few frames if oscillation is detected
-        counter = Counter(self._IOU_history)
+        counter = Counter(self._agent_nodes)
         freq = counter.most_common()
 
+        # TODO: wtF?
         if freq[0][0] == (0, 0, 0):
             if (freq[1][1] > 3):
                 return True
@@ -584,6 +585,10 @@ class Brain_Env(gym.Env):
         return screen dimensions
         """
         return (self.width, self.height, self.depth)
+
+    def _locations_to_branch(self):
+        # TODO implement
+        locs = self._location
 
     def lives(self):
         return None
