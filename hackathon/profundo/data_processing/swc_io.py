@@ -154,11 +154,10 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
         return outfile_fpath
 
-def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
+def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="~/Desktop/v3d_external/bin/vaa3d", overwrite=False,
                  output_dir="../data/07_cube_TIFFs"):
     """note: swc2mask crops the """
-    
-    
+
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -166,7 +165,7 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
     outfile_fpath = os.path.join(output_dir, input_fname + ".tiff")
     
     # don't overwrite
-    if not os.path.isfile(outfile_fpath):
+    if not os.path.isfile(outfile_fpath) or overwrite:
 
         # https://stackoverflow.com/a/4376421/4212158
         v3d_plugin_name = "swc2mask"
@@ -180,12 +179,9 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
         #print("running \n")
         #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
         os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
-
-
-
         return outfile_fpath
     
-def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):
+def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", overwrite=False):
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -193,7 +189,7 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):
     outfile_fpath = os.path.join(output_dir, input_fname + ".npy")
     
     # don't overwrite
-    if not os.path.isfile(outfile_fpath):
+    if not os.path.isfile(outfile_fpath) or overwrite:
         desired_len = 16
         img_array = tiff2array.imread(input_fpath)
         # make all arrays the same shape
@@ -208,9 +204,10 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy"):
                 #print(shp, flush=True)  # don't wait for all threads to finish before printing
                 
         np.save(outfile_fpath, img_array)
+        return outfile_fpath
 
 
-def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
+def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/", overwrite = False):
     """
     SWC convention:
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
@@ -221,7 +218,7 @@ def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_
         os.mkdir(outdir)
     outfile = os.path.join(outdir, branch_name+".swc")
     # don't overwrite
-    if not os.path.isfile(outfile):
+    if not os.path.isfile(outfile) or overwrite:
         #print("saving SWC {}".format(branch_name))
         output = open(outfile, "w+")
 
@@ -250,3 +247,4 @@ def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_
             parent_node_id = child_node_id
 
         output.close()
+        return outfile
