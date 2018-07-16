@@ -47,7 +47,7 @@ __all__ = ['Brain_Env', 'FrameStack']
 
 _ALE_LOCK = threading.Lock()
 
-Rectangle = namedtuple('Rectangle', ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'])
+ObservationBounds = namedtuple('ObservationBounds', ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'])
 
 
 # ===================================================================
@@ -150,8 +150,8 @@ class Brain_Env(gym.Env):
                                             shape=self.screen_dims)
         # history buffer for storing last locations to check oscilations
         self._history_length = max_num_frames
-        # initialize rectangle limits from input image coordinates
-        self.rectangle = Rectangle(0, 0, 0, 0, 0, 0)
+        # TODO initialize _observation_bounds limits from input image coordinates
+        self._observation_bounds = ObservationBounds(0, 0, 0, 0, 0, 0)
         # add your data loader here
         # self.files = filesListBrainMRLandmark(directory,files_list)
         self.files = FilesListCubeNPY(directory, files_list)
@@ -165,7 +165,7 @@ class Brain_Env(gym.Env):
     def reset(self):
         # with _ALE_LOCK:
         self._restart_episode()
-        return self._current_state()
+        return self._observe()
 
     def _restart_episode(self):
         """
@@ -200,7 +200,7 @@ class Brain_Env(gym.Env):
         #             writer.writerow(map(lambda x: x, fields))
         #         self.total_loc = []
         #     # sample a new image
-        #     self._image, self._target_loc, self.filepath, self.spacing = next(self.sampled_files)
+        #     self._state, self._target_loc, self.filepath, self.spacing = next(self.sampled_files)
         #     scale = next(self.start_points)
         #     self.count_points +=1
         # else:
@@ -208,16 +208,16 @@ class Brain_Env(gym.Env):
         #     logger.info('count_points {}'.format(self.count_points))
         #     scale = next(self.start_points)
         #
-        # x = int(scale[0] * self._image.dims[0])
-        # y = int(scale[1] * self._image.dims[1])
-        # z = int(scale[2] * self._image.dims[2])
+        # x = int(scale[0] * self._state.dims[0])
+        # y = int(scale[1] * self._state.dims[1])
+        # z = int(scale[2] * self._state.dims[2])
         # logger.info('starting point {}-{}-{}'.format(x,y,z))
         # ######################################################################
 
         # # sample a new image
         self.filepath, self.filename= next(self.file_sampler)
-        self._image = np.load(self.filepath)
-        self.original_img = np.copy(self._image)
+        self._state = np.load(self.filepath)
+        self.original_state = np.copy(self._state)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
@@ -238,7 +238,7 @@ class Brain_Env(gym.Env):
             self.yscale = 1
             self.zscale = 1
         # image volume size
-        self._image_dims = np.shape(self._image)
+        self._image_dims = np.shape(self._state)
         #######################################################################
         ## select random starting point
         # add padding to avoid start right on the border of the image
@@ -262,7 +262,7 @@ class Brain_Env(gym.Env):
         self._location = (x, y, z)
         self._start_location = (x, y, z)
         self._qvalues = [0, ] * self.actions
-        self._screen = self._current_state()
+        self._observation = self._observe()
         self.cur_IOU = 0.0
 
     def calc_IOU(self):
@@ -272,11 +272,11 @@ class Brain_Env(gym.Env):
         https://en.wikipedia.org/wiki/Jaccard_index
         """
         # flatten bc  jaccard_similarity_score expects 1D arrays
-        state = self._image.ravel()
+        state = self._state.ravel()
         state[state != -1] = 0  # mask out non-agent trajectory
         state = state.astype(bool)  # everything non-zero = True
-        original_bool = self.original_img.astype(bool)
-        iou = jaccard_similarity_score(state, original_bool.ravel())
+        original_state = self.original_state.astype(bool)
+        iou = jaccard_similarity_score(state, original_state.ravel())
         return iou
 
     def step(self, act, qvalues):
@@ -373,7 +373,7 @@ class Brain_Env(gym.Env):
             self.reward = self._calc_reward()
         # update screen, reward ,location, terminal
         self._location = next_location
-        self._screen = self._current_state()
+        self._observation = self._observe()
 
         # terminate if the distance is less than 1 during trainig
         if self.train:
@@ -393,7 +393,7 @@ class Brain_Env(gym.Env):
         if self._oscillate:
             # TODO: rewind history, recalculate IOU
             self._location = self.getBestLocation()  # TODO replace
-            self._screen = self._current_state()
+            self._observation = self._observe()
             self.cur_IOU = self.calc_IOU()
             # multi-scale steps
             # if self.multiscale:
@@ -440,7 +440,7 @@ class Brain_Env(gym.Env):
         #         self.count_points = 0
         # #######################################################################
 
-        return self._current_state(), self.reward, self.terminal, info
+        return self._observe(), self.reward, self.terminal, info
 
 
     def _clear_history(self):
@@ -461,15 +461,15 @@ class Brain_Env(gym.Env):
         # update q-value history
         self._qvalues_history[self.cnt] = self._qvalues
 
-    def _current_state(self):
+    def _observe(self):
         """
         crop image data around current location to update what network sees.
-        update rectangle
+        update _observation_bounds
 
         :return: new state
         """
         # initialize screen with zeros - all background
-        screen = np.zeros((self.screen_dims))
+        observation = np.zeros((self.screen_dims))
 
         # screen uses coordinate system relative to origin (0, 0, 0)
         screen_xmin, screen_ymin, screen_zmin = 0, 0, 0
@@ -514,25 +514,25 @@ class Brain_Env(gym.Env):
 
         # TODO: take image, mask it w agent trajectory
         # agent_trajectory = self.trajectory_to_branch()
-        # self._image = np.copyto(self.original_img, agent_trajectory, where=True)
+        # self._state = np.copyto(self.original_state, agent_trajectory, where=True)
 
 
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
         print(xmin, xmax, ymin, ymax, zmin, zmax)
-        screen[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._image[
+        observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
                                                                                             xmin:xmax,
                                                                                             ymin:ymax,
                                                                                             zmin:zmax]
 
-        # update rectangle limits from input image coordinates
+        # update _observation_bounds limits from input image coordinates
         # this is what the network sees
-        self.rectangle = Rectangle(xmin, xmax,
-                                   ymin, ymax,
-                                   zmin, zmax)
+        self._observation_bounds = ObservationBounds(xmin, xmax,
+                                                     ymin, ymax,
+                                                     zmin, zmax)
 
-        return screen
+        return observation
 
     def trajectory_to_branch(self):
         """take location histroy, generate connected branches"""
@@ -646,11 +646,11 @@ class Brain_Env(gym.Env):
     #                             pos_y=scale_y * current_point[1],
     #                             color=(0.0, 0.0, 1.0, 1.0))
     #     # draw a box around the agent - what the network sees ROI
-    #     self.viewer.draw_rect(self.rectangle.xmin, self.rectangle.ymin,
-    #                           self.rectangle.xmax, self.rectangle.ymax)
+    #     self.viewer.draw_rect(self._observation_bounds.xmin, self._observation_bounds.ymin,
+    #                           self._observation_bounds.xmax, self._observation_bounds.ymax)
     #     self.viewer.display_text('Agent ', color=(204, 204, 0, 255),
-    #                              x=self.rectangle.xmin - 15,
-    #                              y=self.rectangle.ymin)
+    #                              x=self._observation_bounds.xmin - 15,
+    #                              y=self._observation_bounds.ymin)
     #     # display info
     #     color = (0, 204, 0, 255) if self.reward > 0 else (204, 0, 0, 255)
     #     text = 'Error ' + str(round(self.cur_dist, 3)) + 'mm'
