@@ -121,13 +121,13 @@ class files(object):
 
 #######################################################################
 class FilesListCubeNPY(files):
-    def __init__(self, directory=None, files_list=None):
+    def __init__(self, filenames_list=None, filepaths_list=None):
 
-        assert directory, 'There is no directory containing training files given'
-        assert files_list, 'There is no directory containing files list'
+        assert filenames_list, 'There is no directory containing training files given'
+        assert filepaths_list, 'There is no directory containing files list'
 
-        self.dir = directory
-        self.files_list = files_list
+        self.filenames = filenames_list
+        self.files_list = filepaths_list
 
     @property
     def num_files(self):
@@ -138,15 +138,15 @@ class FilesListCubeNPY(files):
         """ return a random sampled ImageRecord from the list of files
         """
         if shuffle:
-            indexes = rng.choice(x, len(x), replace=False)
+            pass  # we shuffle using train_test_split
+            #indexes = rng.choice(x, len(x), replace=False)
         else:
             indexes = np.arange(self.num_files)
 
         while True:  #
             for idx in indexes:
-                sitk_image, image = NiftiImage().decode(self.images_list[idx])
-                landmark = self.landmarks_list[idx]
-                image_filename = self.images_list[idx][:-7]
+                image = self.files_list[idx]
+                image_filename =self.files_list[idx] 
                 # x, y, file, ?
-                yield image, landmark, image_filename, sitk_image.GetSpacing()
+                yield image, image_filename
 
