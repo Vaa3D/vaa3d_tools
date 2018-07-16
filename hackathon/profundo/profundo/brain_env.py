@@ -165,7 +165,7 @@ class Brain_Env(gym.Env):
         # reset buffer, terminal, counters, and init new_random_game
         self._restart_episode()
 
-    def _reset(self):
+    def reset(self):
         # with _ALE_LOCK:
         self._restart_episode()
         return self._current_state()
@@ -477,6 +477,7 @@ class Brain_Env(gym.Env):
         """
         # initialize screen with zeros - all background
         screen = np.zeros((self.screen_dims))
+        print("scr dims", self.screen_dims)
 
         # screen uses coordinate system relative to origin (0, 0, 0)
         screen_xmin, screen_ymin, screen_zmin = 0, 0, 0
@@ -522,7 +523,8 @@ class Brain_Env(gym.Env):
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
-        screen[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._image.data[
+        print(xmin, xmax, ymin, ymax, zmin, zmax)
+        screen[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._image[
                                                                                             xmin:xmax,
                                                                                             ymin:ymax,
                                                                                             zmin:zmax]
@@ -730,7 +732,7 @@ class FrameStack(gym.Wrapper):
 
     def _reset(self):
         """Clear buffer and re-fill by duplicating the first observation."""
-        ob = self.env._reset()
+        ob = self.env.reset()
         for _ in range(self.k - 1):
             self.frames.append(np.zeros_like(ob))
         self.frames.append(ob)

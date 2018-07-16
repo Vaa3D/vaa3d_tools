@@ -53,7 +53,7 @@ logger_dir = os.path.join('train_log', 'expriment_1')
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
 BATCH_SIZE = 48
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
-IMAGE_SIZE = (45, 45, 45)
+IMAGE_SIZE = (3, 3, 3)
 # how many frames to keep
 # in other words, how many past observations the network can see
 FRAME_HISTORY = 1
@@ -101,8 +101,9 @@ class Model(DQNModel):
         # normalize image values to [0, 1]
         image = image / 255.0
 
-        with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True), \
-                argscope(tf.nn.leaky_relu, alpha=0.01):
+        # FIXME figure out this argscope leaky_relu is not a registered layer
+        with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True): #, \
+               # argscope(tf.nn.leaky_relu, alpha=0.01):
             # core layers of the network
             conv = (LinearWrap(image)
                  .Conv3D('conv0', out_channel=32,
