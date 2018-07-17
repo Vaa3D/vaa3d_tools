@@ -1795,8 +1795,16 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             } while(1);
                         }
 
+                        int count=0;
                         do
                         {
+                            if(count>4)
+                            {
+                                inputswc.clear();
+                                break;
+                            }
+
+                            count++;
                             soma_tile = false;
                             num_tips = 0;
                             proc_app2(callback, p2, versionStr);
@@ -1823,7 +1831,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             {
                                 if(childs[d].size() == 0)
                                     num_tips++;
-                                if(ifs_swc && inputswc[d]->radius >= 20) //was 8
+                                if(ifs_swc && inputswc[d]->radius >= 8) //was 8
                                 {
                                     soma_tile = true;
                                 }
@@ -2028,7 +2036,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 2*finalswc.at(j)->radius || dis < 20 || curr.type ==0)  //was 5
+                    if(dis < 2*finalswc.at(j)->radius || dis < 10 || curr.type ==0)  //was 5
                    // if(dis < 10)
                     {
                         check_tip = true;
@@ -2380,7 +2388,8 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
         if(offsetY > offsetY_max) offsetY_max = offsetY;
         if(offsetZ > offsetZ_max) offsetZ_max = offsetZ;
 
-
+        if(!QFileInfo(QString(swcfilepath.c_str())).exists())
+            continue;
         if(node_type == 1)
         {
             origin_x = offsetX;
