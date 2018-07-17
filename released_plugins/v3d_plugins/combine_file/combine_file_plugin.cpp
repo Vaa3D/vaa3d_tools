@@ -159,8 +159,27 @@ bool combine_file::dofunc(const QString & func_name, const V3DPluginArgList & in
     if (func_name == tr("combine"))
 	{
        return generatorcombined4FilesInDir(input, output);
-	}
-	else if (func_name == tr("help"))
+    }
+    else if (func_name == tr("separate"))
+    {
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString fileOpenName = QString(inimg_file);
+        NeuronTree nt = readSWC_file(fileOpenName);
+
+        NeuronTree nt_trees;
+        for(int j=110; j<240; j+=30)
+        {
+            QString fileSaveName = fileOpenName + QString("_level_%1.swc").arg(j);
+            for(int i=0; i<nt.listNeuron.size();i++)
+            {
+                if(nt.listNeuron.at(i).level<=j)
+                    nt_trees.listNeuron.push_back(nt.listNeuron.at(i));
+            }
+            writeSWC_file(fileSaveName,nt_trees);
+            nt_trees.listNeuron.clear();
+        }
+    }
+    else if (func_name == tr("help"))
 	{
            cout<<"Usage : v3d -x combine_file -f combine -i <in_folder> -o <combined_file> -p <method_code> "<<endl;
            cout<<endl;
