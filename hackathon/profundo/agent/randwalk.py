@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 DATA_DIR = "../data/08_cube_npy"
 N_trajectories = 1
-TRAJECTORY_LEN = 10
+TRAJECTORY_LEN = 20
 LINE_WIDTH = 2
 
 SAVE_VIDEO = True
@@ -88,9 +88,9 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     return frames
 
 
-def trajectory_to_axes(data):
-    fig_, axes_ = prep_data_for_voxels(data)
-    return axes_
+# def trajectory_to_axes(data):
+#     fig_, axes_ = prep_data_for_voxels(data)
+#     return axes_
 
 
 def is_in_bounds(coords):
@@ -349,16 +349,18 @@ def animate(i, frames):
 anim = animation.FuncAnimation(fig, animate,
                                fargs=[frames],
                                frames=TRAJECTORY_LEN,
-                               # interval=30,
-                               blit=True)
+                               interval=30)
+                               # blit=True)
 
 # Save as mp4. This requires mplayer or ffmpeg to be installed
 if SAVE_VIDEO is True:
     import string
 
     tokens = list(string.ascii_lowercase + string.digits)
-    anim.save('trajectory {}.mp4'.format("".join(np.random.choice(tokens, size=6))),
-              fps=15,
-              extra_args=['-vcodec', 'libx264'])
+    # anim.save('trajectory {}.mp4'.format("".join(np.random.choice(tokens, size=6))),
+    #           fps=15,
+    #           extra_args=['-vcodec', 'libx264'])
+    #
+    anim.save('/tmp/animation.gif', writer='imagemagick', fps=3)
 
-plt.show()
+# plt.show()
