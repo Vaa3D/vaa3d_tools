@@ -48,7 +48,7 @@ RAND_WALK_STEPSIZE = 1
 def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     """Compute the time-derivative of a Lorentz system."""
     dims = 3
-    trajectory = np.empty((length, *groundtruth.shape))
+    trajectory = np.zeros((length, *groundtruth.shape))
     # print("trajectory shape ", trajectory.shape)
     # replace first col with starting coords
     # trajectory[0, :] = starting_coords
@@ -75,6 +75,7 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
             # replace only the  next col in the sequence
             # take last point and add step to it
             proposed_spot = location + step
+            print("proposed ", proposed_spot)
 
             if is_in_bounds(proposed_spot):
                 location = proposed_spot
@@ -88,9 +89,9 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
 
 def is_in_bounds(coords):
     x, y, z = coords
-    return ((X_MIN < x < X_MAX and
-             Y_MIN < y < Y_MAX and
-             Z_MIN < z < Z_MAX))
+    return ((X_MIN <= x <= X_MAX-1 and
+             Y_MIN <= y <= Y_MAX-1 and
+             Z_MIN <= z <= Z_MAX-1))
 
 
 def normalize(arr):
@@ -116,7 +117,7 @@ def explode(data):
 
 def plot_cube(cube, angle=0): # 320
     cube = normalize(cube)
-    # print(cube)
+    print("cube shape working ", cube)
 
     facecolors = cm.RdBu(cube)
     # makes the alpha equal to the voxel value.
@@ -143,7 +144,7 @@ def plot_cube(cube, angle=0): # 320
     # set point-of-view: specified by (altitude degrees, azimuth degrees)
 
     # static facecolor w some transparency: "#1f77b430"
-    print("working filled ", filled.shape)
+    print("working filled ", filled)
     ax.voxels(x, y, z, filled, facecolors=facecolors, edgecolor='#1f77b430')
 
     # center = np.zeros_like(cube)
@@ -209,7 +210,8 @@ fig, ax = plot_cube(groundtruth)
 # print("gt ", groundtruth)
 
 # Solve for the trajectories
-starting_position = np.array([X_MAX//2,X_MAX//2,X_MAX//2])
+starting_position = np.array([0,0,0])
+# starting_position = np.array([X_MAX//2,X_MAX//2,X_MAX//2])
 trajectories = np.asarray([rand_walk(starting_position, TRAJECTORY_LEN)
                            for _ in range(N_trajectories)])
 
@@ -265,6 +267,7 @@ def animate(i):
             # print(np.shape(xi.T))
             pass
         trajec = traj[idx, :, :, :]
+        print("anim trajec shape ", trajec)
 
         facecolors = cm.RdBu(trajec)
         facecolors[:, :, :, -1] = trajec / 5  # /20 to reduce alpha
@@ -272,7 +275,7 @@ def animate(i):
 
         filled = facecolors[:, :, :, -1] != 0
         x, y, z = expand_coordinates(np.indices(np.array(filled.shape) + 1))
-        print("anim filled ", filled.shape)
+        print("anim filled ", filled)
         ax.voxels(x, y, z, filled, facecolors="red", edgecolor='#1f77b430')
 
         # xs, ys, zs = traj[:i].T
