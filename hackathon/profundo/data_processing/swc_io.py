@@ -26,15 +26,15 @@ def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
             return abs_path_dict
     
 
-def remove_comments_from_swc(fpaths, fnames, outdir="../data/02_human_clean/"):
+def remove_comments_from_swc(fpaths, fnames, output_dir="../data/02_human_clean/"):
     """SWC files start with comments, remove before proceeding"""
     for i in range(len(fpaths)):
 
         input = open(fpaths[i], "r")
-        outdir = os.path.abspath(outdir)
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
-        outfile = os.path.join(outdir, fnames[i])
+        output_dir = os.path.abspath(output_dir)
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        outfile = os.path.join(output_dir, fnames[i])
         output = open(outfile, "w+")
 
         for line in input:
@@ -207,16 +207,16 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", ove
         return outfile_fpath
 
 
-def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/", overwrite = False):
+def save_branch_as_swc(branch: list, branch_name: str, output_dir="../data/03_human_branches_splitted/", overwrite = False):
     """
     SWC convention:
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
     assert(isinstance(branch, list))
-    outdir = os.path.abspath(outdir)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-    outfile = os.path.join(outdir, branch_name+".swc")
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    outfile = os.path.join(output_dir, branch_name+".swc")
     # don't overwrite
     if not os.path.isfile(outfile) or overwrite:
         #print("saving SWC {}".format(branch_name))
