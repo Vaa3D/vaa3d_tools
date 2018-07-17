@@ -532,16 +532,14 @@ class Brain_Env(gym.Env):
         # take image, mask it w agent trajectory
         agent_trajectory = self.trajectory_to_branch()
         agent_trajectory *= 1  # agent trajectories are negative
-        # print(agent_trajectory)
         # paste agent trajectory ontop of original state, but only when vals are not 0
-        print("agent ", np.shape(agent_trajectory), "og ", np.shape(self.original_state))
         self._state = np.copyto(self.original_state, agent_trajectory, where=agent_trajectory.astype(bool))
 
 
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
-        print(xmin, xmax, ymin, ymax, zmin, zmax)
+        print("observation bounds: ", xmin, xmax, ymin, ymax, zmin, zmax)
         observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
                                                                                             xmin:xmax,
                                                                                             ymin:ymax,

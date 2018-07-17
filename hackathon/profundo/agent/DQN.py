@@ -203,7 +203,7 @@ def get_config():
 
 
 if __name__ == '__main__':
-
+    # e.g. python DQN.py --algo DQN --gpu 0
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
