@@ -229,17 +229,21 @@ def save_branch_as_swc(branch: list, branch_name: str, output_dir="../data/03_hu
 
         parent_node_id = "-1"
         for i, node in enumerate(branch):
-            try:
+            if len(node) == 4:
                 child_node_id, x, y, z = node
-            except ValueError:
-                print("error in save-branch", len(node), node)
-                raise
+            elif len(node) == 3:
+                x, y, z = node
+                child_node_id = str(i)
             # this is the SWC file convention
             # \n is important to separate into new lines
             swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
+            swc_items = [str(x) for x in swc_items]
             #swc_items = [str(item) for item in str_items]
             try:
                 swc_line = " ".join(swc_items)
+            except TypeError:
+                print(swc_items)
+                raise
             except:
                 print(swc_items)
                 for item in swc_items:

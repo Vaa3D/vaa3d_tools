@@ -81,7 +81,7 @@ EVAL_EPISODE = 50
 def get_player(directory=None, files_list=None, viz=False,
                train=False, saveGif=False, saveVideo=False):
     # in atari paper, max_num_frames = 30000
-    env = Brain_Env(directory=directory, screen_dims=OBSERVATION_DIMS,
+    env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
                     train=train, files_list=files_list, max_num_frames=1500)
     if not train:
