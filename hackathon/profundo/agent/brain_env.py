@@ -218,7 +218,7 @@ class Brain_Env(gym.Env):
 
         # # sample a new image
         self.filepath, self.filename= next(self.file_sampler)
-        self._state = np.load(self.filepath)
+        self._state = np.load(self.filepath).astype(float)
         self.original_state = np.copy(self._state)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
@@ -265,7 +265,7 @@ class Brain_Env(gym.Env):
         self._start_location = (x, y, z)
         self._qvalues = [0, ] * self.actions
         self._observation = self._observe()
-        self.cur_IOU = 0.0
+        self.curr_IOU = 0.0
 
     def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
@@ -368,7 +368,11 @@ class Brain_Env(gym.Env):
                 go_out = True
         # ---------------------------------------------------------------------
         # ---------------------------------------------------------------------
+        # calc intercept over union
+        self.curr_IOU = self.calc_IOU()
+
         # punish -1 reward if the agent tries to go out
+
         if go_out:
             self.reward = -1
         else:
@@ -379,7 +383,7 @@ class Brain_Env(gym.Env):
 
         # terminate if the distance is less than 1 during trainig
         if self.train:
-            if self.cur_IOU <= 1:
+            if self.curr_IOU <= 1:
                 self.terminal = True
                 self.num_success.feed(1)
 
@@ -388,15 +392,15 @@ class Brain_Env(gym.Env):
         if self.cnt >= self.max_num_frames: self.terminal = True
 
         # update history buffer with new location and qvalues
-        self.cur_IOU = self.calc_IOU()
+
         self._update_history()
 
         # check if agent oscillates
-        if self._oscillate:
+        # if self._oscillate:
             # TODO: rewind history, recalculate IOU
-            self._location = self.get_best_node()  # TODO replace
-            self._observation = self._observe()
-            self.cur_IOU = self.calc_IOU()
+            # self._location = self.get_best_node()  # TODO replace
+            # self._observation = self._observe()
+            # self.curr_IOU = self.calc_IOU()
             # multi-scale steps
             # if self.multiscale:
             #     if self.xscale > 1:
@@ -408,21 +412,21 @@ class Brain_Env(gym.Env):
             #     # terminate if scale is less than 1
             #     else:
             #         self.terminal = True
-            #         if self.cur_IOU >= 0.9: self.num_success.feed(1)
+            #         if self.curr_IOU >= 0.9: self.num_success.feed(1)
             # else:
-            self.terminal = True
-            if self.cur_IOU >= 0.9: self.num_success.feed(1)
+            # self.terminal = True
+            # if self.curr_IOU >= 0.9: self.num_success.feed(1)
 
         # render screen if viz is on
-        with _ALE_LOCK:
-            if self.viz:
-                if isinstance(self.viz, float):
-                    self.display()
+        # with _ALE_LOCK:
+        #     if self.viz:
+        #         if isinstance(self.viz, float):
+        #             self.display()
 
-        distance_error = self.cur_IOU
+        # distance_error = self.curr_IOU
         self.current_episode_score.feed(self.reward)
 
-        info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'distError': distance_error,
+        info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
                 'filename': self.filename}
 
         # #######################################################################
@@ -535,7 +539,8 @@ class Brain_Env(gym.Env):
         # paste agent trajectory ontop of original state, but only when vals are not 0
         agent_mask = agent_trajectory.astype(bool)
         if np.any(agent_trajectory): # agent trajectory not empty
-            self._state = np.copyto(self.original_state, agent_trajectory, where=agent_trajectory.astype(bool))
+            print(self.original_state.dtype, agent_trajectory.dtype)
+            self._state = np.copyto(self.original_state, agent_trajectory, where=agent_mask)
         # print("og", self.original_state)
         # print(self._state)
 
@@ -566,10 +571,10 @@ class Brain_Env(gym.Env):
             output_swc = save_branch_as_swc(locations, "agent_trajectory", output_dir="tmp", overwrite=True)
             output_tiff = swc_to_TIFF("agent_trajectory", output_swc, output_dir="tmp", overwrite=True)
             output_npy = TIFF_to_npy("agent_trajectory", output_tiff, output_dir="tmp", overwrite=True)
-            output_npy = np.load(output_npy)
+            output_npy = np.load(output_npy).astype(float)
             tiff_max = np.amax(np.fabs(output_npy))
             if not np.isclose(tiff_max, 0):  # normalize if tiff is not blank
-                output_npy /= tiff_max
+                output_npy = output_npy / tiff_max
             return output_npy
 
 
@@ -580,7 +585,8 @@ class Brain_Env(gym.Env):
         """ Calculate the new reward based on the increase in IoU
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        IOU_difference = self._IOU_history[self.cnt] - self._IOU_history[self.cnt-1]
+        # TODO, double check if indexes are correct
+        IOU_difference = self.curr_IOU - self._IOU_history[self.cnt - 1]
         return IOU_difference
 
     @property
