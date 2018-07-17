@@ -532,7 +532,9 @@ class Brain_Env(gym.Env):
         # take image, mask it w agent trajectory
         agent_trajectory = self.trajectory_to_branch()
         agent_trajectory *= 1  # agent trajectories are negative
+        # print(agent_trajectory)
         # paste agent trajectory ontop of original state, but only when vals are not 0
+        print("agent ", np.shape(agent_trajectory), "og ", np.shape(self.original_state))
         self._state = np.copyto(self.original_state, agent_trajectory, where=agent_trajectory.astype(bool))
 
 
@@ -556,18 +558,18 @@ class Brain_Env(gym.Env):
     def trajectory_to_branch(self):
         """take location history, generate connected branches
         """
-
-        def normalize(arr):
-            arr_min = np.min(arr)
-            return (arr - arr_min) / (np.max(arr) - arr_min)
-
         locations = self._agent_nodes
-        output_swc = save_branch_as_swc(locations, "agent_trajectory", outdir="tmp", overwrite=True)
-        output_tiff = swc_to_TIFF("agent_trajectory", output_swc, outdir="tmp", overwrite=True)
-        output_npy = TIFF_to_npy("agent_trajectory", output_tiff, outdir="tmp", overwrite=True)
-        output_npy = np.load(output_npy)
-        output_npy = normalize(output_npy)
-        return output_npy
+        if not locations:  # empty, skip pipeline
+            return np.zeros_like(self.original_state)
+        else:
+            output_swc = save_branch_as_swc(locations, "agent_trajectory", output_dir="tmp", overwrite=True)
+            output_tiff = swc_to_TIFF("agent_trajectory", output_swc, output_dir="tmp", overwrite=True)
+            output_npy = TIFF_to_npy("agent_trajectory", output_tiff, output_dir="tmp", overwrite=True)
+            output_npy = np.load(output_npy)
+            tiff_max = np.amax(np.fabs(output_npy))
+            if not np.isclose(tiff_max, 0):  # normalize if tiff is not blank
+                output_npy /= tiff_max
+            return output_npy
 
 
 
