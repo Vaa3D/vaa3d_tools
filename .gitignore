@@ -138,6 +138,7 @@ venv.bak/
 *.swc
 *.npy
 *.mp4
+*.tiff
 
 # pycharm
 .idea/
