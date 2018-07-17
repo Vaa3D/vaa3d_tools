@@ -11,8 +11,8 @@ from scipy import interpolate
 from data_processing.swc_io import get_fnames_and_abspath_from_dir, swc_to_dframe
 from collections import OrderedDict
 
-DATA_DIR = "../../data/06_centered_cubes"
-N_trajectories = 10
+DATA_DIR = "../data/08_cube_npy"
+N_trajectories = 1
 TRAJECTORY_LEN = 1000
 LINE_WIDTH = 2
 
@@ -51,6 +51,7 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     dims = 3
     trajectory = np.empty((length, dims))
     # replace first col with starting coords
+    print(starting_coords.shape, trajectory.shape)
     trajectory[0, :] = starting_coords
 
     # step in fixed directions
@@ -105,9 +106,9 @@ ax.view_init(30, 0)
 scoreboard = ax.text(0.9 * X_MIN, 0, 0.9 * Z_MAX, s=" ", bbox={'facecolor': 'w', 'alpha': 0.5, 'pad': 5},
                      )
 fnames, training_fabspaths = get_fnames_and_abspath_from_dir(DATA_DIR)
-random_i = np.random.choice(range(len(training_fabspaths)))
-print("using ", fnames[random_i])
-groundtruth_fabspath = training_fabspaths[random_i]
+random_file = np.random.choice(range(len(training_fabspaths)))
+print("using ", fnames[random_file])
+groundtruth_fabspath = training_fabspaths[random_file]
 groundtruth = swc_to_dframe(groundtruth_fabspath)
 
 # plot ground truth and leave it up
@@ -128,9 +129,11 @@ node_ids = set(groundtruth.node_id)
 parent_ids = set(groundtruth.parent_node_id)
 root_id = parent_ids - node_ids
 root_id = np.int32(next(iter(root_id)))  # convert set to int
+print("roots ", root_id)
 
 # make all trajectories start at root node
 starting_position = groundtruth[groundtruth.parent_node_id == root_id][["x", "y", "z"]]
+print("gt ", groundtruth)
 
 # Solve for the trajectories
 
