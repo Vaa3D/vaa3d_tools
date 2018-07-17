@@ -12,10 +12,10 @@ from collections import OrderedDict
 
 DATA_DIR = "../data/08_cube_npy"
 N_trajectories = 1
-TRAJECTORY_LEN = 500
+TRAJECTORY_LEN = 10
 LINE_WIDTH = 2
 
-SAVE_VIDEO = False
+SAVE_VIDEO = True
 
 X_MAX = 16
 X_MIN = 0
@@ -46,15 +46,6 @@ RAND_WALK_STEPSIZE = 1
 
 
 def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
-    """Compute the time-derivative of a Lorentz system."""
-    dims = 3
-    trajectory = np.zeros((length, *groundtruth.shape))
-    # print("trajectory shape ", trajectory.shape)
-    # replace first col with starting coords
-    # trajectory[0, :] = starting_coords
-    location = starting_coords
-    trajectory[0, location[0], location[1], location[2]] = 500
-
     # step in fixed directions
     action_space = np.array([[0, 0, 1],
                              [0, 1, 0],
@@ -62,6 +53,16 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     action_space = np.concatenate([-1 * action_space, action_space])  # step backwards, too
     action_space = action_space * stepsize  # scale steps
 
+    frames = []
+
+    reference = np.zeros_like(groundtruth)
+    trajectory = reference.copy()
+    # print("trajectory shape ", trajectory.shape)
+    # replace first col with starting coords
+    # trajectory[0, :] = starting_coords
+    location = starting_coords
+    trajectory[location[0], location[1], location[2]] = 500
+    frames.append(trajectory)
     for index in range(1, length):  # skip zero
         in_bounds = False
         while not in_bounds:  # for each step, find a point that is in bounds
@@ -75,16 +76,21 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
             # replace only the  next col in the sequence
             # take last point and add step to it
             proposed_spot = location + step
-            print("proposed ", proposed_spot)
+            # print("proposed ", proposed_spot)
 
             if is_in_bounds(proposed_spot):
                 location = proposed_spot
-                print("location ", location)
-                trajectory[index, :, :, :] = trajectory[index-1, :, :, :]
-                trajectory[index, location[0], location[1], location[2]] = 500
+                # print("location ", location)
+                trajectory[location[0], location[1], location[2]] = 500
+                frames.append(trajectory)
                 in_bounds = True  # mv to next timestep
 
-    return trajectory
+    return frames
+
+
+def trajectory_to_axes(data):
+    fig_, axes_ = prep_data_for_voxels(data)
+    return axes_
 
 
 def is_in_bounds(coords):
@@ -115,13 +121,13 @@ def explode(data):
     return exploded
 
 
-def plot_cube(cube, angle=0): # 320
-    cube = normalize(cube)
-    print("cube shape working ", cube)
+def prep_data_for_voxels(data): # 320
+    data = normalize(data)
+    # print("data shape working ", data)
 
-    facecolors = cm.RdBu(cube)
+    facecolors = cm.RdBu(data)
     # makes the alpha equal to the voxel value.
-    facecolors[:, :, :, -1] = cube / 5  # /20 to reduce alpha
+    facecolors[:, :, :, -1] = data / 5  # /20 to reduce alpha
     facecolors = explode(facecolors)
 
     filled = facecolors[:, :, :, -1] != 0
@@ -130,24 +136,16 @@ def plot_cube(cube, angle=0): # 320
     # print("x shape", x.shape, "X", x[1])
 
 
-    fig = plt.figure(figsize=(30 / 2.54, 30 / 2.54))
-    ax = fig.gca(projection='3d')
-    ax.axis('off')
-    ax.set_aspect('equal')
-    ax.view_init(30, angle)
 
-    # prepare the axes limits
-    ax.set_xlim((X_MIN, X_MAX))
-    ax.set_ylim((Y_MIN, Y_MAX))
-    ax.set_zlim((Z_MIN, Z_MAX))
 
     # set point-of-view: specified by (altitude degrees, azimuth degrees)
 
     # static facecolor w some transparency: "#1f77b430"
-    print("working filled ", filled)
-    ax.voxels(x, y, z, filled, facecolors=facecolors, edgecolor='#1f77b430')
+    # print("working filled ", filled)
+    # ax.voxels(x, y, z, filled, facecolors=facecolors, edgecolor='#1f77b430')
+    return (x, y, z, filled, facecolors, '#1f77b430')
 
-    # center = np.zeros_like(cube)
+    # center = np.zeros_like(data)
     # center[X_MAX//2, X_MAX//2, X_MAX//2] = 300.0
     #
     # facecolors = cm.RdBu(center)
@@ -159,7 +157,7 @@ def plot_cube(cube, angle=0): # 320
     # x, y, z = expand_coordinates(np.indices(np.array(filled.shape) + 1))
     # ax.voxels(x,y,z,filled, facecolors="red", edgecolor='#1f77b430')
     # plt.show()
-    return fig, ax
+    # return ax
 
 fnames, training_fabspaths = get_fnames_and_abspath_from_dir(DATA_DIR)
 random_file = np.random.choice(range(len(training_fabspaths)))
@@ -170,7 +168,18 @@ groundtruth = np.load(groundtruth_fabspath)
 
 
 # IMG_DIM = 16
-fig, ax = plot_cube(groundtruth)
+fig = plt.figure(figsize=(30 / 2.54, 30 / 2.54))
+ax = fig.gca(projection='3d')
+ax.axis('off')
+ax.set_aspect('equal')
+ax.view_init(30, 0)
+
+# prepare the axes limits
+ax.set_xlim((X_MIN, X_MAX))
+ax.set_ylim((Y_MIN, Y_MAX))
+ax.set_zlim((Z_MIN, Z_MAX))
+x, y, z, filled, facecolors, edgecolor = prep_data_for_voxels(groundtruth)
+ax.voxels(x,y,z,filled,facecolors=facecolors, edgecolors=edgecolor)
 
 
 # Set up figure & 3D axis for animation
@@ -205,17 +214,18 @@ fig, ax = plot_cube(groundtruth)
 # root_id = np.int32(next(iter(root_id)))  # convert set to int
 # print("roots ", root_id)
 
-# make all trajectories start at root node
+# make all frames start at root node
 # starting_position = groundtruth[groundtruth.parent_node_id == root_id][["x", "y", "z"]]
 # print("gt ", groundtruth)
 
-# Solve for the trajectories
+# Solve for the frames
 starting_position = np.array([0,0,0])
 # starting_position = np.array([X_MAX//2,X_MAX//2,X_MAX//2])
-trajectories = np.asarray([rand_walk(starting_position, TRAJECTORY_LEN)
-                           for _ in range(N_trajectories)])
+frames = np.asarray([rand_walk(starting_position, TRAJECTORY_LEN)
+                     for _ in range(N_trajectories)])
+frames = frames[0]
 
-# trajectories_upsampled = [upsample_coords(t) for t in trajectories]
+# trajectories_upsampled = [upsample_coords(t) for t in frames]
 # trajectories_coords = np.column_stack(trajectories_upsampled)
 
 # choose a different color for each trajectory
@@ -224,72 +234,76 @@ colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
 # set up lines and points
 # each item in these lists is a separate list of points, one for each frame in the final animation
 # this is redundant, but we'll only animate pre-computed data this way
-agent_trajectories = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
-                          for c in colors], [])
+# agent_trajectories = sum([ax.voxels([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
+# agent_trajectories = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
+#                           for c in colors], [])
 # agent_tip = sum([ax.plot([], [], [], '*', c=c, markersize=10, alpha=0.5)  # leading edge of agents
 #                  for c in colors], [])
 # intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=4, fillstyle='none', markeredgewidth=1,
 #                              label="intersection")
 #                      for i in range(N_trajectories)], [])
 
-# plot legends
-handles, labels = plt.gca().get_legend_handles_labels()
-by_label = OrderedDict(zip(labels, handles))
-ax.legend(by_label.values(), by_label.keys())
+# # plot legends
+# handles, labels = plt.gca().get_legend_handles_labels()
+# by_label = OrderedDict(zip(labels, handles))
+# ax.legend(by_label.values(), by_label.keys())
 
 
 # initialization function: plot the background of each frame
-def init():
-    for traj in agent_trajectories:
-    # for line, pt, inter in zip(agent_trajectories, agent_tip, intersections):
-        traj.set_data([], [])
-        traj.set_3d_properties([])
-        #
-        # pt.set_data([], [])
-        # pt.set_3d_properties([])
-        #
-        # inter.set_data([], [])
-        # inter.set_3d_properties([])
-    return agent_trajectories# + agent_tip
+# def init():
+#     for traj in agent_trajectories:
+#     # for line, pt, inter in zip(agent_trajectories, agent_tip, intersections):
+#         traj.set_data([], [])
+#         traj.set_3d_properties([])
+#         #
+#         # pt.set_data([], [])
+#         # pt.set_3d_properties([])
+#         #
+#         # inter.set_data([], [])
+#         # inter.set_3d_properties([])
+#     return agent_trajectories# + agent_tip
 
 
 # animation function.  This will be called sequentially with the frame number
-def animate(i):
+def animate(i, frames):
     # we'll step two time-steps per frame.  This leads to nice results.
-    og_i = i
-    i = (2 * i) % trajectories.shape[1]
+    # og_i = i
+    # i = (2 * i) % frames.shape[1]
 
-    scores_per_trajectory = []
+    data = frames[i]
+    x, y, z, filled, facecolors, edgecolor = prep_data_for_voxels(data)
+    ax.voxels(x,y,z,filled,facecolors=facecolors, edgecolors=edgecolor)
 
-    # for idx, (line, pt, inter, traj) in enumerate(zip(agent_trajectories, agent_tip, intersections, trajectories)):
-    for idx, traj in enumerate(trajectories):
-        if og_i == 0:
-            # print(np.shape(xi.T))
-            pass
-        trajec = traj[idx, :, :, :]
-        print("anim trajec shape ", trajec)
-
-        facecolors = cm.RdBu(trajec)
-        facecolors[:, :, :, -1] = trajec / 5  # /20 to reduce alpha
-        facecolors = explode(facecolors)
-
-        filled = facecolors[:, :, :, -1] != 0
-        x, y, z = expand_coordinates(np.indices(np.array(filled.shape) + 1))
-        print("anim filled ", filled)
-        ax.voxels(x, y, z, filled, facecolors="red", edgecolor='#1f77b430')
-
-        # xs, ys, zs = traj[:i].T
-        # line.set_data(xs, ys)
-        # line.set_3d_properties(zs)
-
-        # # [-1:] gets last row
-        # pt.set_data(xs[-1:], ys[-1:])
-        # pt.set_3d_properties(zs[-1:])
-
-        # calculate if intersected
-        if i == 0:  # skip first, there is no previous point
-            continue
-        #
+    # scores_per_trajectory = []
+    #
+    # # for idx, (line, pt, inter, traj) in enumerate(zip(agent_trajectories, agent_tip, intersections, frames)):
+    # for idx, traj in enumerate(frames):
+    #     if og_i == 0:
+    #         # print(np.shape(xi.T))
+    #         pass
+    #     # print("anim trajec shape ", trajec)
+    #     #
+    #     # facecolors = cm.RdBu(traj)
+    #     # facecolors[:, :, :, -1] = traj / 5  # /20 to reduce alpha
+    #     # facecolors = explode(facecolors)
+    #     #
+    #     # filled = facecolors[:, :, :, -1] != 0
+    #     # x, y, z = expand_coordinates(np.indices(np.array(filled.shape) + 1))
+    #     # # print("anim filled ", filled)
+    #     # ax.voxels(x, y, z, filled, facecolors="red", edgecolor='#1f77b430')
+    #
+    #     # xs, ys, zs = traj[:i].T
+    #     # line.set_data(xs, ys)
+    #     # line.set_3d_properties(zs)
+    #
+    #     # # [-1:] gets last row
+    #     # pt.set_data(xs[-1:], ys[-1:])
+    #     # pt.set_3d_properties(zs[-1:])
+    #
+    #     # calculate if intersected
+    #     if i == 0:  # skip first, there is no previous point
+    #         continue
+    #     #
         # # FIXME this is very redundant and expensive, don't recompute whole
         # # trajectory in query every time
         # # print(np.shape(np.concatenate(list(zip(xs.ravel(),ys.ravel(),zs.ravel())))
@@ -325,16 +339,17 @@ def animate(i):
         #
         # scoreboard.set_text("# Intersections: {}".format(sum(scores_per_trajectory)))
 
-    # rotate the scene
-    ax.view_init(30, 0.3 * i)
-    fig.canvas.draw()
-    return agent_trajectories# + agent_tip
+    # # rotate the scene
+    # ax.view_init(30, 0.3 * i)
+    # fig.canvas.draw()
+    # return agent_trajectories# + agent_tip
 
 
 # instantiate the animator.
-anim = animation.FuncAnimation(fig, animate, init_func=init,
+anim = animation.FuncAnimation(fig, animate,
+                               fargs=[frames],
                                frames=TRAJECTORY_LEN,
-                               interval=30,
+                               # interval=30,
                                blit=True)
 
 # Save as mp4. This requires mplayer or ffmpeg to be installed
