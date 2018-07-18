@@ -3,6 +3,7 @@
 #include "v3d_interface.h"
 #include "v3d_message.h"
 #include "../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.h"
+#include "../../heyishan/blastneuron_bjut/overlap/overlap_gold.h"
 #include  <vector>
 
 //struct Linker

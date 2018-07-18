@@ -4,9 +4,10 @@
  using namespace std;
 //#define DIS((x,y,z),b) (x-b.x)*(x-b.x)+(y-b.y)*(y-b.y)+(z-b.z)*(z-b.z)
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
-#define NTDISs(a,b) (sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z)))
+//#define NTDISs(a,b) (sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z)))
 bool FAR = 0;
 bool CLOSE = 1;
+int dis_thresh = 5;
 
 struct Coordinate
 {
@@ -17,6 +18,15 @@ struct Coordinate
     {
         return (x==b.x && y==b.y && z == b.z);
     }
+};
+struct Soma
+{
+  double x_b;
+  double x_e;
+  double y_b;
+  double y_e;
+  double z_b;
+  double z_e;
 };
 uint qHash(const Coordinate key)
 {
@@ -238,7 +248,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
      catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
     for(V3DLONG i=0;i<pagesz;i++)
     {
-        if(int(data1d[i]) < 40)
+        if(int(data1d[i]) < 42)
         {
             im_cropped[i] = 0;
         }
@@ -251,8 +261,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     vector<vector<vector<V3DLONG> > > coodinate3D,mark3D;
     vector<vector<V3DLONG> > coodinate2D,mark2D;
     vector<V3DLONG> coodinate1D,mark1D;
-
-
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         V3DLONG offsetk = iz*M*N;
@@ -262,10 +270,12 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             for(V3DLONG ix = 0; ix < M; ix++)
             {
                 V3DLONG tmp = im_cropped[offsetk + offsetj + ix];
+                ImageMarker coord_curr;
                 if(tmp==255)
                 {
-                   int one=1;
-                   mark1D.push_back(one);
+                    int one=1;
+                    mark1D.push_back(one);
+
                 }
                 else
                 {
@@ -291,14 +301,19 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     QHash<Coordinate,int> map_index;
     vector<Coordinate> each_region1;
     vector<Coordinate> each_region;
-QList<ImageMarker> marker_all3;
-    for(V3DLONG iz = 1; iz < P-1; iz++) //P-1
+    QList<ImageMarker> marker_all3;
+    int black = 0;
+    int white = 0;
+    int unknow = 0;
+    int black2 = 0;
+    int all = 0;
+    for(int iz = 0; iz < P; iz++)   //P
     {
-        cout<<"iz = "<<iz<<endl;
-        for(V3DLONG iy = 1; iy < N-1; iy++)
+        for(int iy = 0; iy < N; iy++)
         {
-            for(V3DLONG ix = 1; ix < M-1; ix++)
+            for(int ix = 0; ix < M; ix++)
             {
+                all++;
                 Coordinate coord_curr;
                 if(coodinate3D[iz][iy][ix]==255)
                 {
@@ -315,40 +330,33 @@ QList<ImageMarker> marker_all3;
                         j++;
                         g++;
                         first_floor = true;
+                        unknow++;
                         continue;
                     }
-
                 }
                 else
                 {
+                    black++;
                     continue;
                 }
                 if(first_floor)
                 {
                     if(coodinate3D[iz][iy][ix]==255)
                     {
-                        cout<<iz<<"  "<<iy<<"  "<<ix<<endl;
+                        white++;
                         int dex;
 
                         bool ind1 = false;
                         coord_curr.x = ix;
                         coord_curr.y = iy;
                         coord_curr.z = iz;
-
-
-
-
-                        int n=2;
                         ImageMarker m;
                         m.x = coord_curr.x;
                         m.y = coord_curr.y;
                         m.z = coord_curr.z;
                         m.radius = 0.5;
-                        m.type = n;
+                        m.type = 2;
                         marker_all3.push_back(m);
-
-
-
                         for(int l=0;l<connected_region.size();l++)
                         {
                             for(int k=0;k<connected_region[l].size();k++)
@@ -368,18 +376,15 @@ QList<ImageMarker> marker_all3;
                         }
                         if(ind1)
                         {
-                            cout<<"connected_region["<<dex<<"].size ++ "<<endl;
                             connected_region[dex].push_back(coord_curr);
-                            cout<<"map_index[connected_region[dex][0] = "<<map_index[connected_region[dex][0]]<<endl;
                             map_index.insert(coord_curr,map_index[connected_region[dex][0]]);
                             ind1 = false;
-                            break;
+                            //break;
                         }
                         else
                         {
                             each_region.clear();
                             each_region.push_back(coord_curr);
-                            cout<<"connected_region +++++++++++++++++++++++++++++++++++++++++++++++++++++++ "<<endl;
                             u++;
                             connected_region.push_back(each_region);
                             map_index.insert(coord_curr,j);
@@ -389,6 +394,10 @@ QList<ImageMarker> marker_all3;
                         each_region.clear();
 
                     }
+                    else
+                    {
+                        black2++;
+                    }
 
                 }
             }
@@ -396,7 +405,6 @@ QList<ImageMarker> marker_all3;
 
     }
     QHash<vector<Coordinate>,vector<Coordinate> > relation;
-    cout<<"connected_region = "<<connected_region.size()<<endl;
     int count_ind=1;
     //vector<int> count;
     vector<V3DLONG> index;
@@ -425,7 +433,7 @@ QList<ImageMarker> marker_all3;
 
                 }
             }
-            if(min_dis<2.5)
+            if(min_dis<dis_thresh)
             {
                 relation.insert(connected_region[l],connected_region[j]);
                 reminder[l] = 1;
@@ -435,29 +443,7 @@ QList<ImageMarker> marker_all3;
             }
         }
     }
-    QList<ImageMarker> marker_all2;
     int n=2;
-    for(V3DLONG l=0;l<connected_region.size();l++)
-    {
-        for(int f=0;f<connected_region[l].size();f++)
-        {
-            ImageMarker m;
-            m.x = connected_region[l][f].x;
-            m.y = connected_region[l][f].y;
-            m.z = connected_region[l][f].z;
-            m.radius = 0.5;
-            m.type = n;
-            marker_all2.push_back(m);
-        }
-    }
-    writeMarker_file(QString("marker_all_2.marker"),marker_all2);
-
-//    for(QHash<vector<Coordinate>,vector<Coordinate> >::iterator it = relation.begin();it!=relation.end();it++)
-//    {
-
-//          cout<<"relation = "<<map_index[it.key()[0]]<<"  "<<map_index[it.value()[0]]<<endl;
-
-//    }
     vector<vector<Coordinate> >connected_region_final;
     vector<V3DLONG> reminder2;
     for(int l=0;l<connected_region.size();l++)
@@ -487,20 +473,20 @@ QList<ImageMarker> marker_all3;
             find_relation(relation,connected_region[l],tmp,reminder2,map_index);
             connected_region_final.push_back(tmp);
         }
-        cout<<"map_index = "<<map_index[connected_region[l][0]]<<endl;
     }
 
     cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^write marker^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<endl;
     QList<ImageMarker> marker_all;
-    cout<<"connected_region_final.size() = "<<connected_region_final.size()<<endl;
+    QList<ImageMarker> center;
+    int size_thresh = 80;
+
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
-
+        if(connected_region_final[l].size()<size_thresh)continue;
         QList<ImageMarker> marker;
-        //if(connected_region[l].size()<3)continue;
-        double mean_x,mean_y,mean_z;
         for(int f=0;f<connected_region_final[l].size();f++)
         {
+
             ImageMarker m;
             m.x = connected_region_final[l][f].x;
             m.y = connected_region_final[l][f].y;
@@ -511,25 +497,150 @@ QList<ImageMarker> marker_all3;
             marker_all.push_back(m);
         }
         writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
-
-
-
-
-
-        n++;
     }
     writeMarker_file(QString("marker_all.marker"),marker_all);
+    vector<MyMarker*> inswc;
+    vector<Soma> soma_v;
 
 
 
-    cout<<"u = "<<u<<endl;
-    cout<<"g = "<<g<<endl;
-    cout<<"j = "<<j<<endl;
 
-    writeMarker_file(QString("marker_all_3.marker"),marker_all3);
-    cout<<"marker_all.size() = "<<marker_all.size()<<endl;
-    cout<<"marker_all2.size() = "<<marker_all2.size()<<endl;
-    cout<<"marker_all3.size() = "<<marker_all3.size()<<endl;
+
+
+    cout<<"find_center"<<endl;
+    for(V3DLONG l=0;l<connected_region_final.size();l++)
+    {
+        double sumx=0;
+        double sumy=0;
+        double sumz=0;
+        Soma soma;
+        soma.x_b = 10000000;
+        soma.y_b = 10000000;
+        soma.z_b = 10000000;
+        soma.x_e = 0;
+        soma.y_e = 0;
+        soma.z_e = 0;
+        if(connected_region_final[l].size()<size_thresh)continue;
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
+            sumx = sumx + connected_region_final[l][f].x;
+            sumy = sumy + connected_region_final[l][f].y;
+            sumz = sumz + connected_region_final[l][f].z;
+        }
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
+            if(connected_region_final[l][f].x<soma.x_b)soma.x_b = connected_region_final[l][f].x;
+            if(connected_region_final[l][f].y<soma.y_b)soma.y_b = connected_region_final[l][f].y;
+            if(connected_region_final[l][f].z<soma.z_b)soma.z_b = connected_region_final[l][f].z;
+        }
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
+            if(connected_region_final[l][f].x>soma.x_e)soma.x_e = connected_region_final[l][f].x;
+            if(connected_region_final[l][f].y>soma.y_e)soma.y_e = connected_region_final[l][f].y;
+            if(connected_region_final[l][f].z>soma.z_e)soma.z_e = connected_region_final[l][f].z;
+        }
+        ImageMarker m;
+        MyMarker* m2 = new MyMarker;
+        m.x = sumx/connected_region_final[l].size();
+        m.y = sumy/connected_region_final[l].size();
+        m.z = sumz/connected_region_final[l].size();
+        m.radius = 0.5;
+        m.type = n;
+        m2->x = m.x;
+        m2->y = m.y;
+        m2->z = m.z;
+        m2->type = n;
+        inswc.push_back(m2);
+        center.push_back(m);
+        soma_v.push_back(soma);
+    }
+    cout<<"center.size = "<<center.size()<<endl;
+    vector<double> D,max_dis_v;
+    int c=0;
+    for(int d=0;d<connected_region_final.size();d++)
+    {
+        double sum_dis=0;
+        double sum_dis2=0;
+        double mean_dis=0;
+        if(connected_region_final[d].size()<size_thresh)continue;
+        double max_dis = 0;
+        for(int f=0;f<connected_region_final[d].size();f++)
+        {
+            double dis = NTDIS(center[c],connected_region_final[d][f]);
+            if(dis>max_dis)
+            {
+                max_dis = dis;
+            }
+            //cout<<"dis = "<<dis<<endl;
+
+            sum_dis=sum_dis+dis;
+        }
+        //
+        mean_dis = sum_dis/connected_region_final[d].size();
+
+        for(int f=0;f<connected_region_final[d].size();f++)
+        {
+
+            double dis = NTDIS(center[c],connected_region_final[d][f]);
+
+            sum_dis2 = sum_dis2+(dis-mean_dis)*(dis-mean_dis);
+        }
+        max_dis_v.push_back(max_dis);
+        double Dd = sum_dis2/connected_region_final[d].size();
+        D.push_back(Dd);
+        c++;
+
+    }
+
+
+
+    QList<ImageMarker> center_choose;
+    for(int d=0;d<D.size();d++)
+    {
+        double x_dis = soma_v[d].x_e - soma_v[d].x_b;
+        double y_dis = soma_v[d].y_e - soma_v[d].y_b;
+
+        if(y_dis-x_dis>7||x_dis-y_dis>7)
+            continue;
+        if(max_dis_v[d]>13)
+            continue;
+        if(D[d]>5)
+            continue;
+        cout<<"max_dis = "<<max_dis_v[d]<<endl;
+        cout<<"D = "<<D[d]<<endl;
+        center_choose.push_back(center[d]);
+        cout<<"y_dis-x_dis = "<<y_dis-x_dis<<endl;
+        cout<<"x_dis-y_dis = "<<x_dis-y_dis<<endl;
+        cout<<"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"<<endl;
+
+    }
+    cout<<"center_choose = "<<center_choose.size()<<endl;
+    writeMarker_file(QString("center_choose.marker"),center_choose);
+    v3d_msg("check!");
+
+
+    for(int b=0;b<soma_v.size();b++)
+    {
+        double x_dis = soma_v[b].x_e - soma_v[b].x_b;
+        double y_dis = soma_v[b].y_e - soma_v[b].y_b;
+        double z_dis = soma_v[b].z_e - soma_v[b].z_b;
+//        cout<<"x_dis = "<<x_dis<<endl;
+//        cout<<"y_dis = "<<y_dis<<endl;
+//        cout<<"z_dis = "<<z_dis<<endl;
+//        cout<<"////////////////////////////////////////////////"<<endl;
+    }
+    writeMarker_file(QString("center.marker"),center);
+    NeuronTree nt = mm2nt(inswc,QString("center.marker"));
+    writeSWC_file(QString("center.swc"),nt);
+    QString img_name = "binary.v3draw";
+    evaluate_radius(inswc,img_name,callback);
+//    for(int r=0;r<inswc.size();r++)
+//    {
+//        cout<<"radius = "<<double(inswc[r]->radius)<<endl;
+//    }
+    cout<<"all = "<<all<<endl;
+
+  //  writeMarker_file(QString("marker_all_3.marker"),marker_all3);
     if(im_cropped){delete []im_cropped;im_cropped=0;}
 }
 void find_relation(QHash<vector<Coordinate>,vector<Coordinate> > &relation,vector<Coordinate> &curr,vector<Coordinate> &tmp,vector<V3DLONG> &reminder2,QHash<Coordinate,int> &map_index)
@@ -549,18 +660,18 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
 {
 
     double dist = NTDIS(curr,b);
-    if(dist<2.5)
+    if(dist<3)
     {
         return true;//this
-//        if(mark3D[curr.z][curr.y][curr.x]==1)
-//        {
-//            mark3D[curr.z][curr.y][curr.x]==0;
-//            return true;
-//        }
-//        else
-//        {
-//            return false;
-//        }
+        if(mark3D[curr.z][curr.y][curr.x]==1)
+        {
+            mark3D[curr.z][curr.y][curr.x]==0;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {
