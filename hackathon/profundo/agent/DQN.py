@@ -78,12 +78,13 @@ EVAL_EPISODE = 50
 
 ###############################################################################
 
+# FIXME hard coded save video True
 def get_player(directory=None, files_list= None, viz=False,
-               task=False, saveGif=False, saveVideo=False):
+               task=False, saveGif=False, saveVideo=True):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                    task=task, files_list=files_list, max_num_frames=1500)
+                    task=task, files_list=files_list, max_num_frames=100)
     if (task != 'train'):
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
@@ -171,7 +172,8 @@ def get_config():
         data=QueueInput(expreplay),
         model=Model(),
         callbacks=[  # TODO: periodically save videos
-            ModelSaver(),
+            ModelSaver(checkpoint_dir="model_checkpoints",
+                       max_to_keep=1000),
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),
                 # update target network every 10k steps
