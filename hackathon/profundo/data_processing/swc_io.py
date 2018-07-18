@@ -214,7 +214,7 @@ def save_branch_as_swc(branch: list, branch_name: str, output_dir="../data/03_hu
     SWC convention:
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
-    assert(isinstance(branch, list))
+    assert(isinstance(branch, (list, np.ndarray)))
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
