@@ -2,7 +2,9 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from matplotlib import animation, cm
 
+TRAJECTORY_LEN = 100
 
 def cuboid_data(position, size=(1, 1, 1)):
     cube_corners = [[[0, 1, 0], [0, 0, 0], [1, 0, 0], [1, 1, 0]],
@@ -51,5 +53,21 @@ ax.add_collection3d(pc)
 ax.set_xlim([0, x_span])
 ax.set_ylim([0, y_span])
 ax.set_zlim([0, z_span])
+
+# animation function.  This will be called sequentially with the frame number
+def animate(i):
+    binary_grid = np.random.choice([0, 1], size=(x_span, y_span, z_span), p=[0.995, 0.005])
+    x, y, z = np.indices((x_span, y_span, z_span)) - .5
+    # filter for the ones
+    positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
+    r = lambda: np.random.randint(0, 255)
+    random_colors = np.array(['#%02X%02X%02X%02X' % (r(), r(), r(), r()) for _ in enumerate(positions)])
+    pc = plotCubeAt(positions, colors=random_colors, edgecolor="k")
+    ax.add_collection3d(pc)
+
+
+anim = animation.FuncAnimation(fig, animate,
+                               frames=TRAJECTORY_LEN,
+                               interval=30)
 
 plt.show()
