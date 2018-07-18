@@ -165,7 +165,7 @@ class ExpReplay(DataFlow, Callback):
         self.mem = ReplayMemory(memory_size, state_shape, history_len)
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
-        self._player_distError = StatCounter()
+        self._player_IOU = StatCounter()
 
     def get_simulator_thread(self):
         # spawn a separate thread to run policy
@@ -229,7 +229,7 @@ class ExpReplay(DataFlow, Callback):
             # if info['gameOver']:  # only record score when a whole game is over (not when an episode is over)
             #     self._player_scores.feed(info['score'])
             self._player_scores.feed(info['score'])
-            self._player_distError.feed(info['distError'])
+            self._player_IOU.feed(info['IoU'])
             self.player.reset()
 
         self.mem.append(Experience(old_s, act, reward, isOver))
@@ -282,7 +282,7 @@ class ExpReplay(DataFlow, Callback):
     def _trigger(self):
         # log player statistics in training
         v = self._player_scores
-        dist = self._player_distError
+        dist = self._player_IOU
         try:
             mean, max = v.average, v.max
             self.trainer.monitors.put_scalar('expreplay/mean_score', mean)
