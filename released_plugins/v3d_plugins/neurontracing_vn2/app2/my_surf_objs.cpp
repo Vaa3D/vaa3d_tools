@@ -145,49 +145,52 @@ bool saveMarker_file(string marker_file, vector<MyMarker*> & outmarkers, list<st
 
 vector<MyMarker*> readSWC_file(string swc_file)
 {
-	vector<MyMarker*> swc;
+    vector<MyMarker*> swc;
 
-	ifstream ifs(swc_file.c_str());
+    ifstream ifs(swc_file.c_str());
+    if(ifs.fail())
+    {
+        cout<<"open swc file : "<< swc_file <<" error"<<endl;
+        return swc;
+    }
 
-	if(ifs.fail()) 
-	{
-		cout<<"open swc file : "<< swc_file <<" error"<<endl;
-		return swc;
-	}
-
-	map<int, MyMarker*> marker_map;
-	map<MyMarker*, int> parid_map;
-	while(ifs.good())
-	{
-		if(ifs.peek() == '#'){ifs.ignore(1000,'\n'); continue;}
-		MyMarker *  marker = new MyMarker;
-		int my_id = -1 ; ifs >> my_id;
-		if(my_id == -1) break;
-		if(marker_map.find(my_id) != marker_map.end())
-		{
+    map<int, MyMarker*> marker_map;
+    map<MyMarker*, int> parid_map;
+    while(ifs.good())
+    {
+        if(ifs.peek() == '#'){ifs.ignore(1000,'\n'); continue;}
+        MyMarker *  marker = new MyMarker;
+        int my_id = -1 ; ifs >> my_id;
+        if(my_id == -1) break;
+        if(marker_map.find(my_id) != marker_map.end())
+        {
             cerr<<"Duplicate Node. This is a graph file. Please read is as a graph."<<endl; //return vector<MyMarker*>();
-		}
-		marker_map[my_id] = marker;
+        }
+        marker_map[my_id] = marker;
 
-		ifs>> marker->type;
-		ifs>> marker->x;
-		ifs>> marker->y;
-		ifs>> marker->z;
-		ifs>> marker->radius;
-		int par_id = -1; ifs >> par_id;
-
-		parid_map[marker] = par_id;
-		swc.push_back(marker);
-	}
-	ifs.close();
-	vector<MyMarker*>::iterator it = swc.begin();
-	while(it != swc.end())
-	{
-		MyMarker * marker = *it;
-		marker->parent = marker_map[parid_map[marker]];
-		it++;
-	}
-	return swc;
+        ifs>> marker->type;
+        ifs>> marker->x;
+        ifs>> marker->y;
+        ifs>> marker->z;
+        ifs>> marker->radius;
+        int par_id = -1; ifs >> par_id;
+        while(ifs.peek()!='\n')
+        {
+            double temp;
+            ifs>>temp;
+        }
+        parid_map[marker] = par_id;
+        swc.push_back(marker);
+    }
+    ifs.close();
+    vector<MyMarker*>::iterator it = swc.begin();
+    while(it != swc.end())
+    {
+        MyMarker * marker = *it;
+        marker->parent = marker_map[parid_map[marker]];
+        it++;
+    }
+    return swc;
 }
 
 bool readSWC_file(string swc_file, vector<MyMarker> & outmarkers)

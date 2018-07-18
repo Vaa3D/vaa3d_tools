@@ -1,6 +1,6 @@
 /* segment_block_plugin.cpp
  * This is a test plugin, you can use it as a demo.
- * 2018-7-1 : by YourName
+ * 2018-7-1 : by Yongzhang
  */
  
 #include "v3d_message.h"
@@ -8,7 +8,6 @@
 #include "basic_surf_objs.h"
 #include "my_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
-//#include "../../../released_plugins/v3d_plugins/resample_swc/resampling.h"
 
 #include "segment_block_plugin.h"
 #include "segment_block.h"
@@ -69,6 +68,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             tree.push_back(pt);
 
         }
+        cout<<"tree.size="<<tree.size()<<endl;
+
         for(V3DLONG i=0;i<nt_p.listNeuron.size();i++)
         {
             if (nt_p.listNeuron[i].pn<0) continue;
@@ -131,7 +132,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by YourName, 2018-7-1"));
+            "Developed by Yongzhang, 2018-7-1"));
 	}
 }
 
