@@ -39,6 +39,7 @@ from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
 from sampleTrain import FilesListCubeNPY
+from viewer import SimpleImageViewer as Viewer
 from sklearn.metrics import jaccard_similarity_score
 from data_processing.swc_io import save_branch_as_swc, swc_to_TIFF, TIFF_to_npy
 
@@ -75,29 +76,6 @@ class Brain_Env(gym.Env):
             episode (useful for training)
         :max_num_frames: maximum number of frames per episode.
         """
-        # python DQN_midl2018.py --task play --gpu 0 --algo DuelingDouble --load train_log/DuelDoubleDQN_multiscale_brain_mri_point_ac_ROI_45_45_45_midl2018/model-350000
-
-        # ######################################################################
-        # ## generate evaluation results from 19 different points
-        # ## save results in csv file
-        # self.csvfile = 'DuelDoubleDQN_multiscale_brain_mri_point_pc_ROI_45_45_45_midl2018.csv'
-        # if not train:
-        #     with open(self.csvfile, 'w') as outcsv:
-        #         fields = ["filename", "dist_error"]
-        #         writer = csv.writer(outcsv)
-        #         writer.writerow(map(lambda x: x, fields))
-        #
-        # x = [0.5,0.25,0.75]
-        # y = [0.5,0.25,0.75]
-        # z = [0.5,0.25,0.75]
-        # self.start_points = []
-        # for combination in itertools.product(x, y, z):
-        #     if 0.5 in combination: self.start_points.append(combination)
-        # self.start_points = itertools.cycle(self.start_points)
-        # self.count_points = 0
-        # self.total_loc = []
-        # ######################################################################
-
         super(Brain_Env, self).__init__()
 
         # inits stat counters
@@ -538,16 +516,12 @@ class Brain_Env(gym.Env):
 
         # take image, mask it w agent trajectory
         agent_trajectory = self.trajectory_to_branch()
-        agent_trajectory *= 1  # agent frames are negative
+        agent_trajectory *= -1  # agent frames are negative
         # paste agent trajectory ontop of original state, but only when vals are not 0
         agent_mask = agent_trajectory.astype(bool)
-        print("state b4 ", self._state)
-        if np.any(agent_trajectory):  # agent trajectory not empty
-            print(self.original_state.dtype, agent_trajectory.dtype)
-            print("nan check ", np.any(np.isnan(agent_trajectory)))
-            self._state = np.copyto(self.original_state, agent_trajectory, where=agent_mask)
-        # print("og", self.original_state)
-        print("state after ", self._state)
+        if agent_mask.any():  # agent trajectory not empty
+            np.copyto(self._state, agent_trajectory, casting='no', where=agent_mask)
+            assert self._state is not None
 
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
@@ -650,9 +624,8 @@ class Brain_Env(gym.Env):
         # scale_x = 1
         # scale_y = 1
 
-        from viewer import SimpleImageViewer as Viewer
-        from itertools import izip
-        plotter = Viewer(self.original_state, izip(self._agent_nodes, self._IOU_history))
+
+        plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history))
         #
         # #
         # # from viewer import SimpleImageViewer
