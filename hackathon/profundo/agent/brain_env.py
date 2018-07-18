@@ -35,7 +35,6 @@ import shutil
 import gym
 from gym import spaces
 
-
 from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
@@ -135,11 +134,11 @@ class Brain_Env(gym.Env):
             self.rng = get_rng(self)
             # TODO: understand this viz setup
             # visualization setup
-        #     if isinstance(viz, six.string_types):  # check if viz is a string
-        #         assert os.path.isdir(viz), viz
-        #         viz = 0
-        #     if isinstance(viz, int):
-        #         viz = float(viz)
+            #     if isinstance(viz, six.string_types):  # check if viz is a string
+            #         assert os.path.isdir(viz), viz
+            #         viz = 0
+            #     if isinstance(viz, int):
+            #         viz = float(viz)
             self.viz = viz
         #     if self.viz and isinstance(self.viz, float):
         #         self.viewer = None
@@ -151,20 +150,20 @@ class Brain_Env(gym.Env):
         self.actions = self.action_space.n
         self.observation_space = spaces.Box(low=0, high=255,
                                             shape=self.observation_dims,
-					    dtype=np.uint8)
+                                            dtype=np.uint8)
         # history buffer for storing last locations to check oscilations
         self._history_length = max_num_frames
         # TODO initialize _observation_bounds limits from input image coordinates
         self._observation_bounds = ObservationBounds(0, 0, 0, 0, 0, 0)
         # add your data loader here
         # TODO: look into returnLandmarks
-        if self.task== 'play':
-            self.files = filesListBrainMRLandmark(directory,files_list,
-                                                  returnLandmarks=False)
-        else:
-            self.files = filesListBrainMRLandmark(directory,files_list,
-                                                  returnLandmarks=True)
-	self.files = FilesListCubeNPY(directory, files_list)
+        # if self.task == 'play':
+        #     self.files = filesListBrainMRLandmark(directory, files_list,
+        #                                           returnLandmarks=False)
+        # else:
+        #     self.files = filesListBrainMRLandmark(directory, files_list,
+        #                                           returnLandmarks=True)
+        self.files = FilesListCubeNPY(directory, files_list)
 
         # self.files = filesListFetalUSLandmark(directory,files_list)
         # self.files = filesListCardioMRLandmark(directory,files_list)
@@ -228,7 +227,7 @@ class Brain_Env(gym.Env):
         # ######################################################################
 
         # # sample a new image
-        self.filepath, self.filename= next(self.file_sampler)
+        self.filepath, self.filename = next(self.file_sampler)
         self._state = np.load(self.filepath).astype(float)
         # TODO: sanity checks for inputs
         self.original_state = np.copy(self._state)
@@ -257,7 +256,7 @@ class Brain_Env(gym.Env):
         #######################################################################
         ## select random starting point
         # add padding to avoid start right on the border of the image
-        if self.train:
+        if (self.task == 'train'):
             skip_thickness = (int(self._image_dims[0] / 5),
                               int(self._image_dims[1] / 5),
                               int(self._image_dims[2] / 5))
@@ -284,7 +283,6 @@ class Brain_Env(gym.Env):
             self.cur_IOU = 0.0
         else:
             self.cur_IOU = self.calc_IOU()
-
 
     def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
@@ -391,7 +389,7 @@ class Brain_Env(gym.Env):
         self.curr_IOU = self.calc_IOU()
 
         # punish -1 reward if the agent tries to go out
-	if (self.task!='play'):
+        if (self.task != 'play'):
             if go_out:
                 self.reward = -1
         else:
@@ -411,60 +409,44 @@ class Brain_Env(gym.Env):
         if self.cnt >= self.max_num_frames: self.terminal = True
 
         # update history buffer with new location and qvalues
-	 if (self.task != 'play'):
-		self.curr_IOU = self.calc_IOU()
+        if (self.task != 'play'):
+            self.curr_IOU = self.calc_IOU()
+
         self._update_history()
 
         # check if agent oscillates
         # if self._oscillate:
-            # TODO: rewind history, recalculate IOU
-            # self._location = self.get_best_node()  # TODO replace
-            # self._observation = self._observe()
-	      # if (self.task != 'play'):
-           	 # self.curr_IOU = self.calc_IOU()
-            # multi-scale steps
-            # if self.multiscale:
-            #     if self.xscale > 1:
-            #         self.xscale -= 1
-            #         self.yscale -= 1
-            #         self.zscale -= 1
-            #         self.action_step = int(self.action_step / 3)
-            #         self._clear_history()
-            #     # terminate if scale is less than 1
-            #     else:
-            #         self.terminal = True
-            #         if self.curr_IOU >= 0.9: self.num_success.feed(1)
-            # else:
-            # self.terminal = True
-            # if self.curr_IOU >= 0.9: self.num_success.feed(1)
+        # TODO: rewind history, recalculate IOU
+        # self._location = self.get_best_node()  # TODO replace
+        # self._observation = self._observe()
+        # if (self.task != 'play'):
+        # self.curr_IOU = self.calc_IOU()
+        # multi-scale steps
+        # if self.multiscale:
+        #     if self.xscale > 1:
+        #         self.xscale -= 1
+        #         self.yscale -= 1
+        #         self.zscale -= 1
+        #         self.action_step = int(self.action_step / 3)
+        #         self._clear_history()
+        #     # terminate if scale is less than 1
+        #     else:
+        #         self.terminal = True
+        #         if self.curr_IOU >= 0.9: self.num_success.feed(1)
+        # else:
+        # self.terminal = True
+        # if self.curr_IOU >= 0.9: self.num_success.feed(1)
 
-        # render screen if viz is on
-        with _ALE_LOCK:
-            if self.viz:
-                if isinstance(self.viz, float):
-                    self.display()
+        # # render screen if viz is on  FIXME this displays at each step
+        # with _ALE_LOCK:
+        #     if self.viz:
+        #         if isinstance(self.viz, float):
+        #             self.display()
 
         self.current_episode_score.feed(self.reward)
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
                 'filename': self.filename}
-
-        # #######################################################################
-        # ## generate evaluation results from 19 different points
-        # if self.terminal:
-        #     logger.info(info)
-        #     self.total_loc.append(self._location)
-        #     if not(self.count_points == 19):
-        #         self._restart_episode()
-        #     else:
-        #         mean_location = np.mean(self.total_loc,axis=0)
-        #         logger.info('total_loc {} \n mean_location{}'.format(self.total_loc, mean_location))
-        #         self.cur_dist = self.calcDistance(mean_location,
-        #                                           self._target_loc,
-        #                                           self.spacing)
-        #         logger.info('final distance error {} \n'.format(self.cur_dist))
-        #         self.count_points = 0
-        # #######################################################################
 
         return self._observe(), self.reward, self.terminal, info
 
@@ -483,15 +465,15 @@ class Brain_Env(gym.Env):
 
         return best_location
 
-
     def _clear_history(self):
         """ clear history buffer with current state
         """
         # TODO: double check these np arrays work in place of the lists
-        self._agent_nodes = np.zeros((self._history_length, self.dims)) #[(0,) * self.dims] * self._history_length
+        self._agent_nodes = np.zeros((self._history_length, self.dims))  # [(0,) * self.dims] * self._history_length
         self._IOU_history = np.zeros((self._history_length, 1))
         # list of q-value lists
-        self._qvalues_history = np.zeros((self._history_length, self.actions)) #[(0,) * self.actions] * self._history_length
+        self._qvalues_history = np.zeros(
+            (self._history_length, self.actions))  # [(0,) * self.actions] * self._history_length
 
     def _update_history(self):
         """ update history buffer with current state
@@ -546,11 +528,11 @@ class Brain_Env(gym.Env):
             screen_zmin = screen_zmax - len(np.arange(zmin, zmax, self.zscale))
         if xmax > self._image_dims[0]:
             xmax = self._image_dims[0]
-            screen_xmax = screen_xmin + len(np.arange(xmin,xmax,self.xscale))
-        if ymax>self._image_dims[1]:
+            screen_xmax = screen_xmin + len(np.arange(xmin, xmax, self.xscale))
+        if ymax > self._image_dims[1]:
             ymax = self._image_dims[1]
-            screen_ymax = screen_ymin + len(np.arange(ymin,ymax,self.yscale))
-        if zmax>self._image_dims[2]:
+            screen_ymax = screen_ymin + len(np.arange(ymin, ymax, self.yscale))
+        if zmax > self._image_dims[2]:
             zmax = self._image_dims[2]
             screen_zmax = screen_zmin + len(np.arange(zmin, zmax, self.zscale))
 
@@ -567,15 +549,14 @@ class Brain_Env(gym.Env):
         # print("og", self.original_state)
         print("state after ", self._state)
 
-
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
-	# TODO: check if we need to keep "stride" from upstream
+        # TODO: check if we need to keep "stride" from upstream
         observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
-                                                                                            xmin:xmax,
-                                                                                            ymin:ymax,
-                                                                                            zmin:zmax]
+                                                                                                 xmin:xmax,
+                                                                                                 ymin:ymax,
+                                                                                                 zmin:zmax]
 
         # update _observation_bounds limits from input image coordinates
         # this is what the network sees
@@ -603,11 +584,8 @@ class Brain_Env(gym.Env):
                 output_npy = output_npy / tiff_max
             return output_npy
 
-	def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
-		return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
-
-
-
+        def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
+            return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
 
     def _calc_reward(self):
         """ Calculate the new reward based on the increase in IoU
@@ -756,6 +734,7 @@ class Brain_Env(gym.Env):
 # =============================================================================
 class FrameStack(gym.Wrapper):
     """used when not training. wrapper for Medical Env"""
+
     def __init__(self, env, k):
         """Buffer observations and stack across channels (last axis)."""
         gym.Wrapper.__init__(self, env)
