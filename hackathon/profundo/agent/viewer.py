@@ -54,6 +54,14 @@ class SimpleImageViewer(object):
         pc = self._plotCubeAt(positions, colors=colors, edgecolor="k")
         self.ax.add_collection3d(pc)
 
+    def save_vid(self, filename, num_frames):
+        print("saving video {}".format(filename), flush=True)
+        if not hasattr(self, 'anim'):
+            self.render_animation(num_frames)
+        self.anim.save('filename',
+                  fps=15,
+                  extra_args=['-vcodec', 'libx264'])
+
     def saveGif(self, filename=None, arr=None, duration=0):
         arr[0].save(filename, save_all=True,
                     append_images=arr[1:],
@@ -104,4 +112,11 @@ class SimpleImageViewer(object):
             self.ax.add_collection3d(pc)
         self.ax.view_init(30, 0.3 * i)
         self.fig.canvas.draw()
+
+    def render_animation(self, num_frames):
+        # instantiate the animator.
+        self.anim = animation.FuncAnimation(self.fig, self._animate,
+                                       fargs=[self.data_generator()],
+                                       frames=num_frames,
+                                       interval=30)
 
