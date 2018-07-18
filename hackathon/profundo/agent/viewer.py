@@ -20,14 +20,14 @@ class SimpleImageViewer(object):
         self.scale_x = scale_x
         self.scale_y = scale_y
         self.display = display
-        self.filepath = filepath
-        self.filename = os.path.basename(filepath)
+        if filepath:
+            self.filepath = filepath
+            self.filename = os.path.basename(filepath)
 
         # initialize window with the input image
         self.x_span, self.y_span, self.z_span = original_state.shape
         self.x, self.y, self.z = np.indices((self.x_span, self.y_span, self.z_span)) - .5
-        assert original_state.shape == (
-        self.x_span, self.y_span, 3), "You passed in an image with the wrong number shape"
+
         self.fig, self.ax = self.__init_fig__()
 
         self.draw_image(original_state)
@@ -61,7 +61,8 @@ class SimpleImageViewer(object):
                     quality=95)  # duration milliseconds
 
     def show(self):
-        plt.show(block=False)
+        plt.show()
+        # plt.show(block=False)
 
     def close(self):
         if self.isopen:
