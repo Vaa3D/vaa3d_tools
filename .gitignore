@@ -143,3 +143,6 @@ venv.bak/
 # pycharm
 .idea/
 *.mp4
+
+# RL agent logfiles
+hackathon/profundo/agent/train_log
