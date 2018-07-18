@@ -65,8 +65,6 @@ def generate_positions():
 
 # animation function.  This will be called sequentially with the frame number
 def animate(i, data_gen):
-    binary_grid = np.random.choice([0, 1], size=(x_span, y_span, z_span), p=[0.995, 0.005])
-    x, y, z = np.indices((x_span, y_span, z_span)) - .5
     # filter for the ones
     positions, colors = next(data_gen)
     if len(positions) > 0:
