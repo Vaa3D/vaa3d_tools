@@ -71,12 +71,6 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA
         PA.im_cropped_sz[3] = 1;
         cout<<"--------------------------------------PA.Z = "<<PA.im_cropped_sz[2]<<endl;
 
-
-
-//        V3DLONG size = PA.im_cropped_sz[0]*PA.original_o[1]*PA.original_o[2];
-//        if(size>1760000000)
-//        {v3d_msg("img too big!"); return false;}
-
         cout<<"x = "<<maxx-xb<<"  "<<minx-xb<<endl;
         cout<<"y = "<<maxy-yb<<"  "<<miny-yb<<endl;
         cout<<"z = "<<maxz-zb<<"  "<<minz-zb<<endl;
@@ -86,8 +80,12 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA
         cout<<"begin ==================="<<xb<<"  "<<yb<<"  "<<zb<<endl;
         cout<<"end   ==================="<<xe<<"  "<<ye<<"  "<<ze<<endl;
         //v3d_msg("test!");
-
-
+		
+		V3DLONG size = (xe-xb)*(ye-yb)*(ze-zb);
+		if(size>1500000000) {
+			cout<<"too big to get!"<<endl;
+			return false;
+		}
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
 

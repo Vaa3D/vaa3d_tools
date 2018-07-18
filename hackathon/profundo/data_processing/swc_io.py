@@ -2,13 +2,13 @@ import os
 from collections import defaultdict
 import numpy as np
 import pandas as pd
+from skimage import io as tiff2array
 
 
 def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
     """given relative directory, return all filenames and their full absolute paths"""
     fnames = []
     abs_paths = []
-    abs_path_dict = {}
     for root, dirs, fnames_ in os.walk(reldir):
         if not as_dict:
             fnames.extend(fnames_)
@@ -18,23 +18,23 @@ def get_fnames_and_abspath_from_dir(reldir, as_dict=False):
                 abs_paths.append(abs_path)
             return fnames, abs_paths
         else:
+            abs_path_dict = {}
             for f in fnames_:
                 relpath = os.path.join(root, f)
                 abs_path = os.path.abspath(relpath)
                 abs_path_dict[f] = abs_path
             return abs_path_dict
+    
 
-
-
-def remove_comments_from_swc(fpaths, fnames, outdir="../data/02_human_clean/"):
+def remove_comments_from_swc(fpaths, fnames, output_dir="../data/02_human_clean/"):
     """SWC files start with comments, remove before proceeding"""
     for i in range(len(fpaths)):
 
         input = open(fpaths[i], "r")
-        outdir = os.path.abspath(outdir)
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
-        outfile = os.path.join(outdir, fnames[i])
+        output_dir = os.path.abspath(output_dir)
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        outfile = os.path.join(output_dir, fnames[i])
         output = open(outfile, "w+")
 
         for line in input:
@@ -64,6 +64,7 @@ def swc_to_linked_list(fpath: list):
 def swc_to_nparray(swc_abspath):
     # should make an np array with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
+    # TODO: use all cols
     arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
     return arr
 
@@ -110,11 +111,6 @@ def dframe_to_swc(fname, df, output_dir="../data/05_sampled_cubes/"):
     return out_fpath
 
 
-def swc_to_img(fname, output_dir="../data/06_synthetic_branches/"):
-    # TODO
-    pass
-
-
 def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0, 
                  output_dir="../data/04_human_branches_filtered_upsampled/"):
     """
@@ -157,52 +153,74 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 
         return outfile_fpath
-    
-def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path,
-                 output_dir="../data/07_cube_TIFFs"):
-    
-    
+
+def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_external/bin/vaa3d", overwrite=False,
+                 output_dir="../data/07_cube_TIFFs",
+                img_dims = "11 11 11"): # TODO: provide explicit bounds
+    """note: swc2mask crops the img"""
+
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-        
-    outfile_fpath = os.path.join(output_dir, input_fname)
+    
+    outfile_fpath = os.path.join(output_dir, input_fname + ".tiff")
     
     # don't overwrite
-    if not os.path.isfile(outfile_fpath):
+    if not os.path.isfile(outfile_fpath) or overwrite:
 
         # https://stackoverflow.com/a/4376421/4212158
-        v3d_plugin_name = "swc_to_maskimage_sphere_unit"
+        v3d_plugin_name = "swc2mask"
 
         cli_dict = {"v3d_bin": vaad3d_bin_path,
                    "plugin": v3d_plugin_name,
                    "in": input_fpath,
-                   "out": outfile_fpath}
+                   "out": outfile_fpath,
+                   "dims": img_dims}
                    #"step": step_length}
 
-        #print("running \n")
-        #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
-        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
-
-
-
+        print("running \n")
+        print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {dims}".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {dims}".format(**cli_dict))
         return outfile_fpath
     
-
+def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", overwrite=False):
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
     
+    outfile_fpath = os.path.join(output_dir, input_fname + ".npy")
+    
+    # don't overwrite
+    if not os.path.isfile(outfile_fpath) or overwrite:
+        desired_len = 16
+        img_array = tiff2array.imread(input_fpath)
+        # make all arrays the same shape
+        # format: ((top, bottom), (left, right))
+        shp = img_array.shape
+        #print(shp, flush=True)
+        if shp != (desired_len, desired_len, desired_len):
+            try:
+                img_array = np.pad(img_array, ((0, desired_len-shp[0]), (0, desired_len-shp[1]), (0, desired_len-shp[2])), 'constant')
+            except ValueError:
+                raise
+                #print(shp, flush=True)  # don't wait for all threads to finish before printing
+                
+        np.save(outfile_fpath, img_array)
+        return outfile_fpath
 
-def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_branches_splitted/"):
+
+def save_branch_as_swc(branch: list, branch_name: str, output_dir="../data/03_human_branches_splitted/", overwrite = False):
     """
     SWC convention:
     node_id type x_coordinate y_coordinate z_coordinate radius parent_node
     """
     assert(isinstance(branch, list))
-    outdir = os.path.abspath(outdir)
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-    outfile = os.path.join(outdir, branch_name+".swc")
+    output_dir = os.path.abspath(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    outfile = os.path.join(output_dir, branch_name+".swc")
     # don't overwrite
-    if not os.path.isfile(outfile):
+    if not os.path.isfile(outfile) or overwrite:
         #print("saving SWC {}".format(branch_name))
         output = open(outfile, "w+")
 
@@ -211,17 +229,21 @@ def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_
 
         parent_node_id = "-1"
         for i, node in enumerate(branch):
-            try:
+            if len(node) == 4:
                 child_node_id, x, y, z = node
-            except ValueError:
-                print("error in save-branch", len(node), node)
-                raise
+            elif len(node) == 3:
+                x, y, z = node
+                child_node_id = str(i)
             # this is the SWC file convention
             # \n is important to separate into new lines
             swc_items = [child_node_id, default_type, x, y, z, default_radius, parent_node_id, "\n"]
+            swc_items = [str(x) for x in swc_items]
             #swc_items = [str(item) for item in str_items]
             try:
                 swc_line = " ".join(swc_items)
+            except TypeError:
+                print(swc_items)
+                raise
             except:
                 print(swc_items)
                 for item in swc_items:
@@ -231,3 +253,4 @@ def save_branch_as_swc(branch: list, branch_name: str, outdir="../data/03_human_
             parent_node_id = child_node_id
 
         output.close()
+        return outfile

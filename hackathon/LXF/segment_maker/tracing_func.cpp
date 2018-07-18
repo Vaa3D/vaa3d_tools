@@ -363,10 +363,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
         if(use_comment == false)
         {
-            v3d_msg("please set a comment 'a'!");
-            return false;
-
-
             for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
             {
                 LocationSimple s = terafly_landmarks_terafly[i];

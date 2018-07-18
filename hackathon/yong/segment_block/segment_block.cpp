@@ -71,7 +71,7 @@ bool segment_block(V3DPluginCallback2 &callback,vector<Segment*> &seg_list,PARA 
         PA.im_cropped_sz[2] = ze-zb+1;
         PA.im_cropped_sz[3] = 1;
 
-        cout<<"--------------------------------------PA.Z = "<<PA.im_cropped_sz[2]<<endl;
+        cout<<" PA.Z = "<<PA.im_cropped_sz[2]<<endl;
 
         cout<<"x = "<<maxx-xb<<"  "<<minx-xb<<endl;
         cout<<"y = "<<maxy-yb<<"  "<<miny-yb<<endl;
@@ -79,8 +79,8 @@ bool segment_block(V3DPluginCallback2 &callback,vector<Segment*> &seg_list,PARA 
 
         cout<<"space "<<spacex<<"  "<<spacey<<"  "<<spacez<<"  "<<endl;
 
-        cout<<"begin ==================="<<xb<<"  "<<yb<<"  "<<zb<<endl;
-        cout<<"end   ==================="<<xe<<"  "<<ye<<"  "<<ze<<endl;
+        cout<<"begin = "<<xb<<"  "<<yb<<"  "<<zb<<endl;
+        cout<<"end = "<<xe<<"  "<<ye<<"  "<<ze<<endl;
         //v3d_msg("test!");
 
 

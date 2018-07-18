@@ -11,7 +11,6 @@
 #include "q_derivatives3D.h"
 #include "q_imgaussian3D.h"
 #include "q_EigenVectors3D.h"
-#include "v3d_interface.h"
 
 
 bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],float *&p_img32f_output)
@@ -58,8 +57,7 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 
 	//do diffusion
 	clock_t iterstart;
-    //v3d_msg("tttt");
-    for(unsigned int iter=0;iter<1;iter++)
+	for(unsigned int iter=0;iter<20;iter++)
 	{
 		iterstart=clock();
 

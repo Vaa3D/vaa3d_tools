@@ -95,12 +95,14 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
         else
         mass_center=mean_shift_obj.mean_shift_center(poss_landmark[j],windowradius);
 
-        LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+		LocationSimple tmp(mass_center[0]+1,mass_center[1]+1,mass_center[2]+1);
+		tmp.radius = LList.at(j).radius;
         if (!LList.at(j).name.empty()) tmp.name=LList.at(j).name;
         LList_new_center.append(tmp);
     }
 
     NeuronTree nt;
+	/*
     for(V3DLONG k = 0; k < LList_new_center.size(); k++)
     {
 
@@ -113,7 +115,22 @@ LandmarkList segment_mean_shift_v2(V3DPluginCallback2 &callback,LandmarkList &LL
         S.pn = k-1;
         S.type = 2;
         nt.listNeuron.push_back(S);
+    }*/
+
+	for(V3DLONG k = 0; k < LList_new_center.size(); k++)
+    {
+
+        NeuronSWC S;
+        S.x = LList.at(k).x;
+        S.y = LList.at(k).y;
+        S.z = LList.at(k).z;
+        S.n = k;
+        S.r = LList.at(k).radius;
+        S.pn = k-1;
+        S.type = 2;
+        nt.listNeuron.push_back(S);
     }
+
     PA.nt_meanshift = nt;
     system("mkdir meanshift_swc");
     QString swc_out_name = "meanshift_swc/"+QString::number(i) + "_meanshifted.swc";

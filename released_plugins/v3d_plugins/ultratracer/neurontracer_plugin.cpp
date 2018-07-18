@@ -740,6 +740,19 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.method = gd;
         crawler_raw_app(callback,parent,P,bmenu);
     }
+    else if (func_name == tr("generate_final_result"))
+    {
+        if(infiles.empty())
+        {
+            cerr<<"Need input txt file"<<endl;
+            return false;
+        }
+
+        QString txtfilenName = infiles[0];
+
+        list<string> infostring;
+        processSmartScan_3D(callback,infostring,txtfilenName);
+    }
 	else if (func_name == tr("help"))
 	{
         printf("\n**** Usage of UltraTracer plugin ****\n");
