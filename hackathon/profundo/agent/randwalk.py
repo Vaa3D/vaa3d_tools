@@ -12,10 +12,10 @@ from collections import OrderedDict
 
 DATA_DIR = "../data/08_cube_npy"
 N_trajectories = 1
-TRAJECTORY_LEN = 20
+TRAJECTORY_LEN = 200
 LINE_WIDTH = 2
 
-SAVE_VIDEO = True
+SAVE_VIDEO = False
 
 X_MAX = 16
 X_MIN = 0
@@ -55,8 +55,7 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
 
     frames = []
 
-    reference = np.zeros_like(groundtruth)
-    trajectory = reference.copy()
+    trajectory = np.zeros_like(groundtruth)
     # print("trajectory shape ", trajectory.shape)
     # replace first col with starting coords
     # trajectory[0, :] = starting_coords
@@ -81,6 +80,7 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
             if is_in_bounds(proposed_spot):
                 location = proposed_spot
                 # print("location ", location)
+                trajectory = trajectory.copy()
                 trajectory[location[0], location[1], location[2]] = 500
                 frames.append(trajectory)
                 in_bounds = True  # mv to next timestep
@@ -88,9 +88,9 @@ def rand_walk(starting_coords, length, stepsize=RAND_WALK_STEPSIZE):
     return frames
 
 
-# def trajectory_to_axes(data):
-#     fig_, axes_ = prep_data_for_voxels(data)
-#     return axes_
+def trajectory_to_axes(data):
+    fig_, axes_ = prep_data_for_voxels(data)
+    return axes_
 
 
 def is_in_bounds(coords):
@@ -128,7 +128,7 @@ def prep_data_for_voxels(data): # 320
     facecolors = cm.RdBu(data)
     # makes the alpha equal to the voxel value.
     facecolors[:, :, :, -1] = data / 5  # /20 to reduce alpha
-    facecolors = explode(facecolors)
+    # facecolors = explode(facecolors)
 
     filled = facecolors[:, :, :, -1] != 0
     # print("fill shape" , filled.shape, "filled", filled)
@@ -179,91 +179,104 @@ ax.set_xlim((X_MIN, X_MAX))
 ax.set_ylim((Y_MIN, Y_MAX))
 ax.set_zlim((Z_MIN, Z_MAX))
 x, y, z, filled, facecolors, edgecolor = prep_data_for_voxels(groundtruth)
-ax.voxels(x,y,z,filled,facecolors=facecolors, edgecolors=edgecolor)
-
-
-# Set up figure & 3D axis for animation
-# fig = plt.figure()
-# ax = fig.add_axes([0, 0, 1, 1], projection='3d')
-# ax.axis('off')
+ax.voxels(filled,facecolors=facecolors, edgecolors=edgecolor)
 
 
 
-# add scoreboard
-# scoreboard = ax.text(0.9 * X_MIN, 0, 0.9 * Z_MAX, s=" ", bbox={'facecolor': 'w', 'alpha': 0.5, 'pad': 5},
-#                      )
-
-
-# plot ground truth and leave it up
-# x_targ = groundtruth.x
-# y_targ = groundtruth.y
-# z_targ = groundtruth.z
-
-# ax.plot(x_targ, y_targ, z_targ, label='human annotation', c="black", linewidth=LINE_WIDTH)
-
-# targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
-# targ_coords = np.column_stack(targ_upsampled)
-
-# KD-tree for nearest neighbor search
-# targ_kdtree = cKDTree(targ_coords)
-
-# finding root node
-# node_ids = set(groundtruth.node_id)
-# parent_ids = set(groundtruth.parent_node_id)
-# root_id = parent_ids - node_ids
-# root_id = np.int32(next(iter(root_id)))  # convert set to int
-# print("roots ", root_id)
-
-# make all frames start at root node
-# starting_position = groundtruth[groundtruth.parent_node_id == root_id][["x", "y", "z"]]
-# print("gt ", groundtruth)
-
+# ###############################################################
+# # Set up figure & 3D axis for animation
+# # fig = plt.figure()
+# # ax = fig.add_axes([0, 0, 1, 1], projection='3d')
+# # ax.axis('off')
+#
+#
+#
+# # add scoreboard
+# # scoreboard = ax.text(0.9 * X_MIN, 0, 0.9 * Z_MAX, s=" ", bbox={'facecolor': 'w', 'alpha': 0.5, 'pad': 5},
+# #                      )
+#
+#
+# # plot ground truth and leave it up
+# # x_targ = groundtruth.x
+# # y_targ = groundtruth.y
+# # z_targ = groundtruth.z
+#
+# # ax.plot(x_targ, y_targ, z_targ, label='human annotation', c="black", linewidth=LINE_WIDTH)
+#
+# # targ_upsampled = upsample_coords([x_targ, y_targ, z_targ])
+# # targ_coords = np.column_stack(targ_upsampled)
+#
+# # KD-tree for nearest neighbor search
+# # targ_kdtree = cKDTree(targ_coords)
+#
+# # finding root node
+# # node_ids = set(groundtruth.node_id)
+# # parent_ids = set(groundtruth.parent_node_id)
+# # root_id = parent_ids - node_ids
+# # root_id = np.int32(next(iter(root_id)))  # convert set to int
+# # print("roots ", root_id)
+#
+# # make all frames start at root node
+# # starting_position = groundtruth[groundtruth.parent_node_id == root_id][["x", "y", "z"]]
+# # print("gt ", groundtruth)
+#
 # Solve for the frames
-starting_position = np.array([0,0,0])
-# starting_position = np.array([X_MAX//2,X_MAX//2,X_MAX//2])
+# starting_position = np.array([0,0,0])
+starting_position = np.array([X_MAX//2,X_MAX//2,X_MAX//2])
 frames = np.asarray([rand_walk(starting_position, TRAJECTORY_LEN)
                      for _ in range(N_trajectories)])
 frames = frames[0]
 
-# trajectories_upsampled = [upsample_coords(t) for t in frames]
-# trajectories_coords = np.column_stack(trajectories_upsampled)
-
-# choose a different color for each trajectory
-colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
-
-# set up lines and points
-# each item in these lists is a separate list of points, one for each frame in the final animation
-# this is redundant, but we'll only animate pre-computed data this way
-# agent_trajectories = sum([ax.voxels([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
-# agent_trajectories = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
-#                           for c in colors], [])
-# agent_tip = sum([ax.plot([], [], [], '*', c=c, markersize=10, alpha=0.5)  # leading edge of agents
-#                  for c in colors], [])
-# intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=4, fillstyle='none', markeredgewidth=1,
-#                              label="intersection")
-#                      for i in range(N_trajectories)], [])
-
-# # plot legends
-# handles, labels = plt.gca().get_legend_handles_labels()
-# by_label = OrderedDict(zip(labels, handles))
-# ax.legend(by_label.values(), by_label.keys())
+#### WITHOUT FUNCANIMATION
+# for i in range(TRAJECTORY_LEN):
+#     data = frames[i]
+#     x, y, z, filled, facecolors, edgecolor = prep_data_for_voxels(data)
+#     ax.voxels(x,y,z,filled,facecolors=facecolors, edgecolors=edgecolor)
+#     fig.canvas.draw()
+#     plt.pause(0.1)
 
 
-# initialization function: plot the background of each frame
-# def init():
-#     for traj in agent_trajectories:
-#     # for line, pt, inter in zip(agent_trajectories, agent_tip, intersections):
-#         traj.set_data([], [])
-#         traj.set_3d_properties([])
-#         #
-#         # pt.set_data([], [])
-#         # pt.set_3d_properties([])
-#         #
-#         # inter.set_data([], [])
-#         # inter.set_3d_properties([])
-#     return agent_trajectories# + agent_tip
 
-
+#
+# # trajectories_upsampled = [upsample_coords(t) for t in frames]
+# # trajectories_coords = np.column_stack(trajectories_upsampled)
+#
+# # choose a different color for each trajectory
+# colors = plt.cm.hsv(np.linspace(0, 1, N_trajectories))
+#
+# # set up lines and points
+# # each item in these lists is a separate list of points, one for each frame in the final animation
+# # this is redundant, but we'll only animate pre-computed data this way
+# # agent_trajectories = sum([ax.voxels([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
+# # agent_trajectories = sum([ax.plot([], [], [], '-', c=c, linewidth=LINE_WIDTH, alpha=0.2, label="agents")
+# #                           for c in colors], [])
+# # agent_tip = sum([ax.plot([], [], [], '*', c=c, markersize=10, alpha=0.5)  # leading edge of agents
+# #                  for c in colors], [])
+# # intersections = sum([ax.plot([], [], [], 'X', c="red", markersize=4, fillstyle='none', markeredgewidth=1,
+# #                              label="intersection")
+# #                      for i in range(N_trajectories)], [])
+#
+# # # plot legends
+# # handles, labels = plt.gca().get_legend_handles_labels()
+# # by_label = OrderedDict(zip(labels, handles))
+# # ax.legend(by_label.values(), by_label.keys())
+#
+#
+# # initialization function: plot the background of each frame
+# # def init():
+# #     for traj in agent_trajectories:
+# #     # for line, pt, inter in zip(agent_trajectories, agent_tip, intersections):
+# #         traj.set_data([], [])
+# #         traj.set_3d_properties([])
+# #         #
+# #         # pt.set_data([], [])
+# #         # pt.set_3d_properties([])
+# #         #
+# #         # inter.set_data([], [])
+# #         # inter.set_3d_properties([])
+# #     return agent_trajectories# + agent_tip
+#
+#
 # animation function.  This will be called sequentially with the frame number
 def animate(i, frames):
     # we'll step two time-steps per frame.  This leads to nice results.
@@ -272,7 +285,7 @@ def animate(i, frames):
 
     data = frames[i]
     x, y, z, filled, facecolors, edgecolor = prep_data_for_voxels(data)
-    ax.voxels(x,y,z,filled,facecolors=facecolors, edgecolors=edgecolor)
+    ax.voxels(filled,facecolors='#FF4C4C', edgecolors=edgecolor)
 
     # scores_per_trajectory = []
     #
@@ -311,9 +324,9 @@ def animate(i, frames):
         #                                              distance_upper_bound=INTERSECTION_LEEWAY)
         #
         # # strangely, points infinitely far away are somehow within the upper bound
-        # inf_mask = np.ma.masked_invalid(distances)
-        # masked_indexes = np.ma.masked_where(np.ma.getmask(inf_mask), close_indexes)
-        # masked_indexes = np.ma.compressed(np.unique(masked_indexes))  # deduplicate
+        # inf_mask = np.binary_matrix.masked_invalid(distances)
+        # masked_indexes = np.binary_matrix.masked_where(np.binary_matrix.getmask(inf_mask), close_indexes)
+        # masked_indexes = np.binary_matrix.compressed(np.unique(masked_indexes))  # deduplicate
         #
         # # plot ground truth that was activated
         # intersection_coords = targ_kdtree.data[masked_indexes]
@@ -325,10 +338,10 @@ def animate(i, frames):
         # # if very last point in trajectory crosses the target trajectory,
         # # give reward; else give penalty
         # distances, close_indexes = targ_kdtree.query(traj[i].T, distance_upper_bound=INTERSECTION_LEEWAY)
-        # inf_mask = np.ma.masked_invalid(distances)
-        # masked_indexes = np.ma.masked_where(np.ma.getmask(inf_mask),
+        # inf_mask = np.binary_matrix.masked_invalid(distances)
+        # masked_indexes = np.binary_matrix.masked_where(np.binary_matrix.getmask(inf_mask),
         #                                     close_indexes)
-        # masked_indexes = np.ma.compressed(
+        # masked_indexes = np.binary_matrix.compressed(
         #     np.unique(masked_indexes))  # deduplicate
         # intersection_coords = targ_kdtree.data[masked_indexes]
         #
@@ -339,9 +352,9 @@ def animate(i, frames):
         #
         # scoreboard.set_text("# Intersections: {}".format(sum(scores_per_trajectory)))
 
-    # # rotate the scene
-    # ax.view_init(30, 0.3 * i)
-    # fig.canvas.draw()
+    # rotate the scene
+    ax.view_init(30, 0.3 * i)
+    fig.canvas.draw()
     # return agent_trajectories# + agent_tip
 
 
@@ -363,4 +376,4 @@ if SAVE_VIDEO is True:
     #
     anim.save('/tmp/animation.gif', writer='imagemagick', fps=3)
 
-# plt.show()
+plt.show()

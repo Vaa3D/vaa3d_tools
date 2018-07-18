@@ -535,14 +535,15 @@ class Brain_Env(gym.Env):
 
         # take image, mask it w agent trajectory
         agent_trajectory = self.trajectory_to_branch()
-        agent_trajectory *= 1  # agent trajectories are negative
+        agent_trajectory *= 1  # agent frames are negative
         # paste agent trajectory ontop of original state, but only when vals are not 0
         agent_mask = agent_trajectory.astype(bool)
-        if np.any(agent_trajectory): # agent trajectory not empty
+        print("state b4 ", self._state)
+        if np.any(agent_trajectory):  # agent trajectory not empty
             print(self.original_state.dtype, agent_trajectory.dtype)
             self._state = np.copyto(self.original_state, agent_trajectory, where=agent_mask)
         # print("og", self.original_state)
-        # print(self._state)
+        print("state after ", self._state)
 
 
         # crop image data to update what network sees
