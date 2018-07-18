@@ -121,6 +121,7 @@ QStringList SWC2MaskPlugin::funclist() const
 {
     return QStringList()
             << tr("swc2mask")
+            << tr("swc2maskbb")
             << tr("help");
 }
 
@@ -265,6 +266,163 @@ bool SWC2MaskPlugin::dofunc(const QString &func_name, const V3DPluginArgList &in
             }
             if(inimg1d){delete [] inimg1d; inimg1d = 0;}
             //if(in_sz){delete [] in_sz; in_sz = 0;}
+        }
+        else
+        {
+            V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+            if(!simple_saveimage_wrapper(callback, outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
+            {
+                cerr<<"Unable to save image to file "<<outimg_file<<endl;
+                return false;
+            }
+        }
+        if(outimg1d){delete [] outimg1d; outimg1d = 0;}
+        return true;
+    }
+    else if(func_name == "swc2maskbb")
+    {
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        if(paras.size() != 0 && paras.size() != 6)
+        {
+            cout<<"./vaa3d -x swc2mask -f swc2maskbb -i input.swc -o output.tif -p xmin xmax ymin ymax zmin zmax"<<endl;
+            return false;
+        }
+
+        string inimg_file;
+        string inswc_file;
+        unsigned char * inimg1d = 0;
+        int datatype = 0;
+        V3DLONG in_sz[4];
+
+        V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
+
+        if(infiles.size() == 1)
+        {
+            inswc_file = infiles[0];
+            if(file_type(inswc_file) != ".swc")
+            {
+                cerr<<"Input is not swc file"<<endl;
+                return false;
+            }
+        }
+
+        vector<MyMarker*> inswc = readSWC_file(inswc_file);
+        string outimg_file = outfiles.empty() ? basename(inswc_file) + "_out.tif" : outfiles[0];
+        if(paras.empty())
+        {
+            MyMarker * marker = inswc[0];
+            V3DLONG x = marker->x + 0.5;
+            V3DLONG y = marker->y + 0.5;
+            V3DLONG z = marker->z + 0.5;
+            V3DLONG mx = x, my = y, mz = z, Mx = x, My = y, Mz = z;
+            V3DLONG margin = 0;
+            for(int i = 1; i < inswc.size(); i++)
+            {
+                marker = inswc[i];
+                x = marker->x + 0.5;
+                y = marker->y + 0.5;
+                z = marker->z + 0.5;
+                mx = MIN(x, mx);
+                my = MIN(y, my);
+                mz = MIN(z, mz);
+                Mx = MAX(x, Mx);
+                My = MAX(y, My);
+                Mz = MAX(z, Mz);
+                margin = MAX(margin, (V3DLONG)(marker->radius+0.5));
+            }
+            mx -= margin;
+            my -= margin;
+            mz -= margin;
+            Mx += margin;
+            My += margin;
+            Mz += margin;
+
+            cout<<"bounding box: "<<mx<<" "<<Mx<<" "<<my<<" "<<My<<" "<<mz<<" "<<Mz<<endl;
+
+            sz0 = Mx - mx + 1;
+            sz1 = My - my + 1;
+            sz2 = Mz - mz + 1;
+            for(int i = 0; i < inswc.size(); i++)
+            {
+                marker = inswc[i];
+                x = marker->x + 0.5;
+                y = marker->y + 0.5;
+                z = marker->z + 0.5;
+                marker->x = x - mx;
+                marker->y = y - my;
+                marker->z = z - mz;
+            }
+        }
+        else
+        {
+            V3DLONG mx, my, mz, Mx, My, Mz;
+            mx = atof(paras[0]);
+            Mx = atof(paras[1]);
+            my = atof(paras[2]);
+            My = atof(paras[3]);
+            mz = atof(paras[4]);
+            Mz = atof(paras[5]);
+
+            sz0 = Mx - mx + 1;
+            sz1 = My - my + 1;
+            sz2 = Mz - mz + 1;
+            MyMarker * marker;
+            for(int i = 0; i < inswc.size(); i++)
+            {
+                marker = inswc[i];
+                V3DLONG x = marker->x + 0.5;
+                V3DLONG y = marker->y + 0.5;
+                V3DLONG z = marker->z + 0.5;
+                marker->x = x - mx;
+                marker->y = y - my;
+                marker->z = z - mz;
+            }
+        }
+        cout<<"size : "<<sz0<<"x"<<sz1<<"x"<<sz2<<endl;
+
+        unsigned char * outimg1d = 0;
+        if(!swc2mask(outimg1d, inswc, sz0, sz1, sz2)) return false;
+        if(infiles.size() == 2)
+        {
+            V3DLONG tol_sz = sz0 * sz1 * sz2;
+            if(datatype == V3D_UINT8)
+            {
+                unsigned char * tmpimg1d = inimg1d;
+                for(V3DLONG i = 0; i < tol_sz; i++)
+                {
+                    tmpimg1d[i] = (outimg1d[i] > 0) ? tmpimg1d[i] : 0;
+                }
+            }
+            else if(datatype == V3D_UINT16)
+            {
+                unsigned short int * tmpimg1d = (unsigned short int *) inimg1d;
+                for(V3DLONG i = 0; i < tol_sz; i++)
+                {
+                    tmpimg1d[i] = (outimg1d[i] > 0) ? tmpimg1d[i] : 0;
+                }
+            }
+            else if(datatype == V3D_FLOAT32)
+            {
+                float * tmpimg1d = (float *) inimg1d;
+                for(V3DLONG i = 0; i < tol_sz; i++)
+                {
+                    tmpimg1d[i] = (outimg1d[i] > 0) ? tmpimg1d[i] : 0;
+                }
+            }
+            V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+            if(!simple_saveimage_wrapper(callback, outimg_file.c_str(), inimg1d, out_sz, datatype))
+            {
+                cerr<<"Unable to save image to file "<<outimg_file<<endl;
+                return false;
+            }
+            if(inimg1d){delete [] inimg1d; inimg1d = 0;}
         }
         else
         {

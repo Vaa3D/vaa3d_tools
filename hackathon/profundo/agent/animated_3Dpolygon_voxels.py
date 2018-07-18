@@ -60,10 +60,13 @@ def animate(i):
     x, y, z = np.indices((x_span, y_span, z_span)) - .5
     # filter for the ones
     positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
-    r = lambda: np.random.randint(0, 255)
-    random_colors = np.array(['#%02X%02X%02X%02X' % (r(), r(), r(), r()) for _ in enumerate(positions)])
-    pc = plotCubeAt(positions, colors=random_colors, edgecolor="k")
-    ax.add_collection3d(pc)
+    if len(positions) > 0:
+        r = lambda: np.random.randint(0, 255)
+        random_colors = np.array(['#%02X%02X%02X%02X' % (r(), r(), r(), r()) for _ in enumerate(positions)])
+        pc = plotCubeAt(positions, colors=random_colors, edgecolor="k")
+        ax.add_collection3d(pc)
+    ax.view_init(30, 0.3 * i)
+    fig.canvas.draw()
 
 
 anim = animation.FuncAnimation(fig, animate,
