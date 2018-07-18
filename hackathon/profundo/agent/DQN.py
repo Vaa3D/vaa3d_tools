@@ -43,7 +43,7 @@ from tensorpack import (PredictConfig, OfflinePredictor, get_model_loader,
 
 from data_processing.swc_io import get_fnames_and_abspath_from_dir
 from sklearn.model_selection import train_test_split
-
+LeakyRelu = tf.nn.leaky_relu
 ###############################################################################
 # import your data here
 data_dir = "../data/08_cube_npy"
@@ -78,13 +78,13 @@ EVAL_EPISODE = 50
 
 ###############################################################################
 
-def get_player(directory=None, files_list=None, viz=False,
-               train=False, saveGif=False, saveVideo=False):
+def get_player(directory=None, files_list= None, viz=False,
+               task=False, saveGif=False, saveVideo=False):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                    train=train, files_list=files_list, max_num_frames=1500)
-    if not train:
+                    task=task, files_list=files_list, max_num_frames=1500)
+    if (task != 'train'):
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
         # otherwise, FrameStack modifies self.step to save observations into a queue
@@ -106,9 +106,7 @@ class Model(DQNModel):
         # normalize image values to [0, 1]
         image = image / 255.0
 
-        # FIXME figure out this argscope leaky_relu is not a registered layer
-        with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):  # , \
-            # argscope(tf.nn.leaky_relu, alpha=0.01):
+        with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):
             # core layers of the network
             conv = (LinearWrap(image)
                     .Conv3D('conv0', out_channel=32,
@@ -157,7 +155,7 @@ def get_config():
     """This is only used during training."""
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
-        player=get_player(directory=data_dir, train=True,
+        player=get_player(directory=data_dir, task='train',
                           files_list=train_data_fpaths),
         state_shape=OBSERVATION_DIMS,
         batch_size=BATCH_SIZE,
@@ -242,12 +240,18 @@ if __name__ == '__main__':
             play_n_episodes(get_player(directory=data_dir,
                                        files_list=test_data_fpaths, viz=0.01,
                                        saveGif=args.saveGif,
-                                       saveVideo=args.saveVideo),
+                                       saveVideo=args.saveVideo,
+				       task='play'),
                             pred, num_validation_files)
         # run episodes in parallel and evaluate pretrained model
         elif args.task == 'eval':
-            eval_model_multithread(pred, EVAL_EPISODE, get_player)
-    else:  # train a model
+            play_n_episodes(get_player(directory=data_dir,
+                                       files_list=eval_list, viz=0.01,
+                                       saveGif=args.saveGif,
+                                       saveVideo=args.saveVideo,
+                                       task='eval'),
+                            pred, num_files)
+    else:  # train model
         logger.set_logger_dir(logger_dir)
         config = get_config()
         if args.load:  # resume training from a saved checkpoint

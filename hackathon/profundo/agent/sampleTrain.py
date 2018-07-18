@@ -4,7 +4,6 @@
 # Author: Amir Alansary <amiralansary@gmail.com>
 
 import warnings
-
 warnings.simplefilter("ignore", category=ResourceWarning)
 
 import numpy as np

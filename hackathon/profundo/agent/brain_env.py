@@ -60,7 +60,7 @@ class Brain_Env(gym.Env):
     Each time-step, the agent chooses an action, and the environment returns
     an observation and a reward."""
 
-    def __init__(self, directory=None, viz=False, train=False, files_list=None,
+    def __init__(self, directory=None, viz=False, task=False, files_list=None,
                  observation_dims=(27, 27, 27), multiscale=False,
                  max_num_frames=0, saveGif=False, saveVideo=False):
         """
@@ -114,7 +114,7 @@ class Brain_Env(gym.Env):
         self.saveGif = saveGif
         self.saveVideo = saveVideo
         # training flag
-        self.train = train
+        self.task = task
         # image dimension (2D/3D)
         self.observation_dims = observation_dims
         self.dims = len(self.observation_dims)
@@ -134,10 +134,7 @@ class Brain_Env(gym.Env):
         with _ALE_LOCK:
             self.rng = get_rng(self)
             # TODO: understand this viz setup
-        #     # visualization setup
-        #     if viz or saveGif or saveVideo:
-        #         from viewer import SimpleImageViewer as Viewer
-        #         self.viewer = Viewer(self.original_state)
+            # visualization setup
         #     if isinstance(viz, six.string_types):  # check if viz is a string
         #         assert os.path.isdir(viz), viz
         #         viz = 0
@@ -153,14 +150,23 @@ class Brain_Env(gym.Env):
         self.action_space = spaces.Discrete(6)  # change number actions here
         self.actions = self.action_space.n
         self.observation_space = spaces.Box(low=0, high=255,
-                                            shape=self.observation_dims)
+                                            shape=self.observation_dims,
+					    dtype=np.uint8)
         # history buffer for storing last locations to check oscilations
         self._history_length = max_num_frames
         # TODO initialize _observation_bounds limits from input image coordinates
         self._observation_bounds = ObservationBounds(0, 0, 0, 0, 0, 0)
         # add your data loader here
-        # self.files = filesListBrainMRLandmark(directory,files_list)
-        self.files = FilesListCubeNPY(directory, files_list)
+        # TODO: look into returnLandmarks
+        if self.task== 'play':
+            self.files = filesListBrainMRLandmark(directory,files_list,
+                                                  returnLandmarks=False)
+        else:
+            self.files = filesListBrainMRLandmark(directory,files_list,
+                                                  returnLandmarks=True)
+	self.files = FilesListCubeNPY(directory, files_list)
+
+        # self.files = filesListFetalUSLandmark(directory,files_list)
         # self.files = filesListCardioMRLandmark(directory,files_list)
         # prepare file sampler
         self.filepath = None
@@ -178,6 +184,7 @@ class Brain_Env(gym.Env):
         restart current episode
         """
         self.terminal = False
+        self.reward = 0
         self.cnt = 0  # counter to limit number of steps per episodes
         self.num_games.feed(1)
         self.current_episode_score.reset()  # reset the stat counter
@@ -272,6 +279,12 @@ class Brain_Env(gym.Env):
         self._qvalues = [0, ] * self.actions
         self._observation = self._observe()
         self.curr_IOU = 0.0
+
+        if self.task == 'play':
+            self.cur_IOU = 0.0
+        else:
+            self.cur_IOU = self.calc_IOU()
+
 
     def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
@@ -378,9 +391,9 @@ class Brain_Env(gym.Env):
         self.curr_IOU = self.calc_IOU()
 
         # punish -1 reward if the agent tries to go out
-
-        if go_out:
-            self.reward = -1
+	if (self.task!='play'):
+            if go_out:
+                self.reward = -1
         else:
             self.reward = self._calc_reward()  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
@@ -388,7 +401,7 @@ class Brain_Env(gym.Env):
         self._observation = self._observe()
 
         # terminate if the distance is less than 1 during trainig
-        if self.train:
+        if (self.task == 'train'):
             if self.curr_IOU <= 1:
                 self.terminal = True
                 self.num_success.feed(1)
@@ -398,7 +411,8 @@ class Brain_Env(gym.Env):
         if self.cnt >= self.max_num_frames: self.terminal = True
 
         # update history buffer with new location and qvalues
-
+	 if (self.task != 'play'):
+		self.curr_IOU = self.calc_IOU()
         self._update_history()
 
         # check if agent oscillates
@@ -406,7 +420,8 @@ class Brain_Env(gym.Env):
             # TODO: rewind history, recalculate IOU
             # self._location = self.get_best_node()  # TODO replace
             # self._observation = self._observe()
-            # self.curr_IOU = self.calc_IOU()
+	      # if (self.task != 'play'):
+           	 # self.curr_IOU = self.calc_IOU()
             # multi-scale steps
             # if self.multiscale:
             #     if self.xscale > 1:
@@ -429,7 +444,6 @@ class Brain_Env(gym.Env):
                 if isinstance(self.viz, float):
                     self.display()
 
-        # distance_error = self.curr_IOU
         self.current_episode_score.feed(self.reward)
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
@@ -532,13 +546,13 @@ class Brain_Env(gym.Env):
             screen_zmin = screen_zmax - len(np.arange(zmin, zmax, self.zscale))
         if xmax > self._image_dims[0]:
             xmax = self._image_dims[0]
-            screen_xmax = len(np.arange(xmin, xmax, self.xscale))
-        if ymax > self._image_dims[1]:
+            screen_xmax = screen_xmin + len(np.arange(xmin,xmax,self.xscale))
+        if ymax>self._image_dims[1]:
             ymax = self._image_dims[1]
-            screen_ymax = len(np.arange(ymin, ymax, self.yscale))
-        if zmax > self._image_dims[2]:
+            screen_ymax = screen_ymin + len(np.arange(ymin,ymax,self.yscale))
+        if zmax>self._image_dims[2]:
             zmax = self._image_dims[2]
-            screen_zmax = len(np.arange(zmin, zmax, self.zscale))
+            screen_zmax = screen_zmin + len(np.arange(zmin, zmax, self.zscale))
 
         # take image, mask it w agent trajectory
         agent_trajectory = self.trajectory_to_branch()
@@ -557,6 +571,7 @@ class Brain_Env(gym.Env):
         # crop image data to update what network sees
         # image coordinate system becomes screen coordinates
         # scale can be thought of as a stride
+	# TODO: check if we need to keep "stride" from upstream
         observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
                                                                                             xmin:xmax,
                                                                                             ymin:ymax,
@@ -588,6 +603,8 @@ class Brain_Env(gym.Env):
                 output_npy = output_npy / tiff_max
             return output_npy
 
+	def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
+		return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
 
 
 
@@ -654,11 +671,7 @@ class Brain_Env(gym.Env):
         # INTER_NEAREST, INTER_LINEAR, INTER_AREA, INTER_CUBIC, INTER_LANCZOS4
         # scale_x = 1
         # scale_y = 1
-        #
-        # img = cv2.resize(img,
-        #                  (int(scale_x*img.shape[1]),int(scale_y*img.shape[0])),
-        #                  interpolation=cv2.INTER_LINEAR)
-        # skip if there is a viewer open
+
         from viewer import SimpleImageViewer as Viewer
         from itertools import izip
         plotter = Viewer(self.original_state, izip(self._agent_nodes, self._IOU_history))
@@ -751,9 +764,10 @@ class FrameStack(gym.Wrapper):
         shp = env.observation_space.shape
         self._base_dim = len(shp)
         new_shape = shp + (k,)
-        self.observation_space = spaces.Box(low=0, high=255, shape=new_shape)
+        self.observation_space = spaces.Box(low=0, high=255, shape=new_shape,
+                                            dtype=np.uint8)
 
-    def _reset(self):
+    def reset(self):
         """Clear buffer and re-fill by duplicating the first observation."""
         ob = self.env.reset()
         for _ in range(self.k - 1):
