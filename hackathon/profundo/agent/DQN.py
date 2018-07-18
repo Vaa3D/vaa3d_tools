@@ -172,7 +172,7 @@ def get_config():
         # dataflow=expreplay,
         data=QueueInput(expreplay),
         model=Model(),
-        callbacks=[
+        callbacks=[  # TODO: periodically save videos
             ModelSaver(),
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),

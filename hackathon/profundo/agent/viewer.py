@@ -5,13 +5,17 @@
 
 import os
 import math
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from matplotlib import animation, cm
 
 
 
 class SimpleImageViewer(object):
-    ''' Simple image viewer class for rendering images using pyglet'''
 
-    def __init__(self, arr, scale_x=1, scale_y=1, filepath=None, display=None):
+    def __init__(self, original_state, scale_x=1, scale_y=1, filepath=None, display=None):
 
         self.isopen = False
         self.scale_x = scale_x
@@ -21,49 +25,40 @@ class SimpleImageViewer(object):
         self.filename = os.path.basename(filepath)
 
         # initialize window with the input image
-        height, width, channels = arr.shape
-        assert arr.shape == (height, width, 3), "You passed in an image with the wrong number shape"
-        self.window = pyglet.window.Window(width=scale_x*width,
-                                           height=scale_y*height,
-                                           caption=self.filename,
-                                           display=self.display,
-                                           resizable=True,
-                                           #fullscreen=True # ruins screen resolution
-                                           )
+        self.x_span, self.y_span, self.z_span = original_state.shape
+        self.x, self.y, self.z = np.indices((self.x_span, self.y_span, self.z_span)) - .5
+        assert original_state.shape == (self.x_span, self.y_span, 3), "You passed in an image with the wrong number shape"
+        self.fig, self.ax = self.__init_fig__()
 
-        ## set location
-        screen_width = self.window.display.get_default_screen().width
-        screen_height = self.window.display.get_default_screen().height
-        self.location_x = screen_width / 2 - 2* width
-        self.location_y = screen_height / 2 - 2* height
-        self.window.set_location((int)(self.location_x), (int)(self.location_y))
 
-        ## scale window size
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glScalef(scale_x, scale_y, 1.0)
-
-        self.img_width = width
-        self.img_height = height
         self.isopen = True
 
-        self.window_width, self.window_height = self.window.get_size()
 
-        # turn on transparency
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    def __init_fig__(self):
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.set_aspect('equal')
+        ax.axis('off')
+
+        ax.set_xlim([0, self.x_span])
+        ax.set_ylim([0, self.y_span])
+        ax.set_zlim([0, self.z_span])
+
+        return fig, ax
+
+
 
 
     def draw_image(self, arr):
-        # convert data typoe to GLubyte
-        rawData = (GLubyte * arr.size)(*list(arr.ravel().astype('int')))
-        image = pyglet.image.ImageData(self.img_width, self.img_height, 'RGB',
-                                       rawData, #arr.tostring(),
-                                       pitch=self.img_width * -3)
-        self.window.clear()
-        self.window.switch_to()
-        self.window.dispatch_events()
-        image.blit(0,0)
+        binary_grid = arr.astype(bool)
+        positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
+        r = lambda: np.random.randint(0, 255)
+        random_colors = np.array(['#%02X%02X%02X%02X' % (r(), r(), r(), r()) for _ in enumerate(positions)])
+
+        pc = self.plotCubeAt(positions, colors=random_colors, edgecolor="k")
+        self.ax.add_collection3d(pc)
+
 
 
     def draw_point(self,x=0.0,y=0.0,z=0.0):
@@ -155,5 +150,30 @@ class SimpleImageViewer(object):
         if self.isopen:
             self.window.close()
             self.isopen = False
+
     def __del__(self):
         self.close()
+
+    def _cuboid_data(self, position, size=(1, 1, 1)):
+        cube_corners = [[[0, 1, 0], [0, 0, 0], [1, 0, 0], [1, 1, 0]],
+             [[0, 0, 0], [0, 0, 1], [1, 0, 1], [1, 0, 0]],
+             [[1, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]],
+             [[0, 0, 1], [0, 0, 0], [0, 1, 0], [0, 1, 1]],
+             [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]],
+             [[0, 1, 1], [0, 0, 1], [1, 0, 1], [1, 1, 1]]]
+        cube_corners = np.array(cube_corners).astype(float)
+        # scale each dimension of cube_corners by size
+        for i in range(3):
+            cube_corners[:, :, i] *= size[i]
+        # translate cuboid to final position
+        cube_corners += np.array(position)
+        return cube_corners
+
+    def _plotCubeAt(self, positions, sizes=None, colors=None, **kwargs):
+        if not isinstance(colors, (list, np.ndarray)): colors = ["C0"] * len(positions)
+        if not isinstance(sizes, (list, np.ndarray)): sizes = [(1, 1, 1)] * len(positions)
+        g = []
+        for p, s, c in zip(positions, sizes, colors):
+            g.append(self._cuboid_data(p, size=s))
+        return Poly3DCollection(np.concatenate(g),
+                                facecolors=np.repeat(colors, 6, axis=0), **kwargs)

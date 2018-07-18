@@ -54,22 +54,30 @@ ax.set_xlim([0, x_span])
 ax.set_ylim([0, y_span])
 ax.set_zlim([0, z_span])
 
+def generate_positions():
+    while True:
+        binary_grid = np.random.choice([0, 1], size=(x_span, y_span, z_span), p=[0.995, 0.005])
+        positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
+        r = lambda: np.random.randint(0, 255)
+        random_colors = np.array(['#%02X%02X%02X%02X' % (r(), r(), r(), r()) for _ in enumerate(positions)])
+        yield positions, random_colors
+
+
 # animation function.  This will be called sequentially with the frame number
-def animate(i):
+def animate(i, data_gen):
     binary_grid = np.random.choice([0, 1], size=(x_span, y_span, z_span), p=[0.995, 0.005])
     x, y, z = np.indices((x_span, y_span, z_span)) - .5
     # filter for the ones
-    positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
+    positions, colors = next(data_gen)
     if len(positions) > 0:
-        r = lambda: np.random.randint(0, 255)
-        random_colors = np.array(['#%02X%02X%02X%02X' % (r(), r(), r(), r()) for _ in enumerate(positions)])
-        pc = plotCubeAt(positions, colors=random_colors, edgecolor="k")
+        pc = plotCubeAt(positions, colors=colors, edgecolor="k")
         ax.add_collection3d(pc)
     ax.view_init(30, 0.3 * i)
     fig.canvas.draw()
 
 
 anim = animation.FuncAnimation(fig, animate,
+                               fargs=[generate_positions()],
                                frames=TRAJECTORY_LEN,
                                interval=30)
 
