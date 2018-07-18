@@ -422,10 +422,10 @@ class Brain_Env(gym.Env):
             # if self.curr_IOU >= 0.9: self.num_success.feed(1)
 
         # render screen if viz is on
-        # with _ALE_LOCK:
-        #     if self.viz:
-        #         if isinstance(self.viz, float):
-        #             self.display()
+        with _ALE_LOCK:
+            if self.viz:
+                if isinstance(self.viz, float):
+                    self.display()
 
         # distance_error = self.curr_IOU
         self.current_episode_score.feed(self.reward)
@@ -471,10 +471,10 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         """ clear history buffer with current state
         """
-        self._agent_nodes = [(0,) * self.dims] * self._history_length
-        self._IOU_history = np.zeros(self._history_length)
+        self._agent_nodes = np.zeros((self._history_length, self.dims)) #[(0,) * self.dims] * self._history_length
+        self._IOU_history = np.zeros((self._history_length, 1))
         # list of q-value lists
-        self._qvalues_history = [(0,) * self.actions] * self._history_length
+        self._qvalues_history = np.zeros((self._history_length, self.actions)) #[(0,) * self.actions] * self._history_length
 
     def _update_history(self):
         """ update history buffer with current state
@@ -653,20 +653,23 @@ class Brain_Env(gym.Env):
         #                  (int(scale_x*img.shape[1]),int(scale_y*img.shape[0])),
         #                  interpolation=cv2.INTER_LINEAR)
         # skip if there is a viewer open
-
-        if (not self.viewer) and self.viz:
-            from viewer import SimpleImageViewer
-            self.viewer = SimpleImageViewer(arr=self._state,
-                                            scale_x=1,
-                                            scale_y=1,
-                                            filepath=self.filename)
-            self.gif_buffer = []
-
-
-        # render and wait (viz) time between frames
-        self.viewer.render()
-        # time.sleep(self.viz)
-        # save gif
+        from viewer import SimpleImageViewer as Viewer
+        from itertools import izip
+        plotter = Viewer(self.original_state, izip(self._agent_nodes, self._IOU_history))
+        #
+        # #
+        # # from viewer import SimpleImageViewer
+        # # self.viewer = SimpleImageViewer(self._state,
+        # #                                 scale_x=1,
+        # #                                 scale_y=1,
+        # #                                 filepath=self.filename)
+        #     self.gif_buffer = []
+        #
+        #
+        # # render and wait (viz) time between frames
+        # self.viewer.render()
+        # # time.sleep(self.viz)
+        # # save gif
         if self.saveGif:
             # TODO make this a method of viewer
             raise NotImplementedError
@@ -705,6 +708,8 @@ class Brain_Env(gym.Env):
             #                 '-vcodec', 'libx264', '-b:v', '2567k', self.filename + '.mp4']
             #     subprocess.check_output(save_cmd)
             #     shutil.rmtree(dirname, ignore_errors=True)
+        if self.viz:
+            plotter.show()
 
 
 # class DiscreteActionSpace(object):

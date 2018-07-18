@@ -60,6 +60,9 @@ class SimpleImageViewer(object):
                     duration=500,
                     quality=95)  # duration milliseconds
 
+    def show(self):
+        plt.show(block=False)
+
     def close(self):
         if self.isopen:
             plt.close()
@@ -93,6 +96,7 @@ class SimpleImageViewer(object):
                                 facecolors=np.repeat(colors, 6, axis=0), **kwargs)
 
     def _animate(self, i):
+        # TODO: translate IOU to colors
         positions, colors = next(self.data_generator)
         if len(positions) > 0:
             pc = self._plotCubeAt(positions, colors=colors, edgecolor="k")
