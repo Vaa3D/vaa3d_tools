@@ -40,7 +40,7 @@ from tensorpack.utils.stats import StatCounter
 
 from sampleTrain import FilesListCubeNPY
 from viewer import SimpleImageViewer as Viewer
-from sklearn.metrics import jaccard_similarity_score
+from jaccard import jaccard
 from data_processing.swc_io import save_branch_as_swc, swc_to_TIFF, TIFF_to_npy
 
 __all__ = ['Brain_Env', 'FrameStack']
@@ -257,11 +257,6 @@ class Brain_Env(gym.Env):
         self._observation = self._observe()
         self.curr_IOU = 0.0
 
-        if self.task == 'play':
-            self.curr_IOU = 0.0
-        else:
-            self.curr_IOU = self.calc_IOU()
-
     def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
         between two images
@@ -272,8 +267,16 @@ class Brain_Env(gym.Env):
         state = self._state.ravel()
         state[state != -1] = 0  # mask out non-agent trajectory
         state = state.astype(bool)  # everything non-zero = True
-        original_state = self.original_state.astype(bool)
-        iou = jaccard_similarity_score(state, original_state.ravel())
+        if not state.any():  # no agent trajectory
+            iou = 0.0
+        else:
+            original_state = self.original_state.ravel().astype(bool)
+            iou = jaccard(state, original_state)
+            # print("agent true ", sum(state), "original true ", sum(original_state), "iou ", iou)
+        # print("agent \n", state.shape)
+        # print("og \n", original_state.shape)
+        # np.save("agent", state)
+        # np.save("og", original_state)
         return iou
 
     def step(self, act, qvalues):
@@ -301,7 +304,7 @@ class Brain_Env(gym.Env):
             official evaluations of your agent are not allowed to use this for
             learning.
         """
-        print("step # ", self.cnt)
+        print("step # ", self.cnt, " of ", self.max_num_frames)
         self._qvalues = qvalues
         current_loc = self._location
         self.terminal = False
