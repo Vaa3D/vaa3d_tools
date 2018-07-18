@@ -258,9 +258,9 @@ class Brain_Env(gym.Env):
         self.curr_IOU = 0.0
 
         if self.task == 'play':
-            self.cur_IOU = 0.0
+            self.curr_IOU = 0.0
         else:
-            self.cur_IOU = self.calc_IOU()
+            self.curr_IOU = self.calc_IOU()
 
     def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
@@ -301,6 +301,7 @@ class Brain_Env(gym.Env):
             official evaluations of your agent are not allowed to use this for
             learning.
         """
+        print("step # ", self.cnt)
         self._qvalues = qvalues
         current_loc = self._location
         self.terminal = False
@@ -378,13 +379,16 @@ class Brain_Env(gym.Env):
 
         # terminate if the distance is less than 1 during trainig
         if (self.task == 'train'):
-            if self.curr_IOU <= 1:
+            if self.curr_IOU >= 0.9:
+                print("finishing episode, IOU = ", self.curr_IOU)
                 self.terminal = True
                 self.num_success.feed(1)
 
         # terminate if maximum number of steps is reached
         self.cnt += 1
-        if self.cnt >= self.max_num_frames: self.terminal = True
+        if self.cnt >= self.max_num_frames:
+            print("finishing episode, exceeded max_frames ", self.max_num_frames)
+            self.terminal = True
 
         # update history buffer with new location and qvalues
         if (self.task != 'play'):
@@ -544,7 +548,6 @@ class Brain_Env(gym.Env):
         """take location history, generate connected branches
         """
         locations = self._agent_nodes
-        print(type(locations))
         # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
         if not locations.any():  # if all zeros, evals to False
             return np.zeros_like(self.original_state)
@@ -655,29 +658,19 @@ class Brain_Env(gym.Env):
             #     self.viewer.saveGif(gifname, arr=self.gif_buffer,
             #                         duration=self.viz)
         if self.saveVideo:
-            # TODO make this a method of viewer
-            raise NotImplementedError
-            # dirname = 'tmp_video'
-            # if self.cnt <= 1:
-            #     if os.path.isdir(dirname):
-            #         logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
-            #         act = input("select action: d (delete) / q (quit): ").lower().strip()
-            #         if act == 'd':
-            #             shutil.rmtree(dirname, ignore_errors=True)
-            #         else:
-            #             raise OSError("Directory {} exits!".format(dirname))
-            #     os.mkdir(dirname)
-            #
-            # frame = dirname + '/' + '%04d' % self.cnt + '.png'
-            # pyglet.image.get_buffer_manager().get_color_buffer().save(frame)
-            # if self.terminal:
-            #     resolution = str(3 * self.viewer.img_width) + 'x' + str(3 * self.viewer.img_height)
-            #     save_cmd = ['ffmpeg', '-f', 'image2', '-framerate', '30',
-            #                 '-pattern_type', 'sequence', '-start_number', '0', '-r',
-            #                 '6', '-i', dirname + '/%04d.png', '-s', resolution,
-            #                 '-vcodec', 'libx264', '-b:v', '2567k', self.filename + '.mp4']
-            #     subprocess.check_output(save_cmd)
-            #     shutil.rmtree(dirname, ignore_errors=True)
+            dirname = 'tmp_video'
+            if self.cnt <= 1:
+                if os.path.isdir(dirname):
+                    logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
+                    act = input("select action: d (delete) / q (quit): ").lower().strip()
+                    if act == 'd':
+                        shutil.rmtree(dirname, ignore_errors=True)
+                    else:
+                        raise OSError("Directory {} exits!".format(dirname))
+                os.mkdir(dirname)
+
+            vid_fpath = dirname + '/' + '%04d' % self.cnt + '.png'
+            plotter.save_vid(vid_fpath, self.max_num_frames)
         if self.viz:
             plotter.show()
 
