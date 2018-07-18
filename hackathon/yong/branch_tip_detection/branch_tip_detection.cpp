@@ -26,7 +26,6 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
        nt.hashNeuron.insert(nt.listNeuron[i].n, i);
        //cout<<"i="<<i<<" "<<"nt.hashNeuron="<<nt.hashNeuron.size()<<" "<<"nt.listNeuron[i].n="<<nt.listNeuron[i].n<<" "<<"nt.listneuron[i].pn="<<nt.listNeuron[i].pn<<endl;
     }
-    //v3d_msg("check1");
 
     //getChildNum
     for (V3DLONG i=0; i<nt.listNeuron.size();i++)
@@ -35,7 +34,6 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
         childs[nt.hashNeuron.value(nt.listNeuron[i].pn)].push_back(i);
         //cout<<"i="<<i<<"nt.hashNeuron.value(nt.listNeuron[i].pn)="<<nt.hashNeuron.value(nt.listNeuron[i].pn)<<endl;
     }
-    //v3d_msg("check2");
 
     QList<NeuronSWC> branchpoints,tips;
     int child_num;
@@ -51,28 +49,49 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
             tips.push_back(cur);
     }
 
-    for(V3DLONG i=0;i<tips.size();i++)
-    {
-        NeuronSWC temp_tip =tips[i];
-        bool flag = false;
-        for(int n=0;n<8;n++)
-        {
-            for(V3DLONG k=0;k<branchpoints.size();k++)
-            {
-                if(temp_tip.pn==branchpoints[k].n)
-                   {
-                        tips.removeAt(i);
-                        branchpoints.removeAt(k);
-                        flag = true;
-                        break;
-                   }
-            }
-            if(flag)
-                break;
-            temp_tip=nt.listNeuron[temp_tip.pn];//  find his father
-        }
+    //method1:Remove nearer branch and tip points------------node numbers
+//    for(V3DLONG i=0;i<tips.size();i++)
+//    {
+//        NeuronSWC temp_tip =tips[i];
+//        bool flag = false;
+//        for(int n=0;n<5;n++)
+//        {
+//            for(V3DLONG k=0;k<branchpoints.size();k++)
+//            {
+//                if(temp_tip.pn==branchpoints[k].n)
+//                   {
+//                        tips.removeAt(i);
+//                        branchpoints.removeAt(k);
+//                        flag = true;
+//                        break;
+//                   }
+//            }
+//            if(flag)
+//                break;
+//            temp_tip=nt.listNeuron[temp_tip.pn];//  find his father
+//        }
 
+//    }
+
+    //method2:Remove nearer branch and tip points----------distance
+    bool ok;
+    V3DLONG thres;
+    thres = QInputDialog::getDouble(0, "Would you like to set a threshold for remove nearer branch and tip points?","threshold:(If you select 'cancel', the thres is 5)",0,0,2147483647,1,&ok);
+    if (!ok)
+        thres = 5;
+
+    for(V3DLONG i=0;i<branchpoints.size();i++)
+    {
+        for(V3DLONG j=0;j<tips.size();j++)
+        {
+            if(NTDIS(branchpoints[i],tips[j])<thres)
+            {
+                tips.removeAt(j);
+                branchpoints.removeAt(i);
+            }
+        }
     }
+
 
     cout<<"branchpoints="<<branchpoints.size()<<endl;
     cout<<"tips="<<tips.size()<<endl;
@@ -138,6 +157,7 @@ bool branch_tip_detection(V3DPluginCallback2 &callback,QList<NeuronSWC> & result
 //                                  50, 1, 1000, 1);
 
 
+    //create .apo and .ano file
     QList<CellAPO> branchpoint_inmarkers,tip_inmarkers;
     for(V3DLONG i = 0; i <branchpoints.size();i++)
     {
