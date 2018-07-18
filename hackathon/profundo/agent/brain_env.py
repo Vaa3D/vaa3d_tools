@@ -133,19 +133,20 @@ class Brain_Env(gym.Env):
 
         with _ALE_LOCK:
             self.rng = get_rng(self)
-            # visualization setup
-            if viz or saveGif or saveVideo:
-                from viewer import SimpleImageViewer as Viewer
-                self.viewer = Viewer(self.original_state)
-            if isinstance(viz, six.string_types):  # check if viz is a string
-                assert os.path.isdir(viz), viz
-                viz = 0
-            if isinstance(viz, int):
-                viz = float(viz)
+            # TODO: understand this viz setup
+        #     # visualization setup
+        #     if viz or saveGif or saveVideo:
+        #         from viewer import SimpleImageViewer as Viewer
+        #         self.viewer = Viewer(self.original_state)
+        #     if isinstance(viz, six.string_types):  # check if viz is a string
+        #         assert os.path.isdir(viz), viz
+        #         viz = 0
+        #     if isinstance(viz, int):
+        #         viz = float(viz)
             self.viz = viz
-            if self.viz and isinstance(self.viz, float):
-                self.viewer = None
-                self.gif_buffer = []
+        #     if self.viz and isinstance(self.viz, float):
+        #         self.viewer = None
+        #         self.gif_buffer = []
         # stat counter to store current score or accumlated reward
         self.current_episode_score = StatCounter()
         # get action space and minimal action set
@@ -228,11 +229,12 @@ class Brain_Env(gym.Env):
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
         if self.multiscale:
-            ## brain
-            self.action_step = 9
-            self.xscale = 3
-            self.yscale = 3
-            self.zscale = 3
+            raise NotImplementedError
+            # ## brain
+            # self.action_step = 9
+            # self.xscale = 3
+            # self.yscale = 3
+            # self.zscale = 3
             ## cardiac
             # self.action_step = 6
             # self.xscale = 2
@@ -252,7 +254,7 @@ class Brain_Env(gym.Env):
             skip_thickness = (int(self._image_dims[0] / 5),
                               int(self._image_dims[1] / 5),
                               int(self._image_dims[2] / 5))
-        else:
+        else:  # TODO: wtf why different skip thickness
             skip_thickness = (int(self._image_dims[0] / 4),
                               int(self._image_dims[1] / 4),
                               int(self._image_dims[2] / 4))
@@ -471,6 +473,7 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         """ clear history buffer with current state
         """
+        # TODO: double check these np arrays work in place of the lists
         self._agent_nodes = np.zeros((self._history_length, self.dims)) #[(0,) * self.dims] * self._history_length
         self._IOU_history = np.zeros((self._history_length, 1))
         # list of q-value lists
@@ -545,6 +548,7 @@ class Brain_Env(gym.Env):
         print("state b4 ", self._state)
         if np.any(agent_trajectory):  # agent trajectory not empty
             print(self.original_state.dtype, agent_trajectory.dtype)
+            print("nan check ", np.any(np.isnan(agent_trajectory)))
             self._state = np.copyto(self.original_state, agent_trajectory, where=agent_mask)
         # print("og", self.original_state)
         print("state after ", self._state)
@@ -570,7 +574,9 @@ class Brain_Env(gym.Env):
         """take location history, generate connected branches
         """
         locations = self._agent_nodes
-        if not locations:  # empty, skip pipeline
+        print(type(locations))
+        # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
+        if not locations.any():  # if all zeros, evals to False
             return np.zeros_like(self.original_state)
         else:
             output_swc = save_branch_as_swc(locations, "agent_trajectory", output_dir="tmp", overwrite=True)
