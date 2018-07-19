@@ -374,6 +374,7 @@ if SAVE_VIDEO is True:
     #           fps=15,
     #           extra_args=['-vcodec', 'libx264'])
     #
-    anim.save('/tmp/animation.gif', writer='imagemagick', fps=3)
+    # anim.save('/tmp/animation.gif', writer='imagemagick', fps=3)
+
 
 plt.show()

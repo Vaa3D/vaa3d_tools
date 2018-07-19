@@ -56,8 +56,9 @@ class SimpleImageViewer(object):
         """given a dense img grid, filter out blank voxels and plot cubes at filled voxels"""
         binary_grid = arr.astype(bool)
         positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
+        print("bg pos ", positions.shape, positions)
 
-        pc = self._plotCubeAt(positions, colors=colors, edgecolor="k")
+        pc = self._plotCubeAt(positions, colors=colors) #, edgecolor="k")
         self.ax.add_collection3d(pc)
 
     def save_vid(self, filename, num_frames):
@@ -145,7 +146,7 @@ class SimpleImageViewer(object):
             print("positions ", positions)
             pc = self._plotCubeAt(positions, colors=colors)  #, edgecolor="k")
             self.ax.add_collection3d(pc)
-        self.ax.view_init(30, 0.6 * self.counter)
+        self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
 
