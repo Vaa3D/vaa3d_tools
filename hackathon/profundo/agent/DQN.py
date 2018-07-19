@@ -74,6 +74,7 @@ STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
 EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
 EVAL_EPISODE = 50
+MAX_EPISODE_LENGTH = 5
 
 
 ###############################################################################
@@ -84,7 +85,7 @@ def get_player(directory=None, files_list= None, viz=False,
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                    task=task, files_list=files_list, max_num_frames=100)
+                    task=task, files_list=files_list, max_num_frames=MAX_EPISODE_LENGTH)
     if (task != 'train'):
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
