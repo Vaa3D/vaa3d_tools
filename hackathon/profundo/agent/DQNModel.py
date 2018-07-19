@@ -60,6 +60,7 @@ class Model3D(ModelDesc):
             return
 
         reward = tf.clip_by_value(reward, -1, 1)
+        # FIXME I think this is history buffer stuff
         next_state = tf.slice(state, [0, 0, 0, 0, 1], [-1, -1, -1, -1, self.channel], name='next_state')
         action_onehot = tf.one_hot(action, self.num_actions, 1.0, 0.0)
 
