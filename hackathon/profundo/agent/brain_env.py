@@ -304,7 +304,6 @@ class Brain_Env(gym.Env):
             official evaluations of your agent are not allowed to use this for
             learning.
         """
-        print("step # ", self.cnt, " of ", self.max_num_frames)
         self._qvalues = qvalues
         current_loc = self._location
         self.terminal = False
@@ -386,12 +385,14 @@ class Brain_Env(gym.Env):
                 print("finishing episode, IOU = ", self.curr_IOU)
                 self.terminal = True
                 self.num_success.feed(1)
+                self.display()
 
         # terminate if maximum number of steps is reached
         self.cnt += 1
-        if self.cnt >= self.max_num_frames:
-            print("finishing episode, exceeded max_frames ", self.max_num_frames)
+        if self.cnt >= self.max_num_frames-1:
+            print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
+            self.display()
 
         # update history buffer with new location and qvalues
         if (self.task != 'play'):
@@ -621,7 +622,7 @@ class Brain_Env(gym.Env):
         self.num_games = StatCounter()
         self.num_success = StatCounter()
 
-    def display(self, return_rgb_array=False):
+    def display(self):
         """this is called at every step"""
         current_point = self._location
         # img = cv2.cvtColor(plane, cv2.COLOR_GRAY2RGB)  # congvert to rgb
