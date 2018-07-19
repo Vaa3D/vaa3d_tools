@@ -46,6 +46,7 @@ from sklearn.model_selection import train_test_split
 LeakyRelu = tf.nn.leaky_relu
 ###############################################################################
 # import your data here
+# TODO: make dataflow for npy?
 data_dir = "../data/08_cube_npy"
 fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
 train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
@@ -74,18 +75,18 @@ STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
 EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
 EVAL_EPISODE = 50
-MAX_EPISODE_LENGTH = 200
+MAX_EPISODE_LENGTH = 100
 
 
 ###############################################################################
 
 # FIXME hard coded save video True
 def get_player(directory=None, files_list= None, viz=False,
-               task=False, saveGif=False, saveVideo=True):
+               task=False, saveGif=False, saveVideo=True, max_num_frames=0):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                    task=task, files_list=files_list, max_num_frames=MAX_EPISODE_LENGTH)
+                    task=task, files_list=files_list, max_num_frames=max_num_frames)
     if (task != 'train'):
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
@@ -96,7 +97,7 @@ def get_player(directory=None, files_list= None, viz=False,
 
 ###############################################################################
 
-class Model(DQNModel):
+class Model(DQNModel): # TODO why override DQN model here? why not keep in DQNModel.py?
     def __init__(self):
         super(Model, self).__init__(OBSERVATION_DIMS, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
 
@@ -158,7 +159,8 @@ def get_config():
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(directory=data_dir, task='train',
-                          files_list=train_data_fpaths),
+                          files_list=train_data_fpaths,
+                          max_num_frames=MAX_EPISODE_LENGTH),  # TODO: check if this is a good idea
         state_shape=OBSERVATION_DIMS,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
