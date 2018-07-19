@@ -61,8 +61,8 @@ class Brain_Env(gym.Env):
     an observation and a reward."""
 
     def __init__(self, directory=None, viz=False, task=False, files_list=None,
-                 observation_dims=(27, 27, 27), multiscale=False,
-                 max_num_frames=0, saveGif=False, saveVideo=False):
+                 observation_dims=(27, 27, 27), multiscale=False, # FIXME automatic dimensions
+                 max_num_frames=20, saveGif=False, saveVideo=False):  # FIXME hardcoded max num frames!
         """
         :param train_directory: environment or game name
         :param viz: visualization
@@ -77,6 +77,8 @@ class Brain_Env(gym.Env):
         :max_num_frames: maximum number of frames per episode.
         """
         super(Brain_Env, self).__init__()
+
+        print("warning! max num frames hard coded to {}!".format(max_num_frames), flush=True)
 
         # inits stat counters
         self.reset_stat()
@@ -149,6 +151,8 @@ class Brain_Env(gym.Env):
         self.filepath = None
         self.file_sampler = self.files.sample_circular()  # returns generator
         # reset buffer, terminal, counters, and init new_random_game
+        # we put this here so that init_player in DQN.py doesn't try to update_history
+        self._clear_history()  # init arrays
         self._restart_episode()
 
     def reset(self):
@@ -165,7 +169,6 @@ class Brain_Env(gym.Env):
         self.cnt = 0  # counter to limit number of steps per episodes
         self.num_games.feed(1)
         self.current_episode_score.reset()  # reset the stat counter
-        self._clear_history()
         self.new_random_game()
 
     def new_random_game(self):
@@ -178,36 +181,11 @@ class Brain_Env(gym.Env):
         """
         self.terminal = False
         self.viewer = None
-        # ######################################################################
-        # ## generate evaluation results from 19 different points
-        # if self.count_points ==0:
-        #     print('\n============== new game ===============\n')
-        #     # save results
-        #     if self.total_loc:
-        #         with open(self.csvfile, 'a') as outcsv:
-        #             fields= [self.filename, self.cur_dist]
-        #             writer = csv.writer(outcsv)
-        #             writer.writerow(map(lambda x: x, fields))
-        #         self.total_loc = []
-        #     # sample a new image
-        #     self._state, self._target_loc, self.filepath, self.spacing = next(self.sampled_files)
-        #     scale = next(self.start_points)
-        #     self.count_points +=1
-        # else:
-        #     self.count_points += 1
-        #     logger.info('count_points {}'.format(self.count_points))
-        #     scale = next(self.start_points)
-        #
-        # x = int(scale[0] * self._state.dims[0])
-        # y = int(scale[1] * self._state.dims[1])
-        # z = int(scale[2] * self._state.dims[2])
-        # logger.info('starting point {}-{}-{}'.format(x,y,z))
-        # ######################################################################
+
 
         # # sample a new image
         self.filepath, self.filename = next(self.file_sampler)
         self._state = np.load(self.filepath).astype(float)
-        # TODO: sanity checks for inputs
         self.original_state = np.copy(self._state)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
@@ -230,32 +208,36 @@ class Brain_Env(gym.Env):
             self.yscale = 1
             self.zscale = 1
         # image volume size
-        self._image_dims = np.shape(self._state)
+        self._state_dims = np.shape(self._state)
         #######################################################################
         ## select random starting point
         # add padding to avoid start right on the border of the image
         if (self.task == 'train'):
-            skip_thickness = (int(self._image_dims[0] / 5),
-                              int(self._image_dims[1] / 5),
-                              int(self._image_dims[2] / 5))
+            skip_thickness = (int(self._state_dims[0] / 5),
+                              int(self._state_dims[1] / 5),
+                              int(self._state_dims[2] / 5))
         else:  # TODO: wtf why different skip thickness
-            skip_thickness = (int(self._image_dims[0] / 4),
-                              int(self._image_dims[1] / 4),
-                              int(self._image_dims[2] / 4))
+            skip_thickness = (int(self._state_dims[0] / 4),
+                              int(self._state_dims[1] / 4),
+                              int(self._state_dims[2] / 4))
 
+        # randomly select the starting coords
         x = self.rng.randint(0 + skip_thickness[0],
-                             self._image_dims[0] - skip_thickness[0])
+                             self._state_dims[0] - skip_thickness[0])
         y = self.rng.randint(0 + skip_thickness[1],
-                             self._image_dims[1] - skip_thickness[1])
+                             self._state_dims[1] - skip_thickness[1])
         z = self.rng.randint(0 + skip_thickness[2],
-                             self._image_dims[2] - skip_thickness[2])
+                             self._state_dims[2] - skip_thickness[2])
         #######################################################################
 
-        self._location = (x, y, z)
-        self._start_location = (x, y, z)
-        self._qvalues = [0, ] * self.actions
+        self._location = np.array([x, y, z])
+        self._start_location = np.array([x, y, z])
+        self._qvalues = np.zeros(self.actions)
         self._observation = self._observe()
         self.curr_IOU = 0.0
+        self._update_history()
+        # we've finished iteration 0. now, step begins with cnt = 1
+        self.cnt += 1
 
     def calc_IOU(self):
         """ calculate the Intersection over Union AKA Jaccard Index
@@ -309,75 +291,49 @@ class Brain_Env(gym.Env):
         self.terminal = False
         go_out = False
 
+
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
-            next_location = (current_loc[0],
-                             current_loc[1],
-                             round(current_loc[2] + self.action_step))
-            if (next_location[2] >= self._image_dims[2]):
-                # print(' trying to go out the image Z+ ',)
-                next_location = current_loc
-                go_out = True
-
+            proposed_location = current_loc + np.array([0,0,1])*self.action_step
         # FORWARD Y+ ---------------------------------------------------------
-        if (act == 1):
-            next_location = (current_loc[0],
-                             round(current_loc[1] + self.action_step),
-                             current_loc[2])
-            if (next_location[1] >= self._image_dims[1]):
-                # print(' trying to go out the image Y+ ',)
-                next_location = current_loc
-                go_out = True
+        elif (act == 1):
+            proposed_location = current_loc + np.array([0, 1, 0]) * self.action_step
         # RIGHT X+ -----------------------------------------------------------
-        if (act == 2):
-            next_location = (round(current_loc[0] + self.action_step),
-                             current_loc[1],
-                             current_loc[2])
-            if next_location[0] >= self._image_dims[0]:
-                # print(' trying to go out the image X+ ',)
-                next_location = current_loc
-                go_out = True
+        elif (act == 2):
+            proposed_location = current_loc + np.array([1, 0, 0]) * self.action_step
         # LEFT X- -----------------------------------------------------------
-        if act == 3:
-            next_location = (round(current_loc[0] - self.action_step),
-                             current_loc[1],
-                             current_loc[2])
-            if next_location[0] <= 0:
-                # print(' trying to go out the image X- ',)
-                next_location = current_loc
-                go_out = True
+        elif act == 3:
+            proposed_location = current_loc + np.array([-1, 0, 0]) * self.action_step
         # BACKWARD Y- ---------------------------------------------------------
-        if act == 4:
-            next_location = (current_loc[0],
-                             round(current_loc[1] - self.action_step),
-                             current_loc[2])
-            if next_location[1] <= 0:
-                # print(' trying to go out the image Y- ',)
-                next_location = current_loc
-                go_out = True
+        elif act == 4:
+            proposed_location = current_loc + np.array([0, -1, 0]) * self.action_step
         # DOWN Z- -----------------------------------------------------------
-        if act == 5:
-            next_location = (current_loc[0],
-                             current_loc[1],
-                             round(current_loc[2] - self.action_step))
-            if next_location[2] <= 0:
-                # print(' trying to go out the image Z- ',)
-                next_location = current_loc
-                go_out = True
-        # ---------------------------------------------------------------------
-        # ---------------------------------------------------------------------
-        # calc intercept over union
-        self.curr_IOU = self.calc_IOU()
+        elif act == 5:
+            proposed_location = current_loc + np.array([0, 0, -1]) * self.action_step
+        else:
+            raise ValueError
+
+        # print("action ", act, "loc ", self._location, "proposed ", proposed_location, "diff ", proposed_location-self._location)
+
+        if self._is_in_bounds(proposed_location):
+            self._location = proposed_location
+            # only update state, iou if we've changed location
+            self._observation = self._observe()
+            self.curr_IOU = self.calc_IOU()
+        else:  # went out of bounds
+            # do not update current_loc
+            go_out = True
+
 
         # punish -1 reward if the agent tries to go out
-        if (self.task != 'play'):
+        if (self.task != 'play'):  # TODO: why is this necessary?
             if go_out:
                 self.reward = -1
         else:
             self.reward = self._calc_reward()  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
-        self._location = next_location
-        self._observation = self._observe()
+        self._update_history()
+
 
         # terminate if the distance is less than 1 during trainig
         if (self.task == 'train'):
@@ -388,7 +344,7 @@ class Brain_Env(gym.Env):
                 self.display()
 
         # terminate if maximum number of steps is reached
-        self.cnt += 1
+
         if self.cnt >= self.max_num_frames-1:
             print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
@@ -398,7 +354,7 @@ class Brain_Env(gym.Env):
         if (self.task != 'play'):
             self.curr_IOU = self.calc_IOU()
 
-        self._update_history()
+
 
         # check if agent oscillates
         # if self._oscillate:
@@ -430,6 +386,7 @@ class Brain_Env(gym.Env):
         #             self.display()
 
         self.current_episode_score.feed(self.reward)
+        self.cnt += 1
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
                 'filename': self.filename}
@@ -464,6 +421,7 @@ class Brain_Env(gym.Env):
     def _update_history(self):
         """ update history buffer with current state
         """
+        # TODO: add reward history?
         # update location history
         self._agent_nodes[self.cnt] = self._location
         # update jaccard index history
@@ -512,14 +470,14 @@ class Brain_Env(gym.Env):
         if zmin < 0:
             zmin = 0
             screen_zmin = screen_zmax - len(np.arange(zmin, zmax, self.zscale))
-        if xmax > self._image_dims[0]:
-            xmax = self._image_dims[0]
+        if xmax > self._state_dims[0]:
+            xmax = self._state_dims[0]
             screen_xmax = screen_xmin + len(np.arange(xmin, xmax, self.xscale))
-        if ymax > self._image_dims[1]:
-            ymax = self._image_dims[1]
+        if ymax > self._state_dims[1]:
+            ymax = self._state_dims[1]
             screen_ymax = screen_ymin + len(np.arange(ymin, ymax, self.yscale))
-        if zmax > self._image_dims[2]:
-            zmax = self._image_dims[2]
+        if zmax > self._state_dims[2]:
+            zmax = self._state_dims[2]
             screen_zmax = screen_zmin + len(np.arange(zmin, zmax, self.zscale))
 
         # take image, mask it w agent trajectory
@@ -575,6 +533,13 @@ class Brain_Env(gym.Env):
         # TODO, double check if indexes are correct
         IOU_difference = self.curr_IOU - self._IOU_history[self.cnt - 1]
         return IOU_difference
+
+    def _is_in_bounds(self, coords):
+        x, y, z = coords
+        bounds = self._observation_bounds
+        return ((bounds.xmin <= x <= bounds.xmax - 1 and
+                 bounds.ymin <= y <= bounds.ymax - 1 and
+                 bounds.zmin <= z <= bounds.zmax - 1))
 
     @property
     def _oscillate(self):
@@ -677,6 +642,7 @@ class Brain_Env(gym.Env):
             vid_fpath = self.filename + '.mp4'
             # vid_fpath = dirname + '/' + self.filename + '.mp4'
             plotter.save_vid(vid_fpath, self.max_num_frames-1)
+
         if self.viz:
             plotter.show()
 
