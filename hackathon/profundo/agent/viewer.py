@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib import animation, cm
+plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
 
 
 class SimpleImageViewer(object):
@@ -30,8 +31,12 @@ class SimpleImageViewer(object):
 
         self.fig, self.ax = self.__init_fig__()
 
-        self.draw_image(original_state)
+        light_gray = [0, 0, 0, 0.5]  # RGBA tuple
+        self.draw_image(original_state, colors=light_gray)
+        # FIXME use generator instead of converting to list
+
         self.data = [list(a) for a in data_generator]
+        # print("anim data ", self.data)
 
         self.isopen = True
 
@@ -48,6 +53,7 @@ class SimpleImageViewer(object):
         return fig, ax
 
     def draw_image(self, arr, colors=None):
+        """given a dense img grid, filter out blank voxels and plot cubes at filled voxels"""
         binary_grid = arr.astype(bool)
         positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
 
@@ -58,11 +64,11 @@ class SimpleImageViewer(object):
         dir_name, filename = os.path.split(filename)
         # if not os.path.exists(dir_name):
         #     os.mkdir(dir_name)
-        print("saving video {}".format(filename), flush=True)
+        # print("saving video {}".format(filename), flush=True)
         if not hasattr(self, 'anim'):  # we haven't animated yet
             self.render_animation(num_frames)
         self.anim.save(filename,
-                  fps=1,  # 15
+                  fps=15,
                   extra_args=['-vcodec', 'libx264'])
 
     def saveGif(self, filename=None, arr=None, duration=0):
@@ -99,21 +105,47 @@ class SimpleImageViewer(object):
         return cube_corners
 
     def _plotCubeAt(self, positions, sizes=None, colors=None, **kwargs):
-        if not isinstance(colors, (list, np.ndarray)): colors = ["C0"] * len(positions)
-        if not isinstance(sizes, (list, np.ndarray)): sizes = [(1, 1, 1)] * len(positions)
+        if not isinstance(colors, (list, np.ndarray)):
+            # print("overriding colors ", type(colors), colors)
+            colors = [(0, 0, 1, 1)] * len(positions)
+        if not isinstance(sizes, (list, np.ndarray)):
+            sizes = [(1, 1, 1)] * len(positions)
+
+        try:
+            # colors[:, :, :, -1] = colors[:, :, :, -1] / 3
+            colors[:, -1] /= 5
+            colors = colors[0]
+        except TypeError:  # colors is list of tuples
+           colors[-1] /= 3  # reduce alpha
+        except IndexError:  # mising alpha vals
+            # print("index before ", colors.shape)
+            alpha_col = np.repeat(0.3, len(colors))[np.newaxis].T
+            colors = np.hstack((colors, alpha_col))
+
+        if len(colors) != len(positions):
+            colors = [tuple(colors)] * len(positions)
+
+        # print("colors shape ", type(colors), colors)
+
         g = []
-        for p, s, c in zip(positions, sizes, colors):
-            g.append(self._cuboid_data(p, size=s))
+        for pos, size, colr in zip(positions, sizes, colors):
+            g.append(self._cuboid_data(pos, size=size))
+
+        # there are 6 faces to a cube
         return Poly3DCollection(np.concatenate(g),
                                 facecolors=np.repeat(colors, 6, axis=0), **kwargs)
 
     def _animate(self, i):
+        """given a list of new positions at a given timestep, plot those positions"""
         positions, iou = self.data[i]
         colors = cm.RdBu(iou)  # map val to colormap
         if len(positions) > 0:
-            pc = self._plotCubeAt(positions, colors=colors, edgecolor="k")
+            # print("animating ")
+            # print("colors = ", colors)
+            print("positions ", positions)
+            pc = self._plotCubeAt(positions, colors=colors)  #, edgecolor="k")
             self.ax.add_collection3d(pc)
-        self.ax.view_init(30, 0.3 * self.counter)
+        self.ax.view_init(30, 0.6 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
 
@@ -122,7 +154,7 @@ class SimpleImageViewer(object):
         self.anim = animation.FuncAnimation(self.fig, self._animate,
                                        frames=num_frames,
                                             # frames=self.data_generator,
-                                       interval=1,
+                                       interval=30,
                                        repeat = False)
-        print("rendering")
+        # print("rendering")
 
