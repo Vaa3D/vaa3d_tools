@@ -15,7 +15,7 @@ from matplotlib import animation, cm
 class SimpleImageViewer(object):
 
     def __init__(self, original_state, data_generator, scale_x=1, scale_y=1, filepath=None, display=None):
-
+        self.counter = 0
         self.isopen = False
         self.scale_x = scale_x
         self.scale_y = scale_y
@@ -31,7 +31,7 @@ class SimpleImageViewer(object):
         self.fig, self.ax = self.__init_fig__()
 
         self.draw_image(original_state)
-        self.data_generator = data_generator
+        self.data = [list(a) for a in data_generator]
 
         self.isopen = True
 
@@ -55,11 +55,14 @@ class SimpleImageViewer(object):
         self.ax.add_collection3d(pc)
 
     def save_vid(self, filename, num_frames):
+        dir_name, filename = os.path.split(filename)
+        # if not os.path.exists(dir_name):
+        #     os.mkdir(dir_name)
         print("saving video {}".format(filename), flush=True)
-        if not hasattr(self, 'anim'):
+        if not hasattr(self, 'anim'):  # we haven't animated yet
             self.render_animation(num_frames)
-        self.anim.save('filename',
-                  fps=15,
+        self.anim.save(filename,
+                  fps=1,  # 15
                   extra_args=['-vcodec', 'libx264'])
 
     def saveGif(self, filename=None, arr=None, duration=0):
@@ -105,18 +108,21 @@ class SimpleImageViewer(object):
                                 facecolors=np.repeat(colors, 6, axis=0), **kwargs)
 
     def _animate(self, i):
-        # TODO: translate IOU to colors
-        positions, iou = next(self.data_generator)
+        positions, iou = self.data[i]
         colors = cm.RdBu(iou)  # map val to colormap
         if len(positions) > 0:
             pc = self._plotCubeAt(positions, colors=colors, edgecolor="k")
             self.ax.add_collection3d(pc)
-        self.ax.view_init(30, 0.3 * i)
+        self.ax.view_init(30, 0.3 * self.counter)
         self.fig.canvas.draw()
+        self.counter += 1
 
     def render_animation(self, num_frames):
         # instantiate the animator.
         self.anim = animation.FuncAnimation(self.fig, self._animate,
                                        frames=num_frames,
-                                       interval=30)
+                                            # frames=self.data_generator,
+                                       interval=1,
+                                       repeat = False)
+        print("rendering")
 
