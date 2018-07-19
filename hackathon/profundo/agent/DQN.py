@@ -74,7 +74,7 @@ STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
 EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
 EVAL_EPISODE = 50
-MAX_EPISODE_LENGTH = 5
+MAX_EPISODE_LENGTH = 200
 
 
 ###############################################################################
