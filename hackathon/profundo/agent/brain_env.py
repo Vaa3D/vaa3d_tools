@@ -291,7 +291,6 @@ class Brain_Env(gym.Env):
         self.terminal = False
         go_out = False
 
-
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
             proposed_location = current_loc + np.array([0,0,1])*self.action_step
@@ -598,7 +597,8 @@ class Brain_Env(gym.Env):
 
         # print("nodes ", self._agent_nodes)
         # print("ious", self._IOU_history)
-        plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history))
+        plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history),
+                         filepath=self.filename)
         #
         # #
         # # from viewer import SimpleImageViewer
@@ -628,7 +628,7 @@ class Brain_Env(gym.Env):
             #     self.viewer.saveGif(gifname, arr=self.gif_buffer,
             #                         duration=self.viz)
         if self.saveVideo:
-            # dirname = 'tmp_video'
+            dirname = 'tmp_video'
             # if self.cnt <= 1:
             #     if os.path.isdir(dirname):
             #         logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
@@ -642,6 +642,7 @@ class Brain_Env(gym.Env):
             vid_fpath = self.filename + '.mp4'
             # vid_fpath = dirname + '/' + self.filename + '.mp4'
             plotter.save_vid(vid_fpath, self.max_num_frames-1)
+            # plotter.show_agent()
 
         if self.viz:
             plotter.show()
@@ -681,6 +682,7 @@ class FrameStack(gym.Wrapper):
         shp = env.observation_space.shape
         self._base_dim = len(shp)
         new_shape = shp + (k,)
+        # fixme observation bounds
         self.observation_space = spaces.Box(low=0, high=255, shape=new_shape,
                                             dtype=np.uint8)
 
