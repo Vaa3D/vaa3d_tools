@@ -631,7 +631,8 @@ class Brain_Env(gym.Env):
         # scale_x = 1
         # scale_y = 1
 
-
+        # print("nodes ", self._agent_nodes)
+        # print("ious", self._IOU_history)
         plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history))
         #
         # #
@@ -662,19 +663,20 @@ class Brain_Env(gym.Env):
             #     self.viewer.saveGif(gifname, arr=self.gif_buffer,
             #                         duration=self.viz)
         if self.saveVideo:
-            dirname = 'tmp_video'
-            if self.cnt <= 1:
-                if os.path.isdir(dirname):
-                    logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
-                    act = input("select action: d (delete) / q (quit): ").lower().strip()
-                    if act == 'd':
-                        shutil.rmtree(dirname, ignore_errors=True)
-                    else:
-                        raise OSError("Directory {} exits!".format(dirname))
-                os.mkdir(dirname)
+            # dirname = 'tmp_video'
+            # if self.cnt <= 1:
+            #     if os.path.isdir(dirname):
+            #         logger.warn("""Log directory {} exists! Use 'd' to delete it. """.format(dirname))
+            #         act = input("select action: d (delete) / q (quit): ").lower().strip()
+            #         if act == 'd':
+            #             shutil.rmtree(dirname, ignore_errors=True)
+            #         else:
+            #             raise OSError("Directory {} exits!".format(dirname))
+            #     os.mkdir(dirname)
 
-            vid_fpath = dirname + '/' + '%04d' % self.cnt + '.png'
-            plotter.save_vid(vid_fpath, self.max_num_frames)
+            vid_fpath = self.filename + '.mp4'
+            # vid_fpath = dirname + '/' + self.filename + '.mp4'
+            plotter.save_vid(vid_fpath, self.max_num_frames-1)
         if self.viz:
             plotter.show()
 
