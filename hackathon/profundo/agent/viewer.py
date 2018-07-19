@@ -106,7 +106,8 @@ class SimpleImageViewer(object):
 
     def _animate(self, i):
         # TODO: translate IOU to colors
-        positions, colors = next(self.data_generator)
+        positions, iou = next(self.data_generator)
+        colors = cm.RdBu(iou)  # map val to colormap
         if len(positions) > 0:
             pc = self._plotCubeAt(positions, colors=colors, edgecolor="k")
             self.ax.add_collection3d(pc)
@@ -116,7 +117,6 @@ class SimpleImageViewer(object):
     def render_animation(self, num_frames):
         # instantiate the animator.
         self.anim = animation.FuncAnimation(self.fig, self._animate,
-                                       fargs=[self.data_generator()],
                                        frames=num_frames,
                                        interval=30)
 
