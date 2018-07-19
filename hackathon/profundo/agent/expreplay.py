@@ -206,11 +206,13 @@ class ExpReplay(DataFlow, Callback):
         # initialize q_values to zeros
         q_values = [0, ] * self.num_actions
 
+        # TODO no longer need history len, right?
         if self.rng.rand() <= self.exploration or (len(self.mem) <= self.history_len):
             act = self.rng.choice(range(self.num_actions))
         else:
             # build a history state
-            history = self.mem.recent_state()
+            #TODO we don't need history anymore, right?
+            # history = self.mem.recent_state()
             history.append(old_s)
             if np.ndim(history) == 4:  # 3d states
                 history = np.stack(history, axis=3)
@@ -221,7 +223,13 @@ class ExpReplay(DataFlow, Callback):
                 # assume batched network - this is the bottleneck
                 q_values = self.predictor(history[None, :, :, :])[0][0]
 
-            act = np.argmax(q_values)
+
+            if np.all(np.isclose(q_values, q_values[0])):  # all q vals same, pick random
+                act = np.random.choice(q_values)
+            else:
+                # In case of multiple occurrences of the maximum values,
+                # the indices corresponding to the first occurrence are /always/ returned (bad
+                act = np.argmax(q_values)
 
         self._current_ob, reward, isOver, info = self.player.step(act, q_values)
 

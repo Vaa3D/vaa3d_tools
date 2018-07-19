@@ -34,7 +34,12 @@ def play_one_episode(env, func, render=False):
         """
         # pick action with best predicted Q-value
         q_values = func(s[None, :, :, :])[0][0]
-        act = q_values.argmax()
+        if np.all(np.isclose(q_values, q_values[0])):  # all q vals same, pick random
+            act = np.random.choice(q_values)
+        else:
+            # In case of multiple occurrences of the maximum values,
+            # the indices corresponding to the first occurrence are /always/ returned (bad
+            act = np.argmax(q_values)
 
         # eps greedy disabled
         # if random.random() < 0.001:
