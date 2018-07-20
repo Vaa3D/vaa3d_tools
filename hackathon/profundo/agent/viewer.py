@@ -10,33 +10,51 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib import animation, cm
+
 plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
 
 
 class SimpleImageViewer(object):
-
-    def __init__(self, original_state, data_generator, scale_x=1, scale_y=1, filepath=None, display=None):
+    # TODO multiprocess https://stackoverflow.com/a/4662511/4212158
+    # TODO https://matplotlib.org/gallery/misc/multiprocess_sgskip.html
+    def __init__(self, original_state, data_generator, filepath=None, display=None):
         self.counter = 0
         self.isopen = False
-        self.scale_x = scale_x
-        self.scale_y = scale_y
         self.display = display
         if filepath:
             self.filepath = filepath
             self.filename = os.path.basename(filepath)
 
         # initialize window with the input image
+        assert np.allclose(original_state.shape, original_state.shape[0])
         self.x_span, self.y_span, self.z_span = original_state.shape
+
+        # TODO: understand why -0.5
         self.x, self.y, self.z = np.indices((self.x_span, self.y_span, self.z_span)) - .5
 
         self.fig, self.ax = self.__init_fig__()
 
-        light_gray = [0, 0, 0, 0.5]  # RGBA tuple
+        light_gray = [0, 0, 0, 0.3]  # RGBA tuple
         self.draw_image(original_state, colors=light_gray)
         # FIXME use generator instead of converting to list
 
         self.data = [list(a) for a in data_generator]
-        # print("anim data ", self.data)
+
+        xs = []
+        ys = []
+        zs = []
+        for pos, _ in self.data:
+            for x, y, z in np.nditer(pos, flags=['external_loop']):
+                xs.append(x)
+                ys.append(y)
+                zs.append(z)
+        print("xs =", xs)
+        print("ys =", ys)
+        print("zs =", zs)
+        self.ax.scatter(xs, ys,zs)
+        self.fig.savefig(str(np.random.randint(100,10000))+".png")
+        self.fig, self.ax = self.__init_fig__()
+
 
         self.isopen = True
 
@@ -54,11 +72,12 @@ class SimpleImageViewer(object):
 
     def draw_image(self, arr, colors=None):
         """given a dense img grid, filter out blank voxels and plot cubes at filled voxels"""
+        # print("bg arr shape ", arr.shape)
         binary_grid = arr.astype(bool)
         positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
-        print("bg pos ", positions.shape, positions)
+        # print("bg pos ", positions.shape, positions)
 
-        pc = self._plotCubeAt(positions, colors=colors) #, edgecolor="k")
+        pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
         self.ax.add_collection3d(pc)
 
     def save_vid(self, filename, num_frames):
@@ -68,9 +87,12 @@ class SimpleImageViewer(object):
         # print("saving video {}".format(filename), flush=True)
         if not hasattr(self, 'anim'):  # we haven't animated yet
             self.render_animation(num_frames)
-        self.anim.save(filename,
-                  fps=15,
-                  extra_args=['-vcodec', 'libx264'])
+        FFwriter = animation.FFMpegWriter(fps=15,
+                       extra_args=['-vcodec', 'libx264'])
+        self.anim.save(filename, writer=FFwriter)
+        # self.anim.save(filename,
+        #           fps=15,
+        #           extra_args=['-vcodec', 'libx264'])
 
     def saveGif(self, filename=None, arr=None, duration=0):
         arr[0].save(filename, save_all=True,
@@ -79,8 +101,28 @@ class SimpleImageViewer(object):
                     quality=95)  # duration milliseconds
 
     def show(self):
-        plt.show()
-        # plt.show(block=False)
+        plt.show(block=False)
+    #
+    # def show_agent(self):
+    #     fig1 = plt.figure()
+    #     ax = fig1.add_subplot(111, projection='3d')
+    #     ax.relim()
+    #     ax.autoscale()
+    #
+    #     # print("dat ", self.data)
+    #
+    #     xs = []
+    #     ys = []
+    #     zs = []
+    #     for pos, _ in self.data:
+    #         for x, y, z in np.nditer(pos, flags=['external_loop']):
+    #             xs.append(x)
+    #             ys.append(y)
+    #             zs.append(z)
+    #
+    #     print("zs ", zs)
+    #     plt.scatter(xs, ys, zs)
+    #     plt.show()
 
     def close(self):
         if self.isopen:
@@ -117,7 +159,7 @@ class SimpleImageViewer(object):
             colors[:, -1] /= 5
             colors = colors[0]
         except TypeError:  # colors is list of tuples
-           colors[-1] /= 3  # reduce alpha
+            colors[-1] /= 5  # reduce alpha
         except IndexError:  # mising alpha vals
             # print("index before ", colors.shape)
             alpha_col = np.repeat(0.3, len(colors))[np.newaxis].T
@@ -130,6 +172,7 @@ class SimpleImageViewer(object):
 
         g = []
         for pos, size, colr in zip(positions, sizes, colors):
+            # print("POS ", pos)
             g.append(self._cuboid_data(pos, size=size))
 
         # there are 6 faces to a cube
@@ -141,10 +184,10 @@ class SimpleImageViewer(object):
         positions, iou = self.data[i]
         colors = cm.RdBu(iou)  # map val to colormap
         if len(positions) > 0:
-            # print("animating ")
+            # print("animating agent ")
             # print("colors = ", colors)
-            print("positions ", positions)
-            pc = self._plotCubeAt(positions, colors=colors)  #, edgecolor="k")
+            # print("anim positions ", positions.shape, positions)
+            pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
             self.ax.add_collection3d(pc)
         self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
@@ -153,9 +196,9 @@ class SimpleImageViewer(object):
     def render_animation(self, num_frames):
         # instantiate the animator.
         self.anim = animation.FuncAnimation(self.fig, self._animate,
-                                       frames=num_frames,
+                                            frames=num_frames,
                                             # frames=self.data_generator,
-                                       interval=30,
-                                       repeat = False)
+                                            interval=30,
+                                            repeat=False)
+        # TODO: figure out how to use blitting to make this faster
         # print("rendering")
-
