@@ -58,6 +58,8 @@ public:
 };
 
 void doCalculateScore(V3DPluginCallback2 &callback, QString fname_img, QString fname_swc, QString fname_output, int score_type, float radius_factor, bool is_gui);
+NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt, int score_type, float radius_factor);
+
 void printHelp();
 
 #endif

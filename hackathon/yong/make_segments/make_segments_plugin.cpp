@@ -51,7 +51,7 @@ void make_segments_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &
         vector<NeuronSegment*> tree;
         cout << "over" << endl;
 
-        swc_to_segments(APP2,tree);
+        swc_to_segments(APP2,tree,PARA);
 
 	}
     else if (menu_name == tr("snake_swc_to_segments"))
@@ -63,7 +63,7 @@ void make_segments_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &
         vector<MyMarker*> snake = readSWC_file(snake_path.toStdString());
         vector<NeuronSegment*> tree;
 
-        swc_to_segments(snake,tree);
+        swc_to_segments(snake,tree,PARA);
 
     }
     else if (menu_name == tr("neuTube_swc_to_segments"))
@@ -75,7 +75,7 @@ void make_segments_Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &
         vector<MyMarker*> neuTube = readSWC_file(neuTube_path.toStdString());
         vector<NeuronSegment*> tree;
 
-        swc_to_segments(neuTube,tree);
+        swc_to_segments(neuTube,tree,PARA);
 
     }
 	else
@@ -286,6 +286,7 @@ bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree
     seg_nt.listNeuron = seg_result;
 
     QString filename = PARA.inimg_file + "_segments.swc";
+    //QString filename = "segments.swc";
     writeSWC_file(filename,seg_nt);
 
     return true;

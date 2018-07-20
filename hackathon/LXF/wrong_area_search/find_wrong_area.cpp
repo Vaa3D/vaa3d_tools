@@ -1179,6 +1179,7 @@ bool get_subarea_in_nt(vector<FourType> &fourtype,V3DLONG length,QList<NeuronSWC
         i=i+length;
     }
     fourtype.push_back(type);
+    return true;
 }
 bool get_subimg(QString raw_img,QString name,vector<Coodinate> &mean,unsigned char * data1d,V3DLONG in_sz[4],V3DPluginCallback2 &callback)
 {
