@@ -7,7 +7,7 @@
 //#define NTDISs(a,b) (sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z)))
 bool FAR = 0;
 bool CLOSE = 1;
-int dis_thresh = 5;
+int dis_thresh = 6;
 
 struct Coordinate
 {
@@ -246,9 +246,18 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     unsigned char *im_cropped = 0;
     try {im_cropped = new unsigned char [pagesz];}
      catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
+    V3DLONG signal_all=0;
     for(V3DLONG i=0;i<pagesz;i++)
     {
-        if(int(data1d[i]) < 42)
+        signal_all = signal_all + int(data1d[i]);
+    }
+    V3DLONG signal = signal_all/pagesz;
+    cout<<"signal_all = "<<signal_all<<endl;
+    cout<<"signal = "<<signal<<endl;
+    //v3d_msg("llllllllllll");
+    for(V3DLONG i=0;i<pagesz;i++)
+    {
+        if(int(data1d[i]) < signal+10)
         {
             im_cropped[i] = 0;
         }
@@ -396,7 +405,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                     }
                     else
                     {
-                        black2++;
+                        black2++;$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
                     }
 
                 }
@@ -477,12 +486,13 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
 
     cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^write marker^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<endl;
     QList<ImageMarker> marker_all;
+    QList<QList<ImageMarker> > marker_all_each;
     QList<ImageMarker> center;
     int size_thresh = 80;
 
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
-        if(connected_region_final[l].size()<size_thresh)continue;
+      //  if(connected_region_final[l].size()<size_thresh)continue;
         QList<ImageMarker> marker;
         for(int f=0;f<connected_region_final[l].size();f++)
         {
@@ -496,7 +506,8 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             marker.push_back(m);
             marker_all.push_back(m);
         }
-        writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
+        marker_all_each.push_back(marker);
+        //writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
     }
     writeMarker_file(QString("marker_all.marker"),marker_all);
     vector<MyMarker*> inswc;
@@ -520,7 +531,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         soma.x_e = 0;
         soma.y_e = 0;
         soma.z_e = 0;
-        if(connected_region_final[l].size()<size_thresh)continue;
+      //  if(connected_region_final[l].size()<size_thresh)continue;
         for(int f=0;f<connected_region_final[l].size();f++)
         {
             sumx = sumx + connected_region_final[l][f].x;
@@ -530,13 +541,25 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         for(int f=0;f<connected_region_final[l].size();f++)
         {
             if(connected_region_final[l][f].x<soma.x_b)soma.x_b = connected_region_final[l][f].x;
+        }
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
             if(connected_region_final[l][f].y<soma.y_b)soma.y_b = connected_region_final[l][f].y;
+        }
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
             if(connected_region_final[l][f].z<soma.z_b)soma.z_b = connected_region_final[l][f].z;
         }
         for(int f=0;f<connected_region_final[l].size();f++)
         {
             if(connected_region_final[l][f].x>soma.x_e)soma.x_e = connected_region_final[l][f].x;
+        }
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
             if(connected_region_final[l][f].y>soma.y_e)soma.y_e = connected_region_final[l][f].y;
+        }
+        for(int f=0;f<connected_region_final[l].size();f++)
+        {
             if(connected_region_final[l][f].z>soma.z_e)soma.z_e = connected_region_final[l][f].z;
         }
         ImageMarker m;
@@ -562,11 +585,11 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         double sum_dis=0;
         double sum_dis2=0;
         double mean_dis=0;
-        if(connected_region_final[d].size()<size_thresh)continue;
+       // if(connected_region_final[d].size()<size_thresh)continue;
         double max_dis = 0;
         for(int f=0;f<connected_region_final[d].size();f++)
         {
-            double dis = NTDIS(center[c],connected_region_final[d][f]);
+            double dis = NTDIS(center[d],connected_region_final[d][f]);
             if(dis>max_dis)
             {
                 max_dis = dis;
@@ -581,42 +604,53 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         for(int f=0;f<connected_region_final[d].size();f++)
         {
 
-            double dis = NTDIS(center[c],connected_region_final[d][f]);
+            double dis = NTDIS(center[d],connected_region_final[d][f]);
 
             sum_dis2 = sum_dis2+(dis-mean_dis)*(dis-mean_dis);
         }
         max_dis_v.push_back(max_dis);
         double Dd = sum_dis2/connected_region_final[d].size();
         D.push_back(Dd);
-        c++;
+      //  c++;
 
     }
 
 
 
     QList<ImageMarker> center_choose;
-    for(int d=0;d<D.size();d++)
+    for(V3DLONG d=0;d<connected_region_final.size();d++)
     {
         double x_dis = soma_v[d].x_e - soma_v[d].x_b;
         double y_dis = soma_v[d].y_e - soma_v[d].y_b;
-
-        if(y_dis-x_dis>7||x_dis-y_dis>7)
+     //   cout<<"d = "<<d<<endl;
+ //       cout<<"connected_region_final[d].size() = "<<connected_region_final[d].size()<<endl;
+ //       cout<<"max_dis = "<<max_dis_v[d]<<endl;
+   //     cout<<"D = "<<D[d]<<endl;
+        if(connected_region_final[d].size()<size_thresh)
             continue;
-        if(max_dis_v[d]>13)
+        //if(marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*max_dis_v[d]*8)<0.7)
+          //  continue;
+        if(y_dis-x_dis>5||x_dis-y_dis>5)
             continue;
-        if(D[d]>5)
+        if(max_dis_v[d]>20)
+            continue;
+        if(D[d]>8)
             continue;
         cout<<"max_dis = "<<max_dis_v[d]<<endl;
         cout<<"D = "<<D[d]<<endl;
         center_choose.push_back(center[d]);
+        cout<<"x_dis = "<<x_dis<<endl;
+        cout<<"y_dis = "<<y_dis<<endl;
         cout<<"y_dis-x_dis = "<<y_dis-x_dis<<endl;
         cout<<"x_dis-y_dis = "<<x_dis-y_dis<<endl;
+        cout<<"marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*max_dis_v[d]*8) = "<<marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*2*4)<<endl;
         cout<<"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"<<endl;
+        writeMarker_file(QString("marker_all_"+QString::number(d)+".marker"),marker_all_each[d]);
 
     }
     cout<<"center_choose = "<<center_choose.size()<<endl;
     writeMarker_file(QString("center_choose.marker"),center_choose);
-    v3d_msg("check!");
+    //v3d_msg("check!");
 
 
     for(int b=0;b<soma_v.size();b++)
@@ -660,7 +694,7 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
 {
 
     double dist = NTDIS(curr,b);
-    if(dist<3)
+    if(dist<4)
     {
         return true;//this
         if(mark3D[curr.z][curr.y][curr.x]==1)
