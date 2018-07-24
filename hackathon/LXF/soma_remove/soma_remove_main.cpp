@@ -405,7 +405,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                     }
                     else
                     {
-                        black2++;$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
+                        black2++;
                     }
 
                 }
@@ -507,7 +507,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             marker_all.push_back(m);
         }
         marker_all_each.push_back(marker);
-        //writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
+        writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
     }
     writeMarker_file(QString("marker_all.marker"),marker_all);
     vector<MyMarker*> inswc;
