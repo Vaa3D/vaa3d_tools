@@ -186,7 +186,7 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_ext
         # the &>/dev/null surpressed output
         # print("running \n")
         # print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {dims} >/dev/null 2>&1".format(**cli_dict))
-        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {dims} >/dev/null 2>&1".format(**cli_dict))
+        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {bounds} >/dev/null 2>&1".format(**cli_dict))
         return outfile_fpath
     
 def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", overwrite=False):
