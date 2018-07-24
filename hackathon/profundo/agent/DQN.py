@@ -57,7 +57,7 @@ logger_dir = os.path.join('train_log', 'expriment_1')
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
 BATCH_SIZE = 48
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
-OBSERVATION_DIMS = (11, 11, 11)
+OBSERVATION_DIMS = (16, 16, 16)
 # how many frames to keep
 # in other words, how many past observations the network can see
 FRAME_HISTORY = 4
@@ -112,6 +112,7 @@ class Model(DQNModel): # TODO why override DQN model here? why not keep in DQNMo
         with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):
             # core layers of the network
             conv = (LinearWrap(image)
+                    # TODO: use obsrvation dimensions?
                     .Conv3D('conv0', out_channel=32,
                             kernel_shape=[5, 5, 5], stride=[1, 1, 1])
                     .MaxPooling3D('pool0', 2)
