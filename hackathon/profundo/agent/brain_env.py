@@ -230,7 +230,8 @@ class Brain_Env(gym.Env):
         x_span, y_span, z_span = self.original_state.shape
         x, y, z = np.indices((x_span, y_span, z_span))
         positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
-        self._location = np.random.choice(positions)
+        # pick a random row as starting position
+        self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
         print("starting location ", self._location)
         self._start_location = self._location
 
@@ -523,15 +524,18 @@ class Brain_Env(gym.Env):
 
     def trajectory_to_branch(self):
         """take location history, generate connected branches using Vaa3d plugin
+        FIXME this function is horribly inefficient
         """
         locations = self._agent_nodes
-        print("og state shape ", np.shape(self.original_state))
-        print("self obs dims ", self.observation_dims)
+        # print("og state shape ", np.shape(self.original_state))
+        # print("self obs dims ", self.observation_dims)
         # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
         if not locations.any():  # if all zeros, evals to False
             return np.zeros_like(self.original_state)
         else:
+            # TODO: make tmp files not collide when doing multiprocessing
             output_swc = save_branch_as_swc(locations, "agent_trajectory", output_dir="tmp", overwrite=True)
+            # TODO: be explicit about bounds to swc_to_tiff
             output_tiff = swc_to_TIFF("agent_trajectory", output_swc, output_dir="tmp", overwrite=True)
             output_npy = TIFF_to_npy("agent_trajectory", output_tiff, output_dir="tmp", overwrite=True)
             output_npy = np.load(output_npy).astype(float)
