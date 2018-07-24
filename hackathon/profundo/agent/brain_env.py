@@ -167,8 +167,6 @@ class Brain_Env(gym.Env):
         restart current episode
         """
         self.terminal = False
-        self.reward = 0
-        self.reward_history[0] = self.reward
         self.cnt = 0  # counter to limit number of steps per episodes
         self.num_games.feed(1)
         self.current_episode_score.reset()  # reset the stat counter
@@ -232,7 +230,7 @@ class Brain_Env(gym.Env):
         positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
         # pick a random row as starting position
         self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
-        print("starting location ", self._location)
+        # print("starting location ", self._location)
         self._start_location = self._location
 
         # # randomly select the starting coords
@@ -248,7 +246,8 @@ class Brain_Env(gym.Env):
         # self._start_location = np.array([x, y, z])
         self._qvalues = np.zeros(self.actions)
         self._observation = self._observe()
-        self.curr_IOU = 0.0
+        self.curr_IOU = self.calc_IOU()
+        self.reward = 1 if self.curr_IOU > 0 else 0
         self._update_history()
         # we've finished iteration 0. now, step begins with cnt = 1
         self.cnt += 1
@@ -435,7 +434,6 @@ class Brain_Env(gym.Env):
     def _update_history(self):
         """ update history buffer with current state
         """
-        # TODO: add reward history?
         # update location history
         self._agent_nodes[self.cnt] = self._location
         # update jaccard index history
@@ -553,7 +551,11 @@ class Brain_Env(gym.Env):
         """
         # TODO, double check if indexes are correct
         IOU_difference = self.curr_IOU - self._IOU_history[self.cnt - 1]
-        return IOU_difference
+        if IOU_difference > 0:
+            reward = 1
+        else:
+            reward = -1
+        return reward
 
     def _is_in_bounds(self, coords):
         x, y, z = coords
@@ -619,6 +621,8 @@ class Brain_Env(gym.Env):
 
         # print("nodes ", self._agent_nodes)
         # print("ious", self._IOU_history)
+        print("reward history ", np.unique(self.reward_history))
+        print("IOU history ", np.unique(self._IOU_history))
         plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history),
                          filepath=self.filename)
         #
