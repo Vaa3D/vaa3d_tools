@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib import animation, cm
 
 plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-
+plt.style.use('dark_background')
 
 class SimpleImageViewer(object):
     # TODO multiprocess https://stackoverflow.com/a/4662511/4212158
@@ -34,25 +34,26 @@ class SimpleImageViewer(object):
 
         self.fig, self.ax = self.__init_fig__()
 
-        light_gray = [0, 0, 0, 0.3]  # RGBA tuple
-        self.draw_image(original_state, colors=light_gray)
+        transparent_white = [1, 1, 1, 0.3]  # RGBA tuple
+        # light_gray = [0, 0, 0, 0.3]  # RGBA tuple
+        self.draw_image(original_state, colors=transparent_white)
         # FIXME use generator instead of converting to list
 
         self.data = [list(a) for a in data_generator]
 
-        xs = []
-        ys = []
-        zs = []
-        for pos, _ in self.data:
-            for x, y, z in np.nditer(pos, flags=['external_loop']):
-                xs.append(x)
-                ys.append(y)
-                zs.append(z)
-        print("xs =", xs)
-        print("ys =", ys)
-        print("zs =", zs)
-        self.ax.scatter(xs, ys,zs)
-        self.fig.savefig(str(np.random.randint(100,10000))+".png")
+        # xs = []
+        # ys = []
+        # zs = []
+        # for pos, _ in self.data:
+        #     for x, y, z in np.nditer(pos, flags=['external_loop']):
+        #         xs.append(x)
+        #         ys.append(y)
+        #         zs.append(z)
+        # print("xs =", xs)
+        # print("ys =", ys)
+        # print("zs =", zs)
+        # self.ax.scatter(xs, ys,zs)
+        # self.fig.savefig(str(np.random.randint(100,10000))+".png")
         self.fig, self.ax = self.__init_fig__()
 
 
@@ -71,12 +72,14 @@ class SimpleImageViewer(object):
         return fig, ax
 
     def draw_image(self, arr, colors=None):
-        """given a dense img grid, filter out blank voxels and plot cubes at filled voxels"""
+        """given a dense img grid, filter out blank voxels and plot cubes at filled voxels
+
+        sends (N, 3) array to plotCubes"""
         # print("bg arr shape ", arr.shape)
         binary_grid = arr.astype(bool)
         positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
-        # print("bg pos ", positions.shape, positions)
-
+        # print("bg pos ", positions.shape, positions.dtype)# positions)
+        # print("plotting background voxels, pos shape ", np.shape(positions))
         pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
         self.ax.add_collection3d(pc)
 
@@ -148,6 +151,13 @@ class SimpleImageViewer(object):
         return cube_corners
 
     def _plotCubeAt(self, positions, sizes=None, colors=None, **kwargs):
+        """positions can either be dense bool array, or """
+        # print("positions ", np.shape(positions))
+        # print("dtype ", positions.dtype)
+        # positions = zip(x,y,z)
+        # colors are provided with the original state,
+        # so this will only be used with agent timeseries
+        # print("colors ", colors)
         if not isinstance(colors, (list, np.ndarray)):
             # print("overriding colors ", type(colors), colors)
             colors = [(0, 0, 1, 1)] * len(positions)
@@ -176,19 +186,38 @@ class SimpleImageViewer(object):
             g.append(self._cuboid_data(pos, size=size))
 
         # there are 6 faces to a cube
+        # print("facecol", np.shape(np.repeat(colors, 6, axis=0)), np.repeat(colors, 6, axis=0))
         return Poly3DCollection(np.concatenate(g),
-                                facecolors=np.repeat(colors, 6, axis=0), **kwargs)
+                                # facecolors=np.repeat(colors, 6, axis=0), **kwargs)
+                                facecolors=np.tile(colors, (6, 1)), **kwargs)
 
     def _animate(self, i):
         """given a list of new positions at a given timestep, plot those positions"""
-        positions, iou = self.data[i]
-        colors = cm.RdBu(iou)  # map val to colormap
-        if len(positions) > 0:
+        data = self.data[:i]
+        xs = []
+        ys = []
+        zs = []
+        ious = []
+        for pos, iou in data:
+            for x, y, z in np.nditer(pos, flags=['external_loop']):
+                xs.append(x)
+                ys.append(y)
+                zs.append(z)
+            ious.append(iou.flatten())
+        # print("agent ious ", ious)
+        colors = cm.RdBu(ious)  # map val to colormap
+        if len(colors) != 0:
+            colors = np.reshape(colors, (-1, 4))  # invalid nesting
+        if len(xs) > 0:
+            # print("xs ys zs", xs, ys, zs)
+            positions = np.vstack((xs, ys, zs)).T
+            # print("agent positions ", np.shape(positions))
             # print("animating agent ")
-            # print("colors = ", colors)
+            # print("agent colors = ", np.shape(colors), colors)
             # print("anim positions ", positions.shape, positions)
             pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
             self.ax.add_collection3d(pc)
+            self.ax.scatter(xs, ys, zs, color=colors, marker="s")
         self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
