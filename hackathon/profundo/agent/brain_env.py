@@ -303,6 +303,7 @@ class Brain_Env(gym.Env):
         current_loc = self._location
         self.terminal = False
         go_out = False
+        backtrack = False
 
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
@@ -327,19 +328,25 @@ class Brain_Env(gym.Env):
 
         # print("action ", act, "loc ", self._location, "proposed ", proposed_location, "diff ", proposed_location-self._location)
 
-        if self._is_in_bounds(proposed_location):
-            self._location = proposed_location
-            # only update state, iou if we've changed location
-            self._observation = self._observe()
-            self.curr_IOU = self.calc_IOU()
-        else:  # went out of bounds
+
+        if not self._is_in_bounds(proposed_location):  # went out of bounds
             # do not update current_loc
             go_out = True
+        else:  # in bounds
+            if np.any(np.isclose(self._agent_nodes, proposed_location)):
+                # we backtracked
+                backtrack = True
+            else:
+                # we are in bounds, AND we didn't back track. accept new location
+                self._location = proposed_location
+                # only update state, iou if we've changed location
+                self._observation = self._observe()
+                self.curr_IOU = self.calc_IOU()
 
 
         # punish -1 reward if the agent tries to go out
         if (self.task != 'play'):  # TODO: why is this necessary?
-            if go_out:
+            if go_out or backtrack:
                 self.reward = -1
         else:
             self.reward = self._calc_reward()  # TODO I think reward needs to be calculated after increment cnt
