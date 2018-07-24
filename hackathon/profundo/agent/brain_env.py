@@ -333,7 +333,8 @@ class Brain_Env(gym.Env):
             # do not update current_loc
             go_out = True
         else:  # in bounds
-            if np.any(np.isclose(np.unique(self._agent_nodes), proposed_location)):
+            transposed = proposed_location.T
+            if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed)):
                 # we backtracked
                 backtrack = True
             else:
