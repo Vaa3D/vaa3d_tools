@@ -156,8 +156,12 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_external/bin/vaa3d", overwrite=False,
                  output_dir="../data/07_cube_TIFFs",
-                img_dims = "11 11 11"): # TODO: provide explicit bounds
-    """note: swc2mask crops the img"""
+                bounds = [0, 0, 0, ]): # TODO: provide explicit bounds
+    """note: swc2mask crops the img
+
+    example usage in cli:
+    ./vaa3d -x swc2mask -f swc2maskbb -i input.swc -o output.tif -p xmin xmax ymin ymax zmin zmax
+    """
 
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
@@ -173,9 +177,10 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_ext
 
         cli_dict = {"v3d_bin": vaad3d_bin_path,
                    "plugin": v3d_plugin_name,
+                   "function": "swc2maskbb",
                    "in": input_fpath,
                    "out": outfile_fpath,
-                   "dims": img_dims}
+                   "bounds": " ".join(bounds)}
                    #"step": step_length}
 
         # the &>/dev/null surpressed output
