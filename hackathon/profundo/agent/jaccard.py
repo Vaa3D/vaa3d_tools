@@ -30,8 +30,8 @@ def jaccard(im1, im2):
     identical if `im1` and `im2` are switched.
 
     """
-    # im1 = np.asarray(im1).astype(np.bool)
-    # im2 = np.asarray(im2).astype(np.bool)
+    im1 = im1.flatten().astype(np.bool)
+    im2 = im2.flatten().astype(np.bool)
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
