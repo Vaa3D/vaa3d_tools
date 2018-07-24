@@ -210,7 +210,7 @@ class SimpleImageViewer(object):
         colors = cm.RdBu(ious)  # map val to colormap
         if len(colors) != 0:
             colors = np.reshape(colors, (-1, 4))  # invalid nesting
-            colors[:, -1] /= 5
+            colors[:, -1] /= 10
         if len(xs) > 0:
             # print("xs ys zs", xs, ys, zs)
             positions = np.vstack((xs, ys, zs)).T
@@ -218,9 +218,9 @@ class SimpleImageViewer(object):
             # print("animating agent ")
             # print("agent colors = ", np.shape(colors), colors)
             # print("anim positions ", positions.shape, positions)
-            pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
+            pc = self._plotCubeAt(positions, colors=colors, edgecolor="w")
             self.ax.add_collection3d(pc)
-            self.ax.scatter(xs, ys, zs, color=colors, marker="s")
+            # self.ax.scatter(xs, ys, zs, color=colors, marker="s")
         self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
