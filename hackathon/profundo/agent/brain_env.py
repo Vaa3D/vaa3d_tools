@@ -154,6 +154,7 @@ class Brain_Env(gym.Env):
         # we put this here so that init_player in DQN.py doesn't try to update_history
         self._clear_history()  # init arrays
         self._restart_episode()
+        # self.viz = True  # FIXME viz should default False
 
     def reset(self):
         # with _ALE_LOCK:
@@ -166,6 +167,7 @@ class Brain_Env(gym.Env):
         """
         self.terminal = False
         self.reward = 0
+        self.reward_history[0] = self.reward
         self.cnt = 0  # counter to limit number of steps per episodes
         self.num_games.feed(1)
         self.current_episode_score.reset()  # reset the stat counter
@@ -416,6 +418,7 @@ class Brain_Env(gym.Env):
         # list of q-value lists
         self._qvalues_history = np.zeros(
             (self._history_length, self.actions))  # [(0,) * self.actions] * self._history_length
+        self.reward_history = np.zeros((self._history_length, 1))
 
     def _update_history(self):
         """ update history buffer with current state
@@ -425,6 +428,8 @@ class Brain_Env(gym.Env):
         self._agent_nodes[self.cnt] = self._location
         # update jaccard index history
         self._IOU_history[self.cnt] = self.curr_IOU
+        # and the reward
+        self.reward_history[self.cnt] = self.reward
         # update q-value history
         self._qvalues_history[self.cnt] = self._qvalues
 
@@ -614,6 +619,7 @@ class Brain_Env(gym.Env):
         # # time.sleep(self.viz)
         # # save gif
         if self.saveGif:
+        # if self.saveGif:
             # TODO make this a method of viewer
             raise NotImplementedError
             # image_data = pyglet.image.get_buffer_manager().get_color_buffer().get_image_data()
@@ -644,8 +650,37 @@ class Brain_Env(gym.Env):
             plotter.save_vid(vid_fpath, self.max_num_frames-1)
             # plotter.show_agent()
 
-        if self.viz:
-            plotter.show()
+        if self.viz:  # show progress
+            # plotter.show()
+            # actually, let's just save the files for later
+            output_dir = os.path.abspath("saved_trajectories/")
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
+
+            # outfile_fpath = os.path.join(output_dir, input_fname + ".npy")
+            #
+            # # don't overwrite
+            # if not os.path.isfile(outfile_fpath) or overwrite:
+            #     desired_len = 16
+            #     img_array = tiff2array.imread(input_fpath)
+            #     # make all arrays the same shape
+            #     # format: ((top, bottom), (left, right))
+            #     shp = img_array.shape
+            #     # print(shp, flush=True)
+            #     if shp != (desired_len, desired_len, desired_len):
+            #         try:
+            #             img_array = np.pad(img_array, (
+            #             (0, desired_len - shp[0]), (0, desired_len - shp[1]), (0, desired_len - shp[2])),
+            #                                'constant')
+            #         except ValueError:
+            #             raise
+            #             # print(shp, flush=True)  # don't wait for all threads to finish before printing
+            #
+            np.savez(output_dir+self.filename, locations=self._agent_nodes, original_state=self.original_state,
+                     reward_history=self.reward_history)
+            #     return outfile_fpath
+
+
 
 
 # class DiscreteActionSpace(object):
