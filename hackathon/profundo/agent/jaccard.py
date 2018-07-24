@@ -34,7 +34,7 @@ def jaccard(im1, im2):
     im2 = im2.flatten().astype(np.bool)
 
     # images should not be all True
-    assert im1.all() is False and im2.all() is False
+    assert im1.all() == False and im2.all() == False
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
