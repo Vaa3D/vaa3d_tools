@@ -210,6 +210,7 @@ class SimpleImageViewer(object):
         colors = cm.RdBu(ious)  # map val to colormap
         if len(colors) != 0:
             colors = np.reshape(colors, (-1, 4))  # invalid nesting
+            colors[:, -1] /= 5
         if len(xs) > 0:
             # print("xs ys zs", xs, ys, zs)
             positions = np.vstack((xs, ys, zs)).T
