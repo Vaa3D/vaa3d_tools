@@ -34,7 +34,7 @@ class SimpleImageViewer(object):
 
         self.fig, self.ax = self.__init_fig__()
 
-        transparent_white = [1, 1, 1, 0.3]  # RGBA tuple
+        transparent_white = [1, 1, 1, 0.5]  # RGBA tuple
         # light_gray = [0, 0, 0, 0.3]  # RGBA tuple
         self.draw_image(original_state, colors=transparent_white)
         # FIXME use generator instead of converting to list
@@ -54,7 +54,7 @@ class SimpleImageViewer(object):
         # print("zs =", zs)
         # self.ax.scatter(xs, ys,zs)
         # self.fig.savefig(str(np.random.randint(100,10000))+".png")
-        self.fig, self.ax = self.__init_fig__()
+        # self.fig, self.ax = self.__init_fig__()
 
 
         self.isopen = True
@@ -73,6 +73,7 @@ class SimpleImageViewer(object):
 
     def draw_image(self, arr, colors=None):
         """given a dense img grid, filter out blank voxels and plot cubes at filled voxels
+        used for drawing the initial background or "ground truth"
 
         sends (N, 3) array to plotCubes"""
         # print("bg arr shape ", arr.shape)
@@ -136,6 +137,7 @@ class SimpleImageViewer(object):
         self.close()
 
     def _cuboid_data(self, position, size=(1, 1, 1)):
+        """used for turning a coordinate into 6 3D polygons"""
         cube_corners = [[[0, 1, 0], [0, 0, 0], [1, 0, 0], [1, 1, 0]],
                         [[0, 0, 0], [0, 0, 1], [1, 0, 1], [1, 0, 0]],
                         [[1, 0, 1], [1, 0, 0], [1, 1, 0], [1, 1, 1]],
