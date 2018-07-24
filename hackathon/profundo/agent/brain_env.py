@@ -155,6 +155,7 @@ class Brain_Env(gym.Env):
         self._clear_history()  # init arrays
         self._restart_episode()
         # self.viz = True  # FIXME viz should default False
+        assert (np.shape(self._state) == self.observation_dims)
 
     def reset(self):
         # with _ALE_LOCK:
@@ -223,17 +224,27 @@ class Brain_Env(gym.Env):
                               int(self._state_dims[1] / 4),
                               int(self._state_dims[2] / 4))
 
-        # randomly select the starting coords
-        x = self.rng.randint(0 + skip_thickness[0],
-                             self._state_dims[0] - skip_thickness[0])
-        y = self.rng.randint(0 + skip_thickness[1],
-                             self._state_dims[1] - skip_thickness[1])
-        z = self.rng.randint(0 + skip_thickness[2],
-                             self._state_dims[2] - skip_thickness[2])
+
+        # FIXME randomly select one of the ground truth voxels as a starting point
+        binary_grid = self.original_state.astype(bool)
+        x_span, y_span, z_span = self.original_state.shape
+        x, y, z = np.indices((x_span, y_span, z_span))
+        positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
+        self._location = np.random.choice(positions)
+        print("starting location ", self._location)
+        self._start_location = self._location
+
+        # # randomly select the starting coords
+        # x = self.rng.randint(0 + skip_thickness[0],
+        #                      self._state_dims[0] - skip_thickness[0])
+        # y = self.rng.randint(0 + skip_thickness[1],
+        #                      self._state_dims[1] - skip_thickness[1])
+        # z = self.rng.randint(0 + skip_thickness[2],
+        #                      self._state_dims[2] - skip_thickness[2])
         #######################################################################
 
-        self._location = np.array([x, y, z])
-        self._start_location = np.array([x, y, z])
+        # self._location = np.array([x, y, z])
+        # self._start_location = np.array([x, y, z])
         self._qvalues = np.zeros(self.actions)
         self._observation = self._observe()
         self.curr_IOU = 0.0
@@ -250,7 +261,7 @@ class Brain_Env(gym.Env):
         # flatten bc  jaccard_similarity_score expects 1D arrays
         state = self._state.ravel()
         state[state != -1] = 0  # mask out non-agent trajectory
-        state = state.astype(bool)  # everything non-zero = True
+        state = state.astype(bool)  # everything non-zero => True
         if not state.any():  # no agent trajectory
             iou = 0.0
         else:
@@ -511,9 +522,11 @@ class Brain_Env(gym.Env):
         return observation
 
     def trajectory_to_branch(self):
-        """take location history, generate connected branches
+        """take location history, generate connected branches using Vaa3d plugin
         """
         locations = self._agent_nodes
+        print("og state shape ", np.shape(self.original_state))
+        print("self obs dims ", self.observation_dims)
         # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
         if not locations.any():  # if all zeros, evals to False
             return np.zeros_like(self.original_state)
