@@ -247,7 +247,8 @@ class Brain_Env(gym.Env):
         self._qvalues = np.zeros(self.actions)
         self._observation = self._observe()
         self.curr_IOU = self.calc_IOU()
-        self.reward = 1 if self.curr_IOU > 0 else 0
+        print("first IOU ", self.curr_IOU)
+        self.reward = self._calc_reward(False, False)
         self._update_history()
         # we've finished iteration 0. now, step begins with cnt = 1
         self.cnt += 1
@@ -263,8 +264,10 @@ class Brain_Env(gym.Env):
         state[state != -1] = 0  # mask out non-agent trajectory
         state = state.astype(bool)  # everything non-zero => True
         if not state.any():  # no agent trajectory
+            print(" no state trajectory found")
             iou = 0.0
         else:
+            print(" computing jaccard")
             original_state = self.original_state.ravel().astype(bool)
             iou = jaccard(state, original_state)
             # print("agent true ", sum(state), "original true ", sum(original_state), "iou ", iou)
@@ -272,6 +275,7 @@ class Brain_Env(gym.Env):
         # print("og \n", original_state.shape)
         # np.save("agent", state)
         # np.save("og", original_state)
+        # assert isinstance(iou, )
         return iou
 
     def step(self, act, qvalues):
@@ -334,7 +338,9 @@ class Brain_Env(gym.Env):
             go_out = True
         else:  # in bounds
             transposed = proposed_location.T
-            if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed)):
+            # https://stackoverflow.com/a/25823710/4212158
+            if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1)):
+                # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
             else:
@@ -346,11 +352,8 @@ class Brain_Env(gym.Env):
 
 
         # punish -1 reward if the agent tries to go out
-        if (self.task != 'play'):  # TODO: why is this necessary?
-            if go_out or backtrack:
-                self.reward = -1
-        else:
-            self.reward = self._calc_reward()  # TODO I think reward needs to be calculated after increment cnt
+        #if (self.task != 'play'):  # TODO: why is this necessary?
+        self.reward = self._calc_reward(go_out, backtrack)  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
         self._update_history()
 
@@ -553,16 +556,24 @@ class Brain_Env(gym.Env):
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
             return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
 
-    def _calc_reward(self):
+    def _calc_reward(self, go_out, backtrack):
         """ Calculate the new reward based on the increase in IoU
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        # TODO, double check if indexes are correct
-        IOU_difference = self.curr_IOU - self._IOU_history[self.cnt - 1]
-        if IOU_difference > 0:
-            reward = 1
-        else:
+        if go_out or backtrack:
             reward = -1
+        else:
+            # TODO, double check if indexes are correct
+            if self.cnt == 0:
+                previous_IOU = 0.
+            else:
+                previous_IOU = self._IOU_history[self.cnt - 1]
+            IOU_difference = self.curr_IOU - previous_IOU
+            print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference)
+            if IOU_difference > 0:
+                reward = 1
+            else:
+                reward = -1
         return reward
 
     def _is_in_bounds(self, coords):
