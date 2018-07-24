@@ -156,6 +156,7 @@ class Brain_Env(gym.Env):
         self._restart_episode()
         # self.viz = True  # FIXME viz should default False
         assert (np.shape(self._state) == self.observation_dims)
+        assert np.isclose(jaccard(self.original_state, self.original_state),1 )
 
     def reset(self):
         # with _ALE_LOCK:
@@ -267,10 +268,9 @@ class Brain_Env(gym.Env):
             print(" no state trajectory found")
             iou = 0.0
         else:
-            print(" computing jaccard")
-            original_state = self.original_state.ravel().astype(bool)
-            iou = jaccard(state, original_state)
-            # print("agent true ", sum(state), "original true ", sum(original_state), "iou ", iou)
+            iou = jaccard(state, self.original_state)
+            # print("computed iou ", iou)
+            # print("sum(agent) ", sum(state), "sum(original state)", sum(self.original_state), "computed iou ", iou)
         # print("agent \n", state.shape)
         # print("og \n", original_state.shape)
         # np.save("agent", state)
@@ -371,7 +371,7 @@ class Brain_Env(gym.Env):
         if self.cnt >= self.max_num_frames-1:
             print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
-            self.display()
+            # self.display()
 
         # update history buffer with new location and qvalues
         if (self.task != 'play'):
@@ -436,11 +436,11 @@ class Brain_Env(gym.Env):
         """
         # TODO: double check these np arrays work in place of the lists
         self._agent_nodes = np.zeros((self._history_length, self.dims))  # [(0,) * self.dims] * self._history_length
-        self._IOU_history = np.zeros((self._history_length, 1))
+        self._IOU_history = np.zeros((self._history_length,))
         # list of q-value lists
         self._qvalues_history = np.zeros(
             (self._history_length, self.actions))  # [(0,) * self.actions] * self._history_length
-        self.reward_history = np.zeros((self._history_length, 1))
+        self.reward_history = np.zeros((self._history_length,))
 
     def _update_history(self):
         """ update history buffer with current state
@@ -570,6 +570,7 @@ class Brain_Env(gym.Env):
                 previous_IOU = self._IOU_history[self.cnt - 1]
             IOU_difference = self.curr_IOU - previous_IOU
             print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference)
+            assert isinstance(IOU_difference, float)
             if IOU_difference > 0:
                 reward = 1
             else:
