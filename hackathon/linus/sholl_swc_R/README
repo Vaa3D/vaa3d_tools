@@ -2,7 +2,7 @@ How to build R inside Vaa3D(Linux).
 
 
 
-1.In order to run the code£¬R must be installed in the system, also "RInside", "Rcpp" and "ggplot2" packages must be installed within R.
+1.In order to run the code£¬R must be installed in the system, also "RInside", "Rcpp" , "ggplot2" , and "svglite" packages must be installed within R.
 
 2.linus/rinside/inst/examples/qt/qtdensity.pro project can be built using qmake and make, running the resulting 'qtdensity' binary should generate a Qt window with an svg ggplot2 density plot of two random distributions.
 
