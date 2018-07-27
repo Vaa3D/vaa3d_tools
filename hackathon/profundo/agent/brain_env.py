@@ -62,7 +62,7 @@ class Brain_Env(gym.Env):
 
     def __init__(self, directory=None, viz=False, task=False, files_list=None,
                  observation_dims=(27, 27, 27), multiscale=False, # FIXME automatic dimensions
-                 max_num_frames=20, saveGif=False, saveVideo=False):  # FIXME hardcoded max num frames!
+                 max_num_frames=0, saveGif=False, saveVideo=False):  # FIXME hardcoded max num frames!
         """
         :param train_directory: environment or game name
         :param viz: visualization
@@ -188,6 +188,9 @@ class Brain_Env(gym.Env):
         # # sample a new image
         self.filepath, self.filename = next(self.file_sampler)
         self._state = np.load(self.filepath).astype(float)
+        # normalize inputs
+        self._state /= 255.
+        self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
         self.original_state = np.copy(self._state)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
@@ -364,7 +367,7 @@ class Brain_Env(gym.Env):
                 print("finishing episode, IOU = ", self.curr_IOU)
                 self.terminal = True
                 self.num_success.feed(1)
-                self.display()
+                # self.display()
 
         # terminate if maximum number of steps is reached
 
@@ -413,6 +416,9 @@ class Brain_Env(gym.Env):
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
                 'filename': self.filename}
+
+        # if self.terminal is True:
+        #     print(self._state)
 
         return self._observe(), self.reward, self.terminal, info
 
@@ -463,6 +469,7 @@ class Brain_Env(gym.Env):
         """
         # initialize screen with zeros - all background
         observation = np.zeros((self.observation_dims))
+        # print("observation dims", np.shape(observation))
 
         # screen uses coordinate system relative to origin (0, 0, 0)
         screen_xmin, screen_ymin, screen_zmin = 0, 0, 0
@@ -510,6 +517,7 @@ class Brain_Env(gym.Env):
         agent_trajectory *= -1  # agent frames are negative
         # paste agent trajectory ontop of original state, but only when vals are not 0
         agent_mask = agent_trajectory.astype(bool)
+        # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
         if agent_mask.any():  # agent trajectory not empty
             np.copyto(self._state, agent_trajectory, casting='no', where=agent_mask)
             assert self._state is not None
@@ -545,9 +553,10 @@ class Brain_Env(gym.Env):
             # TODO: make tmp files not collide when doing multiprocessing
             output_swc = save_branch_as_swc(locations, "agent_trajectory", output_dir="tmp", overwrite=True)
             # TODO: be explicit about bounds to swc_to_tiff
-            output_tiff = swc_to_TIFF("agent_trajectory", output_swc, output_dir="tmp", overwrite=True)
-            output_npy = TIFF_to_npy("agent_trajectory", output_tiff, output_dir="tmp", overwrite=True)
-            output_npy = np.load(output_npy).astype(float)
+            output_tiff_path = swc_to_TIFF("agent_trajectory", output_swc, output_dir="tmp", overwrite=True)
+            output_npy_path = TIFF_to_npy("agent_trajectory", output_tiff_path, output_dir="tmp", overwrite=True)
+            output_npy = np.load(output_npy_path).astype(float)
+            # print("agent trajectory shape ", np.shape(output_npy))
             tiff_max = np.amax(np.fabs(output_npy))
             if not np.isclose(tiff_max, 0):  # normalize if tiff is not blank
                 output_npy = output_npy / tiff_max
@@ -569,6 +578,7 @@ class Brain_Env(gym.Env):
             else:
                 previous_IOU = self._IOU_history[self.cnt - 1]
             IOU_difference = self.curr_IOU - previous_IOU
+            print(self.cnt, self._history_length)
             print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference)
             assert isinstance(IOU_difference, float)
             if IOU_difference > 0:
@@ -752,6 +762,7 @@ class FrameStack(gym.Wrapper):
 
     def __init__(self, env, k):
         """Buffer observations and stack across channels (last axis)."""
+        print("CALLING FRAMESTACK!!!!")
         gym.Wrapper.__init__(self, env)
         self.k = k  # history length
         self.frames = deque([], maxlen=k)
