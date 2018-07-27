@@ -93,12 +93,12 @@ class files(object):
 
 #######################################################################
 class FilesListCubeNPY(files):
-    def __init__(self, filenames_list=None, filepaths_list=None):
+    def __init__(self, directory=None, filepaths_list=None):
 
-        assert filenames_list, 'There is no directory containing training files given'
+        assert directory, 'There is no directory containing training files given'
         assert filepaths_list, 'There is no directory containing files list'
 
-        self.filenames = filenames_list
+        # self.filenames = directory
         self.files_list = filepaths_list
 
     @property
@@ -117,8 +117,12 @@ class FilesListCubeNPY(files):
 
         while True:  #
             for idx in indexes:
-                image_path = self.files_list[idx]
-                image_filename =self.files_list[idx] 
+                image_path = self.files_list[idx]  # FIXME shouldn't these be different
+                image_filename = os.path.basename(image_path)
+                # image_filename = self.filenames[idx]
                 # x, y, file, ?
                 yield image_path, image_filename
 
+    def sample_first(self):
+        """determinist for unit tests"""
+        yield self.files_list[0], os.path.basename(self.files_list[0])
