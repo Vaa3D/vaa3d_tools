@@ -34,12 +34,8 @@ def play_one_episode(env, func, render=False):
         """
         # pick action with best predicted Q-value
         q_values = func(s[None, :, :, :])[0][0]
-        if np.all(np.isclose(q_values, q_values[0])):  # all q vals same, pick random
-            act = np.random.choice(q_values)
-        else:
-            # In case of multiple occurrences of the maximum values,
-            # the indices corresponding to the first occurrence are /always/ returned (bad
-            act = np.argmax(q_values)
+        # if there is a tie for max, randomly choose between them
+        act = np.random.choice(np.flatnonzero(q_values == q_values.max()))
 
         # eps greedy disabled
         # if random.random() < 0.001:
@@ -102,7 +98,7 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn,
         def run(self):
             with self.default_sess():
                 player = get_player_fn(directory=directory,
-                                       train=False,
+                                       task=False,
                                        files_list=files_list)
                 while not self.stopped():
                     try:
