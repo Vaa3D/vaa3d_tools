@@ -630,11 +630,11 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             continue;
         //if(marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*max_dis_v[d]*8)<0.7)
           //  continue;
-        if(y_dis-x_dis>5||x_dis-y_dis>5)
+        if(y_dis-x_dis>7||x_dis-y_dis>7)
             continue;
         if(max_dis_v[d]>20)
             continue;
-        if(D[d]>8)
+        if(D[d]>10)
             continue;
         cout<<"max_dis = "<<max_dis_v[d]<<endl;
         cout<<"D = "<<D[d]<<endl;
