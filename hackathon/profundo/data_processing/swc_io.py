@@ -156,7 +156,7 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
 def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_external/bin/vaa3d", overwrite=False,
                  output_dir="../data/07_cube_TIFFs",
-                bounds = [0, 16, 0, 16, 0, 16]): # TODO: provide explicit bounds
+                bounds = [0, 15, 0, 15, 0, 15]): # TODO: provide explicit bounds
     """note: swc2mask crops the img
 
     example usage in cli:
@@ -198,7 +198,7 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", ove
     
     # don't overwrite
     if not os.path.isfile(outfile_fpath) or overwrite:
-        desired_len = 16
+        desired_len = 15  # FIXME should not be explicit shape
         img_array = tiff2array.imread(input_fpath)
         # make all arrays the same shape
         # format: ((top, bottom), (left, right))
