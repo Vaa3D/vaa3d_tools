@@ -136,7 +136,8 @@ class ExpReplay(DataFlow, Callback):
                  batch_size,
                  memory_size, init_memory_size,
                  init_exploration,
-                 update_frequency, history_len):
+                 update_frequency,
+                 frame_history_len):
         """
         Args:
             predictor_io_names (tuple of list of str): input/output names to
@@ -144,7 +145,7 @@ class ExpReplay(DataFlow, Callback):
             player (RLEnvironment): the player.
             update_frequency (int): number of new transitions to add to memory
                 after sampling a batch of transitions for training.
-            history_len (int): length of history frames to concat. Zero-filled
+            frame_history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
         """
         init_memory_size = int(init_memory_size)
@@ -162,7 +163,7 @@ class ExpReplay(DataFlow, Callback):
         # a queue to receive notifications to populate memory
         self._populate_job_queue = queue.Queue(maxsize=5)
 
-        self.mem = ReplayMemory(memory_size, state_shape, history_len)
+        self.mem = ReplayMemory(memory_size, state_shape, frame_history_len)
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
@@ -212,7 +213,7 @@ class ExpReplay(DataFlow, Callback):
         else:
             # build a history state
             #TODO we don't need history anymore, right?
-            # history = self.mem.recent_state()
+            history = self.mem.recent_state()
             history.append(old_s)
             if np.ndim(history) == 4:  # 3d states
                 history = np.stack(history, axis=3)
@@ -223,13 +224,8 @@ class ExpReplay(DataFlow, Callback):
                 # assume batched network - this is the bottleneck
                 q_values = self.predictor(history[None, :, :, :])[0][0]
 
-
-            if np.all(np.isclose(q_values, q_values[0])):  # all q vals same, pick random
-                act = np.random.choice(q_values)
-            else:
-                # In case of multiple occurrences of the maximum values,
-                # the indices corresponding to the first occurrence are /always/ returned (bad
-                act = np.argmax(q_values)
+            # if there is a tie for max, randomly choose between them
+            act = np.random.choice(np.flatnonzero(q_values == q_values.max()))
 
         self._current_ob, reward, isOver, info = self.player.step(act, q_values)
 
