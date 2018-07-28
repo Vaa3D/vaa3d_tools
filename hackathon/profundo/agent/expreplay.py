@@ -25,10 +25,10 @@ Experience = namedtuple('Experience',
 
 
 class ReplayMemory(object):
-    def __init__(self, max_size, state_shape, history_len):
+    def __init__(self, max_size, state_shape, frame_history_len):
         self.max_size = int(max_size)
         self.state_shape = state_shape
-        self.history_len = int(history_len)
+        self.frame_history_len = int(frame_history_len)
 
         self.state = np.zeros((self.max_size,) + state_shape, dtype='uint8')
         self.action = np.zeros((self.max_size,), dtype='int32')
@@ -37,7 +37,7 @@ class ReplayMemory(object):
 
         self._curr_size = 0
         self._curr_pos = 0
-        self._hist = deque(maxlen=history_len - 1)
+        self._hist = deque(maxlen=frame_history_len - 1)
 
     def append(self, exp):
         """Append the replay memory with experience sample
@@ -70,7 +70,7 @@ class ReplayMemory(object):
                   where state is of shape STATE_SIZE + (history_length+1,)
         """
         idx = (self._curr_pos + idx) % self._curr_size
-        k = self.history_len + 1
+        k = self.frame_history_len + 1
         if idx + k <= self._curr_size:
             state = self.state[idx: idx + k]
             reward = self.reward[idx: idx + k]
@@ -87,7 +87,7 @@ class ReplayMemory(object):
 
     # the next_state is a different episode if current_state.isOver==True
     def _pad_sample(self, state, reward, action, isOver):
-        for k in range(self.history_len - 2, -1, -1):
+        for k in range(self.frame_history_len - 2, -1, -1):
             if isOver[k]:
                 state = copy.deepcopy(state)
                 state[:k + 1].fill(0)
@@ -208,7 +208,7 @@ class ExpReplay(DataFlow, Callback):
         q_values = [0, ] * self.num_actions
 
         # TODO no longer need history len, right?
-        if self.rng.rand() <= self.exploration or (len(self.mem) <= self.history_len):
+        if self.rng.rand() <= self.exploration or (len(self.mem) <= self.frame_history_len):
             act = self.rng.choice(range(self.num_actions))
         else:
             # build a history state
@@ -244,8 +244,8 @@ class ExpReplay(DataFlow, Callback):
         def view_state(comb_state):
             state = comb_state[:, :, :-1]
             next_state = comb_state[:, :, 1:]
-            r = np.concatenate([state[:, :, k] for k in range(self.history_len)], axis=1)
-            r2 = np.concatenate([next_state[:, :, k] for k in range(self.history_len)], axis=1)
+            r = np.concatenate([state[:, :, k] for k in range(self.frame_history_len)], axis=1)
+            r2 = np.concatenate([next_state[:, :, k] for k in range(self.frame_history_len)], axis=1)
             r = np.concatenate([r, r2], axis=0)
             cv2.imshow("state", r)
             cv2.waitKey()
@@ -261,7 +261,7 @@ class ExpReplay(DataFlow, Callback):
         while True:
             idx = self.rng.randint(
                 self._populate_job_queue.maxsize * self.update_frequency,
-                len(self.mem) - self.history_len - 1,
+                len(self.mem) - self.frame_history_len - 1,
                 size=self.batch_size)
             batch_exp = [self.mem.sample(i) for i in idx]
 

@@ -128,7 +128,7 @@ class Brain_Env(gym.Env):
         # get action space and minimal action set
         self.action_space = spaces.Discrete(6)  # change number actions here
         self.actions = self.action_space.n
-        self.observation_space = spaces.Box(low=0, high=255,
+        self.observation_space = spaces.Box(low=-1., high=1.,
                                             shape=self.observation_dims,
                                             dtype=np.uint8)
         # history buffer for storing last locations to check oscilations
@@ -579,7 +579,8 @@ class Brain_Env(gym.Env):
                 previous_IOU = self._IOU_history[self.cnt - 1]
             IOU_difference = self.curr_IOU - previous_IOU
             print(self.cnt, self._history_length)
-            print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference)
+            print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
+                  "loc ", self._location)
             assert isinstance(IOU_difference, float)
             if IOU_difference > 0:
                 reward = 1
@@ -763,14 +764,14 @@ class FrameStack(gym.Wrapper):
     def __init__(self, env, k):
         """Buffer observations and stack across channels (last axis)."""
         print("CALLING FRAMESTACK!!!!")
-        gym.Wrapper.__init__(self, env)
+        gym.Wrapper.__init__(self, env)  # TODO shouldn't this be a super() method?
         self.k = k  # history length
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
         self._base_dim = len(shp)
         new_shape = shp + (k,)
         # fixme observation bounds
-        self.observation_space = spaces.Box(low=0, high=255, shape=new_shape,
+        self.observation_space = spaces.Box(low=-1., high=1., shape=new_shape,
                                             dtype=np.uint8)
 
     def reset(self):
