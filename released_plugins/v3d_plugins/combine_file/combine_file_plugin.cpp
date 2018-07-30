@@ -312,6 +312,162 @@ vector<MyMarker*> findNearestMarker(vector<MyMarker*> inputSwc,MyMarker* inputMa
     return outMarkerSwc;
 }
 
+double distanceofPoints(XYZ point1,XYZ point2)
+{
+    double distance=0;
+    distance=(point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)+(point1.z-point2.z)*(point1.z-point2.z);
+    return distance;
+}
+
+vector<XYZ> InterpolationBetweenMarkers(vector<MyMarker*> inputSwc)
+{
+    vector<XYZ> outPostion;
+
+    if(inputSwc.size()>0)
+    {
+        for(vector<MyMarker*>::iterator it=inputSwc.begin();it!=inputSwc.end();it++)
+        {
+            MyMarker* inputMarker=*it;
+            XYZ inputPosition,parentPosition;
+            if(!inputMarker->parent)
+                continue;
+            inputPosition.x=(float)inputMarker->x;inputPosition.y=(float)inputMarker->y;inputPosition.z=(float)inputMarker->z;
+            parentPosition.x=(float)inputMarker->parent->x;parentPosition.y=(float)inputMarker->parent->y;parentPosition.z=(float)inputMarker->parent->z;
+            double distanceInit=distanceofPoints(inputPosition,parentPosition);
+            int interpolationNumber=2;
+            if(distanceInit<20)
+            {
+                continue;
+            }
+            else
+            {
+                interpolationNumber=(int)(distanceInit/20)+1;
+            }
+            for(int i=1;i<interpolationNumber;i++)
+            {
+                XYZ point;
+                point.x=i*(inputPosition.x+parentPosition.x)/interpolationNumber;
+                point.y=i*(inputPosition.y+parentPosition.y)/interpolationNumber;
+                point.z=i*(inputPosition.z+parentPosition.z)/interpolationNumber;
+                outPostion.push_back(point);
+            }
+        }
+    }
+}
+
+vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
+                                       vector<MyMarker*> inputSwc2)
+{
+    vector<MyMarker*> targetSwc,inputSwc,outSwc,MergeSwc;
+    //merge the small size SWC file to large size SWC file.
+    {
+    if(inputSwc1.size()==0&&inputSwc2.size()==0)
+    {
+        qDebug("Input SWC file is Worng.");
+        return outSwc;
+    }
+    else if(inputSwc1.size()!=0&&inputSwc2.size()==0)
+    {
+        outSwc=inputSwc1;
+        return outSwc;
+    }
+    else if(inputSwc1.size()==0&&inputSwc2.size()!=0)
+    {
+        outSwc=inputSwc2;
+        return outSwc;
+    }
+    else if(inputSwc1.size()>0&&inputSwc2.size()>=inputSwc1.size())
+    {
+        targetSwc=inputSwc2;
+        inputSwc=inputSwc1;
+    }
+    else if(inputSwc2.size()>0&&inputSwc1.size()>=inputSwc2.size())
+    {
+        targetSwc=inputSwc1;
+        inputSwc=inputSwc2;
+    }
+    }
+    //resample the targeSwc, add point between two nodes if the distance of these nodes is too big.
+    vector<XYZ> interpolationPosition =InterpolationBetweenMarkers(targetSwc);
+
+
+    bool miok;
+    double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",150,1,500,10,&miok);
+
+    int _countnumber=0;int _flag[inputSwc.size()];
+    if(miok)
+    {
+        cout<<"input number is "<<distanceThreshold<<endl;
+        for(vector<MyMarker*>::iterator inp=inputSwc.begin();inp!=inputSwc.end();inp++)
+        {
+            MyMarker* inputMarker=*inp;
+            _flag[_countnumber]=0;
+            for(vector<MyMarker*>::iterator tari=targetSwc.begin();tari!=targetSwc.end();tari++)
+            {
+                MyMarker* targetMarkerT=*tari;
+                if(distanceofMarker(targetMarkerT,inputMarker)<distanceThreshold)
+                {
+                    _flag[_countnumber]=1;
+                    break;
+                }
+
+            }
+            _countnumber++;
+        }
+    }
+
+    int countnumber=0;
+    for(vector<MyMarker*>::iterator inp=inputSwc.begin();inp!=inputSwc.end();inp++)
+    {
+        MyMarker* interMarker=*inp;
+        if(_flag[countnumber]!=1)
+        {
+            MergeSwc.push_back(interMarker);
+            outSwc.push_back(interMarker);
+        }
+        countnumber++;
+    }
+
+    vector<MyMarker*> mergeParentSwc;
+    if(MergeSwc.size()>0)
+    {
+        for(vector<MyMarker*>::iterator se=MergeSwc.begin();se!=MergeSwc.end();se++)
+        {
+            MyMarker* MergeMarker=*se;
+            if(MergeMarker->parent!=0)
+            {
+                //if parent node already in firstMergeMarker, continue;else add a parent node
+                vector<MyMarker*>::iterator searchResult=find(MergeSwc.begin(),MergeSwc.end(),MergeMarker->parent);
+                if(searchResult==MergeSwc.end())
+                {
+                    mergeParentSwc.push_back(MergeMarker);
+                }
+                else
+                    continue;
+            }
+            else
+                continue;
+        }
+    }
+
+    //find the nearest node in targe node of second Merge node without parent node and add.
+    for(vector<MyMarker*>::iterator ses=mergeParentSwc.begin();ses!=mergeParentSwc.end();ses++)
+    {
+        MyMarker* mergeParentMarker =*ses;
+        vector<MyMarker*> resultSWC=findNearestMarker(targetSwc,mergeParentMarker,true);
+        if(resultSWC.size()>0)
+        {
+            for(vector<MyMarker*>::iterator re=resultSWC.begin();re!=resultSWC.end();re++)
+            {
+                MyMarker* resultMarker=*re;
+                outSwc.push_back(resultMarker);
+            }
+        }
+    }
+
+    qDebug("out swc size is %d",outSwc.size());
+    return outSwc;
+}
 
 vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
                                        vector<MyMarker*> inputSwc2)
