@@ -190,6 +190,8 @@ class Brain_Env(gym.Env):
         self._state = np.load(self.filepath).astype(float)
         # normalize inputs
         self._state /= 255.
+        # check not all False
+        assert self._state.all() == False
         self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
         self.original_state = np.copy(self._state)
 
@@ -264,9 +266,13 @@ class Brain_Env(gym.Env):
         https://en.wikipedia.org/wiki/Jaccard_index
         """
         # flatten bc  jaccard_similarity_score expects 1D arrays
-        state = self._state.ravel()
+        state = self._state
+        # state = self._state.ravel()
         state[state != -1] = 0  # mask out non-agent trajectory
-        state = state.astype(bool)  # everything non-zero => True
+        # state = state.astype(bool)  # everything non-zero => True
+
+        # images should not be all True
+        assert state.all() == False
         if not state.any():  # no agent trajectory
             print(" no state trajectory found")
             iou = 0.0
@@ -461,57 +467,7 @@ class Brain_Env(gym.Env):
         self._qvalues_history[self.cnt] = self._qvalues
 
     def _observe(self):
-        """
-        crop image data around current location to update what network sees.
-        update _observation_bounds
-
-        :return: new state
-        """
-        # initialize screen with zeros - all background
-        observation = np.zeros((self.observation_dims))
-        # print("observation dims", np.shape(observation))
-
-        # screen uses coordinate system relative to origin (0, 0, 0)
-        screen_xmin, screen_ymin, screen_zmin = 0, 0, 0
-        screen_xmax, screen_ymax, screen_zmax = self.observation_dims
-
-        # extract boundary locations using coordinate system relative to "global" image
-        # width, height, depth in terms of screen coord system
-        if self.xscale % 2:
-            xmin = self._location[0] - int(self.width * self.xscale / 2) - 1
-            xmax = self._location[0] + int(self.width * self.xscale / 2)
-            ymin = self._location[1] - int(self.height * self.yscale / 2) - 1
-            ymax = self._location[1] + int(self.height * self.yscale / 2)
-            zmin = self._location[2] - int(self.depth * self.zscale / 2) - 1
-            zmax = self._location[2] + int(self.depth * self.zscale / 2)
-        else:
-            xmin = self._location[0] - round(self.width * self.xscale / 2)
-            xmax = self._location[0] + round(self.width * self.xscale / 2)
-            ymin = self._location[1] - round(self.height * self.yscale / 2)
-            ymax = self._location[1] + round(self.height * self.yscale / 2)
-            zmin = self._location[2] - round(self.depth * self.zscale / 2)
-            zmax = self._location[2] + round(self.depth * self.zscale / 2)
-
-        # check if they violate image boundary and fix it
-        if xmin < 0:
-            xmin = 0
-            screen_xmin = screen_xmax - len(np.arange(xmin, xmax, self.xscale))
-        if ymin < 0:
-            ymin = 0
-            screen_ymin = screen_ymax - len(np.arange(ymin, ymax, self.yscale))
-        if zmin < 0:
-            zmin = 0
-            screen_zmin = screen_zmax - len(np.arange(zmin, zmax, self.zscale))
-        if xmax > self._state_dims[0]:
-            xmax = self._state_dims[0]
-            screen_xmax = screen_xmin + len(np.arange(xmin, xmax, self.xscale))
-        if ymax > self._state_dims[1]:
-            ymax = self._state_dims[1]
-            screen_ymax = screen_ymin + len(np.arange(ymin, ymax, self.yscale))
-        if zmax > self._state_dims[2]:
-            zmax = self._state_dims[2]
-            screen_zmax = screen_zmin + len(np.arange(zmin, zmax, self.zscale))
-
+        observation = np.copy(self.original_state)
         # take image, mask it w agent trajectory
         agent_trajectory = self.trajectory_to_branch()
         agent_trajectory *= -1  # agent frames are negative
@@ -522,22 +478,86 @@ class Brain_Env(gym.Env):
             np.copyto(self._state, agent_trajectory, casting='no', where=agent_mask)
             assert self._state is not None
 
-        # crop image data to update what network sees
-        # image coordinate system becomes screen coordinates
-        # scale can be thought of as a stride
-        # TODO: check if we need to keep "stride" from upstream
-        observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
-                                                                                                 xmin:xmax,
-                                                                                                 ymin:ymax,
-                                                                                                 zmin:zmax]
-
-        # update _observation_bounds limits from input image coordinates
-        # this is what the network sees
-        self._observation_bounds = ObservationBounds(xmin, xmax,
-                                                     ymin, ymax,
-                                                     zmin, zmax)
-
         return observation
+
+
+        # """
+        # crop image data around current location to update what network sees.
+        # update _observation_bounds
+        #
+        # :return: new state
+        # """
+        # # initialize screen with zeros - all background
+        # observation = np.zeros((self.observation_dims))
+        # # print("observation dims", np.shape(observation))
+        #
+        # # screen uses coordinate system relative to origin (0, 0, 0)
+        # screen_xmin, screen_ymin, screen_zmin = 0, 0, 0
+        # screen_xmax, screen_ymax, screen_zmax = self.observation_dims
+        #
+        # # extract boundary locations using coordinate system relative to "global" image
+        # # width, height, depth in terms of screen coord system
+        # if self.xscale % 2:
+        #     xmin = self._location[0] - int(self.width * self.xscale / 2) - 1
+        #     xmax = self._location[0] + int(self.width * self.xscale / 2)
+        #     ymin = self._location[1] - int(self.height * self.yscale / 2) - 1
+        #     ymax = self._location[1] + int(self.height * self.yscale / 2)
+        #     zmin = self._location[2] - int(self.depth * self.zscale / 2) - 1
+        #     zmax = self._location[2] + int(self.depth * self.zscale / 2)
+        # else:
+        #     xmin = self._location[0] - round(self.width * self.xscale / 2)
+        #     xmax = self._location[0] + round(self.width * self.xscale / 2)
+        #     ymin = self._location[1] - round(self.height * self.yscale / 2)
+        #     ymax = self._location[1] + round(self.height * self.yscale / 2)
+        #     zmin = self._location[2] - round(self.depth * self.zscale / 2)
+        #     zmax = self._location[2] + round(self.depth * self.zscale / 2)
+        #
+        # # check if they violate image boundary and fix it
+        # if xmin < 0:
+        #     xmin = 0
+        #     screen_xmin = screen_xmax - len(np.arange(xmin, xmax, self.xscale))
+        # if ymin < 0:
+        #     ymin = 0
+        #     screen_ymin = screen_ymax - len(np.arange(ymin, ymax, self.yscale))
+        # if zmin < 0:
+        #     zmin = 0
+        #     screen_zmin = screen_zmax - len(np.arange(zmin, zmax, self.zscale))
+        # if xmax > self._state_dims[0]:
+        #     xmax = self._state_dims[0]
+        #     screen_xmax = screen_xmin + len(np.arange(xmin, xmax, self.xscale))
+        # if ymax > self._state_dims[1]:
+        #     ymax = self._state_dims[1]
+        #     screen_ymax = screen_ymin + len(np.arange(ymin, ymax, self.yscale))
+        # if zmax > self._state_dims[2]:
+        #     zmax = self._state_dims[2]
+        #     screen_zmax = screen_zmin + len(np.arange(zmin, zmax, self.zscale))
+        #
+        # # take image, mask it w agent trajectory
+        # agent_trajectory = self.trajectory_to_branch()
+        # agent_trajectory *= -1  # agent frames are negative
+        # # paste agent trajectory ontop of original state, but only when vals are not 0
+        # agent_mask = agent_trajectory.astype(bool)
+        # # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
+        # if agent_mask.any():  # agent trajectory not empty
+        #     np.copyto(self._state, agent_trajectory, casting='no', where=agent_mask)
+        #     assert self._state is not None
+        #
+        # # crop image data to update what network sees
+        # # image coordinate system becomes screen coordinates
+        # # scale can be thought of as a stride
+        # # TODO: check if we need to keep "stride" from upstream
+        # observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
+        #                                                                                          xmin:xmax,
+        #                                                                                          ymin:ymax,
+        #                                                                                          zmin:zmax]
+        #
+        # # update _observation_bounds limits from input image coordinates
+        # # this is what the network sees
+        # self._observation_bounds = ObservationBounds(xmin, xmax,
+        #                                              ymin, ymax,
+        #                                              zmin, zmax)
+        #
+        # return observation
 
     def trajectory_to_branch(self):
         """take location history, generate connected branches using Vaa3d plugin
@@ -560,6 +580,7 @@ class Brain_Env(gym.Env):
             tiff_max = np.amax(np.fabs(output_npy))
             if not np.isclose(tiff_max, 0):  # normalize if tiff is not blank
                 output_npy = output_npy / tiff_max
+
             return output_npy
 
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
@@ -775,7 +796,7 @@ class FrameStack(gym.Wrapper):
                                             dtype=np.uint8)
 
     def reset(self):
-        """Clear buffer and re-fill by duplicating the first observation."""
+        """flush buffer with empty frames, then add the first observation."""
         ob = self.env.reset()
         for _ in range(self.k - 1):
             self.frames.append(np.zeros_like(ob))
@@ -787,6 +808,7 @@ class FrameStack(gym.Wrapper):
         self.frames.append(ob)
         return self._observation(), reward, done, info
 
+    # TODO: check if we can change to get_last_observation
     def _observation(self):
         assert len(self.frames) == self.k
         return np.stack(self.frames, axis=-1)
