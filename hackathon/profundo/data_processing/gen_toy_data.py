@@ -57,7 +57,7 @@ def main():
     trajectories = sc.textFile(','.join(swc_list))
     trajectories = trajectories.map(remove_comments)
     tst_log()
-    #trajectories = trajectories.map(chop_branches)
+    #frames = frames.map(chop_branches)
 
 
 if __name__ == "__main__":

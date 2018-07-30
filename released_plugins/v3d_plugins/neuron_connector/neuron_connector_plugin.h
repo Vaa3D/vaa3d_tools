@@ -60,10 +60,10 @@ public:
     void doconnect(V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-void printHelp();
-void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchtype, bool minusradius, int rootID);
-double getswcdiameter(NeuronTree* nt);
-bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
+//void printHelp();
+//void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, double yscale, double zscale, double angThr, double disThr, int matchtype, bool minusradius, int rootID);
+//double getswcdiameter(NeuronTree* nt);
+//bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 
 #endif
 

@@ -5,8 +5,10 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../..
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
-HEADERS	+= neuron_connector_plugin.h
-SOURCES	+= neuron_connector_plugin.cpp
+HEADERS	+= neuron_connector_plugin.h \
+    neuron_connector_func.h
+SOURCES	+= neuron_connector_plugin.cpp \
+    neuron_connector_func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 

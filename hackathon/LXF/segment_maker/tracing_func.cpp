@@ -962,7 +962,15 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
             return false;
         }
     }
-
+    printf("0. Make some backgrand pixels as 0 \n");
+    V3DLONG pagesz = sz_img_input[0]*sz_img_input[1]*sz_img_input[2];
+    for(V3DLONG i=0;i<pagesz;i++)
+    {
+        if(int(p_img_input[i])<15)
+        {
+            p_img_input[i]=0;
+        }
+    }
     //-----------------------------------------------------------------------------------------
     printf("1. Find the bounding box and crop image. \n");
     long l_boundbox_min[3],l_boundbox_max[3];//xyz
