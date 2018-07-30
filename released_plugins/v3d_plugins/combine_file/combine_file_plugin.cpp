@@ -10,6 +10,7 @@
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../sort_neuron_swc/openSWCDialog.h"
+#include <algorithm>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(combine_file, combine_file);
@@ -176,7 +177,353 @@ bool combine_file::dofunc(const QString & func_name, const V3DPluginArgList & in
 
 	return true;
 }
+double distanceofMarker(MyMarker* marker1,MyMarker* marker2)
+{
+    double distance=0;/*int count=0;*/
+    distance=(marker1->x-marker2->x)*(marker1->x-marker2->x)+(marker1->y-marker2->y)*(marker1->y-marker2->y)+(marker1->z-marker2->z)*(marker1->z-marker2->z);
+    return distance;
+}
 
+MyMarker* findNearestMarker(vector<MyMarker*> inputSwc,MyMarker* inputMarker)
+{
+    MyMarker* outMarker,*findMarker;
+    double Mindistance=0;
+
+    if(inputMarker->parent!=0)
+    {
+        for(vector<MyMarker*>::iterator tar=inputSwc.begin();tar!=inputSwc.end();tar++)
+        {
+            MyMarker* targetMarker=*tar;
+            if(tar==inputSwc.begin())
+            {
+                Mindistance=distanceofMarker(targetMarker,inputMarker);
+                findMarker=targetMarker;
+            }
+            else
+            {
+                double tempDistace=distanceofMarker(targetMarker,inputMarker);
+                if(Mindistance>tempDistace)
+                {
+                    Mindistance=tempDistace;
+                    findMarker=targetMarker;
+                }
+            }
+        }
+    }
+    else
+    {
+        qDebug("this marker is already parent marker");
+    }
+    if(Mindistance>150)
+    {
+        qDebug("the distance is worng.");
+        return outMarker;
+    }
+    else
+        outMarker=inputMarker->parent;
+    if(findMarker&&outMarker)
+    {
+        qDebug("find one");
+        outMarker->x=findMarker->x;
+        outMarker->y=findMarker->y;
+        outMarker->z=findMarker->z;
+        outMarker->type=findMarker->type;
+        outMarker->radius=findMarker->radius;
+        outMarker->parent=0;
+    }
+    else
+        qDebug("can't find parent node.");
+    return outMarker;
+}
+
+vector<MyMarker*> findNearestMarker(vector<MyMarker*> inputSwc,MyMarker* inputMarker,bool isSecondMerge)
+{
+    MyMarker*findMarker;
+    vector<MyMarker*> outMarkerSwc;
+    double Mindistance=0;
+    if(!isSecondMerge)
+        return outMarkerSwc;
+    if(inputMarker->parent!=0)
+    {
+        for(vector<MyMarker*>::iterator tar=inputSwc.begin();tar!=inputSwc.end();tar++)
+        {
+            MyMarker* targetMarker=*tar;
+            if(tar==inputSwc.begin())
+            {
+                Mindistance=distanceofMarker(targetMarker,inputMarker);
+                findMarker=targetMarker;
+            }
+            else
+            {
+                double tempDistace=distanceofMarker(targetMarker,inputMarker);
+                if(Mindistance>tempDistace)
+                {
+                    Mindistance=tempDistace;
+                    findMarker=targetMarker;
+                }
+            }
+        }
+    }
+    else
+    {
+        qDebug("this marker is already parent marker");
+    }
+    double parent2targetdistance=distanceofMarker(findMarker,inputMarker->parent);
+    while(Mindistance>parent2targetdistance&&inputMarker->parent!=0)
+    {
+        inputMarker=inputMarker->parent;
+        Mindistance=parent2targetdistance;
+        parent2targetdistance=distanceofMarker(findMarker,inputMarker);
+        outMarkerSwc.push_back(inputMarker);
+    }
+
+    if(findMarker&&outMarkerSwc.size()>0)
+    {
+        qDebug("find one");
+        MyMarker* outMarker=outMarkerSwc.back();
+        outMarker->x=findMarker->x;
+        outMarker->y=findMarker->y;
+        outMarker->z=findMarker->z;
+        outMarker->type=findMarker->type;
+        outMarker->radius=findMarker->radius;
+        outMarker->parent=0;
+    }
+    else
+        qDebug("can't find parent node.");
+    return outMarkerSwc;
+}
+
+
+vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
+                                       vector<MyMarker*> inputSwc2)
+{
+    //vector<MyMarker*> outSwc;
+    vector<MyMarker*> targetSwc,inputSwc,outSwc,firstMergeSwc,secondMergeSwc;
+    //merge the small size SWC file to large size SWC file.
+    if(inputSwc1.size()==0&&inputSwc2.size()==0)
+    {
+        qDebug("Input SWC file is Worng.");
+        return outSwc;
+    }
+    else if(inputSwc1.size()!=0&&inputSwc2.size()==0)
+    {
+        outSwc=inputSwc1;
+        return outSwc;
+    }
+    else if(inputSwc1.size()==0&&inputSwc2.size()!=0)
+    {
+        outSwc=inputSwc2;
+        return outSwc;
+    }
+    else if(inputSwc1.size()>0&&inputSwc2.size()>=inputSwc1.size())
+    {
+        targetSwc=inputSwc2;
+        inputSwc=inputSwc1;
+    }
+    else if(inputSwc2.size()>0&&inputSwc1.size()>=inputSwc2.size())
+    {
+        targetSwc=inputSwc1;
+        inputSwc=inputSwc2;
+    }
+
+    double tarXmax=0,tarXmin=0,tarYmax=0,tarYmin=0,tarZmax=0,tarZmin=0;
+    qDebug("targetswc size is %d",targetSwc.size());
+    qDebug("inputswc size is %d",inputSwc.size());
+
+    //firstly, put all the targertSwc marker to outSwc file.
+    for(vector<MyMarker*>::iterator tar=targetSwc.begin();tar!=targetSwc.end();tar++)
+    {
+        MyMarker* targetMarker=*tar;
+        outSwc.push_back(targetMarker);
+        if(tar==targetSwc.begin())
+        {
+            tarXmax=tarXmin=targetMarker->x;
+            tarYmax=tarYmin=targetMarker->y;
+            tarZmax=tarZmin=targetMarker->z;
+        }
+        //caculate the margin of the region of targetSwc.
+        if(targetMarker->x>=tarXmax)
+            tarXmax=targetMarker->x;
+        else if(targetMarker->x<=tarXmin)
+            tarXmin=targetMarker->x;
+        if(targetMarker->y>=tarYmax)
+            tarYmax=targetMarker->x;
+        else if(targetMarker->y<=tarYmin)
+            tarYmin=targetMarker->y;
+        if(targetMarker->z>=tarZmax)
+            tarZmax=targetMarker->z;
+        else if(targetMarker->z<=tarZmin)
+            tarZmin=targetMarker->z;
+    }
+    vector<MyMarker*> intersectionSwc,targetIntersectionSwc;
+    for(vector<MyMarker*>::iterator inp=inputSwc.begin();inp!=inputSwc.end();inp++)
+    {
+        //caculate the margin of the region of inputswc
+        MyMarker* inputMarker=*inp;
+        if(inputMarker->x<=tarXmax&&inputMarker->x>=tarXmin
+                &&inputMarker->y<=tarYmax&&inputMarker->y>=tarYmin
+                &&inputMarker->z<=tarZmax&&inputMarker->z>=tarZmin)
+        {
+            intersectionSwc.push_back(inputMarker);
+        }
+        else //put all the inputSwc marker that is outside of the target margin to outSwc file.
+        {
+            firstMergeSwc.push_back(inputMarker);
+            outSwc.push_back(inputMarker);
+        }
+    }
+    //Add parnet node to firstMergeSwc.
+    qDebug("out swc size is %d,before adding parent node at firstly step.",outSwc.size());
+    vector<MyMarker*> firstParentSwc;
+    if(firstMergeSwc.size()>0)
+    {
+        for(vector<MyMarker*>::iterator fi=firstMergeSwc.begin();fi!=firstMergeSwc.end();fi++)
+        {
+            MyMarker* firstMergeMarker=*fi;
+            if(firstMergeMarker->parent!=0)
+            {
+                //if parent node already in firstMergeMarker, continue;else add a parent node
+                vector<MyMarker*>::iterator searchResult=find(firstMergeSwc.begin(),firstMergeSwc.end(),firstMergeMarker->parent);
+                if(searchResult==firstMergeSwc.end())
+                {
+                    firstParentSwc.push_back(firstMergeMarker);
+                }
+                else
+                    continue;
+            }
+            else
+                continue;
+        }
+    }
+    qDebug("first Parent Swc size is %d",firstParentSwc.size());
+    //find the nearest node in targe node of firstMerge node without parent node and add.
+    for(vector<MyMarker*>::iterator fis=firstParentSwc.begin();fis!=firstParentSwc.end();fis++)
+    {
+        MyMarker* firstParentMarker =*fis;
+        MyMarker* resultMarker=findNearestMarker(targetSwc,firstParentMarker);
+        if(resultMarker)
+            outSwc.push_back(resultMarker);
+    }
+    qDebug("out swc size is %d. after adding parent node to firstly merging step",outSwc.size());
+    qDebug("intersectionswc size is %d",intersectionSwc.size());
+
+    double intersectionXmax=0,intersectionXmin=0,intersectionYmax=0,intersectionYmin=0,intersectionZmax=0,intersectionZmin=0;
+    for(vector<MyMarker*>::iterator itp=intersectionSwc.begin();itp!=intersectionSwc.end();itp++)
+    {
+        MyMarker* tempIntersectionMarker=*itp;
+        if(itp==intersectionSwc.begin())
+        {
+            intersectionXmax=intersectionXmin=tempIntersectionMarker->x;
+            intersectionYmax=intersectionYmin=tempIntersectionMarker->y;
+            intersectionZmax=intersectionZmin=tempIntersectionMarker->z;
+        }
+        else
+        {
+            if(tempIntersectionMarker->x>=intersectionXmax)
+                intersectionXmax=tempIntersectionMarker->x;
+            else if(tempIntersectionMarker->x<=intersectionXmin)
+                intersectionXmin=tempIntersectionMarker->x;
+            if(tempIntersectionMarker->y>=intersectionYmax)
+                intersectionYmax=tempIntersectionMarker->y;
+            else if(tempIntersectionMarker->y<=intersectionYmin)
+                intersectionYmin=tempIntersectionMarker->y;
+            if(tempIntersectionMarker->z>=intersectionZmax)
+                intersectionZmax=tempIntersectionMarker->z;
+            else if(tempIntersectionMarker->z<=intersectionZmin)
+                intersectionZmin=tempIntersectionMarker->z;
+        }
+    }
+    for(vector<MyMarker*>::iterator tar=targetSwc.begin();tar!=targetSwc.end();tar++)
+    {
+        MyMarker* targetMarker=*tar;
+        //caculate the margin of the region of targetSwc in interaction region.
+        if(targetMarker->x<=intersectionXmax&&targetMarker->x>=intersectionXmin
+                &&targetMarker->y<=intersectionYmax&&targetMarker->y>=intersectionYmin
+                &&targetMarker->z<=intersectionZmax&&targetMarker->z>=intersectionZmin)
+        {
+            targetIntersectionSwc.push_back(targetMarker);
+        }
+    }
+    qDebug("target intersection size is %d ",targetIntersectionSwc.size());
+    qDebug("out swc size is %d",outSwc.size());
+
+    bool miok;
+    double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",150,1,500,10,&miok);
+
+    int _countnumber=0;int _flag[intersectionSwc.size()];
+    if(miok)
+    {
+        cout<<"input number is "<<distanceThreshold<<endl;
+        for(vector<MyMarker*>::iterator tart=intersectionSwc.begin();tart!=intersectionSwc.end();tart++)
+        {
+            MyMarker* interMarkerI=*tart;_flag[_countnumber]=0;
+
+            for(vector<MyMarker*>::iterator tari=targetIntersectionSwc.begin();tari!=targetIntersectionSwc.end();tari++)
+            {
+                MyMarker* targetMarkerT=*tari;
+                if(distanceofMarker(targetMarkerT,interMarkerI)<distanceThreshold)
+                {
+                    _flag[_countnumber]=1;
+                    break;
+                }
+
+            }
+            _countnumber++;
+        }
+    }
+
+    int countnumber=0;
+    for(vector<MyMarker*>::iterator tart=intersectionSwc.begin();tart!=intersectionSwc.end();tart++)
+    {
+        MyMarker* interMarkerI=*tart;
+        if(_flag[countnumber]!=1)
+        {
+            secondMergeSwc.push_back(interMarkerI);
+            outSwc.push_back(interMarkerI);
+        }
+        countnumber++;
+    }
+
+    vector<MyMarker*> secondParentSwc;
+    if(secondMergeSwc.size()>0)
+    {
+        for(vector<MyMarker*>::iterator se=secondMergeSwc.begin();se!=secondMergeSwc.end();se++)
+        {
+            MyMarker* secondMergeMarker=*se;
+            if(secondMergeMarker->parent!=0)
+            {
+                //if parent node already in firstMergeMarker, continue;else add a parent node
+                vector<MyMarker*>::iterator searchResult=find(secondMergeSwc.begin(),secondMergeSwc.end(),secondMergeMarker->parent);
+                if(searchResult==secondMergeSwc.end())
+                {
+                    secondParentSwc.push_back(secondMergeMarker);
+                }
+                else
+                    continue;
+            }
+            else
+                continue;
+        }
+    }
+    qDebug("second Parent Swc size is %d",secondParentSwc.size());
+    //find the nearest node in targe node of second Merge node without parent node and add.
+    for(vector<MyMarker*>::iterator ses=secondParentSwc.begin();ses!=secondParentSwc.end();ses++)
+    {
+        MyMarker* secondParentMarker =*ses;
+        vector<MyMarker*> resultSWC=findNearestMarker(targetSwc,secondParentMarker,true);
+        if(resultSWC.size()>0)
+        {
+            for(vector<MyMarker*>::iterator re=resultSWC.begin();re!=resultSWC.end();re++)
+            {
+                MyMarker* resultMarker=*re;
+                outSwc.push_back(resultMarker);
+            }
+        }
+    }
+
+    qDebug("out swc size is %d",outSwc.size());
+    return outSwc;
+}
 void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent, int method_code)
 {
     if(method_code == 1)
@@ -192,12 +539,19 @@ void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent,
         {
 
             QString curPathSWC = swcList.at(i);
-            vector<MyMarker*> inputswc;
+            vector<MyMarker*> inputswc,mergeswc;
             inputswc = readSWC_file(curPathSWC.toStdString());
-
-            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            if(i>0&&outswc.size()>0)
             {
-                outswc.push_back(inputswc[d]);
+                mergeswc=mergeSWCafterCombine(outswc,inputswc);
+            }
+            else
+            {
+                mergeswc=inputswc;
+            }
+            for(V3DLONG d = 0; d < mergeswc.size(); d++)
+            {
+                outswc.push_back(mergeswc[d]);
             }
 
         }

@@ -174,11 +174,12 @@ vector<MyMarker*> readSWC_file(string swc_file)
         ifs>> marker->z;
         ifs>> marker->radius;
         int par_id = -1; ifs >> par_id;
-        while(ifs.peek()!='\n')
-        {
-            double temp;
-            ifs>>temp;
-        }
+        ifs.ignore(1000,'\n');
+//        while(ifs.peek()!='\n')
+//        {
+//            cout<<"move in"<<endl;
+//            ifs.ignore(1000,'\n');break;
+//        }
         parid_map[marker] = par_id;
         swc.push_back(marker);
     }
