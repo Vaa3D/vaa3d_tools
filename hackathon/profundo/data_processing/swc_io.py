@@ -151,7 +151,8 @@ def resample_swc(input_fname, input_fpath, vaad3d_bin_path, step_length=1.0,
 
         #print("running \n")
         #print("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out}".format(**cli_dict))
-        os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
+        subprocess.run("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict), shell=True)
+        # os.system("{v3d_bin} -x {plugin} -f {plugin} -i {in} -o {out} -p {step}".format(**cli_dict))
 
         assert (os.path.isfile(outfile_fpath))
         return outfile_fpath
