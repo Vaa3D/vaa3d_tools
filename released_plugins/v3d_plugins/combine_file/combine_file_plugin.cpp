@@ -295,10 +295,10 @@ vector<MyMarker*> findNearestMarker(vector<MyMarker*> inputSwc,MyMarker* inputMa
         parent2targetdistance=distanceofMarker(findMarker,inputMarker);
         outMarkerSwc.push_back(inputMarker);
     }
-
-    if(findMarker&&outMarkerSwc.size()>0)
-    {
-        qDebug("find one");
+    if(outMarkerSwc.size()>0)
+        return outMarkerSwc;
+    if(findMarker)
+    {        
         MyMarker* outMarker=outMarkerSwc.back();
         outMarker->x=findMarker->x;
         outMarker->y=findMarker->y;
@@ -318,7 +318,18 @@ double distanceofPoints(XYZ point1,XYZ point2)
     distance=(point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)+(point1.z-point2.z)*(point1.z-point2.z);
     return distance;
 }
-
+double distanceofMarker2point(MyMarker* inputMarker,XYZ inputPosition)
+{
+    double distanceMP=0;
+    XYZ inputMarkerP;
+    inputMarkerP.x=inputMarker->x;
+    inputMarkerP.y=inputMarker->y;
+    inputMarkerP.z=inputMarker->z;
+    distanceMP=distanceofPoints(inputMarkerP,inputPosition);
+    return distanceMP;
+}
+///interpolate node between markers,if one node is too far to their parent node, interpolate node between them.
+//some code may need to adjust.
 vector<XYZ> InterpolationBetweenMarkers(vector<MyMarker*> inputSwc)
 {
     vector<XYZ> outPostion;
@@ -334,14 +345,15 @@ vector<XYZ> InterpolationBetweenMarkers(vector<MyMarker*> inputSwc)
             inputPosition.x=(float)inputMarker->x;inputPosition.y=(float)inputMarker->y;inputPosition.z=(float)inputMarker->z;
             parentPosition.x=(float)inputMarker->parent->x;parentPosition.y=(float)inputMarker->parent->y;parentPosition.z=(float)inputMarker->parent->z;
             double distanceInit=distanceofPoints(inputPosition,parentPosition);
-            int interpolationNumber=2;
-            if(distanceInit<20)
+            int interpolationNumber=1;
+            if(distanceInit<30)
             {
                 continue;
             }
             else
             {
-                interpolationNumber=(int)(distanceInit/20)+1;
+                interpolationNumber=(int)(distanceInit/30)+1;
+                //cout<<"interpolation number is "<<interpolationNumber<<endl;
             }
             for(int i=1;i<interpolationNumber;i++)
             {
@@ -353,8 +365,13 @@ vector<XYZ> InterpolationBetweenMarkers(vector<MyMarker*> inputSwc)
             }
         }
     }
+    return outPostion;
 }
-
+////merge version2: 1.merge the small size Swc file to large size SWC file.
+////                2.interpolate node to these markers whose position are very big to their parent node.
+////                3.if input node is too small to the target node, delete it. add the rest (input node) to the output swc file.
+////                4.if input node is too small to the interpolate nodes, delete it. add the rest (input node) to the output swc file.
+////                5.for all outMarker,find the nearest node in targe nodes and adjust postion of the parent node of those outmarker to it.
 vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
                                        vector<MyMarker*> inputSwc2)
 {
@@ -389,10 +406,10 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
     }
     //resample the targeSwc, add point between two nodes if the distance of these nodes is too big.
     vector<XYZ> interpolationPosition =InterpolationBetweenMarkers(targetSwc);
-
+    qDebug("interpolation size is %d",interpolationPosition.size());
 
     bool miok;
-    double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",150,1,500,10,&miok);
+    double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",150,1,300,10,&miok);
 
     int _countnumber=0;int _flag[inputSwc.size()];
     if(miok)
@@ -410,7 +427,18 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
                     _flag[_countnumber]=1;
                     break;
                 }
-
+            }
+            if(_flag[_countnumber]!=1)
+            {
+                for(vector<XYZ>::iterator interpolationp=interpolationPosition.begin();interpolationp!=interpolationPosition.end();interpolationp++)
+                {
+                    XYZ interpolationposition=*interpolationp;
+                    if(distanceofMarker2point(inputMarker,interpolationposition)<distanceThreshold)
+                    {
+                         _flag[_countnumber]=1;
+                         break;
+                    }
+                }
             }
             _countnumber++;
         }
@@ -469,6 +497,10 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
     return outSwc;
 }
 
+////merge version1:1.merge the small size Swc file to large size SWC file.
+////               2.find the same region of these two file, only working on these region.
+////               3.if input node is too small to the target node, delete it. add the rest (input node) to the output swc file.
+////               4.for all outMarker,find the nearest node in targe nodes and adjust postion of the parent node of those outmarker to it.
 vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
                                        vector<MyMarker*> inputSwc2)
 {
@@ -718,7 +750,7 @@ void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent,
             inputswc = readSWC_file(curPathSWC.toStdString());
             if(i>0&&outswc.size()>0)
             {
-                mergeswc=mergeSWCafterCombine(outswc,inputswc);
+                mergeswc=mergeSWCorESWC(outswc,inputswc);
             }
             else
             {
