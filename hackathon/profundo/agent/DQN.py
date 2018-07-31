@@ -55,38 +55,40 @@ logger_dir = os.path.join('train_log', 'expriment_1')
 
 ###############################################################################
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
-BATCH_SIZE = 48
+BATCH_SIZE = 20
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
-OBSERVATION_DIMS = (16, 16, 16)
+OBSERVATION_DIMS = (15, 15, 15)
 # how many frames to keep
 # in other words, how many past observations the network can see
-FRAME_HISTORY = 4
+FRAME_HISTORY = 1
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
 GAMMA = 0.9  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
-MEMORY_SIZE = 1e5  # 6
+MEMORY_SIZE = 1e3  # 6
+# MEMORY_SIZE = 1e5  # 6 # FIXME og
 # consume at least 1e6 * 27 * 27 * 27 bytes
 INIT_MEMORY_SIZE = MEMORY_SIZE // 20  # 5e4
 # each epoch is 100k played frames
-STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
+STEPS_PER_EPOCH = 100 // UPDATE_FREQ * 10
+# STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  FIXME og
 # num training epochs in between model evaluations
 EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
-EVAL_EPISODE = 50
-MAX_EPISODE_LENGTH = 100
+EVAL_EPISODE = 5
+MAX_EPISODE_LENGTH = 10
 
 
 ###############################################################################
 
 # FIXME hard coded save video True
 def get_player(directory=None, files_list= None, viz=False,
-               task=False, saveGif=False, saveVideo=True, max_num_frames=0):
+               task=False, saveGif=False, saveVideo=True):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                    task=task, files_list=files_list, max_num_frames=max_num_frames)
+                    task=task, files_list=files_list, max_num_frames=MAX_EPISODE_LENGTH)
     if (task != 'train'):
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
@@ -105,9 +107,6 @@ class Model(DQNModel): # TODO why override DQN model here? why not keep in DQNMo
         """ image: [0,255]
 
         :returns predicted Q values"""
-        # FIXME norm not needed
-        # normalize image values to [0, 1]
-        image = image / 255.0
 
         with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):
             # core layers of the network
@@ -160,15 +159,15 @@ def get_config():
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(directory=data_dir, task='train',
-                          files_list=train_data_fpaths,
-                          max_num_frames=MAX_EPISODE_LENGTH),  # TODO: check if this is a good idea
+                          files_list=train_data_fpaths),
+
         state_shape=OBSERVATION_DIMS,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
         init_exploration=1.0,
         update_frequency=UPDATE_FREQ,
-        history_len=FRAME_HISTORY
+        frame_history_len=FRAME_HISTORY
     )
 
     return TrainConfig(
@@ -177,7 +176,7 @@ def get_config():
         model=Model(),
         callbacks=[  # TODO: periodically save videos
             ModelSaver(checkpoint_dir="model_checkpoints",
-                       max_to_keep=1000),
+                       max_to_keep=1000),  # TODO: og was just ModelSaver()
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),
                 # update target network every 10k steps
@@ -198,7 +197,7 @@ def get_config():
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
-        max_epoch=1000,
+        max_epoch=1,
     )
 
 
@@ -230,7 +229,8 @@ if __name__ == '__main__':
     # load files into env to set num_actions, num_validation_files
     init_player = Brain_Env(directory=data_dir,
                             files_list=test_data_fpaths,
-                            observation_dims=OBSERVATION_DIMS)
+                            observation_dims=OBSERVATION_DIMS,
+                            max_num_frames=MAX_EPISODE_LENGTH)
     NUM_ACTIONS = init_player.action_space.n
     num_validation_files = init_player.files.num_files
 
