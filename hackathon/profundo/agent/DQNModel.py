@@ -52,13 +52,13 @@ class Model3D(ModelDesc):
 
     def _build_graph(self, inputs):
         comb_state, action, reward, isOver = inputs
-        print("state stuff", comb_state, flush=True)
+        # print("state stuff", comb_state, flush=True)
 
         comb_state = tf.cast(comb_state, tf.float32)
         # TODO: wtf is this?
-        print("state shape ", tf.shape(comb_state), flush=True)
-        print("state size ", tf.size(comb_state), flush=True)
-        print("self channel ", self.channel)
+        # print("state shape ", tf.shape(comb_state), flush=True)
+        # print("state size ", tf.size(comb_state), flush=True)
+        # print("self channel ", self.channel)
         state = tf.slice(comb_state, [0, 0, 0, 0, 0], [-1, -1, -1, -1, self.channel], name='state')
         self.predict_value = self.get_DQN_prediction(state)
         if not get_current_tower_context().is_training:
@@ -66,7 +66,7 @@ class Model3D(ModelDesc):
 
         reward = tf.clip_by_value(reward, -1, 1)
         # FIXME I think this is history buffer stuff
-        comb_state = tf.Print(comb_state, [comb_state, tf.shape(comb_state)], message="tf Print out", summarize=50)
+        # comb_state = tf.Print(comb_state, [comb_state, tf.shape(comb_state)], message="tf Print out", summarize=50)
         next_state = tf.slice(comb_state, [0, 0, 0, 0, 1], [-1, -1, -1, -1, self.channel], name='next_state')
         action_onehot = tf.one_hot(action, self.num_actions, 1.0, 0.0)
 
