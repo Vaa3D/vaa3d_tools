@@ -150,8 +150,8 @@ void combine_file::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 //    }
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2015-2-27"));
+        v3d_msg(tr("this is a plugin used to combine two or more swc files together.Firstly, you need put all the swc or eswc files to one folder.. "
+                   "Developed by Zhi Zhou (2015-2-27) and redesigned by Shengdian Jiang (2018-07-31)"));
 	}
 }
 
@@ -295,7 +295,7 @@ vector<MyMarker*> findNearestMarker(vector<MyMarker*> inputSwc,MyMarker* inputMa
         parent2targetdistance=distanceofMarker(findMarker,inputMarker);
         outMarkerSwc.push_back(inputMarker);
     }
-    if(outMarkerSwc.size()>0)
+    if(outMarkerSwc.size()==0)
         return outMarkerSwc;
     if(findMarker)
     {        
@@ -346,21 +346,22 @@ vector<XYZ> InterpolationBetweenMarkers(vector<MyMarker*> inputSwc)
             parentPosition.x=(float)inputMarker->parent->x;parentPosition.y=(float)inputMarker->parent->y;parentPosition.z=(float)inputMarker->parent->z;
             double distanceInit=distanceofPoints(inputPosition,parentPosition);
             int interpolationNumber=1;
-            if(distanceInit<30)
+            if(distanceInit<35)
             {
                 continue;
             }
             else
             {
-                interpolationNumber=(int)(distanceInit/30)+1;
+                interpolationNumber=(int)(distanceInit/35)+1;
                 //cout<<"interpolation number is "<<interpolationNumber<<endl;
             }
+            //interpolate points
             for(int i=1;i<interpolationNumber;i++)
             {
                 XYZ point;
-                point.x=i*(inputPosition.x+parentPosition.x)/interpolationNumber;
-                point.y=i*(inputPosition.y+parentPosition.y)/interpolationNumber;
-                point.z=i*(inputPosition.z+parentPosition.z)/interpolationNumber;
+                point.x=i*(-inputPosition.x+parentPosition.x)/interpolationNumber+inputPosition.x;
+                point.y=i*(-inputPosition.y+parentPosition.y)/interpolationNumber+inputPosition.y;
+                point.z=i*(-inputPosition.z+parentPosition.z)/interpolationNumber+inputPosition.z;
                 outPostion.push_back(point);
             }
         }
@@ -409,7 +410,7 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
     qDebug("interpolation size is %d",interpolationPosition.size());
 
     bool miok;
-    double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",150,1,300,10,&miok);
+    double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",50,1,150,5,&miok);
 
     int _countnumber=0;int _flag[inputSwc.size()];
     if(miok)
@@ -455,6 +456,7 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
         }
         countnumber++;
     }
+    qDebug("out swc size is %d",outSwc.size());
 
     vector<MyMarker*> mergeParentSwc;
     if(MergeSwc.size()>0)
@@ -477,6 +479,7 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
                 continue;
         }
     }
+    qDebug("merge parent swc size is %d",mergeParentSwc.size());
 
     //find the nearest node in targe node of second Merge node without parent node and add.
     for(vector<MyMarker*>::iterator ses=mergeParentSwc.begin();ses!=mergeParentSwc.end();ses++)
