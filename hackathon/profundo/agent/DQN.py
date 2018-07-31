@@ -66,7 +66,7 @@ UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
 GAMMA = 0.9  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
-MEMORY_SIZE = 1e3  # 6
+MEMORY_SIZE = 1e5  # 6
 # MEMORY_SIZE = 1e5  # 6 # FIXME og
 # consume at least 1e6 * 27 * 27 * 27 bytes
 INIT_MEMORY_SIZE = MEMORY_SIZE // 20  # 5e4
@@ -77,7 +77,7 @@ STEPS_PER_EPOCH = 100 // UPDATE_FREQ * 10
 EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
 EVAL_EPISODE = 5
-MAX_EPISODE_LENGTH = 10
+MAX_EPISODE_LENGTH = 100
 
 
 ###############################################################################
