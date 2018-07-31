@@ -5,6 +5,8 @@ from data_processing.swc_io import get_fnames_and_abspath_from_dir
 from sampleTrain import FilesListCubeNPY
 import numpy as np
 from jaccard import jaccard
+from data_processing.swc_io import linked_list_2_swc, swc_to_TIFF, TIFF_to_npy
+
 
 
 
@@ -35,9 +37,7 @@ class TestBrain_Env(TestCase):
     def test_calc_IOU(self):
         """method tests self._state with self.original_state. _state gets masked out everywhere
         that isn't -1"""
-        og_state = np.copy(self.env.original_state)
-
-        agent_state = og_state * -1
+        agent_state = self.env.original_state * -1
         self.env._state = agent_state
         assert np.isclose(self.env.calc_IOU(), 1)
 
