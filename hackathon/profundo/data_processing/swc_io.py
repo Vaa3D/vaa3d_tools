@@ -47,7 +47,8 @@ def remove_comments_from_swc(fpaths, fnames, output_dir="../data/02_human_clean/
         # assert os.  # TODO
 
 def swc_to_linked_list(fpath: list):
-    
+    # TODO: think of a better data structure for querying
+    # maybe, one which is generated using DFS from the soma
     # https://stackoverflow.com/a/17756005/4212158
     linked_list = defaultdict(list)
     
@@ -197,6 +198,7 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_ext
             assert (os.path.isfile(outfile_fpath))
         except AssertionError:
             print("TIFF saving failed!")
+            print("swc contents: ", swc_to_nparray(input_fpath))
             print("running {v3d_bin} -x {plugin} -f {function} -i {in} -o {out} -p {bounds}".format(**cli_dict))
             # do not surpress output
             os.system("{v3d_bin} -x {plugin} -f {function} -i {in} -o {out} -p {bounds}".format(**cli_dict))
