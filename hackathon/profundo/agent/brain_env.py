@@ -24,6 +24,8 @@ import threading
 import numpy as np
 from tensorpack import logger
 from collections import (Counter, defaultdict, deque, namedtuple)
+import tempfile
+
 
 import cv2
 import math
@@ -41,7 +43,7 @@ from tensorpack.utils.stats import StatCounter
 from sampleTrain import FilesListCubeNPY
 from viewer import SimpleImageViewer as Viewer
 from jaccard import jaccard
-from data_processing.swc_io import save_branch_as_swc, swc_to_TIFF, TIFF_to_npy
+from data_processing.swc_io import locations_to_swc, swc_to_TIFF, TIFF_to_npy
 
 __all__ = ['Brain_Env', 'FrameStack']
 
@@ -251,7 +253,7 @@ class Brain_Env(gym.Env):
         # self._location = np.array([x, y, z])
         # self._start_location = np.array([x, y, z])
         self._qvalues = np.zeros(self.actions)
-        self._observation = self._observe()
+        self._state = self._observe()
         self.curr_IOU = self.calc_IOU()
         print("first IOU ", self.curr_IOU)
         self.reward = self._calc_reward(False, False)
@@ -266,22 +268,18 @@ class Brain_Env(gym.Env):
         https://en.wikipedia.org/wiki/Jaccard_index
         """
         # flatten bc  jaccard_similarity_score expects 1D arrays
-        state = self._state
+        agent_trajectory = self._state
         # state = self._state.ravel()
-        state[state != -1] = 0  # mask out non-agent trajectory
+        agent_trajectory[agent_trajectory != -1] = 0  # mask out non-agent trajectory
         # state = state.astype(bool)  # everything non-zero => True
 
         # images should not be all True
-        assert state.all() == False
-        if not state.any():  # no agent trajectory
-            print(" no state trajectory found")
-            iou = 0.0
-        else:
-            iou = jaccard(state, self.original_state)
-            # print("computed iou ", iou)
-            # print("sum(agent) ", sum(state), "sum(original state)", sum(self.original_state), "computed iou ", iou)
-        # print("agent \n", state.shape)
-        # print("og \n", original_state.shape)
+        assert agent_trajectory.all() == False
+        iou = jaccard(agent_trajectory, self.original_state)
+        print("computed iou ", iou)
+        print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
+        # print("agent shape\n", agent_trajectory.shape)
+        # print("og shape\n", self.original_state.shape)
         # np.save("agent", state)
         # np.save("og", original_state)
         # assert isinstance(iou, )
@@ -343,13 +341,14 @@ class Brain_Env(gym.Env):
 
 
         if not self._is_in_bounds(proposed_location):  # went out of bounds
+            print("proposed out of bounds ", proposed_location)
             # do not update current_loc
             go_out = True
         else:  # in bounds
             transposed = proposed_location.T
             # https://stackoverflow.com/a/25823710/4212158
             if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1)):
-                # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
+                print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
             else:
@@ -475,9 +474,7 @@ class Brain_Env(gym.Env):
         agent_mask = agent_trajectory.astype(bool)
         # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
         if agent_mask.any():  # agent trajectory not empty
-            np.copyto(self._state, agent_trajectory, casting='no', where=agent_mask)
-            assert self._state is not None
-
+            np.copyto(observation, agent_trajectory, casting='no', where=agent_mask)
         return observation
 
 
@@ -512,6 +509,7 @@ class Brain_Env(gym.Env):
         #     zmin = self._location[2] - round(self.depth * self.zscale / 2)
         #     zmax = self._location[2] + round(self.depth * self.zscale / 2)
         #
+        # TODO mv to crop_brain()?
         # # check if they violate image boundary and fix it
         # if xmin < 0:
         #     xmin = 0
@@ -563,25 +561,35 @@ class Brain_Env(gym.Env):
         """take location history, generate connected branches using Vaa3d plugin
         FIXME this function is horribly inefficient
         """
-        locations = self._agent_nodes
+        locations = self._agent_nodes[:self.cnt+1]   # grab everything up until the current ts
+        print("iter ", self.cnt, "locations: ", locations)
         # print("og state shape ", np.shape(self.original_state))
         # print("self obs dims ", self.observation_dims)
         # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
         if not locations.any():  # if all zeros, evals to False
-            return np.zeros_like(self.original_state)
+            output_npy = np.zeros_like(self.original_state)
         else:
-            # TODO: make tmp files not collide when doing multiprocessing
-            output_swc = save_branch_as_swc(locations, "agent_trajectory", output_dir="tmp", overwrite=True)
-            # TODO: be explicit about bounds to swc_to_tiff
-            output_tiff_path = swc_to_TIFF("agent_trajectory", output_swc, output_dir="tmp", overwrite=True)
-            output_npy_path = TIFF_to_npy("agent_trajectory", output_tiff_path, output_dir="tmp", overwrite=True)
-            output_npy = np.load(output_npy_path).astype(float)
+            fname = 'agent_trajectory' + str(np.random.randint(low=10000, high=999999))
+
+            # try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+
+                # TODO: make tmp files not collide when doing multiprocessing
+                output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
+                # TODO: be explicit about bounds to swc_to_tiff
+                output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
+                output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
+                                              overwrite=False)
+                output_npy = np.load(output_npy_path).astype(float)
+            # except IOError as e:
+            #     print('IOError', e)
+            # finally:
             # print("agent trajectory shape ", np.shape(output_npy))
             tiff_max = np.amax(np.fabs(output_npy))
             if not np.isclose(tiff_max, 0):  # normalize if tiff is not blank
                 output_npy = output_npy / tiff_max
 
-            return output_npy
+        return output_npy
 
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
             return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
