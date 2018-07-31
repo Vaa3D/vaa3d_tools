@@ -41,6 +41,10 @@ class TestBrain_Env(TestCase):
         self.env._state = agent_state
         assert np.isclose(self.env.calc_IOU(), 1)
 
+    def test_is_in_bounds(self):
+        self.fail()
+
+
 
 class TestJaccard(TestCase):
     def identical_ones(self):

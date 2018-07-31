@@ -136,7 +136,12 @@ class Brain_Env(gym.Env):
         # history buffer for storing last locations to check oscilations
         self._history_length = max_num_frames
         # TODO initialize _observation_bounds limits from input image coordinates
-        self._observation_bounds = ObservationBounds(0, 0, 0, 0, 0, 0)
+        self._observation_bounds = ObservationBounds(0,
+                                                     self.observation_dims[0],
+                                                     0,
+                                                     self.observation_dims[1],
+                                                     0,
+                                                     self.observation_dims[2])
         # add your data loader here
         # TODO: look into returnLandmarks
         # if self.task == 'play':
@@ -256,7 +261,7 @@ class Brain_Env(gym.Env):
         # TODO: when doing multiscale, make difference bw state and observation
         self._state = self._observe()
         self.curr_IOU = self.calc_IOU()
-        print("first IOU ", self.curr_IOU)
+        # print("first IOU ", self.curr_IOU)
         self.reward = self._calc_reward(False, False)
         self._update_history()
         # we've finished iteration 0. now, step begins with cnt = 1
@@ -277,7 +282,7 @@ class Brain_Env(gym.Env):
         # images should not be all True
         assert agent_trajectory.all() == False
         iou = jaccard(agent_trajectory, self.original_state)
-        print("computed iou ", iou)
+        # print("computed iou ", iou)
         print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
         # print("agent shape\n", agent_trajectory.shape)
         # print("og shape\n", self.original_state.shape)
@@ -342,14 +347,14 @@ class Brain_Env(gym.Env):
 
 
         if not self._is_in_bounds(proposed_location):  # went out of bounds
-            print("proposed out of bounds ", proposed_location)
+            # print("proposed out of bounds ", proposed_location)
             # do not update current_loc
             go_out = True
         else:  # in bounds
             transposed = proposed_location.T
             # https://stackoverflow.com/a/25823710/4212158
             if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1)):
-                print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
+                # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
             else:
@@ -562,8 +567,8 @@ class Brain_Env(gym.Env):
         """take location history, generate connected branches using Vaa3d plugin
         FIXME this function is horribly inefficient
         """
-        locations = self._agent_nodes[:self.cnt+1]   # grab everything up until the current ts
-        print("iter ", self.cnt, "locations: ", locations)
+        locations = self._agent_nodes[:self.cnt]   # grab everything up until the current ts
+        # print("iter ", self.cnt, "locations: ", locations)
         # print("og state shape ", np.shape(self.original_state))
         # print("self obs dims ", self.observation_dims)
         # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
@@ -608,7 +613,7 @@ class Brain_Env(gym.Env):
             else:
                 previous_IOU = self._IOU_history[self.cnt - 1]
             IOU_difference = self.curr_IOU - previous_IOU
-            print(self.cnt, self._history_length)
+            # print(self.cnt, self._history_length)
             print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
                   "loc ", self._location)
             assert isinstance(IOU_difference, float)
@@ -619,6 +624,7 @@ class Brain_Env(gym.Env):
         return reward
 
     def _is_in_bounds(self, coords):
+        assert len(coords) == 3
         x, y, z = coords
         bounds = self._observation_bounds
         return ((bounds.xmin <= x <= bounds.xmax - 1 and
