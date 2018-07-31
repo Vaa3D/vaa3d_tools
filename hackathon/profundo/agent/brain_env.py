@@ -253,6 +253,7 @@ class Brain_Env(gym.Env):
         # self._location = np.array([x, y, z])
         # self._start_location = np.array([x, y, z])
         self._qvalues = np.zeros(self.actions)
+        # TODO: when doing multiscale, make difference bw state and observation
         self._state = self._observe()
         self.curr_IOU = self.calc_IOU()
         print("first IOU ", self.curr_IOU)
@@ -355,7 +356,7 @@ class Brain_Env(gym.Env):
                 # we are in bounds, AND we didn't back track. accept new location
                 self._location = proposed_location
                 # only update state, iou if we've changed location
-                self._observation = self._observe()
+                self._state = self._observe()
                 self.curr_IOU = self.calc_IOU()
 
 
@@ -809,12 +810,12 @@ class FrameStack(gym.Wrapper):
         for _ in range(self.k - 1):
             self.frames.append(np.zeros_like(ob))
         self.frames.append(ob)
-        return self._observation()
+        return self._observation()  # fixme should this be self._state
 
     def step(self, action, q_values):
         ob, reward, done, info = self.env.step(action, q_values)
         self.frames.append(ob)
-        return self._observation(), reward, done, info
+        return self._observation(), reward, done, info    # fixme should this be self._state
 
     # TODO: check if we can change to get_last_observation
     def _observation(self):
