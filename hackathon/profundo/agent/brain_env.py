@@ -283,7 +283,7 @@ class Brain_Env(gym.Env):
         assert agent_trajectory.all() == False
         iou = jaccard(agent_trajectory, self.original_state)
         # print("computed iou ", iou)
-        print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
+        # print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
         # print("agent shape\n", agent_trajectory.shape)
         # print("og shape\n", self.original_state.shape)
         # np.save("agent", state)
@@ -375,7 +375,7 @@ class Brain_Env(gym.Env):
         # terminate if the distance is less than 1 during trainig
         if (self.task == 'train'):
             if self.curr_IOU >= 0.9:
-                print("finishing episode, IOU = ", self.curr_IOU)
+                # print("finishing episode, IOU = ", self.curr_IOU)
                 self.terminal = True
                 self.num_success.feed(1)
                 # self.display()
@@ -383,7 +383,7 @@ class Brain_Env(gym.Env):
         # terminate if maximum number of steps is reached
 
         if self.cnt >= self.max_num_frames-1:
-            print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
+            # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
             # self.display()
 
@@ -614,8 +614,8 @@ class Brain_Env(gym.Env):
                 previous_IOU = self._IOU_history[self.cnt - 1]
             IOU_difference = self.curr_IOU - previous_IOU
             # print(self.cnt, self._history_length)
-            print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
-                  "loc ", self._location)
+            # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
+            #       "loc ", self._location)
             assert isinstance(IOU_difference, float)
             if IOU_difference > 0:
                 reward = 1
@@ -688,8 +688,8 @@ class Brain_Env(gym.Env):
 
         # print("nodes ", self._agent_nodes)
         # print("ious", self._IOU_history)
-        print("reward history ", np.unique(self.reward_history))
-        print("IOU history ", np.unique(self._IOU_history))
+        # print("reward history ", np.unique(self.reward_history))
+        # print("IOU history ", np.unique(self._IOU_history))
         plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history),
                          filepath=self.filename)
         #
