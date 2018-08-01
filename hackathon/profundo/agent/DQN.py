@@ -71,12 +71,12 @@ MEMORY_SIZE = 1e5  # 6
 # consume at least 1e6 * 27 * 27 * 27 bytes
 INIT_MEMORY_SIZE = MEMORY_SIZE // 20  # 5e4
 # each epoch is 100k played frames
-STEPS_PER_EPOCH = 100 // UPDATE_FREQ * 10
+STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
 # STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  FIXME og
 # num training epochs in between model evaluations
 EPOCHS_PER_EVAL = 2
 # the number of episodes to run during evaluation
-EVAL_EPISODE = 5
+EVAL_EPISODE = 50
 MAX_EPISODE_LENGTH = 100
 
 
@@ -197,7 +197,7 @@ def get_config():
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
-        max_epoch=1,
+        max_epoch=1000,
     )
 
 
