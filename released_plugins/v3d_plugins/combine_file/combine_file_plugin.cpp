@@ -368,6 +368,7 @@ vector<XYZ> InterpolationBetweenMarkers(vector<MyMarker*> inputSwc)
     }
     return outPostion;
 }
+#define MAXSIZE 500000
 ////merge version2: 1.merge the small size Swc file to large size SWC file.
 ////                2.interpolate node to these markers whose position are very big to their parent node.
 ////                3.if input node is too small to the target node, delete it. add the rest (input node) to the output swc file.
@@ -412,7 +413,10 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
     bool miok;
     double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",50,1,150,5,&miok);
 
-    int _countnumber=0;int _flag[inputSwc.size()];
+
+    if(MAXSIZE<inputSwc.size())
+        qDebug("input swc size is very big, need to change the define of MAXSIZE.");return outSwc;
+    int _countnumber=0;int _flag[MAXSIZE];
     if(miok)
     {
         cout<<"input number is "<<distanceThreshold<<endl;
@@ -504,7 +508,7 @@ vector<MyMarker*> mergeSWCorESWC(vector<MyMarker*> inputSwc1,//inputSwc nodes me
 ////               2.find the same region of these two file, only working on these region.
 ////               3.if input node is too small to the target node, delete it. add the rest (input node) to the output swc file.
 ////               4.for all outMarker,find the nearest node in targe nodes and adjust postion of the parent node of those outmarker to it.
-vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
+/*vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc nodes merge to targetSwc nodes
                                        vector<MyMarker*> inputSwc2)
 {
     //vector<MyMarker*> outSwc;
@@ -660,7 +664,9 @@ vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc no
     bool miok;
     double distanceThreshold=QInputDialog::getDouble(0,"distance Threshold (>0)","please input your number",150,1,500,10,&miok);
 
-    int _countnumber=0;int _flag[intersectionSwc.size()];
+    if(MAXSIZE<intersectionSwc.size())
+        qDebug("input swc size is very big, need to change the define of MAXSIZE.");return outSwc;
+    int _countnumber=0;int _flag[MAXSIZE];
     if(miok)
     {
         cout<<"input number is "<<distanceThreshold<<endl;
@@ -733,7 +739,7 @@ vector<MyMarker*> mergeSWCafterCombine(vector<MyMarker*> inputSwc1,//inputSwc no
 
     qDebug("out swc size is %d",outSwc.size());
     return outSwc;
-}
+}*/
 void generatorcombined4FilesInDir(V3DPluginCallback2 &callback, QWidget *parent, int method_code)
 {
     if(method_code == 1)
