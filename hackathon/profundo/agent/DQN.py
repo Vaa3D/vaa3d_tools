@@ -82,9 +82,8 @@ MAX_EPISODE_LENGTH = 100
 
 ###############################################################################
 
-# FIXME hard coded save video True
 def get_player(directory=None, files_list= None, viz=False,
-               task=False, saveGif=False, saveVideo=True):
+               task=False, saveGif=False, saveVideo=False):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
@@ -176,6 +175,7 @@ def get_config():
         model=Model(),
         callbacks=[  # TODO: periodically save videos
             ModelSaver(checkpoint_dir="model_checkpoints",
+                       keep_checkpoint_every_n_hours=1.0,
                        max_to_keep=1000),  # TODO: og was just ModelSaver()
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),
@@ -244,15 +244,17 @@ if __name__ == '__main__':
         # demo pretrained model one episode at a time
         if args.task == 'play':
             play_n_episodes(get_player(directory=data_dir,
-                                       files_list=test_data_fpaths, viz=0.01,
+                                       files_list=test_data_fpaths,
+                                       viz=False,
                                        saveGif=args.saveGif,
                                        saveVideo=args.saveVideo,
-				       task='play'),
+				                       task='play'),
                             pred, num_validation_files)
         # run episodes in parallel and evaluate pretrained model
         elif args.task == 'eval':
             play_n_episodes(get_player(directory=data_dir,
-                                       files_list=eval_list, viz=0.01,
+                                       files_list=eval_list,
+                                       viz=False,
                                        saveGif=args.saveGif,
                                        saveVideo=args.saveVideo,
                                        task='eval'),
