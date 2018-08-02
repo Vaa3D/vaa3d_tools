@@ -125,6 +125,9 @@ class Brain_Env(gym.Env):
         #     if self.viz and isinstance(self.viz, float):
         #         self.viewer = None
         #         self.gif_buffer = []
+
+        print("viz {} gif {} video {}".format(self.viz, self.saveGif, self.saveVideo))
+
         # stat counter to store current score or accumlated reward
         self.current_episode_score = StatCounter()
         # get action space and minimal action set
@@ -136,12 +139,13 @@ class Brain_Env(gym.Env):
         # history buffer for storing last locations to check oscilations
         self._history_length = max_num_frames
         # TODO initialize _observation_bounds limits from input image coordinates
+        # -1 to compensate for 0 indexing
         self._observation_bounds = ObservationBounds(0,
-                                                     self.observation_dims[0],
+                                                     self.observation_dims[0]-1,
                                                      0,
-                                                     self.observation_dims[1],
+                                                     self.observation_dims[1]-1,
                                                      0,
-                                                     self.observation_dims[2])
+                                                     self.observation_dims[2]-1)
         # add your data loader here
         # TODO: look into returnLandmarks
         # if self.task == 'play':
@@ -161,7 +165,6 @@ class Brain_Env(gym.Env):
         # we put this here so that init_player in DQN.py doesn't try to update_history
         self._clear_history()  # init arrays
         self._restart_episode()
-        # self.viz = True  # FIXME viz should default False
         assert (np.shape(self._state) == self.observation_dims)
         assert np.isclose(jaccard(self.original_state, self.original_state),1 )
 
@@ -207,17 +210,17 @@ class Brain_Env(gym.Env):
         if self.multiscale:
             raise NotImplementedError
             # ## brain
-            # self.action_step = 9
+            # self.stepsize = 9
             # self.xscale = 3
             # self.yscale = 3
             # self.zscale = 3
             ## cardiac
-            # self.action_step = 6
+            # self.stepsize = 6
             # self.xscale = 2
             # self.yscale = 2
             # self.zscale = 2
         else:
-            self.action_step = 1
+            self.stepsize = 1
             self.xscale = 1
             self.yscale = 1
             self.zscale = 1
@@ -236,13 +239,15 @@ class Brain_Env(gym.Env):
                               int(self._state_dims[2] / 4))
 
 
-        # FIXME randomly select one of the ground truth voxels as a starting point
         binary_grid = self.original_state.astype(bool)
         x_span, y_span, z_span = self.original_state.shape
         x, y, z = np.indices((x_span, y_span, z_span))
         positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
-        # pick a random row as starting position
+        # # pick a random row as starting position
+        # TODO: pick starting location using SWC file
+        # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
         self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
+
         # print("starting location ", self._location)
         self._start_location = self._location
 
@@ -321,25 +326,25 @@ class Brain_Env(gym.Env):
         self.terminal = False
         go_out = False
         backtrack = False
-
+        # print("action ", act)
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
-            proposed_location = current_loc + np.array([0,0,1])*self.action_step
+            proposed_location = current_loc + np.array([0,0,1])*self.stepsize
         # FORWARD Y+ ---------------------------------------------------------
         elif (act == 1):
-            proposed_location = current_loc + np.array([0, 1, 0]) * self.action_step
+            proposed_location = current_loc + np.array([0, 1, 0]) * self.stepsize
         # RIGHT X+ -----------------------------------------------------------
         elif (act == 2):
-            proposed_location = current_loc + np.array([1, 0, 0]) * self.action_step
+            proposed_location = current_loc + np.array([1, 0, 0]) * self.stepsize
         # LEFT X- -----------------------------------------------------------
         elif act == 3:
-            proposed_location = current_loc + np.array([-1, 0, 0]) * self.action_step
+            proposed_location = current_loc + np.array([-1, 0, 0]) * self.stepsize
         # BACKWARD Y- ---------------------------------------------------------
         elif act == 4:
-            proposed_location = current_loc + np.array([0, -1, 0]) * self.action_step
+            proposed_location = current_loc + np.array([0, -1, 0]) * self.stepsize
         # DOWN Z- -----------------------------------------------------------
         elif act == 5:
-            proposed_location = current_loc + np.array([0, 0, -1]) * self.action_step
+            proposed_location = current_loc + np.array([0, 0, -1]) * self.stepsize
         else:
             raise ValueError
 
@@ -363,7 +368,7 @@ class Brain_Env(gym.Env):
                 # only update state, iou if we've changed location
                 self._state = self._observe()
                 self.curr_IOU = self.calc_IOU()
-
+        # print("new location ", self._location, go_out, backtrack)
 
         # punish -1 reward if the agent tries to go out
         #if (self.task != 'play'):  # TODO: why is this necessary?
@@ -406,7 +411,7 @@ class Brain_Env(gym.Env):
         #         self.xscale -= 1
         #         self.yscale -= 1
         #         self.zscale -= 1
-        #         self.action_step = int(self.action_step / 3)
+        #         self.stepsize = int(self.stepsize / 3)
         #         self._clear_history()
         #     # terminate if scale is less than 1
         #     else:
@@ -428,10 +433,12 @@ class Brain_Env(gym.Env):
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
                 'filename': self.filename}
 
-        # if self.terminal is True:
-        #     print(self._state)
+        if self.terminal:
+            self._trim_arrays()
+            if (self.saveGif or self.saveVideo or self.viz):
+                self.display()
 
-        return self._observe(), self.reward, self.terminal, info
+        return self._state, self.reward, self.terminal, info
 
     def get_best_node(self):
         ''' get best location with best qvalue from last for locations
@@ -470,6 +477,10 @@ class Brain_Env(gym.Env):
         self.reward_history[self.cnt] = self.reward
         # update q-value history
         self._qvalues_history[self.cnt] = self._qvalues
+
+    def _trim_arrays(self):
+        for arr in [self._agent_nodes, self._IOU_history, self.reward_history, self._qvalues_history]:
+            arr = arr[:self.cnt]
 
     def _observe(self):
         observation = np.copy(self.original_state)
@@ -679,7 +690,7 @@ class Brain_Env(gym.Env):
 
     def display(self):
         """this is called at every step"""
-        current_point = self._location
+        # current_point = self._location
         # img = cv2.cvtColor(plane, cv2.COLOR_GRAY2RGB)  # congvert to rgb
         # rescale image
         # INTER_NEAREST, INTER_LINEAR, INTER_AREA, INTER_CUBIC, INTER_LANCZOS4
@@ -735,7 +746,7 @@ class Brain_Env(gym.Env):
 
             vid_fpath = self.filename + '.mp4'
             # vid_fpath = dirname + '/' + self.filename + '.mp4'
-            plotter.save_vid(vid_fpath, self.max_num_frames-1)
+            plotter.save_vid(vid_fpath, self.max_num_frames)
             # plotter.show_agent()
 
         if self.viz:  # show progress
