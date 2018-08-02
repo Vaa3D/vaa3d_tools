@@ -161,12 +161,16 @@ class ExpReplay(DataFlow, Callback):
         self._init_memory_flag = threading.Event()  # tell if memory has been initialized
 
         # a queue to receive notifications to populate memory
+        # TODO why maxsize=5?
         self._populate_job_queue = queue.Queue(maxsize=5)
 
         self.mem = ReplayMemory(memory_size, state_shape, frame_history_len)
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
+
+        # print("dims of expreplay history ", np.ndim(self.mem.recent_state()))
+
 
     def get_simulator_thread(self):
         # spawn a separate thread to run policy
@@ -214,7 +218,8 @@ class ExpReplay(DataFlow, Callback):
             # build a history state
             #TODO we don't need history anymore, right?
             history = self.mem.recent_state()
-            history.append(old_s)
+            history.append(old_s)  # TODO: history is size 1 at init, should we actually append??
+            print("expreplay history went from ndim 1 to ", np.ndim(history))
             if np.ndim(history) == 4:  # 3d states
                 history = np.stack(history, axis=3)
                 # assume batched network - this is the bottleneck
@@ -225,7 +230,8 @@ class ExpReplay(DataFlow, Callback):
                 q_values = self.predictor(history[None, :, :, :])[0][0]
 
             # if there is a tie for max, randomly choose between them
-            act = np.random.choice(np.flatnonzero(q_values == q_values.max()))
+            act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max())))
+        # print("pop_experience act {} qvals {}".format(act, q_values))
 
         self._current_ob, reward, isOver, info = self.player.step(act, q_values)
 
@@ -285,19 +291,19 @@ class ExpReplay(DataFlow, Callback):
 
     def _trigger(self):
         # log player statistics in training
-        v = self._player_scores
-        dist = self._player_IOU
+        scores = self._player_scores
+        IoU = self._player_IOU
         try:
-            mean, max = v.average, v.max
+            mean, max = scores.average, scores.max
             self.trainer.monitors.put_scalar('expreplay/mean_score', mean)
             self.trainer.monitors.put_scalar('expreplay/max_score', max)
-            mean, max = dist.average, dist.max
-            self.trainer.monitors.put_scalar('expreplay/mean_dist', mean)
-            self.trainer.monitors.put_scalar('expreplay/max_dist', max)
+            mean, max = IoU.average, IoU.max
+            self.trainer.monitors.put_scalar('expreplay/mean_IoU', mean)
+            self.trainer.monitors.put_scalar('expreplay/max_IoU', max)
         except Exception:
             logger.exception("Cannot log training scores.")
-        v.reset()
-        dist.reset()
+        scores.reset()
+        IoU.reset()
 
         # monitor number of played games and successes of reaching the target
         if self.player.num_games.count:
