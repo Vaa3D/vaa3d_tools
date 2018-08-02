@@ -25,6 +25,7 @@
 
 bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
+
 	printf("welcome to pre_processing\n");
 
 
@@ -86,7 +87,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	int skip_rotation = 1;
 	
 	int c;
-    static char optstring[]="i:o:l:s:t:r:";
+    static char optstring[]="h:i:o:l:s:t:r:";
 	extern char * optarg;
 	extern int optind, opterr;
     optind = 1;
@@ -101,7 +102,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 			case 'i':
 				if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
 				{
-					fprintf(stderr, "Found illegal or NULL parameter for the option -l.\n");
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
 					return 1;
 				}
 				dfile_input = optarg;
@@ -179,7 +180,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	printf("Pruning short branches\n");
 	NeuronTree pruned;
 
-    if (!prune_branch(nt, pruned,prune_size))
+    if (!prune_branch(nt, pruned, prune_size))
 	{
 		fprintf(stderr,"Error in prune_short_branch.\n");
 		return 1;
@@ -207,14 +208,24 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
         QString sortedfileName = qs_input + ".sorted.temp.swc";
         // Call neuron_connector
         printf("Running neuron_connector...\n");
-        QString sys_cmd = QString("vaa3d -x neuron_connector -f connect_neuron_SWC -i %1 -o %2 -p 60 10 5 1 1").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+//        QString sys_cmd = QString("vaa3d -x neuron_connector -f connect_neuron_SWC -i %1 -o %2 -p 60 10 5 1 1").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+        QString subStr("swc");
+        QString newStr("apo");
+        QString old_apo = qs_input;
+        QString new_apo = resamplefileName;
+        old_apo.replace(old_apo.lastIndexOf(subStr), subStr.size(), newStr);
+        new_apo.replace(new_apo.lastIndexOf(subStr), subStr.size(), newStr);
+        QString apo_cmd = QString("cp %1 %2").arg(old_apo.toStdString().c_str()).arg(new_apo.toStdString().c_str());
+        system(qPrintable(apo_cmd));
+        printf(qPrintable(resamplefileName));
+        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
         system(qPrintable(sys_cmd));
         sorted = readSWC_file(sortedfileName);
         // Cleanup
         sys_cmd = QString("rm %1").arg(resamplefileName.toStdString().c_str());
-        system(qPrintable(sys_cmd));
+//        system(qPrintable(sys_cmd));
         sys_cmd = QString("rm %1").arg(sortedfileName.toStdString().c_str());
-        system(qPrintable(sys_cmd));
+//        system(qPrintable(sys_cmd));
     }else{
         printf("Skip sorting\n");
         sorted=resampled;
