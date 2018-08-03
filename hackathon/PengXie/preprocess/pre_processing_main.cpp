@@ -13,7 +13,8 @@
 
 #include "pre_processing_main.h"
 #include "basic_surf_objs.h"
-#include "sort_eswc.h"
+//#include "sort_eswc.h"
+#include "sort_swc.h"
 #if !defined(Q_OS_WIN32)
 #include <unistd.h>
 #endif
@@ -186,17 +187,27 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 		return 1;
 	}
 
-    //2.2 Resample
-    NeuronTree resampled;
+    //2.2 Remove duplicates
+    QList<NeuronSWC> newNeuron;
+    NeuronTree deduped;
+    SortSWC(pruned.listNeuron, deduped.listNeuron, VOID, 0.25);
+//    connect_swc(pruned, deduped.listNeuron, 100, 90);
+    export_listNeuron_2swc(deduped.listNeuron,qPrintable(QString("01_test.swc")));
+
+//	QString fileOpenName = nt.file;
+//	(SortSWC(neuron, result ,rootid, thres))
+
+    //2.3 Resample
+    NeuronTree resampled = deduped;
     if (step_size>0){
         printf("Resampling along segments\n");
         resampled = resample(pruned, step_size);
     }else{
         printf("Skip Resampling\n");
         resampled=pruned;
-    }
+    }    
 
-    //2.3 Sort
+    //2.4 Sort
     //The old version of sort function is slow for large (>20,000 nodes) trees
     //Replaced by neuron_connector
     NeuronTree sorted;
