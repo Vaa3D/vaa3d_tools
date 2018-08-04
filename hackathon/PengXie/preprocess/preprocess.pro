@@ -6,7 +6,7 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
-INCLUDEPATH     += /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/
+INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/
 
 HEADERS	+= preprocess_plugin.h
 #HEADERS += get_main_component.h
@@ -27,11 +27,11 @@ SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/resampling.cpp
 HEADERS	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/sort_eswc.h
 
-HEADERS += /home/penglab/Desktop/vaa3d/v3d_external/v3d_main/basic_c_fun/basic_surf_objs.h
+HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 # SortSWC
-HEADERS += /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
+#HEADERS += /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
 
 TARGET	= $$qtLibraryTarget(preprocess)
 DESTDIR	= $$VAA3DPATH/bin/plugins/preprocess/
