@@ -13,7 +13,6 @@
 
 #include "pre_processing_main.h"
 #include "basic_surf_objs.h"
-//#include "sort_eswc.h"
 #include "sort_swc.h"
 #if !defined(Q_OS_WIN32)
 #include <unistd.h>
@@ -23,6 +22,59 @@
 #include "getopt_tool.h"
 #include <io.h>
 #endif
+
+int assignComponents(NeuronTree nt)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
+{
+    QList<int> components;
+    QList<int> pList;
+    int curid=0;
+    //connected component
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn<0){
+            components.append(curid); curid++;
+            pList.append(-1);
+        }
+        else{
+            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            components.append(-1);
+            pList.append(pid);
+        }
+    }
+    //connected component
+    for(V3DLONG cid=0; cid<curid; cid++){
+        QStack<int> pstack;
+        int chid, size = 0;
+        if(!components.contains(cid)) //should not happen, just in case
+            continue;
+        if(components.indexOf(cid)!=components.lastIndexOf(cid)) //should not happen
+            qDebug("unexpected multiple tree root, please check the code: neuron_stitch_func.cpp");
+        //recursively search for child and mark them as the same component
+        pstack.push(components.indexOf(cid));
+        size++;
+        while(!pstack.isEmpty()){
+            int pid=pstack.pop();
+            chid = -1;
+            chid = pList.indexOf(pid,chid+1);
+            while(chid>=0){
+                pstack.push(chid);
+                components[chid]=cid;
+                chid=pList.indexOf(pid,chid+1);
+                size++;
+            }
+        }
+    }
+    //update type with component
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        nt.listNeuron[i].type=components.at(i);
+    }
+    return curid;
+}
+
+void  get_tree_ends(NeuronTree nt)
+{
+    int n_component = assignComponents(nt);
+    printf("# components:\t%d\n", n_component);
+}
 
 bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -177,6 +229,9 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	}
 
     //2. start processing
+
+    get_tree_ends(nt);
+
     //2.1 Prune
 	printf("Pruning short branches\n");
 	NeuronTree pruned;
@@ -217,9 +272,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
         QString resamplefileName = qs_input + ".resample.temp.swc";
         export_listNeuron_2swc(resampled.listNeuron, qPrintable(resamplefileName));
         QString sortedfileName = qs_input + ".sorted.temp.swc";
-        // Call neuron_connector
-        printf("Running neuron_connector...\n");
-//        QString sys_cmd = QString("vaa3d -x neuron_connector -f connect_neuron_SWC -i %1 -o %2 -p 60 10 5 1 1").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+
         QString subStr("swc");
         QString newStr("apo");
         QString old_apo = qs_input;
@@ -229,7 +282,9 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
         QString apo_cmd = QString("cp %1 %2").arg(old_apo.toStdString().c_str()).arg(new_apo.toStdString().c_str());
         system(qPrintable(apo_cmd));
         printf(qPrintable(resamplefileName));
-        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+//        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i 01_test.swc -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+        printf(qPrintable(sys_cmd));
         system(qPrintable(sys_cmd));
         sorted = readSWC_file(sortedfileName);
         // Cleanup

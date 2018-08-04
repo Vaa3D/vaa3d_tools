@@ -25,13 +25,12 @@ SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/pca1.cpp
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.cpp
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/resampling.cpp
-HEADERS	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/sort_eswc.h
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 # SortSWC
-#HEADERS += /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
 
 TARGET	= $$qtLibraryTarget(preprocess)
 DESTDIR	= $$VAA3DPATH/bin/plugins/preprocess/
