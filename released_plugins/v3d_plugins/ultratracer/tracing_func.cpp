@@ -2436,7 +2436,7 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-    QString fileSaveName = fileWithData + "wofusion.swc";
+    QString fileSaveName = fileWithData + "wfusion.swc";
 
     QDir imagefolderDir = QDir(QFileInfo(fileWithData).absoluteDir());
     imagefolderDir.cdUp();
@@ -2496,6 +2496,22 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
                 if (par<0) continue;
                 childs[nt.hashNeuron.value(par)].push_back(i);
             }
+            if(inputswc.size()>0 && childs[0].size()==1)
+            {
+                int count=1;
+                int current = childs[0].at(0);
+                while(childs[current].size()==1)
+                {
+                    current=childs[current].at(0);
+                    count++;
+                }
+                if(count<10)
+                {
+                    inputswc[current]->parent = inputswc[0]->parent;
+                    inputswc.erase(inputswc.begin(),inputswc.begin()+count);
+                }
+            }
+
             outswc = readSWC_file(fileSaveName.toStdString());
             for(V3DLONG d = 0; d < inputswc.size(); d++)
             {
@@ -2522,7 +2538,6 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
             }
             saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
-
         }
         node_type++;
     }
@@ -2546,6 +2561,12 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
     }
 
     export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+    NeuronTree nt_b4_prune = readSWC_file(fileSaveName);
+    NeuronTree nt_pruned = smartPrune(nt_b4_prune,10);
+    NeuronTree nt_pruned_2nd = smartPrune(nt_pruned,10);
+
+    writeSWC_file(fileSaveName,nt_pruned_2nd);
+
 
     //write tc file
 
@@ -7025,4 +7046,91 @@ vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString&
     if(total1dData) {delete []total1dData; total1dData = 0;}
     return file_inmarkers;
 
+}
+
+NeuronTree smartPrune(NeuronTree nt, double length)
+{
+    QVector<QVector<V3DLONG> > childs;
+
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    V3DLONG *flag = new V3DLONG[neuronNum];
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 1;
+
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<NeuronSWC> list = nt.listNeuron;
+
+    for (int i=0;i<list.size();i++)
+    {
+        if (childs[i].size()==0 && list.at(i).parent >=0)
+        {
+            int index_tip = 0;
+            int parent_tip = getParent(i,nt);
+            while(childs[parent_tip].size()<2)
+            {
+                parent_tip = getParent(parent_tip,nt);
+                index_tip++;
+                if(parent_tip == 1000000000)
+                    break;
+            }
+            if(index_tip < length && list.at(childs[parent_tip].at(0)).type != list.at(childs[parent_tip].at(1)).type)
+            {
+                flag[i] = -1;
+
+                int parent_tip = getParent(i,nt);
+                while(childs[parent_tip].size()<2)
+               {
+                    flag[parent_tip] = -1;
+                    parent_tip = getParent(parent_tip,nt);
+                    if(parent_tip == 1000000000)
+                        break;
+               }
+            }
+
+        }else if (childs[i].size()==0 && list.at(i).parent < 0)
+            flag[i] = -1;
+
+    }
+
+   //NeutronTree structure
+   NeuronTree nt_prunned;
+   QList <NeuronSWC> listNeuron;
+   QHash <int, int>  hashNeuron;
+   listNeuron.clear();
+   hashNeuron.clear();
+
+   //set node
+
+   NeuronSWC S;
+   for (int i=0;i<list.size();i++)
+   {
+       if(flag[i] == 1)
+       {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+       }
+
+  }
+   nt_prunned.n = -1;
+   nt_prunned.on = true;
+   nt_prunned.listNeuron = listNeuron;
+   nt_prunned.hashNeuron = hashNeuron;
+
+   if(flag) {delete[] flag; flag = 0;}
+   return nt_prunned;
 }
