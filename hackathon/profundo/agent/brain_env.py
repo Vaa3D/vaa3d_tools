@@ -319,10 +319,6 @@ class Brain_Env(gym.Env):
         """
         self._qvalues = qvalues
 
-        # logging qvals to see if training is stable
-        for qval in qvalues:
-            self.qvals_logger.feed(qval)
-
         current_loc = self._location
         self.terminal = False
         go_out = False
@@ -365,15 +361,16 @@ class Brain_Env(gym.Env):
                 # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
-            else:
-                # we are in bounds, AND we didn't back track. accept new location
-                self._location = proposed_location
-                # only update state, iou if we've changed location
-                self._state = self._observe()
-                self.curr_IOU = self.calc_IOU()
+
+            # we are in bounds, accept new location
+            self._location = proposed_location
+            # only update state, iou if we've changed location
+            self._state = self._observe()
+            self.curr_IOU = self.calc_IOU()
 
         # check that all 3 coords match terminal node location
-        if np.isclose(proposed_location, self._terminal_node).all():
+        # atol gives us some tolerance
+        if np.isclose(proposed_location, self._terminal_node, atol=3).all():
             terminal_found = True
         # print("new location ", self._location, go_out, backtrack)
 
@@ -444,7 +441,7 @@ class Brain_Env(gym.Env):
         self.cnt += 1
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
-                'filename': self.filename}
+                'filename': self.filename, "qvals": qvalues}
 
         if self.terminal:
             self._trim_arrays()
@@ -717,7 +714,6 @@ class Brain_Env(gym.Env):
         self.stats = defaultdict(list)
         self.num_games = StatCounter()
         self.num_success = StatCounter()
-        self.qvals_logger = StatCounter()
 
     def display(self):
         """this is called at every step"""

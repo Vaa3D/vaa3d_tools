@@ -171,6 +171,7 @@ class ExpReplay(DataFlow, Callback):
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
+        self._player_qvals = StatCounter()
 
         # print("dims of expreplay history ", np.ndim(self.mem.recent_state()))
 
@@ -221,10 +222,13 @@ class ExpReplay(DataFlow, Callback):
             # build a history state
             #TODO we don't need history anymore, right?
             history = self.mem.recent_state()
+            print("expreplay history before ", history)
             history.append(old_s)  # TODO: history is size 1 at init, should we actually append??
-            print("expreplay history went from ndim 1 to ", np.ndim(history))
+            print("expreplay history ndim after ", np.ndim(history))
             if np.ndim(history) == 4:  # 3d states
                 history = np.stack(history, axis=3)
+                print("expreplay history after stack ", np.ndim(history))
+                print("expreplay size fed to predictor ", np.ndim(history[None, :, :, :, :]))
                 # assume batched network - this is the bottleneck
                 q_values = self.predictor(history[None, :, :, :, :])[0][0]
             else:
@@ -243,6 +247,8 @@ class ExpReplay(DataFlow, Callback):
             #     self._player_scores.feed(info['score'])
             self._player_scores.feed(info['score'])
             self._player_IOU.feed(info['IoU'])
+            for qval in info['qvals']:
+                self._player_qvals.feed(qval)
             self.player.reset()
 
         self.mem.append(Experience(old_s, act, reward, isOver))
@@ -296,6 +302,7 @@ class ExpReplay(DataFlow, Callback):
     def _trigger(self):
         # log player statistics in training
         scores = self._player_scores
+        qvals = self._player_qvals
         IoU = self._player_IOU
         try:
             mean, max = scores.average, scores.max
@@ -304,6 +311,10 @@ class ExpReplay(DataFlow, Callback):
             mean, max = IoU.average, IoU.max
             self.trainer.monitors.put_scalar('expreplay/mean_IoU', mean)
             self.trainer.monitors.put_scalar('expreplay/max_IoU', max)
+
+            self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
+            self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.mean)
+
         except Exception:
             logger.exception("Cannot log training scores.")
         scores.reset()
