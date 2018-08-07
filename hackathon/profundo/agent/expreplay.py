@@ -87,9 +87,12 @@ class ReplayMemory(object):
 
     # the next_state is a different episode if current_state.isOver==True
     def _pad_sample(self, state, reward, action, isOver):
-        for k in range(self.frame_history_len - 2, -1, -1):
+        # TODO: what are the -2 magic numbers?
+        for k in range(self.frame_history_len-2, -1, -1):
+            # if episode ends,
             if isOver[k]:
                 state = copy.deepcopy(state)
+                # replace states from diff episode with zeros
                 state[:k + 1].fill(0)
                 break
         # transpose state
