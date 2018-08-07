@@ -242,28 +242,23 @@ class Brain_Env(gym.Env):
         binary_grid = self.original_state.astype(bool)
         x_span, y_span, z_span = self.original_state.shape
         x, y, z = np.indices((x_span, y_span, z_span))
-        positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
-        # # pick a random row as starting position
-        self._location = np.array(begin, dtype=float)
-        self._terminal_node = np.array(end, dtype=float)
-        # TODO: pick starting location using SWC file
-        # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
-        # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
+        # positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
 
-        # print("starting location ", self._location)
-        self._start_location = self._location
+        # keep starting positions in bounds
+        print("xmax ", self._observation_bounds.xmax-1e-15)
+        self._start_location = np.clip(np.array(begin, dtype=float),
+                                 self._observation_bounds.xmin+1e-15,
+                                 self._observation_bounds.xmax-1e-15)
+        self._terminal_node = np.clip(np.array(end, dtype=float),
+                                       self._observation_bounds.xmin+1e-15,
+                                       self._observation_bounds.xmax-1e-15)
 
-        # # randomly select the starting coords
-        # x = self.rng.randint(0 + skip_thickness[0],
-        #                      self._state_dims[0] - skip_thickness[0])
-        # y = self.rng.randint(0 + skip_thickness[1],
-        #                      self._state_dims[1] - skip_thickness[1])
-        # z = self.rng.randint(0 + skip_thickness[2],
-        #                      self._state_dims[2] - skip_thickness[2])
-        #######################################################################
 
-        # self._location = np.array([x, y, z])
-        # self._start_location = np.array([x, y, z])
+        self._location = self._start_location
+
+        assert self._is_in_bounds(self._start_location)
+        assert self._is_in_bounds(self._terminal_node)
+
         self._qvalues = np.zeros(self.actions)
         # TODO: when doing multiscale, make difference bw state and observation
         self._state = self._observe()
@@ -324,6 +319,11 @@ class Brain_Env(gym.Env):
             learning.
         """
         self._qvalues = qvalues
+
+        # logging qvals to see if training is stable
+        for qval in qvalues:
+            self.qvals_logger.feed(qval)
+
         current_loc = self._location
         self.terminal = False
         go_out = False
@@ -632,30 +632,35 @@ class Brain_Env(gym.Env):
         """ Calculate the new reward based on the increase in IoU
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        if go_out:
-            reward = -1
-        if backtrack:
-            reward = -5
-        # TODO if terminal node, big reward!
-        else:
-            # TODO, double check if indexes are correct
-            if self.cnt == 0:
-                previous_IOU = 0.
-            else:
-                previous_IOU = self._IOU_history[self.cnt - 1]
-            IOU_difference = self.curr_IOU - previous_IOU
-            # print(self.cnt, self._history_length)
-            # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
-            #       "loc ", self._location)
-            assert isinstance(IOU_difference, float)
-            if IOU_difference > 0:
-                reward = 1
-            else:
-                reward = -1
-
         # overrides everything else
         if terminal_found:
             reward = 100
+            return reward
+        if go_out:
+            reward = -1
+            return reward
+        if backtrack:
+            reward = -5
+            return reward
+
+
+        # TODO, double check if indexes are correct
+        if self.cnt == 0:
+            previous_IOU = 0.
+        else:
+            previous_IOU = self._IOU_history[self.cnt - 1]
+        IOU_difference = self.curr_IOU - previous_IOU
+        # print(self.cnt, self._history_length)
+        # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
+        #       "loc ", self._location)
+        assert isinstance(IOU_difference, float)
+
+        if IOU_difference > 0:
+            reward = 1
+        else:
+            reward = -1
+
+
 
         return reward
 
@@ -663,9 +668,18 @@ class Brain_Env(gym.Env):
         assert len(coords) == 3
         x, y, z = coords
         bounds = self._observation_bounds
-        return ((bounds.xmin <= x <= bounds.xmax - 1 and
-                 bounds.ymin <= y <= bounds.ymax - 1 and
-                 bounds.zmin <= z <= bounds.zmax - 1))
+        print("bxmin ", bounds.xmin <= x)
+        print("bxmax ", x <= bounds.xmax)
+        print("bymin ", bounds.ymin <= y)
+        print("bymax ", y <= bounds.ymax)
+        print("bzmin ", bounds.zmin <= z <= bounds.zmax)
+        print("in bounds ", (bounds.xmin <= x <= bounds.xmax and
+                 bounds.ymin <= y <= bounds.ymax and
+                 bounds.zmin <= z <= bounds.zmax))
+
+        return ((bounds.xmin <= x <= bounds.xmax and
+                 bounds.ymin <= y <= bounds.ymax and
+                 bounds.zmin <= z <= bounds.zmax))
 
     @property
     def _oscillate(self):
@@ -712,6 +726,7 @@ class Brain_Env(gym.Env):
         self.stats = defaultdict(list)
         self.num_games = StatCounter()
         self.num_success = StatCounter()
+        self.qvals_logger = StatCounter()
 
     def display(self):
         """this is called at every step"""
