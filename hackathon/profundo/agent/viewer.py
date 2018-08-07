@@ -199,15 +199,15 @@ class SimpleImageViewer(object):
         xs = []
         ys = []
         zs = []
-        ious = []
-        for pos, iou in data:
+        rewards = []
+        for pos, reward in data:
             for x, y, z in np.nditer(pos, flags=['external_loop']):
                 xs.append(x)
                 ys.append(y)
                 zs.append(z)
-            ious.append(iou.flatten())
+            rewards.append(reward.flatten())
         # print("agent ious ", ious)
-        colors = cm.RdBu(ious)  # map val to colormap
+        colors = cm.RdBu(rewards)  # map val to colormap
         if len(colors) != 0:
             colors = np.reshape(colors, (-1, 4))  # invalid nesting
             colors[:, -1] /= 10
@@ -220,7 +220,7 @@ class SimpleImageViewer(object):
             # print("anim positions ", positions.shape, positions)
             pc = self._plotCubeAt(positions, colors=colors, edgecolor="w")
             self.ax.add_collection3d(pc)
-            # self.ax.scatter(xs, ys, zs, color=colors, marker="s")
+            self.ax.scatter(xs[-1], ys[-1], zs[-1], color="cyan", marker="s")
         self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
