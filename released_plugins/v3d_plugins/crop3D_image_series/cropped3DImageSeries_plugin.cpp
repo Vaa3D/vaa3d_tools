@@ -639,6 +639,63 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		return true;
 		
 	}
+	else if (func_name == tr("slicesFromTera"))
+	{
+		vector<char*> infiles, inparas, outfiles;
+		if (input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+		if (input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+		if (output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+		QString m_InputfolderName = infiles.at(0);
+		QString savePath = outfiles.at(0);
+
+		V3DLONG* dims;
+		if (!callback.getDimTeraFly(m_InputfolderName.toStdString(), dims))
+		{
+			v3d_msg("Cannot load terafly images.", 0);
+			return false;
+		}
+		
+		int sliceNum = 0;
+		while (sliceNum <= dims[2] - 1)
+		{
+			unsigned char* cropped_image = 0;
+			cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(), 0, dims[0], 0, dims[1], sliceNum, sliceNum + 1);
+			/*Image4DSimple* new4DImage = new Image4DSimple();
+			new4DImage->createImage(dims[0], dims[1], 1, dims[3], V3D_UINT8);*/
+			V3DLONG sliceDim[4];
+			sliceDim[0] = dims[0];
+			sliceDim[1] = dims[1];
+			sliceDim[2] = 1;
+			sliceDim[3] = dims[3];
+
+			QString prefix;
+			if (sliceNum / 10 == 0) prefix = "0000" + QString::number(sliceNum);
+			else if (sliceNum / 100 == 0) prefix = "000" + QString::number(sliceNum);
+			else if (sliceNum / 1000 == 0) prefix = "00" + QString::number(sliceNum);
+			else if (sliceNum / 10000 == 0) prefix = "0" + QString::number(sliceNum);
+			else prefix = QString::number(sliceNum);
+
+			QString directory = savePath + "\\" + inparas[0] + "\\";
+			QString saveName = savePath + "\\" + inparas[0] + "\\" + prefix + ".tif";
+			qDebug() << saveName;
+			if (QDir(directory).exists())
+			{
+				const char* fileName = saveName.toAscii();
+				simple_saveimage_wrapper(callback, fileName, cropped_image, sliceDim, 1);
+			}
+			else
+			{
+				QDir().mkdir(directory);
+				const char* fileName = saveName.toAscii();
+				simple_saveimage_wrapper(callback, fileName, cropped_image, sliceDim, 1);
+			}
+
+			sliceNum = sliceNum + 2;
+		}
+		
+		return true;
+	}
 	/*else if (func_name == tr("markerCube_apoWhole"))
 	{
 		QDir dir("Y:/10soma_volumes/3large/");

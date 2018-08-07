@@ -8,6 +8,7 @@
 #include "prune_short_branch.h"
 #include "resampling.h"
 #include "align_axis.h"
+#include "neuron_connector_func.h"
 using namespace std;
 
 bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & output);
