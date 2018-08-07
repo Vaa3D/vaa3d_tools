@@ -118,10 +118,48 @@ class FilesListCubeNPY(files):
             for idx in indexes:
                 image_path = self.files_list[idx]  # FIXME shouldn't these be different
                 image_filename = os.path.basename(image_path)
+                # split the last 2 periods off, then grab the basename
+                swc_filename = image_filename.rsplit('.', 2)[0]
+                # get relevant swc file
+                # go up two directories
+                data_dir = os.path.dirname(os.path.dirname(image_path))
+                # FIXME shouldn't use abs name for swc folder
+                swc_path = os.path.join(data_dir, "06_origin_cubes", swc_filename)
+                print("img path ", image_path)
                 # image_filename = self.filenames[idx]
                 # x, y, file, ?
-                yield image_path, image_filename
+                begin, end = self.first_last_swc_nodes(swc_path)
+                yield image_path, image_filename, begin, end
 
     def sample_first(self):
         """determinist for unit tests"""
         yield self.files_list[0], os.path.basename(self.files_list[0])
+
+    def first_last_swc_nodes(self, swc_file):
+        good_first = False
+        # https://stackoverflow.com/a/18603065/4212158
+        with open(swc_file, "rb") as f:
+            while not good_first:
+                first = f.readline()  # Read the first line.
+                print("first ", first)
+                if not first.startswith(b"#"):
+                    good_first = True
+            f.seek(-2, os.SEEK_END)  # Jump to the second last byte.
+            while f.read(1) != b"\n":  # Until EOL is found...
+                f.seek(-2, os.SEEK_CUR)  # ...jump back the read byte plus one more.
+            last = f.readline()  # Read last line.
+
+        # convert from bytes to regular string
+        first, last = first.decode(), last.decode()
+        # convert to lists
+        first = first.strip().split(" ")
+        last = last.strip().split(" ")
+
+        #SWC convention:
+        # node_id type x_coordinate y_coordinate z_coordinate radius parent_node
+        # we want [2,3,4]
+        first, last = first[2,3,4], last[2,3,4]
+
+        return first, last
+
+
