@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: sampleTrain.py
+# File: dataAPI.py
 # Author: Amir Alansary <amiralansary@gmail.com>
 
 import warnings
@@ -11,8 +11,7 @@ import SimpleITK as sitk
 from tensorpack import logger
 from IPython.core.debugger import set_trace
 
-__all__ = ['files', 'filesListBrainMRLandmark', 'filesListFetalUSLandmark',
-           'filesListCardioMRLandmark', 'NiftiImage']
+__all__ = ['files', 'FilesListCubeNPY']
 
 #######################################################################
 ## list file/directory names
