@@ -64,7 +64,7 @@ FRAME_HISTORY = 1
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
-GAMMA = 0.9  # 0.99
+GAMMA = 0.99  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
 MEMORY_SIZE = 1e5  # 6
 # MEMORY_SIZE = 1e5  # 6 # FIXME og
@@ -109,7 +109,7 @@ class Model(DQNModel): # TODO why override DQN model here? why not keep in DQNMo
 
         with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):
             # core layers of the network
-            conv = (LinearWrap(image)
+            conv = (LinearWrap(image)  # TODO wtf is LinearWrap
                     # TODO: use obsrvation dimensions?
                     .Conv3D('conv0', out_channel=32,
                             kernel_shape=[5, 5, 5], stride=[1, 1, 1])
@@ -175,7 +175,7 @@ def get_config():
         model=Model(),
         callbacks=[  # TODO: periodically save videos
             ModelSaver(checkpoint_dir="model_checkpoints",
-                       keep_checkpoint_every_n_hours=1.0,
+                       keep_checkpoint_every_n_hours=0.25,
                        max_to_keep=1000),  # TODO: og was just ModelSaver()
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),
