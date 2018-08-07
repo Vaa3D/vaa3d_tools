@@ -125,7 +125,6 @@ class FilesListCubeNPY(files):
                 data_dir = os.path.dirname(os.path.dirname(image_path))
                 # FIXME shouldn't use abs name for swc folder
                 swc_path = os.path.join(data_dir, "06_origin_cubes", swc_filename)
-                print("img path ", image_path)
                 # image_filename = self.filenames[idx]
                 # x, y, file, ?
                 begin, end = self.first_last_swc_nodes(swc_path)
@@ -141,7 +140,6 @@ class FilesListCubeNPY(files):
         with open(swc_file, "rb") as f:
             while not good_first:
                 first = f.readline()  # Read the first line.
-                print("first ", first)
                 if not first.startswith(b"#"):
                     good_first = True
             f.seek(-2, os.SEEK_END)  # Jump to the second last byte.
@@ -157,8 +155,8 @@ class FilesListCubeNPY(files):
 
         #SWC convention:
         # node_id type x_coordinate y_coordinate z_coordinate radius parent_node
-        # we want [2,3,4]
-        first, last = first[2,3,4], last[2,3,4]
+        # we want [2,3,4]. adding +1 to 4 since slice is not end inclusive
+        first, last = first[2:4+1], last[2:4+1]
 
         return first, last
 
