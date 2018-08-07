@@ -348,7 +348,7 @@ class Brain_Env(gym.Env):
         else:
             raise ValueError
 
-        # print("action ", act, "loc ", self._location, "proposed ", proposed_location, "diff ", proposed_location-self._location)
+        # print("action ", act, "diff ", proposed_location-self._location, "q vals ", qvalues)
 
 
         if not self._is_in_bounds(proposed_location):  # went out of bounds
@@ -356,9 +356,10 @@ class Brain_Env(gym.Env):
             # do not update current_loc
             go_out = True
         else:  # in bounds
-            transposed = proposed_location.T
             # https://stackoverflow.com/a/25823710/4212158
-            if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1)):
+            # .all(axis=1) makes sure that all of x,y,z isclose
+            # np.any() checks is any coord is close
+            if np.any(np.isclose(self._agent_nodes, proposed_location.T).all(axis=1)):
                 # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
@@ -427,6 +428,7 @@ class Brain_Env(gym.Env):
         #         if isinstance(self.viz, float):
         #             self.display()
 
+        # TODO check if I actually want to store current rewards
         self.current_episode_score.feed(self.reward)
         self.cnt += 1
 
@@ -492,6 +494,9 @@ class Brain_Env(gym.Env):
         # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
         if agent_mask.any():  # agent trajectory not empty
             np.copyto(observation, agent_trajectory, casting='no', where=agent_mask)
+            _loc = self._location.astype(int)
+            # set current location value to -10 to indicate where the agent currently is
+            observation[_loc[0], _loc[1], _loc[2]] = -10
         return observation
 
 
@@ -615,8 +620,11 @@ class Brain_Env(gym.Env):
         """ Calculate the new reward based on the increase in IoU
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        if go_out or backtrack:
+        if go_out:
             reward = -1
+        if backtrack:
+            reward = -5
+        # TODO if terminal node, big reward!
         else:
             # TODO, double check if indexes are correct
             if self.cnt == 0:
@@ -701,7 +709,7 @@ class Brain_Env(gym.Env):
         # print("ious", self._IOU_history)
         # print("reward history ", np.unique(self.reward_history))
         # print("IOU history ", np.unique(self._IOU_history))
-        plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history),
+        plotter = Viewer(self.original_state, zip(self._agent_nodes, self.reward_history),
                          filepath=self.filename)
         #
         # #
@@ -875,7 +883,7 @@ class FrameStack(gym.Wrapper):
     so an input to the neural network is consisted of four frame;
         [max(T-1, T), max(T+3, T+4), max(T+7, T+8), max(T+11, T+12)]
 
-    ALE provides mechanism for frame skipping (combined with adjustable random action repeat) and color averaging over skipped frames. This is also used in simple_dqn's ALEEnvironment
+    ALE provides mechanism for frame skipping (combined with adjustable random repeat) and color averaging over skipped frames. This is also used in simple_dqn's ALEEnvironment
 
     Gym's Atari Environment has built-in stochastic frame skipping common to all games. So the frames returned from environment are not consecutive.
 
