@@ -21,7 +21,7 @@ import sys
 
 # get around module not found errors
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import time
+from datetime import datetime
 import argparse
 from collections import deque
 
@@ -51,7 +51,7 @@ data_dir = "../data/08_cube_npy"
 fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
 train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
 
-logger_dir = os.path.join('train_log', 'expriment_1')
+logger_dir = os.path.join('train_log', str(datetime.now()))
 
 ###############################################################################
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
