@@ -71,6 +71,8 @@ class Model3D(ModelDesc):
         state = tf.slice(comb_state, [0, 0, 0, 0, 0], [-1, -1, -1, -1, self.channel], name='state')
 
         self.predict_value = self.get_DQN_prediction(state)  # shape: (batch_size, action_space_size)
+        tf.summary.histogram("Q_vals", self.predict_value)
+
         if not get_current_tower_context().is_training:
             return
 
@@ -107,7 +109,7 @@ class Model3D(ModelDesc):
             best_v = tf.reduce_max(targetQ_predict_value, axis=1)  # shape: batch_size
         else:
             # Double-DQN or DuelingDouble
-            next_predict_value = self.get_DQN_prediction(next_state)
+            next_predict_value = self.get_DQN_prediction(next_state)  # FIXME isnt this redundant
             self.greedy_choice = tf.argmax(next_predict_value, axis=1)  # N,
             predict_onehot = tf.one_hot(self.greedy_choice, self.num_actions, 1.0, 0.0)
             best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, axis=1)
