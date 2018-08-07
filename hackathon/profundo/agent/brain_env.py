@@ -244,8 +244,8 @@ class Brain_Env(gym.Env):
         x, y, z = np.indices((x_span, y_span, z_span))
         positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
         # # pick a random row as starting position
-        self._location = np.array(begin)
-        self._terminal_node = np.array(end)
+        self._location = np.array(begin, dtype=float)
+        self._terminal_node = np.array(end, dtype=float)
         # TODO: pick starting location using SWC file
         # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
         # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
@@ -373,7 +373,8 @@ class Brain_Env(gym.Env):
                 self._state = self._observe()
                 self.curr_IOU = self.calc_IOU()
 
-        if np.isclose(proposed_location, self._terminal_node):
+        # check that all 3 coords match terminal node location
+        if np.isclose(proposed_location, self._terminal_node).all():
             terminal_found = True
         # print("new location ", self._location, go_out, backtrack)
 
