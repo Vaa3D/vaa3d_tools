@@ -275,6 +275,7 @@ class ExpReplay(DataFlow, Callback):
             self._populate_job_queue.put(1)
 
     def _process_batch(self, batch_exp):
+        """decompose batch_exp into list of matrices"""
         state = np.asarray([e[0] for e in batch_exp], dtype='uint8')
         reward = np.asarray([e[1] for e in batch_exp], dtype='float32')
         action = np.asarray([e[2] for e in batch_exp], dtype='int8')
