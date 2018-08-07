@@ -71,7 +71,7 @@ class Model3D(ModelDesc):
         state = tf.slice(comb_state, [0, 0, 0, 0, 0], [-1, -1, -1, -1, self.channel], name='state')
 
         self.predict_value = self.get_DQN_prediction(state)  # shape: (batch_size, action_space_size)
-        tf.summary.histogram("Q_vals", self.predict_value)
+        # tf.summary.histogram("Q_vals", self.predict_value)
 
         if not get_current_tower_context().is_training:
             return
@@ -93,10 +93,12 @@ class Model3D(ModelDesc):
         # print("pred_action_value shape", (pred_action_value.get_shape().as_list()))
         # select maximum q val for each
         # FIXME shape: EMPTY?
-        max_pred_reward = pred_action_value
-        # max_pred_reward = tf.reduce_mean(tf.reduce_max(
-        #     self.predict_value, axis=1), name='predict_reward')
-        # max_pred_reward = tf.Print(max_pred_reward, [max_pred_reward.get_shape().as_list()], message="max_pred_reward shp", summarize=50)
+        # max_pred_reward = pred_action_value
+        # print(max_pred_reward)
+        max_pred_reward = tf.reduce_mean(tf.reduce_max(
+            self.predict_value, axis=1), name='predict_reward')
+        # max_pred_reward = tf.Print(max_pred_reward, [max_pred_reward], message="max_pred_reward shp", summarize=50)
+        # max_pred_reward = tf.Print(max_pred_reward, [max_pred_reward, max_pred_reward.get_shape().as_list()], message="max_pred_reward shp", summarize=50)
         summary.add_moving_summary(max_pred_reward)
 
         with tf.variable_scope('target'):
@@ -118,7 +120,7 @@ class Model3D(ModelDesc):
         # why do we care about the Q-vals in the next state? arent they irrelevant?
         # why can't we just use the rewards directly?
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * self.gamma * tf.stop_gradient(best_v)
-        print("target shape ", target.get_shape().as_list())
+        # print("target shape ", target.get_shape().as_list())
         # loss between the predicted reward for selected action and actual reward recieved
         # TODO is this true?
         # bestV, target comes from discounted*get_DQN_prediction(next_state) + REWARD
@@ -126,7 +128,7 @@ class Model3D(ModelDesc):
         # FIXME this assumes that the max of both target and prediction will be the same
         self.cost = tf.losses.huber_loss(target, pred_action_value,
                                          reduction=tf.losses.Reduction.MEAN)
-        print("cost shape ", self.cost.get_shape().as_list())
+        # print("cost shape ", self.cost.get_shape().as_list())
         summary.add_param_summary(('conv.*/W', ['histogram', 'rms']),
                                   ('fc.*/W', ['histogram', 'rms']))  # monitor all W
         summary.add_moving_summary(self.cost)

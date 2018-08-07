@@ -245,7 +245,6 @@ class Brain_Env(gym.Env):
         # positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
 
         # keep starting positions in bounds
-        print("xmax ", self._observation_bounds.xmax-1e-15)
         self._start_location = np.clip(np.array(begin, dtype=float),
                                  self._observation_bounds.xmin+1e-15,
                                  self._observation_bounds.xmax-1e-15)
@@ -668,14 +667,6 @@ class Brain_Env(gym.Env):
         assert len(coords) == 3
         x, y, z = coords
         bounds = self._observation_bounds
-        print("bxmin ", bounds.xmin <= x)
-        print("bxmax ", x <= bounds.xmax)
-        print("bymin ", bounds.ymin <= y)
-        print("bymax ", y <= bounds.ymax)
-        print("bzmin ", bounds.zmin <= z <= bounds.zmax)
-        print("in bounds ", (bounds.xmin <= x <= bounds.xmax and
-                 bounds.ymin <= y <= bounds.ymax and
-                 bounds.zmin <= z <= bounds.zmax))
 
         return ((bounds.xmin <= x <= bounds.xmax and
                  bounds.ymin <= y <= bounds.ymax and
