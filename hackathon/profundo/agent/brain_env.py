@@ -40,7 +40,7 @@ from gym import spaces
 from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
-from sampleTrain import FilesListCubeNPY
+from dataAPI import FilesListCubeNPY
 from viewer import SimpleImageViewer as Viewer
 from jaccard import jaccard
 from data_processing.swc_io import locations_to_swc, swc_to_TIFF, TIFF_to_npy
@@ -196,7 +196,7 @@ class Brain_Env(gym.Env):
 
 
         # # sample a new image
-        self.filepath, self.filename = next(self.file_sampler)
+        self.filepath, self.filename, begin, end = next(self.file_sampler)
         self._state = np.load(self.filepath).astype(float)
         # normalize inputs
         self._state /= 255.
@@ -244,9 +244,11 @@ class Brain_Env(gym.Env):
         x, y, z = np.indices((x_span, y_span, z_span))
         positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
         # # pick a random row as starting position
+        self._location = np.array(begin)
+        self._terminal_node = np.array(end)
         # TODO: pick starting location using SWC file
         # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
-        self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
+        # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
 
         # print("starting location ", self._location)
         self._start_location = self._location
@@ -267,7 +269,7 @@ class Brain_Env(gym.Env):
         self._state = self._observe()
         self.curr_IOU = self.calc_IOU()
         # print("first IOU ", self.curr_IOU)
-        self.reward = self._calc_reward(False, False)
+        self.reward = self._calc_reward(False, False, False)
         self._update_history()
         # we've finished iteration 0. now, step begins with cnt = 1
         self.cnt += 1
@@ -326,6 +328,7 @@ class Brain_Env(gym.Env):
         self.terminal = False
         go_out = False
         backtrack = False
+        terminal_found = False
         # print("action ", act)
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
@@ -369,26 +372,34 @@ class Brain_Env(gym.Env):
                 # only update state, iou if we've changed location
                 self._state = self._observe()
                 self.curr_IOU = self.calc_IOU()
+
+        if np.isclose(proposed_location, self._terminal_node):
+            terminal_found = True
         # print("new location ", self._location, go_out, backtrack)
 
         # punish -1 reward if the agent tries to go out
         #if (self.task != 'play'):  # TODO: why is this necessary?
-        self.reward = self._calc_reward(go_out, backtrack)  # TODO I think reward needs to be calculated after increment cnt
+        self.reward = self._calc_reward(go_out, backtrack, terminal_found)  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
         self._update_history()
 
 
-        # terminate if the distance is less than 1 during trainig
-        if (self.task == 'train'):
-            if self.curr_IOU >= 0.9:
-                # print("finishing episode, IOU = ", self.curr_IOU)
-                self.terminal = True
-                self.num_success.feed(1)
-                # self.display()
+        # # terminate if the distance is less than 1 during trainig
+        # if (self.task == 'train'):
+        #     if self.curr_IOU >= 0.9:
+        #         # print("finishing episode, IOU = ", self.curr_IOU)
+        #         self.terminal = True
+        #         self.num_success.feed(1)
+        #         # self.display()
+        if terminal_found:
+            print("finishing episode, terminal found, IOU = ", self.curr_IOU)
+            self.terminal = True
+            self.num_success.feed(1)
+            self.display()
 
         # terminate if maximum number of steps is reached
 
-        if self.cnt >= self.max_num_frames-1:
+        if self.cnt >= self.max_num_frames-1: # compensate for 0 indexing
             # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
             # self.display()
@@ -616,7 +627,7 @@ class Brain_Env(gym.Env):
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
             return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
 
-    def _calc_reward(self, go_out, backtrack):
+    def _calc_reward(self, go_out, backtrack, terminal_found):
         """ Calculate the new reward based on the increase in IoU
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
@@ -640,6 +651,11 @@ class Brain_Env(gym.Env):
                 reward = 1
             else:
                 reward = -1
+
+        # overrides everything else
+        if terminal_found:
+            reward = 100
+
         return reward
 
     def _is_in_bounds(self, coords):
