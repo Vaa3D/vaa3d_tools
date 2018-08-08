@@ -198,8 +198,8 @@ class Brain_Env(gym.Env):
         # # sample a new image
         self.filepath, self.filename, begin, end = next(self.file_sampler)
         self._state = np.load(self.filepath).astype(float)
-        # normalize inputs
-        self._state /= 255.
+        # normalize inputs in-place
+        np.clip(self._state, 0, 1, out=self._state)
         # check not all False
         assert self._state.all() == False
         self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
@@ -400,12 +400,6 @@ class Brain_Env(gym.Env):
             # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
             # self.display()
-
-        # update history buffer with new location and qvalues
-        if (self.task != 'play'):
-            self.curr_IOU = self.calc_IOU()
-
-
 
         # check if agent oscillates
         # if self._oscillate:
@@ -608,7 +602,8 @@ class Brain_Env(gym.Env):
                 output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
                 # TODO: be explicit about bounds to swc_to_tiff
                 output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
-                output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
+                with _ALE_LOCK:
+                    output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
                                               overwrite=False)
                 output_npy = np.load(output_npy_path).astype(float)
             # except IOError as e:
@@ -652,7 +647,7 @@ class Brain_Env(gym.Env):
         assert isinstance(IOU_difference, float)
 
         if IOU_difference > 0:
-            reward = 1
+            reward = 20
         else:
             reward = -1
 
