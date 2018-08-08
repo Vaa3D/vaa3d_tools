@@ -60,6 +60,7 @@ class ReplayMemory(object):
     def recent_state(self):
         """ return a list of (hist_len-1,) + STATE_SIZE """
         lst = list(self._hist)
+        # pad zeros if len(history) < max history len
         states = [np.zeros(self.state_shape, dtype='uint8')] * (self._hist.maxlen - len(lst))
         states.extend([k.state for k in lst])
         return states
@@ -86,7 +87,7 @@ class ReplayMemory(object):
         return ret
 
     # the next_state is a different episode if current_state.isOver==True
-    def _pad_sample(self, state, reward, action, isOver):
+    def _pad_sample(self, state, reward, action, isOver):  # TODO wtf is this function doing
         # TODO: what are the -2 magic numbers?
         for k in range(self.frame_history_len-2, -1, -1):
             # if episode ends,
@@ -151,11 +152,14 @@ class ExpReplay(DataFlow, Callback):
             frame_history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
         """
-        init_memory_size = int(init_memory_size)
-
+        # automatically save args as self.key = value
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
+
+        # override the asignment above
+        self.init_memory_size = int(init_memory_size)
+
         self.exploration = init_exploration
         self.num_actions = player.action_space.n
         logger.info("Number of Legal actions: {}".format(self.num_actions))
