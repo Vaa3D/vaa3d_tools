@@ -221,14 +221,12 @@ class ExpReplay(DataFlow, Callback):
         else:
             # build a history state
             #TODO we don't need history anymore, right?
-            history = self.mem.recent_state()
-            print("expreplay history before ", history)
+            history = self.mem.recent_state()  # shp (1, 15, 15, 15) ndim  4
             history.append(old_s)  # TODO: history is size 1 at init, should we actually append??
-            print("expreplay history ndim after ", np.ndim(history))
+            # shp (2, 15, 15, 15) ndim  4
             if np.ndim(history) == 4:  # 3d states
-                history = np.stack(history, axis=3)
-                print("expreplay history after stack ", np.ndim(history))
-                print("expreplay size fed to predictor ", np.ndim(history[None, :, :, :, :]))
+                history = np.stack(history, axis=3)  # shp (15, 15, 15, 2) ndim  4
+                # shp of history[None, :, :, :, :] is (1, 15, 15, 15, 2) ndim 5
                 # assume batched network - this is the bottleneck
                 q_values = self.predictor(history[None, :, :, :, :])[0][0]
             else:
@@ -313,7 +311,7 @@ class ExpReplay(DataFlow, Callback):
             self.trainer.monitors.put_scalar('expreplay/max_IoU', max)
 
             self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
-            self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.mean)
+            self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
 
         except Exception:
             logger.exception("Cannot log training scores.")
