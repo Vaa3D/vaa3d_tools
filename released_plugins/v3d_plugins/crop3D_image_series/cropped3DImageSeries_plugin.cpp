@@ -691,7 +691,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 				simple_saveimage_wrapper(callback, fileName, cropped_image, sliceDim, 1);
 			}
 
-			sliceNum = sliceNum + 2;
+			++sliceNum;
 		}
 		
 		return true;
