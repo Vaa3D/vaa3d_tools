@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 
 using namespace std;
@@ -71,6 +72,11 @@ public:
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
 	/******************************************/
+
+	/***************** Basic Image Statistics *****************/
+	template<class T>
+	static inline map<string, float> getBasicStats(T inputImgPtr[], int imgDims[]);
+	/**********************************************************/
 
 	/********* Morphological Operations *********/
 	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
@@ -196,6 +202,25 @@ inline void ImgProcessor::imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], 
 			++outi;
 		}
 	}
+}
+
+template<class T>
+inline map<string, float> ImgProcessor::getBasicStats(T inputImgPtr[], int imgDims[])
+{
+	map<string, float> basicStats;
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+
+	float mean = 0;
+	float var = 0;
+	float sum = 0;
+	
+	for (size_t i = 0; i < totalPixNum; ++i) sum = sum + inputImgPtr[i];
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	return basicStats;
 }
 
 #endif
