@@ -51,36 +51,36 @@ data_dir = "../data/08_cube_npy"
 fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
 train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
 
-experiment_name = str(datetime.now())
+experiment_name = str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 logger_dir = os.path.join('train_log', experiment_name)
 print("Logging tf stuff to ", experiment_name, flush=True)
 
 ###############################################################################
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
-BATCH_SIZE = 20
+BATCH_SIZE = 300  #2**8  # 32
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
 OBSERVATION_DIMS = (15, 15, 15)
 # how many frames to keep
 # in other words, how many past observations the network can see
-FRAME_HISTORY = 1
+FRAME_HISTORY = 2
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
 GAMMA = 0.99  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
-MEMORY_SIZE = 1e5  # 6
+MEMORY_SIZE = 1e6  # 6
 # MEMORY_SIZE = 1e5  # 6 # FIXME og
 # consume at least 1e6 * 27 * 27 * 27 bytes
-INIT_MEMORY_SIZE = MEMORY_SIZE // 20  # 5e4
-# each epoch is 100k played frames
-STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
+INIT_MEMORY_SIZE = MEMORY_SIZE // 1e3   # 5e4
+
 # STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  FIXME og
 # num training epochs in between model evaluations
-EPOCHS_PER_EVAL = 2
+EPOCHS_PER_EVAL = 1
 # the number of episodes to run during evaluation
-EVAL_EPISODE = 50
-MAX_EPISODE_LENGTH = 100
-
+EVAL_EPISODE = 5
+MAX_EPISODE_LENGTH = 250
+# each epoch is 100k played frames
+STEPS_PER_EPOCH = MAX_EPISODE_LENGTH * UPDATE_FREQ
 
 ###############################################################################
 
@@ -189,7 +189,7 @@ def get_config():
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
                 # 1->0.1 in the first million steps
-                [(0, 1), (10, 0.1), (320, 0.01)],
+                [(0, 1), (50, 0.1), (320, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
                 Evaluator(nr_eval=EVAL_EPISODE, input_names=['state'],
