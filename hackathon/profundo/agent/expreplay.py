@@ -60,6 +60,7 @@ class ReplayMemory(object):
     def recent_state(self):
         """ return a list of (hist_len-1,) + STATE_SIZE """
         lst = list(self._hist)
+        # pad zeros if len(history) < max history len
         states = [np.zeros(self.state_shape, dtype='uint8')] * (self._hist.maxlen - len(lst))
         states.extend([k.state for k in lst])
         return states
@@ -86,10 +87,13 @@ class ReplayMemory(object):
         return ret
 
     # the next_state is a different episode if current_state.isOver==True
-    def _pad_sample(self, state, reward, action, isOver):
-        for k in range(self.frame_history_len - 2, -1, -1):
+    def _pad_sample(self, state, reward, action, isOver):  # TODO wtf is this function doing
+        # TODO: what are the -2 magic numbers?
+        for k in range(self.frame_history_len-2, -1, -1):
+            # if episode ends,
             if isOver[k]:
                 state = copy.deepcopy(state)
+                # replace states from diff episode with zeros
                 state[:k + 1].fill(0)
                 break
         # transpose state
@@ -148,11 +152,14 @@ class ExpReplay(DataFlow, Callback):
             frame_history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
         """
-        init_memory_size = int(init_memory_size)
-
+        # automatically save args as self.key = value
         for k, v in locals().items():
             if k != 'self':
                 setattr(self, k, v)
+
+        # override the asignment above
+        self.init_memory_size = int(init_memory_size)
+
         self.exploration = init_exploration
         self.num_actions = player.action_space.n
         logger.info("Number of Legal actions: {}".format(self.num_actions))
@@ -161,12 +168,17 @@ class ExpReplay(DataFlow, Callback):
         self._init_memory_flag = threading.Event()  # tell if memory has been initialized
 
         # a queue to receive notifications to populate memory
+        # TODO why maxsize=5?
         self._populate_job_queue = queue.Queue(maxsize=5)
 
         self.mem = ReplayMemory(memory_size, state_shape, frame_history_len)
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
+        self._player_qvals = StatCounter()
+
+        # print("dims of expreplay history ", np.ndim(self.mem.recent_state()))
+
 
     def get_simulator_thread(self):
         # spawn a separate thread to run policy
@@ -213,10 +225,12 @@ class ExpReplay(DataFlow, Callback):
         else:
             # build a history state
             #TODO we don't need history anymore, right?
-            history = self.mem.recent_state()
-            history.append(old_s)
+            history = self.mem.recent_state()  # shp (1, 15, 15, 15) ndim  4
+            history.append(old_s)  # TODO: history is size 1 at init, should we actually append??
+            # shp (2, 15, 15, 15) ndim  4
             if np.ndim(history) == 4:  # 3d states
-                history = np.stack(history, axis=3)
+                history = np.stack(history, axis=3)  # shp (15, 15, 15, 2) ndim  4
+                # shp of history[None, :, :, :, :] is (1, 15, 15, 15, 2) ndim 5
                 # assume batched network - this is the bottleneck
                 q_values = self.predictor(history[None, :, :, :, :])[0][0]
             else:
@@ -225,7 +239,8 @@ class ExpReplay(DataFlow, Callback):
                 q_values = self.predictor(history[None, :, :, :])[0][0]
 
             # if there is a tie for max, randomly choose between them
-            act = np.random.choice(np.flatnonzero(q_values == q_values.max()))
+            act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max())))
+        # print("pop_experience act {} qvals {}".format(act, q_values))
 
         self._current_ob, reward, isOver, info = self.player.step(act, q_values)
 
@@ -234,6 +249,8 @@ class ExpReplay(DataFlow, Callback):
             #     self._player_scores.feed(info['score'])
             self._player_scores.feed(info['score'])
             self._player_IOU.feed(info['IoU'])
+            for qval in info['qvals']:
+                self._player_qvals.feed(qval)
             self.player.reset()
 
         self.mem.append(Experience(old_s, act, reward, isOver))
@@ -269,6 +286,7 @@ class ExpReplay(DataFlow, Callback):
             self._populate_job_queue.put(1)
 
     def _process_batch(self, batch_exp):
+        """decompose batch_exp into list of matrices"""
         state = np.asarray([e[0] for e in batch_exp], dtype='uint8')
         reward = np.asarray([e[1] for e in batch_exp], dtype='float32')
         action = np.asarray([e[2] for e in batch_exp], dtype='int8')
@@ -285,19 +303,24 @@ class ExpReplay(DataFlow, Callback):
 
     def _trigger(self):
         # log player statistics in training
-        v = self._player_scores
-        dist = self._player_IOU
+        scores = self._player_scores
+        qvals = self._player_qvals
+        IoU = self._player_IOU
         try:
-            mean, max = v.average, v.max
+            mean, max = scores.average, scores.max
             self.trainer.monitors.put_scalar('expreplay/mean_score', mean)
             self.trainer.monitors.put_scalar('expreplay/max_score', max)
-            mean, max = dist.average, dist.max
-            self.trainer.monitors.put_scalar('expreplay/mean_dist', mean)
-            self.trainer.monitors.put_scalar('expreplay/max_dist', max)
+            mean, max = IoU.average, IoU.max
+            self.trainer.monitors.put_scalar('expreplay/mean_IoU', mean)
+            self.trainer.monitors.put_scalar('expreplay/max_IoU', max)
+
+            self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
+            self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
+
         except Exception:
             logger.exception("Cannot log training scores.")
-        v.reset()
-        dist.reset()
+        scores.reset()
+        IoU.reset()
 
         # monitor number of played games and successes of reaching the target
         if self.player.num_games.count:

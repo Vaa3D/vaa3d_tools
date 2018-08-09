@@ -29,13 +29,15 @@ import traceback
 def play_one_episode(env, func, render=False):
     def predict(s):
         """
+        see also expreplay _populate_exp()
+
         Run a full episode, mapping observation to action, WITHOUT 0.001 greedy.
     :returns sum of rewards
         """
         # pick action with best predicted Q-value
         q_values = func(s[None, :, :, :])[0][0]
         # if there is a tie for max, randomly choose between them
-        act = np.random.choice(np.flatnonzero(q_values == q_values.max()))
+        act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.005)))
 
         # eps greedy disabled
         # if random.random() < 0.001:
@@ -47,6 +49,7 @@ def play_one_episode(env, func, render=False):
     sum_r = 0
     while True:
         act, q_values = predict(ob)
+        # print("play_one act {} qvals {}".format(act, q_values))
         ob, r, isOver, info = env.step(act, q_values)
         if render:
             env.render()

@@ -40,7 +40,7 @@ from gym import spaces
 from tensorpack.utils.utils import get_rng
 from tensorpack.utils.stats import StatCounter
 
-from sampleTrain import FilesListCubeNPY
+from dataAPI import FilesListCubeNPY
 from viewer import SimpleImageViewer as Viewer
 from jaccard import jaccard
 from data_processing.swc_io import locations_to_swc, swc_to_TIFF, TIFF_to_npy
@@ -196,10 +196,10 @@ class Brain_Env(gym.Env):
 
 
         # # sample a new image
-        self.filepath, self.filename = next(self.file_sampler)
+        self.filepath, self.filename, begin, end = next(self.file_sampler)
         self._state = np.load(self.filepath).astype(float)
-        # normalize inputs
-        self._state /= 255.
+        # normalize inputs in-place
+        np.clip(self._state, 0, 1, out=self._state)
         # check not all False
         assert self._state.all() == False
         self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
@@ -242,32 +242,28 @@ class Brain_Env(gym.Env):
         binary_grid = self.original_state.astype(bool)
         x_span, y_span, z_span = self.original_state.shape
         x, y, z = np.indices((x_span, y_span, z_span))
-        positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
-        # # pick a random row as starting position
-        # TODO: pick starting location using SWC file
-        # self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
-        self._location = positions[np.random.choice(positions.shape[0], 1)].flatten()
+        # positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
 
-        # print("starting location ", self._location)
-        self._start_location = self._location
+        # keep starting positions in bounds
+        self._start_location = np.clip(np.array(begin, dtype=float),
+                                 self._observation_bounds.xmin+1e-15,
+                                 self._observation_bounds.xmax-1e-15)
+        self._terminal_node = np.clip(np.array(end, dtype=float),
+                                       self._observation_bounds.xmin+1e-15,
+                                       self._observation_bounds.xmax-1e-15)
 
-        # # randomly select the starting coords
-        # x = self.rng.randint(0 + skip_thickness[0],
-        #                      self._state_dims[0] - skip_thickness[0])
-        # y = self.rng.randint(0 + skip_thickness[1],
-        #                      self._state_dims[1] - skip_thickness[1])
-        # z = self.rng.randint(0 + skip_thickness[2],
-        #                      self._state_dims[2] - skip_thickness[2])
-        #######################################################################
 
-        # self._location = np.array([x, y, z])
-        # self._start_location = np.array([x, y, z])
+        self._location = self._start_location
+
+        assert self._is_in_bounds(self._start_location)
+        assert self._is_in_bounds(self._terminal_node)
+
         self._qvalues = np.zeros(self.actions)
         # TODO: when doing multiscale, make difference bw state and observation
         self._state = self._observe()
         self.curr_IOU = self.calc_IOU()
         # print("first IOU ", self.curr_IOU)
-        self.reward = self._calc_reward(False, False)
+        self.reward = self._calc_reward(False, False, False)
         self._update_history()
         # we've finished iteration 0. now, step begins with cnt = 1
         self.cnt += 1
@@ -322,10 +318,12 @@ class Brain_Env(gym.Env):
             learning.
         """
         self._qvalues = qvalues
+
         current_loc = self._location
         self.terminal = False
         go_out = False
         backtrack = False
+        terminal_found = False
         # print("action ", act)
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
@@ -348,7 +346,7 @@ class Brain_Env(gym.Env):
         else:
             raise ValueError
 
-        # print("action ", act, "loc ", self._location, "proposed ", proposed_location, "diff ", proposed_location-self._location)
+        # print("action ", act, "diff ", proposed_location-self._location, "q vals ", qvalues)
 
 
         if not self._is_in_bounds(proposed_location):  # went out of bounds
@@ -356,47 +354,52 @@ class Brain_Env(gym.Env):
             # do not update current_loc
             go_out = True
         else:  # in bounds
-            transposed = proposed_location.T
             # https://stackoverflow.com/a/25823710/4212158
-            if np.any(np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1)):
+            # .all(axis=1) makes sure that all of x,y,z isclose
+            # np.any() checks is any coord is close
+            if np.any(np.isclose(self._agent_nodes, proposed_location.T).all(axis=1)):
                 # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
-            else:
-                # we are in bounds, AND we didn't back track. accept new location
-                self._location = proposed_location
-                # only update state, iou if we've changed location
-                self._state = self._observe()
-                self.curr_IOU = self.calc_IOU()
+
+            # we are in bounds, accept new location
+            self._location = proposed_location
+            # only update state, iou if we've changed location
+            self._state = self._observe()
+            self.curr_IOU = self.calc_IOU()
+
+        # check that all 3 coords match terminal node location
+        # atol gives us some tolerance
+        if np.isclose(proposed_location, self._terminal_node, atol=3).all():
+            terminal_found = True
         # print("new location ", self._location, go_out, backtrack)
 
         # punish -1 reward if the agent tries to go out
         #if (self.task != 'play'):  # TODO: why is this necessary?
-        self.reward = self._calc_reward(go_out, backtrack)  # TODO I think reward needs to be calculated after increment cnt
+        self.reward = self._calc_reward(go_out, backtrack, terminal_found)  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
         self._update_history()
 
 
-        # terminate if the distance is less than 1 during trainig
-        if (self.task == 'train'):
-            if self.curr_IOU >= 0.9:
-                # print("finishing episode, IOU = ", self.curr_IOU)
-                self.terminal = True
-                self.num_success.feed(1)
-                # self.display()
+        # # terminate if the distance is less than 1 during trainig
+        # if (self.task == 'train'):
+        #     if self.curr_IOU >= 0.9:
+        #         # print("finishing episode, IOU = ", self.curr_IOU)
+        #         self.terminal = True
+        #         self.num_success.feed(1)
+        #         # self.display()
+        if terminal_found:
+            print("finishing episode, terminal found, IOU = ", self.curr_IOU)
+            self.terminal = True
+            self.num_success.feed(1)
+            self.display()
 
         # terminate if maximum number of steps is reached
 
-        if self.cnt >= self.max_num_frames-1:
+        if self.cnt >= self.max_num_frames-1: # compensate for 0 indexing
             # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
             # self.display()
-
-        # update history buffer with new location and qvalues
-        if (self.task != 'play'):
-            self.curr_IOU = self.calc_IOU()
-
-
 
         # check if agent oscillates
         # if self._oscillate:
@@ -427,11 +430,12 @@ class Brain_Env(gym.Env):
         #         if isinstance(self.viz, float):
         #             self.display()
 
+        # TODO check if I actually want to store current rewards
         self.current_episode_score.feed(self.reward)
         self.cnt += 1
 
         info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
-                'filename': self.filename}
+                'filename': self.filename, "qvals": qvalues}
 
         if self.terminal:
             self._trim_arrays()
@@ -492,6 +496,9 @@ class Brain_Env(gym.Env):
         # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
         if agent_mask.any():  # agent trajectory not empty
             np.copyto(observation, agent_trajectory, casting='no', where=agent_mask)
+            _loc = self._location.astype(int)
+            # set current location value to -10 to indicate where the agent currently is
+            observation[_loc[0], _loc[1], _loc[2]] = -10
         return observation
 
 
@@ -595,7 +602,8 @@ class Brain_Env(gym.Env):
                 output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
                 # TODO: be explicit about bounds to swc_to_tiff
                 output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
-                output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
+                with _ALE_LOCK:
+                    output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
                                               overwrite=False)
                 output_npy = np.load(output_npy_path).astype(float)
             # except IOError as e:
@@ -611,36 +619,50 @@ class Brain_Env(gym.Env):
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
             return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
 
-    def _calc_reward(self, go_out, backtrack):
+    def _calc_reward(self, go_out, backtrack, terminal_found):
         """ Calculate the new reward based on the increase in IoU
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
-        if go_out or backtrack:
+        # overrides everything else
+        if terminal_found:
+            reward = 100
+            return reward
+        if go_out:
             reward = -1
+            return reward
+        if backtrack:
+            reward = -5
+            return reward
+
+
+        # TODO, double check if indexes are correct
+        if self.cnt == 0:
+            previous_IOU = 0.
         else:
-            # TODO, double check if indexes are correct
-            if self.cnt == 0:
-                previous_IOU = 0.
-            else:
-                previous_IOU = self._IOU_history[self.cnt - 1]
-            IOU_difference = self.curr_IOU - previous_IOU
-            # print(self.cnt, self._history_length)
-            # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
-            #       "loc ", self._location)
-            assert isinstance(IOU_difference, float)
-            if IOU_difference > 0:
-                reward = 1
-            else:
-                reward = -1
+            previous_IOU = self._IOU_history[self.cnt - 1]
+        IOU_difference = self.curr_IOU - previous_IOU
+        # print(self.cnt, self._history_length)
+        # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
+        #       "loc ", self._location)
+        assert isinstance(IOU_difference, float)
+
+        if IOU_difference > 0:
+            reward = 20
+        else:
+            reward = -1
+
+
+
         return reward
 
     def _is_in_bounds(self, coords):
         assert len(coords) == 3
         x, y, z = coords
         bounds = self._observation_bounds
-        return ((bounds.xmin <= x <= bounds.xmax - 1 and
-                 bounds.ymin <= y <= bounds.ymax - 1 and
-                 bounds.zmin <= z <= bounds.zmax - 1))
+
+        return ((bounds.xmin <= x <= bounds.xmax and
+                 bounds.ymin <= y <= bounds.ymax and
+                 bounds.zmin <= z <= bounds.zmax))
 
     @property
     def _oscillate(self):
@@ -701,7 +723,7 @@ class Brain_Env(gym.Env):
         # print("ious", self._IOU_history)
         # print("reward history ", np.unique(self.reward_history))
         # print("IOU history ", np.unique(self._IOU_history))
-        plotter = Viewer(self.original_state, zip(self._agent_nodes, self._IOU_history),
+        plotter = Viewer(self.original_state, zip(self._agent_nodes, self.reward_history),
                          filepath=self.filename)
         #
         # #
@@ -875,7 +897,7 @@ class FrameStack(gym.Wrapper):
     so an input to the neural network is consisted of four frame;
         [max(T-1, T), max(T+3, T+4), max(T+7, T+8), max(T+11, T+12)]
 
-    ALE provides mechanism for frame skipping (combined with adjustable random action repeat) and color averaging over skipped frames. This is also used in simple_dqn's ALEEnvironment
+    ALE provides mechanism for frame skipping (combined with adjustable random repeat) and color averaging over skipped frames. This is also used in simple_dqn's ALEEnvironment
 
     Gym's Atari Environment has built-in stochastic frame skipping common to all games. So the frames returned from environment are not consecutive.
 

@@ -2,7 +2,10 @@ import os
 from collections import defaultdict
 import numpy as np
 import pandas as pd
+# import imageio
+# import pytiff
 from skimage import io as tiff2array
+
 import subprocess
 
 
@@ -215,18 +218,22 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", ove
     # don't overwrite
     if not os.path.isfile(outfile_fpath) or overwrite:
         desired_len = 15  # FIXME should not be explicit shape
+        # img_array = imageio.volread(input_fpath)
         img_array = tiff2array.imread(input_fpath)
         # make all arrays the same shape
         # format: ((top, bottom), (left, right))
         shp = img_array.shape
         #print(shp, flush=True)
         if shp != (desired_len, desired_len, desired_len):
-            # print("tiff is wrong shape: ", shp, "; padding!")
+            print("tiff is wrong shape: ", shp, "; padding!")
             try:
                 img_array = np.pad(img_array, ((0, desired_len-shp[0]), (0, desired_len-shp[1]), (0, desired_len-shp[2])), 'constant')
             except ValueError:
                 raise
                 #print(shp, flush=True)  # don't wait for all threads to finish before printing
+
+        # squish [0, 255] to [0,1]
+        np.clip(img_array, 0, 1, out=img_array)  # clip in place
                 
         np.save(outfile_fpath, img_array)
         assert (os.path.isfile(outfile_fpath))
