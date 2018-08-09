@@ -7,16 +7,19 @@
 
 #include <v3d_interface.h>
 #include "v3d_message.h"
-#include "sholl_func.h"
+#include "plot_func.h"
 #include "openSWCDialog.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
-#include "sholl_swc.h"
+#include <angle_calculate.h>
+#include "Rinstancing.h"
+#include <iterator>
+
+#define VOID 1000000000
 using namespace std;
 
 const QString title = QObject::tr("Sholl Analysis SWC Plugin");
-
 void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
@@ -25,15 +28,18 @@ void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     NeuronTree nt = openDlg->nt;
     QList<NeuronSWC> neuron = nt.listNeuron;
-    double step;
 
-    bool ok;
-    step = QInputDialog::getDouble(0,"Would you like to specify a radius step size?","radius step size (0 for continuous sampling)",0,0,2147483647,1,&ok);
-	if (!ok)
-        step = VOID;
+    vector<double> Angles;
+    vector<int> branchid;
+    angles temp;
+    temp=angle_calculate(nt);
+    Angles=temp.a;
+    branchid=temp.c;
+    //qDebug()<<branchid.size();
 
-    ShollSWC(neuron, step);
-
+    int test1;
+    char** test2;
+    instantiateR(test1, test2, branchid, Angles);
     return;
 }
 
@@ -43,14 +49,11 @@ void sholl_toolbox(const V3DPluginArgList & input)
 	NeuronTree nt(paras->nt);
 	QList<NeuronSWC> neuron = nt.listNeuron;
 
-    double step;
+    vector<int>  branchid;
 
-    bool ok;
-    step = QInputDialog::getDouble(0,"Would you like to specify a radius step size?","radius step size (0 for continuous sampling)",5000,5000,2147483647,1,&ok);
-    if (!ok)
-        step = VOID;
-
-    ShollSWC(neuron, step);
+    angles temp;
+    temp=angle_calculate(nt);
+    branchid=temp.c;
 
 	return;
 }
@@ -131,7 +134,8 @@ bool sholl_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 		return false;
 	}
 
-    if (!ShollSWC(neuron, step))
+    crossings = ShollSWC(neuron, step);
+    if (crossings.size()!=0)
 	{
         cout<<"Error in doing the sholl analysis of the swc"<<endl;
 		return false;

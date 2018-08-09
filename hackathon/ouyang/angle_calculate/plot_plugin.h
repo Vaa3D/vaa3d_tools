@@ -2,8 +2,8 @@
  * 2018-06-26: by OuYang Qiang
  */
  
-#ifndef __SHOLL_PLUGIN_H__
-#define __SHOLL_PLUGIN_H__
+#ifndef __PLOT_PLUGIN_H__
+#define __PLOT_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>

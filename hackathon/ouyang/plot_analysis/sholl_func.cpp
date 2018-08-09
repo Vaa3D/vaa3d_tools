@@ -13,10 +13,20 @@
 #include <vector>
 #include <iostream>
 #include "sholl_swc.h"
+#include "Rinstancing.h"
+#include <iterator>
 using namespace std;
 
-const QString title = QObject::tr("Sholl Analysis SWC Plugin");
+/*QList<NeuronSWC> getdendrite(QList<NeuronSWC> neuron){
+    for (int i=0;i<neuron.size();i++){
+            if (neuron.at(i).type!=3 && neuron.at(i).type!=4 && neuron.at(i).pn!= -1)
+                neuron.removeAt(i);
+}
+    return neuron;
+}
+*/
 
+const QString title = QObject::tr("Sholl Analysis SWC Plugin");
 void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
@@ -25,6 +35,17 @@ void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
 
     NeuronTree nt = openDlg->nt;
     QList<NeuronSWC> neuron = nt.listNeuron;
+   /* QList<NeuronSWC> temp=QList<NeuronSWC>();
+    for (int j=0;j<sumtype;j++){
+        int i=0;
+        temp.at(i)=neuron.at(typelist.at(j));
+        i+=1;
+}
+    neuron=temp;*/
+
+    vector<double> radius;
+    vector<double> crossings;
+
     double step;
 
     bool ok;
@@ -32,7 +53,16 @@ void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	if (!ok)
         step = VOID;
 
-    ShollSWC(neuron, step);
+    crossings = ShollSWC(neuron, step);
+
+    for(int i=0;i<crossings.size();i++)
+    {
+        radius.push_back(i*step);
+    }
+
+    int test1;
+    char** test2;
+    instantiateR(test1, test2, radius, crossings);
 
     return;
 }
@@ -43,6 +73,8 @@ void sholl_toolbox(const V3DPluginArgList & input)
 	NeuronTree nt(paras->nt);
 	QList<NeuronSWC> neuron = nt.listNeuron;
 
+    vector<double> crossings;
+
     double step;
 
     bool ok;
@@ -50,7 +82,7 @@ void sholl_toolbox(const V3DPluginArgList & input)
     if (!ok)
         step = VOID;
 
-    ShollSWC(neuron, step);
+    crossings = ShollSWC(neuron, step);
 
 	return;
 }
@@ -60,6 +92,8 @@ bool sholl_func(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"==========Welcome to sholl_swc function============="<<endl;
 	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
 	vector<char*>* paralist = NULL;
+
+
 
     double step = VOID;
 
@@ -131,7 +165,8 @@ bool sholl_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 		return false;
 	}
 
-    if (!ShollSWC(neuron, step))
+    crossings = ShollSWC(neuron, step);
+    if (crossings.size()!=0)
 	{
         cout<<"Error in doing the sholl analysis of the swc"<<endl;
 		return false;

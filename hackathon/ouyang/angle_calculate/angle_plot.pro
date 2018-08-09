@@ -6,22 +6,19 @@ V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 
 HEADERS	= \
-    sholl_swc.h \
-    sholl_plugin.h \
-    sholl_func.h \
-    openSWCDialog.h
-HEADERS	+=
-HEADERS +=
-HEADERS +=
+    openSWCDialog.h \
+    Rinstancing.h \
+    angle_calculate.h \
+    plot_func.h \
+    plot_plugin.h
 
 SOURCES	= \
-    sholl_func.cpp \
-    sholl_plugin.cpp \
-    sholl_swc.cpp \
-    openSWCDialog.cpp
+    openSWCDialog.cpp \
+    Rinstancing.cpp \
+    angle_calculate.cpp \
+    plot_func.cpp \
+    plot_plugin.cpp
 
-SOURCES	+=
-SOURCES +=
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
@@ -61,9 +58,6 @@ RINSIDELIBS = 		$$system($$R_HOME/bin/Rscript -e \"RInside:::LdFlags\(\)\")
 QMAKE_CXXFLAGS +=	$$RCPPWARNING $$RCPPFLAGS $$RCPPINCL $$RINSIDEINCL
 QMAKE_LIBS +=           $$RLDFLAGS $$RBLAS $$RLAPACK $$RINSIDELIBS $$RCPPLIBS
 
-## addition clean targets
-QMAKE_CLEAN +=		qtdensity Makefile
 
-
-TARGET	= $$qtLibraryTarget(sholl_swc)
-DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_analysis/sholl_analysis_swc/
+TARGET	= $$qtLibraryTarget(sholl_plot)
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_analysis/angle_plot/
