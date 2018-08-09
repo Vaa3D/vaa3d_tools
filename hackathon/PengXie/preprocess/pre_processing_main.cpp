@@ -24,7 +24,50 @@
 #include <io.h>
 #endif
 
-NeuronTree getComponents(NeuronTree nt, QList<CellAPO> markers, double dThres=1000.0)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
+CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b){
+    CellAPO marker;
+    marker.x = node.x;
+    marker.y = node.y;
+    marker.z = node.z;
+    marker.volsize = vol;
+    marker.color.r = color_r;
+    marker.color.g = color_g;
+    marker.color.b = color_b;
+    return marker;
+}
+
+bool my_saveANO(QString fileNameHeader, bool swc=true, bool apo=true){
+    FILE * fp=0;
+    fp = fopen((char *)qPrintable(fileNameHeader+QString(".ano")), "wt");
+    if (!fp)
+    {
+        v3d_msg("Fail to open file to write.");
+        return false;
+    }
+    if(fileNameHeader.count("/")>0){
+        fileNameHeader = fileNameHeader.right(fileNameHeader.size()-fileNameHeader.lastIndexOf("/")-1);
+    }
+
+    if(swc){fprintf(fp, "SWCFILE=%s\n", qPrintable(fileNameHeader+QString(".swc")));}
+    if(apo){fprintf(fp, "APOFILE=%s\n", qPrintable(fileNameHeader+QString(".apo")));}
+    if(fp){fclose(fp);}
+    return true;
+}
+
+NeuronTree rm_nodes(NeuronTree nt, QList<int> list){
+    qSort(list);
+    if(list.at(list.last())>=nt.listNeuron.size()){  // Index out of range
+        cout << list.at(list.last())<<endl<<"rm_nodes Error: index out of range\n";
+        return nt;
+    }
+    for(int i=(list.size()-1); i>=0; i--){
+        nt.listNeuron.removeAt(list.at(i));
+    }
+
+    return nt;
+}
+
+NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel, double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
 {
     QList<int> components;
     QList<int> pList;
@@ -81,10 +124,12 @@ NeuronTree getComponents(NeuronTree nt, QList<CellAPO> markers, double dThres=10
             }
         }
     }
-//    //update type with component
-//    for(int i=0; i<nt.listNeuron.size(); i++){
-//        nt.listNeuron[i].type=components.at(i);
-//    }
+    // Add color to components
+    if(colorful){
+        for(int i=0; i<nt.listNeuron.size(); i++){
+            nt.listNeuron[i].type=components.at(i)+1;
+        }
+    }
 
     //check if marker exists and use it as root
     int somarootid = 0;
@@ -99,7 +144,7 @@ NeuronTree getComponents(NeuronTree nt, QList<CellAPO> markers, double dThres=10
             S.y = markers.at(0).y;
             S.z = markers.at(0).z;
 //            S.r = markers.at(0).volsize;
-            S.r = 5;
+            S.r = 100;
             S.type = 1;
             S.n = 0;
             S.pn = -1;
@@ -117,7 +162,7 @@ NeuronTree getComponents(NeuronTree nt, QList<CellAPO> markers, double dThres=10
                     S.y = markers.at(i).y;
                     S.z = markers.at(i).z;
                     S.type = 1;
-                    S.r = markers.at(i).volsize;
+                    S.r = 100;
                     S.n = 0;
                     S.pn = -1;
                     S_list.append(S);
@@ -138,56 +183,97 @@ NeuronTree getComponents(NeuronTree nt, QList<CellAPO> markers, double dThres=10
         else{istip.append(false);}
     }
 
+    export_listNeuron_2swc(nt.listNeuron, "01.swc");
+
     // For each subtree, connect the closest end (tip or root) to soma, if within certain distance.
-    QList<int> selected;
     cout << "Total components:\t" <<ncomponents << endl;
+    QList<int> drop_list;
+    int bad_nodes=0;
     for(int cid=0; cid<ncomponents; cid++){
-        cout << "Component\t" << cid <<endl;
+
+        // Find closet ends
+        cout << "\nComponent\t" << cid <<endl;
         QList<double> edist; // distance from end to soma
         QList<int> eid; // end id
+        int ct = 0;
         for(int i=0; i<N; i++){
             if((istip.at(i) || pList.at(i)==-1) && (components.at(i)==cid)){  //  i is tip or root
                 edist.append(computeDist2(nt.listNeuron.at(i+1), nt.listNeuron.at(somarootid)));
                 eid.append(i);
             }
+            if(components.at(i)==cid){ct++;}
         }
+        cout << "# Nodes:\t" << ct <<endl;
+
         QList<double> dsorted = edist;
         qSort(dsorted);
+        // Drop a subtree if it's too far from
+        if(dsorted.at(0) > drop_thres){
+            cout<<"Operation: Deleted!\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
+            for(int i=0; i<N; i++){
+                if(components.at(i)==cid){
+                    drop_list.append(i+1);
+                    bad_nodes++;
+                }
+            }
+            printf("Subtree size:\t%d\n", ct);
+            continue;
+        }
+
+        // Whether to connect subtrees to soma
         if(dsorted.at(0) < dThres){
-            selected.append(eid.at(edist.indexOf(dsorted.at(0))));
-            cout<<eid.at(edist.indexOf(dsorted.at(0)))<<"\t"<<dsorted.at(0)<<endl;
+            int cend = eid.at(edist.indexOf(dsorted.at(0)));
+            cout<<"Operation: Connected to soma.\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
+            markers.append(get_marker(nt.listNeuron.at(eid.at(edist.indexOf(dsorted.at(0)))+1), 50, 255, 255, 255));
+            // If this is a root, connect with soma
+            if(pList.at(cend)==-1){
+                nt.listNeuron[cend+1].pn = somarootid;
+            }
+            // If this is a tip, creat a root at the same position and connect to soma.
+            else{
+                NeuronSWC psuedo_root = nt.listNeuron.at(cend+1);
+                psuedo_root.pn = somarootid;
+                psuedo_root.n = nt.listNeuron.size()+1;
+                nt.listNeuron.append(psuedo_root);
+            }
+        }
+        else{
+             // Label un-connected subtrees
+            markers.append(get_marker(nt.listNeuron.at(eid.at(edist.indexOf(dsorted.at(0)))+1), 50, 255, 0, 0));
+            if(!return_maintree){
+                cout<<"Operation: kept but not connected.\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
+                for(int i=0; i<N;i++){
+                    if(components.at(i)==cid){
+                        nt.listNeuron[i+1].type = 0;
+                        bad_nodes++;
+                    }
+                }
+            }
+            else{
+                cout<<"Operation: Deleted!\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
+                for(int i=0; i<N;i++){
+                    if(components.at(i)==cid){
+                        drop_list.append(i+1);
+                        bad_nodes++;
+                    }
+                }
+            }
         }
     }
-
-    // Connect components to soma
-    for(int i=0; i<selected.size(); i++){
-        int cend = selected.at(i);
-        cout << cend << "\t" << pList.count(cend) << endl;
-        if(pList.at(cend)==-1){  // If this is a root, connect with soma
-            nt.listNeuron[cend+1].pn = somarootid;
-//            nt.listNeuron[cend].type = 0;
-        }
-        else{   // If this is a tip, creat a root at the same position and connect to soma.
-            NeuronSWC psuedo_root = nt.listNeuron.at(cend+1);
-            psuedo_root.pn = somarootid;
-            psuedo_root.n = nt.listNeuron.size()+1;
-//            psuedo_root.type = 0;
-            nt.listNeuron.append(psuedo_root);
-        }
+    // Drop distal subtrees.
+    if(drop_list.size()>0){
+        printf("Nodes droped:\t%d\n", drop_list.size());
+        nt = rm_nodes(nt, drop_list);
     }
-//    return nt;
+    writeAPO_file(outfileLabel+QString(".apo"), markers);
+    cout<<bad_nodes<<endl;
 
-    // Sort the tree.
-    NeuronTree new_nt;
-    double angthr=60, disthr=0.00000001, xscale=1, yscale=1, zscale=1;
-    int matchtype = 2, rootid=somarootid;
-    angthr=cos((180-angthr)/180*M_PI);
-    bool b_minusradius = false;
-    new_nt = nt;
-    cout<<rootid<<endl;
-    connectall(&nt, new_nt.listNeuron, xscale, yscale, zscale, angthr, disthr, matchtype, b_minusradius, rootid);
-//    SortSWC(nt.listNeuron, new_nt.listNeuron, somarootid, 0.25);
-    return new_nt;
+    // QC report
+    FILE * fp=0;
+    fp = fopen((char *)qPrintable(outfileLabel+QString(".QC")), "wt");
+    fprintf(fp, "Percentage_lost\t%f\%\n", bad_nodes*100.0/N);
+    fclose(fp);
+    return nt;
 }
 
 
@@ -245,26 +331,29 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 		printHelp_pre_processing();
 
 
-    //1. read arguments
+    //0. read arguments
 
 	char *dfile_input = NULL;
 	char *dfile_result = NULL;
 	char *outfile = NULL;
-	double step_size = 2;
-    double thres = 2;
-    double prune_size = -1; //default case
-	int skip_rotation = 1;
+    double prune_size = 2; //default case
+    double step_size = 0;
+    double connect_soma_dist = 1000;
+    double thres = 0;
+    bool rotation = false;
+    bool colorful = false;
+    bool return_maintree = false;
 	
 	int c;
-    static char optstring[]="h:i:o:l:s:t:r:";
+    static char optstring[]="hi:o:l:s:m:t:r:d:f:";
 	extern char * optarg;
 	extern int optind, opterr;
     optind = 1;
     while ((c = getopt(argc, argv, optstring))!=-1)
     {
         switch (c)
-		{
-			case 'h':
+        {
+            case 'h':
 				printHelp_pre_processing();
 				return 0;
 				break;
@@ -275,6 +364,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 					return 1;
 				}
 				dfile_input = optarg;
+                cout << "Input file name:\t" << dfile_input <<endl;
 				break;
 			case 'o':
 				if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
@@ -309,6 +399,13 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
                     fprintf(stderr, "Illegal step_size.\n");
                 }
                 break;
+            case 'm':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -m.\n");
+                    return 1;
+                }
+                connect_soma_dist = atof(optarg);
             case 't':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
@@ -324,18 +421,49 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
            case 'r':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
-                    fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -r.\n");
                     return 1;
                 }
-                skip_rotation = atoi(optarg);
+                rotation = (atoi(optarg)==1);
                 break;
-			case '?':
-				fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
-				return 1;
-				break;
+            case 'd':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -d.\n");
+                    return 1;
+                }
+                if(atoi(optarg)==1){
+                    colorful=true;
+                    cout<<"Compartments will be labeled\n";
+                }
+                else{
+                    colorful=false;
+                    cout<<"Compartments will not be labeled\n";
+                }
+                break;
+            case 'f':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -f.\n");
+                    return 1;
+                }
+                else{
+                    if(atoi(optarg)==1){
+                        return_maintree=true;
+                        cout<<"Only return main tree\n";
+                    }
+                    else{return_maintree=false;cout<<"Report main tree and subtrees\n";}
+                    break;
+                }
+
+            case '?':
+                fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
+                return 1;
+                break;
 		}
 	}
 
+    // 1. Load data
     QString qs_input(dfile_input);
 
     NeuronTree nt;
@@ -344,7 +472,6 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
     if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC"))
     {
         nt = readSWC_file(qs_input);
-        markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
     }
 
 	QString outfileName = QString(dfile_result);
@@ -368,14 +495,8 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
     //2.2 Remove duplicates
     QList<NeuronSWC> newNeuron;
     NeuronTree deduped;
-    SortSWC(pruned.listNeuron, deduped.listNeuron, VOID, 0.25);
-//    connect_swc(pruned, deduped.listNeuron, 100, 90);
-    export_listNeuron_2swc(deduped.listNeuron,qPrintable(QString("01_test.swc")));
-    QString fileOpenName = QString("01_test.swc");
-    deduped = getComponents(deduped, markers);
-    export_listNeuron_2swc(deduped.listNeuron,qPrintable(QString("02_test.swc")));
-    return 1;
-
+    // Maybe not the best solution. Use it for now.
+    SortSWC(pruned.listNeuron, deduped.listNeuron, VOID, thres);
 
     //2.3 Resample
     NeuronTree resampled = deduped;
@@ -385,46 +506,59 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
     }else{
         printf("Skip Resampling\n");
         resampled=pruned;
-    }    
-
-    //2.4 Sort
-    //The old version of sort function is slow for large (>20,000 nodes) trees
-    //Replaced by neuron_connector
-    NeuronTree sorted;
-    if (thres>0){
-        printf("Sort \n");
-//        sorted = sort(resampled,VOID, thres); // Original 2012-06-02
-        QString resamplefileName = qs_input + ".resample.temp.swc";
-        export_listNeuron_2swc(resampled.listNeuron, qPrintable(resamplefileName));
-        QString sortedfileName = qs_input + ".sorted.temp.swc";
-
-        QString subStr("swc");
-        QString newStr("apo");
-        QString old_apo = qs_input;
-        QString new_apo = resamplefileName;
-        old_apo.replace(old_apo.lastIndexOf(subStr), subStr.size(), newStr);
-        new_apo.replace(new_apo.lastIndexOf(subStr), subStr.size(), newStr);
-        QString apo_cmd = QString("cp %1 %2").arg(old_apo.toStdString().c_str()).arg(new_apo.toStdString().c_str());
-        system(qPrintable(apo_cmd));
-        printf(qPrintable(resamplefileName));
-//        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
-        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i 01_test.swc -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
-        printf(qPrintable(sys_cmd));
-        system(qPrintable(sys_cmd));
-        sorted = readSWC_file(sortedfileName);
-        // Cleanup
-        sys_cmd = QString("rm %1").arg(resamplefileName.toStdString().c_str());
-//        system(qPrintable(sys_cmd));
-        sys_cmd = QString("rm %1").arg(sortedfileName.toStdString().c_str());
-//        system(qPrintable(sys_cmd));
-    }else{
-        printf("Skip sorting\n");
-        sorted=resampled;
     }
 
-    //2.4 Align axis
+    //2.4 Connect to soma
+    NeuronTree connected = deduped;
+    if (connect_soma_dist>0){
+        markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
+        connected = connect_soma(deduped, markers, connect_soma_dist, outfileName.left(outfileName.length() - 4), 1e6, colorful, return_maintree);
+    }
+
+    //2.5 Sort the tree.
+    NeuronTree sorted;
+    SortSWC(connected.listNeuron, sorted.listNeuron, 0, thres);
+    // To be implemented: remove duplicates
+
+
+//    //2.4 Sort
+//    //The old version of sort function is slow for large (>20,000 nodes) trees
+//    //Replaced by neuron_connector
+//    NeuronTree sorted;
+//    if (thres>0){
+//        printf("Sort \n");
+////        sorted = sort(resampled,VOID, thres); // Original 2012-06-02
+//        QString resamplefileName = qs_input + ".resample.temp.swc";
+//        export_listNeuron_2swc(resampled.listNeuron, qPrintable(resamplefileName));
+//        QString sortedfileName = qs_input + ".sorted.temp.swc";
+
+//        QString subStr("swc");
+//        QString newStr("apo");
+//        QString old_apo = qs_input;
+//        QString new_apo = resamplefileName;
+//        old_apo.replace(old_apo.lastIndexOf(subStr), subStr.size(), newStr);
+//        new_apo.replace(new_apo.lastIndexOf(subStr), subStr.size(), newStr);
+//        QString apo_cmd = QString("cp %1 %2").arg(old_apo.toStdString().c_str()).arg(new_apo.toStdString().c_str());
+//        system(qPrintable(apo_cmd));
+//        printf(qPrintable(resamplefileName));
+////        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+//        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i 01_test.swc -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+//        printf(qPrintable(sys_cmd));
+//        system(qPrintable(sys_cmd));
+//        sorted = readSWC_file(sortedfileName);
+//        // Cleanup
+//        sys_cmd = QString("rm %1").arg(resamplefileName.toStdString().c_str());
+////        system(qPrintable(sys_cmd));
+//        sys_cmd = QString("rm %1").arg(sortedfileName.toStdString().c_str());
+////        system(qPrintable(sys_cmd));
+//    }else{
+//        printf("Skip sorting\n");
+//        sorted=resampled;
+//    }
+
+    //2.6 Align axis
 	NeuronTree result;
-	if (skip_rotation!=1)
+    if (rotation)
 	{
 		printf("Aligning PCA axis\n");
         result = align_axis(sorted);
@@ -436,6 +570,8 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
     if (export_listNeuron_2swc(result.listNeuron,qPrintable(outfileName)))
 		printf("\t %s has been generated successfully.\n",qPrintable(outfileName));
+    bool print_apo = connect_soma_dist>0;
+    my_saveANO(outfileName.left(outfileName.length() - 4), true, print_apo);
 
 	return 1;
 }
@@ -452,12 +588,17 @@ void printHelp_pre_processing()
 	printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
     printf("\t#l <prune_size> :  prune short branches that has length smaller than prune_size.\n");
     printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
-	printf("\t#s <step_size>       :   step size for resampling.\n");
-    printf("\t                         use 0 to skip, if not specified, use 2.\n");
+    printf("\t#s <step_size>       :   step size for resampling.\n");
+    printf("\t                         use 0 to skip, if not specified, use 0.\n");
+    printf("\t#m <thres_connect_soma>       :   maximun distance to connect a node to soma.\n");
+    printf("\t                         use 0 to skip, if not specified, use 1000.\n");
     printf("\t#t <thres>       :    gap threshold for connecting during the sorting procedure.\n");
     printf("\t                         use 0 to skip, if not specified, use 2.\n");
-    printf("\t#r <skip_rotation_flag = 1>   :   whether to skip PCA alignment.\n");
+    printf("\t#r <rotation = 0>   :   whether to perform PCA alignment.\n");
     printf("\t                         if not specified, rotation is not performed\n");
-
-    printf("Usage: vaa3d -x preprocess -f preprocess -p \"#i input.swc #o result.swc #l 3 #s 2 #t 2 #r 0\"\n");
+    printf("\t#d <label_subtree = 0>   :   whether to give each subtree a different color.\n");
+    printf("\t                         if not specified, labeling is not performed\n");
+    printf("\t#f <return_maintree = 0>   :   whether to return only the maintree (a single tree connected to soma).\n");
+    printf("\t                         if not specified, all trees will be reported\n");
+    printf("Usage: vaa3d -x preprocess -f preprocess -p \"#i input.swc #o result.swc #l 2 #s 0 #m 2000 #t 0.25 #r 0 #d 0 #f 1\"\n");
 }
