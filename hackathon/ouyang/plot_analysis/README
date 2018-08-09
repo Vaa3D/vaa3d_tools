@@ -8,3 +8,5 @@ How to build R inside Vaa3D(Linux).
 
 3.build plugin 'vaa3d_tools\hackathon\linus\sholl_swc_R' with qmake and make 
 4.use the plugin in Vaa3D ,directory £º'neuron_analysis--sholl_analysis_swc--sholl_swc' and choose a SWC. file to show the analysis result in R
+
+5.open swc.file and choose a step(1 is recommended) to show the numbers of intersections from dendrite
