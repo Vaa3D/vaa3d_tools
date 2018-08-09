@@ -136,6 +136,14 @@ venv.bak/
 
 # data
 *.swc
+*.npy
+*.mp4
+*.tiff
 
 # pycharm
 .idea/
+*.mp4
+
+# RL agent logfiles
+hackathon/profundo/agent/train_log
+*.meta

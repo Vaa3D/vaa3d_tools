@@ -29,6 +29,7 @@ extern QString outimg_file;
 extern bool is_soma;
 int thresh=42;
 int func_name;
+bool enhance = false;
 struct relationship
 {
     double datald;
@@ -362,6 +363,9 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
+        cout<<"trace_result.size = "<<trace_result.listNeuron.size()<<endl;
+        cout<<"curr_window_nt.size = "<<curr_win_nt.listNeuron.size()<<endl;
+        v3d_msg("check_size");
         NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
         //NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
@@ -642,17 +646,20 @@ lookPanel::lookPanel(V3DPluginCallback2 &callback, QWidget *parent) :
     QPushButton* blank2     = new QPushButton("                                              ");
    // QPushButton* move_block     = new QPushButton("move_block");
     QPushButton* use_landmark     = new QPushButton("                use_landmark                ");
+    QPushButton* enhance_img     = new QPushButton("                 enhance_img                ");
     gridLayout->addWidget(set_thresh, 0,0);
     gridLayout->addWidget(set_thresh, 1,0);
     //gridLayout->addWidget(blank2, 2,0);
     gridLayout->addWidget(use_landmark, 2,0);
+    gridLayout->addWidget(set_thresh, 3,0);
+    gridLayout->addWidget(enhance_img, 4,0);
     //gridLayout->addWidget(move_block, 2,0);
 
     setLayout(gridLayout);
     setWindowTitle(QString("Synchronize annotation "));
     connect(set_thresh,     SIGNAL(clicked()), this, SLOT(_slot_set_thresh()));
     //connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
-    connect(use_landmark,     SIGNAL(clicked()), this, SLOT(_slot_use_landmarker()));
+    connect(enhance_img,     SIGNAL(clicked()), this, SLOT(_slot_enhance_img()));
 
 
 }
@@ -754,7 +761,7 @@ void lookPanel::_slot_move_block()
         all_marker.push_back(marker_rebase3[i]);
     }
     all_marker.push_back(next_m);
-    v3d_msg("lllllllllll");
+    //v3d_msg("lllllllllll");
     callback.setLandmarkTeraFly(all_marker);
     v3d_msg("move_to_another_block_with_marker");
 
@@ -780,6 +787,11 @@ void lookPanel::_slot_use_landmarker()
         next_m.y = 0;
         next_m.z = 0;
 
+}
+void lookPanel::_slot_enhance_img()
+{
+    enhance = true;
+    v3d_msg("The first time to use this function in current block would be a little bit slow,please wait.");
 }
 bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &count_v,vector<NeuronSWC> &point_b)
 {

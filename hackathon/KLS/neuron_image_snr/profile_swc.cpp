@@ -19,7 +19,7 @@
 #include "v3d_message.h"
 #include "compute_tubularity.h"
 
-#include "neuron_image_profiling_plugin.h"
+#include "neuron_image_snr_plugin.h"
 
 using namespace std;
 
@@ -30,6 +30,10 @@ const QString title = QObject::tr("Image Profile with SWC ROI");
 #endif
 #ifndef MAX
 #define MAX(a, b)  ( ((a)>(b))? (a) : (b) )
+#endif
+
+#ifndef dist
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #endif
 
 static void cutoff_outliers(vector<double> & x, float cut_off_ratio)
@@ -192,7 +196,7 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
     else
     {
         QTextStream stream (&file);
-        stream<< "segment_type,num_of_nodes,dynamic_range,cnr,snr,tubularity_mean,tubularity_std,fg_mean,fg_std,bg_mean,bg_std"<<"\n";
+        stream<< "segment_type,num_of_nodes,dynamic_range,cnr,snr,tubularity_mean,tubularity_std,fg_mean,fg_std,bg_mean,bg_std,vr/3d"<<"\n";
 
         for (int i  = 0; i < result_metrics.size() ; i++)
         {
@@ -215,95 +219,6 @@ bool writeMetrics2CSV(QList<IMAGE_METRICS> result_metrics, QString output_csv_fi
 }
 
 
-bool profile_swc_menu(V3DPluginCallback2 &callback, QWidget *parent)
-{
-
-    v3dhandle curwin = callback.currentImageWindow();
-	if (!curwin)
-	{
-       		QMessageBox::information(0, "", "you don't have any image open in the main window");
-            return false;
-	}
-
-
-
-    Image4DSimple * image = callback.getImage(curwin);
-    if (! image->convert_to_UINT8()){
-        QMessageBox::information(0, "", "Error in converting data into  UINT8 type.");
-        return false;
-    }
-
-	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
-	if (!openDlg->exec())
-		return false;
-
-	NeuronTree nt = openDlg->nt;
-
-
-    QString swcFileName = openDlg->file_name;
-    QString output_csv_file = swcFileName + QString(".csv");
-
-
-    float dilate_ratio = QInputDialog::getDouble(parent, "dilate_ratio",
-                                 "Enter dialate ratio:",
-                                 3.0, 1.0, 100.0);
-    int flip = QInputDialog::getInteger(parent, "flip in y ?",
-                                 "Flip in Y (0/1):",
-                                 0, 0, 1);
-    int invert = QInputDialog::getInteger(parent, "invert intensity ? (for calculating tubularities, signals should be brighter than background",
-                                 "Invert Intensity (0/1):",
-                                 0, 0, 1);
-    float cut_off_ratio = QInputDialog::getDouble(parent, "cut off outliers ? (for more robust results againt ROI errors",
-                                 "Cut off the top and bottom (%5)percentage:",
-                                 0.05, 0, 0.2);
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(nt, image, dilate_ratio,flip,invert,cut_off_ratio,callback);
-	//cout<<"!!!!!!!!!!!!!!!!!!!!!"<<endl;
-    if (result_metrics.isEmpty())
-    {
-        cout<<"Error in intensity_profile() !"<<endl;
-        return false;
-    }
-
-
-    //output
-    writeMetrics2CSV(result_metrics, output_csv_file);
-    IMAGE_METRICS m_stats = result_metrics[0];
-
-
-    QString disp_text = "";
-    disp_text += "Contrast-to-Background Ratio = " + QString::number(m_stats.cnr) + ";\n";
-    disp_text += "Dynamic Range = " + QString::number(m_stats.dy) + ";\n";
-    disp_text += "Mean FG Intensity = " + QString::number (m_stats.fg_mean)  + ", STD = "    + QString::number(m_stats.fg_std) + ";\n";
-    disp_text += "Mean BG Intensity = " + QString::number (m_stats.bg_mean)  + ", STD = "    + QString::number(m_stats.bg_std) + ";\n";
-    disp_text += "Mean Tubularity = " + QString::number(m_stats.tubularity_mean) + ", STD = " + QString::number(m_stats.tubularity_std) + ".\n";
-
-
-    disp_text += "\n Segment type-specific screening metrics are exported in: \n "+ output_csv_file +"\n";
-
-
-    /*
-    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics,cut_off_ratio);
-
-
-    //display metrics to the msg window
-    QString disp_text = "";
-    disp_text += "Mean FG Intensity = " + QString::number (m_stats.mean_fg)  + ", STD = "    + QString::number(m_stats.std_fg) + ";\n";
-    disp_text += "Mean BG Intensity = " + QString::number(m_stats.mean_bg )  + ", STD = "    + QString::number(m_stats.std_bg) + ";\n";
-    disp_text += "Mean Contrast-to-Background Ratio = " + QString::number(m_stats.mean_cnr)  + ", STD = "    + QString::number(m_stats.std_cnr) + ";\n";
-    disp_text += "Mean Dynamic Range = " + QString::number(m_stats.mean_dy)   + ", STD = "    + QString::number(m_stats.std_dy) + ";\n";
-    disp_text += "Mean Tubularity = " + QString::number(m_stats.mean_tubularity) + ", STD = " + QString::number(m_stats.std_tubularity) + ".\n";
-
-
-    disp_text += "\n  Screening Metrics of each segment can be found in: \n "+ output_csv_file +"\n";
-    */
-
-
-    v3d_msg(disp_text);
-
-
-	return true;
-
-}
 
 
 
@@ -357,32 +272,7 @@ bool  profile_swc_func(V3DPluginCallback2 &callback, const V3DPluginArgList & in
         return false;
     }
 
-    QList<IMAGE_METRICS> result_metrics = intensity_profile(neuronTree, image, dilate_ratio,flip,invert,cut_off_ratio, callback);
-    IMAGE_METRICS m_stats = result_metrics[0];
-
-    /*
-    ENSEMBLE_METRICS m_stats = stats_ensemble(result_metrics,cut_off_ratio);
-    */
-
-    cout << "Overall Contrast-to-Background Ratio:" << m_stats.cnr << "\n"
-         << "Overall Dynamic Range:"<< m_stats.dy << "\n"
-         << "Mean BG Intensity:" << m_stats.bg_mean << ", with std = "    << m_stats.bg_std << "\n"
-         << "Mean FG Intensity:" << m_stats.fg_mean << ", with std = "    << m_stats.fg_std << "\n"
-         << "Mean Tubularity:"   << m_stats.tubularity_mean << ", with std = " << m_stats.tubularity_std << "\n"
-         << endl;
-
-    if (result_metrics.isEmpty())
-    {
-        cout<<"Error in intensity_profile() !"<<endl;
-        return false;
-    }
-    else{
-        if (!writeMetrics2CSV(result_metrics, output_csv_file))
-        {
-            cout<< "error in writeMetrics2CSV()" <<endl;
-        }
-    }
-    cout << "Segment type-specific screening metrics are exported in:  " << output_csv_file.toStdString() <<endl;
+  
 
 	return true;
 
@@ -413,13 +303,14 @@ static float distancePtSeg(const float* pt, const NeuronSWC p, const NeuronSWC q
 	return sqrt(dx*dx + dy*dy + dz*dz);
 }
 
-IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSegment, float dilate_ratio, float cut_off_ratio,V3DPluginCallback2 &callback)
+IMAGE_METRICS   compute_metrics(Image4DSimple *image,int num,  QList<NeuronSWC> neuronSegment, float dilate_ratio, float cut_off_ratio,V3DPluginCallback2 &callback)
 {
 	//cout<<"compute begin"<<endl;
 	//cout<<neuronSegment.size()<<endl;
     IMAGE_METRICS metrics;
     metrics.type = neuronSegment.at(0).type;
     metrics.num_of_nodes = neuronSegment.size();
+	metrics.length = 0.0;
     metrics.cnr = 0.0;
     metrics.snr = 0.0;
     metrics.dy = 0.0;
@@ -429,6 +320,21 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     metrics.tubularity_std = 0.0;
     metrics.fg_std = 0.0;
     metrics.bg_std = 0.0;
+	metrics.vr = 0.0;
+	metrics.number = num;
+	double distance = 0.0;
+	if(neuronSegment.size()<2)
+		metrics.length = 1.0;
+	else{
+		for(int i=0;i<neuronSegment.size()-1;i++){
+			distance = distance + sqrt(pow((neuronSegment.at(i+1).x-neuronSegment.at(i).x),2)+pow((neuronSegment.at(i+1).y-neuronSegment.at(i).y),2)+pow((neuronSegment.at(i+1).z-neuronSegment.at(i).z),2));
+		}
+		metrics.length = distance;
+	}
+
+	if((fabs(neuronSegment.at(0).radius - 0.618f) < 0.001f)||(fabs(neuronSegment.at(0).radius - 0.666f) < 0.001f)){
+		metrics.vr = 1.0;
+	}
 
     V3DLONG min_x = image->getXDim() , min_y = image->getYDim() ,  min_z = image->getZDim() , max_x = 0, max_y = 0, max_z= 0;
 
@@ -604,7 +510,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
 					float f[3] = {x,y,z};
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    if  ((roi_1d_visited[roi_index] != FG )&&(distancePtSeg(f,node,node2)- r <= 0.0001f))
+                    if  ((roi_1d_visited[roi_index] != FG )&&(distancePtSeg(f,node,node2)- (r+2) <= 0.0001f))
                     {
                         roi_1d_visited[roi_index] = FG;
                     }
@@ -703,7 +609,8 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
     metrics.tubularity_std  = standard_dev(tubularities);
     
 
-    metrics.snr = fabs(fg_mean - bg_mean+0.001)/(metrics.fg_std+0.001); //avoid denominator=0
+    //metrics.snr = fabs(fg_mean - bg_mean+0.001)/(metrics.fg_std+0.001); //avoid denominator=0
+	metrics.snr = fabs(fg_mean/(bg_mean+0.001));
     metrics.cnr = fabs(fg_mean - bg_mean+0.001)/(metrics.bg_std+0.001);
 
     //average tubularity
@@ -716,7 +623,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,  QList<NeuronSWC> neuronSe
 
 }
 
-QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * image, float dilate_ratio, int flip, int invert, float cut_off_ratio, V3DPluginCallback2 &callback)
+QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, int num,Image4DSimple * image, float dilate_ratio, int flip, int invert, float cut_off_ratio, V3DPluginCallback2 &callback)
 {
 	//cout<<"test1"<<endl;
     if(flip > 0)
@@ -737,7 +644,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
     QList<IMAGE_METRICS> result_metrics;
 	//cout<<"test2"<<endl;
     // all types
-    IMAGE_METRICS metrics = compute_metrics( image, neuronSWCs,dilate_ratio, cut_off_ratio,callback );
+    IMAGE_METRICS metrics = compute_metrics( image,num, neuronSWCs,dilate_ratio, cut_off_ratio,callback );
 	//cout<<"compute done!"<<endl;
     metrics.type = -1;  //all types
     result_metrics.push_back(metrics);
@@ -810,7 +717,7 @@ QList<IMAGE_METRICS> intensity_profile(NeuronTree neuronTree, Image4DSimple * im
         if (!neuronSWC_lists[j].isEmpty() )
         {
 			//cout<<"000"<<endl;
-            IMAGE_METRICS metrics = compute_metrics( image, neuronSWC_lists[j] ,dilate_ratio,cut_off_ratio,callback );
+            IMAGE_METRICS metrics = compute_metrics( image,num, neuronSWC_lists[j] ,dilate_ratio,cut_off_ratio,callback );
 			//cout<<"111"<<endl;
             result_metrics.push_back(metrics);
 			//cout<<"222"<<endl;
@@ -846,38 +753,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 /*******************************************/
 
-vector<basicSegmentROIStats> compute_metricsSegment(Image4DSimple* img4DPtr, vector<QList<NeuronSWC> >* segmentsPtr, V3DPluginCallback2& callback)
-{
-	float dilate_ratio = 2;
-	vector<basicSegmentROIStats> segmentProfiles;
-	QList<IMAGE_METRICS> segMetrics;
-    for (vector<QList<NeuronSWC> >::iterator it = segmentsPtr->begin(); it != segmentsPtr->end(); ++it)
-	{
-		NeuronTree segTree;
-		segTree.listNeuron = *it;
-		IMAGE_METRICS curSegMetrics = compute_metrics(img4DPtr, *it, dilate_ratio, 0.05, callback);
-		basicSegmentROIStats curROIStats;
-		curROIStats.fgMean = curSegMetrics.fg_mean;
-		curROIStats.bgMean = curSegMetrics.bg_mean;
-		curROIStats.fgStd = curSegMetrics.fg_std;
-		curROIStats.bgStd = curSegMetrics.bg_std;
-		curROIStats.SNR = curSegMetrics.snr;
-		curROIStats.CNR = curSegMetrics.cnr;
-		curROIStats.tubularityMean = curSegMetrics.tubularity_mean;
-		curROIStats.tubularityStd = curSegMetrics.tubularity_std;
 
-		V3DLONG ROIlowerBound[3];
-		findSegLowerBound(&segTree.listNeuron, img4DPtr, ROIlowerBound);
-		double tubuV = compute_anisotropy_sphere(img4DPtr->getRawData(), img4DPtr->getXDim(), img4DPtr->getYDim(), img4DPtr->getZDim(), 0, ROIlowerBound[0], ROIlowerBound[1], ROIlowerBound[2], 2 + 2 * dilate_ratio);
-		curROIStats.segTub = tubuV;
-		
-		segmentProfiles.push_back(curROIStats);
-
-		segTree.listNeuron.clear();
-	}
-
-	return segmentProfiles;
-}
 
 void findSegLowerBound(QList<NeuronSWC>* segPtr, Image4DSimple* image4DPtr, V3DLONG lBounds[])
 {

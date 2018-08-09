@@ -16,6 +16,7 @@
 #include "../mean_shift_center/mean_shift_fun.h"
 #include "../neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../hackathon/zhi/branch_point_detection/branch_pt_detection_func.h"
+#include "../neuron_reliability_score/src/topology_analysis.h"
 
 
 
@@ -1795,8 +1796,16 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             } while(1);
                         }
 
+                        int count=0;
                         do
                         {
+                            if(count>4)
+                            {
+                                inputswc.clear();
+                                break;
+                            }
+
+                            count++;
                             soma_tile = false;
                             num_tips = 0;
                             proc_app2(callback, p2, versionStr);
@@ -1823,7 +1832,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             {
                                 if(childs[d].size() == 0)
                                     num_tips++;
-                                if(ifs_swc && inputswc[d]->radius >= 20) //was 8
+                                if(ifs_swc && inputswc[d]->radius >= 8) //was 8
                                 {
                                     soma_tile = true;
                                 }
@@ -1862,8 +1871,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     }
                 }
             }
-            saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
-            nt = readSWC_file(swcString);
+           // saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
+           // nt = readSWC_file(swcString);
         }
     }
     else if (P.method == gd )
@@ -1967,6 +1976,19 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     }
 
+    map<MyMarker*, double> score_map;
+//    vector<MyMarker *> neuronTree = readSWC_file(swcString.toStdString());
+    topology_analysis_perturb_intense(total4DImage->getRawData(), tileswc_file, score_map, 1, p2.p4dImage->getXDim(), p2.p4dImage->getYDim(), p2.p4dImage->getZDim(), 1);
+
+    for(V3DLONG i = 0; i<tileswc_file.size(); i++){
+        MyMarker * marker = tileswc_file[i];
+        double tmp = score_map[marker] * 120 +19;
+        marker->type = (tmp > 255 || marker->type ==0) ? 255 : tmp;
+    }
+
+    saveSWC_file(swcString.toStdString(),tileswc_file);
+    nt = readSWC_file(swcString);
+
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
@@ -1975,6 +1997,57 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         V3DLONG par = nt.listNeuron[i].pn;
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    //assign all sub_trees
+    if(ifs_swc)
+    {
+        QVector<int> visit(nt.listNeuron.size(),0);
+        for(int i=0; i<nt.listNeuron.size();i++)
+        {
+            if(nt.listNeuron[i].pn ==-1 && visit[i]==0)
+            {
+                QQueue<int> q;
+                visit[i]=1;
+                q.push_back(i);
+                while(!q.empty())
+                {
+                    int current = q.front(); q.pop_front();
+                    for(int j=0; j<childs[current].size();j++)
+                    {
+                        int current_child = childs[current].at(j);
+                        if(visit[current_child]==0)
+                        {
+                            visit[current_child]=1;
+                            if(childs[current_child].size()<2)
+                                q.push_back(current_child);
+                        }
+                    }
+                }
+                q.clear();
+            }
+
+            if(nt.listNeuron[i].type>180 && visit[i]==0)
+            {
+                QQueue<int> q;
+                visit[i]=1;
+                q.push_back(i);
+                while(!q.empty())
+                {
+                    int current = q.front(); q.pop_front();
+                    nt.listNeuron[current].type = 255;
+                    for(int j=0; j<childs[current].size();j++)
+                    {
+                        if(visit[childs[current].at(j)]==0)
+                        {
+                            visit[childs[current].at(j)]=1;
+                            q.push_back(childs[current].at(j));
+                        }
+                    }
+                }
+                q.clear();
+            }
+        }
     }
 
     LandmarkList tip_left;
@@ -1998,6 +2071,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         if (childs[i].size()==0 || P.method != gd)
         {
             NeuronSWC curr = list.at(i);
+            if(curr.type >180) continue;
             LocationSimple newTip;
             bool check_tip = false;
             if( curr.x < overlap_ratio*  total4DImage->getXDim() || curr.x > (1-overlap_ratio) *  total4DImage->getXDim() || curr.y < overlap_ratio * total4DImage->getYDim() || curr.y > (1-overlap_ratio)* total4DImage->getYDim()
@@ -2028,7 +2102,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 for(V3DLONG j = 0; j < finalswc.size(); j++ )
                 {
                     double dis = sqrt(pow2(newTip.x - finalswc.at(j)->x) + pow2(newTip.y - finalswc.at(j)->y) + pow2(newTip.z - finalswc.at(j)->z));
-                    if(dis < 2*finalswc.at(j)->radius || dis < 20 || curr.type ==0)  //was 5
+                    if(dis < 2*finalswc.at(j)->radius || dis < 10 || curr.type ==0)  //was 5
                    // if(dis < 10)
                     {
                         check_tip = true;
@@ -2362,7 +2436,7 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     QString folderpath = QFileInfo(fileWithData).absolutePath();
     V3DLONG in_sz[4];
-    QString fileSaveName = fileWithData + "wofusion.swc";
+    QString fileSaveName = fileWithData + "wfusion.swc";
 
     QDir imagefolderDir = QDir(QFileInfo(fileWithData).absoluteDir());
     imagefolderDir.cdUp();
@@ -2380,7 +2454,8 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
         if(offsetY > offsetY_max) offsetY_max = offsetY;
         if(offsetZ > offsetZ_max) offsetZ_max = offsetZ;
 
-
+        if(!QFileInfo(QString(swcfilepath.c_str())).exists())
+            continue;
         if(node_type == 1)
         {
             origin_x = offsetX;
@@ -2421,6 +2496,22 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
                 if (par<0) continue;
                 childs[nt.hashNeuron.value(par)].push_back(i);
             }
+            if(inputswc.size()>0 && childs[0].size()==1)
+            {
+                int count=1;
+                int current = childs[0].at(0);
+                while(childs[current].size()==1)
+                {
+                    current=childs[current].at(0);
+                    count++;
+                }
+                if(count<10)
+                {
+                    inputswc[current]->parent = inputswc[0]->parent;
+                    inputswc.erase(inputswc.begin(),inputswc.begin()+count);
+                }
+            }
+
             outswc = readSWC_file(fileSaveName.toStdString());
             for(V3DLONG d = 0; d < inputswc.size(); d++)
             {
@@ -2447,7 +2538,6 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
             }
             saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
-
         }
         node_type++;
     }
@@ -2471,6 +2561,12 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
     }
 
     export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+    NeuronTree nt_b4_prune = readSWC_file(fileSaveName);
+    NeuronTree nt_pruned = smartPrune(nt_b4_prune,10);
+    NeuronTree nt_pruned_2nd = smartPrune(nt_pruned,10);
+
+    writeSWC_file(fileSaveName,nt_pruned_2nd);
+
 
     //write tc file
 
@@ -2693,8 +2789,8 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
     int iii = 0;
-    while(allTargetList.size()>0)
-    {
+//    while(allTargetList.size()>0)
+//    {
         iii++;
         newTargetList.clear();
         newTipsList.clear();
@@ -2730,7 +2826,7 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             }
         }
 
-    }
+//    }
     qint64 etime1 = timer1.elapsed();
 
     list<string> infostring;
@@ -4036,7 +4132,7 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
             try {total1dData = new unsigned char [pagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for loading the region.",0); return false;}
-            if(P.channel > in_zz[3])
+            if(P.channel > in_zz[3] || P.channel ==0)
                P.channel = 1;
             unsigned char * total1dDataTerafly = 0;
             total1dDataTerafly = callback.getSubVolumeTeraFly(P.inimg_file.toStdString(),start_x,end_x,
@@ -4173,12 +4269,12 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(nt_neutube.listNeuron.size() ==0)
         return true;
 
-    NeuronTree nt_pruned = pruneswc(nt_neutube, 2);
-    NeuronTree nt_pruned_rs = resample(nt_pruned, 10);
-    QString outfilename = swcNEUTUBE + "_connected.swc";
-    QList<NeuronSWC> newNeuron;
-    connect_swc(nt_pruned_rs,newNeuron,120,120);
-    export_list2file(newNeuron, outfilename, swcNEUTUBE);
+//    NeuronTree nt_pruned = pruneswc(nt_neutube, 2);
+//    NeuronTree nt_pruned_rs = resample(nt_pruned, 10);
+    QString outfilename = swcNEUTUBE;// + "_connected.swc";
+//    QList<NeuronSWC> newNeuron;
+//    connect_swc(nt_pruned_rs,newNeuron,120,120);
+//    export_list2file(newNeuron, outfilename, swcNEUTUBE);
 
 
     nt_neutube = readSWC_file(outfilename);
@@ -4186,6 +4282,9 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     ifstream ifs_swcString(swcString.toStdString().c_str());
     if(!ifs_swcString)
     {
+        export_list2file(nt_neutube.listNeuron, swcString,swcNEUTUBE);
+        return true;
+
         nt = sort_eliminate_swc(nt_neutube,inputRootList,total4DImage);
         export_list2file(nt.listNeuron, swcString,swcNEUTUBE);
 
@@ -6947,4 +7046,91 @@ vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString&
     if(total1dData) {delete []total1dData; total1dData = 0;}
     return file_inmarkers;
 
+}
+
+NeuronTree smartPrune(NeuronTree nt, double length)
+{
+    QVector<QVector<V3DLONG> > childs;
+
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    V3DLONG *flag = new V3DLONG[neuronNum];
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 1;
+
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<NeuronSWC> list = nt.listNeuron;
+
+    for (int i=0;i<list.size();i++)
+    {
+        if (childs[i].size()==0 && list.at(i).parent >=0)
+        {
+            int index_tip = 0;
+            int parent_tip = getParent(i,nt);
+            while(childs[parent_tip].size()<2)
+            {
+                parent_tip = getParent(parent_tip,nt);
+                index_tip++;
+                if(parent_tip == 1000000000)
+                    break;
+            }
+            if(index_tip < length && list.at(childs[parent_tip].at(0)).type != list.at(childs[parent_tip].at(1)).type)
+            {
+                flag[i] = -1;
+
+                int parent_tip = getParent(i,nt);
+                while(childs[parent_tip].size()<2)
+               {
+                    flag[parent_tip] = -1;
+                    parent_tip = getParent(parent_tip,nt);
+                    if(parent_tip == 1000000000)
+                        break;
+               }
+            }
+
+        }else if (childs[i].size()==0 && list.at(i).parent < 0)
+            flag[i] = -1;
+
+    }
+
+   //NeutronTree structure
+   NeuronTree nt_prunned;
+   QList <NeuronSWC> listNeuron;
+   QHash <int, int>  hashNeuron;
+   listNeuron.clear();
+   hashNeuron.clear();
+
+   //set node
+
+   NeuronSWC S;
+   for (int i=0;i<list.size();i++)
+   {
+       if(flag[i] == 1)
+       {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.type 	= curr.type;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+       }
+
+  }
+   nt_prunned.n = -1;
+   nt_prunned.on = true;
+   nt_prunned.listNeuron = listNeuron;
+   nt_prunned.hashNeuron = hashNeuron;
+
+   if(flag) {delete[] flag; flag = 0;}
+   return nt_prunned;
 }

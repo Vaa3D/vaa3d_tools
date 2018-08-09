@@ -56,7 +56,7 @@ float fastmax(const std::vector<float>& v)
     float shared_max;
 #pragma omp parallel
     {
-        float max = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::min();
 #pragma omp for nowait
         for(size_t ii=0; ii<v.size(); ++ii)
         {

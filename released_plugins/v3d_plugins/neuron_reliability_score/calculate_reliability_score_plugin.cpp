@@ -301,12 +301,12 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
             if(end_z<seg->at(j)->z)  end_z = seg->at(j)->z;
         }
 
-        start_x -= 10;
-        end_x   +=10;
-        start_y -= 10;
-        end_y   +=10;
-        start_z -= 10;
-        end_z   +=10;
+        start_x -= 50;
+        end_x   +=50;
+        start_y -= 50;
+        end_y   +=50;
+        start_z -= 50;
+        end_z   +=50;
 
         unsigned char * total1dData = 0;
         total1dData = callback.getSubVolumeTeraFly(fname_img.toStdString(),start_x,end_x+1,start_y,end_y+1,start_z,end_z+1);
@@ -328,7 +328,7 @@ NeuronTree calculateScoreTerafly(V3DPluginCallback2 &callback,QString fname_img,
 
 
         map<MyMarker*, double> score_map;
-        topology_analysis_perturb_intense(total1dData, *seg, score_map, radius_factor, mysz[0], mysz[1], mysz[2], 0);
+        topology_analysis_perturb_intense(total1dData, *seg, score_map, radius_factor, mysz[0], mysz[1], mysz[2], 1);
         for(V3DLONG i = 0; i<seg->size(); i++){
             MyMarker * marker = seg->at(i);
             double tmp = score_map[marker] * 120 +19;

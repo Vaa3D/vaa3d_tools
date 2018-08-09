@@ -331,7 +331,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         {
             neuron[localroot].pn = newrootid+1;
             counter++;
-            qDebug() << "Segment" << neuron.at(localtip).seg_id << "root connected to soma.";
+            qDebug() << "Segment" << neuron.at(localroot).seg_id << "root connected to soma.";
         }
         else if(disttip<distroot && disttip<=root_dist_thres)
         {

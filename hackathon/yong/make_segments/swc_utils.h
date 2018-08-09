@@ -9,7 +9,6 @@ struct NeuronSegment
     vector<MyMarker*> markers;
 };
 
-// convert inmarkers to many connected neuron structure
 bool swc_to_segments(vector<MyMarker*> & inmarkers, vector<NeuronSegment*> &tree);
 
 #endif

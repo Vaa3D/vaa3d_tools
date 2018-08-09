@@ -2,7 +2,7 @@
 
 
 
-bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg_m,PARA &PA,int n)
+bool get_sub_block(V3DPluginCallback2 &callback,int model,NeuronTree &seg_m,PARA &PA,int n)
 {
     cout<<"get_sub_block"<<endl;
 
@@ -16,25 +16,25 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
         double maxz = -100000000;
         QString inimg_file = callback.getPathTeraFly();
         cout<<"inimg = "<<inimg_file.toStdString()<<endl;
-        for(V3DLONG i = 0;i < seg_m.size();i++)
+        for(V3DLONG i = 0;i < seg_m.listNeuron.size();i++)
         {
-            MyMarker* curr = seg_m[i];
-            if(curr->x<minx)
-                minx = curr->x;
-            if(curr->y<miny)
-                miny = curr->y;
-            if(curr->z<minz)
-                minz = curr->z;
+            NeuronSWC curr = seg_m.listNeuron[i];
+            if(curr.x<minx)
+                minx = curr.x;
+            if(curr.y<miny)
+                miny = curr.y;
+            if(curr.z<minz)
+                minz = curr.z;
         }
-        for(V3DLONG i = 0;i < seg_m.size();i++)
+        for(V3DLONG i = 0;i < seg_m.listNeuron.size();i++)
         {
-            MyMarker *curr2 = seg_m[i];
-            if(curr2->x>maxx)
-                maxx = curr2->x;
-            if(curr2->y>maxy)
-                maxy = curr2->y;
-            if(curr2->z>maxz)
-                maxz = curr2->z;
+            NeuronSWC curr2 = seg_m.listNeuron[i];
+            if(curr2.x>maxx)
+                maxx = curr2.x;
+            if(curr2.y>maxy)
+                maxy = curr2.y;
+            if(curr2.z>maxz)
+                maxz = curr2.z;
         }
         double lenx = maxx - minx;
         double leny = maxy - miny;
@@ -80,8 +80,12 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
         cout<<"begin ==================="<<xb<<"  "<<yb<<"  "<<zb<<endl;
         cout<<"end   ==================="<<xe<<"  "<<ye<<"  "<<ze<<endl;
         //v3d_msg("test!");
-
-
+		
+		V3DLONG size = (xe-xb)*(ye-yb)*(ze-zb);
+		if(size>1500000000) {
+			cout<<"too big to get!"<<endl;
+			return false;
+		}
         try {im_cropped = new unsigned char [pagesz];}
         catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return false;}
 
@@ -97,14 +101,17 @@ bool get_sub_block(V3DPluginCallback2 &callback,int model,vector<MyMarker*> &seg
 
         QString outimg_file;
         outimg_file = "segment_profiling_"+ QString::number(n)+".tif";
-        PA.img_name = outimg_file;
-
-        simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
+        system("mkdir tmp_img");
+        QString outtif = "tmp_img/segment_profiling_"+ QString::number(n)+".tif";
+        PA.img_name = outtif;
+        //simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
+        simple_saveimage_wrapper(callback, outtif.toStdString().c_str(),(unsigned char *)im_cropped,PA.im_cropped_sz,1);
         PA.data1d = im_cropped;
-        return true;
+
         //if(im_cropped) {delete []im_cropped; im_cropped = 0;}
 
     }
+    return true;
 }
 
 

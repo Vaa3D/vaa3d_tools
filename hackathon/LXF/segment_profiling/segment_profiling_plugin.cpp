@@ -32,7 +32,6 @@ void segment_profilingPlugin::domenu(const QString &menu_name, V3DPluginCallback
 {
     if (menu_name == tr("segment_profiling"))
 	{
-
         OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
 
         if (!openDlg->exec())
@@ -42,10 +41,10 @@ void segment_profilingPlugin::domenu(const QString &menu_name, V3DPluginCallback
 
         QString filename = openDlg->file_name;
         cout<<filename.toStdString()<<endl;
-        SortSWC(nt_p.listNeuron,nt.listNeuron,nt_p.listNeuron[0].n,100000000);
+        //SortSWC(nt_p.listNeuron,nt.listNeuron,nt_p.listNeuron[0].n,100000000);
 
 
-        segment_profiling_main(callback,nt,filename);
+        segment_profiling_main(callback,nt_p,filename);
 	}
 	else if (menu_name == tr("menu2"))
 	{
