@@ -55,7 +55,7 @@ void QtSholl::plot(void) {
 
     std::string cmd1_1 = "df=data.frame(x=radius,y=crossings);";
     std::string cmd1_2 = "p <- ggplot(df, aes(x=x,y=y)) + geom_point(color='green') + annotate(geom = 'text', label = 'vaa3d.org', x = Inf, y = Inf, size=6, hjust = 1.2, vjust = 2, colour='lightblue');";
-    std::string cmd1_3 = "p <- p + labs(title='Sholl Analysis', x='3D Distance from soma [micron]', y='Number of intersections') + theme(plot.title = element_text(size=15)) + theme(axis.text = element_text(size=10)) + theme(axis.title = element_text(size=13))+stat_smooth()+scale_y_continuous(limits=c(0,max(crossings)));";
+    std::string cmd1_3 = "p <- p + labs(title='Sholl Analysis', x='3D Distance from soma [micron]', y='Number of intersections') + theme(plot.title = element_text(size=15)) + theme(axis.text = element_text(size=10)) + theme(axis.title = element_text(size=13))+stat_smooth()+scale_y_continuous(limits=c(1,max(crossings)));";
     std::string cmd1_4 = "ggsave(file='sholl.svg', plot=p, width=8, height=6);";
     std::string cmd1_5 = "print(p); dev.off()";
 
