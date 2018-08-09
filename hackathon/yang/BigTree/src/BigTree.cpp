@@ -465,8 +465,8 @@ uint8 *BigTree::load(long zs, long ze)
         #pragma omp for
         for(k=0; k<sbv_D; k++)
         {
-            unsigned int sx, sy;
-            readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,0,sbv_V-1,0,sbv_H-1);
+            // unsigned int sx, sy;
+            readTiff(dataInMemory[k],imgList[k],0,0,0,sbv_V-1,0,sbv_H-1);
         }
     }
 
