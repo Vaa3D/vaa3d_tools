@@ -404,14 +404,12 @@ class Brain_Env(gym.Env):
             print("finishing episode, terminal found, IOU = ", self.curr_IOU)
             self.terminal = True
             self.num_success.feed(1)
-            self.display()
 
         # terminate if maximum number of steps is reached
 
         if self.cnt >= self.max_num_frames-1: # compensate for 0 indexing
             # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
-            # self.display()
 
         # check if agent oscillates
         # if self._oscillate:
@@ -619,7 +617,7 @@ class Brain_Env(gym.Env):
         if not locations.any():  # if all zeros, evals to False
             output_npy = np.zeros_like(self.original_state)
         else:
-            fname = 'agent_trajectory' + str(np.random.randint(low=10000, high=999999))
+            fname = 'agent_trajectory' + str(np.random.randint(low=0, high=int(99e10)))
 
             # try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -636,9 +634,7 @@ class Brain_Env(gym.Env):
             #     print('IOError', e)
             # finally:
             # print("agent trajectory shape ", np.shape(output_npy))
-            tiff_max = np.amax(np.fabs(output_npy))
-            if not np.isclose(tiff_max, 0):  # normalize if tiff is not blank
-                output_npy = output_npy / tiff_max
+            np.clip(output_npy, 0, 1, out=output_npy)
 
         return output_npy
 
