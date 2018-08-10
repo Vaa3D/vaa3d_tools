@@ -141,14 +141,14 @@ class Model3D(ModelDesc):
 
     @staticmethod
     def update_target_param():
-        """periodically triggered by trainer"""
+        """update network weights by copying from target. periodically triggered by trainer"""
         vars = tf.global_variables()
         ops = []
-        G = tf.get_default_graph()
-        for v in vars:
-            target_name = v.op.name
+        graph = tf.get_default_graph()
+        for var in vars:
+            target_name = var.op.name
             if target_name.startswith('target'):
                 new_name = target_name.replace('target/', '')
                 logger.info("{} <- {}".format(target_name, new_name))
-                ops.append(v.assign(G.get_tensor_by_name(new_name + ':0')))
+                ops.append(var.assign(graph.get_tensor_by_name(new_name + ':0')))
         return tf.group(*ops, name='update_target_network')
