@@ -35,9 +35,10 @@ def play_one_episode(env, func, render=False):
     :returns sum of rewards
         """
         # pick action with best predicted Q-value
-        q_values = func(s[None, :, :, :])[0][0]
+        q_values = func(s[None, :, :, :, :])[0][0]
         # if there is a tie for max, randomly choose between them
-        act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.005)))
+        act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.5)))
+
 
         # eps greedy disabled
         # if random.random() < 0.001:
@@ -51,6 +52,7 @@ def play_one_episode(env, func, render=False):
         act, q_values = predict(ob)
         # print("play_one act {} qvals {}".format(act, q_values))
         ob, r, isOver, info = env.step(act, q_values)
+        print("play q vals", q_values, "act ", act, "env_act ", env.env._act, "loc ", env.env._location)
         if render:
             env.render()
         sum_r += r
@@ -194,9 +196,9 @@ class Evaluator(Callback):
             self.eval_episode = int(self.eval_episode * 0.94)
 
         # log scores
-        self.trainer.monitors.put_scalar('mean_score', mean_score)
-        self.trainer.monitors.put_scalar('max_score', max_score)
-        self.trainer.monitors.put_scalar('mean_IoU', mean_IoU)
-        self.trainer.monitors.put_scalar('max_IoU', max_IoU)
+        self.trainer.monitors.put_scalar('evaluator/mean_score', mean_score)
+        self.trainer.monitors.put_scalar('evaluator/max_score', max_score)
+        self.trainer.monitors.put_scalar('evaluator/mean_IoU', mean_IoU)
+        self.trainer.monitors.put_scalar('evaluator/max_IoU', max_IoU)
 
 ###############################################################################
