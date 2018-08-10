@@ -204,6 +204,7 @@ class Brain_Env(gym.Env):
         assert self._state.all() == False
         self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
         self.original_state = np.copy(self._state)
+        self.agent_states = []  # one for each time step
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
@@ -229,19 +230,19 @@ class Brain_Env(gym.Env):
         #######################################################################
         ## select random starting point
         # add padding to avoid start right on the border of the image
-        if (self.task == 'train'):
-            skip_thickness = (int(self._state_dims[0] / 5),
-                              int(self._state_dims[1] / 5),
-                              int(self._state_dims[2] / 5))
-        else:  # TODO: wtf why different skip thickness
-            skip_thickness = (int(self._state_dims[0] / 4),
-                              int(self._state_dims[1] / 4),
-                              int(self._state_dims[2] / 4))
+        # if (self.task == 'train'):
+        #     skip_thickness = (int(self._state_dims[0] / 5),
+        #                       int(self._state_dims[1] / 5),
+        #                       int(self._state_dims[2] / 5))
+        # else:  # TODO: wtf why different skip thickness
+        #     skip_thickness = (int(self._state_dims[0] / 4),
+        #                       int(self._state_dims[1] / 4),
+        #                       int(self._state_dims[2] / 4))
 
 
-        binary_grid = self.original_state.astype(bool)
-        x_span, y_span, z_span = self.original_state.shape
-        x, y, z = np.indices((x_span, y_span, z_span))
+        # binary_grid = self.original_state.astype(bool)
+        # x_span, y_span, z_span = self.original_state.shape
+        # x, y, z = np.indices((x_span, y_span, z_span))
         # positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
 
         # keep starting positions in bounds
@@ -504,7 +505,9 @@ class Brain_Env(gym.Env):
     def _observe(self):
         observation = np.copy(self.original_state)
         # take image, mask it w agent trajectory
-        agent_trajectory = self.trajectory_to_branch()
+        agent_trajectory = self.connect_nodes_to_img()
+        self.agent_states.append(self.img_to_locations(agent_trajectory))
+
         agent_trajectory *= -1  # agent frames are negative
         # paste agent trajectory ontop of original state, but only when vals are not 0
         agent_mask = agent_trajectory.astype(bool)
@@ -515,6 +518,14 @@ class Brain_Env(gym.Env):
             # set current location value to -10 to indicate where the agent currently is
             observation[_loc[0], _loc[1], _loc[2]] = -10
         return observation
+
+    def img_to_locations(self, img):
+        """take dense 4D matrix, return coords where there is data"""
+        binary_grid = img.astype(bool)
+        x_span, y_span, z_span = img.shape
+        x, y, z = np.indices((x_span, y_span, z_span))
+        positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
+        return positions
 
 
         # """
