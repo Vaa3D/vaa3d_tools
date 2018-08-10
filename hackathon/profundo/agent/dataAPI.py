@@ -131,8 +131,21 @@ class FilesListCubeNPY(files):
                 yield image_path, image_filename, begin, end
 
     def sample_first(self):
-        """determinist for unit tests"""
-        yield self.files_list[0], os.path.basename(self.files_list[0])
+        """deterministic for unit tests"""
+        image_path = self.files_list[0]  # FIXME shouldn't these be different
+        image_filename = os.path.basename(image_path)
+        # split the last 2 periods off, then grab the basename
+        swc_filename = image_filename.rsplit('.', 2)[0]
+        # get relevant swc file
+        # go up two directories
+        data_dir = os.path.dirname(os.path.dirname(image_path))
+        # FIXME shouldn't use abs name for swc folder
+        swc_path = os.path.join(data_dir, "06_origin_cubes", swc_filename)
+        # image_filename = self.filenames[idx]
+        # x, y, file, ?
+        begin, end = self.first_last_swc_nodes(swc_path)
+        yield image_path, image_filename, begin, end, swc_path  # TODO remove swc_path
+
 
     def first_last_swc_nodes(self, swc_file):
         good_first = False
@@ -158,6 +171,6 @@ class FilesListCubeNPY(files):
         # we want [2,3,4]. adding +1 to 4 since slice is not end inclusive
         first, last = first[2:4+1], last[2:4+1]
 
-        return first, last
+        return [float(coord) for coord in first], [float(coord) for coord in last]
 
 
