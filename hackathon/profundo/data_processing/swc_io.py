@@ -199,6 +199,8 @@ def swc_to_TIFF(input_fname, input_fpath, vaad3d_bin_path="$HOME/Desktop/v3d_ext
         try:
             # TODO make similar assertion errors for other funcs
             assert (os.path.isfile(outfile_fpath))
+            # img_array = tiff2array.imread(outfile_fpath)
+            # print("tiff written, sum = ", sum(img_array.flatten()))
         except AssertionError:
             print("TIFF saving failed!")
             print("swc contents: ", swc_to_nparray(input_fpath))
@@ -220,6 +222,7 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", ove
         desired_len = 15  # FIXME should not be explicit shape
         # img_array = imageio.volread(input_fpath)
         img_array = tiff2array.imread(input_fpath)
+        # print("tiff loaded, sum = ", sum(img_array.flatten()))
         # make all arrays the same shape
         # format: ((top, bottom), (left, right))
         shp = img_array.shape
@@ -234,7 +237,12 @@ def TIFF_to_npy(input_fname,  input_fpath, output_dir="../data/08_cube_npy", ove
 
         # squish [0, 255] to [0,1]
         np.clip(img_array, 0, 1, out=img_array)  # clip in place
-                
+
+        # VERY IMPORTANT!!!!!
+        # euclidean coords are (x,y,z) by convention, wherase
+        # numpy uses (z,y,x) index ordering! swap first col with last!
+        img_array = np.swapaxes(img_array,0,-1)
+
         np.save(outfile_fpath, img_array)
         assert (os.path.isfile(outfile_fpath))
         return outfile_fpath
@@ -310,6 +318,7 @@ def locations_to_swc(locations_list: list, branch_name: str, output_dir: str, ov
             # swc_items = [str(item) for item in str_items]
             try:
                 swc_line = " ".join(swc_items)
+                # print("swc line ", swc_line)
             except TypeError:
                 print(swc_items)
                 raise
