@@ -67,11 +67,15 @@ def swc_to_linked_list(fpath: list):
     input.close()
     return linked_list
 
-def swc_to_nparray(swc_abspath):
+def swc_to_nparray(swc_abspath, include_node_id=True):
     # should make an np array with node_id, x,y,z coords
     # note: by default, node_id is coerced from int to float
     # TODO: use all cols
-    arr = np.genfromtxt(swc_abspath, usecols=(0,2,3,4), delimiter=" ")
+    if include_node_id:
+        cols = (0,2,3,4)
+    else:
+        cols = (2,3,4)
+    arr = np.genfromtxt(swc_abspath, usecols=cols, delimiter=" ", comments='#')
     return arr
 
 def swc_to_dframe(swc_abspath):
