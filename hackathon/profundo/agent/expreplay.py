@@ -176,6 +176,7 @@ class ExpReplay(DataFlow, Callback):
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
         self._player_qvals = StatCounter()
+        self._player_best_qvals = StatCounter()
 
         # print("dims of expreplay history ", np.ndim(self.mem.recent_state()))
 
@@ -239,7 +240,7 @@ class ExpReplay(DataFlow, Callback):
                 q_values = self.predictor(history[None, :, :, :])[0][0]
 
             # if there is a tie for max, randomly choose between them
-            act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max())))
+            act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.5)))
         # print("pop_experience act {} qvals {}".format(act, q_values))
 
         self._current_ob, reward, isOver, info = self.player.step(act, q_values)
@@ -249,8 +250,12 @@ class ExpReplay(DataFlow, Callback):
             #     self._player_scores.feed(info['score'])
             self._player_scores.feed(info['score'])
             self._player_IOU.feed(info['IoU'])
+            best_q = -np.inf
             for qval in info['qvals']:
+                if qval > best_q:
+                    best_q = qval
                 self._player_qvals.feed(qval)
+            self._player_best_qvals.feed(best_q)
             self.player.reset()
 
         self.mem.append(Experience(old_s, act, reward, isOver))
@@ -305,6 +310,7 @@ class ExpReplay(DataFlow, Callback):
         # log player statistics in training
         scores = self._player_scores
         qvals = self._player_qvals
+        best_qs = self._player_best_qvals
         IoU = self._player_IOU
         try:
             mean, max = scores.average, scores.max
@@ -317,26 +323,76 @@ class ExpReplay(DataFlow, Callback):
             self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
             self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
 
+            self.trainer.monitors.put_scalar('expreplay/max_best_qval', best_qs.max)
+            self.trainer.monitors.put_scalar('expreplay/mean_best_qval', best_qs.average)
+
         except Exception:
             logger.exception("Cannot log training scores.")
         scores.reset()
         IoU.reset()
+        qvals.reset()
+        best_qs.reset()
+
 
         # monitor number of played games and successes of reaching the target
         if self.player.num_games.count:
-            self.trainer.monitors.put_scalar('n_games',
+            self.trainer.monitors.put_scalar('expreplay/n_games',
                                              np.asscalar(self.player.num_games.sum))
         else:
-            self.trainer.monitors.put_scalar('n_games', 0)
+            self.trainer.monitors.put_scalar('expreplay/n_games', 0)
+
+        if self.player.num_backtracked.count:
+            self.trainer.monitors.put_scalar('expreplay/n_backtracked',
+                                             np.asscalar(self.player.num_backtracked.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/n_backtracked', 0)
 
         if self.player.num_success.count:
-            self.trainer.monitors.put_scalar('n_success',
+            self.trainer.monitors.put_scalar('expreplay/n_success',
                                              np.asscalar(self.player.num_success.sum))
-            self.trainer.monitors.put_scalar('n_success_ratio',
+            self.trainer.monitors.put_scalar('expreplay/n_success_ratio',
                                              self.player.num_success.sum / self.player.num_games.sum)
         else:
-            self.trainer.monitors.put_scalar('n_success', 0)
-            self.trainer.monitors.put_scalar('n_success_ratio', 0)
+            self.trainer.monitors.put_scalar('expreplay/n_success', 0)
+            self.trainer.monitors.put_scalar('expreplay/n_success_ratio', 0)
+
+        # count different actions
+        if self.player.num_act0.count:
+            self.trainer.monitors.put_scalar('expreplay/num_act0',
+                                             np.asscalar(self.player.num_act0.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/num_act0', 0)
+
+        if self.player.num_act1.count:
+            self.trainer.monitors.put_scalar('expreplay/num_act1',
+                                             np.asscalar(self.player.num_act1.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/num_act1', 0)
+
+        if self.player.num_act2.count:
+            self.trainer.monitors.put_scalar('expreplay/num_act2',
+                                             np.asscalar(self.player.num_act2.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/num_act2', 0)
+
+        if self.player.num_act3.count:
+            self.trainer.monitors.put_scalar('expreplay/num_act3',
+                                             np.asscalar(self.player.num_act3.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/num_act3', 0)
+
+        if self.player.num_act4.count:
+            self.trainer.monitors.put_scalar('expreplay/num_act4',
+                                             np.asscalar(self.player.num_act4.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/num_act4', 0)
+
+        if self.player.num_act5.count:
+            self.trainer.monitors.put_scalar('expreplay/num_act5',
+                                             np.asscalar(self.player.num_act5.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/num_act5', 0)
+
         # reset stats
         self.player.reset_stat()
 
