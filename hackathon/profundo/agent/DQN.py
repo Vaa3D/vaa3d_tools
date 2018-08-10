@@ -81,6 +81,7 @@ EVAL_EPISODE = 5
 MAX_EPISODE_LENGTH = 250
 # each epoch is 100k played frames
 STEPS_PER_EPOCH = MAX_EPISODE_LENGTH * UPDATE_FREQ
+NUM_EPOCHS = 1
 
 ###############################################################################
 
@@ -192,14 +193,17 @@ def get_config():
                 [(0, 1), (50, 0.1), (320, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
-                Evaluator(nr_eval=EVAL_EPISODE, input_names=['state'],
-                          output_names=['Qvalue'], directory=data_dir,
-                          files_list=test_data_fpaths, get_player_fn=get_player),
+                Evaluator(nr_eval=EVAL_EPISODE,
+                          input_names=['state'],
+                          output_names=['Qvalue'],
+                          directory=data_dir,
+                          files_list=test_data_fpaths,
+                          get_player_fn=get_player),
                 every_k_epochs=EPOCHS_PER_EVAL),
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
-        max_epoch=1000,
+        max_epoch=NUM_EPOCHS,
     )
 
 
@@ -260,10 +264,20 @@ if __name__ == '__main__':
                                        saveGif=args.saveGif,
                                        saveVideo=args.saveVideo,
                                        task='eval'),
-                            pred, num_files)
+                            pred,
+                            num_files)
     else:  # train model
+        import cProfile
         logger.set_logger_dir(logger_dir)
         config = get_config()
         if args.load:  # resume training from a saved checkpoint
             config.session_init = get_model_loader(args.load)
-        launch_train_with_config(config, SimpleTrainer())
+        profiler = cProfile.Profile()
+        test = lambda: launch_train_with_config(config, SimpleTrainer())
+        profiler.runctx('launch_train_with_config(config, SimpleTrainer())',globals(),locals())
+        import pstats
+        stats = pstats.Stats(profiler)
+        stats.strip_dirs()
+        stats.sort_stats('cumulative')
+        stats.print_stats()
+        # launch_train_with_config(config, SimpleTrainer())
