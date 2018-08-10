@@ -45,4 +45,4 @@ def jaccard(im1, im2):
 
     assert isinstance(jaccard_coeff, float)
 
-    return jaccard_coeff
+    return jaccard_coeff, intersection, union
