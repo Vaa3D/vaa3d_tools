@@ -166,7 +166,7 @@ class Brain_Env(gym.Env):
         self._clear_history()  # init arrays
         self._restart_episode()
         assert (np.shape(self._state) == self.observation_dims)
-        assert np.isclose(jaccard(self.original_state, self.original_state),1 )
+        assert np.isclose(jaccard(self.original_state, self.original_state)[0],1 )
 
     def reset(self):
         # with _ALE_LOCK:
@@ -282,7 +282,7 @@ class Brain_Env(gym.Env):
 
         # images should not be all True
         assert agent_trajectory.all() == False
-        iou = jaccard(agent_trajectory, self.original_state)
+        iou, _, _ = jaccard(agent_trajectory, self.original_state)
         # print("computed iou ", iou)
         # print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
         # print("agent shape\n", agent_trajectory.shape)
@@ -318,31 +318,41 @@ class Brain_Env(gym.Env):
             learning.
         """
         self._qvalues = qvalues
+        self._act = act
 
         current_loc = self._location
         self.terminal = False
         go_out = False
         backtrack = False
         terminal_found = False
+
+        # TODO FIXME numpy coord order is (z,y,x)
+
         # print("action ", act)
         # UP Z+ -----------------------------------------------------------
         if (act == 0):
-            proposed_location = current_loc + np.array([0,0,1])*self.stepsize
+            proposed_location = current_loc + np.array([0, 0, 1]) * self.stepsize
+            self.num_act0.feed(1)
         # FORWARD Y+ ---------------------------------------------------------
         elif (act == 1):
             proposed_location = current_loc + np.array([0, 1, 0]) * self.stepsize
+            self.num_act1.feed(1)
         # RIGHT X+ -----------------------------------------------------------
         elif (act == 2):
             proposed_location = current_loc + np.array([1, 0, 0]) * self.stepsize
+            self.num_act2.feed(1)
         # LEFT X- -----------------------------------------------------------
         elif act == 3:
             proposed_location = current_loc + np.array([-1, 0, 0]) * self.stepsize
+            self.num_act3.feed(1)
         # BACKWARD Y- ---------------------------------------------------------
         elif act == 4:
             proposed_location = current_loc + np.array([0, -1, 0]) * self.stepsize
+            self.num_act4.feed(1)
         # DOWN Z- -----------------------------------------------------------
         elif act == 5:
             proposed_location = current_loc + np.array([0, 0, -1]) * self.stepsize
+            self.num_act5.feed(1)
         else:
             raise ValueError
 
@@ -361,6 +371,7 @@ class Brain_Env(gym.Env):
                 # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
+                self.num_backtracked.feed(1)
 
             # we are in bounds, accept new location
             self._location = proposed_location
@@ -434,8 +445,12 @@ class Brain_Env(gym.Env):
         self.current_episode_score.feed(self.reward)
         self.cnt += 1
 
-        info = {'score': self.current_episode_score.sum, 'gameOver': self.terminal, 'IoU': self.curr_IOU,
-                'filename': self.filename, "qvals": qvalues}
+        info = {'score': self.current_episode_score.sum,
+                'gameOver': self.terminal,
+                'IoU': self.curr_IOU,
+                'filename': self.filename,
+                "qvals": qvalues,
+                "backtracked": backtrack}
 
         if self.terminal:
             self._trim_arrays()
@@ -581,14 +596,14 @@ class Brain_Env(gym.Env):
         #
         # return observation
 
-    def trajectory_to_branch(self):
+    def connect_nodes_to_img(self):
         """take location history, generate connected branches using Vaa3d plugin
         FIXME this function is horribly inefficient
         """
         locations = self._agent_nodes[:self.cnt]   # grab everything up until the current ts
         # print("iter ", self.cnt, "locations: ", locations)
         # print("og state shape ", np.shape(self.original_state))
-        # print("self obs dims ", self.observation_dims)
+    # print("self obs dims ", self.observation_dims)
         # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
         if not locations.any():  # if all zeros, evals to False
             output_npy = np.zeros_like(self.original_state)
@@ -624,11 +639,11 @@ class Brain_Env(gym.Env):
         TODO: if current location is same as past location, always penalize (discourage retracing)
         """
         # overrides everything else
-        if terminal_found:
-            reward = 100
-            return reward
+        # if terminal_found:
+        #     reward = 500
+        #     return reward
         if go_out:
-            reward = -1
+            reward = -10
             return reward
         if backtrack:
             reward = -5
@@ -647,8 +662,8 @@ class Brain_Env(gym.Env):
         assert isinstance(IOU_difference, float)
 
         if IOU_difference > 0:
-            reward = 20
-        else:
+            reward = 100
+        else:  # didn't go out, backtrack, or improve score
             reward = -1
 
 
@@ -709,6 +724,13 @@ class Brain_Env(gym.Env):
         self.stats = defaultdict(list)
         self.num_games = StatCounter()
         self.num_success = StatCounter()
+        self.num_backtracked = StatCounter()
+        self.num_act0 = StatCounter()
+        self.num_act1 = StatCounter()
+        self.num_act2 = StatCounter()
+        self.num_act3 = StatCounter()
+        self.num_act4 = StatCounter()
+        self.num_act5 = StatCounter()
 
     def display(self):
         """this is called at every step"""
@@ -723,7 +745,8 @@ class Brain_Env(gym.Env):
         # print("ious", self._IOU_history)
         # print("reward history ", np.unique(self.reward_history))
         # print("IOU history ", np.unique(self._IOU_history))
-        plotter = Viewer(self.original_state, zip(self._agent_nodes, self.reward_history),
+        original_voxels = self.img_to_locations(self.original_state)
+        plotter = Viewer(original_voxels, zip(self._agent_nodes, self.reward_history),
                          filepath=self.filename)
         #
         # #
