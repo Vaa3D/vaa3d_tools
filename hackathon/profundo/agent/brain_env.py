@@ -204,7 +204,7 @@ class Brain_Env(gym.Env):
         assert self._state.all() == False
         self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
         self.original_state = np.copy(self._state)
-        self.agent_states = []  # one for each time step
+        self.agent_trajectories = []  # one for each time step
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
@@ -504,7 +504,8 @@ class Brain_Env(gym.Env):
         observation = np.copy(self.original_state)
         # take image, mask it w agent trajectory
         agent_trajectory = self.connect_nodes_to_img()
-        self.agent_states.append(self.img_to_locations(agent_trajectory))
+        # extact locations where agent TIFF is active, and add it to state
+        self.agent_trajectories.append(self.img_to_locations(agent_trajectory))
 
         agent_trajectory *= -1  # agent frames are negative
         # paste agent trajectory ontop of original state, but only when vals are not 0
@@ -753,7 +754,7 @@ class Brain_Env(gym.Env):
         # print("reward history ", np.unique(self.reward_history))
         # print("IOU history ", np.unique(self._IOU_history))
         original_voxels = self.img_to_locations(self.original_state)
-        plotter = Viewer(original_voxels, zip(self._agent_nodes, self.reward_history),
+        plotter = Viewer(original_voxels, zip(self.agent_trajectories, self.reward_history),
                          filepath=self.filename)
         #
         # #
