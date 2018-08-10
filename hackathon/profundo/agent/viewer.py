@@ -18,6 +18,7 @@ class SimpleImageViewer(object):
     # TODO multiprocess https://stackoverflow.com/a/4662511/4212158
     # TODO https://matplotlib.org/gallery/misc/multiprocess_sgskip.html
     def __init__(self, original_state, data_generator, filepath=None, display=None):
+        print("spawning animator...")
         self.counter = 0
         self.isopen = False
         self.display = display
@@ -36,7 +37,8 @@ class SimpleImageViewer(object):
 
         transparent_white = [1, 1, 1, 0.5]  # RGBA tuple
         # light_gray = [0, 0, 0, 0.3]  # RGBA tuple
-        self.draw_image(original_state, colors=transparent_white)
+        # FIXME renable
+        # self.draw_image(original_state, colors=transparent_white)
         # FIXME use generator instead of converting to list
 
         self.data = [list(a) for a in data_generator]
@@ -105,7 +107,7 @@ class SimpleImageViewer(object):
                     quality=95)  # duration milliseconds
 
     def show(self):
-        plt.show(block=False)
+        plt.show(block=True)
     #
     # def show_agent(self):
     #     fig1 = plt.figure()
@@ -220,7 +222,7 @@ class SimpleImageViewer(object):
             # print("anim positions ", positions.shape, positions)
             pc = self._plotCubeAt(positions, colors=colors, edgecolor="w")
             self.ax.add_collection3d(pc)
-            self.ax.scatter(xs[-1], ys[-1], zs[-1], color="cyan", marker="s")
+            # self.ax.scatter(xs[-1], ys[-1], zs[-1], color="cyan", marker="s")
         self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
