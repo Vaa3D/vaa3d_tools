@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;
@@ -50,7 +51,7 @@ public:
 	MIPOrientation MIPDirection;
 	mipOrientation mipDirection;
 
-	/********* Basic Image Operations *********/
+	/***************** Image Operations *****************/
 	template<class T1, class T2>
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
 
@@ -71,22 +72,34 @@ public:
 
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
-	/******************************************/
+	/****************************************************/
 
-	/***************** Basic Image Statistics *****************/
+	/***************** Image Statistics *****************/
 	template<class T>
 	static inline map<string, float> getBasicStats(T inputImgPtr[], int imgDims[]);
-	/**********************************************************/
+
+	template<class T>
+	static inline map<string, float> getBasicStats_no0(T inputImgPtr[], int imgDims[]);
+
+	template<class T>
+	static inline map<int, size_t> histQuickList(T inputImgPtr[], int imgDims[]);
+	/****************************************************/
+
+	/***************** Image Filtering *****************/
+	template<class T>
+	static inline void simpleGammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int inRange, int outRange, int factor);
+	/***************************************************/
 
 	/********* Morphological Operations *********/
 	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
 	/********************************************/
 
-	/********* Other utilities *********/
+	/***************** Other utilities *****************/
 	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
 		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
 
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
+	/***************************************************/
 };
 
 template<class T1, class T2>
@@ -209,18 +222,125 @@ inline map<string, float> ImgProcessor::getBasicStats(T inputImgPtr[], int imgDi
 {
 	map<string, float> basicStats;
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	vector<T> img1DVec;
 
+	float sum = 0;
 	float mean = 0;
 	float var = 0;
-	float sum = 0;
-	
-	for (size_t i = 0; i < totalPixNum; ++i) sum = sum + inputImgPtr[i];
+	float std = 0;
+	float median = 0;
+
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		img1DVec.push_back(inputImgPtr[i]);
+		sum = sum + inputImgPtr[i];
+	}
 	basicStats.insert(pair<string, float>("sum", sum));
 
 	mean = sum / float(totalPixNum);
 	basicStats.insert(pair<string, float>("mean", mean));
 
+	float varSum = 0;
+	for (size_t i = 0; i < totalPixNum; ++i) varSum = varSum + (inputImgPtr[i] - mean) * (inputImgPtr[i] - mean);
+	var = varSum / float(totalPixNum);
+	std = sqrtf(var);
+	basicStats.insert(pair<string, float>("var", var));
+	basicStats.insert(pair<string, float>("std", std));
+
+	sort(img1DVec.begin(), img1DVec.end());
+	median = float(img1DVec[floor(totalPixNum / 2)]);
+	basicStats.insert(pair<string, float>("median", median));
+
 	return basicStats;
+}
+
+template<class T>
+inline map<string, float> ImgProcessor::getBasicStats_no0(T inputImgPtr[], int imgDims[])
+{
+	map<string, float> basicStats;
+	vector<T> img1DVec;
+	float validPixCount = 0;
+
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	for (size_t i = 0; i < imgDims[0] * imgDims[1] * imgDims[2]; ++i)
+	{
+		if (inputImgPtr[i] == 0) continue;
+
+		++validPixCount;
+		img1DVec.push_back(inputImgPtr[i]);
+		sum = sum + inputImgPtr[i];
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(validPixCount);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (size_t i = 0; i < validPixCount; ++i) varSum = varSum + (inputImgPtr[i] - mean) * (inputImgPtr[i] - mean);
+	var = varSum / float(validPixCount);
+	std = sqrtf(var);
+	basicStats.insert(pair<string, float>("var", var));
+	basicStats.insert(pair<string, float>("std", std));
+
+	sort(img1DVec.begin(), img1DVec.end());
+	median = float(img1DVec[floor(validPixCount / 2)]);
+	basicStats.insert(pair<string, float>("median", median));
+
+	return basicStats;
+}
+
+template<class T>
+inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims[])
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	map<int, size_t> histMap;
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		int value = int(inputImgPtr[i]);
+		++histMap.insert(pair<int, size_t>(value, 0)).first->second;
+	}
+
+	return histMap;
+}
+
+template<class T>
+inline void ImgProcessor::simpleGammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int inRange, int outRange, int factor)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		/*else if (inputImgPtr[i] >= 20)
+		{
+		outputImgPtr[i] = outRange;
+		continue;
+		}*/
+
+		int transformedValue = int(inputImgPtr[i]);
+		int baseValue = int(inputImgPtr[i]);
+		//for (int j = 1; j < baseValue; ++j) transformedValue *= baseValue;
+		//transformedValue = baseValue * baseValue;
+
+		/*if (transformedValue / factor < 1) outputImgPtr[i] = 0;
+		else if (transformedValue / factor >= inRange) outputImgPtr[i] = outRange;
+		else
+		{
+		outputImgPtr[i] = T(transformedValue / factor);
+		}*/
+
+		if (transformedValue <= 9) outputImgPtr[i] = transformedValue;
+		else if (transformedValue > 20) outputImgPtr[i] = outRange;
+		else outputImgPtr[i] = transformedValue * (transformedValue - 8);
+	}
 }
 
 #endif
