@@ -441,7 +441,7 @@ char *loadTiffMetaInfo(char* filename, uint32 &sz0, uint32  &sz1, uint32  &sz2, 
 }
 
 //
-void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int starti, int endi, int startj, int endj )
+void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int first, unsigned int last, int starti, int endi, int startj, int endj )
 {
     //
     TIFF* input = TIFFStreamOpen("MemTIFF", (istream *)dataStreamInMemory);
@@ -450,6 +450,7 @@ void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned i
     uint32 rps;
     uint16 spp, bpp, photo, comp, planar_config;
     int StripsPerImage,LastStripSize;
+    unsigned int img_width, img_height;
 
     //
     if (!TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &img_width))

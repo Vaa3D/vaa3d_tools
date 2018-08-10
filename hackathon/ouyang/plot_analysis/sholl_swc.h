@@ -24,6 +24,6 @@ using namespace std;
 
 
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined);
-bool ShollSWC(QList<NeuronSWC> & neuron, double step);
+vector<double> ShollSWC(QList<NeuronSWC> & neuron, double step);
 
 #endif

@@ -6,28 +6,28 @@
  
 #include "v3d_message.h"
 
-#include "sholl_plugin.h"
-#include "sholl_func.h"
+#include "plot_plugin.h"
+#include "plot_func.h"
  
 Q_EXPORT_PLUGIN2(sholl_swc, SHOLLPlugin);
  
 QStringList SHOLLPlugin::menulist() const
 {
 	return QStringList()
-        <<tr("sholl_swc")
+        <<tr("angle_plot")
 		<<tr("about");
 }
 
 QStringList SHOLLPlugin::funclist() const
 {
 	return QStringList()
-        <<tr("sholl_swc")
+        <<tr("angle_plot")
 		<<tr("help");
 }
 
 void SHOLLPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("sholl_swc"))
+    if (menu_name == tr("angle_plot"))
 	{
         sholl_menu(callback,parent);
 	}
@@ -43,7 +43,7 @@ void SHOLLPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
 bool SHOLLPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    if (func_name == tr("sholl_swc"))
+    if (func_name == tr("angle_plot"))
 	{
         sholl_func(input, output);
 	  return true;

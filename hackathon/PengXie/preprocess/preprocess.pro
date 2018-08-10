@@ -10,7 +10,6 @@ INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
 
 HEADERS	+= preprocess_plugin.h
 HEADERS += pre_processing_main.h
-HEADERS += get_main_component.h
 SOURCES	+= preprocess_plugin.cpp
 SOURCES += pre_processing_main.cpp
 

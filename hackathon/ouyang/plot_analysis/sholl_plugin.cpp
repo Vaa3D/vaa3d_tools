@@ -14,20 +14,20 @@ Q_EXPORT_PLUGIN2(sholl_swc, SHOLLPlugin);
 QStringList SHOLLPlugin::menulist() const
 {
 	return QStringList()
-        <<tr("sholl_swc")
+        <<tr("sholl_dendrite")
 		<<tr("about");
 }
 
 QStringList SHOLLPlugin::funclist() const
 {
 	return QStringList()
-        <<tr("sholl_swc")
+        <<tr("sholl_dendrite")
 		<<tr("help");
 }
 
 void SHOLLPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("sholl_swc"))
+    if (menu_name == tr("sholl_dendrite"))
 	{
         sholl_menu(callback,parent);
 	}
@@ -43,7 +43,7 @@ void SHOLLPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
 bool SHOLLPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    if (func_name == tr("sholl_swc"))
+    if (func_name == tr("sholl_dendrite"))
 	{
         sholl_func(input, output);
 	  return true;

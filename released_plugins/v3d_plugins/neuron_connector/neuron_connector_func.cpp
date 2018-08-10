@@ -219,7 +219,6 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                         }
                     }
                 }
-                cout << mvid << "\t" << mtid <<endl;
                 id=components.indexOf(cid, id+1);
             }
 //            if(b_connectall){
