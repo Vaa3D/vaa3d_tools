@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib import animation, cm
-from collections import OrderedDict
 import matplotlib.patches as mpatches
 
 plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
@@ -90,8 +89,6 @@ class SimpleImageViewer(object):
                              bbox={'facecolor': 'w', 'alpha': 0.5, 'pad': 5})
 
         # plot legends
-        # handles, labels = plt.gca().get_legend_handles_labels()
-        # by_label = OrderedDict(zip(labels, handles))
         white_patch = mpatches.Patch(color='white', label='human annotation')
         blue_patch = mpatches.Patch(color='blue', label='agent trajectory')
         ax.legend(handles=[white_patch, blue_patch])
@@ -241,7 +238,7 @@ class SimpleImageViewer(object):
             #         pc = self._plotCubeAt([pos], colors=color, edgecolor="c")
             #         self.ax.add_collection3d(pc)
             if len(traj) > 0:
-                pc = self._plotCubeAt(traj, colors=[0,0,1, 0.5], edgecolor="w")
+                pc = self._plotCubeAt(traj, colors=[0,0,1, 0.3])
                 self.ax.add_collection3d(pc)
         self.scoreboard.set_text("Score: {}".format(sum(self.reward_history[:i])))
 
