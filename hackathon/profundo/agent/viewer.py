@@ -27,7 +27,7 @@ class SimpleImageViewer(object):
             self.filename = os.path.basename(filepath)
 
         # initialize window with the input image
-        assert np.allclose(original_state.shape, original_state.shape[0])
+        # assert np.allclose(original_state.shape, original_state.shape[0])
         self.x_span, self.y_span, self.z_span = original_state.shape
 
         # TODO: understand why -0.5
@@ -73,18 +73,18 @@ class SimpleImageViewer(object):
 
         return fig, ax
 
-    def draw_image(self, arr, colors=None):
-        """given a dense img grid, filter out blank voxels and plot cubes at filled voxels
-        used for drawing the initial background or "ground truth"
-
-        sends (N, 3) array to plotCubes"""
-        # print("bg arr shape ", arr.shape)
-        binary_grid = arr.astype(bool)
-        positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
-        # print("bg pos ", positions.shape, positions.dtype)# positions)
-        # print("plotting background voxels, pos shape ", np.shape(positions))
-        pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
-        self.ax.add_collection3d(pc)
+    # def draw_image(self, arr, colors=None):
+    #     """given a dense img grid, filter out blank voxels and plot cubes at filled voxels
+    #     used for drawing the initial background or "ground truth"
+    #
+    #     sends (N, 3) array to plotCubes"""
+    #     # print("bg arr shape ", arr.shape)
+    #     binary_grid = arr.astype(bool)
+    #     positions = np.c_[self.x[binary_grid == 1], self.y[binary_grid == 1], self.z[binary_grid == 1]]
+    #     # print("bg pos ", positions.shape, positions.dtype)# positions)
+    #     # print("plotting background voxels, pos shape ", np.shape(positions))
+    #     pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
+    #     self.ax.add_collection3d(pc)
 
     def save_vid(self, filename, num_frames):
         dir_name, filename = os.path.split(filename)
@@ -101,6 +101,7 @@ class SimpleImageViewer(object):
         #           extra_args=['-vcodec', 'libx264'])
 
     def saveGif(self, filename=None, arr=None, duration=0):
+        raise NotImplementedError
         arr[0].save(filename, save_all=True,
                     append_images=arr[1:],
                     duration=500,
