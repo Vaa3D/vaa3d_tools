@@ -416,8 +416,8 @@ uint8 *BigTree::load(long zs, long ze, long zp)
     ofstream outfile;
     outfile.open(config4resume.c_str());
 
-    outfile << zs;
-    outfile << zp;
+    outfile << zs << endl;
+    outfile << zp << endl;
 
     outfile.close();
 
@@ -1343,8 +1343,8 @@ int BigTree::resume()
         ofstream outfile;
         outfile.open(config4resume.c_str());
 
-        outfile << 0;
-        outfile << 1;
+        outfile << 0 << endl;
+        outfile << 1 << endl;
 
         outfile.close();
     }
