@@ -53,7 +53,7 @@ train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7,
 
 experiment_name = str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 logger_dir = os.path.join('train_log', experiment_name)
-print("Logging tf stuff to ", experiment_name, flush=True)
+print("To examine logs, run \n tensorboard --logdir ", experiment_name, flush=True)
 
 ###############################################################################
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
@@ -81,7 +81,7 @@ EVAL_EPISODE = 5
 MAX_EPISODE_LENGTH = 250
 # each epoch is 100k played frames
 STEPS_PER_EPOCH = MAX_EPISODE_LENGTH * UPDATE_FREQ
-NUM_EPOCHS = 1
+NUM_EPOCHS = 1000
 
 ###############################################################################
 
@@ -267,17 +267,23 @@ if __name__ == '__main__':
                             pred,
                             num_files)
     else:  # train model
-        import cProfile
+
         logger.set_logger_dir(logger_dir)
         config = get_config()
         if args.load:  # resume training from a saved checkpoint
             config.session_init = get_model_loader(args.load)
-        profiler = cProfile.Profile()
-        test = lambda: launch_train_with_config(config, SimpleTrainer())
-        profiler.runctx('launch_train_with_config(config, SimpleTrainer())',globals(),locals())
-        import pstats
-        stats = pstats.Stats(profiler)
-        stats.strip_dirs()
-        stats.sort_stats('cumulative')
-        stats.print_stats()
-        # launch_train_with_config(config, SimpleTrainer())
+
+
+        launch_train_with_config(config, SimpleTrainer())
+
+        # # FOR PROFILING
+        # NUM_EPOCHS = 2
+        # import cProfile
+        # import pstats
+        # profiler = cProfile.Profile()
+        # profiler.runctx('launch_train_with_config(config, SimpleTrainer())', globals(), locals())
+        #
+        # stats = pstats.Stats(profiler)
+        # stats.strip_dirs()
+        # stats.sort_stats('cumulative')
+        # stats.print_stats()
