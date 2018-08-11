@@ -99,14 +99,21 @@ TMITREE::~TMITREE()
 }
 
 //
-BigTree::BigTree(string inputdir, string outputdir, int scales, int genMetaInfo, bool genZeroData)
+BigTree::BigTree(string inputdir, string outputdir, int scales, int genMetaInfo, bool genZeroData, int bits)
 {
     // default parameters settings
     block_width = 256;
     block_height = 256;
     block_depth = 256;
 
-    nbits = 4;
+    zstart = 0;
+
+    config4resume = outputdir + "/.BigTreeResume.conf";
+
+    resume();
+
+    //
+    nbits = bits;
 
     genMetaInfoOnly = genMetaInfo;
 
@@ -404,6 +411,14 @@ int BigTree::init()
 
 uint8 *BigTree::load(long zs, long ze)
 {
+    // resume
+    ofstream outfile;
+    outfile.open(config4resume.c_str());
+
+    outfile << zs << endl;
+
+    outfile.close();
+
     //
     long sbv_V, sbv_H, sbv_D;
 
@@ -498,7 +513,7 @@ int BigTree::reformat()
     }
 
     //
-    for(long z=0, z_parts=1; z<depth; z+=z_max_res, z_parts++)
+    for(long z=zstart, z_parts=1; z<depth; z+=z_max_res, z_parts++)
     {
         if(!genMetaInfoOnly && !genZeroDataOnly)
         {
@@ -1303,3 +1318,32 @@ int BigTree::index()
     return 0;
 }
 
+int BigTree::resume()
+{
+    // update zstart
+
+    //
+    struct stat info;
+
+    if( stat( config4resume.c_str(), &info ) == 0 )
+    {
+        // config file exist
+        ifstream infile;
+        infile.open(config4resume.c_str());
+
+        infile >> zstart;
+
+        infile.close();
+    }
+    else
+    {
+        ofstream outfile;
+        outfile.open(config4resume.c_str());
+
+        outfile << 0 << endl;
+
+        outfile.close();
+    }
+
+    return 0;
+}
