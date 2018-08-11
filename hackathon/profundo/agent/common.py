@@ -52,7 +52,7 @@ def play_one_episode(env, func, render=False):
         act, q_values = predict(ob)
         # print("play_one act {} qvals {}".format(act, q_values))
         ob, r, isOver, info = env.step(act, q_values)
-        print("play q vals", q_values, "act ", act, "env_act ", env.env._act, "loc ", env.env._location)
+        # print("play q vals", q_values, "act ", act, "env_act ", env.env._act, "loc ", env.env._location)
         if render:
             env.render()
         sum_r += r
@@ -69,12 +69,11 @@ def play_n_episodes(player, predfunc, nr, render=False):
     for k in range(nr):
         # if k != 0:
         #     player.restart_episode()
-        score, filename, ditance_error, q_values = play_one_episode(player,
+        score, filename, IoU, q_values = play_one_episode(player,
                                                                     predfunc,
                                                                     render=render)
         logger.info(
-            "{}/{} - {} - score {} - IoU {} - q_values {}".format(k + 1, nr, filename, score, ditance_error,
-                                                                        q_values))
+            "{}/{} - {} - score {} - IoU {}".format(k + 1, nr, filename, score, IoU))
 
 
 ###############################################################################
