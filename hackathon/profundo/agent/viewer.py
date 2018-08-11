@@ -4,12 +4,13 @@
 # Author: Amir Alansary <amiralansary@gmail.com>
 
 import os
-import math
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib import animation, cm
+from collections import OrderedDict
+import matplotlib.patches as mpatches
 
 plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
 plt.style.use('dark_background')
@@ -83,6 +84,17 @@ class SimpleImageViewer(object):
         ax.set_zlim([0, self.z_span])
         # except AttributeError:
         #     pass
+
+        self.scoreboard = ax.text(0.9 * self.x_span, 0, 0.9 * self.z_span,
+                             s=" ",
+                             bbox={'facecolor': 'w', 'alpha': 0.5, 'pad': 5})
+
+        # plot legends
+        # handles, labels = plt.gca().get_legend_handles_labels()
+        # by_label = OrderedDict(zip(labels, handles))
+        white_patch = mpatches.Patch(color='white', label='human annotation')
+        blue_patch = mpatches.Patch(color='blue', label='agent trajectory')
+        ax.legend(handles=[white_patch, blue_patch])
 
         return fig, ax
 
@@ -231,6 +243,7 @@ class SimpleImageViewer(object):
             if len(traj) > 0:
                 pc = self._plotCubeAt(traj, colors=[0,0,1, 0.5], edgecolor="w")
                 self.ax.add_collection3d(pc)
+        self.scoreboard.set_text("Score: {}".format(sum(self.reward_history[:i])))
 
         # xs = []
         # ys = []
