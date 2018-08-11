@@ -73,7 +73,7 @@ def play_n_episodes(player, predfunc, nr, render=False):
                                                                     predfunc,
                                                                     render=render)
         logger.info(
-            "{}/{} - {} - score {} - IoU {}".format(k + 1, nr, filename, score, IoU))
+            "{}/{} {} \m score:{}  IoU: {}".format(k + 1, nr, filename, score, IoU))
 
 
 ###############################################################################
