@@ -127,16 +127,19 @@ public:
 class BigTree
 {
 public:
-    BigTree(string inputdir, string outputdir, int scales, int genMetaInfo=0, bool genZeroData=false);
+    BigTree(string inputdir, string outputdir, int scales, int genMetaInfo=0, bool genZeroData=false, int bits=4);
     ~BigTree();
 
 public:
     int init();
-    uint8* load(long zs, long ze);
+    uint8* load(long zs, long ze, long zp);
     int reformat();
 
     // mdata.bin
     int index();
+
+    // updating starting z index
+    int resume();
 
 public:
     string srcdir, dstdir;
@@ -158,4 +161,7 @@ public:
     TMITREE meta;
     int genMetaInfoOnly;
     bool genZeroDataOnly;
+
+    int zstart, zpart;
+    string config4resume;
 };
