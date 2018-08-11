@@ -132,7 +132,7 @@ public:
 
 public:
     int init();
-    uint8* load(long zs, long ze);
+    uint8* load(long zs, long ze, long zp);
     int reformat();
 
     // mdata.bin
@@ -162,6 +162,6 @@ public:
     int genMetaInfoOnly;
     bool genZeroDataOnly;
 
-    int zstart;
+    int zstart, zpart;
     string config4resume;
 };

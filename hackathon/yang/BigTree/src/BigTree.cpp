@@ -107,6 +107,7 @@ BigTree::BigTree(string inputdir, string outputdir, int scales, int genMetaInfo,
     block_depth = 256;
 
     zstart = 0;
+    zpart = 1;
 
     config4resume = outputdir + "/.BigTreeResume.conf";
 
@@ -409,13 +410,14 @@ int BigTree::init()
     return 0;
 }
 
-uint8 *BigTree::load(long zs, long ze)
+uint8 *BigTree::load(long zs, long ze, long zp)
 {
     // resume
     ofstream outfile;
     outfile.open(config4resume.c_str());
 
-    outfile << zs << endl;
+    outfile << zs;
+    outfile << zp;
 
     outfile.close();
 
@@ -513,13 +515,13 @@ int BigTree::reformat()
     }
 
     //
-    for(long z=zstart, z_parts=1; z<depth; z+=z_max_res, z_parts++)
+    for(long z=zstart, z_parts=zpart; z<depth; z+=z_max_res, z_parts++)
     {
         if(!genMetaInfoOnly && !genZeroDataOnly)
         {
             auto start = std::chrono::high_resolution_clock::now();
 
-            ubuffer = load(z,(z+z_max_res <= depth) ? (z+z_max_res) : depth);
+            ubuffer = load(z,(z+z_max_res <= depth) ? (z+z_max_res) : depth, z_parts);
 
             auto end = std::chrono::high_resolution_clock::now();
 
@@ -1332,6 +1334,7 @@ int BigTree::resume()
         infile.open(config4resume.c_str());
 
         infile >> zstart;
+        infile >> zpart;
 
         infile.close();
     }
@@ -1340,7 +1343,8 @@ int BigTree::resume()
         ofstream outfile;
         outfile.open(config4resume.c_str());
 
-        outfile << 0 << endl;
+        outfile << 0;
+        outfile << 1;
 
         outfile.close();
     }
