@@ -17,7 +17,8 @@ plt.style.use('dark_background')
 class SimpleImageViewer(object):
     # TODO multiprocess https://stackoverflow.com/a/4662511/4212158
     # TODO https://matplotlib.org/gallery/misc/multiprocess_sgskip.html
-    def __init__(self, original_state, data_generator, filepath=None, display=None):
+    def __init__(self, original_state, agent_trajectories, reward_history, filepath=None, display=None,
+                 state_dimensions=None):
         print("spawning animator...")
         self.counter = 0
         self.isopen = False
@@ -26,12 +27,17 @@ class SimpleImageViewer(object):
             self.filepath = filepath
             self.filename = os.path.basename(filepath)
 
+        self.agent_trajectories = agent_trajectories
+        self.reward_history = reward_history
+        self.num_frames = len(agent_trajectories)
+
         # initialize window with the input image
         # assert np.allclose(original_state.shape, original_state.shape[0])
-        self.x_span, self.y_span, self.z_span = original_state.shape
+        if state_dimensions is not None:
+            self.x_span, self.y_span, self.z_span =state_dimensions
 
-        # TODO: understand why -0.5
-        self.x, self.y, self.z = np.indices((self.x_span, self.y_span, self.z_span)) - .5
+            # TODO: understand why -0.5
+            self.x, self.y, self.z = np.indices((self.x_span, self.y_span, self.z_span)) - .5
 
         self.fig, self.ax = self.__init_fig__()
 
@@ -39,9 +45,13 @@ class SimpleImageViewer(object):
         # light_gray = [0, 0, 0, 0.3]  # RGBA tuple
         # FIXME renable
         # self.draw_image(original_state, colors=transparent_white)
+        for pos in original_state:
+            # print("agent pos before transpose", pos)
+            pc = self._plotCubeAt([pos], colors=[1, 1, 1, 0.5])
+            self.ax.add_collection3d(pc)
         # FIXME use generator instead of converting to list
 
-        self.data = [list(a) for a in data_generator]
+        # self.data = [list(a) for a in data_generator]
 
         # xs = []
         # ys = []
@@ -67,9 +77,12 @@ class SimpleImageViewer(object):
         ax.set_aspect('equal')
         ax.axis('off')
 
+        # try:
         ax.set_xlim([0, self.x_span])
         ax.set_ylim([0, self.y_span])
         ax.set_zlim([0, self.z_span])
+        # except AttributeError:
+        #     pass
 
         return fig, ax
 
@@ -86,13 +99,13 @@ class SimpleImageViewer(object):
     #     pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
     #     self.ax.add_collection3d(pc)
 
-    def save_vid(self, filename, num_frames):
+    def save_vid(self, filename):
         dir_name, filename = os.path.split(filename)
         # if not os.path.exists(dir_name):
         #     os.mkdir(dir_name)
         # print("saving video {}".format(filename), flush=True)
         if not hasattr(self, 'anim'):  # we haven't animated yet
-            self.render_animation(num_frames)
+            self.render_animation()
         FFwriter = animation.FFMpegWriter(fps=15,
                        extra_args=['-vcodec', 'libx264'])
         self.anim.save(filename, writer=FFwriter)
@@ -198,40 +211,60 @@ class SimpleImageViewer(object):
 
     def _animate(self, i):
         """given a list of new positions at a given timestep, plot those positions"""
-        data = self.data[:i]
-        xs = []
-        ys = []
-        zs = []
-        rewards = []
-        for pos, reward in data:
-            for x, y, z in np.nditer(pos, flags=['external_loop']):
-                xs.append(x)
-                ys.append(y)
-                zs.append(z)
-            rewards.append(reward.flatten())
-        # print("agent ious ", ious)
-        colors = cm.RdBu(rewards)  # map val to colormap
-        if len(colors) != 0:
-            colors = np.reshape(colors, (-1, 4))  # invalid nesting
-            colors[:, -1] /= 10
-        if len(xs) > 0:
-            # print("xs ys zs", xs, ys, zs)
-            positions = np.vstack((xs, ys, zs)).T
-            # print("agent positions ", np.shape(positions))
-            # print("animating agent ")
-            # print("agent colors = ", np.shape(colors), colors)
-            # print("anim positions ", positions.shape, positions)
-            pc = self._plotCubeAt(positions, colors=colors, edgecolor="w")
-            self.ax.add_collection3d(pc)
-            # self.ax.scatter(xs[-1], ys[-1], zs[-1], color="cyan", marker="s")
+        try:
+            traj = self.agent_trajectories[i]
+        except IndexError:
+            pass
+        else:
+            # rewards = self.reward_history[:i]
+            # self.ax.collections = []
+            # # print("data", data, "len ", len(data))
+            # for pos, reward in zip(traj, rewards):
+            #     # print("agent nodes pos ", pos)
+            #     if reward > 0:
+            #         color = [0,1,0,0.5]  # green
+            #     else:
+            #         color = [1,0,0,0.5]  # red
+            #     if len(pos) > 0:
+            #         pc = self._plotCubeAt([pos], colors=color, edgecolor="c")
+            #         self.ax.add_collection3d(pc)
+            if len(traj) > 0:
+                pc = self._plotCubeAt(traj, colors=[0,0,1, 0.5], edgecolor="w")
+                self.ax.add_collection3d(pc)
+
+        # xs = []
+        # ys = []
+        # zs = []
+        # rewards = []
+        # for pos, reward in data:
+        #     for x, y, z in np.nditer(pos, flags=['external_loop']):
+        #         xs.append(x)
+        #         ys.append(y)
+        #         zs.append(z)
+        #     rewards.append(reward.flatten())
+        # # print("agent ious ", ious)
+        # colors = cm.RdBu(rewards)  # map val to colormap
+        # if len(colors) != 0:
+        #     colors = np.reshape(colors, (-1, 4))  # invalid nesting
+        #     colors[:, -1] /= 10
+        # if len(xs) > 0:
+        #     # print("xs ys zs", xs, ys, zs)
+        #     positions = np.vstack((xs, ys, zs)).T
+        #     # print("agent positions ", np.shape(positions))
+        #     # print("animating agent ")
+        #     # print("agent colors = ", np.shape(colors), colors)
+        #     # print("anim positions ", positions.shape, positions)
+        #     pc = self._plotCubeAt(positions, colors=colors, edgecolor="w")
+        #     self.ax.add_collection3d(pc)
+        #     # self.ax.scatter(xs[-1], ys[-1], zs[-1], color="cyan", marker="s")
         self.ax.view_init(30, 0.8 * self.counter)
         self.fig.canvas.draw()
         self.counter += 1
 
-    def render_animation(self, num_frames):
+    def render_animation(self):
         # instantiate the animator.
         self.anim = animation.FuncAnimation(self.fig, self._animate,
-                                            frames=num_frames,
+                                            frames=self.num_frames,
                                             # frames=self.data_generator,
                                             interval=30,
                                             repeat=False)

@@ -725,8 +725,8 @@ class Brain_Env(gym.Env):
         # print("reward history ", np.unique(self.reward_history))
         # print("IOU history ", np.unique(self._IOU_history))
         original_voxels = self.img_to_locations(self.original_state)
-        plotter = Viewer(original_voxels, zip(self.agent_trajectories, self.reward_history),
-                         filepath=self.filename)
+        plotter = Viewer(original_voxels, self.agent_trajectories, self.reward_history,
+                         filepath=self.filename, state_dimensions=self.original_state.shape)
         #
         # #
         # # from viewer import SimpleImageViewer
@@ -768,7 +768,7 @@ class Brain_Env(gym.Env):
 
             vid_fpath = self.filename + '.mp4'
             # vid_fpath = dirname + '/' + self.filename + '.mp4'
-            plotter.save_vid(vid_fpath, self.max_num_frames)
+            plotter.save_vid(vid_fpath)
             # plotter.show_agent()
 
         if self.viz:  # show progress
