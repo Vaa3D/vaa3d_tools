@@ -114,17 +114,8 @@ class Brain_Env(gym.Env):
 
         with _ALE_LOCK:
             self.rng = get_rng(self)
-            # TODO: understand this viz setup
-            # visualization setup
-            #     if isinstance(viz, six.string_types):  # check if viz is a string
-            #         assert os.path.isdir(viz), viz
-            #         viz = 0
-            #     if isinstance(viz, int):
-            #         viz = float(viz)
-            self.viz = viz
-        #     if self.viz and isinstance(self.viz, float):
-        #         self.viewer = None
-        #         self.gif_buffer = []
+        self.viz = viz
+
 
         print("viz {} gif {} video {}".format(self.viz, self.saveGif, self.saveVideo))
 
@@ -146,14 +137,7 @@ class Brain_Env(gym.Env):
                                                      self.observation_dims[1]-1,
                                                      0,
                                                      self.observation_dims[2]-1)
-        # add your data loader here
-        # TODO: look into returnLandmarks
-        # if self.task == 'play':
-        #     self.files = filesListBrainMRLandmark(directory, files_list,
-        #                                           returnLandmarks=False)
-        # else:
-        #     self.files = filesListBrainMRLandmark(directory, files_list,
-        #                                           returnLandmarks=True)
+
         self.files = FilesListCubeNPY(directory, files_list)
 
         # self.files = filesListFetalUSLandmark(directory,files_list)
@@ -234,10 +218,6 @@ class Brain_Env(gym.Env):
         #     skip_thickness = (int(self._state_dims[0] / 5),
         #                       int(self._state_dims[1] / 5),
         #                       int(self._state_dims[2] / 5))
-        # else:  # TODO: wtf why different skip thickness
-        #     skip_thickness = (int(self._state_dims[0] / 4),
-        #                       int(self._state_dims[1] / 4),
-        #                       int(self._state_dims[2] / 4))
 
 
         # binary_grid = self.original_state.astype(bool)
@@ -319,6 +299,7 @@ class Brain_Env(gym.Env):
             learning.
         """
         self._qvalues = qvalues
+        # print("step qvals " ,qvalues)
         self._act = act
 
         current_loc = self._location
@@ -326,8 +307,6 @@ class Brain_Env(gym.Env):
         go_out = False
         backtrack = False
         terminal_found = False
-
-        # TODO FIXME numpy coord order is (z,y,x)
 
         # print("action ", act)
         # UP Z+ -----------------------------------------------------------
@@ -434,13 +413,7 @@ class Brain_Env(gym.Env):
         # self.terminal = True
         # if self.curr_IOU >= 0.9: self.num_success.feed(1)
 
-        # # render screen if viz is on  FIXME this displays at each step
-        # with _ALE_LOCK:
-        #     if self.viz:
-        #         if isinstance(self.viz, float):
-        #             self.display()
 
-        # TODO check if I actually want to store current rewards
         self.current_episode_score.feed(self.reward)
         self.cnt += 1
 
@@ -464,6 +437,7 @@ class Brain_Env(gym.Env):
 
         TODO: make sure nodes dont have overlap
         '''
+        raise NotImplemented
         last_qvalues_history = self._qvalues_history[-4:]
         last_loc_history = self._agent_nodes[-4:]
         best_qvalues = np.max(last_qvalues_history, axis=1)
@@ -476,7 +450,6 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         """ clear history buffer with current state
         """
-        # TODO: double check these np arrays work in place of the lists
         self._agent_nodes = np.zeros((self._history_length, self.dims))  # [(0,) * self.dims] * self._history_length
         self._IOU_history = np.zeros((self._history_length,))
         # list of q-value lists
@@ -623,7 +596,6 @@ class Brain_Env(gym.Env):
             # try:
             with tempfile.TemporaryDirectory() as tmpdir:
 
-                # TODO: make tmp files not collide when doing multiprocessing
                 output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
                 # TODO: be explicit about bounds to swc_to_tiff
                 output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
@@ -644,7 +616,6 @@ class Brain_Env(gym.Env):
 
     def _calc_reward(self, go_out, backtrack, terminal_found):
         """ Calculate the new reward based on the increase in IoU
-        TODO: if current location is same as past location, always penalize (discourage retracing)
         """
         # overrides everything else
         # if terminal_found:
@@ -759,7 +730,7 @@ class Brain_Env(gym.Env):
         #
         # #
         # # from viewer import SimpleImageViewer
-        # # self.viewer = SimpleImageViewer(self._state,
+        # # self.viewer = SimpleImageViewer(self.swc_to_tiff,
         # #                                 scale_x=1,
         # #                                 scale_y=1,
         # #                                 filepath=self.filename)
@@ -771,8 +742,6 @@ class Brain_Env(gym.Env):
         # # time.sleep(self.viz)
         # # save gif
         if self.saveGif:
-        # if self.saveGif:
-            # TODO make this a method of viewer
             raise NotImplementedError
             # image_data = pyglet.image.get_buffer_manager().get_color_buffer().get_image_data()
             # data = image_data.get_data('RGB', image_data.width * 3)
