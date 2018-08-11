@@ -217,28 +217,25 @@ class ExpReplay(DataFlow, Callback):
         """ populate a transition by epsilon-greedy"""
         old_s = self._current_ob
 
-        # initialize q_values to zeros
-        q_values = [0, ] * self.num_actions
+        # build a history state
+        # TODO we don't need history anymore, right?
+        history = self.mem.recent_state()  # shp (1, 15, 15, 15) ndim  4
+        history.append(old_s)  # TODO: history is size 1 at init, should we actually append??
+        # shp (2, 15, 15, 15) ndim  4
+        if np.ndim(history) == 4:  # 3d states
+            history = np.stack(history, axis=3)  # shp (15, 15, 15, 2) ndim  4
+            # shp of history[None, :, :, :, :] is (1, 15, 15, 15, 2) ndim 5
+            # assume batched network - this is the bottleneck
+            q_values = self.predictor(history[None, :, :, :, :])[0][0]
+        else:
+            history = np.stack(history, axis=2)
+            # assume batched network - this is the bottleneck
+            q_values = self.predictor(history[None, :, :, :])[0][0]
 
         # TODO no longer need history len, right?
         if self.rng.rand() <= self.exploration or (len(self.mem) <= self.frame_history_len):
             act = self.rng.choice(range(self.num_actions))
         else:
-            # build a history state
-            #TODO we don't need history anymore, right?
-            history = self.mem.recent_state()  # shp (1, 15, 15, 15) ndim  4
-            history.append(old_s)  # TODO: history is size 1 at init, should we actually append??
-            # shp (2, 15, 15, 15) ndim  4
-            if np.ndim(history) == 4:  # 3d states
-                history = np.stack(history, axis=3)  # shp (15, 15, 15, 2) ndim  4
-                # shp of history[None, :, :, :, :] is (1, 15, 15, 15, 2) ndim 5
-                # assume batched network - this is the bottleneck
-                q_values = self.predictor(history[None, :, :, :, :])[0][0]
-            else:
-                history = np.stack(history, axis=2)
-                # assume batched network - this is the bottleneck
-                q_values = self.predictor(history[None, :, :, :])[0][0]
-
             # if there is a tie for max, randomly choose between them
             act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.5)))
         # print("pop_experience act {} qvals {}".format(act, q_values))
