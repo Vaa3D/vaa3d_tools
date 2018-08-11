@@ -77,7 +77,7 @@ INIT_MEMORY_SIZE = MEMORY_SIZE // 1e3   # 5e4
 # num training epochs in between model evaluations
 EPOCHS_PER_EVAL = 1
 # the number of episodes to run during evaluation
-EVAL_EPISODE = 5
+EVAL_EPISODE = 0
 MAX_EPISODE_LENGTH = 250
 # each epoch is 100k played frames
 STEPS_PER_EPOCH = MAX_EPISODE_LENGTH * UPDATE_FREQ
