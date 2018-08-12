@@ -52,6 +52,9 @@ public:
 	mipOrientation mipDirection;
 
 	/***************** Image Operations *****************/
+	template<class T>
+	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+	
 	template<class T1, class T2>
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
 
@@ -61,8 +64,8 @@ public:
 	template<class T1, class T2>
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
-	template<class T1, class T2>
-	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the one with greater value. 
+	template<class T>
+	static inline void imageMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[]); // Between 2 input images, pixel-wisely pick the one with greater value. 
 
 	template<class T>
 	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
@@ -87,7 +90,7 @@ public:
 
 	/***************** Image Filtering *****************/
 	template<class T>
-	static inline void simpleGammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int inRange, int outRange, int factor);
+	static inline void gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
 	/***************************************************/
 
 	/********* Morphological Operations *********/
@@ -101,6 +104,21 @@ public:
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 	/***************************************************/
 };
+
+template<class T>
+inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] <= threshold)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
 
 template<class T1, class T2>
 inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
@@ -116,12 +134,13 @@ inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 
 	}
 }
 
-template<class T1, class T2>
-inline void ImgProcessor::imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum)
+template<class T>
+inline void ImgProcessor::imageMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[])
 {
-	for (size_t i = 0; i < pixelNum; ++i)
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
 	{
-		T1 updatedVal = getMax(inputPtr[i], outputPtr[i]);
+		T updatedVal = getMax(inputPtr1[i], inputPtr2[i]);
 		outputPtr[i] = updatedVal;
 	}
 }
@@ -309,7 +328,7 @@ inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims
 }
 
 template<class T>
-inline void ImgProcessor::simpleGammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int inRange, int outRange, int factor)
+inline void ImgProcessor::gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -319,27 +338,19 @@ inline void ImgProcessor::simpleGammaCorrect(T inputImgPtr[], T outputImgPtr[], 
 			outputImgPtr[i] = 0;
 			continue;
 		}
-		/*else if (inputImgPtr[i] >= 20)
-		{
-		outputImgPtr[i] = outRange;
-		continue;
-		}*/
 
 		int transformedValue = int(inputImgPtr[i]);
-		int baseValue = int(inputImgPtr[i]);
-		//for (int j = 1; j < baseValue; ++j) transformedValue *= baseValue;
-		//transformedValue = baseValue * baseValue;
-
-		/*if (transformedValue / factor < 1) outputImgPtr[i] = 0;
-		else if (transformedValue / factor >= inRange) outputImgPtr[i] = outRange;
-		else
+		if (transformedValue < starting_intensity)
 		{
-		outputImgPtr[i] = T(transformedValue / factor);
-		}*/
-
-		if (transformedValue <= 9) outputImgPtr[i] = transformedValue;
-		else if (transformedValue > 20) outputImgPtr[i] = outRange;
-		else outputImgPtr[i] = transformedValue * (transformedValue - 8);
+			//if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
+			//else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
+			outputImgPtr[i] = transformedValue;
+			//outputImgPtr[i] = 0;
+		}
+		else if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
+		else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
+		//else outputImgPtr[i] = 255;
+		//else outputImgPtr[i] = transformedValue;
 	}
 }
 
