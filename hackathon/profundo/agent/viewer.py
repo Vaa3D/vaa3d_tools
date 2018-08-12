@@ -242,7 +242,7 @@ class SimpleImageViewer(object):
         # avoid replotting
         if node_ not in self.already_plotted:
             self.already_plotted.add(node_)
-            print("adding cube at ", new_node)
+            # print("adding cube at ", new_node)
             # if len(traj) > 0:
             pc = self.make_cubes([new_node], colors=[1, 0, 1, 0.3])
             self.ax.add_collection3d(pc)

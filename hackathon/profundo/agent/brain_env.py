@@ -43,7 +43,9 @@ from tensorpack.utils.stats import StatCounter
 from dataAPI import FilesListCubeNPY
 from viewer import SimpleImageViewer as Viewer
 from jaccard import jaccard
-from data_processing.swc_io import locations_to_swc, swc_to_TIFF, TIFF_to_npy
+from data_processing.swc_io import (locations_to_swc,
+                                    swc_to_TIFF, TIFF_to_npy,
+                                    swc_to_nparray, locations_to_img)
 
 __all__ = ['Brain_Env', 'FrameStack']
 
@@ -79,8 +81,6 @@ class Brain_Env(gym.Env):
         :max_num_frames: maximum number of frames per episode.
         """
         super(Brain_Env, self).__init__()
-
-        print("warning! max num frames hard coded to {}!".format(max_num_frames), flush=True)
 
         # inits stat counters
         self.reset_stat()
@@ -150,6 +150,7 @@ class Brain_Env(gym.Env):
         self._clear_history()  # init arrays
         self._restart_episode()
         assert (np.shape(self._state) == self.observation_dims)
+        # test jaccard
         assert np.isclose(jaccard(self.original_state, self.original_state)[0],1 )
 
     def reset(self):
@@ -181,14 +182,31 @@ class Brain_Env(gym.Env):
 
         # # sample a new image
         self.filepath, self.filename, begin, end = next(self.file_sampler)
-        self._state = np.load(self.filepath).astype(float)
-        # normalize inputs in-place
-        np.clip(self._state, 0, 1, out=self._state)
+        human_locations = swc_to_nparray(self.filepath, include_node_id=False)
+        self.human_locations = np.unique(human_locations.astype(int), axis=0)
+        # FIXME: input data should all be inbounds already!
+        lim = self.observation_dims[0]
+        np.clip(self.human_locations, 0, lim-1, out=self.human_locations)
+        # print("human locs ", self.human_locations)
+        # print("calling locations_to_img from new_random")
+        self.original_state = locations_to_img(self.human_locations, self.observation_dims,
+                                       img=None, val=1)
+
+        # check no negatives
+        print(np.where(self.original_state < 0))
+        assert not np.any(self.original_state < 0)
         # check not all False
-        assert self._state.all() == False
-        self._state = self._state[:15, :15, :15]  # FIXME data should be already in this shape
-        self.original_state = np.copy(self._state)
-        self.agent_trajectories = []  # one for each time step
+        assert self.original_state.all() == False
+
+        self.original_state = self.original_state[:lim, :lim, :lim]  # FIXME data should be already in this shape
+        # self._state = np.load(self.filepath).astype(float)
+        # self._state = np.load(self.filepath).astype(float)
+        # normalize inputs in-place
+        # np.clip(self._state, 0, 1, out=self._state)
+
+
+
+        self._state= np.copy(self.original_state)
 
         # multiscale (e.g. start with 3 -> 2 -> 1)
         # scale can be thought of as sampling stride
@@ -210,8 +228,8 @@ class Brain_Env(gym.Env):
             self.yscale = 1
             self.zscale = 1
         # image volume size
-        self._state_dims = np.shape(self._state)
-        #######################################################################
+        # self._state_dims = np.shape(self._state)
+    #######################################################################
         ## select random starting point
         # add padding to avoid start right on the border of the image
         # if (self.task == 'train'):
@@ -226,12 +244,14 @@ class Brain_Env(gym.Env):
         # positions = np.c_[x[binary_grid == 1], y[binary_grid == 1], z[binary_grid == 1]]
 
         # keep starting positions in bounds
-        self._start_location = np.clip(np.array(begin, dtype=float),
-                                 self._observation_bounds.xmin+1e-15,
-                                 self._observation_bounds.xmax-1e-15)
-        self._terminal_node = np.clip(np.array(end, dtype=float),
-                                       self._observation_bounds.xmin+1e-15,
-                                       self._observation_bounds.xmax-1e-15)
+        self._start_location = np.clip(np.array(begin, dtype=int), 0, lim-1)
+        self._terminal_node = np.clip(np.array(end, dtype=int), 0, lim-1)
+        # self._start_location = np.clip(np.array(begin, dtype=float),
+        #                          self._observation_bounds.xmin+1e-15,
+        #                          self._observation_bounds.xmax-1e-15)
+        # self._terminal_node = np.clip(np.array(end, dtype=float),
+        #                                self._observation_bounds.xmin+1e-15,
+        #                                self._observation_bounds.xmax-1e-15)
 
 
         self._location = self._start_location
@@ -256,13 +276,26 @@ class Brain_Env(gym.Env):
         https://en.wikipedia.org/wiki/Jaccard_index
         """
         # flatten bc  jaccard_similarity_score expects 1D arrays
-        agent_trajectory = self._state
+        # agent_trajectory = self._state
         # state = self.swc_to_tiff.ravel()
-        agent_trajectory[agent_trajectory != -1] = 0  # mask out non-agent trajectory
+        # agent_trajectory[agent_trajectory != -1] = 0  # mask out non-agent trajectory
         # state = state.astype(bool)  # everything non-zero => True
 
         # images should not be all True
-        assert agent_trajectory.all() == False
+        # assert agent_trajectory.all() == False
+        # print("calling locations_to_img from IOU")
+        agent_trajectory = locations_to_img(self._agent_nodes[:self.cnt],
+                                            self.observation_dims,
+                                            img=None,
+                                            val=-1)
+
+        if self.cnt > 0:
+            if self.curr_IOU > 0.7:
+                np.set_printoptions(threshold=np.nan)
+                print("arr1 \n ", np.array_repr(agent_trajectory))
+                print("arr2 \n ", np.array_repr(self.original_state))
+                print(self.original_state[np.where(self.original_state < 0)])
+                raise Exception
         iou, _, _ = jaccard(agent_trajectory, self.original_state)
         # print("computed iou ", iou)
         # print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
@@ -347,8 +380,10 @@ class Brain_Env(gym.Env):
             # https://stackoverflow.com/a/25823710/4212158
             # .all(axis=1) makes sure that all of x,y,z isclose
             # np.any() checks is any coord is close
-            if np.any(np.isclose(self._agent_nodes, proposed_location.T).all(axis=1)):
-                # print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
+            if (self._state[proposed_location[0], proposed_location[1], proposed_location[2]]
+                    == -1):
+            # if np.any(np.isclose(self._agent_nodes, proposed_location.T).all(axis=1)):
+            #     print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
                 self.num_backtracked.feed(1)
@@ -451,7 +486,7 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         """ clear history buffer with current state
         """
-        self._agent_nodes = np.zeros((self._history_length, self.dims))  # [(0,) * self.dims] * self._history_length
+        self._agent_nodes = np.zeros((self._history_length, self.dims), dtype=int)  # [(0,) * self.dims] * self._history_length
         self._IOU_history = np.zeros((self._history_length,))
         # list of value lists
         self._qvalues_history = np.zeros(
@@ -475,22 +510,32 @@ class Brain_Env(gym.Env):
             arr = arr[:self.cnt]
 
     def _observe(self):
-        observation = np.copy(self.original_state)
-        # take image, mask it w agent trajectory
-        agent_trajectory = self.connect_nodes_to_img()
-        # extact locations where agent TIFF is active, and add it to state
-        self.agent_trajectories.append(self.img_to_locations(agent_trajectory))
-
-        agent_trajectory *= -1  # agent frames are negative
-        # paste agent trajectory ontop of original state, but only when vals are not 0
-        agent_mask = agent_trajectory.astype(bool)
-        # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
-        if agent_mask.any():  # agent trajectory not empty
-            np.copyto(observation, agent_trajectory, casting='no', where=agent_mask)
-            _loc = self._location.astype(int)
-            # set current location value to -10 to indicate where the agent currently is
-            observation[_loc[0], _loc[1], _loc[2]] = -10
+        # print("agent nodes ", self._agent_nodes[:self.cnt])
+        # print("calling locations_to_img from observe")
+        observation = locations_to_img(self._agent_nodes[:self.cnt],
+                                       self.observation_dims,
+                                       img=self.original_state,
+                                       val=-1)
+        loc = self._location.astype(int)
+        observation[loc[0], loc[1], loc[2]] = -10
         return observation
+
+        #
+        # # take image, mask it w agent trajectory
+        # agent_trajectory = self.connect_nodes_to_img()
+        # # extact locations where agent TIFF is active, and add it to state
+        # self.agent_nodes.append(self.img_to_locations(agent_trajectory))
+        #
+        # agent_trajectory *= -1  # agent frames are negative
+        # # paste agent trajectory ontop of original state, but only when vals are not 0
+        # agent_mask = agent_trajectory.astype(bool)
+        # # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
+        # if agent_mask.any():  # agent trajectory not empty
+        #     np.copyto(observation, agent_trajectory, casting='no', where=agent_mask)
+        #     _loc = self._location.astype(int)
+        #     # set current location value to -10 to indicate where the agent currently is
+        #     observation[_loc[0], _loc[1], _loc[2]] = -10
+        # return observation
 
     def img_to_locations(self, img):
         """take dense 4D matrix, return coords where there is data"""
@@ -580,37 +625,37 @@ class Brain_Env(gym.Env):
         #
         # return observation
 
-    def connect_nodes_to_img(self):
-        """take location history, generate connected branches using Vaa3d plugin
-        FIXME this function is horribly inefficient
-        """
-        locations = self._agent_nodes[:self.cnt]   # grab everything up until the current ts
-        # print("iter ", self.cnt, "locations: ", locations)
-        # print("og state shape ", np.shape(self.original_state))
-    # print("self obs dims ", self.observation_dims)
-        # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
-        if not locations.any():  # if all zeros, evals to False
-            output_npy = np.zeros_like(self.original_state)
-        else:
-            fname = 'agent_trajectory' + str(np.random.randint(low=0, high=int(99e10)))
-
-            # try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-
-                output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
-                # TODO: be explicit about bounds to swc_to_tiff
-                output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
-                with _ALE_LOCK:
-                    output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
-                                              overwrite=False)
-                output_npy = np.load(output_npy_path).astype(float)
-            # except IOError as e:
-            #     print('IOError', e)
-            # finally:
-            # print("agent trajectory shape ", np.shape(output_npy))
-            np.clip(output_npy, 0, 1, out=output_npy)
-
-        return output_npy
+    # def connect_nodes_to_img(self):
+    #     """take location history, generate connected branches using Vaa3d plugin
+    #     FIXME this function is horribly inefficient
+    #     """
+    #     locations = self._agent_nodes[:self.cnt]   # grab everything up until the current ts
+    #     # print("iter ", self.cnt, "locations: ", locations)
+    #     # print("og state shape ", np.shape(self.original_state))
+    # # print("self obs dims ", self.observation_dims)
+    #     # if the agent hasn't drawn any nodes, then the branch is empty. skip pipeline, return empty arr.
+    #     if not locations.any():  # if all zeros, evals to False
+    #         output_npy = np.zeros_like(self.original_state)
+    #     else:
+    #         fname = 'agent_trajectory' + str(np.random.randint(low=0, high=int(99e10)))
+    #
+    #         # try:
+    #         with tempfile.TemporaryDirectory() as tmpdir:
+    #
+    #             output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
+    #             # TODO: be explicit about bounds to swc_to_tiff
+    #             output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
+    #             with _ALE_LOCK:
+    #                 output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
+    #                                           overwrite=False)
+    #             output_npy = np.load(output_npy_path).astype(float)
+    #         # except IOError as e:
+    #         #     print('IOError', e)
+    #         # finally:
+    #         # print("agent trajectory shape ", np.shape(output_npy))
+    #         np.clip(output_npy, 0, 1, out=output_npy)
+    #
+    #     return output_npy
 
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
             return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
@@ -642,12 +687,12 @@ class Brain_Env(gym.Env):
         assert isinstance(IOU_difference, float)
 
         if IOU_difference > 0:
-            reward = 25
+            reward = 200
         else:  # didn't go out, backtrack, or improve score
             reward = -1
 
         if terminal_found:
-            reward = 500
+            reward = 1000
 
 
 
@@ -657,50 +702,54 @@ class Brain_Env(gym.Env):
         assert len(coords) == 3
         x, y, z = coords
         bounds = self._observation_bounds
-
-        return ((bounds.xmin <= x <= bounds.xmax and
+        is_in_bounds =  ((bounds.xmin <= x <= bounds.xmax and
                  bounds.ymin <= y <= bounds.ymax and
                  bounds.zmin <= z <= bounds.zmax))
 
-    @property
-    def _oscillate(self):
-        """ Return True if the agent is stuck and oscillating
-        """
-        # TODO reimplement
-        # TODO: erase last few frames if oscillation is detected
-        counter = Counter(self._agent_nodes)
-        freq = counter.most_common()
+        # if not is_in_bounds:
+        #     print("out of bounds :", coords)
 
-        # TODO: wtF?
-        if freq[0][0] == (0, 0, 0):
-            if (freq[1][1] > 3):
-                return True
-            else:
-                return False
-        elif (freq[0][1] > 3):
-            return True
+        return is_in_bounds
 
-    def get_action_meanings(self):
-        """ return array of integers for actions"""
-        ACTION_MEANING = {
-            1: "UP",  # MOVE Z+
-            2: "FORWARD",  # MOVE Y+
-            3: "RIGHT",  # MOVE X+
-            4: "LEFT",  # MOVE X-
-            5: "BACKWARD",  # MOVE Y-
-            6: "DOWN",  # MOVE Z-
-        }
-        return [ACTION_MEANING[i] for i in self.actions]
+    # @property
+    # def _oscillate(self):
+    #     """ Return True if the agent is stuck and oscillating
+    #     """
+    #     # TODO reimplement
+    #     # TODO: erase last few frames if oscillation is detected
+    #     counter = Counter(self._agent_nodes)
+    #     freq = counter.most_common()
+    #
+    #     # TODO: wtF?
+    #     if freq[0][0] == (0, 0, 0):
+    #         if (freq[1][1] > 3):
+    #             return True
+    #         else:
+    #             return False
+    #     elif (freq[0][1] > 3):
+    #         return True
+    #
+    # def get_action_meanings(self):
+    #     """ return array of integers for actions"""
+    #     ACTION_MEANING = {
+    #         1: "UP",  # MOVE Z+
+    #         2: "FORWARD",  # MOVE Y+
+    #         3: "RIGHT",  # MOVE X+
+    #         4: "LEFT",  # MOVE X-
+    #         5: "BACKWARD",  # MOVE Y-
+    #         6: "DOWN",  # MOVE Z-
+    #     }
+    #     return [ACTION_MEANING[i] for i in self.actions]
 
-    @property
-    def getScreenDims(self):
-        """
-        return screen dimensions
-        """
-        return (self.width, self.height, self.depth)
-
-    def lives(self):
-        return None
+    # @property
+    # def getScreenDims(self):
+    #     """
+    #     return screen dimensions
+    #     """
+    #     return (self.width, self.height, self.depth)
+    #
+    # def lives(self):
+    #     return None
 
     def reset_stat(self):
         """ Reset all statistics counter"""
@@ -728,8 +777,7 @@ class Brain_Env(gym.Env):
         # print("ious", self._IOU_history)
         # print("reward history ", np.unique(self.reward_history))
         # print("IOU history ", np.unique(self._IOU_history))
-        original_voxels = self.img_to_locations(self.original_state)
-        plotter = Viewer(original_voxels, self.agent_trajectories, self.reward_history,
+        plotter = Viewer(self.human_locations, self._agent_nodes, self.reward_history,
                          filepath=self.filename, state_dimensions=self.original_state.shape)
         #
         # #
