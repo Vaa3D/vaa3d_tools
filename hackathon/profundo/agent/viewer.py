@@ -17,7 +17,7 @@ plt.style.use('dark_background')
 class SimpleImageViewer(object):
     # TODO multiprocess https://stackoverflow.com/a/4662511/4212158
     # TODO https://matplotlib.org/gallery/misc/multiprocess_sgskip.html
-    def __init__(self, original_state, agent_trajectories, reward_history, filepath=None, display=None,
+    def __init__(self, human_nodes, agent_nodes, reward_history, filepath=None, display=None,
                  state_dimensions=None):
         print("spawning animator...")
         self.counter = 0
@@ -27,12 +27,14 @@ class SimpleImageViewer(object):
             self.filepath = filepath
             self.filename = os.path.basename(filepath)
 
-        self.agent_trajectories = agent_trajectories
+
+        self.already_plotted = set()
+        self.agent_nodes = agent_nodes
         self.reward_history = reward_history
-        self.num_frames = len(agent_trajectories)
+        self.num_frames = len(agent_nodes)
 
         # initialize window with the input image
-        # assert np.allclose(original_state.shape, original_state.shape[0])
+        # assert np.allclose(human_nodes.shape, human_nodes.shape[0])
         if state_dimensions is not None:
             self.x_span, self.y_span, self.z_span =state_dimensions
 
@@ -44,11 +46,11 @@ class SimpleImageViewer(object):
         transparent_white = [1, 1, 1, 0.5]  # RGBA tuple
         # light_gray = [0, 0, 0, 0.3]  # RGBA tuple
         # FIXME renable
-        # self.draw_image(original_state, colors=transparent_white)
-        for pos in original_state:
+        # self.draw_image(human_nodes, colors=transparent_white)
+        # for pos in human_nodes:
             # print("agent pos before transpose", pos)
-            pc = self._plotCubeAt([pos], colors=[1, 1, 1, 0.5])
-            self.ax.add_collection3d(pc)
+        pc = self.make_cubes(human_nodes, colors=[1, 1, 1, 0.8])
+        self.ax.add_collection3d(pc)
         # FIXME use generator instead of converting to list
 
         # self.data = [list(a) for a in data_generator]
@@ -109,6 +111,7 @@ class SimpleImageViewer(object):
     #     self.ax.add_collection3d(pc)
 
     def save_vid(self, filename):
+        print("saving figure...")
         dir_name, filename = os.path.split(filename)
         # if not os.path.exists(dir_name):
         #     os.mkdir(dir_name)
@@ -177,7 +180,7 @@ class SimpleImageViewer(object):
         cube_corners += np.array(position)
         return cube_corners
 
-    def _plotCubeAt(self, positions, sizes=None, colors=None, **kwargs):
+    def make_cubes(self, positions, sizes=None, colors=None, **kwargs):
         """positions can either be dense bool array, or """
         # print("positions ", np.shape(positions))
         # print("dtype ", positions.dtype)
@@ -220,11 +223,7 @@ class SimpleImageViewer(object):
 
     def _animate(self, i):
         """given a list of new positions at a given timestep, plot those positions"""
-        try:
-            traj = self.agent_trajectories[i]
-        except IndexError:
-            pass
-        else:
+
             # rewards = self.reward_history[:i]
             # self.ax.collections = []
             # # print("data", data, "len ", len(data))
@@ -237,9 +236,16 @@ class SimpleImageViewer(object):
             #     if len(pos) > 0:
             #         pc = self._plotCubeAt([pos], colors=color, edgecolor="c")
             #         self.ax.add_collection3d(pc)
-            if len(traj) > 0:
-                pc = self._plotCubeAt(traj, colors=[0,0,1, 0.1])
-                self.ax.add_collection3d(pc)
+        new_node = self.agent_nodes[i]
+        node_ = tuple(new_node)
+
+        # avoid replotting
+        if node_ not in self.already_plotted:
+            self.already_plotted.add(node_)
+            print("adding cube at ", new_node)
+            # if len(traj) > 0:
+            pc = self.make_cubes([new_node], colors=[1, 0, 1, 0.3])
+            self.ax.add_collection3d(pc)
         self.scoreboard.set_text("Score: {}".format(sum(self.reward_history[:i])))
 
         # xs = []
