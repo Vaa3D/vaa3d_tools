@@ -238,7 +238,7 @@ class SimpleImageViewer(object):
             #         pc = self._plotCubeAt([pos], colors=color, edgecolor="c")
             #         self.ax.add_collection3d(pc)
             if len(traj) > 0:
-                pc = self._plotCubeAt(traj, colors=[0,0,1, 0.3])
+                pc = self._plotCubeAt(traj, colors=[0,0,1, 0.1])
                 self.ax.add_collection3d(pc)
         self.scoreboard.set_text("Score: {}".format(sum(self.reward_history[:i])))
 
