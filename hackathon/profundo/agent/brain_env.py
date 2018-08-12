@@ -193,7 +193,7 @@ class Brain_Env(gym.Env):
                                        img=None, val=1)
 
         # check no negatives
-        print(np.where(self.original_state < 0))
+        # print(np.where(self.original_state < 0))
         assert not np.any(self.original_state < 0)
         # check not all False
         assert self.original_state.all() == False
@@ -289,13 +289,13 @@ class Brain_Env(gym.Env):
                                             img=None,
                                             val=-1)
 
-        if self.cnt > 0:
-            if self.curr_IOU > 0.7:
-                np.set_printoptions(threshold=np.nan)
-                print("arr1 \n ", np.array_repr(agent_trajectory))
-                print("arr2 \n ", np.array_repr(self.original_state))
-                print(self.original_state[np.where(self.original_state < 0)])
-                raise Exception
+        # if self.cnt > 0:
+        #     if self.curr_IOU > 0.7:
+        #         np.set_printoptions(threshold=np.nan)
+        #         print("arr1 \n ", np.array_repr(agent_trajectory))
+        #         print("arr2 \n ", np.array_repr(self.original_state))
+        #         print(self.original_state[np.where(self.original_state < 0)])
+        #         raise Exception
         iou, _, _ = jaccard(agent_trajectory, self.original_state)
         # print("computed iou ", iou)
         # print("sum(agent) ", np.sum(agent_trajectory), "sum(original state)", np.sum(self.original_state), "computed iou ", iou)
@@ -461,6 +461,7 @@ class Brain_Env(gym.Env):
                 "backtracked": backtrack}
 
         if self.terminal:
+            self.episode_duration.feed(self.cnt)
             self._trim_arrays()
             if (self.saveGif or self.saveVideo or self.viz):
                 self.display()
@@ -754,6 +755,7 @@ class Brain_Env(gym.Env):
     def reset_stat(self):
         """ Reset all statistics counter"""
         self.stats = defaultdict(list)
+        self.episode_duration = StatCounter()
         self.num_games = StatCounter()
         self.num_success = StatCounter()
         self.num_backtracked = StatCounter()

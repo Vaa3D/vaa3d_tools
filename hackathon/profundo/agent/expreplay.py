@@ -353,6 +353,14 @@ class ExpReplay(DataFlow, Callback):
             self.trainer.monitors.put_scalar('expreplay/n_success', 0)
             self.trainer.monitors.put_scalar('expreplay/n_success_ratio', 0)
 
+        # length of trials
+        if self.player.episode_duration.count:
+            try:
+                self.trainer.monitors.put_scalar('expreplay/avg_episode_duration',
+                                             np.asscalar(self.player.episode_duration.average))
+            except:
+                self.trainer.monitors.put_scalar('expreplay/avg_episode_duration',
+                                                 self.player.episode_duration.average)
         # count different actions
         if self.player.num_act0.count:
             self.trainer.monitors.put_scalar('expreplay/num_act0',
