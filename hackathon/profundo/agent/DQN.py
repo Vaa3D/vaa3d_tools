@@ -47,7 +47,7 @@ LeakyRelu = tf.nn.leaky_relu
 ###############################################################################
 # import your data here
 # TODO: make dataflow for npy?
-data_dir = "../data/08_cube_npy"
+data_dir = "../data/06_origin_cubes"
 fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
 train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
 

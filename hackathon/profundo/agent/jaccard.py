@@ -43,6 +43,4 @@ def jaccard(im1, im2):
 
     jaccard_coeff = intersection.sum() / float(union.sum())
 
-    assert isinstance(jaccard_coeff, float)
-
     return jaccard_coeff, intersection, union
