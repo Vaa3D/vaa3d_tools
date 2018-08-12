@@ -116,19 +116,20 @@ class FilesListCubeNPY(files):
 
         while True:  #
             for idx in indexes:
-                image_path = self.files_list[idx]  # FIXME shouldn't these be different
-                image_filename = os.path.basename(image_path)
+                swc_path = self.files_list[idx]  # FIXME shouldn't these be different
+                swc_fname = os.path.basename(swc_path)
                 # split the last 2 periods off, then grab the basename
-                swc_filename = image_filename.rsplit('.', 2)[0]
+                # swc_filename = swc_fname.rsplit('.', 2)[0]
                 # get relevant swc file
                 # go up two directories
-                data_dir = os.path.dirname(os.path.dirname(image_path))
-                # FIXME shouldn't use abs name for swc folder
-                swc_path = os.path.join(data_dir, "06_origin_cubes", swc_filename)
-                # image_filename = self.filenames[idx]
-                # x, y, file, ?
+                # data_dir = os.path.dirname(os.path.dirname(swc_path))
+                # # FIXME shouldn't use abs name for swc folder
+                # swc_path = os.path.join(data_dir, "06_origin_cubes", swc_filename)
+                # # image_filename = self.filenames[idx]
+                # # x, y, file, ?
                 begin, end = self.first_last_swc_nodes(swc_path)
-                yield image_path, image_filename, begin, end
+
+                yield swc_path, swc_fname, begin, end
 
     def sample_first(self):
         """deterministic for unit tests"""
