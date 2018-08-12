@@ -339,3 +339,23 @@ def locations_to_swc(locations_list: list, branch_name: str, output_dir: str, ov
         assert(os.path.isfile(outfile))
         # print(outfile, " exists!")
         return outfile
+
+def locations_to_img(locations, dims, img=None, val=1):
+    if img is None:
+        img = np.zeros(dims, dtype=int)
+    else:
+        assert np.shape(img) == dims
+        # this is sneaky! don't overwrite your original state!
+        img = np.copy(img)
+    for loc in locations:
+        # print("loc ", loc)
+        try:
+            img[loc[0], loc[1], loc[2]] = val
+        except IndexError:
+            print("loc indexerror ", loc)
+            print(locations)
+            raise
+
+    return img
+
+
