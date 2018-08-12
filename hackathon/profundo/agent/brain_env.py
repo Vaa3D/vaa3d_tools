@@ -376,6 +376,7 @@ class Brain_Env(gym.Env):
             # print("proposed out of bounds ", proposed_location)
             # do not update current_loc
             go_out = True
+            self.num_go_out.feed(1)
         else:  # in bounds
             # https://stackoverflow.com/a/25823710/4212158
             # .all(axis=1) makes sure that all of x,y,z isclose
@@ -669,7 +670,7 @@ class Brain_Env(gym.Env):
         #     reward = 500
         #     return reward
         if go_out:
-            reward = -10
+            reward = -20
             return reward
         if backtrack:
             reward = -5
@@ -759,6 +760,7 @@ class Brain_Env(gym.Env):
         self.num_games = StatCounter()
         self.num_success = StatCounter()
         self.num_backtracked = StatCounter()
+        self.num_go_out = StatCounter()
         self.num_act0 = StatCounter()
         self.num_act1 = StatCounter()
         self.num_act2 = StatCounter()
