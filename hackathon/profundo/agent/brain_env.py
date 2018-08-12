@@ -257,7 +257,7 @@ class Brain_Env(gym.Env):
         """
         # flatten bc  jaccard_similarity_score expects 1D arrays
         agent_trajectory = self._state
-        # state = self._state.ravel()
+        # state = self.swc_to_tiff.ravel()
         agent_trajectory[agent_trajectory != -1] = 0  # mask out non-agent trajectory
         # state = state.astype(bool)  # everything non-zero => True
 
@@ -361,8 +361,13 @@ class Brain_Env(gym.Env):
 
         # check that all 3 coords match terminal node location
         # atol gives us some tolerance
-        if np.isclose(proposed_location, self._terminal_node, atol=3).all():
+
+
+        if np.isclose(self._terminal_node, proposed_location.T, atol=1).all():
             terminal_found = True
+            print("finishing episode, terminal found, IOU = ", self.curr_IOU)
+            self.terminal = True
+            self.num_success.feed(1)
         # print("new location ", self._location, go_out, backtrack)
 
         # punish -1 reward if the agent tries to go out
@@ -379,10 +384,6 @@ class Brain_Env(gym.Env):
         #         self.terminal = True
         #         self.num_success.feed(1)
         #         # self.display()
-        if terminal_found:
-            print("finishing episode, terminal found, IOU = ", self.curr_IOU)
-            self.terminal = True
-            self.num_success.feed(1)
 
         # terminate if maximum number of steps is reached
 
@@ -452,7 +453,7 @@ class Brain_Env(gym.Env):
         """
         self._agent_nodes = np.zeros((self._history_length, self.dims))  # [(0,) * self.dims] * self._history_length
         self._IOU_history = np.zeros((self._history_length,))
-        # list of q-value lists
+        # list of value lists
         self._qvalues_history = np.zeros(
             (self._history_length, self.actions))  # [(0,) * self.actions] * self._history_length
         self.reward_history = np.zeros((self._history_length,))
@@ -559,14 +560,14 @@ class Brain_Env(gym.Env):
         # agent_mask = agent_trajectory.astype(bool)
         # # print("agent traj shape", np.shape(agent_trajectory), np.shape(agent_mask))
         # if agent_mask.any():  # agent trajectory not empty
-        #     np.copyto(self._state, agent_trajectory, casting='no', where=agent_mask)
-        #     assert self._state is not None
+        #     np.copyto(self.swc_to_tiff, agent_trajectory, casting='no', where=agent_mask)
+        #     assert self.swc_to_tiff is not None
         #
         # # crop image data to update what network sees
         # # image coordinate system becomes screen coordinates
         # # scale can be thought of as a stride
         # # TODO: check if we need to keep "stride" from upstream
-        # observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self._state[
+        # observation[screen_xmin:screen_xmax, screen_ymin:screen_ymax, screen_zmin:screen_zmax] = self.swc_to_tiff[
         #                                                                                          xmin:xmax,
         #                                                                                          ymin:ymax,
         #                                                                                          zmin:zmax]
@@ -641,9 +642,12 @@ class Brain_Env(gym.Env):
         assert isinstance(IOU_difference, float)
 
         if IOU_difference > 0:
-            reward = 100
+            reward = 25
         else:  # didn't go out, backtrack, or improve score
             reward = -1
+
+        if terminal_found:
+            reward = 500
 
 
 
