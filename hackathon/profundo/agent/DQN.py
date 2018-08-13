@@ -184,22 +184,25 @@ def get_config():
                 RunOp(DQNModel.update_target_param, verbose=True),
                 # update target network every 10k steps
                 every_k_steps=10000 // UPDATE_FREQ),
-            expreplay,
+            # expreplay,
             ScheduledHyperParamSetter('learning_rate',
                                       [(60, 4e-4), (100, 2e-4)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
-                # 1->0.1 in the first million steps
-                [(0, 1), (40, 0.1), (100, 0.01)],
+                # 1->0.1 in the first 250k steps
+                [(0, 1), (10, 0.1), (100, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
-                Evaluator(nr_eval=EVAL_EPISODE,
-                          input_names=['state'],
-                          output_names=['Qvalue'],
-                          directory=data_dir,
-                          files_list=test_data_fpaths,
-                          get_player_fn=get_player),
-                every_k_epochs=EPOCHS_PER_EVAL),
+                expreplay,
+                every_k_steps=10000 // UPDATE_FREQ),
+            # PeriodicTrigger(
+            #     Evaluator(nr_eval=EVAL_EPISODE,
+            #               input_names=['state'],
+            #               output_names=['Qvalue'],
+            #               directory=data_dir,
+            #               files_list=test_data_fpaths,
+            #               get_player_fn=get_player),
+            #         every_k_steps=10000 // UPDATE_FREQ),
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
