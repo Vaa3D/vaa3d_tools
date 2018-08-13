@@ -62,7 +62,7 @@ BATCH_SIZE = 300  #2**8  # 32
 OBSERVATION_DIMS = (15, 15, 15)
 # how many frames to keep
 # in other words, how many past observations the network can see
-FRAME_HISTORY = 2
+FRAME_HISTORY = 1
 # the frequency of updating the target network
 UPDATE_FREQ = 4
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
@@ -71,14 +71,14 @@ GAMMA = 0.99  # 0.99
 MEMORY_SIZE = 1e6  # 6
 # MEMORY_SIZE = 1e5  # 6 # FIXME og
 # consume at least 1e6 * 27 * 27 * 27 bytes
-INIT_MEMORY_SIZE = MEMORY_SIZE // 1e3   # 5e4
+INIT_MEMORY_SIZE = MEMORY_SIZE // 20   # 5e4
 
 # STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  FIXME og
 # num training epochs in between model evaluations
 EPOCHS_PER_EVAL = 1
 # the number of episodes to run during evaluation
 EVAL_EPISODE = 0
-MAX_EPISODE_LENGTH = 250
+MAX_EPISODE_LENGTH = 100
 # each epoch is 100k played frames
 STEPS_PER_EPOCH = MAX_EPISODE_LENGTH * UPDATE_FREQ
 NUM_EPOCHS = 1000
@@ -190,7 +190,7 @@ def get_config():
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
                 # 1->0.1 in the first million steps
-                [(0, 1), (50, 0.1), (320, 0.01)],
+                [(0, 1), (200, 0.1), (1000, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
                 Evaluator(nr_eval=EVAL_EPISODE,
