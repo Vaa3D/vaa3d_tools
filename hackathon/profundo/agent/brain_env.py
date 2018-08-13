@@ -324,6 +324,9 @@ class Brain_Env(gym.Env):
             official evaluations of your agent are not allowed to use this for
             learning.
         """
+        if self.terminal:
+            print("should never be starting episode after terminal state!")
+            raise ValueError
         self._qvalues = qvalues
         self.best_q_vals.feed(np.max(qvalues))
         self._act = act
@@ -862,9 +865,10 @@ class Brain_Env(gym.Env):
             #             raise OSError("Directory {} exits!".format(dirname))
             #     os.mkdir(dirname)
 
-            vid_fpath = self.filename + '.mp4'
-            # vid_fpath = dirname + '/' + self.filename + '.mp4'
-            plotter.save_vid(vid_fpath)
+            vid_fpath = str(np.sum(self.reward_history)) + self.filename + '.mp4'
+            vid_fpath = dirname + '/' + vid_fpath + '.mp4'
+            with THREAD_LOCKER:
+                plotter.save_vid(vid_fpath)
             # plotter.show_agent()
 
         if self.viz:  # show progress
