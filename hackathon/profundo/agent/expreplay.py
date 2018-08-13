@@ -138,7 +138,8 @@ class ExpReplay(DataFlow, Callback):
                  player,
                  state_shape,
                  batch_size,
-                 memory_size, init_memory_size,
+                 memory_size,
+                 init_memory_size,
                  init_exploration,
                  update_frequency,
                  frame_history_len):
@@ -157,8 +158,8 @@ class ExpReplay(DataFlow, Callback):
             if k != 'self':
                 setattr(self, k, v)
 
-        # override the asignment above
-        self.init_memory_size = int(init_memory_size)
+        # override the asignment above with int version
+        self.init_memory_size = int(self.init_memory_size)
 
         self.exploration = init_exploration
         self.num_actions = player.action_space.n
@@ -175,6 +176,7 @@ class ExpReplay(DataFlow, Callback):
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
+        self._player_distances = StatCounter()
         self._player_qvals = StatCounter()
         self._player_best_qvals = StatCounter()
 
@@ -243,16 +245,9 @@ class ExpReplay(DataFlow, Callback):
         self._current_ob, reward, isOver, info = self.player.step(act, q_values)
 
         if isOver:
-            # if info['gameOver']:  # only record score when a whole game is over (not when an episode is over)
-            #     self._player_scores.feed(info['score'])
+            # log these only at the end
             self._player_scores.feed(info['score'])
             self._player_IOU.feed(info['IoU'])
-            best_q = -np.inf
-            for qval in info['qvals']:
-                if qval > best_q:
-                    best_q = qval
-                self._player_qvals.feed(qval)
-            self._player_best_qvals.feed(best_q)
             self.player.reset()
 
         self.mem.append(Experience(old_s, act, reward, isOver))
@@ -317,8 +312,8 @@ class ExpReplay(DataFlow, Callback):
             self.trainer.monitors.put_scalar('expreplay/mean_IoU', mean)
             self.trainer.monitors.put_scalar('expreplay/max_IoU', max)
 
-            self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
-            self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
+            # self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
+            # self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
 
             self.trainer.monitors.put_scalar('expreplay/max_best_qval', best_qs.max)
             self.trainer.monitors.put_scalar('expreplay/mean_best_qval', best_qs.average)
@@ -337,6 +332,18 @@ class ExpReplay(DataFlow, Callback):
                                              np.asscalar(self.player.num_games.sum))
         else:
             self.trainer.monitors.put_scalar('expreplay/n_games', 0)
+
+        if self.player.best_q_vals.count:
+            self.trainer.monitors.put_scalar('expreplay/max_best_qval',
+                                             np.asscalar(self.player.best_q_vals.max))
+            self.trainer.monitors.put_scalar('expreplay/mean_best_qval',
+                                             np.asscalar(self.player.best_q_vals.average))
+            self.trainer.monitors.put_scalar('expreplay/min_best_qval',
+                                             np.asscalar(self.player.best_q_vals.min))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/max_best_qval', 0)
+            self.trainer.monitors.put_scalar('expreplay/mean_best_qval', 0)
+            self.trainer.monitors.put_scalar('expreplay/min_best_qval', 0)
 
         if self.player.num_backtracked.count:
             self.trainer.monitors.put_scalar('expreplay/n_backtracked',
