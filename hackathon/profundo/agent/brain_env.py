@@ -427,7 +427,8 @@ class Brain_Env(gym.Env):
 
         # don't let agent memory get populated with a bunch of stuck frames
         if self.stuck():
-            print("stuck! terminating")
+            self.num_stuck.feed(1)
+            # print("stuck! terminating")
             self.terminal = True
 
         # check if agent oscillates
@@ -464,6 +465,7 @@ class Brain_Env(gym.Env):
         if self.terminal:
             self.episode_duration.feed(self.cnt)
             info['IoU'] = self.calc_IOU()
+            info['stuck'] = self.stuck()
             self._trim_arrays()
             self.check_for_irragular_jumps()
             if (self.saveGif or self.saveVideo or self.viz):
@@ -826,7 +828,8 @@ class Brain_Env(gym.Env):
         self.num_success = StatCounter()
         self.num_backtracked = StatCounter()
         self.num_go_out = StatCounter()
-        self.best_q_vals = StatCounter()
+        self.num_stuck = StatCounter()
+        # self.best_q_vals = StatCounter()
 
         self.num_act0 = StatCounter()
         self.num_act1 = StatCounter()
