@@ -332,7 +332,7 @@ class Brain_Env(gym.Env):
         self.terminal = False
         go_out = False
         backtrack = False
-        terminal_found = False
+        node_found = False
 
         # print("action ", act)
         # UP Z+ -----------------------------------------------------------
@@ -373,13 +373,15 @@ class Brain_Env(gym.Env):
             # https://stackoverflow.com/a/25823710/4212158
             # .all(axis=1) makes sure that all of x,y,z isclose
             # np.any() checks is any coord is close
-            if (self._state[proposed_location[0], proposed_location[1], proposed_location[2]]
-                    == -1):
+            value_at_proposed = self._state[proposed_location[0], proposed_location[1], proposed_location[2]]
+            if value_at_proposed == -1:
                 # if np.any(np.isclose(self._agent_nodes, proposed_location.T).all(axis=1)):
                 #     print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
                 self.num_backtracked.feed(1)
+            elif value_at_proposed == 1:
+                node_found = True
 
             # we are in bounds, accept new location
             self._location = proposed_location
@@ -400,7 +402,7 @@ class Brain_Env(gym.Env):
         # punish -1 reward if the agent tries to go out
         # if (self.task != 'play'):  # TODO: why is this necessary?
         self.reward = self._calc_reward(go_out, backtrack,
-                                        terminal_found)  # TODO I think reward needs to be calculated after increment cnt
+                                        node_found)  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
         self._update_history()
 
@@ -668,14 +670,14 @@ class Brain_Env(gym.Env):
 
         return distance_to_nearest
 
-    def _calc_reward(self, go_out, backtrack, terminal_found):
+    def _calc_reward(self, go_out, backtrack, node_found):
         """ Calculate the new reward based on the increase in IoU
         """
         if go_out or backtrack:
             reward = -1
             return reward
-        if terminal_found:
-            reward = 1
+        if node_found:
+            reward = 2
             return reward
 
         if self.cnt == 0:
@@ -686,8 +688,6 @@ class Brain_Env(gym.Env):
         # print("distance: ", distance_to_nearest)
 
         if distance_to_nearest < previous_distance:
-            reward = 1
-        elif distance_to_nearest <= 1.1:  # we are right next to the next block
             reward = 1
         else:  # going farther away
             reward = -1
