@@ -363,6 +363,12 @@ class ExpReplay(DataFlow, Callback):
         else:
             self.trainer.monitors.put_scalar('expreplay/n_backtracked', 0)
 
+        if self.player.num_backtracked.count:
+            self.trainer.monitors.put_scalar('expreplay/n_backtracked',
+                                             np.asscalar(self.player.num_backtracked.sum))
+        else:
+            self.trainer.monitors.put_scalar('expreplay/n_backtracked', 0)
+
         # count wall collisions
         if self.player.num_go_out.count:
             self.trainer.monitors.put_scalar('expreplay/num_go_out',
