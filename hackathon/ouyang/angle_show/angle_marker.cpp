@@ -1,4 +1,4 @@
-#include "angle_calculate.h"
+#include "angle_marker.h"
 #include <math.h>
 #include <iostream>
 #include <vector>
@@ -96,7 +96,7 @@ struct angles angle_calculate(const NeuronTree & nt)
                 branchid.push_back(a);
             }
         }
-     qDebug()<<branchid.size();
+
      //calculate both local and remote angle
      //iI found that many branch nodes' child point is itself
 
@@ -112,13 +112,12 @@ struct angles angle_calculate(const NeuronTree & nt)
             int ch_local1 = childs[branchid.at(i)][0];
             int ch_local2 = childs[branchid.at(i)][1];
             local_ang = angle(neuron.at(branchid.at(i)),neuron.at(ch_local1),neuron.at(ch_local2));
-            qDebug()<<branchid.at(i)<<local_ang;
+
 
             int ch_remote1 = getRemoteChild(branchid.at(i)).at(0);
             int ch_remote2 = getRemoteChild(branchid.at(i)).at(1);
             remote_ang = angle(neuron.at(branchid.at(i)),neuron.at(ch_remote1),neuron.at(ch_remote2));
-            qDebug()<<branchid.at(i)<<remote_ang;
-            cout<<"====================this is a line======================="<<endl;
+
             //if (local_ang<=0)
             //   local_ang = 360-local_ang;
             //if (local_ang==local_ang)
@@ -130,11 +129,11 @@ struct angles angle_calculate(const NeuronTree & nt)
             remoteang.push_back(remote_ang);
             //i choose to plot remote angle,but both angles should be ploted in R,i just don't know how to plot two kinds of nodes in R
         }
-      result.b=localang;
-      result.a=remoteang;
+      result.a=localang;
+      result.b=remoteang;
       result.c=branchid;
-      qDebug()<<localang.size()<<branchid.size();
       return result;
+
 };
 
 QVector<V3DLONG> getRemoteChild(int t)
@@ -151,3 +150,4 @@ QVector<V3DLONG> getRemoteChild(int t)
     }
     return rchildlist;
 }
+
