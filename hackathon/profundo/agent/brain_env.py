@@ -453,10 +453,9 @@ class Brain_Env(gym.Env):
         # self.terminal = True
         # if self.curr_IOU >= 0.9: self.num_success.feed(1)
 
-        self.current_episode_score.feed(self.reward)
-        self.cnt += 1
+        self.rewards.feed(self.reward)
 
-        info = {'score': self.current_episode_score.sum,
+        info = {'score': self.rewards.sum,
                 'gameOver': self.terminal,
                 'filename': self.filename,
                 "qvals": qvalues,
@@ -469,6 +468,8 @@ class Brain_Env(gym.Env):
             self.check_for_irragular_jumps()
             if (self.saveGif or self.saveVideo or self.viz):
                 self.display()
+
+        self.cnt += 1
 
         return self._state, self.reward, self.terminal, info
 
