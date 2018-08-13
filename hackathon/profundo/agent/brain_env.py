@@ -425,6 +425,11 @@ class Brain_Env(gym.Env):
             # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
             self.terminal = True
 
+        # don't let agent memory get populated with a bunch of stuck frames
+        if self.stuck():
+            print("stuck! terminating")
+            self.terminal = True
+
         # check if agent oscillates
         # if self._oscillate:
         # TODO: rewind history, recalculate IOU
@@ -511,8 +516,13 @@ class Brain_Env(gym.Env):
         self._qvalues_history[self.cnt] = self._qvalues
 
     def _trim_arrays(self):
-        for arr in [self._agent_nodes, self._distances, self.reward_history, self._qvalues_history]:
-            arr = arr[:self.cnt]  # self._IOU_history
+        self._agent_nodes = self._agent_nodes[:self.cnt]
+        self._distances = self._distances[:self.cnt]
+        self.reward_history = self.reward_history[:self.cnt]
+        self._qvalues_history = self._qvalues_history[:self.cnt]
+        # for arr in [self._agent_nodes, self._distances, self.reward_history, self._qvalues_history]:
+        #     arr = arr[:self.cnt]  # self._IOU_history
+
 
     def _observe(self):
         # print("agent nodes ", self._agent_nodes[:self.cnt])
