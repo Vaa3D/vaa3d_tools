@@ -49,7 +49,7 @@ class SimpleImageViewer(object):
         # self.draw_image(human_nodes, colors=transparent_white)
         # for pos in human_nodes:
             # print("agent pos before transpose", pos)
-        pc = self.make_cubes(human_nodes, colors=[1, 1, 1, 0.8])
+        pc = self.make_cubes(human_nodes, colors=[1, 1, 1, 0.9])
         self.ax.add_collection3d(pc)
         # FIXME use generator instead of converting to list
 
@@ -86,7 +86,7 @@ class SimpleImageViewer(object):
         # except AttributeError:
         #     pass
 
-        self.scoreboard = ax.text(0.9 * self.x_span, 0, 0.9 * self.z_span,
+        self.scoreboard = ax.text(0.5 * self.x_span, 0, 0.9 * self.z_span,
                              s=" ",
                              bbox={'facecolor': 'w', 'alpha': 0.5, 'pad': 5})
 
@@ -244,7 +244,7 @@ class SimpleImageViewer(object):
             self.already_plotted.add(node_)
             # print("adding cube at ", new_node)
             # if len(traj) > 0:
-            pc = self.make_cubes([new_node], colors=[1, 0, 1, 0.3])
+            pc = self.make_cubes([new_node], colors=[1, 0, 1, 0.5], edgecolor=[1, 0, 1, 0.8])
             self.ax.add_collection3d(pc)
         self.scoreboard.set_text("Score: {}".format(sum(self.reward_history[:i])))
 
