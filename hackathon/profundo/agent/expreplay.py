@@ -305,12 +305,12 @@ class ExpReplay(DataFlow, Callback):
         best_qs = self._player_best_qvals
         IoU = self._player_IOU
         try:
-            mean, max = scores.average, scores.max
-            self.trainer.monitors.put_scalar('expreplay/mean_score', mean)
-            self.trainer.monitors.put_scalar('expreplay/max_score', max)
-            mean, max = IoU.average, IoU.max
-            self.trainer.monitors.put_scalar('expreplay/mean_IoU', mean)
-            self.trainer.monitors.put_scalar('expreplay/max_IoU', max)
+            if scores.count:
+                self.trainer.monitors.put_scalar('expreplay/mean_score', scores.average)
+                self.trainer.monitors.put_scalar('expreplay/max_score', scores.max)
+            if IoU.count:
+                self.trainer.monitors.put_scalar('expreplay/mean_IoU', IoU.average)
+                self.trainer.monitors.put_scalar('expreplay/max_IoU', IoU.max)
 
             # self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
             # self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
