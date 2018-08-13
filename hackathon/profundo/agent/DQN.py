@@ -80,8 +80,8 @@ EPOCHS_PER_EVAL = 1
 EVAL_EPISODE = 0
 MAX_EPISODE_LENGTH = 100
 # each epoch is 100k played frames
-STEPS_PER_EPOCH = MAX_EPISODE_LENGTH * UPDATE_FREQ
-NUM_EPOCHS = 1000
+STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
+NUM_EPOCHS = 100
 
 ###############################################################################
 
@@ -190,7 +190,7 @@ def get_config():
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
                 # 1->0.1 in the first million steps
-                [(0, 1), (200, 0.1), (1000, 0.01)],
+                [(0, 1), (40, 0.1), (100, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
                 Evaluator(nr_eval=EVAL_EPISODE,

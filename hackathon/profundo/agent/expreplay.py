@@ -315,8 +315,8 @@ class ExpReplay(DataFlow, Callback):
             # self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
             # self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
 
-            self.trainer.monitors.put_scalar('expreplay/max_best_qval', best_qs.max)
-            self.trainer.monitors.put_scalar('expreplay/mean_best_qval', best_qs.average)
+            # self.trainer.monitors.put_scalar('expreplay/max_best_qval', best_qs.max)
+            # self.trainer.monitors.put_scalar('expreplay/mean_best_qval', best_qs.average)
 
         except Exception:
             logger.exception("Cannot log training scores.")
