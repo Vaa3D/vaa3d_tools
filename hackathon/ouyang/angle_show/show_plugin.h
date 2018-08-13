@@ -1,0 +1,28 @@
+/* sort_plugin_lmg.h
+ * 2018-05-24 : by Linus Manubens Gil
+ * adapted from 2012-02-01 : by Yinan Wan
+ */
+ 
+#ifndef __SHOW_PLUGIN_LMG_H__
+#define __SHOW_PLUGIN_LMG_H__
+
+#include <QtGui>
+#include <v3d_interface.h>
+
+class ANGLEPlugin : public QObject, public V3DPluginInterface2_1
+{
+	Q_OBJECT
+	Q_INTERFACES(V3DPluginInterface2_1);
+
+public:
+    float getPluginVersion() const {return 0.91f;}
+
+	QStringList menulist() const;
+	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
+
+	QStringList funclist() const ;
+	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+};
+
+#endif
+
