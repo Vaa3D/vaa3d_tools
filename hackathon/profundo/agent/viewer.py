@@ -92,8 +92,8 @@ class SimpleImageViewer(object):
 
         # plot legends
         white_patch = mpatches.Patch(color='white', label='human annotation')
-        blue_patch = mpatches.Patch(color='blue', label='agent trajectory')
-        ax.legend(handles=[white_patch, blue_patch])
+        purple_patch = mpatches.Patch(color='purple', label='agent trajectory')
+        ax.legend(handles=[white_patch, purple_patch])
 
         return fig, ax
 
