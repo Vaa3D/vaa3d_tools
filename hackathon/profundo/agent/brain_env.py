@@ -466,10 +466,25 @@ class Brain_Env(gym.Env):
             self.episode_duration.feed(self.cnt)
             info['IoU'] = self.calc_IOU()
             self._trim_arrays()
+            self.check_for_irragular_jumps()
             if (self.saveGif or self.saveVideo or self.viz):
                 self.display()
 
         return self._state, self.reward, self.terminal, info
+
+    def check_for_irragular_jumps(self):
+        #https://stackoverflow.com/a/13592234/4212158
+        d = np.diff(self._agent_nodes, axis=0)
+        segdists = np.sqrt((d ** 2).sum(axis=1))
+        assert np.all((segdists <= self.stepsize)), "big jump detected: {}".format(segdists)
+
+    def stuck(self):
+        if self.cnt > 5:
+            recent_locations = self._agent_nodes[self.cnt-5:self.cnt]
+            is_stuck = np.all(np.isclose(recent_locations, recent_locations[0]))
+            return is_stuck
+        else:
+            return False
 
     # def get_best_node(self):
     #     ''' get best location with best qvalue from last for locations
