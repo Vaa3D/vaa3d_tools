@@ -43,6 +43,7 @@ from tensorpack.utils.stats import StatCounter
 from dataAPI import FilesListCubeNPY
 from viewer import SimpleImageViewer as Viewer
 from jaccard import jaccard
+from scipy.spatial import distance
 from data_processing.swc_io import (locations_to_swc,
                                     swc_to_TIFF, TIFF_to_npy,
                                     swc_to_nparray, locations_to_img)
@@ -262,7 +263,7 @@ class Brain_Env(gym.Env):
         self._qvalues = np.zeros(self.actions)
         # TODO: when doing multiscale, make difference bw state and observation
         self._state = self._observe()
-        self.curr_IOU = self.calc_IOU()
+        # self.curr_IOU = self.calc_IOU()
         # print("first IOU ", self.curr_IOU)
         self.reward = self._calc_reward(False, False, False)
         self._update_history()
@@ -332,7 +333,7 @@ class Brain_Env(gym.Env):
             learning.
         """
         self._qvalues = qvalues
-        # print("step qvals " ,qvalues)
+        self.best_q_vals.feed(np.max(qvalues))
         self._act = act
 
         current_loc = self._location
@@ -393,7 +394,7 @@ class Brain_Env(gym.Env):
             self._location = proposed_location
             # only update state, iou if we've changed location
             self._state = self._observe()
-            self.curr_IOU = self.calc_IOU()
+            # self.curr_IOU = self.calc_IOU()
 
         # check that all 3 coords match terminal node location
         # atol gives us some tolerance
@@ -401,7 +402,7 @@ class Brain_Env(gym.Env):
 
         if np.isclose(self._terminal_node, proposed_location.T, atol=1).all():
             terminal_found = True
-            print("finishing episode, terminal found, IOU = ", self.curr_IOU)
+            print("finishing episode, terminal found")
             self.terminal = True
             self.num_success.feed(1)
         # print("new location ", self._location, go_out, backtrack)
@@ -456,13 +457,13 @@ class Brain_Env(gym.Env):
 
         info = {'score': self.current_episode_score.sum,
                 'gameOver': self.terminal,
-                'IoU': self.curr_IOU,
                 'filename': self.filename,
                 "qvals": qvalues,
                 "backtracked": backtrack}
 
         if self.terminal:
             self.episode_duration.feed(self.cnt)
+            info['IoU'] = self.calc_IOU()
             self._trim_arrays()
             if (self.saveGif or self.saveVideo or self.viz):
                 self.display()
@@ -489,7 +490,8 @@ class Brain_Env(gym.Env):
         """ clear history buffer with current state
         """
         self._agent_nodes = np.zeros((self._history_length, self.dims), dtype=int)  # [(0,) * self.dims] * self._history_length
-        self._IOU_history = np.zeros((self._history_length,))
+        # self._IOU_history = np.zeros((self._history_length,))
+        self._distances = np.zeros((self._history_length,))
         # list of value lists
         self._qvalues_history = np.zeros(
             (self._history_length, self.actions))  # [(0,) * self.actions] * self._history_length
@@ -501,15 +503,16 @@ class Brain_Env(gym.Env):
         # update location history
         self._agent_nodes[self.cnt] = self._location
         # update jaccard index history
-        self._IOU_history[self.cnt] = self.curr_IOU
+        # self._IOU_history[self.cnt] = self.curr_IOU
+        self._distances[self.cnt] = self.curr_distance
         # and the reward
         self.reward_history[self.cnt] = self.reward
         # update q-value history
         self._qvalues_history[self.cnt] = self._qvalues
 
     def _trim_arrays(self):
-        for arr in [self._agent_nodes, self._IOU_history, self.reward_history, self._qvalues_history]:
-            arr = arr[:self.cnt]
+        for arr in [self._agent_nodes, self._distances, self.reward_history, self._qvalues_history]:
+            arr = arr[:self.cnt]  # self._IOU_history
 
     def _observe(self):
         # print("agent nodes ", self._agent_nodes[:self.cnt])
@@ -519,7 +522,7 @@ class Brain_Env(gym.Env):
                                        img=self.original_state,
                                        val=-1)
         loc = self._location.astype(int)
-        observation[loc[0], loc[1], loc[2]] = -10
+        observation[loc[0], loc[1], loc[2]] = -3
         return observation
 
         #
@@ -662,43 +665,82 @@ class Brain_Env(gym.Env):
         def crop_brain(self, xmin, xmax, ymin, ymax, zmin, zmax):
             return self.state[xmin:xmax, ymin:ymax, zmin:zmax]
 
+    def distance_to_nearest_unexplored_node(self, location=None):
+        # allow to chose reference location
+        if location is None:
+            location = self._location
+
+        unvisisted_nodes = np.transpose(np.where(self._state > 0))
+        if unvisisted_nodes.size == 0:
+            raise Exception
+        else:
+            distance_to_nearest = distance.cdist([location], unvisisted_nodes).min()
+        self.curr_distance = distance_to_nearest
+
+        return distance_to_nearest
+
+
     def _calc_reward(self, go_out, backtrack, terminal_found):
         """ Calculate the new reward based on the increase in IoU
         """
-        # overrides everything else
-        # if terminal_found:
-        #     reward = 500
-        #     return reward
-        if go_out:
-            reward = -20
+        if go_out or backtrack:
+            reward = -1
             return reward
-        if backtrack:
-            reward = -5
+        if terminal_found:
+            reward = 1
             return reward
 
-
-        # TODO, double check if indexes are correct
         if self.cnt == 0:
-            previous_IOU = 0.
+            previous_distance = np.inf
         else:
-            previous_IOU = self._IOU_history[self.cnt - 1]
-        IOU_difference = self.curr_IOU - previous_IOU
-        # print(self.cnt, self._history_length)
-        # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
-        #       "loc ", self._location)
-        assert isinstance(IOU_difference, float)
+            previous_distance = self._distances[self.cnt - 1]
+        distance_to_nearest = self.distance_to_nearest_unexplored_node()
+        # print("distance: ", distance_to_nearest)
 
-        if IOU_difference > 0:
-            reward = 200
-        else:  # didn't go out, backtrack, or improve score
+        if distance_to_nearest < previous_distance:
+            reward = 1
+        elif distance_to_nearest <= 1.1:  # we are right next to the next block
+            reward = 1
+        else:  # going farther away
             reward = -1
 
-        if terminal_found:
-            reward = 1000
-
-
-
         return reward
+
+
+        # # overrides everything else
+        # # if terminal_found:
+        # #     reward = 500
+        # #     return reward
+        # if go_out:
+        #     reward = -20
+        #     return reward
+        # if backtrack:
+        #     reward = -5
+        #     return reward
+        #
+        #
+        # # TODO, double check if indexes are correct
+        # if self.cnt == 0:
+        #     previous_IOU = 0.
+        # else:
+        #     previous_IOU = self._IOU_history[self.cnt - 1]
+        # IOU_difference = self.curr_IOU - previous_IOU
+        # # print(self.cnt, self._history_length)
+        # # print("curr IOU = ", self.curr_IOU, "prev IOU = ", self._IOU_history[self.cnt - 1], "diff = ", IOU_difference,
+        # #       "loc ", self._location)
+        # assert isinstance(IOU_difference, float)
+        #
+        # if IOU_difference > 0:
+        #     reward = 200
+        # else:  # didn't go out, backtrack, or improve score
+        #     reward = -1
+        #
+        # if terminal_found:
+        #     reward = 1000
+        #
+        #
+        #
+        # return reward
 
     def _is_in_bounds(self, coords):
         assert len(coords) == 3
@@ -761,6 +803,8 @@ class Brain_Env(gym.Env):
         self.num_success = StatCounter()
         self.num_backtracked = StatCounter()
         self.num_go_out = StatCounter()
+        self.best_q_vals = StatCounter()
+
         self.num_act0 = StatCounter()
         self.num_act1 = StatCounter()
         self.num_act2 = StatCounter()
