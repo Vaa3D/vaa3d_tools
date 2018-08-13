@@ -171,7 +171,7 @@ class Brain_Env(gym.Env):
         calc distance to goal
         """
         self._clear_history()
-        self.reset_stat()
+        # self.reset_stat()  # we want to keep this info in between episodes
         self.num_games.feed(1)
         self.cnt = 0
         self.terminal = False
