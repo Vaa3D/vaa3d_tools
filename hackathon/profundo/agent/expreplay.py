@@ -176,6 +176,7 @@ class ExpReplay(DataFlow, Callback):
         self._current_ob = self.player.reset()
         self._player_scores = StatCounter()
         self._player_IOU = StatCounter()
+        self._player_stuck = StatCounter()
         self._player_distances = StatCounter()
         self._player_qvals = StatCounter()
         self._player_best_qvals = StatCounter()
@@ -255,6 +256,7 @@ class ExpReplay(DataFlow, Callback):
             # log these only at the end
             self._player_scores.feed(info['score'])
             self._player_IOU.feed(info['IoU'])
+            self._player_stuck.feed(info['stuck'])
             self.player.reset()
 
         self.mem.append(Experience(old_s, act, reward, isOver))
@@ -335,7 +337,6 @@ class ExpReplay(DataFlow, Callback):
         IoU.reset()
         qvals.reset()
         best_qs.reset()
-
 
         # monitor number of played games and successes of reaching the target
         if self.player.num_games.count:
@@ -423,6 +424,6 @@ class ExpReplay(DataFlow, Callback):
         else:
             self.trainer.monitors.put_scalar('expreplay/num_act5', 0)
 
-        # reset stats
+        # reset stats after logging to tensorboard
         self.player.reset_stat()
 
