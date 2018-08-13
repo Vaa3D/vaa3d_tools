@@ -33,7 +33,7 @@ void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
     vector<int> branchid;
     angles temp;
     temp=angle_calculate(nt);
-    Angles=temp.a;
+    Angles=temp.b;
     branchid=temp.c;
     //qDebug()<<branchid.size();
 

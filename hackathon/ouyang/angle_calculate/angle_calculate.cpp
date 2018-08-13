@@ -117,7 +117,8 @@ struct angles angle_calculate(const NeuronTree & nt)
             int ch_remote1 = getRemoteChild(branchid.at(i)).at(0);
             int ch_remote2 = getRemoteChild(branchid.at(i)).at(1);
             remote_ang = angle(neuron.at(branchid.at(i)),neuron.at(ch_remote1),neuron.at(ch_remote2));
-
+            qDebug()<<branchid.at(i)<<remote_ang;
+            cout<<"====================this is a line======================="<<endl;
             //if (local_ang<=0)
             //   local_ang = 360-local_ang;
             //if (local_ang==local_ang)
@@ -132,8 +133,8 @@ struct angles angle_calculate(const NeuronTree & nt)
       result.b=localang;
       result.a=remoteang;
       result.c=branchid;
+      qDebug()<<localang.size()<<branchid.size();
       return result;
-
 };
 
 QVector<V3DLONG> getRemoteChild(int t)
