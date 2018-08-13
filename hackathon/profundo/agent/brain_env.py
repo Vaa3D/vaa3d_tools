@@ -49,7 +49,7 @@ from data_processing.swc_io import (locations_to_swc,
 
 __all__ = ['Brain_Env', 'FrameStack']
 
-_ALE_LOCK = threading.Lock()
+THREAD_LOCKER = threading.Lock()
 
 ObservationBounds = namedtuple('ObservationBounds', ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'])
 
@@ -112,14 +112,13 @@ class Brain_Env(gym.Env):
         else:
             raise ValueError
 
-        with _ALE_LOCK:
+        with THREAD_LOCKER:
             self.rng = get_rng(self)
         self.viz = viz
 
         print("viz {} gif {} video {}".format(self.viz, self.saveGif, self.saveVideo))
 
-        # stat counter to store current score or accumlated reward
-        self.current_episode_score = StatCounter()
+
         # get action space and minimal action set
         self.action_space = spaces.Discrete(6)  # change number actions here
         self.actions = self.action_space.n
@@ -152,7 +151,7 @@ class Brain_Env(gym.Env):
         assert np.isclose(jaccard(self.original_state, self.original_state)[0], 1)
 
     def reset(self):
-        # with _ALE_LOCK:
+        # with THREAD_LOCKER:
         self._restart_episode()
         return self._observe()
 
@@ -160,10 +159,7 @@ class Brain_Env(gym.Env):
         """
         restart current episode
         """
-        self.terminal = False
-        self.cnt = 0  # counter to limit number of steps per episodes
-        self.num_games.feed(1)
-        self.current_episode_score.reset()  # reset the stat counter
+
         self.new_random_game()
 
     def new_random_game(self):
@@ -174,6 +170,10 @@ class Brain_Env(gym.Env):
         init _screen, qvals,
         calc distance to goal
         """
+        self._clear_history()
+        self.reset_stat()
+        self.num_games.feed(1)
+        self.cnt = 0
         self.terminal = False
         self.viewer = None
 
@@ -384,7 +384,9 @@ class Brain_Env(gym.Env):
                 node_found = True
 
             # we are in bounds, accept new location
+            print("loc ", self._location, " to ", proposed_location, " diff = ", proposed_location-self._location )
             self._location = proposed_location
+
             # only update state, iou if we've changed location
             self._state = self._observe()
             # self.curr_IOU = self.calc_IOU()
@@ -480,6 +482,9 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         """ clear history buffer with current state
         """
+        # stat counter to store current score or accumlated reward
+        self.rewards = StatCounter()
+
         self._agent_nodes = np.zeros((self.max_num_frames, self.dims),
                                      dtype=int)  # [(0,) * self.dims] * self._history_length
         # self._IOU_history = np.zeros((self._history_length,))
@@ -514,6 +519,7 @@ class Brain_Env(gym.Env):
                                        img=self.original_state,
                                        val=-1)
         loc = self._location.astype(int)
+        # agent location was reset above
         observation[loc[0], loc[1], loc[2]] = -3
         return observation
 
@@ -641,7 +647,7 @@ class Brain_Env(gym.Env):
     #             output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
     #             # TODO: be explicit about bounds to swc_to_tiff
     #             output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
-    #             with _ALE_LOCK:
+    #             with THREAD_LOCKER:
     #                 output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
     #                                           overwrite=False)
     #             output_npy = np.load(output_npy_path).astype(float)
@@ -736,6 +742,7 @@ class Brain_Env(gym.Env):
         is_in_bounds = ((bounds.xmin <= x <= bounds.xmax and
                          bounds.ymin <= y <= bounds.ymax and
                          bounds.zmin <= z <= bounds.zmax))
+        print(coords, "in bounds ", is_in_bounds)
 
         # if not is_in_bounds:
         #     print("out of bounds :", coords)
@@ -785,6 +792,8 @@ class Brain_Env(gym.Env):
     def reset_stat(self):
         """ Reset all statistics counter"""
         self.stats = defaultdict(list)
+        # stat counter to store current score or accumlated reward
+        self.rewards = StatCounter()
         self.episode_duration = StatCounter()
         self.num_games = StatCounter()
         self.num_success = StatCounter()
