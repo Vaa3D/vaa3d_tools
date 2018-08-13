@@ -234,6 +234,13 @@ class ExpReplay(DataFlow, Callback):
             # assume batched network - this is the bottleneck
             q_values = self.predictor(history[None, :, :, :])[0][0]
 
+        # update q values
+        for qv in q_values:
+            self._player_qvals.feed(qv)
+        self._player_best_qvals.feed(np.max(q_values))
+
+
+
         # TODO no longer need history len, right?
         if self.rng.rand() <= self.exploration or (len(self.mem) <= self.frame_history_len):
             act = self.rng.choice(range(self.num_actions))
@@ -242,7 +249,7 @@ class ExpReplay(DataFlow, Callback):
             act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.5)))
         # print("pop_experience act {} qvals {}".format(act, q_values))
 
-        self._current_ob, reward, isOver, info = self.player.step(act, q_values)
+        self._current_ob, reward, isOver, info = self.player.step(act)
 
         if isOver:
             # log these only at the end
@@ -299,11 +306,13 @@ class ExpReplay(DataFlow, Callback):
         self._simulator_th.start()
 
     def _trigger(self):
-        # log player statistics in training
+        """log player statistics in training periodically"""
+        logger.info("Logging stats... ")
         scores = self._player_scores
         qvals = self._player_qvals
         best_qs = self._player_best_qvals
         IoU = self._player_IOU
+
         try:
             if scores.count:
                 self.trainer.monitors.put_scalar('expreplay/mean_score', scores.average)
@@ -312,11 +321,13 @@ class ExpReplay(DataFlow, Callback):
                 self.trainer.monitors.put_scalar('expreplay/mean_IoU', IoU.average)
                 self.trainer.monitors.put_scalar('expreplay/max_IoU', IoU.max)
 
-            # self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
-            # self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
+            if qvals.count:
+                self.trainer.monitors.put_scalar('expreplay/max_qval', qvals.max)
+                self.trainer.monitors.put_scalar('expreplay/mean_qval', qvals.average)
 
-            # self.trainer.monitors.put_scalar('expreplay/max_best_qval', best_qs.max)
-            # self.trainer.monitors.put_scalar('expreplay/mean_best_qval', best_qs.average)
+            if best_qs.count:
+                self.trainer.monitors.put_scalar('expreplay/max_best_qval', best_qs.max)
+                self.trainer.monitors.put_scalar('expreplay/mean_best_qval', best_qs.average)
 
         except Exception:
             logger.exception("Cannot log training scores.")

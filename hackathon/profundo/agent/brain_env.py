@@ -299,7 +299,7 @@ class Brain_Env(gym.Env):
         # assert isinstance(iou, )
         return iou
 
-    def step(self, act, qvalues):
+    def step(self, act):
         """The environment's step function returns exactly what we need.
         Args:
           act:
@@ -327,8 +327,8 @@ class Brain_Env(gym.Env):
         if self.terminal:
             print("should never be starting episode after terminal state!")
             raise ValueError
-        self._qvalues = qvalues
-        self.best_q_vals.feed(np.max(qvalues))
+        # self._qvalues = qvalues
+        # self.best_q_vals.feed(np.max(qvalues))
         self._act = act
 
         current_loc = self._location
@@ -387,7 +387,7 @@ class Brain_Env(gym.Env):
                 node_found = True
 
             # we are in bounds, accept new location
-            print("loc ", self._location, " to ", proposed_location, " diff = ", proposed_location-self._location )
+            # print("loc ", self._location, " to ", proposed_location, " diff = ", proposed_location-self._location )
             self._location = proposed_location
 
             # only update state, iou if we've changed location
@@ -458,7 +458,7 @@ class Brain_Env(gym.Env):
         info = {'score': self.rewards.sum,
                 'gameOver': self.terminal,
                 'filename': self.filename,
-                "qvals": qvalues,
+                # "qvals": qvalues,
                 "backtracked": backtrack}
 
         if self.terminal:
@@ -514,8 +514,8 @@ class Brain_Env(gym.Env):
         # self._IOU_history = np.zeros((self._history_length,))
         self._distances = np.zeros((self.max_num_frames,))
         # list of value lists
-        self._qvalues_history = np.zeros(
-            (self.max_num_frames, self.actions))  # [(0,) * self.actions] * self._history_length
+        # self._qvalues_history = np.zeros(
+        #     (self.max_num_frames, self.actions))  # [(0,) * self.actions] * self._history_length
         self.reward_history = np.zeros((self.max_num_frames,))
 
     def _update_history(self):
@@ -529,13 +529,13 @@ class Brain_Env(gym.Env):
         # and the reward
         self.reward_history[self.cnt] = self.reward
         # update q-value history
-        self._qvalues_history[self.cnt] = self._qvalues
+        # self._qvalues_history[self.cnt] = self._qvalues
 
     def _trim_arrays(self):
         self._agent_nodes = self._agent_nodes[:self.cnt]
         self._distances = self._distances[:self.cnt]
         self.reward_history = self.reward_history[:self.cnt]
-        self._qvalues_history = self._qvalues_history[:self.cnt]
+        # self._qvalues_history = self._qvalues_history[:self.cnt]
         # for arr in [self._agent_nodes, self._distances, self.reward_history, self._qvalues_history]:
         #     arr = arr[:self.cnt]  # self._IOU_history
 
@@ -771,8 +771,6 @@ class Brain_Env(gym.Env):
         is_in_bounds = ((bounds.xmin <= x <= bounds.xmax and
                          bounds.ymin <= y <= bounds.ymax and
                          bounds.zmin <= z <= bounds.zmax))
-        print(coords, "in bounds ", is_in_bounds)
-
         # if not is_in_bounds:
         #     print("out of bounds :", coords)
 
@@ -975,8 +973,8 @@ class FrameStack(gym.Wrapper):
         self.frames.append(ob)
         return self._observation()  # fixme should this be self._state
 
-    def step(self, action, q_values):
-        ob, reward, done, info = self.env.step(action, q_values)
+    def step(self, action):
+        ob, reward, done, info = self.env.step(action)
         self.frames.append(ob)
         return self._observation(), reward, done, info  # fixme should this be self._state
 
