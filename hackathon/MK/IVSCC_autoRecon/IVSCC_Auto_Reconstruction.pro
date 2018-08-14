@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 QMAKE_CFLAGS = -Zc:wchar_t
 #CONFIG	+= x86_64
 
-VAA3DPATH = C:/Vaa3D_2013_Qt486/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/swc2mask_cylinder
 INCLUDEPATH += ../v3d_imgManagerMK/imgProcessor
