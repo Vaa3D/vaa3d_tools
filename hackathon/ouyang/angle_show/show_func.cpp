@@ -12,6 +12,7 @@
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 #include <angle_marker.h>
 using namespace std;
@@ -38,9 +39,22 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     vector<int> branchid;
     angles temp;
     temp=angle_calculate(nt);
+    branchid=temp.c;
     local_angles=temp.a;
     remote_angles=temp.b;
-    branchid=temp.c;
+
+    vector<int>:: iterator it,it1;
+    for(it=++branchid.begin();it!=branchid.end();)
+    {
+        it1=find(branchid.begin(),it,*it);
+        if(it1!=it)
+            it=branchid.erase(it);
+        else
+            it++;
+    }
+    //sort(branchid.begin(),branchid.end());
+    //branchid.erase(unique(branchid.begin(),branchid.end()));
+
 
     //LocationSimple m;
     //LandmarkList mark;
@@ -59,7 +73,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     {
         //int sum=0;
         CellAPO t;
-        if(local_angles.at(i)>90)
+        if(remote_angles.at(i)>90)
         {
             t.x = neuron.at(branchid.at(i)).x;
             t.y = neuron.at(branchid.at(i)).y;
@@ -73,7 +87,10 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
 
-    qDebug()<<branchid.size()<<angle_markers.size();
+    //for(int i=0;i<branchid.size();i++){
+      //  qDebug()<<branchid.at(i);
+    //}
+    qDebug()<<branchid.size()<<remote_angles.size()<<angle_markers.size();
 
     QString apo_name = fileOpenName + ".apo";
     writeAPO_file(apo_name,angle_markers);
