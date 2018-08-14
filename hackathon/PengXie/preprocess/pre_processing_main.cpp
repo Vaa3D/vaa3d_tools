@@ -13,8 +13,9 @@
 
 #include "pre_processing_main.h"
 #include "basic_surf_objs.h"
-#include "sort_swc.h"
+#include "sort_swc_redefined.h"
 #include "neuron_connector_func.h"
+#include "utilities.h"
 #if !defined(Q_OS_WIN32)
 #include <unistd.h>
 #endif
@@ -23,49 +24,6 @@
 #include "getopt_tool.h"
 #include <io.h>
 #endif
-
-CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b){
-    CellAPO marker;
-    marker.x = node.x;
-    marker.y = node.y;
-    marker.z = node.z;
-    marker.volsize = vol;
-    marker.color.r = color_r;
-    marker.color.g = color_g;
-    marker.color.b = color_b;
-    return marker;
-}
-
-bool my_saveANO(QString fileNameHeader, bool swc=true, bool apo=true){
-    FILE * fp=0;
-    fp = fopen((char *)qPrintable(fileNameHeader+QString(".ano")), "wt");
-    if (!fp)
-    {
-        v3d_msg("Fail to open file to write.");
-        return false;
-    }
-    if(fileNameHeader.count("/")>0){
-        fileNameHeader = fileNameHeader.right(fileNameHeader.size()-fileNameHeader.lastIndexOf("/")-1);
-    }
-
-    if(swc){fprintf(fp, "SWCFILE=%s\n", qPrintable(fileNameHeader+QString(".swc")));}
-    if(apo){fprintf(fp, "APOFILE=%s\n", qPrintable(fileNameHeader+QString(".apo")));}
-    if(fp){fclose(fp);}
-    return true;
-}
-
-NeuronTree rm_nodes(NeuronTree nt, QList<int> list){
-    qSort(list);
-    if(list.at(list.last())>=nt.listNeuron.size()){  // Index out of range
-        cout << list.at(list.last())<<endl<<"rm_nodes Error: index out of range\n";
-        return nt;
-    }
-    for(int i=(list.size()-1); i>=0; i--){
-        nt.listNeuron.removeAt(list.at(i));
-    }
-
-    return nt;
-}
 
 NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel, double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
 {
@@ -335,7 +293,6 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 	char *dfile_input = NULL;
 	char *dfile_result = NULL;
-	char *outfile = NULL;
     double prune_size = 2; //default case
     double step_size = 0;
     double connect_soma_dist = 1000;
@@ -469,7 +426,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
     NeuronTree nt;
     QList<CellAPO> markers;
 
-    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC"))
+    if (qs_input.endsWith("swc") || qs_input.endsWith("SWC"))
     {
         nt = readSWC_file(qs_input);
     }
@@ -493,12 +450,14 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	}
 
     //2.2 Remove duplicates
+    printf("Removing duplicates\n");
     QList<NeuronSWC> newNeuron;
     NeuronTree deduped;
     // Maybe not the best solution. Use it for now.
     SortSWC(pruned.listNeuron, deduped.listNeuron, VOID, thres);
 
     //2.3 Resample
+    printf("Resampling\n");
     NeuronTree resampled = deduped;
     if (step_size>0){
         printf("Resampling along segments\n");
@@ -509,13 +468,26 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
     }
 
     //2.4 Connect to soma
+    printf("Connecting to soma\n");
     NeuronTree connected = deduped;
     if (connect_soma_dist>0){
-        markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
-        connected = connect_soma(deduped, markers, connect_soma_dist, outfileName.left(outfileName.length() - 4), 1e6, colorful, return_maintree);
+        if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){
+            markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
+        }
+        if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){
+            markers = readAPO_file(qs_input.left(qs_input.length() - 5) + QString(".apo"));
+        }
+        if (outfileName.endsWith(".swc") || outfileName.endsWith(".SWC")){
+            connected = connect_soma(deduped, markers, connect_soma_dist, outfileName.left(outfileName.length() - 4), 1e6, colorful, return_maintree);
+        }
+        if (outfileName.endsWith(".eswc") || outfileName.endsWith(".ESWC")){
+            connected = connect_soma(deduped, markers, connect_soma_dist, outfileName.left(outfileName.length() - 5), 1e6, colorful, return_maintree);
+        }
     }
+    cout << connected.listNeuron.size()<<endl;
 
     //2.5 Sort the tree.
+    printf("Sorting\n");
     NeuronTree sorted;
     SortSWC(connected.listNeuron, sorted.listNeuron, 0, thres);
     // To be implemented: remove duplicates
@@ -541,16 +513,16 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 //        QString apo_cmd = QString("cp %1 %2").arg(old_apo.toStdString().c_str()).arg(new_apo.toStdString().c_str());
 //        system(qPrintable(apo_cmd));
 //        printf(qPrintable(resamplefileName));
-////        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
+//        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
 //        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i 01_test.swc -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
 //        printf(qPrintable(sys_cmd));
 //        system(qPrintable(sys_cmd));
 //        sorted = readSWC_file(sortedfileName);
 //        // Cleanup
 //        sys_cmd = QString("rm %1").arg(resamplefileName.toStdString().c_str());
-////        system(qPrintable(sys_cmd));
+//        system(qPrintable(sys_cmd));
 //        sys_cmd = QString("rm %1").arg(sortedfileName.toStdString().c_str());
-////        system(qPrintable(sys_cmd));
+//        system(qPrintable(sys_cmd));
 //    }else{
 //        printf("Skip sorting\n");
 //        sorted=resampled;

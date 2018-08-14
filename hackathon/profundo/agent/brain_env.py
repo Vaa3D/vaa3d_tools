@@ -49,7 +49,7 @@ from data_processing.swc_io import (locations_to_swc,
 
 __all__ = ['Brain_Env', 'FrameStack']
 
-_ALE_LOCK = threading.Lock()
+THREAD_LOCKER = threading.Lock()
 
 ObservationBounds = namedtuple('ObservationBounds', ['xmin', 'xmax', 'ymin', 'ymax', 'zmin', 'zmax'])
 
@@ -112,14 +112,13 @@ class Brain_Env(gym.Env):
         else:
             raise ValueError
 
-        with _ALE_LOCK:
+        with THREAD_LOCKER:
             self.rng = get_rng(self)
         self.viz = viz
 
         print("viz {} gif {} video {}".format(self.viz, self.saveGif, self.saveVideo))
 
-        # stat counter to store current score or accumlated reward
-        self.current_episode_score = StatCounter()
+
         # get action space and minimal action set
         self.action_space = spaces.Discrete(6)  # change number actions here
         self.actions = self.action_space.n
@@ -152,7 +151,7 @@ class Brain_Env(gym.Env):
         assert np.isclose(jaccard(self.original_state, self.original_state)[0], 1)
 
     def reset(self):
-        # with _ALE_LOCK:
+        # with THREAD_LOCKER:
         self._restart_episode()
         return self._observe()
 
@@ -160,10 +159,7 @@ class Brain_Env(gym.Env):
         """
         restart current episode
         """
-        self.terminal = False
-        self.cnt = 0  # counter to limit number of steps per episodes
-        self.num_games.feed(1)
-        self.current_episode_score.reset()  # reset the stat counter
+
         self.new_random_game()
 
     def new_random_game(self):
@@ -174,6 +170,10 @@ class Brain_Env(gym.Env):
         init _screen, qvals,
         calc distance to goal
         """
+        self._clear_history()
+        # self.reset_stat()  # we want to keep this info in between episodes
+        self.num_games.feed(1)
+        self.cnt = 0
         self.terminal = False
         self.viewer = None
 
@@ -299,7 +299,7 @@ class Brain_Env(gym.Env):
         # assert isinstance(iou, )
         return iou
 
-    def step(self, act, qvalues):
+    def step(self, act):
         """The environment's step function returns exactly what we need.
         Args:
           act:
@@ -324,15 +324,18 @@ class Brain_Env(gym.Env):
             official evaluations of your agent are not allowed to use this for
             learning.
         """
-        self._qvalues = qvalues
-        self.best_q_vals.feed(np.max(qvalues))
+        if self.terminal:
+            print("should never be starting episode after terminal state!")
+            raise ValueError
+        # self._qvalues = qvalues
+        # self.best_q_vals.feed(np.max(qvalues))
         self._act = act
 
         current_loc = self._location
         self.terminal = False
         go_out = False
         backtrack = False
-        terminal_found = False
+        node_found = False
 
         # print("action ", act)
         # UP Z+ -----------------------------------------------------------
@@ -373,16 +376,20 @@ class Brain_Env(gym.Env):
             # https://stackoverflow.com/a/25823710/4212158
             # .all(axis=1) makes sure that all of x,y,z isclose
             # np.any() checks is any coord is close
-            if (self._state[proposed_location[0], proposed_location[1], proposed_location[2]]
-                    == -1):
+            value_at_proposed = self._state[proposed_location[0], proposed_location[1], proposed_location[2]]
+            if value_at_proposed == -1:
                 # if np.any(np.isclose(self._agent_nodes, proposed_location.T).all(axis=1)):
                 #     print("backtracking detected ", transposed, "hist ", np.unique(self._agent_nodes, axis=0), np.isclose(np.unique(self._agent_nodes, axis=0), transposed).all(axis=1))
                 # we backtracked
                 backtrack = True
                 self.num_backtracked.feed(1)
+            elif value_at_proposed == 1:
+                node_found = True
 
             # we are in bounds, accept new location
+            # print("loc ", self._location, " to ", proposed_location, " diff = ", proposed_location-self._location )
             self._location = proposed_location
+
             # only update state, iou if we've changed location
             self._state = self._observe()
             # self.curr_IOU = self.calc_IOU()
@@ -400,7 +407,7 @@ class Brain_Env(gym.Env):
         # punish -1 reward if the agent tries to go out
         # if (self.task != 'play'):  # TODO: why is this necessary?
         self.reward = self._calc_reward(go_out, backtrack,
-                                        terminal_found)  # TODO I think reward needs to be calculated after increment cnt
+                                        node_found)  # TODO I think reward needs to be calculated after increment cnt
         # update screen, reward ,location, terminal
         self._update_history()
 
@@ -416,6 +423,12 @@ class Brain_Env(gym.Env):
 
         if self.cnt >= self.max_num_frames - 1:  # compensate for 0 indexing
             # print("finishing episode, exceeded max_frames ", self.max_num_frames, " IOU = ", self.curr_IOU)
+            self.terminal = True
+
+        # don't let agent memory get populated with a bunch of stuck frames
+        if self.stuck():
+            self.num_stuck.feed(1)
+            # print("stuck! terminating")
             self.terminal = True
 
         # check if agent oscillates
@@ -441,23 +454,40 @@ class Brain_Env(gym.Env):
         # self.terminal = True
         # if self.curr_IOU >= 0.9: self.num_success.feed(1)
 
-        self.current_episode_score.feed(self.reward)
-        self.cnt += 1
+        self.rewards.feed(self.reward)
 
-        info = {'score': self.current_episode_score.sum,
+        info = {'score': self.rewards.sum,
                 'gameOver': self.terminal,
                 'filename': self.filename,
-                "qvals": qvalues,
+                # "qvals": qvalues,
                 "backtracked": backtrack}
 
         if self.terminal:
             self.episode_duration.feed(self.cnt)
             info['IoU'] = self.calc_IOU()
+            info['stuck'] = self.stuck()
             self._trim_arrays()
+            self.check_for_irragular_jumps()
             if (self.saveGif or self.saveVideo or self.viz):
                 self.display()
 
+        self.cnt += 1
+
         return self._state, self.reward, self.terminal, info
+
+    def check_for_irragular_jumps(self):
+        #https://stackoverflow.com/a/13592234/4212158
+        d = np.diff(self._agent_nodes, axis=0)
+        segdists = np.sqrt((d ** 2).sum(axis=1))
+        assert np.all((segdists <= self.stepsize)), "big jump detected: {}".format(segdists)
+
+    def stuck(self):
+        if self.cnt > 5:
+            recent_locations = self._agent_nodes[self.cnt-5:self.cnt]
+            is_stuck = np.all(np.isclose(recent_locations, recent_locations[0]))
+            return is_stuck
+        else:
+            return False
 
     # def get_best_node(self):
     #     ''' get best location with best qvalue from last for locations
@@ -478,13 +508,16 @@ class Brain_Env(gym.Env):
     def _clear_history(self):
         """ clear history buffer with current state
         """
+        # stat counter to store current score or accumlated reward
+        self.rewards = StatCounter()
+
         self._agent_nodes = np.zeros((self.max_num_frames, self.dims),
                                      dtype=int)  # [(0,) * self.dims] * self._history_length
         # self._IOU_history = np.zeros((self._history_length,))
         self._distances = np.zeros((self.max_num_frames,))
         # list of value lists
-        self._qvalues_history = np.zeros(
-            (self.max_num_frames, self.actions))  # [(0,) * self.actions] * self._history_length
+        # self._qvalues_history = np.zeros(
+        #     (self.max_num_frames, self.actions))  # [(0,) * self.actions] * self._history_length
         self.reward_history = np.zeros((self.max_num_frames,))
 
     def _update_history(self):
@@ -498,11 +531,16 @@ class Brain_Env(gym.Env):
         # and the reward
         self.reward_history[self.cnt] = self.reward
         # update q-value history
-        self._qvalues_history[self.cnt] = self._qvalues
+        # self._qvalues_history[self.cnt] = self._qvalues
 
     def _trim_arrays(self):
-        for arr in [self._agent_nodes, self._distances, self.reward_history, self._qvalues_history]:
-            arr = arr[:self.cnt]  # self._IOU_history
+        self._agent_nodes = self._agent_nodes[:self.cnt]
+        self._distances = self._distances[:self.cnt]
+        self.reward_history = self.reward_history[:self.cnt]
+        # self._qvalues_history = self._qvalues_history[:self.cnt]
+        # for arr in [self._agent_nodes, self._distances, self.reward_history, self._qvalues_history]:
+        #     arr = arr[:self.cnt]  # self._IOU_history
+
 
     def _observe(self):
         # print("agent nodes ", self._agent_nodes[:self.cnt])
@@ -512,6 +550,7 @@ class Brain_Env(gym.Env):
                                        img=self.original_state,
                                        val=-1)
         loc = self._location.astype(int)
+        # agent location was reset above
         observation[loc[0], loc[1], loc[2]] = -3
         return observation
 
@@ -639,7 +678,7 @@ class Brain_Env(gym.Env):
     #             output_swc = locations_to_swc(locations, fname, output_dir=tmpdir, overwrite=False)
     #             # TODO: be explicit about bounds to swc_to_tiff
     #             output_tiff_path = swc_to_TIFF(fname, output_swc, output_dir=tmpdir, overwrite=False)
-    #             with _ALE_LOCK:
+    #             with THREAD_LOCKER:
     #                 output_npy_path = TIFF_to_npy(fname, output_tiff_path, output_dir=tmpdir,
     #                                           overwrite=False)
     #             output_npy = np.load(output_npy_path).astype(float)
@@ -668,14 +707,14 @@ class Brain_Env(gym.Env):
 
         return distance_to_nearest
 
-    def _calc_reward(self, go_out, backtrack, terminal_found):
+    def _calc_reward(self, go_out, backtrack, node_found):
         """ Calculate the new reward based on the increase in IoU
         """
         if go_out or backtrack:
             reward = -1
             return reward
-        if terminal_found:
-            reward = 1
+        if node_found:
+            reward = 2
             return reward
 
         if self.cnt == 0:
@@ -686,8 +725,6 @@ class Brain_Env(gym.Env):
         # print("distance: ", distance_to_nearest)
 
         if distance_to_nearest < previous_distance:
-            reward = 1
-        elif distance_to_nearest <= 1.1:  # we are right next to the next block
             reward = 1
         else:  # going farther away
             reward = -1
@@ -736,7 +773,6 @@ class Brain_Env(gym.Env):
         is_in_bounds = ((bounds.xmin <= x <= bounds.xmax and
                          bounds.ymin <= y <= bounds.ymax and
                          bounds.zmin <= z <= bounds.zmax))
-
         # if not is_in_bounds:
         #     print("out of bounds :", coords)
 
@@ -785,12 +821,15 @@ class Brain_Env(gym.Env):
     def reset_stat(self):
         """ Reset all statistics counter"""
         self.stats = defaultdict(list)
+        # stat counter to store current score or accumlated reward
+        self.rewards = StatCounter()
         self.episode_duration = StatCounter()
         self.num_games = StatCounter()
         self.num_success = StatCounter()
         self.num_backtracked = StatCounter()
         self.num_go_out = StatCounter()
-        self.best_q_vals = StatCounter()
+        self.num_stuck = StatCounter()
+        # self.best_q_vals = StatCounter()
 
         self.num_act0 = StatCounter()
         self.num_act1 = StatCounter()
@@ -853,9 +892,10 @@ class Brain_Env(gym.Env):
             #             raise OSError("Directory {} exits!".format(dirname))
             #     os.mkdir(dirname)
 
-            vid_fpath = self.filename + '.mp4'
-            # vid_fpath = dirname + '/' + self.filename + '.mp4'
-            plotter.save_vid(vid_fpath)
+            vid_fpath = str(np.sum(self.reward_history)) + self.filename + '.mp4'
+            vid_fpath = dirname + '/' + vid_fpath + '.mp4'
+            with THREAD_LOCKER:
+                plotter.save_vid(vid_fpath)
             # plotter.show_agent()
 
         if self.viz:  # show progress
@@ -936,8 +976,8 @@ class FrameStack(gym.Wrapper):
         self.frames.append(ob)
         return self._observation()  # fixme should this be self._state
 
-    def step(self, action, q_values):
-        ob, reward, done, info = self.env.step(action, q_values)
+    def step(self, action):
+        ob, reward, done, info = self.env.step(action)
         self.frames.append(ob)
         return self._observation(), reward, done, info  # fixme should this be self._state
 

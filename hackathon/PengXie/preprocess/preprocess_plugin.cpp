@@ -20,7 +20,6 @@ QStringList neuron_analysis::funclist() const
 	return QStringList()
         <<tr("preprocess")
         <<tr("get_main_component")
-        <<tr("add_soma")
         <<tr("help");
 }
 
@@ -44,6 +43,10 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 	{
         return (pre_processing_main(input, output));
 	}
+    if (func_name == tr("neurite_analysis"))
+    {
+        return (neurite_analysis_main(input, output));
+    }
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

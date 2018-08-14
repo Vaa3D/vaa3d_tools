@@ -92,8 +92,8 @@ class SimpleImageViewer(object):
 
         # plot legends
         white_patch = mpatches.Patch(color='white', label='human annotation')
-        blue_patch = mpatches.Patch(color='blue', label='agent trajectory')
-        ax.legend(handles=[white_patch, blue_patch])
+        purple_patch = mpatches.Patch(color='purple', label='agent trajectory')
+        ax.legend(handles=[white_patch, purple_patch])
 
         return fig, ax
 
@@ -110,17 +110,18 @@ class SimpleImageViewer(object):
     #     pc = self._plotCubeAt(positions, colors=colors)  # , edgecolor="k")
     #     self.ax.add_collection3d(pc)
 
-    def save_vid(self, filename):
-        print("saving figure...")
-        dir_name, filename = os.path.split(filename)
-        # if not os.path.exists(dir_name):
-        #     os.mkdir(dir_name)
+    def save_vid(self, filepath):
+
+        dir_name, filename = os.path.split(filepath)
+        print("saving figure {}...".format(filename))
+        if not os.path.exists(dir_name):
+            os.mkdir(dir_name)
         # print("saving video {}".format(filename), flush=True)
         if not hasattr(self, 'anim'):  # we haven't animated yet
             self.render_animation()
         FFwriter = animation.FFMpegWriter(fps=15,
                        extra_args=['-vcodec', 'libx264'])
-        self.anim.save(filename, writer=FFwriter)
+        self.anim.save(filepath, writer=FFwriter)
         # self.anim.save(filename,
         #           fps=15,
         #           extra_args=['-vcodec', 'libx264'])

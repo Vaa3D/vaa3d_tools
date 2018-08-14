@@ -8,9 +8,15 @@ INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/
 
-HEADERS	+= preprocess_plugin.h
+HEADERS	+= preprocess_plugin.h \
+    neurite_analysis_main.h \
+    utilities.h \
+    sort_swc_redefined.h
 HEADERS += pre_processing_main.h
-SOURCES	+= preprocess_plugin.cpp
+SOURCES	+= preprocess_plugin.cpp \
+    neurite_analysis_main.cpp \
+    utilities.cpp \
+    sort_swc_redefined.cpp
 SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

@@ -51,7 +51,7 @@ def play_one_episode(env, func, render=False):
     while True:
         act, q_values = predict(ob)
         # print("play_one act {} qvals {}".format(act, q_values))
-        ob, r, isOver, info = env.step(act, q_values)
+        ob, r, isOver, info = env.step(act)
         # print("play q vals", q_values, "act ", act, "env_act ", env.env._act, "loc ", env.env._location)
         if render:
             env.render()
