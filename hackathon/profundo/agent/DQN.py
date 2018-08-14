@@ -64,7 +64,7 @@ OBSERVATION_DIMS = (15, 15, 15)
 # in other words, how many past observations the network can see
 FRAME_HISTORY = 1
 # the frequency of updating the target network
-UPDATE_FREQ = 4
+UPDATE_FREQ = 6
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
 GAMMA = 0.99  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
@@ -77,10 +77,10 @@ INIT_MEMORY_SIZE = MEMORY_SIZE // 20   # 5e4
 # num training epochs in between model evaluations
 EPOCHS_PER_EVAL = 1
 # the number of episodes to run during evaluation
-EVAL_EPISODE = 0
+EVAL_EPISODE = 0  # TODO: eval on validation data
 MAX_EPISODE_LENGTH = 100
 # each epoch is 100k played frames
-STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
+STEPS_PER_EPOCH = 10000 // UPDATE_FREQ
 NUM_EPOCHS = 100
 
 ###############################################################################
@@ -182,7 +182,7 @@ def get_config():
                        max_to_keep=1000),  # TODO: og was just ModelSaver()
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),
-                # update target network every 10k steps
+                # update target network every 10k/freq steps
                 every_k_steps=10000 // UPDATE_FREQ),
             # expreplay,
             ScheduledHyperParamSetter('learning_rate',
@@ -193,16 +193,14 @@ def get_config():
                 [(0, 1), (10, 0.1), (100, 0.01)],
                 interp='linear'),
             PeriodicTrigger(
-                expreplay,
-                every_k_steps=10000 // UPDATE_FREQ),
-            # PeriodicTrigger(
-            #     Evaluator(nr_eval=EVAL_EPISODE,
-            #               input_names=['state'],
-            #               output_names=['Qvalue'],
-            #               directory=data_dir,
-            #               files_list=test_data_fpaths,
-            #               get_player_fn=get_player),
-            #         every_k_steps=10000 // UPDATE_FREQ),
+                # eval_model_multithread(pred, EVAL_EPISODE, get_player)
+                Evaluator(nr_eval=EVAL_EPISODE,
+                          input_names=['state'],
+                          output_names=['Qvalue'],
+                          directory=data_dir,
+                          files_list=test_data_fpaths,
+                          get_player_fn=get_player),
+                    every_k_steps=10000 // UPDATE_FREQ),
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
