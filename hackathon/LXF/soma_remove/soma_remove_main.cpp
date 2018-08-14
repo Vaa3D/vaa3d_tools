@@ -7,27 +7,11 @@
 //#define NTDISs(a,b) (sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z)))
 bool FAR = 0;
 bool CLOSE = 1;
-int dis_thresh = 6;
+int dis_thresh = 3;
 
-struct Coordinate
-{
-    int x;
-    int y;
-    int z;
-    bool operator == (const Coordinate &b) const
-    {
-        return (x==b.x && y==b.y && z == b.z);
-    }
-};
-struct Soma
-{
-  double x_b;
-  double x_e;
-  double y_b;
-  double y_e;
-  double z_b;
-  double z_e;
-};
+
+
+//bool if_is_connect(Coordinate* &curr,Coordinate* &b,vector<vector<vector<V3DLONG> > > &mark3D);
 uint qHash(const Coordinate key)
 {
     return key.x + key.y + key.z;
@@ -37,10 +21,6 @@ uint qHash(const vector<Coordinate> key)
     return key[0].x + key[0].y + key[0].z;
 }
 
-
-//bool if_is_connect(Coordinate* &curr,Coordinate* &b,vector<vector<vector<V3DLONG> > > &mark3D);
-bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> > > &mark3D);
-void find_relation(QHash<vector<Coordinate>,vector<Coordinate> > &relation,vector<Coordinate> &curr,vector<Coordinate> &tmp,vector<V3DLONG> &reminder2,QHash<Coordinate,int> &map_index);
 bool soma_remove_main(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback2 &callback)
 {
     V3DLONG M = in_sz[0];
@@ -254,7 +234,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     V3DLONG signal = signal_all/pagesz;
     cout<<"signal_all = "<<signal_all<<endl;
     cout<<"signal = "<<signal<<endl;
-    //v3d_msg("llllllllllll");
     for(V3DLONG i=0;i<pagesz;i++)
     {
         if(int(data1d[i]) < signal+10)
@@ -267,6 +246,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         }
     }
     simple_saveimage_wrapper(callback,QString("binary.v3draw").toStdString().c_str(),im_cropped,in_sz,1);
+    cout<<"2.make connected area."<<endl;
     vector<vector<vector<V3DLONG> > > coodinate3D,mark3D;
     vector<vector<V3DLONG> > coodinate2D,mark2D;
     vector<V3DLONG> coodinate1D,mark1D;
@@ -316,7 +296,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     int unknow = 0;
     int black2 = 0;
     int all = 0;
-    for(int iz = 0; iz < P; iz++)   //P
+    for(int iz = 0; iz < P; iz++)
     {
         for(int iy = 0; iy < N; iy++)
         {
@@ -484,7 +464,197 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         }
     }
 
-    cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^write marker^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<endl;
+    cout<<"3.train_data"<<endl;
+
+
+
+
+
+    cout<<"4.calculate feature."<<endl;
+
+
+    vector<bool> y_n;
+    vector<double> overlap_level;
+    vector<double> ratio_v;
+    vector<double> count_v;
+    vector<double> D;
+    vector<double> grey;
+    //feature_calculate(y_n,overlap_level,ratio_v,count_v,D,connected_region_final);
+
+
+    if(im_cropped){delete []im_cropped;im_cropped=0;}
+
+}
+void find_relation(QHash<vector<Coordinate>,vector<Coordinate> > &relation,vector<Coordinate> &curr,vector<Coordinate> &tmp,vector<V3DLONG> &reminder2,QHash<Coordinate,int> &map_index)
+{
+    if(relation[curr].size()==0)return;
+    for(int y = 0;y<relation[curr].size();y++)
+    {
+        tmp.push_back(relation[curr][y]);
+    }
+    int g = map_index[relation[curr][0]];
+    reminder2[g-1] = 1;
+    find_relation(relation,relation[curr],tmp,reminder2,map_index);
+    return;
+
+}
+bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> > > &mark3D)
+{
+
+    double dist = NTDIS(curr,b);
+    if(dist<3)
+    {
+        return true;//this
+        if(mark3D[curr.z][curr.y][curr.x]==1)
+        {
+            mark3D[curr.z][curr.y][curr.x]==0;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+bool feature_calculate(vector<bool> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
+{
+    int n=2;
+    cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
+    int ind1;
+    int ind2;
+    vector<Max_level> two_level;
+    for(int i=0;i<connected_region_final.size();i++)
+    {
+        QHash<int,int> hashlinker;
+        for(int j=0;j<connected_region_final[i].size();j++)
+        {
+            Coordinate curr = connected_region_final[i][j];
+            hashlinker[curr.z]++;
+        }
+        int max1=0;
+        int max2=0;
+        ind1=0;
+        ind2=0;
+
+        for(QHash<int,int>::iterator it=hashlinker.begin();it!=hashlinker.end();it++)
+        {
+            if(it.value()>max1)
+            {
+                max1 = it.value();
+                ind1 = it.key();
+            }
+        }
+        for(QHash<int,int>::iterator it=hashlinker.begin();it!=hashlinker.end();it++)
+        {
+            if(it.value()==max1)continue;
+            if(it.value()>max2)
+            {
+                max2 = it.value();
+                ind2 = it.key();
+            }
+        }
+        Max_level max_l;
+        cout<<"max = "<<max1<<"  "<<max2<<endl;
+        cout<<"ind = "<<ind1<<"  "<<ind2<<endl;
+        max_l.level1=ind1;
+        max_l.level2=ind2;
+        two_level.push_back(max_l);
+        if((ind1-ind2==1)||(ind2-ind1==1))
+        {
+            y_n.push_back(true);
+        }
+        else
+        {
+            //v3d_msg("check");
+            y_n.push_back(false);
+        }
+    }
+
+
+    cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
+    double maxx;
+    double maxy;
+    double minx;
+    double miny;
+    double count_level;
+    for(int i=0;i<connected_region_final.size();i++)
+    {
+        count_level=0;
+        maxx=0;
+        maxy=0;
+        minx=100000000;
+        miny=100000000;
+        for(int j=0;j<connected_region_final[i].size();j++)
+        {
+            Coordinate curr = connected_region_final[i][j];
+            //cout<<"curr.z = "<<curr.z<<endl;
+            //cout<<"two_level[i] = "<<two_level[i].level1<<"  "<<two_level[i].level2<<endl;
+            if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2))||two_level[i].level2==0||two_level[i].level1==0)
+            {
+                continue;
+            }
+            count_level++;
+            if(curr.x>maxx)
+            {
+                maxx=curr.x;
+            }
+            if(curr.y>maxy)
+            {
+                maxy=curr.y;
+            }
+        }
+        count_v.push_back(count_level);
+        for(int j=0;j<connected_region_final[i].size();j++)
+        {
+            Coordinate curr = connected_region_final[i][j];
+            //cout<<"curr.z = "<<curr.z<<endl;
+            //cout<<"two_level[i] = "<<two_level[i].level1<<"  "<<two_level[i].level2<<endl;
+            if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2))||two_level[i].level2==0||two_level[i].level1==0)
+            {
+                //ratio_v.push_back(-1);
+                //overlap_level.push_back(-1);
+                continue;
+            }
+            if(curr.x<minx)
+            {
+                minx=curr.x;
+            }
+            if(curr.y<miny)
+            {
+                miny=curr.y;
+            }
+        }
+        double minus_x=maxx-minx+1;
+        double minus_y=maxy-miny+1;
+        double overl=count_level/(minus_x*minus_y*2);
+        double ratio1=minus_x/minus_y;
+        double ratio2=minus_y/minus_x;
+        double ratio;
+        if(ratio1>ratio2)
+            ratio=ratio1;
+        else
+            ratio=ratio2;
+        ratio_v.push_back(ratio);
+        overlap_level.push_back(overl);
+
+    }
+
+
+    cout<<"size = "<<overlap_level.size()<<endl;
+    cout<<"connected_region_final.size() = "<<connected_region_final.size()<<endl;
+
+
+
+
+
+
+
+
+
     QList<ImageMarker> marker_all;
     QList<QList<ImageMarker> > marker_all_each;
     QList<ImageMarker> center;
@@ -492,7 +662,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
 
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
-      //  if(connected_region_final[l].size()<size_thresh)continue;
         QList<ImageMarker> marker;
         for(int f=0;f<connected_region_final[l].size();f++)
         {
@@ -507,15 +676,14 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             marker_all.push_back(m);
         }
         marker_all_each.push_back(marker);
-        writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
+        //writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
     }
-    writeMarker_file(QString("marker_all.marker"),marker_all);
+    //writeMarker_file(QString("marker_all.marker"),marker_all);
     vector<MyMarker*> inswc;
     vector<Soma> soma_v;
 
 
-
-
+    cout<<"  <5>.calculate D "<<endl;
 
 
     cout<<"find_center"<<endl;
@@ -531,7 +699,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         soma.x_e = 0;
         soma.y_e = 0;
         soma.z_e = 0;
-      //  if(connected_region_final[l].size()<size_thresh)continue;
         for(int f=0;f<connected_region_final[l].size();f++)
         {
             sumx = sumx + connected_region_final[l][f].x;
@@ -577,15 +744,12 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         center.push_back(m);
         soma_v.push_back(soma);
     }
-    cout<<"center.size = "<<center.size()<<endl;
-    vector<double> D,max_dis_v;
-    int c=0;
+    vector<double> max_dis_v;
     for(int d=0;d<connected_region_final.size();d++)
     {
         double sum_dis=0;
         double sum_dis2=0;
         double mean_dis=0;
-       // if(connected_region_final[d].size()<size_thresh)continue;
         double max_dis = 0;
         for(int f=0;f<connected_region_final[d].size();f++)
         {
@@ -594,11 +758,8 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             {
                 max_dis = dis;
             }
-            //cout<<"dis = "<<dis<<endl;
-
             sum_dis=sum_dis+dis;
         }
-        //
         mean_dis = sum_dis/connected_region_final[d].size();
 
         for(int f=0;f<connected_region_final[d].size();f++)
@@ -609,12 +770,10 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             sum_dis2 = sum_dis2+(dis-mean_dis)*(dis-mean_dis);
         }
         max_dis_v.push_back(max_dis);
-        double Dd = sum_dis2/connected_region_final[d].size();
+        double Dd = sum_dis2/(connected_region_final[d].size()-1);
         D.push_back(Dd);
-      //  c++;
 
     }
-
 
 
     QList<ImageMarker> center_choose;
@@ -636,79 +795,50 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             continue;
         if(D[d]>10)
             continue;
-        cout<<"max_dis = "<<max_dis_v[d]<<endl;
-        cout<<"D = "<<D[d]<<endl;
+
         center_choose.push_back(center[d]);
-        cout<<"x_dis = "<<x_dis<<endl;
-        cout<<"y_dis = "<<y_dis<<endl;
-        cout<<"y_dis-x_dis = "<<y_dis-x_dis<<endl;
-        cout<<"x_dis-y_dis = "<<x_dis-y_dis<<endl;
-        cout<<"marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*max_dis_v[d]*8) = "<<marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*2*4)<<endl;
-        cout<<"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm"<<endl;
-        writeMarker_file(QString("marker_all_"+QString::number(d)+".marker"),marker_all_each[d]);
+
 
     }
-    cout<<"center_choose = "<<center_choose.size()<<endl;
-    writeMarker_file(QString("center_choose.marker"),center_choose);
-    //v3d_msg("check!");
 
+    cout<<"  <6>.calculate mean grey "<<endl;
 
-    for(int b=0;b<soma_v.size();b++)
+    double mean_grey;
+    for(int i=0;i<connected_region_final.size();i++)
     {
-        double x_dis = soma_v[b].x_e - soma_v[b].x_b;
-        double y_dis = soma_v[b].y_e - soma_v[b].y_b;
-        double z_dis = soma_v[b].z_e - soma_v[b].z_b;
-//        cout<<"x_dis = "<<x_dis<<endl;
-//        cout<<"y_dis = "<<y_dis<<endl;
-//        cout<<"z_dis = "<<z_dis<<endl;
-//        cout<<"////////////////////////////////////////////////"<<endl;
-    }
-    writeMarker_file(QString("center.marker"),center);
-    NeuronTree nt = mm2nt(inswc,QString("center.marker"));
-    writeSWC_file(QString("center.swc"),nt);
-    QString img_name = "binary.v3draw";
-    evaluate_radius(inswc,img_name,callback);
-//    for(int r=0;r<inswc.size();r++)
-//    {
-//        cout<<"radius = "<<double(inswc[r]->radius)<<endl;
-//    }
-    cout<<"all = "<<all<<endl;
-
-  //  writeMarker_file(QString("marker_all_3.marker"),marker_all3);
-    if(im_cropped){delete []im_cropped;im_cropped=0;}
-}
-void find_relation(QHash<vector<Coordinate>,vector<Coordinate> > &relation,vector<Coordinate> &curr,vector<Coordinate> &tmp,vector<V3DLONG> &reminder2,QHash<Coordinate,int> &map_index)
-{
-    if(relation[curr].size()==0)return;
-    for(int y = 0;y<relation[curr].size();y++)
-    {
-        tmp.push_back(relation[curr][y]);
-    }
-    int g = map_index[relation[curr][0]];
-    reminder2[g-1] = 1;
-    find_relation(relation,relation[curr],tmp,reminder2,map_index);
-    return;
-
-}
-bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> > > &mark3D)
-{
-
-    double dist = NTDIS(curr,b);
-    if(dist<4)
-    {
-        return true;//this
-        if(mark3D[curr.z][curr.y][curr.x]==1)
+        double sum_grey=0;
+        for(int d=0;d<connected_region_final[i].size();d++)
         {
-            mark3D[curr.z][curr.y][curr.x]==0;
-            return true;
+            sum_grey = sum_grey + connected_region_final[i][d].bri;
         }
-        else
-        {
-            return false;
-        }
+        mean_grey = sum_grey/connected_region_final[i].size();
+        grey.push_back(mean_grey);
     }
-    else
+    cout<<"  <7>.calculate std grey "<<endl;
+    double std_grey;
+    for(int i=0;i<connected_region_final.size();i++)
     {
-        return false;
+        double sum_grey=0;
+        for(int d=0;d<connected_region_final[i].size();d++)
+        {
+            sum_grey = (connected_region_final[i][d].bri-grey[i])*(connected_region_final[i][d].bri-grey[i]) + sum_grey;
+        }
+        std_grey = sum_grey/(connected_region_final[i].size()-1);
+        grey_std.push_back(sqrt(std_grey));
     }
+
+    for(int i=0;i<D.size();i++)
+    {
+        cout<<"y_n = "<<y_n[i]<<endl;
+        cout<<"D = "<<D[i]<<endl;
+        cout<<"overlap_level = "<<overlap_level[i]<<endl;
+        cout<<"ratio_v = "<<ratio_v[i]<<endl;
+        cout<<"count_v = "<<count_v[i]<<endl;
+        cout<<"grey_mean = "<<grey[i]<<endl;
+        cout<<"grey_std = "<<grey_std[i]<<endl;
+        cout<<"*************************************************"<<endl;
+    }
+
+
+
 }

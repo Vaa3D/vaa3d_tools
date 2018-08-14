@@ -1,16 +1,15 @@
-/* preprocess_plugin.h
- * Preprocess_neuron_for_analysis
- * 2018-7-27 : by PengXie
+/* IVSCC_Auto_Reconstruction_plugin.h
+ * This is a test plugin, you can use it as a demo.
+ * 2018-8-13 : by MK
  */
  
-#ifndef __PREPROCESS_PLUGIN_H__
-#define __PREPROCESS_PLUGIN_H__
+#ifndef __IVSCC_AUTO_RECONSTRUCTION_PLUGIN_H__
+#define __IVSCC_AUTO_RECONSTRUCTION_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include <pre_processing_main.h>
-#include <neurite_analysis_main.h>
-class neuron_analysis : public QObject, public V3DPluginInterface2_1
+
+class IVSCC_autoRecon : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
