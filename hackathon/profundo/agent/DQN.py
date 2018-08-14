@@ -192,6 +192,9 @@ def get_config():
                 # 1->0.1 in the first 250k steps
                 [(0, 1), (10, 0.1), (100, 0.01)],
                 interp='linear'),
+            PeriodicTrigger(  # runs exprelay._trigger()
+                expreplay,
+                every_k_steps=5000),
             PeriodicTrigger(
                 # eval_model_multithread(pred, EVAL_EPISODE, get_player)
                 Evaluator(nr_eval=EVAL_EPISODE,
