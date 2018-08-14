@@ -345,18 +345,6 @@ class ExpReplay(DataFlow, Callback):
         else:
             self.trainer.monitors.put_scalar('expreplay/n_games', 0)
 
-        if self.player.best_q_vals.count:
-            self.trainer.monitors.put_scalar('expreplay/max_best_qval',
-                                             np.asscalar(self.player.best_q_vals.max))
-            self.trainer.monitors.put_scalar('expreplay/mean_best_qval',
-                                             np.asscalar(self.player.best_q_vals.average))
-            self.trainer.monitors.put_scalar('expreplay/min_best_qval',
-                                             np.asscalar(self.player.best_q_vals.min))
-        else:
-            self.trainer.monitors.put_scalar('expreplay/max_best_qval', 0)
-            self.trainer.monitors.put_scalar('expreplay/mean_best_qval', 0)
-            self.trainer.monitors.put_scalar('expreplay/min_best_qval', 0)
-
         if self.player.num_backtracked.count:
             self.trainer.monitors.put_scalar('expreplay/n_backtracked',
                                              np.asscalar(self.player.num_backtracked.sum))
