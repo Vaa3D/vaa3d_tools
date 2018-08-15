@@ -520,7 +520,7 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
         return false;
     }
 }
-bool feature_calculate(vector<bool> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
+bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
 {
     int n=2;
     cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
@@ -593,11 +593,12 @@ bool feature_calculate(vector<bool> &y_n,vector<double> &overlap_level,vector<do
             Coordinate curr = connected_region_final[i][j];
             //cout<<"curr.z = "<<curr.z<<endl;
             //cout<<"two_level[i] = "<<two_level[i].level1<<"  "<<two_level[i].level2<<endl;
+            count_level++;
             if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2))||two_level[i].level2==0||two_level[i].level1==0)
             {
                 continue;
             }
-            count_level++;
+
             if(curr.x>maxx)
             {
                 maxx=curr.x;
@@ -634,10 +635,11 @@ bool feature_calculate(vector<bool> &y_n,vector<double> &overlap_level,vector<do
         double ratio1=minus_x/minus_y;
         double ratio2=minus_y/minus_x;
         double ratio;
-        if(ratio1>ratio2)
-            ratio=ratio1;
-        else
-            ratio=ratio2;
+//        if(ratio1>ratio2)
+//            ratio=ratio1;
+//        else
+//            ratio=ratio2;
+        ratio = ratio1;
         ratio_v.push_back(ratio);
         overlap_level.push_back(overl);
 

@@ -16,7 +16,9 @@ QStringList segment_profilingPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("segment_profiling")
-		<<tr("menu2")
+		<<tr("segmrnt_profiling_batch")
+		<<tr("eswc_relevel")
+		<<tr("feature")
 		<<tr("about");
 }
 
@@ -46,9 +48,21 @@ void segment_profilingPlugin::domenu(const QString &menu_name, V3DPluginCallback
 
         segment_profiling_main(callback,nt_p,filename);
 	}
-	else if (menu_name == tr("menu2"))
+	else if (menu_name == tr("eswc_relevel"))
 	{
-		v3d_msg("To be implemented.");
+		eswc_relevel(callback,parent);
+	}
+	else if (menu_name == tr("feature"))
+	{
+		nf__main(callback,parent);
+	}
+	else if (menu_name == tr("test"))
+	{
+		test_batch_file_menu(callback);
+	}
+	else if (menu_name == tr("segmrnt_profiling_batch"))
+	{
+		test_batch_file_menu(callback);
 	}
 	else
 	{
@@ -67,6 +81,8 @@ bool segment_profilingPlugin::dofunc(const QString & func_name, const V3DPluginA
 	if (func_name == tr("func1"))
 	{
 		v3d_msg("To be implemented.");
+		test_batch_file(input,output,callback);
+
 	}
 	else if (func_name == tr("func2"))
 	{

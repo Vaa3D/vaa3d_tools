@@ -51,7 +51,7 @@ public:
 	MIPOrientation MIPDirection;
 	mipOrientation mipDirection;
 
-	/***************** Image Operations *****************/
+	/***************** Basic Image Operations *****************/
 	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 	
@@ -75,7 +75,7 @@ public:
 
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
-	/****************************************************/
+	/**********************************************************/
 
 	/***************** Image Statistics *****************/
 	template<class T>
@@ -88,10 +88,13 @@ public:
 	static inline map<int, size_t> histQuickList(T inputImgPtr[], int imgDims[]);
 	/****************************************************/
 
-	/***************** Image Filtering *****************/
+	/***************** Image Processing/Filtering *****************/
 	template<class T>
 	static inline void gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
-	/***************************************************/
+
+	template<class T>
+	static inline void reversed_gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+	/**************************************************************/
 
 	/********* Morphological Operations *********/
 	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
@@ -105,6 +108,7 @@ public:
 	/***************************************************/
 };
 
+// ========================================= BASIC IMAGE OPERATION =========================================
 template<class T>
 inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
 {
@@ -235,7 +239,10 @@ inline void ImgProcessor::imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], 
 		}
 	}
 }
+// ====================================== END of [BASIC IMAGE OPERATION] ======================================
 
+
+// ==================================== IMAGE STATISTICS ====================================
 template<class T>
 inline map<string, float> ImgProcessor::getBasicStats(T inputImgPtr[], int imgDims[])
 {
@@ -326,9 +333,39 @@ inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims
 
 	return histMap;
 }
+// ================================== END of [IMAGE STATISTICS] ==================================
 
+
+// ================================== IMAGE PROCESSING/FILTERING ==================================
 template<class T>
 inline void ImgProcessor::gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+
+		int transformedValue = int(inputImgPtr[i]);
+		if (transformedValue < starting_intensity)
+		{
+			//if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
+			//else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
+			//outputImgPtr[i] = transformedValue;
+			outputImgPtr[i] = 0;
+		}
+		else if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
+		else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
+		//else outputImgPtr[i] = 255;
+		//else outputImgPtr[i] = transformedValue;
+	}
+}
+
+template<class T>
+inline void ImgProcessor::reversed_gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -353,5 +390,6 @@ inline void ImgProcessor::gammaCorrect(T inputImgPtr[], T outputImgPtr[], int im
 		//else outputImgPtr[i] = transformedValue;
 	}
 }
+// =================================== END of [IMAGE PROCESSING/FILTERING] ===================================
 
 #endif

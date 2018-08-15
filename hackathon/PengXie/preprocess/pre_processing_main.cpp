@@ -111,6 +111,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
             qDebug()<< "Marker found. Using it as root."; //<< neuron.size()<< neuron.at(neuron.size()-1).pn;
         }
         else{
+            QList <CellAPO> new_markers;
             for(int i=0;i<markers.size();i++)
             {
                 if(markers.at(i).comment == "soma")//markers.at(i).color.r == 0 && markers.at(i).color.g == 0 && markers.at(i).color.b == 255)
@@ -124,6 +125,8 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
                     S.n = 0;
                     S.pn = -1;
                     S_list.append(S);
+                    new_markers.append(markers.at(i));
+                    markers = new_markers;
                     break;
                 }
             }
@@ -131,6 +134,9 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         }
         for(int i=0;i<N;i++){S_list.append(nt.listNeuron.at(i));}
         nt.listNeuron = S_list;
+        markers[0].color.r=0;
+        markers[0].color.g=0;
+        markers[0].color.b=0;
         somarootid = 0;
     }
 
@@ -141,7 +147,6 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         else{istip.append(false);}
     }
 
-    export_listNeuron_2swc(nt.listNeuron, "01.swc");
 
     // For each subtree, connect the closest end (tip or root) to soma, if within certain distance.
     cout << "Total components:\t" <<ncomponents << endl;
@@ -421,6 +426,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 	}
 
     // 1. Load data
+    printf("Loading swc\n");
     QString qs_input(dfile_input);
 
     NeuronTree nt;
@@ -550,7 +556,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 void printHelp_pre_processing()
 {
-    printf("\nVaa3D plugin: modifiled pre-processing step for BlastNeuron pipeline, including: \n");
+    printf("\nVaa3D plugin: modifiled pre-processing step analysis/QC, including: \n");
     printf("\t1) delete the branches in a neuron which have a length smaller the prune size ( by default the prune size is 5 %% of neuron/tree diameter.\n");
     printf("\t2) resample the neurons along the segments with the step size (default: 1). \n");
     printf("\t3) sort the neurons along the segments with the step size (deyyplt: 1). \n");
@@ -565,7 +571,7 @@ void printHelp_pre_processing()
     printf("\t#m <thres_connect_soma>       :   maximun distance to connect a node to soma.\n");
     printf("\t                         use 0 to skip, if not specified, use 1000.\n");
     printf("\t#t <thres>       :    gap threshold for connecting during the sorting procedure.\n");
-    printf("\t                         use 0 to skip, if not specified, use 2.\n");
+    printf("\t                        if not specified, use 0.\n");
     printf("\t#r <rotation = 0>   :   whether to perform PCA alignment.\n");
     printf("\t                         if not specified, rotation is not performed\n");
     printf("\t#d <label_subtree = 0>   :   whether to give each subtree a different color.\n");

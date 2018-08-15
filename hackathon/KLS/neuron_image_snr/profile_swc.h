@@ -25,7 +25,7 @@ struct IMAGE_METRICS {
     double fg_std;
     double bg_std;
     double tubularity_std;
-	double vr;
+	int vr;
 };
 
 

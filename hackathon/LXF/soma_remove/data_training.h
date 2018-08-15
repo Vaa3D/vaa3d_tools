@@ -5,6 +5,7 @@
 #include "v3d_interface.h"
 #include "../../heyishan/blastneuron_bjut/overlap/overlap_gold.h"
 #include "soma_remove_main.h"
+
 struct Each_line
 {
     double x1;
@@ -23,7 +24,7 @@ struct Chart
 };
 struct Feature
 {
-    vector<bool> y_n;
+    vector<double> y_n;
     vector<double> overlap_level;
     vector<double> ratio_v;
     vector<double> count_v;
@@ -32,7 +33,8 @@ struct Feature
     vector<double> grey_std;
 };
 
-
+double get_D(vector<double> &v1,vector<double> &v2);
+bool Cov_calculate(Chart &chart,Feature &feature);
 vector<Coordinate> readtxt_LXF(const QString& filename);
 bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 #endif // DATA_TRAINING_H
