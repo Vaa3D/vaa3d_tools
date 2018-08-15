@@ -11,6 +11,9 @@
 #include "neuron_connector_func.h"
 using namespace std;
 
-bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent);
+bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & output);
+
 void printHelp_pre_processing();
 #endif

@@ -6,13 +6,15 @@
 #include "v3d_message.h"
 #include <vector>
 #include "preprocess_plugin.h"
+#include "pre_processing_main.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
  
 QStringList neuron_analysis::menulist() const
 {
     return QStringList()
-        <<tr("about");
+            <<tr("preprocess")
+            <<tr("about");
 }
 
 QStringList neuron_analysis::funclist() const
@@ -25,6 +27,10 @@ QStringList neuron_analysis::funclist() const
 
 void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
+    if(menu_name == tr("preprocess"))
+    {
+        pre_processing_domenu(callback, parent);
+    }
     if (menu_name == tr("about"))
     {
 		v3d_msg(tr("Preprocess_neuron_for_analysis. "
@@ -41,7 +47,7 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 
     if (func_name == tr("preprocess"))
 	{
-        return (pre_processing_main(input, output));
+        return (pre_processing_dofunc(input, output));
 	}
     if (func_name == tr("neurite_analysis"))
     {

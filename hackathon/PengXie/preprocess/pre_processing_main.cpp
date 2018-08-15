@@ -11,6 +11,7 @@
 
 #define DEFAULT 1000000000
 
+#include "QtGui"
 #include "pre_processing_main.h"
 #include "basic_surf_objs.h"
 #include "sort_swc_redefined.h"
@@ -233,20 +234,108 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 
     // QC report
     FILE * fp=0;
-    fp = fopen((char *)qPrintable(outfileLabel+QString(".QC")), "wt");
-    fprintf(fp, "Percentage_lost\t%f\%\n", bad_nodes*100.0/N);
+    fp = fopen((char *)qPrintable(outfileLabel+QString(".QC.txt")), "wt");
+    fprintf(fp, "Percentage_lost\t%f%%\n", bad_nodes*100.0/N);
     fclose(fp);
     return nt;
 }
 
+bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, double thres = 0,
+                    double step_size = 0, double connect_soma_dist = 2000, bool rotation = false,
+                    bool colorful = false, bool return_maintree = false)
+{
 
+    // 1. Load data
+    printf("Loading swc\n");
 
-bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & output)
+    NeuronTree nt;
+    QList<CellAPO> markers;
+
+    if (qs_input.endsWith("swc") || qs_input.endsWith("SWC"))
+    {
+        nt = readSWC_file(qs_input);
+    }
+
+    //2. start processing
+
+    //2.1 Prune
+    printf("Pruning short branches\n");
+    NeuronTree pruned;
+
+    if (!prune_branch(nt, pruned, prune_size))
+    {
+        fprintf(stderr,"Error in prune_short_branch.\n");
+        return 1;
+    }
+
+    //2.2 Remove duplicates
+    printf("Removing duplicates\n");
+    QList<NeuronSWC> newNeuron;
+    NeuronTree deduped;
+    // Maybe not the best solution. Use it for now.
+    SortSWC(pruned.listNeuron, deduped.listNeuron, VOID, thres);
+
+    //2.3 Resample
+    printf("Resampling\n");
+    NeuronTree resampled = deduped;
+    if (step_size>0){
+        printf("Resampling along segments\n");
+        resampled = resample(pruned, step_size);
+    }else{
+        printf("Skip Resampling\n");
+        resampled=pruned;
+    }
+
+    //2.4 Connect to soma
+    printf("Connecting to soma\n");
+    NeuronTree connected = deduped;
+    if (connect_soma_dist>0){
+        printf(qPrintable(qs_input),"\n");
+        if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){
+            markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
+        }
+        if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){
+            markers = readAPO_file(qs_input.left(qs_input.length() - 5) + QString(".apo"));
+        }
+        if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
+            connected = connect_soma(deduped, markers, connect_soma_dist, qs_output.left(qs_output.length() - 4), 1e6, colorful, return_maintree);
+        }
+        if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
+            connected = connect_soma(deduped, markers, connect_soma_dist, qs_output.left(qs_output.length() - 5), 1e6, colorful, return_maintree);
+        }
+    }
+    cout << connected.listNeuron.size()<<endl;
+
+    //2.5 Sort the tree.
+    printf("Sorting\n");
+    NeuronTree sorted;
+    SortSWC(connected.listNeuron, sorted.listNeuron, 0, thres);
+    // To be implemented: remove duplicates
+
+    //2.6 Align axis
+    NeuronTree result;
+    if (rotation)
+    {
+        printf("Aligning PCA axis\n");
+        result = align_axis(sorted);
+    }
+    else{
+        printf("Skip PCA alignment\n");
+        result = sorted;
+    }
+
+    if (export_listNeuron_2swc(result.listNeuron,qPrintable(qs_output)))
+        printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
+    bool print_apo = connect_soma_dist>0;
+    my_saveANO(qs_output.left(qs_output.length() - 4), true, print_apo);
+
+    return 1;
+}
+
+bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
 	printf("welcome to pre_processing\n");
-
-
 	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
 	vector<char*>* outlist = NULL;
 	vector<char*>* paralist = NULL;
@@ -296,7 +385,7 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 
     //0. read arguments
 
-	char *dfile_input = NULL;
+    char *dfile_input = NULL;
 	char *dfile_result = NULL;
     double prune_size = 2; //default case
     double step_size = 0;
@@ -425,133 +514,38 @@ bool pre_processing_main(const V3DPluginArgList & input, V3DPluginArgList & outp
 		}
 	}
 
-    // 1. Load data
-    printf("Loading swc\n");
-    QString qs_input(dfile_input);
-
-    NeuronTree nt;
-    QList<CellAPO> markers;
-
-    if (qs_input.endsWith("swc") || qs_input.endsWith("SWC"))
-    {
-        nt = readSWC_file(qs_input);
-    }
-
-	QString outfileName = QString(dfile_result);
-	if (dfile_result==NULL)
-	{
-		outfileName = qs_input+"_preprocessed.swc";
-	}
-
-    //2. start processing
-
-    //2.1 Prune
-	printf("Pruning short branches\n");
-	NeuronTree pruned;
-
-    if (!prune_branch(nt, pruned, prune_size))
-	{
-		fprintf(stderr,"Error in prune_short_branch.\n");
-		return 1;
-	}
-
-    //2.2 Remove duplicates
-    printf("Removing duplicates\n");
-    QList<NeuronSWC> newNeuron;
-    NeuronTree deduped;
-    // Maybe not the best solution. Use it for now.
-    SortSWC(pruned.listNeuron, deduped.listNeuron, VOID, thres);
-
-    //2.3 Resample
-    printf("Resampling\n");
-    NeuronTree resampled = deduped;
-    if (step_size>0){
-        printf("Resampling along segments\n");
-        resampled = resample(pruned, step_size);
-    }else{
-        printf("Skip Resampling\n");
-        resampled=pruned;
-    }
-
-    //2.4 Connect to soma
-    printf("Connecting to soma\n");
-    NeuronTree connected = deduped;
-    if (connect_soma_dist>0){
-        if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){
-            markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
-        }
-        if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){
-            markers = readAPO_file(qs_input.left(qs_input.length() - 5) + QString(".apo"));
-        }
-        if (outfileName.endsWith(".swc") || outfileName.endsWith(".SWC")){
-            connected = connect_soma(deduped, markers, connect_soma_dist, outfileName.left(outfileName.length() - 4), 1e6, colorful, return_maintree);
-        }
-        if (outfileName.endsWith(".eswc") || outfileName.endsWith(".ESWC")){
-            connected = connect_soma(deduped, markers, connect_soma_dist, outfileName.left(outfileName.length() - 5), 1e6, colorful, return_maintree);
-        }
-    }
-    cout << connected.listNeuron.size()<<endl;
-
-    //2.5 Sort the tree.
-    printf("Sorting\n");
-    NeuronTree sorted;
-    SortSWC(connected.listNeuron, sorted.listNeuron, 0, thres);
-    // To be implemented: remove duplicates
-
-
-//    //2.4 Sort
-//    //The old version of sort function is slow for large (>20,000 nodes) trees
-//    //Replaced by neuron_connector
-//    NeuronTree sorted;
-//    if (thres>0){
-//        printf("Sort \n");
-////        sorted = sort(resampled,VOID, thres); // Original 2012-06-02
-//        QString resamplefileName = qs_input + ".resample.temp.swc";
-//        export_listNeuron_2swc(resampled.listNeuron, qPrintable(resamplefileName));
-//        QString sortedfileName = qs_input + ".sorted.temp.swc";
-
-//        QString subStr("swc");
-//        QString newStr("apo");
-//        QString old_apo = qs_input;
-//        QString new_apo = resamplefileName;
-//        old_apo.replace(old_apo.lastIndexOf(subStr), subStr.size(), newStr);
-//        new_apo.replace(new_apo.lastIndexOf(subStr), subStr.size(), newStr);
-//        QString apo_cmd = QString("cp %1 %2").arg(old_apo.toStdString().c_str()).arg(new_apo.toStdString().c_str());
-//        system(qPrintable(apo_cmd));
-//        printf(qPrintable(resamplefileName));
-//        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i %1 -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
-//        QString sys_cmd = QString("vaa3d -x sort_neuron_swc_lmg -f sort_swc_lmg -i 01_test.swc -o %2 -p 1000").arg(resamplefileName.toStdString().c_str()).arg(sortedfileName.toStdString().c_str());
-//        printf(qPrintable(sys_cmd));
-//        system(qPrintable(sys_cmd));
-//        sorted = readSWC_file(sortedfileName);
-//        // Cleanup
-//        sys_cmd = QString("rm %1").arg(resamplefileName.toStdString().c_str());
-//        system(qPrintable(sys_cmd));
-//        sys_cmd = QString("rm %1").arg(sortedfileName.toStdString().c_str());
-//        system(qPrintable(sys_cmd));
-//    }else{
-//        printf("Skip sorting\n");
-//        sorted=resampled;
-//    }
-
-    //2.6 Align axis
-	NeuronTree result;
-    if (rotation)
-	{
-		printf("Aligning PCA axis\n");
-        result = align_axis(sorted);
-	}
-    else{
-        printf("Skip PCA alignment\n");
-        result = sorted;
-    }
-
-    if (export_listNeuron_2swc(result.listNeuron,qPrintable(outfileName)))
-		printf("\t %s has been generated successfully.\n",qPrintable(outfileName));
-    bool print_apo = connect_soma_dist>0;
-    my_saveANO(outfileName.left(outfileName.length() - 4), true, print_apo);
-
+    pre_processing(QString(dfile_input), QString(dfile_result), prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
 	return 1;
+}
+
+bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    double prune_size = 2; //default case
+    double step_size = 0;
+    double connect_soma_dist = 1000;
+    double thres = 0;
+    bool rotation = false;
+    bool colorful = false;
+    bool return_maintree = false;
+
+    //choose a directory that contain swc files
+    QString qs_input;
+    qs_input=QFileDialog::getOpenFileName(
+                parent,
+                "Please select input file (*.swc)\n",
+                QDir::currentPath(),
+                "All files (*.*) ;; swc files (*.swc *.eswc)"
+                );
+    QString qs_output(qPrintable(qs_input));
+    if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
+        qs_output = qs_output.left(qs_output.length() - 4) + QString(".processed.swc");
+    }
+    if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
+        qs_output = qs_output.left(qs_output.length() - 5) + QString(".processed.eswc");
+    }
+
+    pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
+    return 1;
 }
 
 void printHelp_pre_processing()
