@@ -3,6 +3,7 @@
  * 2018-8-13 : by MK
  */
  
+#include <iostream>
 #include <vector>
 
 #include "v3d_message.h"
@@ -56,9 +57,11 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	if (func_name == tr("segmentationPipe"))
 	{
 		QString inputPathQ = infiles[0];
-		QString outputPathQ = outfiles[0];
+		QString outputPathQ;
+		if (!outfiles.empty()) outputPathQ = outfiles[0];
 		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
-		segPipePtr->sliceDownSample2D(2, "max");
+		//segPipePtr->sliceDownSample2D(2, "max");
+		segPipePtr->sliceGammaCorrect();
 	}
 	else if (func_name == tr("func2"))
 	{
