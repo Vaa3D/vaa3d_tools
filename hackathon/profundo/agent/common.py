@@ -181,6 +181,9 @@ class Evaluator(Callback):
 
     def _setup_graph(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 20)
+
+
+        # http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.TowerTrainer.get_predictor
         self.pred_funcs = [self.trainer.get_predictor(
             self.input_names, self.output_names)] * NR_PROC
 
