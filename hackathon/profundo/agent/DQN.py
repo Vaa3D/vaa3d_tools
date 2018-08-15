@@ -80,7 +80,7 @@ EPOCHS_PER_EVAL = 1
 EVAL_EPISODE = 0  # TODO: eval on validation data
 MAX_EPISODE_LENGTH = 100
 # each epoch is 100k played frames
-STEPS_PER_EPOCH = 10000 // UPDATE_FREQ
+STEPS_PER_EPOCH = 100000
 NUM_EPOCHS = 100
 
 ###############################################################################
@@ -189,8 +189,8 @@ def get_config():
                                       [(60, 4e-4), (100, 2e-4)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
-                # 1->0.1 in the first 250k steps
-                [(0, 1), (10, 0.1), (100, 0.01)],
+                # 1->0.1 in the first 10M steps
+                [(0, 1), (100, 0.1), (120, 0.01)],
                 interp='linear'),
             PeriodicTrigger(  # runs exprelay._trigger()
                 expreplay,
