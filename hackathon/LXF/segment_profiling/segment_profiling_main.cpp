@@ -35,7 +35,7 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
 		}
 	}
 
-	cout<<"++++++++++++++++++++++++++++++++++"<<v_l<<endl;
+	//cout<<"++++++++++++++++++++++++++++++++++"<<v_l<<endl;
     QList<QList<IMAGE_METRICS> > CSVlist;
     V_NeuronSWC_list testVNL = NeuronTree__2__V_NeuronSWC_list(nt);
 	//NeuronTree ntree = V_NeuronSWC_list__2__NeuronTree(testVNL)
@@ -66,12 +66,12 @@ bool segment_profiling_main(V3DPluginCallback2 &callback,NeuronTree &nt,QString 
 		for(int j=0;j<snrTree.listNeuron.size()-1;j++){
 			total_length = total_length + sqrt(pow((snrTree.listNeuron.at(j+1).x*0.2-snrTree.listNeuron.at(j).x*0.2),2)+pow((snrTree.listNeuron.at(j+1).y*0.2-snrTree.listNeuron.at(j).y*0.2),2)+pow((snrTree.listNeuron.at(j+1).z-snrTree.listNeuron.at(j).z),2))/1000;
 		}
-		/*
-		if((fabs(snrTree.listNeuron.at(0).radius - 0.618f)<0.001f)||(fabs(snrTree.listNeuron.at(0).radius - 0.666f)<0.001f)){
-			for(int j=0;j<snrTree.listNeuron.size()-1;j++){
-				v_l = v_l + sqrt(pow((snrTree.listNeuron.at(j+1).x*0.2-snrTree.listNeuron.at(j).x*0.2),2)+pow((snrTree.listNeuron.at(j+1).y*0.2-snrTree.listNeuron.at(j).y*0.2),2)+pow((snrTree.listNeuron.at(j+1).z-snrTree.listNeuron.at(j).z),2))/1000;
-			}
-		}*/
+		
+		//if((fabs(snrTree.listNeuron.at(0).radius - 0.618f)<0.001f)||(fabs(snrTree.listNeuron.at(0).radius - 0.666f)<0.001f)){
+		//	for(int j=0;j<snrTree.listNeuron.size()-1;j++){
+		//		v_l = v_l + sqrt(pow((snrTree.listNeuron.at(j+1).x*0.2-snrTree.listNeuron.at(j).x*0.2),2)+pow((snrTree.listNeuron.at(j+1).y*0.2-snrTree.listNeuron.at(j).y*0.2),2)+pow((snrTree.listNeuron.at(j+1).z-snrTree.listNeuron.at(j).z),2))/1000;
+		//	}
+		//}
 		
 		if(!get_sub_block(callback,1,sketchedNTList[i],PA,i)){
 			vnList.append(NeuronTree__2__V_NeuronSWC_list(snrTree).seg.at(0));
@@ -187,7 +187,7 @@ bool writeCSV(QList<QList<IMAGE_METRICS> > &CSVlist, QString output_csv_file,int
 		double vl_less_than_ave = 0.0;
         stream<< "segment_id,segment_type,num_of_nodes,dynamic_range,cnr,snr,tubularity_mean,tubularity_std,fg_mean,fg_std,brightest_%%20_bg_mean,bg_std,length,w_snr,vr/3d"<<"\n";
 		for (int j  = 0; j < CSVlist.size() ; j++){
-			w_l = w_l + CSVlist[j][0].length/(CSVlist[j][0].snr-0.2);
+			w_l = w_l + CSVlist[j][0].length/CSVlist[j][0].snr;
 			l = l + CSVlist[j][0].length;
 			sum_vr = sum_vr + CSVlist[j][0].vr;
 			if(CSVlist[j][0].vr == 1){
@@ -212,6 +212,7 @@ bool writeCSV(QList<QList<IMAGE_METRICS> > &CSVlist, QString output_csv_file,int
 		}
 
 		for (int j = 0; j < CSVlist.size() ; j++){
+
 			if((CSVlist[j][0].snr < ave_snr)&&(CSVlist[j][0].vr == 1)){
 				vl_less_than_ave = vl_less_than_ave + CSVlist[j][0].length;
 			}
@@ -266,8 +267,8 @@ bool writeCSV(QList<QList<IMAGE_METRICS> > &CSVlist, QString output_csv_file,int
 			  <<vr_stroke<<","
 			  <<vs1/ts1<<","
 			  <<ave_snr <<","
-			  <<vl_less_than_ave/vl <<","
-			  <<1 - vl_less_than_ave/vl <<","
+			  <<vl_less_than_ave/vr_length <<","
+			  <<1 - vl_less_than_ave/vr_length <<","
 			  <<vr_less_than_ave/sum_vr <<","
 			  <<1 - vr_less_than_ave/sum_vr <<","
 			  <<w_l<<"\n";
