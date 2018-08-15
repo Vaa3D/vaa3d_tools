@@ -55,11 +55,17 @@ NeuronTree single_tree(NeuronTree nt, int soma){
             pList.append(pid);
         }
     }
+
+    // Case 1
     if(subtree_ct==1){return nt;}
+
+    // Case 2
     if(subtree_ct==0){
         printf("No root found in the swc.\n");
         return nt;
     }
+
+    // Case 3
     if(subtree_ct>1){
         printf("More than one single trees in the input swc. Only the first connected with soma will be reported.\n");
         NeuronTree new_tree;
@@ -99,6 +105,74 @@ NeuronTree single_tree(NeuronTree nt, int soma){
     }
 }
 
+NeuronTree long_axon_extractor(NeuronTree nt, int soma){
+    // extract axon nodes
+    NeuronTree new_tree;
+    QList<int> name_list;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        if(node.type==1 || node.type==2){
+            new_tree.listNeuron.append(node);
+            name_list.append(node.n);
+        }
+    }
+    nt = new_tree;
+    int N = nt.listNeuron.size();
+    export_list2file(nt.listNeuron, "test.swc");
+
+    // Case that needs consideration: if more than 1 axon braches connected to soma
+    // Case that needs consideration: if no axon connected to soma
+
+    // find longest path from soma
+    // DFS
+    // Initialization
+    int pid=soma;
+    QList<double> distance;
+    for(int i=0;i<N; i++){distance.append(-1);}
+    QStack<int> pstack;
+    pstack.push(pid);
+    bool is_push = false;
+    distance[pid]=0;
+
+    // DFS search
+    while(!pstack.isEmpty()){
+        is_push = false;
+        pid = pstack.top();
+        // whether exist unvisited children of pid
+        // if yes, push child to stack;
+        for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
+            if((nt.listNeuron.at(i).pn)==nt.listNeuron.at(pid).n && distance.at(i)==(-1.0)){
+                pstack.push(i);
+                distance[i]=distance.at(pid)+1;
+                is_push=true;
+                break;
+            }
+        }
+        // else, pop pid
+        if(!is_push){
+            pstack.pop();
+        }
+    }
+    QList<double> sort_distance = distance;
+    qSort(sort_distance);
+    double longest_distance = sort_distance.last();
+    int endpoint = distance.lastIndexOf(longest_distance);
+    cout<<"Longest distance:\t"<<distance.at(endpoint)<<"\t"<<"node "<<nt.listNeuron.at(endpoint).n <<endl;
+
+    // extract nodes on the longest path
+    new_tree.listNeuron.clear();
+    int cur_id = endpoint;
+    new_tree.listNeuron.prepend(nt.listNeuron.at(cur_id));
+    while(nt.listNeuron.at(cur_id).type!=1){
+        cur_id = name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn); // Move to the parent node
+        if(cur_id==name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn)){break;} // check self loop; should not exist;
+        new_tree.listNeuron.prepend(nt.listNeuron.at(cur_id));
+        if(nt.listNeuron.at(cur_id).pn<0){  // Reached root
+            break;
+        }
+    }
+    return new_tree;
+}
 
 void printHelp_neurite_analysis()
 {
@@ -109,22 +183,10 @@ void printHelp_neurite_analysis()
     printf("\t4) rotate the neuron to align its longest dimension to x axis\n");
     printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
     printf("\t#o <output_filename> :   output file name.\n");
-    printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
-    printf("\t#l <prune_size> :  prune short branches that has length smaller than prune_size.\n");
-    printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
-    printf("\t#s <step_size>       :   step size for resampling.\n");
-    printf("\t                         use 0 to skip, if not specified, use 0.\n");
-    printf("\t#m <thres_connect_soma>       :   maximun distance to connect a node to soma.\n");
-    printf("\t                         use 0 to skip, if not specified, use 1000.\n");
-    printf("\t#t <thres>       :    gap threshold for connecting during the sorting procedure.\n");
-    printf("\t                         use 0 to skip, if not specified, use 2.\n");
-    printf("\t#r <rotation = 0>   :   whether to perform PCA alignment.\n");
-    printf("\t                         if not specified, rotation is not performed\n");
-    printf("\t#d <label_subtree = 0>   :   whether to give each subtree a different color.\n");
-    printf("\t                         if not specified, labeling is not performed\n");
-    printf("\t#f <return_maintree = 0>   :   whether to return only the maintree (a single tree connected to soma).\n");
-    printf("\t                         if not specified, all trees will be reported\n");
-    printf("Usage: vaa3d -x preprocess -f preprocess -p \"#i input.swc #o result.swc #l 2 #s 0 #m 2000 #t 0.25 #r 0 #d 0 #f 1\"\n");
+    printf("\t                         if not specified, it is \"inputName.extract_type.swc\"\n");
+    printf("\t#t <extract_type> :  which neurite type to extract.\n");
+    printf("\t                         if not specified, long projection axon will be extracted\n");
+    printf("Usage: vaa3d -x preprocess -f neurite_analysis -p \"#i input.swc #o result.swc #t a\"\n");
 }
 
 bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -138,7 +200,7 @@ bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & ou
 
     char *dfile_input = NULL;
     char *dfile_output = NULL;
-    char *extract_type = NULL;
+    string extract_type = "a";
 
     if(1==1){
         if(input.size() != 2)
@@ -183,10 +245,8 @@ bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & ou
         else
             printHelp_neurite_analysis();
 
-
-
         int c;
-        static char optstring[]="ht:";
+        static char optstring[]="hi:o:t:";
         extern char * optarg;
         extern int optind, opterr;
         optind = 1;
@@ -241,19 +301,37 @@ bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & ou
     QString outfileName = QString(dfile_output);
     if (dfile_output==NULL)
     {
-        outfileName = qs_input+"_preprocessed.swc";
+        char *tag;
+        if(extract_type == "a"){tag = strdup(".long_axon");}
+        if(extract_type == "c"){tag = strdup(".cluster_axon");}
+        if(extract_type == "d"){tag = strdup(".dendrite");}
+        if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){outfileName = qs_input.left(qs_input.length()-4)+tag+".swc";}
+        if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){outfileName = qs_input.left(qs_input.length()-5)+tag+".swc";}
     }
 
     // 2. Examine input
     // 2.1 Check soma
+    printf("Checking soma\n");
     int soma=get_soma(nt);
     if(soma<0){return 0;}
 
     // 2.2 Check single tree
+    printf("Checking single tree\n");
+    double total_size = nt.listNeuron.size();
     nt = single_tree(nt, soma);
+    if(nt.listNeuron.size() / total_size < 0.1){
+        printf("Warning: only %f%% belongs to the soma-connected single tree!\n", nt.listNeuron.size()/total_size*100);
+    }
+
+
+    // 3. Extract the specified type of neurite
+    printf("Extracting neurite\n");
+    if(extract_type == "a"){nt=long_axon_extractor(nt, soma);}
+
+
     writeSWC_file(outfileName, nt);
 
-    return 0;
+    return 1;
 
 
 }
