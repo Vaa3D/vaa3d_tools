@@ -14,6 +14,7 @@ QStringList neuron_analysis::menulist() const
 {
     return QStringList()
             <<tr("preprocess")
+            <<tr("help")
             <<tr("about");
 }
 
@@ -30,6 +31,17 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     if(menu_name == tr("preprocess"))
     {
         pre_processing_domenu(callback, parent);
+    }
+    if (menu_name == tr("help"))
+    {
+        v3d_msg(tr("This plugin performs two tasks: \n"
+                   "1. Connect and sort the input SWC.\n"
+                   "2. Generate statistics for quality control purposes.\n"
+                   "\n"
+                   "Please select an SWC file.\n"
+                   "Note: an apo file (showing soma location) with the same prefix is required.\n"
+                   )
+                );
     }
     if (menu_name == tr("about"))
     {
@@ -51,7 +63,7 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 	}
     if (func_name == tr("neurite_analysis"))
     {
-        return (neurite_analysis_main(input, output));
+        return (neurite_analysis_dofunc(input, output));
     }
 	else if (func_name == tr("help"))
 	{
