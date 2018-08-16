@@ -18,12 +18,12 @@
 #include "neuron_connector_func.h"
 #include "utilities.h"
 #if !defined(Q_OS_WIN32)
-#include <unistd.h>
+#include "unistd.h"
 #endif
 
 #if defined(Q_OS_WIN32)
-#include "getopt_tool.h"
-#include <io.h>
+//#include "getopt_tool.h"
+#include "io.h"
 #endif
 
 NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel, double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp

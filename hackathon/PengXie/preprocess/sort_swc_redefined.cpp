@@ -1,11 +1,11 @@
-#include <QtGlobal>
-#include <math.h>
-//#include <unistd.h> //remove the unnecessary include file. //by PHC 20131228
+#include "QtGlobal"
+#include "math.h"
+//#include "unistd.h" //remove the unnecessary include file. //by PHC 20131228
 #include "basic_surf_objs.h"
-#include <string.h>
-#include <vector>
-#include <iostream>
-#include <sort_swc_redefined.h>
+#include "string.h"
+#include "vector"
+#include "iostream"
+#include "sort_swc_redefined.h"
 using namespace std;
 
 #ifndef VOID

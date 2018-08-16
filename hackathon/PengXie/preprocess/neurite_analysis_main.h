@@ -1,8 +1,8 @@
 #ifndef NEURITE_ANALYSIS_MAIN_H
 #define NEURITE_ANALYSIS_MAIN_H
 
-#include <QtGlobal>
-#include <vector>
+#include "QtGlobal"
+#include "vector"
 #include "v3d_message.h"
 #include <v3d_interface.h>
 #include "prune_short_branch.h"

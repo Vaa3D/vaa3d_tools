@@ -1,7 +1,7 @@
-#include <QtGlobal>
-#include <vector>
+#include "QtGlobal"
+#include "vector"
 #include "v3d_message.h"
-#include <v3d_interface.h>
+#include "v3d_interface.h"
 using namespace std;
 
 #include "pre_processing_main.h"
@@ -9,12 +9,12 @@ using namespace std;
 #include "sort_swc_redefined.h"
 #include "neuron_connector_func.h"
 #if !defined(Q_OS_WIN32)
-#include <unistd.h>
+#include "unistd.h"
 #endif
 
 #if defined(Q_OS_WIN32)
-#include "getopt_tool.h"
-#include <io.h>
+//#include "getopt_tool.h"
+#include "io.h"
 #endif
 
 CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b){

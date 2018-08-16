@@ -15,12 +15,12 @@
 #include "neuron_connector_func.h"
 #include "utilities.h"
 #if !defined(Q_OS_WIN32)
-#include <unistd.h>
+#include "unistd.h"
 #endif
 
 #if defined(Q_OS_WIN32)
-#include "getopt_tool.h"
-#include <io.h>
+//#include "getopt_tool.h"
+#include "io.h"
 #endif
 
 int get_soma(NeuronTree nt){
