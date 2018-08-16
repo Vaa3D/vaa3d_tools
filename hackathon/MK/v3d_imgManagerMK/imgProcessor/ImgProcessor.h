@@ -47,9 +47,11 @@ public:
 	ImgProcessor(MIPOrientation);
 	/*******************************/
 
+
 	// These 2 enums decide in which direction to make projection.
 	MIPOrientation MIPDirection;
 	mipOrientation mipDirection;
+
 
 	/***************** Basic Image Operations *****************/
 	template<class T>
@@ -77,6 +79,7 @@ public:
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
 	/**********************************************************/
 
+
 	/***************** Image Statistics *****************/
 	template<class T>
 	static inline map<string, float> getBasicStats(T inputImgPtr[], int imgDims[]);
@@ -88,17 +91,22 @@ public:
 	static inline map<int, size_t> histQuickList(T inputImgPtr[], int imgDims[]);
 	/****************************************************/
 
+
 	/***************** Image Processing/Filtering *****************/
 	template<class T>
-	static inline void gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
+	static inline void gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
 
 	template<class T>
-	static inline void reversed_gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+	static inline void reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
 	/**************************************************************/
+
 
 	/********* Morphological Operations *********/
 	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
+
+	void imgThinning(unsigned char inputPtr[], unsigned char outputPtr[], int imgDims[]);
 	/********************************************/
+
 
 	/***************** Other utilities *****************/
 	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
@@ -115,7 +123,7 @@ inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int im
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
 	{
-		if (inputImgPtr[i] <= threshold)
+		if (inputImgPtr[i] < threshold)
 		{
 			outputImgPtr[i] = 0;
 			continue;
@@ -338,7 +346,7 @@ inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims
 
 // ================================== IMAGE PROCESSING/FILTERING ==================================
 template<class T>
-inline void ImgProcessor::gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+inline void ImgProcessor::gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -350,22 +358,14 @@ inline void ImgProcessor::gammaCorrect(T inputImgPtr[], T outputImgPtr[], int im
 		}
 
 		int transformedValue = int(inputImgPtr[i]);
-		if (transformedValue < starting_intensity)
-		{
-			//if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
-			//else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
-			//outputImgPtr[i] = transformedValue;
-			outputImgPtr[i] = 0;
-		}
+		if (transformedValue < starting_intensity) outputImgPtr[i] = 0;
 		else if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
 		else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
-		//else outputImgPtr[i] = 255;
-		//else outputImgPtr[i] = transformedValue;
 	}
 }
 
 template<class T>
-inline void ImgProcessor::reversed_gammaCorrect(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -377,19 +377,11 @@ inline void ImgProcessor::reversed_gammaCorrect(T inputImgPtr[], T outputImgPtr[
 		}
 
 		int transformedValue = int(inputImgPtr[i]);
-		if (transformedValue < starting_intensity)
-		{
-			//if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
-			//else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
-			outputImgPtr[i] = transformedValue;
-			//outputImgPtr[i] = 0;
-		}
-		else if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
-		else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
-		//else outputImgPtr[i] = 255;
-		//else outputImgPtr[i] = transformedValue;
+		if (transformedValue > starting_intensity) outputImgPtr[i] = transformedValue;
+		else if (transformedValue / (starting_intensity - transformedValue + 1) < 1) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = transformedValue / (starting_intensity - transformedValue + 1);
 	}
 }
-// =================================== END of [IMAGE PROCESSING/FILTERING] ===================================
+// ================================ END of [IMAGE PROCESSING/FILTERING] ================================
 
 #endif
