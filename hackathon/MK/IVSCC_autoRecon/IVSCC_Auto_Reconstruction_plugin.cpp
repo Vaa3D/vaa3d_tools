@@ -61,7 +61,11 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		if (!outfiles.empty()) outputPathQ = outfiles[0];
 		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
 		//segPipePtr->sliceDownSample2D(2, "max");
-		segPipePtr->sliceGammaCorrect();
+		//segPipePtr->adaSliceGammaCorrect();
+		//segPipePtr->sliceReversedGammaCorrect();
+		//segPipePtr->sliceThre(0.999);
+		//segPipePtr->histQuickList();
+		segPipePtr->sliceBkgThre();
 	}
 	else if (func_name == tr("func2"))
 	{

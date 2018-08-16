@@ -71,4 +71,3 @@ void ImgProcessor::maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputI
 		}
 	}
 }
-

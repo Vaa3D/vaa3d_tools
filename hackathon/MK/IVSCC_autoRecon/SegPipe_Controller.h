@@ -32,7 +32,12 @@ public:
 	unsigned char* currProcessingImgPtr;
 
 	void sliceDownSample2D(int downFactor, string method = "");
-	void sliceGammaCorrect();
+	void adaSliceGammaCorrect();
+	void sliceThre(float thre);
+	void sliceBkgThre();
+	void sliceReversedGammaCorrect();
+	
+	void histQuickList();
 };
 
 #endif
