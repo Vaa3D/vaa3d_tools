@@ -3,6 +3,10 @@
 #include<stdio.h>
 #include<math.h>
 #include<ostream>
+#include "QR.h"
+#include "SVD.h"
+//#include "matrix.h"
+#include<math.h>
 ///////////////////////////////////线性
 //parameter list
 #define tol 0.001
@@ -16,7 +20,13 @@
 #define result_classify  "E:/vs_workplace/SVM/result_classify_5.txt"
 #define ifKernel  1
 #define d 0.2
-
+vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<vector<double> > &R,double &sum_log);
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
+vector<bool> classify_glio2(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method);
+bool GetMatrixInverse(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
+void  getAStart(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
+double getA(vector<vector<double> > &V1,int n);
+int size_all;
 using namespace std;
 
 struct elemeter
@@ -255,6 +265,135 @@ public:
     }
 };
 
+
+
+
+
+int Matrix ::times=1;
+void Matrix::setSize()
+{
+    int n;
+    cout<<"请问你要输入几阶矩阵:";
+    cin>>n;
+    size=n;
+}
+void Matrix::show()
+{
+    cout<<"("<<times<<")"<<endl;
+    times++;
+    int i,j;
+    for(i=0;i<size;i++)
+    {
+        for(j=0;j<2*size;j++)
+        {
+            cout.width(10);
+            cout.flags (ios::right);
+            cout<<data[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<"***********************************************"<<endl;
+    cout<<endl;
+}
+void Matrix::chuShi(vector<vector<double> > &V1)
+{
+    int i,j;
+    size = V1.size();
+    cout<<"size = "<<size<<endl;
+
+
+    for(i=0;i<V1.size();i++)
+    {
+        cout<<"i = "<<i<<endl;
+        for(j=0;j<5;j++)
+        {
+            cout<<"v1 = "<<V1[i][j]<<"   ";
+           // cout<<"data = "<<data[i][j];
+
+        }
+        cout<<endl;
+    }
+    for(i=0;i<V1.size();i++)
+    {
+        cout<<"i = "<<i<<endl;
+        for(j=0;j<5;j++)
+        {
+            data[i][j] = V1[i][j];
+           // cout<<"data = "<<data[i][j]<<"   ";
+
+        }
+        cout<<endl;
+    }
+    cout<<"开始求逆:"<<endl;
+    //show();
+}
+void Matrix::qiuNi(vector<vector<double> > &V1)
+{
+
+    size = size_all;
+    int i,j,k;
+    int maxI=0;
+    for(i=1;i<size;i++)
+    {
+        if(fabs(data[maxI][0])<fabs(data[i][0]))
+            maxI=i;
+    }
+    cout<<"ooooooooooooo"<<endl;
+    if(maxI!=0)
+    {
+        double temp;
+        for(j=0;j<5;j++)
+        {
+            temp=data[0][j];
+            data[0][j]=data[maxI][j];
+            data[maxI][j]=temp;
+        }
+    }
+    cout<<"ooooooooooooo1"<<endl;
+    double temp2;
+    cout<<"size = "<<size_all<<endl;
+    for(i=0;i<size_all;i++)
+    {
+        cout<<"data[i][i] = "<<data[i][i]<<endl;
+        if(data[i][i]!=0)
+        {
+            cout<<"uuuuuu"<<endl;
+            temp2=1.0/data[i][i];
+        }
+        else
+        {
+            cout<<"此矩阵无逆!"<<endl;
+            return ;
+        }
+        for(j=0;j<5;j++)
+            data[i][j]*=temp2;
+        for(j=0;j<size;j++)
+        {
+            if(j!=i)
+            {
+                double temp3=data[j][i];
+                for(k=0;k<j;k++)
+                    data[j][k]-=temp3*data[i][k];
+            }
+        }
+    }
+    cout<<"tttttttttt"<<endl;
+    //show();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
@@ -262,16 +401,26 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     vector<char*>* paralist = NULL;
     char * folder_path1;
     char * folder_path2;
-    if(inlist->size() == 2)
+    char * folder_path3;
+    char * folder_path4;
+    if(inlist->size() == 4)
     {
         folder_path1 = inlist->at(0);
         folder_path2 = inlist->at(1);
+        folder_path3 = inlist->at(2);
+        folder_path4 = inlist->at(3);
+    }
+    else
+    {
+        return false;
     }
     QStringList folderList1 = importFileList_addnumbersort(QString(folder_path1));
     QStringList folderList2 = importFileList_addnumbersort(QString(folder_path2));
-    QStringList fileList1,fileList2;
-    vector<Coordinate> tmp,tmp2;
-    vector<vector<Coordinate> > coor_v,coor_v2;
+    QStringList predictList1 = importFileList_addnumbersort(QString(folder_path3));
+    QStringList predictList2 = importFileList_addnumbersort(QString(folder_path4));
+    QStringList fileList1,fileList2,predict1,predict2;
+    vector<Coordinate> tmp,tmp2,tmp3,tmp4;
+    vector<vector<Coordinate> > coor_v,coor_v2,coor_v3,coor_v4;
     //first folderlist1
     for(int i=2;i<folderList1.size();i++)
     {
@@ -305,19 +454,57 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         }
     }
 
-    vector<double> y_n,y_n2;
-    vector<double> overlap_level,overlap_level2;
-    vector<double> ratio_v,ratio_v2;
-    vector<double> count_v,count_v2;
-    vector<double> D,D2;
-    vector<double> grey_mean,grey_mean2;
-    vector<double> grey_std,grey_std2;
+    for(int i=2;i<predictList1.size();i++)
+    {
+        predict1 = importFileList_addnumbersort(QString(predictList1[i]));
+        for(int i=2;i<predict1.size();i++)
+        {
+            tmp3.clear();
+            if (predict1[i].toUpper().endsWith(".TXT"))
+            {
+
+                tmp3 = readtxt_LXF(predict1[i]);
+            }
+            if(tmp3.size()==0)continue;
+            coor_v3.push_back(tmp3);
+        }
+
+    }
+    for(int i=2;i<predictList2.size();i++)
+    {
+        predict2 = importFileList_addnumbersort(QString(predictList2[i]));
+        for(int i=2;i<predict2.size();i++)
+        {
+            tmp4.clear();
+            if (predict2[i].toUpper().endsWith(".TXT"))
+            {
+
+                tmp4 = readtxt_LXF(predict2[i]);
+            }
+            if(tmp4.size()==0)continue;
+            coor_v4.push_back(tmp4);
+        }
+
+    }
+
+    vector<double> y_n,y_n2,y_n3,y_n4;
+    vector<double> overlap_level,overlap_level2,overlap_level3,overlap_level4;
+    vector<double> ratio_v,ratio_v2,ratio_v3,ratio_v4;
+    vector<double> count_v,count_v2,count_v3,count_v4;
+    vector<double> D,D2,D3,D4;
+    vector<double> grey_mean,grey_mean2,grey_mean3,grey_mean4;
+    vector<double> grey_std,grey_std2,grey_std3,grey_std4;
 
 
     feature_calculate(y_n,overlap_level,ratio_v,count_v,D,grey_mean,grey_std,coor_v);
-    //feature_calculate(y_n2,overlap_level2,ratio_v2,count_v2,D2,grey_mean2,grey_std2,coor_v2);
-    Feature feature;
-    Chart chart;
+    feature_calculate(y_n2,overlap_level2,ratio_v2,count_v2,D2,grey_mean2,grey_std2,coor_v2);
+
+    feature_calculate(y_n3,overlap_level3,ratio_v3,count_v3,D3,grey_mean3,grey_std3,coor_v3);
+    feature_calculate(y_n4,overlap_level4,ratio_v4,count_v4,D3,grey_mean4,grey_std4,coor_v4);
+
+    Feature feature,feature2,feature3,feature4;
+    Chart chart,chart2,chart3,chart4;
+    Each_line E,E2,E3,E4;
     feature.y_n = y_n;
     feature.overlap_level = overlap_level;
     feature.ratio_v = ratio_v;
@@ -325,7 +512,208 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature.D = D;
     feature.grey_mean = grey_mean;
     feature.grey_std = grey_std;
+
+    feature2.y_n = y_n2;
+    feature2.overlap_level = overlap_level2;
+    feature2.ratio_v = ratio_v2;
+    feature2.count_v = count_v2;
+    feature2.D = D2;
+    feature2.grey_mean = grey_mean2;
+    feature2.grey_std = grey_std2;
+
+    feature3.y_n = y_n3;
+    feature3.overlap_level = overlap_level3;
+    feature3.ratio_v = ratio_v3;
+    feature3.count_v = count_v3;
+    feature3.D = D3;
+    feature3.grey_mean = grey_mean3;
+    feature3.grey_std = grey_std3;
+
+    feature4.y_n = y_n4;
+    feature4.overlap_level = overlap_level4;
+    feature4.ratio_v = ratio_v4;
+    feature4.count_v = count_v4;
+    feature4.D = D4;
+    feature4.grey_mean = grey_mean4;
+    feature4.grey_std = grey_std4;
+
     Cov_calculate(chart,feature);
+    Cov_calculate(chart2,feature2);
+    E = E_calculate(feature);
+    E2 = E_calculate(feature2);
+    E3 = E_calculate(feature3);
+    E4 = E_calculate(feature4);
+    QString fileSaveName = "glio.txt";
+    QString fileSaveName2 = "signal.txt";
+    export_TXT(E,chart,fileSaveName);
+    export_TXT(E2,chart2,fileSaveName2);
+    int K = y_n.size();
+    int U = y_n2.size();
+
+
+    //float A[K][N];
+    vector<vector<float> >A,A2;
+    //cout<<"Matrix A:"<<endl;
+    for(int i=0;i<K;i++)
+    {
+        vector<float> a;
+        a.push_back(feature.y_n[i]-E.x1);
+        a.push_back(feature.ratio_v[i]-E.x2);
+        a.push_back(feature.overlap_level[i]-E.x3);
+        a.push_back(feature.grey_std[i]-E.x4);
+        a.push_back(feature.count_v[i]-E.x5);
+        A.push_back(a);
+
+    }
+    for(int i=0;i<U;i++)
+    {
+        vector<float> a;
+        a.push_back(feature2.y_n[i]-E2.x1);
+        a.push_back(feature2.ratio_v[i]-E2.x2);
+        a.push_back(feature2.overlap_level[i]-E2.x3);
+        a.push_back(feature2.grey_std[i]-E2.x4);
+        a.push_back(feature2.count_v[i]-E2.x5);
+        A2.push_back(a);
+
+    }
+    vector<vector<float> >Q,R,Q2,R2;
+    vector<vector<double> >R_new,R2_new;
+
+    cout<<"对矩阵A进行QR Factorization"<<endl;
+    Matrix_QR_Factorization(A,Q,R);
+    Matrix_QR_Factorization(A2,Q2,R2);
+            cout<<"finish"<<endl;
+    for(int i=0;i<K;i++)
+    {
+        vector<double> r;
+        r.push_back(R[i][0]/sqrt(K-2));
+        r.push_back(R[i][1]/sqrt(K-2));
+        r.push_back(R[i][2]/sqrt(K-2));
+        r.push_back(R[i][3]/sqrt(K-2));
+        r.push_back(R[i][4]/sqrt(K-2));
+        R_new.push_back(r);
+    }
+    for(int i=0;i<U;i++)
+    {
+        vector<double> r;
+        r.push_back(R2[i][0]/sqrt(U-2));
+        r.push_back(R2[i][1]/sqrt(U-2));
+        r.push_back(R2[i][2]/sqrt(U-2));
+        r.push_back(R2[i][3]/sqrt(U-2));
+        r.push_back(R2[i][4]/sqrt(U-2));
+        R2_new.push_back(r);
+    }
+    int k=5;
+    vector<vector<double> > UU,UU2;
+    vector<double> S,S2;
+    vector<vector<double> > V,V2;
+    svd(R_new,k,UU,S,V);
+    svd(R2_new,k,UU2,S2,V2);
+
+
+    cout<<"S="<<endl;
+    for(int i=0;i<S.size();i++){
+        cout<<setw(7)<<S[i]<<' ';
+    }
+    cout<<endl;
+    double sum_log=0;
+    for(int i=0;i<S.size();i++){
+        sum_log = sum_log + log(S[i]);
+    }
+    double sum_log2=0;
+    for(int i=0;i<S2.size();i++){
+        sum_log2 = sum_log2 + log(S2[i]);
+    }
+    //cout<<"oooooooooooo"<<endl;
+    cout<<endl<<"Matrix R:"<<endl;
+    for(int i=0;i<R_new.size();i++){
+        for(int j=0;j<5;j++){
+            cout<<setw(8)<<R_new[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+    vector<double> cl,cl2,cl3,cl4;
+    cl = classify_glio_Y(S,feature3,E3,R_new,sum_log);
+    cl2 = classify_glio_Y(S2,feature3,E3,R2_new,sum_log2);
+
+    cl3 = classify_glio_Y(S,feature4,E3,R_new,sum_log);
+    cl4 = classify_glio_Y(S2,feature4,E3,R2_new,sum_log2);
+    for(int i=0;i<cl.size();i++)
+    {
+            cout<<cl2[i]<<endl;
+
+
+    }
+
+    vector<bool> result1,result2;
+    for(int i=0;i<cl.size();i++)
+    {
+        if(cl[i]>cl2[i])
+        {
+            result1.push_back(1);//is glio
+        }
+        else
+        {
+            result2.push_back(0);
+        }
+    }
+
+    for(int i=0;i<cl3.size();i++)
+    {
+        if(cl3[i]>cl4[i])
+        {
+            result2.push_back(1);//is glio
+        }
+        else
+        {
+            result2.push_back(0);
+        }
+    }
+
+
+//    bool method=false;
+//    vector<bool> result1 = classify_glio2(chart,E,chart2,E2,chart3,E3,feature3,method);
+//    vector<bool> result2 = classify_glio2(chart,E,chart2,E2,chart4,E4,feature4,method);
+    double sum1=0;
+    for(int i=0;i<result1.size();i++)
+    {
+        sum1 = sum1 + result1[i];
+    }
+    double per1 = sum1/result1.size();
+    double sum2=0;
+    for(int i=0;i<result2.size();i++)
+    {
+        sum2 = sum2 + result2[i];
+    }
+    double per2 = (result2.size()-sum2)/result2.size();
+    cout<<"per = "<<per1<<"  "<<per2<<endl;
+
+}
+bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
+
+    cout << E.x1 <<"    "<<chart.first_line.x1<<"    "<<chart.first_line.x2<<"    "<<chart.first_line.x3<<"    "<<chart.first_line.x4<<"    "<<chart.first_line.x5<<endl;
+    cout << E.x2 <<"    "<<chart.second_line.x1<<"    "<<chart.second_line.x2<<"    "<<chart.second_line.x3<<"    "<<chart.second_line.x4<<"    "<<chart.second_line.x5<<endl;
+    cout << E.x3 <<"    "<<chart.third_line.x1<<"    "<<chart.third_line.x2<<"    "<<chart.third_line.x3<<"    "<<chart.third_line.x4<<"    "<<chart.third_line.x5<<endl;
+    cout << E.x4 <<"    "<<chart.forth_line.x1<<"    "<<chart.forth_line.x2<<"    "<<chart.forth_line.x3<<"    "<<chart.forth_line.x4<<"    "<<chart.forth_line.x5<<endl;
+    cout << E.x5 <<"    "<<chart.fifth_line.x1<<"    "<<chart.fifth_line.x2<<"    "<<chart.fifth_line.x3<<"    "<<chart.fifth_line.x4<<"    "<<chart.fifth_line.x5<<endl;
+
+
+        myfile << E.x1 <<"   "<<chart.first_line.x1<<"   "<<chart.first_line.x2<<"   "<<chart.first_line.x3<<"   "<<chart.first_line.x4<<"   "<<chart.first_line.x5<<endl;
+        myfile << E.x2 <<"   "<<chart.second_line.x1<<"   "<<chart.second_line.x2<<"   "<<chart.second_line.x3<<"   "<<chart.second_line.x4<<"   "<<chart.second_line.x5<<endl;
+        myfile << E.x3 <<"   "<<chart.third_line.x1<<"   "<<chart.third_line.x2<<"   "<<chart.third_line.x3<<"   "<<chart.third_line.x4<<"   "<<chart.third_line.x5<<endl;
+        myfile << E.x4 <<"   "<<chart.forth_line.x1<<"   "<<chart.forth_line.x2<<"   "<<chart.forth_line.x3<<"   "<<chart.forth_line.x4<<"   "<<chart.forth_line.x5<<endl;
+        myfile << E.x5 <<"   "<<chart.fifth_line.x1<<"   "<<chart.fifth_line.x2<<"   "<<chart.fifth_line.x3<<"   "<<chart.fifth_line.x4<<"   "<<chart.fifth_line.x5<<endl;
+
+
+    file.close();
+    cout<<"txt file "<<fileSaveName.toStdString()<<" has been generated"<<endl;
+    return true;
 }
 
 
@@ -389,13 +777,12 @@ double get_D(vector<double> &v1,vector<double> &v2)//v1,v2 with the same size
     for(int i=0;i<v1.size();i++)
     {
         sum = (v1[i]-mean1)*(v2[i]-mean2) + sum;
-        cout<<"sum = "<<sum<<endl;
-        cout<<"mean1 = "<<mean1<<endl;
-        cout<<"mean2 = "<<mean2<<endl;
-        cout<<"v1[i] = "<<v1[i]<<endl;
-        cout<<"v2[i] = "<<v2[i]<<endl;
+        //cout<<"sum = "<<sum<<endl;
+       // cout<<"mean1 = "<<mean1<<endl;
+      //  cout<<"mean2 = "<<mean2<<endl;
+      //  cout<<"v1[i] = "<<v1[i]<<endl;
+      //  cout<<"v2[i] = "<<v2[i]<<endl;
     }
-    //cout<<""
     double mean_two = sum/(v1.size()-1);
     return mean_two;
 
@@ -405,34 +792,234 @@ bool Cov_calculate(Chart &chart,Feature &feature)
     chart.fifth_line.x1 = get_D(feature.y_n,feature.y_n);
     chart.fifth_line.x2 = get_D(feature.y_n,feature.ratio_v);
     chart.fifth_line.x3 = get_D(feature.y_n,feature.overlap_level);
-    chart.fifth_line.x4 = get_D(feature.y_n,feature.D);
+    chart.fifth_line.x4 = get_D(feature.y_n,feature.grey_std);
     chart.fifth_line.x5 = get_D(feature.y_n,feature.count_v);
 
     chart.second_line.x1 = get_D(feature.ratio_v,feature.y_n);
     chart.second_line.x2 = get_D(feature.ratio_v,feature.ratio_v);
     chart.second_line.x3 = get_D(feature.ratio_v,feature.overlap_level);
-    chart.second_line.x4 = get_D(feature.ratio_v,feature.D);
+    chart.second_line.x4 = get_D(feature.ratio_v,feature.grey_std);
     chart.second_line.x5 = get_D(feature.ratio_v,feature.count_v);
 
     chart.third_line.x1 = get_D(feature.overlap_level,feature.y_n);
     chart.third_line.x2 = get_D(feature.overlap_level,feature.ratio_v);
     chart.third_line.x3 = get_D(feature.overlap_level,feature.overlap_level);
-    chart.third_line.x4 = get_D(feature.overlap_level,feature.D);
+    chart.third_line.x4 = get_D(feature.overlap_level,feature.grey_std);
     chart.third_line.x5 = get_D(feature.overlap_level,feature.count_v);
 
-    chart.forth_line.x1 = get_D(feature.D,feature.y_n);
-    chart.forth_line.x2 = get_D(feature.D,feature.ratio_v);
-    chart.forth_line.x3 = get_D(feature.D,feature.overlap_level);
-    chart.forth_line.x4 = get_D(feature.D,feature.D);
-    chart.forth_line.x5 = get_D(feature.D,feature.count_v);
+    chart.forth_line.x1 = get_D(feature.grey_std,feature.y_n);
+    chart.forth_line.x2 = get_D(feature.grey_std,feature.ratio_v);
+    chart.forth_line.x3 = get_D(feature.grey_std,feature.overlap_level);
+    chart.forth_line.x4 = get_D(feature.grey_std,feature.grey_std);
+    chart.forth_line.x5 = get_D(feature.grey_std,feature.count_v);
 
     chart.fifth_line.x1 = get_D(feature.count_v,feature.y_n);
     chart.fifth_line.x2 = get_D(feature.count_v,feature.ratio_v);
     chart.fifth_line.x3 = get_D(feature.count_v,feature.overlap_level);
-    chart.fifth_line.x4 = get_D(feature.count_v,feature.D);
+    chart.fifth_line.x4 = get_D(feature.count_v,feature.grey_std);
     chart.fifth_line.x5 = get_D(feature.count_v,feature.count_v);
-    cout<<chart.fifth_line.x1<<"  "<<chart.fifth_line.x2<<"  "<<chart.fifth_line.x3<<"  "<<chart.fifth_line.x4<<"  "<<chart.fifth_line.x5<<"  "<<endl;
-    cout<<chart.second_line.x1<<"  "<<chart.second_line.x2<<"  "<<chart.second_line.x3<<"  "<<chart.second_line.x4<<"  "<<chart.second_line.x5<<"  "<<endl;
+    //cout<<chart.fifth_line.x1<<"  "<<chart.fifth_line.x2<<"  "<<chart.fifth_line.x3<<"  "<<chart.fifth_line.x4<<"  "<<chart.fifth_line.x5<<"  "<<endl;
+    //cout<<chart.second_line.x1<<"  "<<chart.second_line.x2<<"  "<<chart.second_line.x3<<"  "<<chart.second_line.x4<<"  "<<chart.second_line.x5<<"  "<<endl;
     return 0;
 
 }
+Each_line E_calculate(Feature &feature)
+{
+    int size = feature.y_n.size();
+    Each_line sum,E;
+    sum.x1=sum.x2=sum.x3=sum.x4=sum.x5=0;
+    for(int i=0;i<size;i++)
+    {
+        sum.x1 = sum.x1 + feature.y_n[i];
+        sum.x2 = sum.x2 + feature.ratio_v[i];
+        sum.x3 = sum.x3 + feature.overlap_level[i];
+        sum.x4 = sum.x4 + feature.grey_std[i];
+        sum.x5 = sum.x5 + feature.count_v[i];
+    }
+    cout<<"sum = "<<sum.x1<<"   "<<sum.x2<<"    "<<sum.x3<<"    "<<sum.x4<<"    "<<sum.x5<<endl;
+    cout<<"size = "<<size<<endl;
+    E.x1=sum.x1/size;
+    E.x2=sum.x2/size;
+    E.x3=sum.x3/size;
+    E.x4=sum.x4/size;
+    E.x5=sum.x5/size;
+    cout<<"E = "<<E.x1<<"   "<<E.x2<<"    "<<E.x3<<"    "<<E.x4<<"    "<<E.x5<<endl;
+    return E;
+}
+vector<bool> classify_glio2(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method)
+{
+    //cout<<"oooooooooooooooooooooooo"<<endl;
+    vector<bool> classify;
+    if(method)
+    {
+        double dis11 = sqrt( (E1.x1 - E_curr.x1)*(E1.x1 - E_curr.x1) + (chart1.first_line.x1-chart_curr.first_line.x1)*(chart1.first_line.x1-chart_curr.first_line.x1) +
+                (chart1.first_line.x2-chart_curr.first_line.x2)*(chart1.first_line.x2-chart_curr.first_line.x2) + (chart1.first_line.x3-chart_curr.first_line.x3 )*(chart1.first_line.x3-chart_curr.first_line.x3)+
+                (chart1.first_line.x4-chart_curr.first_line.x4)*(chart1.first_line.x4-chart_curr.first_line.x4) + (chart1.first_line.x5-chart_curr.first_line.x5)*(chart1.first_line.x5-chart_curr.first_line.x5) );
+
+        double dis12 = sqrt( (E1.x2 - E_curr.x2)*(E1.x2 - E_curr.x2) + (chart1.second_line.x1-chart_curr.second_line.x1)*(chart1.second_line.x1-chart_curr.second_line.x1) +
+                (chart1.second_line.x2-chart_curr.second_line.x2)*(chart1.second_line.x2-chart_curr.second_line.x2) + (chart1.second_line.x3-chart_curr.second_line.x3 )*(chart1.second_line.x3-chart_curr.second_line.x3)+
+                (chart1.second_line.x4-chart_curr.second_line.x4)*(chart1.second_line.x4-chart_curr.second_line.x4) + (chart1.second_line.x5-chart_curr.second_line.x5)*(chart1.second_line.x5-chart_curr.second_line.x5) );
+
+        double dis13 = sqrt( (E1.x3 - E_curr.x3)*(E1.x3 - E_curr.x3) + (chart1.third_line.x1-chart_curr.third_line.x1)*(chart1.third_line.x1-chart_curr.third_line.x1) +
+                (chart1.third_line.x2-chart_curr.third_line.x2)*(chart1.third_line.x2-chart_curr.third_line.x2) + (chart1.third_line.x3-chart_curr.third_line.x3 )*(chart1.third_line.x3-chart_curr.third_line.x3)+
+                (chart1.third_line.x4-chart_curr.third_line.x4)*(chart1.third_line.x4-chart_curr.third_line.x4) + (chart1.third_line.x5-chart_curr.third_line.x5)*(chart1.third_line.x5-chart_curr.third_line.x5) );
+
+        double dis14 = sqrt( (E1.x4 - E_curr.x4)*(E1.x4 - E_curr.x4) + (chart1.forth_line.x1-chart_curr.forth_line.x1)*(chart1.forth_line.x1-chart_curr.forth_line.x1) +
+                (chart1.forth_line.x2-chart_curr.forth_line.x2)*(chart1.forth_line.x2-chart_curr.forth_line.x2) + (chart1.forth_line.x3-chart_curr.forth_line.x3 )*(chart1.forth_line.x3-chart_curr.forth_line.x3)+
+                (chart1.forth_line.x4-chart_curr.forth_line.x4)*(chart1.forth_line.x4-chart_curr.forth_line.x4) + (chart1.forth_line.x5-chart_curr.forth_line.x5)*(chart1.forth_line.x5-chart_curr.forth_line.x5) );
+
+        double dis15 = sqrt( (E1.x5 - E_curr.x5)*(E1.x5 - E_curr.x5) + (chart1.fifth_line.x1-chart_curr.fifth_line.x1)*(chart1.fifth_line.x1-chart_curr.fifth_line.x1) +
+                (chart1.fifth_line.x2-chart_curr.fifth_line.x2)*(chart1.fifth_line.x2-chart_curr.fifth_line.x2) + (chart1.fifth_line.x3-chart_curr.fifth_line.x3 )*(chart1.fifth_line.x3-chart_curr.fifth_line.x3)+
+                (chart1.fifth_line.x4-chart_curr.fifth_line.x4)*(chart1.fifth_line.x4-chart_curr.fifth_line.x4) + (chart1.fifth_line.x5-chart_curr.fifth_line.x5)*(chart1.fifth_line.x5-chart_curr.fifth_line.x5) );
+
+
+        double dis21 = sqrt( (E2.x1 - E_curr.x1)*(E2.x1 - E_curr.x1) + (chart2.first_line.x1-chart_curr.first_line.x1)*(chart2.first_line.x1-chart_curr.first_line.x1) +
+                (chart2.first_line.x2-chart_curr.first_line.x2)*(chart2.first_line.x2-chart_curr.first_line.x2) + (chart2.first_line.x3-chart_curr.first_line.x3 )*(chart2.first_line.x3-chart_curr.first_line.x3)+
+                (chart2.first_line.x4-chart_curr.first_line.x4)*(chart2.first_line.x4-chart_curr.first_line.x4) + (chart2.first_line.x5-chart_curr.first_line.x5)*(chart2.first_line.x5-chart_curr.first_line.x5) );
+
+        double dis22 = sqrt( (E2.x2 - E_curr.x2)*(E2.x2 - E_curr.x2) + (chart2.second_line.x1-chart_curr.second_line.x1)*(chart2.second_line.x1-chart_curr.second_line.x1) +
+                (chart2.second_line.x2-chart_curr.second_line.x2)*(chart2.second_line.x2-chart_curr.second_line.x2) + (chart2.second_line.x3-chart_curr.second_line.x3 )*(chart2.second_line.x3-chart_curr.second_line.x3)+
+                (chart2.second_line.x4-chart_curr.second_line.x4)*(chart2.second_line.x4-chart_curr.second_line.x4) + (chart2.second_line.x5-chart_curr.second_line.x5)*(chart2.second_line.x5-chart_curr.second_line.x5) );
+
+        double dis23 = sqrt( (E2.x3 - E_curr.x3)*(E2.x3 - E_curr.x3) + (chart2.third_line.x1-chart_curr.third_line.x1)*(chart2.third_line.x1-chart_curr.third_line.x1) +
+                (chart2.third_line.x2-chart_curr.third_line.x2)*(chart2.third_line.x2-chart_curr.third_line.x2) + (chart2.third_line.x3-chart_curr.third_line.x3 )*(chart2.third_line.x3-chart_curr.third_line.x3)+
+                (chart2.third_line.x4-chart_curr.third_line.x4)*(chart2.third_line.x4-chart_curr.third_line.x4) + (chart2.third_line.x5-chart_curr.third_line.x5)*(chart2.third_line.x5-chart_curr.third_line.x5) );
+
+        double dis24 = sqrt( (E2.x4 - E_curr.x4)*(E2.x4 - E_curr.x4) + (chart2.forth_line.x1-chart_curr.forth_line.x1)*(chart2.forth_line.x1-chart_curr.forth_line.x1) +
+                (chart2.forth_line.x2-chart_curr.forth_line.x2)*(chart2.forth_line.x2-chart_curr.forth_line.x2) + (chart2.forth_line.x3-chart_curr.forth_line.x3 )*(chart2.forth_line.x3-chart_curr.forth_line.x3)+
+                (chart2.forth_line.x4-chart_curr.forth_line.x4)*(chart2.forth_line.x4-chart_curr.forth_line.x4) + (chart2.forth_line.x5-chart_curr.forth_line.x5)*(chart2.forth_line.x5-chart_curr.forth_line.x5) );
+
+        double dis25 = sqrt( (E2.x5 - E_curr.x5)*(E2.x5 - E_curr.x5) + (chart2.fifth_line.x1-chart_curr.fifth_line.x1)*(chart2.fifth_line.x1-chart_curr.fifth_line.x1) +
+                (chart2.fifth_line.x2-chart_curr.fifth_line.x2)*(chart2.fifth_line.x2-chart_curr.fifth_line.x2) + (chart2.fifth_line.x3-chart_curr.fifth_line.x3 )*(chart2.fifth_line.x3-chart_curr.fifth_line.x3)+
+                (chart2.fifth_line.x4-chart_curr.fifth_line.x4)*(chart2.fifth_line.x4-chart_curr.fifth_line.x4) + (chart2.fifth_line.x5-chart_curr.fifth_line.x5)*(chart2.fifth_line.x5-chart_curr.fifth_line.x5) );
+        double dis1 = dis11+dis12+dis13+dis14+dis15;
+        double dis2 = dis21+dis22+dis23+dis24+dis25;
+
+//        if(dis1>dis2){return true;}
+//        else{return false;}
+
+    }
+    else
+    {
+        int size = feature_curr.count_v.size();
+        for(int i=0;i<size;i++)
+        {
+            double dis1 = sqrt( (E1.x1 - feature_curr.y_n[i])*(E1.x1 - feature_curr.y_n[i]) + (E1.x2 - feature_curr.ratio_v[i])*(E1.x2 - feature_curr.ratio_v[i]) + (E1.x3 - feature_curr.overlap_level[i])*(E1.x3 - feature_curr.overlap_level[i])
+                                + (E1.x4 - feature_curr.grey_std[i])*(E1.x4 - feature_curr.grey_std[i]) + (E1.x5 - feature_curr.count_v[i])*(E1.x5 - feature_curr.count_v[i]) );
+
+            double dis2 = sqrt( (E2.x1 - feature_curr.y_n[i])*(E2.x1 - feature_curr.y_n[i]) + (E2.x2 - feature_curr.ratio_v[i])*(E2.x2 - feature_curr.ratio_v[i]) + (E2.x3 - feature_curr.overlap_level[i])*(E2.x3 - feature_curr.overlap_level[i])
+                                + (E2.x4 - feature_curr.grey_std[i])*(E2.x4 - feature_curr.grey_std[i]) + (E2.x5 - feature_curr.count_v[i])*(E2.x5 - feature_curr.count_v[i]) );
+
+
+
+            if(dis1>dis2)
+            {
+                classify.push_back(1);
+            }
+            else
+            {
+                classify.push_back(0);
+            }
+
+
+        }
+        return classify;
+
+    }
+
+}
+vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<vector<double> > &R,double &sum_log)
+{
+    cout<<"in classify"<<endl;
+    int size = f.count_v.size();
+    double m1;
+    double m2;
+    double m3;
+    double m4;
+    double m5;
+    vector<vector<double> > re;
+    for(int i=0;i<size;i++)
+    {
+        vector<double> r;
+       m1 = f.y_n[i]-E.x1;
+       m2 = f.ratio_v[i]-E.x2;
+       m3 = f.overlap_level[i]-E.x3;
+       m4 = f.grey_std[i]-E.x4;
+       m5 = f.count_v[i]-E.x5;
+       r.push_back(m1);
+       r.push_back(m2);
+       r.push_back(m3);
+       r.push_back(m4);
+       r.push_back(m5);
+       re.push_back(r);
+    }
+    //v3d_msg("check");
+    vector<vector<double> > result;
+    Matrix m,m_inv;
+    size_all=re.size();
+    cout<<"size_all = "<<size_all<<endl;
+    v3d_msg("i");
+    m.chuShi(R);
+    m.qiuNi(R);
+    //m.Matrix(size,5);
+//    cout<<"ooooo"<<endl;
+//    for(int i=1;i<size+1;i++)
+//    {
+//        for(int j=1;j<6;j++)
+//        {
+//            m(i,j) = re[i-1][0];
+//            m(i,j) = re[i-1][1];
+//            m(i,j) = re[i-1][2];
+//            m(i,j) = re[i-1][3];
+//            m(i,j) = re[i-1][4];
+//        }
+//    }
+    //cout<<"ooooo"<<endl;
+    //double l = m.det();
+   // m_inv = m.Inverse();
+
+
+    for(int i=0;i<size;i++)
+    {
+        vector<double> tmp;
+        tmp.push_back(m.data[i][0]);
+        tmp.push_back(m.data[i][1]);
+        tmp.push_back(m.data[i][2]);
+        tmp.push_back(m.data[i][3]);
+        tmp.push_back(m.data[i][4]);
+        result.push_back(tmp);
+    }
+
+    vector<double> prior;
+    for(int i=0;i<size;i++)
+    {
+        prior.push_back(0.5);
+    }
+    vector<double> sum;
+    for(int i=0;i<size;i++)
+    {
+        double tmp = result[i][0]*result[i][0] + result[i][1]*result[i][1] + result[i][2]*result[i][2] + result[i][3]*result[i][3] + result[i][4]*result[i][4];
+
+        sum.push_back(tmp);
+    }
+    vector<double> D;
+    for(int i=0;i<size;i++)
+    {
+        double t = log(prior[i])-0.5*sum[i]+2*sum_log;
+        D.push_back(t);
+    }
+    return D;
+
+}
+
+
+
+//int main()
+//{
+//    Matrix a;
+//    a.setSize();
+//    a.chuShi();
+//    a.qiuNi();
+//    return 0;
+//}
+
