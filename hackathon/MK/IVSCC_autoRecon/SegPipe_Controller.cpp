@@ -386,3 +386,73 @@ void SegPipe_Controller::histQuickList()
 		}
 	}
 }
+
+
+map<QString, NeuronSWC> SegPipe_Controller::findSoma()
+{
+	map<QString, NeuronSWC> somaList;
+
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString saveCaseFullNameQ = this->outputRootPath + "/soma/" + *caseIt;
+		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+		string saveFullPathRoot = saveCaseFullNameQ.toStdString();
+
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
+		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
+		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+		vector<unsigned char**> slice2DVector;
+
+		for (multimap<string, string>::iterator sliceIt = range.first; sliceIt != range.second; ++sliceIt)
+		{
+			const char* inputFullPathC = (sliceIt->second).c_str();
+			Image4DSimple* slicePtr = new Image4DSimple;
+			slicePtr->loadImage(inputFullPathC);
+			int dims[3];
+			dims[0] = int(slicePtr->getXDim());
+			dims[1] = int(slicePtr->getYDim());
+			dims[2] = 1;
+			long int totalbyteSlice = slicePtr->getTotalBytes();
+			unsigned char* slice1D = new unsigned char[totalbyteSlice];
+			memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
+			unsigned char* soma1D = new unsigned char[dims[0] * dims[1]];
+			int threStart = 250;
+			ImgProcessor::simpleThresh(slice1D, soma1D, dims, threStart);
+			int pixCount = 0;
+			for (int i = 0; i < dims[0] * dims[1]; ++i) if (soma1D[i] > 0) ++pixCount;
+			if (pixCount <= 50)
+			{
+				while (pixCount <= 50)
+				{
+					threStart -= 5;
+					ImgProcessor::simpleThresh(slice1D, soma1D, dims, threStart);
+					pixCount = 0;
+					for (int i = 0; i < dims[0] * dims[1]; ++i) if (soma1D[i] > 0) ++pixCount;
+				}
+			}
+
+			V3DLONG Dims[4];
+			Dims[0] = dims[0];
+			Dims[1] = dims[1];
+			Dims[2] = 1;
+			Dims[3] = 1;
+
+			string fileName = sliceIt->second.substr(sliceIt->second.length() - 9, 9);
+			string sliceSaveFullName = saveFullPathRoot + "/" + fileName;
+			const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+			ImgManager::saveimage_wrapper(sliceSaveFullNameC, soma1D, Dims, 1);
+
+			slicePtr->~Image4DSimple();
+			operator delete(slicePtr);
+			if (slice1D) { delete[] slice1D; slice1D = 0; }
+			if (soma1D) { delete[] soma1D; soma1D = 0; }
+		}
+	}
+
+	return somaList;
+}
+
+void SegPipe_Controller::somaNeighborhoodThin()
+{
+
+}

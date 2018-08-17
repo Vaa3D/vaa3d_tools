@@ -9,6 +9,8 @@
 #include <qstring.h>
 #include <qstringlist.h>
 
+#include "basic_surf_objs.h"
+
 using namespace std;
 
 enum folderStruct {singleCase, multipleCase};
@@ -33,11 +35,14 @@ public:
 
 	void sliceDownSample2D(int downFactor, string method = "");
 	void adaSliceGammaCorrect();
-	void sliceThre(float thre);
+	void sliceThre(float threshold);
 	void sliceBkgThre();
 	void sliceReversedGammaCorrect();
 	
 	void histQuickList();
+
+	map<QString, NeuronSWC> findSoma();
+	void somaNeighborhoodThin();
 };
 
 #endif
