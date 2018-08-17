@@ -32,18 +32,18 @@ struct Feature
     vector<double> grey_mean;
     vector<double> grey_std;
 };
-class Matrix
-{
-public:
-    double data[999][5];
-    int size;
-    static int times;
-public:
-    void qiuNi(vector<vector<double> > &V1);
-    void setSize();
-    void show();
-    void chuShi(vector<vector<double> > &V1);
-};
+//class Matrix
+//{
+//public:
+//    double data[999][999];
+//    int size;
+//    static int times;
+//public:
+//    void qiuNi(vector<vector<double> > &V1);
+//    void setSize();
+//    void show();
+//    void chuShi(vector<vector<double> > &V1);
+//};
 bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName);
 double get_D(vector<double> &v1,vector<double> &v2);
 Each_line E_calculate(Feature &feature);

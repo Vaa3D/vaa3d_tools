@@ -5,7 +5,7 @@
 #include<ostream>
 #include "QR.h"
 #include "SVD.h"
-//#include "matrix.h"
+#include "matrix.h"
 #include<math.h>
 ///////////////////////////////////线性
 //parameter list
@@ -25,6 +25,7 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
 vector<bool> classify_glio2(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method);
 bool GetMatrixInverse(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
 void  getAStart(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
+vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<vector<double> > &arrB);
 double getA(vector<vector<double> > &V1,int n);
 int size_all;
 using namespace std;
@@ -269,119 +270,148 @@ public:
 
 
 
-int Matrix ::times=1;
-void Matrix::setSize()
-{
-    int n;
-    cout<<"请问你要输入几阶矩阵:";
-    cin>>n;
-    size=n;
-}
-void Matrix::show()
-{
-    cout<<"("<<times<<")"<<endl;
-    times++;
-    int i,j;
-    for(i=0;i<size;i++)
-    {
-        for(j=0;j<2*size;j++)
-        {
-            cout.width(10);
-            cout.flags (ios::right);
-            cout<<data[i][j]<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<"***********************************************"<<endl;
-    cout<<endl;
-}
-void Matrix::chuShi(vector<vector<double> > &V1)
-{
-    int i,j;
-    size = V1.size();
-    cout<<"size = "<<size<<endl;
+//int Matrix ::times=1;
+//void Matrix::setSize()
+//{
+//    int n;
+//    cout<<"请问你要输入几阶矩阵:";
+//    cin>>n;
+//    size=n;
+//}
+//void Matrix::show()
+//{
+//    cout<<"("<<times<<")"<<endl;
+//    times++;
+//    int i,j;
+//    for(i=0;i<size;i++)
+//    {
+//        for(j=0;j<2*size;j++)
+//        {
+//            cout.width(10);
+//            cout.flags (ios::right);
+//            cout<<data[i][j]<<" ";
+//        }
+//        cout<<endl;
+//    }
+//    cout<<"***********************************************"<<endl;
+//    cout<<endl;
+//}
+//void Matrix::chuShi(vector<vector<double> > &V1)
+//{
+//    int i,j;
+//    size = V1.size();
+//    cout<<"size = "<<size<<endl;
 
 
-    for(i=0;i<V1.size();i++)
-    {
-        cout<<"i = "<<i<<endl;
-        for(j=0;j<5;j++)
-        {
-            cout<<"v1 = "<<V1[i][j]<<"   ";
-           // cout<<"data = "<<data[i][j];
+//    for(i=0;i<V1.size();i++)
+//    {
+//        cout<<"i = "<<i<<endl;
+//        for(j=0;j<5;j++)
+//        {
+//            cout<<"v1 = "<<V1[i][j]<<"   ";
+//           // cout<<"data = "<<data[i][j];
 
-        }
-        cout<<endl;
-    }
-    for(i=0;i<V1.size();i++)
-    {
-        cout<<"i = "<<i<<endl;
-        for(j=0;j<5;j++)
-        {
-            data[i][j] = V1[i][j];
-           // cout<<"data = "<<data[i][j]<<"   ";
+//        }
+//        cout<<endl;
+//    }
+//    for(i=0;i<V1.size();i++)
+//    {
+//        cout<<"i = "<<i<<endl;
+//        for(j=0;j<5;j++)
+//        {
+//            data[i][j] = V1[i][j];
+//           // cout<<"data = "<<data[i][j]<<"   ";
 
-        }
-        cout<<endl;
-    }
-    cout<<"开始求逆:"<<endl;
-    //show();
-}
-void Matrix::qiuNi(vector<vector<double> > &V1)
-{
+//        }
+//        cout<<endl;
+//    }
+//    cout<<"开始求逆:"<<endl;
+//    //show();
+//}
+//void Matrix::qiuNi(vector<vector<double> > &V1)
+//{
 
-    size = size_all;
-    int i,j,k;
-    int maxI=0;
-    for(i=1;i<size;i++)
-    {
-        if(fabs(data[maxI][0])<fabs(data[i][0]))
-            maxI=i;
-    }
-    cout<<"ooooooooooooo"<<endl;
-    if(maxI!=0)
-    {
-        double temp;
-        for(j=0;j<5;j++)
-        {
-            temp=data[0][j];
-            data[0][j]=data[maxI][j];
-            data[maxI][j]=temp;
-        }
-    }
-    cout<<"ooooooooooooo1"<<endl;
-    double temp2;
-    cout<<"size = "<<size_all<<endl;
-    for(i=0;i<size_all;i++)
-    {
-        cout<<"data[i][i] = "<<data[i][i]<<endl;
-        if(data[i][i]!=0)
-        {
-            cout<<"uuuuuu"<<endl;
-            temp2=1.0/data[i][i];
-        }
-        else
-        {
-            cout<<"此矩阵无逆!"<<endl;
-            return ;
-        }
-        for(j=0;j<5;j++)
-            data[i][j]*=temp2;
-        for(j=0;j<size;j++)
-        {
-            if(j!=i)
-            {
-                double temp3=data[j][i];
-                for(k=0;k<j;k++)
-                    data[j][k]-=temp3*data[i][k];
-            }
-        }
-    }
-    cout<<"tttttttttt"<<endl;
-    //show();
-}
+//    size = size_all;
+//    int i,j,k;
+//    int maxI=0;
+//    for(i=1;i<6;i++)
+//    {
+//        if(fabs(data[maxI][0])<fabs(data[i][0]))
+//            maxI=i;
+//    }
+//    if(maxI!=0)
+//    {
+//        double temp;
+//        for(j=0;j<size;j++)
+//        {
+//            temp=data[0][j];
+//            data[0][j]=data[maxI][j];
+//            data[maxI][j]=temp;
+//        }
+//    }
+//    double temp2;
+//    cout<<"size = "<<size_all<<endl;
+//    for(i=0;i<size_all;i++)
+//    {
+//        cout<<"data[i][i] = "<<data[i][i]<<endl;
+//        if(data[i][i]!=0)
+//        {
+//            cout<<"uuuuuu"<<endl;
+//            temp2=1.0/data[i][i];
+//        }
+//        else
+//        {
+//            cout<<"此矩阵无逆!"<<endl;
+//            return ;
+//        }
+//        for(j=0;j<5;j++)
+//            data[i][j]*=temp2;
+//        for(j=0;j<size;j++)
+//        {
+//            if(j!=i)
+//            {
+//                double temp3=data[j][i];
+//                for(k=0;k<j;k++)
+//                    data[j][k]-=temp3*data[i][k];
+//            }
+//        }
+//    }
+//    cout<<"tttttttttt"<<endl;
+//    //show();
+//}
 
 
+//void Matrix::qiuNi()
+//{
+//    int i,j,k;
+//    int maxI=0;
+//    for(i=1;i<size;i++)
+//    {
+//        if(fabs(data[maxI][0])<fabs(data[i][0]))
+//            maxI=i;
+//    }
+//    if(maxI!=0)
+//    {
+//        double temp;
+//        for(j=0;j<2*size;j++)
+//        {
+//            temp=data[0][j];
+//            data[0][j]=data[maxI][j];
+//            data[maxI][j]=temp;
+//        }
+//    }
+//    double temp2;
+//    for(i=0;i<size;i++)
+//    {
+//        if(data[i][i]!=0)
+//            temp2=1.0/data[i][i];
+//        else
+//        {
+//            cout<<"此矩阵无逆!"<<endl;
+//            return ;
+//        }
+//    }
+//}
 
 
 
@@ -955,40 +985,61 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
     }
     //v3d_msg("check");
     vector<vector<double> > result;
-    Matrix m,m_inv;
+    Matrix m(R.size(),5);
+    Matrix m_m(5,R.size());
+
+
     size_all=re.size();
     cout<<"size_all = "<<size_all<<endl;
-    v3d_msg("i");
-    m.chuShi(R);
-    m.qiuNi(R);
+//    v3d_msg("i");
+//    m.chuShi(R);
+//    m.qiuNi(R);
     //m.Matrix(size,5);
 //    cout<<"ooooo"<<endl;
-//    for(int i=1;i<size+1;i++)
-//    {
-//        for(int j=1;j<6;j++)
-//        {
-//            m(i,j) = re[i-1][0];
-//            m(i,j) = re[i-1][1];
-//            m(i,j) = re[i-1][2];
-//            m(i,j) = re[i-1][3];
-//            m(i,j) = re[i-1][4];
-//        }
-//    }
+    cout<<"R.size = "<<R.size()<<endl;
+    for(int i=1;i<R.size()+1;i++)
+    {
+        for(int j=1;j<6;j++)
+        {
+            cout<<i<<"  "<<j<<endl;
+            m(i,j) = R[i-1][0];
+            m(i,j) = R[i-1][1];
+            m(i,j) = R[i-1][2];
+            m(i,j) = R[i-1][3];
+            m(i,j) = R[i-1][4];
+        }
+    }
+    double o = m.det();
+    cout<<"o = "<<o<<endl;
+    m_m = m.Inverse();
+        v3d_msg("check");
+
     //cout<<"ooooo"<<endl;
     //double l = m.det();
    // m_inv = m.Inverse();
+//    vector<vector<double> > m_inv;
+//    for(int i=0;i<size;i++)
+//    {
+//        vector<double> tmp;
+//        tmp.push_back(m.data[i][0]);
+//        tmp.push_back(m.data[i][1]);
+//        tmp.push_back(m.data[i][2]);
+//        tmp.push_back(m.data[i][3]);
+//        tmp.push_back(m.data[i][4]);
+//        m_inv.push_back(tmp);
+//    }
+//    result = matrix_multiply(m_inv,re);
 
-
-    for(int i=0;i<size;i++)
-    {
-        vector<double> tmp;
-        tmp.push_back(m.data[i][0]);
-        tmp.push_back(m.data[i][1]);
-        tmp.push_back(m.data[i][2]);
-        tmp.push_back(m.data[i][3]);
-        tmp.push_back(m.data[i][4]);
-        result.push_back(tmp);
-    }
+    //    for(int i=0;i<size;i++)
+    //    {
+    //        vector<double> tmp;
+    //        tmp.push_back(re[i][0]*m.data[i][0]);
+    //        tmp.push_back(re[i][1]*m.data[i][1]);
+    //        tmp.push_back(re[i][2]*m.data[i][2]);
+    //        tmp.push_back(re[i][3]*m.data[i][3]);
+    //        tmp.push_back(re[i][4]*m.data[i][4]);
+    //        result.push_back(tmp);
+    //    }
 
     vector<double> prior;
     for(int i=0;i<size;i++)
@@ -1010,6 +1061,61 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
     }
     return D;
 
+}
+
+vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<vector<double> > &arrB)
+{
+    cout<<"ppppppppppppp"<<endl;
+    //矩阵arrA的行数
+    int rowA = arrA.size();
+    //矩阵arrA的列数
+    int colA = arrA[0].size();
+    //矩阵arrB的行数
+    int rowB = arrB.size();
+    //矩阵arrB的列数
+    int colB = arrB[0].size();
+    //相乘后的结果矩阵
+    vector<vector<double> >  res;
+    double tmp[rowA][colB];
+    double sum=0;
+    cout<<colA<<"   "<<colB<<"  "<<rowA<<"   "<<rowB<<endl;
+    if (colA != rowB)//如果矩阵arrA的列数不等于矩阵arrB的行数。则返回空
+    {
+        return res;
+    }
+    else
+    {
+        //设置结果矩阵的大小，初始化为为0
+//        res.resize(rowA);
+//        for (int i = 0; i < rowA; ++i)
+//        {
+//            res[i].resize(colB);
+//        }
+
+        //矩阵相乘
+        cout<<"uuuuuuuuuuuu"<<endl;
+        for (int i = 0; i < rowA; ++i)
+        {
+            for (int j = 0; j < colB; ++j)
+            {
+                for (int k = 0; k < colA; ++k)
+                {
+                    sum = arrA[i][k] * arrB[k][j] + sum;
+                    tmp[i][j] = sum;
+                }
+            }
+        }
+        for (int i = 0; i < rowA; ++i)
+        {
+            vector<double> t;
+            for (int j = 0; j < colB; ++j)
+            {
+                t.push_back(tmp[i][j]);
+            }
+            res.push_back(t);
+        }
+    }
+    return res;
 }
 
 

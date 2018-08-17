@@ -762,11 +762,15 @@ bool Matrix::QR(Matrix& Q, Matrix& R)
 }
 double Matrix::det()//determinant(Matrix)
 {
-        if(this->rows!=this->columns)
-             throw logic_error ("Matrix has to be square to find det");
+    cout<<"tttttt"<<endl;
+//        if(this->rows!=this->columns)
+//             throw logic_error ("Matrix has to be square to find det");
+        cout<<"uuuuuuuu"<<endl;
     int r=this->GetRows();
     double tmp=1;
+
     Matrix L,U;
+
     this->LU(L,U);
     for(int i=0;i<r;i++)
         tmp=tmp*L.buf[i*r+i]*U.buf[i*r+i];
