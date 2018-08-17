@@ -46,8 +46,16 @@ public:
 	/******** Constructors *********/
 	ImgProcessor() : MIPDirection(Mxy), mipDirection(mxy) {};
 	ImgProcessor(MIPOrientation);
+	ImgProcessor(unsigned char* inputImg1DPtr);
+	ImgProcessor(unsigned char** inputImg2DPtr);
+	ImgProcessor(unsigned char*** inputImg3DPtr);
 	/*******************************/
 
+	/***************** Data Members *****************/
+	unsigned char*   inputImg1DPtr;
+	unsigned char**  inputImg2DPtr;
+	unsigned char*** inputImg3DPtr;
+	/************************************************/
 
 	// These 2 enums decide in which direction to make projection.
 	MIPOrientation MIPDirection;
