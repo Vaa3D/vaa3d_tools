@@ -34,9 +34,10 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     }
     if (menu_name == tr("help"))
     {
-        v3d_msg(tr("This plugin performs two tasks: \n"
+        v3d_msg(tr("This plugin performs several tasks: \n"
                    "1. Connect and sort the input SWC.\n"
                    "2. Generate statistics for quality control purposes.\n"
+                   "3. Split SWC into different components for analysis purposes.\n"
                    "\n"
                    "Please select an SWC file.\n"
                    "Note: an apo file (showing soma location) with the same prefix is required.\n"

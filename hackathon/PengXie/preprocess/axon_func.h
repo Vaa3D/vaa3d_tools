@@ -14,7 +14,7 @@
 #include "sort_swc_redefined.h"
 using namespace std;
 
-bool axon_retype(QString input_swc);
+bool axon_retype(QString input_swc, QString output_swc);
 bool branch_distribution(QString input_swc);
 
 #endif // AXON_FUNC_H

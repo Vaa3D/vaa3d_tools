@@ -16,7 +16,9 @@
 #include "basic_surf_objs.h"
 #include "sort_swc_redefined.h"
 #include "neuron_connector_func.h"
+#include "neurite_analysis_main.h"
 #include "utilities.h"
+#include "axon_func.h"
 #if !defined(Q_OS_WIN32)
 #include "unistd.h"
 #endif
@@ -299,7 +301,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){
             markers = readAPO_file(qs_input.left(qs_input.length() - 5) + QString(".apo"));
         }
-        cout<<qPrintable(qs_output)<<endl;
         if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
             connected = connect_soma(deduped, markers, connect_soma_dist, qs_output.left(qs_output.length() - 4), 1e8, colorful, return_maintree);
         }
@@ -330,6 +331,15 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     bool print_apo = connect_soma_dist>0;
     my_saveANO(qs_output.left(qs_output.length() - 4), true, print_apo);
+
+    qs_input = qs_output;
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+".long_axon.swc";}
+    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-5)+".long_axon.swc";}
+    neurite_analysis(qs_input, QString(""), "a", true);
+    qs_input = qs_output;
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+".retype.swc";}
+    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-5)+".retype.swc";}
+    axon_retype(qs_input, qs_output);
 
     return 1;
 }
