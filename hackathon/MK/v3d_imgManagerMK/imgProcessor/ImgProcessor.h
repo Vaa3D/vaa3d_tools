@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <cmath>
 #include <algorithm>
 
@@ -34,8 +35,8 @@ struct morphStructElement
 	morphStructElement(string shape);
 	morphStructElement(string shape, int length1, int length2);
 
-	vector<vector<int>> structEle2D;
-	vector<vector<vector<int>>> structEle3D;
+	vector<vector<int> > structEle2D;
+	vector<vector<vector<int> > > structEle3D;
 };
 
 class ImgProcessor 
@@ -56,6 +57,9 @@ public:
 	/***************** Basic Image Operations *****************/
 	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	template<class T>
+	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 	
 	template<class T1, class T2>
 	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
@@ -77,6 +81,9 @@ public:
 
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
+
+	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
+		int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
 	/**********************************************************/
 
 
@@ -103,15 +110,10 @@ public:
 
 	/********* Morphological Operations *********/
 	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
-
-	void imgThinning(unsigned char inputPtr[], unsigned char outputPtr[], int imgDims[]);
 	/********************************************/
 
 
 	/***************** Other utilities *****************/
-	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
-		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
-
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 	/***************************************************/
 };
@@ -126,6 +128,21 @@ inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int im
 		if (inputImgPtr[i] < threshold)
 		{
 			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] > threshold)
+		{
+			outputImgPtr[i] = 255;
 			continue;
 		}
 		else outputImgPtr[i] = inputImgPtr[i];
