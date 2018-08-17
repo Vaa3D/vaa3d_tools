@@ -33,7 +33,6 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
     }
     nt = new_tree;
     int N = nt.listNeuron.size();
-    export_list2file(nt.listNeuron, "test.swc");
 
     // Case that needs consideration: if more than 1 axon braches connected to soma
     // Case that needs consideration: if no axon connected to soma
