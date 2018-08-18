@@ -454,9 +454,9 @@ map<QString, QList<NeuronSWC> > SegPipe_Controller::findSoma()
 
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
-		QString saveCaseFullNameQ = this->outputRootPath + "/soma/" + *caseIt;
-		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
-		string saveFullPathRoot = saveCaseFullNameQ.toStdString();
+		//QString saveCaseFullNameQ = this->outputRootPath + "/soma/" + *caseIt;
+		//if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+		//string saveFullPathRoot = saveCaseFullNameQ.toStdString();
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
@@ -513,6 +513,8 @@ map<QString, QList<NeuronSWC> > SegPipe_Controller::findSoma()
 			somaDot.x = dotIt->at(0);
 			somaDot.y = dotIt->at(1);
 			somaDot.z = dotIt->at(2);
+			somaDot.type = 2;
+			somaDot.parent = -1;
 			somaDots.push_back(somaDot);
 		}
 		somaList.insert(pair<QString, QList<NeuronSWC> >(*caseIt, somaDots));

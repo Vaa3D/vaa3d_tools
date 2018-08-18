@@ -89,10 +89,11 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 	else
 	{
 		int islandCount = 0;
+		cout << "white pixel number: " << whitePixAddress.size() << endl;
 		for (vector<unsigned char**>::iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
 		{
 			int sliceNum = int(sliceIt - inputSlicesVector.begin());
-			cout << "processing slice " << sliceNum + 1 << ".." << endl;
+			cout << "  processing slice " << sliceNum + 1 << ".." << endl;
 			for (set<vector<int> >::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
 			{
 				if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0)
