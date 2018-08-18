@@ -6,6 +6,7 @@
 
 #include "SegPipe_Controller.h"
 #include "ImgProcessor.h"
+#include "imgAnalyzer.h"
 #include "ImgManager.h"
 
 using namespace std;
@@ -14,7 +15,7 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 {
 	this->caseList.clear();
 	QDir inputDir(inputCaseRootPath);
-	inputDir.setFilter(QDir::Dirs);
+	inputDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
 	this->caseList = inputDir.entryList();
 
 	if (caseList.empty())
@@ -387,10 +388,69 @@ void SegPipe_Controller::histQuickList()
 	}
 }
 
-
-map<QString, NeuronSWC> SegPipe_Controller::findSoma()
+void SegPipe_Controller::findSomaMass()
 {
-	map<QString, NeuronSWC> somaList;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+
+		QString saveCaseFullNameQ = this->outputRootPath + "/soma/" + *caseIt;
+		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+		string saveFullPathRoot = saveCaseFullNameQ.toStdString();
+
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
+		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
+		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+
+		int massSize = 0;
+		int startIntensity = 255;
+		while (massSize <= 27)
+		{
+			startIntensity -= 5;
+			int pixCount = 0;
+			int dims[3];
+			for (multimap<string, string>::iterator sliceIt = range.first; sliceIt != range.second; ++sliceIt)
+			{
+				const char* inputFullPathC = (sliceIt->second).c_str();
+				Image4DSimple* slicePtr = new Image4DSimple;
+				slicePtr->loadImage(inputFullPathC);
+				dims[0] = int(slicePtr->getXDim());
+				dims[1] = int(slicePtr->getYDim());
+				dims[2] = 1;
+				long int totalbyteSlice = slicePtr->getTotalBytes();
+				unsigned char* slice1D = new unsigned char[totalbyteSlice];
+				memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
+
+				unsigned char* somaThreSlice1D = new unsigned char[totalbyteSlice];
+				ImgProcessor::simpleThresh(slice1D, somaThreSlice1D, dims, startIntensity);
+				for (int i = 0; i < dims[0] * dims[1]; ++i)
+				{
+					if (somaThreSlice1D[i] > 0) ++pixCount;
+				}
+
+				V3DLONG Dims[4];
+				Dims[0] = dims[0];
+				Dims[1] = dims[1];
+				Dims[2] = 1;
+				Dims[3] = 1;
+
+				string fileName = sliceIt->second.substr(sliceIt->second.length() - 9, 9);
+				string sliceSaveFullName = saveFullPathRoot + "/" + fileName;
+				const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+				ImgManager::saveimage_wrapper(sliceSaveFullNameC, somaThreSlice1D, Dims, 1);
+
+				slicePtr->~Image4DSimple();
+				operator delete(slicePtr);
+				if (slice1D) { delete[] slice1D; slice1D = 0; }
+				if (somaThreSlice1D) { delete[] somaThreSlice1D; somaThreSlice1D = 0; }
+			}
+			massSize = massSize + pixCount;
+		}
+	}
+}
+
+map<QString, QList<NeuronSWC> > SegPipe_Controller::findSoma()
+{
+	map<QString, QList<NeuronSWC> > somaList;
 
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
@@ -403,50 +463,65 @@ map<QString, NeuronSWC> SegPipe_Controller::findSoma()
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 		vector<unsigned char**> slice2DVector;
 
+		int dims[3];
 		for (multimap<string, string>::iterator sliceIt = range.first; sliceIt != range.second; ++sliceIt)
 		{
 			const char* inputFullPathC = (sliceIt->second).c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
 			slicePtr->loadImage(inputFullPathC);
-			int dims[3];
 			dims[0] = int(slicePtr->getXDim());
 			dims[1] = int(slicePtr->getYDim());
 			dims[2] = 1;
 			long int totalbyteSlice = slicePtr->getTotalBytes();
 			unsigned char* slice1D = new unsigned char[totalbyteSlice];
 			memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
-			unsigned char* soma1D = new unsigned char[dims[0] * dims[1]];
-			int threStart = 250;
-			ImgProcessor::simpleThresh(slice1D, soma1D, dims, threStart);
-			int pixCount = 0;
-			for (int i = 0; i < dims[0] * dims[1]; ++i) if (soma1D[i] > 0) ++pixCount;
-			if (pixCount <= 50)
+
+			unsigned char** slice2DPtr = new unsigned char*[dims[1]];
+			for (int j = 0; j < dims[1]; ++j)
 			{
-				while (pixCount <= 50)
-				{
-					threStart -= 5;
-					ImgProcessor::simpleThresh(slice1D, soma1D, dims, threStart);
-					pixCount = 0;
-					for (int i = 0; i < dims[0] * dims[1]; ++i) if (soma1D[i] > 0) ++pixCount;
-				}
+				slice2DPtr[j] = new unsigned char[dims[0]];
+				for (int i = 0; i < dims[0]; ++i) slice2DPtr[j][i] = slice1D[dims[0] * j + i];
 			}
-
-			V3DLONG Dims[4];
-			Dims[0] = dims[0];
-			Dims[1] = dims[1];
-			Dims[2] = 1;
-			Dims[3] = 1;
-
-			string fileName = sliceIt->second.substr(sliceIt->second.length() - 9, 9);
-			string sliceSaveFullName = saveFullPathRoot + "/" + fileName;
-			const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
-			ImgManager::saveimage_wrapper(sliceSaveFullNameC, soma1D, Dims, 1);
+			slice2DVector.push_back(slice2DPtr);
 
 			slicePtr->~Image4DSimple();
 			operator delete(slicePtr);
 			if (slice1D) { delete[] slice1D; slice1D = 0; }
-			if (soma1D) { delete[] soma1D; soma1D = 0; }
 		}
+		cout << "slice preparation done." << endl;
+
+		vector<connectedComponent> somaCandidates = ImgAnalyzer::findConnectedComponent(slice2DVector, dims);
+		long int massSize = 0;
+		connectedComponent soma;
+		for (vector<connectedComponent>::iterator connIt = somaCandidates.begin(); connIt != somaCandidates.end(); ++connIt)
+		{
+			connIt->size = connIt->coords.size();
+			if (connIt->coords.size() > massSize)
+			{
+				massSize = connIt->coords.size();
+				soma.coords.clear();
+				soma.coords = connIt->coords;
+				soma.size = massSize;
+				soma.islandNum = connIt->islandNum;
+			}
+		}
+
+		QList<NeuronSWC> somaDots;
+		for (set<vector<int> >::iterator dotIt = soma.coords.begin(); dotIt != soma.coords.end(); ++dotIt)
+		{
+			NeuronSWC somaDot;
+			somaDot.x = dotIt->at(0);
+			somaDot.y = dotIt->at(1);
+			somaDot.z = dotIt->at(2);
+			somaDots.push_back(somaDot);
+		}
+		somaList.insert(pair<QString, QList<NeuronSWC> >(*caseIt, somaDots));
+
+		NeuronTree treeAtSoma;
+		treeAtSoma.listNeuron = somaDots;
+		QString swcSaveFullNameQ = this->outputRootPath + "/soma/" + *caseIt + ".swc";
+		writeSWC_file(swcSaveFullNameQ, treeAtSoma);
+		somaDots.clear();
 	}
 
 	return somaList;

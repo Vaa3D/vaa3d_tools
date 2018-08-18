@@ -63,10 +63,11 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		//segPipePtr->sliceDownSample2D(2, "max");
 		//segPipePtr->adaSliceGammaCorrect();
 		//segPipePtr->sliceReversedGammaCorrect();
-		segPipePtr->sliceThre(0.999);
+		//segPipePtr->sliceThre(0.999);
 		//segPipePtr->histQuickList();
 		//segPipePtr->sliceBkgThre();
-		//map<QString, NeuronSWC> somaList = segPipePtr->findSoma();
+		map<QString, QList<NeuronSWC> > somaList = segPipePtr->findSoma();
+		//segPipePtr->findSomaMass();
 	}
 	else if (func_name == tr("func2"))
 	{

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "ImgProcessor.h"
 
@@ -11,7 +12,8 @@ using namespace std;
 
 struct connectedComponent
 {
-	map<string, int[3]> coords;
+	int islandNum;
+	set<vector<int> > coords;
 	long int size;
 	vector<float> centroid;
 };

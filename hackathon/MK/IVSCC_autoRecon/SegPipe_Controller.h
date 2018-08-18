@@ -41,7 +41,8 @@ public:
 	
 	void histQuickList();
 
-	map<QString, NeuronSWC> findSoma();
+	map<QString, QList<NeuronSWC> > findSoma();
+	void findSomaMass();
 	void somaNeighborhoodThin();
 };
 
