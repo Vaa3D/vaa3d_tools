@@ -13,8 +13,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-
-#include <angle_marker.h>
+#include "angle_marker.h"
 using namespace std;
 
 const QString title = QObject::tr("Sort SWC Plugin");
@@ -73,7 +72,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     {
         //int sum=0;
         CellAPO t;
-        if(remote_angles.at(i)>90)
+        if(local_angles.at(i)>110)
         {
             t.x = neuron.at(branchid.at(i)).x;
             t.y = neuron.at(branchid.at(i)).y;
@@ -90,7 +89,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     //for(int i=0;i<branchid.size();i++){
       //  qDebug()<<branchid.at(i);
     //}
-    qDebug()<<branchid.size()<<remote_angles.size()<<angle_markers.size();
+    qDebug()<<branchid.size()<<angle_markers.size();
 
     QString apo_name = fileOpenName + ".apo";
     writeAPO_file(apo_name,angle_markers);

@@ -240,15 +240,45 @@ vector<int> deletetipbranch(const NeuronTree & nt)
 
       qDebug()<<probranchnodes.size()<<resultbranches.size();
 
+      vector<int> Result;
+      vector<int> pro;
+      vector<int> trash;
+      for(int i=0;i<resultbranches.size();i++){
+          for(int j=i+1;j<resultbranches.size();j++){
+              double dis;
+              dis=dist(neuron.at(resultbranches.at(i)),neuron.at(resultbranches.at(j)));
+              //disofbranchs.push_back(dis);
+              if(dis<8){
+                  pro.push_back(resultbranches.at(i));
+                  pro.push_back(resultbranches.at(j));
+              }
+              //else{
+              //    Result.push_back(resultbranches.at(i));
+              //    Result.push_back(resultbranches.at(j));
+              //}
+      }}
+
       vector<int>:: iterator it,it1;
-      for(it=++resultbranches.begin();it!=resultbranches.end();)
+      for(it=++pro.begin();it!=pro.end();)
       {
-          it1=find(resultbranches.begin(),it,*it);
+          it1=find(pro.begin(),it,*it);
           if(it1!=it)
-              it=resultbranches.erase(it);
+              it=pro.erase(it);
           else
               it++;
       }
+      qDebug()<<pro.size();
+
+      for(int i=0;i<resultbranches.size();i++){
+          int cout=0;
+          for(int j=0;j<pro.size();j++){
+
+                  if(resultbranches.at(i)==pro.at(j)) cout=cout+1;
+             }
+          if(cout==0) Result.push_back(resultbranches.at(i));
+          else       trash.push_back(resultbranches.at(i));
+
+        }
 
       //for(int i=0;i<probranchnodes.size();i++){
         //  qDebug()<<probranchnodes.at(i);
@@ -263,7 +293,7 @@ vector<int> deletetipbranch(const NeuronTree & nt)
           }
       }*/
 
-     return resultbranches;
+     return Result;
 }
 
 QVector<V3DLONG> getRemoteChild(int t)

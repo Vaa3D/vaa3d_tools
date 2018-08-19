@@ -84,7 +84,7 @@ vector<double> ShollSWC(QList<NeuronSWC> & neuron, double step)
     }
 
     int sumtype=typenum(neuron);
-    qDebug()<<sumtype;
+    //qDebug()<<sumtype;
 
     vector<double> typelist;
 
@@ -92,7 +92,7 @@ vector<double> ShollSWC(QList<NeuronSWC> & neuron, double step)
         if (neuron[i].type==3 || neuron[i].type==4 || neuron[i].pn ==-1){
             typelist.push_back(i);}
     }
-    qDebug()<<typelist.size();
+    //qDebug()<<typelist.size();
     int soma_line;
     vector <double> distance;
 
@@ -112,7 +112,7 @@ vector<double> ShollSWC(QList<NeuronSWC> & neuron, double step)
     }
     double max = *max_element(distance.begin(),distance.end());
     qDebug()<< max;
-    qDebug()<< distance.size();
+    //qDebug()<< distance.size();
     vector<int> tipslist;
     for (int i=0;i<neuron.size();i++)
     {
@@ -129,7 +129,7 @@ vector<double> ShollSWC(QList<NeuronSWC> & neuron, double step)
                 tipslist.push_back(i);
             }
      }
-    qDebug()<< tipslist.size();
+    //qDebug()<< tipslist.size();
 
     vector<double> radius;
     vector<double> crossings;
@@ -139,7 +139,7 @@ vector<double> ShollSWC(QList<NeuronSWC> & neuron, double step)
     }
     radius.push_back(0);
     crossings.push_back(0);
-    for (int i=int(step);i<max;i+=int(step))
+    for (double i=int(step);i<max;i+=int(step))
     {
          radius.push_back(i);
          int crss = 0;
