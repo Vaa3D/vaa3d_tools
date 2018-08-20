@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 
+#include "ImgManager.h"
 #include "ImgProcessor.h"
 
 using namespace std;
@@ -13,7 +14,7 @@ using namespace std;
 struct connectedComponent
 {
 	int islandNum;
-	set<vector<int> > coords;
+	map<int, vector<int> > coords;
 	long int size;
 	vector<float> centroid;
 };

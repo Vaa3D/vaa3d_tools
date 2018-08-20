@@ -1,3 +1,5 @@
+#include <ctime>
+
 #include "ImgAnalyzer.h"
 
 vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned char**> inputSlicesVector, int dims[])
@@ -23,6 +25,14 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 		if (currSlice1D) { delete[] currSlice1D; currSlice1D = 0; }
 	}
 	cout << " MIP done." << endl;
+	/*string testName = "H:/test.tif";
+	const char* testNameC = testName.c_str();
+	V3DLONG saveDims[4];
+	saveDims[0] = dims[0];
+	saveDims[1] = dims[1];
+	saveDims[2] = 1;
+	saveDims[3] = 1;
+	ImgManager::saveimage_wrapper(testNameC, maxIP1D, saveDims, 1);*/
 
 	set<vector<int> > whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
@@ -47,14 +57,14 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 			int connectedCount = 0;
 			for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
 			{
-				for (set<vector<int> >::iterator coordIt = connIt->coords.begin(); coordIt != connIt->coords.end(); ++coordIt)
+				for (map<int, vector<int> >::iterator coordIt = connIt->coords.begin(); coordIt != connIt->coords.end(); ++coordIt)
 				{
-					if ((it->at(0) - 1 == coordIt->at(0) || it->at(0) + 1 == coordIt->at(0)) && (it->at(1) - 1 == coordIt->at(1) || it->at(1) + 1 == coordIt->at(1)))
+					if ((it->at(0) - 1 == coordIt->second.at(0) || it->at(0) + 1 == coordIt->second.at(0)) && (it->at(1) - 1 == coordIt->second.at(1) || it->at(1) + 1 == coordIt->second.at(1)))
 					{
 						vector<int> newCoord(2);
 						newCoord[0] = it->at(0);
 						newCoord[1] = it->at(1);
-						connIt->coords.insert(newCoord);
+						connIt->coords.insert(pair<int, vector<int> >(0, newCoord));
 						++connectedCount;
 						break;
 					}
@@ -66,7 +76,7 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 				++islandCount;
 				connectedComponent newIsland;
 				newIsland.islandNum = islandCount;
-				newIsland.coords.insert(*it);
+				newIsland.coords.insert(pair<int, vector<int> >(0, *it));
 				connList.push_back(newIsland);
 			}
 		}
@@ -93,34 +103,44 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 		for (vector<unsigned char**>::iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
 		{
 			int sliceNum = int(sliceIt - inputSlicesVector.begin());
-			cout << "  processing slice " << sliceNum + 1 << ".." << endl;
+			cout << "  processing slice " << sliceNum << ".." << endl;
 			for (set<vector<int> >::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
 			{
 				if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0)
 				{
-					//cout << "coordinates: (" << mipIt->at(0) << ", " << mipIt->at(1) << ")" << endl;
-					int connectedCount = 0;
+					cout << "coordinates: (" << mipIt->at(0) << ", " << mipIt->at(1) << ")" << endl;
+					bool connectedCount = false;
 					for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
 					{
-						for (set<vector<int> >::iterator coordIt = connIt->coords.begin(); coordIt != connIt->coords.end(); ++coordIt)
+						pair<map<int, vector<int> >::iterator, map<int, vector<int> >::iterator> lastSliceRange = connIt->coords.equal_range(sliceNum - 1);
+						pair<map<int, vector<int> >::iterator, map<int, vector<int> >::iterator> currSliceRange = connIt->coords.equal_range(sliceNum);
+						for (map<int, vector<int> >::iterator rangeIt = lastSliceRange.first; rangeIt != lastSliceRange.second; ++rangeIt)
 						{
-							if (coordIt->at(2) == sliceNum - 1)
+							if ((mipIt->at(0) - 1 == rangeIt->second.at(0) || mipIt->at(0) + 1 == rangeIt->second.at(0)) && (mipIt->at(1) - 1 == rangeIt->second.at(1) || mipIt->at(1) + 1 == rangeIt->second.at(1)))
 							{
-								if ((mipIt->at(0) - 1 == coordIt->at(0) || mipIt->at(0) + 1 == coordIt->at(0)) && (mipIt->at(1) - 1 == coordIt->at(1) || mipIt->at(1) + 1 == coordIt->at(1)))
-								{
-									vector<int> newCoord(3);
-									newCoord[0] = mipIt->at(0);
-									newCoord[1] = mipIt->at(1);
-									newCoord[2] = sliceNum;
-									connIt->coords.insert(newCoord);
-									++connectedCount;
-									break;
-								}
+								vector<int> newCoord(3);
+								newCoord[0] = mipIt->at(0);
+								newCoord[1] = mipIt->at(1);
+								newCoord[2] = sliceNum;
+								connIt->coords.insert(pair<int, vector<int> >(sliceNum, newCoord));
+								connectedCount = true;
+							}
+						}
+						for (map<int, vector<int> >::iterator rangeIt = currSliceRange.first; rangeIt != currSliceRange.second; ++rangeIt)
+						{
+							if ((mipIt->at(0) - 1 == rangeIt->second.at(0) || mipIt->at(0) + 1 == rangeIt->second.at(0)) && (mipIt->at(1) - 1 == rangeIt->second.at(1) || mipIt->at(1) + 1 == rangeIt->second.at(1)))
+							{
+								vector<int> newCoord(3);
+								newCoord[0] = mipIt->at(0);
+								newCoord[1] = mipIt->at(1);
+								newCoord[2] = sliceNum;
+								connIt->coords.insert(pair<int, vector<int> >(sliceNum, newCoord));
+								connectedCount = true;
 							}
 						}
 					}
 
-					if (connectedCount == 0)
+					if (!connectedCount)
 					{
 						++islandCount;
 						connectedComponent newIsland;
@@ -129,7 +149,7 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 						newCoord[0] = mipIt->at(0);
 						newCoord[1] = mipIt->at(1);
 						newCoord[2] = sliceNum;
-						newIsland.coords.insert(newCoord);
+						newIsland.coords.insert(pair<int, vector<int> >(sliceNum, newCoord));
 						connList.push_back(newIsland);
 					}
 				}
