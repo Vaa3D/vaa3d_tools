@@ -2,13 +2,13 @@
 #define SORT_SWC_REDIFINED_H
 
 // Adapted from /Users/pengxie/Applications/vaa3d/v3d_external/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
-#include <QtGlobal>
-#include <math.h>
-//#include <unistd.h> //remove the unnecessary include file. //by PHC 20131228
+#include "QtGlobal"
+#include "math.h"
+//#include "unistd.h" //remove the unnecessary include file. //by PHC 20131228
 #include "basic_surf_objs.h"
-#include <string.h>
-#include <vector>
-#include <iostream>
+#include "string.h"
+#include "vector"
+#include "iostream"
 using namespace std;
 
 #ifndef VOID

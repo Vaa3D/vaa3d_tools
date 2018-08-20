@@ -7,6 +7,7 @@ QMAKE_CFLAGS = -Zc:wchar_t
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += ../../../released_plugins/v3d_plugins/swc2mask_cylinder
+INCLUDEPATH += ../v3d_imgManagerMK/imgAnalyzer
 INCLUDEPATH += ../v3d_imgManagerMK/imgProcessor
 INCLUDEPATH += ../v3d_imgManagerMK
 
@@ -39,6 +40,7 @@ HEADERS += SegPipe_Controller.h
 SOURCES	+= IVSCC_Auto_Reconstruction_plugin.cpp
 SOURCES += SegPipe_Controller.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(IVSCC_Auto_Reconstruction)
 DESTDIR	= $$VAA3DPATH/bin/plugins/IVSCC_Auto_Reconstruction/

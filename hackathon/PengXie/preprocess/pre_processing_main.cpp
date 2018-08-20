@@ -16,31 +16,34 @@
 #include "basic_surf_objs.h"
 #include "sort_swc_redefined.h"
 #include "neuron_connector_func.h"
+#include "neurite_analysis_main.h"
 #include "utilities.h"
+#include "axon_func.h"
 #if !defined(Q_OS_WIN32)
-#include <unistd.h>
+#include "unistd.h"
 #endif
 
 #if defined(Q_OS_WIN32)
 #include "getopt_tool.h"
-#include <io.h>
+#include "io.h"
 #endif
 
 NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel, double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
 {
+    printf("Running connect_soma\n");
     QList<int> components;
     QList<int> pList;
     int ncomponents=0;
     const int N=nt.listNeuron.size();
 
     //connected component
+    printf("\tFinding components\n");
     for(V3DLONG i=0; i<N; i++){
         if(nt.listNeuron.at(i).pn<0){
             components.append(ncomponents); ncomponents++;
             pList.append(-1);
         }
         else{
-//            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
             int pid = nt.listNeuron.at(i).pn-1;
             components.append(-1);
             pList.append(pid);
@@ -49,7 +52,6 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 
     //assign nodes to components
     for(int cid=0; cid<ncomponents; cid++){
-//    for(int cid=0; cid<1; cid++){
         QStack<int> pstack;
         if(!components.contains(cid)) //should not happen, just in case
             continue;
@@ -89,7 +91,10 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
             nt.listNeuron[i].type=components.at(i)+1;
         }
     }
+    printf("\tTotsl # components:\t%d\n", ncomponents);
 
+    // Connect components to soma
+    printf("\tConnecting components to soma\n");
     //check if marker exists and use it as root
     int somarootid = 0;
     if(markers.size()>0)
@@ -138,6 +143,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         markers[0].color.r=0;
         markers[0].color.g=0;
         markers[0].color.b=0;
+        markers[0].comment="soma";
         somarootid = 0;
     }
 
@@ -150,7 +156,6 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 
 
     // For each subtree, connect the closest end (tip or root) to soma, if within certain distance.
-    cout << "Total components:\t" <<ncomponents << endl;
     QList<int> drop_list;
     int bad_nodes=0;
     for(int cid=0; cid<ncomponents; cid++){
@@ -290,7 +295,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
     printf("Connecting to soma\n");
     NeuronTree connected = deduped;
     if (connect_soma_dist>0){
-        printf(qPrintable(qs_input),"\n");
         if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){
             markers = readAPO_file(qs_input.left(qs_input.length() - 4) + QString(".apo"));
         }
@@ -304,7 +308,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
             connected = connect_soma(deduped, markers, connect_soma_dist, qs_output.left(qs_output.length() - 5), 1e6, colorful, return_maintree);
         }
     }
-    cout << connected.listNeuron.size()<<endl;
 
     //2.5 Sort the tree.
     printf("Sorting\n");
@@ -328,6 +331,22 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     bool print_apo = connect_soma_dist>0;
     my_saveANO(qs_output.left(qs_output.length() - 4), true, print_apo);
+
+    // Split neurons into different components
+    // Report 1: long axon only.
+    qs_input = qs_output;
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+".long_axon.swc";}
+    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-5)+".long_axon.eswc";}
+    neurite_analysis(qs_input, qs_output, "a", false);
+    // Report 2: other axons retyped
+    qs_input = qs_output;
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-14)+".axon.swc";}
+    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-15)+".axon.eswc";}
+    neurite_analysis(qs_input, qs_output, "a", true);
+    qs_input = qs_output;
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+".retype.swc";}
+    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-5)+".retype.eswc";}
+    axon_retype(qs_input, qs_output);
 
     return 1;
 }
@@ -559,7 +578,7 @@ void printHelp_pre_processing()
 	printf("\t#o <output_filename> :   output file name.\n");
 	printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
     printf("\t#l <prune_size> :  prune short branches that has length smaller than prune_size.\n");
-    printf("\t                         if not specified, it is \"inputName_preprocessed.swc\"\n");
+    printf("\t                         if not specified, use 2\"\n");
     printf("\t#s <step_size>       :   step size for resampling.\n");
     printf("\t                         use 0 to skip, if not specified, use 0.\n");
     printf("\t#m <thres_connect_soma>       :   maximun distance to connect a node to soma.\n");

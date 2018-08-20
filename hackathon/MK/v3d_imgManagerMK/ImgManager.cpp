@@ -89,7 +89,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 	const char* firstImgC = firstImg.c_str();
 	Image4DSimple* tempPtr = new Image4DSimple;
 	tempPtr->loadImage(firstImgC);
-	long int dims[2];
+	int dims[2];
 	dims[0] = tempPtr->getXDim();
 	dims[1] = tempPtr->getYDim();
 	cout << "image dimension: " << dims[0] << " " << dims[1] << endl;
@@ -108,7 +108,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 		V3DLONG totalbytes = inputMask4D->getTotalBytes();
 		unsigned char* input1D = new unsigned char[totalbytes];
 		memcpy(input1D, inputMask4D->getRawData(), totalbytes);
-		ImgProcessor::imageMax(input1D, maskMIP, totalbytes);
+		ImgProcessor::imageMax(input1D, maskMIP, maskMIP, dims);
 		delete inputMask4D;
 	}
 
