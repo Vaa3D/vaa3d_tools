@@ -3,12 +3,13 @@
  *  io functions for domenu and do func 
  *
  *  Created by Wan, Yinan, on 02/01/2012.
+ *  modified by OUyang , on 08/21/2018
  */
 
 #include <v3d_interface.h>
 #include "v3d_message.h"
 #include "show_func.h"
-#include "openSWCDialog.h"
+//#include "openSWCDialog.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
@@ -41,11 +42,9 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
     neuron=dendrite;
-    cout<<"dendrite node number:"<<neuron.size()<<endl;
-
 
     LandmarkList Markers = callback.getLandmarkTeraFly();
-    qDebug()<<Markers.size();
+    //qDebug()<<Markers.size();
     //qDebug()<<Markers.at(0).x<<Markers.at(0).y<<Markers.at(0).z;
 
     /*for(int i=0;i<Markers.size();i++){
@@ -82,27 +81,25 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
         neuron_nt=result;
     }
     neuron=neuron_nt;
-    qDebug()<<neuron.size();
+    cout<<"--------------------------------------dendrite node number after sorting: "<<neuron.size()<<endl;
     NeuronTree n_t;
     QHash <int, int> hash_nt;
 
     for(V3DLONG j=0; j<neuron.size();j++){
         hash_nt.insert(neuron[j].n, j);
     }
-
     n_t.listNeuron=neuron;
     n_t.hashNeuron=hash_nt;
     nt=n_t;
-
 
     vector<double> remote_angles;
     vector<double> local_angles;
     vector<int> branchid;
     angles temp;
-    temp=angle_calculate(nt);
-    branchid=temp.c;
-    local_angles=temp.a;
-    remote_angles=temp.b;
+           temp=angle_calculate(nt);
+           branchid=temp.c;
+           local_angles=temp.a;
+           remote_angles=temp.b;
 
     vector<int>:: iterator it,it1;
     for(it=++branchid.begin();it!=branchid.end();)
@@ -121,7 +118,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     LocationSimple m;
     LandmarkList mark;
     for(int i=0;i < branchid.size();i++){
-        if(local_angles.at(i)>90)
+        if(local_angles.at(i)>110)
         {
             m.x=neuron.at(branchid.at(i)).x;
             m.y=neuron.at(branchid.at(i)).y;
@@ -132,9 +129,14 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
             mark.push_back(m);
           }
      }
-    qDebug()<<mark.size();
-    //qDebug()<<mark.at(0).x<<mark.at(0).y<<mark.at(0).z;
+    cout<<"total marker number set into terafly: "<<mark.size()<<endl;
+    for(int i;i<mark.size();i++)
+    {
+        cout<<"the coordinates of markers:x="<<mark.at(i).x<<" y="<<mark.at(i).y<<" z="<<mark.at(i).z<<endl;
+    }
     callback.setLandmarkTeraFly(mark);
+
+
    /* QList<CellAPO> angle_markers;
     for(V3DLONG i = 0; i < branchid.size(); i++)
     {
@@ -153,13 +155,6 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
             //sum+=1;
         }
     }*/
-
-
-    //for(int i=0;i<branchid.size();i++){
-      //  qDebug()<<branchid.at(i);
-    //}
-    //qDebug()<<branchid.size()<<local_angles.size()<<mark.size();
-
 
  }
 
