@@ -14,7 +14,8 @@ using namespace std;
 struct connectedComponent
 {
 	int islandNum;
-	map<int, vector<int> > coords;
+	multimap<int, vector<int> > coords;
+	map<int, vector<int> > finalCoords;
 	long int size;
 	vector<float> centroid;
 };
