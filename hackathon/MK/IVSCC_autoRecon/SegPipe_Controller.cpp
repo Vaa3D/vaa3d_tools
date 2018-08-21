@@ -498,21 +498,43 @@ map<QString, QList<NeuronSWC> > SegPipe_Controller::findSoma()
 		vector<connectedComponent> somaCandidates = ImgAnalyzer::findConnectedComponent(slice2DVector, dims);
 		long int massSize = 0;
 		connectedComponent soma;
+		//NeuronTree treeAtSoma;
+		//QList<NeuronSWC> somaDots;
 		for (vector<connectedComponent>::iterator connIt = somaCandidates.begin(); connIt != somaCandidates.end(); ++connIt)
 		{
 			connIt->size = connIt->coords.size();
-			if (connIt->coords.size() > massSize)
+			if (connIt->size > massSize)
 			{
-				massSize = connIt->coords.size();
+				massSize = connIt->size;
 				soma.coords.clear();
 				soma.coords = connIt->coords;
 				soma.size = massSize;
 				soma.islandNum = connIt->islandNum;
 			}
+
+			cout << connIt->islandNum << ":" << connIt->size << endl;
+			/*for (map<int, vector<int> >::iterator dotIt = connIt->finalCoords.begin(); dotIt != connIt->finalCoords.end(); ++dotIt)
+			{
+				NeuronSWC somaDot;
+				somaDot.x = dotIt->second.at(1);
+				somaDot.y = dotIt->second.at(0);
+				somaDot.z = dotIt->second.at(2);
+				somaDot.type = 2;
+				somaDot.parent = -1;
+				somaDots.push_back(somaDot);
+				cout << " " << dotIt->second.at(0) << " " << dotIt->second.at(1) << " " << dotIt->second.at(2) << endl;
+			}*/
+			//somaList.insert(pair<QString, QList<NeuronSWC> >(*caseIt, somaDots));
+			cout << endl;
 		}
 
+		//treeAtSoma.listNeuron = somaDots;
+		//QString swcSaveFullNameQ = this->outputRootPath + "/soma/" + *caseIt + ".swc";
+		//writeSWC_file(swcSaveFullNameQ, treeAtSoma);
+		//somaDots.clear();
+
 		QList<NeuronSWC> somaDots;
-		for (map<int, vector<int> >::iterator dotIt = soma.coords.begin(); dotIt != soma.coords.end(); ++dotIt)
+		for (multimap<int, vector<int> >::iterator dotIt = soma.coords.begin(); dotIt != soma.coords.end(); ++dotIt)
 		{
 			NeuronSWC somaDot;
 			somaDot.x = dotIt->second.at(1);
