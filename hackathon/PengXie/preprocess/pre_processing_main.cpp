@@ -332,20 +332,24 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
     bool print_apo = connect_soma_dist>0;
     my_saveANO(qs_output.left(qs_output.length() - 4), true, print_apo);
 
-//    // Split neurons into different components
+    return 1;
+}
+
+bool split_neuron(QString qs_input){
+    // Split neurons into different components
     QString qs_tag;
-    qs_input = qs_output;
     if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_tag = qs_input.left(qs_input.length()-4);}
     if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_tag = qs_input.left(qs_input.length()-5);}
+
     // Report 1: long axon only.
-    neurite_analysis(qs_input, qs_tag+".long_axon.swc", "a", false);
+    neurite_analysis(qs_input, qs_tag+".long_axon.swc", "l");
     // Report 2: other axons retyped
-    neurite_analysis(qs_input, qs_tag+".axon.swc", "a", true);
+    neurite_analysis(qs_input, qs_tag+".axon.swc", "a");
     axon_retype(qs_tag+".axon.swc", qs_tag+".long_axon.swc", qs_tag+".axon.retype.swc");
-    QList<double> lpa_density = branch_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
-    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
+//    QList<double> lpa_density = branch_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
+//    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
     // Report 3: dendrite
-    neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d", true);
+    neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d");
 
     return 1;
 }
@@ -532,8 +536,14 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
 		}
 	}
 
-    pre_processing(QString(dfile_input), QString(dfile_result), prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
-	return 1;
+    QString qs_input = QString(dfile_input);
+    QString qs_output = QString(dfile_result);
+    // Pre-process
+    pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
+    // Split neuron
+    qs_input = QString(qPrintable(qs_output));
+    split_neuron(qs_input);
+    return 1;
 }
 
 bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
@@ -562,7 +572,12 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         qs_output = qs_output.left(qs_output.length() - 5) + QString(".processed.eswc");
     }
 
+    // Pre-process
     pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
+    // Split neuron
+    qs_input = QString(qPrintable(qs_output));
+    split_neuron(qs_input);
+
     return 1;
 }
 

@@ -20,24 +20,13 @@
 #include "io.h"
 #endif
 
+
 QList <int> find_long_axon(NeuronTree nt, int soma){
-    // extract axon nodes
-    NeuronTree new_tree;
-    QList<int> name_list;
-    for(int i=0; i<nt.listNeuron.size(); i++){
-        NeuronSWC node = nt.listNeuron.at(i);
-        if(node.type==1 || node.type==2){
-            new_tree.listNeuron.append(node);
-            name_list.append(node.n);
-        }
-    }
-    nt = new_tree;
+
     int N = nt.listNeuron.size();
-
-    // Case that needs consideration: if more than 1 axon braches connected to soma
-    // Case that needs consideration: if no axon connected to soma
-
-    // find longest path from soma
+    QList<int> name_list;
+    for(int i=0; i<N; i++){name_list.append(nt.listNeuron.at(i).n);}
+    // 1. find longest path from soma
     // DFS
     // Initialization
     int pid=soma;
@@ -73,7 +62,7 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
     int endpoint = distance.lastIndexOf(longest_distance);
     cout<<"Longest distance:\t"<<distance.at(endpoint)<<"\t"<<"node "<<nt.listNeuron.at(endpoint).n <<endl;
 
-    // Return a list of node ids of the long projection axon
+    // 2. Return a list of node ids of the long projection axon
     QList <int> lpa;
     int cur_id = endpoint;
     lpa.prepend(cur_id);
@@ -97,33 +86,65 @@ NeuronTree return_long_axon(NeuronTree nt, int soma, bool color_tree){
     }
     return nt;
 }
-NeuronTree return_dendrite(NeuronTree nt){
+NeuronTree return_axon(NeuronTree nt, int soma){
+
+    printf("Welcome to use return_axon.\n");
+    // 1. Get axon subtrees starting from soma
+    // 1.1 extract axon nodes
+    NeuronTree new_tree = get_subtree_by_type(nt, 2);
+    QList<int> name_list;
+    for(int i=0; i<nt.listNeuron.size();i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        name_list.append(node.n);
+    }
+    // 1.2 Add axon-connected dendrite segments to axon subtrees
+    // Find out whether any axon node connected to dendrite
+    QList<int> a2d_ind;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        int pn_ind = name_list.indexOf(node.pn);
+        if(pn_ind<0){continue;}
+        if((nt.listNeuron.at(pn_ind).type==3) && (node.type==2)){
+            a2d_ind.append(i);
+            cout << i <<endl;
+        }
+    }
+    // If any, trace back to soma;
+    if(a2d_ind.size()>0){
+        if(a2d_ind.size()>1){printf("Warning: %d axon nodes connected to dendrite!\n", a2d_ind.size());}
+        for(int i=0; i<a2d_ind.size(); i++){
+            bool soma_reached=0;
+            NeuronSWC node = nt.listNeuron.at(a2d_ind.at(i));
+            while(node.pn != -1){
+                int pn_ind = name_list.indexOf(node.pn);
+                node = nt.listNeuron.at(pn_ind);
+                if(node.type==3){new_tree.listNeuron.append(node);}
+                if(node.type==1){soma_reached==1;}
+            }
+            if(!soma_reached){
+                printf("Warning: axon nodes connected to dendrite but cannot trace back to soma!\n");
+            }
+        }
+    }
+
+    nt = single_tree(new_tree, soma);
+    return nt;
+
+}
+NeuronTree return_dendrite(NeuronTree nt, int soma){
     nt = get_subtree_by_type(nt, 3);
+    nt = single_tree(nt, soma);
     return nt;
 }
-void printHelp_neurite_analysis()
-{
-    printf("\nVaa3D plugin: modifiled pre-processing step for BlastNeuron pipeline, including: \n");
-    printf("\t1) delete the branches in a neuron which have a length smaller the prune size ( by default the prune size is 5 %% of neuron/tree diameter.\n");
-    printf("\t2) resample the neurons along the segments with the step size (default: 1). \n");
-    printf("\t3) sort the neurons along the segments with the step size (deyyplt: 1). \n");
-    printf("\t4) rotate the neuron to align its longest dimension to x axis\n");
-    printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
-    printf("\t#o <output_filename> :   output file name.\n");
-    printf("\t                         if not specified, it is \"inputName.extract_type.swc\"\n");
-    printf("\t#t <extract_type> :  which neurite type to extract.\n");
-    printf("\t                         if not specified, long projection axon will be extracted\n");
-    printf("\t#c <color_tree> :  whether to label the specified type by color.\n");
-    printf("\t                         if not specified, only return the subtree\n");
-    printf("\t                         if specified as 1, whole neuron will be returned, with the specified part showing white coloor\n");
-    printf("Usage: vaa3d -x preprocess -f neurite_analysis -p \"#i input.swc #o result.swc #t a #c 1\"\n");
-}
 
-bool neurite_analysis(QString qs_input, QString qs_output, string extract_type, bool color_tree=true){
+bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
+
+    printf("welcome to neurite_analysis\n");
+
     // 1. Load data
     NeuronTree nt;
 
-    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC"))
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC") || qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC"))
     {
         nt = readSWC_file(qs_input);
     }
@@ -147,22 +168,15 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type, 
         return 0;
     }
 
-    // 2.2 Check single tree
-    printf("Checking single tree\n");
-    double total_size = nt.listNeuron.size();
-    if(extract_type == "a" || extract_type == "c"){nt=get_subtree_by_type(nt, 2);}
-    if(extract_type == "d"){nt=get_subtree_by_type(nt, 3);}
-    nt = single_tree(nt, soma);
-    if(nt.listNeuron.size() / total_size < 0.1){
-        printf("Warning: only %f%% belongs to the soma-connected single tree!\n", nt.listNeuron.size()/total_size*100);
-    }
-
-
     // 3. Extract the specified type of neurite
     printf("Extracting neurite\n");
-    QList<int> idlist;
-    if(extract_type == "a"){nt = return_long_axon(nt, soma, color_tree);}
-    if(extract_type == "d"){nt = return_dendrite(nt);}
+    if(extract_type == "a" || extract_type == "l"){
+        nt=return_axon(nt, soma);
+        if(extract_type == "l"){
+            nt = return_long_axon(nt, soma, false);
+        }
+    }
+    if(extract_type == "d"){nt=return_dendrite(nt, soma);}
 
     writeSWC_file(qs_output, nt);
     return 1;
@@ -170,7 +184,6 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type, 
 
 bool neurite_analysis_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    printf("welcome to neurite_analysis\n");
 
     //0. read arguments
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
@@ -275,5 +288,23 @@ bool neurite_analysis_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         }
     }
 
-    return neurite_analysis(QString(dfile_input), QString(dfile_output), extract_type, color_tree);
+    return neurite_analysis(QString(dfile_input), QString(dfile_output), extract_type);
+}
+
+void printHelp_neurite_analysis()
+{
+    printf("\nVaa3D plugin: modifiled pre-processing step for BlastNeuron pipeline, including: \n");
+    printf("\t1) delete the branches in a neuron which have a length smaller the prune size ( by default the prune size is 5 %% of neuron/tree diameter.\n");
+    printf("\t2) resample the neurons along the segments with the step size (default: 1). \n");
+    printf("\t3) sort the neurons along the segments with the step size (deyyplt: 1). \n");
+    printf("\t4) rotate the neuron to align its longest dimension to x axis\n");
+    printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
+    printf("\t#o <output_filename> :   output file name.\n");
+    printf("\t                         if not specified, it is \"inputName.extract_type.swc\"\n");
+    printf("\t#t <extract_type> :  which neurite type to extract.\n");
+    printf("\t                         if not specified, long projection axon will be extracted\n");
+    printf("\t#c <color_tree> :  whether to label the specified type by color.\n");
+    printf("\t                         if not specified, only return the subtree\n");
+    printf("\t                         if specified as 1, whole neuron will be returned, with the specified part showing white coloor\n");
+    printf("Usage: vaa3d -x preprocess -f neurite_analysis -p \"#i input.swc #o result.swc #t a #c 1\"\n");
 }

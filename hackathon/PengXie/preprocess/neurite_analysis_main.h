@@ -14,7 +14,7 @@
 #include "sort_swc_redefined.h"
 using namespace std;
 
-bool neurite_analysis(QString qs_input, QString qs_output, string extract_type, bool color_tree);
+bool neurite_analysis(QString qs_input, QString qs_output, string extract_type);
 bool neurite_analysis_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp_neurite_analysis();
 #endif // NEURITE_ANALYSIS_MAIN_H

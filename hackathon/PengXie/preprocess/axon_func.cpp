@@ -105,13 +105,14 @@ bool export_branch_distribution(QList<double> lpa_density, QString output_fileNa
         fprintf(fp, "%f\n", lpa_density.at(i));
     }
     fclose(fp);
+    return 1;
 }
 
 bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bool proximal_distal){
     // Input is an swc of axon, with the long-projection axon labeled as 0
     // id's of whole_axon_swc and lpa_swc should match
 
-    printf("axon_retype\n");
+    printf("Welcome to use axon_retype\n");
 
     // 1. Load data
     if(output_swc.size()==0){
@@ -153,11 +154,9 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     for(int i=1; i<axon.listNeuron.size(); i++){
         branch_ind.clear();
         NeuronSWC node = axon.listNeuron.at(i);
-//        cout<< node.n<<"\t"<<node.pn<<endl;
-        int pn_ind = nlist.indexOf(node.pn);
         // find the start of a non-long-projection branch
-//        if(node.n==1745){cout<<node.pn<<"\t"<<axon.listNeuron.at(pn_ind).type<<"\t"<<node.type<<endl;}
-        if(axon.listNeuron.at(pn_ind).type ==0 && node.type != 0){
+        if(lpa_id.indexOf(node.n) == (-1) && lpa_id.indexOf(node.pn) != (-1)){
+
             // Initialization
             int pid=i;
             QList<int> visited;
