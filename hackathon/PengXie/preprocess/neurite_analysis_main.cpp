@@ -119,7 +119,7 @@ void printHelp_neurite_analysis()
     printf("Usage: vaa3d -x preprocess -f neurite_analysis -p \"#i input.swc #o result.swc #t a #c 1\"\n");
 }
 
-bool neurite_analysis(QString qs_input, QString qs_output, string extract_type, bool color_tree){
+bool neurite_analysis(QString qs_input, QString qs_output, string extract_type, bool color_tree=true){
     // 1. Load data
     NeuronTree nt;
 

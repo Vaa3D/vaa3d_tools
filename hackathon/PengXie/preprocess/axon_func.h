@@ -12,9 +12,10 @@
 #include "utilities.h"
 #include "basic_surf_objs.h"
 #include "sort_swc_redefined.h"
+#include "math.h"
 using namespace std;
 
-bool axon_retype(QString input_swc, QString output_swc);
-bool branch_distribution(QString input_swc);
-
+bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bool proximal_distal=true);
+QList<double> branch_distribution(QString whole_axon_swc, QString lpa_swc);
+bool export_branch_distribution(QList<double> lpa_density, QString output_fileName);
 #endif // AXON_FUNC_H

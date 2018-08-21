@@ -332,21 +332,20 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
     bool print_apo = connect_soma_dist>0;
     my_saveANO(qs_output.left(qs_output.length() - 4), true, print_apo);
 
-    // Split neurons into different components
+//    // Split neurons into different components
+    QString qs_tag;
+    qs_input = qs_output;
+    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_tag = qs_input.left(qs_input.length()-4);}
+    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_tag = qs_input.left(qs_input.length()-5);}
     // Report 1: long axon only.
-    qs_input = qs_output;
-    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+".long_axon.swc";}
-    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-5)+".long_axon.eswc";}
-    neurite_analysis(qs_input, qs_output, "a", false);
+    neurite_analysis(qs_input, qs_tag+".long_axon.swc", "a", false);
     // Report 2: other axons retyped
-    qs_input = qs_output;
-    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-14)+".axon.swc";}
-    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-15)+".axon.eswc";}
-    neurite_analysis(qs_input, qs_output, "a", true);
-    qs_input = qs_output;
-    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+".retype.swc";}
-    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_output = qs_input.left(qs_input.length()-5)+".retype.eswc";}
-    axon_retype(qs_input, qs_output);
+    neurite_analysis(qs_input, qs_tag+".axon.swc", "a", true);
+    axon_retype(qs_tag+".axon.swc", qs_tag+".long_axon.swc", qs_tag+".axon.retype.swc");
+    QList<double> lpa_density = branch_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
+    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
+    // Report 3: dendrite
+    neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d", true);
 
     return 1;
 }
