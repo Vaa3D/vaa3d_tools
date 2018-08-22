@@ -25,14 +25,14 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 		if (currSlice1D) { delete[] currSlice1D; currSlice1D = 0; }
 	}
 	cout << " MIP done." << endl;
-	string testName = "Z:/test.tif";
+	/*string testName = "Z:/test.tif";
 	const char* testNameC = testName.c_str();
 	V3DLONG saveDims[4];
 	saveDims[0] = dims[0];
 	saveDims[1] = dims[1];
 	saveDims[2] = 1;
 	saveDims[3] = 1;
-	ImgManager::saveimage_wrapper(testNameC, maxIP1D, saveDims, 1);
+	ImgManager::saveimage_wrapper(testNameC, maxIP1D, saveDims, 1);*/
 
 	set<vector<int> > whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
@@ -48,142 +48,77 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
 		}
 	}
-
-	if (inputSlicesVector.size() == 1)
+	
+	int islandCount = 0;
+	cout << "  -- white pixel number: " << whitePixAddress.size() << endl;
+	cout << "Processing slices: ";
+	for (vector<unsigned char**>::iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
 	{
-		int islandCount = 0;
-		for (set<vector<int> >::iterator it = whitePixAddress.begin(); it != whitePixAddress.end(); ++it)
+		int sliceNum = int(sliceIt - inputSlicesVector.begin());
+		cout << sliceNum << " ";
+		for (set<vector<int> >::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
 		{
-			int connectedCount = 0;
-			for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
+			if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0)
 			{
-				for (multimap<int, vector<int> >::iterator coordIt = connIt->coords.begin(); coordIt != connIt->coords.end(); ++coordIt)
+				bool connected = false;
+				for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
 				{
-					if ((it->at(0) - 1 == coordIt->second.at(0) || it->at(0) + 1 == coordIt->second.at(0)) && (it->at(1) - 1 == coordIt->second.at(1) || it->at(1) + 1 == coordIt->second.at(1)))
+					if (mipIt->at(0) + 2 < connIt->xMin && mipIt->at(0) - 2 > connIt->xMax &&
+						mipIt->at(1) + 2 < connIt->yMin && mipIt->at(1) - 2 > connIt->yMax &&
+						connIt->zMin > sliceNum + 2 && connIt->zMax < sliceNum - 2) goto NEW_SIGNAL_VECTOR;
+					else
 					{
-						vector<int> newCoord(2);
-						newCoord[0] = it->at(0);
-						newCoord[1] = it->at(1);
-						connIt->coords.insert(pair<int, vector<int> >(0, newCoord));
-						++connectedCount;
-						break;
-					}
-				}
-			}
-
-			if (connectedCount == 0)
-			{
-				++islandCount;
-				connectedComponent newIsland;
-				newIsland.islandNum = islandCount;
-				newIsland.coords.insert(pair<int, vector<int> >(0, *it));
-				connList.push_back(newIsland);
-			}
-		}
-
-		vector<vector<connectedComponent>::iterator> pos;
-		for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end(); ++it)
-		{
-			for (vector<connectedComponent>::iterator checkIt = it + 1; checkIt != connList.end(); ++checkIt)
-			{
-				if (it->coords == checkIt->coords)
-				{
-					if (find(pos.begin(), pos.end(), checkIt) == pos.end()) pos.push_back(checkIt);
-				}
-			}
-		}
-		for (vector<vector<connectedComponent>::iterator>::iterator eraseIt = pos.begin(); eraseIt != pos.end(); ++eraseIt) connList.erase(*eraseIt);
-
-		return connList;
-	}
-	else
-	{
-		int islandCount = 0;
-		cout << "white pixel number: " << whitePixAddress.size() << endl;
-		for (vector<unsigned char**>::iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
-		{
-			int sliceNum = int(sliceIt - inputSlicesVector.begin());
-			cout << "  processing slice " << sliceNum << ".." << endl;
-			for (set<vector<int> >::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
-			{
-				if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0)
-				{
-					//cout << "coordinates: (" << mipIt->at(0) << ", " << mipIt->at(1) << ")" << endl;
-					bool connected = false;
-					for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
-					{
-						pair<multimap<int, vector<int> >::iterator, multimap<int, vector<int> >::iterator> lastSliceRange = connIt->coords.equal_range(sliceNum - 1);
-						pair<multimap<int, vector<int> >::iterator, multimap<int, vector<int> >::iterator> currSliceRange = connIt->coords.equal_range(sliceNum);
-						for (multimap<int, vector<int> >::iterator rangeIt = lastSliceRange.first; rangeIt != lastSliceRange.second; ++rangeIt)
+						for (set<vector<int> >::iterator it1 = connIt->coordSets[sliceNum - 1].begin(); it1 != connIt->coordSets[sliceNum - 1].end(); ++it1)
 						{
-							if (rangeIt->second.at(0) >= mipIt->at(0) - 1 && rangeIt->second.at(0) <= mipIt->at(0) + 1 && 
-								rangeIt->second.at(1) >= mipIt->at(1) - 1 && rangeIt->second.at(1) <= mipIt->at(1) + 1)
-							{ 
-								bool duplicate = false;
-								for (multimap<int, vector<int> >::iterator dupCheckIt = currSliceRange.first; dupCheckIt != currSliceRange.second; ++dupCheckIt)
-								{
-									if (dupCheckIt->second.at(0) == mipIt->at(0) && dupCheckIt->second.at(1) == mipIt->at(1) && dupCheckIt->second.at(2) == sliceNum)
-									{
-										duplicate = true;
-										break;
-									}
-								}
-
-								if (!duplicate)
-								{
-									vector<int> newCoord(3);
-									newCoord[0] = mipIt->at(0);
-									newCoord[1] = mipIt->at(1);
-									newCoord[2] = sliceNum;
-									connIt->coords.insert(pair<int, vector<int> >(sliceNum, newCoord));
-									connected = true;
-									break;
-								}
-								else break;
-
-								/*cout << connIt->islandNum << ":" << endl;
-								for (multimap<int, vector<int> >::iterator currCoordIt = connIt->coords.begin(); currCoordIt != connIt->coords.end(); ++currCoordIt)
-									cout << " [" << currCoordIt->second.at(0) << ", " << currCoordIt->second.at(1) << ", " << currCoordIt->second.at(2) << "] ";
-
-								cout << endl;*/
-							}
-						}
-						for (multimap<int, vector<int> >::iterator rangeIt = currSliceRange.first; rangeIt != currSliceRange.second; ++rangeIt)
-						{
-							if (rangeIt->second.at(0) >= mipIt->at(0) - 1 && rangeIt->second.at(0) <= mipIt->at(0) + 1 && 
-								rangeIt->second.at(1) >= mipIt->at(1) - 1 && rangeIt->second.at(1) <= mipIt->at(1) + 1)
+							if (it1->at(0) >= mipIt->at(0) - 1 && it1->at(0) <= mipIt->at(0) + 1 &&
+								it1->at(1) >= mipIt->at(1) - 1 && it1->at(1) <= mipIt->at(1) + 1)
 							{
-								bool duplicate = false;
-								for (multimap<int, vector<int> >::iterator dupCheckIt = currSliceRange.first; dupCheckIt != currSliceRange.second; ++dupCheckIt)
-								{
-									if (dupCheckIt->second.at(0) == mipIt->at(0) && dupCheckIt->second.at(1) == mipIt->at(1) && dupCheckIt->second.at(2) == sliceNum)
-									{
-										duplicate = true;
-										break;
-									}
-								}
+								vector<int> newCoord(3);
+								newCoord[0] = mipIt->at(0);
+								newCoord[1] = mipIt->at(1);
+								newCoord[2] = sliceNum;
+								connIt->coordSets[sliceNum].insert(newCoord);
 
-								if (!duplicate)
-								{
-									vector<int> newCoord(3);
-									newCoord[0] = mipIt->at(0);
-									newCoord[1] = mipIt->at(1);
-									newCoord[2] = sliceNum;
-									connIt->coords.insert(pair<int, vector<int> >(sliceNum, newCoord));
-									connected = true;
-									break;
-								}
-								else break;
+								if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
+								else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
 
-								/*cout << connIt->islandNum << ":" << endl;
-								for (multimap<int, vector<int> >::iterator currCoordIt = connIt->coords.begin(); currCoordIt != connIt->coords.end(); ++currCoordIt)
-									cout << " [" << currCoordIt->second.at(0) << "," << currCoordIt->second.at(1) << "," << currCoordIt->second.at(2) << "] ";
+								if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
+								else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
 
-								cout << endl;*/
+								connIt->zMax = sliceNum;
+
+								connected = true;
+								goto SIGNAL_VECTOR_INSERTED;
+							}
+						}
+						for (set<vector<int> >::iterator it2 = connIt->coordSets[sliceNum].begin(); it2 != connIt->coordSets[sliceNum].end(); ++it2)
+						{
+							if (it2->at(0) >= mipIt->at(0) - 1 && it2->at(0) <= mipIt->at(0) + 1 &&
+								it2->at(1) >= mipIt->at(1) - 1 && it2->at(1) <= mipIt->at(1) + 1)
+							{
+								vector<int> newCoord(3);
+								newCoord[0] = mipIt->at(0);
+								newCoord[1] = mipIt->at(1);
+								newCoord[2] = sliceNum;
+								connIt->coordSets[sliceNum].insert(newCoord);
+
+								if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
+								else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
+
+								if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
+								else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
+
+								connIt->zMax = sliceNum;
+
+								connected = true;
+								goto SIGNAL_VECTOR_INSERTED;
 							}
 						}
 					}
+				}
 
+			NEW_SIGNAL_VECTOR:
+				{
 					if (!connected)
 					{
 						++islandCount;
@@ -193,55 +128,74 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 						newCoord[0] = mipIt->at(0);
 						newCoord[1] = mipIt->at(1);
 						newCoord[2] = sliceNum;
-						newIsland.coords.insert(pair<int, vector<int> >(sliceNum, newCoord));
+						set<vector<int> > coordSet;
+						coordSet.insert(newCoord);
+						newIsland.coordSets.insert(pair<int, set<vector<int> > >(sliceNum, coordSet));
+						newIsland.xMax = newCoord[0];
+						newIsland.xMin = newCoord[0];
+						newIsland.yMax = newCoord[1];
+						newIsland.yMin = newCoord[1];
+						newIsland.zMin = sliceNum;
+						newIsland.zMax = sliceNum;
 						connList.push_back(newIsland);
+						continue;
 					}
 				}
+
+			SIGNAL_VECTOR_INSERTED:
+				continue;
 			}
 		}
+	}
+	cout << endl;
 
-		bool merge = true;
-		int merging1, merging2;
-		while (merge)
+	bool merge = true;
+	int merging1, merging2;
+	while (merge)
+	{
+		for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end() - 1; ++it)
 		{
-			for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end() - 1; ++it)
+			for (map<int, set<vector<int> > >::iterator compIt = it->coordSets.begin(); compIt != it->coordSets.end(); ++compIt)
 			{
-				for (multimap<int, vector<int> >::iterator compIt = it->coords.begin(); compIt != it->coords.end(); ++compIt)
+				for (set<vector<int> >::iterator compSliceIt = compIt->second.begin(); compSliceIt != compIt->second.end(); ++compSliceIt)
 				{
 					for (vector<connectedComponent>::iterator checkIt = it + 1; checkIt != connList.end(); ++checkIt)
 					{
-						for (multimap<int, vector<int> >::iterator checkCompIt = checkIt->coords.begin(); checkCompIt != checkIt->coords.end(); ++checkCompIt)
-						{
-							if (compIt->second.at(0) >= checkCompIt->second.at(0) - 1 && compIt->second.at(0) <= checkCompIt->second.at(0) + 1 &&
-								compIt->second.at(1) >= checkCompIt->second.at(1) - 1 && compIt->second.at(1) <= checkCompIt->second.at(1) + 1 &&
-								compIt->second.at(2) >= checkCompIt->second.at(2) - 1 && compIt->second.at(2) <= checkCompIt->second.at(2) + 1)
-							{
-								for (multimap<int, vector<int> >::iterator mergeIt = checkIt->coords.begin(); mergeIt != checkIt->coords.end(); ++mergeIt)
-									it->coords.insert(pair<int, vector<int> >(mergeIt->first, mergeIt->second));
+						if (checkIt->xMin > it->xMax + 2 || checkIt->xMax < it->xMin - 2 ||
+							checkIt->yMin > it->yMax + 2 || checkIt->yMax < it->yMin - 2 ||
+							checkIt->zMin > it->zMax + 2 || checkIt->zMax < it->zMin - 2) continue;
 
-								merging1 = it->islandNum;
-								merging2 = checkIt->islandNum;
-								connList.erase(checkIt);
-								goto MERGE_CHECKPOINT;
+						for (map<int, set<vector<int> > >::iterator checkSetIt = checkIt->coordSets.begin(); checkSetIt != checkIt->coordSets.end(); ++checkSetIt)
+						{
+							for (set<vector<int> >::iterator checkSliceIt = checkSetIt->second.begin(); checkSliceIt != checkSetIt->second.end(); ++checkSliceIt)
+							{
+								if (compSliceIt->at(0) >= checkSliceIt->at(0) - 1 && compSliceIt->at(0) <= checkSliceIt->at(0) + 1 &&
+									compSliceIt->at(1) >= checkSliceIt->at(1) - 1 && compSliceIt->at(1) <= checkSliceIt->at(1) + 1 &&
+									compSliceIt->at(2) >= checkSliceIt->at(2) - 1 && compSliceIt->at(2) <= checkSliceIt->at(2) + 1)
+								{
+									for (map<int, set<vector<int> > >::iterator addSetIt = checkIt->coordSets.begin(); addSetIt != checkIt->coordSets.end(); ++addSetIt)
+									{
+										for (set<vector<int> >::iterator addVectorIt = addSetIt->second.begin(); addVectorIt != addSetIt->second.end(); ++addVectorIt)
+											it->coordSets[addSetIt->first].insert(*addVectorIt);
+
+										merging1 = it->islandNum;
+										merging2 = checkIt->islandNum;
+										connList.erase(checkIt);
+										goto MERGE_CHECKPOINT;
+									}
+								}
 							}
 						}
 					}
 				}
 			}
-			merge = false;
-
-		MERGE_CHECKPOINT:
-			cout << "merging component " << merging1 << " and " << merging2 << endl;
 		}
+		merge = false;
 
-		/*for (vector<connectedComponent>::iterator finalIt = connList.begin(); finalIt != connList.end(); ++finalIt)
-		{
-			for (multimap<int, vector<int> >::iterator finalCoordsIt = finalIt->coords.begin(); finalCoordsIt != finalIt->coords.end(); ++finalCoordsIt)
-				finalIt->finalCoords.insert(pair<int, vector<int> >(finalCoordsIt->first, finalCoordsIt->second));
-
-			finalIt->size = finalIt->finalCoords.size();
-		}*/
-
-		return connList;
+	MERGE_CHECKPOINT:
+		cout << "merging components " << merging1 << " and " << merging2 << "    component number left: " << connList.size() << endl;
 	}
+
+	return connList;
 }
+

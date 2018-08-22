@@ -11,6 +11,8 @@
 
 #include "basic_surf_objs.h"
 
+#include "ImgAnalyzer.h"
+
 using namespace std;
 
 enum folderStruct {singleCase, multipleCase};
@@ -41,8 +43,12 @@ public:
 	
 	void histQuickList();
 
-	map<QString, QList<NeuronSWC> > findSoma();
+	vector<connectedComponent> connComponents;
+	QList<NeuronSWC> centers;
+	void findConnComponent();
 	void findSomaMass();
+	void getChebyshevCenters(QString caseNum);
+
 	void somaNeighborhoodThin();
 };
 
