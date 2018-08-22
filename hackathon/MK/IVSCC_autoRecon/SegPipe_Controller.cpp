@@ -5,8 +5,6 @@
 #include <qdebug.h>
 
 #include "SegPipe_Controller.h"
-#include "ImgProcessor.h"
-#include "ImgManager.h"
 
 using namespace std;
 
@@ -123,7 +121,7 @@ void SegPipe_Controller::sliceThre(float thre)
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
-		QString saveCaseFullNameQ = this->outputRootPath + "/simple_thresholded/" + *caseIt;
+		QString saveCaseFullNameQ = this->outputRootPath + "/" + *caseIt;
 		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
 		else
 		{
@@ -396,7 +394,7 @@ void SegPipe_Controller::findSomaMass()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
-		QString saveCaseFullNameQ = this->outputRootPath + "/connComponents/" + *caseIt;
+		QString saveCaseFullNameQ = this->outputRootPath + "/" + *caseIt;
 		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
 		else
 		{
@@ -460,6 +458,7 @@ void SegPipe_Controller::findConnComponent()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
+		cout << "Processing case " << (*caseIt).toStdString() << ":" << endl;
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
@@ -494,32 +493,29 @@ void SegPipe_Controller::findConnComponent()
 
 		this->connComponents.clear();
 		this->connComponents = ImgAnalyzer::findConnectedComponent(slice2DVector, dims);
-		long int massSize = 0;
 		connectedComponent soma;
-		QList<NeuronSWC> somaDots;
+		QList<NeuronSWC> allSigs;
 		for (vector<connectedComponent>::iterator connIt = this->connComponents.begin(); connIt != this->connComponents.end(); ++connIt)
 		{
-			connIt->size = 0;
 			for (map<int, set<vector<int> > >::iterator sliceSizeIt = connIt->coordSets.begin(); sliceSizeIt != connIt->coordSets.end(); ++sliceSizeIt)
 			{
-				connIt->size = connIt->size + sliceSizeIt->second.size();
 				for (set<vector<int> >::iterator nodeIt = sliceSizeIt->second.begin(); nodeIt != sliceSizeIt->second.end(); ++nodeIt)
 				{
-					NeuronSWC somaDot;
-					somaDot.x = nodeIt->at(1);
-					somaDot.y = nodeIt->at(0);
-					somaDot.z = sliceSizeIt->first;
-					somaDot.type = 2;
-					somaDot.parent = -1;
-					somaDots.push_back(somaDot);
+					NeuronSWC sig;
+					sig.x = nodeIt->at(1);
+					sig.y = nodeIt->at(0);
+					sig.z = sliceSizeIt->first;
+					sig.type = 2;
+					sig.parent = -1;
+					allSigs.push_back(sig);
 				}
 			}
 		}
-		NeuronTree treeAtSoma;
-		treeAtSoma.listNeuron = somaDots;
+		NeuronTree sigTree;
+		sigTree.listNeuron = allSigs;
 		QString swcSaveFullNameQ = this->outputRootPath + "/connComponents/" + *caseIt + ".swc";
-		writeSWC_file(swcSaveFullNameQ, treeAtSoma);
-		somaDots.clear();
+		writeSWC_file(swcSaveFullNameQ, sigTree);
+		allSigs.clear();
 
 		this->getChebyshevCenters(*caseIt);
 	}

@@ -149,7 +149,7 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 	}
 	cout << endl;
 
-	bool merge = true;
+	/*bool merge = true;
 	int merging1, merging2;
 	while (merge)
 	{
@@ -194,8 +194,12 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 
 	MERGE_CHECKPOINT:
 		cout << "merging components " << merging1 << " and " << merging2 << "    component number left: " << connList.size() << endl;
-	}
+	}*/
 
 	return connList;
 }
 
+void ImgAnalyzer::mergeConnComponent(vector<connectedComponent>& inputConnCompList)
+{
+
+}

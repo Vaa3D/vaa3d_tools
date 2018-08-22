@@ -29,6 +29,9 @@ public:
 	static vector<connectedComponent> findConnectedComponent(vector<unsigned char**> inputSlicesVector, int imgDims[]);
 	
 	static inline vector<float> ChebyshevCenter(connectedComponent inputComp);
+
+private:
+	void mergeConnComponent(vector<connectedComponent>& inputConnCompList);
 };
 
 #endif

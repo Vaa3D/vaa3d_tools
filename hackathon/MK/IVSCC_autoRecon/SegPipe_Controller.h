@@ -12,6 +12,8 @@
 #include "basic_surf_objs.h"
 
 #include "ImgAnalyzer.h"
+#include "ImgProcessor.h"
+#include "ImgManager.h"
 
 using namespace std;
 
