@@ -23,9 +23,12 @@ const QString title = QObject::tr("Sort SWC Plugin");
 
 void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-
+    cout<<"what's up??????"<<endl;
+    LandmarkList Markers = callback.getLandmarkTeraFly();
+    qDebug()<<Markers.size();
     NeuronTree nt= callback.getSWCTeraFly();
     QList<NeuronSWC> neuron = nt.listNeuron;
+    qDebug()<<neuron.size();
     QList<NeuronSWC> dendrite;
     for(int i=0;i<neuron.size();i++){
 
@@ -43,8 +46,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     }
     neuron=dendrite;
 
-    LandmarkList Markers = callback.getLandmarkTeraFly();
-    //qDebug()<<Markers.size();
+
     //qDebug()<<Markers.at(0).x<<Markers.at(0).y<<Markers.at(0).z;
 
     /*for(int i=0;i<Markers.size();i++){
@@ -101,7 +103,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
            local_angles=temp.a;
            remote_angles=temp.b;
 
-    vector<int>:: iterator it,it1;
+   /* vector<int>:: iterator it,it1;
     for(it=++branchid.begin();it!=branchid.end();)
     {
         it1=find(branchid.begin(),it,*it);
@@ -109,7 +111,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
             it=branchid.erase(it);
         else
             it++;
-    }
+    }*/
     //sort(branchid.begin(),branchid.end());
     //branchid.erase(unique(branchid.begin(),branchid.end()));
 
@@ -118,7 +120,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     LocationSimple m;
     LandmarkList mark;
     for(int i=0;i < branchid.size();i++){
-        if(local_angles.at(i)>110)
+        if(local_angles.at(i)>120)
         {
             m.x=neuron.at(branchid.at(i)).x;
             m.y=neuron.at(branchid.at(i)).y;
