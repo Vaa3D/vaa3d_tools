@@ -23,10 +23,11 @@ class SegPipe_Controller
 {
 public:
 	/***************** Constructors and Basic Data Members *****************/
-	SegPipe_Controller(QString inputPath, QString outputPath);
+	SegPipe_Controller(QString inputPath, QString outputPath, QString inputPathSWC);
 
 	folderStruct inputContent;
 	QString inputCaseRootPath;
+	QString inputSWCPath;
 	QString outputRootPath;
 	QStringList caseList;
 	deque<string> inputSingleCaseSliceFullPaths;
@@ -34,6 +35,8 @@ public:
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 	/***********************************************************************/
+
+	ImgManager* myImgManagerPtr;
 
 	unsigned char* currProcessingImgPtr;
 
@@ -52,6 +55,8 @@ public:
 	void getChebyshevCenters(QString caseNum);
 
 	void somaNeighborhoodThin();
+
+	void swc_imgCrop();
 };
 
 #endif
