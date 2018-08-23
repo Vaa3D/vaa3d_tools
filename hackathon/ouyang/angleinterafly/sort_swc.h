@@ -115,11 +115,11 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
 
-    //if(neurons.size()==0){
-      //  printf("No dendrite part in your neuron,please specify it firstly\n");
-        //cout<<"Dendrite part is not found"<<endl;
-        //return false;
-   // }
+    if(neurons.size()==0){
+        printf("No dendrite part in your neuron,please specify it firstly.\n");
+        cout<<"Dendrite part is not found"<<endl;
+        return false;
+     }
     //create a LUT, from the original id to the position in the listNeuron, different neurons with the same x,y,z & r are merged into one position
     QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons);
 

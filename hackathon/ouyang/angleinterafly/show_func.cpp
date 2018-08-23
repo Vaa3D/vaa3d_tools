@@ -23,7 +23,7 @@ const QString title = QObject::tr("Sort SWC Plugin");
 
 void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    cout<<"what's up??????"<<endl;
+    cout<<"what's up???????????????????????"<<endl;
     LandmarkList Markers = callback.getLandmarkTeraFly();
     qDebug()<<Markers.size();
     NeuronTree nt= callback.getSWCTeraFly();
@@ -120,17 +120,20 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     LocationSimple m;
     LandmarkList mark;
     for(int i=0;i < branchid.size();i++){
-        if(local_angles.at(i)>120)
+        if(local_angles.at(i)>125 && remote_angles.at(i)>110)
         {
             m.x=neuron.at(branchid.at(i)).x;
             m.y=neuron.at(branchid.at(i)).y;
             m.z=neuron.at(branchid.at(i)).z;            
             m.color.r = 255;
-            m.color.g = 0;
-            m.color.b = 0;
+            m.color.g = 255;
+            m.color.b = 255;
             mark.push_back(m);
           }
      }
+    for (int i=0;i<Markers.size();i++){
+            mark.push_back(Markers.at(i));
+    }
     cout<<"total marker number set into terafly: "<<mark.size()<<endl;
     for(int i;i<mark.size();i++)
     {
