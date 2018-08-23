@@ -11,14 +11,63 @@
 using namespace std;
 using namespace boost::filesystem;
 
-registeredImg::registeredImg(string inputImgName)
+registeredImg::~registeredImg()
 {
-	this->imgFullPathName = inputImgName;
-	const char* imgName = inputImgName.c_str();
-	this->thisImg4DPtr = new Image4DSimple;
-	this->thisImg4DPtr->loadImage(imgName);
-	this->imgData1D = new unsigned char;
-	ImgManager::img1Ddumpster(this->thisImg4DPtr, this->imgData1D, this->dims, this->datatype);
+	if (this->imgData1D) { delete[] this->imgData1D; this->imgData1D = NULL; }
+	
+	for (int i = 0; i < this->dims[1]; ++i)
+	{
+		if (this->imgData2D[i]) { delete[] this->imgData2D[i]; this->imgData2D[i] = NULL; }
+	}
+	if (this->imgData2D) { delete[] this->imgData2D; this->imgData2D = NULL; }
+
+	for (int j = 0; j < this->dims[2]; ++j)
+	{
+		for (int i = 0; i < this->dims[1]; ++i)
+		{
+			if (this->imgData3D[j][i]) { delete[] this->imgData3D[j][i]; this->imgData3D[j][i] = NULL; }
+		}
+		if (this->imgData3D[j]) { delete[] this->imgData3D[j]; this->imgData3D[j] = NULL; }
+	}
+	if (this->imgData3D) { delete[] this->imgData3D; this->imgData3D = NULL; }
+
+	for (vector<unsigned char*>::iterator it = this->slicePtrs.begin(); it != this->slicePtrs.end(); ++it)
+	{
+		if (*it) { delete[] (*it); *it = NULL; }
+	}
+	this->slicePtrs.clear();
+
+	this->imgAlias = "";
+	this->imgCaseRootQ = "";
+	this->dims[0] = 0;
+	this->dims[1] = 0;
+	this->dims[2] = 0;
+}
+
+void ImgManager::imgManager_init(QString caseID, imgFormat format)
+{
+	if (format == slices)
+	{
+		registeredImg currImgCase(this->inputCaseRootPath, caseID);
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID.toStdString());
+		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
+		{
+			string sliceFullName = it->second;
+			const char* sliceFullNameC = sliceFullName.c_str();
+			Image4DSimple* slicePtr = new Image4DSimple;
+			slicePtr->loadImage(sliceFullNameC);
+			currImgCase.dims[0] = int(slicePtr->getXDim());
+			currImgCase.dims[1] = int(slicePtr->getYDim());
+			currImgCase.dims[2] = 1;
+			long int totalbyteSlice = slicePtr->getTotalBytes();
+			unsigned char* slice1D = new unsigned char[totalbyteSlice];
+			memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
+
+			currImgCase.slicePtrs.push_back(slice1D);
+		}
+
+		this->imgDataBase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+	}
 }
 
 bool ImgManager::img1Ddumpster(Image4DSimple* inputImgPtr, unsigned char*& data1D, long int dims[4], int datatype)

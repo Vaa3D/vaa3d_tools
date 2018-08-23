@@ -57,9 +57,12 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	if (func_name == tr("segmentationPipe"))
 	{
 		QString inputPathQ = infiles[0];
+		QString inputSWCPathQ;
+		if (infiles[1]) inputSWCPathQ = infiles[1];
 		QString outputPathQ;
+
 		if (!outfiles.empty()) outputPathQ = outfiles[0];
-		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
+		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ, inputSWCPathQ);
 		//segPipePtr->sliceDownSample2D(2, "max");
 		//segPipePtr->adaSliceGammaCorrect();
 		//segPipePtr->sliceReversedGammaCorrect();

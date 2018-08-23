@@ -2,40 +2,62 @@
 #define IMGMANAGER_H
 
 #include <string>
+#include <vector>
+#include <deque>
+#include <map>
 #include <unordered_map>
 
 #include <boost\filesystem.hpp>
+
+#include <qstring.h>
+#include <qstringlist.h>
 
 #include "basic_surf_objs.h"
 #include "my_surf_objs.h"
 #include "basic_4dimage.h"
 #include "v3d_interface.h"
 
+enum imgFormat { cube, slices, single2D };
+
 struct registeredImg
 {
-	registeredImg(string imgFullName);
+	registeredImg(QString imgFullName, QString alias) : imgCaseRootQ(imgFullName), imgAlias(alias), datatype(1) {};
+	~registeredImg();
 
-	string imgAlias;
-	string imgFullPathName;
-	Image4DSimple* thisImg4DPtr;
+	QString imgAlias;
+	QString imgCaseRootQ;
 	unsigned char* imgData1D;
-	long int dims[4];
+	unsigned char** imgData2D;
+	unsigned char*** imgData3D;
+	vector<unsigned char*> slicePtrs;
+	int dims[3];
 	int datatype;
 };
 
 class ImgManager
 {
 public: 
-	/********* Constructors *********/
+	/********* Constructors and Basic Data Menbers *********/
 	ImgManager() {};
 	ImgManager(string wholeImgName);
-	/********************************/
+
+	QString inputCaseRootPath;
+	QString inputSWCPath;
+	QString outputRootPath;
+	QStringList caseList;
+	deque<string> inputSingleCaseSliceFullPaths;
+	deque<string> outputSingleCaseSliceFullPaths;
+	multimap<string, string> inputMultiCasesSliceFullPaths;
+	multimap<string, string> outputMultiCasesSliceFullPaths;
+	/*******************************************************/
 
 	/********* IO *********/
 	static bool img1Ddumpster(Image4DSimple* imgPtr, unsigned char*& data1D, long int dims[4], int datatype);
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[4], int datatype);
 	
 	unordered_map<string, registeredImg> imgDataBase;
+
+	void imgManager_init(QString caseID, imgFormat format);
 	/**********************/
 
 	/********* Methods for generating binary masks from SWC files *********/

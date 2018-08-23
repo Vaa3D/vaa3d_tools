@@ -2,6 +2,45 @@
 
 #include "ImgAnalyzer.h"
 
+morphStructElement::morphStructElement() : eleShape("square"), xLength(3), yLength(3)
+{
+	vector<int> array1(3, 1);
+	this->structEle2D.push_back(array1);
+	this->structEle2D.push_back(array1);
+	this->structEle2D.push_back(array1);
+}
+
+morphStructElement::morphStructElement(string shape) : eleShape(shape)
+{
+	if (this->eleShape.compare("square") == 0)
+	{
+		vector<int> array1(3, 1);
+		this->structEle2D.push_back(array1);
+		this->structEle2D.push_back(array1);
+		this->structEle2D.push_back(array1);
+	}
+	else if (this->eleShape.compare("circle") == 0)
+	{
+		this->xLength = 7;
+		this->yLength = 7;
+
+		vector<int> array1(7, 1);
+		vector<int> array2(7, 1);
+		vector<int> array3(7, 1);
+		array1.at(0) = 0; array1.at(1) = 0; array1.at(5) = 0; array1.at(6) = 0;
+		array2.at(0) = 0; array2.at(6) = 0;
+
+		this->structEle2D.push_back(array1);
+		this->structEle2D.push_back(array2);
+		this->structEle2D.push_back(array3);
+		this->structEle2D.push_back(array3);
+		this->structEle2D.push_back(array3);
+		this->structEle2D.push_back(array2);
+		this->structEle2D.push_back(array1);
+	}
+}
+
+
 vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned char**> inputSlicesVector, int dims[])
 {
 	vector<connectedComponent> connList;
@@ -149,17 +188,22 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 	}
 	cout << endl;
 
-	/*bool merge = true;
+	return connList;
+}
+
+void ImgAnalyzer::mergeConnComponent(vector<connectedComponent>& inputConnCompList)
+{
+	bool merge = true;
 	int merging1, merging2;
 	while (merge)
 	{
-		for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end() - 1; ++it)
+		for (vector<connectedComponent>::iterator it = inputConnCompList.begin(); it != inputConnCompList.end() - 1; ++it)
 		{
 			for (map<int, set<vector<int> > >::iterator compIt = it->coordSets.begin(); compIt != it->coordSets.end(); ++compIt)
 			{
 				for (set<vector<int> >::iterator compSliceIt = compIt->second.begin(); compSliceIt != compIt->second.end(); ++compSliceIt)
 				{
-					for (vector<connectedComponent>::iterator checkIt = it + 1; checkIt != connList.end(); ++checkIt)
+					for (vector<connectedComponent>::iterator checkIt = it + 1; checkIt != inputConnCompList.end(); ++checkIt)
 					{
 						if (checkIt->xMin > it->xMax + 2 || checkIt->xMax < it->xMin - 2 ||
 							checkIt->yMin > it->yMax + 2 || checkIt->yMax < it->yMin - 2 ||
@@ -180,7 +224,7 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 
 										merging1 = it->islandNum;
 										merging2 = checkIt->islandNum;
-										connList.erase(checkIt);
+										inputConnCompList.erase(checkIt);
 										goto MERGE_CHECKPOINT;
 									}
 								}
@@ -193,13 +237,6 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 		merge = false;
 
 	MERGE_CHECKPOINT:
-		cout << "merging components " << merging1 << " and " << merging2 << "    component number left: " << connList.size() << endl;
-	}*/
-
-	return connList;
-}
-
-void ImgAnalyzer::mergeConnComponent(vector<connectedComponent>& inputConnCompList)
-{
-
+		cout << "merging components " << merging1 << " and " << merging2 << "    component number left: " << inputConnCompList.size() << endl;
+	}
 }

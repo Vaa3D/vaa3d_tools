@@ -14,6 +14,19 @@
 
 using namespace std;
 
+struct morphStructElement
+{
+	std::string eleShape;
+	int xLength, yLength;
+
+	morphStructElement();
+	morphStructElement(string shape);
+	morphStructElement(string shape, int length1, int length2);
+
+	vector<vector<int> > structEle2D;
+	vector<vector<vector<int> > > structEle3D;
+};
+
 struct connectedComponent
 {
 	int islandNum;

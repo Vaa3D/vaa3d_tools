@@ -8,7 +8,7 @@
 
 using namespace std;
 
-SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : inputCaseRootPath(inputPath), outputRootPath(outputPath)
+SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath, QString inputPathSWC) : inputCaseRootPath(inputPath), outputRootPath(outputPath), inputSWCPath(inputPathSWC)
 {
 	this->caseList.clear();
 	QDir inputDir(inputCaseRootPath);
@@ -47,10 +47,9 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
 			QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
 			QDir caseFolder(caseFullPath);
-			caseFolder.setFilter(QDir::Files);
+			caseFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 			QStringList caseSlices = caseFolder.entryList();
-			if (*caseIt == "." || *caseIt == "..") continue;
-			else if (caseSlices.empty()) cout << "case " << (*caseIt).toStdString() << " is empty. Skip." << endl;
+			if (caseSlices.empty()) cout << "case " << (*caseIt).toStdString() << " is empty. Skip." << endl;
 
 			for (QStringList::iterator sliceIt = caseSlices.begin(); sliceIt != caseSlices.end(); ++sliceIt)
 			{
@@ -62,6 +61,11 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 			}
 		}
 	}
+
+	this->myImgManagerPtr = new ImgManager;
+	this->myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
+	this->myImgManagerPtr->caseList = this->caseList;
+	this->myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 }
 
 void SegPipe_Controller::sliceDownSample2D(int downFactor, string method)
@@ -184,8 +188,13 @@ void SegPipe_Controller::sliceBkgThre()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
-		QString saveCaseFullNameQ = this->outputRootPath + "/bkg_thresholded/" + *caseIt;
+		QString saveCaseFullNameQ = this->outputRootPath + "/" + *caseIt;
 		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+		else
+		{
+			cerr << "This folder already exists. Skip case: " << (*caseIt).toStdString() << endl;
+			continue;
+		}
 		string saveFullPathRoot = saveCaseFullNameQ.toStdString();
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
@@ -219,7 +228,7 @@ void SegPipe_Controller::sliceBkgThre()
 				}
 				previousI = it->first;
 			}
-			cout << "slice No=" << sliceCount << ": " << thre << endl << endl;
+			cout << "slice No = " << sliceCount << ": " << thre << endl << endl;
 			ImgProcessor::simpleThresh(slice1D, threSlice, dims, thre);
 
 			V3DLONG Dims[4];
