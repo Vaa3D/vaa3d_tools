@@ -4,14 +4,9 @@
 
 using namespace std;
 
-ImgProcessor::ImgProcessor(MIPOrientation MIP_Direction)
-{
-	this->MIPDirection = MIP_Direction;
-}
-
 void ImgProcessor::maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[], int xDim, int yDim, int zDim)
 {
-	if (this->MIPDirection == Mxy) // need to check in which direction to generate MIP? no template implementation for now
+	if (this->MIPDirection == Mxy) // need to check in which direction to generate MIP? no static function implementation for now
 	{
 		for (int yi = 0; yi < yDim; ++yi)
 		{

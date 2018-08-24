@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include <boost\filesystem.hpp>
+#include <boost\shared_array.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
@@ -18,20 +19,20 @@
 #include "v3d_interface.h"
 
 enum imgFormat { cube, slices, single2D };
+typedef boost::shared_array<unsigned char> myImg1DPtr;
 
 struct registeredImg
 {
-	registeredImg(QString imgFullName, QString alias) : imgCaseRootQ(imgFullName), imgAlias(alias), datatype(1) {};
-	~registeredImg();
-
 	QString imgAlias;
 	QString imgCaseRootQ;
-	unsigned char* imgData1D;
-	unsigned char** imgData2D;
-	unsigned char*** imgData3D;
-	vector<unsigned char*> slicePtrs;
+
+	//shared_ptr<unsigned char*> imgData1D;
+	//shared_ptr<unsigned char**> imgData2D;
+	//shared_ptr<unsigned char***> imgData3D;
+
+	map<string, myImg1DPtr> slicePtrs;
+	
 	int dims[3];
-	int datatype;
 };
 
 class ImgManager
@@ -53,9 +54,10 @@ public:
 
 	/********* IO *********/
 	static bool img1Ddumpster(Image4DSimple* imgPtr, unsigned char*& data1D, long int dims[4], int datatype);
-	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[4], int datatype);
+	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	
-	unordered_map<string, registeredImg> imgDataBase;
+	map<string, registeredImg> imgDatabase;
+	void clearImgDatabase();
 
 	void imgManager_init(QString caseID, imgFormat format);
 	/**********************/
@@ -76,7 +78,7 @@ public:
 	/*******************************************************************************************/
 };
 
-inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[4], int datatype)
+inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[], int datatype)
 {
 	if (!pdata)
 	{

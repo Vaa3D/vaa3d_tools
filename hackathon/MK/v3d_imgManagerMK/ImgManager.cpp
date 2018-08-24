@@ -11,48 +11,18 @@
 using namespace std;
 using namespace boost::filesystem;
 
-registeredImg::~registeredImg()
-{
-	if (this->imgData1D) { delete[] this->imgData1D; this->imgData1D = NULL; }
-	
-	for (int i = 0; i < this->dims[1]; ++i)
-	{
-		if (this->imgData2D[i]) { delete[] this->imgData2D[i]; this->imgData2D[i] = NULL; }
-	}
-	if (this->imgData2D) { delete[] this->imgData2D; this->imgData2D = NULL; }
-
-	for (int j = 0; j < this->dims[2]; ++j)
-	{
-		for (int i = 0; i < this->dims[1]; ++i)
-		{
-			if (this->imgData3D[j][i]) { delete[] this->imgData3D[j][i]; this->imgData3D[j][i] = NULL; }
-		}
-		if (this->imgData3D[j]) { delete[] this->imgData3D[j]; this->imgData3D[j] = NULL; }
-	}
-	if (this->imgData3D) { delete[] this->imgData3D; this->imgData3D = NULL; }
-
-	for (vector<unsigned char*>::iterator it = this->slicePtrs.begin(); it != this->slicePtrs.end(); ++it)
-	{
-		if (*it) { delete[] (*it); *it = NULL; }
-	}
-	this->slicePtrs.clear();
-
-	this->imgAlias = "";
-	this->imgCaseRootQ = "";
-	this->dims[0] = 0;
-	this->dims[1] = 0;
-	this->dims[2] = 0;
-}
-
 void ImgManager::imgManager_init(QString caseID, imgFormat format)
 {
 	if (format == slices)
 	{
-		registeredImg currImgCase(this->inputCaseRootPath, caseID);
+		registeredImg currImgCase;
+		currImgCase.imgCaseRootQ = this->inputCaseRootPath;
+		currImgCase.imgAlias = caseID;
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID.toStdString());
 		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
 		{
 			string sliceFullName = it->second;
+			string fileName = it->second.substr(it->second.length() - 9, 9);
 			const char* sliceFullNameC = sliceFullName.c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
 			slicePtr->loadImage(sliceFullNameC);
@@ -62,11 +32,29 @@ void ImgManager::imgManager_init(QString caseID, imgFormat format)
 			long int totalbyteSlice = slicePtr->getTotalBytes();
 			unsigned char* slice1D = new unsigned char[totalbyteSlice];
 			memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
+			myImg1DPtr storedSlice1D(slice1D);
+			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, storedSlice1D));
 
-			currImgCase.slicePtrs.push_back(slice1D);
+			slicePtr->~Image4DSimple();
+			operator delete(slicePtr);
 		}
 
-		this->imgDataBase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+		//for (map<string, myImg1DPtr>::iterator sliceIt = currImgCase.slicePtrs.begin(); sliceIt != currImgCase.slicePtrs.end(); ++sliceIt)
+		//	qDebug() << QString::fromStdString(sliceIt->first) << " " << sliceIt->second[805985];
+
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+	}
+}
+
+void ImgManager::clearImgDatabase()
+{
+	if (!this->imgDatabase.empty())
+	{
+		for (map<string, registeredImg>::iterator it1 = this->imgDatabase.begin(); it1 != this->imgDatabase.end(); ++it1)
+		{
+			for (map<string, myImg1DPtr>::iterator it2 = it1->second.slicePtrs.begin(); it2 != it1->second.slicePtrs.end(); ++it2) {}
+				
+		}
 	}
 }
 
@@ -141,6 +129,8 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 	int dims[2];
 	dims[0] = tempPtr->getXDim();
 	dims[1] = tempPtr->getYDim();
+	dims[2] = tempPtr->getZDim();
+	dims[3] = tempPtr->getCDim();
 	cout << "image dimension: " << dims[0] << " " << dims[1] << endl;
 	
 	unsigned char* maskMIP = new unsigned char[dims[0] * dims[1]];
@@ -166,7 +156,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 	sz[1] = dims[1];
 	sz[2] = 1;
 	sz[3] = 1;
-	ImgManager::saveimage_wrapper(outputFileNameC, maskMIP, sz, V3D_UINT8);
+	ImgManager::saveimage_wrapper(outputFileNameC, maskMIP, dims, V3D_UINT8);
 }
 
 void ImgManager::swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D)
@@ -280,13 +270,14 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 	unsigned char* img1D = new unsigned char[totalbytes];
 	memcpy(img1D, inputImg4D->getRawData(), totalbytes);
 
-	int imgX = inputImg4D->getXDim();
-	int imgY = inputImg4D->getYDim();
-	int channel = inputImg4D->getCDim();
-	cout << "x dimension: " << imgX << "    y dimension: " << imgY << endl;
+	int dims[3];
+	dims[0] = inputImg4D->getXDim();
+	dims[1] = inputImg4D->getYDim();
+	dims[2] = inputImg4D->getCDim();
+	cout << "x dimension: " << dims[0] << "    y dimension: " << dims[1] << endl;
 
-	int i_tileSteps = imgX / tileSize;
-	int j_tileSteps = imgY / tileSize;
+	int i_tileSteps = dims[0] / tileSize;
+	int j_tileSteps = dims[1] / tileSize;
 	cout << "tiles in x: " << i_tileSteps << "    tiles in y: " << j_tileSteps << endl;
 	ImgProcessor* imgProcPtr = new ImgProcessor;
 	for (int j = 0; j < j_tileSteps; ++j)
@@ -299,12 +290,12 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 			int yhb = tileSize * (j + 1);
 			long int ROIsz = tileSize * tileSize;
 			unsigned char* ROIPtr = new unsigned char[ROIsz];
-			V3DLONG ROIxyz[4];
+			int ROIxyz[4];
 			ROIxyz[0] = tileSize;
 			ROIxyz[1] = tileSize;
 			ROIxyz[2] = 1;
-			ROIxyz[3] = channel;
-			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, imgX, imgY);
+			ROIxyz[3] = dims[2];
+			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, dims);
 
 			QString patchPath = QString::fromStdString(imgName) + "_patches";
 			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);
