@@ -2,6 +2,7 @@
 #include "matrix.h"
 #include "general.h"
 #include <math.h>
+#include <v3d_message.h>
 #include <cmath>
 #include <exception>
 #include <stdexcept>
@@ -226,13 +227,17 @@ istream& operator >> (istream& input, Matrix& A)
 Matrix Matrix::Adjugate() //Adjoint/Adjugate
 {
     Matrix tmp;
+    v3d_msg("hhhh");
     tmp=this->Cofactor();
+    v3d_msg("kkkk");
     tmp=tmp.Transpose();
+    v3d_msg("cccccc");
     return tmp;
 }
 double Matrix::Cofactor(int i, int j) //cofactor Cij
 {
         double tmp;
+        v3d_msg("jjjjjjjjjjj");
         tmp=this->Minor(i,j);
         tmp=pow(-1,(i+j))*tmp;
 //	double tmp;
@@ -243,13 +248,16 @@ Matrix Matrix::Cofactor()//matrix of cofactors
 
     if(!this->buf)    throw logic_error (" Empty Matrix ");
     Matrix tmp(this->rows, this->columns);
+    v3d_msg("??????????");
         for (int i=1;i<=this->rows;i++)
               {
                 for (int j=1;j<=this->columns;j++)
                         {
+                    cout<<"i j = "<<i<<"    "<<j<<endl;
                           tmp(i,j)=this->Cofactor(i,j);
                         }
               }
+
     return tmp;
 
 }
@@ -271,7 +279,20 @@ double Matrix::Minor(int i, int j)//Minor Mij
                       a++;
                    }
               }
+          v3d_msg("ppppppp");
+          int w = A.rows;
+          int e = A.columns;
+          for(int k=1;k<=w;k++)
+          {
+              for(int f=1;f<=e;f++)
+              {
+                  cout<<A(k,f)<<"       ";
+              }
+              cout<<endl;
+          }
+
         tmp=A.det();
+        v3d_msg("aaaaaaaa");
         return tmp;
 
 }
@@ -317,13 +338,21 @@ Matrix Matrix::Inverse()//Inverse Matrix
            {throw logic_error ("Solving for Inverse fail: Not a square    matrix!");
             //return (*this);
            }
+        v3d_msg("check");
         if(fabs(this->det()-0)<0.000000001)
            {
              throw logic_error ("determinant equal to zero, can not do inverse");
            }
+        v3d_msg("check2");
         Matrix A;
         A=this->Adjugate();
+        v3d_msg("check222");
+        cout<<this->buf<<endl;
+       //  v3d_msg("check2");
+        v3d_msg("check3");
+
         tmp=(1/this->det())*A;
+        v3d_msg("check4");
     return tmp;
 }
 Matrix Matrix::Null(int n) //make a "zero" Matrix, with a new dimension, change "this"
@@ -706,6 +735,9 @@ if(this->rows!=this->columns)   //LU decomposition only can be operated on squar
             sum=*(this->buf+i*this->rows+n);    //here sum store A[n][j]
             for(long k=0;k<n;k++)
                 sum-=(*(L.buf+i*L.rows+k))*(*(U.buf+k*U.rows+n) );
+           cout<<"U.buff = "<<U.buf<<"  "<<n<<"   "<<U.rows<<endl;
+            cout<<"*(U.buf+n*U.rows+n) = "<<*(U.buf+n*U.rows+n)<<endl;
+
             if(*(U.buf+n*U.rows+n)==0)
                 {   //if U[n][n]==0, then it means that A can not decomposed, for if U[n][n]=0, |A|=|L|*|U|=|L[n][n]|*|U[n][n]|=0, which can not meet the prerequisite of decomposing A;
                     cout<<"OOps, Zero in U["<<n<<"]["<<n<<"] is found, the matrix can not be decomposed. "<<endl;
@@ -762,10 +794,10 @@ bool Matrix::QR(Matrix& Q, Matrix& R)
 }
 double Matrix::det()//determinant(Matrix)
 {
-    cout<<"tttttt"<<endl;
-//        if(this->rows!=this->columns)
-//             throw logic_error ("Matrix has to be square to find det");
-        cout<<"uuuuuuuu"<<endl;
+    //cout<<"tttttt"<<endl;
+        if(this->rows!=this->columns)
+             throw logic_error ("Matrix has to be square to find det");
+   //     cout<<"uuuuuuuu"<<endl;
     int r=this->GetRows();
     double tmp=1;
 

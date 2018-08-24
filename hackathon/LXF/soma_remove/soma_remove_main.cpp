@@ -1,5 +1,5 @@
 #include "soma_remove_main.h"
-#include "data_training.h"
+
 #include <iostream>
 #include "string.h"
  using namespace std;
@@ -484,7 +484,8 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     vector<double> D;
     vector<double> grey;
     vector<double> grey_std;
-    feature_calculate(y_n,overlap_level,ratio_v,count_v,D,grey,grey_std,connected_region_final);
+    vector<inf> inf_v;
+    feature_calculate(inf_v,y_n,overlap_level,ratio_v,count_v,D,grey,grey_std,connected_region_final);
 
 
 
@@ -549,7 +550,7 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
         return false;
     }
 }
-bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
+bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
 {
     int n=2;
     cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
@@ -855,9 +856,11 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
             sum_grey = (connected_region_final[i][d].bri-grey[i])*(connected_region_final[i][d].bri-grey[i]) + sum_grey;
         }
         std_grey = sum_grey/(connected_region_final[i].size()-1);
+      //  cout<<"sum_grey = "<<sum_grey<<"      "<<(connected_region_final[i].size()-1)<<"    "<<i<<endl;
+
         grey_std.push_back(sqrt(std_grey));
     }
-
+       // v3d_msg("gggggggggggg");
 //    for(int i=0;i<D.size();i++)
 //    {
 //        cout<<"y_n = "<<y_n[i]<<endl;
@@ -869,6 +872,19 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
 //        cout<<"grey_std = "<<grey_std[i]<<endl;
 //        cout<<"*************************************************"<<endl;
 //    }
+    cout<<"  <7>.get information from folder "<<endl;
+    for(int i=0;i<connected_region_final.size();i++)
+    {
+        //vector<inf> inf_tmp_v;
+       // for(int d=0;d<connected_region_final[i].size();d++)
+        //{
+            inf inf_tmp;
+            inf_tmp.inf1 =  connected_region_final[i][0].inf1;
+            inf_tmp.name = connected_region_final[i][0].name;
+            inf_v.push_back(inf_tmp);
+      //  }
+        //inf_v.push_back(inf_tmp_v);
+    }
 
 
 

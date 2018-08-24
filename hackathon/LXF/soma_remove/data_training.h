@@ -4,7 +4,7 @@
 #include "v3d_message.h"
 #include "v3d_interface.h"
 #include "../../heyishan/blastneuron_bjut/overlap/overlap_gold.h"
-#include "soma_remove_main.h"
+
 
 struct Each_line
 {
@@ -32,6 +32,11 @@ struct Feature
     vector<double> grey_mean;
     vector<double> grey_std;
 };
+struct inf
+{
+    string inf1;
+    string name;
+};
 //class Matrix
 //{
 //public:
@@ -48,6 +53,7 @@ bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName);
 double get_D(vector<double> &v1,vector<double> &v2);
 Each_line E_calculate(Feature &feature);
 bool Cov_calculate(Chart &chart,Feature &feature);
-vector<Coordinate> readtxt_LXF(const QString& filename);
+//vector<Coordinate> readtxt_LXF(const QString& filename);
+
 bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 #endif // DATA_TRAINING_H

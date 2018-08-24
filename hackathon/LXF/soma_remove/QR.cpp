@@ -5,6 +5,7 @@ Author:Robert.Tianyi
 Date:2016-10-24
 *********************************************************/
 #include "QR.h"
+#include "v3d_message.h"
 
 //using namespace std;
 
@@ -87,6 +88,7 @@ void Matrix_QR_Factorization(vector<vector<float> >&A_a,vector<vector<float> >&Q
         }
         cout<<endl;
     }
+    //v3d_msg("kkkkkkkk");
     for(int i=0;i<M;i++)
     {
         vector<float> q;
