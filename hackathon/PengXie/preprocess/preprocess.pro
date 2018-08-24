@@ -14,13 +14,15 @@ HEADERS	+= preprocess_plugin.h \
     neurite_analysis_main.h \
     utilities.h \
     sort_swc_redefined.h \
-    axon_func.h
+    axon_func.h \
+    connnect_swc_redefined.h
 HEADERS += pre_processing_main.h
 SOURCES	+= preprocess_plugin.cpp \
     neurite_analysis_main.cpp \
     utilities.cpp \
     sort_swc_redefined.cpp \
-    axon_func.cpp
+    axon_func.cpp \
+    connect_swc_redefined.cpp
 SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
@@ -29,6 +31,8 @@ SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/pca1.cpp
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.cpp
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/resampling.cpp
+
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/neuron_connector_func.h
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/neuron_connector_func.cpp
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
