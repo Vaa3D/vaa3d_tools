@@ -23,11 +23,10 @@ class SegPipe_Controller
 {
 public:
 	/***************** Constructors and Basic Data Members *****************/
-	SegPipe_Controller(QString inputPath, QString outputPath, QString inputPathSWC);
+	SegPipe_Controller(QString inputPath, QString outputPath);
 
 	folderStruct inputContent;
 	QString inputCaseRootPath;
-	QString inputSWCPath;
 	QString outputRootPath;
 	QStringList caseList;
 	deque<string> inputSingleCaseSliceFullPaths;
@@ -56,7 +55,7 @@ public:
 
 	void somaNeighborhoodThin();
 
-	void swc_imgCrop();
+	void swc_imgCrop(QString inputSWCPath);
 };
 
 #endif

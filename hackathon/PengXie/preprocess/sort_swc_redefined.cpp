@@ -1,10 +1,10 @@
-#include "QtGlobal"
-#include "math.h"
-//#include "unistd.h" //remove the unnecessary include file. //by PHC 20131228
-#include "basic_surf_objs.h"
-#include "string.h"
-#include "vector"
-#include "iostream"
+//#include "QtGlobal"
+//#include "math.h"
+////#include "unistd.h" //remove the unnecessary include file. //by PHC 20131228
+//#include "basic_surf_objs.h"
+//#include "string.h"
+//#include "vector"
+//#include "iostream"
 #include "sort_swc_redefined.h"
 using namespace std;
 
@@ -101,6 +101,14 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
         }
     }
 };
+
+NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres){
+    NeuronTree new_tree;
+    SortSWC(nt.listNeuron, new_tree.listNeuron, newrootid, thres);
+    export_list2file(new_tree.listNeuron, "temp.swc");
+    new_tree = readSWC_file("temp.swc");
+    return new_tree;
+}
 
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {

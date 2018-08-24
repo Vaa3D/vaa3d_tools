@@ -10,6 +10,7 @@ HEADERS	+= soma_remove_plugin.h \
     my_surf_objs.h \
     sort_swc.h \
     data_training.h \
+    matrix.h \
     QR.h \
     SVD.h \
     general.h

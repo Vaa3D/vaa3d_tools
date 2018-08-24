@@ -62,15 +62,18 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		QString outputPathQ;
 
 		if (!outfiles.empty()) outputPathQ = outfiles[0];
-		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ, inputSWCPathQ);
+		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
 		//segPipePtr->sliceDownSample2D(2, "max");
 		//segPipePtr->adaSliceGammaCorrect();
 		//segPipePtr->sliceReversedGammaCorrect();
 		//segPipePtr->sliceThre(0.999);
 		//segPipePtr->histQuickList();
 		//segPipePtr->sliceBkgThre();
-		segPipePtr->findConnComponent();
+		//segPipePtr->findConnComponent();
 		//segPipePtr->findSomaMass();
+		segPipePtr->swc_imgCrop(inputSWCPathQ);
+		SegPipe_Controller* segPipePtr2 = new SegPipe_Controller(outputPathQ, "H:");
+		segPipePtr2->findConnComponent();
 	}
 	else if (func_name == tr("func2"))
 	{

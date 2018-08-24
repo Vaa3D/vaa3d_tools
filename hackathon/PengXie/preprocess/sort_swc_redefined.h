@@ -10,6 +10,10 @@
 #include "vector"
 #include "iostream"
 using namespace std;
+#include "QtGui"
+#include "QDialog"
+#include "v3d_interface.h"
+#include "utilities.h"
 
 #ifndef VOID
 #define VOID 1000000000
@@ -36,6 +40,7 @@ double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2);
 
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined);
 
+NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres);
 
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName);
