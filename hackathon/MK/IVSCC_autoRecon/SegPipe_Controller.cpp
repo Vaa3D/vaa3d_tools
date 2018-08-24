@@ -416,7 +416,7 @@ void SegPipe_Controller::findSomaMass()
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
-		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+		//QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
 		int massSize = 0;
 		int startIntensity = 255;
@@ -566,12 +566,12 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 	swcDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 	QStringList swcList = swcDir.entryList();
 
-	QString shiftedSWC_saveRootQ = this->outputRootPath + "/shiftedSWC/";
+	QString shiftedSWC_saveRootQ = "H:/shiftedSWC/";
 	if (!QDir(shiftedSWC_saveRootQ).exists()) QDir().mkpath(shiftedSWC_saveRootQ);
 	else
 	{
 		cerr << "The output SWC folder already exists. Do nothing and return" << endl;
-		//return;
+		return;
 	}
 
 	this->myImgManagerPtr = new ImgManager;
@@ -588,23 +588,34 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
 		QString currInputSWCFile = inputSWCPath + "/" + *caseIt + ".swc";
-		qDebug() << currInputSWCFile;
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
 		int xlb = 10000, xhb = 0, ylb = 10000, yhb = 0;
 		for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
 		{
-			int thisNodeX = int(round(nodeIt->x));
-			int thisNodeY = int(round(nodeIt->y));
-			if (thisNodeX < ylb) ylb = thisNodeX;
-			if (thisNodeX > yhb) yhb = thisNodeX;
-			if (thisNodeY < xlb) xlb = thisNodeY;
-			if (thisNodeX > xhb) xhb = thisNodeY;
+			int thisNodeX = int(round(nodeIt->x / 4));
+			int thisNodeY = int(round(nodeIt->y / 4));
+			if (thisNodeX < xlb) xlb = thisNodeX;
+			if (thisNodeX > xhb) xhb = thisNodeX;
+			if (thisNodeY < ylb) ylb = thisNodeY;
+			if (thisNodeY > yhb) yhb = thisNodeY;
 		}
 		xlb -= 10; xhb += 10; ylb -= 10; yhb += 10;
 		int newDims[3];
 		newDims[0] = xhb - xlb + 1;
 		newDims[1] = yhb - ylb + 1;
 		newDims[2] = 1;
+
+		NeuronTree newTree;
+		for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
+		{
+			NeuronSWC newNode = *nodeIt;
+			newNode.x = (nodeIt->x / 4) - xlb;
+			newNode.y = (nodeIt->y / 4) - ylb;
+			newNode.z = (nodeIt->z / 2);
+			newTree.listNeuron.push_back(newNode);
+		}
+		QString newTreeName = shiftedSWC_saveRootQ + *caseIt + ".swc";
+		writeSWC_file(newTreeName, newTree);
 
 		V3DLONG saveDims[4];
 		saveDims[0] = newDims[0];
@@ -614,9 +625,6 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 				
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->imgManager_init(*caseIt, slices);
-		/*for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.begin(); 
-			sliceIt != myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.end(); ++sliceIt)
-			qDebug() << QString::fromStdString(sliceIt->first) << " " << sliceIt->second[805985];*/
 		
 		QString saveImgCasePathQ = this->outputRootPath + "/" + *caseIt + "/";
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.begin();
@@ -627,13 +635,11 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 			
 			QString saveFileNameQ = saveImgCasePathQ + QString::fromStdString(sliceIt->first);
 			string saveFileName = saveFileNameQ.toStdString();
-			cout << saveFileName << endl;
 			const char* saveFileNameC = saveFileName.c_str();
-			//string testName = "Z:/test";
-			//const char* testNameC = testName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, croppedSlice, saveDims, 1);
 
 			if (croppedSlice) { delete[] croppedSlice; croppedSlice = 0; }
 		}
 	}
+	operator delete(myImgManagerPtr);
 }

@@ -3,8 +3,6 @@
 #include <iterator>
 #include <fstream>
 
-#include <boost\filesystem.hpp>
-
 #include "ImgProcessor.h"
 #include "ImgManager.h"
 
@@ -156,7 +154,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 	sz[1] = dims[1];
 	sz[2] = 1;
 	sz[3] = 1;
-	ImgManager::saveimage_wrapper(outputFileNameC, maskMIP, dims, V3D_UINT8);
+	ImgManager::saveimage_wrapper(outputFileNameC, maskMIP, sz, V3D_UINT8);
 }
 
 void ImgManager::swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D)
@@ -290,7 +288,7 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 			int yhb = tileSize * (j + 1);
 			long int ROIsz = tileSize * tileSize;
 			unsigned char* ROIPtr = new unsigned char[ROIsz];
-			int ROIxyz[4];
+			V3DLONG ROIxyz[4];
 			ROIxyz[0] = tileSize;
 			ROIxyz[1] = tileSize;
 			ROIxyz[2] = 1;

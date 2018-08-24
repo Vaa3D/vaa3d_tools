@@ -72,6 +72,8 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		//segPipePtr->findConnComponent();
 		//segPipePtr->findSomaMass();
 		segPipePtr->swc_imgCrop(inputSWCPathQ);
+		SegPipe_Controller* segPipePtr2 = new SegPipe_Controller(outputPathQ, "H:");
+		segPipePtr2->findConnComponent();
 	}
 	else if (func_name == tr("func2"))
 	{
