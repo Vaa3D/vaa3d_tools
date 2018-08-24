@@ -65,15 +65,15 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     //V3DLONG rootid;
     //rootid=neuron.size()-1;
     //V3DLONG thres;
-    V3DLONG rootid;
-    V3DLONG thres;
-    bool ok;
-    rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
+    V3DLONG rootid=VOID;
+    V3DLONG thres=100;
+    //bool ok;
+    /*rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
     if (!ok)
         rootid = VOID;
     thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
     if (!ok)
-        thres = VOID;
+        thres = VOID;*/
 
     QList<NeuronSWC> result;
     QList<NeuronSWC> neuron_nt;
@@ -120,7 +120,7 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
     LocationSimple m;
     LandmarkList mark;
     for(int i=0;i < branchid.size();i++){
-        if(local_angles.at(i)>125 && remote_angles.at(i)>110)
+        if(local_angles.at(i)>115 && remote_angles.at(i)>120)
         {
             m.x=neuron.at(branchid.at(i)).x;
             m.y=neuron.at(branchid.at(i)).y;
@@ -131,13 +131,15 @@ void show_menu(V3DPluginCallback2 &callback, QWidget *parent)
             mark.push_back(m);
           }
      }
-    for (int i=0;i<Markers.size();i++){
-            mark.push_back(Markers.at(i));
-    }
+
     cout<<"total marker number set into terafly: "<<mark.size()<<endl;
     for(int i;i<mark.size();i++)
     {
         cout<<"the coordinates of markers:x="<<mark.at(i).x<<" y="<<mark.at(i).y<<" z="<<mark.at(i).z<<endl;
+    }
+    for (int i=0;i<Markers.size();i++)
+    {
+            mark.push_back(Markers.at(i));
     }
     callback.setLandmarkTeraFly(mark);
 
