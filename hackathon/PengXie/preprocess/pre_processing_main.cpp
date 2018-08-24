@@ -226,6 +226,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         soma_connected = connect_soma(resampled, markers, connect_soma_dist, outfileLabel, 1e6, colorful, return_maintree);
     }
     double percentage_lost = 100 - soma_connected.listNeuron.size()*100.0 / resampled.listNeuron.size();
+    if(percentage_lost<0){
+        percentage_lost = 0;
+    }
 
     //2.5 Sort the tree and remove duplicates.
     printf("\tSorting\n");
@@ -350,7 +353,7 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
     double prune_size = 2; //default case
     double step_size = 0;
     double connect_soma_dist = 2000;
-    double thres = 0;
+    double thres = 10;
     bool rotation = false;
     bool colorful = false;
     bool return_maintree = false;
@@ -509,6 +512,7 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
         qs_output = qs_output.left(qs_output.length() - 5) + QString(".processed.eswc");
     }
+
 
     // Pre-process
     pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
