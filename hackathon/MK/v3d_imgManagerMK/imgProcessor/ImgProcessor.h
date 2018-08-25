@@ -4,9 +4,17 @@
 //------------------------------------------------------------------------------
 
 /*******************************************************************************
-* This library intends to fascilitate basic image operations
-
-*/
+*
+*  This library intends to fascilitate Vaa3D image operations in the lowest level.
+*  ImgProcessor class only takes array pointers as the input and as well outputs array pointers. 
+*  It does not involve in any image I/O and only operates arrays in the memory.
+*  
+*  Most ImgProcessor class methods are implemented as static template functions.   
+*  A typical function call would need at least three input arguments:
+*
+*		ImgProcessor::func(unsigned char[] inputImgArray, unsigned char[] outputImgArray, int[] inputImgDimensions, other input arguments);
+*
+********************************************************************************/
 
 #ifndef IMGPROCESSOR_H
 #define IMGPROCESSOR_H
@@ -76,8 +84,7 @@ public:
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
 
-	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
-		int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
+	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[], int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
 	/**********************************************************/
 
 

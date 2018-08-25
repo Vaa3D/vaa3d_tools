@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include <qdir.h>
+#include <qfile.h>
 #include <qdebug.h>
 
 #include "SegPipe_Controller.h"
@@ -254,12 +255,17 @@ void SegPipe_Controller::sliceBkgThre()
 
 void SegPipe_Controller::adaSliceGammaCorrect()
 {
-	if (this->inputContent == multipleCase)
-	{
+	
 		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 		{
-			QString saveCaseFullNameQ = this->outputRootPath + "/gamma/" + *caseIt;
+			QString saveCaseFullNameQ = this->outputRootPath + "/" + *caseIt;
+			qDebug() << saveCaseFullNameQ;
 			if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+			else
+			{
+				cerr << "This folder already exists. Skip case: " << (*caseIt).toStdString() << endl;
+				continue;
+			}
 			string saveFullPathRoot = saveCaseFullNameQ.toStdString();
 
 			pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
@@ -308,7 +314,7 @@ void SegPipe_Controller::adaSliceGammaCorrect()
 				if (gammaSlice) { delete[] gammaSlice; gammaSlice = 0; }
 			}
 		}
-	}
+	
 }
 
 void SegPipe_Controller::sliceReversedGammaCorrect()
@@ -416,7 +422,7 @@ void SegPipe_Controller::findSomaMass()
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
-		//QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
 		int massSize = 0;
 		int startIntensity = 255;
@@ -473,7 +479,16 @@ void SegPipe_Controller::findConnComponent()
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+		qDebug() << caseFullPathQ;
 		vector<unsigned char**> slice2DVector;
+
+		QString swcSaveFullNameQ = this->outputRootPath + "/connComponents/" + *caseIt + ".swc";
+		QFile swcFileCheck(swcSaveFullNameQ);
+		if (swcFileCheck.exists())
+		{
+			cerr << "This case is complete. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
 
 		int dims[3];
 		for (multimap<string, string>::iterator sliceIt = range.first; sliceIt != range.second; ++sliceIt)
@@ -524,7 +539,6 @@ void SegPipe_Controller::findConnComponent()
 		}
 		NeuronTree sigTree;
 		sigTree.listNeuron = allSigs;
-		QString swcSaveFullNameQ = this->outputRootPath + "/connComponents/" + *caseIt + ".swc";
 		writeSWC_file(swcSaveFullNameQ, sigTree);
 		allSigs.clear();
 
@@ -566,12 +580,12 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 	swcDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 	QStringList swcList = swcDir.entryList();
 
-	QString shiftedSWC_saveRootQ = "H:/shiftedSWC/";
+	QString shiftedSWC_saveRootQ = "Z:/shiftedSWC/";
 	if (!QDir(shiftedSWC_saveRootQ).exists()) QDir().mkpath(shiftedSWC_saveRootQ);
 	else
 	{
-		cerr << "The output SWC folder already exists. Do nothing and return" << endl;
-		return;
+		//cerr << "The output SWC folder already exists. Do nothing and return" << endl;
+		//return;
 	}
 
 	this->myImgManagerPtr = new ImgManager;
@@ -581,7 +595,14 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 		cout << "Processing case " << (*caseIt).toStdString() << ":" << endl;
 		QString saveCaseFullNameQ = this->outputRootPath + "/" + *caseIt;
 		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+		else
+		{
+			cerr << "This case is done. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
 		string saveCaseFullPathRoot = saveCaseFullNameQ.toStdString();
+		myImgManagerPtr->imgDatabase.clear();
+		myImgManagerPtr->imgManager_init(*caseIt, slices);
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
@@ -600,10 +621,15 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 			if (thisNodeY > yhb) yhb = thisNodeY;
 		}
 		xlb -= 10; xhb += 10; ylb -= 10; yhb += 10;
+		if (xlb <= 0) xlb = 1;
+		if (xhb >= myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0]) xhb = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0];
+		if (ylb <= 0) ylb = 1;
+		if (yhb >= myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1]) yhb = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1];
 		int newDims[3];
 		newDims[0] = xhb - xlb + 1;
 		newDims[1] = yhb - ylb + 1;
 		newDims[2] = 1;
+		cout << "boundries: " << xlb << " " << xhb << " " << ylb << " " << yhb << endl;
 
 		NeuronTree newTree;
 		for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
@@ -622,17 +648,15 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 		saveDims[1] = newDims[1];
 		saveDims[2] = 1;
 		saveDims[3] = 1;
-				
-		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->imgManager_init(*caseIt, slices);
 		
 		QString saveImgCasePathQ = this->outputRootPath + "/" + *caseIt + "/";
+		if (!QDir(saveImgCasePathQ).exists()) QDir().mkpath(saveImgCasePathQ);
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.end(); ++sliceIt)
 		{
 			unsigned char* croppedSlice = new unsigned char[newDims[0] * newDims[1]];
 			ImgProcessor::cropImg2D(sliceIt->second.get(), croppedSlice, xlb, xhb, ylb, yhb, myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims);
-			
+
 			QString saveFileNameQ = saveImgCasePathQ + QString::fromStdString(sliceIt->first);
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
