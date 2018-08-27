@@ -381,7 +381,6 @@ bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versi
         V3DLONG sz_tracing[4]; sz_tracing[0] = in_sz[0]; sz_tracing[1] = in_sz[1]; sz_tracing[2] = in_sz[2]; sz_tracing[3] = nChannelsToUse;
 
         //soma detection if necessary
-        v3d_msg("find soma");
         if(inmarkers.empty())
         {
             cout<<"Start detecting cellbody"<<endl;
@@ -417,7 +416,6 @@ bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versi
             p0.x = max_marker.x;
             p0.y = max_marker.y;
             p0.z = max_marker.z;
-            v3d_msg(QString("x is %1, y is %2,z is %3").arg(p0.x).arg(p0.y).arg(p0.z));
         }
         else
         {
