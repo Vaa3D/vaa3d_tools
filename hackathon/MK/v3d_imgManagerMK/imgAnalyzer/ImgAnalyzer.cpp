@@ -50,7 +50,6 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 	for (vector<unsigned char**>::iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
 	{
 		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];
-		cout << dims[0] << " " << dims[1] << endl;
 		size_t currSliceI = 0;
 		for (int j = 0; j < dims[1]; ++j)
 		{
@@ -60,9 +59,7 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 				currSlice1D[currSliceI] = (*it)[j][i];
 			}
 		}
-		cout << "test2" << endl;
 		ImgProcessor::imageMax(currSlice1D, maxIP1D, maxIP1D, dims);
-		cout << "test3" << endl;
 
 		if (currSlice1D) { delete[] currSlice1D; currSlice1D = 0; }
 	}

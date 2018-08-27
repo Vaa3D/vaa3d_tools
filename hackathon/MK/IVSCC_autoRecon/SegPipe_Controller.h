@@ -18,6 +18,7 @@
 using namespace std;
 
 enum folderStruct {singleCase, multipleCase};
+enum task {downsample2D, threshold2D, bkgThreshold2D, gammaCorrect2D};
 
 class SegPipe_Controller
 {
@@ -35,12 +36,12 @@ public:
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 	/***********************************************************************/
 
-	ImgManager* myImgManagerPtr;
+	deque<task> taskList;
 
 	unsigned char* currProcessingImgPtr;
 
 	void sliceDownSample2D(int downFactor, string method = "");
-	void adaSliceGammaCorrect();
+	void sliceGammaCorrect();
 	void sliceThre(float threshold);
 	void sliceBkgThre();
 	void sliceReversedGammaCorrect();
@@ -56,6 +57,12 @@ public:
 	void somaNeighborhoodThin();
 
 	void swc_imgCrop(QString inputSWCPath);
+	
+	void getMST();
+
+private:
+	ImgManager* myImgManagerPtr;
+	void singleTaskDispatcher(deque<task> taskList);
 };
 
 #endif

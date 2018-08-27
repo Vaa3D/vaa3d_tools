@@ -19,7 +19,8 @@
 #include "v3d_interface.h"
 
 enum imgFormat { cube, slices, single2D };
-typedef boost::shared_array<unsigned char> myImg1DPtr;
+typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
+													   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
 
 struct registeredImg
 {
@@ -38,7 +39,7 @@ struct registeredImg
 class ImgManager
 {
 public: 
-	/********* Constructors and Basic Data Menbers *********/
+	/********* Constructors and Basic Data Members *********/
 	ImgManager() {};
 	ImgManager(string wholeImgName);
 
@@ -53,13 +54,10 @@ public:
 	/*******************************************************/
 
 	/********* IO *********/
-	static bool img1Ddumpster(Image4DSimple* imgPtr, unsigned char*& data1D, long int dims[4], int datatype);
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	
 	map<string, registeredImg> imgDatabase;
-	void clearImgDatabase();
-
-	void imgManager_init(QString caseID, imgFormat format);
+	void imgManager_regisImg(QString caseID, imgFormat format);
 	/**********************/
 
 	/********* Methods for generating binary masks from SWC files *********/

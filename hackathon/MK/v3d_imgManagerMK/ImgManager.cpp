@@ -9,7 +9,7 @@
 using namespace std;
 using namespace boost::filesystem;
 
-void ImgManager::imgManager_init(QString caseID, imgFormat format)
+void ImgManager::imgManager_regisImg(QString caseID, imgFormat format)
 {
 	if (format == slices)
 	{
@@ -28,10 +28,9 @@ void ImgManager::imgManager_init(QString caseID, imgFormat format)
 			currImgCase.dims[1] = int(slicePtr->getYDim());
 			currImgCase.dims[2] = 1;
 			long int totalbyteSlice = slicePtr->getTotalBytes();
-			unsigned char* slice1D = new unsigned char[totalbyteSlice];
-			memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
-			myImg1DPtr storedSlice1D(slice1D);
-			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, storedSlice1D));
+			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
+			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
+			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
 
 			slicePtr->~Image4DSimple();
 			operator delete(slicePtr);
@@ -42,49 +41,6 @@ void ImgManager::imgManager_init(QString caseID, imgFormat format)
 
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
-}
-
-void ImgManager::clearImgDatabase()
-{
-	if (!this->imgDatabase.empty())
-	{
-		for (map<string, registeredImg>::iterator it1 = this->imgDatabase.begin(); it1 != this->imgDatabase.end(); ++it1)
-		{
-			for (map<string, myImg1DPtr>::iterator it2 = it1->second.slicePtrs.begin(); it2 != it1->second.slicePtrs.end(); ++it2) {}
-				
-		}
-	}
-}
-
-bool ImgManager::img1Ddumpster(Image4DSimple* inputImgPtr, unsigned char*& data1D, long int dims[4], int datatype)
-{
-	if (!inputImgPtr || !inputImgPtr->valid())
-		return false;
-
-	if (data1D) { delete[] data1D; data1D = 0; }
-
-	V3DLONG totalbytes = inputImgPtr->getTotalBytes();
-	try
-	{
-		data1D = new unsigned char[totalbytes];
-		if (!data1D) goto Label_error_simple_loadimage_wrapper;
-
-		memcpy(data1D, inputImgPtr->getRawData(), totalbytes);
-		datatype = inputImgPtr->getUnitBytes(); // 1, 2, or 4
-		dims[0] = inputImgPtr->getXDim();
-		dims[1] = inputImgPtr->getYDim();
-		dims[2] = inputImgPtr->getZDim();
-		dims[3] = inputImgPtr->getCDim();
-	}
-	catch (...)
-	{
-		goto Label_error_simple_loadimage_wrapper;
-	}
-	return true;
-
-Label_error_simple_loadimage_wrapper:
-	if (inputImgPtr) { delete inputImgPtr; inputImgPtr = 0; }
-	return false;
 }
 
 // ================= Methods for generating binary masks from SWC files ================= //
