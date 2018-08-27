@@ -31,6 +31,7 @@ void  getAStart(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
 vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<vector<double> > &arrB);
 double getA(vector<vector<double> > &V1,int n);
 vector<Coordinate> readtxt_LXF(const QString& filename,const string &inf1);
+bool export_feature(Feature &feature,QString &fileSaveName);
 int size_all;
 using namespace std;
 
@@ -516,6 +517,7 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature.D = D;
     feature.grey_mean = grey_mean;
     feature.grey_std = grey_std;
+    feature.inff = inf_v;
 
     feature2.y_n = y_n2;
     feature2.overlap_level = overlap_level2;
@@ -524,6 +526,7 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature2.D = D2;
     feature2.grey_mean = grey_mean2;
     feature2.grey_std = grey_std2;
+    feature2.inff = inf_v2;
 
     feature3.y_n = y_n3;
     feature3.overlap_level = overlap_level3;
@@ -532,6 +535,7 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature3.D = D3;
     feature3.grey_mean = grey_mean3;
     feature3.grey_std = grey_std3;
+    feature3.inff = inf_v3;
 
     feature4.y_n = y_n4;
     feature4.overlap_level = overlap_level4;
@@ -540,7 +544,12 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature4.D = D4;
     feature4.grey_mean = grey_mean4;
     feature4.grey_std = grey_std4;
+    feature4.inff = inf_v4;
 
+    QString name = "feature.txt";
+    QString name2 = "feature2.txt";
+    export_feature(feature,name);
+    export_feature(feature2,name2);
     Cov_calculate(chart,feature);
     Cov_calculate(chart2,feature2);
     E = E_calculate(feature);
@@ -611,11 +620,11 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     svd(R2_new,k,UU2,S2,V2);
 
 
-    cout<<"S="<<endl;
-    for(int i=0;i<S.size();i++)
-    {
-        cout<<setw(7)<<S[i]<<' ';
-    }
+//    cout<<"S="<<endl;
+//    for(int i=0;i<S.size();i++)
+//    {
+//        cout<<setw(7)<<S[i]<<' ';
+//    }
     cout<<endl;
     double sum_log=0;
     for(int i=0;i<S.size();i++)
@@ -627,33 +636,33 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     {
         sum_log2 = sum_log2 + log(S2[i]);
     }
-    cout<<endl<<"Matrix R:"<<endl;
-    for(int i=0;i<R_new.size();i++)
-    {
-        for(int j=0;j<5;j++)
-        {
-            cout<<setw(8)<<R_new[i][j]<<" ";
-        }
-        cout<<endl;
-    }
+//    cout<<endl<<"Matrix R:"<<endl;
+//    for(int i=0;i<R_new.size();i++)
+//    {
+//        for(int j=0;j<5;j++)
+//        {
+//            cout<<setw(8)<<R_new[i][j]<<" ";
+//        }
+//        cout<<endl;
+//    }
 
     cout<<R_new.size()<<endl;
    // v3d_msg("Start Classification");
     vector<double> cl,cl2,cl3,cl4;
 
 
-    cl = classify_glio_Y(S,feature,E,R_new,sum_log);
-    cl2 = classify_glio_Y(S2,feature,E,R2_new,sum_log2);
+//    cl = classify_glio_Y(S,feature,E,R_new,sum_log);
+//    cl2 = classify_glio_Y(S2,feature,E,R2_new,sum_log2);
 
-    cl3 = classify_glio_Y(S,feature2,E2,R_new,sum_log);
-    cl4 = classify_glio_Y(S2,feature2,E2,R2_new,sum_log2);
+//    cl3 = classify_glio_Y(S,feature2,E2,R_new,sum_log);
+//    cl4 = classify_glio_Y(S2,feature2,E2,R2_new,sum_log2);
 
-//    cl = classify_glio_Y(S,feature3,E3,R_new,sum_log);
-//    cl2 = classify_glio_Y(S2,feature3,E3,R2_new,sum_log2);
+    cl = classify_glio_Y(S,feature3,E3,R_new,sum_log);
+    cl2 = classify_glio_Y(S2,feature3,E3,R2_new,sum_log2);
 
-//    cl3 = classify_glio_Y(S,feature4,E4,R_new,sum_log);
-//    cl4 = classify_glio_Y(S2,feature4,E4,R2_new,sum_log2);
-   // v3d_msg("Classification Done");
+    cl3 = classify_glio_Y(S,feature4,E4,R_new,sum_log);
+    cl4 = classify_glio_Y(S2,feature4,E4,R2_new,sum_log2);
+    v3d_msg("Classification Done");
 //    for(int i=0;i<cl.size();i++)
 //    {
 //            cout<<cl2[i]<<endl;
@@ -673,7 +682,7 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         else
         {
 
-            cout<<"wrong = "<<inf_v[i].inf1<<"  "<<inf_v[i].name<<"     "<<feature.y_n[i]<<"    "<<feature.ratio_v[i]<<feature.overlap_level[i]<<"        "<<feature.count_v[i]<<"     "<<feature.grey_std[i]<<endl;
+            //cout<<"wrong = "<<inf_v[i].inf1<<"  "<<inf_v[i].name<<"     "<<feature.y_n[i]<<"    "<<feature.ratio_v[i]<<feature.overlap_level[i]<<"        "<<feature.count_v[i]<<"     "<<feature.grey_std[i]<<endl;
             //cout<<<<endl;
 
             result1.push_back(0);
@@ -683,7 +692,7 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     for(int i=0;i<cl3.size();i++)
     {
       //  cout<<"cl3 cl4 = "<<cl3[i]<<"    "<<cl4[i]<<endl;
-        if(cl3[i]<cl4[i]||y_n4[i]==0)
+        if(cl3[i]>cl4[i]||y_n2[i]==0)
         {
             //if(y_n[i]==1)
             result2.push_back(1);//is signal
@@ -726,11 +735,11 @@ bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName)
         return false;
     QTextStream myfile(&file);
 
-    cout << E.x1 <<"    "<<chart.first_line.x1<<"    "<<chart.first_line.x2<<"    "<<chart.first_line.x3<<"    "<<chart.first_line.x4<<"    "<<chart.first_line.x5<<endl;
-    cout << E.x2 <<"    "<<chart.second_line.x1<<"    "<<chart.second_line.x2<<"    "<<chart.second_line.x3<<"    "<<chart.second_line.x4<<"    "<<chart.second_line.x5<<endl;
-    cout << E.x3 <<"    "<<chart.third_line.x1<<"    "<<chart.third_line.x2<<"    "<<chart.third_line.x3<<"    "<<chart.third_line.x4<<"    "<<chart.third_line.x5<<endl;
-    cout << E.x4 <<"    "<<chart.forth_line.x1<<"    "<<chart.forth_line.x2<<"    "<<chart.forth_line.x3<<"    "<<chart.forth_line.x4<<"    "<<chart.forth_line.x5<<endl;
-    cout << E.x5 <<"    "<<chart.fifth_line.x1<<"    "<<chart.fifth_line.x2<<"    "<<chart.fifth_line.x3<<"    "<<chart.fifth_line.x4<<"    "<<chart.fifth_line.x5<<endl;
+//    cout << E.x1 <<"    "<<chart.first_line.x1<<"    "<<chart.first_line.x2<<"    "<<chart.first_line.x3<<"    "<<chart.first_line.x4<<"    "<<chart.first_line.x5<<endl;
+//    cout << E.x2 <<"    "<<chart.second_line.x1<<"    "<<chart.second_line.x2<<"    "<<chart.second_line.x3<<"    "<<chart.second_line.x4<<"    "<<chart.second_line.x5<<endl;
+//    cout << E.x3 <<"    "<<chart.third_line.x1<<"    "<<chart.third_line.x2<<"    "<<chart.third_line.x3<<"    "<<chart.third_line.x4<<"    "<<chart.third_line.x5<<endl;
+//    cout << E.x4 <<"    "<<chart.forth_line.x1<<"    "<<chart.forth_line.x2<<"    "<<chart.forth_line.x3<<"    "<<chart.forth_line.x4<<"    "<<chart.forth_line.x5<<endl;
+//    cout << E.x5 <<"    "<<chart.fifth_line.x1<<"    "<<chart.fifth_line.x2<<"    "<<chart.fifth_line.x3<<"    "<<chart.fifth_line.x4<<"    "<<chart.fifth_line.x5<<endl;
 
 
         myfile << E.x1 <<"   "<<chart.first_line.x1<<"   "<<chart.first_line.x2<<"   "<<chart.first_line.x3<<"   "<<chart.first_line.x4<<"   "<<chart.first_line.x5<<endl;
@@ -740,6 +749,27 @@ bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName)
         myfile << E.x5 <<"   "<<chart.fifth_line.x1<<"   "<<chart.fifth_line.x2<<"   "<<chart.fifth_line.x3<<"   "<<chart.fifth_line.x4<<"   "<<chart.fifth_line.x5<<endl;
 
 
+    file.close();
+    cout<<"txt file "<<fileSaveName.toStdString()<<" has been generated"<<endl;
+    return true;
+}
+
+bool export_feature(Feature &feature,QString &fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
+    myfile <<"name        "<< "y_n" <<"    "<<"ratio(x/y)" <<"    "<<"overlap_level" <<"    "<<"count"<<"    "<<"grey_std"<<endl;
+    for(int i=0;i<feature.count_v.size();i++)
+    {
+
+        QString inf1 = QString::fromStdString(feature.inff[i].inf1);
+        QString name = QString::fromStdString(feature.inff[i].name);
+
+        myfile << name <<"     " << feature.y_n[i] <<"   "<<feature.ratio_v[i]<<"   "<<feature.overlap_level[i]<<"   "<<feature.count_v[i]<<"   "<<feature.grey_std[i]<<endl;
+
+    }
     file.close();
     cout<<"txt file "<<fileSaveName.toStdString()<<" has been generated"<<endl;
     return true;
@@ -864,8 +894,8 @@ Each_line E_calculate(Feature &feature)
         sum.x2 = sum.x2 + feature.ratio_v[i];
         sum.x3 = sum.x3 + feature.overlap_level[i];
         sum.x4 = sum.x4 + feature.grey_std[i];
-        cout<<"feature.grey_std = "<<feature.grey_std[i]<<endl;
-        cout<<"sum.x4 = "<<sum.x4<<endl;
+       // cout<<"feature.grey_std = "<<feature.grey_std[i]<<endl;
+       // cout<<"sum.x4 = "<<sum.x4<<endl;
         sum.x5 = sum.x5 + feature.count_v[i];
     }
   //  cout<<"sum = "<<sum.x1<<"   "<<sum.x2<<"    "<<sum.x3<<"    "<<sum.x4<<"    "<<sum.x5<<endl;
@@ -964,7 +994,7 @@ vector<bool> classify_glio2(Chart &chart1,Each_line &E1,Chart &chart2,Each_line 
 }
 vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<vector<double> > &R,double &sum_log)
 {
-    cout<<"in classify"<<endl;
+    //cout<<"in classify"<<endl;
     int size = f.count_v.size();
     double m1;
     double m2;
@@ -980,9 +1010,6 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
        m3 = f.overlap_level[i]-E.x3;
        m4 = f.grey_std[i]-E.x4;
        m5 = f.count_v[i]-E.x5;
-       cout<<E.x1<<"    "<<E.x2<<"      "<<E.x3<<"      "<<E.x4<<"      "<<E.x5<<endl;
-       cout<<"f.grey_std  E.x4 = "<<f.grey_std[i]<<"    "<<E.x4<<endl;
-      // cout<<"m = "<<m1<<"  "<<m2<<"    "<<m3<<"    "<<m4<<"    "<<m5<<endl;
        r.push_back(m1);
        r.push_back(m2);
        r.push_back(m3);
@@ -990,7 +1017,6 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
        r.push_back(m5);
        re.push_back(r);
     }
-    //v3d_msg("check");
     vector<vector<double> > result;
  //   cout<<"R.size() = "<<R.size()<<endl;
 

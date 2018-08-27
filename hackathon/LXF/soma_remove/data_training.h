@@ -4,7 +4,11 @@
 #include "v3d_message.h"
 #include "v3d_interface.h"
 #include "../../heyishan/blastneuron_bjut/overlap/overlap_gold.h"
-
+struct inf
+{
+    string inf1;
+    string name;
+};
 
 struct Each_line
 {
@@ -31,12 +35,9 @@ struct Feature
     vector<double> D;
     vector<double> grey_mean;
     vector<double> grey_std;
+    vector<inf> inff;
 };
-struct inf
-{
-    string inf1;
-    string name;
-};
+
 //class Matrix
 //{
 //public:

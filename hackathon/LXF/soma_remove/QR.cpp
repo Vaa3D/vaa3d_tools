@@ -74,20 +74,20 @@ void Matrix_QR_Factorization(vector<vector<float> >&A_a,vector<vector<float> >&Q
                 Q[j][k]=p[j];
         }
     }
-    cout<<endl<<"Matrix Q:"<<endl;
-    for(int i=0;i<M;i++){
-        for(int j=0;j<N;j++){
-            cout<<setw(8)<<Q[i][j]<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<endl<<"Matrix R:"<<endl;
-    for(int i=0;i<M;i++){
-        for(int j=0;j<N;j++){
-            cout<<setw(8)<<R[i][j]<<" ";
-        }
-        cout<<endl;
-    }
+//    cout<<endl<<"Matrix Q:"<<endl;
+//    for(int i=0;i<M;i++){
+//        for(int j=0;j<N;j++){
+//           //cout<<setw(8)<<Q[i][j]<<" ";
+//        }
+//        cout<<endl;
+//    }
+//    cout<<endl<<"Matrix R:"<<endl;
+//    for(int i=0;i<M;i++){
+//        for(int j=0;j<N;j++){
+//            //cout<<setw(8)<<R[i][j]<<" ";
+//        }
+//        cout<<endl;
+//    }
     //v3d_msg("kkkkkkkk");
     for(int i=0;i<M;i++)
     {

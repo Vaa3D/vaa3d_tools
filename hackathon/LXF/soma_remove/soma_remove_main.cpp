@@ -553,7 +553,7 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
 bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
 {
     int n=2;
-    cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
+   // cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
     int ind1;
     int ind2;
     vector<Max_level> two_level;
@@ -605,15 +605,16 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
     }
 
 
-    cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
+  //  cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
     double maxx;
     double maxy;
     double minx;
     double miny;
-    double count_level;
+    double count_level,count_tmp;
     for(int i=0;i<connected_region_final.size();i++)
     {
         count_level=0;
+        count_tmp=0;
         maxx=0;
         maxy=0;
         minx=100000000;
@@ -628,7 +629,7 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             {
                 continue;
             }
-
+            count_tmp++;
             if(curr.x>maxx)
             {
                 maxx=curr.x;
@@ -661,7 +662,9 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
         }
         double minus_x=maxx-minx+1;
         double minus_y=maxy-miny+1;
-        double overl=count_level/(minus_x*minus_y*2);
+        double overl=count_tmp/(minus_x*minus_y*2);
+        cout<<"x/y = "<<minus_x<<"  "<<minus_y<<endl;
+
         double ratio1=minus_x/minus_y;
         double ratio2=minus_y/minus_x;
         double ratio;
@@ -715,10 +718,10 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
     vector<Soma> soma_v;
 
 
-    cout<<"  <5>.calculate D "<<endl;
+   // cout<<"  <5>.calculate D "<<endl;
 
 
-    cout<<"find_center"<<endl;
+  //  cout<<"find_center"<<endl;
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
         double sumx=0;
@@ -833,7 +836,7 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
     }
 
-    cout<<"  <6>.calculate mean grey "<<endl;
+ //   cout<<"  <6>.calculate mean grey "<<endl;
 
     double mean_grey;
     for(int i=0;i<connected_region_final.size();i++)
@@ -872,7 +875,7 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 //        cout<<"grey_std = "<<grey_std[i]<<endl;
 //        cout<<"*************************************************"<<endl;
 //    }
-    cout<<"  <7>.get information from folder "<<endl;
+ //   cout<<"  <7>.get information from folder "<<endl;
     for(int i=0;i<connected_region_final.size();i++)
     {
         //vector<inf> inf_tmp_v;
