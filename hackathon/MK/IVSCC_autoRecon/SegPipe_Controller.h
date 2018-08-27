@@ -34,6 +34,7 @@ public:
 	deque<string> outputSingleCaseSliceFullPaths;
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
+	QString inputSWCRootPath;
 	/***********************************************************************/
 
 	deque<task> taskList;

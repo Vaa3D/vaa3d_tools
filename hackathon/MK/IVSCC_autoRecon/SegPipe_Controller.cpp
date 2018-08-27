@@ -670,7 +670,7 @@ void SegPipe_Controller::getMST()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
-		QString swcFileFullPathQ = "H:/batch/" + *caseIt + ".swc";
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt + ".swc";
 		QFile swcFileCheck(swcFileFullPathQ);
 		if (!swcFileCheck.exists())
 		{

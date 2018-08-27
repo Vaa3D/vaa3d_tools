@@ -57,9 +57,12 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	QString inputPathQ = infiles[0];
 	QString inputSWCPathQ;
 	if (infiles[1]) inputSWCPathQ = infiles[1];
+
 	QString outputPathQ;
 	if (!outfiles.empty()) outputPathQ = outfiles[0];
+
 	SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
+	segPipePtr->inputSWCRootPath = inputSWCPathQ;
 
 	if (func_name == tr("downSample2D_Max"))
 	{
