@@ -163,7 +163,8 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
         int xRez_o=deskRect.width()/col;
         int yRez_o=deskRect.height()/row;
-        yRez_o=yRez_o/2;
+        col--;
+        yRez_o=yRez_o;
         qDebug("every col size is %d",xRez_o);
         qDebug("every row size is %d",yRez_o);
 
@@ -191,14 +192,15 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
             new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
         }
 
-
         QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
         for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
         {
             if( (i%col)*xRez ==0)
                 offsety++;
+
             callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
-            callback.resizeWindow(cur_list_3dviewer.at(i),xRez_o,yRez_o);
+            callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
+           // callback.setResizeEvent(cur_list_3dviewer.at(i),768,600);
         }
 
 
@@ -210,13 +212,13 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
              col = QInputDialog::getInteger(parent, "",
                                            "#tiles per row:",
-                                           1, 1, 1000, 1, &ok1);
+                                           1, 1, 100, 1, &ok1);
 
              if(ok1)
              {
                  row = QInputDialog::getInteger(parent, "",
                                                "display from column:",
-                                               1, 1, col, 1, &ok2);
+                                               1, 1, 100, 1, &ok2);
              }
              else
                  return;
