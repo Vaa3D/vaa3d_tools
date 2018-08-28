@@ -320,20 +320,24 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,int num,  QList<NeuronSWC> 
     metrics.tubularity_std = 0.0;
     metrics.fg_std = 0.0;
     metrics.bg_std = 0.0;
-	metrics.vr = 0.0;
+	metrics.vr = 0;
 	metrics.number = num;
 	double distance = 0.0;
-	if(neuronSegment.size()<2)
+	/*if(neuronSegment.size()<2)
 		metrics.length = 1.0;
 	else{
 		for(int i=0;i<neuronSegment.size()-1;i++){
-			distance = distance + sqrt(pow((neuronSegment.at(i+1).x-neuronSegment.at(i).x),2)+pow((neuronSegment.at(i+1).y-neuronSegment.at(i).y),2)+pow((neuronSegment.at(i+1).z-neuronSegment.at(i).z),2));
+			distance = distance + sqrt(pow((neuronSegment.at(i+1).x*0.2-neuronSegment.at(i).x*0.2),2)+pow((neuronSegment.at(i+1).y*0.2-neuronSegment.at(i).y*0.2),2)+pow((neuronSegment.at(i+1).z-neuronSegment.at(i).z),2))/1000;
 		}
 		metrics.length = distance;
+	}*/
+	for(int i=0;i<neuronSegment.size()-1;i++){
+		distance = distance + sqrt(pow((neuronSegment.at(i+1).x*0.2-neuronSegment.at(i).x*0.2),2)+pow((neuronSegment.at(i+1).y*0.2-neuronSegment.at(i).y*0.2),2)+pow((neuronSegment.at(i+1).z-neuronSegment.at(i).z),2))/1000;
 	}
+	metrics.length = distance;
 
 	if((fabs(neuronSegment.at(0).radius - 0.618f) < 0.001f)||(fabs(neuronSegment.at(0).radius - 0.666f) < 0.001f)){
-		metrics.vr = 1.0;
+		metrics.vr = 1;
 	}
 
     V3DLONG min_x = image->getXDim() , min_y = image->getYDim() ,  min_z = image->getZDim() , max_x = 0, max_y = 0, max_z= 0;
@@ -510,7 +514,7 @@ IMAGE_METRICS   compute_metrics(Image4DSimple *image,int num,  QList<NeuronSWC> 
 					float f[3] = {x,y,z};
                     V3DLONG index_1d = z * (image->getXDim() * image->getYDim())  + y * image->getXDim() + x;
                     V3DLONG roi_index =  (z - min_z) * (width * height)  + (y - min_y) * width + (x - min_x);
-                    if  ((roi_1d_visited[roi_index] != FG )&&(distancePtSeg(f,node,node2)- (r+2) <= 0.0001f))
+                    if  ((roi_1d_visited[roi_index] != FG )&&(distancePtSeg(f,node,node2)- (2) <= 0.0001f))
                     {
                         roi_1d_visited[roi_index] = FG;
                     }

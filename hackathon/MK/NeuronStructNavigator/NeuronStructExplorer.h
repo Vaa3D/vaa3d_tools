@@ -7,15 +7,27 @@
 #include <unordered_map>
 #include <string>
 
+#include <boost/config.hpp>
+#include <boost/graph/prim_minimum_spanning_tree.hpp>
+#include <boost/graph/adjacency_list.hpp>
+
 #include <qlist.h>
 #include <qstring.h>
 #include <qstringlist.h>
 
+#include "basic_surf_objs.h"
 #include "v_neuronswc.h"
 
-#include "basic_surf_objs.h"
-
 using namespace std;
+enum edge_lastvoted_t { edge_lastvoted };
+namespace boost 
+{
+	BOOST_INSTALL_PROPERTY(edge, lastvoted);
+}
+
+typedef boost::property<boost::edge_weight_t, double> weights;
+typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
 
 class NeuronStructExplorer
 {
@@ -27,9 +39,13 @@ public:
 	NeuronTree* singleTreePtr;
 	NeuronTree singleTree;
 	NeuronTree processedTree;
-	vector<NeuronTree>* treeVectorPtr;
+	vector<NeuronTree>* treePtrsVector;
 	QString neuronFileName;
 	/*******************************************************/
+
+	/***************** Neuron Struct Connecting Functions *****************/
+	static NeuronTree SWC2MSTtree(NeuronTree* inputTreePtr);
+	/**********************************************************************/
 
 	/********* Pixel-based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;

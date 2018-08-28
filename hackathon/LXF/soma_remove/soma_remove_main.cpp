@@ -1,6 +1,7 @@
 #include "soma_remove_main.h"
 
 #include <iostream>
+#include "string.h"
  using namespace std;
 //#define DIS((x,y,z),b) (x-b.x)*(x-b.x)+(y-b.y)*(y-b.y)+(z-b.z)*(z-b.z)
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
@@ -9,8 +10,8 @@ bool FAR = 0;
 bool CLOSE = 1;
 int dis_thresh = 3;
 
-
-
+vector<bool> classify_glio(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method);
+bool export_training_data(const QString &fileOpenName,Chart &chart,Each_line &E);
 //bool if_is_connect(Coordinate* &curr,Coordinate* &b,vector<vector<vector<V3DLONG> > > &mark3D);
 uint qHash(const Coordinate key)
 {
@@ -465,7 +466,10 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     }
 
     cout<<"3.train_data"<<endl;
-
+    Chart chart,chart2;
+    Each_line E,E2;
+    export_training_data(QString("signal.txt"),chart,E);
+    export_training_data(QString("glio.txt"),chart2,E2);
 
 
 
@@ -473,14 +477,40 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     cout<<"4.calculate feature."<<endl;
 
 
-    vector<bool> y_n;
+    vector<double> y_n;
     vector<double> overlap_level;
     vector<double> ratio_v;
     vector<double> count_v;
     vector<double> D;
     vector<double> grey;
-    //feature_calculate(y_n,overlap_level,ratio_v,count_v,D,connected_region_final);
+    vector<double> grey_std;
+    vector<inf> inf_v;
+    feature_calculate(inf_v,y_n,overlap_level,ratio_v,count_v,D,grey,grey_std,connected_region_final);
 
+
+
+
+
+    Feature feature_curr;
+    Chart chart_curr;
+    Each_line E_curr;
+    feature_curr.y_n = y_n;
+    feature_curr.overlap_level = overlap_level;
+    feature_curr.ratio_v = ratio_v;
+    feature_curr.count_v = count_v;
+    feature_curr.D = D;
+    feature_curr.grey_mean = grey;
+    feature_curr.grey_std = grey_std;
+   // Cov_calculate(chart_curr,feature_curr);
+    //E_curr = E_calculate(feature_curr);
+    bool method=false;
+    vector<bool> classify;
+
+    classify = classify_glio(chart,E,chart2,E2,chart_curr,E_curr,feature_curr,method);
+    for(int i=0;i<classify.size();i++)
+    {
+        cout<<"classify = "<<classify[i]<<endl;
+    }
 
     if(im_cropped){delete []im_cropped;im_cropped=0;}
 
@@ -520,10 +550,10 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
         return false;
     }
 }
-bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
+bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
 {
     int n=2;
-    cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
+   // cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
     int ind1;
     int ind2;
     vector<Max_level> two_level;
@@ -558,8 +588,8 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
             }
         }
         Max_level max_l;
-        cout<<"max = "<<max1<<"  "<<max2<<endl;
-        cout<<"ind = "<<ind1<<"  "<<ind2<<endl;
+        //cout<<"max = "<<max1<<"  "<<max2<<endl;
+        //cout<<"ind = "<<ind1<<"  "<<ind2<<endl;
         max_l.level1=ind1;
         max_l.level2=ind2;
         two_level.push_back(max_l);
@@ -575,15 +605,16 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
     }
 
 
-    cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
+  //  cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
     double maxx;
     double maxy;
     double minx;
     double miny;
-    double count_level;
+    double count_level,count_tmp;
     for(int i=0;i<connected_region_final.size();i++)
     {
         count_level=0;
+        count_tmp=0;
         maxx=0;
         maxy=0;
         minx=100000000;
@@ -598,7 +629,7 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
             {
                 continue;
             }
-
+            count_tmp++;
             if(curr.x>maxx)
             {
                 maxx=curr.x;
@@ -631,7 +662,9 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
         }
         double minus_x=maxx-minx+1;
         double minus_y=maxy-miny+1;
-        double overl=count_level/(minus_x*minus_y*2);
+        double overl=count_tmp/(minus_x*minus_y*2);
+        cout<<"x/y = "<<minus_x<<"  "<<minus_y<<endl;
+
         double ratio1=minus_x/minus_y;
         double ratio2=minus_y/minus_x;
         double ratio;
@@ -685,10 +718,10 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
     vector<Soma> soma_v;
 
 
-    cout<<"  <5>.calculate D "<<endl;
+   // cout<<"  <5>.calculate D "<<endl;
 
 
-    cout<<"find_center"<<endl;
+  //  cout<<"find_center"<<endl;
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
         double sumx=0;
@@ -803,7 +836,7 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
 
     }
 
-    cout<<"  <6>.calculate mean grey "<<endl;
+ //   cout<<"  <6>.calculate mean grey "<<endl;
 
     double mean_grey;
     for(int i=0;i<connected_region_final.size();i++)
@@ -826,21 +859,191 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
             sum_grey = (connected_region_final[i][d].bri-grey[i])*(connected_region_final[i][d].bri-grey[i]) + sum_grey;
         }
         std_grey = sum_grey/(connected_region_final[i].size()-1);
+      //  cout<<"sum_grey = "<<sum_grey<<"      "<<(connected_region_final[i].size()-1)<<"    "<<i<<endl;
+
         grey_std.push_back(sqrt(std_grey));
     }
-
-    for(int i=0;i<D.size();i++)
+       // v3d_msg("gggggggggggg");
+//    for(int i=0;i<D.size();i++)
+//    {
+//        cout<<"y_n = "<<y_n[i]<<endl;
+//        cout<<"D = "<<D[i]<<endl;
+//        cout<<"overlap_level = "<<overlap_level[i]<<endl;
+//        cout<<"ratio_v = "<<ratio_v[i]<<endl;
+//        cout<<"count_v = "<<count_v[i]<<endl;
+//        cout<<"grey_mean = "<<grey[i]<<endl;
+//        cout<<"grey_std = "<<grey_std[i]<<endl;
+//        cout<<"*************************************************"<<endl;
+//    }
+ //   cout<<"  <7>.get information from folder "<<endl;
+    for(int i=0;i<connected_region_final.size();i++)
     {
-        cout<<"y_n = "<<y_n[i]<<endl;
-        cout<<"D = "<<D[i]<<endl;
-        cout<<"overlap_level = "<<overlap_level[i]<<endl;
-        cout<<"ratio_v = "<<ratio_v[i]<<endl;
-        cout<<"count_v = "<<count_v[i]<<endl;
-        cout<<"grey_mean = "<<grey[i]<<endl;
-        cout<<"grey_std = "<<grey_std[i]<<endl;
-        cout<<"*************************************************"<<endl;
+        //vector<inf> inf_tmp_v;
+       // for(int d=0;d<connected_region_final[i].size();d++)
+        //{
+            inf inf_tmp;
+            inf_tmp.inf1 =  connected_region_final[i][0].inf1;
+            inf_tmp.name = connected_region_final[i][0].name;
+            inf_v.push_back(inf_tmp);
+      //  }
+        //inf_v.push_back(inf_tmp_v);
     }
 
 
+
+}
+bool export_training_data(const QString &fileOpenName,Chart &chart,Each_line &E)
+{
+
+
+    QFile qf(fileOpenName);
+    if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+#ifndef DISABLE_V3D_MSG
+        v3d_msg(QString("open file [%1] failed!").arg(fileOpenName));
+#endif
+        return false;
+    }
+
+    V3DLONG k=0,j=1;
+    while (! qf.atEnd())
+    {
+        char curline[2000];
+
+        qf.readLine(curline, sizeof(curline));
+        k++;
+        {
+
+            QStringList qsl = QString(curline).trimmed().split("   ");
+            int qsl_count=qsl.size();
+            cout<<"qls.size = "<<qsl_count<<endl;
+            if (qsl_count<6)   continue;
+
+            switch(j)
+            {
+                case 1: E.x1 = qsl[0].toFloat();
+                        chart.first_line.x1 = qsl[1].toFloat();
+                        chart.first_line.x2 = qsl[2].toFloat();
+                        chart.first_line.x3 = qsl[3].toFloat();
+                        chart.first_line.x4 = qsl[4].toFloat();
+                        chart.first_line.x5 = qsl[5].toFloat();break;
+                case 2: E.x2 = qsl[0].toFloat();
+                        chart.second_line.x1 = qsl[1].toFloat();
+                        chart.second_line.x2 = qsl[2].toFloat();
+                        chart.second_line.x3 = qsl[3].toFloat();
+                        chart.second_line.x4 = qsl[4].toFloat();
+                        chart.second_line.x5 = qsl[5].toFloat();break;
+                case 3: E.x3 = qsl[0].toFloat();
+                        chart.third_line.x1 = qsl[1].toFloat();
+                        chart.third_line.x2 = qsl[2].toFloat();
+                        chart.third_line.x3 = qsl[3].toFloat();
+                        chart.third_line.x4 = qsl[4].toFloat();
+                        chart.third_line.x5 = qsl[5].toFloat();break;
+                case 4: E.x4 = qsl[0].toFloat();
+                        chart.forth_line.x1 = qsl[1].toFloat();
+                        chart.forth_line.x2 = qsl[2].toFloat();
+                        chart.forth_line.x3 = qsl[3].toFloat();
+                        chart.forth_line.x4 = qsl[4].toFloat();
+                        chart.forth_line.x5 = qsl[5].toFloat();break;
+                case 5: E.x5 = qsl[0].toFloat();
+                        chart.fifth_line.x1 = qsl[1].toFloat();
+                        chart.fifth_line.x2 = qsl[2].toFloat();
+                        chart.fifth_line.x3 = qsl[3].toFloat();
+                        chart.fifth_line.x4 = qsl[4].toFloat();
+                        chart.fifth_line.x5 = qsl[5].toFloat();break;
+            default:break;
+
+            }
+            j++;
+
+        }
+    }
+    cout << E.x1 <<"    "<<chart.first_line.x1<<"    "<<chart.first_line.x2<<"    "<<chart.first_line.x3<<"    "<<chart.first_line.x4<<"    "<<chart.first_line.x5<<endl;
+    cout << E.x2 <<"    "<<chart.second_line.x1<<"    "<<chart.second_line.x2<<"    "<<chart.second_line.x3<<"    "<<chart.second_line.x4<<"    "<<chart.second_line.x5<<endl;
+    cout << E.x3 <<"    "<<chart.third_line.x1<<"    "<<chart.third_line.x2<<"    "<<chart.third_line.x3<<"    "<<chart.third_line.x4<<"    "<<chart.third_line.x5<<endl;
+    cout << E.x4 <<"    "<<chart.forth_line.x1<<"    "<<chart.forth_line.x2<<"    "<<chart.forth_line.x3<<"    "<<chart.forth_line.x4<<"    "<<chart.forth_line.x5<<endl;
+    cout << E.x5 <<"    "<<chart.fifth_line.x1<<"    "<<chart.fifth_line.x2<<"    "<<chart.fifth_line.x3<<"    "<<chart.fifth_line.x4<<"    "<<chart.fifth_line.x5<<endl;
+    return true;
+}
+vector<bool> classify_glio(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method)
+{
+    cout<<"oooooooooooooooooooooooo"<<endl;
+    vector<bool> classify;
+    if(method)
+    {
+        double dis11 = sqrt( (E1.x1 - E_curr.x1)*(E1.x1 - E_curr.x1) + (chart1.first_line.x1-chart_curr.first_line.x1)*(chart1.first_line.x1-chart_curr.first_line.x1) +
+                (chart1.first_line.x2-chart_curr.first_line.x2)*(chart1.first_line.x2-chart_curr.first_line.x2) + (chart1.first_line.x3-chart_curr.first_line.x3 )*(chart1.first_line.x3-chart_curr.first_line.x3)+
+                (chart1.first_line.x4-chart_curr.first_line.x4)*(chart1.first_line.x4-chart_curr.first_line.x4) + (chart1.first_line.x5-chart_curr.first_line.x5)*(chart1.first_line.x5-chart_curr.first_line.x5) );
+
+        double dis12 = sqrt( (E1.x2 - E_curr.x2)*(E1.x2 - E_curr.x2) + (chart1.second_line.x1-chart_curr.second_line.x1)*(chart1.second_line.x1-chart_curr.second_line.x1) +
+                (chart1.second_line.x2-chart_curr.second_line.x2)*(chart1.second_line.x2-chart_curr.second_line.x2) + (chart1.second_line.x3-chart_curr.second_line.x3 )*(chart1.second_line.x3-chart_curr.second_line.x3)+
+                (chart1.second_line.x4-chart_curr.second_line.x4)*(chart1.second_line.x4-chart_curr.second_line.x4) + (chart1.second_line.x5-chart_curr.second_line.x5)*(chart1.second_line.x5-chart_curr.second_line.x5) );
+
+        double dis13 = sqrt( (E1.x3 - E_curr.x3)*(E1.x3 - E_curr.x3) + (chart1.third_line.x1-chart_curr.third_line.x1)*(chart1.third_line.x1-chart_curr.third_line.x1) +
+                (chart1.third_line.x2-chart_curr.third_line.x2)*(chart1.third_line.x2-chart_curr.third_line.x2) + (chart1.third_line.x3-chart_curr.third_line.x3 )*(chart1.third_line.x3-chart_curr.third_line.x3)+
+                (chart1.third_line.x4-chart_curr.third_line.x4)*(chart1.third_line.x4-chart_curr.third_line.x4) + (chart1.third_line.x5-chart_curr.third_line.x5)*(chart1.third_line.x5-chart_curr.third_line.x5) );
+
+        double dis14 = sqrt( (E1.x4 - E_curr.x4)*(E1.x4 - E_curr.x4) + (chart1.forth_line.x1-chart_curr.forth_line.x1)*(chart1.forth_line.x1-chart_curr.forth_line.x1) +
+                (chart1.forth_line.x2-chart_curr.forth_line.x2)*(chart1.forth_line.x2-chart_curr.forth_line.x2) + (chart1.forth_line.x3-chart_curr.forth_line.x3 )*(chart1.forth_line.x3-chart_curr.forth_line.x3)+
+                (chart1.forth_line.x4-chart_curr.forth_line.x4)*(chart1.forth_line.x4-chart_curr.forth_line.x4) + (chart1.forth_line.x5-chart_curr.forth_line.x5)*(chart1.forth_line.x5-chart_curr.forth_line.x5) );
+
+        double dis15 = sqrt( (E1.x5 - E_curr.x5)*(E1.x5 - E_curr.x5) + (chart1.fifth_line.x1-chart_curr.fifth_line.x1)*(chart1.fifth_line.x1-chart_curr.fifth_line.x1) +
+                (chart1.fifth_line.x2-chart_curr.fifth_line.x2)*(chart1.fifth_line.x2-chart_curr.fifth_line.x2) + (chart1.fifth_line.x3-chart_curr.fifth_line.x3 )*(chart1.fifth_line.x3-chart_curr.fifth_line.x3)+
+                (chart1.fifth_line.x4-chart_curr.fifth_line.x4)*(chart1.fifth_line.x4-chart_curr.fifth_line.x4) + (chart1.fifth_line.x5-chart_curr.fifth_line.x5)*(chart1.fifth_line.x5-chart_curr.fifth_line.x5) );
+
+
+        double dis21 = sqrt( (E2.x1 - E_curr.x1)*(E2.x1 - E_curr.x1) + (chart2.first_line.x1-chart_curr.first_line.x1)*(chart2.first_line.x1-chart_curr.first_line.x1) +
+                (chart2.first_line.x2-chart_curr.first_line.x2)*(chart2.first_line.x2-chart_curr.first_line.x2) + (chart2.first_line.x3-chart_curr.first_line.x3 )*(chart2.first_line.x3-chart_curr.first_line.x3)+
+                (chart2.first_line.x4-chart_curr.first_line.x4)*(chart2.first_line.x4-chart_curr.first_line.x4) + (chart2.first_line.x5-chart_curr.first_line.x5)*(chart2.first_line.x5-chart_curr.first_line.x5) );
+
+        double dis22 = sqrt( (E2.x2 - E_curr.x2)*(E2.x2 - E_curr.x2) + (chart2.second_line.x1-chart_curr.second_line.x1)*(chart2.second_line.x1-chart_curr.second_line.x1) +
+                (chart2.second_line.x2-chart_curr.second_line.x2)*(chart2.second_line.x2-chart_curr.second_line.x2) + (chart2.second_line.x3-chart_curr.second_line.x3 )*(chart2.second_line.x3-chart_curr.second_line.x3)+
+                (chart2.second_line.x4-chart_curr.second_line.x4)*(chart2.second_line.x4-chart_curr.second_line.x4) + (chart2.second_line.x5-chart_curr.second_line.x5)*(chart2.second_line.x5-chart_curr.second_line.x5) );
+
+        double dis23 = sqrt( (E2.x3 - E_curr.x3)*(E2.x3 - E_curr.x3) + (chart2.third_line.x1-chart_curr.third_line.x1)*(chart2.third_line.x1-chart_curr.third_line.x1) +
+                (chart2.third_line.x2-chart_curr.third_line.x2)*(chart2.third_line.x2-chart_curr.third_line.x2) + (chart2.third_line.x3-chart_curr.third_line.x3 )*(chart2.third_line.x3-chart_curr.third_line.x3)+
+                (chart2.third_line.x4-chart_curr.third_line.x4)*(chart2.third_line.x4-chart_curr.third_line.x4) + (chart2.third_line.x5-chart_curr.third_line.x5)*(chart2.third_line.x5-chart_curr.third_line.x5) );
+
+        double dis24 = sqrt( (E2.x4 - E_curr.x4)*(E2.x4 - E_curr.x4) + (chart2.forth_line.x1-chart_curr.forth_line.x1)*(chart2.forth_line.x1-chart_curr.forth_line.x1) +
+                (chart2.forth_line.x2-chart_curr.forth_line.x2)*(chart2.forth_line.x2-chart_curr.forth_line.x2) + (chart2.forth_line.x3-chart_curr.forth_line.x3 )*(chart2.forth_line.x3-chart_curr.forth_line.x3)+
+                (chart2.forth_line.x4-chart_curr.forth_line.x4)*(chart2.forth_line.x4-chart_curr.forth_line.x4) + (chart2.forth_line.x5-chart_curr.forth_line.x5)*(chart2.forth_line.x5-chart_curr.forth_line.x5) );
+
+        double dis25 = sqrt( (E2.x5 - E_curr.x5)*(E2.x5 - E_curr.x5) + (chart2.fifth_line.x1-chart_curr.fifth_line.x1)*(chart2.fifth_line.x1-chart_curr.fifth_line.x1) +
+                (chart2.fifth_line.x2-chart_curr.fifth_line.x2)*(chart2.fifth_line.x2-chart_curr.fifth_line.x2) + (chart2.fifth_line.x3-chart_curr.fifth_line.x3 )*(chart2.fifth_line.x3-chart_curr.fifth_line.x3)+
+                (chart2.fifth_line.x4-chart_curr.fifth_line.x4)*(chart2.fifth_line.x4-chart_curr.fifth_line.x4) + (chart2.fifth_line.x5-chart_curr.fifth_line.x5)*(chart2.fifth_line.x5-chart_curr.fifth_line.x5) );
+        double dis1 = dis11+dis12+dis13+dis14+dis15;
+        double dis2 = dis21+dis22+dis23+dis24+dis25;
+
+//        if(dis1>dis2){return true;}
+//        else{return false;}
+
+    }
+    else
+    {
+        int size = feature_curr.count_v.size();
+        for(int i=0;i<size;i++)
+        {
+            double dis1 = sqrt( (E1.x1 - feature_curr.y_n[i])*(E1.x1 - feature_curr.y_n[i]) + (E1.x2 - feature_curr.ratio_v[i])*(E1.x2 - feature_curr.ratio_v[i]) + (E1.x3 - feature_curr.overlap_level[i])*(E1.x3 - feature_curr.overlap_level[i])
+                                + (E1.x4 - feature_curr.grey_std[i])*(E1.x4 - feature_curr.grey_std[i]) + (E1.x5 - feature_curr.count_v[i])*(E1.x5 - feature_curr.count_v[i]) );
+
+            double dis2 = sqrt( (E2.x1 - feature_curr.y_n[i])*(E2.x1 - feature_curr.y_n[i]) + (E2.x2 - feature_curr.ratio_v[i])*(E2.x2 - feature_curr.ratio_v[i]) + (E2.x3 - feature_curr.overlap_level[i])*(E2.x3 - feature_curr.overlap_level[i])
+                                + (E2.x4 - feature_curr.grey_std[i])*(E2.x4 - feature_curr.grey_std[i]) + (E2.x5 - feature_curr.count_v[i])*(E2.x5 - feature_curr.count_v[i]) );
+
+
+
+            if(dis1>dis2)
+            {
+                classify.push_back(1);
+            }
+            else
+            {
+                classify.push_back(0);
+            }
+
+
+        }
+        return classify;
+
+    }
 
 }

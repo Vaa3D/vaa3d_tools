@@ -49,7 +49,7 @@ void sholl_menu(V3DPluginCallback2 &callback, QWidget *parent)
     double step;
 
     bool ok;
-    step = QInputDialog::getDouble(0,"Would you like to specify a radius step size?","radius step size (0 for continuous sampling)",0,0,2147483647,1,&ok);
+    step = QInputDialog::getDouble(0,"Would you like to specify a radius step size?","radius step size",0,0,2147483647,1,&ok);
 	if (!ok)
         step = VOID;
 

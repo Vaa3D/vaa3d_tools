@@ -2,14 +2,18 @@
 #define SORT_SWC_REDIFINED_H
 
 // Adapted from /Users/pengxie/Applications/vaa3d/v3d_external/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
-#include <QtGlobal>
-#include <math.h>
-//#include <unistd.h> //remove the unnecessary include file. //by PHC 20131228
+#include "QtGlobal"
+#include "math.h"
+//#include "unistd.h" //remove the unnecessary include file. //by PHC 20131228
 #include "basic_surf_objs.h"
-#include <string.h>
-#include <vector>
-#include <iostream>
+#include "string.h"
+#include "vector"
+#include "iostream"
 using namespace std;
+#include "QtGui"
+#include "QDialog"
+#include "v3d_interface.h"
+#include "utilities.h"
 
 #ifndef VOID
 #define VOID 1000000000
@@ -36,6 +40,7 @@ double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2);
 
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined);
 
+NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres);
 
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName);

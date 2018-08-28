@@ -482,11 +482,12 @@ class Brain_Env(gym.Env):
         assert np.all((segdists <= self.stepsize)), "big jump detected: {}".format(segdists)
 
     def stuck(self):
-        if self.cnt > 5:
-            recent_locations = self._agent_nodes[self.cnt-5:self.cnt]
+        stuck_len = 15
+        if self.cnt > 20:
+            recent_locations = self._agent_nodes[self.cnt-stuck_len:self.cnt]
             is_stuck = np.all(np.isclose(recent_locations, recent_locations[0]))
             return is_stuck
-        else:
+        else:  # can't be stuck in first 19 ts
             return False
 
     # def get_best_node(self):
@@ -710,7 +711,10 @@ class Brain_Env(gym.Env):
     def _calc_reward(self, go_out, backtrack, node_found):
         """ Calculate the new reward based on the increase in IoU
         """
-        if go_out or backtrack:
+        if go_out:
+            reward = -2
+            return reward
+        if backtrack:
             reward = -1
             return reward
         if node_found:
