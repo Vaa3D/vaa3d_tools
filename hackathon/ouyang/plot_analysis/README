@@ -1,0 +1,12 @@
+How to build R inside Vaa3D(Linux).
+
+
+
+1.In order to run the code£¬R must be installed in the system, also "RInside", "Rcpp" , "ggplot2" , and "svglite" packages must be installed within R.
+
+2.linus/rinside/inst/examples/qt/qtdensity.pro project can be built using qmake and make, running the resulting 'qtdensity' binary should generate a Qt window with an svg ggplot2 density plot of two random distributions.
+
+3.build plugin 'vaa3d_tools\hackathon\linus\sholl_swc_R' with qmake and make 
+4.use the plugin in Vaa3D ,directory £º'neuron_analysis--sholl_analysis_swc--sholl_swc' and choose a SWC. file to show the analysis result in R
+
+5.open swc.file and choose a step(1 is recommended) to show the numbers of intersections from dendrite

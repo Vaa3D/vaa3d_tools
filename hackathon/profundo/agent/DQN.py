@@ -21,7 +21,7 @@ import sys
 
 # get around module not found errors
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import time
+from datetime import datetime
 import argparse
 from collections import deque
 
@@ -47,46 +47,50 @@ LeakyRelu = tf.nn.leaky_relu
 ###############################################################################
 # import your data here
 # TODO: make dataflow for npy?
-data_dir = "../data/08_cube_npy"
+data_dir = "../data/06_origin_cubes"
 fnames, abs_paths = get_fnames_and_abspath_from_dir(data_dir)
 train_data_fpaths, test_data_fpaths = train_test_split(abs_paths, test_size=0.7, shuffle=True)
 
-logger_dir = os.path.join('train_log', 'expriment_1')
+experiment_name = str(datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+logger_dir = os.path.join('train_log', experiment_name)
+print("To examine logs, run \n tensorboard --logdir ", experiment_name, flush=True)
 
 ###############################################################################
 # BATCH SIZE USED IN NATURE PAPER IS 32 - MEDICAL IS 256
-BATCH_SIZE = 48
+BATCH_SIZE = 300  #2**8  # 32
 # BREAKOUT (84,84) - MEDICAL 2D (60,60) - MEDICAL 3D (26,26,26)
-OBSERVATION_DIMS = (16, 16, 16)
+OBSERVATION_DIMS = (15, 15, 15)
 # how many frames to keep
 # in other words, how many past observations the network can see
-FRAME_HISTORY = 4
+FRAME_HISTORY = 1
 # the frequency of updating the target network
-UPDATE_FREQ = 4
+UPDATE_FREQ = 6
 # DISCOUNT FACTOR - NATURE (0.99) - MEDICAL (0.9)
-GAMMA = 0.9  # 0.99
+GAMMA = 0.99  # 0.99
 # REPLAY MEMORY SIZE - NATURE (1e6) - MEDICAL (1e5 view-patches)
-MEMORY_SIZE = 1e5  # 6
+MEMORY_SIZE = 1e6  # 6
+# MEMORY_SIZE = 1e5  # 6 # FIXME og
 # consume at least 1e6 * 27 * 27 * 27 bytes
-INIT_MEMORY_SIZE = MEMORY_SIZE // 20  # 5e4
-# each epoch is 100k played frames
-STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10
-# num training epochs in between model evaluations
-EPOCHS_PER_EVAL = 2
-# the number of episodes to run during evaluation
-EVAL_EPISODE = 50
-MAX_EPISODE_LENGTH = 100
+INIT_MEMORY_SIZE = MEMORY_SIZE // 20   # 5e4
 
+# STEPS_PER_EPOCH = 10000 // UPDATE_FREQ * 10  FIXME og
+# num training epochs in between model evaluations
+EPOCHS_PER_EVAL = 1
+# the number of episodes to run during evaluation
+EVAL_EPISODE = 0  # TODO: eval on validation data
+MAX_EPISODE_LENGTH = 100
+# each epoch is 100k played frames
+STEPS_PER_EPOCH = 100000
+NUM_EPOCHS = 100
 
 ###############################################################################
 
-# FIXME hard coded save video True
 def get_player(directory=None, files_list= None, viz=False,
-               task=False, saveGif=False, saveVideo=True, max_num_frames=0):
+               task=False, saveGif=False, saveVideo=False):
     # in atari paper, max_num_frames = 30000
     env = Brain_Env(directory=directory, observation_dims=OBSERVATION_DIMS,
                     viz=viz, saveGif=saveGif, saveVideo=saveVideo,
-                    task=task, files_list=files_list, max_num_frames=max_num_frames)
+                    task=task, files_list=files_list, max_num_frames=MAX_EPISODE_LENGTH)
     if (task != 'train'):
         # in training, env will be decorated by ExpReplay, and history
         # is taken care of in expreplay buffer
@@ -105,13 +109,10 @@ class Model(DQNModel): # TODO why override DQN model here? why not keep in DQNMo
         """ image: [0,255]
 
         :returns predicted Q values"""
-        # FIXME norm not needed
-        # normalize image values to [0, 1]
-        image = image / 255.0
 
         with argscope(Conv3D, nl=PReLU.symbolic_function, use_bias=True):
             # core layers of the network
-            conv = (LinearWrap(image)
+            conv = (LinearWrap(image)  # TODO wtf is LinearWrap
                     # TODO: use obsrvation dimensions?
                     .Conv3D('conv0', out_channel=32,
                             kernel_shape=[5, 5, 5], stride=[1, 1, 1])
@@ -160,15 +161,15 @@ def get_config():
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(directory=data_dir, task='train',
-                          files_list=train_data_fpaths,
-                          max_num_frames=MAX_EPISODE_LENGTH),  # TODO: check if this is a good idea
+                          files_list=train_data_fpaths),
+
         state_shape=OBSERVATION_DIMS,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
         init_exploration=1.0,
         update_frequency=UPDATE_FREQ,
-        history_len=FRAME_HISTORY
+        frame_history_len=FRAME_HISTORY
     )
 
     return TrainConfig(
@@ -177,28 +178,36 @@ def get_config():
         model=Model(),
         callbacks=[  # TODO: periodically save videos
             ModelSaver(checkpoint_dir="model_checkpoints",
-                       max_to_keep=1000),
+                       keep_checkpoint_every_n_hours=0.25,
+                       max_to_keep=1000),  # TODO: og was just ModelSaver()
             PeriodicTrigger(
                 RunOp(DQNModel.update_target_param, verbose=True),
-                # update target network every 10k steps
+                # update target network every 10k/freq steps
                 every_k_steps=10000 // UPDATE_FREQ),
-            expreplay,
+            # expreplay,
             ScheduledHyperParamSetter('learning_rate',
                                       [(60, 4e-4), (100, 2e-4)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
-                # 1->0.1 in the first million steps
-                [(0, 1), (10, 0.1), (320, 0.01)],
+                # 1->0.1 in the first 10M steps
+                [(0, 1), (100, 0.1), (120, 0.01)],
                 interp='linear'),
+            PeriodicTrigger(  # runs exprelay._trigger()
+                expreplay,
+                every_k_steps=5000),
             PeriodicTrigger(
-                Evaluator(nr_eval=EVAL_EPISODE, input_names=['state'],
-                          output_names=['Qvalue'], directory=data_dir,
-                          files_list=test_data_fpaths, get_player_fn=get_player),
-                every_k_epochs=EPOCHS_PER_EVAL),
+                # eval_model_multithread(pred, EVAL_EPISODE, get_player)
+                Evaluator(nr_eval=EVAL_EPISODE,
+                          input_names=['state'],
+                          output_names=['Qvalue'],
+                          directory=data_dir,
+                          files_list=test_data_fpaths,
+                          get_player_fn=get_player),
+                    every_k_steps=10000 // UPDATE_FREQ),
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
-        max_epoch=1000,
+        max_epoch=NUM_EPOCHS,
     )
 
 
@@ -230,7 +239,8 @@ if __name__ == '__main__':
     # load files into env to set num_actions, num_validation_files
     init_player = Brain_Env(directory=data_dir,
                             files_list=test_data_fpaths,
-                            observation_dims=OBSERVATION_DIMS)
+                            observation_dims=OBSERVATION_DIMS,
+                            max_num_frames=MAX_EPISODE_LENGTH)
     NUM_ACTIONS = init_player.action_space.n
     num_validation_files = init_player.files.num_files
 
@@ -244,22 +254,40 @@ if __name__ == '__main__':
         # demo pretrained model one episode at a time
         if args.task == 'play':
             play_n_episodes(get_player(directory=data_dir,
-                                       files_list=test_data_fpaths, viz=0.01,
+                                       files_list=test_data_fpaths,
+                                       viz=False,
                                        saveGif=args.saveGif,
                                        saveVideo=args.saveVideo,
-				       task='play'),
+				                       task='play'),
                             pred, num_validation_files)
         # run episodes in parallel and evaluate pretrained model
         elif args.task == 'eval':
             play_n_episodes(get_player(directory=data_dir,
-                                       files_list=eval_list, viz=0.01,
+                                       files_list=eval_list,
+                                       viz=False,
                                        saveGif=args.saveGif,
                                        saveVideo=args.saveVideo,
                                        task='eval'),
-                            pred, num_files)
+                            pred,
+                            num_files)
     else:  # train model
+
         logger.set_logger_dir(logger_dir)
         config = get_config()
         if args.load:  # resume training from a saved checkpoint
             config.session_init = get_model_loader(args.load)
+
+
         launch_train_with_config(config, SimpleTrainer())
+
+        # # FOR PROFILING
+        # NUM_EPOCHS = 2
+        # import cProfile
+        # import pstats
+        # profiler = cProfile.Profile()
+        # profiler.runctx('launch_train_with_config(config, SimpleTrainer())', globals(), locals())
+        #
+        # stats = pstats.Stats(profiler)
+        # stats.strip_dirs()
+        # stats.sort_stats('cumulative')
+        # stats.print_stats()

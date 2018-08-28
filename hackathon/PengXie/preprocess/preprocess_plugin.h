@@ -6,10 +6,10 @@
 #ifndef __PREPROCESS_PLUGIN_H__
 #define __PREPROCESS_PLUGIN_H__
 
-#include <QtGui>
-#include <v3d_interface.h>
-#include <pre_processing_main.h>
-#include <add_soma.h>
+#include "QtGui"
+#include "v3d_interface.h"
+#include "pre_processing_main.h"
+#include "neurite_analysis_main.h"
 class neuron_analysis : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT

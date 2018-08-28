@@ -195,6 +195,7 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                     }
                 }
                 double dis=NTDIS(scaledXYZ.at(tidx),scaledXYZ.at(id));
+
                 if(b_minusradius){
                     dis-=nt->listNeuron.at(id).radius;
                     dis-=nt->listNeuron.at(tidx).radius;
@@ -202,6 +203,7 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                 if(dis<mvdis){
                     mvdis=dis;
                     mvid=id;
+                    cout <<dis <<endl;
                 }
                 if(dis<mtdis){
                     if(connNum.at(id)<1){//tips

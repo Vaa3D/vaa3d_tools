@@ -9,7 +9,6 @@
 
 #include "basic_4dimage.h"
 #include "NeuronStructUtilities.h"
-#include "AnalysisExplorer.h"
 
 using namespace std;
 using namespace boost;

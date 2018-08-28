@@ -99,14 +99,22 @@ TMITREE::~TMITREE()
 }
 
 //
-BigTree::BigTree(string inputdir, string outputdir, int scales, int genMetaInfo, bool genZeroData)
+BigTree::BigTree(string inputdir, string outputdir, int scales, int genMetaInfo, bool genZeroData, int bits)
 {
     // default parameters settings
     block_width = 256;
     block_height = 256;
     block_depth = 256;
 
-    nbits = 4;
+    zstart = 0;
+    zpart = 1;
+
+    config4resume = outputdir + "/.BigTreeResume.conf";
+
+    resume();
+
+    //
+    nbits = bits;
 
     genMetaInfoOnly = genMetaInfo;
 
@@ -402,8 +410,17 @@ int BigTree::init()
     return 0;
 }
 
-uint8 *BigTree::load(long zs, long ze)
+uint8 *BigTree::load(long zs, long ze, long zp)
 {
+    // resume
+    ofstream outfile;
+    outfile.open(config4resume.c_str());
+
+    outfile << zs << endl;
+    outfile << zp << endl;
+
+    outfile.close();
+
     //
     long sbv_V, sbv_H, sbv_D;
 
@@ -465,8 +482,8 @@ uint8 *BigTree::load(long zs, long ze)
         #pragma omp for
         for(k=0; k<sbv_D; k++)
         {
-            unsigned int sx, sy;
-            readTiff(dataInMemory[k],imgList[k],sx,sy,0,0,0,sbv_V-1,0,sbv_H-1);
+            // unsigned int sx, sy;
+            readTiff(dataInMemory[k],imgList[k],0,0,0,sbv_V-1,0,sbv_H-1);
         }
     }
 
@@ -498,13 +515,13 @@ int BigTree::reformat()
     }
 
     //
-    for(long z=0, z_parts=1; z<depth; z+=z_max_res, z_parts++)
+    for(long z=zstart, z_parts=zpart; z<depth; z+=z_max_res, z_parts++)
     {
         if(!genMetaInfoOnly && !genZeroDataOnly)
         {
             auto start = std::chrono::high_resolution_clock::now();
 
-            ubuffer = load(z,(z+z_max_res <= depth) ? (z+z_max_res) : depth);
+            ubuffer = load(z,(z+z_max_res <= depth) ? (z+z_max_res) : depth, z_parts);
 
             auto end = std::chrono::high_resolution_clock::now();
 
@@ -1303,3 +1320,34 @@ int BigTree::index()
     return 0;
 }
 
+int BigTree::resume()
+{
+    // update zstart
+
+    //
+    struct stat info;
+
+    if( stat( config4resume.c_str(), &info ) == 0 )
+    {
+        // config file exist
+        ifstream infile;
+        infile.open(config4resume.c_str());
+
+        infile >> zstart;
+        infile >> zpart;
+
+        infile.close();
+    }
+    else
+    {
+        ofstream outfile;
+        outfile.open(config4resume.c_str());
+
+        outfile << 0 << endl;
+        outfile << 1 << endl;
+
+        outfile.close();
+    }
+
+    return 0;
+}

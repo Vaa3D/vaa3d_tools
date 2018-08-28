@@ -89,7 +89,7 @@ void swap4bytes(void *targetp);
 char *loadTiffMetaInfo(char* filename, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint32  &sz3, uint16 &datatype);
 
 //
-void readTiff(stringstream *dataStreamInMemory, unsigned char *&img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last, int starti = -1, int endi = -1, int startj = -1, int endj = -1);
+void readTiff( stringstream *dataStreamInMemory, unsigned char *&img, unsigned int first, unsigned int last, int starti = -1, int endi = -1, int startj = -1, int endj = -1 );
 
 //
 char *initTiff3DFile(char *filename, int sz0, int  sz1, int  sz2, int  sz3, int datatype);
