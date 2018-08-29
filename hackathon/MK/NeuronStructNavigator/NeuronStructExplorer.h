@@ -44,7 +44,7 @@ public:
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
-	static NeuronTree SWC2MSTtree(NeuronTree* inputTreePtr);
+	static NeuronTree SWC2MSTtree(NeuronTree* inputTreePtr, double zFactor = 1, double distThre = 0);
 	/**********************************************************************/
 
 	/********* Pixel-based deep neural network result refining/cleaning *********/

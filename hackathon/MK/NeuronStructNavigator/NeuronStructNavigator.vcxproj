@@ -149,14 +149,12 @@
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\v_neuronswc.cpp" />
     <ClCompile Include="NeuronStructExplorer.cpp" />
     <ClCompile Include="NeuronStructUtilities.cpp" />
-    <ClCompile Include="PointCluster_formulator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.h" />
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\v_neuronswc.h" />
     <ClInclude Include="NeuronStructExplorer.h" />
     <ClInclude Include="NeuronStructUtilities.h" />
-    <ClInclude Include="PointCluster_formulator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

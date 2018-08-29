@@ -53,12 +53,12 @@ public:
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 	/*******************************************************/
 
-	/********* IO *********/
+	/***************** I/O *****************/
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	
-	map<string, registeredImg> imgDatabase;
+	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
 	void imgManager_regisImg(QString caseID, imgFormat format);
-	/**********************/
+	/***************************************/
 
 	/********* Methods for generating binary masks from SWC files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."

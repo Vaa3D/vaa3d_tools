@@ -55,14 +55,11 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
 	QString inputPathQ = infiles[0];
-	QString inputSWCPathQ;
-	if (infiles[1]) inputSWCPathQ = infiles[1];
 
 	QString outputPathQ;
 	if (!outfiles.empty()) outputPathQ = outfiles[0];
 
 	SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
-	segPipePtr->inputSWCRootPath = inputSWCPathQ;
 
 	if (func_name == tr("downSample2D_Max"))
 	{
@@ -95,9 +92,35 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	}
 	else if (func_name == tr("hist")) segPipePtr->histQuickList();
 	else if (func_name == tr("bkgThreshold")) segPipePtr->sliceBkgThre();
-	else if (func_name == tr("cropImgWithSWC")) segPipePtr->swc_imgCrop(inputSWCPathQ);
+	else if (func_name == tr("cropImgWithSWC"))
+	{	
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		segPipePtr->swc_imgCrop();
+	}
 	else if (func_name == tr("connectedComponent")) segPipePtr->findConnComponent();
 	else if (func_name == tr("MST")) segPipePtr->getMST();
+	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
+	else if (func_name == tr("swcRegister"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		else
+		{
+			cerr << "No reference swc path sepecied. Do nothing and return." << endl;
+			return false;
+		}
+		segPipePtr->swcRegister();
+	}
+	else if (func_name == tr("swcScale"))
+	{
+		QString xScaleQ = inparas[0];
+		QString yScaleQ = inparas[1];
+		QString zScaleQ = inparas[2];
+		float xScale = xScaleQ.toFloat();
+		float yScale = yScaleQ.toFloat();
+		float zScale = zScaleQ.toFloat();
+
+		segPipePtr->swcScale(xScale, yScale, zScale);
+	}
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
