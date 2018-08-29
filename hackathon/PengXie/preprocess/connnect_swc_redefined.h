@@ -14,6 +14,7 @@
 #include "sort_swc_redefined.h"
 using namespace std;
 
-NeuronTree connect_swc(NeuronTree nt);
+NeuronTree my_connectall(NeuronTree nt, double xscale, double yscale, double zscale,
+                         double angThr, double disThr, int matchType, bool b_minusradius, int rootID);
 
 #endif // CONNNECT_SWC_REDEFINED_H

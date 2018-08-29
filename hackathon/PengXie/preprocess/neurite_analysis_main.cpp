@@ -177,6 +177,7 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
         }
     }
     if(extract_type == "d"){nt=return_dendrite(nt, soma);}
+    nt = my_SortSWC(nt, 1, 0);
 
     writeSWC_file(qs_output, nt);
     return 1;

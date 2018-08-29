@@ -32,7 +32,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 
     // Add color to components
     if(colorful){
-        color_components(nt, components);
+        nt = color_components(nt, components);
     }
     printf("\tTotal # components:\t%d\n", ncomponents);
 
@@ -89,7 +89,6 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 
     // For each subtree, connect the closest end (tip or root) to soma, if within certain distance.
     QList<int> drop_list;
-    int bad_nodes=0;
     NeuronTree new_tree;
     new_tree.listNeuron.append(S);
     for(int cid=0; cid<ncomponents; cid++){
@@ -117,34 +116,34 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         int new_cend = new_tree.listNeuron.size();
 
         // Case 1: subtree close to soma
+        new_tree = neuron_cat(new_tree, component_i_sorted);
         if(dsorted.at(0) < dThres){
             cout<<"\t\tOperation: Connected to soma.\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
             markers.append(get_marker(component_i_sorted.listNeuron.at(0), 50, 255, 255, 255));
-            new_tree = neuron_cat(new_tree, component_i_sorted);
             new_tree.listNeuron[new_cend].pn = soma_rootid;
         }
         // Case 2: subtree far from soma
         else{
-            bad_nodes += component_i_sorted.listNeuron.size();
-             // Label un-connected subtrees
-            if(!return_maintree){
-                cout<<"\t\tOperation: kept but not connected.\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
-                markers.append(get_marker(component_i_sorted.listNeuron.at(0), 50, 255, 0, 0));
-                // Color this subtree as white
-                for(int i=0; i<component_i_sorted.listNeuron.size(); i++){
-                    component_i_sorted.listNeuron[i].type=0;
-                }
-                new_tree = neuron_cat(new_tree, component_i_sorted);
-                new_tree.listNeuron[new_cend].pn = -1;
-            }
-            else{
-                cout<<"\t\tOperation: Deleted!\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
-            }
+            cout<<"\t\tOperation: kept but not connected.\t"<<"Distance:\t"<<dsorted.at(0)<<endl;
+            new_tree.listNeuron[new_cend].pn = -1;
         }
     }
+    export_list2file(new_tree.listNeuron, "temp.swc");
+    new_tree = readSWC_file("temp.swc");
+    new_tree = my_connectall(new_tree, 1, 1, 5, 30, 50, 1, true, -1);
+    const int new_N = new_tree.listNeuron.size();
+
+    // color branches that cannot connect to the main tree;
+    components = get_components(new_tree);
+    QList<int> lost_branch;
+    for(int i=0; i<components.size(); i++){
+        if(components.at(i)>0){lost_branch.append(i);}
+    }
+    new_tree = color_subtree_by_id(new_tree, lost_branch, 7);
+    new_tree = my_SortSWC(new_tree, 1, 0);
 
     writeAPO_file(outfileLabel+QString(".apo"), markers);
-    printf("Percentage_lost\t%f%%\n", bad_nodes*100.0/N);
+    printf("Percentage_lost\t%f%%\n", lost_branch.size()*100.0/new_N);
 
     return new_tree;
 }
@@ -182,115 +181,59 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         nt = readSWC_file(qs_input);
     }
 
+
     //2. start processing
+    NeuronTree cur_nt;
 
     //2.1 Prune
     printf("\tPruning short branches\n");
-    NeuronTree pruned;
-
-    if (!prune_branch(nt, pruned, prune_size))
+    if (!prune_branch(nt, cur_nt, prune_size))
     {
         fprintf(stderr,"Error in prune_short_branch.\n");
         return 1;
     }
+    export_list2file(cur_nt.listNeuron, "temp.swc");
+    nt = readSWC_file("temp.swc");
 
     //2.2 Remove duplicates
     printf("\tRemoving duplicates\n");
+    cur_nt.listNeuron = nt.listNeuron;
     // Maybe not the best solution. Use it for now.
-    NeuronTree deduped = my_SortSWC(pruned, VOID, 0);;
-//    NeuronTree deduped = readSWC_file("temp.swc");
-
-    //2.3 Connect as a break points
-    printf("\tConnecting breaks\n");
-    NeuronTree connected;
-    double angthr=60;
-    angthr = cos((180-angthr)/180*M_PI);
-    connectall(&deduped, connected.listNeuron, 1, 1, 5, angthr, thres, 1, true, -1);
+    nt = my_SortSWC(cur_nt, VOID, 0);
 
     //2.3 Resample
     printf("\tResampling\n");
-    NeuronTree resampled = connected;
     if (step_size>0){
         printf("Resampling along segments\n");
-        resampled = resample(connected, step_size);
+        nt = resample(nt, step_size);
     }else{
         printf("Skip Resampling\n");
-        resampled=connected;
     }
 
     //2.4 Connect to soma
     printf("\tConnecting to soma\n");
-    NeuronTree soma_connected;
+    cur_nt.listNeuron = nt.listNeuron;
     if (connect_soma_dist>0){
         markers = readAPO_file(infileLabel + QString(".apo"));
-        soma_connected = connect_soma(resampled, markers, connect_soma_dist, outfileLabel, 1e6, colorful, return_maintree);
+        nt = connect_soma(cur_nt, markers, connect_soma_dist, outfileLabel, 1e6, colorful, return_maintree);
     }
-    double percentage_lost = 100 - soma_connected.listNeuron.size()*100.0 / resampled.listNeuron.size();
-    if(percentage_lost<0){
-        percentage_lost = 0;
-    }
-
-    //2.5 Sort the tree and remove duplicates.
-    printf("\tSorting\n");
-    NeuronTree sorted;
-    SortSWC(soma_connected.listNeuron, sorted.listNeuron, 0, 0);
 
     //2.6 Align axis
-    NeuronTree result;
+    cur_nt.listNeuron = nt.listNeuron;
     if (rotation)
     {
         printf("\tAligning PCA axis\n");
-        result = align_axis(sorted);
+        nt = align_axis(cur_nt);
     }
     else{
         printf("\tSkip PCA alignment\n");
-        result = sorted;
     }
 
-    if (export_listNeuron_2swc(result.listNeuron,qPrintable(qs_output))){
+    if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     }
     bool print_apo = connect_soma_dist>0;
     my_saveANO(outfileLabel, true, print_apo);
-
-
-    // QC report
-    FILE * fp=0;
-    fp = fopen((char *)qPrintable(outfileLabel+QString(".QC.txt")), "wt");
-    // QC.1
-    fprintf(fp, "Percentage_lost(%%)\t%f\n", percentage_lost);
-    // QC.2
-    QList<int> components = get_components(sorted);
-    int ncomponents=components.toSet().size();
-    fprintf(fp, "Number_single_trees\t%d\n", ncomponents);
-    // QC.3
-    if(check_duplicate(result)){
-        fprintf(fp, "Exist_duplicate_nodes\t%d\n", 0);
-    }
-    else{
-        fprintf(fp, "Exist_duplicate_nodes\t%d\n", 1);
-    }
-
-    fclose(fp);
-
-    return 1;
-}
-
-bool split_neuron(QString qs_input){
-    // Split neurons into different components
-    QString qs_tag;
-    if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_tag = qs_input.left(qs_input.length()-4);}
-    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_tag = qs_input.left(qs_input.length()-5);}
-
-    // Report 1: long axon only.
-    neurite_analysis(qs_input, qs_tag+".long_axon.swc", "l");
-    // Report 2: other axons retyped
-    neurite_analysis(qs_input, qs_tag+".axon.swc", "a");
-    axon_retype(qs_tag+".axon.swc", qs_tag+".long_axon.swc", qs_tag+".axon.retype.swc");
-//    QList<double> lpa_density = branch_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
-//    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
-    // Report 3: dendrite
-    neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d");
 
     return 1;
 }
@@ -481,9 +424,6 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
     QString qs_output = QString(dfile_result);
     // Pre-process
     pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
-    // Split neuron
-    qs_input = QString(qPrintable(qs_output));
-    split_neuron(qs_input);
     return 1;
 }
 
@@ -516,9 +456,7 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     // Pre-process
     pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
-    // Split neuron
-    qs_input = QString(qPrintable(qs_output));
-    split_neuron(qs_input);
+
 
     return 1;
 }
