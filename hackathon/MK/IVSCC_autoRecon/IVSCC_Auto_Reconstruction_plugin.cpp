@@ -100,6 +100,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	else if (func_name == tr("connectedComponent")) segPipePtr->findConnComponent();
 	else if (func_name == tr("MST")) segPipePtr->getMST();
 	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
+	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();
 	else if (func_name == tr("swcRegister"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];

@@ -66,6 +66,7 @@ public:
 	void swcScale(float xScale, float yScale, float zScale);
 	void swcRegister();
 	void getTiledMST();
+	void cutMST();
 
 private:
 	ImgManager* myImgManagerPtr;

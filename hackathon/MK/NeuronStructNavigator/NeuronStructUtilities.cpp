@@ -13,14 +13,14 @@
 using namespace std;
 using namespace boost;
 
-NeuronTree NeuronStructUtil::swcRegister(NeuronTree* inputTreePtr, NeuronTree const* refTreePtr, float customFactor)
+NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTreePtr, NeuronTree const& refTreePtr, float customFactor)
 {
 	float xShift, yShift, zShift;
 	float xScale, yScale, zScale;
 
 	float xmin = 10000, ymin = 10000, zmin = 10000;
 	float xmax = 0, ymax = 0, zmax = 0;
-	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
+	for (QList<NeuronSWC>::iterator it = inputTreePtr.listNeuron.begin(); it != inputTreePtr.listNeuron.end(); ++it)
 	{
 		if (it->x < xmin) xmin = it->x;
 		if (it->x > xmax) xmax = it->x;
@@ -31,7 +31,7 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree* inputTreePtr, NeuronTree co
 	}
 	float refXmin = 10000, refYmin = 10000, refZmin = 10000;
 	float refXmax = 0, refYmax = 0, refZmax = 0;
-	for (QList<NeuronSWC>::const_iterator refIt = refTreePtr->listNeuron.begin(); refIt != refTreePtr->listNeuron.end(); ++refIt)
+	for (QList<NeuronSWC>::const_iterator refIt = refTreePtr.listNeuron.begin(); refIt != refTreePtr.listNeuron.end(); ++refIt)
 	{
 		if (refIt->x < refXmin) refXmin = refIt->x;
 		if (refIt->x > refXmax) refXmax = refIt->x;
@@ -49,9 +49,9 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree* inputTreePtr, NeuronTree co
 	zScale = (refZmax - refZmin) / (zmax - zmin);
 
 	NeuronTree outputTree;
-	for (int i = 0; i < inputTreePtr->listNeuron.size(); ++i)
+	for (int i = 0; i < inputTreePtr.listNeuron.size(); ++i)
 	{
-		NeuronSWC newNode = inputTreePtr->listNeuron.at(i);
+		NeuronSWC newNode = inputTreePtr.listNeuron.at(i);
 		newNode.x = (newNode.x - xmin) * xScale + refXmin;
 		newNode.y = (newNode.y - xmin) * yScale + refYmin;
 		newNode.z = (newNode.z - xmin) * zScale + refZmin;
