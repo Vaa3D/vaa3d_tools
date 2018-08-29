@@ -9,6 +9,7 @@
 
 #include "SegPipe_Controller.h"
 #include "NeuronStructExplorer.h"
+#include "NeuronStructUtilities.h"
 
 using namespace std;
 
@@ -21,27 +22,10 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 
 	if (caseList.empty())
 	{
-		inputContent = singleCase;
-		inputDir.setFilter(QDir::Files);
-		QStringList sliceList = inputDir.entryList();
-		if (sliceList.empty())
-		{
-			cerr << "Empty folder. Do nothing and return." << endl;
-			return;
-		}
-		else
-		{
-			for (QStringList::iterator sliceIt = sliceList.begin(); sliceIt != sliceList.end(); ++sliceIt)
-			{
-				QString sliceFullPathQ = this->inputCaseRootPath + "/" + *sliceIt;
-				string sliceFullPath = sliceFullPathQ.toStdString();
-				inputSingleCaseSliceFullPaths.push_back(sliceFullPath);
-
-				QString outputSliceFullPathQ = this->outputRootPath + "/" + *sliceIt;
-				string outputSliceFullPath = outputSliceFullPathQ.toStdString();
-				outputSingleCaseSliceFullPaths.push_back(outputSliceFullPath);
-			}
-		}
+		inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->caseList = inputDir.entryList();
+		this->inputSWCRootPath = inputPath;
+		this->inputCaseRootPath = "";
 	}
 	else
 	{
@@ -64,12 +48,12 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 				outputMultiCasesSliceFullPaths.insert(pair<string, string>((*caseIt).toStdString(), outputSliceFullPath.toStdString()));
 			}
 		}
-	}
 
-	this->myImgManagerPtr = new ImgManager;
-	this->myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
-	this->myImgManagerPtr->caseList = this->caseList;
-	this->myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+		this->myImgManagerPtr = new ImgManager;
+		this->myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
+		this->myImgManagerPtr->caseList = this->caseList;
+		this->myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+	}
 }
 
 void SegPipe_Controller::singleTaskDispatcher(deque<task> taskList)
@@ -582,7 +566,7 @@ void SegPipe_Controller::somaNeighborhoodThin()
 
 }
 
-void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
+void SegPipe_Controller::swc_imgCrop()
 {
 	QString shiftedSWC_saveRootQ = this->outputRootPath + "/../shiftedSWC/";
 
@@ -606,7 +590,7 @@ void SegPipe_Controller::swc_imgCrop(QString inputSWCPath)
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
-		QString currInputSWCFile = inputSWCPath + "/" + *caseIt + ".swc";
+		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
 		int xlb = 10000, xhb = 0, ylb = 10000, yhb = 0;
 		for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
@@ -670,7 +654,7 @@ void SegPipe_Controller::getMST()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
-		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt + ".swc";
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
 		QFile swcFileCheck(swcFileFullPathQ);
 		if (!swcFileCheck.exists())
 		{
@@ -678,9 +662,115 @@ void SegPipe_Controller::getMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree MSTtree = NeuronStructExplorer::SWC2MSTtree(&currTree);
+		NeuronTree MSTtree = NeuronStructExplorer::SWC2MSTtree(currTree);
 
-		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt + ".swc";
+		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, MSTtree);
+	}
+}
+
+void SegPipe_Controller::cutMST()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+		NeuronStructExplorer::MSTtreeCut(currTree, 6, 15);
+
+		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCFullPath, currTree);
+	}
+}
+
+void SegPipe_Controller::getTiledMST()
+{
+	float xyLength = 30;
+	float zLength = 5;
+	map<string, QList<NeuronSWC> > tiledSWCmap;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		tiledSWCmap.clear();
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		QList<NeuronSWC> tileSWCList;
+		tileSWCList.clear();
+		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+		{
+			int tileXlabel = int(floor(it->x / xyLength));
+			int tileYlabel = int(floor(it->y / xyLength));
+			int tileZlabel = int(floor(it->z / zLength));
+			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
+			if (tiledSWCmap.insert(pair<string, QList<NeuronSWC> >(swcTileKey, tileSWCList)).first != tiledSWCmap.end()) tiledSWCmap[swcTileKey].push_back(*it);
+		}
+		cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
+
+		NeuronTree assembledTree;
+		//NeuronTree testTree;
+		for (map<string, QList<NeuronSWC> >::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
+		{
+			NeuronTree tileTree;
+			tileTree.listNeuron = it->second;
+			NeuronTree tileMSTtree = NeuronStructExplorer::SWC2MSTtree(tileTree);
+
+			int currnodeNum = assembledTree.listNeuron.size();
+			//if (currnodeNum > 50) break;	
+			for (QList<NeuronSWC>::iterator nodeIt = tileMSTtree.listNeuron.begin(); nodeIt != tileMSTtree.listNeuron.end(); ++nodeIt)
+			{
+				nodeIt->n = nodeIt->n + currnodeNum;
+				if (nodeIt->parent != -1)
+				{	
+					nodeIt->parent = nodeIt->parent + currnodeNum;
+					//cout << "  " << nodeIt->parent << " " << currnodeNum << endl;
+				}
+
+				//if (currnodeNum >= 2900 && currnodeNum <= 3000) testTree.listNeuron.push_back(*nodeIt);
+				//cout << nodeIt->n << " " << nodeIt->parent << endl;
+				assembledTree.listNeuron.push_back(*nodeIt);
+			}
+		}
+
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt; 
+		//writeSWC_file(outputSWCPath, assembledTree);
+		writeSWC_file(outputSWCPath, assembledTree);
+	}
+}
+
+void SegPipe_Controller::swcRegister()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		QString refSWCPath = this->refSWCRootPath + "/" + *caseIt;
+		QFile refCheck(refSWCPath);
+		if (!refCheck.exists())
+		{
+			cerr << "No refSWC for this case. Skip  " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree refTree = readSWC_file(refSWCPath);
+
+		NeuronTree regTree = NeuronStructUtil::swcRegister(inputTree, refTree);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, regTree);
+	}
+}
+
+void SegPipe_Controller::swcScale(float xScale, float yScale, float zScale)
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+
+		NeuronTree scaledTree = NeuronStructUtil::swcScale(inputTree, xScale, yScale, zScale);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;\
+		writeSWC_file(outputSWCPath, scaledTree);
 	}
 }

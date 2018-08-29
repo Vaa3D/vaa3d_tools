@@ -28,13 +28,16 @@ public:
 
 	folderStruct inputContent;
 	QString inputCaseRootPath;
+	QString inputSWCRootPath;
+	QString refSWCRootPath;
 	QString outputRootPath;
 	QStringList caseList;
+	QStringList swcList;
+
 	deque<string> inputSingleCaseSliceFullPaths;
 	deque<string> outputSingleCaseSliceFullPaths;
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
-	QString inputSWCRootPath;
 	/***********************************************************************/
 
 	deque<task> taskList;
@@ -57,9 +60,13 @@ public:
 
 	void somaNeighborhoodThin();
 
-	void swc_imgCrop(QString inputSWCPath);
+	void swc_imgCrop();
 	
 	void getMST();
+	void swcScale(float xScale, float yScale, float zScale);
+	void swcRegister();
+	void getTiledMST();
+	void cutMST();
 
 private:
 	ImgManager* myImgManagerPtr;

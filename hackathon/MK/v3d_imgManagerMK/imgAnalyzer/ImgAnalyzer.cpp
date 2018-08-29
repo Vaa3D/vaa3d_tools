@@ -40,7 +40,6 @@ morphStructElement::morphStructElement(string shape) : eleShape(shape)
 	}
 }
 
-
 vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned char**> inputSlicesVector, int dims[])
 {
 	vector<connectedComponent> connList;
@@ -64,14 +63,6 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 		if (currSlice1D) { delete[] currSlice1D; currSlice1D = 0; }
 	}
 	cout << " MIP done." << endl;
-	/*string testName = "Z:/test.tif";
-	const char* testNameC = testName.c_str();
-	V3DLONG saveDims[4];
-	saveDims[0] = dims[0];
-	saveDims[1] = dims[1];
-	saveDims[2] = 1;
-	saveDims[3] = 1;
-	ImgManager::saveimage_wrapper(testNameC, maxIP1D, saveDims, 1);*/
 
 	set<vector<int> > whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
