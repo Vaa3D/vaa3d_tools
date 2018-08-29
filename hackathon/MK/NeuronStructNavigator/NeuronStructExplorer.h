@@ -7,15 +7,27 @@
 #include <unordered_map>
 #include <string>
 
+#include <boost/config.hpp>
+#include <boost/graph/prim_minimum_spanning_tree.hpp>
+#include <boost/graph/adjacency_list.hpp>
+
 #include <qlist.h>
 #include <qstring.h>
 #include <qstringlist.h>
 
+#include "basic_surf_objs.h"
 #include "v_neuronswc.h"
 
-#include "basic_surf_objs.h"
-
 using namespace std;
+enum edge_lastvoted_t { edge_lastvoted };
+namespace boost 
+{
+	BOOST_INSTALL_PROPERTY(edge, lastvoted);
+}
+
+typedef boost::property<boost::edge_weight_t, double> weights;
+typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
 
 class NeuronStructExplorer
 {
@@ -27,9 +39,14 @@ public:
 	NeuronTree* singleTreePtr;
 	NeuronTree singleTree;
 	NeuronTree processedTree;
-	vector<NeuronTree>* treeVectorPtr;
+	vector<NeuronTree>* treePtrsVector;
 	QString neuronFileName;
 	/*******************************************************/
+
+	/***************** Neuron Struct Connecting Functions *****************/
+	static NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
+	inline static void MSTtreeCut(NeuronTree& inputTree, double zFactor = 1, double distThre = 1000000);
+	/**********************************************************************/
 
 	/********* Pixel-based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
@@ -54,5 +71,21 @@ public:
 	void segmentDecompose(NeuronTree* inputTreePtr);
 	/**************************************************************/
 };
+
+inline void NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double zFactor, double distThre)
+{
+	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin() + 1; it != inputTree.listNeuron.end(); ++it)
+	{
+		double x1 = it->x;
+		double y1 = it->y;
+		double z1 = it->z;
+		size_t paID = it->parent;
+		double x2 = inputTree.listNeuron.at(paID - 1).x;
+		double y2 = inputTree.listNeuron.at(paID - 1).y;
+		double z2 = inputTree.listNeuron.at(paID - 1).z;
+		double dist = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + zFactor * zFactor * (z1 - z2) * (z1 - z2));
+		if (dist > distThre) it->parent = -1;
+	}
+}
 
 #endif

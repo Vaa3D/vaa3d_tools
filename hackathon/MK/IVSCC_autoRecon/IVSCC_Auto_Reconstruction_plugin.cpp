@@ -54,27 +54,73 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("segmentationPipe"))
-	{
-		QString inputPathQ = infiles[0];
-		QString inputSWCPathQ;
-		if (infiles[1]) inputSWCPathQ = infiles[1];
-		QString outputPathQ;
+	QString inputPathQ = infiles[0];
 
-		if (!outfiles.empty()) outputPathQ = outfiles[0];
-		SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ, inputSWCPathQ);
-		//segPipePtr->sliceDownSample2D(2, "max");
-		//segPipePtr->adaSliceGammaCorrect();
-		//segPipePtr->sliceReversedGammaCorrect();
-		//segPipePtr->sliceThre(0.999);
-		//segPipePtr->histQuickList();
-		//segPipePtr->sliceBkgThre();
-		segPipePtr->findConnComponent();
-		//segPipePtr->findSomaMass();
-	}
-	else if (func_name == tr("func2"))
+	QString outputPathQ;
+	if (!outfiles.empty()) outputPathQ = outfiles[0];
+
+	SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
+
+	if (func_name == tr("downSample2D_Max"))
 	{
-		v3d_msg("To be implemented.");
+		if (inparas[0])
+		{
+			QString downFactorQ = inparas[0];
+			int downFactor = downFactorQ.toInt();
+			segPipePtr->sliceDownSample2D(downFactor, "max");
+		}
+		else
+		{
+			cerr << "Invalid parameter. Do nothing and return." << endl;
+			return false;
+		}
+	}
+	else if (func_name == tr("gammaCorrect2D")) segPipePtr->sliceGammaCorrect();
+	else if (func_name == tr("threshold2D"))
+	{
+		if (inparas[0])
+		{
+			QString percentileQ = inparas[0];
+			float percentile = percentileQ.toFloat();
+			segPipePtr->sliceThre(percentile);
+		}
+		else
+		{
+			cerr << "Invalid parameter. Do nothing and return." << endl;
+			return false;
+		}
+	}
+	else if (func_name == tr("hist")) segPipePtr->histQuickList();
+	else if (func_name == tr("bkgThreshold")) segPipePtr->sliceBkgThre();
+	else if (func_name == tr("cropImgWithSWC"))
+	{	
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		segPipePtr->swc_imgCrop();
+	}
+	else if (func_name == tr("connectedComponent")) segPipePtr->findConnComponent();
+	else if (func_name == tr("MST")) segPipePtr->getMST();
+	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
+	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();
+	else if (func_name == tr("swcRegister"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		else
+		{
+			cerr << "No reference swc path sepecied. Do nothing and return." << endl;
+			return false;
+		}
+		segPipePtr->swcRegister();
+	}
+	else if (func_name == tr("swcScale"))
+	{
+		QString xScaleQ = inparas[0];
+		QString yScaleQ = inparas[1];
+		QString zScaleQ = inparas[2];
+		float xScale = xScaleQ.toFloat();
+		float yScale = yScaleQ.toFloat();
+		float zScale = zScaleQ.toFloat();
+
+		segPipePtr->swcScale(xScale, yScale, zScale);
 	}
 	else if (func_name == tr("help"))
 	{

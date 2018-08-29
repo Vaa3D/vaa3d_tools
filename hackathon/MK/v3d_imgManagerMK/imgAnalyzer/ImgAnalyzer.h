@@ -33,7 +33,7 @@ struct connectedComponent
 	map<int, set<vector<int> > > coordSets;
 	int xMax, xMin, yMax, yMin, zMax, zMin;
 	long int size;
-	vector<float> ChebyshezCenter;
+	vector<float> ChebyshevCenter;
 };
 
 class ImgAnalyzer
@@ -77,7 +77,7 @@ inline vector<float> ImgAnalyzer::ChebyshevCenter(connectedComponent inputComp)
 			lengthSum = currLengthSum;
 		}
 	}
-	inputComp.ChebyshezCenter = center;
+	inputComp.ChebyshevCenter = center;
 
 	return center;
 }

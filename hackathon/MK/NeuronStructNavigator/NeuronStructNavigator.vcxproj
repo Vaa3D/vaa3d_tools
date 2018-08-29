@@ -67,7 +67,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>.</OutDir>
+    <OutDir>.\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -125,7 +125,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\neuron_editing;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgAnalyzerMK;C:\boostLibs\boost_1_61_0;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Qt\4.8.6\mkspecs\win32-msvc2013;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\common_lib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\neuron_editing;C:\boostLibs\boost_1_61_0;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Qt\4.8.6\mkspecs\win32-msvc2013;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\common_lib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,13 +149,12 @@
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\v_neuronswc.cpp" />
     <ClCompile Include="NeuronStructExplorer.cpp" />
     <ClCompile Include="NeuronStructUtilities.cpp" />
-    <ClCompile Include="PointCluster_formulator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.h" />
+    <ClInclude Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\v_neuronswc.h" />
     <ClInclude Include="NeuronStructExplorer.h" />
     <ClInclude Include="NeuronStructUtilities.h" />
-    <ClInclude Include="PointCluster_formulator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

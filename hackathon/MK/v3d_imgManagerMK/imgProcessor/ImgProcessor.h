@@ -4,9 +4,17 @@
 //------------------------------------------------------------------------------
 
 /*******************************************************************************
-* This library intends to fascilitate basic image operations
-
-*/
+*
+*  This library intends to fascilitate Vaa3D image operations in the lowest level.
+*  ImgProcessor class only takes array pointers as the input and as well outputs array pointers. 
+*  It does not involve in any image I/O and only operates arrays in the memory.
+*  
+*  Most ImgProcessor class methods are implemented as static template functions.   
+*  A typical function call would need at least three input arguments:
+*
+*		ImgProcessor::func(unsigned char[] inputImgArray, unsigned char[] outputImgArray, int[] inputImgDimensions, other input arguments);
+*
+********************************************************************************/
 
 #ifndef IMGPROCESSOR_H
 #define IMGPROCESSOR_H
@@ -31,8 +39,7 @@ class ImgProcessor
 
 public:
 	/******** Constructors *********/
-	ImgProcessor() : MIPDirection(Mxy), mipDirection(mxy) {};
-	ImgProcessor(MIPOrientation);
+	ImgProcessor() {};
 	ImgProcessor(unsigned char* inputImg1DPtr);
 	ImgProcessor(unsigned char** inputImg2DPtr);
 	ImgProcessor(unsigned char*** inputImg3DPtr);
@@ -56,8 +63,8 @@ public:
 	template<class T>
 	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 	
-	template<class T1, class T2>
-	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
+	template<class T>
+	static inline void cropImg2D(T InputImagePtr[], T OutputImagePtr[], int xlb, int xhb, int ylb, int yhb, int imgDims[]);
 
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
@@ -77,8 +84,7 @@ public:
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
 
-	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
-		int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
+	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[], int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
 	/**********************************************************/
 
 
@@ -104,7 +110,7 @@ public:
 
 
 	/********* Morphological Operations *********/
-	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
+	static void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
 	/********************************************/
 
 
@@ -144,15 +150,15 @@ inline void ImgProcessor::imgMasking(T inputImgPtr[], T outputImgPtr[], int imgD
 	}
 }
 
-template<class T1, class T2>
-inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
+template<class T>
+inline void ImgProcessor::cropImg2D(T InputImagePtr[], T OutputImagePtr[], int xlb, int xhb, int ylb, int yhb, int imgDims[])
 {
 	long int OutputArrayi = 0;
-	for (T2 yi = ylb; yi <= yhb; ++yi)
+	for (int yi = ylb; yi <= yhb; ++yi)
 	{
-		for (T2 xi = xlb; xi <= xhb; ++xi)
+		for (int xi = xlb; xi <= xhb; ++xi)
 		{
-			OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*(yi - 1) + (xi - 1)];
+			OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * (yi - 1) + (xi - 1)];
 			++OutputArrayi;
 		}
 	}

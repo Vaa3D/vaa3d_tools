@@ -1,5 +1,5 @@
 #include "soma_remove_main.h"
-#include "data_training.h"
+
 #include <iostream>
 #include "string.h"
  using namespace std;
@@ -484,7 +484,8 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     vector<double> D;
     vector<double> grey;
     vector<double> grey_std;
-    feature_calculate(y_n,overlap_level,ratio_v,count_v,D,grey,grey_std,connected_region_final);
+    vector<inf> inf_v;
+    feature_calculate(inf_v,y_n,overlap_level,ratio_v,count_v,D,grey,grey_std,connected_region_final);
 
 
 
@@ -549,10 +550,10 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
         return false;
     }
 }
-bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
+bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
 {
     int n=2;
-    cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
+   // cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
     int ind1;
     int ind2;
     vector<Max_level> two_level;
@@ -604,15 +605,16 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
     }
 
 
-    cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
+  //  cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
     double maxx;
     double maxy;
     double minx;
     double miny;
-    double count_level;
+    double count_level,count_tmp;
     for(int i=0;i<connected_region_final.size();i++)
     {
         count_level=0;
+        count_tmp=0;
         maxx=0;
         maxy=0;
         minx=100000000;
@@ -627,7 +629,7 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
             {
                 continue;
             }
-
+            count_tmp++;
             if(curr.x>maxx)
             {
                 maxx=curr.x;
@@ -660,7 +662,9 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
         }
         double minus_x=maxx-minx+1;
         double minus_y=maxy-miny+1;
-        double overl=count_level/(minus_x*minus_y*2);
+        double overl=count_tmp/(minus_x*minus_y*2);
+        cout<<"x/y = "<<minus_x<<"  "<<minus_y<<endl;
+
         double ratio1=minus_x/minus_y;
         double ratio2=minus_y/minus_x;
         double ratio;
@@ -714,10 +718,10 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
     vector<Soma> soma_v;
 
 
-    cout<<"  <5>.calculate D "<<endl;
+   // cout<<"  <5>.calculate D "<<endl;
 
 
-    cout<<"find_center"<<endl;
+  //  cout<<"find_center"<<endl;
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
         double sumx=0;
@@ -832,7 +836,7 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
 
     }
 
-    cout<<"  <6>.calculate mean grey "<<endl;
+ //   cout<<"  <6>.calculate mean grey "<<endl;
 
     double mean_grey;
     for(int i=0;i<connected_region_final.size();i++)
@@ -855,9 +859,11 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
             sum_grey = (connected_region_final[i][d].bri-grey[i])*(connected_region_final[i][d].bri-grey[i]) + sum_grey;
         }
         std_grey = sum_grey/(connected_region_final[i].size()-1);
+      //  cout<<"sum_grey = "<<sum_grey<<"      "<<(connected_region_final[i].size()-1)<<"    "<<i<<endl;
+
         grey_std.push_back(sqrt(std_grey));
     }
-
+       // v3d_msg("gggggggggggg");
 //    for(int i=0;i<D.size();i++)
 //    {
 //        cout<<"y_n = "<<y_n[i]<<endl;
@@ -869,6 +875,19 @@ bool feature_calculate(vector<double> &y_n,vector<double> &overlap_level,vector<
 //        cout<<"grey_std = "<<grey_std[i]<<endl;
 //        cout<<"*************************************************"<<endl;
 //    }
+ //   cout<<"  <7>.get information from folder "<<endl;
+    for(int i=0;i<connected_region_final.size();i++)
+    {
+        //vector<inf> inf_tmp_v;
+       // for(int d=0;d<connected_region_final[i].size();d++)
+        //{
+            inf inf_tmp;
+            inf_tmp.inf1 =  connected_region_final[i][0].inf1;
+            inf_tmp.name = connected_region_final[i][0].name;
+            inf_v.push_back(inf_tmp);
+      //  }
+        //inf_v.push_back(inf_tmp_v);
+    }
 
 
 

@@ -5,355 +5,272 @@
 <script src="https://unpkg.com/three"></script>
 <script src="/statics/OrbitControls.js"></script>
 <script src="/statics/FirstPersonControls.js"></script>
+<script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
+<script src="/js/JavaScript.js"></script>
+<script src="~/js/mainstyle.js"></script>
+<script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
+@*<link rel="stylesheet" href="~/css/mainstyle.css"/>*@
 <body>
-    <div id="app">
-        <canvas ref="glcanvas">
-            Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
-        </canvas>
-        <input v-model="id" placeholder="图片文件夹id">
-        <button @@click="getPictures">获取图片</button>
-        <div v-for="(img,index) in imgs" :key="img._filename">
-            <p>{{img}}</p>
-            <canvas-wrapper :img="img"></canvas-wrapper>
+    <div id="main-content">
+
+
+        <div id="left-content">
+            <div id="view">
+                <div id="loading" class="progress progress-big" lay-showpercent="true" lay-filter="demo">
+                    <div class="progress-bar bg-red" lay-percent="0%"></div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div id="show-panel" onmouseover="show_panel()"></div>
+
+        <div id="right-content">
+
+            <div id="logo">
+                <img /><!--logo-->
+            </div>
+
+            <div id="menu">
+                <ul id="nave">
+                    <li id="File" class="show" data-content="openfile" tabindex="-1">
+                        <i class="fa fa-file "></i>&nbsp;File
+                        <ul id="openfile">
+                            <li>
+                               <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
+                                <ul id="thrid-nave-open">
+
+                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" /></li>
+
+                                    <li id="open-server" onclick="getPictures()"><i class="fa  fa-server fa-fw"></i>&nbsp;open from server</li> <!--待完善-->
+                                    <li id="open-url"><i class="fa fa-globe fa-fw "></i>&nbsp;open by URL</li>
+                                </ul>
+                            </li>
+
+                            <li id="save">
+                                <i class="fa fa-save fa-fw"></i>&nbsp;save...
+                                <ul id="thrid-nave-save">
+                                    <li><i class="fa fa-save fa-fw"></i>save</li>
+                                    <li><i class="fa fa-folder fa-fw"></i>save as</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+
+
+                    <li id="Edit" class="show" data-content="second-nave-edit" tabindex="0">
+                       <i class="fa  fa-edit fa-fw"></i>&nbsp;Edit
+                        <ul id="second-nave-edit">
+                            <li onclick="draw()"><i class="fa fa-pencil fa-fw "></i>&nbsp;draw</li>
+                            <li><i class="fa fa-trash fa-fw "></i>&nbsp;delete</li>
+                            <li><i class="fa fa-undo fa-fw "></i>&nbsp;undo</li>
+                            <li><i class="fa fa-repeat fa-fw "></i>&nbsp;redo</li>
+                            <li><i class="fa fa-mouse-pointer fa-fw "></i>&nbsp;select all</li>
+                        </ul>
+                    </li>
+                    <li id="Tools" class="show" data-content="second-nave-tools" tabindex="1">
+                        <i class="fa  fa-wrench fa-fw"></i>&nbsp;Tools
+                        <ul id="second-nave-tools">
+                            <li><i class="fa  fa-camera fa-fw"></i>&nbsp;screen shot</li>
+                        </ul>
+                    </li>
+
+                    <li id="help"> <i class="fa fa-hand-stop-o fa-fw"></i>&nbsp;Help</li>
+                    <li id="about"><i class="fa fa-question-circle-o fa-fw"></i>&nbsp;About</li>
+                </ul>
+            </div>
+            <div class="panel" id="Vaa3Dweb-panel">
+                <div class="panel-body">
+                    <div class="panel-group1" id="Waa3Dweb-panelgroup-img">
+                        <div id="title1" ><p><h2 style="text-align:center;">Img</h2></p></div><br />
+                        <div class="contrast">
+                            <span>Contrast</span><br /><br />
+                            <p><input type="range" min="0" max="10" id="contrast" name="point1" style="" /></p>
+
+                            <input id="fullscreen" type="button" value="full screen" />
+                        </div>
+                        <br /><br />
+                    </div>
+
+
+                    <div class="panel-group2" id="Waa3Dweb-panelgroup-draw">
+                        <div id="title2" ><p><h2 style="text-align:center;">Draw</h2></p></div><br />
+                        <div>
+                            <span>Line Size</span>&nbsp;&nbsp;&nbsp;&nbsp;
+                            <select id="line-size-select">
+                                <option label="1pt" value="1pt" selected>1pt</option>
+                                <option label="2pt" value="2pt">2pt</option>
+                                <option label="3pt" value="3pt">3pt</option>
+                            </select>
+                        </div><br />
+
+                        <div class="color">
+                            <span>Line Color</span>&nbsp;&nbsp;&nbsp;&nbsp;<input type="color" id="color" />
+
+
+
+                        </div>
+                        <br />
+                        <div><input type="button" id="close" value="close" />  </div>
+                        <br /><br />
+                    </div>
+
+
+
+
+
+                </div>
+            </div>
+
+
+
+
         </div>
     </div>
+  
 </body>
-<script>
-    const axios = window.axios;
 
-
-    var app = new Vue({
-        el: '#app',
-        components: {
-            'canvasWrapper': {
-                props: {
-                    img: { required: true }
-                },
-                template: '<div></div>',
-                mounted() {
-                    this.$el.parentNode.replaceChild(this.img.toCanvas(), this.$el);
-                }
-            }
-        },
-        mounted() {
-            const canvas = this.$refs.glcanvas;
-            // Initialize the GL context
-            //console.log('refs', this.$refs)
-            const gl = canvas.getContext("webgl");
-
-
-            // Only continue if WebGL is available and working
-            if (!gl) {
-                alert("Unable to initialize WebGL. Your browser or machine may not support it.");
-                return;
-            }
-
-            // Set clear color to black, fully opaque
-            gl.clearColor(1.0, 1.0, 1.0, 1.0);
-            // Clear the color buffer with specified clear color
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            this.gl = gl;
-        },
-        data: {
-            imgs: [],
-            id: '0',
-            gl: null
-        },
-        methods: {
-
-            async getPictures() {
-                const res = await axios.get(`/api/tiff/${+this.id}`)
-                    let id = this.id;
-
-                    var files = res.data;
-                    console.log(files);
-
-                    renderer = new THREE.WebGLRenderer({ antialias: false });
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                    document.body.appendChild(renderer.domElement);
-                    //
-                    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
-                    camera.position.x = 567;
-                    camera.position.y = 562;
-                    camera.position.z = -659;
-
-                    scene = new THREE.Scene();
-                    renderer.setClearColor(0x000000, 1.0);
-
-                    for (index in files)
-                    //for (i = 0; i <= 5;i++ )
-                    {   //index=i;
-                        const file = files[index]
-                        const response = await axios.get(`/api/tiff/${+id}/${file}`, { responseType: "arraybuffer" })
-
-
-                            var fileName = $("#file").val();
-                            console.log(file);
-                            var regex = /\d+/g;
-                            var filestr = file.match(regex);
-
-                            var tiff = new Tiff({ buffer: response.data });
-                            var count = tiff.countDirectory();
-
-
-
-
-
-
-                            //console.log(count);
-                            var j;
-                            for (j = 0; j < count; j++) {
-                                tiff.setDirectory(j);
-                                var buffer = tiff.readRGBAImage();
-                                //console.log(tiff.width(),tiff.height());
-                                const rgba = new Uint8Array(buffer);
-
-                                var k; var contrast = 12; var thresh = 0;
-                                for (k = 0; k < rgba.byteLength; k = k + 4) {
-                                    if (rgba[k] < thresh) { rgba[k + 3] = 0; }
-                                    rgba[k] *= contrast;
-                                    rgba[k + 1] *= contrast;
-                                    rgba[k + 2] *= contrast;
-                                    if (rgba[k] == 0 && rgba[k + 1] == 0 && rgba[k + 1] == 0)
-                                        rgba[k + 3] = 0;
-
-                                }
-                                //console.log(filestr[1] / 114560);
-
-
-
-                                const gl = this.gl;
-
-
-
-                                // A begin
-                                var geometry = new THREE.Geometry(); //创建一个空几何体对象
-                                /**顶点坐标(纹理映射位置)*/
-
-
-                                var p1 = new THREE.Vector3(0 + filestr[0] / 136960 * tiff.height(), 0 + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点1坐标
-                                var p2 = new THREE.Vector3(0 + filestr[0] / 136960 * tiff.height(), tiff.width() + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点2坐标
-                                var p3 = new THREE.Vector3(tiff.height() + filestr[0] / 136960 * tiff.height(), tiff.width() + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点3坐标
-                                var p4 = new THREE.Vector3(tiff.height() + filestr[0] / 136960 * tiff.height(), 0 + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点4坐标
-                                geometry.vertices.push(p1, p2, p3, p4); //顶点坐标添加到geometry对象
-
-
-
-                                /** 三角面1、三角面2*/
-                                var normal = new THREE.Vector3(0, 0, 1); //三角面法向量
-                                var face0 = new THREE.Face3(0, 1, 2, normal); //三角面1
-                                var face1 = new THREE.Face3(0, 2, 3, normal); //三角面2
-                                geometry.faces.push(face0, face1); //三角面1、2添加到几何体
-                                /**纹理坐标*/
-                                var t0 = new THREE.Vector2(0, 0);//图片左下角
-                                var t1 = new THREE.Vector2(1, 0);//图片右下角
-                                var t2 = new THREE.Vector2(1, 1);//图片右上角
-                                var t3 = new THREE.Vector2(0, 1);//图片左上角
-                                uv1 = [t0, t1, t2];//选中图片一个三角区域像素——映射到三角面1
-                                uv2 = [t0, t2, t3];//选中图片一个三角区域像素——映射到三角面2
-                                geometry.faceVertexUvs[0].push(uv1, uv2);//纹理坐标传递给纹理三角面属性
-
-
-
-                                //var texture2 = new THREE.TextureLoader().load( rgba );
-
-                                //console.log(texture2);
-                                var texture = new THREE.DataTexture(rgba, tiff.width(), tiff.height(), THREE.RGBAFormat);
-                                texture.needsUpdate = true;
-                                //console.log(texture);
-                                var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-                                material.transparent = true;
-                                //material.opacity = 0.5;
-                                material.blending = THREE["CustomBlending"];
-                                material.blendEquation = THREE.MaxEquation;
-                                //material.depthWrite = false,
-                                //material.depthTest = false,
-                                //material.alphaTest = 0.5;
-
-                                var mesh = new THREE.Mesh(geometry, material);
-
-
-
-
-
-
-                                scene.add(mesh);
-                              
-
-                            }
-                            tiff.close();
-                       
-
-                    }
-                    function render() {
-                        renderer.render(scene, camera);
-                    }
-                    //console.log(scene.children);
-                    //scene.children.material.blending = THREE["CustomBlending"];
-                    //scene.children.material.blendEquation = THREE.MaxEquation;
-                    render();
-                    
-                   
-
-                    var raycaster = new THREE.Raycaster();
-                    var mouse = new THREE.Vector2();
-
-                    level = 0;
-
-                    tiff_width = [179, 215, 239, 253,253];
-                    tiff_height = [213, 244, 244, 253,253];
-                    unit_width = [114560, 68800, 38240, 20240,10160];
-                    unit_height = [136960, 78080, 39040, 20240,10120];
-                    unit_depth = [1, 49280, 32800, 19680,9880];
-
-                    async function onMouseClick(event) {
-                        console.log(camera.position);
-                        
-                        //通过鼠标点击的位置计算出raycaster所需要的点的位置，以屏幕中心为原点，值的范围为-1到1.
-
-                        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                        mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-                        // 通过鼠标点的位置和当前相机的矩阵计算出raycaster
-                        raycaster.setFromCamera(mouse, camera);
-
-                        // 获取raycaster直线和所有模型相交的数组集合
-                        var intersects = raycaster.intersectObjects(scene.children);
-
-                        zoomin_width = Math.floor(intersects[0].point.x / tiff_height[level] * unit_height[level] / unit_height[level + 1]) * unit_height[level + 1];
-                        zoomin_height = Math.floor(intersects[0].point.y / tiff_width[level] * unit_width[level] / unit_width[level + 1]) * unit_width[level + 1];
-
-
-                        while (scene.children.length > 0) { scene.remove(scene.children[0]); }
-                        const re = await axios.get(`/api/tiff/${+id + level + 1}`)
-
-                       
-                            var files = re.data;
-                            
-                            for (index in files) {
-                                const file = files[index]
-                                var fileName = $("#file").val();
-
-                                var regex = /\d+/g;
-                                var filestr = file.match(regex);
-
-                                if (filestr[0] == zoomin_width && filestr[1] == zoomin_height) {
-                                    const response = await axios.get(`/api/tiff/${+id + level + 1}/${file}`, { responseType: "arraybuffer" })
-                                    console.log(fileName);
-                                   
-                                        var tiff = new Tiff({ buffer: response.data });
-                                        var count = tiff.countDirectory();
-
-                                        var j;
-                                        for (j = 0; j < count; j++) {
-                                            tiff.setDirectory(j);
-                                            var buffer = tiff.readRGBAImage();
-                                            //console.log(tiff.width(),tiff.height());
-                                            const rgba = new Uint8Array(buffer);
-
-                                            var k; var contrast = 12; var thresh = 0;
-                                            for (k = 0; k < rgba.byteLength; k = k + 4) {
-                                                if (rgba[k] < thresh) { rgba[k + 3] = 0; }
-                                                rgba[k] *= contrast;
-                                                rgba[k + 1] *= contrast;
-                                                rgba[k + 2] *= contrast;
-                                                if (rgba[k] == 0 && rgba[k + 1] == 0 && rgba[k + 1] == 0)
-                                                    rgba[k + 3] = 0;
-
-                                            }
-
-                                            const gl = this.gl;
-
-
-
-                                            // A begin
-                                            var geometry = new THREE.Geometry(); //创建一个空几何体对象
-                                            /**顶点坐标(纹理映射位置)*/
-
-
-                                            var p1 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点1坐标
-                                            var p2 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点2坐标
-                                            var p3 = new THREE.Vector3(tiff_height[level + 1] + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点3坐标
-                                            var p4 = new THREE.Vector3(tiff_height[level + 1] + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点4坐标
-                                            geometry.vertices.push(p1, p2, p3, p4); //顶点坐标添加到geometry对象
-                                            //console.log(filestr[0], filestr[1]);
-                                            //console.log(p1, p2, p3, p4);
-
-
-
-                                            /** 三角面1、三角面2*/
-                                            var normal = new THREE.Vector3(0, 0, 1); //三角面法向量
-                                            var face0 = new THREE.Face3(0, 1, 2, normal); //三角面1
-                                            var face1 = new THREE.Face3(0, 2, 3, normal); //三角面2
-                                            geometry.faces.push(face0, face1); //三角面1、2添加到几何体
-                                            /**纹理坐标*/
-                                            var t0 = new THREE.Vector2(0, 0);//图片左下角
-                                            var t1 = new THREE.Vector2(1, 0);//图片右下角
-                                            var t2 = new THREE.Vector2(1, 1);//图片右上角
-                                            var t3 = new THREE.Vector2(0, 1);//图片左上角
-                                            uv1 = [t0, t1, t2];//选中图片一个三角区域像素——映射到三角面1
-                                            uv2 = [t0, t2, t3];//选中图片一个三角区域像素——映射到三角面2
-                                            geometry.faceVertexUvs[0].push(uv1, uv2);//纹理坐标传递给纹理三角面属性
-
-
-
-                                            //var texture2 = new THREE.TextureLoader().load( rgba );
-
-                                            //console.log(texture2);
-                                            var texture = new THREE.DataTexture(rgba, tiff.width(), tiff.height(), THREE.RGBAFormat);
-
-                                            texture.needsUpdate = true;
-                                            //console.log(texture);
-                                            var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-                                            material.transparent = true;
-                                            //material.blending = THREE[ "MultiplyBlending"];
-                                            //material.depthWrite = false,
-                                            //material.depthTest = false,
-                                            material.blending = THREE["CustomBlending"];
-                                            material.blendEquation = THREE.MaxEquation;
-
-                                            var mesh = new THREE.Mesh(geometry, material);
-
-
-
-
-
-
-                                            scene.add(mesh);
-
-                                        }
-                                        tiff.close();
-                                        render();
-                                    
-                                }
-                            }
-                        
-                        level = level + 1;
-                        //camera.position = (p1 + p2 + p3 + p4) / 2;
-                        //camera.position.z = -1 * camera.position.z;
-                        console.log(camera.position);
-                        camera.lookAt(intersects[0].point);
-                    }
-
-
-
-
-
-                    window.addEventListener('dblclick', onMouseClick, false);
-                    var controls = new THREE.OrbitControls(camera);//创建控件对象
-                    controls.addEventListener('change', render);//监听鼠标、键盘事件
-
-
-
-
-
-                    // handle success
-                    // this.imgs.push(new Tiff({ buffer: response.data }))
-
-
-                
-            }
+<script type="text/javascript">
+    $('.show').on('click', function () {//单击隐藏或显示下拉菜单
+        var code = $(this).data('content');
+        if ($('#' + code).css('display') == 'none') {
+            $('#' + code).show();
         }
-    })
+        else {
+            $('#' + code).hide();
+        }
+
+
+
+    });
+    $('.show').on('blur', function () {//失去光标隐藏下拉菜单
+        var code = $(this).data('content');
+        $('#' + code).hide();
+    });
+
+
+    $('#open-local').on('click', function () {//打开本地文件夹
+        $('#vaa3dweb-input-open-local').click();
+
+    });
+    $('#fullscreen').on('click', function () {//全屏并隐藏控制面板
+        $('#right-content').hide();
+        full_screen();//全屏
+        $('#left-content').css('width', '99%');
+        renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+        //renderer.render(scene, camera);
+        $('#show-panel').show();//显示打开控制面板按钮
+    });
+
+    $('#help').on('click', function () {
+        layer.open({
+            type: 1,
+            area: ['29%', '360px'],
+            shadeClose: true, //点击遮罩关闭
+            content:'help information',
+            title: ['HELP', 'font-size:18px;background-color:rgba(25, 104, 150, 0.91)'],
+            offset:['5%','70%'],
+        });
+       
+      
+    });
+
+    $('#about').on('click', function () {
+        layer.open({
+            type: 1,
+            area: ['29%', '360px'],
+            shadeClose: true, //点击遮罩关闭
+            content: 'introduce information',
+            title:false,//不显示标题
+            offset: ['5%', '70%'],
+        });
+      
+    });
+
+
+    //        页面加载状态改变时的事件，未实现-------------------
+   // document.onreadystatechange = function () {
+   //     if (document.readyState == 'complete') {   //判断页面加载完成，加载的图标就隐藏  进度条------------------------
+    //        $("#loading").fadeOut();
+     //   }
+  //  }
+
+    function show_panel() {//淡入显示面板-----------待改善
+        $('#right-content').fadeIn("slow");
+        $('#show-panel').hide();
+        $('#left-content').css('width', '70%');
+        if (document.webkitIsFullScreen) {         
+        }
+        else {//不是全屏状态时重新render一下，恢复到原来状态
+            renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+        }
+       
+       
+    }
+   
+       
+
+   
+    //隐藏面板
+    $('#view').on("click", function () {
+        if (document.webkitIsFullScreen) {//全屏是自动隐藏控制面板  ****************存在全屏时，全屏退出过后如果不提前打开菜单栏会出现菜单栏无法显示
+
+            
+            $('#right-content').hide();
+            $('#left-content').css('width', '99%');
+            $('#show-panel').show();//  
+        }
+       
+    });
+    
+       
+
+    //document.addEventListener("webkitfullscreenchange", show_panel());
+
+
+  //  if (document.webkitIsFullScreen) {
+  //      alert("sdsafdfd");
+  //      $('#left-content').on('mouseover', function () {//********************移除鼠标后应该隐藏
+  ////          $('#right-content').hide();
+  //          $('#left-content').css('width', '99%');
+  //          $('#show-panel').show();
+  //      });
+  //    
+ //   }
+ //   $('#open-url').on('click', function () {
+
+
+      //  window.open("openurl.html", "Input URL to open", "height=80, width=300,top=20px,left=50%, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no")
+
+        //找不到页面？路径不对？
+
+//
+    //});
+   // $(document).ready(function () {
+    //    var target = "#app";
+    ///    $('#show3d').html(target);
+
+   // });
+
+   // function menu_show(str) {
+
+  //      var sub_menu = document.getElementById(str);
+
+    //    if (sub_menu.style.display == "none")
+    //        sub_menu.style.display = "block";
+     //   else
+     //       sub_menu.style.display = "none";
+
+   // }
+
+  //  $(document).ready(function () {
+    //   $("#File").click(function () {
+      //     $("#second-nave-open").show();
+     //  });
+   // });
 </script>
+

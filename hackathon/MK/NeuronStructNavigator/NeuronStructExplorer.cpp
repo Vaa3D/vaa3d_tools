@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "basic_4dimage.h"
+#include "basic_landmark.h"
 #include "neuron_format_converter.h"
 
 #include "NeuronStructExplorer.h"
@@ -19,6 +20,61 @@ NeuronStructExplorer::NeuronStructExplorer(string inputFileName)
 		this->singleTree = inputSWC;
 		this->singleTreePtr = &(this->singleTree);
 	}
+}
+
+NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
+{
+	NeuronTree MSTtrees;
+	undirectedGraph graph(inputTreePtr.listNeuron.size());
+	for (int i = 0; i < inputTreePtr.listNeuron.size(); ++i)
+	{
+			
+		float x1, y1, z1;
+		x1 = inputTreePtr.listNeuron.at(i).x;
+		y1 = inputTreePtr.listNeuron.at(i).y;
+		z1 = inputTreePtr.listNeuron.at(i).z;
+		for (int j = 0; j < inputTreePtr.listNeuron.size(); ++j)
+		{
+			float x2, y2, z2;
+			x2 = inputTreePtr.listNeuron.at(j).x;
+			y2 = inputTreePtr.listNeuron.at(j).y;
+			z2 = inputTreePtr.listNeuron.at(j).z;
+
+			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + double(z1 - z2) * double(z1 - z2));
+			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
+			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
+		}
+	}
+
+	vector <boost::graph_traits<undirectedGraph>::vertex_descriptor > p(num_vertices(graph));
+	boost::prim_minimum_spanning_tree(graph, &p[0]);
+	NeuronTree MSTtree;
+	QList<NeuronSWC> listNeuron;
+	QHash<int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+		
+	for (size_t ii = 0; ii != p.size(); ++ii)
+	{
+		int pn;
+		if (p[ii] == ii) pn = -1;
+		else pn = p[ii] + 1;
+
+		NeuronSWC S;
+		S.n = ii + 1;
+		S.type = 7;
+		S.x = inputTreePtr.listNeuron.at(ii).x;
+		S.y = inputTreePtr.listNeuron.at(ii).y;
+		S.z = inputTreePtr.listNeuron.at(ii).z;
+		S.r = 1;
+		S.pn = pn;
+		listNeuron.append(S);
+		hashNeuron.insert(S.n, listNeuron.size() - 1);
+	}
+	MSTtree.listNeuron = listNeuron;
+	MSTtree.hashNeuron = hashNeuron;
+
+	return MSTtree;
 }
 
 void NeuronStructExplorer::detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr)

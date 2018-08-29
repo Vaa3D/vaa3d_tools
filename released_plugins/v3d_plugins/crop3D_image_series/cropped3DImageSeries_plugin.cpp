@@ -696,71 +696,29 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		
 		return true;
 	}
-	/*else if (func_name == tr("markerCube_apoWhole"))
+	else if (func_name == tr("cropTerafly_nonApo"))
 	{
-		QDir dir("Y:/10soma_volumes/3large/");
-		QFileInfoList files = dir.entryInfoList();
-		for (QList<QFileInfo>::iterator fileIt=files.begin(); fileIt!=files.end(); ++fileIt)
+		vector<char*> infiles, inparas, outfiles;
+		if (input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+		if (input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+		if (output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+		QString m_InputfolderName = infiles.at(0);
+		QString savePath = outfiles.at(0);
+
+		V3DLONG *in_zz;
+		if (!callback.getDimTeraFly(m_InputfolderName.toStdString(), in_zz))
 		{
-			QString fileName = fileIt->fileName();
-			//qDebug() << fileName;
-			if (fileName == "." || fileName == "..") 
-			{
-				fileName.clear();
-				continue;	
-			}
-
-			QList<QString> fileSplit;
-			fileSplit = fileName.split("_");
-			QList<QString> aa = fileSplit[2].split(".v3draw");
-			double xOld = fileSplit[0].toDouble();
-			double yOld = fileSplit[1].toDouble();
-			double zOld = aa[0].toDouble();
-			//cout << xOld << " " << yOld << " " << zOld << endl;
-
-			fileName = "Y:/10soma_volumes/3large/" + fileName;
-			QFile inputFile(fileName);
-			if (inputFile.open(QIODevice::ReadOnly))
-			{
-				QTextStream in(&inputFile);
-				while (!in.atEnd())
-				{
-					QString line = in.readLine();
-					QList<QString> lineSplit = line.split(",");
-					if (lineSplit[0] == "##x") continue;
-					double cubeX = lineSplit[0].toDouble();
-					double cubeY = lineSplit[1].toDouble();
-					double cubeZ = lineSplit[2].toDouble();
-
-					double distX = cubeX - 200;
-					double distY = cubeY - 200;
-					double distZ = cubeZ - 200;
-
-					double newX = xOld + distX;
-					double newY = yOld + distY;
-					double newZ = zOld + distZ;
-
-					cout << newX << " " << newY << " " << newZ << endl;
-
-					CellAPO node;
-					node.x = newX;
-					node.y = newY;
-					node.z = newZ;
-					QList<CellAPO> listCell;
-					listCell.push_back(node);
-					QString nameX = QString::number(newX);
-					QString nameY = QString::number(newY);
-					QString nameZ = QString::number(newZ);
-					QString saveName = "Y:/10soma_volumes/3large/" + nameX + "_" + nameY + "_" + nameZ + ".apo";
-					//qDebug() << saveName;
-					writeAPO_file(saveName, listCell);
-				}
-				inputFile.close();
-			}
+			v3d_msg("Cannot load terafly images.", 0);
+			return false;
 		}
+		unsigned char* cropped_image = 0;
+		cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(), 0, in_zz[0], 0, in_zz[1], 0, in_zz[2]);
+		const char* fileName = savePath.toAscii();
+		simple_saveimage_wrapper(callback, fileName, cropped_image, in_zz, 1);
+		
 
 		return true;
-	}*/
+	}
     else if (func_name == tr("help"))
     {
         cout<<"Usage : v3d -x dllname -f crop3d_imageseries -i <inimg_folder> -o <outimg_file> -p <xs> <xe> <ys> <ye> <zs> <ze> <ch>"<<endl;

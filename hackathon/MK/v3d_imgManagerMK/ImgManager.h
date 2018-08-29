@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include <boost\filesystem.hpp>
+#include <boost\shared_array.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
@@ -18,26 +19,27 @@
 #include "v3d_interface.h"
 
 enum imgFormat { cube, slices, single2D };
+typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
+													   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
 
 struct registeredImg
 {
-	registeredImg(QString imgFullName, QString alias) : imgCaseRootQ(imgFullName), imgAlias(alias), datatype(1) {};
-	~registeredImg();
-
 	QString imgAlias;
 	QString imgCaseRootQ;
-	unsigned char* imgData1D;
-	unsigned char** imgData2D;
-	unsigned char*** imgData3D;
-	vector<unsigned char*> slicePtrs;
+
+	//shared_ptr<unsigned char*> imgData1D;
+	//shared_ptr<unsigned char**> imgData2D;
+	//shared_ptr<unsigned char***> imgData3D;
+
+	map<string, myImg1DPtr> slicePtrs;
+	
 	int dims[3];
-	int datatype;
 };
 
 class ImgManager
 {
 public: 
-	/********* Constructors and Basic Data Menbers *********/
+	/********* Constructors and Basic Data Members *********/
 	ImgManager() {};
 	ImgManager(string wholeImgName);
 
@@ -51,14 +53,12 @@ public:
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 	/*******************************************************/
 
-	/********* IO *********/
-	static bool img1Ddumpster(Image4DSimple* imgPtr, unsigned char*& data1D, long int dims[4], int datatype);
-	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[4], int datatype);
+	/***************** I/O *****************/
+	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	
-	unordered_map<string, registeredImg> imgDataBase;
-
-	void imgManager_init(QString caseID, imgFormat format);
-	/**********************/
+	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
+	void imgManager_regisImg(QString caseID, imgFormat format);
+	/***************************************/
 
 	/********* Methods for generating binary masks from SWC files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
@@ -76,7 +76,7 @@ public:
 	/*******************************************************************************************/
 };
 
-inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[4], int datatype)
+inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pdata[], V3DLONG sz[], int datatype)
 {
 	if (!pdata)
 	{

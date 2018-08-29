@@ -9,10 +9,57 @@
 
 #include "basic_4dimage.h"
 #include "NeuronStructUtilities.h"
-#include "AnalysisExplorer.h"
 
 using namespace std;
 using namespace boost;
+
+NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTreePtr, NeuronTree const& refTreePtr, float customFactor)
+{
+	float xShift, yShift, zShift;
+	float xScale, yScale, zScale;
+
+	float xmin = 10000, ymin = 10000, zmin = 10000;
+	float xmax = 0, ymax = 0, zmax = 0;
+	for (QList<NeuronSWC>::iterator it = inputTreePtr.listNeuron.begin(); it != inputTreePtr.listNeuron.end(); ++it)
+	{
+		if (it->x < xmin) xmin = it->x;
+		if (it->x > xmax) xmax = it->x;
+		if (it->y < ymin) ymin = it->y;
+		if (it->y > ymax) ymax = it->y;
+		if (it->z < zmin) zmin = it->z;
+		if (it->z > zmax) zmax = it->z;
+	}
+	float refXmin = 10000, refYmin = 10000, refZmin = 10000;
+	float refXmax = 0, refYmax = 0, refZmax = 0;
+	for (QList<NeuronSWC>::const_iterator refIt = refTreePtr.listNeuron.begin(); refIt != refTreePtr.listNeuron.end(); ++refIt)
+	{
+		if (refIt->x < refXmin) refXmin = refIt->x;
+		if (refIt->x > refXmax) refXmax = refIt->x;
+		if (refIt->y < refYmin) refYmin = refIt->y;
+		if (refIt->y > refYmax) refYmax = refIt->y;
+		if (refIt->z < refZmin) refZmin = refIt->z;
+		if (refIt->z > refZmax) refZmax = refIt->z;
+	}
+
+	xShift = refXmin - xmin;
+	yShift = refYmin - ymin;
+	zShift = refZmin - zmin;
+	xScale = (refXmax - refXmin) / (xmax - xmin);
+	yScale = (refYmax - refYmin) / (ymax - ymin);
+	zScale = (refZmax - refZmin) / (zmax - zmin);
+
+	NeuronTree outputTree;
+	for (int i = 0; i < inputTreePtr.listNeuron.size(); ++i)
+	{
+		NeuronSWC newNode = inputTreePtr.listNeuron.at(i);
+		newNode.x = (newNode.x - xmin) * xScale + refXmin;
+		newNode.y = (newNode.y - xmin) * yScale + refYmin;
+		newNode.z = (newNode.z - xmin) * zScale + refZmin;
+		outputTree.listNeuron.push_back(newNode);
+	}
+
+	return outputTree;
+}
 
 void NeuronStructUtil::swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)
 {
@@ -100,39 +147,6 @@ void NeuronStructUtil::swcSliceAssembler(string swcPath)
 
 	QString outputFileName = QString::fromStdString(swcPath) + "\\assembledSWC.swc";
 	writeSWC_file(outputFileName, outputTree);
-}
-
-void NeuronStructUtil::swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
-{
-	if (zlb == 0 && zhb == 0)
-	{
-		for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-		{
-			if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb) continue;
-			else
-			{
-				NeuronSWC newNode;
-				newNode.x = it->x - (xlb - 1);
-				newNode.y = it->y - (ylb - 1);
-				newNode.z = it->z;
-				newNode.type = it->type;
-				newNode.n = it->n;
-				newNode.parent = it->parent;
-				outputTreePtr->listNeuron.push_back(newNode);
-			}
-		}
-	}
-}
-
-void NeuronStructUtil::swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength)
-{
-	float yMiddle = float(yLength + 1) / 2;
-	for (QList<NeuronSWC>::const_iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-	{
-		NeuronSWC flippedNode = *it;
-		if (it->y > yMiddle) flippedNode.y = (yMiddle - (it->y - yMiddle));
-		else if (it->y < yMiddle) flippedNode.y = (yMiddle + (yMiddle - it->y));
-	}
 }
 
 void NeuronStructUtil::swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor)
