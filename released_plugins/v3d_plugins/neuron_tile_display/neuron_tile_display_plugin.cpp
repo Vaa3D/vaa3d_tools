@@ -406,7 +406,10 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent)
     for(V3DLONG i = 0; i < swcList.size(); i++)
     {
         QString curPathSWC = swcList.at(i);
+        QFileInfo curSWCBase(curPathSWC);
         new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
+        //reset window title to basename instead of path name
+        callback.setWindowDataTitle(new3DWindow,curSWCBase.baseName());
     }
     MethodForCombineSWCDisplay(callback,parent,swcList);
 
