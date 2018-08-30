@@ -119,7 +119,11 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
         lastIndex[ita]=0;
         for(int itb=0;itb<fileDateMap.size();itb++)
         {
-            if(fileDateMap[ita]<=fileDateMap[itb])
+            if(fileDateMap[ita]<fileDateMap[itb])
+            {
+                lastIndex[ita]++;
+            }
+            if(fileDateMap[ita]==fileDateMap[itb]&&ita>itb)
             {
                 lastIndex[ita]++;
             }
