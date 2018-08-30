@@ -12,7 +12,7 @@
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_tile_display, neuron_tile_display);
-void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent);
+void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent, int displayNum);
 
 QStringList neuron_tile_display::menulist() const
 {
@@ -65,7 +65,7 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
     return myList;
 }
 ///used in bigScreen display
-QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code,bool bigScreen)
+QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code,int displayNum)
 {
 
     QStringList myList,nameList/*,pathList*/;
@@ -73,9 +73,6 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
     myList.clear();
     nameList.clear();
     //pathList.clear();
-    if(!bigScreen)
-        return myList;
-
     // get the image files namelist in the directory
     QStringList imgSuffix;
     if (method_code ==1)
@@ -127,28 +124,28 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
             {
                 lastIndex[ita]++;
             }
-            if(lastIndex[ita]>10)
+            if(lastIndex[ita]>displayNum)
             {
                 break;
             }
         }
     }
     int count=0;
-    if(fileDateMap.size()<=10)
+    if(fileDateMap.size()<=displayNum)
     {
         foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
         {
             myList += QFileInfo(dir, file).absoluteFilePath();
         }
     }
-    else//pick up 10 new files with lagerest date
+    else//pick up displayNumbers new files with lagerest date
     {
         foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
         {
-            if(lastIndex[count]<=10)
+            if(lastIndex[count]<=displayNum)
                 myList += QFileInfo(dir, file).absoluteFilePath();
             count++;
-            if(myList.size()==10)
+            if(myList.size()==displayNum)
                 break;
         }
     }
@@ -346,7 +343,15 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
     }
     else if(menu_name==tr("BigScreen Display"))
     {
-        MethodForBigScreenDisplay(callback,parent);
+        unsigned int displayNum=9;
+        bool ok;
+        displayNum = QInputDialog::getInteger(parent, "",
+                                      "#Number of the monitors:",
+                                      9, 9, 10, 1, &ok);
+        if(ok)
+            MethodForBigScreenDisplay(callback,parent,displayNum);
+        else
+            return;
     }
     else
 	{
@@ -367,7 +372,7 @@ void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QS
     QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (surface_win);
 
     new_treeList->clear();
-    QString file_name="10 of the New Finished Neurons";
+    QString file_name="Combine of the New Finished Neurons";
 
     int neuronNum = nameList.size();
     for (V3DLONG i=0;i<neuronNum;i++)
@@ -382,14 +387,26 @@ void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QS
 }
 
 //designed by shengdian.08282018
-void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent)
+void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int displayNum=9)
 {
     QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all finished annotation files "),
                                                                   QDir::currentPath(),
                                                                   QFileDialog::ShowDirsOnly);
 
 
+
     int col=5, row=3, xRez=-5, yRez=0;
+    //
+    switch (displayNum) {
+    case 9:
+        col=3;
+        break;
+    case 10:
+        col=5;
+        break;
+    default:
+        break;
+    }
 
     QRect deskRect = QApplication::desktop()->availableGeometry();
     qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
@@ -399,7 +416,9 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent)
     qDebug("every col size is %d",xRez_o);
     qDebug("every row size is %d",yRez_o);
 
-    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,true);
+    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+
+    qDebug("display monitor num is %d",swcList.size());
 
     V3dR_MainWindow * new3DWindow = NULL;
     int offsety = -1;
@@ -419,8 +438,20 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent)
     {
         if( (i%col)/**xRez*/ ==0)
             offsety++;
-
-        callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+        switch(displayNum)
+        {
+        case 9:
+            if(i<cur_list_3dviewer.size()-1)
+                callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+            else
+                callback.moveWindow(cur_list_3dviewer.at(i),col*(xRez_o+xRez),0);
+            break;
+        case 10:
+            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+            break;
+        default:
+            break;
+        }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
 }
