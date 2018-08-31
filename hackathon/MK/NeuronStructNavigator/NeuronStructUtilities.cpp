@@ -14,7 +14,7 @@
 using namespace std;
 using namespace boost;
 
-NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, NeuronTree const& refTree, float customFactor)
+NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree, float customFactor)
 {
 	float xShift, yShift, zShift;
 	float xScale, yScale, zScale;
@@ -62,27 +62,75 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, NeuronTree const
 	return outputTree;
 }
 
-vector<connectedComponent>& swc2connComponent(NeuronTree const& inputTree)
+vector<connectedComponent> NeuronStructUtil::swc2signalBlobs2D(const NeuronTree& inputTree)
 {
-	set<NeuronSWC> allNodes;
-	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it) allNodes.insert(*it);
+	vector<NeuronSWC> allNodes;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it) allNodes.push_back(*it);
 
-	vector<connectedComponent> connComps;
-	while (allNodes.size() != 0)
+	vector<connectedComponent> connComps2D;
+	int islandCount = 0;
+	for (vector<NeuronSWC>::iterator nodeIt = allNodes.begin(); nodeIt != allNodes.end(); ++nodeIt)
 	{
-		for (vector<connectedComponent>::iterator connIt = connComps.begin(); connIt != connComps.end(); ++connIt)
+		if (int(nodeIt - allNodes.begin()) % 10000 == 0) cout << int(nodeIt - allNodes.begin()) << " ";
+
+		for (vector<connectedComponent>::iterator connIt = connComps2D.begin(); connIt != connComps2D.end(); ++connIt)
 		{
-			for (map<int, set<vector<int> > >::iterator sliceIt = connIt->coordSets.begin(); sliceIt != connIt->coordSets.end(); ++sliceIt)
+			if (int(nodeIt->z) == connIt->coordSets.begin()->first)
 			{
-				for (set<NeuronSWC>::iterator nodeIt = allNodes.begin(); nodeIt != allNodes.end(); ++nodeIt)
+				for (set<vector<int> >::iterator dotIt = connIt->coordSets[int(nodeIt->z)].begin(); dotIt != connIt->coordSets[int(nodeIt->z)].end(); ++dotIt)
 				{
-					if (int(nodeIt->z) == sliceIt->first || int(nodeIt->z) == sliceIt->first - 1)
+					if (int(nodeIt->x) <= dotIt->at(0) + 1 && int(nodeIt->x) >= dotIt->at(0) - 1 &&
+						int(nodeIt->y) <= dotIt->at(1) + 1 && int(nodeIt->y) >= dotIt->at(1) - 1)
+					{
+						vector<int> newCoord(3);
+						newCoord[0] = int(nodeIt->x);
+						newCoord[1] = int(nodeIt->y);
+						newCoord[2] = int(nodeIt->z);
+						connIt->coordSets[newCoord[2]].insert(newCoord);
+
+						if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
+						else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
+
+						if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
+						else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
+
+						goto NODE_INSERTED;
+					}
 				}
 			}
 		}
 
-		
+		{
+			++islandCount;
+			connectedComponent newIsland;
+			newIsland.islandNum = islandCount;
+			vector<int> newCoord(3);
+			newCoord[0] = int(nodeIt->x);
+			newCoord[1] = int(nodeIt->y);
+			newCoord[2] = int(nodeIt->z);
+			set<vector<int> > coordSet;
+			coordSet.insert(newCoord);
+			newIsland.coordSets.insert(pair<int, set<vector<int> > >(newCoord[2], coordSet));
+			newIsland.xMax = newCoord[0];
+			newIsland.xMin = newCoord[0];
+			newIsland.yMax = newCoord[1];
+			newIsland.yMin = newCoord[1];
+			newIsland.zMin = newCoord[2];
+			newIsland.zMax = newCoord[2];
+			connComps2D.push_back(newIsland);
+		}
+
+	NODE_INSERTED:
+		continue;
 	}
+	cout << endl;
+
+	return connComps2D;
+}
+
+vector<connectedComponent> NeuronStructUtil::swc2signalBlobs3D(const NeuronTree& inputTree)
+{
+	vector<connectedComponent> connComps;
 
 	return connComps;
 }

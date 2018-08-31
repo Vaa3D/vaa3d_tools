@@ -9,9 +9,6 @@
 
 #include <qlist.h>
 
-#include "ImgManager.h"
-#include "ImgProcessor.h"
-
 using namespace std;
 
 struct morphStructElement
@@ -39,7 +36,7 @@ struct connectedComponent
 class ImgAnalyzer
 {
 public:
-	static vector<connectedComponent> findConnectedComponent_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
+	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
 	
 	static inline vector<float> ChebyshevCenter(connectedComponent inputComp);
 
@@ -47,14 +44,13 @@ private:
 	void mergeConnComponent(vector<connectedComponent>& inputConnCompList);
 };
 
-#endif
 
 inline vector<float> ImgAnalyzer::ChebyshevCenter(connectedComponent inputComp)
 {
 	set<vector<int> > allCoords;
 	for (map<int, set<vector<int> > >::iterator sliceIt = inputComp.coordSets.begin(); sliceIt != inputComp.coordSets.end(); ++sliceIt)
 		allCoords.insert(sliceIt->second.begin(), sliceIt->second.end());
-	
+
 	vector<float> center(3);
 	float lengthSum = 1000000;
 	for (set<vector<int> >::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)
@@ -62,9 +58,9 @@ inline vector<float> ImgAnalyzer::ChebyshevCenter(connectedComponent inputComp)
 		float currLengthSum = 0;
 		for (set<vector<int> >::iterator checkCoordIt = allCoords.begin(); checkCoordIt != allCoords.end(); ++checkCoordIt)
 		{
-			float length = sqrt( (checkCoordIt->at(0) - allCoordIt->at(0)) * (checkCoordIt->at(0) - allCoordIt->at(0)) +
-				                 (checkCoordIt->at(1) - allCoordIt->at(1)) * (checkCoordIt->at(1) - allCoordIt->at(1)) +
-								 (checkCoordIt->at(2) - allCoordIt->at(2)) * (checkCoordIt->at(2) - allCoordIt->at(2)) );
+			float length = sqrt((checkCoordIt->at(0) - allCoordIt->at(0)) * (checkCoordIt->at(0) - allCoordIt->at(0)) +
+				(checkCoordIt->at(1) - allCoordIt->at(1)) * (checkCoordIt->at(1) - allCoordIt->at(1)) +
+				(checkCoordIt->at(2) - allCoordIt->at(2)) * (checkCoordIt->at(2) - allCoordIt->at(2)));
 
 			currLengthSum += length;
 		}
@@ -81,3 +77,5 @@ inline vector<float> ImgAnalyzer::ChebyshevCenter(connectedComponent inputComp)
 
 	return center;
 }
+
+#endif

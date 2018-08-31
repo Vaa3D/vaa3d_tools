@@ -5,15 +5,17 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <set>
 
 #include <qstring.h>
 #include <qstringlist.h>
 
 #include "basic_surf_objs.h"
 
+#include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
-#include "ImgManager.h"
+#include "NeuronStructUtilities.h"
 
 using namespace std;
 
@@ -53,9 +55,10 @@ public:
 	
 	void histQuickList();
 
-	vector<connectedComponent> connComponents;
+	vector<connectedComponent> signalBlobs;
 	QList<NeuronSWC> centers;
-	void findConnComponent();
+	void findSignalBlobs();
+	void swc2DsignalBlobsCenter();
 	void findSomaMass();
 	void getChebyshevCenters(QString caseNum);
 
@@ -71,6 +74,9 @@ public:
 
 private:
 	ImgManager* myImgManagerPtr;
+	ImgAnalyzer* myImgAnalyzerPtr;
+	NeuronStructUtil* myNeuronUtilPtr;
+
 	void singleTaskDispatcher(deque<task> taskList);
 };
 
