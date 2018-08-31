@@ -3,6 +3,7 @@
 #include <deque>
 #include <string>
 #include <iterator>
+#include <set>
 #include <ctime>
 
 #include <boost\filesystem.hpp>
@@ -13,14 +14,14 @@
 using namespace std;
 using namespace boost;
 
-NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTreePtr, NeuronTree const& refTreePtr, float customFactor)
+NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, NeuronTree const& refTree, float customFactor)
 {
 	float xShift, yShift, zShift;
 	float xScale, yScale, zScale;
 
 	float xmin = 10000, ymin = 10000, zmin = 10000;
 	float xmax = 0, ymax = 0, zmax = 0;
-	for (QList<NeuronSWC>::iterator it = inputTreePtr.listNeuron.begin(); it != inputTreePtr.listNeuron.end(); ++it)
+	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		if (it->x < xmin) xmin = it->x;
 		if (it->x > xmax) xmax = it->x;
@@ -31,7 +32,7 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTreePtr, NeuronTree co
 	}
 	float refXmin = 10000, refYmin = 10000, refZmin = 10000;
 	float refXmax = 0, refYmax = 0, refZmax = 0;
-	for (QList<NeuronSWC>::const_iterator refIt = refTreePtr.listNeuron.begin(); refIt != refTreePtr.listNeuron.end(); ++refIt)
+	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
 	{
 		if (refIt->x < refXmin) refXmin = refIt->x;
 		if (refIt->x > refXmax) refXmax = refIt->x;
@@ -49,9 +50,9 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTreePtr, NeuronTree co
 	zScale = (refZmax - refZmin) / (zmax - zmin);
 
 	NeuronTree outputTree;
-	for (int i = 0; i < inputTreePtr.listNeuron.size(); ++i)
+	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
 	{
-		NeuronSWC newNode = inputTreePtr.listNeuron.at(i);
+		NeuronSWC newNode = inputTree.listNeuron.at(i);
 		newNode.x = (newNode.x - xmin) * xScale + refXmin;
 		newNode.y = (newNode.y - xmin) * yScale + refYmin;
 		newNode.z = (newNode.z - xmin) * zScale + refZmin;
@@ -59,6 +60,31 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTreePtr, NeuronTree co
 	}
 
 	return outputTree;
+}
+
+vector<connectedComponent>& swc2connComponent(NeuronTree const& inputTree)
+{
+	set<NeuronSWC> allNodes;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it) allNodes.insert(*it);
+
+	vector<connectedComponent> connComps;
+	while (allNodes.size() != 0)
+	{
+		for (vector<connectedComponent>::iterator connIt = connComps.begin(); connIt != connComps.end(); ++connIt)
+		{
+			for (map<int, set<vector<int> > >::iterator sliceIt = connIt->coordSets.begin(); sliceIt != connIt->coordSets.end(); ++sliceIt)
+			{
+				for (set<NeuronSWC>::iterator nodeIt = allNodes.begin(); nodeIt != allNodes.end(); ++nodeIt)
+				{
+					if (int(nodeIt->z) == sliceIt->first || int(nodeIt->z) == sliceIt->first - 1)
+				}
+			}
+		}
+
+		
+	}
+
+	return connComps;
 }
 
 void NeuronStructUtil::swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)

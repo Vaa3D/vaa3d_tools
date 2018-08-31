@@ -57,6 +57,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	QString inputPathQ = infiles[0];
 
 	QString outputPathQ;
+	QString output2;
 	if (!outfiles.empty()) outputPathQ = outfiles[0];
 
 	SegPipe_Controller* segPipePtr = new SegPipe_Controller(inputPathQ, outputPathQ);
@@ -95,9 +96,15 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	else if (func_name == tr("cropImgWithSWC"))
 	{	
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		if (outfiles[1])
+		{
+			segPipePtr->outputSWCRootPath.clear();
+			segPipePtr->outputSWCRootPath = output2;
+		}
 		segPipePtr->swc_imgCrop();
 	}
 	else if (func_name == tr("connectedComponent")) segPipePtr->findConnComponent();
+	else if (func_name == tr("centroid")) segPipePtr->getChebyshevCenters(output2);
 	else if (func_name == tr("MST")) segPipePtr->getMST();
 	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
 	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();

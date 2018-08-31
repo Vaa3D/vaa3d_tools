@@ -465,16 +465,16 @@ void SegPipe_Controller::findSomaMass()
 
 void SegPipe_Controller::findConnComponent()
 {
+	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
 		cout << "Processing case " << (*caseIt).toStdString() << ":" << endl;
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
-		qDebug() << caseFullPathQ;
 		vector<unsigned char**> slice2DVector;
 
-		QString swcSaveFullNameQ = this->outputRootPath + "/connComponents/" + *caseIt + ".swc";
+		QString swcSaveFullNameQ = this->outputRootPath + "/" + *caseIt + ".swc";
 		QFile swcFileCheck(swcSaveFullNameQ);
 		if (swcFileCheck.exists())
 		{
@@ -482,35 +482,48 @@ void SegPipe_Controller::findConnComponent()
 			continue;
 		}
 
-		int dims[3];
-		for (multimap<string, string>::iterator sliceIt = range.first; sliceIt != range.second; ++sliceIt)
+		myImgManagerPtr->imgDatabase.clear();
+		myImgManagerPtr->imgManager_regisImg(*caseIt, slices);
+		int dims[3]; 
+		dims[0] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0];
+		dims[1] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1];
+		dims[2] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[2];
+		unsigned char* MIP1Dptr = new unsigned char[dims[0] * dims[1]];
+		for (int i = 0; i < dims[0] * dims[1]; ++i) MIP1Dptr[i] = 0;
+		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.begin();
+			sliceIt != myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.end(); ++sliceIt)
 		{
-			const char* inputFullPathC = (sliceIt->second).c_str();
-			Image4DSimple* slicePtr = new Image4DSimple;
-			slicePtr->loadImage(inputFullPathC);
-			dims[0] = int(slicePtr->getXDim());
-			dims[1] = int(slicePtr->getYDim());
-			dims[2] = 1;
-			long int totalbyteSlice = slicePtr->getTotalBytes();
-			unsigned char* slice1D = new unsigned char[totalbyteSlice];
-			memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
-
+			ImgProcessor::imageMax(sliceIt->second.get(), MIP1Dptr, MIP1Dptr, dims);
 			unsigned char** slice2DPtr = new unsigned char*[dims[1]];
 			for (int j = 0; j < dims[1]; ++j)
 			{
 				slice2DPtr[j] = new unsigned char[dims[0]];
-				for (int i = 0; i < dims[0]; ++i) slice2DPtr[j][i] = slice1D[dims[0] * j + i];
+				for (int i = 0; i < dims[0]; ++i) slice2DPtr[j][i] = sliceIt->second.get()[dims[0] * j + i];
 			}
 			slice2DVector.push_back(slice2DPtr);
-
-			slicePtr->~Image4DSimple();
-			operator delete(slicePtr);
-			if (slice1D) { delete[] slice1D; slice1D = 0; }
 		}
 		cout << "slice preparation done." << endl;
 
 		this->connComponents.clear();
-		this->connComponents = ImgAnalyzer::findConnectedComponent(slice2DVector, dims);
+		this->connComponents = ImgAnalyzer::findConnectedComponent_2Dcombine(slice2DVector, dims, MIP1Dptr);
+
+		delete[] MIP1Dptr;
+		MIP1Dptr = nullptr;
+		/*{
+			// -- This is a workaround testing block for some cases that have problematic arrays in ImgAnalyzer::findConnectedComponent_2Dcombine's currSlice1D.
+			string mipName = "Z:/mip1.tif";
+			const char* mipNameC = mipName.c_str();
+			Image4DSimple* slicePtr = new Image4DSimple;
+			slicePtr->loadImage(mipNameC);
+			dims[0] = int(slicePtr->getXDim());
+			dims[1] = int(slicePtr->getYDim());
+			dims[2] = 1;
+			long int totalbyteSlice = slicePtr->getTotalBytes();
+			unsigned char* mip1D = new unsigned char[totalbyteSlice];
+			memcpy(mip1D, slicePtr->getRawData(), totalbyteSlice);
+			this->connComponents = ImgAnalyzer::findConnectedComponent_2Dcombine(slice2DVector, dims, mip1D);
+		}*/
+
 		connectedComponent soma;
 		QList<NeuronSWC> allSigs;
 		for (vector<connectedComponent>::iterator connIt = this->connComponents.begin(); connIt != this->connComponents.end(); ++connIt)
@@ -533,8 +546,6 @@ void SegPipe_Controller::findConnComponent()
 		sigTree.listNeuron = allSigs;
 		writeSWC_file(swcSaveFullNameQ, sigTree);
 		allSigs.clear();
-
-		this->getChebyshevCenters(*caseIt);
 	}
 }
 
@@ -568,9 +579,8 @@ void SegPipe_Controller::somaNeighborhoodThin()
 
 void SegPipe_Controller::swc_imgCrop()
 {
-	QString shiftedSWC_saveRootQ = this->outputRootPath + "/../shiftedSWC/";
+	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
 
-	this->myImgManagerPtr = new ImgManager;
 	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
@@ -612,18 +622,21 @@ void SegPipe_Controller::swc_imgCrop()
 		newDims[1] = yhb - ylb + 1;
 		newDims[2] = 1;
 		cout << "boundries: " << xlb << " " << xhb << " " << ylb << " " << yhb << endl;
-
-		NeuronTree newTree;
-		for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
+		
+		if (!this->outputSWCRootPath.isEmpty())
 		{
-			NeuronSWC newNode = *nodeIt;
-			newNode.x = (nodeIt->x / 4) - xlb;
-			newNode.y = (nodeIt->y / 4) - ylb;
-			newNode.z = (nodeIt->z / 2);
-			newTree.listNeuron.push_back(newNode);
+			NeuronTree newTree;
+			for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
+			{
+				NeuronSWC newNode = *nodeIt;
+				newNode.x = (nodeIt->x / 4) - xlb;
+				newNode.y = (nodeIt->y / 4) - ylb;
+				newNode.z = (nodeIt->z / 2);
+				newTree.listNeuron.push_back(newNode);
+			}
+			QString newTreeName = scaledSWC_saveRootQ + *caseIt + ".swc";
+			writeSWC_file(newTreeName, newTree);
 		}
-		QString newTreeName = shiftedSWC_saveRootQ + *caseIt + ".swc";
-		writeSWC_file(newTreeName, newTree);
 
 		V3DLONG saveDims[4];
 		saveDims[0] = newDims[0];
@@ -647,7 +660,6 @@ void SegPipe_Controller::swc_imgCrop()
 			if (croppedSlice) { delete[] croppedSlice; croppedSlice = 0; }
 		}
 	}
-	operator delete(myImgManagerPtr);
 }
 
 void SegPipe_Controller::getMST()
@@ -690,8 +702,8 @@ void SegPipe_Controller::cutMST()
 
 void SegPipe_Controller::getTiledMST()
 {
-	float xyLength = 30;
-	float zLength = 5;
+	float xyLength = 200;
+	float zLength = 20;
 	map<string, QList<NeuronSWC> > tiledSWCmap;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
@@ -706,7 +718,8 @@ void SegPipe_Controller::getTiledMST()
 			int tileYlabel = int(floor(it->y / xyLength));
 			int tileZlabel = int(floor(it->z / zLength));
 			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
-			if (tiledSWCmap.insert(pair<string, QList<NeuronSWC> >(swcTileKey, tileSWCList)).first != tiledSWCmap.end()) tiledSWCmap[swcTileKey].push_back(*it);
+			tiledSWCmap.insert(pair<string, QList<NeuronSWC> >(swcTileKey, tileSWCList));  
+			tiledSWCmap[swcTileKey].push_back(*it);
 		}
 		cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
 

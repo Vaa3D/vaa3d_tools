@@ -31,6 +31,7 @@ public:
 	QString inputSWCRootPath;
 	QString refSWCRootPath;
 	QString outputRootPath;
+	QString outputSWCRootPath;
 	QStringList caseList;
 	QStringList swcList;
 

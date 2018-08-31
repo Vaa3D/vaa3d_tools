@@ -74,17 +74,20 @@ public:
 
 inline void NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double zFactor, double distThre)
 {
-	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin() + 1; it != inputTree.listNeuron.end(); ++it)
+	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
-		double x1 = it->x;
-		double y1 = it->y;
-		double z1 = it->z;
-		size_t paID = it->parent;
-		double x2 = inputTree.listNeuron.at(paID - 1).x;
-		double y2 = inputTree.listNeuron.at(paID - 1).y;
-		double z2 = inputTree.listNeuron.at(paID - 1).z;
-		double dist = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + zFactor * zFactor * (z1 - z2) * (z1 - z2));
-		if (dist > distThre) it->parent = -1;
+		if (it->parent != -1)
+		{
+			double x1 = it->x;
+			double y1 = it->y;
+			double z1 = it->z;
+			size_t paID = it->parent;
+			double x2 = inputTree.listNeuron.at(paID - 1).x;
+			double y2 = inputTree.listNeuron.at(paID - 1).y;
+			double z2 = inputTree.listNeuron.at(paID - 1).z;
+			double dist = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + zFactor * zFactor * (z1 - z2) * (z1 - z2));
+			if (dist > distThre) it->parent = -1;
+		}
 	}
 }
 

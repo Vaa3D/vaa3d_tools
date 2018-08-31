@@ -39,7 +39,7 @@ struct connectedComponent
 class ImgAnalyzer
 {
 public:
-	static vector<connectedComponent> findConnectedComponent(vector<unsigned char**> inputSlicesVector, int imgDims[]);
+	static vector<connectedComponent> findConnectedComponent_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
 	
 	static inline vector<float> ChebyshevCenter(connectedComponent inputComp);
 

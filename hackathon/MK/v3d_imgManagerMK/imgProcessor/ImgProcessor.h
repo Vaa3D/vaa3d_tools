@@ -82,6 +82,9 @@ public:
 	static inline void imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
 
 	template<class T>
+	static inline void maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[]);
+
+	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
 
 	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[], int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
@@ -193,6 +196,19 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 		for (int i = 0; i < xLength; ++i)
 		{
 			output[xLength*j + i] = input[xLength*(yLength - j - 1) + i];
+		}
+	}
+}
+
+template<class T>
+inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[])
+{
+	for (int i = 0; i < dims[0] * dims[1]; ++i) outputImgPtr[i] = 0;
+	for (vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
+	{
+		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i)
+		{
+			outputImgPtr[i] = ImgProcessor::imageMax(it, outputImgPtr, outputImgPtr, imgDims);
 		}
 	}
 }
