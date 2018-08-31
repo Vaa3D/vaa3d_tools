@@ -68,10 +68,10 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
 QStringList importFileList_addnumbersort(const QString & curFilePath, int method_code,int displayNum)
 {
 
-    QStringList myList,nameList/*,pathList*/;
+    QStringList myList,displayList/*,pathList*/;
     map<int,double> fileDateMap;
     myList.clear();
-    nameList.clear();
+    displayList.clear();
     //pathList.clear();
     // get the image files namelist in the directory
     QStringList imgSuffix;
@@ -86,7 +86,7 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
     if (!dir.exists())
     {
         qWarning("Cannot find the directory");
-        return myList;
+        return displayList;
     }
 
     //exact file name in FinishedNeuron folder
@@ -130,27 +130,43 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
             }
         }
     }
-    int count=0;
+    int count=0;int displayIndex[9];int displayOrderIndex[9];
     if(fileDateMap.size()<=displayNum)
     {
         foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
         {
-            myList += QFileInfo(dir, file).absoluteFilePath();
+            displayList += QFileInfo(dir, file).absoluteFilePath();
         }
     }
     else//pick up displayNumbers new files with lagerest date
     {
+        int displayCount=0;
         foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
         {
-            if(lastIndex[count]<=displayNum)
+            if(lastIndex[count]<displayNum)
+            {
+                displayIndex[displayCount]=lastIndex[count];
+                displayCount++;
                 myList += QFileInfo(dir, file).absoluteFilePath();
+            }
             count++;
             if(myList.size()==displayNum)
                 break;
+        }//sort the display
+        for(int i=0;i<myList.size();i++)
+        {
+            displayOrderIndex[displayIndex[i]]=i;
+        }
+        //std:sort(displayIndex,displayIndex+9,less<int>());
+
+        for(int i=0;i<myList.size();i++)
+        {
+            displayList+=myList.at(displayOrderIndex[i]);
         }
     }
-    foreach (QString qs, myList)  qDebug() << qs;
-    return myList;
+
+    foreach (QString qs, displayList)  qDebug() << qs;
+    return displayList;
 }
 void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
