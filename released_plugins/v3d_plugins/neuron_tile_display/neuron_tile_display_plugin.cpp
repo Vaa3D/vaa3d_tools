@@ -360,10 +360,10 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
     else if(menu_name==tr("BigScreen Display"))
     {
         unsigned int displayNum=9;
-        bool ok;
-        displayNum = QInputDialog::getInteger(parent, "",
-                                      "#Number of the monitors:",
-                                      9, 9, 10, 1, &ok);
+        bool ok=true;
+//        displayNum = QInputDialog::getInteger(parent, "",
+//                                      "#Number of the monitors:",
+//                                      9, 9, 10, 1, &ok);
         if(ok)
             MethodForBigScreenDisplay(callback,parent,displayNum);
         else
@@ -411,7 +411,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
 
 
 
-    int col=5, row=3, xRez=-5, yRez=0;
+    int col=5, row=3, xRez=3840, yRez=2160;
     //
     switch (displayNum) {
     case 9:
@@ -424,13 +424,13 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         break;
     }
 
-    QRect deskRect = QApplication::desktop()->availableGeometry();
-    qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
-    int xRez_o=deskRect.width()/col;
-    int yRez_o=deskRect.height()/row;
+//    QRect deskRect = QApplication::desktop()->availableGeometry();
+//    qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
+//    int xRez_o=deskRect.width()/5;
+//    int yRez_o=deskRect.height()/3;
 
-    qDebug("every col size is %d",xRez_o);
-    qDebug("every row size is %d",yRez_o);
+//    qDebug("every col size is %d",xRez_o);
+//    qDebug("every row size is %d",yRez_o);
 
     QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
 
@@ -450,6 +450,14 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
 
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     qDebug("new window size is %d",cur_list_3dviewer.size());
+    int ydim=720;int xdim=1280;
+//    bool ok1,ok2;
+//    xdim = QInputDialog::getInteger(parent, "",
+//                                  "#xdimension is",
+//                                  1280, 0, 10000, 1, &ok1);
+//    ydim = QInputDialog::getInteger(parent, "",
+//                                  "#ydimension is:",
+//                                  720, 0, 10000, 1, &ok2);
     for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
     {
         if( (i%col)/**xRez*/ ==0)
@@ -458,13 +466,32 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         {
         case 9:
             if(i<cur_list_3dviewer.size()-1)
-                callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+            {
+                //callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+                //if(ok1&&ok2)
+                {
+                    callback.moveWindow(cur_list_3dviewer.at(i),xRez+(i%col)*xdim,(offsety)*ydim);
+                    callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
+                }
+            }
             else
-                callback.moveWindow(cur_list_3dviewer.at(i),col*(xRez_o+xRez),0);
+            {
+                int ydim=1030;int xdim=1920;
+//                bool ok1,ok2;
+//                xdim = QInputDialog::getInteger(parent, "",
+//                                              "#xdimension is",
+//                                              1920, 0, 10000, 1, &ok1);
+//                ydim = QInputDialog::getInteger(parent, "",
+//                                              "#ydimension is:",
+//                                              1080, 0, 10000, 1, &ok2);
+                callback.moveWindow(cur_list_3dviewer.at(i),0,yRez+50);
+//                if(ok1&&ok2)
+                    callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
+            }
             break;
-        case 10:
-            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
-            break;
+//        case 10:
+//            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
+//            break;
         default:
             break;
         }
