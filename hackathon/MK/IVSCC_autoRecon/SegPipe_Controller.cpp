@@ -9,7 +9,6 @@
 
 #include "SegPipe_Controller.h"
 #include "NeuronStructExplorer.h"
-#include "NeuronStructUtilities.h"
 
 using namespace std;
 
@@ -53,6 +52,10 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 		this->myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
 		this->myImgManagerPtr->caseList = this->caseList;
 		this->myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+
+		this->myImgAnalyzerPtr = new ImgAnalyzer;
+
+		this->myNeuronUtilPtr = new NeuronStructUtil;
 	}
 }
 
@@ -463,7 +466,7 @@ void SegPipe_Controller::findSomaMass()
 	}
 }
 
-void SegPipe_Controller::findConnComponent()
+void SegPipe_Controller::findSignalBlobs()
 {
 	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
@@ -504,13 +507,14 @@ void SegPipe_Controller::findConnComponent()
 		}
 		cout << "slice preparation done." << endl;
 
-		this->connComponents.clear();
-		this->connComponents = ImgAnalyzer::findConnectedComponent_2Dcombine(slice2DVector, dims, MIP1Dptr);
+		this->signalBlobs.clear();
+		ImgAnalyzer* myAnalyzer = new ImgAnalyzer;
+		this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs_2Dcombine(slice2DVector, dims, MIP1Dptr);
 
 		delete[] MIP1Dptr;
 		MIP1Dptr = nullptr;
 		/*{
-			// -- This is a workaround testing block for some cases that have problematic arrays in ImgAnalyzer::findConnectedComponent_2Dcombine's currSlice1D.
+			// -- This is a workaround testing block for some cases that have problematic arrays in ImgAnalyzer::findSignalBlobs_2Dcombine's currSlice1D.
 			string mipName = "Z:/mip1.tif";
 			const char* mipNameC = mipName.c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
@@ -521,18 +525,19 @@ void SegPipe_Controller::findConnComponent()
 			long int totalbyteSlice = slicePtr->getTotalBytes();
 			unsigned char* mip1D = new unsigned char[totalbyteSlice];
 			memcpy(mip1D, slicePtr->getRawData(), totalbyteSlice);
-			this->connComponents = ImgAnalyzer::findConnectedComponent_2Dcombine(slice2DVector, dims, mip1D);
+			this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs_2Dcombine(slice2DVector, dims, mip1D);
 		}*/
 
-		connectedComponent soma;
 		QList<NeuronSWC> allSigs;
-		for (vector<connectedComponent>::iterator connIt = this->connComponents.begin(); connIt != this->connComponents.end(); ++connIt)
+		for (vector<connectedComponent>::iterator connIt = this->signalBlobs.begin(); connIt != this->signalBlobs.end(); ++connIt)
 		{
 			for (map<int, set<vector<int> > >::iterator sliceSizeIt = connIt->coordSets.begin(); sliceSizeIt != connIt->coordSets.end(); ++sliceSizeIt)
 			{
 				for (set<vector<int> >::iterator nodeIt = sliceSizeIt->second.begin(); nodeIt != sliceSizeIt->second.end(); ++nodeIt)
 				{
 					NeuronSWC sig;
+					V3DLONG blobID = connIt->islandNum;
+					sig.n = blobID;
 					sig.x = nodeIt->at(1);
 					sig.y = nodeIt->at(0);
 					sig.z = sliceSizeIt->first;
@@ -549,10 +554,47 @@ void SegPipe_Controller::findConnComponent()
 	}
 }
 
+void SegPipe_Controller::swc2DsignalBlobsCenter()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signalBlobs2D(currTree);
+		cout << signalBlobs2D.size() << endl;
+
+		this->centers.clear();
+		for (vector<connectedComponent>::iterator it = signalBlobs2D.begin(); it != signalBlobs2D.end(); ++it)
+		{
+			vector<float> center = ImgAnalyzer::ChebyshevCenter(*it);
+
+			NeuronSWC centerNode;
+			centerNode.n = it->islandNum;
+			centerNode.x = center[0];
+			centerNode.y = center[1];
+			centerNode.z = center[2];
+			centerNode.type = 2;
+			centerNode.parent = -1;
+			this->centers.push_back(centerNode);
+		}
+
+		NeuronTree centerTree;
+		centerTree.listNeuron = this->centers;
+		QString swcSaveFullNameQ = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(swcSaveFullNameQ, centerTree);
+	}
+}
+
 void SegPipe_Controller::getChebyshevCenters(QString caseNum)
 {
 	this->centers.clear();
-	for (vector<connectedComponent>::iterator it = this->connComponents.begin(); it != this->connComponents.end(); ++it)
+	for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 	{
 		vector<float> center = ImgAnalyzer::ChebyshevCenter(*it);
 

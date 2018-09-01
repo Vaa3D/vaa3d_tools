@@ -1,6 +1,8 @@
 #include <ctime>
 
+#include "ImgManager.h"
 #include "ImgAnalyzer.h"
+#include "ImgProcessor.h"
 
 morphStructElement::morphStructElement() : eleShape("square"), xLength(3), yLength(3)
 {
@@ -40,7 +42,7 @@ morphStructElement::morphStructElement(string shape) : eleShape(shape)
 	}
 }
 
-vector<connectedComponent> ImgAnalyzer::findConnectedComponent_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
+vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
 	// --- for TESTING purpose ------
 	string testName = "Z:/IVSCC_mouse_inhibitory_442_swcROIcropped_lumps/test.tif";
@@ -123,32 +125,6 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent_2Dcombine(vector<
 						connIt->zMin > sliceNum + 2 && connIt->zMax < sliceNum - 2) goto NEW_SIGNAL_VECTOR;
 					else
 					{
-						// -- slice[i]
-						for (set<vector<int> >::iterator it1 = connIt->coordSets[sliceNum - 1].begin(); it1 != connIt->coordSets[sliceNum - 1].end(); ++it1)
-						{
-							if (it1->at(0) >= mipIt->at(0) - 1 && it1->at(0) <= mipIt->at(0) + 1 &&
-								it1->at(1) >= mipIt->at(1) - 1 && it1->at(1) <= mipIt->at(1) + 1)
-							{
-								vector<int> newCoord(3);
-								newCoord[0] = mipIt->at(0);
-								newCoord[1] = mipIt->at(1);
-								newCoord[2] = sliceNum;
-								connIt->coordSets[sliceNum].insert(newCoord);
-
-								if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
-								else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
-
-								if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
-								else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
-
-								connIt->zMax = sliceNum;
-
-								connected = true;
-								goto SIGNAL_VECTOR_INSERTED;
-							}
-						}
-
-						// -- slice[i + 1]
 						for (set<vector<int> >::iterator it2 = connIt->coordSets[sliceNum].begin(); it2 != connIt->coordSets[sliceNum].end(); ++it2)
 						{
 							if (it2->at(0) >= mipIt->at(0) - 1 && it2->at(0) <= mipIt->at(0) + 1 &&

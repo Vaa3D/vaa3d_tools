@@ -270,13 +270,15 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.x = tileLocation.x -int(P.block_size/2);
     tileLocation.y = tileLocation.y -int(P.block_size/2);
     if(P.tracing_3D)
-        tileLocation.z = tileLocation.z -int(P.block_size/2);
+        tileLocation.z = tileLocation.z -int(P.block_size/8);
     else
         tileLocation.z = 0;
 
     tileLocation.ev_pc1 = P.block_size;
     tileLocation.ev_pc2 = P.block_size;
-    tileLocation.ev_pc3 = P.block_size;
+    tileLocation.ev_pc3 = P.block_size/4;
+
+    P.block_size = P.block_size/2;
 
     tileLocation.category = 1;
     allTargetList.push_back(tileLocation);
@@ -1527,9 +1529,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     saveTextFile.close();
 
     simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, total4DImage->getDatatype());
+
+    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-    if(0)
+    if(!ifs_swc)
     {
+        P.length_thresh = 2;
         QString imageUnetString = imageSaveString + "unet.v3draw";
 
 
@@ -1578,11 +1583,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             return false;
         }
         total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-
-
-    }
-
-    if(in_sz) {delete []in_sz; in_sz =0;}
+    }else
+        P.length_thresh = 5;
 
 
     PARA_APP1 p1;
@@ -1630,7 +1632,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     NeuronTree nt;
-    ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     vector<MyMarker*> finalswc;
 
     if(ifs_swc)
@@ -1839,7 +1840,13 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
                             }
                             if (num_tips>=tips_th  && ifs_swc) //add <=20 and #tips>=100 constraints by PHC 20170801
+                            {
+                                unsigned char* total1dData_apa = 0;
+                                total1dData_apa = new unsigned char [pagesz_vim];
+                                BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
+                                p2.p4dImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
                                 p2.bkg_thresh +=1;
+                            }
                             else
                                 break;
                         } while (1);
@@ -1871,8 +1878,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     }
                 }
             }
-           // saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
-           // nt = readSWC_file(swcString);
+//            saveSWC_file(swcString.toStdString().c_str(), tileswc_file);
+//            nt = readSWC_file(swcString);
         }
     }
     else if (P.method == gd )
@@ -1976,14 +1983,26 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     }
 
-    map<MyMarker*, double> score_map;
-//    vector<MyMarker *> neuronTree = readSWC_file(swcString.toStdString());
-    topology_analysis_perturb_intense(total4DImage->getRawData(), tileswc_file, score_map, 1, p2.p4dImage->getXDim(), p2.p4dImage->getYDim(), p2.p4dImage->getZDim(), 1);
+    if(in_sz) {delete []in_sz; in_sz =0;}
 
-    for(V3DLONG i = 0; i<tileswc_file.size(); i++){
-        MyMarker * marker = tileswc_file[i];
-        double tmp = score_map[marker] * 120 +19;
-        marker->type = (tmp > 255 || marker->type ==0) ? 255 : tmp;
+    if(ifs_swc)
+    {
+
+        map<MyMarker*, double> score_map;
+    //    vector<MyMarker *> neuronTree = readSWC_file(swcString.toStdString());
+        topology_analysis_perturb_intense(total4DImage->getRawData(), tileswc_file, score_map, 1, p2.p4dImage->getXDim(), p2.p4dImage->getYDim(), p2.p4dImage->getZDim(), 1);
+
+        for(V3DLONG i = 0; i<tileswc_file.size(); i++){
+            MyMarker * marker = tileswc_file[i];
+            double tmp = score_map[marker] * 120 +19;
+            marker->type = (tmp > 255 || marker->type ==0) ? 255 : tmp;
+        }
+    }else
+    {
+        for(V3DLONG i = 0; i<tileswc_file.size(); i++){
+            MyMarker * marker = tileswc_file[i];
+            marker->type = 3;
+        }
     }
 
     saveSWC_file(swcString.toStdString(),tileswc_file);
@@ -2027,7 +2046,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 q.clear();
             }
 
-            if(nt.listNeuron[i].type>180 && visit[i]==0)
+            if(nt.listNeuron[i].type>130 && visit[i]==0)
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2071,7 +2090,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         if (childs[i].size()==0 || P.method != gd)
         {
             NeuronSWC curr = list.at(i);
-            if(curr.type >180) continue;
+            if(curr.type >130) continue;
             LocationSimple newTip;
             bool check_tip = false;
             if( curr.x < overlap_ratio*  total4DImage->getXDim() || curr.x > (1-overlap_ratio) *  total4DImage->getXDim() || curr.y < overlap_ratio * total4DImage->getYDim() || curr.y > (1-overlap_ratio)* total4DImage->getYDim()
@@ -5748,9 +5767,9 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
         adaptive_size_z = adaptive_size_x;
     }
 
-    adaptive_size_x = (adaptive_size_x <= 512) ? 512 : adaptive_size_x;
-    adaptive_size_y = (adaptive_size_y <= 512) ? 512 : adaptive_size_y;
-    adaptive_size_z = (adaptive_size_z <= 512) ? 512 : adaptive_size_z;
+    adaptive_size_x = (adaptive_size_x <= 128) ? 128 : adaptive_size_x;
+    adaptive_size_y = (adaptive_size_y <= 128) ? 128 : adaptive_size_y;
+    adaptive_size_z = (adaptive_size_z <= 128) ? 128 : adaptive_size_z;
 
 
     adaptive_size_x = (adaptive_size_x >= block_size) ? block_size : adaptive_size_x;

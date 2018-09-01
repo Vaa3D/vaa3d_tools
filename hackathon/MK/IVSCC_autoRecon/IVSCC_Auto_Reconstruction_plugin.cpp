@@ -103,8 +103,9 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		segPipePtr->swc_imgCrop();
 	}
-	else if (func_name == tr("connectedComponent")) segPipePtr->findConnComponent();
+	else if (func_name == tr("signalBlob")) segPipePtr->findSignalBlobs();
 	else if (func_name == tr("centroid")) segPipePtr->getChebyshevCenters(output2);
+	else if (func_name == tr("2Dcentroid")) segPipePtr->swc2DsignalBlobsCenter();
 	else if (func_name == tr("MST")) segPipePtr->getMST();
 	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
 	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();

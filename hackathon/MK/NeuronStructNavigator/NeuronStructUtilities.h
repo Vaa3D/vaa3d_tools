@@ -22,9 +22,10 @@ public:
 	static void swcSliceAssembler(string swcPath);
 	inline static void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	inline static void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength);
-	inline static NeuronTree swcScale(NeuronTree const& inputTree, float xScale, float yScale, float zScale);
-	static NeuronTree swcRegister(NeuronTree& inputTree, NeuronTree const& refTree, float customFactor = 1);
-	static vector<connectedComponent>& swc2connComponent(NeuronTree const& inputTree);
+	inline static NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
+	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree, float customFactor = 1);
+	vector<connectedComponent> swc2signalBlobs2D(const NeuronTree& inputTree);
+	vector<connectedComponent> swc2signalBlobs3D(const NeuronTree& inputTree);
 
 	static void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor);
 	static void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold);
@@ -37,7 +38,7 @@ public:
 	/*********************************************************/
 };
 
-inline NeuronTree NeuronStructUtil::swcScale(NeuronTree const& inputTree, float xScale, float yScale, float zScale)
+inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale)
 {
 	NeuronTree outputTree;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
