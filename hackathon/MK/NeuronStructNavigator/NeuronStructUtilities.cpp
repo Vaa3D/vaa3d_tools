@@ -3,6 +3,7 @@
 #include <deque>
 #include <string>
 #include <iterator>
+#include <set>
 #include <ctime>
 
 #include <boost\filesystem.hpp>
@@ -12,6 +13,127 @@
 
 using namespace std;
 using namespace boost;
+
+NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree, float customFactor)
+{
+	float xShift, yShift, zShift;
+	float xScale, yScale, zScale;
+
+	float xmin = 10000, ymin = 10000, zmin = 10000;
+	float xmax = 0, ymax = 0, zmax = 0;
+	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		if (it->x < xmin) xmin = it->x;
+		if (it->x > xmax) xmax = it->x;
+		if (it->y < ymin) ymin = it->y;
+		if (it->y > ymax) ymax = it->y;
+		if (it->z < zmin) zmin = it->z;
+		if (it->z > zmax) zmax = it->z;
+	}
+	float refXmin = 10000, refYmin = 10000, refZmin = 10000;
+	float refXmax = 0, refYmax = 0, refZmax = 0;
+	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
+	{
+		if (refIt->x < refXmin) refXmin = refIt->x;
+		if (refIt->x > refXmax) refXmax = refIt->x;
+		if (refIt->y < refYmin) refYmin = refIt->y;
+		if (refIt->y > refYmax) refYmax = refIt->y;
+		if (refIt->z < refZmin) refZmin = refIt->z;
+		if (refIt->z > refZmax) refZmax = refIt->z;
+	}
+
+	xShift = refXmin - xmin;
+	yShift = refYmin - ymin;
+	zShift = refZmin - zmin;
+	xScale = (refXmax - refXmin) / (xmax - xmin);
+	yScale = (refYmax - refYmin) / (ymax - ymin);
+	zScale = (refZmax - refZmin) / (zmax - zmin);
+
+	NeuronTree outputTree;
+	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
+	{
+		NeuronSWC newNode = inputTree.listNeuron.at(i);
+		newNode.x = (newNode.x - xmin) * xScale + refXmin;
+		newNode.y = (newNode.y - xmin) * yScale + refYmin;
+		newNode.z = (newNode.z - xmin) * zScale + refZmin;
+		outputTree.listNeuron.push_back(newNode);
+	}
+
+	return outputTree;
+}
+
+vector<connectedComponent> NeuronStructUtil::swc2signalBlobs2D(const NeuronTree& inputTree)
+{
+	vector<NeuronSWC> allNodes;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it) allNodes.push_back(*it);
+
+	vector<connectedComponent> connComps2D;
+	int islandCount = 0;
+	for (vector<NeuronSWC>::iterator nodeIt = allNodes.begin(); nodeIt != allNodes.end(); ++nodeIt)
+	{
+		if (int(nodeIt - allNodes.begin()) % 10000 == 0) cout << int(nodeIt - allNodes.begin()) << " ";
+
+		for (vector<connectedComponent>::iterator connIt = connComps2D.begin(); connIt != connComps2D.end(); ++connIt)
+		{
+			if (int(nodeIt->z) == connIt->coordSets.begin()->first)
+			{
+				for (set<vector<int> >::iterator dotIt = connIt->coordSets[int(nodeIt->z)].begin(); dotIt != connIt->coordSets[int(nodeIt->z)].end(); ++dotIt)
+				{
+					if (int(nodeIt->x) <= dotIt->at(0) + 1 && int(nodeIt->x) >= dotIt->at(0) - 1 &&
+						int(nodeIt->y) <= dotIt->at(1) + 1 && int(nodeIt->y) >= dotIt->at(1) - 1)
+					{
+						vector<int> newCoord(3);
+						newCoord[0] = int(nodeIt->x);
+						newCoord[1] = int(nodeIt->y);
+						newCoord[2] = int(nodeIt->z);
+						connIt->coordSets[newCoord[2]].insert(newCoord);
+
+						if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
+						else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
+
+						if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
+						else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
+
+						goto NODE_INSERTED;
+					}
+				}
+			}
+		}
+
+		{
+			++islandCount;
+			connectedComponent newIsland;
+			newIsland.islandNum = islandCount;
+			vector<int> newCoord(3);
+			newCoord[0] = int(nodeIt->x);
+			newCoord[1] = int(nodeIt->y);
+			newCoord[2] = int(nodeIt->z);
+			set<vector<int> > coordSet;
+			coordSet.insert(newCoord);
+			newIsland.coordSets.insert(pair<int, set<vector<int> > >(newCoord[2], coordSet));
+			newIsland.xMax = newCoord[0];
+			newIsland.xMin = newCoord[0];
+			newIsland.yMax = newCoord[1];
+			newIsland.yMin = newCoord[1];
+			newIsland.zMin = newCoord[2];
+			newIsland.zMax = newCoord[2];
+			connComps2D.push_back(newIsland);
+		}
+
+	NODE_INSERTED:
+		continue;
+	}
+	cout << endl;
+
+	return connComps2D;
+}
+
+vector<connectedComponent> NeuronStructUtil::swc2signalBlobs3D(const NeuronTree& inputTree)
+{
+	vector<connectedComponent> connComps;
+
+	return connComps;
+}
 
 void NeuronStructUtil::swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness)
 {
@@ -99,39 +221,6 @@ void NeuronStructUtil::swcSliceAssembler(string swcPath)
 
 	QString outputFileName = QString::fromStdString(swcPath) + "\\assembledSWC.swc";
 	writeSWC_file(outputFileName, outputTree);
-}
-
-void NeuronStructUtil::swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
-{
-	if (zlb == 0 && zhb == 0)
-	{
-		for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-		{
-			if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb) continue;
-			else
-			{
-				NeuronSWC newNode;
-				newNode.x = it->x - (xlb - 1);
-				newNode.y = it->y - (ylb - 1);
-				newNode.z = it->z;
-				newNode.type = it->type;
-				newNode.n = it->n;
-				newNode.parent = it->parent;
-				outputTreePtr->listNeuron.push_back(newNode);
-			}
-		}
-	}
-}
-
-void NeuronStructUtil::swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength)
-{
-	float yMiddle = float(yLength + 1) / 2;
-	for (QList<NeuronSWC>::const_iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-	{
-		NeuronSWC flippedNode = *it;
-		if (it->y > yMiddle) flippedNode.y = (yMiddle - (it->y - yMiddle));
-		else if (it->y < yMiddle) flippedNode.y = (yMiddle + (yMiddle - it->y));
-	}
 }
 
 void NeuronStructUtil::swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor)

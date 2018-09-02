@@ -15,14 +15,18 @@ HEADERS	+= preprocess_plugin.h \
     utilities.h \
     sort_swc_redefined.h \
     axon_func.h \
-    connnect_swc_redefined.h
+    connnect_swc_redefined.h \
+    split_neuron_main.h \
+    qc_main.h
 HEADERS += pre_processing_main.h
 SOURCES	+= preprocess_plugin.cpp \
     neurite_analysis_main.cpp \
     utilities.cpp \
     sort_swc_redefined.cpp \
     axon_func.cpp \
-    connect_swc_redefined.cpp
+    connect_swc_redefined.cpp \
+    split_neuron_main.cpp \
+    qc_main.cpp
 SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

@@ -1,6 +1,8 @@
 #include <ctime>
 
+#include "ImgManager.h"
 #include "ImgAnalyzer.h"
+#include "ImgProcessor.h"
 
 morphStructElement::morphStructElement() : eleShape("square"), xLength(3), yLength(3)
 {
@@ -40,39 +42,53 @@ morphStructElement::morphStructElement(string shape) : eleShape(shape)
 	}
 }
 
-
-vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned char**> inputSlicesVector, int dims[])
+vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
-	vector<connectedComponent> connList;
-
-	unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
-	for (int i = 0; i < dims[0] * dims[1]; ++i) maxIP1D[i] = 0;
-	for (vector<unsigned char**>::iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
-	{
-		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];
-		size_t currSliceI = 0;
-		for (int j = 0; j < dims[1]; ++j)
-		{
-			for (int i = 0; i < dims[0]; ++i)
-			{
-				++currSliceI;
-				currSlice1D[currSliceI] = (*it)[j][i];
-			}
-		}
-		ImgProcessor::imageMax(currSlice1D, maxIP1D, maxIP1D, dims);
-
-		if (currSlice1D) { delete[] currSlice1D; currSlice1D = 0; }
-	}
-	cout << " MIP done." << endl;
-	/*string testName = "Z:/test.tif";
+	// --- for TESTING purpose ------
+	string testName = "Z:/IVSCC_mouse_inhibitory_442_swcROIcropped_lumps/test.tif";
 	const char* testNameC = testName.c_str();
-	V3DLONG saveDims[4];
-	saveDims[0] = dims[0];
-	saveDims[1] = dims[1];
-	saveDims[2] = 1;
-	saveDims[3] = 1;
-	ImgManager::saveimage_wrapper(testNameC, maxIP1D, saveDims, 1);*/
+	V3DLONG testDims[4];
+	testDims[0] = dims[0];
+	testDims[1] = dims[1];
+	testDims[2] = dims[2];
+	testDims[3] = 1;
+	// ------------------------------
 
+	vector<connectedComponent> connList;
+	cout << "slice dimension: " << dims[0] << " " << dims[1] << endl;
+	// --------- Onlu get into this selection when MIP image is not provided ---------
+	if (maxIP1D == nullptr) 
+	{
+		unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
+		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
+		for (int i = 0; i < dims[0] * dims[1]; ++i)
+		{
+			maxIP1D[i] = 0;
+			currSlice1D[i] = 0;
+		}
+		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
+		for (vector<unsigned char**>::iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
+		{
+			cout << ptrdiff_t(it - inputSlicesVector.begin() + 1) << " ";
+			size_t currSliceI = 0;
+			for (int j = 0; j < dims[1]; ++j)
+			{
+				for (int i = 0; i < dims[0]; ++i)
+				{
+					++currSliceI;
+					currSlice1D[currSliceI] = (*it)[j][i];
+				}
+			}
+			ImgProcessor::imageMax(currSlice1D, maxIP1D, maxIP1D, dims);
+		}
+		cout << " MIP done." << endl;
+
+		delete[] currSlice1D;
+		currSlice1D = nullptr;
+	}
+	// ------- END [Onlu get into this selection when MIP image is not provided] -------
+
+	// ----------- Prepare white pixel address book ------------
 	set<vector<int> > whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
 	for (int j = 0; j < dims[1]; ++j)
@@ -87,7 +103,9 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
 		}
 	}
+	// ------- END of [Prepare white pixel address book] -------
 	
+	// -- This slice-by-slice approach for finding connected component is achieved by analyzing the connectivity of every 2 adjacent slices.
 	int islandCount = 0;
 	cout << "  -- white pixel number: " << whitePixAddress.size() << endl;
 	cout << "Processing slices: ";
@@ -102,15 +120,13 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 				bool connected = false;
 				for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
 				{
-					if (mipIt->at(0) + 2 < connIt->xMin && mipIt->at(0) - 2 > connIt->xMax &&
-						mipIt->at(1) + 2 < connIt->yMin && mipIt->at(1) - 2 > connIt->yMax &&
-						connIt->zMin > sliceNum + 2 && connIt->zMax < sliceNum - 2) goto NEW_SIGNAL_VECTOR;
+					if (connIt->zMax != sliceNum) continue;
 					else
 					{
-						for (set<vector<int> >::iterator it1 = connIt->coordSets[sliceNum - 1].begin(); it1 != connIt->coordSets[sliceNum - 1].end(); ++it1)
+						for (set<vector<int> >::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
 						{
-							if (it1->at(0) >= mipIt->at(0) - 1 && it1->at(0) <= mipIt->at(0) + 1 &&
-								it1->at(1) >= mipIt->at(1) - 1 && it1->at(1) <= mipIt->at(1) + 1)
+							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
+								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1)
 							{
 								vector<int> newCoord(3);
 								newCoord[0] = mipIt->at(0);
@@ -124,29 +140,7 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 								if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
 								else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
 
-								connIt->zMax = sliceNum;
-
-								connected = true;
-								goto SIGNAL_VECTOR_INSERTED;
-							}
-						}
-						for (set<vector<int> >::iterator it2 = connIt->coordSets[sliceNum].begin(); it2 != connIt->coordSets[sliceNum].end(); ++it2)
-						{
-							if (it2->at(0) >= mipIt->at(0) - 1 && it2->at(0) <= mipIt->at(0) + 1 &&
-								it2->at(1) >= mipIt->at(1) - 1 && it2->at(1) <= mipIt->at(1) + 1)
-							{
-								vector<int> newCoord(3);
-								newCoord[0] = mipIt->at(0);
-								newCoord[1] = mipIt->at(1);
-								newCoord[2] = sliceNum;
-								connIt->coordSets[sliceNum].insert(newCoord);
-
-								if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
-								else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
-
-								if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
-								else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
-
+								connIt->zMin = sliceNum;
 								connIt->zMax = sliceNum;
 
 								connected = true;
@@ -156,29 +150,26 @@ vector<connectedComponent> ImgAnalyzer::findConnectedComponent(vector<unsigned c
 					}
 				}
 
-			NEW_SIGNAL_VECTOR:
+				if (!connected) // -- new connected component identified
 				{
-					if (!connected)
-					{
-						++islandCount;
-						connectedComponent newIsland;
-						newIsland.islandNum = islandCount;
-						vector<int> newCoord(3);
-						newCoord[0] = mipIt->at(0);
-						newCoord[1] = mipIt->at(1);
-						newCoord[2] = sliceNum;
-						set<vector<int> > coordSet;
-						coordSet.insert(newCoord);
-						newIsland.coordSets.insert(pair<int, set<vector<int> > >(sliceNum, coordSet));
-						newIsland.xMax = newCoord[0];
-						newIsland.xMin = newCoord[0];
-						newIsland.yMax = newCoord[1];
-						newIsland.yMin = newCoord[1];
-						newIsland.zMin = sliceNum;
-						newIsland.zMax = sliceNum;
-						connList.push_back(newIsland);
-						continue;
-					}
+					++islandCount;
+					connectedComponent newIsland;
+					newIsland.islandNum = islandCount;
+					vector<int> newCoord(3);
+					newCoord[0] = mipIt->at(0);
+					newCoord[1] = mipIt->at(1);
+					newCoord[2] = sliceNum;
+					set<vector<int> > coordSet;
+					coordSet.insert(newCoord);
+					newIsland.coordSets.insert(pair<int, set<vector<int> > >(sliceNum, coordSet));
+					newIsland.xMax = newCoord[0];
+					newIsland.xMin = newCoord[0];
+					newIsland.yMax = newCoord[1];
+					newIsland.yMin = newCoord[1];
+					newIsland.zMin = sliceNum;
+					newIsland.zMax = sliceNum;
+					connList.push_back(newIsland);
+					continue;
 				}
 
 			SIGNAL_VECTOR_INSERTED:

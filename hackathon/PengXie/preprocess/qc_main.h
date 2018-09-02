@@ -1,5 +1,5 @@
-#ifndef __PRE_PROCESSING_MAIN_H__
-#define __PRE_PROCESSING_MAIN_H__
+#ifndef QC_MAIN_H
+#define QC_MAIN_H
 
 #include "QtGlobal"
 #include "vector"
@@ -29,10 +29,6 @@ using namespace std;
 #include "io.h"
 #endif
 
-bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent);
-bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
-bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
-bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool qc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 
-void printHelp_pre_processing();
-#endif
+#endif // QC_MAIN_H

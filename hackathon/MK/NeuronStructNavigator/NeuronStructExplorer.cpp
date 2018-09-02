@@ -22,28 +22,27 @@ NeuronStructExplorer::NeuronStructExplorer(string inputFileName)
 	}
 }
 
-NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree* inputTreePtr)
+NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 {
-	undirectedGraph graph(inputTreePtr->listNeuron.size());
-	LocationSimple tmpLocation(0, 0, 0);
-	for (int i = 0; i < inputTreePtr->listNeuron.size(); ++i)
+	NeuronTree MSTtrees;
+	undirectedGraph graph(inputTreePtr.listNeuron.size());
+	for (int i = 0; i < inputTreePtr.listNeuron.size(); ++i)
 	{
+			
 		float x1, y1, z1;
-		x1 = inputTreePtr->listNeuron.at(i).x;
-		y1 = inputTreePtr->listNeuron.at(i).y;
-		z1 = inputTreePtr->listNeuron.at(i).z;
-		for (int j = 0; j < inputTreePtr->listNeuron.size(); ++j)
+		x1 = inputTreePtr.listNeuron.at(i).x;
+		y1 = inputTreePtr.listNeuron.at(i).y;
+		z1 = inputTreePtr.listNeuron.at(i).z;
+		for (int j = 0; j < inputTreePtr.listNeuron.size(); ++j)
 		{
 			float x2, y2, z2;
-			x2 = inputTreePtr->listNeuron.at(j).x;
-			y2 = inputTreePtr->listNeuron.at(j).y;
-			z2 = inputTreePtr->listNeuron.at(j).z;
+			x2 = inputTreePtr.listNeuron.at(j).x;
+			y2 = inputTreePtr.listNeuron.at(j).y;
+			z2 = inputTreePtr.listNeuron.at(j).z;
+
+			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + double(z1 - z2) * double(z1 - z2));
 			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
-			if (!edgeQuery.second && i != j)
-			{
-				double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + double(z1 - z2) * double(z1 - z2));
-				boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
-			}
+			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
 		}
 	}
 
@@ -54,18 +53,19 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree* inputTreePtr)
 	QHash<int, int>  hashNeuron;
 	listNeuron.clear();
 	hashNeuron.clear();
-	for (size_t i = 0; i != p.size(); ++i)
+		
+	for (size_t ii = 0; ii != p.size(); ++ii)
 	{
 		int pn;
-		if (p[i] == i) pn = -1;
-		else pn = p[i] + 1;
+		if (p[ii] == ii) pn = -1;
+		else pn = p[ii] + 1;
 
 		NeuronSWC S;
-		S.n = i + 1;
+		S.n = ii + 1;
 		S.type = 7;
-		S.x = inputTreePtr->listNeuron.at(i).x;
-		S.y = inputTreePtr->listNeuron.at(i).y;
-		S.z = inputTreePtr->listNeuron.at(i).z;
+		S.x = inputTreePtr.listNeuron.at(ii).x;
+		S.y = inputTreePtr.listNeuron.at(ii).y;
+		S.z = inputTreePtr.listNeuron.at(ii).z;
 		S.r = 1;
 		S.pn = pn;
 		listNeuron.append(S);

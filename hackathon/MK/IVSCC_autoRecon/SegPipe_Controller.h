@@ -5,15 +5,17 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <set>
 
 #include <qstring.h>
 #include <qstringlist.h>
 
 #include "basic_surf_objs.h"
 
+#include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
-#include "ImgManager.h"
+#include "NeuronStructUtilities.h"
 
 using namespace std;
 
@@ -28,13 +30,17 @@ public:
 
 	folderStruct inputContent;
 	QString inputCaseRootPath;
+	QString inputSWCRootPath;
+	QString refSWCRootPath;
 	QString outputRootPath;
+	QString outputSWCRootPath;
 	QStringList caseList;
+	QStringList swcList;
+
 	deque<string> inputSingleCaseSliceFullPaths;
 	deque<string> outputSingleCaseSliceFullPaths;
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
-	QString inputSWCRootPath;
 	/***********************************************************************/
 
 	deque<task> taskList;
@@ -49,20 +55,28 @@ public:
 	
 	void histQuickList();
 
-	vector<connectedComponent> connComponents;
+	vector<connectedComponent> signalBlobs;
 	QList<NeuronSWC> centers;
-	void findConnComponent();
+	void findSignalBlobs();
+	void swc2DsignalBlobsCenter();
 	void findSomaMass();
 	void getChebyshevCenters(QString caseNum);
 
 	void somaNeighborhoodThin();
 
-	void swc_imgCrop(QString inputSWCPath);
+	void swc_imgCrop();
 	
 	void getMST();
+	void swcScale(float xScale, float yScale, float zScale);
+	void swcRegister();
+	void getTiledMST();
+	void cutMST();
 
 private:
 	ImgManager* myImgManagerPtr;
+	ImgAnalyzer* myImgAnalyzerPtr;
+	NeuronStructUtil* myNeuronUtilPtr;
+
 	void singleTaskDispatcher(deque<task> taskList);
 };
 
