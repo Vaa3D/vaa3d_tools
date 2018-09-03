@@ -13,6 +13,8 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_tile_display, neuron_tile_display);
 void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent, int displayNum);
+void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent);
+QString m_InputfolderName="";
 
 QStringList neuron_tile_display::menulist() const
 {
@@ -24,6 +26,7 @@ QStringList neuron_tile_display::menulist() const
         <<tr("tile_multi_windows (swc and image files under one folder)")
         <<tr("set configuration (tile_multi_windows options only)")
        <<tr("BigScreen Display")
+      <<tr("BigScreen Display Update")
         <<tr("about");
 }
 
@@ -369,11 +372,68 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
         else
             return;
     }
+    else if(menu_name==tr("BigScreen Display Update"))
+    {
+        MethodForUpdateSWCDispaly(callback,parent);
+    }
     else
 	{
 		v3d_msg(tr("This Plugin will tile neuron to display. "
 			"Developed by Hanbo Chen, 2014-10-28"));
 	}
+}
+
+void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
+    unsigned int displayNum=9;
+    //clear the window
+    for(int i=0;i<cur_list_3dviewer.size();i++)
+    {
+        QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (cur_list_3dviewer.at(i));
+
+        new_treeList->clear();
+        QString file_name="updating....";
+        callback.setWindowDataTitle(cur_list_3dviewer.at(i), file_name);
+        callback.update_NeuronBoundingBox(cur_list_3dviewer.at(i));
+        callback.update_3DViewer(cur_list_3dviewer.at(i));
+    }
+    //update SWC list
+    if(m_InputfolderName.size()==0)
+        return;
+
+    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+    for(int i=0;i<swcList.size();i++)
+    {
+        QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (cur_list_3dviewer.at(i));
+        //new_treeList->clear();
+
+        QString curPathSWC = swcList.at(i);
+        QFileInfo curSWCBase(curPathSWC);
+        NeuronTree tmp=readSWC_file(curPathSWC);
+        new_treeList->push_back(tmp);
+        //new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
+        //reset window title to basename instead of path name
+        callback.setWindowDataTitle(cur_list_3dviewer.at(i),curSWCBase.baseName());
+        callback.update_NeuronBoundingBox(cur_list_3dviewer.at(i));
+        callback.update_3DViewer(cur_list_3dviewer.at(i));
+    }
+    //update Combine SWC file
+
+    V3dR_MainWindow * surface_combine_win=cur_list_3dviewer.at(cur_list_3dviewer.size()-1);
+    QList<NeuronTree> * new_treeList_combine = callback.getHandleNeuronTrees_Any3DViewer (surface_combine_win);
+    QString combine_file_name="Combine of the New Finished Neurons";
+    int neuronNum = swcList.size();
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        NeuronTree tmp = readSWC_file(swcList.at(i));
+        for(int j=0;j<tmp.listNeuron.size();j++)
+            tmp.listNeuron[j].type=i+2;
+        new_treeList_combine->push_back(tmp);
+    }
+    callback.setWindowDataTitle(surface_combine_win, combine_file_name);
+    callback.update_NeuronBoundingBox(surface_combine_win);
+    callback.update_3DViewer(surface_combine_win);
 }
 
 void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QStringList nameList)
@@ -394,6 +454,8 @@ void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QS
     for (V3DLONG i=0;i<neuronNum;i++)
     {
         NeuronTree tmp = readSWC_file(nameList.at(i));
+        for(int j=0;j<tmp.listNeuron.size();j++)
+            tmp.listNeuron[j].type=i+2;
         new_treeList->push_back(tmp);
     }
 
@@ -405,7 +467,7 @@ void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QS
 //designed by shengdian.08282018
 void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int displayNum=9)
 {
-    QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all finished annotation files "),
+    /*QString*/ m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all finished annotation files "),
                                                                   QDir::currentPath(),
                                                                   QFileDialog::ShowDirsOnly);
 
@@ -424,17 +486,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         break;
     }
 
-//    QRect deskRect = QApplication::desktop()->availableGeometry();
-//    qDebug("deskRect height %d and width %d",deskRect.height(),deskRect.width());
-//    int xRez_o=deskRect.width()/5;
-//    int yRez_o=deskRect.height()/3;
-
-//    qDebug("every col size is %d",xRez_o);
-//    qDebug("every row size is %d",yRez_o);
-
     QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
-
-    qDebug("display monitor num is %d",swcList.size());
 
     V3dR_MainWindow * new3DWindow = NULL;
     int offsety = -1;
@@ -451,49 +503,21 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     qDebug("new window size is %d",cur_list_3dviewer.size());
     int ydim=720;int xdim=1280;
-//    bool ok1,ok2;
-//    xdim = QInputDialog::getInteger(parent, "",
-//                                  "#xdimension is",
-//                                  1280, 0, 10000, 1, &ok1);
-//    ydim = QInputDialog::getInteger(parent, "",
-//                                  "#ydimension is:",
-//                                  720, 0, 10000, 1, &ok2);
     for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
     {
         if( (i%col)/**xRez*/ ==0)
             offsety++;
-        switch(displayNum)
+
+        if(i<cur_list_3dviewer.size()-1)
         {
-        case 9:
-            if(i<cur_list_3dviewer.size()-1)
-            {
-                //callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
-                //if(ok1&&ok2)
-                {
-                    callback.moveWindow(cur_list_3dviewer.at(i),xRez+(i%col)*xdim,(offsety)*ydim);
-                    callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
-                }
-            }
-            else
-            {
-                int ydim=1030;int xdim=1920;
-//                bool ok1,ok2;
-//                xdim = QInputDialog::getInteger(parent, "",
-//                                              "#xdimension is",
-//                                              1920, 0, 10000, 1, &ok1);
-//                ydim = QInputDialog::getInteger(parent, "",
-//                                              "#ydimension is:",
-//                                              1080, 0, 10000, 1, &ok2);
-                callback.moveWindow(cur_list_3dviewer.at(i),0,yRez+50);
-//                if(ok1&&ok2)
-                    callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
-            }
-            break;
-//        case 10:
-//            callback.moveWindow(cur_list_3dviewer.at(i),(i%col)*(xRez_o+xRez),offsety*(yRez_o+yRez));
-//            break;
-        default:
-            break;
+            callback.moveWindow(cur_list_3dviewer.at(i),xRez+(i%col)*xdim,(offsety)*ydim);
+            callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
+        }
+        else
+        {
+            int ydim=1030;int xdim=1920;
+            callback.moveWindow(cur_list_3dviewer.at(i),0,yRez+50);
+            callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
@@ -510,6 +534,14 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
 	{
 		v3d_msg("To be implemented.");
 	}
+    else if(func_name==tr("BigScreen Display"))
+    {
+        MethodForBigScreenDisplay(callback,parent,9);
+    }
+    else if(func_name==tr("BigScreen Display Update"))
+    {
+        MethodForUpdateSWCDispaly(callback,parent);
+    }
 	else return false;
 
 	return true;
