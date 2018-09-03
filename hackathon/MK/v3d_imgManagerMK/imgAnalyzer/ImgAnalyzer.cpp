@@ -120,15 +120,13 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 				bool connected = false;
 				for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
 				{
-					if (mipIt->at(0) + 2 < connIt->xMin && mipIt->at(0) - 2 > connIt->xMax &&
-						mipIt->at(1) + 2 < connIt->yMin && mipIt->at(1) - 2 > connIt->yMax &&
-						connIt->zMin > sliceNum + 2 && connIt->zMax < sliceNum - 2) goto NEW_SIGNAL_VECTOR;
+					if (connIt->zMax != sliceNum) continue;
 					else
 					{
-						for (set<vector<int> >::iterator it2 = connIt->coordSets[sliceNum].begin(); it2 != connIt->coordSets[sliceNum].end(); ++it2)
+						for (set<vector<int> >::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
 						{
-							if (it2->at(0) >= mipIt->at(0) - 1 && it2->at(0) <= mipIt->at(0) + 1 &&
-								it2->at(1) >= mipIt->at(1) - 1 && it2->at(1) <= mipIt->at(1) + 1)
+							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
+								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1)
 							{
 								vector<int> newCoord(3);
 								newCoord[0] = mipIt->at(0);
@@ -142,6 +140,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 								if (newCoord[1] < connIt->yMin) connIt->yMin = newCoord[1];
 								else if (newCoord[1] > connIt->yMax) connIt->yMax = newCoord[1];
 
+								connIt->zMin = sliceNum;
 								connIt->zMax = sliceNum;
 
 								connected = true;
@@ -151,29 +150,26 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					}
 				}
 
-			NEW_SIGNAL_VECTOR:
+				if (!connected) // -- new connected component identified
 				{
-					if (!connected) // -- new connected component identified
-					{
-						++islandCount;
-						connectedComponent newIsland;
-						newIsland.islandNum = islandCount;
-						vector<int> newCoord(3);
-						newCoord[0] = mipIt->at(0);
-						newCoord[1] = mipIt->at(1);
-						newCoord[2] = sliceNum;
-						set<vector<int> > coordSet;
-						coordSet.insert(newCoord);
-						newIsland.coordSets.insert(pair<int, set<vector<int> > >(sliceNum, coordSet));
-						newIsland.xMax = newCoord[0];
-						newIsland.xMin = newCoord[0];
-						newIsland.yMax = newCoord[1];
-						newIsland.yMin = newCoord[1];
-						newIsland.zMin = sliceNum;
-						newIsland.zMax = sliceNum;
-						connList.push_back(newIsland);
-						continue;
-					}
+					++islandCount;
+					connectedComponent newIsland;
+					newIsland.islandNum = islandCount;
+					vector<int> newCoord(3);
+					newCoord[0] = mipIt->at(0);
+					newCoord[1] = mipIt->at(1);
+					newCoord[2] = sliceNum;
+					set<vector<int> > coordSet;
+					coordSet.insert(newCoord);
+					newIsland.coordSets.insert(pair<int, set<vector<int> > >(sliceNum, coordSet));
+					newIsland.xMax = newCoord[0];
+					newIsland.xMin = newCoord[0];
+					newIsland.yMax = newCoord[1];
+					newIsland.yMin = newCoord[1];
+					newIsland.zMin = sliceNum;
+					newIsland.zMax = sliceNum;
+					connList.push_back(newIsland);
+					continue;
 				}
 
 			SIGNAL_VECTOR_INSERTED:

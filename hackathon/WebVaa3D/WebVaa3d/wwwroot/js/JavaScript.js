@@ -1,8 +1,58 @@
 ﻿const axios = window.axios;
-renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer = new THREE.WebGLRenderer({ alpha: false } );
 camera = new THREE.PerspectiveCamera();
 scene = new THREE.Scene();
 controls = new THREE.OrbitControls(camera);//创建控件对象
+mouse = new THREE.Vector2();
+clock = new THREE.Clock();
+bbox = new THREE.BoxGeometry(853, 537, 153);
+
+
+
+var spheres = [];
+var spheresIndex = 0;
+
+
+
+function init() {
+    width = document.getElementById('view').clientWidth;
+    height = document.getElementById('view').clientHeight;
+    renderer.setSize(width, height);
+    camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+    document.getElementById("view").appendChild(renderer.domElement);
+
+    camera.position.x = 431;
+    camera.position.y = 494;
+    camera.position.z = 1245;
+
+    //renderer.setClearColor(0x000000, 1.0);
+    renderer.setClearColor(0x000000, 1.0);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.getElementById("view").appendChild(renderer.domElement);
+
+    
+    //var material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    //material.transparent = true;
+    //material.opacity = 0;
+    //var cube = new THREE.Mesh(bbox, material);
+    //cube.position.set(427, 269, 77);
+    //console.log(bbox);
+    //scene.add(cube);
+
+
+    camera.lookAt(427, 269, 77);
+
+    var axesHelper = new THREE.AxesHelper(1000);
+    scene.add(axesHelper);
+
+
+    controls = new THREE.OrbitControls(camera, document.getElementById('view'));//创建控件对象
+    controls.addEventListener('change', render);//监听鼠标、键盘事件
+    controls.target.set(427, 269, 77);
+    //console.log(cube);
+    render();
+
+}
 
 function render() {
     //requestAnimationFrame(render);
@@ -17,31 +67,12 @@ render();
 
 async function getPictures()
 {
+    init();
     var id = 0;
     const res = await axios.get(`api/tiff/${+id}`);
-    width = document.getElementById('view').clientWidth;
-    height = document.getElementById('view').clientHeight;
-    renderer.setSize(width, height);
-    camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
-
     var files = res.data;
-    //console.log(files);
-   
-   
-    document.getElementById("view").appendChild(renderer.domElement);
-   
-    camera.position.x = 567;
-    camera.position.y = 562;
-    camera.position.z = -659;
-
-    
-    renderer.setClearColor(0x000000, 1.0);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-
     for (index in files)
-    //for (i = 0; i <= 5;i++ )
-    {   //index=i;
+    {   
         const file = files[index];
         const response = await axios.get(`api/tiff/${+id}/${file}`, { responseType: "arraybuffer" });
 
@@ -54,12 +85,6 @@ async function getPictures()
         var tiff = new Tiff({ buffer: response.data });
         var count = tiff.countDirectory();
 
-
-
-
-
-
-        //console.log(count);
         var j;
         for (j = 0; j < count; j++) {
             tiff.setDirectory(j);
@@ -95,7 +120,7 @@ async function getPictures()
             var p3 = new THREE.Vector3(tiff.height() + filestr[0] / 136960 * tiff.height(), tiff.width() + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点3坐标
             var p4 = new THREE.Vector3(tiff.height() + filestr[0] / 136960 * tiff.height(), 0 + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点4坐标
             geometry.vertices.push(p1, p2, p3, p4); //顶点坐标添加到geometry对象
-
+            //console.log(p1, p2, p3, p4);
 
 
             /** 三角面1、三角面2*/
@@ -131,11 +156,6 @@ async function getPictures()
 
             var mesh = new THREE.Mesh(geometry, material);
 
-
-
-
-
-
             scene.add(mesh);
 
 
@@ -145,6 +165,19 @@ async function getPictures()
 
     }
 
+    var sphereGeometry = new THREE.SphereBufferGeometry(0.1, 32, 32);
+    var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    for (var i = 0; i < 40; i++) {
+        var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+        spheres.push(sphere);
+    }
+
+    var edges = new THREE.EdgesGeometry(bbox);
+    var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+    line.position.set(427, 269, 77);
+    scene.add(line);
+   
 
 
 
@@ -161,12 +194,12 @@ async function getPictures()
     unit_depth = [98560, 49280, 32800, 19680, 9840];
 
     async function onMouseClick(event) {
-        console.log(camera.position);
-
+        
         //通过鼠标点击的位置计算出raycaster所需要的点的位置，以屏幕中心为原点，值的范围为-1到1.
 
         mouse.x = (event.clientX / width) * 2 - 1;
         mouse.y = - (event.clientY / height) * 2 + 1;
+        console.log(width,height,mouse.x,mouse.y)
 
         // 通过鼠标点的位置和当前相机的矩阵计算出raycaster
         raycaster.setFromCamera(mouse, camera);
@@ -195,6 +228,23 @@ async function getPictures()
         console.log(zoomin_width, zoomin_height, zoomin_depth);
 
         while (scene.children.length > 0) { scene.remove(scene.children[0]); }
+
+
+        bbox2 = new THREE.BoxGeometry(tiff_height[level + 1], tiff_width[level + 1], tiff_depth[level + 1]);
+        var edges = new THREE.EdgesGeometry(bbox2);
+        var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+        line.position.set(tiff_height[level + 1] / 2, tiff_width[level + 1]/2, tiff_depth[level + 1]/2);
+        scene.add(line);
+        controls.target.set(128, 128, 128);
+
+        var axesHelper = new THREE.AxesHelper(300);
+        scene.add(axesHelper);
+
+
+
+
+
+
         const re = await axios.get(`api/tiff/${+id + level + 1}`)
 
 
@@ -244,10 +294,15 @@ async function getPictures()
                     /**顶点坐标(纹理映射位置)*/
 
 
-                    var p1 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点1坐标
-                    var p2 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点2坐标
-                    var p3 = new THREE.Vector3(tiff_height[level + 1] + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点3坐标
-                    var p4 = new THREE.Vector3(tiff_height[level + 1] + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点4坐标
+                    //var p1 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点1坐标
+                    //var p2 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点2坐标
+                    //var p3 = new THREE.Vector3(tiff_height[level + 1] + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点3坐标
+                    //var p4 = new THREE.Vector3(tiff_height[level + 1] + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点4坐标
+                    var p1 = new THREE.Vector3(0, 0, j);
+                    var p2 = new THREE.Vector3(0, tiff_width[level + 1], j);
+                    var p3 = new THREE.Vector3(tiff_height[level + 1], tiff_width[level + 1], j);
+                    var p4 = new THREE.Vector3(tiff_height[level + 1], 0, j);
+
                     geometry.vertices.push(p1, p2, p3, p4); //顶点坐标添加到geometry对象
                     //console.log(filestr[0], filestr[1]);
 
@@ -287,14 +342,10 @@ async function getPictures()
                     material.alphaTest = 0.5;
 
                     var mesh = new THREE.Mesh(geometry, material);
-
-
-
-
-
-
+                    //mesh.position.set(128, 128, j);
                     scene.add(mesh);
-
+                   
+                    
                 }
                 tiff.close();
                 render();
@@ -303,16 +354,25 @@ async function getPictures()
         }
 
         level = level + 1;
+
+        var sphereGeometry = new THREE.SphereBufferGeometry(0.1, 32, 32);
+        var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        for (var i = 0; i < 40; i++) {
+            var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            scene.add(sphere);
+            spheres.push(sphere);
+        }
+        
+        camera.position.x = 146;
+        camera.position.y = 169;
+        camera.position.z = 556;
+        //camera.position.addVectors(p1, p3);
+        //camera.position.divideScalar(2);
+        camera.lookAt(128,128,128);
         //console.log(camera.position);
-        console.log(p1, p2, p3, p4);
-        camera.position.x = 0;
-        camera.position.y = 0;
-        camera.position.z = 0;
-        camera.position.addVectors(p1, p3);
-        camera.position.divideScalar(2);
-        camera.lookAt(camera.position);
-        console.log(camera.position);
         render();
+
+
     }
 
     
@@ -334,8 +394,7 @@ async function getPictures()
 
     window.addEventListener('dblclick', onMouseClick, false);
    // window.addEventListener('resize', onWindowResize, false);
-    controls = new THREE.OrbitControls(camera, document.getElementById('view'));//创建控件对象
-    controls.addEventListener('change', render);//监听鼠标、键盘事件
+    
     document.getElementById('left-content').addEventListener('fullscreenchange', render);
 
 
@@ -348,19 +407,92 @@ async function getPictures()
 
 }
 
-function draw()
-{   
-    function VF(event) {
-        controls.removeEventListener('change', render);
-        points = new Array();
-        var raycaster = new THREE.Raycaster();
-        var mouse = new THREE.Vector2();
-        raycaster.setFromCamera(mouse, camera);
-        var intersects = raycaster.intersectObjects(scene.children);
-        console.log(points);
-        window.addEventListener('mouseup', controls.addEventListener('change', render), false);
-       
+
+
+function VF(event) {
+    width = document.getElementById('view').clientWidth;
+    height = document.getElementById('view').clientHeight;
+    event.preventDefault();
+    mouse.x = (event.clientX / width) * 2 - 1;
+    mouse.y = - (event.clientY / height) * 2 + 1;
+
+    controls.removeEventListener('change', render);
+    points = new Array();
+    var raycaster = new THREE.Raycaster();
+
+    raycaster.setFromCamera(mouse, camera);
+    var intersects = raycaster.intersectObjects(scene.children);
+    var intensity = new Array();
+    for (var i = 0; i < intersects.length; i++) {
+
+        intensity[i] = intersects[i].object.material.map.image.data[(parseInt(intersects[i].point.y % tiff_width[level]) - 1) * tiff_height[level] + parseInt(intersects[i].point.x % tiff_height[level])];
+
     }
-    window.addEventListener('mousedown', VF, false);
+    //console.log(intensity);
+    var indexOfMaxintensity = intensity.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
+    //console.log(intersects[indexOfMaxintensity].point);
+    //console.log(intersects[0].point);
+
     
+    if (intersects!== null) {
+        spheres[spheresIndex].position.copy(intersects[indexOfMaxintensity].point);
+        spheres[spheresIndex].scale.set(1, 1, 1);
+        spheresIndex = (spheresIndex + 1) % spheres.length;
+      
+    }
+    //for (var i = 0; i < spheres.length; i++) {
+    //    var sphere = spheres[i];
+    //    //sphere.scale.multiplyScalar(0.98);
+    //    //sphere.scale.clampScalar(0.01, 1);
+    //}
+   
+    render();
+    //console.log(spheres);
+
+
+
+
+
+}
+function onkeydown(event) {
+    switch (event.keyCode) {
+        case 68: draw(); break;
+        case 27: document.removeEventListener('mousemove', VF, false); controls.addEventListener('change', render);break;
+
+
+
+    }
+}
+
+window.addEventListener('keydown',onkeydown,false);
+function draw()
+{
+    //window.addEventListener('dblclick', window.addEventListener('mousemove', VF, false), false);
+    document.addEventListener('mousemove', VF, false);
+
+  
+    //window.addEventListener('mouseup', quitVF, false);
+    //function VF(event) {
+
+        //controls.removeEventListener('change', render);
+        //points = new Array();
+        //var raycaster = new THREE.Raycaster();
+        
+        //raycaster.setFromCamera(mouse, camera);
+        //var intersects = raycaster.intersectObjects(scene.children);
+        //console.log(intersects[0].point);
+         
+      
+    //}
+
+    //function quitVF(event) {
+    //    window.removeEventListener('mousedown', window.addEventListener('mousemove', VF, false), false);
+    //    window.removeEventListener('mousemove', VF, false);
+    //    controls.addEventListener('change', render);
+        
+
+
+
+    //}
+   
 }
