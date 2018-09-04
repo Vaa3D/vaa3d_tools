@@ -21,61 +21,6 @@
 #endif
 
 
-QList <int> find_long_axon(NeuronTree nt, int soma){
-
-    int N = nt.listNeuron.size();
-    QList<int> name_list;
-    for(int i=0; i<N; i++){name_list.append(nt.listNeuron.at(i).n);}
-    // 1. find longest path from soma
-    // DFS
-    // Initialization
-    int pid=soma;
-    QList<double> distance;
-    for(int i=0;i<N; i++){distance.append(-1);}
-    QStack<int> pstack;
-    pstack.push(pid);
-    bool is_push = false;
-    distance[pid]=0;
-
-    // DFS search
-    while(!pstack.isEmpty()){
-        is_push = false;
-        pid = pstack.top();
-        // whether exist unvisited children of pid
-        // if yes, push child to stack;
-        for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
-            if((nt.listNeuron.at(i).pn)==nt.listNeuron.at(pid).n && distance.at(i)==(-1.0)){
-                pstack.push(i);
-                distance[i]=distance.at(pid)+1;
-                is_push=true;
-                break;
-            }
-        }
-        // else, pop pid
-        if(!is_push){
-            pstack.pop();
-        }
-    }
-    QList<double> sort_distance = distance;
-    qSort(sort_distance);
-    double longest_distance = sort_distance.last();
-    int endpoint = distance.lastIndexOf(longest_distance);
-    cout<<"Longest distance:\t"<<distance.at(endpoint)<<"\t"<<"node "<<nt.listNeuron.at(endpoint).n <<endl;
-
-    // 2. Return a list of node ids of the long projection axon
-    QList <int> lpa;
-    int cur_id = endpoint;
-    lpa.prepend(cur_id);
-    while(nt.listNeuron.at(cur_id).type!=1){
-        cur_id = name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn); // Move to the parent node
-        if(cur_id==name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn)){break;} // check self loop; should not exist;
-        lpa.prepend(cur_id);
-        if(nt.listNeuron.at(cur_id).pn<0){  // Reached root, should't happen
-            break;
-        }
-    }
-    return lpa;
-}
 NeuronTree return_long_axon(NeuronTree nt, int soma, bool color_tree){
     QList<int> idlist = find_long_axon(nt, soma);
     if(color_tree){

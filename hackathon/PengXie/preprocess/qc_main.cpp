@@ -6,19 +6,19 @@
 
 #include "qc_main.h"
 
-double get_percentage_lost(QString qs_input){
+double get_percentage_disconnected(QString qs_input){
 
-    printf("welcome to use get_percentage_lost\n");
+    printf("welcome to use get_percentage_disconnected\n");
     NeuronTree nt = readSWC_file(qs_input);
     if(nt.listNeuron.size()==0){return 100;}
     int lost_ct = 0;
     for(int i=0; i<nt.listNeuron.size(); i++){
-        if(nt.listNeuron.at(i).type == 0){
+        if(nt.listNeuron.at(i).type == 7){
             lost_ct ++;
         }
     }
-    double percentage_lost = lost_ct * 100.0 / nt.listNeuron.size();
-    return percentage_lost;
+    double percentage_disconnected = lost_ct * 100.0 / nt.listNeuron.size();
+    return percentage_disconnected;
 }
 
 bool qc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -116,12 +116,13 @@ bool qc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     FILE * fp=0;
     fp = fopen((char *)qPrintable(outfileLabel+QString(".QC.txt")), "wt");
     // QC.1
-    double percentage_lost = get_percentage_lost(qs_input);
-    fprintf(fp, "Percentage_lost(%%)\t%f\n", percentage_lost);
+    double percentage_disconnected = get_percentage_disconnected(qs_input);
+    fprintf(fp, "Percentage_disconnected(%%)\t%f\n", percentage_disconnected);
     // QC.2
     QList<int> components = get_components(nt);
     int ncomponents=components.toSet().size();
     fprintf(fp, "Number_single_trees\t%d\n", ncomponents);
+//    fprintf(fp, "Number_single_trees\t%d\n", 0);
     // QC.3
     if(check_duplicate(nt)){
         fprintf(fp, "Exist_duplicate_nodes\t%d\n", 0);
@@ -129,7 +130,7 @@ bool qc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     else{
         fprintf(fp, "Exist_duplicate_nodes\t%d\n", 1);
     }
-
+//    fprintf(fp, "Exist_duplicate_nodes\t%d\n", 1);
     fclose(fp);
 
     return 1;

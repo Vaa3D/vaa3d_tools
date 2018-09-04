@@ -68,12 +68,12 @@ void DFS(bool** matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG si
     }
 };
 
-double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
+double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2, double xscale, double yscale, double zscale)
 {
-    double xx = s1.x-s2.x;
-    double yy = s1.y-s2.y;
-    double zz = s1.z-s2.z;
-    return (xx*xx+yy*yy+zz*zz);
+    double xx = (s1.x-s2.x)*xscale;
+    double yy = (s1.y-s2.y)*yscale;
+    double zz = (s1.z-s2.z)*zscale;
+    return sqrt(xx*xx+yy*yy+zz*zz);
 };
 
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined)

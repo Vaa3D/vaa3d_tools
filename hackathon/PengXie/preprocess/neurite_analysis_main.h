@@ -12,6 +12,7 @@
 #include "utilities.h"
 #include "basic_surf_objs.h"
 #include "sort_swc_redefined.h"
+#include "axon_func.h"
 using namespace std;
 
 bool neurite_analysis(QString qs_input, QString qs_output, string extract_type);

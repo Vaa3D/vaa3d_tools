@@ -28,10 +28,12 @@ QList<int> get_components(NeuronTree nt);
 NeuronTree get_ith_component(NeuronTree nt, QList<int> components, int ith);
 NeuronTree single_tree(NeuronTree nt, int soma);
 NeuronTree get_subtree_by_id(NeuronTree nt, QList <int> idlist);
+NeuronTree get_subtree_by_name(NeuronTree nt, QList <int> nlist);
 NeuronTree color_subtree_by_id(NeuronTree nt, QList <int> idlist, int new_type=0);
 NeuronTree color_components(NeuronTree nt, QList<int> components);
 NeuronTree get_subtree_by_type(NeuronTree nt, int type, bool keep_soma=1);
 bool check_duplicate(NeuronTree nt);
 QList<int> get_tips(NeuronTree nt, bool include_soma);
 NeuronTree neuron_cat(NeuronTree nt1, NeuronTree nt2);
+double dist_to_parent(NeuronTree nt, int i, double xscale=1, double yscale=1, double zscale=5);
 #endif // UTILITIES_H

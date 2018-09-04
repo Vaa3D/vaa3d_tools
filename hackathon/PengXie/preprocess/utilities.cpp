@@ -212,6 +212,18 @@ NeuronTree single_tree(NeuronTree nt, int soma){
     }
 }
 
+NeuronTree get_subtree_by_name(NeuronTree nt, QList <int> nlist){
+    NeuronTree new_tree;
+    QList<int> name_list;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        name_list.append(nt.listNeuron.at(i).n);
+    }
+    for(int i=0; i<nlist.size();i++){
+        new_tree.listNeuron.append(nt.listNeuron.at(name_list.indexOf(nlist.at(i))));
+    }
+    return new_tree;
+}
+
 NeuronTree get_subtree_by_id(NeuronTree nt, QList <int> idlist){
     NeuronTree new_tree;
     for(int i=0; i<idlist.size();i++){
@@ -269,6 +281,11 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
 NeuronTree neuron_cat(NeuronTree nt1, NeuronTree nt2){
     // Concatenate nt2 after nt1;
     // id's of nt1/2 should start from 1;
+    NeuronTree empty_tree;
+    if(nt1.listNeuron.at(0).n != 1 || nt2.listNeuron.at(0).n != 1){
+        printf("names of neuron trees must begin with 1!\n");
+        return empty_tree;
+    }
     int nt1_size = nt1.listNeuron.size();
     for(int i=0; i<nt2.listNeuron.size(); i++){
         nt2.listNeuron[i].n += nt1_size;
@@ -351,4 +368,15 @@ bool check_duplicate(NeuronTree nt){
     printf("Total duplicates:\t%d\n", total_ct);
     for(int i=0; i<4; i++){printf("Case %d:\t%d\n", (i+1), case_ct.at(i));}
     return (total_ct==0);
+}
+
+double dist_to_parent(NeuronTree nt, int i, double xscale, double yscale, double zscale){
+    NeuronSWC node = nt.listNeuron.at(i);
+    QList<int> nlist;
+    for(int j=0; j<nt.listNeuron.size(); j++){
+        nlist.append(nt.listNeuron.at(j).pn);
+    }
+    int pid = nlist.indexOf(node.pn);
+    if(pid == -1){return 0;}  // this is a root
+    return computeDist2(node, nt.listNeuron.at(pid), xscale, yscale, zscale);
 }

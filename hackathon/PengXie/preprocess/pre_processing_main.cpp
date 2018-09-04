@@ -13,7 +13,8 @@
 
 #include "pre_processing_main.h"
 
-NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel, double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
+NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel,
+                        double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
 {
     printf("Running connect_soma\n");
     QList<int> pList;
@@ -41,7 +42,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     //check if marker exists and use it as root
     QList<NeuronSWC> S_list;
     NeuronSWC S;
-    int soma_rootid=0;
+    int soma_rootid=1;
     if(markers.size()>0)
     {
         if(markers.size()==1)
@@ -102,7 +103,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         QList<double> edist; // distance from end to soma
         QList<int> eid; // end id
         for(int i=0; i<tip_list.size();i++){
-            edist.append(computeDist2(component_i.listNeuron.at(tip_list.at(i)), S));
+            edist.append(computeDist2(component_i.listNeuron.at(tip_list.at(i)), S, 1,1,5));
             eid.append(tip_list.at(i));
         }
 
@@ -130,7 +131,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     }
     export_list2file(new_tree.listNeuron, "temp.swc");
     new_tree = readSWC_file("temp.swc");
-    new_tree = my_connectall(new_tree, 1, 1, 5, 30, 50, 1, true, -1);
+    new_tree = my_connectall(new_tree, 1, 1, 5, 60, 10, 1, false, 1);
     const int new_N = new_tree.listNeuron.size();
 
     // color branches that cannot connect to the main tree;
@@ -153,7 +154,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
                     bool colorful = false, bool return_maintree = false)
 {
 
-    printf("welcome to use pre_processiing!\n");
+    printf("welcome to use pre_processing!\n");
 
     QString outfileLabel;
     QString infileLabel;
@@ -185,7 +186,13 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
     //2. start processing
     NeuronTree cur_nt;
 
-    //2.1 Prune
+    //2.1 Remove duplicates
+    printf("\tRemoving duplicates\n");
+    cur_nt.listNeuron = nt.listNeuron;
+    // Maybe not the best solution. Use it for now.
+    nt = my_SortSWC(cur_nt, VOID, 0);
+
+    //2.2 Prune
     printf("\tPruning short branches\n");
     if (!prune_branch(nt, cur_nt, prune_size))
     {
@@ -193,13 +200,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         return 1;
     }
     export_list2file(cur_nt.listNeuron, "temp.swc");
-    nt = readSWC_file("temp.swc");
 
-    //2.2 Remove duplicates
-    printf("\tRemoving duplicates\n");
-    cur_nt.listNeuron = nt.listNeuron;
-    // Maybe not the best solution. Use it for now.
-    nt = my_SortSWC(cur_nt, VOID, 0);
+    //2.3 Short distance connection
+    nt = readSWC_file("temp.swc");
+    nt = my_connectall(nt, 1, 1, 5, 60, thres, 0, false, 1);
 
     //2.3 Resample
     printf("\tResampling\n");
@@ -241,7 +245,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
 bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 
-	printf("welcome to pre_processing\n");
 	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
 	vector<char*>* outlist = NULL;
 	vector<char*>* paralist = NULL;
@@ -431,8 +434,8 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 {
     double prune_size = 2; //default case
     double step_size = 0;
-    double connect_soma_dist = 1000;
-    double thres = 0;
+    double connect_soma_dist = 5000;
+    double thres = 5;
     bool rotation = false;
     bool colorful = false;
     bool return_maintree = false;

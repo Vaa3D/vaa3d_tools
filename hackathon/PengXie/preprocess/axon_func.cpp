@@ -9,16 +9,11 @@
 #define DEFAULT 1000000000
 
 #include "axon_func.h"
+QList<int> match_axon_and_lpa(NeuronTree axon, NeuronTree lpa){
 
+    QList<int> lpa_id;
 
-QList<double> branch_distribution(QString whole_axon_swc, QString lpa_swc){
-    // Input is an swc of axon, with the long-projection axon labeled as 0
-    // id's of whole_axon_swc and lpa_swc should match
-
-    printf("axon_retype\n");
-
-    // 1. Load data
-    NeuronTree axon = readSWC_file(whole_axon_swc);
+    // 1.1 Load whole axon data
     QList<int> plist;
     QList<int> nlist;
     for(int i=0; i<axon.listNeuron.size();i++){
@@ -27,30 +22,125 @@ QList<double> branch_distribution(QString whole_axon_swc, QString lpa_swc){
         nlist.append(node.n);
     }
 
-    NeuronTree lpa = readSWC_file(lpa_swc);
-    QList<double> lpa_id;
-    QList<bool> is_proximal;
+    // 2 Check whether match
+    bool matched = 1; // Whether the id's of axon and lpa matches
     for(int i=0; i<lpa.listNeuron.size();i++){
         NeuronSWC node=lpa.listNeuron.at(i);
+        int i_in_axon = nlist.indexOf(node.n);
+        if(i_in_axon == -1){  // lpa id doesn't exsit in axon: break the loop.
+            matched = 0;
+            break;
+        }
+        NeuronSWC node_axon = axon.listNeuron.at(i_in_axon);  // The matching node in axon
+        if(node.x != node_axon.x || node.y != node_axon.y || node.z != node_axon.z){
+            matched = 0;
+            break;
+        }
         lpa_id.append(node.n);
-        if((i*1.0/lpa.listNeuron.size())<0.2){
-            is_proximal.append(1);
-        }
-        else{
-            is_proximal.append(0);
-        }
     }
 
+    if(matched){
+        return lpa_id;
+    }
+    else{
+        printf("ID's of axon and lpa do not match!\n");
+        int soma = get_soma(axon);
+        lpa_id.clear();
+        QList<int> lpa = find_long_axon(axon, soma);
+        for(int i=0; i<lpa.size(); i++){
+            lpa_id.append(axon.listNeuron.at(lpa.at(i)).n);
+        }
+        return lpa_id;
+    }
+}
+QList <int> find_long_axon(NeuronTree nt, int soma){
+
+    int N = nt.listNeuron.size();
+    QList<int> name_list;
+    for(int i=0; i<N; i++){name_list.append(nt.listNeuron.at(i).n);}
+    // 1. find longest path from soma
+    // DFS
+    // Initialization
+    int pid=soma;
+    QList<double> distance;
+    for(int i=0;i<N; i++){distance.append(-1);}
+    QStack<int> pstack;
+    pstack.push(pid);
+    bool is_push = false;
+    distance[pid]=0;
+
+    // DFS search
+    while(!pstack.isEmpty()){
+        is_push = false;
+        pid = pstack.top();
+        // whether exist unvisited children of pid
+        // if yes, push child to stack;
+        for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
+            if((nt.listNeuron.at(i).pn)==nt.listNeuron.at(pid).n && distance.at(i)==(-1.0)){
+                pstack.push(i);
+                distance[i]=distance.at(pid)+1;
+                is_push=true;
+                break;
+            }
+        }
+        // else, pop pid
+        if(!is_push){
+            pstack.pop();
+        }
+    }
+    QList<double> sort_distance = distance;
+    qSort(sort_distance);
+    double longest_distance = sort_distance.last();
+    int endpoint = distance.lastIndexOf(longest_distance);
+    cout<<"Longest distance:\t"<<distance.at(endpoint)<<"\t"<<"node "<<nt.listNeuron.at(endpoint).n <<endl;
+
+    // 2. Return a list of node ids of the long projection axon
+    QList <int> lpa;
+    int cur_id = endpoint;
+    lpa.prepend(cur_id);
+    while(nt.listNeuron.at(cur_id).type!=1){
+        cur_id = name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn); // Move to the parent node
+        if(cur_id==name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn)){break;} // check self loop; should not exist;
+        lpa.prepend(cur_id);
+        if(nt.listNeuron.at(cur_id).pn<0){  // Reached root
+            break;
+        }
+    }
+    return lpa;
+}
+
+QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
+
+    printf("Welcome to use arbor_distribution\n");
+
+    // 1. Load data
+
+    // 1.1 Load whole axon data
+    NeuronTree axon = readSWC_file(whole_axon_swc);
+    QList<int> plist;
+    QList<int> nlist;
+    for(int i=0; i<axon.listNeuron.size();i++){
+        NeuronSWC node=axon.listNeuron.at(i);
+        plist.append(node.pn);
+        nlist.append(node.n);
+    }
+    // 1.2 Load lpa
+    NeuronTree lpa = readSWC_file(lpa_swc);
+    // 1.3 Match axon and lpa
+    QList<int> lpa_id = match_axon_and_lpa(axon, lpa);
+    lpa = get_subtree_by_name(axon, lpa_id);
+
+
+    cout <<2<<endl;
     // 2. Branch size at every node of lpa
     QList<double> lpa_size;
     for(int i=0; i<lpa.listNeuron.size();i++){lpa_size.append(0);}
-    QList<int> branch_ind;
-    for(int i=1; i<axon.listNeuron.size(); i++){
-        branch_ind.clear();
+    double branch_size;
+    for(int i=0; i<axon.listNeuron.size(); i++){
+        branch_size=0;
         NeuronSWC node = axon.listNeuron.at(i);
-        int pn_ind = nlist.indexOf(node.pn);
         // find the start of a non-long-projection branch
-        if(axon.listNeuron.at(pn_ind).type ==0 && node.type != 0){
+        if(lpa_id.indexOf(node.n) == (-1) && lpa_id.indexOf(node.pn) != (-1)){
             // Initialization
             int pid=i;
             QList<int> visited;
@@ -59,7 +149,6 @@ QList<double> branch_distribution(QString whole_axon_swc, QString lpa_swc){
             pstack.push(pid);
             bool is_push = false;
             visited[pid]=1;
-            branch_ind.append(pid);
 
             // DFS using stack
             while(!pstack.isEmpty()){
@@ -71,7 +160,7 @@ QList<double> branch_distribution(QString whole_axon_swc, QString lpa_swc){
                     if((axon.listNeuron.at(j).pn)==nlist.at(pid) && visited.at(j)==0){
                         pstack.push(j);
                         visited[j]=1;
-                        branch_ind.append(j);
+                        branch_size+=1;
                         is_push=true;
                         break;
                     }
@@ -82,17 +171,22 @@ QList<double> branch_distribution(QString whole_axon_swc, QString lpa_swc){
                 }
             }
 
+            // Add to the parent node on lpa
+            int pid_lpa = lpa_id.indexOf(node.pn);
+            if(pid_lpa==-1){cout<<"warning\n";break;}
+            lpa_size[pid_lpa] += branch_size;
         }
-        lpa_size[i] += branch_ind.size();
     }
 
+    cout<<3<<endl;
     // 3. Branch density at every node of lpa
     QList<double> lpa_density;
     for(int i=0; i<lpa.listNeuron.size();i++){
-        lpa_density.append(0);
-        for(int j=0; j<lpa.listNeuron.size();i++){
-            lpa_density[i] += lpa_size.at(j) * exp(-pow(i-j, 2));
-        }
+        lpa_density.append(lpa_size.at(i));
+//        lpa_density.append(0);
+//        for(int j=0; j<lpa.listNeuron.size();i++){
+//            lpa_density[i] += lpa_size.at(j) * exp(-pow(i-j, 2));
+//        }
     }
 
     return lpa_density;
@@ -102,15 +196,13 @@ bool export_branch_distribution(QList<double> lpa_density, QString output_fileNa
     FILE * fp=0;
     fp = fopen((char *)qPrintable(output_fileName), "wt");
     for(int i=0; i<lpa_density.size(); i++){
-        fprintf(fp, "%f\n", lpa_density.at(i));
+        fprintf(fp, "%d\t%f\n", i, lpa_density.at(i));
     }
     fclose(fp);
     return 1;
 }
 
 bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bool proximal_distal){
-    // Input is an swc of axon, with the long-projection axon labeled as 0
-    // id's of whole_axon_swc and lpa_swc should match
 
     printf("Welcome to use axon_retype\n");
 
@@ -119,6 +211,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
         if (whole_axon_swc.endsWith(".swc") || whole_axon_swc.endsWith(".SWC")){output_swc = whole_axon_swc.left(whole_axon_swc.length()-4)+".retype.swc";}
         if (whole_axon_swc.endsWith(".eswc") || whole_axon_swc.endsWith(".ESWC")){output_swc = whole_axon_swc.left(whole_axon_swc.length()-5)+".retype.swc";}
     }
+    // 1.1 Load whole axon data
     NeuronTree axon = readSWC_file(whole_axon_swc);
     QList<int> plist;
     QList<int> nlist;
@@ -127,13 +220,15 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
         plist.append(node.pn);
         nlist.append(node.n);
     }
-
+    // 1.2 Load lpa
     NeuronTree lpa = readSWC_file(lpa_swc);
-    QList<double> lpa_id;
+    // 1.3 Match axon and lpa
+    QList<int> lpa_id = match_axon_and_lpa(axon, lpa);
+    lpa = get_subtree_by_name(axon, lpa_id);
+
     QList<bool> is_proximal;
     for(int i=0; i<lpa.listNeuron.size();i++){
         NeuronSWC node=lpa.listNeuron.at(i);
-        lpa_id.append(node.n);
         if((i*1.0/lpa.listNeuron.size())<0.2){
             is_proximal.append(1);
         }
@@ -143,7 +238,6 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     }
 
     // 2. label non-long-projection axon braches
-    printf("\tFinding non-long-projection axons\n");
     // 2.1 default mode: retype axon clusters as proximal or distal
     int proximal_retype = 5;
     int distal_retype = 6;

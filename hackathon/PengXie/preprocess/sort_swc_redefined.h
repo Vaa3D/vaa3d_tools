@@ -36,7 +36,7 @@ QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons);
 
 void DFS(bool** matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG siz, int* numbered, int *group);;
 
-double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2);
+double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2, double xscale=1, double yscale=1, double zscale=1);
 
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined);
 

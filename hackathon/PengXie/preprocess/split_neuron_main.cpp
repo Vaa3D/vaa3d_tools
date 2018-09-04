@@ -16,9 +16,9 @@ bool split_neuron(QString qs_input){
     neurite_analysis(qs_input, qs_tag+".long_axon.swc", "l");
     // Report 2: other axons retyped
     neurite_analysis(qs_input, qs_tag+".axon.swc", "a");
-    axon_retype(qs_tag+".axon.swc", qs_tag+".long_axon.swc", qs_tag+".axon.retype.swc");
-//    QList<double> lpa_density = branch_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
-//    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
+    axon_retype(qs_tag+".axon.swc", qs_tag+".long_axon.swc", qs_tag+".axon.retype.swc", true);
+    QList<double> lpa_density = arbor_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
+    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
     // Report 3: dendrite
     neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d");
 
