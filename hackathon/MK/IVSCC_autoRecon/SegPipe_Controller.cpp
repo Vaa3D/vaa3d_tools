@@ -8,7 +8,6 @@
 #include <qdebug.h>
 
 #include "SegPipe_Controller.h"
-#include "NeuronStructExplorer.h"
 
 using namespace std;
 
@@ -56,6 +55,8 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 		this->myImgAnalyzerPtr = new ImgAnalyzer;
 
 		this->myNeuronUtilPtr = new NeuronStructUtil;
+
+		this->myNeuronStructExpPtr = new NeuronStructExplorer;
 	}
 }
 
@@ -216,7 +217,7 @@ void SegPipe_Controller::sliceBkgThre()
 
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-		myImgManagerPtr->imgManager_regisImg(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, slices);
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
 		{
@@ -466,7 +467,7 @@ void SegPipe_Controller::findSomaMass()
 	}
 }
 
-void SegPipe_Controller::findSignalBlobs()
+void SegPipe_Controller::findSignalBlobs2D()
 {
 	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
@@ -486,17 +487,19 @@ void SegPipe_Controller::findSignalBlobs()
 		}
 
 		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->imgManager_regisImg(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, slices);
 		int dims[3]; 
 		dims[0] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0];
 		dims[1] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1];
 		dims[2] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[2];
 		unsigned char* MIP1Dptr = new unsigned char[dims[0] * dims[1]];
 		for (int i = 0; i < dims[0] * dims[1]; ++i) MIP1Dptr[i] = 0;
+		
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.end(); ++sliceIt)
 		{
 			ImgProcessor::imageMax(sliceIt->second.get(), MIP1Dptr, MIP1Dptr, dims);
+
 			unsigned char** slice2DPtr = new unsigned char*[dims[1]];
 			for (int j = 0; j < dims[1]; ++j)
 			{
@@ -511,8 +514,22 @@ void SegPipe_Controller::findSignalBlobs()
 		ImgAnalyzer* myAnalyzer = new ImgAnalyzer;
 		this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs_2Dcombine(slice2DVector, dims, MIP1Dptr);
 
+		// ----------- Releasing memory ------------
 		delete[] MIP1Dptr;
 		MIP1Dptr = nullptr;
+		for (vector<unsigned char**>::iterator slice2DPtrIt = slice2DVector.begin(); slice2DPtrIt != slice2DVector.end(); ++slice2DPtrIt)
+		{
+			for (int yi = 0; yi < dims[1]; ++yi)
+			{
+				delete[] (*slice2DPtrIt)[yi];
+				(*slice2DPtrIt)[yi] = nullptr;
+			}
+			delete[] *slice2DPtrIt;
+			*slice2DPtrIt = nullptr;
+		}
+		slice2DVector.clear();
+		// ------- END of [Releasing memory] -------
+
 		/*{
 			// -- This is a workaround testing block for some cases that have problematic arrays in ImgAnalyzer::findSignalBlobs_2Dcombine's currSlice1D.
 			string mipName = "Z:/mip1.tif";
@@ -572,13 +589,51 @@ void SegPipe_Controller::swc2DsignalBlobsCenter()
 		this->centers.clear();
 		for (vector<connectedComponent>::iterator it = signalBlobs2D.begin(); it != signalBlobs2D.end(); ++it)
 		{
-			vector<float> center = ImgAnalyzer::ChebyshevCenter(*it);
+			ImgAnalyzer::ChebyshevCenter_connComp(*it);
 
 			NeuronSWC centerNode;
 			centerNode.n = it->islandNum;
-			centerNode.x = center[0];
-			centerNode.y = center[1];
-			centerNode.z = center[2];
+			centerNode.x = it->ChebyshevCenter[0];
+			centerNode.y = it->ChebyshevCenter[1];
+			centerNode.z = it->ChebyshevCenter[2];
+			centerNode.type = 2;
+			centerNode.parent = -1;
+			this->centers.push_back(centerNode);
+		}
+
+		NeuronTree centerTree;
+		centerTree.listNeuron = this->centers;
+		QString swcSaveFullNameQ = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(swcSaveFullNameQ, centerTree);
+	}
+}
+
+void SegPipe_Controller::swcSignalBlob3Dcenter()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signalBlobs2D(currTree);
+		vector<connectedComponent> signalBlobs3D = myImgAnalyzerPtr->merge2DConnComponent(signalBlobs2D);
+
+		this->centers.clear();
+		for (vector<connectedComponent>::iterator it = signalBlobs3D.begin(); it != signalBlobs3D.end(); ++it)
+		{
+			if (it->size < 5) continue;
+
+			ImgAnalyzer::ChebyshevCenter_connComp(*it);
+			NeuronSWC centerNode;
+			centerNode.n = it->islandNum;
+			centerNode.x = it->ChebyshevCenter[0];
+			centerNode.y = it->ChebyshevCenter[1];
+			centerNode.z = it->ChebyshevCenter[2];
 			centerNode.type = 2;
 			centerNode.parent = -1;
 			this->centers.push_back(centerNode);
@@ -596,12 +651,12 @@ void SegPipe_Controller::getChebyshevCenters(QString caseNum)
 	this->centers.clear();
 	for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 	{
-		vector<float> center = ImgAnalyzer::ChebyshevCenter(*it);
+		ImgAnalyzer::ChebyshevCenter_connComp(*it);
 
 		NeuronSWC centerNode;
-		centerNode.x = center[1];
-		centerNode.y = center[0];
-		centerNode.z = center[2];
+		centerNode.x = it->ChebyshevCenter[1];
+		centerNode.y = it->ChebyshevCenter[0];
+		centerNode.z = it->ChebyshevCenter[2];
 		centerNode.type = 2;
 		centerNode.parent = -1;
 		this->centers.push_back(centerNode);
@@ -636,7 +691,7 @@ void SegPipe_Controller::swc_imgCrop()
 		}
 		string saveCaseFullPathRoot = saveCaseFullNameQ.toStdString();
 		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->imgManager_regisImg(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, slices);
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
@@ -716,10 +771,72 @@ void SegPipe_Controller::getMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree MSTtree = NeuronStructExplorer::SWC2MSTtree(currTree);
+		NeuronTree MSTtree = myNeuronStructExpPtr->SWC2MSTtree(currTree);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, MSTtree);
+	}
+}
+
+void SegPipe_Controller::getMST_2Dslices()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+
+		QStringList caseParse = (*caseIt).split(".");
+		QString caseNum = caseParse[0];
+		QString outputSWCcasePath = this->outputRootPath + "/" + caseNum;
+		if (!QDir(outputSWCcasePath).exists()) QDir().mkpath(outputSWCcasePath);
+		else
+		{
+			cerr << "This case is done. Skip " << caseNum.toStdString() << endl;
+			continue;
+		}
+
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+		float zMax = 0;
+		for (QList<NeuronSWC>::iterator zIt = currTree.listNeuron.begin(); zIt != currTree.listNeuron.end(); ++zIt) 
+			if (zIt->z > zMax) zMax = zIt->z;
+
+		vector<connectedComponent> blob2D = myNeuronUtilPtr->swc2signalBlobs2D(currTree);
+		vector<NeuronTree> MSTsliceTrees;
+		NeuronTree thisSliceTree;
+		for (int i = 0; i <= int(zMax); ++i)
+		{
+			thisSliceTree.listNeuron.clear();
+			for (vector<connectedComponent>::iterator blobIt = blob2D.begin(); blobIt != blob2D.end(); ++blobIt)
+			{
+				if (blobIt->coordSets.begin()->first == i)
+				{
+					NeuronSWC centerSWC;
+					centerSWC.n = blobIt->islandNum;
+					centerSWC.type = 2;
+					centerSWC.x = blobIt->ChebyshevCenter[0];
+					centerSWC.y = blobIt->ChebyshevCenter[1];
+					centerSWC.z = blobIt->ChebyshevCenter[2];
+					centerSWC.parent = -1;
+					thisSliceTree.listNeuron.push_back(centerSWC);
+				}
+			}
+			if (thisSliceTree.listNeuron.isEmpty()) continue;
+			
+			NeuronTree thisSliceMSTtree = myNeuronStructExpPtr->SWC2MSTtree(thisSliceTree);
+			NeuronStructExplorer::MSTtreeCut(thisSliceMSTtree, 1, 15);
+			MSTsliceTrees.push_back(thisSliceMSTtree);
+		}
+		
+		for (vector<NeuronTree>::iterator treeIt = MSTsliceTrees.begin(); treeIt != MSTsliceTrees.end(); ++treeIt)
+		{
+			QString sliceMSTtreeSaveName = outputSWCcasePath + "/" + QString::number((int(treeIt - MSTsliceTrees.begin()))) + ".swc";
+			writeSWC_file(sliceMSTtreeSaveName, *treeIt);
+		}
 	}
 }
 
@@ -735,17 +852,36 @@ void SegPipe_Controller::cutMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronStructExplorer::MSTtreeCut(currTree, 6, 15);
+		NeuronStructExplorer::MSTtreeCut(currTree, 3, 60);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, currTree);
 	}
 }
 
+void SegPipe_Controller::MSTtrim()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+		NeuronTree trimmedTree = NeuronStructExplorer::MSTtreeTrim(currTree);
+
+		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCFullPath, trimmedTree);
+	}
+}
+
 void SegPipe_Controller::getTiledMST()
 {
-	float xyLength = 200;
-	float zLength = 20;
+	float xyLength = 30;
+	float zLength = 10;
 	map<string, QList<NeuronSWC> > tiledSWCmap;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
@@ -771,7 +907,7 @@ void SegPipe_Controller::getTiledMST()
 		{
 			NeuronTree tileTree;
 			tileTree.listNeuron = it->second;
-			NeuronTree tileMSTtree = NeuronStructExplorer::SWC2MSTtree(tileTree);
+			NeuronTree tileMSTtree = myNeuronStructExpPtr->SWC2MSTtree(tileTree);
 
 			int currnodeNum = assembledTree.listNeuron.size();
 			//if (currnodeNum > 50) break;	

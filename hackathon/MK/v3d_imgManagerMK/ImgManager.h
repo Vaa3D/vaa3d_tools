@@ -57,7 +57,7 @@ public:
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
-	void imgManager_regisImg(QString caseID, imgFormat format);
+	void imgEntry(QString caseID, imgFormat format);
 	/***************************************/
 
 	/********* Methods for generating binary masks from SWC files *********/

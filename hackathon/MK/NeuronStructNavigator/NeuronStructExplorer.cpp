@@ -77,6 +77,46 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 	return MSTtree;
 }
 
+NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
+{
+	vector<vector<size_t> > childs; // location and its children, also in location.
+	size_t neuronNum = inputTree.listNeuron.size();
+	childs = vector<vector<size_t> >(neuronNum, vector<size_t>());
+	size_t* flag = new size_t[neuronNum];
+	for (size_t i = 0; i < neuronNum; ++i)
+	{
+		flag[i] = 1;
+		size_t par = inputTree.listNeuron[i].pn;
+		if (par < 0) continue;
+		
+		childs[inputTree.hashNeuron.value(par)].push_back(i);
+	}
+
+	NeuronTree outputTree;
+	outputTree.listNeuron = inputTree.listNeuron;
+	/*for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1)
+		{
+			int length = 0;
+
+		}
+	}*/
+
+	for (vector<vector<size_t> >::iterator it = childs.begin(); it != childs.end(); ++it)
+	{
+		if (it->size() >= 2)
+		{
+			for (vector<size_t>::iterator it2 = it->begin(); it2 != it->end(); ++it2)
+			{
+				outputTree.listNeuron[*it2].parent = -1;
+			}
+		}
+	}
+
+	return outputTree;
+}
+
 void NeuronStructExplorer::detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr)
 {
 	// -- This method creates a z-frequency profile on the xy plane for the image stack.

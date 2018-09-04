@@ -103,12 +103,15 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		segPipePtr->swc_imgCrop();
 	}
-	else if (func_name == tr("signalBlob")) segPipePtr->findSignalBlobs();
+	else if (func_name == tr("signalBlob")) segPipePtr->findSignalBlobs2D();
 	else if (func_name == tr("centroid")) segPipePtr->getChebyshevCenters(output2);
 	else if (func_name == tr("2Dcentroid")) segPipePtr->swc2DsignalBlobsCenter();
+	else if (func_name == tr("3Dcentroid")) segPipePtr->swcSignalBlob3Dcenter();
 	else if (func_name == tr("MST")) segPipePtr->getMST();
+	else if (func_name == tr("MSTslice")) segPipePtr->getMST_2Dslices();
 	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
 	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();
+	else if (func_name == tr("MSTtrim")) segPipePtr->MSTtrim();
 	else if (func_name == tr("swcRegister"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];

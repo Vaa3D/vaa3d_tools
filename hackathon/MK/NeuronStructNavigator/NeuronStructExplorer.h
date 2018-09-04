@@ -44,10 +44,15 @@ public:
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
-	static NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
-	inline static void MSTtreeCut(NeuronTree& inputTree, double zFactor = 1, double distThre = 1000000);
+	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
+	static inline void MSTtreeCut(NeuronTree& inputTree, double zFactor = 1, double distThre = 1000000);
+	static NeuronTree MSTtreeTrim(const NeuronTree& inputTree);
+
+private:
+
 	/**********************************************************************/
 
+public:
 	/********* Pixel-based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
 	void detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);

@@ -16,6 +16,7 @@
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 #include "NeuronStructUtilities.h"
+#include "NeuronStructExplorer.h"
 
 using namespace std;
 
@@ -57,8 +58,9 @@ public:
 
 	vector<connectedComponent> signalBlobs;
 	QList<NeuronSWC> centers;
-	void findSignalBlobs();
+	void findSignalBlobs2D();
 	void swc2DsignalBlobsCenter();
+	void swcSignalBlob3Dcenter();
 	void findSomaMass();
 	void getChebyshevCenters(QString caseNum);
 
@@ -67,15 +69,18 @@ public:
 	void swc_imgCrop();
 	
 	void getMST();
+	void getMST_2Dslices();
 	void swcScale(float xScale, float yScale, float zScale);
 	void swcRegister();
 	void getTiledMST();
 	void cutMST();
+	void MSTtrim();
 
 private:
 	ImgManager* myImgManagerPtr;
 	ImgAnalyzer* myImgAnalyzerPtr;
 	NeuronStructUtil* myNeuronUtilPtr;
+	NeuronStructExplorer* myNeuronStructExpPtr;
 
 	void singleTaskDispatcher(deque<task> taskList);
 };

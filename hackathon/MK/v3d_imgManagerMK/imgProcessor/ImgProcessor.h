@@ -30,6 +30,7 @@
 using namespace std;
 
 #define getMax(a, b) ((a) >= (b)? (a):(b))
+#define getMin(a, b) ((a) <= (b)? (a):(b))
 
 enum MIPOrientation {Mxy, Myz, Mxz};
 enum mipOrientation {mxy, myz, mxz};

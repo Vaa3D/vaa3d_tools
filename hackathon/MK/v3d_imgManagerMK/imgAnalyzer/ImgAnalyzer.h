@@ -30,28 +30,21 @@ struct connectedComponent
 	map<int, set<vector<int> > > coordSets;
 	int xMax, xMin, yMax, yMin, zMax, zMin;
 	long int size;
-	vector<float> ChebyshevCenter;
+	float ChebyshevCenter[3];
 };
 
 class ImgAnalyzer
 {
 public:
 	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
-	
-	static inline vector<float> ChebyshevCenter(connectedComponent inputComp);
+	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 
-private:
-	void mergeConnComponent(vector<connectedComponent>& inputConnCompList);
+	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
+	static inline void ChebyshevCenter(set<vector<int> > allCoords, float center[]);
 };
 
-
-inline vector<float> ImgAnalyzer::ChebyshevCenter(connectedComponent inputComp)
+inline void ImgAnalyzer::ChebyshevCenter(set<vector<int> > allCoords, float center[])
 {
-	set<vector<int> > allCoords;
-	for (map<int, set<vector<int> > >::iterator sliceIt = inputComp.coordSets.begin(); sliceIt != inputComp.coordSets.end(); ++sliceIt)
-		allCoords.insert(sliceIt->second.begin(), sliceIt->second.end());
-
-	vector<float> center(3);
 	float lengthSum = 1000000;
 	for (set<vector<int> >::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)
 	{
@@ -73,9 +66,24 @@ inline vector<float> ImgAnalyzer::ChebyshevCenter(connectedComponent inputComp)
 			lengthSum = currLengthSum;
 		}
 	}
-	inputComp.ChebyshevCenter = center;
 
-	return center;
+	//cout << center[0] << " " << center[1] << " " << center[2] << endl;
+}
+
+inline void ImgAnalyzer::ChebyshevCenter_connComp(connectedComponent& inputComp)
+{
+	set<vector<int> > allCoords;
+	for (map<int, set<vector<int> > >::iterator sliceIt = inputComp.coordSets.begin(); sliceIt != inputComp.coordSets.end(); ++sliceIt)
+		allCoords.insert(sliceIt->second.begin(), sliceIt->second.end());
+
+	float center[3];
+	ImgAnalyzer::ChebyshevCenter(allCoords, center);
+
+	inputComp.ChebyshevCenter[0] = center[0];
+	inputComp.ChebyshevCenter[1] = center[1];
+	inputComp.ChebyshevCenter[2] = center[2];
+	
+	//cout << inputComp.ChebyshevCenter[0] << " " << inputComp.ChebyshevCenter[1] << " " << inputComp.ChebyshevCenter[2] << endl;
 }
 
 #endif

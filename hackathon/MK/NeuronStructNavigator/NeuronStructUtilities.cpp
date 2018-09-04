@@ -69,13 +69,14 @@ vector<connectedComponent> NeuronStructUtil::swc2signalBlobs2D(const NeuronTree&
 
 	vector<connectedComponent> connComps2D;
 	int islandCount = 0;
+	cout << "number of SWC nodes processed: ";
 	for (vector<NeuronSWC>::iterator nodeIt = allNodes.begin(); nodeIt != allNodes.end(); ++nodeIt)
 	{
 		if (int(nodeIt - allNodes.begin()) % 10000 == 0) cout << int(nodeIt - allNodes.begin()) << " ";
-
 		for (vector<connectedComponent>::iterator connIt = connComps2D.begin(); connIt != connComps2D.end(); ++connIt)
 		{
-			if (int(nodeIt->z) == connIt->coordSets.begin()->first)
+			if (connIt->coordSets.empty()) continue;
+			else if (int(nodeIt->z) == connIt->coordSets.begin()->first)
 			{
 				for (set<vector<int> >::iterator dotIt = connIt->coordSets[int(nodeIt->z)].begin(); dotIt != connIt->coordSets[int(nodeIt->z)].end(); ++dotIt)
 				{
@@ -87,6 +88,7 @@ vector<connectedComponent> NeuronStructUtil::swc2signalBlobs2D(const NeuronTree&
 						newCoord[1] = int(nodeIt->y);
 						newCoord[2] = int(nodeIt->z);
 						connIt->coordSets[newCoord[2]].insert(newCoord);
+						connIt->size = connIt->size + 1;
 
 						if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
 						else if (newCoord[0] > connIt->xMax) connIt->xMax = newCoord[0];
@@ -117,13 +119,18 @@ vector<connectedComponent> NeuronStructUtil::swc2signalBlobs2D(const NeuronTree&
 			newIsland.yMin = newCoord[1];
 			newIsland.zMin = newCoord[2];
 			newIsland.zMax = newCoord[2];
+			newIsland.size = 1;
 			connComps2D.push_back(newIsland);
 		}
 
 	NODE_INSERTED:
 		continue;
 	}
-	cout << endl;
+	cout << endl << endl;
+
+	vector<float> center(3);
+	for (vector<connectedComponent>::iterator it = connComps2D.begin(); it != connComps2D.end(); ++it)
+		ImgAnalyzer::ChebyshevCenter_connComp(*it);
 
 	return connComps2D;
 }

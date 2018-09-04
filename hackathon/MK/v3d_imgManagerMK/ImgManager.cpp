@@ -9,7 +9,7 @@
 using namespace std;
 using namespace boost::filesystem;
 
-void ImgManager::imgManager_regisImg(QString caseID, imgFormat format)
+void ImgManager::imgEntry(QString caseID, imgFormat format)
 {
 	if (format == slices)
 	{
