@@ -31,6 +31,7 @@ SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/getopt_tool.h
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/align_axis.cpp
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/pca1.cpp
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.cpp
