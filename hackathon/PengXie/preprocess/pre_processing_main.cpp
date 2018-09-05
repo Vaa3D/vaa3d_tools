@@ -129,8 +129,8 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
             new_tree.listNeuron[new_cend].pn = -1;
         }
     }
-    export_list2file(new_tree.listNeuron, "temp.swc");
-    new_tree = readSWC_file("temp.swc");
+    export_list2file(new_tree.listNeuron, qPrintable(outfileLabel + "temp.swc"));
+    new_tree = readSWC_file(qPrintable(outfileLabel + "temp.swc"));
     new_tree = my_connectall(new_tree, 1, 1, 5, 60, 10, 1, false, 1);
     const int new_N = new_tree.listNeuron.size();
 
@@ -199,10 +199,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, 
         fprintf(stderr,"Error in prune_short_branch.\n");
         return 1;
     }
-    export_list2file(cur_nt.listNeuron, "temp.swc");
+    export_list2file(cur_nt.listNeuron, qPrintable(outfileLabel+"temp.swc"));
 
     //2.3 Short distance connection
-    nt = readSWC_file("temp.swc");
+    nt = readSWC_file(qPrintable(outfileLabel+"temp.swc"));
     nt = my_connectall(nt, 1, 1, 5, 60, thres, 0, false, 1);
 
     //2.3 Resample
