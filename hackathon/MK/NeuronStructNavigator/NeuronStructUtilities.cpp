@@ -4,6 +4,7 @@
 #include <string>
 #include <iterator>
 #include <set>
+#include <cmath>
 #include <ctime>
 
 #include <boost\filesystem.hpp>
@@ -14,13 +15,13 @@
 using namespace std;
 using namespace boost;
 
-NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree, float customFactor)
+NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree)
 {
-	float xShift, yShift, zShift;
-	float xScale, yScale, zScale;
+	double xShift, yShift, zShift;
+	double xScale, yScale, zScale;
 
-	float xmin = 10000, ymin = 10000, zmin = 10000;
-	float xmax = 0, ymax = 0, zmax = 0;
+	double xmin = 10000, ymin = 10000, zmin = 10000;
+	double xmax = 0, ymax = 0, zmax = 0;
 	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		if (it->x < xmin) xmin = it->x;
@@ -30,8 +31,8 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 		if (it->z < zmin) zmin = it->z;
 		if (it->z > zmax) zmax = it->z;
 	}
-	float refXmin = 10000, refYmin = 10000, refZmin = 10000;
-	float refXmax = 0, refYmax = 0, refZmax = 0;
+	double refXmin = 10000, refYmin = 10000, refZmin = 10000;
+	double refXmax = 0, refYmax = 0, refZmax = 0;
 	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
 	{
 		if (refIt->x < refXmin) refXmin = refIt->x;
@@ -42,28 +43,83 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 		if (refIt->z > refZmax) refZmax = refIt->z;
 	}
 
-	xShift = refXmin - xmin;
-	yShift = refYmin - ymin;
-	zShift = refZmin - zmin;
 	xScale = (refXmax - refXmin) / (xmax - xmin);
 	yScale = (refYmax - refYmin) / (ymax - ymin);
 	zScale = (refZmax - refZmin) / (zmax - zmin);
+	xShift = refXmin - xmin * xScale;
+	yShift = refYmin - ymin * yScale;
+	zShift = refZmin - zmin * zScale;
 
 	NeuronTree outputTree;
 	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
 	{
 		NeuronSWC newNode = inputTree.listNeuron.at(i);
-		newNode.x = (newNode.x - xmin) * xScale + refXmin;
-		newNode.y = (newNode.y - xmin) * yScale + refYmin;
-		newNode.z = (newNode.z - xmin) * zScale + refZmin;
+		newNode.x = newNode.x * xScale + xShift;
+		newNode.y = newNode.y * yScale + yShift;
+		newNode.z = newNode.z * zScale + zShift;
 		outputTree.listNeuron.push_back(newNode);
 	}
 
 	return outputTree;
 }
 
-vector<connectedComponent> NeuronStructUtil::swc2signalBlobs2D(const NeuronTree& inputTree)
+NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree)
 {
+	map<string, vector<NeuronSWC> > gridSWCmap; // better use vector instead of set here, as set by default sorts the elements.
+	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
+	{
+		string xLabel = to_string(int(refIt->x) / 10);
+		string yLabel = to_string(int(refIt->y) / 10);
+		string zLabel = to_string(int(refIt->z) / 10);
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (gridSWCmap.find(keyLabel) != gridSWCmap.end()) gridSWCmap[keyLabel].push_back(*refIt);
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*refIt);
+			gridSWCmap.insert(pair<string, vector<NeuronSWC> >(keyLabel, newSet));
+		}
+	}
+
+	NeuronTree outputTree;
+	for (QList<NeuronSWC>::const_iterator suIt = subjectTree.listNeuron.begin(); suIt != subjectTree.listNeuron.end(); ++suIt)
+	{
+		string xLabel = to_string(int(suIt->x) / 10);
+		string yLabel = to_string(int(suIt->y) / 10);
+		string zLabel = to_string(int(suIt->z) / 10);
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+
+		NeuronSWC thisNode = *suIt;
+		bool identified = false;
+		for (vector<NeuronSWC>::iterator nodeIt = gridSWCmap[keyLabel].begin(); nodeIt != gridSWCmap[keyLabel].end(); ++nodeIt)
+		{
+			/*float dist = sqrt((nodeIt->x - suIt->x) * (nodeIt->x - suIt->x) + (nodeIt->y - suIt->y) * (nodeIt->y - suIt->y) + 
+				zRATIO * zRATIO * (nodeIt->z - suIt->z) * (nodeIt->z - suIt->z));*/
+			float dist = sqrt((nodeIt->x - suIt->x) * (nodeIt->x - suIt->x) + (nodeIt->y - suIt->y) * (nodeIt->y - suIt->y) + (nodeIt->z - suIt->z) * (nodeIt->z - suIt->z));
+			
+			if (dist <= 10)
+			{
+				outputTree.listNeuron.push_back(thisNode);
+				identified = true;
+				break;
+			}
+		}
+		
+		if (!identified)
+		{
+			thisNode.type = 3;
+			outputTree.listNeuron.push_back(thisNode);
+		}
+	}
+
+	return outputTree;
+}
+
+vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree& inputTree)
+{
+	// -- Finds signal blobs "slice by slice" from input NeuronTree. Each slice is independent to one another.
+	// -- Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
+	// -- Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
+
 	vector<NeuronSWC> allNodes;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it) allNodes.push_back(*it);
 

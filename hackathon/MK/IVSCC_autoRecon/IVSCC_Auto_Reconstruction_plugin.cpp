@@ -112,6 +112,16 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
 	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();
 	else if (func_name == tr("MSTtrim")) segPipePtr->MSTtrim();
+	else if (func_name == tr("correctSWC"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		else
+		{
+			cerr << "No reference swc path sepecied. Do nothing and return." << endl;
+			return false;
+		}
+		segPipePtr->correctSWC();
+	}
 	else if (func_name == tr("swcRegister"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
@@ -132,6 +142,21 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		float zScale = zScaleQ.toFloat();
 
 		segPipePtr->swcScale(xScale, yScale, zScale);
+	}
+	else if (func_name == tr("swcOverlap"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		else
+		{
+			cerr << "No reference swc path sepecied. Do nothing and return." << endl;
+			return false;
+		}
+		segPipePtr->nodeIdentify();
+	}
+	else if (func_name == tr("swcSeparate"))
+	{
+		QString outputRoot2 = outfiles[1];
+		segPipePtr->swcSeparate(outputRoot2);
 	}
 	else if (func_name == tr("help"))
 	{

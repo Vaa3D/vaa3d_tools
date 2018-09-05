@@ -45,19 +45,19 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 				QString outputSliceFullPath = outputCaseFullPath + "/" + *sliceIt;
 				outputMultiCasesSliceFullPaths.insert(pair<string, string>((*caseIt).toStdString(), outputSliceFullPath.toStdString()));
 			}
-		}
-
-		this->myImgManagerPtr = new ImgManager;
-		this->myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
-		this->myImgManagerPtr->caseList = this->caseList;
-		this->myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-
-		this->myImgAnalyzerPtr = new ImgAnalyzer;
-
-		this->myNeuronUtilPtr = new NeuronStructUtil;
-
-		this->myNeuronStructExpPtr = new NeuronStructExplorer;
+		}	
 	}
+
+	this->myImgManagerPtr = new ImgManager;
+	this->myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
+	this->myImgManagerPtr->caseList = this->caseList;
+	this->myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+
+	this->myImgAnalyzerPtr = new ImgAnalyzer;
+
+	this->myNeuronUtilPtr = new NeuronStructUtil;
+
+	this->myNeuronStructExpPtr = new NeuronStructExplorer;
 }
 
 void SegPipe_Controller::singleTaskDispatcher(deque<task> taskList)
@@ -583,14 +583,14 @@ void SegPipe_Controller::swc2DsignalBlobsCenter()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signalBlobs2D(currTree);
-		cout << signalBlobs2D.size() << endl;
+		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signal2DBlobs(currTree);
+		//cout << signalBlobs2D.size() << endl;
 
 		this->centers.clear();
 		for (vector<connectedComponent>::iterator it = signalBlobs2D.begin(); it != signalBlobs2D.end(); ++it)
 		{
+			if (it->size <= 3) continue;
 			ImgAnalyzer::ChebyshevCenter_connComp(*it);
-
 			NeuronSWC centerNode;
 			centerNode.n = it->islandNum;
 			centerNode.x = it->ChebyshevCenter[0];
@@ -620,7 +620,7 @@ void SegPipe_Controller::swcSignalBlob3Dcenter()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signalBlobs2D(currTree);
+		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signal2DBlobs(currTree);
 		vector<connectedComponent> signalBlobs3D = myImgAnalyzerPtr->merge2DConnComponent(signalBlobs2D);
 
 		this->centers.clear();
@@ -805,7 +805,7 @@ void SegPipe_Controller::getMST_2Dslices()
 		for (QList<NeuronSWC>::iterator zIt = currTree.listNeuron.begin(); zIt != currTree.listNeuron.end(); ++zIt) 
 			if (zIt->z > zMax) zMax = zIt->z;
 
-		vector<connectedComponent> blob2D = myNeuronUtilPtr->swc2signalBlobs2D(currTree);
+		vector<connectedComponent> blob2D = myNeuronUtilPtr->swc2signal2DBlobs(currTree);
 		vector<NeuronTree> MSTsliceTrees;
 		NeuronTree thisSliceTree;
 		for (int i = 0; i <= int(zMax); ++i)
@@ -961,7 +961,90 @@ void SegPipe_Controller::swcScale(float xScale, float yScale, float zScale)
 		NeuronTree inputTree = readSWC_file(swcFullPath);
 
 		NeuronTree scaledTree = NeuronStructUtil::swcScale(inputTree, xScale, yScale, zScale);
-		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;\
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, scaledTree);
+	}
+}
+
+void SegPipe_Controller::correctSWC()
+{
+	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
+
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
+		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
+		string inputSliceFullPath = range.first->second;
+		myImgManagerPtr->inputSingleCaseSliceFullPaths.push_back(inputSliceFullPath);
+		myImgManagerPtr->imgEntry(*caseIt, single2D);
+
+		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
+		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
+		int xlb = 10000, xhb = 0, ylb = 10000, yhb = 0;
+		for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
+		{
+			int thisNodeX = int(round(nodeIt->x / 4));
+			int thisNodeY = int(round(nodeIt->y / 4));
+			if (thisNodeX < xlb) xlb = thisNodeX;
+			if (thisNodeX > xhb) xhb = thisNodeX;
+			if (thisNodeY < ylb) ylb = thisNodeY;
+			if (thisNodeY > yhb) yhb = thisNodeY;
+		}
+		xlb -= 10; xhb += 10; ylb -= 10; yhb += 10;
+		if (xlb <= 0) xlb = 1;
+		if (xhb >= myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0]) xhb = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0];
+		if (ylb <= 0) ylb = 1;
+		if (yhb >= myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1]) yhb = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1];
+		int newDims[3];
+		newDims[0] = xhb - xlb + 1;
+		newDims[1] = yhb - ylb + 1;
+		newDims[2] = 1;
+		cout << "boundries: " << xlb << " " << xhb << " " << ylb << " " << yhb << endl;
+
+		NeuronTree correctedTree = this->swcBackTrack(4, 4, 2, xlb, ylb, 0, currCaseTree);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt + ".swc";
+		writeSWC_file(outputSWCPath, correctedTree);
+
+		myImgManagerPtr->inputSingleCaseSliceFullPaths.clear();
+	}
+}
+
+void SegPipe_Controller::nodeIdentify()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+
+		QString refSWCfullPath = this->refSWCRootPath + "/" + *caseIt;
+		NeuronTree refTree = readSWC_file(refSWCfullPath);
+
+		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, diffTree);
+	}
+}
+
+void SegPipe_Controller::swcSeparate(QString outputRoot2)
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+
+		NeuronTree sigTree;
+		NeuronTree noiseTree;
+
+		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+		{
+			NeuronSWC thisNode = *it;
+			if (it->type == 2) sigTree.listNeuron.push_back(thisNode);
+			else if (it->type == 3) noiseTree.listNeuron.push_back(thisNode);
+		}
+
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		QString outputSWCPath2 = outputRoot2 + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, sigTree);
+		writeSWC_file(outputSWCPath2, noiseTree);
 	}
 }

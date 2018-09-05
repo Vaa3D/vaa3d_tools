@@ -14,7 +14,6 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 	if (format == slices)
 	{
 		registeredImg currImgCase;
-		currImgCase.imgCaseRootQ = this->inputCaseRootPath;
 		currImgCase.imgAlias = caseID;
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID.toStdString());
 		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
@@ -39,6 +38,29 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 		//for (map<string, myImg1DPtr>::iterator sliceIt = currImgCase.slicePtrs.begin(); sliceIt != currImgCase.slicePtrs.end(); ++sliceIt)
 		//	qDebug() << QString::fromStdString(sliceIt->first) << " " << sliceIt->second[805985];
 
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+	}
+	else if (format == single2D)
+	{
+		registeredImg currImgCase;
+		currImgCase.imgAlias = caseID;
+		
+		string sliceFullName = *(this->inputSingleCaseSliceFullPaths.begin());
+		string fileName = (*(this->inputSingleCaseSliceFullPaths.begin())).substr((*(this->inputSingleCaseSliceFullPaths.begin())).length() - 9, 9);
+		const char* sliceFullNameC = sliceFullName.c_str();
+		Image4DSimple* slicePtr = new Image4DSimple;
+		slicePtr->loadImage(sliceFullNameC);
+		currImgCase.dims[0] = int(slicePtr->getXDim());
+		currImgCase.dims[1] = int(slicePtr->getYDim());
+		currImgCase.dims[2] = 1;
+		long int totalbyteSlice = slicePtr->getTotalBytes();
+		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
+		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
+		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
+
+		slicePtr->~Image4DSimple();
+		operator delete(slicePtr);
+		
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
 }
