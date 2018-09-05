@@ -403,7 +403,7 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	}
 }
 
-void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent, const V3DPluginArgList & input)
+void MethodFunForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent, const V3DPluginArgList & input)
 {
     cout<<"big screen display update"<<endl;
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
@@ -466,7 +466,7 @@ void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent, co
     callback.update_NeuronBoundingBox(surface_combine_win);
     callback.update_3DViewer(surface_combine_win);
 }
-void MethodFunForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent)
+void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent)
 {
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     unsigned int displayNum=9;
@@ -685,14 +685,14 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
     }
 }
 
-void neuron_tile_display::timerUpdate()
-{
-    if(update_flag)
-        update_flag=false;
-    else
-        update_flag=true;
-    cout<<"move to update okay"<<endl;
-}
+//void neuron_tile_display::timerUpdate()
+//{
+//    if(update_flag)
+//        update_flag=false;
+//    else
+//        update_flag=true;
+//    cout<<"move to update okay"<<endl;
+//}
 
 bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
@@ -731,7 +731,7 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
 //                MethodForUpdateSWCDispaly(callback,parent,input);
 //            }
             sleep(1800);
-            MethodForUpdateSWCDispaly(callback,parent,input);
+            MethodFunForUpdateSWCDispaly(callback,parent,input);
 
         }
 
@@ -739,7 +739,7 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
     else if(func_name==tr("BigScreenDisplayUpdate"))
     {
         cout<<"move to display update"<<endl;
-        MethodForUpdateSWCDispaly(callback,parent,input);
+        MethodForUpdateSWCDispaly(callback,parent);
     }
 	else return false;
 
