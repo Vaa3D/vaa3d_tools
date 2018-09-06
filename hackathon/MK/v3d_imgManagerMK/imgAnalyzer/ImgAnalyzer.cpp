@@ -44,6 +44,11 @@ morphStructElement::morphStructElement(string shape) : eleShape(shape)
 
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
+	// Finds connected components from a image statck using slice-by-slice approach.
+	// All components are sotred in the form of ImgAnalyzer::connectedComponent.
+	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
+	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
+
 	// --- for TESTING purpose ------
 	string testName = "Z:/IVSCC_mouse_inhibitory_442_swcROIcropped_lumps/test.tif";
 	const char* testNameC = testName.c_str();
@@ -186,6 +191,9 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 
 vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connectedComponent>& inputConnCompList)
 {
+	cout << "Merging 2D signal blobs.." << endl;
+	cout << "-- processing slice ";
+
 	vector<connectedComponent> outputConnCompList;
 
 	int zMax = 0;
@@ -213,7 +221,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	vector<connectedComponent> preSliceConnComps;
 	for (int i = 1; i <= zMax; ++i)
 	{
-		//cout << i << ": ";
+		cout << i << " ";
 		currSliceConnComps.clear();
 		preSliceConnComps.clear();
 
@@ -289,22 +297,22 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 				b3Dcomps.insert(pair<int, set<int> >(firstSliceBlobCount, comps));
 			}
 		}
-
-	BLANK_SLICE_ENCOUNTERED:
-		//cout << endl;
-		continue;
 	}
+	cout << endl << endl;
+	cout << "Merging Slice Done." << endl << endl;
 
-	//cout << "oroginal 3D blob size: " << b3Dcomps.size() << endl;
+	cout << "Now merging 3D blobs.." << endl;
+	cout << "-- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
 	bool mergeFinish = false;
+	int currBaseBlob = 1;
 	while (!mergeFinish)
 	{
 		for (map<int, set<int> >::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
-		{
-			for (map<int, set<int> >::iterator checkIt2 = b3Dcomps.begin(); checkIt2 != b3Dcomps.end(); ++checkIt2)
+		{ 
+			if (checkIt1->first < currBaseBlob) continue;
+			for (map<int, set<int> >::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 			{
 				if (checkIt2 == checkIt1) continue;
-
 				for (set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 				{
 					for (set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
@@ -313,6 +321,8 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 						{
 							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
 							b3Dcomps.erase(checkIt2);
+							currBaseBlob = checkIt1->first;
+							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << endl;
 							goto MERGED;
 						}
 					}
@@ -324,7 +334,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	MERGED:
 		continue;
 	}
-	//cout << "new 3D blob size: " << b3Dcomps.size() << endl;
+	cout << "-- new 3D blobs number: " << b3Dcomps.size() << endl;
 
 	map<int, connectedComponent> compsMap;
 	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)

@@ -12,6 +12,10 @@
 
 using namespace std;
 
+#ifndef zRATIO
+#define zRATIO (2.8 / 0.1144)
+#endif
+
 class NeuronStructUtil
 {
 public: 
@@ -23,9 +27,12 @@ public:
 	inline static void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	inline static void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength);
 	inline static NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
-	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree, float customFactor = 1);
-	vector<connectedComponent> swc2signalBlobs2D(const NeuronTree& inputTree);
+	inline static NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
+	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
+	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signalBlobs3D(const NeuronTree& inputTree);
+
+	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree);
 
 	static void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor);
 	static void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold);
@@ -48,6 +55,22 @@ inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float 
 		newNode.x = it->x / xScale;
 		newNode.y = it->y / yScale;
 		newNode.z = it->z / zScale;
+		outputTree.listNeuron.push_back(newNode);
+	}
+
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift)
+{
+	NeuronTree outputTree;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		NeuronSWC newNode;
+		newNode = *it;
+		newNode.x = it->x + xShift;
+		newNode.y = it->y + yShift;
+		newNode.z = it->z + zShift;
 		outputTree.listNeuron.push_back(newNode);
 	}
 

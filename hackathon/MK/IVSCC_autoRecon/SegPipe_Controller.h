@@ -72,9 +72,13 @@ public:
 	void getMST_2Dslices();
 	void swcScale(float xScale, float yScale, float zScale);
 	void swcRegister();
+	void correctSWC();
 	void getTiledMST();
 	void cutMST();
 	void MSTtrim();
+
+	void nodeIdentify();
+	void swcSeparate(QString outputRoot2);
 
 private:
 	ImgManager* myImgManagerPtr;
@@ -83,6 +87,24 @@ private:
 	NeuronStructExplorer* myNeuronStructExpPtr;
 
 	void singleTaskDispatcher(deque<task> taskList);
+
+	inline NeuronTree swcBackTrack(int xFactor, int yFactor, int zFactor, float xShift, float yShift, float zShift, NeuronTree& intputTree);
 };
+
+NeuronTree SegPipe_Controller::swcBackTrack(int xFactor, int yFactor, int zFactor, float xlb, float ylb, float zlb, NeuronTree& inputTree)
+{
+	NeuronTree outputTree;
+	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		NeuronSWC newNode;
+		newNode = *it;
+		newNode.x = it->x / xFactor - xlb;
+		newNode.y = it->y / yFactor - ylb;
+		newNode.z = it->z / zFactor - zlb;
+		outputTree.listNeuron.push_back(newNode);
+	}
+
+	return outputTree;
+}
 
 #endif
