@@ -16,19 +16,13 @@ using namespace std;
 Q_EXPORT_PLUGIN2(neuron_tile_display, neuron_tile_display);
 void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent, int displayNum);
 void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent);
+void printHelpForBigScreenUsage();
 
 QString m_InputfolderName="";
-//neuron_tile_display::neuron_tile_display()
-//{
 
-//    /*QTimer **/timer=new QTimer(this);
-//    update_flag=false;
-//    connect(timer,SIGNAL(timeout()),this,SLOT(timerUpdate()));
-//}
-
-void sleep(unsigned int msec)
+void sleep(unsigned int minute)
 {
-    double stopmsec=msec*1000;
+    double stopmsec=minute*1000*60;
     QTime reachTime=QTime::currentTime().addMSecs(stopmsec);
     while(QTime::currentTime()<reachTime)
         QCoreApplication::processEvents(QEventLoop::AllEvents,100);
@@ -382,13 +376,13 @@ void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &c
     }
     else if(menu_name==tr("BigScreen Display"))
     {
-        unsigned int displayNum=9;
+        unsigned int updateInterval=30;
         bool ok=true;
-//        displayNum = QInputDialog::getInteger(parent, "",
-//                                      "#Number of the monitors:",
-//                                      9, 9, 10, 1, &ok);
+        updateInterval = QInputDialog::getInteger(parent, "",
+                                      "#update interval time (minutes) :",
+                                      30, 0, 10000, 1, &ok);
         if(ok)
-            MethodForBigScreenDisplay(callback,parent,displayNum);
+            MethodForBigScreenDisplay(callback,parent,updateInterval);
         else
             return;
     }
@@ -465,6 +459,7 @@ void MethodFunForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent,
     callback.setWindowDataTitle(surface_combine_win, combine_file_name);
     callback.update_NeuronBoundingBox(surface_combine_win);
     callback.update_3DViewer(surface_combine_win);
+
 }
 void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -549,7 +544,7 @@ void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QS
 }
 
 //designed by shengdian.08282018
-void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int displayNum=9)
+void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int updateInterval=30)
 {
     /*QString*/ m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all finished annotation files "),
                                                                   QDir::currentPath(),
@@ -557,6 +552,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
 
 
 
+    int displayNum=9;
     int col=5, /*row=3,*/ xRez=3840, yRez=2160;
     //
     switch (displayNum) {
@@ -586,7 +582,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
 
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     qDebug("new window size is %d",cur_list_3dviewer.size());
-    int ydim=720;int xdim=1280;
+    int ydim=700;int xdim=1280;
     for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
     {
         if( (i%col)/**xRez*/ ==0)
@@ -605,6 +601,12 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
+    while(true)
+    {
+        sleep(updateInterval);
+        MethodForUpdateSWCDispaly(callback,parent);
+    }
+
 }
 
 void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/*,int displayNum=9*/, const V3DPluginArgList & input)
@@ -612,21 +614,13 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
 
     cout<<"Welcome to big screen display"<<endl;
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-//    vector<char*>* outlist = NULL;
-    vector<char*>* paralist = NULL;
-
     if(input.size() != 2)
     {
         printf("Please specify both input folder and the number of new finished Neurons.\n");
+        printHelpForBigScreenUsage();
         return /*false*/;
     }
-    paralist = (vector<char*>*)(input.at(1).p);
-    if (paralist->size()!=1)
-    {
-        printf("Please specify only one parameter - the number of new finished Neurons.\n");
-        return /*false*/;
-    }
-    int displayNum = atof(paralist->at(0));
+    int displayNum = 9;
 
     /*QString*/ m_InputfolderName = QString(inlist->at(0));
     /*QString*/ /*m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all finished annotation files "),
@@ -685,52 +679,54 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
     }
 }
 
-//void neuron_tile_display::timerUpdate()
-//{
-//    if(update_flag)
-//        update_flag=false;
-//    else
-//        update_flag=true;
-//    cout<<"move to update okay"<<endl;
-//}
+void printHelpForBigScreenUsage()
+{
+    printf("\nVaa3D plugin: BigScreenDisplay, including: \n");
+    printf("\t1) display nine new finished neurons of one mouse brain\n");
+    printf("\t2) combine and display nine new finished neurons together to a window \n");
+    printf("\t3) real time update                                                   \n");
+    printf("\t#i <neuron_finished_folder_name> :   input finished neurons (all in one folder) of one brain \n");
+    printf("\t#p <update interval time> :  update 10 windows every interval time.\n");
+    printf("\t                         if not specified, use 30 minutes\"\n");
+    printf("Usage (linux): vaa3d -x tile_display_multiple_neurons -f BigScreenDisplay -i /home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ -p 30\" \n");
+    printf("Usage (windows): vaa3d_msvc.exe /x tile_display_multiple_neurons /f BigScreenDisplay /i d:/home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ /p 30\" \n");
+    printf("\n                                                           \n");
+
+}
 
 bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    vector<char*> /*infiles,*/ inparas/*, outfiles*/;
+//	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+//	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    if(input.size() != 2)
+    {
+        printf("Please specify both input folder and the number of new finished Neurons.\n");
+        printHelpForBigScreenUsage();
+        return false;
+    }
+    if (inparas.size()!=1)
+    {
+        printf("Please specify only one parameter - the number of new finished Neurons.\n");
+        printHelpForBigScreenUsage();
+        return false;
+    }
+
+    int updateInterval = atof(inparas.at(0));
 
 	if (func_name == tr("help"))
 	{
-        v3d_msg("To be implemented??????");
+        printHelpForBigScreenUsage();
 	}
     else if(func_name==tr("BigScreenDisplay"))
     {
-        cout<<"move to display"<<endl;
         MethodFunForBigScreenDisplay(callback,parent,input);
-//        int displayType=0;
-//        cout<<"please choose display type: ";
-//        cin>>displayType;
-//        QTimer::singleShot(10000, 0, SLOT(close()));
-//        update_flag=false;
-//        timer->start(60000);
-//        timer->start(50000);
+
         while(true)
         {
-//            //cout<<"move in one time"<<endl;
-//            if(!timer->isActive())
-//            {
-//                cout<<"stop once"<<endl;
-//                timer->start(50000);
-//            }
-//            if(update_flag)
-//            {
-//                cout<<"move in one time"<<endl;
-//                MethodForUpdateSWCDispaly(callback,parent,input);
-//            }
-            sleep(1800);
+            sleep(updateInterval);
             MethodFunForUpdateSWCDispaly(callback,parent,input);
 
         }
@@ -739,7 +735,7 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
     else if(func_name==tr("BigScreenDisplayUpdate"))
     {
         cout<<"move to display update"<<endl;
-        MethodForUpdateSWCDispaly(callback,parent);
+        //MethodForUpdateSWCDispaly(callback,parent);
     }
 	else return false;
 
