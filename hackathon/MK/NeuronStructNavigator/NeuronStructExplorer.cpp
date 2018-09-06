@@ -107,10 +107,11 @@ NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
 	{
 		if (it->size() >= 2)
 		{
-			for (vector<size_t>::iterator it2 = it->begin(); it2 != it->end(); ++it2)
+			/*for (vector<size_t>::iterator it2 = it->begin(); it2 != it->end(); ++it2)
 			{
 				outputTree.listNeuron[*it2].parent = -1;
-			}
+			}*/
+			outputTree.listNeuron[it->at(1)].parent = -1;
 		}
 	}
 
