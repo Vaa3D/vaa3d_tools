@@ -1,5 +1,9 @@
 #include <ctime>
 
+#include <boost\container\flat_set.hpp>
+#include <boost\container\map.hpp>
+#include <boost\container\flat_map.hpp>
+
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
@@ -197,56 +201,58 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	vector<connectedComponent> outputConnCompList;
 
 	int zMax = 0;
-	multimap<int, int> b2Dtob3Dmap;
+	
+	boost::container::flat_multimap<int, int> b2Dtob3Dmap;
 	b2Dtob3Dmap.clear();
-	map<int, set<int> > b3Dcomps;
+	boost::container::flat_map<int, boost::container::flat_set<int> > b3Dcomps;
 	b3Dcomps.clear();
 
-	int firstSliceBlobCount = 0;
+	int sliceBlobCount = 0;
 	for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 	{
 		if (it->coordSets.begin()->first > zMax) zMax = it->coordSets.begin()->first;
 
 		if (it->coordSets.begin()->first == 0)
 		{
-			++firstSliceBlobCount;
-			b2Dtob3Dmap.insert(pair<int, int>(it->islandNum, firstSliceBlobCount));
-			set<int> comps;
+			++sliceBlobCount;
+			b2Dtob3Dmap.insert(pair<int, int>(it->islandNum, sliceBlobCount));
+			boost::container::flat_set<int> comps;
 			comps.insert(it->islandNum);
-			b3Dcomps.insert(pair<int, set<int> >(firstSliceBlobCount, comps));
+			b3Dcomps[sliceBlobCount] = comps;
 		}
 	}
 	
 	vector<connectedComponent> currSliceConnComps;
 	vector<connectedComponent> preSliceConnComps;
+	size_t increasedSize;
 	for (int i = 1; i <= zMax; ++i)
 	{
-		cout << i << " ";
 		currSliceConnComps.clear();
 		preSliceConnComps.clear();
 
+		increasedSize = 0;
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it);
 		if (currSliceConnComps.empty())
 		{
-			//cout << endl;
+			cout << i << "->0 ";
 			continue;
 		}
 
+		cout << i << "->";
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);
 		if (preSliceConnComps.empty())
 		{
 			for (vector<connectedComponent>::iterator newCompsIt = currSliceConnComps.begin(); newCompsIt != currSliceConnComps.end(); ++newCompsIt)
 			{
-				++firstSliceBlobCount;
-				//cout << firstSliceBlobCount << " ";
-				b2Dtob3Dmap.insert(pair<int, int>(newCompsIt->islandNum, firstSliceBlobCount));
-				set<int> comps;
+				++sliceBlobCount;
+				b2Dtob3Dmap.insert(pair<int, int>(newCompsIt->islandNum, sliceBlobCount));
+				boost::container::flat_set<int> comps;
 				comps.insert(newCompsIt->islandNum);
-				b3Dcomps.insert(pair<int, set<int> >(firstSliceBlobCount, comps));
+				b3Dcomps[sliceBlobCount] = comps;
+				increasedSize = increasedSize + comps.size();
 			}
-			//cout << endl;
 			continue;
 		}
 
@@ -260,21 +266,21 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 
 				for (set<vector<int> >::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
 				{
-					//if (i == 74) cout << endl << " (" << currDotIt->at(0) << " " << currDotIt->at(1) << "): " << endl;
 					for (set<vector<int> >::iterator preDotIt = preIt->coordSets.begin()->second.begin(); preDotIt != preIt->coordSets.begin()->second.end(); ++preDotIt)
 					{
-						//if (i == 74) cout << "  (" << preDotIt->at(0) << " " << preDotIt->at(1) << "), ";
 						if (currDotIt->at(0) >= preDotIt->at(0) - 1 && currDotIt->at(0) <= preDotIt->at(0) + 1 &&
 							currDotIt->at(1) >= preDotIt->at(1) - 1 && currDotIt->at(1) <= preDotIt->at(1) + 1)
 						{
-							pair<multimap<int, int>::iterator, multimap<int, int>::iterator> range = b2Dtob3Dmap.equal_range(preIt->islandNum);
-							//cout << range.first->first << " " << range.second->first << endl;
-							for (multimap<int, int>::iterator rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+							pair<boost::container::flat_multimap<int, int>::iterator, boost::container::flat_multimap<int, int>::iterator> range = b2Dtob3Dmap.equal_range(preIt->islandNum);
+							for (boost::container::flat_multimap<int, int>::iterator rangeIt = range.first; rangeIt != range.second; ++rangeIt)
 							{
-								//if (i == 74) cout << rangeIt->second << endl;
+								if (i == 52) cout << "_" << rangeIt->first << "_" << rangeIt->second << "_" << preIt->islandNum << "_" << currIt->islandNum << "> ";
 								if (rangeIt->first != preIt->islandNum) break;
-								b2Dtob3Dmap.insert(pair<int, int>(currIt->islandNum, rangeIt->second));
-								b3Dcomps[rangeIt->second].insert(currIt->islandNum);
+								else
+								{
+									b2Dtob3Dmap.insert(pair<int, int>(currIt->islandNum, rangeIt->second));
+									b3Dcomps[rangeIt->second].insert(currIt->islandNum);
+								}
 							}
 							
 							goto BLOB_MERGED;
@@ -289,14 +295,15 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 
 			if (!merged)
 			{
-				++firstSliceBlobCount;
-				//cout << firstSliceBlobCount << " ";
-				b2Dtob3Dmap.insert(pair<int, int>(currIt->islandNum, firstSliceBlobCount));
-				set<int> comps;
+				++sliceBlobCount;
+				b2Dtob3Dmap.insert(pair<int, int>(currIt->islandNum, sliceBlobCount));
+				boost::container::flat_set<int> comps;
 				comps.insert(currIt->islandNum);
-				b3Dcomps.insert(pair<int, set<int> >(firstSliceBlobCount, comps));
+				b3Dcomps[sliceBlobCount] = comps;
+				increasedSize = increasedSize + comps.size();
 			}
 		}
+		cout << increasedSize << ", ";
 	}
 	cout << endl << endl;
 	cout << "Merging Slice Done." << endl << endl;
@@ -307,15 +314,15 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	int currBaseBlob = 1;
 	while (!mergeFinish)
 	{
-		for (map<int, set<int> >::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
-		{ 
+		for (boost::container::flat_map<int, boost::container::flat_set<int> >::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+		{
 			if (checkIt1->first < currBaseBlob) continue;
-			for (map<int, set<int> >::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			for (boost::container::flat_map<int, boost::container::flat_set<int> >::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 			{
 				if (checkIt2 == checkIt1) continue;
-				for (set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 				{
-					for (set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
 					{
 						if (*member2 == *member1)
 						{
@@ -340,7 +347,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)
 		compsMap.insert(pair<int, connectedComponent>(inputIt->islandNum, *inputIt));
 	int newLabel = 0;
-	for (map<int, set<int> >::iterator it = b3Dcomps.begin(); it != b3Dcomps.end(); ++it)
+	for (boost::container::flat_map<int, boost::container::flat_set<int> >::iterator it = b3Dcomps.begin(); it != b3Dcomps.end(); ++it)
 	{
 		++newLabel;
 		connectedComponent newComp;
@@ -349,7 +356,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 		newComp.xMax = 0; newComp.xMin = 0;
 		newComp.yMax = 0; newComp.yMin = 0;
 		newComp.zMax = 0; newComp.zMin = 0;
-		for (set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
 			newComp.coordSets.insert(pair<int, set<vector<int> > >(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
 			newComp.xMax = getMax(newComp.xMax, compsMap[*it2].xMax);
@@ -364,5 +371,181 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 		outputConnCompList.push_back(newComp);
 	}
 	
+	return outputConnCompList;
+}
+
+vector<connectedComponent> ImgAnalyzer::merge2DConnComponent_vecVersion(const vector<connectedComponent>& inputConnCompList)
+{
+	cout << "Merging 2D signal blobs.." << endl;
+	cout << "-- processing slice ";
+
+	vector<connectedComponent> outputConnCompList;
+
+	int zMax = 0;
+	boost::container::multimap<int, int> b2Dtob3Dmap;
+	b2Dtob3Dmap.clear();
+	boost::container::map<int, boost::container::flat_set<int> > b3Dcomps;
+	b3Dcomps.clear();
+
+	int sliceBlobCount = 0;
+	for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
+	{
+		if (it->coordSets.begin()->first > zMax) zMax = it->coordSets.begin()->first;
+
+		if (it->coordSets.begin()->first == 0)
+		{
+			++sliceBlobCount;
+			b2Dtob3Dmap.insert(pair<int, int>(it->islandNum, sliceBlobCount));
+			boost::container::flat_set<int> comps;
+			comps.insert(it->islandNum);
+			b3Dcomps[sliceBlobCount] = comps;
+		}
+	}
+
+	vector<connectedComponent> currSliceConnComps;
+	vector<connectedComponent> preSliceConnComps;
+	size_t increasedSize;
+	for (int i = 1; i <= zMax; ++i)
+	{
+		currSliceConnComps.clear();
+		preSliceConnComps.clear();
+
+		increasedSize = 0;
+		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
+			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it);
+		if (currSliceConnComps.empty())
+		{
+			cout << i << "->0 ";
+			continue;
+		}
+
+		cout << i << "->";
+		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
+			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);
+		if (preSliceConnComps.empty())
+		{
+			for (vector<connectedComponent>::iterator newCompsIt = currSliceConnComps.begin(); newCompsIt != currSliceConnComps.end(); ++newCompsIt)
+			{
+				++sliceBlobCount;
+				b2Dtob3Dmap.insert(pair<int, int>(newCompsIt->islandNum, sliceBlobCount));
+				boost::container::flat_set<int> comps;
+				comps.insert(newCompsIt->islandNum);
+				b3Dcomps[sliceBlobCount] = comps;
+				increasedSize = increasedSize + comps.size();
+			}
+			continue;
+		}
+
+		for (vector<connectedComponent>::iterator currIt = currSliceConnComps.begin(); currIt != currSliceConnComps.end(); ++currIt)
+		{
+			bool merged = false;
+			for (vector<connectedComponent>::iterator preIt = preSliceConnComps.begin(); preIt != preSliceConnComps.end(); ++preIt)
+			{
+				if (currIt->xMin > preIt->xMax + 2 || currIt->xMax < preIt->xMin - 2 ||
+					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue;
+
+				for (set<vector<int> >::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
+				{
+					for (set<vector<int> >::iterator preDotIt = preIt->coordSets.begin()->second.begin(); preDotIt != preIt->coordSets.begin()->second.end(); ++preDotIt)
+					{
+						if (currDotIt->at(0) >= preDotIt->at(0) - 1 && currDotIt->at(0) <= preDotIt->at(0) + 1 &&
+							currDotIt->at(1) >= preDotIt->at(1) - 1 && currDotIt->at(1) <= preDotIt->at(1) + 1)
+						{
+							pair<boost::container::multimap<int, int>::iterator, boost::container::multimap<int, int>::iterator> range = b2Dtob3Dmap.equal_range(preIt->islandNum);
+							for (boost::container::multimap<int, int>::iterator rangeIt = range.first; rangeIt != range.second; ++rangeIt)
+							{
+								if (rangeIt->first != preIt->islandNum) break;
+								b2Dtob3Dmap.insert(pair<int, int>(currIt->islandNum, rangeIt->second));
+								b3Dcomps[rangeIt->second].insert(currIt->islandNum);
+							}
+
+							goto BLOB_MERGED;
+						}
+					}
+				}
+
+			BLOB_MERGED:
+				merged = true;
+				continue;
+			}
+
+			if (!merged)
+			{
+				++sliceBlobCount;
+				b2Dtob3Dmap.insert(pair<int, int>(currIt->islandNum, sliceBlobCount));
+				boost::container::flat_set<int> comps;
+				comps.insert(currIt->islandNum);
+				b3Dcomps[sliceBlobCount] = comps;
+				increasedSize = increasedSize + comps.size();
+			}
+		}
+		cout << increasedSize << ", ";
+	}
+	cout << endl << endl;
+	cout << "Merging Slice Done." << endl << endl;
+
+	cout << "Now merging 3D blobs.." << endl;
+	cout << "-- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	bool mergeFinish = false;
+	int currBaseBlob = 1;
+	while (!mergeFinish)
+	{
+		for (boost::container::map<int, boost::container::flat_set<int> >::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+		{
+			if (checkIt1->first < currBaseBlob) continue;
+			for (boost::container::map<int, boost::container::flat_set<int> >::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			{
+				if (checkIt2 == checkIt1) continue;
+				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+				{
+					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+					{
+						if (*member2 == *member1)
+						{
+							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+							b3Dcomps.erase(checkIt2);
+							currBaseBlob = checkIt1->first;
+							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << endl;
+							goto MERGED;
+						}
+					}
+				}
+			}
+		}
+		mergeFinish = true;
+
+	MERGED:
+		continue;
+	}
+	cout << "-- new 3D blobs number: " << b3Dcomps.size() << endl;
+
+	map<int, connectedComponent> compsMap;
+	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)
+		compsMap.insert(pair<int, connectedComponent>(inputIt->islandNum, *inputIt));
+	int newLabel = 0;
+	for (boost::container::map<int, boost::container::flat_set<int> >::iterator it = b3Dcomps.begin(); it != b3Dcomps.end(); ++it)
+	{
+		++newLabel;
+		connectedComponent newComp;
+		newComp.islandNum = newLabel;
+		newComp.size = 0;
+		newComp.xMax = 0; newComp.xMin = 0;
+		newComp.yMax = 0; newComp.yMin = 0;
+		newComp.zMax = 0; newComp.zMin = 0;
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			newComp.coordSets.insert(pair<int, set<vector<int> > >(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
+			newComp.xMax = getMax(newComp.xMax, compsMap[*it2].xMax);
+			newComp.xMin = getMin(newComp.xMin, compsMap[*it2].xMin);
+			newComp.yMax = getMax(newComp.yMax, compsMap[*it2].yMax);
+			newComp.yMin = getMin(newComp.yMin, compsMap[*it2].yMin);
+			newComp.zMax = getMax(newComp.zMax, compsMap[*it2].zMax);
+			newComp.zMin = getMin(newComp.zMin, compsMap[*it2].zMin);
+			newComp.size = newComp.size + compsMap[*it2].size;
+		}
+
+		outputConnCompList.push_back(newComp);
+	}
+
 	return outputConnCompList;
 }

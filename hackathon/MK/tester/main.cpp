@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 	{
 		//const char* inputSWCnameC = argv[2];
 		//string inputSWCname(inputSWCnameC);
-		string inputSWCname = "H:\\IVSCC_mouse_inhibitory_442_swc2Dlumps\\478293723.swc";
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory_442_swcLumps_2Dlabel\\478293723.swc";
 		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
 
 		SWCtester mySWCtester;
