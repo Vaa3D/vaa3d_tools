@@ -185,6 +185,11 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
     foreach (QString qs, displayList)  qDebug() << qs;
     return displayList;
 }
+void WriteNewFinishedNeuronsFileName(QStringList nameList)
+{
+
+}
+
 void neuron_tile_display::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("neuron_tile_display"))
@@ -582,7 +587,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
 
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     qDebug("new window size is %d",cur_list_3dviewer.size());
-    int ydim=700;int xdim=1280;
+    int xdim=1920;int ydim=1080;
     for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
     {
         if( (i%col)/**xRez*/ ==0)
@@ -595,8 +600,8 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         }
         else
         {
-            int ydim=1030;int xdim=1920;
-            callback.moveWindow(cur_list_3dviewer.at(i),0,yRez+50);
+            //int ydim=1030;int xdim=1920;
+            callback.moveWindow(cur_list_3dviewer.at(i),xRez+xdim*3,0);
             callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
@@ -658,7 +663,7 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
 
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     qDebug("new window size is %d",cur_list_3dviewer.size());
-    int ydim=720;int xdim=1280;
+    int xdim=1920;int ydim=1080;
     for (V3DLONG i = 0; i < cur_list_3dviewer.size(); i++)
     {
         if( (i%col)/**xRez*/ ==0)
@@ -671,8 +676,8 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
         }
         else
         {
-            int ydim=1030;int xdim=1920;
-            callback.moveWindow(cur_list_3dviewer.at(i),0,yRez+50);
+            //int ydim=1030;int xdim=1920;
+            callback.moveWindow(cur_list_3dviewer.at(i),xRez+xdim*3,0);
             callback.resizeWindow(cur_list_3dviewer.at(i),xdim,ydim);
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
