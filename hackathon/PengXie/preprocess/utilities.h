@@ -20,6 +20,7 @@ using namespace std;
 //#include "io.h"
 //#endif
 
+bool fexists(QString filename);
 CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b);
 bool my_saveANO(QString fileNameHeader, bool swc=true, bool apo=true);
 NeuronTree rm_nodes(NeuronTree nt, QList<int> list);

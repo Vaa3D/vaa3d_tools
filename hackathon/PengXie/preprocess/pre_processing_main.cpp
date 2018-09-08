@@ -149,9 +149,9 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     return new_tree;
 }
 
-bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, double thres = 0,
-                    double step_size = 0, double connect_soma_dist = 2000, bool rotation = false,
-                    bool colorful = false, bool return_maintree = false)
+bool pre_processing(QString qs_input, QString qs_output, double prune_size, double thres,
+                    double step_size, double connect_soma_dist, bool rotation,
+                    bool colorful, bool return_maintree)
 {
 
     printf("welcome to use pre_processing!\n");
@@ -298,7 +298,7 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
 	char *dfile_result = NULL;
     double prune_size = 2; //default case
     double step_size = 0;
-    double connect_soma_dist = 2000;
+    double connect_soma_dist = 70;
     double thres = 10;
     bool rotation = false;
     bool colorful = false;
@@ -434,7 +434,7 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 {
     double prune_size = 2; //default case
     double step_size = 0;
-    double connect_soma_dist = 5000;
+    double connect_soma_dist = 70;
     double thres = 5;
     bool rotation = false;
     bool colorful = false;

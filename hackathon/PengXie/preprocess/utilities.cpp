@@ -2,6 +2,7 @@
 #include "vector"
 #include "v3d_message.h"
 #include "v3d_interface.h"
+#include "fstream"
 using namespace std;
 
 #include "pre_processing_main.h"
@@ -10,6 +11,12 @@ using namespace std;
 #include "neuron_connector_func.h"
 #include "utilities.h"
 
+
+bool fexists(QString filename)
+{
+  std::ifstream ifile(qPrintable(filename));
+  return ifile;
+}
 
 CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b){
     CellAPO marker;
