@@ -626,7 +626,7 @@ void SegPipe_Controller::swcSignalBlob3Dcenter()
 		this->centers.clear();
 		for (vector<connectedComponent>::iterator it = signalBlobs3D.begin(); it != signalBlobs3D.end(); ++it)
 		{
-			if (it->size < 5) continue;
+			if (it->size <= 3) continue;
 
 			ImgAnalyzer::ChebyshevCenter_connComp(*it);
 			NeuronSWC centerNode;
