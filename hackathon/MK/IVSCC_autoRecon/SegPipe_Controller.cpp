@@ -620,8 +620,7 @@ void SegPipe_Controller::swcSignalBlob3Dcenter()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		vector<connectedComponent> signalBlobs2D = myNeuronUtilPtr->swc2signal2DBlobs(currTree);
-		vector<connectedComponent> signalBlobs3D = myImgAnalyzerPtr->merge2DConnComponent(signalBlobs2D);
+		vector<connectedComponent> signalBlobs3D = myNeuronUtilPtr->swc2signal3DBlobs(currTree);
 
 		this->centers.clear();
 		for (vector<connectedComponent>::iterator it = signalBlobs3D.begin(); it != signalBlobs3D.end(); ++it)
@@ -1019,9 +1018,22 @@ void SegPipe_Controller::nodeIdentify()
 		QString refSWCfullPath = this->refSWCRootPath + "/" + *caseIt;
 		NeuronTree refTree = readSWC_file(refSWCfullPath);
 
-		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree);
+		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree, 50, 20);
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, diffTree);
+	}
+}
+
+void SegPipe_Controller::cleanUpzFor2Dcentroids()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+
+		NeuronTree cleanedZtree = NeuronStructUtil::swcZclenUP(inputTree);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, cleanedZtree);
 	}
 }
 

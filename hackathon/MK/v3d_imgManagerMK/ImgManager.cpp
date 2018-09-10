@@ -1,7 +1,6 @@
 #include <iostream>
-#include <set>
-#include <iterator>
 #include <fstream>
+#include <set>
 
 #include "ImgProcessor.h"
 #include "ImgManager.h"

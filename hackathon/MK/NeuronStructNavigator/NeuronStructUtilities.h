@@ -12,8 +12,8 @@
 
 using namespace std;
 
-#ifndef zRATIO
-#define zRATIO (2.8 / 0.1144)
+#ifndef zRATIO // This is the ratio of z resolution to x and y in IVSCC images.
+#define zRATIO (0.28 / 0.1144) 
 #endif
 
 class NeuronStructUtil
@@ -21,28 +21,33 @@ class NeuronStructUtil
 public: 
 	NeuronStructUtil() {};
 
-	/********* Basic neuron struct file operations *********/
-	static void swcSlicer(NeuronTree* inputTreePtr, vector<NeuronTree>* outputTreesPtr, int thickness = 0);
+	/********* Basic Neuron Struct File Operations *********/
+	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static void swcSliceAssembler(string swcPath);
-	inline static void swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
-	inline static void swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength);
+	inline static void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	inline static NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
 	inline static NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
+	/*******************************************************/
+	
+	/********* SWC to ImgAnalyzer::connectedComponent *********/
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
-	vector<connectedComponent> swc2signalBlobs3D(const NeuronTree& inputTree);
+	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
+	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
+	/**********************************************************/
 
-	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree);
+	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
+	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
 
 	static void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor);
 	static void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold);
 	/*******************************************************/
 
-	/********* Simulated volumetric patch generation *********/
-	static void sigNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float ratio, float distance);
-	static void bkgNode_Gen(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, long int dims[], float ratio, float distance);
-	static void bkgNode_Gen_somaArea(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int xLength, int yLength, int zLength, float ratio, float distance);
-	/*********************************************************/
+	/********* Sampling Methods for Simulated Volumetric Patch Generation *********/
+	static void sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance);
+	static void bkgNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, int dims[], float ratio, float distance);
+	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
+	/******************************************************************************/
 };
 
 inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale)
@@ -77,22 +82,11 @@ inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, float 
 	return outputTree;
 }
 
-inline void NeuronStructUtil::swcFlipY(NeuronTree const* inputTreePtr, NeuronTree*& outputTreePtr, long int yLength)
-{
-	float yMiddle = float(yLength + 1) / 2;
-	for (QList<NeuronSWC>::const_iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-	{
-		NeuronSWC flippedNode = *it;
-		if (it->y > yMiddle) flippedNode.y = (yMiddle - (it->y - yMiddle));
-		else if (it->y < yMiddle) flippedNode.y = (yMiddle + (yMiddle - it->y));
-	}
-}
-
-inline void NeuronStructUtil::swcCrop(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
+inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
 {
 	if (zlb == 0 && zhb == 0)
 	{
-		for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
+		for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 		{
 			if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb) continue;
 			else
@@ -104,7 +98,7 @@ inline void NeuronStructUtil::swcCrop(NeuronTree* inputTreePtr, NeuronTree* outp
 				newNode.type = it->type;
 				newNode.n = it->n;
 				newNode.parent = it->parent;
-				outputTreePtr->listNeuron.push_back(newNode);
+				outputTree.listNeuron.push_back(newNode);
 			}
 		}
 	}

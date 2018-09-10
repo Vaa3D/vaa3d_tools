@@ -79,6 +79,7 @@ public:
 
 	void nodeIdentify();
 	void swcSeparate(QString outputRoot2);
+	void cleanUpzFor2Dcentroids();
 
 private:
 	ImgManager* myImgManagerPtr;
