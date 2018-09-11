@@ -827,8 +827,8 @@ void SegPipe_Controller::getMST_2Dslices()
 			if (thisSliceTree.listNeuron.isEmpty()) continue;
 			
 			NeuronTree thisSliceMSTtree = myNeuronStructExpPtr->SWC2MSTtree(thisSliceTree);
-			NeuronStructExplorer::MSTtreeCut(thisSliceMSTtree, 1, 15);
-			MSTsliceTrees.push_back(thisSliceMSTtree);
+			NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(thisSliceMSTtree, 15);
+			MSTsliceTrees.push_back(outputTree);
 		}
 		
 		for (vector<NeuronTree>::iterator treeIt = MSTsliceTrees.begin(); treeIt != MSTsliceTrees.end(); ++treeIt)
@@ -851,10 +851,10 @@ void SegPipe_Controller::cutMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronStructExplorer::MSTtreeCut(currTree, 3, 60);
+		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 20);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCFullPath, currTree);
+		writeSWC_file(outputSWCFullPath, outputTree);
 	}
 }
 

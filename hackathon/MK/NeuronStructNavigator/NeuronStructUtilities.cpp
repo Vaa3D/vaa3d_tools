@@ -347,7 +347,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre)
 {
-	map<string, vector<NeuronSWC> > gridSWCmap; // better use vector instead of set here, as set by default sorts the elements.
+	map<string, vector<NeuronSWC> > gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
 												// This can cause complication if the element is a data struct.
 
 	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
@@ -408,9 +408,8 @@ NeuronTree NeuronStructUtil::swcZclenUP(const NeuronTree& inputTree, float zThre
 	map<string, vector<NeuronSWC> > xyLabeledNodeMap;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
-		string xLabel = to_string(int((it->x)));
-		string yLabel = to_string(int((it->y)));
-		string zLabel = to_string(int((it->z)));
+		string xLabel = to_string(int(it->x / 2));
+		string yLabel = to_string(int(it->y / 2));
 		string labelKey = xLabel + "_" + yLabel;
 		if (xyLabeledNodeMap.find(labelKey) != xyLabeledNodeMap.end()) xyLabeledNodeMap[labelKey].push_back(*it);
 		else
@@ -543,16 +542,6 @@ void NeuronStructUtil::swcSliceAssembler(string swcPath)
 
 	QString outputFileName = QString::fromStdString(swcPath) + "\\assembledSWC.swc";
 	writeSWC_file(outputFileName, outputTree);
-}
-
-void NeuronStructUtil::swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor)
-{
-	// -- Downsample swc in z dimension with the given factor.
-
-	QList<NeuronSWC> inputList = inputTreePtr->listNeuron;
-	outputTreePtr->listNeuron.clear();
-	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
-		if (int(it->z) % factor == 0) outputTreePtr->listNeuron.push_back(*it);
 }
 
 void NeuronStructUtil::detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold)

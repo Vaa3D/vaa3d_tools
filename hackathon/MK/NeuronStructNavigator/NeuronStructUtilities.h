@@ -24,9 +24,9 @@ public:
 	/********* Basic Neuron Struct File Operations *********/
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static void swcSliceAssembler(string swcPath);
-	inline static void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
-	inline static NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
-	inline static NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
+	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
+	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
+	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
 	/*******************************************************/
 	
@@ -38,8 +38,7 @@ public:
 
 	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
-
-	static void swcDownSampleZ(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, int factor);
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink = false);
 	static void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold);
 	/*******************************************************/
 
@@ -100,6 +99,27 @@ inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& o
 				newNode.parent = it->parent;
 				outputTree.listNeuron.push_back(newNode);
 			}
+		}
+	}
+}
+
+void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink)
+{
+	QList<NeuronSWC> inputList = inputTree.listNeuron;
+	outputTree.listNeuron.clear();
+	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+	{
+		if (int(it->z) % factor == 0 && int(it->x) % factor == 0 && int(it->y) % factor == 0) 
+			outputTree.listNeuron.push_back(*it);
+	}
+
+	if (shrink)
+	{
+		for (QList<NeuronSWC>::iterator it = outputTree.listNeuron.begin(); it != outputTree.listNeuron.end(); ++it)
+		{
+			it->x = it->x / 2;
+			it->y = it->y / 2;
+			it->z = it->z / 2;
 		}
 	}
 }

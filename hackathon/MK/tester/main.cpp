@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "cleanUpZ";
+	string funcName = "swcDownSample";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -50,6 +50,16 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
 		NeuronTree outputTree = NeuronStructUtil::swcZclenUP(inputTree);
 		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("swcDownSample"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_diffTree_zCleaned\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+		NeuronTree outputTree;
+		NeuronStructUtil::swcDownSample(inputTree, outputTree, 2, true);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
 
