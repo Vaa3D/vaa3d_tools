@@ -10,6 +10,9 @@
 #include "v3d_interface.h"
 #include "pre_processing_main.h"
 #include "neurite_analysis_main.h"
+#include "split_neuron_main.h"
+#include "qc_main.h"
+#include "preprocess_batch_main.h"
 class neuron_analysis : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT

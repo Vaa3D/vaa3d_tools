@@ -15,9 +15,11 @@ using namespace boost;
 
 int main(int argc, char* argv[])
 {
+	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "2DblobMerge";
+	string funcName = "swcDownSample";
+	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
 	{
@@ -28,6 +30,37 @@ int main(int argc, char* argv[])
 
 		SWCtester mySWCtester;
 		vector<connectedComponent> outputConnCompList = mySWCtester.connComponent2DmergeTest(inputSWCnameQ);
+	}
+	else if (!funcName.compare("swcID"))
+	{
+		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
+		string subjSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped_centroids3D\\319215569.swc";
+		QString refSWCnameQ = QString::fromStdString(refSWCname);
+		QString subjSWCnameQ = QString::fromStdString(subjSWCname);
+		NeuronTree refTree = readSWC_file(refSWCnameQ);
+		NeuronTree subjTree = readSWC_file(subjSWCnameQ);
+		NeuronTree outputTree = NeuronStructUtil::swcIdentityCompare(subjTree, refTree, 50, 20);
+		QString outputSWCname = "H:\\testOutput\\test.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("cleanUpZ"))
+	{
+		string inputSWCname = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_diffTree\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+		NeuronTree outputTree = NeuronStructUtil::swcZclenUP(inputTree);
+		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("swcDownSample"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_diffTree_zCleaned\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+		NeuronTree outputTree;
+		NeuronStructUtil::swcDownSample(inputTree, outputTree, 2, true);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test.swc";
+		writeSWC_file(outputSWCname, outputTree);
 	}
 
 
@@ -87,56 +120,6 @@ int main(int argc, char* argv[])
 	//		}
 	//	}
 	//	cout << topBracket << " ";
-
-	//	/*int maxNegDiff = 0;
-	//	int cutoffValue;
-	//	for (int diffI = 1; diffI <= 255; ++diffI)
-	//	{
-	//		if (int(histMap[diffI]) - int(histMap[diffI - 1]) <= maxNegDiff)
-	//		{
-	//			cutoffValue = diffI;
-	//			maxNegDiff = int(histMap[diffI]) - int(histMap[diffI - 1]);
-
-	//		}
-	//	}*/
-	//	//ImgProcessor::gammaCorrect(adaTiffSlice1D, proc1, dims, gammaStart);
-	//	//cout << gammaStart << " ";
-
-	//	unsigned char* proc2 = new unsigned char[dims[0] * dims[1]];
-	//	ImgProcessor::simpleThresh(tiffSlice1D, proc2, dims, topBracket);
-
-	//	unsigned char* proc3 = new unsigned char[dims[0] * dims[1]];
-	//	ImgProcessor::imageMax(proc1, proc2, proc3, dims);
-
-	//	//cout << basicStats["mean"] << " " << basicStats["mean"] + basicStats["std"] << endl;
-	//	//for (size_t i = 0; i < dims[0] * dims[1]; ++i)
-	//	//{
-	//	//	sum = sum + tiffSlice1D[i];
-	//	//	if (tiffSlice1D[i] <= basicStats["mean"]) adath[i] = 0;
-	//	//	else adath[i] = tiffSlice1D[i];
-	//	//}
-	//	V3DLONG Dims[4];
-	//	Dims[0] = dims[0];
-	//	Dims[1] = dims[1];
-	//	Dims[2] = 1;
-	//	Dims[3] = 1;
-	//	string saveFullName = saveRoot + "\\" + sliceName;
-	//	//cout << saveFullName << endl;
-	//	const char* saveFullNameC = saveFullName.c_str();
-	//	ImgManager::saveimage_wrapper(saveFullNameC, proc3, Dims, 1);
-
-	//	tiffPtr->~Image4DSimple();
-	//	operator delete(tiffPtr);
-	//	adaTiffPtr->~Image4DSimple();
-	//	operator delete(adaTiffPtr);
-
-	//	if (tiffSlice1D) { delete[] tiffSlice1D; tiffSlice1D = 0; }
-	//	if (adaTiffSlice1D) { delete[] adaTiffSlice1D; adaTiffSlice1D = 0; }
-	//	if (proc1) { delete[] proc1; proc1 = 0; }
-	//	if (proc2) { delete[] proc2; proc2 = 0; }
-	//	if (proc3) { delete[] proc2; proc3 = 0; }
-	//}
-	//float mean = sum / float(dims[0] * dims[1] * sliceI);
 
 	return 0;
 }

@@ -158,6 +158,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		QString outputRoot2 = outfiles[1];
 		segPipePtr->swcSeparate(outputRoot2);
 	}
+	else if (func_name == tr("cleanUp2DcentroidZ")) segPipePtr->cleanUpzFor2Dcentroids();
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");

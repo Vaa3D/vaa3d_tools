@@ -7,8 +7,6 @@
 #include <set>
 #include <cmath>
 
-#include <qlist.h>
-
 using namespace std;
 
 struct morphStructElement
@@ -37,8 +35,6 @@ class ImgAnalyzer
 {
 public:
 	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
-	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
-	vector<connectedComponent> merge2DConnComponent_vecVersion(const vector<connectedComponent>& inputConnCompList);
 
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
 	static inline void ChebyshevCenter(set<vector<int> > allCoords, float center[]);

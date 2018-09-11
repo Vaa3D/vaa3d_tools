@@ -17,8 +17,10 @@
 
 #include "basic_surf_objs.h"
 #include "v_neuronswc.h"
+#include "NeuronStructUtilities.h"
 
 using namespace std;
+
 enum edge_lastvoted_t { edge_lastvoted };
 namespace boost 
 {
@@ -28,6 +30,31 @@ namespace boost
 typedef boost::property<boost::edge_weight_t, double> weights;
 typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
+
+#ifndef PI
+#define PI 3.1415926
+#endif
+
+struct segUnit
+{
+	QList<NeuronSWC> nodes;
+	map<int, size_t> nodeLocMap;
+	map<size_t, vector<size_t> > childMap;
+	vector<topoCharacter> topoCenters;
+};
+
+struct topoCharacter
+{
+	topoCharacter(NeuronSWC centerNode, segUnit* segUnitPtr = nullptr);
+	NeuronSWC topoCenter;
+	NeuronSWC topoCenterPa;
+	vector<NeuronSWC> topoCenterImmedChildren;
+	double childAngle;
+	map<int, double> immedChildrenLengths;
+	map<int, double> subsequentChildrenAngles;
+
+	segUnit* segUnitPtr;
+};
 
 class NeuronStructExplorer
 {
@@ -44,9 +71,10 @@ public:
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
+	vector<segUnit> segs;
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
-	static inline void MSTtreeCut(NeuronTree& inputTree, double zFactor = 1, double distThre = 1000000);
-	static NeuronTree MSTtreeTrim(const NeuronTree& inputTree);
+	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
+	NeuronTree MSTtreeTrim(const NeuronTree& inputTree); 
 
 private:
 
@@ -56,7 +84,6 @@ public:
 	/********* Pixel-based deep neural network result refining/cleaning *********/
 	unordered_map<string, unordered_map<int, float>> zProfileMap;
 	void detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
-	void pixelStackZcleanup(unordered_map<string, unordered_map<int, float>> zProfileMap, NeuronTree* outputTreePtr, int minSecNum, bool max, int threshold = 0);
 	/****************************************************************************/
 
 	/********* Distance-based SWC analysis *********/
@@ -77,8 +104,9 @@ public:
 	/**************************************************************/
 };
 
-inline void NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double zFactor, double distThre)
+inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double distThre)
 {
+	NeuronTree outputTree;
 	for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		if (it->parent != -1)
@@ -90,10 +118,17 @@ inline void NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double zFact
 			double x2 = inputTree.listNeuron.at(paID - 1).x;
 			double y2 = inputTree.listNeuron.at(paID - 1).y;
 			double z2 = inputTree.listNeuron.at(paID - 1).z;
-			double dist = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + zFactor * zFactor * (z1 - z2) * (z1 - z2));
-			if (dist > distThre) it->parent = -1;
+			double dist = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + zRATIO * zRATIO * (z1 - z2) * (z1 - z2));
+			if (dist > distThre)
+			{
+				outputTree.listNeuron.push_back(*it);
+				(outputTree.listNeuron.end() - 1)->parent = -1;
+			}
+			else outputTree.listNeuron.push_back(*it);
 		}
 	}
+
+	return outputTree;
 }
 
 #endif

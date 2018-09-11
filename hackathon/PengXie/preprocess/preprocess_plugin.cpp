@@ -6,10 +6,7 @@
 #include "v3d_message.h"
 #include "vector"
 #include "preprocess_plugin.h"
-#include "pre_processing_main.h"
-#include "neurite_analysis_main.h"
-#include "split_neuron_main.h"
-#include "qc_main.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
  
@@ -25,6 +22,7 @@ QStringList neuron_analysis::funclist() const
 {
 	return QStringList()
         <<tr("preprocess")
+        <<tr("preprocess_batch")
         <<tr("split_neuron")
         <<tr("qc")
         <<tr("get_main_component")
@@ -63,6 +61,10 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
+    if (func_name == tr("preprocess_batch"))
+    {
+        return (preprocess_batch_dofunc(input, output));
+    }
     if (func_name == tr("preprocess"))
 	{
         return (pre_processing_dofunc(input, output));

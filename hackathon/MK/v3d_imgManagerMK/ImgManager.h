@@ -5,7 +5,6 @@
 #include <vector>
 #include <deque>
 #include <map>
-#include <unordered_map>
 
 #include <boost\filesystem.hpp>
 #include <boost\shared_array.hpp>
