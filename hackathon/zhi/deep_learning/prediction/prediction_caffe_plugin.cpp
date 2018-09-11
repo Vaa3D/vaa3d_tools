@@ -1282,18 +1282,36 @@ bool prediction_caffe::dofunc(const QString & func_name, const V3DPluginArgList 
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
                 {
-                    im_seg[offsetk + offsetj + ix]=(im_label[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
+                    im_seg[offsetk + offsetj + ix]=(im_label[offsetk + offsetj + ix]>0)?255:0;
+                }
+            }
+        }
+
+        float* outimg = 0;
+        gaussian_filter(im_seg, in_sz, 7, 7, 1, 1, 3, outimg);
+
+        for(V3DLONG iz = ita+1; iz < P-ita-1; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+
+            for(V3DLONG iy = ita+1; iy < M-ita-1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = ita+1; ix < N-ita-1; ix++)
+                {
+                    im_seg[offsetk + offsetj + ix]=(outimg[offsetk + offsetj + ix]>0)?data1d[offsetk + offsetj + ix]:0;
                 }
             }
         }
 
         // save image
         in_sz[3]=1;
-        simple_saveimage_wrapper(callback, ouimg_file.toStdString().c_str(), (unsigned char *)im_seg, in_sz, datatype);
+        simple_saveimage_wrapper(callback, ouimg_file.toStdString().c_str(), im_seg, in_sz, 1);
 
         if(im_label) {delete []im_label;im_label=0;}
         if(data1d) {delete []data1d; data1d = 0;}
         if(im_seg) {delete []im_seg; im_seg = 0;}
+        if(outimg) {delete []outimg; outimg = 0;}
 
         return true;
     }

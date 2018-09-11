@@ -59,6 +59,6 @@ std::vector<std::vector<float> > batch_detection(unsigned char * & data1d,Classi
 std::vector<std::vector<float> > batch_detection_ref(unsigned char * & data1d,unsigned char * & data1d_ref,Classifier classifier, int N, int M, int P, int Sxy);
 QList <ImageMarker> batch_deletion(unsigned char * & data1d,Classifier classifier, QList <ImageMarker> input_marker, int N, int M, int P);
 //void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double angThr);
-
+void gaussian_filter(unsigned char* data1d,V3DLONG *in_sz, unsigned int Wx,unsigned int Wy,unsigned int Wz,unsigned int c,double sigma,float* &outimg);
 #endif
 
