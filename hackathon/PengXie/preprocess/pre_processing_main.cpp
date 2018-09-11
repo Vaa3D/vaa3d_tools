@@ -242,7 +242,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     }
-    bool print_apo = connect_soma_dist>0;
+    bool print_apo = ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo"))));
     my_saveANO(outfileLabel, true, print_apo);
 
     return 1;
