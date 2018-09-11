@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "swcDownSample";
+	string funcName = "morphCheck";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -59,6 +59,16 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
 		NeuronTree outputTree;
 		NeuronStructUtil::swcDownSample(inputTree, outputTree, 2, true);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("morphCheck"))
+	{
+		NeuronStructExplorer mySWCanalyzer;
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testInputFolder\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+		NeuronTree outputTree = mySWCanalyzer.MSTtreeTrim(inputTree);
 		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
