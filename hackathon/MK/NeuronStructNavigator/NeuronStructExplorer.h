@@ -49,9 +49,23 @@ struct topoCharacter
 struct segUnit
 {
 	QList<NeuronSWC> nodes;
+	map<int, size_t> seg_nodeLocMap;
+	map<int, vector<size_t> > seg_childMap;
+	vector<topoCharacter> topoCenters;
+};
+
+struct registeredTree
+{
+	registeredTree(const NeuronTree& inputTree);
+
+	NeuronTree tree;
+
+	QList<NeuronSWC> duRemovedNodeList;
 	map<int, size_t> nodeLocMap;
 	map<int, vector<size_t> > childMap;
-	vector<topoCharacter> topoCenters;
+
+	vector<segUnit> segs;
+	vector<NeuronTree> derivedTrees;
 };
 
 class NeuronStructExplorer
@@ -66,6 +80,9 @@ public:
 	NeuronTree processedTree;
 	vector<NeuronTree>* treePtrsVector;
 	QString neuronFileName;
+
+	map<string, registeredTree> treeDataBase;
+	void treeEntry(const NeuronTree& inputTree, string treeName);
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/

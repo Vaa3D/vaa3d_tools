@@ -10,6 +10,12 @@
 
 using namespace std;
 
+registeredTree::registeredTree(const NeuronTree& inputTree)
+{
+	this->tree = inputTree;
+	this->duRemovedNodeList = NeuronStructUtil::removeRednNode(this->tree);
+}
+
 NeuronStructExplorer::NeuronStructExplorer(string inputFileName)
 {
 	this->neuronFileName = QString::fromStdString(inputFileName);
@@ -142,21 +148,21 @@ NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
 			cout << endl;
 			
 			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it)  
-				newSeg.nodeLocMap.insert(pair<int, size_t>(it->n, size_t(it - newSeg.nodes.begin())));
+				newSeg.seg_nodeLocMap.insert(pair<int, size_t>(it->n, size_t(it - newSeg.nodes.begin())));
 
 			vector<size_t> childSegLocs;
-			newSeg.childMap.insert(pair<int, vector<size_t> >(newSeg.nodes.begin()->n, childSegLocs));
+			newSeg.seg_childMap.insert(pair<int, vector<size_t> >(newSeg.nodes.begin()->n, childSegLocs));
 			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it)
 			{
 				if (it->parent == -1) continue;
 
-				size_t paLoc = newSeg.nodeLocMap[it->parent];
-				if (newSeg.childMap.find(newSeg.nodes[paLoc].n) != newSeg.childMap.end()) newSeg.childMap[newSeg.nodes[paLoc].n].push_back(newSeg.nodeLocMap[it->n]);
+				size_t paLoc = newSeg.seg_nodeLocMap[it->parent];
+				if (newSeg.seg_childMap.find(newSeg.nodes[paLoc].n) != newSeg.seg_childMap.end()) newSeg.seg_childMap[newSeg.nodes[paLoc].n].push_back(newSeg.seg_nodeLocMap[it->n]);
 				else
 				{
 					vector<size_t> childSet;
-					childSet.push_back(newSeg.nodeLocMap[it->n]);
-					newSeg.childMap.insert(pair<int, vector<size_t> >(newSeg.nodes[newSeg.nodeLocMap[it->parent]].n, childSet));
+					childSet.push_back(newSeg.seg_nodeLocMap[it->n]);
+					newSeg.seg_childMap.insert(pair<int, vector<size_t> >(newSeg.nodes[newSeg.seg_nodeLocMap[it->parent]].n, childSet));
 				}	
 			}
 			this->segs.push_back(newSeg);
@@ -170,13 +176,13 @@ NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
 
 		for (QList<NeuronSWC>::iterator nodeIt = segIt->nodes.begin(); nodeIt != segIt->nodes.end(); ++nodeIt)
 		{
-			if (segIt->childMap[nodeIt->n].size() == 2)
+			if (segIt->seg_childMap[nodeIt->n].size() == 2)
 			{
 				if (nodeIt->parent == -1) continue;
 
 				topoCharacter newTopoCenter(*nodeIt);
-				newTopoCenter.topoCenterPa = segIt->nodes.at(segIt->nodeLocMap[nodeIt->parent]);
-				for (vector<size_t>::iterator immedChildLocIt = segIt->childMap[nodeIt->n].begin(); immedChildLocIt != segIt->childMap[nodeIt->n].end(); ++immedChildLocIt)
+				newTopoCenter.topoCenterPa = segIt->nodes.at(segIt->seg_nodeLocMap[nodeIt->parent]);
+				for (vector<size_t>::iterator immedChildLocIt = segIt->seg_childMap[nodeIt->n].begin(); immedChildLocIt != segIt->seg_childMap[nodeIt->n].end(); ++immedChildLocIt)
 					newTopoCenter.topoCenterImmedChildren.push_back(segIt->nodes.at(*immedChildLocIt));
 				
 				double dot = (newTopoCenter.topoCenterImmedChildren.at(0).x - nodeIt->x) * (newTopoCenter.topoCenterImmedChildren.at(1).x - nodeIt->x) +

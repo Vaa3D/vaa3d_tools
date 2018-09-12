@@ -62,6 +62,55 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 	return outputTree;
 }
 
+QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
+{
+	boost::container::flat_map<string, QList<NeuronSWC> > nodeTileMap;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / 100));
+		string yLabel = to_string(int(it->y / 100));
+		string zLabel = to_string(int(it->z / 100));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, NeuronSWC>(keyLabel, *it));
+		}
+	}
+
+	QList<NeuronSWC> outputNodeList;
+	for (boost::container::flat_map<string, QList<NeuronSWC> >::iterator tileIt = nodeTileMap.begin(); tileIt != nodeTileMap.end(); ++tileIt)
+	{
+		bool redun = true;
+		while (redun)
+		{
+			for (QList<NeuronSWC>::iterator it1 = tileIt->second.begin(); it1 != tileIt->second.end(); ++it1)
+			{
+				for (QList<NeuronSWC>::iterator it2 = tileIt->second.begin(); it2 != tileIt->second.end(); it2)
+				{
+					if (it2 == it1) continue;
+
+					if (it2->x == it1->x && it2->y == it1->y && it2->z == it1->z)
+					{
+						tileIt->second.erase(it2);
+						goto NODE_DELETED;
+					}
+				}
+			}
+			redun = false;
+
+		NODE_DELETED:
+			continue;
+		}
+
+		outputNodeList.append(tileIt->second);
+	}
+
+	return outputNodeList;
+}
+
 vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree& inputTree)
 {
 	// -- Finds signal blobs "slice by slice" from input NeuronTree. Each slice is independent to one another.
