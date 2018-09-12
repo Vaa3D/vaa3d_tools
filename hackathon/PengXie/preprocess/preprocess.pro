@@ -19,7 +19,8 @@ HEADERS	+= preprocess_plugin.h \
     connnect_swc_redefined.h \
     split_neuron_main.h \
     qc_main.h \
-    preprocess_batch_main.h
+    preprocess_batch_main.h \
+    crop_swc_main.h
 HEADERS += pre_processing_main.h
 SOURCES	+= preprocess_plugin.cpp \
     neurite_analysis_main.cpp \
@@ -29,7 +30,8 @@ SOURCES	+= preprocess_plugin.cpp \
     connect_swc_redefined.cpp \
     split_neuron_main.cpp \
     qc_main.cpp \
-    preprocess_batch_main.cpp
+    preprocess_batch_main.cpp \
+    crop_swc_main.cpp
 SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

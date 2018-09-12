@@ -129,8 +129,8 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
             new_tree.listNeuron[new_cend].pn = -1;
         }
     }
-    export_list2file(new_tree.listNeuron, qPrintable(outfileLabel + "temp.swc"));
-    new_tree = readSWC_file(qPrintable(outfileLabel + "temp.swc"));
+    export_list2file(new_tree.listNeuron, qPrintable(outfileLabel + ".connect_soma.swc"));
+    new_tree = readSWC_file(qPrintable(outfileLabel + ".connect_soma.swc"));
     new_tree = my_connectall(new_tree, 1, 1, 5, 60, 10, 1, false, 1);
     const int new_N = new_tree.listNeuron.size();
 
@@ -199,11 +199,13 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         fprintf(stderr,"Error in prune_short_branch.\n");
         return 1;
     }
-    export_list2file(cur_nt.listNeuron, qPrintable(outfileLabel+"temp.swc"));
+    export_list2file(cur_nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
 
     //2.3 Short distance connection
-    nt = readSWC_file(qPrintable(outfileLabel+"temp.swc"));
+    printf("\tShort distance connection\n");
+    nt = readSWC_file(qPrintable(outfileLabel+".prune.swc"));
     nt = my_connectall(nt, 1, 1, 5, 60, thres, 0, false, 1);
+    export_list2file(nt.listNeuron, qPrintable(outfileLabel+".short_connect.swc"));
 
     //2.3 Resample
     printf("\tResampling\n");
@@ -214,12 +216,16 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("Skip Resampling\n");
     }
 
-    //2.4 Connect to soma
-    printf("\tConnecting to soma\n");
+    //2.4 Connect to soma  
     cur_nt.listNeuron = nt.listNeuron;
-    if (connect_soma_dist>0){
+    if ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo")))){
+        printf("\tConnecting to soma\n");
         markers = readAPO_file(infileLabel + QString(".apo"));
         nt = connect_soma(cur_nt, markers, connect_soma_dist, outfileLabel, 1e6, colorful, return_maintree);
+    }
+    else{
+        printf("\tSkip connecting to soma\n");
+        nt = my_connectall(cur_nt, 1, 1, 5, 60, 10, 1, false, 1);
     }
 
     //2.6 Align axis
@@ -236,7 +242,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     }
-    bool print_apo = connect_soma_dist>0;
+    bool print_apo = ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo"))));
     my_saveANO(outfileLabel, true, print_apo);
 
     return 1;
@@ -424,7 +430,20 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
 	}
 
     QString qs_input = QString(dfile_input);
-    QString qs_output = QString(dfile_result);
+    QString qs_output;
+    if(dfile_input != NULL){
+        qs_output = QString(dfile_result);
+    }
+    else{
+        qs_output = QString((qPrintable(qs_input)));
+        if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
+            qs_output = qs_output.left(qs_output.length() - 4) + QString(".processed.swc");
+        }
+        if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
+            qs_output = qs_output.left(qs_output.length() - 5) + QString(".processed.eswc");
+        }
+    }
+
     // Pre-process
     pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
     return 1;
@@ -488,5 +507,5 @@ void printHelp_pre_processing()
     printf("\t                         if not specified, labeling is not performed\n");
     printf("\t#f <return_maintree = 0>   :   whether to return only the maintree (a single tree connected to soma).\n");
     printf("\t                         if not specified, all trees will be reported\n");
-    printf("Usage: vaa3d -x preprocess -f preprocess -p \"#i input.swc #o result.swc #l 2 #s 0 #m 2000 #t 0.25 #r 0 #d 0 #f 1\"\n");
+    printf("Usage: vaa3d -x preprocess -f preprocess -p \"#i input.swc #o result.swc #l 2 #s 0 #m 70 #t 5 #r 0 #d 0 #f 0\"\n");
 }

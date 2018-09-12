@@ -21,24 +21,30 @@ class NeuronStructUtil
 public: 
 	NeuronStructUtil() {};
 
-	/********* Basic Neuron Struct File Operations *********/
+	/********* Basic Neuron Struct Files Operations *********/
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static void swcSliceAssembler(string swcPath);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink = false);
 	/*******************************************************/
 	
+	/********* Neuron Struct Refinement *********/
+	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
+	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
+	/********************************************/
+
+	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
+
 	/********* SWC to ImgAnalyzer::connectedComponent *********/
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 	/**********************************************************/
 
-	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
-	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
-	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink = false);
+	
 	static void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold);
 	/*******************************************************/
 
