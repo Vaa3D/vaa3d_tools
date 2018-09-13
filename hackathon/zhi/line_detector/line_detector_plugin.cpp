@@ -20,12 +20,15 @@
 #include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
 #include <iostream>
 #include "../resample_swc/resampling.h"
-
+#include "neuron_format_converter.h"
 
 
 #include <fstream>
 
 Q_EXPORT_PLUGIN2(line_detector, line_detector);
+
+typedef vector<MyMarker*> SegmentNew;
+typedef vector<MyMarker*> TreeNew;
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
@@ -56,6 +59,8 @@ int reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PAR
 int curveFitting_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 int reconstruction_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+int reconstruction_func_conf(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+NeuronTree calculateScore(NeuronTree nt, unsigned char *total1dData, V3DLONG *in_sz, int score_type, float radius_factor);
 
  
 QStringList line_detector::menulist() const
@@ -94,7 +99,7 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	{
         bool bmenu = true;
         input_PARA PARA;
-        reconstruction_func(callback,parent,PARA,bmenu);
+        reconstruction_func_conf(callback,parent,PARA,bmenu);
 	}
     else if (menu_name == tr("GD Curveline infinite"))
     {
@@ -103,7 +108,7 @@ void line_detector::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for (;;)
         {
             printf("\n\n~~~~~~~~~ Enter again @@@@@@@@@@@@@@@@@@@\n\n");
-            int res = reconstruction_func(callback,parent,PARA,bmenu);
+            int res = reconstruction_func_conf(callback,parent,PARA,bmenu);
             if (res!=0)
                 break;
         }
@@ -1116,39 +1121,40 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
 
         int k=0;
         QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
-        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") marker_name = ""; k++;
+//        QString marker_name = paras.empty() ? "" : paras[k]; if(marker_name == "NULL") marker_name = ""; k++;
 
-        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(marker_name)));
+//        vector<MyMarker> file_inmarkers = readMarker_file(string(qPrintable(marker_name)));
         NeuronTree nt_manual = readSWC_file(swc_name);
         NeuronTree nt = resample(nt_manual,1);
 
-        for(V3DLONG d = 0; d <nt_manual.listNeuron.size(); d++)
-        {
-            bool flag = true;
-            for(V3DLONG j = 0; j < file_inmarkers.size();j++)
-            {
-                double dist = NTDIS(nt_manual.listNeuron.at(d),file_inmarkers.at(j));
-                if((j==0 && dist<150) || (j>0 && dist<128))
-                {
-                    flag = false;
-                    break;
-                }
-            }
+//        for(V3DLONG d = 0; d <nt_manual.listNeuron.size(); d++)
+//        {
+//            bool flag = true;
+//            for(V3DLONG j = 0; j < file_inmarkers.size();j++)
+//            {
+//                double dist = NTDIS(nt_manual.listNeuron.at(d),file_inmarkers.at(j));
+//                if((j==0 && dist<150) || (j>0 && dist<128))
+//                {
+//                    flag = false;
+//                    break;
+//                }
+//            }
 
-            if(flag)
-            {
-                MyMarker t;
-                t.x = nt_manual.listNeuron.at(d).x;
-                t.y = nt_manual.listNeuron.at(d).y;
-                t.z = nt_manual.listNeuron.at(d).z;
-                file_inmarkers.push_back(t);
+//            if(flag)
+//            {
+                int d=0;
+//                MyMarker t;
+//                t.x = nt_manual.listNeuron.at(d).x;
+//                t.y = nt_manual.listNeuron.at(d).y;
+//                t.z = nt_manual.listNeuron.at(d).z;
+//                file_inmarkers.push_back(t);
 
-                V3DLONG start_x = nt_manual.listNeuron.at(d).x - 32;
-                V3DLONG end_x = start_x + 64 - 1;
-                V3DLONG start_y = nt_manual.listNeuron.at(d).y - 32;
-                V3DLONG end_y = start_y + 64 - 1;
-                V3DLONG start_z = nt_manual.listNeuron.at(d).z - 32;
-                V3DLONG end_z = start_z + 64 - 1;
+                V3DLONG start_x = nt_manual.listNeuron.at(d).x - 64;
+                V3DLONG end_x = start_x + 128 - 1;
+                V3DLONG start_y = nt_manual.listNeuron.at(d).y - 64;
+                V3DLONG end_y = start_y + 128 - 1;
+                V3DLONG start_z = nt_manual.listNeuron.at(d).z - 64;
+                V3DLONG end_z = start_z + 128 - 1;
 
                 V3DLONG mysz[4];
                 mysz[0] = end_x - start_x +1;
@@ -1161,11 +1167,13 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                                                            start_y,end_y+1,start_z,end_z+1);
 
                 QString pathname = output_folder + QString("/x%1_y%2_z%3").arg(start_x).arg(start_y).arg(start_z);
-                QString imageSaveString = pathname + ".tif";
+                QString imageSaveString = pathname + ".v3draw.tif";
                 simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)data1d_crop, mysz, 1);
 
                 NeuronTree nt_crop;
                 QList <NeuronSWC> & listNeuron = nt_crop.listNeuron;
+
+                nt = resample(nt,1);
 
                 for(V3DLONG i =0; i < nt.listNeuron.size();i++)
                 {
@@ -1181,15 +1189,20 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                 NeuronTree nt_crop_sorted;
                 SortSWC(nt_crop.listNeuron, nt_crop_sorted.listNeuron ,VOID, 0);
 
-                QString swcSaveString = pathname + "_label.swc";
+                QString swcSaveString = pathname + ".v3draw_label.swc";
                 writeSWC_file(swcSaveString,nt_crop_sorted);
 
+                QString cmd_predict = QString("/local1/work/v3d_external/bin/vaa3d -x neuron_radius -f neuron_radius -i %1 %2 -p 70 0").arg(imageSaveString.toStdString().c_str()).arg(swcSaveString.toStdString().c_str());
+                system(qPrintable(cmd_predict));
+
+                swcSaveString = swcSaveString+".out.swc";
+                nt_crop_sorted=readSWC_file(swcSaveString);
                 unsigned char* data1d_mask = 0;
                 data1d_mask = new unsigned char [pagesz];
                 memset(data1d_mask,0,pagesz*sizeof(unsigned char));
                 double margin=1;//by PHC 20170531
                 ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2], margin);
-                QString labelSaveString = pathname + "_label.tif";
+                QString labelSaveString = pathname + ".v3draw_label.tif";
                 simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
 
                 V3DLONG stacksz =mysz[0]*mysz[1];
@@ -1245,8 +1258,98 @@ bool line_detector::dofunc(const QString & func_name, const V3DPluginArgList & i
                 if(image_mip) {delete [] image_mip; image_mip=0;}
                 if(label_mip) {delete [] label_mip; label_mip=0;}
                 listNeuron.clear();
-            }
+//            }
+//        }
+
+    }else if (func_name == tr("generate_training_unet_terafly_v2"))
+    {
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        QString inimg_file = infiles[0];
+
+        int k=0;
+        QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
+        NeuronTree nt_manual = readSWC_file(swc_name);
+
+        unsigned char* data1d = 0;
+        V3DLONG mysz[4];
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d, mysz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",inimg_file.toStdString().c_str());
+            return -1;
         }
+
+        V3DLONG pagesz=mysz[0]*mysz[1]*mysz[2];
+        unsigned char* data1d_mask = 0;
+        data1d_mask = new unsigned char [pagesz];
+        memset(data1d_mask,0,pagesz*sizeof(unsigned char));
+        double margin=0;
+        ComputemaskImage(nt_manual, data1d_mask, mysz[0], mysz[1], mysz[2], margin);
+        QString labelSaveString = inimg_file + "_label.tif";
+        simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
+
+
+
+//        NeuronTree nt = resample(nt_manual,1);
+
+//        V3DLONG start_x = nt.listNeuron.at(0).x;
+//        V3DLONG end_x = nt.listNeuron.at(0).x;
+//        V3DLONG start_y = nt.listNeuron.at(0).y;
+//        V3DLONG end_y = nt.listNeuron.at(0).y;
+//        V3DLONG start_z = nt.listNeuron.at(0).z;
+//        V3DLONG end_z = nt.listNeuron.at(0).z;
+
+//        for(V3DLONG i = 1; i < nt.listNeuron.size();i++)
+//        {
+//            if(nt.listNeuron.at(i).type ==1 || nt.listNeuron.at(i).type ==3 || nt.listNeuron.at(i).type ==4)
+//            {
+//                if(start_x>nt.listNeuron.at(i).x) start_x = nt.listNeuron.at(i).x;
+//                if(end_x<nt.listNeuron.at(i).x) end_x = nt.listNeuron.at(i).x;
+
+//                if(start_y>nt.listNeuron.at(i).y) start_y = nt.listNeuron.at(i).y;
+//                if(end_y<nt.listNeuron.at(i).y) end_y = nt.listNeuron.at(i).y;
+
+//                if(start_z>nt.listNeuron.at(i).z) start_z = nt.listNeuron.at(i).z;
+//                if(end_z<nt.listNeuron.at(i).z) end_z = nt.listNeuron.at(i).z;
+//            }
+//        }
+
+//        unsigned char * total1dData = 0;
+//        total1dData = callback.getSubVolumeTeraFly(inimg_file.toStdString(),start_x,end_x+1,
+//                                                   start_y,end_y+1,start_z,end_z+1);
+//        V3DLONG mysz[4];
+//        mysz[0] = end_x -start_x +1;
+//        mysz[1] = end_y - start_y +1;
+//        mysz[2] = end_z - start_z +1;
+//        mysz[3] = 1;
+//        QString imageSaveString = swc_name + "_dendrite.v3draw";
+//        simple_saveimage_wrapper(callback, imageSaveString.toLatin1().data(),(unsigned char *)total1dData, mysz, 1);
+
+//        NeuronTree nt_crop;
+//        QList <NeuronSWC> & listNeuron = nt_crop.listNeuron;
+
+//        for(V3DLONG i =0; i < nt.listNeuron.size();i++)
+//        {
+//            nt.listNeuron[i].x -= start_x;
+//            nt.listNeuron[i].y -= start_y;
+//            nt.listNeuron[i].z -= start_z;
+//            if(nt.listNeuron[i].x  >= 0 && nt.listNeuron[i].x  < mysz[0] && nt.listNeuron[i].y  >= 0 && nt.listNeuron[i].y  < mysz[1] && nt.listNeuron[i].z >=0 && nt.listNeuron[i].z < mysz[2])
+//                listNeuron << nt.listNeuron.at(i);
+//        }
+
+//        NeuronTree nt_crop_sorted;
+//        SortSWC(nt_crop.listNeuron, nt_crop_sorted.listNeuron ,VOID, VOID);
+
+//        QString swcSaveString = swc_name + "_dendrite.swc";
+//        writeSWC_file(swcSaveString,nt_crop_sorted);
+
 
     }else if (func_name == tr("shift_swc"))
     {
@@ -3003,4 +3106,493 @@ bool curveFitting_func_v2(V3DPluginCallback2 &callback, QWidget *parent, input_P
 
     if(data1d_mask) {delete []data1d_mask; data1d_mask = 0;}
 
+}
+
+int reconstruction_func_conf(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+{
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,sc,c;
+    V3DLONG in_sz[4];
+    v3dhandle curwin;
+    if(bmenu)
+    {
+        curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return -1;
+        }
+
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return -1;
+        }
+
+        PARA.listLandmarks = callback.getLandmark(curwin);
+        if(PARA.listLandmarks.count() ==0)
+        {
+            QMessageBox::information(0, "", "No markers in the current image, please select a marker.");
+            return -1;
+        }
+
+        if(PARA.win_size ==0)
+        {
+            bool ok;
+            PARA.win_size = QInputDialog::getInteger(parent, "Window radius",
+                                                     "Enter radius (window size is 2*radius+1):",
+                                                     32, 16, 512, 1, &ok);
+            if (!ok)
+                return -1;
+        }
+
+        data1d = p4DImage->getRawData();
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        sc = p4DImage->getCDim();
+
+        bool ok1;
+
+        if(sc==1)
+        {
+            c=1;
+            ok1=true;
+        }
+        else
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                             "Enter channel NO:",
+                                             1, 1, sc, 1, &ok1);
+        }
+
+        if(!ok1)
+            return -1;
+
+        in_sz[0] = N;
+        in_sz[1] = M;
+        in_sz[2] = P;
+        in_sz[3] = sc;
+
+        PARA.inimg_file = p4DImage->getFileName();
+    }
+    else
+    {
+        int datatype = 0;
+        if (!simple_loadimage_wrapper(callback,PARA.inimg_file.toStdString().c_str(), data1d, in_sz, datatype))
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return -1;
+        }
+        if(PARA.channel < 1 || PARA.channel > in_sz[3])
+        {
+            fprintf (stderr, "Invalid channel number. \n");
+            return -1;
+        }
+        N = in_sz[0];
+        M = in_sz[1];
+        P = in_sz[2];
+        sc = in_sz[3];
+        c = PARA.channel;
+    }
+
+    //GD_tracing
+    LocationSimple p0;
+    vector<LocationSimple> pp;
+    NeuronTree nt;
+
+    double weight_xy_z=1.0;
+    CurveTracePara trace_para;
+    trace_para.channo = 0;
+    trace_para.sp_graph_background = 0;
+    trace_para.b_postMergeClosebyBranches = false;
+    trace_para.b_3dcurve_width_from_xyonly = true;
+    trace_para.b_pruneArtifactBranches = false;
+    trace_para.sp_num_end_nodes = 2;
+    trace_para.b_deformcurve = false;
+    trace_para.sp_graph_resolution_step = 1;
+    trace_para.b_estRadii = false;
+
+    int markSize = PARA.listLandmarks.size();
+    if (PARA.nt.listNeuron.size() > 0 && PARA.listLandmarks.at(markSize-1).category !=1)
+    {
+        for(V3DLONG i=0; i<PARA.nt.listNeuron.size();i++)
+        {
+            if(NTDIS(PARA.nt.listNeuron.at(i),PARA.listLandmarks.at(markSize-1))<5)
+            {
+                   PARA.listLandmarks.removeAt(markSize-1);
+                   callback.setLandmark(curwin,PARA.listLandmarks);
+                   callback.updateImageWindow(curwin);
+                   callback.pushObjectIn3DWindow(curwin);
+                   return(PARA.listLandmarks.size()==0)? 1 : 0;
+            }
+        }
+    }
+    p0.x = PARA.listLandmarks.at(markSize-1).x-1;
+    p0.y = PARA.listLandmarks.at(markSize-1).y-1;
+    p0.z = PARA.listLandmarks.at(markSize-1).z-1;
+
+    V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
+    start_x = (p0.x - PARA.win_size < 0)?  0 : (p0.x - PARA.win_size);
+    start_y = (p0.y - PARA.win_size < 0)?  0 : (p0.y - PARA.win_size);
+    start_z = (p0.z - PARA.win_size < 0)?  0 : (p0.z - PARA.win_size);
+
+    end_x = (p0.x + PARA.win_size >= N-1)?  (N-1) : (p0.x + PARA.win_size);
+    end_y = (p0.y + PARA.win_size >= M-1)?  (M-1) : (p0.y + PARA.win_size);
+    end_z = (p0.z + PARA.win_size >= P-1)?  (P-1) : (p0.z + PARA.win_size);
+
+    V3DLONG stacksz = N*M*P*sc;
+    unsigned char* data1d_mask = 0;
+    data1d_mask = new unsigned char [stacksz];
+    memset(data1d_mask,0,stacksz*sizeof(unsigned char));
+    double margin=3;//by PHC 20170531
+    if (PARA.nt.listNeuron.size() > 0)
+        ComputemaskImage(PARA.nt, data1d_mask, N, M, P, margin);
+    else if (PARA.nt_input.listNeuron.size() > 0)
+    {
+        margin = 10;
+        ComputemaskImage(PARA.nt_input, data1d_mask, N, M, P, margin);
+    }
+
+    unsigned char *localarea=0;
+    V3DLONG blockpagesz = (end_x-start_x+1)*(end_y-start_y+1)*(end_z-start_z+1);
+    localarea = new unsigned char [blockpagesz];
+    V3DLONG d = 0;
+    for(V3DLONG iz = start_z; iz <= end_z; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = start_y; iy <= end_y; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = start_x; ix <= end_x; ix++)
+            {
+                localarea[d++] = (data1d_mask[offsetk + offsetj + ix] == 0) ? data1d[offsetk + offsetj + ix] : 1;
+//                localarea[d++] = data1d[offsetk + offsetj + ix]; //disable the masking and copy the data as is // by PHC 20170607
+            }
+        }
+    }
+
+    if(data1d_mask) {delete []data1d_mask; data1d_mask=0;}
+    V3DLONG sz_tracing[4];
+    sz_tracing[0] = end_x-start_x+1;
+    sz_tracing[1] = end_y-start_y+1;
+    sz_tracing[2] = end_z-start_z+1;
+    sz_tracing[3] = 1;
+
+    unsigned char ****p4d = 0;
+    if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
+    {
+        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+        if(localarea) {delete []localarea; localarea = 0;}
+        if(p4d) {delete []p4d; p4d = 0;}
+        return -1;
+    }
+    p0.x -= start_x;
+    p0.y -= start_y;
+    p0.z -= start_z;
+
+    LocationSimple tmpp;
+    vector<MyMarker> file_inmarkers;
+
+    for(V3DLONG ix = 0; ix <=2; ix++)
+    {
+        tmpp.x = (2-ix)*start_x/2 + ix*end_x/2 - start_x;
+        if(tmpp.x < 0) tmpp.x = 0;
+        if(tmpp.x > sz_tracing[0]-1) tmpp.x = sz_tracing[0]-1;
+        for(V3DLONG iy = 0; iy <=2; iy++)
+        {
+            tmpp.y = (2-iy)*start_y/2 + iy*end_y/2 - start_y;
+            if(tmpp.y < 0) tmpp.y = 0;
+            if(tmpp.y > sz_tracing[1]-1) tmpp.y = sz_tracing[1]-1;
+            for(V3DLONG iz = 0; iz <=2; iz++)
+            {
+                tmpp.z = (2-iz)*start_z/2 + iz*end_z/2 - start_z;
+                if(tmpp.z < 0) tmpp.z = 0;
+                if(tmpp.z > sz_tracing[2]-1) tmpp.z = sz_tracing[2]-1;
+                if(!(ix==1 && iy ==1 && iz==1))
+                {
+                    MyMarker t;
+                    t.x = tmpp.x;//+start_x;
+                    t.y = tmpp.y;//+start_y;
+                    t.z = tmpp.z;//+start_z;
+                    file_inmarkers.push_back(t);
+                    pp.push_back(tmpp);
+                }
+            }
+        }
+    }
+
+    NeuronTree nt_gd = v3dneuron_GD_tracing(p4d, sz_tracing,
+                              p0, pp,
+                              trace_para, weight_xy_z);
+
+    NeuronTree nt_score = calculateScore(nt_gd,localarea,sz_tracing,1,2);
+    V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt_score);
+    V3DLONG n_segs = nt_decomposed.seg.size();
+    V3DLONG *seg_id_array = 0;
+    try{ seg_id_array = new V3DLONG [n_segs];}
+    catch (...) {v3d_msg("fail to allocate memory in proj_trace_joinAllNeuronSegs()");return false;}
+    for (V3DLONG i=0;i<n_segs;i++) seg_id_array[i]=i;
+
+    V_NeuronSWC nt_neuron = join_segs_in_V_NeuronSWC_list(nt_decomposed, seg_id_array, n_segs);
+    nt = V_NeuronSWC__2__NeuronTree(nt_neuron);
+
+    QString image_name = PARA.inimg_file + QString("_x_%1_y_%2_z_%3_line_detector.v3draw").arg(PARA.listLandmarks.at(0).x).arg(PARA.listLandmarks.at(0).y).arg(PARA.listLandmarks.at(0).z);
+    simple_saveimage_wrapper(callback, image_name.toStdString().c_str(),(unsigned char *)localarea, sz_tracing, 1);
+
+    QString swc_name = PARA.inimg_file + QString("_x_%1_y_%2_z_%3_line_detector.swc").arg(PARA.listLandmarks.at(0).x).arg(PARA.listLandmarks.at(0).y).arg(PARA.listLandmarks.at(0).z);
+    writeSWC_file(swc_name,nt);
+
+    QList<NeuronSWC> list = nt.listNeuron;
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    vector<QList<NeuronSWC> > nt_list;
+    V3DLONG seg_max = 0;
+    for (int i=0;i<list.size();i++)
+    {
+        QList<NeuronSWC> nt_seg;
+        if (childs[i].size()==0)
+        {
+            int index_i = i;
+            while(index_i != 1000000000)
+            {
+                nt_seg.push_front(list.at(index_i));
+                index_i = getParent(index_i,nt);
+            }
+            nt_list.push_back(nt_seg);
+            if(nt_seg.size() > seg_max)
+                seg_max = nt_seg.size();
+            nt_seg.clear();
+        }
+    }
+
+    double seg_mean_min = MAX_INT;
+    int seg_tip_id;
+
+    v3d_msg(QString("").setNum(nt_list.size()).prepend("The number of segments right now = "), 0);
+    for (int i =0; i<nt_list.size();i++)
+    {
+        QList<NeuronSWC> nt_seg = nt_list.at(i);
+        int break_id = nt_seg.size();
+
+        double seg_intensity = 0;
+        for(int j = 0; j < break_id; j++)
+        {
+            seg_intensity += nt_seg[j].type;
+        }
+
+        if(seg_intensity/break_id <= seg_mean_min)
+        {
+            seg_mean_min = seg_intensity/break_id;
+            seg_tip_id = i;
+        }
+    }
+
+    QList<NeuronSWC> nt_selected = nt_list.at(seg_tip_id);
+    double std = 0;
+    for(int i=0; i <nt_selected.size();i++)
+    {
+        std += pow(nt_selected[i].type-seg_mean_min,2);
+    }
+    std = sqrt(std/nt_selected.size());
+
+    QString swc_seg = swc_name + QString("%1.swc").arg(seg_tip_id);
+
+//    writeSWC_file(swc_name,nt);
+    export_list2file(nt_selected, swc_seg,swc_name);
+    v3d_msg(QString("mean is %1, std is %2").arg(seg_mean_min).arg(std));
+
+    bool ending_tip = false;
+    bool b_boundary = false;
+    double std_cof=0.1;
+    for(int i = nt_selected.size()-1; i >= 0; i--)
+    {
+        NeuronSWC curr = nt_selected.at(i);
+        if(!ending_tip)
+        {
+            if(curr.type <= seg_mean_min - std_cof*std)
+            {
+                ending_tip = true;
+                LocationSimple newmarker;
+                newmarker.x = curr.x + start_x +1;
+                newmarker.y = curr.y + start_y +1;
+                newmarker.z = curr.z + start_z +1;
+                newmarker.category = 1;
+                PARA.listLandmarks.removeAt(markSize-1);
+
+                double boundary_margin_ratio=0.02;
+                if(newmarker.x <= N*boundary_margin_ratio || newmarker.x >= N*(1-boundary_margin_ratio) ||
+                        newmarker.y <= M*boundary_margin_ratio || newmarker.y >= M*(1-boundary_margin_ratio) ||
+                        newmarker.z <= P*boundary_margin_ratio || newmarker.z >= P*(1-boundary_margin_ratio))
+                {
+                    b_boundary = true;
+                }
+                else
+                    PARA.listLandmarks.push_back(newmarker);
+                break;
+            }
+            else
+                nt_selected.removeAt(i);
+        }
+    }
+
+    NeuronTree nt_original = PARA.nt;
+    NeuronSWC S;
+    V3DLONG nt_length = nt_original.listNeuron.size();
+    V3DLONG index;
+    if(nt_length>0)
+        index = nt_original.listNeuron.at(nt_length-1).n;
+    else
+        index = 0;
+
+    PARA.nt_last.clear();
+    for (int i=0;i<nt_selected.size();i++)
+    {
+        NeuronSWC curr = nt_selected.at(i);
+        S.n 	= curr.n + index;
+        S.type 	= 3;
+        S.x 	= curr.x + start_x;
+        S.y 	= curr.y + start_y;
+        S.z 	= curr.z + start_z;
+        S.r 	= curr.r;
+        S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
+        nt_original.listNeuron.append(S);
+        nt_original.hashNeuron.insert(S.n, nt_original.listNeuron.size()-1);
+        if(!b_boundary) PARA.nt_last.push_back(S);
+    }
+
+    PARA.nt = nt_original;
+    if(bmenu)
+    {
+        callback.setLandmark(curwin,PARA.listLandmarks);
+        nt_original.color.r = 0;
+        nt_original.color.g = 0;
+        nt_original.color.b = 0;
+        nt_original.color.a = 0;
+
+        callback.setSWC(curwin,nt_original);
+        callback.updateImageWindow(curwin);
+        callback.pushObjectIn3DWindow(curwin); //by PHC 170601
+    }
+
+    if(localarea) {delete []localarea; localarea = 0;}
+    if(p4d) {delete []p4d; p4d = 0;}
+    if (b_boundary)
+        v3d_msg("Hit the boundary!",0);
+
+    if(!bmenu)
+    {
+        if(data1d) {delete []data1d; data1d = 0;}
+    }
+
+    return ((b_boundary) && PARA.listLandmarks.size()==0) ? 1 : 0;
+
+}
+
+NeuronTree calculateScore(NeuronTree nt, unsigned char *total1dData, V3DLONG *in_sz, int score_type=1, float radius_factor=2)
+{
+    NeuronTree result;
+    V3DLONG siz = nt.listNeuron.size();
+    QHash <int, int>  hashNeuron;
+    hashNeuron.clear();
+    TreeNew tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        MyMarker* pt = new MyMarker;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->radius = s.r;
+        pt->type = s.type;
+        pt->parent = NULL;
+        pt->level = 0;
+        tree.push_back(pt);
+        hashNeuron.insert(s.n, i);
+    }
+    nt.hashNeuron = hashNeuron;
+
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (nt.listNeuron[i].pn<0) continue;
+        V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
+        tree[i]->parent = tree[pid];
+        tree[pid]->level++;
+    }
+    //	printf("tree constructed.\n");
+    vector<SegmentNew*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->level!=1)//tip or branch point
+        {
+            SegmentNew* seg = new SegmentNew;
+            MyMarker* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->parent;
+            }
+            while(cur && cur->level==1);
+            seg_list.push_back(seg);
+        }
+    }
+
+    for(V3DLONG i=0; i<seg_list.size();i++)
+    {
+        SegmentNew* seg = seg_list[i];
+        map<MyMarker*, double> score_map;
+        topology_analysis_perturb_intense(total1dData, *seg, score_map, 1, in_sz[0], in_sz[1], in_sz[2], 1);
+        for(V3DLONG i = 0; i<seg->size(); i++){
+            MyMarker * marker = seg->at(i);
+            double tmp = score_map[marker] * 120 +19;
+            marker->type = tmp;
+        }
+    }
+
+    tree.clear();
+    map<MyMarker*, V3DLONG> index_map;
+    for (V3DLONG i=0;i<seg_list.size();i++)
+        for (V3DLONG j=0;j<seg_list[i]->size();j++)
+        {
+            tree.push_back(seg_list[i]->at(j));
+            index_map.insert(pair<MyMarker*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
+        }
+
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        NeuronSWC S;
+        MyMarker* p = tree[i];
+        S.n = i+1;
+        if (p->parent==NULL) S.pn = -1;
+        else
+            S.pn = index_map[p->parent]+1;
+        if (p->parent==p) printf("There is loop in the tree!\n");
+        S.x = p->x;
+        S.y = p->y;
+        S.z = p->z;
+        S.r = p->radius;
+        S.type = p->type;
+        S.level = p->level;
+        result.listNeuron.push_back(S);
+    }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        if (tree[i]) {delete tree[i]; tree[i]=NULL;}
+    }
+    for (V3DLONG j=0;j<seg_list.size();j++)
+        if (seg_list[j]) {delete seg_list[j]; seg_list[j] = NULL;}
+    for (V3DLONG i=0;i<result.listNeuron.size();i++)
+        result.hashNeuron.insert(result.listNeuron[i].n, i);
+
+    return result;
 }
