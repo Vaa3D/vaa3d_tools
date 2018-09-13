@@ -18,6 +18,9 @@
 #include "../../../hackathon/zhi/branch_point_detection/branch_pt_detection_func.h"
 #include "../neuron_reliability_score/src/topology_analysis.h"
 
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
+#define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
 
 
 #if  defined(Q_OS_LINUX)
@@ -1534,14 +1537,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     // call unet segmentation
     if(!ifs_swc)
     {
-        P.length_thresh = 2;
+        P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
 
 
 #if  defined(Q_OS_LINUX)
-    QString cmd_tremap = QString("%1/vaa3d -x prediction_caffe -f Segmentation_3D -i %2 -o %3 -p /local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt /local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel")
+    QString cmd_predict = QString("%1/vaa3d -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p /local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt /local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel /local1/work/caffe_unet/HeartSeg/3D-DSN/snapshot/HVSMR_iter_138000.caffemodel")
             .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
-    system(qPrintable(cmd_tremap));
+    system(qPrintable(cmd_predict));
 #endif
 
 
@@ -1845,7 +1848,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                                 total1dData_apa = new unsigned char [pagesz_vim];
                                 BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
                                 p2.p4dImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-                                p2.bkg_thresh +=1;
+                                p2.bkg_thresh =-1;
                             }
                             else
                                 break;
@@ -2024,7 +2027,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         QVector<int> visit(nt.listNeuron.size(),0);
         for(int i=0; i<nt.listNeuron.size();i++)
         {
-            if(nt.listNeuron[i].pn ==-1 && visit[i]==0)
+            if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2046,7 +2049,32 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 q.clear();
             }
 
-            if(nt.listNeuron[i].type>130 && visit[i]==0)
+            int diff_radius;
+            if(nt.listNeuron[i].type<=130 && nt.listNeuron[i].radius<2 && visit[i]==0)
+            {
+                int count=0;
+                int pre_sum=0;
+                int next_sum=0;
+                int pre=i, next=i;
+                while(count<15 && childs[next].size()>0 && nt.listNeuron[pre].pn>0)
+                {
+                    pre_sum += nt.listNeuron[pre].radius;
+                    next_sum += nt.listNeuron[next].radius;
+                    pre = nt.hashNeuron.value(nt.listNeuron[pre].pn);
+                    next = childs[next].at(0);
+                    count++;
+                }
+
+                if(count==15)
+                {
+                    diff_radius = (next_sum-pre_sum);
+                    double node_angle = angle(nt.listNeuron[i], nt.listNeuron[pre], nt.listNeuron[next]);
+
+                    if(diff_radius>15 && node_angle<120) nt.listNeuron[i].type=255;
+                }
+            }
+
+            if(nt.listNeuron[i].type>130 && visit[i]==0 && childs[i].size()==1)
             {
                 QQueue<int> q;
                 visit[i]=1;
