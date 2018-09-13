@@ -10,10 +10,21 @@
 
 using namespace std;
 
-registeredTree::registeredTree(const NeuronTree& inputTree)
+profiledTree::profiledTree(const NeuronTree& inputTree, bool removeRdn)
 {
 	this->tree = inputTree;
-	this->duRemovedNodeList = NeuronStructUtil::removeRednNode(this->tree);
+	if (removeRdn)
+	{
+		this->duRemovedNodeList = NeuronStructUtil::removeRednNode(inputTree);
+		this->cleanedUpTree.listNeuron = this->duRemovedNodeList;
+		NeuronStructUtil::node2loc_node2childLocMap(this->cleanedUpTree.listNeuron, this->node2LocMap, this->node2childLocMap);
+		this->segs = NeuronStructExplorer::findSegs(this->duRemovedNodeList, this->node2childLocMap);
+	}
+	else
+	{
+		NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
+		this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
+	}
 }
 
 NeuronStructExplorer::NeuronStructExplorer(string inputFileName)
@@ -46,7 +57,7 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 			y2 = inputTreePtr.listNeuron.at(j).y;
 			z2 = inputTreePtr.listNeuron.at(j).z;
 
-			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + double(z1 - z2) * double(z1 - z2));
+			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + zRATIO * zRATIO * double(z1 - z2) * double(z1 - z2));
 			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
 			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
 		}
@@ -83,42 +94,19 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 	return MSTtree;
 }
 
-NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
+vector<segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t> >& node2childLocMap)
 {
-	size_t neuronNum = inputTree.listNeuron.size();
-	map<int, vector<size_t> > childsMap;
-	int segNum = 0;
-	for (size_t i = 0; i < neuronNum; ++i)
-	{
-		int par = inputTree.listNeuron[i].pn;
-		if (childsMap.find(par) != childsMap.end()) childsMap[par].push_back(i);
-		else
-		{
-			vector<size_t> childSet;
-			childSet.push_back(i);
-			childsMap.insert(pair<int, vector<size_t> >(par, childSet));
-		}
-	}
-	cout << "Total segment number: " << segNum << endl;
-	/*for (map<int, vector<size_t> >::iterator it = childsMap.begin(); it != childsMap.end(); ++it)
-	{
-		cout << it->first << ": ";
-		for (vector<size_t>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-			cout << *it2 << " ";
-		cout << endl;
-	}*/
-	
-	this->segs.clear();
+	vector<segUnit> segs;
 	int segCount = 0;
-	for (QList<NeuronSWC>::const_iterator nodeIt = inputTree.listNeuron.begin(); nodeIt != inputTree.listNeuron.end(); ++nodeIt)
+	for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
 	{
 		if (nodeIt->parent == -1)
 		{
 			++segCount;
-			cout << " processing segment " << segCount << "..  head node ID: " << nodeIt->n << endl << "  ";
+			//cout << " processing segment " << segCount << "..  head node ID: " << nodeIt->n << endl << "  ";
 			segUnit newSeg;
-			newSeg.nodes.push_back(*nodeIt); 
-			vector<size_t> childLocs = childsMap[nodeIt->n]; 
+			newSeg.nodes.push_back(*nodeIt);
+			vector<size_t> childLocs = node2childLocMap[nodeIt->n];
 			vector<size_t> grandChildLocs;
 			vector<size_t> thisGrandChildLocs;
 			bool childNum = true;
@@ -127,63 +115,127 @@ NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
 				grandChildLocs.clear();
 				for (vector<size_t>::iterator childIt = childLocs.begin(); childIt != childLocs.end(); ++childIt)
 				{
-					cout << inputTree.listNeuron[*childIt].n << "_";
+					//cout << inputNodeList[*childIt].n << " ";
 					thisGrandChildLocs.clear();
 					for (QList<NeuronSWC>::iterator checkIt = newSeg.nodes.begin(); checkIt != newSeg.nodes.end(); ++checkIt)
 					{
-						if (checkIt->n == inputTree.listNeuron[*childIt].n) goto LOOP;
+						if (checkIt->n == inputNodeList[*childIt].n) goto LOOP;
 					}
-					
-					newSeg.nodes.push_back(inputTree.listNeuron[*childIt]);
-					thisGrandChildLocs = childsMap[inputTree.listNeuron[*childIt].n]; 
+
+					newSeg.nodes.push_back(inputNodeList[*childIt]);
+					thisGrandChildLocs = node2childLocMap[inputNodeList[*childIt].n];
 					grandChildLocs.insert(grandChildLocs.end(), thisGrandChildLocs.begin(), thisGrandChildLocs.end());
 
 				LOOP:
 					continue;
 				}
 				if (grandChildLocs.size() == 0) childNum = false;
-				
+
 				childLocs = grandChildLocs;
 			}
-			cout << endl;
-			
-			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it)  
+			//cout << endl; 
+
+			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it) 
 				newSeg.seg_nodeLocMap.insert(pair<int, size_t>(it->n, size_t(it - newSeg.nodes.begin())));
 
 			vector<size_t> childSegLocs;
-			newSeg.seg_childMap.insert(pair<int, vector<size_t> >(newSeg.nodes.begin()->n, childSegLocs));
+			newSeg.seg_childLocMap.insert(pair<int, vector<size_t> >(newSeg.nodes.begin()->n, childSegLocs));
 			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it)
 			{
 				if (it->parent == -1) continue;
 
 				size_t paLoc = newSeg.seg_nodeLocMap[it->parent];
-				if (newSeg.seg_childMap.find(newSeg.nodes[paLoc].n) != newSeg.seg_childMap.end()) newSeg.seg_childMap[newSeg.nodes[paLoc].n].push_back(newSeg.seg_nodeLocMap[it->n]);
+				if (newSeg.seg_childLocMap.find(newSeg.nodes[paLoc].n) != newSeg.seg_childLocMap.end()) newSeg.seg_childLocMap[newSeg.nodes[paLoc].n].push_back(newSeg.seg_nodeLocMap[it->n]);
 				else
 				{
 					vector<size_t> childSet;
 					childSet.push_back(newSeg.seg_nodeLocMap[it->n]);
-					newSeg.seg_childMap.insert(pair<int, vector<size_t> >(newSeg.nodes[newSeg.seg_nodeLocMap[it->parent]].n, childSet));
-				}	
+					newSeg.seg_childLocMap.insert(pair<int, vector<size_t> >(newSeg.nodes[newSeg.seg_nodeLocMap[it->parent]].n, childSet));
+				}
 			}
-			this->segs.push_back(newSeg);
+			segs.push_back(newSeg);
 		}
 	}
 
-	NeuronTree outputTree = inputTree;
-	for (vector<segUnit>::iterator segIt = this->segs.begin(); segIt != this->segs.end(); ++segIt)
+	return segs;
+}
+
+NeuronTree NeuronStructExplorer::MSTbranchBreak(const NeuronTree& inputTree)
+{
+	NeuronTree outputTree;
+	outputTree.listNeuron = inputTree.listNeuron;
+	profiledTree thisTree(outputTree);
+	vector<size_t> spikeLocs;
+	for (QList<NeuronSWC>::iterator it = outputTree.listNeuron.begin(); it != outputTree.listNeuron.end(); ++it)
+	{
+		if (thisTree.node2childLocMap[it->n].size() == 2)
+		{
+			size_t loc1 = thisTree.node2childLocMap[it->n].at(0);
+			size_t loc2 = thisTree.node2childLocMap[it->n].at(1);
+			if (thisTree.node2childLocMap[outputTree.listNeuron[loc1].n].size() == 0)
+			{	
+				outputTree.listNeuron[loc1].parent = -1;
+				spikeLocs.push_back(loc1);
+				//QList<NeuronSWC>::iterator deIt = outputTree.listNeuron.begin();
+				//outputTree.listNeuron.erase(deIt + ptrdiff_t(loc1));
+				continue;
+			}
+			else if (thisTree.node2childLocMap[outputTree.listNeuron[loc2].n].size() == 0)
+			{
+				outputTree.listNeuron[loc2].parent = -1;
+				spikeLocs.push_back(loc2);
+				//QList<NeuronSWC>::iterator deIt = outputTree.listNeuron.begin();
+				//outputTree.listNeuron.erase(deIt + ptrdiff_t(loc2));
+				continue;
+			}
+			else
+			{
+				outputTree.listNeuron[loc1].parent = -1;
+				outputTree.listNeuron[loc2].parent = -1;
+			}
+		}
+		else if (thisTree.node2childLocMap[it->n].size() >= 3)
+		{
+			for (vector<size_t>::iterator locIt = thisTree.node2childLocMap[it->n].begin(); locIt != thisTree.node2childLocMap[it->n].end(); ++locIt)
+				outputTree.listNeuron[*locIt].parent = -1;
+		}
+	}
+	
+	/*sort(spikeLocs.rbegin(), spikeLocs.rend());
+	int delNum = spikeLocs.size();
+	QList<NeuronSWC>::iterator deIt = outputTree.listNeuron.begin();
+	bool deleted = true;
+	for (int i = 0; i < delNum; ++i)
+	{
+		for (vector<size_t>::iterator locIt = spikeLocs.begin(); locIt != spikeLocs.end(); ++locIt)
+			outputTree.listNeuron.erase(deIt + ptrdiff_t(*locIt));
+	}*/
+
+	return outputTree;
+}
+
+vector<segUnit> NeuronStructExplorer::MSTtreeTrim(vector<segUnit>& inputSegUnits)
+{
+	vector<segUnit> outputSegUnits = inputSegUnits;
+
+	for (vector<segUnit>::iterator segIt = outputSegUnits.begin(); segIt != outputSegUnits.end(); ++segIt)
 	{
 		if (segIt->nodes.size() <= 3) continue;
 
+		NeuronStructUtil::node2loc_node2childLocMap(segIt->nodes, segIt->seg_nodeLocMap, segIt->seg_childLocMap);
 		for (QList<NeuronSWC>::iterator nodeIt = segIt->nodes.begin(); nodeIt != segIt->nodes.end(); ++nodeIt)
 		{
-			if (segIt->seg_childMap[nodeIt->n].size() == 2)
+			if (segIt->seg_childLocMap[nodeIt->n].size() == 2)
 			{
 				if (nodeIt->parent == -1) continue;
 
 				topoCharacter newTopoCenter(*nodeIt);
 				newTopoCenter.topoCenterPa = segIt->nodes.at(segIt->seg_nodeLocMap[nodeIt->parent]);
-				for (vector<size_t>::iterator immedChildLocIt = segIt->seg_childMap[nodeIt->n].begin(); immedChildLocIt != segIt->seg_childMap[nodeIt->n].end(); ++immedChildLocIt)
+				for (vector<size_t>::iterator immedChildLocIt = segIt->seg_childLocMap[nodeIt->n].begin(); immedChildLocIt != segIt->seg_childLocMap[nodeIt->n].end(); ++immedChildLocIt)
 					newTopoCenter.topoCenterImmedChildren.push_back(segIt->nodes.at(*immedChildLocIt));
+
+				if (segIt->seg_childLocMap[newTopoCenter.topoCenterImmedChildren.at(0).n].size() == 0 || segIt->seg_childLocMap[newTopoCenter.topoCenterImmedChildren.at(1).n].size() == 0)
+					continue;
 				
 				double dot = (newTopoCenter.topoCenterImmedChildren.at(0).x - nodeIt->x) * (newTopoCenter.topoCenterImmedChildren.at(1).x - nodeIt->x) +
 							 (newTopoCenter.topoCenterImmedChildren.at(0).y - nodeIt->y) * (newTopoCenter.topoCenterImmedChildren.at(1).y - nodeIt->y) +
@@ -208,16 +260,15 @@ NeuronTree NeuronStructExplorer::MSTtreeTrim(const NeuronTree& inputTree)
 		}
 	}
 
-	
-	for (vector<segUnit>::iterator segIt = this->segs.begin(); segIt != this->segs.end(); ++segIt)
+	for (vector<segUnit>::iterator segIt = outputSegUnits.begin(); segIt != outputSegUnits.end(); ++segIt)
 	{
 		for (vector<topoCharacter>::iterator topoIt = segIt->topoCenters.begin(); topoIt != segIt->topoCenters.end(); ++topoIt)
 		{
-			if (topoIt->childAngle / PI <= 0.55 && topoIt->childAngle / PI >= 0.45) outputTree.listNeuron[inputTree.hashNeuron[topoIt->topoCenter.n]].type = 3;
+			if (topoIt->childAngle / PI <= 0.55 && topoIt->childAngle / PI >= 0.45) segIt->nodes[segIt->seg_nodeLocMap[topoIt->topoCenter.n]].type = 3;
 		}
 	}
 
-	return outputTree;
+	return outputSegUnits;
 
 	/*if (inputSeg.size() <= 3) return;
 

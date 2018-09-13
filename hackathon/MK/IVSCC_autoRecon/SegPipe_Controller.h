@@ -76,6 +76,7 @@ public:
 	void getTiledMST();
 	void cutMST();
 	void MSTtrim();
+	void breakMSTbranch();
 
 	void nodeIdentify();
 	void swcSeparate(QString outputRoot2);
