@@ -15,7 +15,7 @@ using namespace std;
 bool fexists(QString filename)
 {
   std::ifstream ifile(qPrintable(filename));
-  return ifile;
+  return ifile.good();
 }
 
 CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b){
@@ -155,6 +155,7 @@ NeuronTree get_ith_component(NeuronTree nt, QList<int> components, int ith){
 }
 NeuronTree single_tree(NeuronTree nt, int soma){
     QList<int> pList;
+    QList<int> nList;
     const int N=nt.listNeuron.size();
     int subtree_ct=0;
     // check whether this is a single tree
@@ -165,12 +166,12 @@ NeuronTree single_tree(NeuronTree nt, int soma){
             subtree_ct++;
         }
         else{
-            int pid = nt.listNeuron.at(i).pn-1;
-            pList.append(pid);
+            pList.append(nt.listNeuron.at(i).pn);
         }
+        nList.append(nt.listNeuron.at(i).n);
     }
 
-    // Case 1
+//    // Case 1
     if(subtree_ct==1){return nt;}
 
     // Case 2
@@ -180,7 +181,7 @@ NeuronTree single_tree(NeuronTree nt, int soma){
     }
 
     // Case 3
-    if(subtree_ct>1){
+    if(subtree_ct>0){
         printf("More than one single trees in the input swc. Only the first connected with soma will be reported.\n");
         NeuronTree new_tree;
         // DFS to extract the first soma-connected tree;
@@ -202,10 +203,11 @@ NeuronTree single_tree(NeuronTree nt, int soma){
             // whether exist unvisited children of pid
             // if yes, push child to stack;
             for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
-                if((nt.listNeuron.at(i).pn-1)==pid && visited.at(i)==0){
+                NeuronSWC node = nt.listNeuron.at(i);
+                if(nList.lastIndexOf(node.pn)==pid && visited.at(i)==0){
                     pstack.push(i);
                     visited[i]=1;
-                    new_tree.listNeuron.append(nt.listNeuron.at(i));
+                    new_tree.listNeuron.append(node);
                     is_push=true;
                     break;
                 }

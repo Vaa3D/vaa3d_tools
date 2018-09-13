@@ -35,25 +35,37 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 #define PI 3.1415926
 #endif
 
-struct segUnit
-{
-	QList<NeuronSWC> nodes;
-	map<int, size_t> nodeLocMap;
-	map<size_t, vector<size_t> > childMap;
-	vector<topoCharacter> topoCenters;
-};
-
 struct topoCharacter
 {
-	topoCharacter(NeuronSWC centerNode, segUnit* segUnitPtr = nullptr);
+	topoCharacter(NeuronSWC centerNode) : topoCenter(centerNode) {};
 	NeuronSWC topoCenter;
 	NeuronSWC topoCenterPa;
 	vector<NeuronSWC> topoCenterImmedChildren;
 	double childAngle;
 	map<int, double> immedChildrenLengths;
 	map<int, double> subsequentChildrenAngles;
+};
 
-	segUnit* segUnitPtr;
+struct segUnit
+{
+	QList<NeuronSWC> nodes;
+	map<int, size_t> seg_nodeLocMap;
+	map<int, vector<size_t> > seg_childLocMap;
+	vector<topoCharacter> topoCenters;
+};
+
+struct profiledTree
+{
+	profiledTree(const NeuronTree& inputTree, bool removeRdn = false);
+
+	NeuronTree tree;
+	NeuronTree cleanedUpTree;
+
+	QList<NeuronSWC> duRemovedNodeList;
+	map<int, size_t> node2LocMap;
+	map<int, vector<size_t> > node2childLocMap;
+
+	vector<segUnit> segs;
 };
 
 class NeuronStructExplorer
@@ -68,13 +80,18 @@ public:
 	NeuronTree processedTree;
 	vector<NeuronTree>* treePtrsVector;
 	QString neuronFileName;
+
+	map<string, profiledTree> treeDataBase;
+	void treeEntry(const NeuronTree& inputTree, string treeName);
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
 	vector<segUnit> segs;
+	static vector<segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t> >& node2childLocMap);
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
-	NeuronTree MSTtreeTrim(const NeuronTree& inputTree); 
+	static NeuronTree MSTbranchBreak(const NeuronTree& inputTree);
+	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 
 private:
 

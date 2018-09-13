@@ -851,7 +851,7 @@ void SegPipe_Controller::cutMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 20);
+		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 25);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
@@ -869,11 +869,37 @@ void SegPipe_Controller::MSTtrim()
 			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
 			continue;
 		}
-		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree trimmedTree = NeuronStructExplorer::MSTtreeTrim(currTree);
+		NeuronTree inputTree = readSWC_file(swcFileFullPathQ);
+		profiledTree currTree(inputTree);
+		vector<segUnit> segs = myNeuronStructExpPtr->MSTtreeTrim(currTree.segs);
+		NeuronTree outputTree;
+		for (vector<segUnit>::iterator it = segs.begin(); it != segs.end(); ++it)
+		{
+			for (QList<NeuronSWC>::iterator nodeIt = it->nodes.begin(); nodeIt != it->nodes.end(); ++nodeIt)
+				outputTree.listNeuron.push_back(*nodeIt);
+		}
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCFullPath, trimmedTree);
+		writeSWC_file(outputSWCFullPath, outputTree);
+	}
+}
+
+void SegPipe_Controller::breakMSTbranch()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+		NeuronTree outputTree = NeuronStructExplorer::MSTbranchBreak(currTree);
+
+		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCFullPath, outputTree);
 	}
 }
 
