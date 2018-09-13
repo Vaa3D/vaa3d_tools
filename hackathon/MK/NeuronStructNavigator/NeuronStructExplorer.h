@@ -50,22 +50,22 @@ struct segUnit
 {
 	QList<NeuronSWC> nodes;
 	map<int, size_t> seg_nodeLocMap;
-	map<int, vector<size_t> > seg_childMap;
+	map<int, vector<size_t> > seg_childLocMap;
 	vector<topoCharacter> topoCenters;
 };
 
-struct registeredTree
+struct profiledTree
 {
-	registeredTree(const NeuronTree& inputTree);
+	profiledTree(const NeuronTree& inputTree, bool removeRdn = false);
 
 	NeuronTree tree;
+	NeuronTree cleanedUpTree;
 
 	QList<NeuronSWC> duRemovedNodeList;
-	map<int, size_t> nodeLocMap;
-	map<int, vector<size_t> > childMap;
+	map<int, size_t> node2LocMap;
+	map<int, vector<size_t> > node2childLocMap;
 
 	vector<segUnit> segs;
-	vector<NeuronTree> derivedTrees;
 };
 
 class NeuronStructExplorer
@@ -81,15 +81,17 @@ public:
 	vector<NeuronTree>* treePtrsVector;
 	QString neuronFileName;
 
-	map<string, registeredTree> treeDataBase;
+	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName);
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
 	vector<segUnit> segs;
+	static vector<segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t> >& node2childLocMap);
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
-	NeuronTree MSTtreeTrim(const NeuronTree& inputTree); 
+	static NeuronTree MSTbranchBreak(const NeuronTree& inputTree);
+	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 
 private:
 

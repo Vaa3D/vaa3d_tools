@@ -112,6 +112,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	else if (func_name == tr("tiledMST")) segPipePtr->getTiledMST();
 	else if (func_name == tr("MSTcut")) segPipePtr->cutMST();
 	else if (func_name == tr("MSTtrim")) segPipePtr->MSTtrim();
+	else if (func_name == tr("MSTbranchBreak")) segPipePtr->breakMSTbranch();
 	else if (func_name == tr("correctSWC"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];

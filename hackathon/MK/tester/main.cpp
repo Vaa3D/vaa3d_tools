@@ -65,11 +65,56 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("morphCheck"))
 	{
 		NeuronStructExplorer mySWCanalyzer;
-		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testInputFolder\\319215569.swc";
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_zCleaned_MSTcut_zRatio\\319215569.swc";
 		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
-		NeuronTree outputTree = mySWCanalyzer.MSTtreeTrim(inputTree);
-		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test.swc";
+		profiledTree currTree(inputTree);
+		vector<segUnit> segs = mySWCanalyzer.MSTtreeTrim(currTree.segs);
+		NeuronTree outputTree;
+		for (vector<segUnit>::iterator it = segs.begin(); it != segs.end(); ++it)
+		{
+			for (QList<NeuronSWC>::iterator nodeIt = it->nodes.begin(); nodeIt != it->nodes.end(); ++nodeIt)
+				outputTree.listNeuron.push_back(*nodeIt);
+		}
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\testMSTzCutMorph.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("profiledTreeTest"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_zCleaned_MSTcut\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+		
+		profiledTree testTree(inputTree);
+		NeuronTree outputTree;
+		for (vector<segUnit>::iterator it = testTree.segs.begin(); it != testTree.segs.end(); ++it)
+		{
+			for (QList<NeuronSWC>::iterator nodeIt = it->nodes.begin(); nodeIt != it->nodes.end(); ++nodeIt)
+				outputTree.listNeuron.push_back(*nodeIt);
+		}
+		
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test2.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("MSTtest"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_diffTree_zCleaned\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+
+		NeuronStructExplorer mySWCanalyzer;
+		NeuronTree outputTree = mySWCanalyzer.SWC2MSTtree(inputTree);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\testMSTz.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("MSTcut"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\testMSTz.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+
+		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(inputTree, 20);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\testMSTzCut.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
 
