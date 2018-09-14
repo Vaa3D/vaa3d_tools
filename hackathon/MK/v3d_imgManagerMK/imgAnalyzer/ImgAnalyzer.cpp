@@ -85,7 +85,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 	// ------- END [Onlu get into this selection when MIP image is not provided] -------
 
 	// ----------- Prepare white pixel address book ------------
-	set<vector<int> > whitePixAddress;
+	set<vector<int>> whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
 	for (int j = 0; j < dims[1]; ++j)
 	{
@@ -109,7 +109,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 	{
 		int sliceNum = int(sliceIt - inputSlicesVector.begin());
 		cout << sliceNum << " ";
-		for (set<vector<int> >::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
+		for (set<vector<int>>::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
 		{
 			if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0)
 			{
@@ -119,7 +119,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					if (connIt->zMax != sliceNum) continue;
 					else
 					{
-						for (set<vector<int> >::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
+						for (set<vector<int>>::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
 						{
 							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
 								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1)
@@ -155,9 +155,9 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					newCoord[0] = mipIt->at(0);
 					newCoord[1] = mipIt->at(1);
 					newCoord[2] = sliceNum;
-					set<vector<int> > coordSet;
+					set<vector<int>> coordSet;
 					coordSet.insert(newCoord);
-					newIsland.coordSets.insert(pair<int, set<vector<int> > >(sliceNum, coordSet));
+					newIsland.coordSets.insert(pair<int, set<vector<int>>>(sliceNum, coordSet));
 					newIsland.xMax = newCoord[0];
 					newIsland.xMin = newCoord[0];
 					newIsland.yMax = newCoord[1];

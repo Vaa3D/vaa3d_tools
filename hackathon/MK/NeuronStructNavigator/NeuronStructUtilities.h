@@ -34,7 +34,7 @@ public:
 	/********* Neuron Struct Profiling Methods *********/
 	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
 	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
-	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t> >& node2childLocMap);
+	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 	/***************************************************/
 
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
@@ -131,7 +131,7 @@ void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& ou
 	}
 }
 
-inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t> >& node2childLocMap)
+inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
 {
 	nodeLocMap.clear();
 	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
@@ -147,7 +147,7 @@ inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& 
 		{
 			vector<size_t> childSet;
 			childSet.push_back(i);
-			node2childLocMap.insert(pair<int, vector<size_t> >(paID, childSet));
+			node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
 		}
 	}
 	//cout << " node - Child location mapping done." << endl;

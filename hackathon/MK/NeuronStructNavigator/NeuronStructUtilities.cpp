@@ -64,7 +64,7 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 
 QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 {
-	boost::container::flat_map<string, QList<NeuronSWC> > nodeTileMap;
+	boost::container::flat_map<string, QList<NeuronSWC>> nodeTileMap;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		string xLabel = to_string(int(it->x / 100));
@@ -84,7 +84,7 @@ QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 	QList<NeuronSWC> outputNodeList;
 	cout << "processing tile: ";
 	int tileCount = 0;
-	for (boost::container::flat_map<string, QList<NeuronSWC> >::iterator tileIt = nodeTileMap.begin(); tileIt != nodeTileMap.end(); ++tileIt)
+	for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator tileIt = nodeTileMap.begin(); tileIt != nodeTileMap.end(); ++tileIt)
 	{
 		++tileCount;
 		cout << tileCount << " ";
@@ -140,7 +140,7 @@ vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree&
 			if (connIt->coordSets.empty()) continue;
 			else if (int(nodeIt->z) == connIt->coordSets.begin()->first)
 			{
-				for (set<vector<int> >::iterator dotIt = connIt->coordSets[int(nodeIt->z)].begin(); dotIt != connIt->coordSets[int(nodeIt->z)].end(); ++dotIt)
+				for (set<vector<int>>::iterator dotIt = connIt->coordSets[int(nodeIt->z)].begin(); dotIt != connIt->coordSets[int(nodeIt->z)].end(); ++dotIt)
 				{
 					if (int(nodeIt->x) <= dotIt->at(0) + 1 && int(nodeIt->x) >= dotIt->at(0) - 1 &&
 						int(nodeIt->y) <= dotIt->at(1) + 1 && int(nodeIt->y) >= dotIt->at(1) - 1)
@@ -172,9 +172,9 @@ vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree&
 			newCoord[0] = int(nodeIt->x);
 			newCoord[1] = int(nodeIt->y);
 			newCoord[2] = int(nodeIt->z);
-			set<vector<int> > coordSet;
+			set<vector<int>> coordSet;
 			coordSet.insert(newCoord);
-			newIsland.coordSets.insert(pair<int, set<vector<int> > >(newCoord[2], coordSet));
+			newIsland.coordSets.insert(pair<int, set<vector<int>>>(newCoord[2], coordSet));
 			newIsland.xMax = newCoord[0];
 			newIsland.xMin = newCoord[0];
 			newIsland.yMax = newCoord[1];
@@ -223,9 +223,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	int zMax = 0;
 
 	// -- I notice that boost's container templates are able to lift up the performace by ~30%.
-	boost::container::flat_map<int, boost::container::flat_set<int> > b2Dtob3Dmap;
+	boost::container::flat_map<int, boost::container::flat_set<int>> b2Dtob3Dmap;
 	b2Dtob3Dmap.clear();
-	boost::container::flat_map<int, boost::container::flat_set<int> > b3Dcomps;
+	boost::container::flat_map<int, boost::container::flat_set<int>> b3Dcomps;
 	b3Dcomps.clear();
 	// ---------------------------------------------------------------------------------------
 
@@ -240,7 +240,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			++sliceBlobCount;
 			boost::container::flat_set<int> blob3D;
 			blob3D.insert(sliceBlobCount);
-			b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int> >(it->islandNum, blob3D));
+			b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(it->islandNum, blob3D));
 			boost::container::flat_set<int> comps;
 			comps.insert(it->islandNum);
 			b3Dcomps[sliceBlobCount] = comps;
@@ -276,7 +276,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 				++sliceBlobCount;
 				boost::container::flat_set<int> blob3D;
 				blob3D.insert(sliceBlobCount);
-				b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int> >(newCompsIt->islandNum, blob3D));
+				b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(newCompsIt->islandNum, blob3D));
 				boost::container::flat_set<int> comps;
 				comps.insert(newCompsIt->islandNum);
 				b3Dcomps[sliceBlobCount] = comps;
@@ -293,16 +293,16 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 				if (currIt->xMin > preIt->xMax + 2 || currIt->xMax < preIt->xMin - 2 ||
 					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue;
 
-				for (set<vector<int> >::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
+				for (set<vector<int>>::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
 				{
-					for (set<vector<int> >::iterator preDotIt = preIt->coordSets.begin()->second.begin(); preDotIt != preIt->coordSets.begin()->second.end(); ++preDotIt)
+					for (set<vector<int>>::iterator preDotIt = preIt->coordSets.begin()->second.begin(); preDotIt != preIt->coordSets.begin()->second.end(); ++preDotIt)
 					{
 						if (currDotIt->at(0) >= preDotIt->at(0) - 1 && currDotIt->at(0) <= preDotIt->at(0) + 1 &&
 							currDotIt->at(1) >= preDotIt->at(1) - 1 && currDotIt->at(1) <= preDotIt->at(1) + 1)
 						{
 							merged = true;
 							boost::container::flat_set<int> asso3Dblob = b2Dtob3Dmap[preIt->islandNum];
-							b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int> >(currIt->islandNum, asso3Dblob));
+							b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(currIt->islandNum, asso3Dblob));
 							for (boost::container::flat_set<int>::iterator blob3DIt = asso3Dblob.begin(); blob3DIt != asso3Dblob.end(); ++blob3DIt)
 								b3Dcomps[*blob3DIt].insert(currIt->islandNum);
 
@@ -322,7 +322,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 				++sliceBlobCount;
 				boost::container::flat_set<int> newBlob3D;
 				newBlob3D.insert(sliceBlobCount);
-				b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int> >(currIt->islandNum, newBlob3D));
+				b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(currIt->islandNum, newBlob3D));
 				boost::container::flat_set<int> comps;
 				comps.insert(currIt->islandNum);
 				b3Dcomps[sliceBlobCount] = comps;
@@ -342,10 +342,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	int currBaseBlob = 1;
 	while (!mergeFinish)
 	{
-		for (boost::container::flat_map<int, boost::container::flat_set<int> >::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
 		{
 			if (checkIt1->first < currBaseBlob) continue;
-			for (boost::container::flat_map<int, boost::container::flat_set<int> >::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 			{
 				if (checkIt2 == checkIt1) continue;
 				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
@@ -376,7 +376,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)
 		compsMap.insert(pair<int, connectedComponent>(inputIt->islandNum, *inputIt));
 	int newLabel = 0;
-	for (boost::container::flat_map<int, boost::container::flat_set<int> >::iterator it = b3Dcomps.begin(); it != b3Dcomps.end(); ++it)
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = b3Dcomps.begin(); it != b3Dcomps.end(); ++it)
 	{
 		++newLabel;
 		connectedComponent newComp;
@@ -387,7 +387,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		newComp.zMax = 0; newComp.zMin = 0;
 		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
-			newComp.coordSets.insert(pair<int, set<vector<int> > >(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
+			newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
 			newComp.xMax = getMax(newComp.xMax, compsMap[*it2].xMax);
 			newComp.xMin = getMin(newComp.xMin, compsMap[*it2].xMin);
 			newComp.yMax = getMax(newComp.yMax, compsMap[*it2].yMax);
@@ -405,7 +405,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre)
 {
-	map<string, vector<NeuronSWC> > gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
+	map<string, vector<NeuronSWC>> gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
 												// This can cause complication if the element is a data struct.
 
 	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
@@ -419,7 +419,7 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 		{
 			vector<NeuronSWC> newSet;
 			newSet.push_back(*refIt);
-			gridSWCmap.insert(pair<string, vector<NeuronSWC> >(keyLabel, newSet));
+			gridSWCmap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
 		}
 	}
 
@@ -463,7 +463,7 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 
 NeuronTree NeuronStructUtil::swcZclenUP(const NeuronTree& inputTree, float zThre)
 {
-	map<string, vector<NeuronSWC> > xyLabeledNodeMap;
+	map<string, vector<NeuronSWC>> xyLabeledNodeMap;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		string xLabel = to_string(int(it->x / 2));
@@ -474,12 +474,12 @@ NeuronTree NeuronStructUtil::swcZclenUP(const NeuronTree& inputTree, float zThre
 		{
 			vector<NeuronSWC> newSet;
 			newSet.push_back(*it);
-			xyLabeledNodeMap.insert(pair<string, vector<NeuronSWC> >(labelKey, newSet));
+			xyLabeledNodeMap.insert(pair<string, vector<NeuronSWC>>(labelKey, newSet));
 		}
 	}
 
 	NeuronTree outputTree;
-	for (map<string, vector<NeuronSWC> >::iterator it = xyLabeledNodeMap.begin(); it != xyLabeledNodeMap.end(); ++it)
+	for (map<string, vector<NeuronSWC>>::iterator it = xyLabeledNodeMap.begin(); it != xyLabeledNodeMap.end(); ++it)
 	{
 		boost::container::flat_map<float, NeuronSWC> zSortedNodes; // boost::container::flat_map is vector based, so it can do pointer arithmetic.
 		if (it->second.size() == 1)
