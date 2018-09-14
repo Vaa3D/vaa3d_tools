@@ -18,14 +18,14 @@ struct morphStructElement
 	morphStructElement(string shape);
 	morphStructElement(string shape, int length1, int length2);
 
-	vector<vector<int> > structEle2D;
-	vector<vector<vector<int> > > structEle3D;
+	vector<vector<int>> structEle2D;
+	vector<vector<vector<int>>> structEle3D;
 };
 
 struct connectedComponent
 {
 	int islandNum;
-	map<int, set<vector<int> > > coordSets;
+	map<int, set<vector<int>>> coordSets;
 	int xMax, xMin, yMax, yMin, zMax, zMin;
 	long int size;
 	float ChebyshevCenter[3];
@@ -37,16 +37,16 @@ public:
 	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
 
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
-	static inline void ChebyshevCenter(set<vector<int> > allCoords, float center[]);
+	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);
 };
 
-inline void ImgAnalyzer::ChebyshevCenter(set<vector<int> > allCoords, float center[])
+inline void ImgAnalyzer::ChebyshevCenter(set<vector<int>> allCoords, float center[])
 {
 	float lengthSum = 1000000;
-	for (set<vector<int> >::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)
+	for (set<vector<int>>::iterator allCoordIt = allCoords.begin(); allCoordIt != allCoords.end(); ++allCoordIt)
 	{
 		float currLengthSum = 0;
-		for (set<vector<int> >::iterator checkCoordIt = allCoords.begin(); checkCoordIt != allCoords.end(); ++checkCoordIt)
+		for (set<vector<int>>::iterator checkCoordIt = allCoords.begin(); checkCoordIt != allCoords.end(); ++checkCoordIt)
 		{
 			float length = sqrt((checkCoordIt->at(0) - allCoordIt->at(0)) * (checkCoordIt->at(0) - allCoordIt->at(0)) +
 				(checkCoordIt->at(1) - allCoordIt->at(1)) * (checkCoordIt->at(1) - allCoordIt->at(1)) +
@@ -69,8 +69,8 @@ inline void ImgAnalyzer::ChebyshevCenter(set<vector<int> > allCoords, float cent
 
 inline void ImgAnalyzer::ChebyshevCenter_connComp(connectedComponent& inputComp)
 {
-	set<vector<int> > allCoords;
-	for (map<int, set<vector<int> > >::iterator sliceIt = inputComp.coordSets.begin(); sliceIt != inputComp.coordSets.end(); ++sliceIt)
+	set<vector<int>> allCoords;
+	for (map<int, set<vector<int>>>::iterator sliceIt = inputComp.coordSets.begin(); sliceIt != inputComp.coordSets.end(); ++sliceIt)
 		allCoords.insert(sliceIt->second.begin(), sliceIt->second.end());
 
 	float center[3];

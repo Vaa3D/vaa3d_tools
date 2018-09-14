@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "morphCheck";
+	string funcName = "branchBreak";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -115,6 +115,16 @@ int main(int argc, char* argv[])
 
 		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(inputTree, 20);
 		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\testMSTzCut.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("branchBreak"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_zCleaned_MST_zRatio\\319215569.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+
+		NeuronTree outputTree = NeuronStructExplorer::MSTbranchBreak(inputTree, true);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test1.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
 

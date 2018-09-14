@@ -548,9 +548,9 @@ void SegPipe_Controller::findSignalBlobs2D()
 		QList<NeuronSWC> allSigs;
 		for (vector<connectedComponent>::iterator connIt = this->signalBlobs.begin(); connIt != this->signalBlobs.end(); ++connIt)
 		{
-			for (map<int, set<vector<int> > >::iterator sliceSizeIt = connIt->coordSets.begin(); sliceSizeIt != connIt->coordSets.end(); ++sliceSizeIt)
+			for (map<int, set<vector<int>>>::iterator sliceSizeIt = connIt->coordSets.begin(); sliceSizeIt != connIt->coordSets.end(); ++sliceSizeIt)
 			{
-				for (set<vector<int> >::iterator nodeIt = sliceSizeIt->second.begin(); nodeIt != sliceSizeIt->second.end(); ++nodeIt)
+				for (set<vector<int>>::iterator nodeIt = sliceSizeIt->second.begin(); nodeIt != sliceSizeIt->second.end(); ++nodeIt)
 				{
 					NeuronSWC sig;
 					V3DLONG blobID = connIt->islandNum;
@@ -907,7 +907,7 @@ void SegPipe_Controller::getTiledMST()
 {
 	float xyLength = 30;
 	float zLength = 10;
-	map<string, QList<NeuronSWC> > tiledSWCmap;
+	map<string, QList<NeuronSWC>> tiledSWCmap;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
 		tiledSWCmap.clear();
@@ -921,14 +921,14 @@ void SegPipe_Controller::getTiledMST()
 			int tileYlabel = int(floor(it->y / xyLength));
 			int tileZlabel = int(floor(it->z / zLength));
 			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
-			tiledSWCmap.insert(pair<string, QList<NeuronSWC> >(swcTileKey, tileSWCList));  
+			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));  
 			tiledSWCmap[swcTileKey].push_back(*it);
 		}
 		cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
 
 		NeuronTree assembledTree;
 		//NeuronTree testTree;
-		for (map<string, QList<NeuronSWC> >::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
+		for (map<string, QList<NeuronSWC>>::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
 		{
 			NeuronTree tileTree;
 			tileTree.listNeuron = it->second;

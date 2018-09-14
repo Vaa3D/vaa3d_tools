@@ -12,6 +12,10 @@
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
+#define NTDOT(a,b) ((a).x*(b).x+(a).y*(b).y+(a).z*(b).z)
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
+
 using namespace std;
 Q_EXPORT_PLUGIN2(retype_swc, retype_swc);
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
@@ -89,19 +93,95 @@ void retype_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         NeuronTree nt;
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
-             bool ok;
              nt = readSWC_file(fileOpenName);
-             type = QInputDialog::getInteger(parent, "Please specify the node type","type:",3,0,256,1,&ok);
-             if (!ok)
-                 return;
-            for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
-            {
-                if(nt.listNeuron[i].parent == -1)
-                    nt.listNeuron[i].type = 1;
-                else
-                    nt.listNeuron[i].type = type;
 
-            }
+             QVector<QVector<V3DLONG> > childs;
+             V3DLONG neuronNum = nt.listNeuron.size();
+             childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+             for (V3DLONG i=0;i<neuronNum;i++)
+             {
+                 V3DLONG par = nt.listNeuron[i].pn;
+                 if (par<0) continue;
+                 childs[nt.hashNeuron.value(par)].push_back(i);
+             }
+
+             //assign all sub_trees
+             QVector<int> visit(nt.listNeuron.size(),0);
+             for(int i=0; i<nt.listNeuron.size();i++)
+             {
+                 if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
+                 {
+                     QQueue<int> q;
+                     visit[i]=1;
+                     q.push_back(i);
+                     while(!q.empty())
+                     {
+                         int current = q.front(); q.pop_front();
+                         for(int j=0; j<childs[current].size();j++)
+                         {
+                             int current_child = childs[current].at(j);
+                             if(visit[current_child]==0)
+                             {
+                                 visit[current_child]=1;
+                                 if(childs[current_child].size()<2)
+                                     q.push_back(current_child);
+                             }
+                         }
+                     }
+                     q.clear();
+                 }
+
+                 int diff_radius;
+                 if(nt.listNeuron[i].type<=130 && nt.listNeuron[i].radius<2 && visit[i]==0)
+                 {
+                     int count=0;
+                     int pre_sum=0;
+                     int next_sum=0;
+                     int pre=i, next=i;
+                     while(count<15 && childs[next].size()>0 && nt.listNeuron[pre].pn>0)
+                     {
+                         pre_sum += nt.listNeuron[pre].radius;
+                         next_sum += nt.listNeuron[next].radius;
+                         pre = nt.hashNeuron.value(nt.listNeuron[pre].pn);
+                         next = childs[next].at(0);
+                         count++;
+                     }
+
+                     if(count==15)
+                     {
+                         diff_radius = (next_sum-pre_sum);
+                         double node_angle = angle(nt.listNeuron[i], nt.listNeuron[pre], nt.listNeuron[next]);
+
+                         if(diff_radius>15)
+                         {
+                             nt.listNeuron[i].type=255;
+                            v3d_msg(QString("%1,%2").arg(node_angle).arg(diff_radius),0);
+                         }
+                     }
+                 }
+
+                 if(nt.listNeuron[i].type>130 && visit[i]==0 && childs[i].size()==1)
+                 {
+                     QQueue<int> q;
+                     visit[i]=1;
+                     q.push_back(i);
+                     while(!q.empty())
+                     {
+                         int current = q.front(); q.pop_front();
+                         nt.listNeuron[current].type = 255;
+                         for(int j=0; j<childs[current].size();j++)
+                         {
+                             if(visit[childs[current].at(j)]==0)
+                             {
+                                 visit[childs[current].at(j)]=1;
+                                 q.push_back(childs[current].at(j));
+                             }
+                         }
+                     }
+                     q.clear();
+                 }
+             }
+
             QString fileDefaultName = fileOpenName+QString("_retyped.swc");
             //write new SWC to file
             QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),

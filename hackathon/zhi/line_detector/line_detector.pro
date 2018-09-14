@@ -85,6 +85,9 @@ SOURCES	+= $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_mas
 HEADERS += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
 SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
 
+SOURCES	+= $$VAA3DPATH/neuron_editing/neuron_format_converter.cpp
+
+
 macx{
     LIBS += -L$$VAA3DPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$VAA3DPATH/jba/c++ -lv3dnewmat
