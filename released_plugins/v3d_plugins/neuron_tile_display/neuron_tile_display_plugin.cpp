@@ -187,6 +187,32 @@ QStringList importFileList_addnumbersort(const QString & curFilePath, int method
 }
 void WriteNewFinishedNeuronsFileName(QStringList nameList)
 {
+    //absolute path
+    QString filePath="";QString fileName="/swclist.txt";
+    foreach(QString qs,nameList)
+    {
+        QFileInfo file(qs);
+        filePath=file.path()+fileName;
+        qDebug() << filePath;
+        break;
+    }
+
+    QFile finishedFile(filePath);
+    if(finishedFile.exists())
+    {
+        finishedFile.remove();
+    }
+    if(!finishedFile.open(QIODevice::ReadWrite))
+    {
+        v3d_msg("Cannot open file for writing!");
+        return;
+    }
+    QTextStream nameOut(&finishedFile);
+    foreach(QString qs,nameList)
+    {
+        nameOut<<qs<<endl;
+        qDebug()<<qs;
+    }
 
 }
 
@@ -433,6 +459,7 @@ void MethodFunForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent,
     }
     //update SWC list
     QStringList swcList = importFileList_addnumbersort(inputfolderName, 1,displayNum);
+    WriteNewFinishedNeuronsFileName(swcList);
     for(int i=0;i<swcList.size();i++)
     {
         QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (cur_list_3dviewer.at(i));
@@ -486,6 +513,7 @@ void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent)
         return;
 
     QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+    WriteNewFinishedNeuronsFileName(swcList);
     for(int i=0;i<swcList.size();i++)
     {
         QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (cur_list_3dviewer.at(i));
@@ -572,6 +600,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
     }
 
     QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+    WriteNewFinishedNeuronsFileName(swcList);
 
     V3dR_MainWindow * new3DWindow = NULL;
     int offsety = -1;
@@ -648,6 +677,9 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
     }
 
     QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+
+    //write new finished nine neurons to file
+    WriteNewFinishedNeuronsFileName(swcList);
 
     V3dR_MainWindow * new3DWindow = NULL;
     int offsety = -1;
