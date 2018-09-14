@@ -479,7 +479,7 @@ void MethodFunForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent,
 
     V3dR_MainWindow * surface_combine_win=cur_list_3dviewer.at(cur_list_3dviewer.size()-1);
     QList<NeuronTree> * new_treeList_combine = callback.getHandleNeuronTrees_Any3DViewer (surface_combine_win);
-    QString combine_file_name="Combine of the New Finished Neurons";
+    QString combine_file_name="Combined Latest Finished Neurons";
     int neuronNum = swcList.size();
     for (V3DLONG i=0;i<neuronNum;i++)
     {
@@ -533,7 +533,7 @@ void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3dR_MainWindow * surface_combine_win=cur_list_3dviewer.at(cur_list_3dviewer.size()-1);
     QList<NeuronTree> * new_treeList_combine = callback.getHandleNeuronTrees_Any3DViewer (surface_combine_win);
-    QString combine_file_name="Combine of the New Finished Neurons";
+    QString combine_file_name="Combined Latest Finished Neurons";
     int neuronNum = swcList.size();
     for (V3DLONG i=0;i<neuronNum;i++)
     {
@@ -560,7 +560,7 @@ void MethodForCombineSWCDisplay(V3DPluginCallback2 &callback, QWidget *parent,QS
     QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (surface_win);
 
     new_treeList->clear();
-    QString file_name="Combine of the New Finished Neurons";
+    QString file_name="Combined Latest Finished Neurons";
 
     int neuronNum = nameList.size();
     for (V3DLONG i=0;i<neuronNum;i++)
