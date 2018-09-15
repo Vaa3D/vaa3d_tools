@@ -48,10 +48,17 @@ struct topoCharacter
 
 struct segUnit
 {
+	segUnit() : to_be_deted(false) {};
+
+	int segID;
+	int head;
+	vector<int> tails;
 	QList<NeuronSWC> nodes;
 	map<int, size_t> seg_nodeLocMap;
 	map<int, vector<size_t>> seg_childLocMap;
 	vector<topoCharacter> topoCenters;
+
+	bool to_be_deted;
 };
 
 struct profiledTree
@@ -61,12 +68,14 @@ struct profiledTree
 	NeuronTree tree;
 	NeuronTree cleanedUpTree;
 	map<string, vector<int>> nodeTileMap;
+	map<string, vector<int>> segHeadMap;
+	map<string, vector<int>> segTailMap;
 
 	QList<NeuronSWC> duRemovedNodeList;
 	map<int, size_t> node2LocMap;
 	map<int, vector<size_t>> node2childLocMap;
 
-	vector<segUnit> segs;
+	map<int, segUnit> segs;
 };
 
 class NeuronStructExplorer
@@ -88,11 +97,18 @@ public:
 
 	/***************** Neuron Struct Connecting Functions *****************/
 	vector<segUnit> segs;
-	static vector<segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t>>& node2childLocMap);
+	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t>>& node2childLocMap);
+	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, bool head = true, float xyLength = 30, float xy2zRatio = 3);
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const NeuronTree& inputTree, bool spikeRemove = false);
 	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
+	NeuronTree segElongate(const NeuronTree& inputTree);
+	/**********************************************************************/
+
+	/***************** Geometry *****************/
+	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
+	inline static double getRadAngle(const vector<float>& pivot, const vector<float>& leg1, const vector<float>& leg2);
 
 private:
 
@@ -147,6 +163,38 @@ inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double
 	}
 
 	return outputTree;
+}
+
+inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector)
+{
+	float disp = sqrt((headVector.at(0) - tailVector.at(0)) * (headVector.at(0) - tailVector.at(0)) +
+					  (headVector.at(1) - tailVector.at(1)) * (headVector.at(1) - tailVector.at(1)) +
+					  (headVector.at(2) - tailVector.at(2)) * (headVector.at(2) - tailVector.at(2)));
+	vector<float> dispUnitVector;
+	dispUnitVector.push_back((headVector.at(0) - tailVector.at(0)) / disp);
+	dispUnitVector.push_back((headVector.at(1) - tailVector.at(1)) / disp);
+	dispUnitVector.push_back((headVector.at(2) - tailVector.at(2)) / disp);
+
+	return dispUnitVector;
+}
+
+inline double NeuronStructExplorer::getRadAngle(const vector<float>& pivot, const vector<float>& leg1, const vector<float>& leg2)
+{
+	double dot = ((leg1.at(0) - pivot.at(0)) * (leg2.at(0) - pivot.at(0)) + 
+		          (leg1.at(1) - pivot.at(1)) * (leg2.at(1) - pivot.at(1)) + 
+				  (leg1.at(2) - pivot.at(2)) * (leg2.at(2) - pivot.at(2)));
+
+	double sq1 = ((leg1.at(0) - pivot.at(0)) * (leg1.at(0) - pivot.at(0)) +
+				  (leg1.at(1) - pivot.at(1)) * (leg1.at(1) - pivot.at(1)) +
+				  (leg1.at(2) - pivot.at(2)) * (leg1.at(2) - pivot.at(2)));
+
+	double sq2 = ((leg2.at(0) - pivot.at(0)) * (leg2.at(0) - pivot.at(0)) +
+				  (leg2.at(1) - pivot.at(1)) * (leg2.at(1) - pivot.at(1)) +
+				  (leg2.at(2) - pivot.at(2)) * (leg2.at(2) - pivot.at(2)));
+
+	double angle = acos(dot / sqrt(sq1 * sq2));
+	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
+	else return angle / PI;
 }
 
 #endif

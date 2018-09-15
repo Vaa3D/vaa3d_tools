@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "branchBreak";
+	string funcName = "segElongate";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
 		profiledTree currTree(inputTree);
-		vector<segUnit> segs = mySWCanalyzer.MSTtreeTrim(currTree.segs);
+		/*vector<segUnit> segs = mySWCanalyzer.MSTtreeTrim(currTree.segs);
 		NeuronTree outputTree;
 		for (vector<segUnit>::iterator it = segs.begin(); it != segs.end(); ++it)
 		{
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 				outputTree.listNeuron.push_back(*nodeIt);
 		}
 		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\testMSTzCutMorph.swc";
-		writeSWC_file(outputSWCname, outputTree);
+		writeSWC_file(outputSWCname, outputTree);*/
 	}
 	else if (!funcName.compare("profiledTreeTest"))
 	{
@@ -87,14 +87,14 @@ int main(int argc, char* argv[])
 		
 		profiledTree testTree(inputTree);
 		NeuronTree outputTree;
-		for (vector<segUnit>::iterator it = testTree.segs.begin(); it != testTree.segs.end(); ++it)
+		/*for (vector<segUnit>::iterator it = testTree.segs.begin(); it != testTree.segs.end(); ++it)
 		{
 			for (QList<NeuronSWC>::iterator nodeIt = it->nodes.begin(); nodeIt != it->nodes.end(); ++nodeIt)
 				outputTree.listNeuron.push_back(*nodeIt);
 		}
 		
 		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test2.swc";
-		writeSWC_file(outputSWCname, outputTree);
+		writeSWC_file(outputSWCname, outputTree);*/
 	}
 	else if (!funcName.compare("MSTtest"))
 	{
@@ -125,6 +125,17 @@ int main(int argc, char* argv[])
 
 		NeuronTree outputTree = NeuronStructExplorer::MSTbranchBreak(inputTree, true);
 		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test1.swc";
+		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("segElongate"))
+	{
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test1.swc";
+		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
+		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+
+		NeuronStructExplorer mySWCExplorer;
+		NeuronTree outputTree = mySWCExplorer.segElongate(inputTree);
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test2.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
 
