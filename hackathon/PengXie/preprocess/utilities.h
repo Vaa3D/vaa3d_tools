@@ -36,6 +36,13 @@ NeuronTree get_subtree_by_type(NeuronTree nt, int type, bool keep_soma=1);
 NeuronTree missing_parent(NeuronTree nt);
 bool check_duplicate(NeuronTree nt);
 QList<int> get_tips(NeuronTree nt, bool include_soma);
-NeuronTree neuron_cat(NeuronTree nt1, NeuronTree nt2);
 double dist_to_parent(NeuronTree nt, int i, double xscale=1, double yscale=1, double zscale=5);
+
+// Neuron operations
+NeuronTree neuron_deepcopy(NeuronTree nt);
+NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
+QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2);
+
+bool whether_identical(NeuronTree nt1, NeuronTree nt2);
+
 #endif // UTILITIES_H
