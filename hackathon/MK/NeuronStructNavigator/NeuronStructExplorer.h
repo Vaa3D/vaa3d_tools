@@ -35,6 +35,8 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 #define PI 3.1415926
 #endif
 
+static enum connectOrientation { head_head, head_tail, tail_head, tail_tail };
+
 struct topoCharacter
 {
 	topoCharacter(NeuronSWC centerNode) : topoCenter(centerNode) {};
@@ -63,19 +65,18 @@ struct segUnit
 
 struct profiledTree
 {
-	profiledTree(const NeuronTree& inputTree, bool removeRdn = false);
+	profiledTree() {};
+	profiledTree(const NeuronTree& inputTree);
 
 	NeuronTree tree;
-	NeuronTree cleanedUpTree;
-	map<string, vector<int>> nodeTileMap;
-	map<string, vector<int>> segHeadMap;
-	map<string, vector<int>> segTailMap;
+	map<string, vector<int>> nodeTileMap; // tile label -> node ID
+	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
+	map<string, vector<int>> segTailMap;  // tile label -> seg ID
 
-	QList<NeuronSWC> duRemovedNodeList;
 	map<int, size_t> node2LocMap;
 	map<int, vector<size_t>> node2childLocMap;
 
-	map<int, segUnit> segs;
+	map<int, segUnit> segs; // key = seg ID
 };
 
 class NeuronStructExplorer
@@ -83,36 +84,36 @@ class NeuronStructExplorer
 public:
 	/********* Constructors and basic data members *********/
 	NeuronStructExplorer() {};
-	NeuronStructExplorer(string neuronFileName);
+	NeuronStructExplorer(QString neuronFileName);
+	NeuronStructExplorer(const NeuronTree inputTree) { this->treeEntry(inputTree, "originalTree"); }
 
 	NeuronTree* singleTreePtr;
 	NeuronTree singleTree;
 	NeuronTree processedTree;
-	vector<NeuronTree>* treePtrsVector;
-	QString neuronFileName;
 
 	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName);
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
-	vector<segUnit> segs;
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, bool head = true, float xyLength = 30, float xy2zRatio = 3);
+	
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
-	static NeuronTree MSTbranchBreak(const NeuronTree& inputTree, bool spikeRemove = false);
+	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, bool spikeRemove = true);
 	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
-	NeuronTree segElongate(const NeuronTree& inputTree);
+	
+	NeuronTree segElongate(const profiledTree& inputProfiledTree);
 	/**********************************************************************/
 
 	/***************** Geometry *****************/
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& pivot, const vector<float>& leg1, const vector<float>& leg2);
-
 private:
+	double segElongPointingCheck(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 
-	/**********************************************************************/
+	/********************************************/
 
 public:
 	/********* Pixel-based deep neural network result refining/cleaning *********/

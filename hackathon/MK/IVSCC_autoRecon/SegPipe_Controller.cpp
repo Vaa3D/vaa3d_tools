@@ -871,7 +871,7 @@ void SegPipe_Controller::MSTtrim()
 		}
 		NeuronTree inputTree = readSWC_file(swcFileFullPathQ);
 		profiledTree currTree(inputTree);
-		vector<segUnit> segs = myNeuronStructExpPtr->MSTtreeTrim(currTree.segs);
+		/*vector<segUnit> segs = myNeuronStructExpPtr->MSTtreeTrim(currTree.segs);
 		NeuronTree outputTree;
 		for (vector<segUnit>::iterator it = segs.begin(); it != segs.end(); ++it)
 		{
@@ -880,7 +880,7 @@ void SegPipe_Controller::MSTtrim()
 		}
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCFullPath, outputTree);
+		writeSWC_file(outputSWCFullPath, outputTree);*/
 	}
 }
 
@@ -896,10 +896,13 @@ void SegPipe_Controller::breakMSTbranch()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree outputTree = NeuronStructExplorer::MSTbranchBreak(currTree);
+		myNeuronStructExpPtr->treeEntry(currTree, "currTree");
+		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"]);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
+
+		myNeuronStructExpPtr->treeDataBase.clear();
 	}
 }
 
