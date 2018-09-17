@@ -13,6 +13,7 @@ Q_EXPORT_PLUGIN2(detect_type, type);
 QStringList type::menulist() const
 {
 	return QStringList() 
+        <<tr("detect_type_distance")
         <<tr("detect_type")
 		<<tr("about");
 }
@@ -20,17 +21,21 @@ QStringList type::menulist() const
 QStringList type::funclist() const
 {
 	return QStringList()
-        <<tr("detect_type")
+        <<tr("detect_type_distance")
 		<<tr("func2")
 		<<tr("help");
 }
 
 void type::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("detect_type"))
+    if (menu_name == tr("detect_type_distance"))
 	{
-        detect_type(callback,parent);
+        detect_type_distance(callback,parent);
 	}
+    else if (menu_name == tr("detect_type"))
+    {
+        detect_type(callback,parent);
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
