@@ -30,6 +30,7 @@ using namespace std;
 #endif
 
 double get_percentage_disconnected(QString qs_input);
+bool printHelp_qc();
 bool qc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 
 #endif // QC_MAIN_H

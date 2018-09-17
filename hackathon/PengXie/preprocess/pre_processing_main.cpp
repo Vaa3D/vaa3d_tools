@@ -431,7 +431,7 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
 
     QString qs_input = QString(dfile_input);
     QString qs_output;
-    if(dfile_input != NULL){
+    if(dfile_result != NULL){
         qs_output = QString(dfile_result);
     }
     else{
@@ -486,7 +486,7 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 void printHelp_pre_processing()
 {
     printf("\nVaa3D plugin: modifiled pre-processing step analysis/QC, including: \n");
-    printf("\t1) delete the branches in a neuron which have a length smaller the prune size ( by default the prune size is 5 %% of neuron/tree diameter.\n");
+    printf("\t1) delete the branches in a neuron which have a length smaller the prune size.\n");
     printf("\t2) resample the neurons along the segments with the step size (default: 1). \n");
     printf("\t3) sort the neurons along the segments with the step size (deyyplt: 1). \n");
     printf("\t4) rotate the neuron to align its longest dimension to x axis\n");

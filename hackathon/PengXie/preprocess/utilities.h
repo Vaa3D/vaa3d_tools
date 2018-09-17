@@ -33,6 +33,7 @@ NeuronTree get_subtree_by_name(NeuronTree nt, QList <int> nlist);
 NeuronTree color_subtree_by_id(NeuronTree nt, QList <int> idlist, int new_type=0);
 NeuronTree color_components(NeuronTree nt, QList<int> components);
 NeuronTree get_subtree_by_type(NeuronTree nt, int type, bool keep_soma=1);
+NeuronTree missing_parent(NeuronTree nt);
 bool check_duplicate(NeuronTree nt);
 QList<int> get_tips(NeuronTree nt, bool include_soma);
 NeuronTree neuron_cat(NeuronTree nt1, NeuronTree nt2);

@@ -9,6 +9,8 @@
 #define DEFAULT 1000000000
 
 #include "axon_func.h"
+#include "crop_swc_main.h"
+
 QList<int> match_axon_and_lpa(NeuronTree axon, NeuronTree lpa){
 
     QList<int> lpa_id;
@@ -55,9 +57,23 @@ QList<int> match_axon_and_lpa(NeuronTree axon, NeuronTree lpa){
 }
 QList <int> find_long_axon(NeuronTree nt, int soma){
 
-    int N = nt.listNeuron.size();
+    printf("welcome to use find_long_axon\n");
+    const int N = nt.listNeuron.size();
     QList<int> name_list;
-    for(int i=0; i<N; i++){name_list.append(nt.listNeuron.at(i).n);}
+    for(int i=0; i<N; i++){
+        name_list.append(nt.listNeuron.at(i).n);
+    }
+
+    list<int> children[N];
+    for(int i=0; i<N; i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        int pid = name_list.lastIndexOf(node.pn);
+        if(pid<0){
+            continue;
+        }
+        children[pid].push_back(i);
+    }
+
     // 1. find longest path from soma
     // DFS
     // Initialization
@@ -75,10 +91,12 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
         pid = pstack.top();
         // whether exist unvisited children of pid
         // if yes, push child to stack;
-        for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
-            if((nt.listNeuron.at(i).pn)==nt.listNeuron.at(pid).n && distance.at(i)==(-1.0)){
-                pstack.push(i);
-                distance[i]=distance.at(pid)+1;
+//        for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
+        for(auto i=children[pid].begin(); i!=children[pid].end(); ++i)
+        {
+            if((nt.listNeuron.at(*i).pn)==nt.listNeuron.at(pid).n && distance.at(*i)==(-1.0)){
+                pstack.push(*i);
+                distance[*i]=distance.at(pid)+1;
                 is_push=true;
                 break;
             }
@@ -108,7 +126,6 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
     }
     return lpa;
 }
-
 QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
 
     printf("Welcome to use arbor_distribution\n");
@@ -160,7 +177,8 @@ QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
                     if((axon.listNeuron.at(j).pn)==nlist.at(pid) && visited.at(j)==0){
                         pstack.push(j);
                         visited[j]=1;
-                        branch_size+=1;
+//                        branch_size+=1;
+                        
                         is_push=true;
                         break;
                     }
@@ -191,7 +209,6 @@ QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
 
     return lpa_density;
 }
-
 bool export_branch_distribution(QList<double> lpa_density, QString output_fileName){
     FILE * fp=0;
     fp = fopen((char *)qPrintable(output_fileName), "wt");
@@ -201,16 +218,36 @@ bool export_branch_distribution(QList<double> lpa_density, QString output_fileNa
     fclose(fp);
     return 1;
 }
-
 bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bool proximal_distal){
 
     printf("Welcome to use axon_retype\n");
 
-    // 1. Load data
-    if(output_swc.size()==0){
-        if (whole_axon_swc.endsWith(".swc") || whole_axon_swc.endsWith(".SWC")){output_swc = whole_axon_swc.left(whole_axon_swc.length()-4)+".retype.swc";}
-        if (whole_axon_swc.endsWith(".eswc") || whole_axon_swc.endsWith(".ESWC")){output_swc = whole_axon_swc.left(whole_axon_swc.length()-5)+".retype.swc";}
+    // 0. File check
+    if (!(whole_axon_swc.endsWith(".swc") || whole_axon_swc.endsWith(".SWC")
+          || whole_axon_swc.endsWith(".eswc") || whole_axon_swc.endsWith(".ESWC"))){
+        printf("Error: Input file is not SWC.\n");
+        return 0;
     }
+    if(output_swc.size()==0){
+        if (whole_axon_swc.endsWith(".swc") || whole_axon_swc.endsWith(".SWC")){
+            output_swc = whole_axon_swc.left(whole_axon_swc.length()-4)+".retype.swc";
+        }
+        if (whole_axon_swc.endsWith(".eswc") || whole_axon_swc.endsWith(".ESWC")){
+            output_swc = whole_axon_swc.left(whole_axon_swc.length()-5)+".retype.swc";
+        }
+    }
+    QString proximal_swc;
+    QString distal_swc;
+    if (output_swc.endsWith(".swc") || output_swc.endsWith(".SWC")){
+        proximal_swc = output_swc.left(output_swc.length()-11)+".proximal_axon.swc";
+        distal_swc = output_swc.left(output_swc.length()-11)+".distal_axon.swc";
+    }
+    else if (whole_axon_swc.endsWith(".eswc") || whole_axon_swc.endsWith(".ESWC")){
+        proximal_swc = output_swc.left(output_swc.length()-12)+".proximal_axon.eswc";
+        distal_swc = output_swc.left(output_swc.length()-12)+".distal_axon.eswc";
+    }
+
+    // 1. Load data
     // 1.1 Load whole axon data
     NeuronTree axon = readSWC_file(whole_axon_swc);
     QList<int> plist;
@@ -227,13 +264,24 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     lpa = get_subtree_by_name(axon, lpa_id);
 
     QList<bool> is_proximal;
+    QList<bool> is_distal;
+    NeuronTree proximal_axon;
+    NeuronTree distal_axon;
     for(int i=0; i<lpa.listNeuron.size();i++){
         NeuronSWC node=lpa.listNeuron.at(i);
         if((i*1.0/lpa.listNeuron.size())<0.2){
             is_proximal.append(1);
+            proximal_axon.listNeuron.append(node);
         }
         else{
             is_proximal.append(0);
+        }
+        if((i*1.0/lpa.listNeuron.size())>0.8){
+            is_distal.append(1);
+            distal_axon.listNeuron.append(node);
+        }
+        else{
+            is_distal.append(0);
         }
     }
 
@@ -245,6 +293,14 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     int cur_retype = 2;
     int size_thres = 10;
     QList<int> branch_ind;
+    const int N=axon.listNeuron.size();
+    list<int> children[N];
+    for(int i=0; i<N; i++){
+        NeuronSWC node = axon.listNeuron.at(i);
+        int pid = nlist.lastIndexOf(node.pn);
+        if(pid<0){continue;}
+        children[pid].push_back(i);
+    }
     for(int i=1; i<axon.listNeuron.size(); i++){
         branch_ind.clear();
         NeuronSWC node = axon.listNeuron.at(i);
@@ -267,11 +323,13 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
                 pid = pstack.top();
                 // whether exist unvisited children of pid
                 // if yes, push child to stack;
-                for(int j=0; j<axon.listNeuron.size();j++){  // This loop can be more efficient, improve it later!
-                    if((axon.listNeuron.at(j).pn)==nlist.at(pid) && visited.at(j)==0){
-                        pstack.push(j);
-                        visited[j]=1;
-                        branch_ind.append(j);
+//                for(int j=0; j<axon.listNeuron.size();j++){  // This loop can be more efficient, improve it later!
+                for(auto j=children[pid].begin(); j!=children[pid].end(); ++j)
+                {
+                    if((axon.listNeuron.at(*j).pn)==nlist.at(pid) && visited.at(*j)==0){
+                        pstack.push(*j);
+                        visited[*j]=1;
+                        branch_ind.append(*j);
                         is_push=true;
                         break;
                     }
@@ -311,7 +369,34 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
                 }
             }
         }
+        // proximal and distal axon
+        if(branch_ind.size()>0){
+            int branch_head = branch_ind.at(0);
+            int branch_at_lpa = lpa_id.indexOf(plist.at(branch_head));
+            // Proximal cluster
+            if(is_proximal.at(branch_at_lpa)){
+                for(int j=0; j<branch_ind.size(); j++){
+                    NeuronSWC node = axon.listNeuron.at(branch_ind.at(j));
+                    proximal_axon.listNeuron.append(node);
+                }
+            }
+            // Distal cluster
+            if(is_distal.at(branch_at_lpa)){
+                for(int j=0; j<branch_ind.size(); j++){
+                    NeuronSWC node = axon.listNeuron.at(branch_ind.at(j));
+                    distal_axon.listNeuron.append(node);
+                }
+            }
+        }
     }
+//    proximal_axon = missing_parent(proximal_axon);
+//    proximal_axon = my_SortSWC(proximal_axon, proximal_axon.listNeuron.at(0).n, 0);
+//    writeSWC_file(proximal_swc, proximal_axon);
+    crop_swc(whole_axon_swc, proximal_swc, 1000, 0, 0, 1);
+    distal_axon = missing_parent(distal_axon);
+    distal_axon = my_SortSWC(distal_axon, distal_axon.listNeuron.at(0).n, 0);
     writeSWC_file(output_swc, axon);
+    writeSWC_file(distal_swc, distal_axon);
+
     return 1;
 }

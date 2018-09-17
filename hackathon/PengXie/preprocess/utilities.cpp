@@ -78,10 +78,14 @@ int get_soma(NeuronTree nt){
         if(nt.listNeuron.at(i).type==1){
             soma=i;
             soma_ct++;
-            if(soma_ct>1){return -1;}
+            break;
+//            if(soma_ct>1){return -1;}
         }
     }
-    if(soma_ct==0){return -1;}
+    if(soma_ct==0){
+        qDebug() << "Error: No soma found\n";
+        return -1;
+    }
     return soma;
 }
 QList<int> get_components(NeuronTree nt){
@@ -162,12 +166,9 @@ NeuronTree single_tree(NeuronTree nt, int soma){
     for(int i=0; i<N; i++){
         // root check
         if(nt.listNeuron.at(i).pn<0){
-            pList.append(-1);
             subtree_ct++;
         }
-        else{
-            pList.append(nt.listNeuron.at(i).pn);
-        }
+        pList.append(nt.listNeuron.at(i).pn);
         nList.append(nt.listNeuron.at(i).n);
     }
 
@@ -178,6 +179,16 @@ NeuronTree single_tree(NeuronTree nt, int soma){
     if(subtree_ct==0){
         printf("No root found in the swc.\n");
         return nt;
+    }
+
+    list<int> children[N];
+    for(int i=0; i<N; i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        int pid = nList.lastIndexOf(node.pn);
+        if(pid<0){
+            continue;
+        }
+        children[pid].push_back(i);
     }
 
     // Case 3
@@ -195,6 +206,7 @@ NeuronTree single_tree(NeuronTree nt, int soma){
         bool is_push = false;
         visited[pid]=1;
         new_tree.listNeuron.append(nt.listNeuron.at(pid));
+//        cout<<nt.listNeuron.at(pid).n<<"\t"<<nt.listNeuron.at(pid).x<<"\t"<<nt.listNeuron.at(pid).y<<"\t"<<nt.listNeuron.at(pid).z<<endl;
 
         // DFS using stack
         while(!pstack.isEmpty()){
@@ -202,12 +214,14 @@ NeuronTree single_tree(NeuronTree nt, int soma){
             pid = pstack.top();
             // whether exist unvisited children of pid
             // if yes, push child to stack;
-            for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
-                NeuronSWC node = nt.listNeuron.at(i);
-                if(nList.lastIndexOf(node.pn)==pid && visited.at(i)==0){
-                    pstack.push(i);
-                    visited[i]=1;
+            for (auto i = children[pid].begin(); i != children[pid].end(); ++i)
+            {
+                NeuronSWC node = nt.listNeuron.at(*i);
+                if(nList.lastIndexOf(node.pn)==pid && visited.at(*i)==0){
+                    pstack.push(*i);
+                    visited[*i]=1;
                     new_tree.listNeuron.append(node);
+//                    cout<<node.n<<"\t"<<node.x<<"\t"<<node.y<<"\t"<<node.z<<endl;
                     is_push=true;
                     break;
                 }
@@ -220,6 +234,76 @@ NeuronTree single_tree(NeuronTree nt, int soma){
         return new_tree;
     }
 }
+
+//NeuronTree single_tree(NeuronTree nt, int soma){
+//    QList<int> pList;
+//    QList<int> nList;
+//    const int N=nt.listNeuron.size();
+//    int subtree_ct=0;
+//    // check whether this is a single tree
+//    for(int i=0; i<N; i++){
+//        // root check
+//        if(nt.listNeuron.at(i).pn<0){
+//            pList.append(-1);
+//            subtree_ct++;
+//        }
+//        else{
+//            pList.append(nt.listNeuron.at(i).pn);
+//        }
+//        nList.append(nt.listNeuron.at(i).n);
+//    }
+
+////    // Case 1
+//    if(subtree_ct==1){return nt;}
+
+//    // Case 2
+//    if(subtree_ct==0){
+//        printf("No root found in the swc.\n");
+//        return nt;
+//    }
+
+//    // Case 3
+//    if(subtree_ct>0){
+//        printf("More than one single trees in the input swc. Only the first connected with soma will be reported.\n");
+//        NeuronTree new_tree;
+//        // DFS to extract the first soma-connected tree;
+
+//        // Initialization
+//        int pid=soma;
+//        QList<int> visited;
+//        for(int i=0;i<N; i++){visited.append(0);}
+//        QStack<int> pstack;
+//        pstack.push(pid);
+//        bool is_push = false;
+//        visited[pid]=1;
+//        new_tree.listNeuron.append(nt.listNeuron.at(pid));
+////        cout<<nt.listNeuron.at(pid).n<<"\t"<<nt.listNeuron.at(pid).x<<"\t"<<nt.listNeuron.at(pid).y<<"\t"<<nt.listNeuron.at(pid).z<<endl;
+
+//        // DFS using stack
+//        while(!pstack.isEmpty()){
+//            is_push = false;
+//            pid = pstack.top();
+//            // whether exist unvisited children of pid
+//            // if yes, push child to stack;
+//            for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
+//                NeuronSWC node = nt.listNeuron.at(i);
+//                if(nList.lastIndexOf(node.pn)==pid && visited.at(i)==0){
+//                    pstack.push(i);
+//                    visited[i]=1;
+//                    new_tree.listNeuron.append(node);
+////                    cout<<node.n<<"\t"<<node.x<<"\t"<<node.y<<"\t"<<node.z<<endl;
+//                    is_push=true;
+//                    break;
+//                }
+//            }
+//            // else, pop pid
+//            if(!is_push){
+//                pstack.pop();
+//            }
+//        }
+//        return new_tree;
+//    }
+//}
 
 NeuronTree get_subtree_by_name(NeuronTree nt, QList <int> nlist){
     NeuronTree new_tree;
@@ -388,4 +472,18 @@ double dist_to_parent(NeuronTree nt, int i, double xscale, double yscale, double
     int pid = nlist.indexOf(node.pn);
     if(pid == -1){return 0;}  // this is a root
     return computeDist2(node, nt.listNeuron.at(pid), xscale, yscale, zscale);
+}
+
+NeuronTree missing_parent(NeuronTree nt){
+    // traverse every node of a tree, if a node's parent node is not in the tree, set this node as root.
+    QList <int> nlist;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        nlist.append(nt.listNeuron.at(i).n);
+    }
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        if(nlist.lastIndexOf(nt.listNeuron.at(i).pn)<0){
+            nt.listNeuron[i].pn = -1;
+        }
+    }
+    return nt;
 }

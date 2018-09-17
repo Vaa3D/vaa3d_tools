@@ -12,14 +12,15 @@ bool split_neuron(QString qs_input){
     if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_tag = qs_input.left(qs_input.length()-4);}
     if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){qs_tag = qs_input.left(qs_input.length()-5);}
 
-    // Report 1: long axon only.
-    neurite_analysis(qs_input, qs_tag+".long_axon.swc", "l");
-    // Report 2: other axons retyped
+    // Report 1: axon.
     neurite_analysis(qs_input, qs_tag+".axon.swc", "a");
+    // Report 2: long axon only.
+    neurite_analysis(qs_tag+".axon.swc", qs_tag+".long_axon.swc", "l");
+    // Report 3: other axons retyped
     axon_retype(qs_tag+".axon.swc", qs_tag+".long_axon.swc", qs_tag+".axon.retype.swc", true);
-    QList<double> lpa_density = arbor_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
-    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
-    // Report 3: dendrite
+//    QList<double> lpa_density = arbor_distribution(qs_tag+".axon.swc", qs_tag+".long_axon.swc");
+//    export_branch_distribution(lpa_density, qs_tag+".axon_density.txt");
+    // Report 4: dendrite
     neurite_analysis(qs_input, qs_tag+".dendrite.swc", "d");
 
     return 1;

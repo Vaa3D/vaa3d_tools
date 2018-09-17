@@ -14,10 +14,11 @@
 #include "string"
 
 
-bool preprocess_batch(QString swclist, QString qctable, bool skip_existing){
+bool preprocess_batch(QString swclist, QString swcdir, QString qctable, bool skip_existing){
     std::ifstream infile(qPrintable(swclist));
     std::string line;
     printf("welcome to use preprocess_batch\n");
+
 
     if(!fexists(qctable)){
         FILE * fp=fopen((char *)qPrintable(qctable), "wt");
@@ -34,6 +35,7 @@ bool preprocess_batch(QString swclist, QString qctable, bool skip_existing){
         std::string a;
         if (!(iss >> a)) { break; }
         QString qs_inswc = QString::fromStdString(a);
+
         QString inswcPrefix;
         if (qs_inswc.endsWith(".swc") || qs_inswc.endsWith(".SWC")){
             inswcPrefix = qs_inswc.left(qs_inswc.length() - 4);
@@ -45,8 +47,17 @@ bool preprocess_batch(QString swclist, QString qctable, bool skip_existing){
         else{
             printf("Error: not all input files are swc's!\n");
         }
+        QString inswcName = inswcPrefix.right(inswcPrefix.length()-inswcPrefix.lastIndexOf("/")-1);
+
         // 1. Run preprocess
-        QString qs_outswc = inswcPrefix + QString(".processed.swc");
+        QString qs_outswc;
+
+        if(swcdir.size()==0){
+            qs_outswc = inswcPrefix + QString(".processed.swc");
+        }
+        else{
+            qs_outswc = swcdir + inswcName + QString(".processed.swc");
+        }
         if((!skip_existing) || (!fexists(qs_outswc))){
             bool preprocessed = pre_processing(qs_inswc, qs_outswc);
             if(! preprocessed){
@@ -55,7 +66,6 @@ bool preprocess_batch(QString swclist, QString qctable, bool skip_existing){
 
             // 2. Run QC
             NeuronTree nt = readSWC_file(qs_outswc);
-            QString inswcName = inswcPrefix.right(inswcPrefix.length()-inswcPrefix.lastIndexOf("/")-1);
             logging << qPrintable(inswcName) << "\t" << "Allneurons\t";
             // QC.1
             double percentage_disconnected = get_percentage_disconnected(qs_outswc);
@@ -129,11 +139,12 @@ bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
     //0. read arguments
 
     char *swclist = NULL;
+    char *swcdir = NULL;
     char *qctable = NULL;
     bool skip_existing = 0;
 
     int c;
-    static char optstring[]="hi:q:s:";
+    static char optstring[]="hi:o:q:s:";
     extern char * optarg;
     extern int optind, opterr;
     optind = 1;
@@ -154,6 +165,15 @@ bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
                 swclist = optarg;
                 cout << "Input file name:\t" << swclist <<endl;
                 break;
+            case 'o':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
+                    return 1;
+                }
+                swcdir = optarg;
+                cout << "Output swc directory:\t" << swcdir <<endl;
+            break;
             case 'q':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
@@ -177,7 +197,7 @@ bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         }
     }
 
-    bool finished = preprocess_batch(QString(swclist), QString(qctable), skip_existing);
+    bool finished = preprocess_batch(QString(swclist), QString(swcdir), QString(qctable), skip_existing);
     return finished;
 }
 
@@ -185,6 +205,7 @@ void printHelp_preprocess_batch()
 {
     printf("\nVaa3D plugin: preprocess SWC files in a given list\n");
     printf("\t#i <swclist> :   input (a file of an swc list)\n");
+    printf("\t#o <dir_output_swc> :   directory of the output swc files \n");
     printf("\t#q <qctable> :   output (name of the QC table.\n");
     printf("\t#s <skip_existing> :   whether to skip the preprocessing step if processed files exist \n");
     printf("Usage: vaa3d -x preprocess -f preprocess_batch -p \"#i swc.list #q QC.csv #s 1\"\n");

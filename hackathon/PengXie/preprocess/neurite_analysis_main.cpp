@@ -51,7 +51,7 @@ NeuronTree return_axon(NeuronTree nt, int soma){
         if(pn_ind<0){continue;}
         if((nt.listNeuron.at(pn_ind).type==3) && (node.type==2)){
             a2d_ind.append(i);
-            cout << i <<endl;
+            printf("Node %d is connected to dendrite.\n", i);
         }
     }
     // If any, trace back to soma;
@@ -84,7 +84,7 @@ NeuronTree return_dendrite(NeuronTree nt, int soma){
 
 bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
 
-    printf("welcome to neurite_analysis\n");
+    printf("welcome to use neurite_analysis\n");
 
     // 1. Load data
     NeuronTree nt;
@@ -97,7 +97,8 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     if (qs_output.size()==0)
     {
         char *tag;
-        if(extract_type == "a"){tag = strdup(".long_axon");}
+        if(extract_type == "a"){tag = strdup(".axon");}
+        if(extract_type == "l"){tag = strdup(".long_axon");}
         if(extract_type == "c"){tag = strdup(".cluster_axon");}
         if(extract_type == "d"){tag = strdup(".dendrite");}
         if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){qs_output = qs_input.left(qs_input.length()-4)+tag+".swc";}
@@ -107,6 +108,7 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     // 2. Examine input
     // 2.1 Check soma
     int soma=get_soma(nt);
+    cout<<soma<<endl;
     if(soma<0){return 0;}
     if(nt.listNeuron.at(soma).pn != (-1)){
         printf("Exit: soma is not root!\n");
@@ -115,11 +117,11 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
 
     // 3. Extract the specified type of neurite
     printf("Extracting neurite\n");
-    if(extract_type == "a" || extract_type == "l"){
+    if(extract_type == "a"){
         nt=return_axon(nt, soma);
-        if(extract_type == "l"){
-            nt = return_long_axon(nt, soma, false);
-        }
+    }
+    if(extract_type == "l"){
+        nt = return_long_axon(nt, soma, false);
     }
     if(extract_type == "d"){nt=return_dendrite(nt, soma);}
     nt = my_SortSWC(nt, 1, 0);

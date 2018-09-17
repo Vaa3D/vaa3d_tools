@@ -20,8 +20,8 @@
 #include "io.h"
 #endif
 
-bool crop_swc(QString qs_input, QString qs_output, double radius, int soma=0, bool center=1, int resample_step=2,
-              double xshift=0, double yshift=0, double zshift=0){
+bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool center, int resample_step,
+              double xshift, double yshift, double zshift,bool rotation){
 
     printf("welcome to crop_swc\n");
     // 1. read input
@@ -54,11 +54,15 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma=0, bo
         nt.listNeuron[i].y += yshift;
         nt.listNeuron[i].z += zshift;
         NeuronSWC node = nt.listNeuron.at(i);
-        if(computeDist2(node, new_soma_node, 1, 1, 5)<radius){
-//            printf("%d distance:\t%f\n", i, computeDist2(node, new_soma_node, 1, 1, 5));
-            inside_nlist.append(node.n);
+        if(radius<0){inside_nlist.append(node.n);}
+        else{
+            if(computeDist2(node, new_soma_node, 1, 1, 5)<radius){
+                inside_nlist.append(node.n);
+            }
         }
     }
+
+
     // 2.2 create a cropped tree
     NeuronTree new_tree;
     for(int i=0; i<nt.listNeuron.size(); i++){
@@ -73,10 +77,12 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma=0, bo
         }
         new_tree.listNeuron.append(node);
     }
+
     export_list2file(new_tree.listNeuron, "cropped.swc");
     // 2.3 return single tree
     nt = single_tree(new_tree, soma);
     export_list2file(nt.listNeuron, "single_tree.swc");
+
     // 2.4 sort the single tree
     nt = my_SortSWC(nt, soma_name, 0);
 
@@ -87,7 +93,15 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma=0, bo
     }else{
         printf("\tSkip resampling\n");
     }
-
+    //2.6 Align axis
+    if (rotation)
+    {
+        printf("\tAligning PCA axis\n");
+        nt = align_axis(nt);
+    }
+    else{
+        printf("\tSkip PCA alignment\n");
+    }
 
     // 4. save output
     export_list2file(nt.listNeuron, qs_output);
@@ -111,6 +125,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     double xshift=0;
     double yshift=0;
     double zshift=0;
+    bool rotation=0;
 
     if(1==1){
         if(input.size() != 2)
@@ -153,7 +168,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
             printHelp_crop_swc();
 
         int c;
-        static char optstring[]="hi:o:s:r:c:j:x:y:x:";
+        static char optstring[]="hi:o:s:r:c:j:t:x:y:z:";
         extern char * optarg;
         extern int optind, opterr;
         optind = 1;
@@ -191,7 +206,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
                     soma = atoi(optarg);
                 break;
                 case 'r':
-                    if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                    if (strcmp(optarg,"(null)")==0)
                     {
                         fprintf(stderr, "Found illegal or NULL parameter for the option -r.\n");
                         return 1;
@@ -206,6 +221,14 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
                     }
                     center = (atoi(optarg)==1);
                 break;
+                case 't':
+                    if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                    {
+                        fprintf(stderr, "Found illegal or NULL parameter for the option -r.\n");
+                        return 1;
+                    }
+                    rotation = (atoi(optarg)==1);
+            break;
                 case 'j':
                     if (strcmp(optarg,"(null)")==0)
                     {
@@ -262,7 +285,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     }
 
     return crop_swc(qs_input, qs_output, radius, soma, center, resample_step,
-                    xshift, yshift, zshift);
+                    xshift, yshift, zshift, rotation);
 }
 
 void printHelp_crop_swc()
@@ -273,10 +296,12 @@ void printHelp_crop_swc()
     printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
     printf("\t#o <output_filename> :   output file name; default output name: input.cropped.swc\n");
     printf("\t#s <soma> :  soma index; default is 0;\n");
-    printf("\t#r <radius> :  the range for cropping.\n");
+    printf("\t#r <radius> :  the range for cropping; set to -1 if you don't want to crop.\n");
     printf("\t#j <reample_step> :  step size for resampling; set to -1 if you'd like to skip resampling.\n");
     printf("\t#x <xshift> :  shift soma node along x-axis.\n");
-    printf("\t#x <yshift> :  shift soma node along y-axis.\n");
-    printf("\t#x <zshift> :  shift soma node along z-axis.\n");
+    printf("\t#y <yshift> :  shift soma node along y-axis.\n");
+    printf("\t#z <zshift> :  shift soma node along z-axis.\n");
+    printf("\t#c <center> :  whether to move soma to the origion; default is 1.\n");
+    printf("\t#t <rotation> :  whether to perform PCA projection; default is 0.\n");
     printf("Usage: vaa3d -x preprocess -f crop_swc -p \"#i input.swc #o result.swc #r 100 #j 2\"\n");
 }
