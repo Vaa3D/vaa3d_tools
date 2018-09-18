@@ -14,11 +14,23 @@
 #include "string"
 
 
-bool preprocess_batch(QString swclist, QString swcdir, QString qctable, bool skip_existing){
-    std::ifstream infile(qPrintable(swclist));
+bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QString qctable, bool skip_existing){
+    std::ifstream infile(qPrintable(inswclist));
     std::string line;
     printf("welcome to use preprocess_batch\n");
 
+    if(!fexists(somalist)){
+        printf("Error: soma list file not found!\n");
+        return 0;
+    }
+    QList<CellAPO> soma_apo = readAPO_file(somalist);
+    QList<QString> soma_nlist;
+    for(int i=0; i<soma_apo.size(); i++){
+        QString tp_name = soma_apo.at(i).name;
+        tp_name.replace(QString(" "), QString(""));
+        cout<<qPrintable(tp_name)<<endl;
+        soma_nlist.append(tp_name);
+    }
 
     if(!fexists(qctable)){
         FILE * fp=fopen((char *)qPrintable(qctable), "wt");
@@ -36,6 +48,9 @@ bool preprocess_batch(QString swclist, QString swcdir, QString qctable, bool ski
         if (!(iss >> a)) { break; }
         QString qs_inswc = QString::fromStdString(a);
 
+        // 0. Prepare files
+        // 0.1 Input
+        printf("Input swc:\t%s\n", qPrintable(qs_inswc));
         QString inswcPrefix;
         if (qs_inswc.endsWith(".swc") || qs_inswc.endsWith(".SWC")){
             inswcPrefix = qs_inswc.left(qs_inswc.length() - 4);
@@ -48,18 +63,46 @@ bool preprocess_batch(QString swclist, QString swcdir, QString qctable, bool ski
             printf("Error: not all input files are swc's!\n");
         }
         QString inswcName = inswcPrefix.right(inswcPrefix.length()-inswcPrefix.lastIndexOf("/")-1);
+        if(outswcdir.size()==0){  // If outswcdir is not specified, processed swc will be put into the same folder as input swc.
+            outswcdir = inswcPrefix;
+            if(inswcPrefix.lastIndexOf("/")>=0){
+                outswcdir = outswcdir.left(inswcPrefix.lastIndexOf("/")+1);
+            }
+            else{
+                outswcdir = QString("./");
+            }
+        }
+        // 0.2 Temp
+        // temp_spo
+        QString temp_apo = outswcdir + inswcName + QString(".temp.apo");
+        QString inswcID = inswcName.right(inswcName.length()-inswcName.indexOf("_")-1);
+        if(inswcID.indexOf("_")>=0){
+            inswcID = inswcID.left(inswcID.indexOf("_"));
+        }
+        int sid = soma_nlist.indexOf(inswcID);
+        if(sid < 0){
+            printf("Error: soma id %s not found in soma_list!\n", qPrintable(inswcID));
+            continue;
+        }
+        QList<CellAPO> this_soma;
+        this_soma.append(soma_apo.at(sid));
+        writeAPO_file(temp_apo, this_soma);
+        QFile temp_apo_file(temp_apo);
+        // temp_swc
+        QString temp_swc = outswcdir + inswcName + QString(".temp.swc");
+        QFile temp_swc_file(temp_swc);
+        QFile qs_inswc_file(qs_inswc);
+        if(temp_swc_file.exists()){
+            temp_swc_file.remove();
+        }
+        qs_inswc_file.copy(temp_swc);
 
+
+        // 0.3 Output
+        QString qs_outswc = outswcdir + inswcName + QString(".processed.swc");
         // 1. Run preprocess
-        QString qs_outswc;
-
-        if(swcdir.size()==0){
-            qs_outswc = inswcPrefix + QString(".processed.swc");
-        }
-        else{
-            qs_outswc = swcdir + inswcName + QString(".processed.swc");
-        }
         if((!skip_existing) || (!fexists(qs_outswc))){
-            bool preprocessed = pre_processing(qs_inswc, qs_outswc);
+            bool preprocessed = pre_processing(temp_swc, qs_outswc);
             if(! preprocessed){
                 return 0;
             }
@@ -82,6 +125,8 @@ bool preprocess_batch(QString swclist, QString swcdir, QString qctable, bool ski
                 logging << 1 << endl;
             }
         }
+        temp_apo_file.remove();
+        temp_swc_file.remove();
     }
     logging.close();
     return 1;
@@ -139,12 +184,13 @@ bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
     //0. read arguments
 
     char *swclist = NULL;
+    char *somalist = NULL;
     char *swcdir = NULL;
     char *qctable = NULL;
     bool skip_existing = 0;
 
     int c;
-    static char optstring[]="hi:o:q:s:";
+    static char optstring[]="hi:o:m:q:s:";
     extern char * optarg;
     extern int optind, opterr;
     optind = 1;
@@ -174,6 +220,15 @@ bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
                 swcdir = optarg;
                 cout << "Output swc directory:\t" << swcdir <<endl;
             break;
+            case 'm':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
+                    return 1;
+                }
+                somalist = optarg;
+                cout << "Somalist:\t" << somalist <<endl;
+        break;
             case 'q':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
@@ -197,7 +252,7 @@ bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
         }
     }
 
-    bool finished = preprocess_batch(QString(swclist), QString(swcdir), QString(qctable), skip_existing);
+    bool finished = preprocess_batch(QString(swclist), QString(swcdir), QString(somalist), QString(qctable), skip_existing);
     return finished;
 }
 
@@ -206,7 +261,8 @@ void printHelp_preprocess_batch()
     printf("\nVaa3D plugin: preprocess SWC files in a given list\n");
     printf("\t#i <swclist> :   input (a file of an swc list)\n");
     printf("\t#o <dir_output_swc> :   directory of the output swc files \n");
-    printf("\t#q <qctable> :   output (name of the QC table.\n");
+    printf("\t#m <somalist.ano> :   an ANO file that includes soma location of all swc files; second column of each record is the cell id, e.g. 001. \n");
+    printf("\t#q <qctable> :   output (name of the QC table).\n");
     printf("\t#s <skip_existing> :   whether to skip the preprocessing step if processed files exist \n");
-    printf("Usage: vaa3d -x preprocess -f preprocess_batch -p \"#i swc.list #q QC.csv #s 1\"\n");
+    printf("Usage: vaa3d -x preprocess -f preprocess_batch -p \"#i swclist.txt #o ./Processed/ #m soma_list.ano.apo #q QC.csv #s 1\"\n");
 }
