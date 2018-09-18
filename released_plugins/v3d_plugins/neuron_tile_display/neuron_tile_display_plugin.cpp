@@ -5,21 +5,256 @@
  
 #include "v3d_message.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <QApplication>
 #include <QTime>
+#include <cmath>
 #include "neuron_tile_display_plugin.h"
 #include "basic_surf_objs.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 using namespace std;
+#define MYFLOAT double
+#define MAXSIZE 10
+const double pi = 3.1415926535897;
 Q_EXPORT_PLUGIN2(neuron_tile_display, neuron_tile_display);
 void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent, int displayNum);
 void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent);
 void printHelpForBigScreenUsage();
+void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
+void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
+void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[]);
+void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
+void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[]);
+MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[]);
+MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
+void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/);
+void LoadAnchorFile();
+//void LoadAnchorFile(QString fileOpenName);
+void LoadAnchorFile(const V3DPluginArgList & input);
 
 QString m_InputfolderName="";
+struct ZMovieFileType
+{
+    QString anchor_file_path;
+    QString frame_folder_path;
+};
+struct AnchorPointPARA
+{
+    MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1,frontCut;
+    bool channelR,channelG,channelB;
+    int showSurf,timePoint;
+    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
+};
+AnchorPointPARA anchorPara[MAXSIZE];
+int anchorParaSize=0;
 
+#define CHECK_WINDOWS \
+{\
+    view=0;curwin=0; \
+    list_triview = callback.getImageWindowList();\
+    list_3dviewer = callback.getListAll3DViewers();\
+    if(anchorParaSize<=0) return;\
+    if(combo_surface->currentIndex() < list_triview.size())\
+{\
+    curwin = list_triview[combo_surface->currentIndex()];\
+    if(curwin)\
+{\
+    callback.open3DWindow(curwin);\
+    view = m_v3d.getView3DControl(curwin);\
+    }\
+    else\
+    return;\
+    }\
+    else\
+{\
+    QString curname = combo_surface->itemText(combo_surface->currentIndex());\
+    v3d_msg(QString("current window selected:[%1]").arg(curname), 0);\
+    for (int i=0; i<list_3dviewer.count(); i++)\
+{\
+    if(curname == m_v3d.getImageName(list_3dviewer[i]))\
+{\
+    surface_win = list_3dviewer[i];\
+    if(surface_win)\
+{\
+    view = m_v3d.getView3DControl_Any3DViewer(surface_win);\
+    }\
+    else\
+    return;\
+    break;\
+    }\
+    }\
+    }\
+    if (!view) return;\
+    }
+
+#define GET_PARA \
+{ \
+    xRot = PARA_temp.xRot;\
+    yRot = PARA_temp.yRot;\
+    zRot = PARA_temp.zRot;\
+    xShift = PARA_temp.xShift;\
+    yShift = PARA_temp.yShift;\
+    zShift = PARA_temp.zShift;\
+    zoom = PARA_temp.zoom;\
+    xCut0 = PARA_temp.xCut0 ;\
+    xCut1 = PARA_temp.xCut1;\
+    yCut0 = PARA_temp.yCut0;\
+    yCut1 = PARA_temp.yCut1;\
+    zCut0 = PARA_temp.zCut0;\
+    zCut1 = PARA_temp.zCut1;\
+    channelR = PARA_temp.channelR;\
+    channelG = PARA_temp.channelG;\
+    channelB = PARA_temp.channelB;\
+    showSurf = PARA_temp.showSurf;\
+    xClip0 = PARA_temp.xClip0;\
+    xClip1 = PARA_temp.xClip1;\
+    yClip0 = PARA_temp.yClip0;\
+    yClip1 = PARA_temp.yClip1;\
+    zClip0 = PARA_temp.zClip0;\
+    zClip1 = PARA_temp.zClip1;\
+    frontCut = PARA_temp.frontCut;\
+    timePoint = PARA_temp.timePoint;\
+    }
+
+#define SET_3DVIEW \
+{ \
+    view->resetRotation();\
+    view->doAbsoluteRot((float)xRot,(float)yRot,(float)zRot);\
+    view->setXShift((float)xShift);\
+    view->setYShift((float)yShift);\
+    view->setZShift((float)zShift);\
+    view->setZoom((float)zoom);\
+    view->setXCut0((float)xCut0);\
+    view->setXCut1((float)xCut1);\
+    view->setYCut0((float)yCut0);\
+    view->setYCut1((float)yCut1);\
+    view->setZCut0((float)zCut0);\
+    view->setZCut1((float)zCut1);\
+    view->setChannelR(channelR);\
+    view->setChannelG(channelG);\
+    view->setChannelB(channelB);\
+    view->setShowSurfObjects(showSurf);\
+    view->setXClip0((float)xClip0);\
+    view->setXClip1((float)xClip1);\
+    view->setYClip0((float)yClip0);\
+    view->setYClip1((float)yClip1);\
+    view->setZClip0((float)zClip0);\
+    view->setZClip1((float)zClip1);\
+    view->setFrontCut((float)frontCut);\
+    view->setVolumeTimePoint((int)timePoint);\
+    \
+    if(curwin)\
+{\
+    callback.updateImageWindow(curwin);\
+    }\
+    else\
+    callback.update_3DViewer(surface_win); \
+}
+
+#define INTERPOLATION_PARA \
+{ \
+    view->resetRotation();\
+    angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
+    angles_to_quaternions(q2,xRot,yRot,zRot);\
+    slerp_zhi(q1, q2, (MYFLOAT)i/N, q_sample);\
+    \
+    \
+    quaternions_to_angles(Rot_current,q_sample);\
+    xShift_current = (xShift_last + i*(xShift-xShift_last)/N); \
+    yShift_current = (yShift_last + i*(yShift-yShift_last)/N); \
+    zShift_current = (zShift_last + i*(zShift-zShift_last)/N); \
+    zoom_current = (zoom_last + i*(zoom-zoom_last)/N); \
+    channel_current = (MYFLOAT)i/N;\
+    xClip0_current = (xClip0_last + i*(xClip0-xClip0_last)/N);\
+    xClip1_current = (xClip1_last + i*(xClip1-xClip1_last)/N);\
+    yClip0_current = (yClip0_last + i*(yClip0-yClip0_last)/N);\
+    yClip1_current = (yClip1_last + i*(yClip1-yClip1_last)/N);\
+    zClip0_current = (zClip0_last + i*(zClip0-zClip0_last)/N);\
+    zClip1_current = (zClip1_last + i*(zClip1-zClip1_last)/N);\
+    xCut0_current = (xCut0_last + i*(xCut0-xCut0_last)/N);\
+    xCut1_current = (xCut1_last + i*(xCut1-xCut1_last)/N);\
+    yCut0_current = (yCut0_last + i*(yCut0-yCut0_last)/N);\
+    yCut1_current = (yCut1_last + i*(yCut1-yCut1_last)/N);\
+    zCut0_current = (zCut0_last + i*(zCut0-zCut0_last)/N);\
+    zCut1_current = (zCut1_last + i*(zCut1-zCut1_last)/N);\
+    frontCut_current = (frontCut_last + i*(frontCut-frontCut_last)/N);\
+    timePoint_current = (timePoint_last + i*(timePoint-timePoint_last)/N);\
+    \
+    \
+    \
+    view->doAbsoluteRot((float)Rot_current[0], (float)Rot_current[1], (float)Rot_current[2]);\
+    view->setXShift((float)(xShift_current));\
+    view->setYShift((float)(yShift_current));\
+    view->setZShift((float)(zShift_current));\
+    view->setZoom((float)(zoom_current));\
+    view->setVolumeTimePoint((int)timePoint_current);\
+    if(channel_current < 0.5)\
+{\
+    view->setChannelR(channelR_last);\
+    view->setChannelG(channelG_last);\
+    view->setChannelB(channelB_last);\
+    view->setShowSurfObjects(showSurf_last);\
+    }\
+    else\
+{\
+    view->setChannelR(channelR);\
+    view->setChannelG(channelG);\
+    view->setChannelB(channelB);\
+    view->setShowSurfObjects(showSurf);\
+    }\
+    view->setXClip0((float)(xClip0_current));\
+    view->setXClip1((float)(xClip1_current));\
+    view->setYClip0((float)(yClip0_current));\
+    view->setYClip1((float)(yClip1_current));\
+    view->setZClip0((float)(zClip0_current));\
+    view->setZClip1((float)(zClip1_current));\
+    if(curwin)\
+{\
+    view->setXCut0((float)(xCut0_current));\
+    view->setXCut1((float)(xCut1_current));\
+    view->setYCut0((float)(yCut0_current));\
+    view->setYCut1((float)(yCut1_current));\
+    view->setZCut0((float)(zCut0_current));\
+    view->setZCut1((float)(zCut1_current));\
+    view->setFrontCut((float)frontCut_current);\
+    callback.updateImageWindow(curwin);\
+    }\
+    else\
+    callback.update_3DViewer(surface_win); \
+    }
+#define UPDATE_PARA \
+{ \
+    xRot_last = xRot;\
+    yRot_last = yRot;\
+    zRot_last = zRot;\
+    xShift_last = xShift;\
+    yShift_last = yShift;\
+    zShift_last = zShift;\
+    zoom_last = zoom;\
+    xCut0_last = xCut0;\
+    xCut1_last = xCut1;\
+    yCut0_last = yCut0;\
+    yCut1_last = yCut1;\
+    zCut0_last = zCut0;\
+    zCut1_last = zCut1;\
+    channelR_last = channelR;\
+    channelG_last = channelG;\
+    channelB_last = channelB;\
+    showSurf_last = showSurf;\
+    xClip0_last = xClip0;\
+    xClip1_last = xClip1;\
+    yClip0_last = yClip0;\
+    yClip1_last = yClip1;\
+    zClip0_last = zClip0;\
+    zClip1_last = zClip1;\
+    frontCut_last = frontCut;\
+    timePoint_last = timePoint;\
+    }
+
+//sleep
 void sleep(unsigned int minute)
 {
     double stopmsec=minute*1000*60;
@@ -613,6 +848,7 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         callback.setWindowDataTitle(new3DWindow,curSWCBase.baseName());
     }
     MethodForCombineSWCDisplay(callback,parent,swcList);
+    LoadAnchorFile();
 
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
     qDebug("new window size is %d",cur_list_3dviewer.size());
@@ -635,10 +871,12 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
+    ZmovieMaker(callback,parent);
     while(true)
     {
         sleep(updateInterval);
         MethodForUpdateSWCDispaly(callback,parent);
+        ZmovieMaker(callback,parent);
     }
 
 }
@@ -648,6 +886,7 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
 
     cout<<"Welcome to big screen display"<<endl;
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+    //QString anchorFileName = QString(inlist->at(1));
     if(input.size() != 2)
     {
         printf("Please specify both input folder and the number of new finished Neurons.\n");
@@ -660,7 +899,6 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
     /*QString*/ /*m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all finished annotation files "),
                                                                   QDir::currentPath(),
                                                                   QFileDialog::ShowDirsOnly);*/
-
 
 
     int col=5, /*row=3,*/ xRez=3840, yRez=2160;
@@ -714,6 +952,8 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
+    LoadAnchorFile(input);
+    ZmovieMaker(callback,parent);
 }
 
 void printHelpForBigScreenUsage()
@@ -729,6 +969,196 @@ void printHelpForBigScreenUsage()
     printf("Usage (windows): vaa3d_msvc.exe /x tile_display_multiple_neurons /f BigScreenDisplay /i d:/home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ /p 30\" \n");
     printf("\n                                                           \n");
 
+}
+
+void LoadAnchorFile(const V3DPluginArgList & input)
+{
+    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+    QString fileOpenName = QString(inlist->at(1));
+    if(input.size() != 2)
+    {
+        printf("Please specify both input folder and the number of new finished Neurons.\n");
+        printHelpForBigScreenUsage();
+        return /*false*/;
+    }
+    if(fileOpenName.isEmpty())
+    {
+        cout<<"Anchor file is not existed or empty!";
+        return;
+    }
+
+    if (fileOpenName.size()>0)
+    {
+        //list_anchors->clear();
+        ifstream ifs(fileOpenName.toLatin1());
+        string points;
+        while(ifs && getline(ifs, points))
+        {
+            std::istringstream iss(points);
+            iss >>anchorPara[anchorParaSize].xRot >>anchorPara[anchorParaSize].yRot >>anchorPara[anchorParaSize].zRot >>
+                  anchorPara[anchorParaSize].xShift >> anchorPara[anchorParaSize].yShift >> anchorPara[anchorParaSize].zShift >>
+                  anchorPara[anchorParaSize].zoom >>
+                   anchorPara[anchorParaSize].xCut0 >> anchorPara[anchorParaSize].xCut1 >>
+                   anchorPara[anchorParaSize].yCut0 >> anchorPara[anchorParaSize].yCut1 >>
+                   anchorPara[anchorParaSize].zCut0 >> anchorPara[anchorParaSize].zCut1 >>
+                   anchorPara[anchorParaSize].channelR >> anchorPara[anchorParaSize].channelG >> anchorPara[anchorParaSize].channelB >>
+                   anchorPara[anchorParaSize].showSurf >>
+                   anchorPara[anchorParaSize].xClip0 >> anchorPara[anchorParaSize].xClip1 >> anchorPara[anchorParaSize].yClip0 >>
+                   anchorPara[anchorParaSize].yClip1 >> anchorPara[anchorParaSize].zClip0 >> anchorPara[anchorParaSize].zClip1 >>
+                   anchorPara[anchorParaSize].frontCut >>
+                   anchorPara[anchorParaSize].timePoint;
+            anchorParaSize++;
+            if(anchorParaSize>MAXSIZE)
+            {
+                cout<<"Anchor file size is too big to load for displaying."<<endl;
+                break;
+            }
+        }
+    }
+    return;
+}
+
+void LoadAnchorFile()
+{
+    QString fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+                                                        "",
+                                                        QObject::tr("Anchor Point File (*.apftxt *.txt *.apf)"
+                                                                    ));
+    if(fileOpenName.isEmpty())
+    {
+        cout<<"Anchor file is not existed or empty!";
+        return;
+    }
+
+    if (fileOpenName.size()>0)
+    {
+        //list_anchors->clear();
+        ifstream ifs(fileOpenName.toLatin1());
+        string points;
+        while(ifs && getline(ifs, points))
+        {
+            std::istringstream iss(points);
+            iss >>anchorPara[anchorParaSize].xRot >>anchorPara[anchorParaSize].yRot >>anchorPara[anchorParaSize].zRot >>
+                  anchorPara[anchorParaSize].xShift >> anchorPara[anchorParaSize].yShift >> anchorPara[anchorParaSize].zShift >>
+                  anchorPara[anchorParaSize].zoom >>
+                   anchorPara[anchorParaSize].xCut0 >> anchorPara[anchorParaSize].xCut1 >>
+                   anchorPara[anchorParaSize].yCut0 >> anchorPara[anchorParaSize].yCut1 >>
+                   anchorPara[anchorParaSize].zCut0 >> anchorPara[anchorParaSize].zCut1 >>
+                   anchorPara[anchorParaSize].channelR >> anchorPara[anchorParaSize].channelG >> anchorPara[anchorParaSize].channelB >>
+                   anchorPara[anchorParaSize].showSurf >>
+                   anchorPara[anchorParaSize].xClip0 >> anchorPara[anchorParaSize].xClip1 >> anchorPara[anchorParaSize].yClip0 >>
+                   anchorPara[anchorParaSize].yClip1 >> anchorPara[anchorParaSize].zClip0 >> anchorPara[anchorParaSize].zClip1 >>
+                   anchorPara[anchorParaSize].frontCut >>
+                   anchorPara[anchorParaSize].timePoint;
+            anchorParaSize++;
+            if(anchorParaSize>MAXSIZE)
+            {
+                cout<<"Anchor file size is too big to load for displaying."<<endl;
+                break;
+            }
+        }
+    }
+    return;
+}
+
+void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/)
+{
+    View3DControl *view;
+    v3dhandle curwin;
+    QList <V3dR_MainWindow *> list_3dviewer;
+    V3dR_MainWindow *surface_win;
+    v3dhandleList list_triview;
+    view=0;curwin=0;
+    list_triview = callback.getImageWindowList();
+    list_3dviewer = callback.getListAll3DViewers();
+    if(anchorParaSize<=0) return;
+    int  N =anchorParaSize;
+    for (int i=0; i<list_3dviewer.count(); i++)
+    {
+        surface_win = list_3dviewer[i];
+        if(surface_win)
+        {
+            view = callback.getView3DControl_Any3DViewer(surface_win);
+            if (!view) return;
+            MYFLOAT xRot, yRot, zRot,
+                    xShift, yShift, zShift,
+                    zoom,
+                    xCut0, xCut1,
+                    yCut0, yCut1,
+                    zCut0, zCut1,
+                    frontCut;
+            int showSurf, showSurf_last,
+                timePoint,timePoint_last;
+            bool channelR, channelG, channelB,
+                    channelR_last, channelG_last, channelB_last;
+            MYFLOAT xRot_last, yRot_last,zRot_last,
+                    xShift_last,yShift_last,zShift_last,
+                    zoom_last,
+                    xCut0_last,xCut1_last,
+                    yCut0_last,yCut1_last,
+                    zCut0_last,zCut1_last,
+                    frontCut_last;
+            int xClip0,xClip1,yClip0,
+                    yClip1,zClip0,zClip1;
+            int xClip0_last,xClip1_last,
+                    yClip0_last,yClip1_last,
+                    zClip0_last,zClip1_last;
+
+        //    // added by Hanchuan Peng, 2013-Dec-14 for debugging
+            MYFLOAT xShift_current;
+            MYFLOAT yShift_current;
+            MYFLOAT zShift_current;
+            MYFLOAT zoom_current;
+            MYFLOAT channel_current;
+            MYFLOAT xClip0_current;
+            MYFLOAT xClip1_current;
+            MYFLOAT yClip0_current;
+            MYFLOAT yClip1_current;
+            MYFLOAT zClip0_current;
+            MYFLOAT zClip1_current;
+            MYFLOAT xCut0_current;
+            MYFLOAT xCut1_current;
+            MYFLOAT yCut0_current;
+            MYFLOAT yCut1_current;
+            MYFLOAT zCut0_current;
+            MYFLOAT zCut1_current;
+            MYFLOAT frontCut_current;
+            MYFLOAT timePoint_current;
+            //
+
+            MYFLOAT q1[4],q2[4],q_sample[4];
+            MYFLOAT Rot_current[3];
+            //QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+            if(anchorParaSize==0)
+            {
+                cout<<"please load anchor file first."<<endl;
+                return;
+            }
+            for(int row = 0; row < anchorParaSize; row++)
+            {
+        //        QString currentPoint = list_anchors->item(row)->text();
+        //        QStringList currentParas = currentPoint.split(rx);
+                AnchorPointPARA PARA_temp=anchorPara[row];
+                GET_PARA;
+                if(row==0)
+                {
+                    SET_3DVIEW;
+                }
+                else
+                {
+                    for (int i=1; i<=anchorParaSize; i++)
+                    {
+                        INTERPOLATION_PARA;
+                    }
+                }
+                UPDATE_PARA;
+            }
+        }
+        else
+            return;
+    }
+
+//    return;
 }
 
 bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
@@ -765,7 +1195,7 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
         {
             sleep(updateInterval);
             MethodFunForUpdateSWCDispaly(callback,parent,input);
-
+            ZmovieMaker(callback,parent);
         }
 
     }
@@ -891,4 +1321,230 @@ void neuron_tile_display::doxytile(V3DPluginCallback2 &callback, QWidget *parent
     NeuronXYTileDialog * myDialog = NULL;
     myDialog = new NeuronXYTileDialog(&callback, v3dwin);
     myDialog->show();
+}
+void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)
+{
+    MYFLOAT xRot_Rad = xRot * (pi/180.0);  // if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    MYFLOAT yRot_Rad = yRot * (pi/180.0);  // if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    MYFLOAT zRot_Rad = zRot * (pi/180.0);  // if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+
+   /* q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
+    q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)-cos(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
+    q[2] = cos(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2);
+    q[3] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2)-sin(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2);*/
+
+    q[0] = -sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2)+ cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2);
+    q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(yRot_Rad/2)*sin(zRot_Rad/2)*cos(xRot_Rad/2);
+    q[2] = -sin(xRot_Rad/2)*sin(zRot_Rad/2)*cos(yRot_Rad/2)+sin(yRot_Rad/2)*cos(xRot_Rad/2)*cos(zRot_Rad/2);
+    q[3] = sin(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2)+sin(zRot_Rad/2)*cos(xRot_Rad/2)*cos(yRot_Rad/2);
+
+    return;
+
+}
+
+void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)
+{
+    MYFLOAT xRot_Rad = xRot * (pi/180.0);  //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    MYFLOAT yRot_Rad = yRot * (pi/180.0);  //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    MYFLOAT zRot_Rad = zRot * (pi/180.0);  //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+
+    MYFLOAT R[3][3];
+
+    const MYFLOAT cosAngle1 = cosf( xRot_Rad ),  sinAngle1 = sinf( xRot_Rad );
+    const MYFLOAT cosAngle2 = cosf( yRot_Rad ),  sinAngle2 = sinf( yRot_Rad );
+    const MYFLOAT cosAngle3 = cosf( zRot_Rad ),  sinAngle3 = sinf( zRot_Rad );
+
+    // Repeated calculations (for efficiency)
+    MYFLOAT s1c3 = sinAngle1 * cosAngle3;
+    MYFLOAT s3c1 = sinAngle3 * cosAngle1;
+    MYFLOAT s1s3 = sinAngle1 * sinAngle3;
+    MYFLOAT c1c3 = cosAngle1 * cosAngle3;
+
+    const int i = 0;
+    const int j = 1;
+    const int k = 2;
+
+    R[i][i] =  cosAngle2 * cosAngle3;
+    R[i][j] = -sinAngle3 * cosAngle2;
+    R[i][k] =  sinAngle2;
+    R[j][i] =  s3c1 + sinAngle2 * s1c3;
+    R[j][j] =  c1c3 - sinAngle2 * s1s3;
+    R[j][k] = -sinAngle1 * cosAngle2;
+    R[k][i] =  s1s3 - sinAngle2 * c1c3;
+    R[k][j] =  s1c3 + sinAngle2 * s3c1;
+    R[k][k] =  cosAngle1 * cosAngle2;
+
+    const MYFLOAT tr = R[i][i] + R[j][j] + R[k][k];
+    if( tr >= R[0][0]  &&  tr >= R[1][1]  &&  tr >= R[2][2] )
+    {
+        q[0] = 1 + tr;
+        q[1] = R[2][1] - R[1][2];
+        q[2] = R[0][2] - R[2][0];
+        q[3] = R[1][0] - R[0][1];
+
+        // Check if R[0][0] is largest along the diagonal
+    }
+    else if( R[0][0] >= R[1][1]  &&  R[0][0] >= R[2][2]  )
+    {
+        q[0] = R[2][1] - R[1][2];
+        q[1] = 1 - (tr - 2*R[0][0]);
+        q[2] = R[0][1]+R[1][0];
+        q[3] = R[0][2]+R[2][0];
+
+        // Check if R[1][1] is largest along the diagonal
+    }
+    else if( R[1][1] >= R[2][2] )
+    {
+        q[0] = R[0][2] - R[2][0];
+        q[1] = R[0][1] + R[1][0];
+        q[2] = 1 - (tr - 2*R[1][1]);
+        q[3] = R[1][2] + R[2][1];
+
+        // R[2][2] is largest along the diagonal
+    }
+    else
+    {
+        q[0] = R[1][0] - R[0][1];
+        q[1] = R[0][2] + R[2][0];
+        q[2] = R[1][2] + R[2][1];
+        q[3] = 1 - (tr - 2*R[2][2]);
+    }
+
+    // Scale to unit length
+    int tmpi; //change i to tmpi as 'i' has ben defined above.
+    MYFLOAT scale = 0.0;
+    for (tmpi = 0; tmpi < 4; tmpi++)
+        scale += q[tmpi] * q[tmpi];
+    scale = 1.0/std::sqrt(scale);
+    if( q[0] < 0 )  scale = -scale;   // canonicalize
+    for (tmpi = 0; tmpi < 4; tmpi++)
+        q[tmpi] *= scale;
+
+    return;
+}
+
+void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
+{
+    MYFLOAT cos_omega = dot_multi_normalized(q1, q2);
+    MYFLOAT omega, theta;
+    MYFLOAT c1,  c2;
+    bool flag = false;
+
+    omega = acos(cos_omega);
+    if (cos_omega<0)
+    {
+        flag = true;
+        omega = omega - pi;
+    }
+
+    theta = t*omega;
+    double sin_omega = sin(omega);
+    if (fabs(sin_omega)<0.001) //use linear interpolation when the angle is close to 0
+    {
+        c1 = 1.0-t;
+        c2 = t;
+    }
+    else
+    {
+        c1 = sin(omega - theta)/sin_omega;
+        c2 = sin(theta)/sin_omega;
+    }
+
+    if (flag)
+        c2 = -c2; //equivalent to negative of one end of q1 or q2 (in this case, it is q2) for the interpolation below
+
+    printf("slerp result is (cos_t=%f, omega=%f, flag=%d, angle=%f, c1=%f, c2=%f)\n", cos_omega, omega, int(flag), omega/pi*180.0, c1, c2);
+
+    MYFLOAT scale = 0;
+    for(int i= 0; i<4;i++)
+    {
+        q_sample[i] = c1*q1[i] + c2*q2[i];
+        scale += q_sample[i] * q_sample[i];
+    }
+
+    scale = 1.0/std::sqrt(scale);
+
+    for (int i = 0; i < 4; i++)
+    {
+        q_sample[i] *= scale;
+    }
+
+    printf("current t=%f, current angle with p1=%f, current angle with p2=%f. sum angle=%f. \n\n",
+           t, acos(dot_multi_normalized(q1, q_sample))/pi*180.0, acos(dot_multi_normalized(q_sample, q2))/pi*180.0,
+           acos(dot_multi_normalized(q1, q_sample))/pi*180.0 + acos(dot_multi_normalized(q_sample, q2))/pi*180.0);
+
+    return;
+}
+
+void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[])
+{
+  /*  MYFLOAT rot_x = atan2f(2.0*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]), 1.0-2.0*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+    MYFLOAT rot_y = asinf(2.0*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
+    MYFLOAT rot_z = atan2f(2.0*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]), 1.0-2.0*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));*/
+
+    MYFLOAT rot_x = atan2f(-2.0*(q_sample[2]*q_sample[3])+2.0*(q_sample[0]*q_sample[1]), 1.0-2.0*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+    MYFLOAT rot_y = asinf(2.0*(q_sample[1]*q_sample[3]+q_sample[0]*q_sample[2]));
+    MYFLOAT rot_z = atan2f(-2.0*(q_sample[1]*q_sample[2])+2*(q_sample[0]*q_sample[3]), 1.0-2.0*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
+
+    Rot_current[0] = rot_x * (180.0/pi); // if(Rot_current[0]<0) Rot_current[0] = 360.0 + Rot_current[0];
+    Rot_current[1] = rot_y * (180.0/pi);  // if(Rot_current[0]<0) Rot_current[1] = 360.0 + Rot_current[1];
+    Rot_current[2] = rot_z * (180.0/pi);  //if(Rot_current[0]<0) Rot_current[2] = 360.0 + Rot_current[2];
+}
+
+void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[])
+{
+    MYFLOAT q00 = q[0]*q[0], q11=q[1]*q[1], q22=q[2]*q[2], q33=q[3]*q[3];
+    MYFLOAT q01 = q[0]*q[1], q02=q[0]*q[2], q03=q[0]*q[3];
+    MYFLOAT q12 = q[1]*q[2], q13=q[1]*q[3], q23=q[2]*q[3];
+
+    MYFLOAT R[3][3];
+
+    int i = 0;
+    int j = 1;
+    int k = 2;
+
+    R[i][i] = q00+q11-q22-q33;
+    R[i][j] = 2*(q12-q03);
+    R[i][k] = 2*(q13+q02);
+    R[j][i] = 2*(q12+q03);
+    R[j][j] = q00-q11+q22-q33;
+    R[j][k] = 2*(q23-q01);
+    R[k][i] = 2*(q13-q02);
+    R[k][j] = 2*(q23+q01);
+    R[k][k] = q00-q11-q22+q33;
+
+    MYFLOAT rot_x = atan2f(R[1][2],R[2][2]);
+    MYFLOAT rot_y = atan2f(-R[0][2], -sqrt(R[0][0]*R[0][0]+R[0][1]*R[0][1]));
+    MYFLOAT rot_z = atan2f(sinf(rot_x)* R[2][0] - cosf(rot_x)*R[1][0], cosf(rot_x)*R[1][1] - sinf(rot_x)*R[2][1]);
+
+    Rot_current[0] = rot_x * (180.0/pi);
+    Rot_current[1] = rot_y * (180.0/pi);
+    Rot_current[2] = rot_z * (180.0/pi);
+
+    return;
+}
+MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[])
+{
+    MYFLOAT result = 0;
+
+    for(int i= 0; i<4;i++)
+    {
+        result += q1[i] * q2[i];
+    }
+
+    return result;
+}
+
+MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[])
+{
+    MYFLOAT result = 0.0, r1=0.0, r2=0.0;
+
+    for(int i= 0; i<4;i++)
+    {
+        result += q1[i] * q2[i];
+        r1 += q1[i]*q1[i];
+        r2 += q2[i]*q2[i];
+    }
+
+    return result/sqrt(r1*r2);
 }
