@@ -13,6 +13,7 @@
 # include <iostream>
 # include <algorithm>
 # include <math.h>
+
 using namespace std;
 
 #define VOID 1000000000
@@ -377,25 +378,16 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
     cout<<"++++++++++++++++++++++++++++++the suspoint number: "<<suspoint.size()<<endl;
-//delete one suspoint node of two nodes who have short distance
-    for (int i=0;i<suspoint.size();i++)
+//delete one suspoint node of two nodes who have very short distance
+   /* int cct=0;
+    vector<int> susresult;
+    while (cct!=suspoint.end())
     {
-        for (int j=0;j<suspoint.size();j++)
-        {
-            if (i != j)
-            {
-                double dist1;
-                dist1=dist(tree1swc.at(suspoint.at(i)),tree1swc.at(suspoint.at(j)));
-                if (dist1<5)
-                {
-                    vector<int>::iterator iter=find(suspoint.begin(), suspoint.end(), suspoint.at(j));
-                    suspoint.erase(iter);
-                }
-            }
-        }
-
+        susresult=deletesus(tree1swc,suspoint,cct);
+        suspoint=susresult;
+        cct+=1;
     }
-    cout<<"++++++++++++++++++++++++++++++the suspoint number: "<<suspoint.size()<<endl;
+    cout<<"++++++++++++++++++++++++++++++the suspicious point number: "<<suspoint.size()<<endl;*/
 //set markers back to terafly
             LandmarkList result1;
             LocationSimple m;
@@ -417,7 +409,35 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
             return 1;
 
 }
-     /*vector<vector<int> > boom(numroot,vector<int>());
+//delete one suspoint node of two nodes who have very short distance
+/*vector<int> deletesus(QList<NeuronSWC> &neurons,vector<int> &points,int ofone)
+{
+    int num=points.size();
+    if (num<=0 || ofone<0)
+    {
+        v3d_msg("your suspipious point is empty,please check it again");
+    }
+    else
+    {
+        for (int j=0;j<num;j++)
+        {
+            if (ofone != j)
+            {
+                double dist1;
+                dist1=dist(neurons.at(points.at(ofone)),neurons.at(points.at(j)));
+                if (dist1<3)
+                {
+                    vector<int>::iterator iter=find(points.begin(), points.end(), points.at(j));
+                    points.erase(iter);
+                    cout<<"++++++++++++++++++++++++++++++test++++++++++++++++++++++ "<<endl;
+                }
+            }
+        }
+    }
+        //points=sus;
+    return points;
+}
+     vector<vector<int> > boom(numroot,vector<int>());
      for (int i=0;i<numroot;i++)
      {
          segsinfo seg=getallchildsofseg(roots.at(i));
