@@ -31,6 +31,7 @@ void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[]);
 MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[]);
 MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
 void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/);
+void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,const V3DPluginArgList & input);
 void LoadAnchorFile();
 //void LoadAnchorFile(QString fileOpenName);
 void LoadAnchorFile(const V3DPluginArgList & input);
@@ -1072,7 +1073,130 @@ void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList nam
     list_triview = callback.getImageWindowList();
     list_3dviewer = callback.getListAll3DViewers();
     if(anchorParaSize<=0) return;
-    int  N =anchorParaSize;
+    unsigned int N=30;
+    bool ok=true;
+    N = QInputDialog::getInteger(parent, "",
+                                  "#update interval time (minutes) :",
+                                  100, 1, 10000, 1, &ok);
+    //int  N =anchorParaSize;
+    for (int i=0; i<list_3dviewer.count(); i++)
+    {
+        surface_win = list_3dviewer[i];
+        if(surface_win)
+        {
+            view = callback.getView3DControl_Any3DViewer(surface_win);
+            if (!view) return;
+            MYFLOAT xRot, yRot, zRot,
+                    xShift, yShift, zShift,
+                    zoom,
+                    xCut0, xCut1,
+                    yCut0, yCut1,
+                    zCut0, zCut1,
+                    frontCut;
+            int showSurf, showSurf_last,
+                timePoint,timePoint_last;
+            bool channelR, channelG, channelB,
+                    channelR_last, channelG_last, channelB_last;
+            MYFLOAT xRot_last, yRot_last,zRot_last,
+                    xShift_last,yShift_last,zShift_last,
+                    zoom_last,
+                    xCut0_last,xCut1_last,
+                    yCut0_last,yCut1_last,
+                    zCut0_last,zCut1_last,
+                    frontCut_last;
+            int xClip0,xClip1,yClip0,
+                    yClip1,zClip0,zClip1;
+            int xClip0_last,xClip1_last,
+                    yClip0_last,yClip1_last,
+                    zClip0_last,zClip1_last;
+
+        //    // added by Hanchuan Peng, 2013-Dec-14 for debugging
+            MYFLOAT xShift_current;
+            MYFLOAT yShift_current;
+            MYFLOAT zShift_current;
+            MYFLOAT zoom_current;
+            MYFLOAT channel_current;
+            MYFLOAT xClip0_current;
+            MYFLOAT xClip1_current;
+            MYFLOAT yClip0_current;
+            MYFLOAT yClip1_current;
+            MYFLOAT zClip0_current;
+            MYFLOAT zClip1_current;
+            MYFLOAT xCut0_current;
+            MYFLOAT xCut1_current;
+            MYFLOAT yCut0_current;
+            MYFLOAT yCut1_current;
+            MYFLOAT zCut0_current;
+            MYFLOAT zCut1_current;
+            MYFLOAT frontCut_current;
+            MYFLOAT timePoint_current;
+            //
+
+            MYFLOAT q1[4],q2[4],q_sample[4];
+            MYFLOAT Rot_current[3];
+            //QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+            if(anchorParaSize==0)
+            {
+                cout<<"please load anchor file first."<<endl;
+                return;
+            }
+            for(int row = 0; row < anchorParaSize; row++)
+            {
+        //        QString currentPoint = list_anchors->item(row)->text();
+        //        QStringList currentParas = currentPoint.split(rx);
+                AnchorPointPARA PARA_temp=anchorPara[row];
+                GET_PARA;
+                if(row==0)
+                {
+                    SET_3DVIEW;
+                }
+                else
+                {
+                    for (int i=1; i<=anchorParaSize; i++)
+                    {
+                        INTERPOLATION_PARA;
+                    }
+                }
+                UPDATE_PARA;
+            }
+        }
+        else
+            return;
+    }
+
+//    return;
+}
+void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,const V3DPluginArgList & input)
+{
+    vector<char*> /*infiles,*/ inparas/*, outfiles*/;
+//	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+
+    if(input.size() != 2)
+    {
+        printf("Please specify both input folder and the number of new finished Neurons.\n");
+        printHelpForBigScreenUsage();
+        return;
+    }
+    if (inparas.size()!=1)
+    {
+        printf("Please specify only one parameter - the number of new finished Neurons.\n");
+        printHelpForBigScreenUsage();
+        return;
+    }
+
+    int N = atof(inparas.at(1));
+
+    View3DControl *view;
+    v3dhandle curwin;
+    QList <V3dR_MainWindow *> list_3dviewer;
+    V3dR_MainWindow *surface_win;
+    v3dhandleList list_triview;
+    view=0;curwin=0;
+    list_triview = callback.getImageWindowList();
+    list_3dviewer = callback.getListAll3DViewers();
+    if(anchorParaSize<=0) return;
+    //int  N =anchorParaSize;
     for (int i=0; i<list_3dviewer.count(); i++)
     {
         surface_win = list_3dviewer[i];
@@ -1195,7 +1319,7 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
         {
             sleep(updateInterval);
             MethodFunForUpdateSWCDispaly(callback,parent,input);
-            ZmovieMaker(callback,parent);
+            ZmovieMaker(callback,parent,input);
         }
 
     }
