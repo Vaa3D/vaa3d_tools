@@ -104,9 +104,15 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
 
 NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres){
     NeuronTree new_tree;
-    SortSWC(nt.listNeuron, new_tree.listNeuron, newrootid, thres);
-    export_list2file(new_tree.listNeuron, "temp.swc");
-    new_tree = readSWC_file("temp.swc");
+    QList<NeuronSWC> neuronlist;
+    SortSWC(nt.listNeuron, neuronlist, newrootid, thres);
+    new_tree.deepCopy(neuronlist_2_neurontree(neuronlist));
+//    for(int i=0; i<10; i++){
+//        cout<<new_tree.listNeuron.at(i).n<<"\t"<< new_tree.hashNeuron.value(new_tree.listNeuron.at(i).n)<<endl;
+//    }
+
+//    export_list2file(new_tree.listNeuron, "temp.swc");
+//    new_tree = readSWC_file("temp.swc");
     return new_tree;
 }
 

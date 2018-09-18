@@ -12,5 +12,6 @@ struct segsinfo{
    int aa; //the childs number of current segment
    int endnd; //the ending point of current segment
 };
+vector<int> deletesus(QList<NeuronSWC> &neurons,vector<int> &points,int ofone);
 
 #endif // MAIN_H

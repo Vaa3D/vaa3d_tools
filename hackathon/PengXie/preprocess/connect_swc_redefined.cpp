@@ -19,9 +19,12 @@ using namespace std;
 NeuronTree my_connectall(NeuronTree nt, double xscale, double yscale, double zscale,
                          double angThr, double disThr, int matchType, bool b_minusradius, int rootID){
     NeuronTree new_tree;
-    connectall(&nt, new_tree.listNeuron, xscale, yscale, zscale, angThr, disThr, matchType, b_minusradius, rootID);
-    export_list2file(new_tree.listNeuron, "temp.swc");
-    new_tree = readSWC_file("temp.swc");
+    QList<NeuronSWC> listneuron;
+    connectall(&nt, listneuron, xscale, yscale, zscale, angThr, disThr, matchType, b_minusradius, rootID);
+//    export_list2file(new_tree.listNeuron, "temp.swc");
+//    NeuronTree new_tree_reload = readSWC_file("temp.swc");
+//    whether_identical(new_tree, new_tree_reload);
+    new_tree.deepCopy(neuronlist_2_neurontree(listneuron));
     return new_tree;
 }
 

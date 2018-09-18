@@ -6,8 +6,10 @@
 #include "v3d_message.h"
 #include <vector>
 #include "detect_type_plugin.h"
-# include "main.h"
+#include "main.h"
+
 using namespace std;
+
 Q_EXPORT_PLUGIN2(detect_type, type);
  
 QStringList type::menulist() const

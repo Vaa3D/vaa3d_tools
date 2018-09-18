@@ -11,7 +11,75 @@ using namespace std;
 #include "neuron_connector_func.h"
 #include "utilities.h"
 
+NeuronTree neuron_deepcopy(NeuronTree nt){
+    QList<NeuronSWC> new_list;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        NeuronSWC S;
+        S.x = node.x;
+        S.y = node.y;
+        S.z = node.z;
+        S.r = node.r;
+        S.type = node.type;
+        S.n = node.n;
+        S.pn = node.pn;
+        new_list.append(S);
+    }
+    NeuronTree new_tree;
+    new_tree.listNeuron = new_list;
+    return new_tree;
+}
 
+NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
+    NeuronTree new_tree;
+    QList<NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+
+    for (int i = 0; i < neuronlist.size(); i++)
+    {
+        NeuronSWC node=neuronlist.at(i);
+        NeuronSWC S;
+        S.n 	= node.n;
+        S.type 	= node.type;
+        S.x 	= node.x;
+        S.y 	= node.y;
+        S.z 	= node.z;
+        S.r 	= node.r;
+        S.pn 	= node.pn;
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, i);
+    }
+
+    new_tree.listNeuron = listNeuron;
+    new_tree.hashNeuron = hashNeuron;
+    return new_tree;
+}
+
+bool whether_identical(NeuronTree nt1, NeuronTree nt2){
+    printf("welcome to use whether_identical\n");
+    if(nt1.listNeuron.size() != nt2.listNeuron.size()){
+        printf("Unequal sizes!\n");
+        return 0;
+    }
+    for(int i=0; i<nt1.listNeuron.size(); i++){
+        NeuronSWC node1 = nt1.listNeuron.at(i);
+        NeuronSWC node2 = nt2.listNeuron.at(i);
+        if(node1.x != node2.x
+                || node1.y != node2.y
+                || node1.z != node2.z
+                || node1.r != node2.r
+                || node1.type != node2.type
+                || node1.n != node2.n
+                || node1.pn != node2.pn){
+            printf("%d\t%d\t%f\t%f\t%f\t%f\t%d\n", node1.n, node1.type, node1.x, node1.y, node1.z, node1.r, node1.pn);
+            printf("%d\t%d\t%f\t%f\t%f\t%f\t%d\n", node2.n, node2.type, node2.x, node2.y, node2.z, node2.r, node2.pn);
+            return 0;
+        }
+    }
+    return 1;
+}
 bool fexists(QString filename)
 {
   std::ifstream ifile(qPrintable(filename));
@@ -92,6 +160,8 @@ QList<int> get_components(NeuronTree nt){
     //connected component
     printf("welcom to use get_components\n");
     int N = nt.listNeuron.size();
+    QList<int> nList;
+    QList<int> pList;
     QList<int> components;
     int ncomponents = 0;
     for(V3DLONG i=0; i<N; i++){
@@ -102,6 +172,18 @@ QList<int> get_components(NeuronTree nt){
         else{
             components.append(-1);
         }
+        nList.append(nt.listNeuron.at(i).n);
+        pList.append(nt.listNeuron.at(i).pn);
+    }
+
+    list<int> children[N];
+    for(int i=0; i<N; i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        int pid = nList.lastIndexOf(node.pn);
+        if(pid<0){
+            continue;
+        }
+        children[pid].push_back(i);
     }
 
     //assign nodes to components
@@ -124,12 +206,12 @@ QList<int> get_components(NeuronTree nt){
             pid = pstack.top();
             // whether exist unvisited children of pid
             // if yes, push child to stack;
-            for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
-                if((nt.listNeuron.at(i).pn-1)==pid && visited.at(i)==0){
-                    pstack.push(i);
-                    visited[i]=1;
+            for(auto i=children[pid].begin(); i!=children[pid].end(); ++i){  // This loop can be more efficient, improve it later!
+                if(visited.at(*i)==0){
+                    pstack.push(*i);
+                    visited[*i]=1;
                     is_push=true;
-                    components[i]=cid;
+                    components[*i]=cid;
                     break;
                 }
             }
@@ -138,6 +220,10 @@ QList<int> get_components(NeuronTree nt){
                 pstack.pop();
             }
         }
+    }
+    QList<int> ucomponents = components.toSet().toList();
+    if(ucomponents.lastIndexOf(-1)>=0){
+        printf("Cannot find parents for some nodes!\n");
     }
     printf("\t%d components found.\n", ncomponents);
     return components;
@@ -371,21 +457,21 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
     }
     return(tip_list);
 }
-NeuronTree neuron_cat(NeuronTree nt1, NeuronTree nt2){
-    // Concatenate nt2 after nt1;
-    // id's of nt1/2 should start from 1;
-    NeuronTree empty_tree;
-    if(nt1.listNeuron.at(0).n != 1 || nt2.listNeuron.at(0).n != 1){
+QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
+    // Concatenate nl2 after nl1;
+    // id's of nl1/2 should start from 1;
+    QList<NeuronSWC> empty_list;
+    if(nl1.at(0).n != 1 || nl2.at(0).n != 1){
         printf("names of neuron trees must begin with 1!\n");
-        return empty_tree;
+        return empty_list;
     }
-    int nt1_size = nt1.listNeuron.size();
-    for(int i=0; i<nt2.listNeuron.size(); i++){
-        nt2.listNeuron[i].n += nt1_size;
-        nt2.listNeuron[i].pn += nt1_size;
+    int nl1_size = nl1.size();
+    for(int i=0; i<nl2.size(); i++){
+        nl2[i].n += nl1_size;
+        nl2[i].pn += nl1_size;
     }
-    nt1.listNeuron.append(nt2.listNeuron);
-    return nt1;
+    nl1.append(nl2);
+    return nl1;
 }
 
 bool check_duplicate(NeuronTree nt){
