@@ -35,7 +35,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 #define PI 3.1415926
 #endif
 
-static enum connectOrientation { head_head, head_tail, tail_head, tail_tail };
+static enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
 
 struct topoCharacter
 {
@@ -109,10 +109,10 @@ public:
 
 	/***************** Geometry *****************/
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
-	inline static double getRadAngle(const vector<float>& pivot, const vector<float>& leg1, const vector<float>& leg2);
+	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
 private:
-	double segElongPointingCheck(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
-
+	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
+	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	/********************************************/
 
 public:
@@ -179,19 +179,11 @@ inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>
 	return dispUnitVector;
 }
 
-inline double NeuronStructExplorer::getRadAngle(const vector<float>& pivot, const vector<float>& leg1, const vector<float>& leg2)
+inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, const vector<float>& vector2)
 {
-	double dot = ((leg1.at(0) - pivot.at(0)) * (leg2.at(0) - pivot.at(0)) + 
-		          (leg1.at(1) - pivot.at(1)) * (leg2.at(1) - pivot.at(1)) + 
-				  (leg1.at(2) - pivot.at(2)) * (leg2.at(2) - pivot.at(2)));
-
-	double sq1 = ((leg1.at(0) - pivot.at(0)) * (leg1.at(0) - pivot.at(0)) +
-				  (leg1.at(1) - pivot.at(1)) * (leg1.at(1) - pivot.at(1)) +
-				  (leg1.at(2) - pivot.at(2)) * (leg1.at(2) - pivot.at(2)));
-
-	double sq2 = ((leg2.at(0) - pivot.at(0)) * (leg2.at(0) - pivot.at(0)) +
-				  (leg2.at(1) - pivot.at(1)) * (leg2.at(1) - pivot.at(1)) +
-				  (leg2.at(2) - pivot.at(2)) * (leg2.at(2) - pivot.at(2)));
+	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
+	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
+	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 
 	double angle = acos(dot / sqrt(sq1 * sq2));
 	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
