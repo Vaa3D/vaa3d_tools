@@ -531,8 +531,6 @@ NeuronTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTr
 		}
 
 		cout << "------- head-head:" << endl << "  ";
-		double head_head_angle = 1;
-		pair<int, int> head1;
 		for (vector<int>::iterator headIt1 = currTileHeadSegIDs.begin(); headIt1 != currTileHeadSegIDs.end(); ++headIt1)
 		{
 			for (vector<int>::iterator headIt2 = currTileHeadSegIDs.begin(); headIt2 != currTileHeadSegIDs.end(); ++headIt2)
@@ -558,11 +556,9 @@ NeuronTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTr
 				}
 			}
 		}
-		cout << endl << endl;
+		cout << endl;
 
-		/*cout << endl << " head-tail:" << endl;
-		double head_tail_angle = 1;
-		pair<int, int> head2;
+		cout << "------- head-tail:" << endl << "  ";
 		for (vector<int>::iterator headIt = currTileHeadSegIDs.begin(); headIt != currTileHeadSegIDs.end(); ++headIt)
 		{
 			for (vector<int>::iterator tailIt = currTileTailSegIDs.begin(); tailIt != currTileTailSegIDs.end(); ++tailIt)
@@ -570,77 +566,85 @@ NeuronTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTr
 				if (*headIt == *tailIt) continue;
 				else
 				{
-					cout << " " << *headIt << "_" << *tailIt << "->";
-					double pointingRadAngle = this->segElongPointingCheck(inputProfiledTree.segs.at(*headIt), inputProfiledTree.segs.at(*tailIt), head_tail);
-					cout << pointingRadAngle << " ";
-					if (pointingRadAngle < head_tail_angle)
+					double pointingRadAngle = this->segPointingCompare(inputProfiledTree.segs.at(*headIt), inputProfiledTree.segs.at(*tailIt), head_tail);
+					double turningRadAngle = this->segTurningAngle(inputProfiledTree.segs.at(*headIt), inputProfiledTree.segs.at(*tailIt), head_tail);
+					if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
+
+					if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
 					{
-						head_tail_angle = pointingRadAngle;
-						head2.first = *headIt;
-						head2.second = *tailIt;
+						cout << *headIt << "_" << *tailIt << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					}
+
+					/*if (pointingRadAngle < head_head_angle)
+					{
+					head_head_angle = pointingRadAngle;
+					head1.first = *headIt1;
+					head1.second = *headIt2;
+					}*/
 				}
 			}
-		}*/
-
-		/*if (head_head_angle <= head_tail_angle)
-		{
-			size_t headLoc = inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(head1.first).head);
-			outputTree.listNeuron[headLoc].parent = inputProfiledTree.segs.at(head1.second).head;
 		}
-		else*/
-		/*if (head_head_angle > head_tail_angle)
-		{
-			size_t headLoc = inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(head2.first).head);
-			outputTree.listNeuron[headLoc].parent = *inputProfiledTree.segs.at(head2.second).tails.begin();
-		}
+		cout << endl;
 
-		cout << endl << " tail-head:" << endl;
-		double tail_head_angle = 1;
-		pair<int, int> tail1;
-		for (vector<int>::iterator tailIt = currTileTailSegIDs.begin(); tailIt != currTileTailSegIDs.end(); ++tailIt)
+		cout << "------- tail-head:" << endl << "  ";
+		for (vector<int>::iterator tailIt = currTileHeadSegIDs.begin(); tailIt != currTileHeadSegIDs.end(); ++tailIt)
 		{
 			for (vector<int>::iterator headIt = currTileTailSegIDs.begin(); headIt != currTileTailSegIDs.end(); ++headIt)
 			{
-				if (*tailIt == *headIt) continue;
+				if (*headIt == *tailIt) continue;
 				else
 				{
-					cout << " " << *tailIt << "_" << *headIt << "->";
-					double pointingRadAngle = this->segElongPointingCheck(inputProfiledTree.segs.at(*tailIt), inputProfiledTree.segs.at(*headIt), tail_head);
-					cout << pointingRadAngle << " ";
-					if (pointingRadAngle < tail_head_angle)
+					double pointingRadAngle = this->segPointingCompare(inputProfiledTree.segs.at(*tailIt), inputProfiledTree.segs.at(*headIt), tail_head);
+					double turningRadAngle = this->segTurningAngle(inputProfiledTree.segs.at(*tailIt), inputProfiledTree.segs.at(*headIt), tail_head);
+					if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
+
+					if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
 					{
-						tail_head_angle = pointingRadAngle;
-						tail1.first = *tailIt;
-						tail1.second = *headIt;
+						cout << *tailIt << "_" << *headIt << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					}
+
+					/*if (pointingRadAngle < head_head_angle)
+					{
+					head_head_angle = pointingRadAngle;
+					head1.first = *headIt1;
+					head1.second = *headIt2;
+					}*/
 				}
 			}
 		}
+		cout << endl;
 
-		cout << endl << " tail-tail:" << endl;
-		double tail_tail_angle = 1;
-		pair<int, int> tail2;
-		for (vector<int>::iterator tailIt1 = currTileTailSegIDs.begin(); tailIt1 != currTileTailSegIDs.end(); ++tailIt1)
+		cout << "------- tail-tail:" << endl << "  ";
+		for (vector<int>::iterator tailIt1 = currTileHeadSegIDs.begin(); tailIt1 != currTileHeadSegIDs.end(); ++tailIt1)
 		{
-			for (vector<int>::iterator tailIt2 = currTileHeadSegIDs.begin(); tailIt2 != currTileHeadSegIDs.end(); ++tailIt2)
+			for (vector<int>::iterator tailIt2 = currTileTailSegIDs.begin(); tailIt2 != currTileTailSegIDs.end(); ++tailIt2)
 			{
 				if (*tailIt1 == *tailIt2) continue;
 				else
 				{
-					cout << " " << *tailIt1 << "_" << *tailIt2 << "->";
-					double pointingRadAngle = this->segElongPointingCheck(inputProfiledTree.segs.at(*tailIt1), inputProfiledTree.segs.at(*tailIt2), tail_tail);
-					cout << pointingRadAngle << " ";
-					if (pointingRadAngle < tail_tail_angle)
+					double pointingRadAngle = this->segPointingCompare(inputProfiledTree.segs.at(*tailIt1), inputProfiledTree.segs.at(*tailIt2), tail_tail);
+					double turningRadAngle = this->segTurningAngle(inputProfiledTree.segs.at(*tailIt1), inputProfiledTree.segs.at(*tailIt2), tail_tail);
+					if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
+
+					if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
 					{
-						tail_head_angle = pointingRadAngle;
-						tail2.first = *tailIt1;
-						tail2.second = *tailIt2;
+						cout << *tailIt1 << "_" << *tailIt2 << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					}
+
+					/*if (pointingRadAngle < head_head_angle)
+					{
+					head_head_angle = pointingRadAngle;
+					head1.first = *headIt1;
+					head1.second = *headIt2;
+					}*/
 				}
 			}
-		}*/
+		}
+		cout << endl;
 
+		cout << endl;
+
+		
 		/*if (tail_head_angle <= tail_tail_angle)
 		{
 			size_t headLoc = inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(tail1.second).head);
@@ -651,7 +655,6 @@ NeuronTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTr
 			size_t headLoc = inputProfiledTree.node2LocMap.at((inputProfiledTree.segs.at(tail2.first).head));
 			outputTree.listNeuron[headLoc].parent = *inputProfiledTree.segs.at(head2.second).tails.begin();
 		}*/
-
 
 		currTileHeadSegIDs.clear();
 		currTileTailSegIDs.clear();
