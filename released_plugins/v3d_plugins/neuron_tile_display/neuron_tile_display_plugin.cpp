@@ -17,7 +17,7 @@
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 using namespace std;
 #define MYFLOAT double
-#define MAXSIZE 10
+#define MAXSIZE 100
 const double pi = 3.1415926535897;
 Q_EXPORT_PLUGIN2(neuron_tile_display, neuron_tile_display);
 void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent, int displayNum);
@@ -30,8 +30,9 @@ void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
 void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[]);
 MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[]);
 MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
-void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/);
+int ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/);
 void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,const V3DPluginArgList & input);
+void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,int samplingRate);
 void LoadAnchorFile();
 //void LoadAnchorFile(QString fileOpenName);
 void LoadAnchorFile(const V3DPluginArgList & input);
@@ -51,45 +52,6 @@ struct AnchorPointPARA
 };
 AnchorPointPARA anchorPara[MAXSIZE];
 int anchorParaSize=0;
-
-#define CHECK_WINDOWS \
-{\
-    view=0;curwin=0; \
-    list_triview = callback.getImageWindowList();\
-    list_3dviewer = callback.getListAll3DViewers();\
-    if(anchorParaSize<=0) return;\
-    if(combo_surface->currentIndex() < list_triview.size())\
-{\
-    curwin = list_triview[combo_surface->currentIndex()];\
-    if(curwin)\
-{\
-    callback.open3DWindow(curwin);\
-    view = m_v3d.getView3DControl(curwin);\
-    }\
-    else\
-    return;\
-    }\
-    else\
-{\
-    QString curname = combo_surface->itemText(combo_surface->currentIndex());\
-    v3d_msg(QString("current window selected:[%1]").arg(curname), 0);\
-    for (int i=0; i<list_3dviewer.count(); i++)\
-{\
-    if(curname == m_v3d.getImageName(list_3dviewer[i]))\
-{\
-    surface_win = list_3dviewer[i];\
-    if(surface_win)\
-{\
-    view = m_v3d.getView3DControl_Any3DViewer(surface_win);\
-    }\
-    else\
-    return;\
-    break;\
-    }\
-    }\
-    }\
-    if (!view) return;\
-    }
 
 #define GET_PARA \
 { \
@@ -872,12 +834,18 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,int
         }
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
-    ZmovieMaker(callback,parent);
+    int samplingRate=ZmovieMaker(callback,parent);
+    int updateCount=0;
     while(true)
     {
-        sleep(updateInterval);
-        MethodForUpdateSWCDispaly(callback,parent);
-        ZmovieMaker(callback,parent);
+        //sleep(updateInterval);
+        if(updateCount==updateInterval)
+        {
+            MethodForUpdateSWCDispaly(callback,parent);
+            updateCount=0;
+        }
+        ZmovieMaker(callback,parent,samplingRate);
+        updateCount++;
     }
 
 }
@@ -954,7 +922,7 @@ void MethodFunForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent/
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
     LoadAnchorFile(input);
-    ZmovieMaker(callback,parent);
+    ZmovieMaker(callback,parent,input);
 }
 
 void printHelpForBigScreenUsage()
@@ -963,11 +931,14 @@ void printHelpForBigScreenUsage()
     printf("\t1) display nine new finished neurons of one mouse brain\n");
     printf("\t2) combine and display nine new finished neurons together to a window \n");
     printf("\t3) real time update                                                   \n");
-    printf("\t#i <neuron_finished_folder_name> :   input finished neurons (all in one folder) of one brain \n");
-    printf("\t#p <update interval time> :  update 10 windows every interval time.\n");
-    printf("\t                         if not specified, use 30 minutes\"\n");
-    printf("Usage (linux): vaa3d -x tile_display_multiple_neurons -f BigScreenDisplay -i /home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ -p 30\" \n");
-    printf("Usage (windows): vaa3d_msvc.exe /x tile_display_multiple_neurons /f BigScreenDisplay /i d:/home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ /p 30\" \n");
+    printf("\t#i <neuron_finished_folder_name> 1:   input finished neurons (all in one folder) of one brain \n");
+    printf("\t#i <neuron_finished_folder_name> 2:   anchor file for zmovieMaker \n");
+    printf("\t#p <update interval time> :  1. update 10 windows every interval time.\n");
+    printf("\t                                if not specified, use 30 \"\n");
+    printf("\t                             2. zMoiveMaker Sampling Rate 1-1000 \"\n");
+    printf("\t                                if not specified, use 100 \"\n");
+    printf("Usage (linux): vaa3d -x tile_display_multiple_neurons -f BigScreenDisplay -i /home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ /home/penglab/Data/jsd/anchorPointFile.txt -p 30 500\" \n");
+    printf("Usage (windows): vaa3d_msvc.exe /x tile_display_multiple_neurons /f BigScreenDisplay /i d:/home/data/SEUAllenJointDataCenter/finished_annotations/17545_finished_neurons/ d:/home/penglab/Data/jsd/anchorPointFile.txt /p 30 500\" \n");
     printf("\n                                                           \n");
 
 }
@@ -1062,7 +1033,7 @@ void LoadAnchorFile()
     return;
 }
 
-void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/)
+int ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList namelist*/)
 {
     View3DControl *view;
     v3dhandle curwin;
@@ -1072,12 +1043,115 @@ void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList nam
     view=0;curwin=0;
     list_triview = callback.getImageWindowList();
     list_3dviewer = callback.getListAll3DViewers();
-    if(anchorParaSize<=0) return;
+    if(anchorParaSize<=0) return 0;
     unsigned int N=30;
     bool ok=true;
     N = QInputDialog::getInteger(parent, "",
-                                  "#update interval time (minutes) :",
+                                  "#Sampling Rate is :",
                                   100, 1, 10000, 1, &ok);
+    if(!ok)
+        return 0;
+    //int  N =anchorParaSize;
+    for (int i=0; i<list_3dviewer.count(); i++)
+    {
+        surface_win = list_3dviewer[i];
+        if(surface_win)
+        {
+            view = callback.getView3DControl_Any3DViewer(surface_win);
+            if (!view) return 0;
+            MYFLOAT xRot, yRot, zRot,
+                    xShift, yShift, zShift,
+                    zoom,
+                    xCut0, xCut1,
+                    yCut0, yCut1,
+                    zCut0, zCut1,
+                    frontCut;
+            int showSurf, showSurf_last,
+                timePoint,timePoint_last;
+            bool channelR, channelG, channelB,
+                    channelR_last, channelG_last, channelB_last;
+            MYFLOAT xRot_last, yRot_last,zRot_last,
+                    xShift_last,yShift_last,zShift_last,
+                    zoom_last,
+                    xCut0_last,xCut1_last,
+                    yCut0_last,yCut1_last,
+                    zCut0_last,zCut1_last,
+                    frontCut_last;
+            int xClip0,xClip1,yClip0,
+                    yClip1,zClip0,zClip1;
+            int xClip0_last,xClip1_last,
+                    yClip0_last,yClip1_last,
+                    zClip0_last,zClip1_last;
+
+        //    // added by Hanchuan Peng, 2013-Dec-14 for debugging
+            MYFLOAT xShift_current;
+            MYFLOAT yShift_current;
+            MYFLOAT zShift_current;
+            MYFLOAT zoom_current;
+            MYFLOAT channel_current;
+            MYFLOAT xClip0_current;
+            MYFLOAT xClip1_current;
+            MYFLOAT yClip0_current;
+            MYFLOAT yClip1_current;
+            MYFLOAT zClip0_current;
+            MYFLOAT zClip1_current;
+            MYFLOAT xCut0_current;
+            MYFLOAT xCut1_current;
+            MYFLOAT yCut0_current;
+            MYFLOAT yCut1_current;
+            MYFLOAT zCut0_current;
+            MYFLOAT zCut1_current;
+            MYFLOAT frontCut_current;
+            MYFLOAT timePoint_current;
+            //
+
+            MYFLOAT q1[4],q2[4],q_sample[4];
+            MYFLOAT Rot_current[3];
+            //QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+            if(anchorParaSize==0)
+            {
+                cout<<"please load anchor file first."<<endl;
+                return 0;
+            }
+            for(int row = 0; row < anchorParaSize; row++)
+            {
+                AnchorPointPARA PARA_temp=anchorPara[row];
+                GET_PARA;
+                if(row==0)
+                {
+                    SET_3DVIEW;
+                }
+                else
+                {
+                    for (int i=1; i<=N; i++)
+                    {
+                        INTERPOLATION_PARA;
+                    }
+                }
+                UPDATE_PARA;
+            }
+        }
+        else
+            return 0;
+    }
+    return N;
+}
+
+//This is for domenu update
+void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,int samplingRate)
+{
+    int N = samplingRate;
+    cout<<"Sampling Rate is "<<N<<endl;
+
+    View3DControl *view;
+    v3dhandle curwin;
+    QList <V3dR_MainWindow *> list_3dviewer;
+    V3dR_MainWindow *surface_win;
+    v3dhandleList list_triview;
+    view=0;curwin=0;
+    list_triview = callback.getImageWindowList();
+    list_3dviewer = callback.getListAll3DViewers();
+    if(anchorParaSize<=0) return;
     //int  N =anchorParaSize;
     for (int i=0; i<list_3dviewer.count(); i++)
     {
@@ -1152,7 +1226,7 @@ void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent/*,QStringList nam
                 }
                 else
                 {
-                    for (int i=1; i<=anchorParaSize; i++)
+                    for (int i=1; i<=N; i++)
                     {
                         INTERPOLATION_PARA;
                     }
@@ -1178,14 +1252,8 @@ void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,const V3DPluginAr
         printHelpForBigScreenUsage();
         return;
     }
-    if (inparas.size()!=1)
-    {
-        printf("Please specify only one parameter - the number of new finished Neurons.\n");
-        printHelpForBigScreenUsage();
-        return;
-    }
-
     int N = atof(inparas.at(1));
+    cout<<"Sampling Rate is "<<N<<endl;
 
     View3DControl *view;
     v3dhandle curwin;
@@ -1270,7 +1338,7 @@ void ZmovieMaker(V3DPluginCallback2 &callback, QWidget *parent,const V3DPluginAr
                 }
                 else
                 {
-                    for (int i=1; i<=anchorParaSize; i++)
+                    for (int i=1; i<=N; i++)
                     {
                         INTERPOLATION_PARA;
                     }
@@ -1298,7 +1366,7 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
         printHelpForBigScreenUsage();
         return false;
     }
-    if (inparas.size()!=1)
+    if (inparas.size()!=2)
     {
         printf("Please specify only one parameter - the number of new finished Neurons.\n");
         printHelpForBigScreenUsage();
@@ -1314,12 +1382,18 @@ bool neuron_tile_display::dofunc(const QString & func_name, const V3DPluginArgLi
     else if(func_name==tr("BigScreenDisplay"))
     {
         MethodFunForBigScreenDisplay(callback,parent,input);
+        int updateCount=0;
 
         while(true)
         {
-            sleep(updateInterval);
-            MethodFunForUpdateSWCDispaly(callback,parent,input);
+            //sleep(updateInterval);
+            if(updateCount==updateInterval)
+            {
+                MethodFunForUpdateSWCDispaly(callback,parent,input);
+                updateCount=0;
+            }
             ZmovieMaker(callback,parent,input);
+            updateCount++;
         }
 
     }
