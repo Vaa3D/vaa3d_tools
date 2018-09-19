@@ -10,6 +10,7 @@
 #include <boost/config.hpp>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <qlist.h>
 #include <qstring.h>
@@ -105,6 +106,7 @@ public:
 	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 	
 	NeuronTree segElongate(const profiledTree& inputProfiledTree);
+	segUnit segUnitConnect(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
 	/**********************************************************************/
 
 	/***************** Geometry *****************/
@@ -113,6 +115,8 @@ public:
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
+	map<int, segUnit> segRegionConn_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, bool length = false);
+	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	/********************************************/
 
 public:
@@ -188,6 +192,28 @@ inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, co
 	double angle = acos(dot / sqrt(sq1 * sq2));
 	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
 	else return angle / PI;
+}
+
+inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)
+{
+	map<double, string> r_segAngleMap;
+	for (map<string, double>::const_iterator reIt = segAngleMap.begin(); reIt != segAngleMap.end(); ++reIt)
+		r_segAngleMap.insert(pair<double, string>(reIt->second, reIt->first));
+
+	for (map<double, string>::iterator angleIt = r_segAngleMap.begin(); angleIt != r_segAngleMap.end(); ++angleIt)
+	{
+		vector<string> key1key2;
+		boost::split(key1key2, angleIt->second, boost::is_any_of("_"));
+
+		int seg1 = stoi(key1key2.at(0));
+		int seg2 = stoi(key1key2.at(1));
+		if (connectedSegs.find(seg1) == connectedSegs.end() && connectedSegs.find(seg2) == connectedSegs.end())
+		{
+			connectedSegs.insert(seg1);
+			connectedSegs.insert(seg2);
+			elongConnMap.insert(pair<int, int>(seg1, seg2));
+		}
+	}
 }
 
 #endif
