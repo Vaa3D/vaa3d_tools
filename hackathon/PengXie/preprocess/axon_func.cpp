@@ -11,6 +11,8 @@
 #include "axon_func.h"
 #include "crop_swc_main.h"
 
+#define MAXSIZE 1000000
+
 QList<int> match_axon_and_lpa(NeuronTree axon, NeuronTree lpa){
 
     QList<int> lpa_id;
@@ -64,7 +66,7 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
         name_list.append(nt.listNeuron.at(i).n);
     }
 
-    list<int> children[N];
+    list<int> children[MAXSIZE];
     for(int i=0; i<N; i++){
         NeuronSWC node = nt.listNeuron.at(i);
         int pid = name_list.lastIndexOf(node.pn);
@@ -294,7 +296,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     int size_thres = 10;
     QList<int> branch_ind;
     const int N=axon.listNeuron.size();
-    list<int> children[N];
+    list<int> children[MAXSIZE];
     for(int i=0; i<N; i++){
         NeuronSWC node = axon.listNeuron.at(i);
         int pid = nlist.lastIndexOf(node.pn);
