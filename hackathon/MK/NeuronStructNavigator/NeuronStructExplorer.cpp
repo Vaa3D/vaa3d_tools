@@ -512,7 +512,7 @@ segUnit NeuronStructExplorer::segUnitConnect(const segUnit& segUnit1, const segU
 		endEditedNodes = segUnit2.nodes;
 		endEditedNodes.begin()->parent = connTailID;
 		newSegNodes.append(segUnit1.nodes);
-		newSegNodes.append(segUnit2.nodes);
+		newSegNodes.append(endEditedNodes);
 		newSeg.nodes = newSegNodes;
 		break;
 	}
@@ -556,6 +556,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 	map<string, double> segAngleMap;
 	map<int, segUnit> newSegs;
 
+	//__________________________________________________________________________________________________________________________
+	
 	cout << "------- head-tail:" << endl << "  ";
 	for (vector<int>::const_iterator headIt = currTileHeadSegIDs.begin(); headIt != currTileHeadSegIDs.end(); ++headIt)
 	{
@@ -584,9 +586,13 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 		currProfiledTree.segs[it->second].to_be_deted = true;
 		segUnit newSeg = this->segUnitConnect(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
+		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
 		newSegs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
 	}
+	segAngleMap.clear();
+	elongConnMap.clear();
 	cout << endl;
+	//__________________________________________________________________________________________________________________________
 
 	cout << "------- tail-head:" << endl << "  ";
 	for (vector<int>::const_iterator tailIt = currTileHeadSegIDs.begin(); tailIt != currTileHeadSegIDs.end(); ++tailIt)
@@ -603,11 +609,26 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
 				{
 					cout << *tailIt << "_" << *headIt << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
+					string segAngleKey = to_string(*tailIt) + "_" + to_string(*headIt);
+					segAngleMap.insert(pair<string, double>(segAngleKey, (pointingRadAngle + turningRadAngle)));
 				}
 			}
 		}
 	}
+	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
+	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
+	{
+		currProfiledTree.segs[it->first].to_be_deted = true;
+		currProfiledTree.segs[it->second].to_be_deted = true;
+		segUnit newSeg = this->segUnitConnect(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
+		newSeg.segID = currProfiledTree.segs.size() + 1;
+		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
+		newSegs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
+	}
+	segAngleMap.clear();
+	elongConnMap.clear();
 	cout << endl;
+	//__________________________________________________________________________________________________________________________
 
 	cout << "------- head-head:" << endl << "  ";
 	for (vector<int>::const_iterator headIt1 = currTileHeadSegIDs.begin(); headIt1 != currTileHeadSegIDs.end(); ++headIt1)
@@ -624,11 +645,26 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
 				{
 					cout << *headIt1 << "_" << *headIt2 << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
+					string segAngleKey = to_string(*headIt1) + "_" + to_string(*headIt2);
+					segAngleMap.insert(pair<string, double>(segAngleKey, (pointingRadAngle + turningRadAngle)));
 				}
 			}
 		}
 	}
+	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
+	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
+	{
+		currProfiledTree.segs[it->first].to_be_deted = true;
+		currProfiledTree.segs[it->second].to_be_deted = true;
+		segUnit newSeg = this->segUnitConnect(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
+		newSeg.segID = currProfiledTree.segs.size() + 1;
+		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
+		newSegs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
+	}
+	segAngleMap.clear();
+	elongConnMap.clear();
 	cout << endl;
+	//__________________________________________________________________________________________________________________________
 
 	cout << "------- tail-tail:" << endl << "  ";
 	for (vector<int>::const_iterator tailIt1 = currTileHeadSegIDs.begin(); tailIt1 != currTileHeadSegIDs.end(); ++tailIt1)
@@ -645,11 +681,26 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
 				{
 					cout << *tailIt1 << "_" << *tailIt2 << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
+					string segAngleKey = to_string(*tailIt1) + "_" + to_string(*tailIt2);
+					segAngleMap.insert(pair<string, double>(segAngleKey, (pointingRadAngle + turningRadAngle)));
 				}
 			}
 		}
 	}
+	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
+	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
+	{
+		currProfiledTree.segs[it->first].to_be_deted = true;
+		currProfiledTree.segs[it->second].to_be_deted = true;
+		segUnit newSeg = this->segUnitConnect(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
+		newSeg.segID = currProfiledTree.segs.size() + 1;
+		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
+		newSegs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
+	}
+	segAngleMap.clear();
+	elongConnMap.clear();
 	cout << endl << endl;
+	//__________________________________________________________________________________________________________________________
 
 	return newSegs;
 }
@@ -705,10 +756,7 @@ NeuronTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTr
 
 		map<int, segUnit> newSegs = this->segRegionConn_angle(currTileHeadSegIDs, currTileTailSegIDs, outputProfiledTree);
 		for (map<int, segUnit>::iterator newSegIt = newSegs.begin(); newSegIt != newSegs.end(); ++newSegIt)
-		{
-			outputProfiledTree.segs.insert(pair<int, segUnit>(newSegIt->first, newSegIt->second));
 			allNewSegs.insert(pair<int, segUnit>(newSegIt->first, newSegIt->second));
-		}
 
 		currTileHeadSegIDs.clear();
 		currTileTailSegIDs.clear();
