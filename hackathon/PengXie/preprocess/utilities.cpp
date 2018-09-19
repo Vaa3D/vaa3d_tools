@@ -11,6 +11,8 @@ using namespace std;
 #include "neuron_connector_func.h"
 #include "utilities.h"
 
+#define MAXSIZE 1000000
+
 NeuronTree neuron_deepcopy(NeuronTree nt){
     QList<NeuronSWC> new_list;
     for(int i=0; i<nt.listNeuron.size(); i++){
@@ -176,7 +178,8 @@ QList<int> get_components(NeuronTree nt){
         pList.append(nt.listNeuron.at(i).pn);
     }
 
-    list<int> children[N];
+//    list<int> children[N];
+    list<int> children[MAXSIZE];
     for(int i=0; i<N; i++){
         NeuronSWC node = nt.listNeuron.at(i);
         int pid = nList.lastIndexOf(node.pn);
@@ -267,7 +270,8 @@ NeuronTree single_tree(NeuronTree nt, int soma){
         return nt;
     }
 
-    list<int> children[N];
+//    list<int> children[N];
+    list<int> children[MAXSIZE];
     for(int i=0; i<N; i++){
         NeuronSWC node = nt.listNeuron.at(i);
         int pid = nList.lastIndexOf(node.pn);
