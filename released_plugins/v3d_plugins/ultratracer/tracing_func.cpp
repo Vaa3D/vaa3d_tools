@@ -294,7 +294,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         if(P.method == app1)
             tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
         else if (P.method == app2)
-            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+//            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+              tmpfolder= QFileInfo(fileOpenName).path()+QString("/tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         else
             tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
@@ -1347,7 +1348,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else if(P.method == app2)
     {
        // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+   //     saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+          saveDirString = QFileInfo(P.inimg_file).path()+ QString("/tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
     else if(P.method == gd)
@@ -2022,9 +2024,41 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     //assign all sub_trees
-    if(ifs_swc)
+    QVector<int> visit(nt.listNeuron.size(),0);
+
+    if(!ifs_swc)
     {
-        QVector<int> visit(nt.listNeuron.size(),0);
+        for(int i=1; i<nt.listNeuron.size();i++)
+        {
+            if(NTDIS(nt.listNeuron.at(i),nt.listNeuron.at(0))<=40)
+                visit[i]=1;
+
+        }
+        for(int i=0; i<nt.listNeuron.size();i++)
+        {
+            if(nt.listNeuron[i].radius>=8 && visit[i]==0)
+            {
+                QQueue<int> q;
+                visit[i]=1;
+                q.push_back(i);
+                while(!q.empty())
+                {
+                    int current = q.front(); q.pop_front();
+                    nt.listNeuron[current].type = 255;
+                    for(int j=0; j<childs[current].size();j++)
+                    {
+                        if(visit[childs[current].at(j)]==0)
+                        {
+                            visit[childs[current].at(j)]=1;
+                            q.push_back(childs[current].at(j));
+                        }
+                    }
+                }
+                q.clear();
+            }
+        }
+    }
+    else{
         for(int i=0; i<nt.listNeuron.size();i++)
         {
             if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
