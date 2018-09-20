@@ -19,7 +19,7 @@
 #include <boost/lexical_cast.hpp>
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 #include "../istitch/y_imglib.h"
-#include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
+#include "../../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "../neurontracing_vn2/vn_imgpreprocess.h"
 
 

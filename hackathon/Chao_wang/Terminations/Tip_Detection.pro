@@ -5,11 +5,23 @@ CONFIG	+= qt plugin warn_off
 V3DMAINPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$V3DMAINPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$V3DMAINPATH/v3d_main/common_lib/include
-LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/v3d_main/common_lib/winlib
+#LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/v3d_main/common_lib/winlib
 
+win32 {
+    LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/winlib64 -llibtiff
+}
 
+macx{
+    LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
+}
+
+unix:!macx {
+    LIBS += -L$$V3DMAINPATH/v3d_main/common_lib/lib -ltiff
+
+}
 HEADERS	+= Tip_Detection_plugin.h
 HEADERS	+= ray_shooting.h
+SOURCES += ../Branch/new_ray-shooting.cpp
 SOURCES	+= Tip_Detection_plugin.cpp
 SOURCES	+= ray_shooting.cpp
 SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp

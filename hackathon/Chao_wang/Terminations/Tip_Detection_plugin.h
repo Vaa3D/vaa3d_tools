@@ -25,6 +25,7 @@ public:
 };
 
 int tipdetection(V3DPluginCallback2 &callback, QWidget *parent);
+int tip_detection(V3DPluginCallback2 &callback, QWidget *parent);
 
 void printHelp();
 #endif

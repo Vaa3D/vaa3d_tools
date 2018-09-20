@@ -35,21 +35,21 @@ void ray_shooting(int m, int n,vector<vector<float> > ray_x,vector<vector<float>
 
 int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_x,vector<vector<float> > ray_y, unsigned char * P,V3DLONG sz0,V3DLONG sz1 )
 {
-
     int count=0;
     float pixe = 0.0;
     float sum=0;
     float max_indd=10;
-    int branch_flag=0;
+    int branch_flag=1;
     vector<int> indd,ind1;//ind1 is the all piex of each ray
 
     for(int i = 0; i < m; i++)   //m is the numble of the ray
     {
-     sum=0;
-     for(int j = 0; j<n; j++)   // n is the numble of the points of the each ray
+       sum=0;
+     for(int j = 0; j < n; j++)    // n is the numble of the points of the each ray
         {
-            pixe = interp_2d(point_y+ray_y[i][j], point_x+ray_x[i][j], P, sz0,sz1 , point_x, point_y);
+            pixe = project_interp_2d(point_y+ray_y[i][j], point_x+ray_x[i][j], P, sz0,sz1 , point_x, point_y);
             pixe=exp(0.05*(j+1))*pixe;
+//            v3d_msg(QString("pixe is %1").arg(pixe));
             sum=sum+pixe;
         }
         ind1.push_back(sum);
@@ -64,30 +64,40 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
         }
     }
 
-    if((max_indd/n)>30)
+    int max_number=0;
+    if((max_indd/n)>5)
     {
         for(int num=0;num<ind1.size();num++)
         {
             if (ind1[num] >= max_indd*0.5)
                 {
+//                     v3d_msg(QString("location is %1").arg(num));
                      indd.push_back(num);
+                     if(num>=max_number)
+                     {
+                         max_number=num;
+                     }
                      count++;
                 }
         }
+//        v3d_msg(QString("max_number is %1").arg(max_number));
+
         int ray_distance=0;
-        //v3d_msg(QString("count is %1").arg(count));
+//        v3d_msg(QString("count is %1").arg(count));
         if (count > 1)
             {
-                for (int i = 0;i < count - 1;i++)
+                for (int i = 0;i < count - 2;i++)
                 {
-
                    ray_distance=abs(indd[i]-indd[i+1]);
                    if(ray_distance>=2)
                    {
-                          branch_flag=branch_flag+1;
+//                       v3d_msg(QString("indd[i] is %1, indd[i+1] is %2").arg(indd[i]).arg(indd[i+1]));
+                       branch_flag=branch_flag+1;
                    }
                 }
+//                v3d_msg(QString("indd[0] is %1, indd[count] is %2").arg(indd[0]).arg(indd[count-1]));
                 long dis=indd[0]-indd[count];
+
                 if(abs(dis)==(m-1))
                 {
                   branch_flag=branch_flag-1;
@@ -96,9 +106,10 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
             }
 
     }
-    //v3d_msg(QString("flag is %1").arg(branch_flag));
+//    v3d_msg(QString("flag is %1").arg(branch_flag));
     if(branch_flag>2)
     {
+
         return 1;
     }
     else
@@ -108,12 +119,14 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
 
 }
 
-float interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLONG sz1,int old_x,int old_y)
+float project_interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLONG sz1,int old_x,int old_y)
 {
     float result;
-
     if(point_y < 0||point_x < 0||point_y > sz1-1||point_x > sz0-1)
+    {
         return 0.0;
+
+    }
     else if(point_x < 1||point_y < 1||point_x > sz0-2||point_y > sz1-2)
     {
         result = get_2D_ValueUINT8(point_y,point_x,PP, sz0, sz1);
@@ -129,14 +142,17 @@ float interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG sz0,V3DLO
     }
     else
     {
+
         int y1 = get_2D_ValueUINT8(ceil(point_y), ceil(point_x),PP,sz0,sz1);
         int y0 = get_2D_ValueUINT8(floor(point_y), ceil(point_x),PP, sz0,sz1);
         int x1 = get_2D_ValueUINT8(ceil(point_y), floor(point_x),PP, sz0,sz1);
         int x0 = get_2D_ValueUINT8(floor(point_y), floor(point_x),PP, sz0,sz1);
 
+
         result = x0*(point_x-floor(point_x))*(point_y-floor(point_y))+x1*(ceil(point_x)-point_x)*(point_y-floor(point_y))
             +y0*(point_x-floor(point_x))*(ceil(point_y)-point_y)+y1*(ceil(point_x)-point_x)*(ceil(point_y)-point_y);
         return result;
+
     }
 }
 
@@ -148,7 +164,6 @@ v3d_uint8  get_2D_ValueUINT8(V3DLONG  y,  V3DLONG  x, unsigned char * T, V3DLONG
     if (idx < im_total_sz)
     {
         return T[idx];//是否要用this指针
-
     }
     else
     {
@@ -424,152 +439,7 @@ void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char 
     }
 }
 
-//set<int> GetAi(int a[], int length)//获取A0~A5
-//{
-//    set<int> vec;
-//    int neighbour[] = { 1,2,4,8,16,32,64,128,1,2,4,8,16,32,64 };
-//    for (int i = 0; i<length; i++)
-//        for (int j = 0; j<8; j++)
-//        {
-//            int sum = 0;
-//            for (int k = j; k <= j + a[i]; k++)
-//                sum += neighbour[k];
-//            vec.insert(sum);
 
-//            std::cout << sum << " ";
-//        }
-//    std::cout << std::endl;
-//    return vec;
-//}
-//bool erodephase(vector<border_point> &border, unsigned char * &Input, int neighbour[][3], const set<int>& A,V3DLONG ix,V3DLONG iy)
-//{
-//    auto pt = border.begin();
-//    bool result = false;
-//    while(pt!= border.end())
-//    {
-
-//        int weight = 0;
-//        for (int j = -1; j <= 1; ++j)
-//        for (int k = -1; k <= 1; k++)
-//        //weight += neighbour[j + 1][k + 1] * Input.at<uchar>(pt->y + j, pt->x + k);
-//        weight += neighbour[j + 1][k + 1] * Input[(pt->border_point.y_point+j)*ix+pt->border_point.x_point+k];
-//        if (std::find(A.begin(), A.end(), weight) != A.end())
-//        {
-//            Input[(pt->border_point.y_point)*ix+pt->border_point.x_point]= 0;
-//            pt=border.erase(pt);
-//            result = true;
-//        }
-//        else
-//            ++pt;
-//    }
-//    return result;
-
-//}
-
-//void findborder(vector<border_point>& border, const unsigned char * &Input,V3DLONG ix,V3DLONG iy)
-//{
-//    int cnt = 0;
-//    int rows = iy;
-//    int cols = ix;
-//    unsigned char *bordermat=new unsigned char [];
-//    bordermat=Input;
-//    //cv::Mat bordermat = Input.clone();
-//        for (int row = 1; row<rows - 1; ++row)
-//        for (int col = 1; col<cols - 1; ++col)
-//        {
-//            int weight = 0;
-//            for (int j = -1; j <= 1; ++j)
-//            for (int k = -1; k <= 1; k++)
-//                {
-//                    //if (Input.at<uchar>(row + j, col + k) == 1)
-//                    if (Input[(row+j)*ix+col+k] == 1)
-//                        ++cnt;
-//                }
-//            if (cnt == 9)
-//                bordermat[row*iy+col] = 0;
-//            cnt = 0;
-//        }
-
-//    for (int row = 1; row<rows - 1; ++row)
-//        for (int col = 1; col < cols - 1; ++col)
-//        {
-//            if (bordermat[row*iy+col] == 1)
-//                //border.push_back(cv::Point2i(col, row));
-//                border_point pp;
-//                pp.x_point=col;
-//                pp.y_point=row;
-//                border.push_back(pp);
-//        }
-
-//}
-
-//void finalerode( unsigned char * &Input ,int neighbour[][3], const set<int>& A,V3DLONG ix,V3DLONG iy)
-//{
-//    int rows = iy;
-//    int cols = ix;
-//    for (int m = 1; m<rows - 1; ++m)
-//        for (int n = 1; n<cols - 1; ++n)
-//        {
-//            int weight = 0;
-//            for (int j = -1; j <= 1; ++j)
-//                for (int k = -1; k <= 1; k++)
-//                {
-//                    //weight += neighbour[j + 1][k + 1] * Input.at<uchar>(m + j, n + k);
-//                    weight += neighbour[j + 1][k + 1] * Input[(m+j)*ix+n+k];
-//                }
-
-//            if (std::find(A.begin(), A.end(), weight) != A.end())
-//                //Input.at<uchar>(m, n) = 0;
-//                Input[m*ix+n] = 0;
-
-//        }
-//}
-
-//void thin(unsigned char* &Input) //Input是二值图像
-//{
-//    int a0[] = { 1,2,3,4,5,6 };
-//    int a1[] = { 2 };
-//    int a2[] = { 2,3 };
-//    int a3[] = { 2,3,4 };
-//    int a4[] = { 2,3,4,5 };
-//    int a5[] = { 2,3,4,5,6 };
-//    set<int> A0 = GetAi(a0, 6);
-//    set<int> A1 = GetAi(a1, 1);
-//    set<int> A2 = GetAi(a2, 2);
-//    set<int> A3 = GetAi(a3, 3);
-//    set<int> A4 = GetAi(a4, 4);
-//    set<int> A5 = GetAi(a5, 5);
-//    //list<cv::Point2i> border;
-//    struct border_point
-//    {
-//        V3DLONG x_point;
-//        V3DLONG y_point;
-//    };
-//    vector<border_point> border;
-//    bool continue_ = true;
-//    int neighbour[3][3] = {
-//        { 128,1,2 },
-//        { 64,0,4 },
-//        { 32,16,8 }
-//    };
-//    while (continue_)
-//    {
-//        //找边界，对原文方法做了小改变，但影响不大。
-//        continue_ = false;
-
-//        findborder(border, Input,nx,ny);//Phase0
-//        //可以在下面每一步打印结果，看每一步对提取骨架的贡献
-//        erodephase(border, Input, neighbour,A1);//Phase1
-//        erodephase(border, Input, neighbour, A2);//Phase2
-//        erodephase(border, Input, neighbour, A3);//Phase3
-//        erodephase(border, Input, neighbour, A4);//Phase4
-//        continue_ =erodephase(border, Input, neighbour, A5);//Phase5
-//        border.clear();
-
-//    }
-//    finalerode(Input,  neighbour, A0);//最后一步
-
-//}
 
 
 

@@ -32,6 +32,7 @@ HEADERS += app2/fastmarching_tree.h
 HEADERS += app2/hierarchy_prune.h
 HEADERS += app2/fastmarching_dt.h
 
+SOURCES +=$$V3DMAINPATH/../released_plugins_more/v3d_plugins/blastneuron_plugin/global_cmp/compute_morph.cpp
 
 SOURCES += vn_imgpreprocess.cpp
 SOURCES += app2_connector.cpp
