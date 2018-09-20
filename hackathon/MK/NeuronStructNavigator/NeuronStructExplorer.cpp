@@ -648,7 +648,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 	cout << endl;
 	//__________________________________________________________________________________________________________________________
 
-	/*cout << "------- head-head:" << endl;
+	cout << "------- head-head:" << endl;
 	for (vector<int>::const_iterator headIt1 = currTileHeadSegIDs.begin(); headIt1 != currTileHeadSegIDs.end(); ++headIt1)
 	{
 		for (vector<int>::const_iterator headIt2 = currTileHeadSegIDs.begin(); headIt2 != currTileHeadSegIDs.end(); ++headIt2)
@@ -683,7 +683,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 	}
 	segAngleMap.clear();
 	elongConnMap.clear();
-	cout << endl;*/
+	cout << endl;
 	//__________________________________________________________________________________________________________________________
 
 	cout << "------- tail-tail:" << endl;
