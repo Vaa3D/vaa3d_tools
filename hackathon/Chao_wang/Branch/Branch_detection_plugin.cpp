@@ -2,11 +2,11 @@
  * This is a test plugin, you can use it as a demo.
  * 2018-5-20 : by Chao Wang
  */
+#include"Branch_detection_plugin.h"
 #include <iostream>
 #include "basic_surf_objs.h"
 #include "v3d_message.h"
 #include <vector>
-#include "Branch_detection_plugin.h"
 #include "new_ray-shooting.h"
 //#include "../../zhi/APP2_large_scale/my_surf_objs.h"
 #define PI 3.1415926
@@ -26,7 +26,7 @@ QStringList TestPlugin::menulist() const
         <<tr("mip_corner_detection")
         <<tr("creat_ray-shooting_model")
         <<tr("corner_detection")
-        <<tr(" Gaussian Filtering ")
+        <<tr("Gaussian Filtering")
         <<tr("calculate the MIP of a subset of Z slices")
         <<tr("about")
         <<tr("skeletonization");
@@ -51,12 +51,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
               v3d_msg(tr("branch detection completed!"));
            }
         }
-        else if (menu_name == tr("creat_ray-shooting_model"))
-        {
-            int flag= rayshoot_model(callback,parent);
-            if(flag==1)
-            v3d_msg("ray-shooting model creat.");
-        }
+//        else if (menu_name == tr("creat_ray-shooting_model"))
+//        {
+//            int flag= rayshoot_model(callback,parent);
+//            if(flag==1)
+//            v3d_msg("ray-shooting model creat.");
+//        }
         else if (menu_name == tr("curve points detection"))
         {
 
@@ -135,7 +135,6 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                     return -1;
             }
             Image4DSimple *p4DImage = callback.getImage(curwin);
-
             int ray_numbers_2d = 128;
             int thres_2d = 45;
             int ray_length_2d = 16;
@@ -147,9 +146,9 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
 
             if(p4DImage->getZDim() > 1)
-                    dialog->setWindowTitle("3D neuron image tip point detection Based on Ray-shooting algorithm");
+                    dialog->setWindowTitle("3D neuron image branch point detection Based on Ray-shooting algorithm");
             else
-                    dialog->setWindowTitle("2D neuron image tip point detection Based on Ray-shooting algorithm");
+                    dialog->setWindowTitle("2D neuron image branch point detection Based on Ray-shooting algorithm");
 
         QGridLayout * layout = new QGridLayout();
 
@@ -229,7 +228,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
        unsigned char* datald=0;
        datald = p4DImage->getRawData();
-       V3DLONG size_image=sz[0]*sz[1]*sz[2];
+       V3DLONG size_image=sz[0]*sz[1];
 
        V3DLONG nx=sz[0];
        V3DLONG ny=sz[1];
@@ -281,7 +280,7 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
            {
                mip(nx,ny,size_z,datald,image_mip,num_layer);
                thres_segment(size_image,image_mip,image_binary,thres_2d);
-               old_image_binary=image_binary;
+//               old_image_binary=image_binary;
 
                while(true)
                {
@@ -444,11 +443,11 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                            }
                            int num=abs(new_neighbor[1]-new_neighbor[8]);
                            cnp=0.5*(sum+num);
-                           //v3d_msg(QString("cnp is %1").arg(cnp));
+//                           v3d_msg(QString("cnp is %1").arg(cnp));
                            if(cnp==3)
                            {
-                               int flag=rayinten_2D(j,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, old_image_binary,nx,ny);
-                               //v3d_msg(QString("flag is %1").arg(flag));
+                               int flag=rayinten_2D(j,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, image_binary,nx,ny);
+
                                if(flag==1)
                                {
                                    s.x=i;
@@ -457,17 +456,20 @@ int branch_detection(V3DPluginCallback2 &callback, QWidget *parent)
                                    int loc_z;
                                    for(int k=size_z;k<size_z+num_layer;k++)
                                    {
+                                       unsigned char sum_pixe;
+                                       sum_pixe=datald[k*nx*ny+j*nx+i]+datald[k*nx*ny+j*nx+i+1]+datald[k*nx*ny+j*nx+i-1]+
+                                               datald[k*nx*ny+(j+1)*nx+i]+datald[k*nx*ny+(j-1)*nx+i]+
+                                               datald[k*nx*ny+(j+1)*nx+i-1]+datald[k*nx*ny+(j+1)*nx+i+1]+
+                                               datald[k*nx*ny+(j-1)*nx+i-1]+datald[k*nx*ny+(j-1)*nx+i+1];
 
-                                       if(datald[k*nx*ny+j*nx+i]>max_z)
+                                       if(sum_pixe>max_z)
                                        {
-                                           max_z=datald[k*nx*ny+j*nx+i];
+                                           max_z=sum_pixe;
                                            //v3d_msg(QString("max_z is %1").arg(max_z));
                                            loc_z=k;
                                            s.z=k;
-                                           //v3d_msg(QString("z_size is %1").arg(s.z));
                                        }
                                    }
-
                                    s.radius=1;
                                    s.color = random_rgba8(255);
                                    curlist << s;
@@ -622,7 +624,7 @@ int mip_corner_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
     unsigned char* datald=0;
     datald = p4DImage->getRawData();
-    V3DLONG size_image=sz[0]*sz[1]*sz[2];
+    V3DLONG size_image=sz[0]*sz[1];
 
 
     V3DLONG nx=sz[0];
@@ -633,7 +635,7 @@ int mip_corner_detection(V3DPluginCallback2 &callback, QWidget *parent)
 
     v3d_msg("mip");
     unsigned char *image_mip=0;
-    try{image_mip=new unsigned char [spage];}
+    try{image_mip=new unsigned char [size_image];}
     catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
     Z_mip(nx,ny,nz,datald,image_mip);
     v3d_msg("mip have complete");
@@ -783,135 +785,135 @@ void printHelp()
     return;
 }
 
-int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    // 1 - Obtain the current 4D image pointer
-    v3dhandle curwin = callback.currentImageWindow();
-    if(!curwin)
-    {
-        v3d_msg("No image is open.");
-        return -1;
-    }
-    Image4DSimple *p4DImage = callback.getImage(curwin);
+//int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
+//{
+//    // 1 - Obtain the current 4D image pointer
+//    v3dhandle curwin = callback.currentImageWindow();
+//    if(!curwin)
+//    {
+//        v3d_msg("No image is open.");
+//        return -1;
+//    }
+//    Image4DSimple *p4DImage = callback.getImage(curwin);
 
-    V3DLONG sz[3];
-    sz[0] = p4DImage->getXDim();
-    sz[1] = p4DImage->getYDim();
-    sz[2] = p4DImage->getZDim();
-    V3DLONG nx=sz[0],ny=sz[1],nz=sz[2];
-    V3DLONG size_image=nx*ny*nz;
-
-
-    int x_point=0;
-    int y_point=0;
-    int ray_numble=64;
-    int length_numble=8;
-    int thres=30;
-
-    QDialog * dialog = new QDialog();
-    QGridLayout * layout = new QGridLayout();
-
-    QSpinBox * X_point_spinbox = new QSpinBox();
-    X_point_spinbox->setRange(1,sz[0]);
-    X_point_spinbox->setValue(x_point);
-
-    QSpinBox * Y_point_spinbox = new QSpinBox();
-    Y_point_spinbox->setRange(1, sz[1]);
-    Y_point_spinbox->setValue(y_point);
-
-    QSpinBox * thres_spinbox = new QSpinBox();
-    thres_spinbox->setRange(1, 255);
-    thres_spinbox->setValue(thres);
-
-    QSpinBox * number_ray_spinbox = new QSpinBox();
-    number_ray_spinbox->setRange(1,1000);
-    number_ray_spinbox->setValue(ray_numble);
-
-    QSpinBox * length_ray_spinbox = new QSpinBox();
-    length_ray_spinbox->setRange(1,100);
-    length_ray_spinbox->setValue(length_numble);
+//    V3DLONG sz[3];
+//    sz[0] = p4DImage->getXDim();
+//    sz[1] = p4DImage->getYDim();
+//    sz[2] = p4DImage->getZDim();
+//    V3DLONG nx=sz[0],ny=sz[1],nz=sz[2];
+//    V3DLONG size_image=nx*ny*nz;
 
 
+//    int x_point=0;
+//    int y_point=0;
+//    int ray_numble=64;
+//    int length_numble=8;
+//    int thres=30;
 
-    layout->addWidget(new QLabel("x laction "),0,0);
-    layout->addWidget(X_point_spinbox, 0,1,1,5);
+//    QDialog * dialog = new QDialog();
+//    QGridLayout * layout = new QGridLayout();
 
-    layout->addWidget(new QLabel("y location"),1,0);
-    layout->addWidget(Y_point_spinbox, 1,1,1,5);
+//    QSpinBox * X_point_spinbox = new QSpinBox();
+//    X_point_spinbox->setRange(1,sz[0]);
+//    X_point_spinbox->setValue(x_point);
 
-    layout->addWidget(new QLabel("threhold"),2,0);
-    layout->addWidget(thres_spinbox, 2,1,1,5);
+//    QSpinBox * Y_point_spinbox = new QSpinBox();
+//    Y_point_spinbox->setRange(1, sz[1]);
+//    Y_point_spinbox->setValue(y_point);
 
-    layout->addWidget(new QLabel("ray_numble of model"),3,0);
-    layout->addWidget(number_ray_spinbox, 3,1,1,5);
+//    QSpinBox * thres_spinbox = new QSpinBox();
+//    thres_spinbox->setRange(1, 255);
+//    thres_spinbox->setValue(thres);
 
-    layout->addWidget(new QLabel("length_numbers of model"),4,0);
-    layout->addWidget(length_ray_spinbox, 4,1,1,5);
+//    QSpinBox * number_ray_spinbox = new QSpinBox();
+//    number_ray_spinbox->setRange(1,1000);
+//    number_ray_spinbox->setValue(ray_numble);
 
-    QHBoxLayout * hbox2 = new QHBoxLayout();
-    QPushButton * ok = new QPushButton(" ok ");
-    ok->setDefault(true);
-    QPushButton * cancel = new QPushButton("cancel");
-    hbox2->addWidget(cancel);
-    hbox2->addWidget(ok);
-
-    layout->addLayout(hbox2,6,0,1,6);
-    dialog->setLayout(layout);
-    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
-    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
-
-
-    //run the dialog
-
-    if(dialog->exec() != QDialog::Accepted)
-    {
-        if (dialog)
-        {
-            delete dialog;
-            dialog=0;
-            cout<<"delete dialog"<<endl;
-        }
-        return -1;
-    }
-
-    //get the dialog return values
-    x_point = X_point_spinbox->value();
-    y_point = Y_point_spinbox->value();
-    ray_numble = number_ray_spinbox->value();
-    length_numble = length_ray_spinbox->value();
-    thres = thres_spinbox->value();
-
-    if (dialog)
-    {
-        delete dialog;
-        dialog=0;
-        cout<<"delete dialog"<<endl;
-    }
-
-    unsigned char * datald=0;
-    datald=p4DImage->getRawData();
+//    QSpinBox * length_ray_spinbox = new QSpinBox();
+//    length_ray_spinbox->setRange(1,100);
+//    length_ray_spinbox->setValue(length_numble);
 
 
-    v3d_msg("mip ");
-    unsigned char *image_mip=0;
-    try{image_mip=new unsigned char [size_image];}
-    catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
-    Z_mip(nx,ny,nz,datald,image_mip);
 
-    v3d_msg("segment");
-    unsigned char *image_binary=0;
-    try{image_binary=new unsigned char [size_image];}
-    catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
-    thres_segment(size_image,image_mip,image_binary,thres);
+//    layout->addWidget(new QLabel("x laction "),0,0);
+//    layout->addWidget(X_point_spinbox, 0,1,1,5);
+
+//    layout->addWidget(new QLabel("y location"),1,0);
+//    layout->addWidget(Y_point_spinbox, 1,1,1,5);
+
+//    layout->addWidget(new QLabel("threhold"),2,0);
+//    layout->addWidget(thres_spinbox, 2,1,1,5);
+
+//    layout->addWidget(new QLabel("ray_numble of model"),3,0);
+//    layout->addWidget(number_ray_spinbox, 3,1,1,5);
+
+//    layout->addWidget(new QLabel("length_numbers of model"),4,0);
+//    layout->addWidget(length_ray_spinbox, 4,1,1,5);
+
+//    QHBoxLayout * hbox2 = new QHBoxLayout();
+//    QPushButton * ok = new QPushButton(" ok ");
+//    ok->setDefault(true);
+//    QPushButton * cancel = new QPushButton("cancel");
+//    hbox2->addWidget(cancel);
+//    hbox2->addWidget(ok);
+
+//    layout->addLayout(hbox2,6,0,1,6);
+//    dialog->setLayout(layout);
+//    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+//    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
 
 
-    Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)image_binary, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
-    v3dhandle newwin = callback.newImageWindow();
-    //v3dhandle newwin = callback.currentImageWindow();
-    callback.setImage(newwin, new4DImage);
-    callback.setImageName(newwin, "maximum intensity projection image");
-    callback.updateImageWindow(newwin);
+//    //run the dialog
+
+//    if(dialog->exec() != QDialog::Accepted)
+//    {
+//        if (dialog)
+//        {
+//            delete dialog;
+//            dialog=0;
+//            cout<<"delete dialog"<<endl;
+//        }
+//        return -1;
+//    }
+
+//    //get the dialog return values
+//    x_point = X_point_spinbox->value();
+//    y_point = Y_point_spinbox->value();
+//    ray_numble = number_ray_spinbox->value();
+//    length_numble = length_ray_spinbox->value();
+//    thres = thres_spinbox->value();
+
+//    if (dialog)
+//    {
+//        delete dialog;
+//        dialog=0;
+//        cout<<"delete dialog"<<endl;
+//    }
+
+//    unsigned char * datald=0;
+//    datald=p4DImage->getRawData();
+
+
+//    v3d_msg("mip ");
+//    unsigned char *image_mip=0;
+//    try{image_mip=new unsigned char [size_image];}
+//    catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+//    Z_mip(nx,ny,nz,datald,image_mip);
+
+//    v3d_msg("segment");
+//    unsigned char *image_binary=0;
+//    try{image_binary=new unsigned char [size_image];}
+//    catch(...) {v3d_msg("cannot allocate memory for image_binary."); return 0;}
+//    thres_segment(size_image,image_mip,image_binary,thres);
+
+
+//    Image4DSimple * new4DImage = new Image4DSimple();
+//    new4DImage->setData((unsigned char *)image_binary, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
+//    v3dhandle newwin = callback.newImageWindow();
+//    //v3dhandle newwin = callback.currentImageWindow();
+//    callback.setImage(newwin, new4DImage);
+//    callback.setImageName(newwin, "maximum intensity projection image");
+//    callback.updateImageWindow(newwin);
 
 
 //    v3dhandle newwin;
@@ -927,68 +929,68 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 // v3d_msg("mip have complete");
 
 
-    cout<<"start the ray-shooting model"<<endl;
+//    cout<<"start the ray-shooting model"<<endl;
 
-    vector<float> x_lac;
-    vector<float> y_lac;
-    float ang = 2*PI/ray_numble;
+//    vector<float> x_lac;
+//    vector<float> y_lac;
+//    float ang = 2*PI/ray_numble;
 
-    //get the location
-    for(int i=0;i<ray_numble;i++)
-    {
-        float x_dis=cos(ang*(i+1));
-        float y_dis=sin(ang*(i+1));
-        for(int j=0;j<length_numble;j++)
-        {
-             x_lac.push_back(x_point+(j+1)*x_dis);
-             y_lac.push_back(y_point+(j+1)*y_dis);
-        }
-        //v3d_msg(QString("y is %1").arg(y_lac[i]));
-    }
+//    //get the location
+//    for(int i=0;i<ray_numble;i++)
+//    {
+//        float x_dis=cos(ang*(i+1));
+//        float y_dis=sin(ang*(i+1));
+//        for(int j=0;j<length_numble;j++)
+//        {
+//             x_lac.push_back(x_point+(j+1)*x_dis);
+//             y_lac.push_back(y_point+(j+1)*y_dis);
+//        }
+//        //v3d_msg(QString("y is %1").arg(y_lac[i]));
+//    }
 
-    //get the pixel valus
-    vector<float> pixel;
-    int num_points=ray_numble*length_numble;
-    for(int i=0;i<num_points;i++)
-    {
-        float tt=interp_2d( y_lac[i], x_lac[i],image_binary, sz[0], sz[1],x_point,y_point);
-        pixel.push_back(tt);
-        //v3d_msg(QString("pixel is %1").arg(pixel[i]));
-    }
+//    //get the pixel valus
+//    vector<float> pixel;
+//    int num_points=ray_numble*length_numble;
+//    for(int i=0;i<num_points;i++)
+//    {
+//        float tt=interp_2d( y_lac[i], x_lac[i],image_binary, sz[0], sz[1],x_point,y_point);
+//        pixel.push_back(tt);
+//        //v3d_msg(QString("pixel is %1").arg(pixel[i]));
+//    }
 
-    for(int i=0;i<num_points;i++)
-    {
-        v3d_msg(QString("pixel is %1,y is %2,pixel is %3").arg(x_lac[i]).arg(y_lac[i]).arg(pixel[i]));
-    }
+//    for(int i=0;i<num_points;i++)
+//    {
+//        v3d_msg(QString("pixel is %1,y is %2,pixel is %3").arg(x_lac[i]).arg(y_lac[i]).arg(pixel[i]));
+//    }
 
-    //get the sum of pixel of length
-    vector<float> sum_ray_pixel;
-    float max_ray;
-    for(int i=0;i<ray_numble;i++)
-    {
-        float sum;
-        for(int j=0;j<length_numble;j++)
-        {
-            float sum=0;
-            sum=sum+pixel[i*length_numble+j];
-        }
-        sum_ray_pixel.push_back(sum);
-        if(sum>max_ray)
-        {
-            max_ray=sum;
-        }
+//    //get the sum of pixel of length
+//    vector<float> sum_ray_pixel;
+//    float max_ray;
+//    for(int i=0;i<ray_numble;i++)
+//    {
+//        float sum;
+//        for(int j=0;j<length_numble;j++)
+//        {
+//            float sum=0;
+//            sum=sum+pixel[i*length_numble+j];
+//        }
+//        sum_ray_pixel.push_back(sum);
+//        if(sum>max_ray)
+//        {
+//            max_ray=sum;
+//        }
 
-        //v3d_msg(QString("sum is %1").arg(sum_ray_pixel[i]));
-    }
+//        //v3d_msg(QString("sum is %1").arg(sum_ray_pixel[i]));
+//    }
 
-    float max_value=max_ray*0.40;
-    v3d_msg("display the ray-shooting model");
+//    float max_value=max_ray*0.40;
+//    v3d_msg("display the ray-shooting model");
 //    LandmarkList curlist;
 //    LocationSimple pp;
 //    for(int i=0;i<ray_numble;i++)
 //    {
 //        if(sum_ray_pixel[i]>max_value)
-//        {
+//       {
 //            for(int j=0;j<length_numble;j++)
 //            {
 //                pp.x=x_lac[i*length_numble+j];
@@ -1000,7 +1002,7 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 //        else
 //        {
 //            for(int j=0;j<length_numble;j++)
-//            {
+//           {
 //                pp.x=x_lac[i*length_numble+j];
 //                pp.y=y_lac[i*length_numble+j];
 //                pp.radius=1;
@@ -1012,59 +1014,59 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 //    }
 //    v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
 //    v3d_msg("express marker");
-//    callback.setLandmark(curwin, curlist);
+//   callback.setLandmark(curwin, curlist);
 
 //    if(image_binary) {delete []image_binary; image_binary = 0;}
 //    if(image_mip) {delete []image_mip; image_mip = 0;}
-    //if(datald){delete []datald;datald=0;}
+//    //if(datald){delete []datald;datald=0;}
 
 //    return 1;
 
-    cout<<"start save swc"<<endl;
-    NeuronTree nt;
-    QList <NeuronSWC> listNeuron;
-    QHash <int, int>  hashNeuron;
-    listNeuron.clear();
-    hashNeuron.clear();
-    int above=0;
-    int low=0;
-    for(int i=0;i<sum_ray_pixel.size();i++)
-    {
-        NeuronSWC pp;
-        if(sum_ray_pixel[i]>max_value)
-        {
-            above++;
-            for(int j=0;j<length_numble;j++)
-            {
-                pp.x=x_lac[i*length_numble+j];
-                pp.y=y_lac[i*length_numble+j];
-                pp.radius=0.3;
-                pp.type=4;
-                pp.parent=-1;
-                listNeuron.append(pp);
-                hashNeuron.insert(pp.n, listNeuron.size()-1);
-            }
-        }
-        else
-        {
-            low++;
-            for(int j=0;j<length_numble;j++)
-            {
-                pp.x=x_lac[i*length_numble+j];
-                pp.y=y_lac[i*length_numble+j];
-                pp.radius=0.3;
-                pp.type=3;
-                pp.parent=-1;
-                listNeuron.append(pp);
-                hashNeuron.insert(pp.n, listNeuron.size()-1);
-            }
-        }
+//    cout<<"start save swc"<<endl;
+//    NeuronTree nt;
+//    QList <NeuronSWC> listNeuron;
+//    QHash <int, int>  hashNeuron;
+//    listNeuron.clear();
+//    hashNeuron.clear();
+//    int above=0;
+//    int low=0;
+//    for(int i=0;i<sum_ray_pixel.size();i++)
+//    {
+//        NeuronSWC pp;
+//        if(sum_ray_pixel[i]>max_value)
+//        {
+//            above++;
+//            for(int j=0;j<length_numble;j++)
+//            {
+//                pp.x=x_lac[i*length_numble+j];
+//                pp.y=y_lac[i*length_numble+j];
+//                pp.radius=0.3;
+//                pp.type=4;
+//                pp.parent=-1;
+//                listNeuron.append(pp);
+//                hashNeuron.insert(pp.n, listNeuron.size()-1);
+//            }
+//        }
+//        else
+//        {
+//            low++;
+//            for(int j=0;j<length_numble;j++)
+//            {
+//                pp.x=x_lac[i*length_numble+j];
+//                pp.y=y_lac[i*length_numble+j];
+//                pp.radius=0.3;
+//                pp.type=3;
+//                pp.parent=-1;
+//                listNeuron.append(pp);
+//                hashNeuron.insert(pp.n, listNeuron.size()-1);
+//            }
+//        }
 
 //        listNeuron.append(pp);
 //        hashNeuron.insert(pp.n, listNeuron.size()-1);
-    }
-    v3d_msg(QString("above is %1").arg(above));
-    v3d_msg(QString("low is %1").arg(low));
+//    }
+//    v3d_msg(QString("above is %1").arg(above));
+//    v3d_msg(QString("low is %1").arg(low));
 
 //    for(V3DLONG i=0;i<ray_numble*length_numble;i++)
 //    {
@@ -1096,17 +1098,17 @@ int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent)
 //        hashNeuron.insert(s.n, listNeuron.size()-1);
 //     }
 
-    nt.n = -1;
-    nt.on = true;
-    nt.listNeuron = listNeuron;
-    nt.hashNeuron = hashNeuron;
-    QString outswc_file;
-    outswc_file = QString(p4DImage->getFileName())  + "ray_model.swc";
-    //QString raynkdh = QString ("ray-shooting.swc");
-    writeSWC_file(outswc_file,nt);
-    return 1;
+//    nt.n = -1;
+//    nt.on = true;
+//    nt.listNeuron = listNeuron;
+//    nt.hashNeuron = hashNeuron;
+//    QString outswc_file;
+//    outswc_file = QString(p4DImage->getFileName())  + "ray_model.swc";
+//    //QString raynkdh = QString ("ray-shooting.swc");
+//    writeSWC_file(outswc_file,nt);
+//    return 1;
 
-}
+//}
 
 int corner_detection(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -1474,82 +1476,141 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
                     return -1;
     }
       Image4DSimple *p4DImage = callback.getImage(curwin);
+
+      int ray_numbers_2d = 128;
+      int thres_2d = 45;
+      int ray_length_2d = 16;
+
+
+      //set update the dialog
+      QDialog * dialog = new QDialog();
+
+
+      if(p4DImage->getZDim() > 1)
+              dialog->setWindowTitle("3D neuron image branch point detection Based on Ray-shooting algorithm");
+      else
+              dialog->setWindowTitle("2D neuron image branch point detection Based on Ray-shooting algorithm");
+
+  QGridLayout * layout = new QGridLayout();
+
+  QSpinBox * ray_numbers_2d_spinbox = new QSpinBox();
+  ray_numbers_2d_spinbox->setRange(1,1000);
+  ray_numbers_2d_spinbox->setValue(ray_numbers_2d);
+
+  QSpinBox * thres_2d_spinbox = new QSpinBox();
+  thres_2d_spinbox->setRange(-1, 255);
+  thres_2d_spinbox->setValue(thres_2d);
+
+  QSpinBox * ray_length_2d_spinbox = new QSpinBox();
+  ray_length_2d_spinbox->setRange(1,p4DImage->getXDim());
+  ray_length_2d_spinbox->setValue(ray_length_2d);
+
+
+  layout->addWidget(new QLabel("ray numbers"),0,0);
+  layout->addWidget(ray_numbers_2d_spinbox, 0,1,1,5);
+
+  layout->addWidget(new QLabel("intensity threshold"),1,0);
+  layout->addWidget(thres_2d_spinbox, 1,1,1,5);
+
+  layout->addWidget(new QLabel("ray length"),2,0);
+  layout->addWidget(ray_length_2d_spinbox, 2,1,1,5);
+
+
+
+  QHBoxLayout * hbox2 = new QHBoxLayout();
+  QPushButton * ok = new QPushButton(" ok ");
+  ok->setDefault(true);
+  QPushButton * cancel = new QPushButton("cancel");
+  hbox2->addWidget(cancel);
+  hbox2->addWidget(ok);
+
+  layout->addLayout(hbox2,6,0,1,6);
+  dialog->setLayout(layout);
+  QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+  QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
+
+  //run the dialog
+
+  if(dialog->exec() != QDialog::Accepted)
+      {
+              if (dialog)
+              {
+                      delete dialog;
+                      dialog=0;
+                      cout<<"delete dialog"<<endl;
+              }
+              return -1;
+      }
+
+  //get the dialog return values
+  ray_numbers_2d = ray_numbers_2d_spinbox->value();
+  thres_2d = thres_2d_spinbox->value();
+  ray_length_2d = ray_length_2d_spinbox->value();
+
+  if (dialog)
+      {
+              delete dialog;
+              dialog=0;
+              cout<<"delete dialog"<<endl;
+      }
+
       V3DLONG sz[3];
       sz[0] = p4DImage->getXDim();
       sz[1] = p4DImage->getYDim();
       sz[2] = p4DImage->getZDim();
       V3DLONG nx=sz[0],ny=sz[1],nz=sz[2];
-      V3DLONG size_image=nx*ny*nz;
+      V3DLONG size_image=nx*ny;
 
       unsigned char* datald=0;
       datald = p4DImage->getRawData();
-      bool ok1;
-      int thres = QInputDialog::getInteger(parent, "threshold  of this image ",
-<<<<<<< HEAD
-                                    "Enter threshold ",
-                                    1, 1, 1000, 1, &ok1);
-      struct delete_piont
-      {
-          V3DLONG xx;
-          V3DLONG yy;
-      };
-=======
-                                    "Enter radius (window size is 2*radius+1):",
-                                    1, 1, 255, 1, &ok1);
->>>>>>> 700fa02627a86c8a085baba8f47db306de2ddca6
+//      bool ok1;
+//      int thres = QInputDialog::getInteger(parent, "threshold  of this image ",
+//                                    "Enter threshold ",
+//                                    1, 1, 1000, 1, &ok1);
+//      struct delete_piont
+//      {
+//          V3DLONG xx;
+//          V3DLONG yy;
+//      };
+
       vector<delete_piont> delete_list;
       int neighbor[8];
       int sum_points;
 
-      vector<vector<float> > ray_x(128,vector<float>(8)), ray_y(128,vector<float>(8));
+      vector<vector<float> > ray_x(ray_numbers_2d,vector<float>(ray_length_2d)), ray_y(ray_numbers_2d,vector<float>(ray_length_2d));
 
-      cout<<"create 2D_ray"<<endl;
+//      cout<<"create 2D_ray"<<endl;
 
-      float ang = 2*PI/128;
+      float ang = 2*PI/ray_numbers_2d;
       float x_dis, y_dis;
 
-      for(int i = 0; i < 128; i++)
+      for(int i = 0; i < ray_numbers_2d; i++)
       {
           x_dis = cos(ang*(i+1));
           y_dis = sin(ang*(i+1));
-          for(int j = 0; j<8; j++)
+          for(int j = 0; j<ray_length_2d; j++)
               {
                   ray_x[i][j] = x_dis*(j+1);
                   ray_y[i][j] = y_dis*(j+1);
+//                  v3d_msg(QString(" ray_x[i][j] is %1,ray_y[i][j] is %2").arg(ray_x[i][j]).arg(ray_y[i][j]));
               }
       }
 
       cout<<"create 2D_ray success"<<endl;
 
-      v3d_msg("mip");
+
       unsigned char *image_mip=0;
       try{image_mip=new unsigned char [size_image];}
       catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
       Z_mip(nx,ny,nz,datald,image_mip);
       v3d_msg("mip have complete");
 
-      v3d_msg("segment");
       unsigned char *image_binary=0;
       try{image_binary=new unsigned char [size_image];}
       catch(...) {v3d_msg("cannot allocate memory for imag"
                           "e_binary."); return 0;}
-      thres_segment(nx*ny*nz,image_mip,image_binary,thres);
+      thres_segment(size_image,image_mip,image_binary,thres_2d);
       v3d_msg("segment have complete");
-
-      unsigned char *old_binary_image=0;
-      try{old_binary_image=new unsigned char [size_image];}
-      catch(...) {v3d_msg("cannot allocate memory for imag"
-                          "e_binary."); return 0;}
-      for(V3DLONG i=0;i<size_image;i++)
-      {
-          old_binary_image[i]=image_binary[i];
-      }
-
-
-
-      //int flag=1;
-      //V3DLONG num_point=0;
-      //V3DLONG num=0;
 
       LandmarkList curlist;
       LocationSimple s;
@@ -1620,7 +1681,6 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
             image_binary[delete_list[num].xx+delete_list[num].yy*nx]=0;
           }
           delete_list.clear();
-
 
           for(V3DLONG j=1;j<ny;j++)
           {
@@ -1723,46 +1783,37 @@ int skeletonization(V3DPluginCallback2 &callback, QWidget *parent)
                   }
                   int num=abs(new_neighbor[1]-new_neighbor[8]);
                   cnp=0.5*(sum+num);
-                  //v3d_msg(QString("cnp is %1").arg(cnp));
                   if(cnp==3)
                   {
-                    //int flag=rayinten_2D(j,i,128 ,8,ray_x, ray_y, image_mip,nx,ny);
-                    //if(flag==1)
-                    //{
-                        s.x=i;
-                        s.y=j;
-                        s.z=1;
-                        s.radius=1;
-                        s.color = random_rgba8(255);
-                        curlist << s;
-                        size_point++;
+                      int flag=rayinten_2D(j,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, image_binary,nx,ny);
+                      if(flag==1)
+                      {
+                          s.x=i;
+                          s.y=j;
+                          s.z=1;
+                          s.radius=1;
+                          s.color = random_rgba8(255);
+                          curlist << s;
+                          num++;
 
-                    //}
-
-
-
+                      }
                    }
             }
 
           }
       }
+      v3d_msg(QString("do you need show the iamge"));
+
+            if(image_binary) {delete []image_binary; image_binary = 0;}
+//            if(image_mip) {delete []image_mip; image_mip = 0;}
+//            if(datald){delete []datald;datald=0;}
 
 
       Image4DSimple * new4DImage = new Image4DSimple();
-      new4DImage->setData((unsigned char *)old_binary_image, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
+      new4DImage->setData((unsigned char *)image_mip, p4DImage->getXDim(), p4DImage->getYDim(), 1, p4DImage->getCDim(), p4DImage->getDatatype());
       callback.setImage(curwin, new4DImage);
       callback.setImageName(curwin, "maximum intensity projection image");
       callback.updateImageWindow(curwin);
       callback.setLandmark(curwin, curlist);
       return 1;
-
-
 }
-
-
-
-
-
-
-
-
