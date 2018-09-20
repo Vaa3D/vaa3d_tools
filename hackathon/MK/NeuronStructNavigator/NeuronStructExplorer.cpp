@@ -17,7 +17,7 @@ profiledTree::profiledTree(const NeuronTree& inputTree)
 	{
 		string xLabel = to_string(int(it->x / 40));
 		string yLabel = to_string(int(it->y / 40));
-		string zLabel = to_string(int(it->z / (40 * zRATIO)));
+		string zLabel = to_string(int(it->z / (40 / zRATIO)));
 		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 		if (this->nodeTileMap.find(keyLabel) != this->nodeTileMap.end()) this->nodeTileMap[keyLabel].push_back(it->n);
 		else
@@ -29,9 +29,13 @@ profiledTree::profiledTree(const NeuronTree& inputTree)
 	}
 	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 	this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
+	cout << "segs num: " << this->segs.size() << endl;
 	vector<segUnit> allSegs;
 	for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
+	{	
+		//if (it->second.tails.size() > 1) cout << " branching seg: " << it->first << endl;
 		allSegs.push_back(it->second);
+	}
 	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs);
 	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, false);
 }
@@ -341,22 +345,22 @@ double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const s
 	vector<float> elongHeadLoc;
 	elongHeadLoc.push_back(elongHeadNode.x);
 	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z);
+	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
 
 	vector<float> elongTailLoc;
 	elongTailLoc.push_back(elongTailNode.x);
 	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z);
+	elongTailLoc.push_back(elongTailNode.z * zRATIO);
 
 	vector<float> connHeadLoc;
 	connHeadLoc.push_back(connHeadNode.x);
 	connHeadLoc.push_back(connHeadNode.y);
-	connHeadLoc.push_back(connHeadNode.z);
+	connHeadLoc.push_back(connHeadNode.z * zRATIO);
 
 	vector<float> connTailLoc;
 	connTailLoc.push_back(connTailNode.x);
 	connTailLoc.push_back(connTailNode.y);
-	connTailLoc.push_back(connTailNode.z);
+	connTailLoc.push_back(connTailNode.z * zRATIO);
 
 	vector<float> elongDispUnitVec;
 	vector<float> connDispUnitVec;
@@ -426,12 +430,12 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 	vector<float> elongHeadLoc;
 	elongHeadLoc.push_back(elongHeadNode.x);
 	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z);
+	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
 
 	vector<float> elongTailLoc;
 	elongTailLoc.push_back(elongTailNode.x);
 	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z);
+	elongTailLoc.push_back(elongTailNode.z * zRATIO);
 
 	vector<float> elongDispUnitVec;
 	vector<float> connPointUnitVec;
@@ -441,7 +445,7 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 		vector<float> connPointLoc;
 		connPointLoc.push_back(connHeadNode.x);
 		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z);
+		connPointLoc.push_back(connHeadNode.z * zRATIO);
 		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongHeadLoc);
 
 		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
@@ -453,7 +457,7 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 		vector<float> connPointLoc;
 		connPointLoc.push_back(connTailNode.x);
 		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z);
+		connPointLoc.push_back(connTailNode.z * zRATIO);
 		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongHeadLoc);
 
 		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
@@ -465,7 +469,7 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 		vector<float> connPointLoc;
 		connPointLoc.push_back(connHeadNode.x);
 		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z);
+		connPointLoc.push_back(connHeadNode.z * zRATIO);
 		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongTailLoc);
 
 		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
@@ -477,7 +481,7 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 		vector<float> connPointLoc;
 		connPointLoc.push_back(connTailNode.x);
 		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z);
+		connPointLoc.push_back(connTailNode.z * zRATIO);
 		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongTailLoc);
 
 		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
@@ -518,17 +522,27 @@ segUnit NeuronStructExplorer::segUnitConnect(const segUnit& segUnit1, const segU
 	}
 	case head_head:
 	{
-		int connHeadID = segUnit2.head;
-		endEditedNodes = segUnit1.nodes;
-		endEditedNodes.begin()->parent = connHeadID;
-		newSegNodes.append(segUnit2.nodes);
+		int connTailID = segUnit2.head;
+		for (map<int, vector<size_t>>::const_iterator it = segUnit2.seg_childLocMap.begin(); it != segUnit2.seg_childLocMap.end(); ++it)
+		{
+			NeuronSWC newNode = segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(it->first));
+			if (it->second.size() == 0)
+			{
+				newNode.parent = -1;
+				system("pause");
+			}
+			else newNode.parent = segUnit2.nodes.at(*(it->second.cbegin())).n;
+			endEditedNodes.push_back(newNode);
+		}
 		newSegNodes.append(segUnit1.nodes);
+		newSegNodes.begin()->parent = connTailID;
+		newSegNodes.append(endEditedNodes);
 		newSeg.nodes = newSegNodes;
 		break;
 	}
 	case tail_tail:
 	{
-		int connTailID = segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())).n;
+		int connTailID = *segUnit2.tails.cbegin();
 		for (map<int, vector<size_t>>::const_iterator it = segUnit1.seg_childLocMap.begin(); it != segUnit1.seg_childLocMap.end(); ++it)
 		{
 			NeuronSWC newNode = segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(it->first));
@@ -537,7 +551,7 @@ segUnit NeuronStructExplorer::segUnitConnect(const segUnit& segUnit1, const segU
 			endEditedNodes.push_back(newNode);
 		}
 		newSegNodes.append(segUnit2.nodes);
-		newSegNodes.append(segUnit1.nodes);
+		newSegNodes.append(endEditedNodes);
 		newSeg.nodes = newSegNodes;
 		break;
 	}
@@ -558,7 +572,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 
 	//__________________________________________________________________________________________________________________________
 	
-	cout << "------- head-tail:" << endl << "  ";
+	cout << "------- head-tail:" << endl;
 	for (vector<int>::const_iterator headIt = currTileHeadSegIDs.begin(); headIt != currTileHeadSegIDs.end(); ++headIt)
 	{
 		for (vector<int>::const_iterator tailIt = currTileTailSegIDs.begin(); tailIt != currTileTailSegIDs.end(); ++tailIt)
@@ -566,6 +580,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 			if (*headIt == *tailIt) continue;
 			else
 			{
+				if (currProfiledTree.segs.at(*headIt).to_be_deted || currProfiledTree.segs.at(*tailIt).to_be_deted) continue;
+
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
@@ -594,7 +610,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 	cout << endl;
 	//__________________________________________________________________________________________________________________________
 
-	cout << "------- tail-head:" << endl << "  ";
+	cout << "------- tail-head:" << endl;
 	for (vector<int>::const_iterator tailIt = currTileHeadSegIDs.begin(); tailIt != currTileHeadSegIDs.end(); ++tailIt)
 	{
 		for (vector<int>::const_iterator headIt = currTileTailSegIDs.begin(); headIt != currTileTailSegIDs.end(); ++headIt)
@@ -602,6 +618,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 			if (*headIt == *tailIt) continue;
 			else
 			{
+				if (currProfiledTree.segs.at(*tailIt).to_be_deted || currProfiledTree.segs.at(*headIt).to_be_deted) continue;
+
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
@@ -630,7 +648,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 	cout << endl;
 	//__________________________________________________________________________________________________________________________
 
-	cout << "------- head-head:" << endl << "  ";
+	cout << "------- head-head:" << endl;
 	for (vector<int>::const_iterator headIt1 = currTileHeadSegIDs.begin(); headIt1 != currTileHeadSegIDs.end(); ++headIt1)
 	{
 		for (vector<int>::const_iterator headIt2 = currTileHeadSegIDs.begin(); headIt2 != currTileHeadSegIDs.end(); ++headIt2)
@@ -638,6 +656,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 			if (*headIt1 == *headIt2) continue;
 			else
 			{
+				if (currProfiledTree.segs.at(*headIt1).to_be_deted || currProfiledTree.segs.at(*headIt2).to_be_deted) continue;
+
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
@@ -666,7 +686,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 	cout << endl;
 	//__________________________________________________________________________________________________________________________
 
-	cout << "------- tail-tail:" << endl << "  ";
+	cout << "------- tail-tail:" << endl;
 	for (vector<int>::const_iterator tailIt1 = currTileHeadSegIDs.begin(); tailIt1 != currTileHeadSegIDs.end(); ++tailIt1)
 	{
 		for (vector<int>::const_iterator tailIt2 = currTileTailSegIDs.begin(); tailIt2 != currTileTailSegIDs.end(); ++tailIt2)
@@ -674,6 +694,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConn_angle(const vector<int>& c
 			if (*tailIt1 == *tailIt2) continue;
 			else
 			{
+				if (currProfiledTree.segs.at(*tailIt1).to_be_deted || currProfiledTree.segs.at(*tailIt2).to_be_deted) continue;
+
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
@@ -787,47 +809,7 @@ NeuronTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTr
 	for (vector<size_t>::iterator it = nodeDeleteLocs.begin(); it != nodeDeleteLocs.end(); ++it) newNodeList.erase(newNodeList.begin() + ptrdiff_t(*it));
 
 	outputProfiledTree.tree.listNeuron = newNodeList;
-	//outputProfiledTree.tree.listNeuron.clear();
 	for (map<int, segUnit>::iterator it = allNewSegs.begin(); it != allNewSegs.end(); ++it) outputProfiledTree.tree.listNeuron.append(it->second.nodes);
-	/*for (map<string, vector<int>>::const_iterator tileIt = inputProfiledTree.segHeadMap.begin(); tileIt != inputProfiledTree.segHeadMap.end(); ++tileIt)
-	{
-
-		/*for (vector<segUnit>::iterator segIt1 = currTileHeadSegs.begin(); segIt1 != currTileHeadSegs.end(); ++segIt1)
-		{
-
-			
-			for (vector<segUnit>::iterator segIt2 = currTileTailSegs.begin(); segIt2 != currTileTailSegs.end(); ++segIt2)
-			{
-				vector<float> connLoc;
-				connLoc.push_back(segIt2->nodes[segIt2->seg_nodeLocMap[*(segIt2->tails.begin())]].x);
-				connLoc.push_back(segIt2->nodes[segIt2->seg_nodeLocMap[*(segIt2->tails.begin())]].y);
-				connLoc.push_back(segIt2->nodes[segIt2->seg_nodeLocMap[*(segIt2->tails.begin())]].z);
-				cout << "(" << connLoc[0] << "," << connLoc[1] << "," << connLoc[2] << ") ";
-				double radAngle = this->getRadAngle(headLoc, pointingVec, connLoc);
-				head_tail = false;
-				if (radAngle < minRadAngle)
-				{
-					minRadAngle = radAngle;
-					connSeg = *segIt2;
-				}
-			}
-
-			if (minRadAngle < 0.25)
-			{
-				segIt1->to_be_deted = true;
-				
-				if (head_tail)
-					profiledOutputTree.tree.listNeuron[profiledOutputTree.node2LocMap[segIt1->head]].parent = profiledOutputTree.tree.listNeuron[profiledOutputTree.node2LocMap[connSeg.head]].n;
-				else
-					profiledOutputTree.tree.listNeuron[profiledOutputTree.node2LocMap[segIt1->head]].parent = profiledOutputTree.tree.listNeuron[profiledOutputTree.node2LocMap[connSeg.tails[0]]].n;
-			}
-		}
-		//cout << endl;
-
-		
-	}*/
-
-	//outputTree.listNeuron = inputProfiledTree.tree.listNeuron;
 
 	return outputProfiledTree.tree;
 }
