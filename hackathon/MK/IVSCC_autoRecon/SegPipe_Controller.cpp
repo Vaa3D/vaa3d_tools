@@ -1089,3 +1089,21 @@ void SegPipe_Controller::swcSeparate(QString outputRoot2)
 		writeSWC_file(outputSWCPath2, noiseTree);
 	}
 }
+
+void SegPipe_Controller::segElongation()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
+		NeuronTree elongedTree = myNeuronStructExpPtr->segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, elongedTree);
+
+		myNeuronStructExpPtr->treeDataBase.clear();
+	}
+}
