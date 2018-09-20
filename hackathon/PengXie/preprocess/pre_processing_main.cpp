@@ -52,7 +52,6 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         pList.append(node.pn);
         nList.append(node.n);
     }
-    cout<<1<<endl;
 
     //connected component
     QList<int> components = get_components(nt); // revise this!
@@ -163,29 +162,18 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     }
 //    export_list2file(listneuron, qPrintable(outfileLabel + ".connect_soma.swc"));
     new_tree.deepCopy(neuronlist_2_neurontree(listneuron));
-    cout << "connect non-soma regions"<<endl;
-    new_tree.deepCopy(my_connectall(new_tree, 1, 1, 5, 60, 10, 1, false, 1));
-    const int new_N = new_tree.listNeuron.size();
-
-    // color branches that cannot connect to the main tree;
-//    components = get_components(new_tree);
-//    QList<int> lost_branch;
-//    for(int i=0; i<components.size(); i++){
-//        if(components.at(i)>0){lost_branch.append(i);}
-//    }
-//    new_tree.deepCopy(color_subtree_by_id(new_tree, lost_branch, 7));
-//    new_tree.deepCopy(my_SortSWC(new_tree, 1, 0));
-    new_tree.deepCopy(color_lost_branch(new_tree));
+//    cout << "connect non-soma regions"<<endl;
+//    new_tree.deepCopy(my_connectall(new_tree, 1, 1, 5, 60, connectall_thres, 1, false, 1));
+//    new_tree.deepCopy(color_lost_branch(new_tree));
 
     writeAPO_file(outfileLabel+QString(".apo"), markers);
     return new_tree;
 }
 
-bool pre_processing(QString qs_input, QString qs_output, double prune_size, double thres,
+bool pre_processing(QString qs_input, QString qs_output, double prune_size, double thres, double thres_long,
                     double step_size, double connect_soma_dist, bool rotation,
                     bool colorful, bool return_maintree)
 {
-
     printf("welcome to use pre_processing!\n");
 
     QString outfileLabel;
@@ -257,10 +245,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }
     else{
         printf("\tSkip connecting to soma\n");
-        nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, 10, 1, false, 1));
-        nt.deepCopy(color_lost_branch(nt));
     }
-
+    nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, thres_long, 1, false, 1));
+    nt.deepCopy(color_lost_branch(nt));
     //2.6 Align axis
     cur_nt.listNeuron = nt.listNeuron;
     if (rotation)
@@ -339,12 +326,13 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
     double step_size = 0;
     double connect_soma_dist = 70;
     double thres = 10;
+    double thres_long = 10;
     bool rotation = false;
     bool colorful = false;
     bool return_maintree = false;
 	
 	int c;
-    static char optstring[]="hi:o:l:s:m:t:r:d:f:";
+    static char optstring[]="hi:o:l:s:m:t:r:d:f:z:";
 	extern char * optarg;
 	extern int optind, opterr;
     optind = 1;
@@ -417,6 +405,18 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
                     fprintf(stderr, "Illegal thres.\n");
                 }
                 break;
+        case 'z':
+            if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+            {
+                fprintf(stderr, "Found illegal or NULL parameter for the option -t.\n");
+                return 1;
+            }
+            thres_long = atof(optarg);
+            if (thres_long<-1)
+            {
+                fprintf(stderr, "Illegal thres.\n");
+            }
+            break;
            case 'r':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
@@ -478,7 +478,7 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
     }
 
     // Pre-process
-    pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
+    pre_processing(qs_input, qs_output, prune_size, thres, thres_long, step_size, connect_soma_dist, rotation, colorful, return_maintree);
     return 1;
 }
 
@@ -532,8 +532,10 @@ void printHelp_pre_processing()
     printf("\t                         use 0 to skip, if not specified, use 0.\n");
     printf("\t#m <thres_connect_soma>       :   maximun distance to connect a node to soma.\n");
     printf("\t                         use 0 to skip, if not specified, use 1000.\n");
-    printf("\t#t <thres>       :    gap threshold for connecting during the sorting procedure.\n");
+    printf("\t#t <thres>       :    gap threshold before soma connection.\n");
     printf("\t                        if not specified, use 0.\n");
+    printf("\t#z <thres_long>       :   gap threshold after soma connection.\n");
+    printf("\t                        if not specified, use 10.\n");
     printf("\t#r <rotation = 0>   :   whether to perform PCA alignment.\n");
     printf("\t                         if not specified, rotation is not performed\n");
     printf("\t#d <label_subtree = 0>   :   whether to give each subtree a different color.\n");

@@ -19,7 +19,7 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
 #ifdef Q_OS_WIN32
     QString sep("\\");
 #else
-    Qstring sep("/");
+    QString sep("/");
 #endif
 
     std::ifstream infile(qPrintable(inswclist));
@@ -89,12 +89,14 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
         int sid = soma_nlist.indexOf(inswcID);
         if(sid < 0){
             printf("Error: soma id %s not found in soma_list!\n", qPrintable(inswcID));
-            continue;
+//            continue;
         }
-        QList<CellAPO> this_soma;
-        this_soma.append(soma_apo.at(sid));
-        writeAPO_file(temp_apo, this_soma);
-        QFile temp_apo_file(temp_apo);
+        else{
+            QList<CellAPO> this_soma;
+            this_soma.append(soma_apo.at(sid));
+            writeAPO_file(temp_apo, this_soma);
+            QFile temp_apo_file(temp_apo);
+        }
         // temp_swc
         QString temp_swc = outswcdir + inswcName + QString(".temp.swc");
         QFile temp_swc_file(temp_swc);
@@ -132,7 +134,7 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
                 logging << 1 << endl;
             }
         }
-        temp_apo_file.remove();
+//        temp_apo_file.remove();
         temp_swc_file.remove();
     }
     logging.close();

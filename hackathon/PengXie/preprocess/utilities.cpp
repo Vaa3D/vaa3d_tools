@@ -232,7 +232,7 @@ QList<int> get_components(NeuronTree nt){
             pid = pstack.top();
             // whether exist unvisited children of pid
             // if yes, push child to stack;
-            for(auto i=children[pid].begin(); i!=children[pid].end(); ++i){  // This loop can be more efficient, improve it later!
+            for(V3DLONG *i=children[pid].begin(); i!=children[pid].end(); ++i){  // This loop can be more efficient, improve it later!
                 if(visited.at(*i)==0){
                     pstack.push(*i);
                     visited[*i]=1;
@@ -335,7 +335,7 @@ NeuronTree single_tree(NeuronTree nt, int soma){
             pid = pstack.top();
             // whether exist unvisited children of pid
             // if yes, push child to stack;
-            for (auto i = children[pid].begin(); i != children[pid].end(); ++i)
+            for (V3DLONG *i = children[pid].begin(); i != children[pid].end(); ++i)
             {
                 NeuronSWC node = nt.listNeuron.at(*i);
                 if(nList.lastIndexOf(node.pn)==pid && visited.at(*i)==0){
