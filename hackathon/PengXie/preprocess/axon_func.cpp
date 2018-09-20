@@ -66,15 +66,24 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
         name_list.append(nt.listNeuron.at(i).n);
     }
 
-    list<int> children[MAXSIZE];
-    for(int i=0; i<N; i++){
-        NeuronSWC node = nt.listNeuron.at(i);
-        int pid = name_list.lastIndexOf(node.pn);
-        if(pid<0){
-            continue;
-        }
+//    list<int> children[MAXSIZE];
+//    for(int i=0; i<N; i++){
+//        NeuronSWC node = nt.listNeuron.at(i);
+//        int pid = name_list.lastIndexOf(node.pn);
+//        if(pid<0){
+//            continue;
+//        }
+//        children[pid].push_back(i);
+//    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(N, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<N;i++)
+    {
+        int pid = name_list.lastIndexOf(nt.listNeuron.at(i).pn);
+        if (pid<0) continue;
         children[pid].push_back(i);
     }
+
 
     // 1. find longest path from soma
     // DFS
@@ -138,6 +147,7 @@ QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
     NeuronTree axon = readSWC_file(whole_axon_swc);
     QList<int> plist;
     QList<int> nlist;
+    const int N = axon.listNeuron.size();
     for(int i=0; i<axon.listNeuron.size();i++){
         NeuronSWC node=axon.listNeuron.at(i);
         plist.append(node.pn);
@@ -149,12 +159,19 @@ QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
     QList<int> lpa_id = match_axon_and_lpa(axon, lpa);
     lpa = get_subtree_by_name(axon, lpa_id);
 
-
-    cout <<2<<endl;
     // 2. Branch size at every node of lpa
     QList<double> lpa_size;
     for(int i=0; i<lpa.listNeuron.size();i++){lpa_size.append(0);}
     double branch_size;
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(N, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<N;i++)
+    {
+        int pid = nlist.lastIndexOf(axon.listNeuron.at(i).pn);
+        if (pid<0) continue;
+        children[pid].push_back(i);
+    }
+
     for(int i=0; i<axon.listNeuron.size(); i++){
         branch_size=0;
         NeuronSWC node = axon.listNeuron.at(i);
@@ -175,10 +192,11 @@ QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
                 pid = pstack.top();
                 // whether exist unvisited children of pid
                 // if yes, push child to stack;
-                for(int j=0; j<axon.listNeuron.size();j++){  // This loop can be more efficient, improve it later!
-                    if((axon.listNeuron.at(j).pn)==nlist.at(pid) && visited.at(j)==0){
-                        pstack.push(j);
-                        visited[j]=1;
+//                for(int j=0; j<axon.listNeuron.size();j++){  // This loop can be more efficient, improve it later!
+                for(auto j=children[pid].begin(); j!=children[pid].end(); ++j){
+                    if((axon.listNeuron.at(*j).pn)==nlist.at(pid) && visited.at(*j)==0){
+                        pstack.push(*j);
+                        visited[*j]=1;
 //                        branch_size+=1;
                         
                         is_push=true;
@@ -296,13 +314,22 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     int size_thres = 10;
     QList<int> branch_ind;
     const int N=axon.listNeuron.size();
-    list<int> children[MAXSIZE];
-    for(int i=0; i<N; i++){
-        NeuronSWC node = axon.listNeuron.at(i);
-        int pid = nlist.lastIndexOf(node.pn);
-        if(pid<0){continue;}
+//    list<int> children[MAXSIZE];
+//    for(int i=0; i<N; i++){
+//        NeuronSWC node = axon.listNeuron.at(i);
+//        int pid = nlist.lastIndexOf(node.pn);
+//        if(pid<0){continue;}
+//        children[pid].push_back(i);
+//    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(N, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<N;i++)
+    {
+        int pid = nlist.lastIndexOf(axon.listNeuron.at(i).pn);
+        if (pid<0) continue;
         children[pid].push_back(i);
     }
+
     for(int i=1; i<axon.listNeuron.size(); i++){
         branch_ind.clear();
         NeuronSWC node = axon.listNeuron.at(i);

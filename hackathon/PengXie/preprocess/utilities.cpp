@@ -11,7 +11,7 @@ using namespace std;
 #include "neuron_connector_func.h"
 #include "utilities.h"
 
-#define MAXSIZE 1000000
+#define MAXSIZE 100000
 
 NeuronTree neuron_deepcopy(NeuronTree nt){
     QList<NeuronSWC> new_list;
@@ -158,6 +158,21 @@ int get_soma(NeuronTree nt){
     }
     return soma;
 }
+
+QList<int> getChild(int t, QList <NeuronSWC> & list, QHash<int,int> & LUT)
+{
+        QList<int> childlist = QList<int>();
+        int pan;
+        for (int i=0;i<list.size();i++)
+        {
+                pan = list.at(i).pn;
+                if (pan==-1) continue;
+                if (LUT.value(pan)==t)
+                        childlist.append(i);
+        }
+        return childlist;
+}
+
 QList<int> get_components(NeuronTree nt){
     //connected component
     printf("welcom to use get_components\n");
@@ -178,16 +193,24 @@ QList<int> get_components(NeuronTree nt){
         pList.append(nt.listNeuron.at(i).pn);
     }
 
-//    list<int> children[N];
-    list<int> children[MAXSIZE];
-    for(int i=0; i<N; i++){
-        NeuronSWC node = nt.listNeuron.at(i);
-        int pid = nList.lastIndexOf(node.pn);
-        if(pid<0){
-            continue;
-        }
+//    list<int> children[MAXSIZE];
+//    for(int i=0; i<N; i++){
+//        NeuronSWC node = nt.listNeuron.at(i);
+//        int pid = nList.lastIndexOf(node.pn);
+//        if(pid<0){
+//            continue;
+//        }
+//        children[pid].push_back(i);
+//    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(N, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<N;i++)
+    {
+        int pid = nList.lastIndexOf(nt.listNeuron.at(i).pn);
+        if (pid<0) continue;
         children[pid].push_back(i);
     }
+
 
     //assign nodes to components
     for(int cid=0; cid<ncomponents; cid++){
@@ -271,13 +294,21 @@ NeuronTree single_tree(NeuronTree nt, int soma){
     }
 
 //    list<int> children[N];
-    list<int> children[MAXSIZE];
-    for(int i=0; i<N; i++){
-        NeuronSWC node = nt.listNeuron.at(i);
-        int pid = nList.lastIndexOf(node.pn);
-        if(pid<0){
-            continue;
-        }
+//    list<int> children[MAXSIZE];
+//    for(int i=0; i<N; i++){
+//        NeuronSWC node = nt.listNeuron.at(i);
+//        int pid = nList.lastIndexOf(node.pn);
+//        if(pid<0){
+//            continue;
+//        }
+//        children[pid].push_back(i);
+//    }
+    QVector<QVector<V3DLONG> > children;
+    children = QVector< QVector<V3DLONG> >(N, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<N;i++)
+    {
+        int pid = nList.lastIndexOf(nt.listNeuron.at(i).pn);
+        if (pid<0) continue;
         children[pid].push_back(i);
     }
 

@@ -52,6 +52,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         pList.append(node.pn);
         nList.append(node.n);
     }
+    cout<<1<<endl;
 
     //connected component
     QList<int> components = get_components(nt); // revise this!

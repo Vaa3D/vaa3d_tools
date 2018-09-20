@@ -6,7 +6,7 @@
 #define DISABLE_V3D_MSG
 #endif
 
-#define DEFAULT 1000000000
+#define DEFAULT 100000
 
 #include "preprocess_batch_main.h"
 #include "fstream"
@@ -15,6 +15,13 @@
 
 
 bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QString qctable, bool skip_existing){
+
+#ifdef Q_OS_WIN32
+    QString sep("\\");
+#else
+    Qstring sep("/");
+#endif
+
     std::ifstream infile(qPrintable(inswclist));
     std::string line;
     printf("welcome to use preprocess_batch\n");
@@ -62,14 +69,14 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
         else{
             printf("Error: not all input files are swc's!\n");
         }
-        QString inswcName = inswcPrefix.right(inswcPrefix.length()-inswcPrefix.lastIndexOf("/")-1);
+        QString inswcName = inswcPrefix.right(inswcPrefix.length()-inswcPrefix.lastIndexOf(sep)-1);
         if(outswcdir.size()==0){  // If outswcdir is not specified, processed swc will be put into the same folder as input swc.
             outswcdir = inswcPrefix;
-            if(inswcPrefix.lastIndexOf("/")>=0){
-                outswcdir = outswcdir.left(inswcPrefix.lastIndexOf("/")+1);
+            if(inswcPrefix.lastIndexOf(sep)>=0){
+                outswcdir = outswcdir.left(inswcPrefix.lastIndexOf(sep)+1);
             }
             else{
-                outswcdir = QString("./");
+                outswcdir = QString(".")+sep;
             }
         }
         // 0.2 Temp
