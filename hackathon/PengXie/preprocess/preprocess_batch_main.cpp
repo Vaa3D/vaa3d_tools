@@ -36,7 +36,6 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
     for(int i=0; i<soma_apo.size(); i++){
         QString tp_name = soma_apo.at(i).name;
         tp_name.replace(QString(" "), QString(""));
-        cout<<qPrintable(tp_name)<<endl;
         soma_nlist.append(tp_name);
     }
 
