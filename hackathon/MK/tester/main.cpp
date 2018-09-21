@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("segElongate"))
 	{
-		string inputSWCname = "H:\\IVSCC_mouse_inhibitory\\testInput\\319215569.swc";
+		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569.swc";
 		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
 
@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
+		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
 
