@@ -16,12 +16,13 @@
 
 bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QString qctable, bool skip_existing){
 
-#ifdef Q_OS_WIN32
-    QString sep("\\");
-#else
-    QString sep("/");
-#endif
+//#ifdef Q_OS_WIN32
+//    QString sep("\\");
+//#else
+//    QString sep("/");
+//#endif
 
+    QString sep("/");
     std::ifstream infile(qPrintable(inswclist));
     std::string line;
     printf("welcome to use preprocess_batch\n");
