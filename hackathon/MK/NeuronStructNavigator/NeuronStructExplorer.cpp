@@ -184,19 +184,16 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it) 
 				newSeg.seg_nodeLocMap.insert(pair<int, size_t>(it->n, size_t(it - newSeg.nodes.begin())));
 
-			vector<size_t> childSegLocs;
-			newSeg.seg_childLocMap.insert(pair<int, vector<size_t>>(newSeg.nodes.begin()->n, childSegLocs));
 			for (QList<NeuronSWC>::iterator it = newSeg.nodes.begin(); it != newSeg.nodes.end(); ++it)
 			{
-				if (it->parent == -1) continue;
+				vector<size_t> childSegLocs;
+				if (newSeg.seg_childLocMap.find(it->n) == newSeg.seg_childLocMap.end()) newSeg.seg_childLocMap.insert(pair<int, vector<size_t>>(it->n, childSegLocs));
 
-				size_t paLoc = newSeg.seg_nodeLocMap[it->parent];
-				if (newSeg.seg_childLocMap.find(newSeg.nodes[paLoc].n) != newSeg.seg_childLocMap.end()) newSeg.seg_childLocMap[newSeg.nodes[paLoc].n].push_back(newSeg.seg_nodeLocMap[it->n]);
-				else
+				vector<size_t> childLocs = node2childLocMap.at(it->n);
+				for (vector<size_t>::iterator globalChildLocIt = childLocs.begin(); globalChildLocIt != childLocs.end(); ++globalChildLocIt)
 				{
-					vector<size_t> childSet;
-					childSet.push_back(newSeg.seg_nodeLocMap[it->n]);
-					newSeg.seg_childLocMap.insert(pair<int, vector<size_t>>(newSeg.nodes[newSeg.seg_nodeLocMap[it->parent]].n, childSet));
+					size_t childSegLoc = newSeg.seg_nodeLocMap[inputNodeList.at(*globalChildLocIt).n];
+					newSeg.seg_childLocMap[it->n].push_back(childSegLoc);
 				}
 			}
 			segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -509,6 +506,7 @@ segUnit NeuronStructExplorer::segUnitConnect(const pair<int, int>& elongConnPair
 	{
 		case head_tail:
 		{
+			system("pause");
 			int connTailID = *currProfiledTree.segs.at(elongConnPair.second).tails.cbegin();
 				//segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())).n;
 			endEditedNodes = currProfiledTree.segs.at(elongConnPair.first).nodes;
@@ -520,6 +518,7 @@ segUnit NeuronStructExplorer::segUnitConnect(const pair<int, int>& elongConnPair
 		}
 		case tail_head:
 		{
+			system("pause");
 			int connTailID = *currProfiledTree.segs.at(elongConnPair.first).tails.cbegin();
 				//segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())).n;
 			endEditedNodes = currProfiledTree.segs.at(elongConnPair.second).nodes;
@@ -574,6 +573,7 @@ segUnit NeuronStructExplorer::segUnitConnect(const pair<int, int>& elongConnPair
 		}
 		case tail_tail:
 		{
+			system("pause");
 			int connTailID = *currProfiledTree.segs.at(elongConnPair.second).tails.cbegin();  //*segUnit2.tails.cbegin();
 			for (map<int, vector<size_t>>::const_iterator it = currProfiledTree.segs.at(elongConnPair.first).seg_childLocMap.cbegin();
 				it != currProfiledTree.segs.at(elongConnPair.first).seg_childLocMap.cend(); ++it)
