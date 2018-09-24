@@ -1107,3 +1107,21 @@ void SegPipe_Controller::segElongation()
 		myNeuronStructExpPtr->treeDataBase.clear();
 	}
 }
+
+void SegPipe_Controller::segTerminalize()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
+		NeuronTree outputTree = NeuronStructExplorer::segTerminalize(myNeuronStructExpPtr->treeDataBase.begin()->second);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
+
+		myNeuronStructExpPtr->treeDataBase.clear();
+	}
+}

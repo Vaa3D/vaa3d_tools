@@ -396,9 +396,9 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 	}
 }
 
-segUnit NeuronStructExplorer::segUnitConnect(const pair<int, int>& elongConnPair, const profiledTree& currProfiledTree, connectOrientation connOrt)
+segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
 {
-	if (currProfiledTree.segs.at(elongConnPair.first).tails.size() > 1 || currProfiledTree.segs.at(elongConnPair.second).tails.size() > 1)
+	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
 		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");	
 
 	segUnit newSeg;
@@ -409,42 +409,40 @@ segUnit NeuronStructExplorer::segUnitConnect(const pair<int, int>& elongConnPair
 	{
 		case head_tail:
 		{
-			int connTailID = *currProfiledTree.segs.at(elongConnPair.second).tails.cbegin();
-			endEditedNodes = currProfiledTree.segs.at(elongConnPair.first).nodes;
+			int connTailID = *segUnit2.tails.cbegin();
+			endEditedNodes = segUnit1.nodes;
 			endEditedNodes.begin()->parent = connTailID; // In current implementation, the 1st element of a seg must be a root.
-			newSegNodes.append(currProfiledTree.segs.at(elongConnPair.second).nodes);
+			newSegNodes.append(segUnit2.nodes);
 			newSegNodes.append(endEditedNodes);
 			newSeg.nodes = newSegNodes;
 			break;
 		}
 		case tail_head:
 		{
-			int connTailID = *currProfiledTree.segs.at(elongConnPair.first).tails.cbegin();
-			endEditedNodes = currProfiledTree.segs.at(elongConnPair.second).nodes;
+			int connTailID = *segUnit1.tails.cbegin();
+			endEditedNodes = segUnit2.nodes;
 			endEditedNodes.begin()->parent = connTailID; // In current implementation, the 1st element of a seg must be a root. 
-			newSegNodes.append(currProfiledTree.segs.at(elongConnPair.first).nodes);
+			newSegNodes.append(segUnit1.nodes);
 			newSegNodes.append(endEditedNodes);
 			newSeg.nodes = newSegNodes;
 			break;
 		}
 		case head_head:
 		{
-			segUnit connSeg = currProfiledTree.segs.at(elongConnPair.second);
-			int connTailID = currProfiledTree.segs.at(elongConnPair.second).head;
-			for (map<int, vector<size_t>>::const_iterator it = currProfiledTree.segs.at(elongConnPair.second).seg_childLocMap.cbegin(); 
-				it != currProfiledTree.segs.at(elongConnPair.second).seg_childLocMap.cend(); ++it)
+			int connTailID = segUnit2.head;
+			for (map<int, vector<size_t>>::const_iterator it = segUnit2.seg_childLocMap.cbegin(); it != segUnit2.seg_childLocMap.cend(); ++it)
 			{
-				size_t nodeLoc = currProfiledTree.segs.at(elongConnPair.second).seg_nodeLocMap.at(it->first);
-				NeuronSWC newNode = currProfiledTree.segs.at(elongConnPair.second).nodes.at(nodeLoc);
+				size_t nodeLoc = segUnit2.seg_nodeLocMap.at(it->first);
+				NeuronSWC newNode = segUnit2.nodes.at(nodeLoc);
 				if (it->second.empty())
 				{
 					//cout << newNode.x << " " << newNode.y << " " << newNode.z << endl;
 					newNode.parent = -1;
 				}
-				else newNode.parent = currProfiledTree.segs.at(elongConnPair.second).nodes.at(*(it->second.cbegin())).n;
+				else newNode.parent = segUnit2.nodes.at(*(it->second.cbegin())).n;
 				endEditedNodes.push_back(newNode);
 			}
-			newSegNodes.append(currProfiledTree.segs.at(elongConnPair.first).nodes);
+			newSegNodes.append(segUnit1.nodes);
 			newSegNodes.begin()->parent = connTailID;
 			newSegNodes.append(endEditedNodes);
 			newSeg.nodes = newSegNodes;
@@ -452,17 +450,16 @@ segUnit NeuronStructExplorer::segUnitConnect(const pair<int, int>& elongConnPair
 		}
 		case tail_tail:
 		{
-			int connTailID = *currProfiledTree.segs.at(elongConnPair.second).tails.cbegin();
-			for (map<int, vector<size_t>>::const_iterator it = currProfiledTree.segs.at(elongConnPair.first).seg_childLocMap.cbegin();
-				it != currProfiledTree.segs.at(elongConnPair.first).seg_childLocMap.cend(); ++it)
+			int connTailID = *segUnit2.tails.cbegin();
+			for (map<int, vector<size_t>>::const_iterator it = segUnit1.seg_childLocMap.cbegin(); it != segUnit1.seg_childLocMap.cend(); ++it)
 			{
-				size_t nodeLoc = currProfiledTree.segs.at(elongConnPair.first).seg_nodeLocMap.at(it->first);
-				NeuronSWC newNode = currProfiledTree.segs.at(elongConnPair.first).nodes.at(nodeLoc);
+				size_t nodeLoc = segUnit1.seg_nodeLocMap.at(it->first);
+				NeuronSWC newNode = segUnit1.nodes.at(nodeLoc);
 				if (it->second.empty()) newNode.parent = connTailID;
-				else newNode.parent = currProfiledTree.segs.at(elongConnPair.first).nodes.at(*(it->second.cbegin())).n;
+				else newNode.parent = segUnit1.nodes.at(*(it->second.cbegin())).n;
 				endEditedNodes.push_back(newNode);
 			}
-			newSegNodes.append(currProfiledTree.segs.at(elongConnPair.second).nodes);
+			newSegNodes.append(segUnit2.nodes);
 			newSegNodes.append(endEditedNodes);
 			newSeg.nodes = newSegNodes;
 			break;
@@ -511,7 +508,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deted = true;
 		currProfiledTree.segs[it->second].to_be_deted = true;
-		segUnit newSeg = this->segUnitConnect(pair<int, int>(it->first, it->second), currProfiledTree, head_tail);
+		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -550,7 +547,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deted = true;
 		currProfiledTree.segs[it->second].to_be_deted = true;
-		segUnit newSeg = this->segUnitConnect(pair<int, int>(it->first, it->second), currProfiledTree, tail_head);
+		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -589,7 +586,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deted = true;
 		currProfiledTree.segs[it->second].to_be_deted = true;
-		segUnit newSeg = this->segUnitConnect(pair<int, int>(it->first, it->second), currProfiledTree, head_head);
+		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
@@ -628,7 +625,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	{
 		currProfiledTree.segs[it->first].to_be_deted = true;
 		currProfiledTree.segs[it->second].to_be_deted = true;
-		segUnit newSeg = this->segUnitConnect(pair<int, int>(it->first, it->second), currProfiledTree, tail_tail);
+		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
 		currProfiledTree.segs.insert(pair<int, segUnit>(newSeg.segID, newSeg));
