@@ -1100,9 +1100,9 @@ void SegPipe_Controller::segElongation()
 		treeName = treeName.substr(0, treeName.length() - 3);
 
 		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
-		NeuronTree elongedTree = myNeuronStructExpPtr->segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second);
+		profiledTree elongatedTree = myNeuronStructExpPtr->itered_segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second);
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCPath, elongedTree);
+		writeSWC_file(outputSWCPath, elongatedTree.tree);
 
 		myNeuronStructExpPtr->treeDataBase.clear();
 	}
