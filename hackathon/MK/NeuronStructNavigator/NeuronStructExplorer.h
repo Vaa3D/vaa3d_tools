@@ -94,19 +94,21 @@ public:
 
 	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName);
+	inline void profiledTreeReInit(profiledTree& inputProfiledTree);
 	/*******************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/
-	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, map<int, vector<size_t>>& node2childLocMap);
-	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, bool head = true, float xyLength = 30); // <- problem?
+	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
+	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, bool head = true, float xyLength = 50);
 	
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, bool spikeRemove = true);
 	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 	
-	NeuronTree segElongate(const profiledTree& inputProfiledTree);
-	segUnit segUnitConnect(const pair<int, int>& elongConnPair, const profiledTree& currProfiledTree, const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
+	profiledTree segElongate(const profiledTree& inputProfiledTree);
+	profiledTree itered_segElongate(profiledTree& inputProfiledTree);
+	segUnit segUnitConnect(const pair<int, int>& elongConnPair, const profiledTree& currProfiledTree, connectOrientation connOrt);
 	/**********************************************************************/
 
 	/***************** Geometry *****************/
@@ -115,7 +117,7 @@ public:
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
-	map<int, segUnit> segRegionConn_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, bool length = false);
+	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, bool length = false);
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	/********************************************/
 
@@ -214,6 +216,23 @@ inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, d
 			elongConnMap.insert(pair<int, int>(seg1, seg2));
 		}
 	}
+}
+
+inline profiledTree NeuronStructExplorer::itered_segElongate(profiledTree& inputProfiledTree)
+{
+	cout << "iteration 1  ";
+	int iterCount = 1;
+	profiledTree elongatedTree = this->segElongate(inputProfiledTree);
+	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
+	{
+		++iterCount;
+		cout << iterCount << " " << endl;
+		inputProfiledTree = elongatedTree;
+		elongatedTree = this->segElongate(inputProfiledTree);
+	}
+	cout << endl;
+
+	return elongatedTree;
 }
 
 #endif

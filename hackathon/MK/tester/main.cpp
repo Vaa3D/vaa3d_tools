@@ -129,36 +129,16 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("segElongate"))
 	{
-		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testInput\\319215569.swc";
+		string inputSWCname = "H:\\IVSCC_mouse_inhibitory\\testInput\\319215569.swc";
 		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
+		profiledTree inputProfiledTree(inputTree);
 
 		NeuronStructExplorer mySWCExplorer;
-		NeuronTree outputTree;
-		bool deleted = true;
-		int count = 0;
-		while (deleted)
-		{
-			++count;
-			cout << count << endl;
-			profiledTree inputProfiledTree(inputTree);
-			outputTree = mySWCExplorer.segElongate(inputProfiledTree);
-			for (map<int, segUnit>::iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
-			{
-				if (it->second.to_be_deted)
-				{
-					inputTree = outputTree;
-					goto DELETED_SEG_FOUND;
-				}
-			}
-			deleted = false;
+		profiledTree elongatedTree = mySWCExplorer.itered_segElongate(inputProfiledTree);
 
-		DELETED_SEG_FOUND:
-			continue;
-		}
-
-		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
-		writeSWC_file(outputSWCname, outputTree);
+		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
+		writeSWC_file(outputSWCname, elongatedTree.tree);
 	}
 
 
