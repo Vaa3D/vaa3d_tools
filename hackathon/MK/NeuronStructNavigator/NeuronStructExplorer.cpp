@@ -733,6 +733,40 @@ profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiled
 	return outputProfiledTree;
 }
 
+profiledTree NeuronStructExplorer::treeUnion(const profiledTree& expandingPart, const profiledTree& baseTree)
+{
+	// Incomplete
+
+	set<int> connectedSegs;
+	profiledTree outputProfiledTree;
+
+	for (map<int, segUnit>::const_iterator segIt = expandingPart.segs.begin(); segIt != expandingPart.segs.end(); ++segIt)
+	{
+		NeuronSWC headNode = *segIt->second.nodes.begin();
+		string xLabel = to_string(int(headNode.x / tileXYlength));
+		string yLabel = to_string(int(headNode.y / tileXYlength));
+		string zLabel = to_string(int(headNode.z / (tileXYlength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		//cout << keyLabel << ": ";
+
+		vector<int> baseSegHeads;
+		vector<int> baseSegTails;
+		vector<int> baseSegs;
+		if (baseTree.segHeadMap.find(keyLabel) != baseTree.segHeadMap.end()) baseSegHeads = baseTree.segHeadMap.at(keyLabel);
+		if (baseTree.segTailMap.find(keyLabel) != baseTree.segTailMap.end()) baseSegTails = baseTree.segTailMap.at(keyLabel);
+		baseSegs = baseSegHeads;
+		for (vector<int>::iterator tileSegIt = baseSegTails.begin(); tileSegIt != baseSegTails.end(); ++tileSegIt)
+		{
+			if (find(baseSegHeads.begin(), baseSegHeads.end(), *tileSegIt) == baseSegs.end())
+				baseSegs.push_back(*tileSegIt);
+		}
+		//for (vector<int>::iterator checkSegIt = baseSegs.begin(); checkSegIt != baseSegs.end(); ++checkSegIt) cout << *checkSegIt << " ";
+		//cout << endl;
+	}
+
+	return outputProfiledTree;
+}
+
 NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 {
 	NeuronTree MSTtrees;
@@ -788,44 +822,47 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 	return MSTtree;
 }
 
-NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfiledTree, bool spikeRemove)
+NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre, bool spikeRemove)
 {
 	// -- This method breaks all branching points of a MST-connected tree.
 	// -- When the value of spikeRemove is true, it eliminates spikes on a main route without breaking it. The default value is true. 
 
-	NeuronTree outputTree = inputProfiledTree.tree;
+	profiledTree outputProfiledTree(inputProfiledTree.tree);
 
 	vector<size_t> spikeLocs;
 	if (spikeRemove)
 	{
-		for (QList<NeuronSWC>::iterator it = outputTree.listNeuron.begin(); it != outputTree.listNeuron.end(); ++it)
+		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
 		{
-			vector<size_t> childLocs = inputProfiledTree.node2childLocMap.at(it->n);
-			if (childLocs.size() >= 2)
+			if (outputProfiledTree.node2childLocMap.find(it->n) != outputProfiledTree.node2childLocMap.end())
 			{
-				int nodeRemoveCount = 0;
-				for (vector<size_t>::iterator locIt = childLocs.begin(); locIt != childLocs.end(); ++locIt)
+				vector<size_t> childLocs = outputProfiledTree.node2childLocMap.at(it->n);
+				if (childLocs.size() >= 2)
 				{
-					if (inputProfiledTree.node2childLocMap.at(outputTree.listNeuron[*locIt].n).size() == 0)
+					int nodeRemoveCount = 0;
+					for (vector<size_t>::iterator locIt = childLocs.begin(); locIt != childLocs.end(); ++locIt)
 					{
-						double spikeDist = sqrt((outputTree.listNeuron[*locIt].x - it->x) * (outputTree.listNeuron[*locIt].x - it->x) +
-							(outputTree.listNeuron[*locIt].y - it->y) * (outputTree.listNeuron[*locIt].y - it->y) +
-							(outputTree.listNeuron[*locIt].z - it->z) * (outputTree.listNeuron[*locIt].z - it->z) * zRATIO * zRATIO);
-						if (spikeDist <= 10) // Take out splikes.
+						if (outputProfiledTree.node2childLocMap.find(outputProfiledTree.tree.listNeuron.at(*locIt).n) == outputProfiledTree.node2childLocMap.end())
 						{
-							spikeLocs.push_back(*locIt);
-							++nodeRemoveCount;
+							double spikeDist = sqrt((outputProfiledTree.tree.listNeuron.at(*locIt).x - it->x) * (outputProfiledTree.tree.listNeuron.at(*locIt).x - it->x) +
+								(outputProfiledTree.tree.listNeuron.at(*locIt).y - it->y) * (outputProfiledTree.tree.listNeuron.at(*locIt).y - it->y) +
+								(outputProfiledTree.tree.listNeuron.at(*locIt).z - it->z) * (outputProfiledTree.tree.listNeuron.at(*locIt).z - it->z) * zRATIO * zRATIO);
+							if (spikeDist <= spikeThre) // Take out splikes.
+							{
+								spikeLocs.push_back(*locIt);
+								++nodeRemoveCount;
+							}
 						}
 					}
-				}
 
-				if (nodeRemoveCount == childLocs.size() - 1) continue; // If there is only 1 child left after taking out all spikes, then this node is supposed to be on the main route.
-				else
-				{
-					for (vector<size_t>::iterator locCheckIt = childLocs.begin(); locCheckIt != childLocs.end(); ++locCheckIt)
+					if (nodeRemoveCount == childLocs.size() - 1) continue; // If there is only 1 child left after taking out all spikes, then this node is supposed to be on the main route.
+					else
 					{
-						if (find(spikeLocs.begin(), spikeLocs.end(), *locCheckIt) == spikeLocs.end())
-							outputTree.listNeuron[*locCheckIt].parent = -1;
+						for (vector<size_t>::iterator locCheckIt = childLocs.begin(); locCheckIt != childLocs.end(); ++locCheckIt)
+						{
+							if (find(spikeLocs.begin(), spikeLocs.end(), *locCheckIt) == spikeLocs.end())
+								outputProfiledTree.tree.listNeuron[*locCheckIt].parent = -1; // 'at' operator treats the container as const, and cannot assign values. Therefore, use [] instead.
+						}
 					}
 				}
 			}
@@ -833,12 +870,15 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 	}
 	else
 	{
-		for (QList<NeuronSWC>::iterator it = outputTree.listNeuron.begin(); it != outputTree.listNeuron.end(); ++it)
+		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
 		{
-			if (inputProfiledTree.node2childLocMap.at(it->n).size() >= 2)
+			if (outputProfiledTree.node2childLocMap.find(it->n) != outputProfiledTree.node2childLocMap.end())
 			{
-				for (vector<size_t>::const_iterator locIt = inputProfiledTree.node2childLocMap.at(it->n).begin(); locIt != inputProfiledTree.node2childLocMap.at(it->n).end(); ++locIt)
-					outputTree.listNeuron[*locIt].parent = -1;
+				if (outputProfiledTree.node2childLocMap.at(it->n).size() >= 2)
+				{
+					for (vector<size_t>::const_iterator locIt = outputProfiledTree.node2childLocMap.at(it->n).begin(); locIt != outputProfiledTree.node2childLocMap.at(it->n).end(); ++locIt)
+						outputProfiledTree.tree.listNeuron[*locIt].parent = -1;
+				}
 			}
 		}
 	}
@@ -847,10 +887,10 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 	{
 		sort(spikeLocs.rbegin(), spikeLocs.rend());
 		for (vector<size_t>::iterator delIt = spikeLocs.begin(); delIt != spikeLocs.end(); ++delIt)
-			outputTree.listNeuron.erase(outputTree.listNeuron.begin() + ptrdiff_t(*delIt));
+			outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*delIt));
 	}
 
-	return outputTree;
+	return outputProfiledTree.tree;
 }
 
 vector<segUnit> NeuronStructExplorer::MSTtreeTrim(vector<segUnit>& inputSegUnits)

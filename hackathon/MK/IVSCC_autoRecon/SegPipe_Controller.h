@@ -79,6 +79,8 @@ public:
 	void breakMSTbranch();
 	void segElongation();
 	void segTerminalize();
+	void dotRemove();
+	void longConnCut();
 
 	void nodeIdentify();
 	void swcSeparate(QString outputRoot2);

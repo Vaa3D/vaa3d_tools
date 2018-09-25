@@ -37,7 +37,9 @@ public:
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 	/***************************************************/
 
+	/***************** Inter-SWC Comparison *****************/
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
+	/********************************************************/
 
 	/********* SWC to ImgAnalyzer::connectedComponent *********/
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
@@ -133,6 +135,10 @@ void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& ou
 
 inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
 {
+	// This method profiles node-location node-child_location of a given NeuronTree.
+	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
+	// However, any tip node will not have an entry in node2childLocMap.
+
 	nodeLocMap.clear();
 	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
 		nodeLocMap.insert(pair<int, size_t>(it->n, (it - inputNodeList.begin())));
