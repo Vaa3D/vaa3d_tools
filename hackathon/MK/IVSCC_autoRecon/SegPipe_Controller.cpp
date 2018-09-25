@@ -897,7 +897,7 @@ void SegPipe_Controller::breakMSTbranch()
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
 		myNeuronStructExpPtr->treeEntry(currTree, "currTree");
-		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"], 30);
+		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"], 20);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
@@ -1158,5 +1158,24 @@ void SegPipe_Controller::longConnCut()
 		writeSWC_file(outputSWCPath, outputTree);
 
 		myNeuronStructExpPtr->treeDataBase.clear();
+	}
+}
+
+void SegPipe_Controller::treeUnion()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree MST2ndTree = readSWC_file(swcFullPath);
+		profiledTree profiledMST2ndTree(MST2ndTree);
+
+		QString refSWCfullPath = this->refSWCRootPath + "/" + *caseIt;
+		NeuronTree baseTree = readSWC_file(refSWCfullPath);
+		profiledTree profiledBaseTree(baseTree);
+
+		profiledTree outputProfiledTree = myNeuronStructExpPtr->treeUnion_MSTbased(profiledMST2ndTree, profiledBaseTree);
+		NeuronTree outputTree = outputProfiledTree.tree;
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
 	}
 }

@@ -81,6 +81,7 @@ public:
 	void segTerminalize();
 	void dotRemove();
 	void longConnCut();
+	void treeUnion();
 
 	void nodeIdentify();
 	void swcSeparate(QString outputRoot2);

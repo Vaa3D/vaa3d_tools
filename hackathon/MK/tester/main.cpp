@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "tiledMST";
+	string funcName = "treeUnion";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -155,8 +155,8 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("treeUnion"))
 	{
-		string inputSWCname1 = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\MST2nd_branchBreak_noSpike_elong_longConnCut100_singleDotRemove\\319215569.swc";
-		string inputSWCname2 = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\diffTree_zCleaned_MST_zRatio_branchBreak_noSpike_elong\\319215569.swc";
+		string inputSWCname1 = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\MST2nd_tiled30_branchBreak_noSpike_elong_noDots\\319215569.swc";
+		string inputSWCname2 = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\diffTree_zCleaned_MST_zRatio_branchBreak_noSpike_elong\\319215569.swc";
 		QString inputSWCname1Q = QString::fromStdString(inputSWCname1);
 		QString inputSWCname2Q = QString::fromStdString(inputSWCname2);
 		NeuronTree inputTree1 = readSWC_file(inputSWCname1Q);
@@ -165,10 +165,10 @@ int main(int argc, char* argv[])
 		profiledTree inputProfiledTree2(inputTree2);
 
 		NeuronStructExplorer mySWCExplorer;
-		profiledTree outputProfiledTree = mySWCExplorer.treeUnion(inputProfiledTree1, inputProfiledTree2);
+		profiledTree outputProfiledTree = mySWCExplorer.treeUnion_MSTbased(inputProfiledTree1, inputProfiledTree2);
 
-		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
-		//writeSWC_file(outputSWCname, outputProfiledTree.tree);
+		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
+		writeSWC_file(outputSWCname, outputProfiledTree.tree);
 	}
 	else if (!funcName.compare("tiledMST"))
 	{

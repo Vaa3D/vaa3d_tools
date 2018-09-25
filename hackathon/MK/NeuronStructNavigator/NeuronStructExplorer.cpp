@@ -733,12 +733,10 @@ profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiled
 	return outputProfiledTree;
 }
 
-profiledTree NeuronStructExplorer::treeUnion(const profiledTree& expandingPart, const profiledTree& baseTree)
+profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree)
 {
-	// Incomplete
-
 	set<int> connectedSegs;
-	profiledTree outputProfiledTree;
+	profiledTree outputProfiledTree = baseTree;
 
 	for (map<int, segUnit>::const_iterator segIt = expandingPart.segs.begin(); segIt != expandingPart.segs.end(); ++segIt)
 	{
@@ -762,6 +760,71 @@ profiledTree NeuronStructExplorer::treeUnion(const profiledTree& expandingPart, 
 		}
 		//for (vector<int>::iterator checkSegIt = baseSegs.begin(); checkSegIt != baseSegs.end(); ++checkSegIt) cout << *checkSegIt << " ";
 		//cout << endl;
+
+		vector<pair<int, connectOrientation>> connRoutingMap;
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			for (vector<int>::iterator baseSegIt = baseSegs.begin(); baseSegIt != baseSegs.end(); ++baseSegIt)
+			{
+				NeuronSWC baseSegHeadNode = *baseTree.segs.at(*baseSegIt).nodes.begin();
+				if (nodeIt->x == baseSegHeadNode.x && nodeIt->y == baseSegHeadNode.y && nodeIt->z == baseSegHeadNode.z)
+				{
+					connRoutingMap.push_back(pair<int, connectOrientation>(*baseSegIt, head));
+					goto SEGMENT_CONFIRMED;
+				}
+
+				for (vector<int>::const_iterator tailIt = baseTree.segs.at(*baseSegIt).tails.begin(); tailIt != baseTree.segs.at(*baseSegIt).tails.end(); ++tailIt)
+				{
+					NeuronSWC baseSegTailNode = baseTree.segs.at(*baseSegIt).nodes.at(baseTree.segs.at(*baseSegIt).seg_nodeLocMap.at(*tailIt));
+					if (nodeIt->x == baseSegTailNode.x && nodeIt->y == baseSegTailNode.y && nodeIt->z == baseSegTailNode.z)
+					{
+						connRoutingMap.push_back(pair<int, connectOrientation>(*baseSegIt, tail));
+						goto SEGMENT_CONFIRMED;
+					}
+				}
+			}
+
+		SEGMENT_CONFIRMED:
+			continue;
+		}
+
+		if (connRoutingMap.size() == 0) continue;
+
+		int segID1 = baseTree.segs.at(connRoutingMap.begin()->first).segID;
+		connectOrientation ort1 = connRoutingMap.begin()->second;
+		for (vector<pair<int, connectOrientation>>::iterator connIt = connRoutingMap.begin() + 1; connIt != connRoutingMap.end(); ++connIt)
+		{
+			int segID2 = connIt->first;
+			connectOrientation ort2 = connIt->second;
+			if (segID1 == segID2)
+			{
+				segID1 = segID2;
+				ort1 = ort2;
+				continue;
+			}
+
+			if (ort1 == head && ort2 == head)
+			{
+				int nodeID1 = outputProfiledTree.segs.at(segID1).head;
+				int nodeID2 = outputProfiledTree.segs.at(segID2).head;
+				size_t nodeLoc1 = outputProfiledTree.node2LocMap.at(nodeID1);
+				outputProfiledTree.tree.listNeuron[nodeLoc1].parent = nodeID2;
+			}
+			else if (ort1 == head && ort2 == tail)
+			{
+				int nodeID1 = outputProfiledTree.segs.at(segID1).head;
+				int nodeID2 = *outputProfiledTree.segs.at(segID2).tails.begin();
+				size_t nodeLoc1 = outputProfiledTree.node2LocMap.at(nodeID1);
+				outputProfiledTree.tree.listNeuron[nodeLoc1].parent = nodeID2;
+			}
+			else if (ort1 == tail && ort2 == head)
+			{
+				int nodeID1 = *outputProfiledTree.segs.at(segID1).tails.begin();
+				int nodeID2 = outputProfiledTree.segs.at(segID2).head;
+				size_t nodeLoc2 = outputProfiledTree.node2LocMap.at(nodeID2);
+				outputProfiledTree.tree.listNeuron[nodeLoc2].parent = nodeID1;
+			}
+		}
 	}
 
 	return outputProfiledTree;

@@ -115,10 +115,11 @@ public:
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 	
+	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	profiledTree segElongate(const profiledTree& inputProfiledTree);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree);
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
-	profiledTree treeUnion(const profiledTree& expandingPart, const profiledTree& baseTree);
+	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
 	/**********************************************************************/
 
 	/***************** Geometry *****************/
@@ -181,6 +182,14 @@ inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double
 	}
 
 	return outputTree;
+}
+
+inline connectOrientation NeuronStructExplorer::getConnOrientation(connectOrientation orit1, connectOrientation orit2)
+{
+	if (orit1 == head && orit2 == head) return head_head;
+	else if (orit1 == head && orit2 == tail) return head_tail;
+	else if (orit1 == tail && orit2 == head) return tail_head;
+	else if (orit1 == tail && orit2 == tail) return tail_tail;
 }
 
 inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector)

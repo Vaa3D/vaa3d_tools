@@ -164,6 +164,11 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 	else if (func_name == tr("segTerminalize")) segPipePtr->segTerminalize();
 	else if (func_name == tr("removeDots")) segPipePtr->dotRemove();
 	else if (func_name == tr("longConnCut")) segPipePtr->longConnCut();
+	else if (func_name == tr("treeUnion"))
+	{
+		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
+		segPipePtr->treeUnion();
+	}
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
