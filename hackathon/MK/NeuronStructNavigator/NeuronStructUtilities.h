@@ -35,7 +35,7 @@ public:
 	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
 	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
-	static pair<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
+	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
 	/***************************************************/
 
 	/***************** Inter-SWC Comparison/Analysis *****************/

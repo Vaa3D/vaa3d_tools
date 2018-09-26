@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <cmath>
 #include <unordered_map>
@@ -1174,4 +1175,24 @@ void SegPipe_Controller::treeUnion()
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, outputTree);
 	}
+}
+
+void SegPipe_Controller::treeWithinDist()
+{
+	string dist2D = "dist2D.txt";
+	string dist3D = "dist3D.txt";
+	string outputName = outputRootPath.toStdString() + "/" + dist2D;
+	ofstream outputFile(outputName.c_str());
+	outputFile << "case num\t" << "mean\t" << "std\t" << "median" << endl;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		map<string, float> swcWithinStats = NeuronStructUtil::selfNodeDist(inputTree.listNeuron);
+		outputFile << (*caseIt).toStdString() << "\t" << swcWithinStats["mean"] << "\t" << swcWithinStats["std"] << "\t" << swcWithinStats["median"] << endl;
+	}
+	outputFile.close();
 }

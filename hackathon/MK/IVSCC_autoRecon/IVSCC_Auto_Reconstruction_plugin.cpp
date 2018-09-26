@@ -169,6 +169,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];
 		segPipePtr->treeUnion();
 	}
+	else if (func_name == tr("treeWithinDist")) segPipePtr->treeWithinDist();
 	else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
