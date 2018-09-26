@@ -51,41 +51,84 @@ class Model3D(ModelDesc):
         return self._get_DQN_prediction(image)
 
     def _build_graph(self, inputs):
-        state, action, reward, isOver = inputs
-        state = tf.cast(state, tf.float32)
+        # shapes:
+        # (?, xdim, ydim, zdim, n_channels) ?, ?, ?
+        # specifically, (?, 15, 15, 15, 5)
+        comb_state, action, reward, isOver = inputs
+        # print("state stuff", comb_state.get_shape().as_list(), action.get_shape().as_list(),
+        #       reward.get_shape().as_list(), isOver.get_shape().as_list(), flush=True)
+
+        comb_state = tf.cast(comb_state, tf.float32)
         # TODO: wtf is this?
-        state = tf.slice(state, [0, 0, 0, 0, 0], [-1, -1, -1, -1, self.channel], name='state')
-        self.predict_value = self.get_DQN_prediction(state)
+        # comb_state = tf.Print(comb_state, [comb_state, (comb_state.get_shape().as_list())], message="combstate shp", summarize=50)
+        # action = tf.Print(action, [comb_state, (action.get_shape().as_list())], message="action shp", summarize=50)
+        # print("combstate shape ", comb_state, flush=True)
+        # print("action shape", action.get_shape().as_list(), flush=True)
+        # print("reward shape", reward.get_shape().as_list())
+        #
+        # print("isOver shape", (isOver.get_shape().as_list()))
+        # state is now [None, 15, 15, 15, 4] according to state.get_shape().as_list())
+        state = tf.slice(comb_state, [0, 0, 0, 0, 0], [-1, -1, -1, -1, self.channel], name='state')
+
+        self.predict_value = self.get_DQN_prediction(state)  # shape: (batch_size, action_space_size)
+        # tf.summary.histogram("Q_vals", self.predict_value)
+
         if not get_current_tower_context().is_training:
             return
 
-        reward = tf.clip_by_value(reward, -1, 1)
+        # TODO check that this is ok
+        # reward = tf.clip_by_value(reward, -1, 1)
         # FIXME I think this is history buffer stuff
-        next_state = tf.slice(state, [0, 0, 0, 0, 1], [-1, -1, -1, -1, self.channel], name='next_state')
+        # comb_state = tf.Print(comb_state, [comb_state, tf.shape(comb_state)], message="tf Print out", summarize=50)
+        # next_state shp [None, 15, 15, 15, 4]
+        next_state = tf.slice(comb_state, [0, 0, 0, 0, 1], [-1, -1, -1, -1, self.channel], name='next_state')
+        # print("next_state shape", (next_state.get_shape().as_list()))
+        # one_hot params: (indices, depth, on_value, off_value)
+        # action_onehot shp: [None, 6]
         action_onehot = tf.one_hot(action, self.num_actions, 1.0, 0.0)
-
-        pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, 1)  # N,
+        # print("action_onehot shape", (action_onehot.get_shape().as_list()))
+        # this is a fancy way of selecting the predicted value of action taken by agent
+        # pred_action_value shape: ?
+        pred_action_value = tf.reduce_sum(self.predict_value * action_onehot, axis=1)  # shape: batchsize,
+        # print("pred_action_value shape", (pred_action_value.get_shape().as_list()))
+        # select maximum q val for each
+        # FIXME shape: EMPTY?
+        # max_pred_reward = pred_action_value
+        # print(max_pred_reward)
         max_pred_reward = tf.reduce_mean(tf.reduce_max(
-            self.predict_value, 1), name='predict_reward')
+            self.predict_value, axis=1), name='predict_reward')
+        # max_pred_reward = tf.Print(max_pred_reward, [max_pred_reward], message="max_pred_reward shp", summarize=50)
+        # max_pred_reward = tf.Print(max_pred_reward, [max_pred_reward, max_pred_reward.get_shape().as_list()], message="max_pred_reward shp", summarize=50)
         summary.add_moving_summary(max_pred_reward)
 
         with tf.variable_scope('target'):
-            targetQ_predict_value = self.get_DQN_prediction(next_state)  # NxA
+            targetQ_predict_value = self.get_DQN_prediction(next_state)  # shape: batch_size x action_space
+            # print("targetQ_predict_value shape", (targetQ_predict_value.get_shape().as_list()))
 
         # TODO disable other models
         if 'Double' not in self.method:
             # DQN or Dueling
-            best_v = tf.reduce_max(targetQ_predict_value, 1)  # N,
+            best_v = tf.reduce_max(targetQ_predict_value, axis=1)  # shape: batch_size
         else:
             # Double-DQN or DuelingDouble
-            next_predict_value = self.get_DQN_prediction(next_state)
-            self.greedy_choice = tf.argmax(next_predict_value, 1)  # N,
+            next_predict_value = self.get_DQN_prediction(next_state)  # FIXME isnt this redundant
+            self.greedy_choice = tf.argmax(next_predict_value, axis=1)  # N,
             predict_onehot = tf.one_hot(self.greedy_choice, self.num_actions, 1.0, 0.0)
-            best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, 1)
+            best_v = tf.reduce_sum(targetQ_predict_value * predict_onehot, axis=1)
 
+        # target shape is ?
+        # why do we care about the Q-vals in the next state? arent they irrelevant?
+        # why can't we just use the rewards directly?
         target = reward + (1.0 - tf.cast(isOver, tf.float32)) * self.gamma * tf.stop_gradient(best_v)
+        # print("target shape ", target.get_shape().as_list())
+        # loss between the predicted reward for selected action and actual reward recieved
+        # TODO is this true?
+        # bestV, target comes from discounted*get_DQN_prediction(next_state) + REWARD
+        # but pred_val comes from get_DQN_prediction(current_state)
+        # FIXME this assumes that the max of both target and prediction will be the same
         self.cost = tf.losses.huber_loss(target, pred_action_value,
                                          reduction=tf.losses.Reduction.MEAN)
+        # print("cost shape ", self.cost.get_shape().as_list())
         summary.add_param_summary(('conv.*/W', ['histogram', 'rms']),
                                   ('fc.*/W', ['histogram', 'rms']))  # monitor all W
         summary.add_moving_summary(self.cost)
@@ -98,14 +141,14 @@ class Model3D(ModelDesc):
 
     @staticmethod
     def update_target_param():
-        """periodically triggered by trainer"""
+        """update network weights by copying from target. periodically triggered by trainer"""
         vars = tf.global_variables()
         ops = []
-        G = tf.get_default_graph()
-        for v in vars:
-            target_name = v.op.name
+        graph = tf.get_default_graph()
+        for var in vars:
+            target_name = var.op.name
             if target_name.startswith('target'):
                 new_name = target_name.replace('target/', '')
                 logger.info("{} <- {}".format(target_name, new_name))
-                ops.append(v.assign(G.get_tensor_by_name(new_name + ':0')))
+                ops.append(var.assign(graph.get_tensor_by_name(new_name + ':0')))
         return tf.group(*ops, name='update_target_network')

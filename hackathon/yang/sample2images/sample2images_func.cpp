@@ -204,18 +204,27 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     }
 
     // parsing input
+    int samplemethod=0; // 0 max 1 average
     if (input.size()>1)
     {
         vector<char*> * paras = (vector<char*> *)(input.at(1).p);
         if (paras->size() >= 1)
         {
-            // parameters
+            samplemethod = atoi(paras->at(0));
+            cout<<"downsample method (0 max/1 average): "<<samplemethod<<endl;
         }
         else
         {
-            cerr<<"unknow parameters"<<endl;
+            cout<<"Invalid input"<<endl;
+            cout<<"vaa3d -x sample2images -f sample2images -i image1.tif image2.tif -o output.tif -p <0 max/1 average>"<<endl;
             return false;
         }
+    }
+
+    if(samplemethod != 0 && samplemethod != 1)
+    {
+        cout<<"Invalid sample method!"<<endl;
+        return false;
     }
 
     vector<char *> * outlist = (vector<char*> *)(output.at(0).p);
@@ -482,40 +491,71 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 unsigned short *p2 = (unsigned short *) (pImg2);
 
                 // computing max of 8-neighbours
-                for(long y=0; y<sy; y++)
+
+                if(samplemethod==0)
                 {
-                    long ofy = y*sx;
-
-                    long ofy1 = 2*y*sx1;
-                    long ofy2 = (2*y+1)*sx1;
-
-                    for(long x=0; x<sx; x++)
+                    for(long y=0; y<sy; y++)
                     {
-                        //
-                        int A = p1[ofy1 + 2*x];
-                        int B = p1[ofy1 + 2*x+1];
-                        if ( B > A ) A = B;
+                        long ofy = y*sx;
 
-                        B = p1[ofy2 + 2*x];
-                        if ( B > A ) A = B;
+                        long ofy1 = 2*y*sx1;
+                        long ofy2 = (2*y+1)*sx1;
 
-                        B = p1[ofy2 + 2*x+1];
-                        if ( B > A ) A = B;
+                        for(long x=0; x<sx; x++)
+                        {
+                            //
+                            int A = p1[ofy1 + 2*x];
+                            int B = p1[ofy1 + 2*x+1];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy1 + 2*x];
-                        if ( B > A ) A = B;
+                            B = p1[ofy2 + 2*x];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy1 + 2*x+1];
-                        if ( B > A ) A = B;
+                            B = p1[ofy2 + 2*x+1];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy2 + 2*x];
-                        if ( B > A ) A = B;
+                            B = p2[ofy1 + 2*x];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy2 + 2*x+1];
-                        if ( B > A ) A = B;
+                            B = p2[ofy1 + 2*x+1];
+                            if ( B > A ) A = B;
 
-                        // computing max
-                        p[ofy + x] = (unsigned char)(A);
+                            B = p2[ofy2 + 2*x];
+                            if ( B > A ) A = B;
+
+                            B = p2[ofy2 + 2*x+1];
+                            if ( B > A ) A = B;
+
+                            // computing max
+                            p[ofy + x] = (unsigned short)(A);
+                        }
+                    }
+                }
+                else if(samplemethod==1)
+                {
+                    for(long y=0; y<sy; y++)
+                    {
+                        long ofy = y*sx;
+
+                        long ofy1 = 2*y*sx1;
+                        long ofy2 = (2*y+1)*sx1;
+
+                        for(long x=0; x<sx; x++)
+                        {
+                            //
+                            double avg = p1[ofy1 + 2*x];
+
+                            avg += p1[ofy1 + 2*x+1];
+                            avg += p1[ofy2 + 2*x];
+                            avg += p1[ofy2 + 2*x+1];
+                            avg += p2[ofy1 + 2*x];
+                            avg += p2[ofy1 + 2*x+1];
+                            avg += p2[ofy2 + 2*x];
+                            avg += p2[ofy2 + 2*x+1];
+
+                            // computing average
+                            p[ofy + x] = (unsigned short)(avg / 8);
+                        }
                     }
                 }
             }
@@ -525,40 +565,74 @@ bool sample2images_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
                 unsigned char *p2 = (unsigned char *) (pImg2);
 
                 // computing max of 8-neighbours
-                for(long y=0; y<sy; y++)
+                if(samplemethod==0)
                 {
-                    long ofy = y*sx;
+                    cout<<"max downsampling ... "<<endl;
 
-                    long ofy1 = 2*y*sx1;
-                    long ofy2 = (2*y+1)*sx1;
-
-                    for(long x=0; x<sx; x++)
+                    for(long y=0; y<sy; y++)
                     {
-                        //
-                        int A = p1[ofy1 + 2*x];
-                        int B = p1[ofy1 + 2*x+1];
-                        if ( B > A ) A = B;
+                        long ofy = y*sx;
 
-                        B = p1[ofy2 + 2*x];
-                        if ( B > A ) A = B;
+                        long ofy1 = 2*y*sx1;
+                        long ofy2 = (2*y+1)*sx1;
 
-                        B = p1[ofy2 + 2*x+1];
-                        if ( B > A ) A = B;
+                        for(long x=0; x<sx; x++)
+                        {
+                            //
+                            int A = p1[ofy1 + 2*x];
+                            int B = p1[ofy1 + 2*x+1];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy1 + 2*x];
-                        if ( B > A ) A = B;
+                            B = p1[ofy2 + 2*x];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy1 + 2*x+1];
-                        if ( B > A ) A = B;
+                            B = p1[ofy2 + 2*x+1];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy2 + 2*x];
-                        if ( B > A ) A = B;
+                            B = p2[ofy1 + 2*x];
+                            if ( B > A ) A = B;
 
-                        B = p2[ofy2 + 2*x+1];
-                        if ( B > A ) A = B;
+                            B = p2[ofy1 + 2*x+1];
+                            if ( B > A ) A = B;
 
-                        // computing max
-                        p[ofy + x] = (unsigned char)(A);
+                            B = p2[ofy2 + 2*x];
+                            if ( B > A ) A = B;
+
+                            B = p2[ofy2 + 2*x+1];
+                            if ( B > A ) A = B;
+
+                            // computing max
+                            p[ofy + x] = (unsigned short)(A);
+                        }
+                    }
+                }
+                else if(samplemethod==1)
+                {
+                    cout<<"average downsampling ... "<<endl;
+
+                    for(long y=0; y<sy; y++)
+                    {
+                        long ofy = y*sx;
+
+                        long ofy1 = 2*y*sx1;
+                        long ofy2 = (2*y+1)*sx1;
+
+                        for(long x=0; x<sx; x++)
+                        {
+                            //
+                            double avg = p1[ofy1 + 2*x];
+
+                            avg += p1[ofy1 + 2*x+1];
+                            avg += p1[ofy2 + 2*x];
+                            avg += p1[ofy2 + 2*x+1];
+                            avg += p2[ofy1 + 2*x];
+                            avg += p2[ofy1 + 2*x+1];
+                            avg += p2[ofy2 + 2*x];
+                            avg += p2[ofy2 + 2*x+1];
+
+                            // computing average
+                            p[ofy + x] = (unsigned short)(avg / 8);
+                        }
                     }
                 }
             }

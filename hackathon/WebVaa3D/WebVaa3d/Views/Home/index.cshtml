@@ -1,0 +1,276 @@
+﻿<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/tiff.js"></script>
+<script src="https://unpkg.com/vue"></script>
+<script src="/statics/UTIF.js"></script>
+<script src="https://unpkg.com/three"></script>
+<script src="/statics/OrbitControls.js"></script>
+<script src="/statics/FirstPersonControls.js"></script>
+<script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
+<script src="/js/JavaScript.js"></script>
+<script src="~/js/mainstyle.js"></script>
+<script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+@*<link rel="stylesheet" href="~/css/mainstyle.css"/>*@
+<body>
+    <div id="main-content">
+
+
+        <div id="left-content">
+            <div id="view">
+                <div id="loading" class="progress progress-big" lay-showpercent="true" lay-filter="demo">
+                    <div class="progress-bar bg-red" lay-percent="0%"></div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div id="show-panel" onmouseover="show_panel()"></div>
+
+        <div id="right-content">
+
+            <div id="logo">
+                <img /><!--logo-->
+            </div>
+
+            <div id="menu">
+                <ul id="nave">
+                    <li id="File" class="show" data-content="openfile" tabindex="-1">
+                        <i class="fa fa-file "></i>&nbsp;File
+                        <ul id="openfile">
+                            <li>
+                               <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
+                                <ul id="thrid-nave-open">
+
+                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" /></li>
+
+                                    <li id="open-server" onclick="getPictures()"><i class="fa  fa-server fa-fw"></i>&nbsp;open from server</li> <!--待完善-->
+                                    <li id="open-url"><i class="fa fa-globe fa-fw "></i>&nbsp;open by URL</li>
+                                </ul>
+                            </li>
+
+                            <li id="save">
+                                <i class="fa fa-save fa-fw"></i>&nbsp;save...
+                                <ul id="thrid-nave-save">
+                                    <li><i class="fa fa-save fa-fw"></i>save</li>
+                                    <li><i class="fa fa-folder fa-fw"></i>save as</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+
+
+                    <li id="Edit" class="show" data-content="second-nave-edit" tabindex="0">
+                       <i class="fa  fa-edit fa-fw"></i>&nbsp;Edit
+                        <ul id="second-nave-edit">
+                            <li onclick="draw()"><i class="fa fa-pencil fa-fw "></i>&nbsp;draw</li>
+                            <li><i class="fa fa-trash fa-fw "></i>&nbsp;delete</li>
+                            <li><i class="fa fa-undo fa-fw "></i>&nbsp;undo</li>
+                            <li><i class="fa fa-repeat fa-fw "></i>&nbsp;redo</li>
+                            <li><i class="fa fa-mouse-pointer fa-fw "></i>&nbsp;select all</li>
+                        </ul>
+                    </li>
+                    <li id="Tools" class="show" data-content="second-nave-tools" tabindex="1">
+                        <i class="fa  fa-wrench fa-fw"></i>&nbsp;Tools
+                        <ul id="second-nave-tools">
+                            <li><i class="fa  fa-camera fa-fw"></i>&nbsp;screen shot</li>
+                        </ul>
+                    </li>
+
+                    <li id="help"> <i class="fa fa-hand-stop-o fa-fw"></i>&nbsp;Help</li>
+                    <li id="about"><i class="fa fa-question-circle-o fa-fw"></i>&nbsp;About</li>
+                </ul>
+            </div>
+            <div class="panel" id="Vaa3Dweb-panel">
+                <div class="panel-body">
+                    <div class="panel-group1" id="Waa3Dweb-panelgroup-img">
+                        <div id="title1" ><p><h2 style="text-align:center;">Img</h2></p></div><br />
+                        <div class="contrast">
+                            <span>Contrast</span><br /><br />
+                            <p><input type="range" min="0" max="10" id="contrast" name="point1" style="" /></p>
+
+                            <input id="fullscreen" type="button" value="full screen" />
+                        </div>
+                        <br /><br />
+                    </div>
+
+
+                    <div class="panel-group2" id="Waa3Dweb-panelgroup-draw">
+                        <div id="title2" ><p><h2 style="text-align:center;">Draw</h2></p></div><br />
+                        <div>
+                            <span>Line Size</span>&nbsp;&nbsp;&nbsp;&nbsp;
+                            <select id="line-size-select">
+                                <option label="1pt" value="1pt" selected>1pt</option>
+                                <option label="2pt" value="2pt">2pt</option>
+                                <option label="3pt" value="3pt">3pt</option>
+                            </select>
+                        </div><br />
+
+                        <div class="color">
+                            <span>Line Color</span>&nbsp;&nbsp;&nbsp;&nbsp;<input type="color" id="color" />
+
+
+
+                        </div>
+                        <br />
+                        <div><input type="button" id="close" value="close" />  </div>
+                        <br /><br />
+                    </div>
+
+
+
+
+
+                </div>
+            </div>
+
+
+
+
+        </div>
+    </div>
+  
+</body>
+
+<script type="text/javascript">
+    $('.show').on('click', function () {//单击隐藏或显示下拉菜单
+        var code = $(this).data('content');
+        if ($('#' + code).css('display') == 'none') {
+            $('#' + code).show();
+        }
+        else {
+            $('#' + code).hide();
+        }
+
+
+
+    });
+    $('.show').on('blur', function () {//失去光标隐藏下拉菜单
+        var code = $(this).data('content');
+        $('#' + code).hide();
+    });
+
+
+    $('#open-local').on('click', function () {//打开本地文件夹
+        $('#vaa3dweb-input-open-local').click();
+
+    });
+    $('#fullscreen').on('click', function () {//全屏并隐藏控制面板
+        $('#right-content').hide();
+        full_screen();//全屏
+        $('#left-content').css('width', '99%');
+        renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+        //renderer.render(scene, camera);
+        $('#show-panel').show();//显示打开控制面板按钮
+    });
+
+    $('#help').on('click', function () {
+        layer.open({
+            type: 1,
+            area: ['29%', '360px'],
+            shadeClose: true, //点击遮罩关闭
+            content:'help information',
+            title: ['HELP', 'font-size:18px;background-color:rgba(25, 104, 150, 0.91)'],
+            offset:['5%','70%'],
+        });
+       
+      
+    });
+
+    $('#about').on('click', function () {
+        layer.open({
+            type: 1,
+            area: ['29%', '360px'],
+            shadeClose: true, //点击遮罩关闭
+            content: 'introduce information',
+            title:false,//不显示标题
+            offset: ['5%', '70%'],
+        });
+      
+    });
+
+
+    //        页面加载状态改变时的事件，未实现-------------------
+   // document.onreadystatechange = function () {
+   //     if (document.readyState == 'complete') {   //判断页面加载完成，加载的图标就隐藏  进度条------------------------
+    //        $("#loading").fadeOut();
+     //   }
+  //  }
+
+    function show_panel() {//淡入显示面板-----------待改善
+        $('#right-content').fadeIn("slow");
+        $('#show-panel').hide();
+        $('#left-content').css('width', '70%');
+        if (document.webkitIsFullScreen) {         
+        }
+        else {//不是全屏状态时重新render一下，恢复到原来状态
+            renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+        }
+       
+       
+    }
+   
+       
+
+   
+    //隐藏面板
+    $('#view').on("click", function () {
+        if (document.webkitIsFullScreen) {//全屏是自动隐藏控制面板  ****************存在全屏时，全屏退出过后如果不提前打开菜单栏会出现菜单栏无法显示
+
+            
+            $('#right-content').hide();
+            $('#left-content').css('width', '99%');
+            $('#show-panel').show();//  
+        }
+       
+    });
+    
+       
+
+    //document.addEventListener("webkitfullscreenchange", show_panel());
+
+
+  //  if (document.webkitIsFullScreen) {
+  //      alert("sdsafdfd");
+  //      $('#left-content').on('mouseover', function () {//********************移除鼠标后应该隐藏
+  ////          $('#right-content').hide();
+  //          $('#left-content').css('width', '99%');
+  //          $('#show-panel').show();
+  //      });
+  //    
+ //   }
+ //   $('#open-url').on('click', function () {
+
+
+      //  window.open("openurl.html", "Input URL to open", "height=80, width=300,top=20px,left=50%, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no")
+
+        //找不到页面？路径不对？
+
+//
+    //});
+   // $(document).ready(function () {
+    //    var target = "#app";
+    ///    $('#show3d').html(target);
+
+   // });
+
+   // function menu_show(str) {
+
+  //      var sub_menu = document.getElementById(str);
+
+    //    if (sub_menu.style.display == "none")
+    //        sub_menu.style.display = "block";
+     //   else
+     //       sub_menu.style.display = "none";
+
+   // }
+
+  //  $(document).ready(function () {
+    //   $("#File").click(function () {
+      //     $("#second-nave-open").show();
+     //  });
+   // });
+</script>
+

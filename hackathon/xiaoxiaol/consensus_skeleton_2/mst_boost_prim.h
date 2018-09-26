@@ -1,9 +1,9 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "boost/graph/prim_minimum_spanning_tree.hpp"
-#include "boost/config.hpp"
-#include "boost/graph/adjacency_list.hpp"
+#include <boost/graph/prim_minimum_spanning_tree.hpp>
+#include <boost/config.hpp>
+#include <boost/graph/adjacency_list.hpp>
 #include "basic_surf_objs.h"
 #include "point3d_util.h"
 #include <vector>

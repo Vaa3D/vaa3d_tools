@@ -7,6 +7,7 @@
 #include <vector>
 #include "soma_remove_plugin.h"
 #include "soma_remove_main.h"
+#include "data_training.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(soma_remove, soma_removePlugin);
  
@@ -14,15 +15,15 @@ QStringList soma_removePlugin::menulist() const
 {
 	return QStringList() 
         <<tr("soma_remove")
-		<<tr("menu2")
+        <<tr("data_training")
 		<<tr("about");
 }
 
 QStringList soma_removePlugin::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("soma_remove")
+        <<tr("data_training")
 		<<tr("help");
 }
 
@@ -60,12 +61,16 @@ bool soma_removePlugin::dofunc(const QString & func_name, const V3DPluginArgList
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("soma_remove"))
 	{
 		v3d_msg("To be implemented.");
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("data_training"))
 	{
+        //QString filelistOpenName = QString(inlist->at(0));
+        //QString filelistfileOpenName2 = QString(inlist->at(1));
+        //QString raw_img = QString(inlist->at(2));
+        data_training(input,output,callback);
 		v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("help"))

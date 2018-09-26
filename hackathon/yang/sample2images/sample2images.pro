@@ -40,3 +40,6 @@ unix:!macx {
 
 TARGET	= $$qtLibraryTarget(sample2images)
 DESTDIR	= $$VAA3DMAINPATH/../bin/plugins/image_filters/sample2images/
+
+OTHER_FILES += \
+    downsampleImages.sh

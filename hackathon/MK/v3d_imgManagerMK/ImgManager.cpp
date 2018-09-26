@@ -1,9 +1,6 @@
 #include <iostream>
-#include <set>
-#include <iterator>
 #include <fstream>
-
-#include <boost\filesystem.hpp>
+#include <set>
 
 #include "ImgProcessor.h"
 #include "ImgManager.h"
@@ -11,45 +8,60 @@
 using namespace std;
 using namespace boost::filesystem;
 
-registeredImg::registeredImg(string inputImgName)
+void ImgManager::imgEntry(QString caseID, imgFormat format)
 {
-	this->imgFullPathName = inputImgName;
-	const char* imgName = inputImgName.c_str();
-	this->thisImg4DPtr = new Image4DSimple;
-	this->thisImg4DPtr->loadImage(imgName);
-	this->imgData1D = new unsigned char;
-	ImgManager::img1Ddumpster(this->thisImg4DPtr, this->imgData1D, this->dims, this->datatype);
-}
-
-bool ImgManager::img1Ddumpster(Image4DSimple* inputImgPtr, unsigned char*& data1D, long int dims[4], int datatype)
-{
-	if (!inputImgPtr || !inputImgPtr->valid())
-		return false;
-
-	if (data1D) { delete[] data1D; data1D = 0; }
-
-	V3DLONG totalbytes = inputImgPtr->getTotalBytes();
-	try
+	if (format == slices)
 	{
-		data1D = new unsigned char[totalbytes];
-		if (!data1D) goto Label_error_simple_loadimage_wrapper;
+		registeredImg currImgCase;
+		currImgCase.imgAlias = caseID;
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID.toStdString());
+		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
+		{
+			string sliceFullName = it->second;
+			string fileName = it->second.substr(it->second.length() - 9, 9);
+			const char* sliceFullNameC = sliceFullName.c_str();
+			Image4DSimple* slicePtr = new Image4DSimple;
+			slicePtr->loadImage(sliceFullNameC);
+			currImgCase.dims[0] = int(slicePtr->getXDim());
+			currImgCase.dims[1] = int(slicePtr->getYDim());
+			currImgCase.dims[2] = 1;
+			long int totalbyteSlice = slicePtr->getTotalBytes();
+			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
+			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
+			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
 
-		memcpy(data1D, inputImgPtr->getRawData(), totalbytes);
-		datatype = inputImgPtr->getUnitBytes(); // 1, 2, or 4
-		dims[0] = inputImgPtr->getXDim();
-		dims[1] = inputImgPtr->getYDim();
-		dims[2] = inputImgPtr->getZDim();
-		dims[3] = inputImgPtr->getCDim();
+			slicePtr->~Image4DSimple();
+			operator delete(slicePtr);
+		}
+
+		//for (map<string, myImg1DPtr>::iterator sliceIt = currImgCase.slicePtrs.begin(); sliceIt != currImgCase.slicePtrs.end(); ++sliceIt)
+		//	qDebug() << QString::fromStdString(sliceIt->first) << " " << sliceIt->second[805985];
+
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
-	catch (...)
+	else if (format == single2D)
 	{
-		goto Label_error_simple_loadimage_wrapper;
-	}
-	return true;
+		registeredImg currImgCase;
+		currImgCase.imgAlias = caseID;
+		
+		string sliceFullName = *(this->inputSingleCaseSliceFullPaths.begin());
+		string fileName = (*(this->inputSingleCaseSliceFullPaths.begin())).substr((*(this->inputSingleCaseSliceFullPaths.begin())).length() - 9, 9);
+		const char* sliceFullNameC = sliceFullName.c_str();
+		Image4DSimple* slicePtr = new Image4DSimple;
+		slicePtr->loadImage(sliceFullNameC);
+		currImgCase.dims[0] = int(slicePtr->getXDim());
+		currImgCase.dims[1] = int(slicePtr->getYDim());
+		currImgCase.dims[2] = 1;
+		long int totalbyteSlice = slicePtr->getTotalBytes();
+		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
+		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
+		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
 
-Label_error_simple_loadimage_wrapper:
-	if (inputImgPtr) { delete inputImgPtr; inputImgPtr = 0; }
-	return false;
+		slicePtr->~Image4DSimple();
+		operator delete(slicePtr);
+		
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+	}
 }
 
 // ================= Methods for generating binary masks from SWC files ================= //
@@ -89,9 +101,11 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 	const char* firstImgC = firstImg.c_str();
 	Image4DSimple* tempPtr = new Image4DSimple;
 	tempPtr->loadImage(firstImgC);
-	long int dims[2];
+	int dims[2];
 	dims[0] = tempPtr->getXDim();
 	dims[1] = tempPtr->getYDim();
+	dims[2] = tempPtr->getZDim();
+	dims[3] = tempPtr->getCDim();
 	cout << "image dimension: " << dims[0] << " " << dims[1] << endl;
 	
 	unsigned char* maskMIP = new unsigned char[dims[0] * dims[1]];
@@ -108,7 +122,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 		V3DLONG totalbytes = inputMask4D->getTotalBytes();
 		unsigned char* input1D = new unsigned char[totalbytes];
 		memcpy(input1D, inputMask4D->getRawData(), totalbytes);
-		ImgProcessor::imageMax(input1D, maskMIP, totalbytes);
+		ImgProcessor::imageMax(input1D, maskMIP, maskMIP, dims);
 		delete inputMask4D;
 	}
 
@@ -231,13 +245,14 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 	unsigned char* img1D = new unsigned char[totalbytes];
 	memcpy(img1D, inputImg4D->getRawData(), totalbytes);
 
-	int imgX = inputImg4D->getXDim();
-	int imgY = inputImg4D->getYDim();
-	int channel = inputImg4D->getCDim();
-	cout << "x dimension: " << imgX << "    y dimension: " << imgY << endl;
+	int dims[3];
+	dims[0] = inputImg4D->getXDim();
+	dims[1] = inputImg4D->getYDim();
+	dims[2] = inputImg4D->getCDim();
+	cout << "x dimension: " << dims[0] << "    y dimension: " << dims[1] << endl;
 
-	int i_tileSteps = imgX / tileSize;
-	int j_tileSteps = imgY / tileSize;
+	int i_tileSteps = dims[0] / tileSize;
+	int j_tileSteps = dims[1] / tileSize;
 	cout << "tiles in x: " << i_tileSteps << "    tiles in y: " << j_tileSteps << endl;
 	ImgProcessor* imgProcPtr = new ImgProcessor;
 	for (int j = 0; j < j_tileSteps; ++j)
@@ -254,8 +269,8 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 			ROIxyz[0] = tileSize;
 			ROIxyz[1] = tileSize;
 			ROIxyz[2] = 1;
-			ROIxyz[3] = channel;
-			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, imgX, imgY);
+			ROIxyz[3] = dims[2];
+			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, dims);
 
 			QString patchPath = QString::fromStdString(imgName) + "_patches";
 			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);

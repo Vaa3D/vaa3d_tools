@@ -13,13 +13,21 @@
 
 # similarly, generate level2 by `time sh downsampleImages.sh level1 level2 /path/vaa3d`
 
-export DISPLAY=:$RANDOM
-Xvfb $DISPLAY -auth /dev/null &
+#export DISPLAY=:$RANDOM
+#Xvfb $DISPLAY -auth /dev/null &
 
 
 inputDir=$1
 outputDir=$2
 vaa3d=$3
+SAMPLEMETHOD=$4
+
+if [ ${SAMPLEMETHOD} == 1 ]
+then
+SAMPLEMETHOD=1
+else
+SAMPLEMETHOD=0
+fi
 
 n=0;
 
@@ -42,8 +50,8 @@ name="test_"${n1}"_"${n2}
 
 output=${outputDir}"/"${name}
 
-echo "$((n/2)) downsample $input1 $input2 to $output"
-time $vaa3d -x sample2images -f sample2images -i $input1 $input2 -o $output
+echo "$((n/2)) downsample $input1 $input2 to $output with method $SAMPLEMETHOD"
+time $vaa3d -x sample2images -f sample2images -i $input1 $input2 -o $output -p $SAMPLEMETHOD
 
 else
 

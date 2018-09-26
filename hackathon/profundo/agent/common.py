@@ -29,17 +29,16 @@ import traceback
 def play_one_episode(env, func, render=False):
     def predict(s):
         """
+        see also expreplay _populate_exp()
+
         Run a full episode, mapping observation to action, WITHOUT 0.001 greedy.
     :returns sum of rewards
         """
         # pick action with best predicted Q-value
-        q_values = func(s[None, :, :, :])[0][0]
-        if np.all(np.isclose(q_values, q_values[0])):  # all q vals same, pick random
-            act = np.random.choice(q_values)
-        else:
-            # In case of multiple occurrences of the maximum values,
-            # the indices corresponding to the first occurrence are /always/ returned (bad
-            act = np.argmax(q_values)
+        q_values = func(s[None, :, :, :, :])[0][0]
+        # if there is a tie for max, randomly choose between them
+        act = np.random.choice(np.flatnonzero(np.isclose(q_values, q_values.max(), atol=0.5)))
+
 
         # eps greedy disabled
         # if random.random() < 0.001:
@@ -51,12 +50,14 @@ def play_one_episode(env, func, render=False):
     sum_r = 0
     while True:
         act, q_values = predict(ob)
-        ob, r, isOver, info = env.step(act, q_values)
+        # print("play_one act {} qvals {}".format(act, q_values))
+        ob, r, isOver, info = env.step(act)
+        # print("play q vals", q_values, "act ", act, "env_act ", env.env._act, "loc ", env.env._location)
         if render:
             env.render()
         sum_r += r
         if isOver:
-            return sum_r, info['filename'], info['distError'], q_values
+            return sum_r, info['filename'], info['IoU'], q_values
 
 
 ###############################################################################
@@ -68,12 +69,11 @@ def play_n_episodes(player, predfunc, nr, render=False):
     for k in range(nr):
         # if k != 0:
         #     player.restart_episode()
-        score, filename, ditance_error, q_values = play_one_episode(player,
+        score, filename, IoU, q_values = play_one_episode(player,
                                                                     predfunc,
                                                                     render=render)
         logger.info(
-            "{}/{} - {} - score {} - distError {} - q_values {}".format(k + 1, nr, filename, score, ditance_error,
-                                                                        q_values))
+            "{}/{} {} \n score:{}  IoU: {}".format(k + 1, nr, filename, score, IoU))
 
 
 ###############################################################################
@@ -88,11 +88,11 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn,
     """
 
     class Worker(StoppableThread, ShareSessionThread):
-        def __init__(self, func, queue, distErrorQueue):
+        def __init__(self, func, queue, IoUErrorQueue):
             super(Worker, self).__init__()
             self._func = func
             self.q = queue
-            self.q_dist = distErrorQueue
+            self.q_IoU = IoUErrorQueue
 
         def func(self, *args, **kwargs):
             if self.stopped():
@@ -102,7 +102,7 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn,
         def run(self):
             with self.default_sess():
                 player = get_player_fn(directory=directory,
-                                       train=False,
+                                       task=False,
                                        files_list=files_list)
                 while not self.stopped():
                     try:
@@ -111,26 +111,26 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn,
                     except RuntimeError:
                         return
                     self.queue_put_stoppable(self.q, score)
-                    self.queue_put_stoppable(self.q_dist, ditance_error)
+                    self.queue_put_stoppable(self.q_IoU, ditance_error)
 
     q = queue.Queue()
-    q_dist = queue.Queue()
+    q_IoU = queue.Queue()
 
-    threads = [Worker(f, q, q_dist) for f in predictors]
+    threads = [Worker(f, q, q_IoU) for f in predictors]
 
     # start all workers
     for k in threads:
         k.start()
         time.sleep(0.1)  # avoid simulator bugs
     stat = StatCounter()
-    dist_stat = StatCounter()
+    IoU_stat = StatCounter()
 
     # show progress bar w/ tqdm
     for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
         r = q.get()
         stat.feed(r)
-        dist = q_dist.get()
-        dist_stat.feed(dist)
+        IoU = q_IoU.get()
+        IoU_stat.feed(IoU)
 
     logger.info("Waiting for all the workers to finish the last run...")
     for k in threads:
@@ -141,12 +141,12 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn,
         r = q.get()
         stat.feed(r)
 
-    while q_dist.qsize():
-        dist = q_dist.get()
-        dist_stat.feed(dist)
+    while q_IoU.qsize():
+        IoU = q_IoU.get()
+        IoU_stat.feed(IoU)
 
     if stat.count > 0:
-        return (stat.average, stat.max, dist_stat.average, dist_stat.max)
+        return (stat.average, stat.max, IoU_stat.average, IoU_stat.max)
     return (0, 0, 0, 0)
 
 
@@ -161,10 +161,10 @@ def eval_model_multithread(pred, nr_eval, get_player_fn, directory, files_list):
     """
     NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
     with pred.sess.as_default():
-        mean_score, max_score, mean_dist, max_dist = eval_with_funcs(
+        mean_score, max_score, mean_IoU, max_IoU = eval_with_funcs(
             [pred] * NR_PROC, nr_eval, get_player_fn,
             directory, files_list)
-    logger.info("Average Score: {}; Max Score: {}; Average Distance: {}; Max Distance: {}".format(mean_score, max_score, mean_dist, max_dist))
+    logger.info("Average Score: {}; Max Score: {}; Average IoU: {}; Max IoU: {}".format(mean_score, max_score, mean_IoU, max_IoU))
 
 ###############################################################################
 
@@ -181,13 +181,16 @@ class Evaluator(Callback):
 
     def _setup_graph(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 20)
+
+
+        # http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.TowerTrainer.get_predictor
         self.pred_funcs = [self.trainer.get_predictor(
             self.input_names, self.output_names)] * NR_PROC
 
     def _trigger(self):
         """triggered by Trainer"""
         t = time.time()
-        mean_score, max_score, mean_dist, max_dist = eval_with_funcs(
+        mean_score, max_score, mean_IoU, max_IoU = eval_with_funcs(
             self.pred_funcs, self.eval_episode, self.get_player_fn,
             self.directory, self.files_list)
         t = time.time() - t
@@ -195,9 +198,9 @@ class Evaluator(Callback):
             self.eval_episode = int(self.eval_episode * 0.94)
 
         # log scores
-        self.trainer.monitors.put_scalar('mean_score', mean_score)
-        self.trainer.monitors.put_scalar('max_score', max_score)
-        self.trainer.monitors.put_scalar('mean_distance', mean_dist)
-        self.trainer.monitors.put_scalar('max_distance', max_dist)
+        self.trainer.monitors.put_scalar('evaluator/mean_score', mean_score)
+        self.trainer.monitors.put_scalar('evaluator/max_score', max_score)
+        self.trainer.monitors.put_scalar('evaluator/mean_IoU', mean_IoU)
+        self.trainer.monitors.put_scalar('evaluator/max_IoU', max_IoU)
 
 ###############################################################################
