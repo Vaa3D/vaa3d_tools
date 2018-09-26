@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <boost\container\flat_map.hpp>
+
 #include "basic_4dimage.h"
 #include "basic_landmark.h"
 #include "neuron_format_converter.h"
@@ -10,7 +12,7 @@
 
 using namespace std;
 
-profiledTree::profiledTree(const NeuronTree& inputTree)
+profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 {
 	this->tree = inputTree;
 	for (QList<NeuronSWC>::iterator it = this->tree.listNeuron.begin(); it != this->tree.listNeuron.end(); ++it)
@@ -38,8 +40,8 @@ profiledTree::profiledTree(const NeuronTree& inputTree)
 		//if (it->second.tails.size() > 1) cout << " branching seg: " << it->first << endl;
 		allSegs.push_back(it->second);
 	}
-	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs);
-	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, false);
+	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
+	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 }
 
 NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
@@ -57,11 +59,11 @@ NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
 	}
 }
 
-void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName)
+void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength)
 {
 	if (this->treeDataBase.find(treeName) == this->treeDataBase.end())
 	{
-		profiledTree registeredTree(inputTree);
+		profiledTree registeredTree(inputTree, segTileLength);
 		this->treeDataBase.insert(pair<string, profiledTree>(treeName, registeredTree));
 	}
 	else
@@ -174,7 +176,7 @@ map<int, segUnit> NeuronStructExplorer::findSegs(const QList<NeuronSWC>& inputNo
 	return segs;
 }
 
-map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>& inputSegs, bool head, float xyLength)
+map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head)
 {
 	if (head)
 	{
@@ -396,7 +398,7 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 	}
 }
 
-segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
+segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1, NeuronSWC* tailNodePtr2)
 {
 	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
 		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");	
@@ -471,7 +473,7 @@ segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, c
 	return newSeg;
 }
 
-map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, bool length)
+map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length)
 {
 	set<int> connectedSegs;
 	map<int, int> elongConnMap;
@@ -494,7 +496,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
-				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
+				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
 				{
 					//cout << *headIt << "_" << *tailIt << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					string segAngleKey = to_string(*headIt) + "_" + to_string(*tailIt);
@@ -533,7 +535,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
-				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
+				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
 				{
 					//cout << *tailIt << "_" << *headIt << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					string segAngleKey = to_string(*tailIt) + "_" + to_string(*headIt);
@@ -572,7 +574,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
-				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
+				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
 				{
 					//cout << *headIt1 << "_" << *headIt2 << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					string segAngleKey = to_string(*headIt1) + "_" + to_string(*headIt2);
@@ -611,7 +613,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
-				if (pointingRadAngle < 0.25 && turningRadAngle < 0.25)
+				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
 				{
 					//cout << *tailIt1 << "_" << *tailIt2 << "->(" << pointingRadAngle << "," << turningRadAngle << ") ";
 					string segAngleKey = to_string(*tailIt1) + "_" + to_string(*tailIt2);
@@ -639,7 +641,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	return newSegs;
 }
 
-profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTree)
+profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiledTree, double angleThre)
 {
 	//cout << inputProfiledTree.segHeadMap.size() << " " << inputProfiledTree.segTailMap.size() << endl;
 
@@ -687,7 +689,7 @@ profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiled
 			continue;
 		}
 
-		map<int, segUnit> newSegs = this->segRegionConnector_angle(currTileHeadSegIDs, currTileTailSegIDs, outputProfiledTree);
+		map<int, segUnit> newSegs = this->segRegionConnector_angle(currTileHeadSegIDs, currTileTailSegIDs, outputProfiledTree, angleThre);
 		for (map<int, segUnit>::iterator newSegIt = newSegs.begin(); newSegIt != newSegs.end(); ++newSegIt) 
 			allNewSegs.insert(pair<int, segUnit>(newSegIt->first, newSegIt->second));
 
@@ -741,9 +743,9 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 	for (map<int, segUnit>::const_iterator segIt = expandingPart.segs.begin(); segIt != expandingPart.segs.end(); ++segIt)
 	{
 		NeuronSWC headNode = *segIt->second.nodes.begin();
-		string xLabel = to_string(int(headNode.x / tileXYlength));
-		string yLabel = to_string(int(headNode.y / tileXYlength));
-		string zLabel = to_string(int(headNode.z / (tileXYlength / zRATIO)));
+		string xLabel = to_string(int(headNode.x / tileXY_LENGTH));
+		string yLabel = to_string(int(headNode.y / tileXY_LENGTH));
+		string zLabel = to_string(int(headNode.z / (tileXY_LENGTH / zRATIO)));
 		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 		//cout << keyLabel << ": ";
 
@@ -761,7 +763,7 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 		//for (vector<int>::iterator checkSegIt = baseSegs.begin(); checkSegIt != baseSegs.end(); ++checkSegIt) cout << *checkSegIt << " ";
 		//cout << endl;
 
-		vector<pair<int, connectOrientation>> connRoutingMap;
+		boost::container::flat_map<int, connectOrientation> connRoutingMap;
 		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 		{
 			for (vector<int>::iterator baseSegIt = baseSegs.begin(); baseSegIt != baseSegs.end(); ++baseSegIt)
@@ -769,7 +771,7 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 				NeuronSWC baseSegHeadNode = *baseTree.segs.at(*baseSegIt).nodes.begin();
 				if (nodeIt->x == baseSegHeadNode.x && nodeIt->y == baseSegHeadNode.y && nodeIt->z == baseSegHeadNode.z)
 				{
-					connRoutingMap.push_back(pair<int, connectOrientation>(*baseSegIt, head));
+					connRoutingMap.insert(pair<int, connectOrientation>(*baseSegIt, head));
 					goto SEGMENT_CONFIRMED;
 				}
 
@@ -778,7 +780,7 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 					NeuronSWC baseSegTailNode = baseTree.segs.at(*baseSegIt).nodes.at(baseTree.segs.at(*baseSegIt).seg_nodeLocMap.at(*tailIt));
 					if (nodeIt->x == baseSegTailNode.x && nodeIt->y == baseSegTailNode.y && nodeIt->z == baseSegTailNode.z)
 					{
-						connRoutingMap.push_back(pair<int, connectOrientation>(*baseSegIt, tail));
+						connRoutingMap.insert(pair<int, connectOrientation>(*baseSegIt, tail));
 						goto SEGMENT_CONFIRMED;
 					}
 				}
@@ -792,7 +794,7 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 		int segID1 = baseTree.segs.at(connRoutingMap.begin()->first).segID;
 		connectOrientation ort1 = connRoutingMap.begin()->second;
-		for (vector<pair<int, connectOrientation>>::iterator connIt = connRoutingMap.begin() + 1; connIt != connRoutingMap.end(); ++connIt)
+		for (boost::container::flat_map<int, connectOrientation>::iterator connIt = connRoutingMap.begin() + 1; connIt != connRoutingMap.end(); ++connIt)
 		{
 			int segID2 = connIt->first;
 			connectOrientation ort2 = connIt->second;
