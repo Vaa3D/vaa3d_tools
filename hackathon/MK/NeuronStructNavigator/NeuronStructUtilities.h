@@ -23,12 +23,11 @@ public:
 
 	/********* Basic Neuron Struct Files Operations *********/
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
-	static void swcSliceAssembler(string swcPath);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
-	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink = false);
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
 	/*******************************************************/
 	
 	/********* Neuron Struct Profiling Methods *********/
@@ -47,10 +46,6 @@ public:
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 	/**********************************************************/
-
-	
-	static void detectedSWCprobFilter(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr, float threshold);
-	/*******************************************************/
 
 	/********* Sampling Methods for Simulated Volumetric Patch Generation *********/
 	static void sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance);

@@ -674,7 +674,7 @@ void SegPipe_Controller::somaNeighborhoodThin()
 
 }
 
-void SegPipe_Controller::swc_imgCrop()
+void SegPipe_Controller::swc_imgCrop(bool saveSWC)
 {
 	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
 
@@ -720,19 +720,22 @@ void SegPipe_Controller::swc_imgCrop()
 		newDims[2] = 1;
 		cout << "boundries: " << xlb << " " << xhb << " " << ylb << " " << yhb << endl;
 		
-		if (!this->outputSWCRootPath.isEmpty())
+		if (saveSWC)
 		{
-			NeuronTree newTree;
-			for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
+			if (!this->outputSWCRootPath.isEmpty())
 			{
-				NeuronSWC newNode = *nodeIt;
-				newNode.x = (nodeIt->x / 4) - xlb;
-				newNode.y = (nodeIt->y / 4) - ylb;
-				newNode.z = (nodeIt->z / 2);
-				newTree.listNeuron.push_back(newNode);
+				NeuronTree newTree;
+				for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
+				{
+					NeuronSWC newNode = *nodeIt;
+					newNode.x = (nodeIt->x / 4) - xlb;
+					newNode.y = (nodeIt->y / 4) - ylb;
+					newNode.z = (nodeIt->z / 2);
+					newTree.listNeuron.push_back(newNode);
+				}
+				QString newTreeName = scaledSWC_saveRootQ + *caseIt + ".swc";
+				writeSWC_file(newTreeName, newTree);
 			}
-			QString newTreeName = scaledSWC_saveRootQ + *caseIt + ".swc";
-			writeSWC_file(newTreeName, newTree);
 		}
 
 		V3DLONG saveDims[4];
@@ -1181,7 +1184,7 @@ void SegPipe_Controller::treeWithinDist()
 {
 	string dist2D = "dist2D.txt";
 	string dist3D = "dist3D.txt";
-	string outputName = outputRootPath.toStdString() + "/" + dist2D;
+	string outputName = outputRootPath.toStdString() + "/" + dist3D;
 	ofstream outputFile(outputName.c_str());
 	outputFile << "case num\t" << "mean\t" << "std\t" << "median" << endl;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)

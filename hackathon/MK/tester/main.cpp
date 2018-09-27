@@ -3,8 +3,11 @@
 #include <sstream>
 #include <ctime>
 #include <iterator>
+#include <map>
+#include <string>
 
 #include <boost\filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "SWCtester.h"
 #include "ImgManager.h"
@@ -18,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "treeUnion";
+	string funcName = "makeLinkerFile";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -50,16 +53,6 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
 		NeuronTree outputTree = NeuronStructUtil::swcZclenUP(inputTree);
 		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
-		writeSWC_file(outputSWCname, outputTree);
-	}
-	else if (!funcName.compare("swcDownSample"))
-	{
-		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_diffTree_zCleaned\\319215569.swc";
-		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
-		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
-		NeuronTree outputTree;
-		NeuronStructUtil::swcDownSample(inputTree, outputTree, 2, true);
-		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput2\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
 	else if (!funcName.compare("morphCheck"))
@@ -170,77 +163,85 @@ int main(int argc, char* argv[])
 		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
 		writeSWC_file(outputSWCname, outputProfiledTree.tree);
 	}
-	else if (!funcName.compare("tiledMST"))
+	else if (!funcName.compare("selfDist"))
 	{
-		string inputSWCname = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\diffTree_zCleaned_MST_zRatio_branchBreak_noSpike_elong_term\\319215569.swc";
-		QString inputSWCnameQ = QString::fromStdString(inputSWCname);
-		NeuronTree inputTree = readSWC_file(inputSWCnameQ);
-		profiledTree inputProfiledTree(inputTree);
+		ofstream outputTest("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test.txt");
 
-		NeuronStructExplorer mySWCExplorer;
-		NeuronTree outputTree = mySWCExplorer.singleDotRemove(inputProfiledTree);
-
-		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
-		writeSWC_file(outputSWCname, outputTree);
+		string inputSWCname1 = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\diffTree_zCleaned_MST_zRatio_branchBreak_noSpike_elong_noDotSeg2_tile30elong30_tile60elong30_RESULT\\319215569.swc";
+		string inputSWCname2 = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\442_swcROIcropped\\319215569.swc";
+		QString inputSWCnameQ1 = QString::fromStdString(inputSWCname1);
+		QString inputSWCnameQ2 = QString::fromStdString(inputSWCname2);
+		NeuronTree inputTree1 = readSWC_file(inputSWCnameQ1);
+		NeuronTree inputTree2 = readSWC_file(inputSWCnameQ2);
+		map<string, float> swcStats = NeuronStructUtil::selfNodeDist(inputTree1.listNeuron);
+		
+		outputTest << swcStats["mean"] << " " << swcStats["std"] << endl;
 	}
+	else if (!funcName.compare("accuracy"))
+	{
+		const char* inputPathNameC = argv[1];
+		string inputPathName(inputPathNameC);
+		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\accuracy.txt");
+		outputFile << "case num\t" << "rate\t" << "node num" << endl;
 
+		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
+		{
+			string swcName = swcIt->path().filename().string();
+			string swcFullName = inputPathName + "\\" + swcName;
+			QString swcFullNameQ = QString::fromStdString(swcFullName);
+			NeuronTree nt = readSWC_file(swcFullNameQ);
 
-	//float sum = 0;
-	//size_t sliceI = 0;
-	//int dims[3];
-	//for (filesystem::directory_iterator sliceIt(originalRoot); sliceIt != filesystem::directory_iterator(); ++sliceIt)
-	//{
-	//	++sliceI;
-	//	string sliceName = sliceIt->path().filename().string();
-	//	string sliceFullName = originalRoot + "\\" + sliceName;
-	//	const char* sliceFullNameC = sliceFullName.c_str();
-	//	Image4DSimple* tiffPtr = new Image4DSimple;
-	//	tiffPtr->loadImage(sliceFullNameC);
-	//	int dims[3];
-	//	dims[0] = int(tiffPtr->getXDim());
-	//	dims[1] = int(tiffPtr->getYDim());
-	//	dims[2] = 1;
-	//	long int totalbyteTiff = tiffPtr->getTotalBytes();
-	//	unsigned char* tiffSlice1D = new unsigned char[totalbyteTiff];
-	//	memcpy(tiffSlice1D, tiffPtr->getRawData(), totalbyteTiff);
-	//	
-	//	string prefix = sliceName.substr(0, 5);
-	//	string adaSliceName = prefix + ".tif";
-	//	string adaSliceFullName = adaRoot + "\\" + adaSliceName;
-	//	const char* adaSliceFullNameC = adaSliceFullName.c_str();
-	//	Image4DSimple* adaTiffPtr = new Image4DSimple;
-	//	adaTiffPtr->loadImage(adaSliceFullNameC);
-	//	long int totalbyteAdaTiff = adaTiffPtr->getTotalBytes();
-	//	unsigned char* adaTiffSlice1D = new unsigned char[totalbyteAdaTiff];
-	//	memcpy(adaTiffSlice1D, adaTiffPtr->getRawData(), totalbyteAdaTiff);
-	//	
-	//	unsigned char* proc1 = new unsigned char[dims[0] * dims[1]];
-	//	map<int, size_t> histMap = ImgProcessor::histQuickList(adaTiffSlice1D, dims);
-	//	map<int, size_t> histMapOri = ImgProcessor::histQuickList(tiffSlice1D, dims);
-	//	//for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it) cout << it->first << " " << it->second << endl;
-	//	//cout << endl;
-	//	map<string, float>basicStats = ImgProcessor::getBasicStats_no0(adaTiffSlice1D, dims);
-	//	int gammaStart = 0;
-	//	int topBracket = 0;
-	//	float pixCount = histMapOri[0];
-	//	for (int histI = 1; histI < histMap.size(); ++histI)
-	//	{
-	//		if (histMap[histI] <= histMap[histI - 1] && histMap[histI] <= histMap[histI + 1])
-	//		{
-	//			gammaStart = histI;
-	//			break;
-	//		}
-	//	}
-	//	for (int bracketI = 1; bracketI < 255; ++bracketI)
-	//	{
-	//		pixCount = pixCount + float(histMapOri[bracketI]);
-	//		if (pixCount / float(dims[0] * dims[1]) >= 0.999)
-	//		{
-	//			topBracket = bracketI;
-	//			break;
-	//		}
-	//	}
-	//	cout << topBracket << " ";
+			int TP = 0;
+			int FP = 0;
+			for (QList<NeuronSWC>::iterator it = nt.listNeuron.begin(); it != nt.listNeuron.end(); ++it)
+			{
+				if (it->type == 2) ++TP;
+				else if (it->type == 3) ++FP;
+			}
+			double rate = double(TP) / double(TP + FP);
+
+			string caseNum = swcName.substr(0, 9);
+			outputFile << caseNum << "\t" << rate << "\t" << nt.listNeuron.size() << endl;
+		}
+	}
+	else if (!funcName.compare("interAccuracy"))
+	{
+		const char* inputPathNameC = argv[1];
+		string inputPathName(inputPathNameC);
+		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\interAccuracy.txt");
+		outputFile << "case num\t" << "avgDist\t" << "structure diff" << endl;
+
+		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
+		{
+			string csvName = swcIt->path().filename().string();
+			string csvFullName = inputPathName + "\\" + csvName;
+			//cout << csvFullName << endl;
+			ifstream inputCSV(csvFullName);
+			string inputLine;
+			int count = 0;
+			while (getline(inputCSV, inputLine))
+			{
+				if (inputLine.find("from neuron 1 to 2") != string::npos)
+				{
+					++count;
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					float measure = stof(inputs.back());
+					string caseName = csvName.substr(0, 9);
+					
+					if (count == 1) outputFile << caseName << "\t" << measure << "\t";
+					else if (count == 2) outputFile << measure << endl;
+				}
+			}
+			inputLine.clear();
+		}
+	}
+	else if (!funcName.compare("makeLinkerFile"))
+	{
+
+	}
 
 	return 0;
 }
