@@ -9,6 +9,8 @@
 #include "basic_surf_objs.h"
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
+
 #include "../sort_neuron_swc/openSWCDialog.h"
 #include <algorithm>
 
@@ -98,8 +100,13 @@ void combine_file::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             NeuronTree nt_trees;
             nt_trees.listNeuron = it->second;
             QString fileSaveName = fileOpenName + QString("_type_%1.swc").arg(it->first);
-            writeSWC_file(fileSaveName,nt_trees);
+
+            NeuronTree nt_sorted;
+            SortSWC(nt_trees.listNeuron,nt_sorted.listNeuron,VOID,0);
+            writeSWC_file(fileSaveName,nt_sorted);
             nt_trees.listNeuron.clear();
+            nt_sorted.listNeuron.clear();
+
         }
         v3d_msg("Done with SWC separation!");
 
