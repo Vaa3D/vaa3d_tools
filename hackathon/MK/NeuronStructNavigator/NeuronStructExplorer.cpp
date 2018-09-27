@@ -53,9 +53,6 @@ NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
 		QStringList fileNameParse2 = fileNameParse1.at(0).split("\\");
 		string treeName = fileNameParse2.back().toStdString();
 		this->treeEntry(inputSWC, treeName);
-		
-		this->singleTree = inputSWC;
-		this->singleTreePtr = &(this->singleTree);
 	}
 }
 
@@ -222,182 +219,8 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 	}
 }
 
-double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
-{
-	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
-	{
-		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
-		return -1;
-	}
 
-	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
-	NeuronSWC elongTailNode;
-	if (elongSeg.tails.size() == 0)
-	{
-		//cerr << "Elongating segment only has head. Do nothinig and return.";
-		return -1;
-	}
-	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
-	
-	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
-	NeuronSWC connTailNode;
-	if (connSeg.tails.size() == 0)
-	{
-		if (connOrt == head_tail || connOrt == tail_tail)
-		{
-			//cerr << "Connecting segment only has head. Do nothing and return";
-			return -1;
-		}
-	}
-	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
-
-	vector<float> elongHeadLoc;
-	elongHeadLoc.push_back(elongHeadNode.x);
-	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
-
-	vector<float> elongTailLoc;
-	elongTailLoc.push_back(elongTailNode.x);
-	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z * zRATIO);
-
-	vector<float> connHeadLoc;
-	connHeadLoc.push_back(connHeadNode.x);
-	connHeadLoc.push_back(connHeadNode.y);
-	connHeadLoc.push_back(connHeadNode.z * zRATIO);
-
-	vector<float> connTailLoc;
-	connTailLoc.push_back(connTailNode.x);
-	connTailLoc.push_back(connTailNode.y);
-	connTailLoc.push_back(connTailNode.z * zRATIO);
-
-	vector<float> elongDispUnitVec;
-	vector<float> connDispUnitVec;
-	if (connOrt == head_head)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		connDispUnitVec = this->getDispUnitVector(connTailLoc, connHeadLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == head_tail)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_head)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_tail)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
-		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-}
-
-double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
-{
-	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
-	{
-		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
-		return -1;
-	}
-
-	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
-	NeuronSWC elongTailNode;
-	if (elongSeg.tails.size() == 0)
-	{
-		//cerr << "Elongating segment only has head. Do nothinig and return.";
-		return -1;
-	}
-	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
-
-	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
-	NeuronSWC connTailNode;
-	if (connSeg.tails.size() == 0)
-	{
-		if (connOrt == head_tail || connOrt == tail_tail)
-		{
-			//cerr << "Connecting segment only has head. Do nothing and return";
-			return -1;
-		}
-	}
-	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
-
-	vector<float> elongHeadLoc;
-	elongHeadLoc.push_back(elongHeadNode.x);
-	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
-
-	vector<float> elongTailLoc;
-	elongTailLoc.push_back(elongTailNode.x);
-	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z * zRATIO);
-
-	vector<float> elongDispUnitVec;
-	vector<float> connPointUnitVec;
-	if (connOrt == head_head)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connHeadNode.x);
-		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z * zRATIO);
-		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongHeadLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == head_tail)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connTailNode.x);
-		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z * zRATIO);
-		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongHeadLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_head)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connHeadNode.x);
-		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z * zRATIO);
-		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongTailLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_tail)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connTailNode.x);
-		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z * zRATIO);
-		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongTailLoc);
-
-		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-}
-
+// ========================================= Segment Analysis / Operations =========================================
 segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1, NeuronSWC* tailNodePtr2)
 {
 	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
@@ -831,6 +654,186 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 	return outputProfiledTree;
 }
+// ===================================== END of [Segment Analysis / Operations] =====================================
+
+
+// ================================================== Geometry =================================================
+double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
+{
+	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
+	{
+		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
+		return -1;
+	}
+
+	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
+	NeuronSWC elongTailNode;
+	if (elongSeg.tails.size() == 0)
+	{
+		//cerr << "Elongating segment only has head. Do nothinig and return.";
+		return -1;
+	}
+	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
+
+	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
+	NeuronSWC connTailNode;
+	if (connSeg.tails.size() == 0)
+	{
+		if (connOrt == head_tail || connOrt == tail_tail)
+		{
+			//cerr << "Connecting segment only has head. Do nothing and return";
+			return -1;
+		}
+	}
+	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
+
+	vector<float> elongHeadLoc;
+	elongHeadLoc.push_back(elongHeadNode.x);
+	elongHeadLoc.push_back(elongHeadNode.y);
+	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
+
+	vector<float> elongTailLoc;
+	elongTailLoc.push_back(elongTailNode.x);
+	elongTailLoc.push_back(elongTailNode.y);
+	elongTailLoc.push_back(elongTailNode.z * zRATIO);
+
+	vector<float> connHeadLoc;
+	connHeadLoc.push_back(connHeadNode.x);
+	connHeadLoc.push_back(connHeadNode.y);
+	connHeadLoc.push_back(connHeadNode.z * zRATIO);
+
+	vector<float> connTailLoc;
+	connTailLoc.push_back(connTailNode.x);
+	connTailLoc.push_back(connTailNode.y);
+	connTailLoc.push_back(connTailNode.z * zRATIO);
+
+	vector<float> elongDispUnitVec;
+	vector<float> connDispUnitVec;
+	if (connOrt == head_head)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
+		connDispUnitVec = this->getDispUnitVector(connTailLoc, connHeadLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == head_tail)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
+		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == tail_head)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
+		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == tail_tail)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
+		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connDispUnitVec);
+		return radAngle;
+	}
+}
+
+double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
+{
+	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
+	{
+		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
+		return -1;
+	}
+
+	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
+	NeuronSWC elongTailNode;
+	if (elongSeg.tails.size() == 0)
+	{
+		//cerr << "Elongating segment only has head. Do nothinig and return.";
+		return -1;
+	}
+	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
+
+	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
+	NeuronSWC connTailNode;
+	if (connSeg.tails.size() == 0)
+	{
+		if (connOrt == head_tail || connOrt == tail_tail)
+		{
+			//cerr << "Connecting segment only has head. Do nothing and return";
+			return -1;
+		}
+	}
+	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
+
+	vector<float> elongHeadLoc;
+	elongHeadLoc.push_back(elongHeadNode.x);
+	elongHeadLoc.push_back(elongHeadNode.y);
+	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
+
+	vector<float> elongTailLoc;
+	elongTailLoc.push_back(elongTailNode.x);
+	elongTailLoc.push_back(elongTailNode.y);
+	elongTailLoc.push_back(elongTailNode.z * zRATIO);
+
+	vector<float> elongDispUnitVec;
+	vector<float> connPointUnitVec;
+	if (connOrt == head_head)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connHeadNode.x);
+		connPointLoc.push_back(connHeadNode.y);
+		connPointLoc.push_back(connHeadNode.z * zRATIO);
+		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongHeadLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == head_tail)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connTailNode.x);
+		connPointLoc.push_back(connTailNode.y);
+		connPointLoc.push_back(connTailNode.z * zRATIO);
+		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongHeadLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == tail_head)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connHeadNode.x);
+		connPointLoc.push_back(connHeadNode.y);
+		connPointLoc.push_back(connHeadNode.z * zRATIO);
+		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongTailLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == tail_tail)
+	{
+		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connTailNode.x);
+		connPointLoc.push_back(connTailNode.y);
+		connPointLoc.push_back(connTailNode.z * zRATIO);
+		connPointUnitVec = this->getDispUnitVector(connPointLoc, elongTailLoc);
+
+		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+}
+// ============================================= End of [Geometry] =============================================
 
 NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 {
@@ -1166,22 +1169,6 @@ vector<segUnit> NeuronStructExplorer::MSTtreeTrim(vector<segUnit>& inputSegUnits
 	}
 
 	return;*/
-}
-
-void NeuronStructExplorer::detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr)
-{
-	// -- This method creates a z-frequency profile on the xy plane for the image stack.
-
-	for (QList<NeuronSWC>::iterator it = inputTreePtr->listNeuron.begin(); it != inputTreePtr->listNeuron.end(); ++it)
-	{
-		int xCoord = int(it->x);
-		int yCoord = int(it->y);
-		int zCoord = int(it->z);
-		float prob = it->radius;
-		
-		string xyKey = to_string(xCoord) + "," + to_string(yCoord);
-		this->zProfileMap[xyKey][zCoord] = prob;
-	}
 }
 
 void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)

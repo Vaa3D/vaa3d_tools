@@ -121,9 +121,14 @@ public:
 	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 	
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
+	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+	
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1 = nullptr, NeuronSWC* tailNodePtr2 = nullptr);
+	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
+	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
+	
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
 	/**********************************************************************/
 
@@ -134,17 +139,10 @@ public:
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
-	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
-	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	/********************************************/
 
-public:
-	/********* Pixel-based deep neural network result refining/cleaning *********/
-	unordered_map<string, unordered_map<int, float>> zProfileMap;
-	void detectedPixelStackZProfile(NeuronTree* inputTreePtr, NeuronTree* outputTreePtr);
-	/****************************************************************************/
-
 	/********* Distance-based SWC analysis *********/
+public:
 	vector<vector<float>> FPsList;
 	vector<vector<float>> FNsList;
 	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);

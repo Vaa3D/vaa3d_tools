@@ -66,7 +66,7 @@ public:
 
 	void somaNeighborhoodThin();
 
-	void swc_imgCrop();
+	void swc_imgCrop(bool saveSWC = false);
 	
 	void getMST();
 	void getMST_2Dslices();
