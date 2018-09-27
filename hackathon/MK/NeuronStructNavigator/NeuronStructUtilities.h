@@ -27,6 +27,7 @@ public:
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
 	/*******************************************************/
 	
 	/********* Neuron Struct Profiling Methods *********/
