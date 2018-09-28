@@ -111,7 +111,7 @@ public:
 	/***************** Neuron Struct Processing Functions *****************/
 	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
-	inline static NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
+	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
 	/**********************************************************************/
 
 	/***************** Neuron Struct Connecting Functions *****************/

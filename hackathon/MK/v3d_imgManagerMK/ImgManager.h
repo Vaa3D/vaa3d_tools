@@ -59,18 +59,22 @@ public:
 	void imgEntry(QString caseID, imgFormat format);
 	/***************************************/
 
-	/********* Methods for generating binary masks from SWC files *********/
+	/***************** Image - SWC Functionalities *****************/
+	static inline vector<int> retreiveSWCcropDnParam_imgBased(const registeredImg& originalImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin = 10, bool zShift = false);
+	/***************************************************************/
+
+	/********* Methods for Generating Binary Masks from SWC Files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
 	bool getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, MyMarker m2);
 
 	void detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D);
 	/**********************************************************************/
 
-	/********* Assemble all SWC masks together as an "SWC mip mask." *********/
+	/********* Assemble All SWC Masks Together as An "SWC Mip Mask." *********/
 	void MaskMIPfrom2Dseries(string path);                       
 	/*************************************************************************/
 
-	/********* Dessemble image/stack into tiles. This is for Caffe's memory leak issue *********/
+	/********* Dessemble Image/Stack Into Tiles. This Is For Caffe's Memory Leak Issue *********/
 	static void imgSliceDessemble(string imgName, int tileSize);
 	/*******************************************************************************************/
 };
@@ -109,6 +113,40 @@ inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pd
 	outimg->saveImage(filename);
 	
 	return true;
+}
+
+inline vector<int> ImgManager::retreiveSWCcropDnParam_imgBased(const registeredImg& inputImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin, bool zShift)
+{
+	int xlb = 10000, xhb = 0, ylb = 10000, yhb = 0, zlb = 10000, zhb = 0;
+	for (QList<NeuronSWC>::const_iterator nodeIt = refNodeList.begin(); nodeIt != refNodeList.end(); ++nodeIt)
+	{
+		int thisNodeX = int(round(nodeIt->x / xDnFactor));
+		int thisNodeY = int(round(nodeIt->y / yDnFactor));
+		int thisNodeZ = int(round(nodeIt->z / zDnFactor));
+		if (thisNodeX < xlb) xlb = thisNodeX;
+		if (thisNodeX > xhb) xhb = thisNodeX;
+		if (thisNodeY < ylb) ylb = thisNodeY;
+		if (thisNodeY > yhb) yhb = thisNodeY;
+		if (thisNodeZ < zlb) zlb = thisNodeZ;
+		if (thisNodeZ > zhb) zhb = thisNodeZ;
+	}
+	xlb -= 10; xhb += 10; ylb -= 10; yhb += 10;
+	if (xlb <= 0) xlb = 1;
+	if (xhb >= inputImg.dims[0]) xhb = inputImg.dims[0];
+	if (ylb <= 0) ylb = 1;
+	if (yhb >= inputImg.dims[1]) yhb = inputImg.dims[1];
+	if (zShift)
+	{
+		if (zlb <= 0) zlb = 1;
+		if (zhb >= inputImg.dims[2]) zhb = inputImg.dims[1];
+	}
+
+	vector<int> offSets(3);
+	offSets.at(0) = xlb;
+	offSets.at(1) = ylb;
+	zShift ? offSets.at(2) : 0;
+
+	return offSets;
 }
 
 #endif

@@ -66,12 +66,13 @@ public:
 
 	void somaNeighborhoodThin();
 
-	void swc_imgCrop(bool saveSWC = false);
+	void swc_imgCrop();
 	
 	void getMST();
 	void getMST_2Dslices();
 	void swcScale(float xScale, float yScale, float zScale);
 	void swcRegister();
+	void swcMapBack();
 	void correctSWC();
 	void getTiledMST();
 	void cutMST();

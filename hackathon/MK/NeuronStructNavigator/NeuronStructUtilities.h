@@ -2,6 +2,10 @@
 #define NEURONSTRUCTUTILITIES_H
 
 #include <vector>
+#include <string>
+#include <fstream>
+
+#include <boost\algorithm\string.hpp>
 
 #include <qlist.h>
 #include <qstring.h>
@@ -52,6 +56,10 @@ public:
 	static void bkgNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, int dims[], float ratio, float distance);
 	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
 	/******************************************************************************/
+
+	/***************** Miscellaneious *****************/
+	static inline void linkerFileGen_forSWC(string swcFullFileName);
+	/**************************************************/
 };
 
 inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale)
@@ -168,6 +176,25 @@ inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& 
 		}
 	}
 	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
+}
+
+inline void NeuronStructUtil::linkerFileGen_forSWC(string swcFullFileName)
+{
+	vector<string> swcFullNameParse;
+	boost::split(swcFullNameParse, swcFullFileName, boost::is_any_of("\\"));
+	string swcName = swcFullNameParse.back();
+	vector<string> swcBaseNameParse;
+	boost::split(swcBaseNameParse, swcName, boost::is_any_of("."));
+	string swcBaseName = swcBaseNameParse.front();
+
+	string rootPath;
+	for (vector<string>::iterator it = swcFullNameParse.begin(); it != swcFullNameParse.end() - 1; ++it)
+		rootPath = rootPath + *it + "/";
+	string anoFullName = rootPath + swcBaseName + ".ano";
+
+	ofstream outputFile(anoFullName.c_str());
+	outputFile << "SWCFILE=" << swcName << endl;
+	outputFile.close();
 }
 
 #endif 

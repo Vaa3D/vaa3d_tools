@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "makeLinkerFile";
+	string funcName = "interAccuracy";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -240,7 +240,17 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("makeLinkerFile"))
 	{
+		const char* inputPathNameC = argv[1];
+		string inputPathName(inputPathNameC);
+		//ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\interAccuracy.txt");
+		//outputFile << "case num\t" << "avgDist\t" << "structure diff" << endl;
 
+		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
+		{
+			string swcName = swcIt->path().filename().string();
+			string swcFullName = inputPathName + "\\" + swcName;
+			NeuronStructUtil::linkerFileGen_forSWC(swcFullName);
+		}
 	}
 
 	return 0;

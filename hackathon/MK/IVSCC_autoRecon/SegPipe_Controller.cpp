@@ -674,7 +674,40 @@ void SegPipe_Controller::somaNeighborhoodThin()
 
 }
 
-void SegPipe_Controller::swc_imgCrop(bool saveSWC)
+void SegPipe_Controller::swcMapBack()
+{
+	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
+
+	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		cout << "Processing case " << (*caseIt).toStdString() << ":" << endl;
+		
+		myImgManagerPtr->imgDatabase.clear();
+		myImgManagerPtr->imgEntry(*caseIt, slices);
+
+		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
+		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
+		
+		vector<int> offSets = ImgManager::retreiveSWCcropDnParam_imgBased(myImgManagerPtr->imgDatabase[(*caseIt).toStdString()], currCaseTree.listNeuron, 4, 4, 2);
+		QString targetedTreeFullNameQ = this->inputSWCRootPath + "/" + *caseIt + ".swc";
+		NeuronTree targetedTree = readSWC_file(targetedTreeFullNameQ);
+		NeuronTree registeredTree;
+		registeredTree.listNeuron.clear();
+		for (QList<NeuronSWC>::iterator nodeIt = targetedTree.listNeuron.begin(); nodeIt != targetedTree.listNeuron.end(); ++nodeIt)
+		{
+			NeuronSWC newNode = *nodeIt;
+			newNode.x = (nodeIt->x + offSets.at(0)) * 4;
+			newNode.y = (nodeIt->y + offSets.at(1)) * 4;
+			newNode.z = (nodeIt->z + offSets.at(2)) * 2;
+			registeredTree.listNeuron.push_back(newNode);
+		}
+		QString newTreeName = scaledSWC_saveRootQ + *caseIt + ".swc";
+		writeSWC_file(newTreeName, registeredTree);
+	}
+}
+
+void SegPipe_Controller::swc_imgCrop()
 {
 	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
 
@@ -720,22 +753,19 @@ void SegPipe_Controller::swc_imgCrop(bool saveSWC)
 		newDims[2] = 1;
 		cout << "boundries: " << xlb << " " << xhb << " " << ylb << " " << yhb << endl;
 		
-		if (saveSWC)
+		if (!this->outputSWCRootPath.isEmpty())
 		{
-			if (!this->outputSWCRootPath.isEmpty())
+			NeuronTree newTree;
+			for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
 			{
-				NeuronTree newTree;
-				for (QList<NeuronSWC>::iterator nodeIt = currCaseTree.listNeuron.begin(); nodeIt != currCaseTree.listNeuron.end(); ++nodeIt)
-				{
-					NeuronSWC newNode = *nodeIt;
-					newNode.x = (nodeIt->x / 4) - xlb;
-					newNode.y = (nodeIt->y / 4) - ylb;
-					newNode.z = (nodeIt->z / 2);
-					newTree.listNeuron.push_back(newNode);
-				}
-				QString newTreeName = scaledSWC_saveRootQ + *caseIt + ".swc";
-				writeSWC_file(newTreeName, newTree);
+				NeuronSWC newNode = *nodeIt;
+				newNode.x = (nodeIt->x / 4) - xlb;
+				newNode.y = (nodeIt->y / 4) - ylb;
+				newNode.z = (nodeIt->z / 2);
+				newTree.listNeuron.push_back(newNode);
 			}
+			QString newTreeName = scaledSWC_saveRootQ + *caseIt + ".swc";
+			writeSWC_file(newTreeName, newTree);
 		}
 
 		V3DLONG saveDims[4];
