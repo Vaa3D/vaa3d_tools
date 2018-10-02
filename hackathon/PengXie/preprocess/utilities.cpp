@@ -99,6 +99,16 @@ CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, d
     marker.color.b = color_b;
     return marker;
 }
+int count_root(NeuronTree nt){
+    int ct = 0;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        if(node.pn == -1){
+            ct++;
+        }
+    }
+    return ct;
+}
 
 bool my_saveANO(QString fileNameHeader, bool swc, bool apo, QString swc_name){
     FILE * fp=0;

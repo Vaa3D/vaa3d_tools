@@ -39,6 +39,7 @@ NeuronTree color_lost_branch(NeuronTree new_tree){
     new_tree.deepCopy(my_SortSWC(new_tree, soma_id, 0));
     return new_tree;
 }
+
 NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel,
                         double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
 {
@@ -170,6 +171,74 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     return new_tree;
 }
 
+QList<bool> whether_internal(NeuronTree nt){
+    QList<bool> is_internal;
+    QList<int> internal_list = get_tips(nt, 1);
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        is_internal.append(1);
+    }
+    for(int i=0; i<internal_list.size(); i++){
+        is_internal[internal_list.at(i)] = 0;
+    }
+    return is_internal;
+}
+NeuronTree label_connections(NeuronTree A, NeuronTree B, QString APO_file){
+    QList<bool> is_internal_A = whether_internal(A);
+    QList<bool> is_internal_B = whether_internal(B);
+    QHash<int, int> AtoB;
+    for(int i=0; i<A.listNeuron.size(); i++){
+        for(int j=0; j<B.listNeuron.size(); j++){
+            if(computeDist2(A.listNeuron.at(i), B.listNeuron.at(j))==0){
+                AtoB.insert(i, j);
+                break;
+            }
+        }
+    }
+    qDebug()<<A.listNeuron.size()<<AtoB.size();
+    QList<int> change_type; // 0: no change; 1: tip to internal; 2: internal to tip
+    for(int i=0; i<A.listNeuron.size(); i++){
+        bool ia = is_internal_A.at(i);
+        bool ib = is_internal_B.at(AtoB.value(i));
+        if(ia == ib){
+            change_type.append(0);
+        }
+        else if(!ia & ib){
+            change_type.append(1);
+        }
+        else{
+            change_type.append(2);
+        }
+    }
+    qDebug()<<change_type.count(0)<<change_type.count(1)<<change_type.count(2);
+    QList<CellAPO> markers;
+    for(int i=0; i<A.listNeuron.size(); i++){
+        if(change_type.at(i)==0){
+            A.listNeuron[i].type = 1;
+            continue;
+        }
+        CellAPO marker;
+        marker.x = A.listNeuron.at(i).x;
+        marker.y = A.listNeuron.at(i).y;
+        marker.z = A.listNeuron.at(i).z;
+        marker.color.r=255;
+        marker.color.g=0;
+        marker.color.b=0;
+        marker.volsize=10;
+        marker.comment="altered_connection";
+        if(change_type.at(i)==1){
+            A.listNeuron[i].type = 3;
+            markers.append(marker);
+            continue;
+        }
+        if(change_type.at(i)==2){
+            A.listNeuron[i].type = 2;
+            markers.append(marker);
+            continue;
+        }
+    }
+    writeAPO_file(APO_file, markers);
+    return A;
+}
 bool pre_processing(QString qs_input, QString qs_output, double prune_size, double thres, double thres_long,
                     double step_size, double connect_soma_dist, bool rotation,
                     bool colorful, bool return_maintree)
@@ -192,7 +261,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }
 
     // 1. Load data
-    printf("\tLoading swc\n");
+    printf("\t0Loading swc\n");
 
     NeuronTree nt;
     QList<CellAPO> markers;
@@ -205,29 +274,18 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
     //2. start processing
     NeuronTree cur_nt;
+    printf("\n### N of subtrees at the beginning:\t%d\n", count_root(nt));
+    printf("\n### Total size:\t%d\n", nt.listNeuron.size());
 
     //2.1 Remove duplicates
     printf("\tRemoving duplicates\n");
-    cur_nt.listNeuron = nt.listNeuron;
     // Maybe not the best solution. Use it for now.
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
+    export_listNeuron_2swc(nt.listNeuron, "dedup.swc");
+    printf("\n### N of subtrees after dedupe:\t%d\n", count_root(nt));
+    printf("\n### Total size:\t%d\n", nt.listNeuron.size());
 
-    //2.2 Prune
-    printf("\tPruning short branches\n");
-    if (!prune_branch(nt, cur_nt, prune_size))
-    {
-        fprintf(stderr,"Error in prune_short_branch.\n");
-        return 1;
-    }
-
-
-    //2.3 Short distance connection
-    printf("\tShort distance connection\n");
-//    nt = readSWC_file(qPrintable(outfileLabel+".prune.swc"));
-    nt.deepCopy(my_connectall(cur_nt, 1, 1, 5, 60, thres, 0, false, 1));
-//    export_list2file(nt.listNeuron, qPrintable(outfileLabel+".short_connect.swc"));
-
-    //2.3 Resample
+    //2.0 Resample
     printf("\tResampling\n");
     if (step_size>0){
         printf("Resampling along segments\n");
@@ -235,9 +293,32 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }else{
         printf("Skip Resampling\n");
     }
+    export_listNeuron_2swc(nt.listNeuron, "resmaple.swc");
+    printf("\n### N of subtrees after resample:\t%d\n", count_root(nt));
+    printf("\n### Total size:\t%d\n", nt.listNeuron.size());
+
+//    //2.2 Prune
+//    printf("\tPruning short branches\n");
+//    if (!prune_branch(nt, cur_nt, prune_size))
+//    {
+//        fprintf(stderr,"Error in prune_short_branch.\n");
+//        return 1;
+//    }
+//    nt.deepCopy(cur_nt);
+
+    //2.3 Short distance connection
+    cur_nt.deepCopy(nt);
+    printf("\tShort distance connection\n");
+    nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, thres, 0, false, 1));
+    export_listNeuron_2swc(nt.listNeuron, "short_connect.swc");
+    printf("\n### N of subtrees after short_connect:\t%d\n", count_root(nt));
+    printf("\n### Total size:\t%d\n", nt.listNeuron.size());
+    // Compare before/after short connection
+    cur_nt = label_connections(nt, cur_nt, QString("check_connections..apo"));
+    export_listNeuron_2swc(cur_nt.listNeuron, "check_connections.swc");
+    return 1;
 
     //2.4 Connect to soma  
-//    cur_nt.listNeuron = nt.listNeuron;
     if ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo")))){
         printf("\tConnecting to soma\n");
         markers = readAPO_file(infileLabel + QString(".apo"));
@@ -248,6 +329,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }
     nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, thres_long, 1, false, 1));
     nt.deepCopy(color_lost_branch(nt));
+    export_listNeuron_2swc(nt.listNeuron, "soma_connect.swc");
+    printf("\n### N of subtrees after soma_connect:\t%d\n", count_root(nt));
+    printf("\n### Total size:\t%d\n", nt.listNeuron.size());
+
     //2.6 Align axis
     cur_nt.listNeuron = nt.listNeuron;
     if (rotation)
@@ -533,7 +618,7 @@ void printHelp_pre_processing()
     printf("\t#m <thres_connect_soma>       :   maximun distance to connect a node to soma.\n");
     printf("\t                         use 0 to skip, if not specified, use 1000.\n");
     printf("\t#t <thres>       :    gap threshold before soma connection.\n");
-    printf("\t                        if not specified, use 0.\n");
+    printf("\t                        if not specified, use 10.\n");
     printf("\t#z <thres_long>       :   gap threshold after soma connection.\n");
     printf("\t                        if not specified, use 10.\n");
     printf("\t#r <rotation = 0>   :   whether to perform PCA alignment.\n");

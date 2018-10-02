@@ -91,6 +91,20 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 			return false;
 		}
 	}
+	else if (func_name == tr("threshold3D"))
+	{
+		if (inparas[0])
+		{
+			QString percentileQ = inparas[0];
+			float percentile = percentileQ.toFloat();
+			segPipePtr->threshold3D(percentile);
+		}
+		else
+		{
+			cerr << "Invalid parameter. Do nothing and return." << endl;
+			return false;
+		}
+	}
 	else if (func_name == tr("hist")) segPipePtr->histQuickList();
 	else if (func_name == tr("bkgThreshold")) segPipePtr->sliceBkgThre();
 	else if (func_name == tr("cropImgWithSWC"))

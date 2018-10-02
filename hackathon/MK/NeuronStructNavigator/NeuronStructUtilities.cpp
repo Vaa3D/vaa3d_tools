@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  This library provides functionalities for neuron struct operations, such as crop, register, sample, data extraction, etc.
+*  NeuronStructUtil class is desinged to take NeuronTree struct as the input and as well output NeuronTree struct for most of the methods.
+*  This class intends to operate on the whole neuron struct level, as 'utility' it is called.
+*
+*  Many NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
+*  A typical function call would need at least three input arguments:
+*
+*		NeuronStructUtil::func(const NeuronTree& inputTree, NeuronTree& outputTree, other input arguments);
+*
+********************************************************************************/
+
 #include <iostream>
 #include <string>
 #include <iterator>

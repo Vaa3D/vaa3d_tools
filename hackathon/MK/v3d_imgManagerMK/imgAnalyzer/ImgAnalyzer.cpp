@@ -45,7 +45,7 @@ morphStructElement::morphStructElement(string shape) : eleShape(shape)
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
 	// Finds connected components from a image statck using slice-by-slice approach.
-	// All components are sotred in the form of ImgAnalyzer::connectedComponent.
+	// All components are stored in the form of ImgAnalyzer::connectedComponent.
 	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
 	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
 

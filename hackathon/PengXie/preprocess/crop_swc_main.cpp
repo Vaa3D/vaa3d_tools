@@ -21,7 +21,7 @@
 #endif
 
 bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool center, int resample_step,
-              double xshift, double yshift, double zshift,bool rotation){
+              double xshift, double yshift, double zshift,bool rotation, bool report_single_tree){
 
     printf("welcome to crop_swc\n");
     // 1. read input
@@ -78,10 +78,13 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         new_tree.listNeuron.append(node);
     }
 
-    export_list2file(new_tree.listNeuron, "cropped.swc");
     // 2.3 return single tree
-    nt = single_tree(new_tree, soma);
-    export_list2file(nt.listNeuron, "single_tree.swc");
+    if(report_single_tree){
+        nt = single_tree(new_tree, soma);
+    }
+    else{
+        nt = new_tree;
+    }
 
     // 2.4 sort the single tree
     nt = my_SortSWC(nt, soma_name, 0);
@@ -126,6 +129,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     double yshift=0;
     double zshift=0;
     bool rotation=0;
+    bool report_single_tree=1;
 
     if(1==1){
         if(input.size() != 2)
@@ -168,7 +172,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
             printHelp_crop_swc();
 
         int c;
-        static char optstring[]="hi:o:s:r:c:j:t:x:y:z:";
+        static char optstring[]="hi:o:s:r:c:j:t:x:y:z:a:";
         extern char * optarg;
         extern int optind, opterr;
         optind = 1;
@@ -228,6 +232,13 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
                         return 1;
                     }
                     rotation = (atoi(optarg)==1);
+                case 'a':
+                    if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                    {
+                        fprintf(stderr, "Found illegal or NULL parameter for the option -r.\n");
+                        return 1;
+                    }
+                    report_single_tree = (atoi(optarg)==1);
             break;
                 case 'j':
                     if (strcmp(optarg,"(null)")==0)
@@ -285,7 +296,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     }
 
     return crop_swc(qs_input, qs_output, radius, soma, center, resample_step,
-                    xshift, yshift, zshift, rotation);
+                    xshift, yshift, zshift, rotation, report_single_tree);
 }
 
 void printHelp_crop_swc()
@@ -303,5 +314,6 @@ void printHelp_crop_swc()
     printf("\t#z <zshift> :  shift soma node along z-axis.\n");
     printf("\t#c <center> :  whether to move soma to the origion; default is 1.\n");
     printf("\t#t <rotation> :  whether to perform PCA projection; default is 0.\n");
+    printf("\t#a <report_single_tree> :  whether to report a single tree; default is 1.\n");
     printf("Usage: vaa3d -x preprocess -f crop_swc -p \"#i input.swc #o result.swc #r 100 #j 2\"\n");
 }
