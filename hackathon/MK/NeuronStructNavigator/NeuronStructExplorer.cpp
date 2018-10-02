@@ -1,3 +1,22 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  This library intends to provide functionalities for neuron struct analysis, including graph and geometry analysis, etc.
+*  Typically NeuronStructExplorer class methods need a profiledTree struct as part of the input arguments. A profiledTree can be assigned when the class is initiated or later.
+*
+*  profiledTree is the core data type in NeuronStructExplorer class. It profiles the NeuronTree and carries crucial information of it.
+*  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
+*  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
+*  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
+
+*  The class can be initiated with or without a profiledTree being initiated at the same time. A profiledTree can be stored and indexed in NeuronStructExplorer's treeDatabe.
+*
+********************************************************************************/
+
 #include <iostream>
 #include <algorithm>
 #include <cmath>

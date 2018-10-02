@@ -50,7 +50,8 @@ public:
 
 	void sliceDownSample2D(int downFactor, string method = "");
 	void sliceGammaCorrect();
-	void sliceThre(float threshold);
+	void sliceThre(float threPercentile);
+	void threshold3D(float threPercentile);
 	void sliceBkgThre();
 	void sliceReversedGammaCorrect();
 	
