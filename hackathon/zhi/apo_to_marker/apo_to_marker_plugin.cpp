@@ -13,6 +13,7 @@ QStringList apo_to_marker::menulist() const
 {
 	return QStringList() 
         <<tr("save apo to marker format")
+        <<tr("save apo to individual markers")
         <<tr("save swc file to apo format")
 		<<tr("about");
 }
@@ -32,65 +33,80 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Point Cloud File"),
                                                     "",
                                                     QObject::tr("Supported file (*.apo *.APO)"
+                                                                ));
+        if (fileOpenName.isEmpty())
+            return;
+
+        QList<CellAPO> file_inmarkers;
+        file_inmarkers = readAPO_file(fileOpenName);
+        QList <ImageMarker> listLandmarks;
+
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            ImageMarker t;
+            t.x = file_inmarkers[i].x;
+            t.y = file_inmarkers[i].y;
+            t.z = file_inmarkers[i].z;
+            t.color = file_inmarkers[i].color;
+            listLandmarks.push_back(t);
+        }
+
+        QString fileDefaultName = fileOpenName + ".marker";
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                            fileDefaultName,
+                                                            QObject::tr("Supported file (*.marker)"));
+        if (fileSaveName.isEmpty())
+            return;
+        else
+        {
+            writeMarker_file(fileSaveName,listLandmarks);
+            v3d_msg(QString("Marker file is save as %1").arg(fileSaveName.toStdString().c_str()));
+        }
+
+    }else if (menu_name == tr("save apo to individual markers"))
+    {
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Point Cloud File"),
+                                                    "",
+                                                    QObject::tr("Supported file (*.apo *.APO)"
                                                         ));
         if (fileOpenName.isEmpty())
             return;
 
         QList<CellAPO> file_inmarkers;
         file_inmarkers = readAPO_file(fileOpenName);
-        QList <CellAPO> listLandmarks;
+        QList <ImageMarker> listLandmarks;
+        int scale;
+        bool ok1;
+        scale = QInputDialog::getDouble(0, "Scale factor ",
+                                      "Enter scale factor:",
+                                      2, 1, INT_MAX, 1, &ok1);
+        if(!ok1)
+            return;
+
+        QString outputFolder;
+        outputFolder = QFileDialog::getExistingDirectory(0,QString(QObject::tr("Choose the output")));
+
 
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
-//            file_inmarkers[i].x = file_inmarkers[i].x/2;
-//            file_inmarkers[i].y = file_inmarkers[i].y/2;
-//            file_inmarkers[i].z = file_inmarkers[i].z/2;
-
-            CellAPO t;
-            t.x = file_inmarkers[i].x;
-            t.y = file_inmarkers[i].y;
-            t.z = file_inmarkers[i].z;
+            ImageMarker t;
+            t.x = file_inmarkers[i].x/scale;
+            t.y = file_inmarkers[i].y/scale;
+            t.z = file_inmarkers[i].z/scale;
             t.color = file_inmarkers[i].color;
-//            t.color.r = 255; t.color.g = 0; t.color.b = 0;
-            t.volsize = 314.159;
             listLandmarks.push_back(t);
             QString fileDefaultName;
             if(i<9)
-                fileDefaultName=QString("/local1/work/SEUAllenJointDataCenter/finished_annotations/18457_UndoNeurons/00%1/00%1_v1.apo").arg(i+1).arg(i+1);
+                fileDefaultName=outputFolder+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
             else if(i<99)
-                fileDefaultName=QString("/local1/work/SEUAllenJointDataCenter/finished_annotations/18457_UndoNeurons/0%1/0%1_v1.apo").arg(i+1).arg(i+1);
+                fileDefaultName=outputFolder+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
             else
-                fileDefaultName=QString("/local1/work/SEUAllenJointDataCenter/finished_annotations/18457_UndoNeurons/%1/%1_v1.apo").arg(i+1).arg(i+1);
+                fileDefaultName=outputFolder+QString("/%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
 
-            writeAPO_file(fileDefaultName,listLandmarks);
+            writeMarker_file(fileDefaultName,listLandmarks);
             listLandmarks.clear();
         }
-
-//        QString fileDefaultName = fileOpenName + ".apo";
-//        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-//                                                            fileDefaultName,
-//                                                            QObject::tr("Supported file (*.apo)"));
-//        if (fileSaveName.isEmpty())
-//            return;
-//        else
-//        {
-//            writeAPO_file(fileSaveName,file_inmarkers);
-//            v3d_msg(QString("Point Cloud file is save as %1").arg(fileSaveName.toStdString().c_str()));
-//        }
-
-
-//        QString fileDefaultName = fileOpenName + ".marker";
-//        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-//                                                            fileDefaultName,
-//                                                            QObject::tr("Supported file (*.marker)"));
-//        if (fileSaveName.isEmpty())
-//            return;
-//        else
-//        {
-//            writeMarker_file(fileSaveName,listLandmarks);
-//            v3d_msg(QString("Marker file is save as %1").arg(fileSaveName.toStdString().c_str()));
-//        }
-
     }
     else if (menu_name == tr("save swc file to apo format"))
     {
