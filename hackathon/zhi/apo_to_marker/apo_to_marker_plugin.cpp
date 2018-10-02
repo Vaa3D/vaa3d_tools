@@ -15,6 +15,7 @@ QStringList apo_to_marker::menulist() const
         <<tr("save apo to marker format")
         <<tr("save apo to individual markers")
         <<tr("save apo to individual apo files")
+        <<tr("add name in apo file")
         <<tr("save swc file to apo format")
 		<<tr("about");
 }
@@ -152,6 +153,35 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             writeAPO_file(fileDefaultName,listLandmarks);
             listLandmarks.clear();
         }
+    }else if (menu_name == tr("add name in apo file"))
+    {
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Point Cloud File"),
+                                                    "",
+                                                    QObject::tr("Supported file (*.apo *.APO)"
+                                                        ));
+        if (fileOpenName.isEmpty())
+            return;
+
+        QList<CellAPO> file_inmarkers;
+        file_inmarkers = readAPO_file(fileOpenName);
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            file_inmarkers[i].name = QString("%1").arg(i+1);
+        }
+
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                            fileOpenName,
+                                                            QObject::tr("Supported file (*.apo)"));
+        if (fileSaveName.isEmpty())
+            return;
+        else
+        {
+            writeAPO_file(fileSaveName,file_inmarkers);
+            v3d_msg(QString("Point Cloud file is save as %1").arg(fileSaveName.toStdString().c_str()));
+        }
+
+
     }
     else if (menu_name == tr("save swc file to apo format"))
     {
