@@ -38,7 +38,7 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
     QHash <int, int>  hashNeuron;
     listNeuron.clear();
     hashNeuron.clear();
-
+//    qDebug()<<"creating new neuronlist";
     for (int i = 0; i < neuronlist.size(); i++)
     {
         NeuronSWC node=neuronlist.at(i);
@@ -513,6 +513,12 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
 QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
     // Concatenate nl2 after nl1;
     // id's of nl1/2 should start from 1;
+    if(nl1.size()==0){
+        return nl2;
+    }
+    if(nl2.size()==0){
+        return nl1;
+    }
     QList<NeuronSWC> empty_list;
     if(nl1.at(0).n != 1 || nl2.at(0).n != 1){
         printf("names of neuron trees must begin with 1!\n");
@@ -521,7 +527,9 @@ QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
     int nl1_size = nl1.size();
     for(int i=0; i<nl2.size(); i++){
         nl2[i].n += nl1_size;
-        nl2[i].pn += nl1_size;
+        if(nl2.at(i).pn != -1){  // Keep root node as it was.
+            nl2[i].pn += nl1_size;
+        }
     }
     nl1.append(nl2);
     return nl1;

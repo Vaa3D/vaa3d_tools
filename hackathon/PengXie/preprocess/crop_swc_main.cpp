@@ -80,14 +80,15 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
 
     // 2.3 return single tree
     if(report_single_tree){
-        nt = single_tree(new_tree, soma);
+        nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));  // Sort the tree so "soma" is the root;
+        nt.deepCopy(single_tree(nt, 0));
     }
     else{
-        nt = new_tree;
+        nt.deepCopy(new_tree);
     }
 
     // 2.4 sort the single tree
-    nt = my_SortSWC(nt, soma_name, 0);
+    nt.deepCopy(my_SortSWC(nt, soma_name, 0));
 
     // 3. resample
     if (resample_step>0){
