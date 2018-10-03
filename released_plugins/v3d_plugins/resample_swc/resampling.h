@@ -16,6 +16,8 @@ struct Point
     V3DLONG type;
 	Point* p;
 	V3DLONG childNum;
+    V3DLONG level,seg_id;
+    QList<float> fea_val;
 };
 typedef vector<Point*> Segment;
 typedef vector<Point*> Tree;
@@ -47,8 +49,22 @@ void resample_path(Segment * seg, double step)
 			pt->z = start->z + rate*(start->p->z-start->z);
 			pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
 			pt->p = start->p;
-            if (rate<0.5) pt->type = start->type;
-            else pt->type = start->p->type;
+
+            if (rate<0.5)
+            {
+                pt->type = start->type;
+                pt->seg_id = start->seg_id;
+                pt->level = start->level;
+                pt->fea_val = start->fea_val;
+            }
+            else
+            {
+                pt->type = start->p->type;
+                pt->seg_id = start->p->seg_id;
+                pt->level = start->p->level;
+                pt->fea_val = start->p->fea_val;
+
+            }
 			seg_r.back()->p = pt;
 			seg_r.push_back(pt);
 			path_length += DISTP(start,pt);
@@ -75,7 +91,10 @@ NeuronTree resample(NeuronTree input, double step)
 		pt->z = s.z;
 		pt->r = s.r;
         pt ->type = s.type;
-		pt->p = NULL;
+        pt->seg_id = s.seg_id;
+        pt->level = s.level;
+        pt->fea_val = s.fea_val;
+        pt->p = NULL;
 		pt->childNum = 0;
 		tree.push_back(pt);
 	}
@@ -132,7 +151,10 @@ NeuronTree resample(NeuronTree input, double step)
 		S.z = p->z;
 		S.r = p->r;
         S.type = p->type;
-		result.listNeuron.push_back(S);
+        S.seg_id = p->seg_id;
+        S.level = p->level;
+        S.fea_val = p->fea_val;
+        result.listNeuron.push_back(S);
 	}
 	for (V3DLONG i=0;i<tree.size();i++)
 	{
