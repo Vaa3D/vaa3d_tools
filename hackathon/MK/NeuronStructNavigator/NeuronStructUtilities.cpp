@@ -684,6 +684,90 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 // =============================== END of [SWC <-> Connected Components] ===============================
 
 
+// ==================================== Neuron Struct Clustering Methods ========================================
+vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronTree& inputTree, float dist)
+{
+	QList<NeuronSWC> inputList = inputTree.listNeuron;
+	vector<connectedComponent> outputConnCompList;
+	outputConnCompList.clear();
+	connectedComponent connComp1;
+	vector<int> node1Coord(3);
+	node1Coord.at(0) = int(inputList.begin()->x);
+	node1Coord.at(1) = int(inputList.begin()->y);
+	node1Coord.at(2) = int(inputList.begin()->z);
+	set<vector<int>> connComp1Set;
+	connComp1Set.insert(node1Coord);
+	connComp1.coordSets.insert(pair<int, set<vector<int>>>(node1Coord.at(0), connComp1Set));
+	connComp1.size = 1;
+	outputConnCompList.push_back(connComp1);
+	inputList.erase(inputList.begin());
+
+	while (inputList.size() > 0)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = inputList.begin(); nodeIt != inputList.end(); ++nodeIt)
+		{
+			for (vector<connectedComponent>::iterator cluIt = outputConnCompList.begin(); cluIt != outputConnCompList.end(); ++cluIt)
+			{
+				for (map<int, set<vector<int>>>::iterator zIt = cluIt->coordSets.begin(); zIt != cluIt->coordSets.end(); ++zIt)
+				{
+					for (set<vector<int>>::iterator cluNodeIt = zIt->second.begin(); cluNodeIt != zIt->second.end(); ++cluNodeIt)
+					{
+						if (sqrt((nodeIt->x - cluNodeIt->at(0)) * (nodeIt->x - cluNodeIt->at(0)) +
+							     (nodeIt->y - cluNodeIt->at(1)) * (nodeIt->y - cluNodeIt->at(1)) +
+							     (nodeIt->z - cluNodeIt->at(2)) * (nodeIt->z - cluNodeIt->at(2)) * zRATIO * zRATIO) <= dist)
+						{
+							if (cluIt->coordSets.find(nodeIt->z) != cluIt->coordSets.end())
+							{
+								vector<int> newPoint(3);
+								newPoint.at(0) = int(nodeIt->x);
+								newPoint.at(1) = int(nodeIt->y);
+								newPoint.at(2) = int(nodeIt->z);
+								cluIt->coordSets[newPoint.at(2)].insert(newPoint);
+								++cluIt->size;
+							}
+							else
+							{
+								vector<int> newPoint(3);
+								newPoint.at(0) = int(nodeIt->x);
+								newPoint.at(1) = int(nodeIt->y);
+								newPoint.at(2) = int(nodeIt->z);
+								set<vector<int>> newSet;
+								newSet.insert(newPoint);
+								cluIt->coordSets.insert(pair<int, set<vector<int>>>(newPoint.at(2), newSet));
+								++cluIt->size;
+							}
+
+							inputList.erase(nodeIt);
+							goto NODE_PROCESSED;
+						}
+					}
+				}
+			}
+
+			connectedComponent newComp;
+			vector<int> newCompPoint(3);
+			newCompPoint.at(0) = int(nodeIt->x);
+			newCompPoint.at(1) = int(nodeIt->y);
+			newCompPoint.at(2) = int(nodeIt->z);
+			set<vector<int>> newCompSet;
+			newCompSet.insert(node1Coord);
+			newComp.coordSets.insert(pair<int, set<vector<int>>>(newCompPoint.at(0), newCompSet));
+			newComp.size = 1;
+			outputConnCompList.push_back(newComp);
+
+			inputList.erase(nodeIt);
+			break;
+		}
+
+	NODE_PROCESSED:
+		continue;
+	}
+
+	return outputConnCompList;
+}
+// ================================ END of [Neuron Struct Clustering Methods] ===================================
+
+
 /* =================================== Volumetric SWC sampling methods =================================== */
 void NeuronStructUtil::sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance)
 {

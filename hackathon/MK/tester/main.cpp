@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "interAccuracy";
+	string funcName = "somaPointsCluster";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -251,6 +251,38 @@ int main(int argc, char* argv[])
 			string swcFullName = inputPathName + "\\" + swcName;
 			NeuronStructUtil::linkerFileGen_forSWC(swcFullName);
 		}
+	}
+	else if (!funcName.compare("somaIdescent"))
+	{
+		const char* inputPathNameC = argv[1];
+		string inputPathName(inputPathNameC);
+		vector<string> inputFullPathParse;
+		boost::split(inputFullPathParse, inputPathName, boost::is_any_of("/"));
+		string caseNum = inputFullPathParse.back();
+		QString caseNumQ = QString::fromStdString(caseNum);
+		ImgManager myImgManager;
+		myImgManager.inputCaseRootPath = QString::fromStdString(inputPathName);
+
+		for (filesystem::directory_iterator sliceIt(inputPathName); sliceIt != filesystem::directory_iterator(); ++sliceIt)
+		{
+			string sliceFileName = sliceIt->path().string();
+			cout << sliceFileName << endl;
+		}
+	}
+	else if (!funcName.compare("somaPointsCluster"))
+	{
+		const char* inputFileNameC = argv[1];
+		string inputFileName(inputFileNameC);
+		QString inputFileNameQ = QString::fromStdString(inputFileName);
+		NeuronTree nt = readSWC_file(inputFileNameQ);
+
+		vector<connectedComponent> compList = NeuronStructUtil::swc2clusters_distance(nt, 20);
+		for (vector<connectedComponent>::iterator compIt = compList.begin(); compIt != compList.end(); ++compIt)
+		{
+			ImgAnalyzer::ChebyshevCenter_connComp(*compIt);
+			cout << compIt->ChebyshevCenter[0] << " " << compIt->ChebyshevCenter[1] << " " << compIt->ChebyshevCenter[2] << endl;
+		}
+		
 	}
 
 	return 0;

@@ -27,7 +27,7 @@ struct connectedComponent
 	int islandNum;
 	map<int, set<vector<int>>> coordSets;
 	int xMax, xMin, yMax, yMin, zMax, zMin;
-	long int size;
+	int size;
 	float ChebyshevCenter[3];
 };
 

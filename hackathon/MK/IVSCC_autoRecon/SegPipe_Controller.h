@@ -62,7 +62,7 @@ public:
 	void findSignalBlobs2D();
 	void swc2DsignalBlobsCenter();
 	void swcSignalBlob3Dcenter();
-	void findSomaMass();
+	void findSomaMass(int somaSizeThre = 27);
 	void getChebyshevCenters(QString caseNum);
 
 	void somaNeighborhoodThin();

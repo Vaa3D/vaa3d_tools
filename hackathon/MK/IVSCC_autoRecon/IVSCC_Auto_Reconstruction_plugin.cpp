@@ -117,6 +117,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		segPipePtr->swc_imgCrop();
 	}
+	else if (func_name == tr("findSoma")) segPipePtr->findSomaMass();
 	else if (func_name == tr("swcMapBack"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];

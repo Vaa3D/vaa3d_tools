@@ -211,17 +211,21 @@ void SegPipe_Controller::threshold3D(float threPercentile)
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 		myImgManagerPtr->imgEntry(*caseIt, slices);
 		int zSliceNum = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.size();
-		size_t totalPixel = zSliceNum * myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1];
-		
+		size_t totalPixel = size_t(zSliceNum) * size_t(myImgManagerPtr->imgDatabase.begin()->second.dims[0]) * size_t(myImgManagerPtr->imgDatabase.begin()->second.dims[1]);
+		cout << "total pixel num: " << totalPixel << endl;
+			 
 		map<int, map<int, size_t>> histMapAllSlice;
 		int sliceCount = 0;
+		cout << "processing slice: ";
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
 		{
 			map<int, size_t> histMap = ImgProcessor::histQuickList(sliceIt->second.get(), myImgManagerPtr->imgDatabase.begin()->second.dims);
 			histMapAllSlice.insert(pair<int, map<int, size_t>>(sliceCount, histMap));
 			++sliceCount;
+			cout << sliceCount << " ";
 		}
+		cout << endl;
 
 		float currPercentile = 0;
 		int threshedPixelCount = 0;
@@ -231,10 +235,12 @@ void SegPipe_Controller::threshold3D(float threPercentile)
 			--currThre;
 			cout << "current threshold: " << currThre;
 			for (map<int, map<int, size_t>>::iterator sliceHistIt = histMapAllSlice.begin(); sliceHistIt != histMapAllSlice.end(); ++sliceHistIt)
-				threshedPixelCount = threshedPixelCount + sliceHistIt->second[currThre];
-			
+			{
+				if (sliceHistIt->second.find(currThre) != sliceHistIt->second.end()) threshedPixelCount = threshedPixelCount + sliceHistIt->second[currThre];
+			}
+
 			currPercentile = float(threshedPixelCount) / float(totalPixel);
-			cout << " " << currPercentile << endl;
+			cout << " thresholded pixel number: " << threshedPixelCount << " " << currPercentile << endl;
 		}
 
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
@@ -467,7 +473,7 @@ void SegPipe_Controller::histQuickList()
 	}
 }
 
-void SegPipe_Controller::findSomaMass()
+void SegPipe_Controller::findSomaMass(int somaSizeThre)
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
@@ -484,49 +490,52 @@ void SegPipe_Controller::findSomaMass()
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
-		int massSize = 0;
-		int startIntensity = 255;
-		while (massSize <= 27)
+		myImgManagerPtr->imgDatabase.clear();
+		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+		myImgManagerPtr->imgEntry(*caseIt, slices);
+
+		map<int, map<int, size_t>> histMapAllSlice;
+		int sliceCount = 0;
+		cout << "processing slice: ";
+		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
+			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
 		{
-			startIntensity -= 5;
-			int pixCount = 0;
-			int dims[3];
-			for (multimap<string, string>::iterator sliceIt = range.first; sliceIt != range.second; ++sliceIt)
+			map<int, size_t> histMap = ImgProcessor::histQuickList(sliceIt->second.get(), myImgManagerPtr->imgDatabase.begin()->second.dims);
+			histMapAllSlice.insert(pair<int, map<int, size_t>>(sliceCount, histMap));
+			++sliceCount;
+			cout << sliceCount << " ";
+		}
+		cout << endl;
+
+		int pixelCount = 0;
+		int currThre = 256;
+		while (pixelCount <= somaSizeThre)
+		{
+			--currThre;
+			cout << "current threshold: " << currThre;
+			for (map<int, map<int, size_t>>::iterator sliceHistIt = histMapAllSlice.begin(); sliceHistIt != histMapAllSlice.end(); ++sliceHistIt)
 			{
-				const char* inputFullPathC = (sliceIt->second).c_str();
-				Image4DSimple* slicePtr = new Image4DSimple;
-				slicePtr->loadImage(inputFullPathC);
-				dims[0] = int(slicePtr->getXDim());
-				dims[1] = int(slicePtr->getYDim());
-				dims[2] = 1;
-				long int totalbyteSlice = slicePtr->getTotalBytes();
-				unsigned char* slice1D = new unsigned char[totalbyteSlice];
-				memcpy(slice1D, slicePtr->getRawData(), totalbyteSlice);
-
-				unsigned char* somaThreSlice1D = new unsigned char[totalbyteSlice];
-				ImgProcessor::simpleThresh(slice1D, somaThreSlice1D, dims, startIntensity);
-				for (int i = 0; i < dims[0] * dims[1]; ++i)
-				{
-					if (somaThreSlice1D[i] > 0) ++pixCount;
-				}
-
-				V3DLONG Dims[4];
-				Dims[0] = dims[0];
-				Dims[1] = dims[1];
-				Dims[2] = 1;
-				Dims[3] = 1;
-
-				string fileName = sliceIt->second.substr(sliceIt->second.length() - 9, 9);
-				string sliceSaveFullName = saveFullPathRoot + "/" + fileName;
-				const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
-				ImgManager::saveimage_wrapper(sliceSaveFullNameC, somaThreSlice1D, Dims, 1);
-
-				slicePtr->~Image4DSimple();
-				operator delete(slicePtr);
-				if (slice1D) { delete[] slice1D; slice1D = 0; }
-				if (somaThreSlice1D) { delete[] somaThreSlice1D; somaThreSlice1D = 0; }
+				if (sliceHistIt->second.find(currThre) != sliceHistIt->second.end()) pixelCount = pixelCount + sliceHistIt->second[currThre];
 			}
-			massSize = massSize + pixCount;
+			cout << " thresholded pixel number: " << pixelCount << endl;
+		}
+
+		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
+			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
+		{
+			unsigned char* slice1DPtr = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+			ImgProcessor::simpleThresh(sliceIt->second.get(), slice1DPtr, myImgManagerPtr->imgDatabase.begin()->second.dims, currThre);
+
+			V3DLONG Dims[4];
+			Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
+			Dims[1] = myImgManagerPtr->imgDatabase.begin()->second.dims[1];
+			Dims[2] = 1;
+			Dims[3] = 1;
+			string sliceSaveFullName = saveFullPathRoot + "/" + sliceIt->first;
+			const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+			ImgManager::saveimage_wrapper(sliceSaveFullNameC, slice1DPtr, Dims, 1);
+
+			delete[] slice1DPtr;
 		}
 	}
 }
@@ -1076,7 +1085,7 @@ void SegPipe_Controller::correctSWC()
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		string inputSliceFullPath = range.first->second;
 		myImgManagerPtr->inputSingleCaseSliceFullPaths.push_back(inputSliceFullPath);
-		myImgManagerPtr->imgEntry(*caseIt, single2D);
+		myImgManagerPtr->imgEntry(*caseIt, single2D_slice);
 
 		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);

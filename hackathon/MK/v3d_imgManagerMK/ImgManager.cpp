@@ -8,8 +8,11 @@
 using namespace std;
 using namespace boost::filesystem;
 
-void ImgManager::imgEntry(QString caseID, imgFormat format)
+void ImgManager::imgEntry(QString caseID, imgFormat format) 
 {
+	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
+	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
+
 	if (format == slices)
 	{
 		registeredImg currImgCase;
@@ -34,12 +37,9 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 			operator delete(slicePtr);
 		}
 
-		//for (map<string, myImg1DPtr>::iterator sliceIt = currImgCase.slicePtrs.begin(); sliceIt != currImgCase.slicePtrs.end(); ++sliceIt)
-		//	qDebug() << QString::fromStdString(sliceIt->first) << " " << sliceIt->second[805985];
-
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
-	else if (format == single2D)
+	else if (format == single2D_slice)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
