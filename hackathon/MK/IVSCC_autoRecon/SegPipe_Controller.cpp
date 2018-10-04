@@ -321,6 +321,47 @@ void SegPipe_Controller::sliceBkgThre()
 	}
 }
 
+void SegPipe_Controller::makeMIPimgs()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
+		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
+		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+
+		myImgManagerPtr->imgDatabase.clear();
+		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+		myImgManagerPtr->imgEntry(*caseIt, slices);
+
+		unsigned char* MIPptr = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+		for (size_t j = 0; j < myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++j)
+			for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0]; ++i) MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i] = 0;	
+		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
+			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
+		{
+			for (size_t j = 0; j < myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++j)
+			{
+				for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0]; ++i)
+				{
+					unsigned char pixValue = getMax(MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i], sliceIt->second[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i]);
+					MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i] = pixValue;
+				}
+			}
+		}
+
+		V3DLONG Dims[4];
+		Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
+		Dims[1] = myImgManagerPtr->imgDatabase.begin()->second.dims[1];
+		Dims[2] = 1;
+		Dims[3] = 1;
+		string sliceSaveFullName = (this->outputRootPath).toStdString() + "/" + (*caseIt).toStdString() + ".tif";
+		const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+		ImgManager::saveimage_wrapper(sliceSaveFullNameC, MIPptr, Dims, 1);
+
+		delete[] MIPptr;
+	}
+}
+
 void SegPipe_Controller::sliceGammaCorrect()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
@@ -724,6 +765,44 @@ void SegPipe_Controller::getChebyshevCenters(QString caseNum)
 	QString swcSaveFullNameQ = this->outputRootPath + "/centers/" + caseNum + ".swc";
 	writeSWC_file(swcSaveFullNameQ, centerTree);
 	
+}
+
+void SegPipe_Controller::getSomaCandidates(float distThre)
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + *caseIt;
+		QFile swcFileCheck(swcFileFullPathQ);
+		if (!swcFileCheck.exists())
+		{
+			cerr << "This case hasn't been generated. Skip " << (*caseIt).toStdString() << endl;
+			continue;
+		}
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+
+		vector<connectedComponent> somaCandidateList;
+		if (distThre == 30) somaCandidateList = NeuronStructUtil::swc2clusters_distance(currTree);
+		else somaCandidateList = NeuronStructUtil::swc2clusters_distance(currTree, distThre);
+		NeuronTree somaOutput;
+		int nodeNum = 1;
+		for (vector<connectedComponent>::iterator connCompIt = somaCandidateList.begin(); connCompIt != somaCandidateList.end(); ++connCompIt)
+		{
+			ImgAnalyzer::ChebyshevCenter_connComp(*connCompIt);
+
+			NeuronSWC somaNode;
+			somaNode.n = nodeNum;
+			somaNode.x = connCompIt->ChebyshevCenter[0];
+			somaNode.y = connCompIt->ChebyshevCenter[1];
+			somaNode.z = connCompIt->ChebyshevCenter[2];
+			somaNode.type = 1;
+			somaNode.parent = -1;
+			somaOutput.listNeuron.push_back(somaNode);
+
+			++nodeNum;
+		}
+		QString swcSaveFullNameQ = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(swcSaveFullNameQ, somaOutput);
+	}
 }
 
 void SegPipe_Controller::swcMapBack()

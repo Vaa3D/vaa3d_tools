@@ -697,7 +697,7 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 	node1Coord.at(2) = int(inputList.begin()->z);
 	set<vector<int>> connComp1Set;
 	connComp1Set.insert(node1Coord);
-	connComp1.coordSets.insert(pair<int, set<vector<int>>>(node1Coord.at(0), connComp1Set));
+	connComp1.coordSets.insert(pair<int, set<vector<int>>>(node1Coord.at(2), connComp1Set));
 	connComp1.size = 1;
 	outputConnCompList.push_back(connComp1);
 	inputList.erase(inputList.begin());
@@ -712,9 +712,9 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 				{
 					for (set<vector<int>>::iterator cluNodeIt = zIt->second.begin(); cluNodeIt != zIt->second.end(); ++cluNodeIt)
 					{
-						if (sqrt((nodeIt->x - cluNodeIt->at(0)) * (nodeIt->x - cluNodeIt->at(0)) +
-							     (nodeIt->y - cluNodeIt->at(1)) * (nodeIt->y - cluNodeIt->at(1)) +
-							     (nodeIt->z - cluNodeIt->at(2)) * (nodeIt->z - cluNodeIt->at(2)) * zRATIO * zRATIO) <= dist)
+						if (sqrt((nodeIt->x - float(cluNodeIt->at(0))) * (nodeIt->x - float(cluNodeIt->at(0))) +
+							     (nodeIt->y - float(cluNodeIt->at(1))) * (nodeIt->y - float(cluNodeIt->at(1))) +
+							     (nodeIt->z - float(cluNodeIt->at(2))) * (nodeIt->z - float(cluNodeIt->at(2))) * zRATIO * zRATIO) <= dist)
 						{
 							if (cluIt->coordSets.find(nodeIt->z) != cluIt->coordSets.end())
 							{
@@ -750,17 +750,80 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 			newCompPoint.at(1) = int(nodeIt->y);
 			newCompPoint.at(2) = int(nodeIt->z);
 			set<vector<int>> newCompSet;
-			newCompSet.insert(node1Coord);
-			newComp.coordSets.insert(pair<int, set<vector<int>>>(newCompPoint.at(0), newCompSet));
+			newCompSet.insert(newCompPoint);
+			newComp.coordSets.insert(pair<int, set<vector<int>>>(newCompPoint.at(2), newCompSet));
 			newComp.size = 1;
 			outputConnCompList.push_back(newComp);
-
 			inputList.erase(nodeIt);
 			break;
 		}
 
 	NODE_PROCESSED:
 		continue;
+	}
+
+	vector<connectedComponent>::iterator mergeIt;
+	vector<connectedComponent>::iterator currCompIt;
+	while (1)
+	{
+		for (vector<connectedComponent>::iterator compBaseIt = outputConnCompList.begin(); compBaseIt != outputConnCompList.end(); ++compBaseIt)
+		{
+			for (vector<connectedComponent>::iterator checkCompIt = compBaseIt + 1; checkCompIt != outputConnCompList.end(); ++checkCompIt)
+			{
+				for (map<int, set<vector<int>>>::iterator checkIt = checkCompIt->coordSets.begin(); checkIt != checkCompIt->coordSets.end(); ++checkIt)
+				{
+					for (set<vector<int>>::iterator checkNodeIt = checkIt->second.begin(); checkNodeIt != checkIt->second.end(); ++checkNodeIt)
+					{
+						for (map<int, set<vector<int>>>::iterator currIt = compBaseIt->coordSets.begin(); currIt != compBaseIt->coordSets.end(); ++currIt)
+						{
+							for (set<vector<int>>::iterator currNodeIt = currIt->second.begin(); currNodeIt != currIt->second.end(); ++currNodeIt)
+							{
+								if (sqrt((float(currNodeIt->at(0)) - float(checkNodeIt->at(0))) * (float(currNodeIt->at(0)) - float(checkNodeIt->at(0))) +
+										 (float(currNodeIt->at(1)) - float(checkNodeIt->at(1))) * (float(currNodeIt->at(1)) - float(checkNodeIt->at(1))) +
+										 (float(currNodeIt->at(2)) - float(checkNodeIt->at(2))) * (float(currNodeIt->at(2)) - float(checkNodeIt->at(2))) * zRATIO * zRATIO) <= dist)
+								{
+									mergeIt = checkCompIt;
+									currCompIt = compBaseIt;
+									goto CLUSTER_MERGE;
+								}
+							}
+						}
+					}
+				}
+			}		
+		}
+		break;
+
+	CLUSTER_MERGE:
+		{
+			for (map<int, set<vector<int>>>::iterator zIt = mergeIt->coordSets.begin(); zIt != mergeIt->coordSets.end(); ++zIt)
+			{
+				for (set<vector<int>>::iterator nodeIt = zIt->second.begin(); nodeIt != zIt->second.end(); ++nodeIt)
+				{
+					if (currCompIt->coordSets.find(nodeIt->at(0)) != currCompIt->coordSets.end())
+					{
+						vector<int> newPoint(3);
+						newPoint.at(0) = nodeIt->at(0);
+						newPoint.at(1) = nodeIt->at(1);
+						newPoint.at(2) = nodeIt->at(2);
+						currCompIt->coordSets[newPoint.at(2)].insert(newPoint);
+					}
+					else
+					{
+						vector<int> newPoint(3);
+						newPoint.at(0) = nodeIt->at(0);
+						newPoint.at(1) = nodeIt->at(1);
+						newPoint.at(2) = nodeIt->at(2);
+						set<vector<int>> newSet;
+						newSet.insert(newPoint);
+						currCompIt->coordSets.insert(pair<int, set<vector<int>>>(newPoint.at(2), newSet));
+					}
+				}
+			}
+
+			outputConnCompList.erase(mergeIt);
+			continue;
+		}
 	}
 
 	return outputConnCompList;

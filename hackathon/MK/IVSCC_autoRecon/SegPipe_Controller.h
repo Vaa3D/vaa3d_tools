@@ -54,6 +54,7 @@ public:
 	void threshold3D(float threPercentile);
 	void sliceBkgThre();
 	void sliceReversedGammaCorrect();
+	void makeMIPimgs();
 	
 	void histQuickList();
 
@@ -64,6 +65,7 @@ public:
 	void swcSignalBlob3Dcenter();
 	void findSomaMass(int somaSizeThre = 27);
 	void getChebyshevCenters(QString caseNum);
+	void getSomaCandidates(float distThre);
 
 	void somaNeighborhoodThin();
 

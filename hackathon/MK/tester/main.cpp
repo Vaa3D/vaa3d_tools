@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "somaPointsCluster";
+	string funcName = "multipleSomaCandidates";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -272,17 +272,41 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("somaPointsCluster"))
 	{
 		const char* inputFileNameC = argv[1];
-		string inputFileName(inputFileNameC);
+		string inputFileName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCentroid3D\\472599722.swc";
+		//string inputFileName(inputFileNameC);
 		QString inputFileNameQ = QString::fromStdString(inputFileName);
 		NeuronTree nt = readSWC_file(inputFileNameQ);
 
 		vector<connectedComponent> compList = NeuronStructUtil::swc2clusters_distance(nt, 20);
 		for (vector<connectedComponent>::iterator compIt = compList.begin(); compIt != compList.end(); ++compIt)
 		{
+			cout << "[";
 			ImgAnalyzer::ChebyshevCenter_connComp(*compIt);
+			for (map<int, set<vector<int>>>::iterator it = compIt->coordSets.begin(); it != compIt->coordSets.end(); ++it)
+			{
+				for (set<vector<int>>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+				{
+					cout << it2->at(0) << "_" << it2->at(1) << "_" << it2->at(2) << ", ";
+				}
+			}
+			cout << "] ";
 			cout << compIt->ChebyshevCenter[0] << " " << compIt->ChebyshevCenter[1] << " " << compIt->ChebyshevCenter[2] << endl;
 		}
-		
+	}
+	else if (!funcName.compare("multipleSomaCandidates"))
+	{
+		string inputFileName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCandidates\\";
+		vector<string> fileList;
+		for (filesystem::directory_iterator fileIt(inputFileName); fileIt != filesystem::directory_iterator(); ++fileIt)
+		{
+			string fileName = fileIt->path().string();
+			QString fileNameQ = QString::fromStdString(fileName);
+			NeuronTree nt = readSWC_file(fileNameQ);
+
+			if (nt.listNeuron.size() == 2) fileList.push_back(fileName);
+		}
+
+		for (vector<string>::iterator it = fileList.begin(); it != fileList.end(); ++it) cout << *it << endl;
 	}
 
 	return 0;

@@ -76,6 +76,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 			return false;
 		}
 	}
+	else if (func_name == tr("getMIP")) segPipePtr->makeMIPimgs();
 	else if (func_name == tr("gammaCorrect2D")) segPipePtr->sliceGammaCorrect();
 	else if (func_name == tr("threshold2D"))
 	{
@@ -118,6 +119,12 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		segPipePtr->swc_imgCrop();
 	}
 	else if (func_name == tr("findSoma")) segPipePtr->findSomaMass();
+	else if (func_name == tr("findSomaCandidates"))
+	{
+		QString distThreQ = inparas[0];
+		float distThre = distThreQ.toFloat();
+		segPipePtr->getSomaCandidates(distThre);
+	}
 	else if (func_name == tr("swcMapBack"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];

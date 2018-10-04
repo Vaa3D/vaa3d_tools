@@ -32,9 +32,6 @@ using namespace std;
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 #define getMin(a, b) ((a) <= (b)? (a):(b))
 
-enum MIPOrientation {Mxy, Myz, Mxz};
-enum mipOrientation {mxy, myz, mxz};
-
 class ImgProcessor 
 {
 
@@ -46,15 +43,12 @@ public:
 	ImgProcessor(unsigned char*** inputImg3DPtr);
 	/*******************************/
 
+
 	/***************** Data Members *****************/
 	unsigned char*   inputImg1DPtr;
 	unsigned char**  inputImg2DPtr;
 	unsigned char*** inputImg3DPtr;
 	/************************************************/
-
-	// These 2 enums decide in which direction to make projection.
-	MIPOrientation MIPDirection;
-	mipOrientation mipDirection;
 
 
 	/***************** Basic Image Operations *****************/
@@ -87,8 +81,6 @@ public:
 
 	template<class T>
 	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
-
-	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[], int MIPxDim, int MIPyDim, int MIPzDim); // make MIP out of an input 1D image data array	
 	/**********************************************************/
 
 
