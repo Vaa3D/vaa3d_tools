@@ -1164,7 +1164,7 @@ void SegPipe_Controller::correctSWC()
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		string inputSliceFullPath = range.first->second;
 		myImgManagerPtr->inputSingleCaseSliceFullPaths.push_back(inputSliceFullPath);
-		myImgManagerPtr->imgEntry(*caseIt, single2D_slice);
+		myImgManagerPtr->imgEntry(*caseIt, singleCase_slice);
 
 		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);

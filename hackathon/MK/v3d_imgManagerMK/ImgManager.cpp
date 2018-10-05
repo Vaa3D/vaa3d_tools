@@ -39,7 +39,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
-	else if (format == single2D_slice)
+	else if (format == singleCase_slice)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;

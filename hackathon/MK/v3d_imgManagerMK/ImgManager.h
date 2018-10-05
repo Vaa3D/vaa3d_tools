@@ -36,7 +36,7 @@
 #include "basic_4dimage.h"
 #include "v3d_interface.h"
 
-enum imgFormat { cube, slices, single2D_slice };
+enum imgFormat { cube, slices, singleCase_slice };
 typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn't adopted C++11 standard (Linux Vaa3D), 
 													   //     I decided to use boost's shared pointer instead of C++11's std::shared_ptr.
 

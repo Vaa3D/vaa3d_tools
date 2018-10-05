@@ -106,6 +106,7 @@ public:
 
 
 	/********* Morphological Operations *********/
+	static void skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[]);
 	static void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
 	/********************************************/
 

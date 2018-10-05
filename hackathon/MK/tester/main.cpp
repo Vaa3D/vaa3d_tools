@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "multipleSomaCandidates";
+	string funcName = "skeletonSlices";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -307,6 +307,73 @@ int main(int argc, char* argv[])
 		}
 
 		for (vector<string>::iterator it = fileList.begin(); it != fileList.end(); ++it) cout << *it << endl;
+	}
+	else if (!funcName.compare("skeleton"))
+	{
+		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
+		string fileName = "319215569.tif";
+		ImgManager myManager;
+		myManager.inputSingleCaseSliceFullPaths.push_back(fileFullName);
+		myManager.imgEntry(QString::fromStdString(fileName), singleCase_slice);
+		int imgDims[3];
+		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
+		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
+		imgDims[2] = 1;
+		unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+		ImgProcessor::skeleton2D(myManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+		
+		V3DLONG Dims[4];
+		Dims[0] = imgDims[0];
+		Dims[1] = imgDims[1];
+		Dims[2] = 1;
+		Dims[3] = 1;
+		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\test.tif";
+		const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+		ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
+
+		delete[] outputImgPtr;
+	}
+	else if (!funcName.compare("skeletonSlices"))
+	{
+		const char* inputPathNameC = argv[1];
+		string inputPathName(inputPathNameC);
+		const char* outputPathNameC = argv[2];
+		string outputPathName(outputPathNameC);
+		//cout << outputPathName << endl;
+		vector<string> inputFullPathParse;
+		boost::split(inputFullPathParse, inputPathName, boost::is_any_of("/"));
+		string caseNum = *(inputFullPathParse.end() - 1);
+		QString caseNumQ = QString::fromStdString(caseNum);
+		
+		ImgManager myImgManager;
+		for (filesystem::directory_iterator fileIt(inputPathName); fileIt != filesystem::directory_iterator(); ++fileIt)
+		{
+			string fileFullName = fileIt->path().string();
+			myImgManager.inputMultiCasesSliceFullPaths.insert(pair<string, string>(caseNum, fileFullName));
+		}
+		
+		myImgManager.imgEntry(QString::fromStdString(caseNum), slices);
+		int imgDims[3];
+		imgDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+		imgDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+		imgDims[2] = 1;
+		for (map<string, myImg1DPtr>::iterator it = myImgManager.imgDatabase.begin()->second.slicePtrs.begin(); it != myImgManager.imgDatabase.begin()->second.slicePtrs.end(); ++it)
+		{
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			ImgProcessor::skeleton2D(it->second.get(), outputImgPtr, imgDims);
+
+			V3DLONG Dims[4];
+			Dims[0] = imgDims[0];
+			Dims[1] = imgDims[1];
+			Dims[2] = 1;
+			Dims[3] = 1;
+			string sliceSaveFullName = outputPathName + "\\" + it->first;
+			cout << sliceSaveFullName << endl;
+			const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+			ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
+
+			delete[] outputImgPtr;
+		}
 	}
 
 	return 0;
