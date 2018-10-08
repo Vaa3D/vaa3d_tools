@@ -30,7 +30,7 @@ using namespace std;
 #endif
 
 bool crop_swc(QString qs_input, QString qs_output, double radius, int soma=0, bool center=1, int resample_step=2,
-              double xshift=0, double yshift=0, double zshift=0, bool rotation=0);
+              double xshift=0, double yshift=0, double zshift=0, bool rotation=0, bool report_single_tree=1);
 bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp_crop_swc();
 #endif // CROP_SWC_MAIN_H

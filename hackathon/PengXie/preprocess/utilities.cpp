@@ -13,6 +13,12 @@ using namespace std;
 
 #define MAXSIZE 100000
 
+bool isEqual(float x, float y)
+{
+  const float epsilon = 1e-5f;
+  return (fabs(x - y) <= epsilon);
+}
+
 NeuronTree neuron_deepcopy(NeuronTree nt){
     QList<NeuronSWC> new_list;
     for(int i=0; i<nt.listNeuron.size(); i++){
@@ -98,6 +104,13 @@ CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, d
     marker.color.g = color_g;
     marker.color.b = color_b;
     return marker;
+}
+NeuronSWC CellAPO_to_NeuronSWC(CellAPO marker){
+    NeuronSWC node;
+    node.x = marker.x;
+    node.y = marker.y;
+    node.z = marker.z;
+    return node;
 }
 int count_root(NeuronTree nt){
     int ct = 0;

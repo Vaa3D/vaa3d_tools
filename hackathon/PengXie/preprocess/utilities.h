@@ -21,7 +21,9 @@ using namespace std;
 //#endif
 
 bool fexists(QString filename);
+bool isEqual(float x, float y);
 CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b);
+NeuronSWC CellAPO_to_NeuronSWC(CellAPO marker);
 bool my_saveANO(QString fileNameHeader, bool swc=true, bool apo=true, QString swc_name=NULL);
 NeuronTree rm_nodes(NeuronTree nt, QList<int> list);
 int get_soma(NeuronTree nt);

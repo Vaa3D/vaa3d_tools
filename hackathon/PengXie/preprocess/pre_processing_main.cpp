@@ -14,12 +14,6 @@
 #include "pre_processing_main.h"
 #include "cmath"  /* for std::abs(double) */
 
-inline bool isEqual(float x, float y)
-{
-  const float epsilon = 1e-5f;
-  return fabs(x - y) <= epsilon;
-}
-
 NeuronTree color_lost_branch(NeuronTree new_tree){
     QList <int> components = get_components(new_tree);
     int soma = get_soma(new_tree);
@@ -399,13 +393,12 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     cur_nt.deepCopy(nt);
     printf("\tShort distance connection\n");
     nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, thres, 0, false, 1));
-    export_listNeuron_2swc(cur_nt.listNeuron,"B.swc");
-    export_listNeuron_2swc(nt.listNeuron,"A.swc");
     // Keep track of new_edges
     new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".short_connection.apo", 5));
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".short_connection.apo", 255,0,0));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".short_connection.apo", 0,0,0).size()/2<<count_root(nt);
+
     //2.4 Connect to soma
     if ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo")))){
         printf("\tConnecting to soma\n");
@@ -678,10 +671,12 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
 
 bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 {
+
     double prune_size = 2; //default case
     double step_size = 0;
     double connect_soma_dist = 70;
     double thres = 2;
+    double thres_long = 10;
     bool rotation = false;
     bool colorful = false;
     bool return_maintree = false;
@@ -702,10 +697,8 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
         qs_output = qs_output.left(qs_output.length() - 5) + QString(".processed.eswc");
     }
 
-
     // Pre-process
-    pre_processing(qs_input, qs_output, prune_size, thres, step_size, connect_soma_dist, rotation, colorful, return_maintree);
-
+    pre_processing(qs_input, qs_output, prune_size, thres, thres_long, step_size, connect_soma_dist, rotation, colorful, return_maintree);
 
     return 1;
 }

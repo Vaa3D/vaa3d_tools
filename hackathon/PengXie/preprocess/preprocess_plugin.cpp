@@ -9,6 +9,7 @@
 #include "split_neuron_main.h"
 #include "neurite_analysis_main.h"
 #include "crop_swc_main.h"
+#include "check_connection.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
@@ -28,8 +29,9 @@ QStringList neuron_analysis::funclist() const
         <<tr("preprocess_batch")
         <<tr("split_neuron")
         <<tr("qc")
-        <<tr("get_main_component")
+//        <<tr("get_main_component")
         <<tr("crop_swc")
+        <<tr("check_connection")
         <<tr("help");
 }
 
@@ -88,6 +90,9 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
     if (func_name == "crop_swc")
     {
         return (crop_swc_dofunc(input, output));
+    }
+    if (func_name == "check_connection"){
+        return (check_connection_dofunc(input, output));
     }
 	else if (func_name == tr("help"))
 	{

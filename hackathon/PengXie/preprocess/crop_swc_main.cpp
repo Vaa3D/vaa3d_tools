@@ -62,7 +62,6 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         }
     }
 
-
     // 2.2 create a cropped tree
     NeuronTree new_tree;
     for(int i=0; i<nt.listNeuron.size(); i++){
@@ -76,19 +75,19 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
             node.pn = -1;
         }
         new_tree.listNeuron.append(node);
+        export_listNeuron_2swc(new_tree.listNeuron, "test.swc");
     }
 
     // 2.3 return single tree
     if(report_single_tree){
+        qDebug()<<soma_name;
         nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));  // Sort the tree so "soma" is the root;
         nt.deepCopy(single_tree(nt, 0));
     }
     else{
-        nt.deepCopy(new_tree);
+        nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));
     }
 
-    // 2.4 sort the single tree
-    nt.deepCopy(my_SortSWC(nt, soma_name, 0));
 
     // 3. resample
     if (resample_step>0){
@@ -124,6 +123,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
     char *dfile_output = NULL;
     double radius;
     int soma=0;
+    char *soma_file = NULL;
     bool center=1;
     int resample_step=2;
     double xshift=0;
@@ -173,7 +173,7 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
             printHelp_crop_swc();
 
         int c;
-        static char optstring[]="hi:o:s:r:c:j:t:x:y:z:a:";
+        static char optstring[]="hi:o:s:m:r:c:j:t:x:y:z:a:";
         extern char * optarg;
         extern int optind, opterr;
         optind = 1;
@@ -210,6 +210,14 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
                     }
                     soma = atoi(optarg);
                 break;
+                case 'm':
+                    if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                    {
+                        fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
+                        return 1;
+                    }
+                    soma_file = optarg;
+                    break;
                 case 'r':
                     if (strcmp(optarg,"(null)")==0)
                     {
@@ -295,6 +303,49 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
             qs_output = qs_output.left(qs_output.length() - 5) + QString(".cropped.eswc");
         }
     }
+    // Center of the cropped region can be sepecified by an swc or apo file
+    if(soma_file != NULL){
+        QString qs_soma = QString(soma_file);
+        NeuronSWC node_soma;
+        bool exist_soma = 0;
+        // Case 1: input is an swc
+        if(qs_soma.endsWith("swc") || qs_soma.endsWith("SWC")){
+            QList<NeuronSWC> ntlist_soma = readSWC_file(qs_soma).listNeuron;
+            if(ntlist_soma.size()>0){
+                node_soma = ntlist_soma.at(0);
+                exist_soma = 1;
+                if(ntlist_soma.size()>1){
+                    qDebug()<<"Input soma file contains >1 nodes! Using the first one as center";
+                }
+            }
+        }
+        // Case 2: input is an apo
+        if(qs_soma.endsWith("apo") || qs_soma.endsWith("APO")){
+            QList<CellAPO> markers = readAPO_file(qs_soma);
+            if(markers.size()>0){
+                node_soma = CellAPO_to_NeuronSWC(markers.at(0));
+                exist_soma = 1;
+                if(markers.size()>1){
+                    qDebug()<<"Input soma file contains >1 nodes! Using the first one as center";
+                }
+            }
+        }
+
+        if(exist_soma){
+            NeuronTree nt = readSWC_file(qs_input);
+            double min_dist=radius;
+            for(int i=0; i<nt.listNeuron.size();i++){
+                NeuronSWC node = nt.listNeuron.at(i);
+                if(computeDist2(node_soma, node, 1,1,5)<min_dist){
+                    min_dist = computeDist2(node_soma, node, 1,1,5);
+                    soma = i;
+                }
+            }
+        }
+        else{
+            qDebug()<<"Input soma file was empty!";
+        }
+    }
 
     return crop_swc(qs_input, qs_output, radius, soma, center, resample_step,
                     xshift, yshift, zshift, rotation, report_single_tree);
@@ -308,6 +359,7 @@ void printHelp_crop_swc()
     printf("\t#i <neuron_filename> :   input neuron structure (.swc) name\n");
     printf("\t#o <output_filename> :   output file name; default output name: input.cropped.swc\n");
     printf("\t#s <soma> :  soma index; default is 0;\n");
+    printf("\t#m <soma_file> :  soma file (either .swc or .apo); default is NULL;\n");
     printf("\t#r <radius> :  the range for cropping; set to -1 if you don't want to crop.\n");
     printf("\t#j <reample_step> :  step size for resampling; set to -1 if you'd like to skip resampling.\n");
     printf("\t#x <xshift> :  shift soma node along x-axis.\n");
