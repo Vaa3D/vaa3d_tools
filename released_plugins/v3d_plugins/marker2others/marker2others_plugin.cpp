@@ -95,7 +95,10 @@ bool marker2apo(const V3DPluginArgList & input, V3DPluginArgList & output)
         t.x = listLandmarks[i].x*scale;
         t.y = listLandmarks[i].y*scale;
         t.z = listLandmarks[i].z*scale;
-        t.color = listLandmarks[i].color;
+        t.color.r = 255;
+        t.color.g = 0;
+        t.color.b = 0;
+
         file_inmarkers.push_back(t);
     }
 
