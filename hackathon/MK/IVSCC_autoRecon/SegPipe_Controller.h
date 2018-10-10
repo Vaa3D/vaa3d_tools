@@ -20,7 +20,7 @@
 
 using namespace std;
 
-enum folderStruct {singleCase, multipleCase};
+enum folderStruct { singleCase_slices, singleCase_singleSlice, multipleCases_slices, multipleCases_singleSlice };
 enum task {downsample2D, threshold2D, bkgThreshold2D, gammaCorrect2D};
 
 class SegPipe_Controller
@@ -34,6 +34,7 @@ public:
 	QString inputSWCRootPath;
 	QString refSWCRootPath;
 	QString outputRootPath;
+	QString outputRootPath2;
 	QString outputSWCRootPath;
 	QStringList caseList;
 	QStringList swcList;
@@ -55,6 +56,7 @@ public:
 	void sliceBkgThre();
 	void sliceReversedGammaCorrect();
 	void makeMIPimgs();
+	void makeDescentSkeletons();
 	
 	void histQuickList();
 
@@ -66,8 +68,6 @@ public:
 	void findSomaMass(int somaSizeThre = 27);
 	void getChebyshevCenters(QString caseNum);
 	void getSomaCandidates(float distThre);
-
-	void somaNeighborhoodThin();
 
 	void swc_imgCrop();
 	

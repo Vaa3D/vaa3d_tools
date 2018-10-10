@@ -39,13 +39,13 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
-	else if (format == singleCase_slice)
+	else if (format == singleCase_singleSlice)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
 		
-		string sliceFullName = *(this->inputSingleCaseSliceFullPaths.begin());
-		string fileName = (*(this->inputSingleCaseSliceFullPaths.begin())).substr((*(this->inputSingleCaseSliceFullPaths.begin())).length() - 9, 9);
+		string sliceFullName = this->inputSingleCaseSingleSliceFullPath;
+		string fileName = this->inputSingleCaseSingleSliceFullPath.substr(this->inputSingleCaseSingleSliceFullPath.length() - 9, 9);
 		const char* sliceFullNameC = sliceFullName.c_str();
 		Image4DSimple* slicePtr = new Image4DSimple;
 		slicePtr->loadImage(sliceFullNameC);
@@ -59,7 +59,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 
 		slicePtr->~Image4DSimple();
 		operator delete(slicePtr);
-		
+
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
 	}
 }

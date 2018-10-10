@@ -77,6 +77,12 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 	}
 	else if (func_name == tr("getMIP")) segPipePtr->makeMIPimgs();
+	else if (func_name == tr("makeDescentSkeletons"))
+	{
+		if (outfiles[1])
+			segPipePtr->outputRootPath2 = outfiles[1];
+		segPipePtr->makeDescentSkeletons();
+	}
 	else if (func_name == tr("gammaCorrect2D")) segPipePtr->sliceGammaCorrect();
 	else if (func_name == tr("threshold2D"))
 	{
