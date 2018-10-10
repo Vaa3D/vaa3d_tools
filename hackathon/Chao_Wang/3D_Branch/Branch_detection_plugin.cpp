@@ -250,8 +250,6 @@ int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent)
        XY_mip(nx,ny,nz,datald,xy_mip_datald);
        thres_segment(nx*ny,xy_mip_datald,xy_binar_datald,thres_2d);
 
-
-
        unsigned char *yz_mip_datald;
        try{yz_mip_datald=new unsigned char [ny*nz];}
        catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
@@ -477,16 +475,22 @@ int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent)
                                             {
                                                 if(((i1==(radiu_block+1))||(i1==(radiu_block-1))||(i1==(radiu_block)))&&((j1==(radiu_block+1))||(j1==(radiu_block-1))||(j1==(radiu_block))))
                                                 {
-                                                    int xy_flag8=rayinten_2D(i,k,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, xy_binar_datald,nx,ny);
-//                                                    v3d_msg(QString("release this plug_in"));
-//                                                    int xy_flag10=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+2),ray_x, ray_y, seg_project,length_block,length_block);
-//                                                    int xy_flag12=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+4),ray_x, ray_y, seg_project,length_block,length_block);
-//                                                    int xy_flag14=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+6),ray_x, ray_y, seg_project,length_block,length_block);
-//                                                    int xy_flag16=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+8),ray_x, ray_y, seg_project,length_block,length_block);
-                                                    int ray_flag=xy_flag8;
-                                                    if(ray_flag>=1)
+                                                    if((i<30)||(j<30))
                                                     {
                                                         sum_flag=sum_flag+1;
+                                                    }
+                                                    else {
+                                                        int xy_flag8=rayinten_2D(i,k,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, xy_binar_datald,nx,ny);
+    //                                                    v3d_msg(QString("release this plug_in"));
+                                                        int xy_flag10=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+2),ray_x, ray_y, seg_project,length_block,length_block);
+                                                        int xy_flag12=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+4),ray_x, ray_y, seg_project,length_block,length_block);
+                                                        int xy_flag14=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+6),ray_x, ray_y, seg_project,length_block,length_block);
+                                                        int xy_flag16=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+8),ray_x, ray_y, seg_project,length_block,length_block);
+                                                        int ray_flag=xy_flag8+xy_flag10+xy_flag12+xy_flag14+xy_flag16;
+                                                        if(ray_flag>=1)
+                                                        {
+                                                            sum_flag=sum_flag+1;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -661,16 +665,20 @@ int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent)
                                             {
                                                 if(((i1==(radiu_block+1))||(i1==(radiu_block-1))||(i1==(radiu_block)))&&((j1==(radiu_block+1))||(j1==(radiu_block-1))||(j1==(radiu_block))))
                                                 {
-//                                                    v3d_msg(QString("release this plug_in"));
-                                                    int xy_flag8=rayinten_2D(j,k,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, xz_binar_datald,nx,nz);
-//                                                    int xy_flag10=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+2),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-//                                                    int xy_flag12=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+4),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-//                                                    int xy_flag14=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+6),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-//                                                    int xy_flag16=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+8),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-                                                    int ray_flag=xy_flag8;
-                                                    if(ray_flag>=1)
+                                                    if((j<20)||(k<20))
                                                     {
                                                         sum_flag=sum_flag+1;
+                                                    }
+                                                    else
+                                                    {
+                                                       int xz_flag8=rayinten_2D(j,k,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, xz_binar_datald,nx,nz);
+                                                       int xz_flag10=rayinten_2D(j,k,ray_numbers_2d ,(ray_length_2d+2),ray_x, ray_y, xz_binar_datald,nx,nz);
+                                                       int xz_flag12=rayinten_2D(j,k,ray_numbers_2d ,(ray_length_2d+4),ray_x, ray_y, xz_binar_datald,nx,nz);
+                                                       int ray_flag=xz_flag8+xz_flag10+xz_flag12;
+                                                       if(ray_flag>=1)
+                                                       {
+                                                           sum_flag=sum_flag+1;
+                                                       }
                                                     }
                                                 }
                                             }
@@ -844,17 +852,23 @@ int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent)
                                             {
                                                 if(((i1==(radiu_block+1))||(i1==(radiu_block-1))||(i1==(radiu_block)))&&((j1==(radiu_block+1))||(j1==(radiu_block-1))||(j1==(radiu_block))))
                                                 {
-                                                    // add largr multiscale ray-shooting model
-                                                   int xy_flag8=rayinten_2D(j,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, yz_binar_datald,ny,nz);
-//                                                   int xy_flag10=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+2),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-//                                                   int xy_flag12=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+4),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-//                                                   int xy_flag14=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+6),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-//                                                   int xy_flag16=rayinten_2D((radiu_block+1),(radiu_block+1),ray_numbers_2d ,(ray_length_2d+8),ray_x, ray_y, seg_project,2*radiu_block,2*radiu_block);
-                                                   int ray_flag=xy_flag8;
-                                                   if(ray_flag>=1)
-                                                   {
-                                                       sum_flag=sum_flag+1;
-                                                   }
+                                                    if((j<20)||(i<20))
+                                                    {
+                                                        sum_flag=sum_flag+1;
+
+                                                    }
+                                                    else
+                                                    {
+                                                        int xy_flag8=rayinten_2D(j,i,ray_numbers_2d ,ray_length_2d,ray_x, ray_y, yz_binar_datald,ny,nz);
+                                                        int xy_flag10=rayinten_2D(j,i,ray_numbers_2d ,(ray_length_2d+2),ray_x, ray_y, yz_binar_datald,ny,nz);
+                                                        int xy_flag12=rayinten_2D(j,i,ray_numbers_2d ,(ray_length_2d+4),ray_x, ray_y, yz_binar_datald,ny,nz);
+                                                        int ray_flag=xy_flag8+xy_flag10+xy_flag12;
+                                                        if(ray_flag>=1)
+                                                        {
+                                                            sum_flag=sum_flag+1;
+                                                        }
+
+                                                    }
                                                 }
                                             }
                                         }
@@ -901,6 +915,12 @@ int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent)
         if(block) {delete []block; block = 0;}
         if(project) {delete []project; project = 0;}
         if(seg_project) {delete []seg_project; seg_project = 0;}
+        if(xy_mip_datald) {delete []xy_mip_datald; xy_mip_datald = 0;}
+        if(xy_binar_datald) {delete []xy_binar_datald; xy_binar_datald= 0;}
+        if(xz_mip_datald) {delete []xz_mip_datald; xz_mip_datald = 0;}
+        if(xz_binar_datald) {delete []xz_binar_datald; xz_binar_datald = 0;}
+        if(yz_binar_datald) {delete []yz_binar_datald; yz_binar_datald = 0;}
+        if(yz_mip_datald) {delete []yz_mip_datald; yz_mip_datald = 0;}
         return 1;
 }
 
@@ -1069,9 +1089,9 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
 
         for(V3DLONG j=radiu_block;j<nz-radiu_block;j++)
         {
-           for(V3DLONG i=length_block;i<ny-length_block;i++)
+           for(V3DLONG i=radiu_block;i<ny-radiu_block;i++)
            {
-               for(V3DLONG k=length_block;k<nx-length_block;k++)
+               for(V3DLONG k=radiu_block;k<nx-radiu_block;k++)
                {
                    unsigned char pixe=p4DImage->getValueUINT8(k,i,j,0);
                    V3DLONG num_block=0;
@@ -1260,7 +1280,7 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                                    {
                                        if(((i1==(radiu_block+1))||(i1==(radiu_block-1))||(i1==(radiu_block)))&&((j1==(radiu_block+1))||(j1==(radiu_block-1))||(j1==(radiu_block))))
                                        {
-                                           if((i<17)&&(j<17))
+                                           if((i<30)||(j<30))
                                            {
                                                s.x=k;
                                                s.y=i;
@@ -1272,7 +1292,7 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                                            }
                                            else
                                            {
-                                               // add largr multiscale ray-shooting model
+//                                               // add largr multiscale ray-shooting model
                                               int xy_flag8=rayinten_2D(i,k,ray_numbers_2d,ray_length_2d,ray_x,ray_y,binar_datald,nx,ny);
     //                                          v3d_msg(QString(" x is %1, y is %2").arg(i1).arg(j1));
                                               int xy_flag10=rayinten_2D(i,k,ray_numbers_2d,(ray_length_2d+2),ray_x,ray_y,binar_datald,nx,ny);
@@ -1340,14 +1360,16 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
         }
 
 
-        Image4DSimple * new4DImage = new Image4DSimple();
-        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
-        v3dhandle newwin = callback.newImageWindow();
-        callback.setImage(newwin, new4DImage);
-        callback.setImageName(newwin, "maximum intensity projection image");
-        callback.updateImageWindow(newwin);
-        v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
-        callback.setLandmark(newwin, curlist);
+//        Image4DSimple * new4DImage = new Image4DSimple();
+//        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
+//        v3dhandle newwin = callback.newImageWindow();
+//        callback.setImage(newwin, new4DImage);
+//        callback.setImageName(newwin, "maximum intensity projection image");
+//        callback.updateImageWindow(newwin);
+//        v3d_msg(QString("single numble of marker is %1").arg(curlist.size()));
+        callback.setLandmark(curwin, curlist);
+        callback.updateImageWindow(curwin);
+
         if(block) {delete []block; block = 0;}
         if(xy_project) {delete []xy_project; xy_project = 0;}
         if(seg_xy_project) {delete []seg_xy_project; seg_xy_project = 0;}
@@ -1380,7 +1402,7 @@ int Thin_branch_points_detection(V3DPluginCallback2&callback,QWidget *parent)
             int ray_numbers_2d = 64;
             int thres_2d = 25;
             int ray_length_2d = 8;
-            int radiu_block=16;
+            int radiu_block=5;
 
 
             //set update the dialog
@@ -2306,6 +2328,16 @@ int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *p
                                 }
                             }
                        }
+                       double sum_block=0;
+                       for(int num=0;num<num_block;num++)
+                       {
+                           sum_block=sum_block+block[num];
+                       }
+                       if(sum_block==0)
+                       {
+                           v3d_msg(QString("sum of pixe is zero"));
+                       }
+
 
                        XY_mip(length_block,length_block,length_block,block,xy_project);
                        thres_segment(size_plane,xy_project,seg_xy_project,thres_2d);
@@ -2537,8 +2569,8 @@ int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *p
         callback.updateImageWindow(newwin);
         v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
         callback.setLandmark(newwin, curlist);
-        if(block) {delete []block; block = 0;}
-        if(xy_project) {delete []xy_project; xy_project = 0;}
-        if(seg_xy_project) {delete []seg_xy_project; seg_xy_project = 0;}
+//        if(block) {delete []block; block = 0;}
+//        if(xy_project) {delete []xy_project; xy_project = 0;}
+//        if(seg_xy_project) {delete []seg_xy_project; seg_xy_project = 0;}
         return 1;
 }
