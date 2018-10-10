@@ -1,6 +1,6 @@
 # include "check_connection.h"
 
-bool check_connection(QString in_swc, QString connection_file, QString out_dir, double radius){
+bool check_connection(QString in_swc, QString connection_file, QString img_file, QString out_dir, double radius, V3DPluginCallback2 & callback){
     printf("welcome to use check_connection");
     QString infileLabel;
     if (in_swc.endsWith(".swc") || in_swc.endsWith(".SWC")){
@@ -33,10 +33,34 @@ bool check_connection(QString in_swc, QString connection_file, QString out_dir, 
             if(center.pn==-1){
                 for(int j=0; j<nt.listNeuron.size();j++){
                     if(isEqual(computeDist2(nt.listNeuron.at(j), center, 1,1,5), 0.0)){
+                        // Crop subvolume of a connection point
                         QString out_swc = out_dir+"/"+infileLabel+"."+QString::number(i)+".swc";
-//                        qDebug()<<i<<j<<infileLabel;
-                        qDebug()<<in_swc<<out_swc<<radius<<j;
                         crop_swc(in_swc, out_swc, radius, j, 0, -1);
+                        NeuronTree retype = readSWC_file(out_swc);
+                        for(int k=0; k<retype.listNeuron.size();k++){
+                            retype.listNeuron[k].type = center.type;
+                        }
+                        export_listNeuron_2swc(retype.listNeuron, qPrintable(out_swc));
+                        // Calculate confidence score for the connection. Terafly image required.
+                        if(img_file != NULL){
+                            // Acquired from $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/calculate_reliability_score_plugin.cpp
+                            int scoreType = 1;
+                            float radiusFactor = 2;
+                            float img_thres = 255; // Subvolume of raw image will be generated if confidence score > img_thres;
+                            NeuronTree nt = readSWC_file(out_swc);
+                            V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+                            NeuronTree nt_new = V_NeuronSWC_list__2__NeuronTree(nt_decomposed);
+                            qDebug()<<"calculateScoreTerafly";
+//                            NeuronTree nt_scored = calculateScoreTerafly(callback, img_file, nt_new, scoreType, radiusFactor, img_thres, out_dir+"/"+infileLabel+"."+QString::number(i));
+                            NeuronTree nt_scored = calculateScoreTerafly(callback, img_file, nt_new, scoreType, radiusFactor, img_thres);
+                            qDebug()<<"calculateScoreTerafly Done";
+                            out_swc = out_dir+"/"+infileLabel+"."+QString::number(i)+".confidence.swc";
+                            writeESWC_file(out_swc, nt_scored);
+                            QList<CellAPO> apolist;
+                            apolist.append(get_marker(center, 10, 255,0,0));
+                            writeAPO_file(out_dir+"/"+infileLabel+"."+QString::number(i)+".confidence.apo", apolist);
+                            my_saveANO(out_dir+"/"+infileLabel+"."+QString::number(i)+".confidence", true, true);
+                        }
                     }
                 }
             }
@@ -49,7 +73,7 @@ bool check_connection(QString in_swc, QString connection_file, QString out_dir, 
     }
 }
 
-bool check_connection_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool check_connection_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
     vector<char*>* outlist = NULL;
@@ -102,11 +126,12 @@ bool check_connection_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
 
     char *dfile_input = NULL;
     char *connection_file = NULL;
+    char *img_file = NULL;
     char *dfile_result = NULL;
     double radius = 30;
 
     int c;
-    static char optstring[]="h:i:o:c:r:";
+    static char optstring[]="h:i:c:t:o:r:";
     extern char * optarg;
     extern int optind, opterr;
     optind = 1;
@@ -135,6 +160,15 @@ bool check_connection_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
                 connection_file = optarg;
                 cout << "Connection file name:\t" << connection_file <<endl;
                 break;
+            case 't':
+                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
+                {
+                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
+                    return 1;
+                }
+                img_file = optarg;
+                cout << "Connection file name:\t" << img_file <<endl;
+                break;
             case 'o':
                 if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
                 {
@@ -149,7 +183,7 @@ bool check_connection_dofunc(const V3DPluginArgList & input, V3DPluginArgList & 
                 break;
         }
     }
-    check_connection(QString(dfile_input), QString(connection_file), QString(dfile_result), radius);
+    check_connection(QString(dfile_input), QString(connection_file), QString(img_file), QString(dfile_result), radius, callback);
 
     return 1;
 }

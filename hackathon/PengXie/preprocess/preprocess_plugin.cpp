@@ -92,7 +92,7 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
         return (crop_swc_dofunc(input, output));
     }
     if (func_name == "check_connection"){
-        return (check_connection_dofunc(input, output));
+        return (check_connection_dofunc(input, output, callback));
     }
 	else if (func_name == tr("help"))
 	{

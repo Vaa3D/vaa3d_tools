@@ -75,7 +75,7 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
             node.pn = -1;
         }
         new_tree.listNeuron.append(node);
-        export_listNeuron_2swc(new_tree.listNeuron, "test.swc");
+//        export_listNeuron_2swc(new_tree.listNeuron, "test.swc");
     }
 
     // 2.3 return single tree

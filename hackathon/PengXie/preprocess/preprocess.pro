@@ -3,7 +3,9 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external
+
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
@@ -49,6 +51,17 @@ SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/neuron
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/calculate_reliability_score_main.h
+SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/calculate_reliability_score_main.cpp
+
+HEADERS += $$VAA3DPATH/v3d_main/neuron_editing/neuron_format_converter.h
+SOURCES	+= $$VAA3DPATH/v3d_main/neuron_editing/neuron_format_converter.cpp
+HEADERS	+= $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.h
+SOURCES	+= $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.cpp
+
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/src/my_surf_objs.h
+SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/src/my_surf_objs.cpp
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {
