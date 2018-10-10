@@ -4,6 +4,8 @@
 #include <cmath>
 #include <unordered_map>
 
+#include <boost/algorithm/string.hpp>
+
 #include <qdir.h>
 #include <qfile.h>
 #include <qdebug.h>
@@ -19,16 +21,32 @@ SegPipe_Controller::SegPipe_Controller(QString inputPath, QString outputPath) : 
 	inputDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
 	this->caseList = inputDir.entryList();
 
-	if (caseList.empty())
+	if (caseList.empty()) // No directories found.
 	{
 		inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 		this->caseList = inputDir.entryList();
-		this->inputSWCRootPath = inputPath;
-		this->inputCaseRootPath = "";
+
+		int swcFileCount = 0;
+		int tifFileCount = 0;
+		for (QStringList::iterator caseCheckIt = this->caseList.begin(); caseCheckIt != this->caseList.end(); ++caseCheckIt)
+		{
+			if ((*caseCheckIt).contains(".swc")) ++swcFileCount;
+			else if ((*caseCheckIt).contains(".tif")) ++tifFileCount;
+		}
+
+		if (swcFileCount == this->caseList.size())
+		{
+			this->inputSWCRootPath = inputPath;
+			this->inputCaseRootPath = "";
+		}
+		else if (tifFileCount == this->caseList.size())
+		{
+			this->inputSWCRootPath = "";
+			this->inputCaseRootPath = inputPath;
+		}
 	}
 	else
 	{
-		inputContent = multipleCase;
 		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 		{
 			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
@@ -155,7 +173,7 @@ void SegPipe_Controller::sliceThre(float threPercentile)
 
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 		qDebug() << *caseIt;
 
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
@@ -209,7 +227,7 @@ void SegPipe_Controller::threshold3D(float threPercentile)
 
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 		int zSliceNum = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.size();
 		size_t totalPixel = size_t(zSliceNum) * size_t(myImgManagerPtr->imgDatabase.begin()->second.dims[0]) * size_t(myImgManagerPtr->imgDatabase.begin()->second.dims[1]);
 		cout << "total pixel num: " << totalPixel << endl;
@@ -263,11 +281,6 @@ void SegPipe_Controller::threshold3D(float threPercentile)
 	}
 }
 
-void SegPipe_Controller::somaNeighborhoodThin()
-{
-
-}
-
 void SegPipe_Controller::sliceBkgThre()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
@@ -287,7 +300,7 @@ void SegPipe_Controller::sliceBkgThre()
 
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
 		{
@@ -331,7 +344,7 @@ void SegPipe_Controller::makeMIPimgs()
 
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 
 		unsigned char* MIPptr = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
 		for (size_t j = 0; j < myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++j)
@@ -359,6 +372,66 @@ void SegPipe_Controller::makeMIPimgs()
 		ImgManager::saveimage_wrapper(sliceSaveFullNameC, MIPptr, Dims, 1);
 
 		delete[] MIPptr;
+	}
+}
+
+void SegPipe_Controller::makeDescentSkeletons()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QStringList inputNameParse = (*caseIt).split(".");
+		QString caseNum = *inputNameParse.begin();
+
+		qDebug() << this->outputRootPath << " " << this->outputRootPath2 << endl;
+		QString saveCaseFullNameQ = this->outputRootPath + "/" + caseNum;
+		if (!QDir(saveCaseFullNameQ).exists()) QDir().mkpath(saveCaseFullNameQ);
+		else
+		{
+			cerr << "This folder already exists. Skip case: " << (*caseIt).toStdString() << endl << endl;
+			continue;
+		}
+		string saveFullPathRoot = saveCaseFullNameQ.toStdString();
+
+		QString saveSkeFullNameQ = this->outputRootPath2 + "/" + caseNum;
+		if (!QDir(saveSkeFullNameQ).exists()) QDir().mkpath(saveSkeFullNameQ);
+		else
+		{
+			cerr << "This folder already exists. Skip case: " << (*caseIt).toStdString() << endl << endl;
+			continue;
+		}
+		string saveSkeFullPathRoot = saveSkeFullNameQ.toStdString();
+
+		QString inputFileFullPath = this->inputCaseRootPath + "/" + *caseIt;
+		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = inputFileFullPath.toStdString();
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::singleCase_singleSlice);
+
+		map<int, size_t> histMap = ImgProcessor::histQuickList(myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin()->second.get(), myImgManagerPtr->imgDatabase.begin()->second.dims);
+		histMap.erase(histMap.begin());
+		for (map<int, size_t>::iterator histIt = histMap.begin(); histIt != histMap.end(); ++histIt)
+		{
+			unsigned char* newThreSlice1D = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+			ImgProcessor::simpleThresh(myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin()->second.get(), newThreSlice1D, myImgManagerPtr->imgDatabase.begin()->second.dims, histIt->first);
+			V3DLONG Dims[4];
+			Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
+			Dims[1] = myImgManagerPtr->imgDatabase.begin()->second.dims[1];
+			Dims[2] = 1;
+			Dims[3] = 1;
+			string threshold = to_string(histIt->first);
+			string newSliceName = saveFullPathRoot + "/" + caseNum.toStdString() + "_" + threshold + ".tif";
+			const char* newSliceNameC = newSliceName.c_str();
+			ImgManager::saveimage_wrapper(newSliceNameC, newThreSlice1D, Dims, 1);
+
+			unsigned char* newThreSliceSke1D = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+			ImgProcessor::skeleton2D(newThreSlice1D, newThreSliceSke1D, myImgManagerPtr->imgDatabase.begin()->second.dims);
+			string newSkeletonSliceName = saveSkeFullPathRoot + "/" + caseNum.toStdString() + "_" + threshold + "skeleton.tif";
+			const char* newSkeletonSliceNameC = newSkeletonSliceName.c_str();
+			ImgManager::saveimage_wrapper(newSkeletonSliceNameC, newThreSliceSke1D, Dims, 1);
+
+			delete[] newThreSlice1D;
+			delete[] newThreSliceSke1D;
+		}
+
+		myImgManagerPtr->imgDatabase.clear();
 	}
 }
 
@@ -533,7 +606,7 @@ void SegPipe_Controller::findSomaMass(int somaSizeThre)
 
 		myImgManagerPtr->imgDatabase.clear();
 		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 
 		map<int, map<int, size_t>> histMapAllSlice;
 		int sliceCount = 0;
@@ -601,7 +674,7 @@ void SegPipe_Controller::findSignalBlobs2D()
 		}
 
 		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 		int dims[3]; 
 		dims[0] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[0];
 		dims[1] = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].dims[1];
@@ -815,7 +888,7 @@ void SegPipe_Controller::swcMapBack()
 		cout << "Processing case " << (*caseIt).toStdString() << ":" << endl;
 		
 		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 
 		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
@@ -855,7 +928,7 @@ void SegPipe_Controller::swc_imgCrop()
 		}
 		string saveCaseFullPathRoot = saveCaseFullNameQ.toStdString();
 		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->imgEntry(*caseIt, slices);
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
@@ -1163,8 +1236,8 @@ void SegPipe_Controller::correctSWC()
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		string inputSliceFullPath = range.first->second;
-		myImgManagerPtr->inputSingleCaseSliceFullPaths.push_back(inputSliceFullPath);
-		myImgManagerPtr->imgEntry(*caseIt, singleCase_slice);
+		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = inputSliceFullPath;
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::singleCase_singleSlice);
 
 		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
@@ -1193,7 +1266,7 @@ void SegPipe_Controller::correctSWC()
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt + ".swc";
 		writeSWC_file(outputSWCPath, correctedTree);
 
-		myImgManagerPtr->inputSingleCaseSliceFullPaths.clear();
+		myImgManagerPtr->inputSingleCaseSingleSliceFullPath.clear();
 	}
 }
 

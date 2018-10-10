@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "skeletonSlices";
+	string funcName = "skeleton";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -313,8 +313,8 @@ int main(int argc, char* argv[])
 		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
 		string fileName = "319215569.tif";
 		ImgManager myManager;
-		myManager.inputSingleCaseSliceFullPaths.push_back(fileFullName);
-		myManager.imgEntry(QString::fromStdString(fileName), singleCase_slice);
+		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
+		myManager.imgEntry(QString::fromStdString(fileName), ImgManager::singleCase_singleSlice);
 		int imgDims[3];
 		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
 		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
 		Dims[1] = imgDims[1];
 		Dims[2] = 1;
 		Dims[3] = 1;
-		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\test.tif";
+		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.tif";
 		const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
 		ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
 
