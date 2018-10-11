@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "skeleton";
+	string funcName = "blendTest";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -252,23 +252,6 @@ int main(int argc, char* argv[])
 			NeuronStructUtil::linkerFileGen_forSWC(swcFullName);
 		}
 	}
-	else if (!funcName.compare("somaIdescent"))
-	{
-		const char* inputPathNameC = argv[1];
-		string inputPathName(inputPathNameC);
-		vector<string> inputFullPathParse;
-		boost::split(inputFullPathParse, inputPathName, boost::is_any_of("/"));
-		string caseNum = inputFullPathParse.back();
-		QString caseNumQ = QString::fromStdString(caseNum);
-		ImgManager myImgManager;
-		myImgManager.inputCaseRootPath = QString::fromStdString(inputPathName);
-
-		for (filesystem::directory_iterator sliceIt(inputPathName); sliceIt != filesystem::directory_iterator(); ++sliceIt)
-		{
-			string sliceFileName = sliceIt->path().string();
-			cout << sliceFileName << endl;
-		}
-	}
 	else if (!funcName.compare("somaPointsCluster"))
 	{
 		const char* inputFileNameC = argv[1];
@@ -352,7 +335,7 @@ int main(int argc, char* argv[])
 			myImgManager.inputMultiCasesSliceFullPaths.insert(pair<string, string>(caseNum, fileFullName));
 		}
 		
-		myImgManager.imgEntry(QString::fromStdString(caseNum), slices);
+		myImgManager.imgEntry(QString::fromStdString(caseNum), ImgManager::slices);
 		int imgDims[3];
 		imgDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
 		imgDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
@@ -374,6 +357,35 @@ int main(int argc, char* argv[])
 
 			delete[] outputImgPtr;
 		}
+	}
+	else if (!funcName.compare("blendTest"))
+	{
+		const char* img1NameC = argv[1];
+		string img1Name(img1NameC);
+		const char* img2NameC = argv[2];
+		string img2Name(img2NameC);
+
+		ImgManager myImgManager;
+		myImgManager.inputSingleCaseSingleSliceFullPath = img1Name;
+		myImgManager.imgEntry("img1", ImgManager::singleCase_singleSlice);
+		myImgManager.inputSingleCaseSingleSliceFullPath = img2Name;
+		myImgManager.imgEntry("img2", ImgManager::singleCase_singleSlice);
+
+		vector<unsigned char*> blendingPtrs;
+		for (map<string, registeredImg>::iterator it = myImgManager.imgDatabase.begin(); it != myImgManager.imgDatabase.end(); ++it)
+			blendingPtrs.push_back(it->second.slicePtrs.begin()->second.get());
+		
+		unsigned char* imgArray1D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1] * 2];
+		ImgManager::imgsBlend(blendingPtrs, imgArray1D, myImgManager.imgDatabase.begin()->second.dims);
+
+		V3DLONG Dims[4];
+		Dims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+		Dims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+		Dims[2] = 1;
+		Dims[3] = 2;
+		
+		const char* saveNameC = argv[3];
+		ImgManager::saveimage_wrapper(saveNameC, imgArray1D, Dims, 1);
 	}
 
 	return 0;

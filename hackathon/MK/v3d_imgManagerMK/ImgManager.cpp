@@ -2,6 +2,8 @@
 #include <fstream>
 #include <set>
 
+#include <boost\algorithm\string.hpp>
+
 #include "ImgProcessor.h"
 #include "ImgManager.h"
 
@@ -21,7 +23,9 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
 		{
 			string sliceFullName = it->second;
-			string fileName = it->second.substr(it->second.length() - 9, 9);
+			vector<string> sliceFullNameParse;
+			boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+			string sliceFileName = sliceFullNameParse.back();
 			const char* sliceFullNameC = sliceFullName.c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
 			slicePtr->loadImage(sliceFullNameC);
@@ -31,7 +35,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 			long int totalbyteSlice = slicePtr->getTotalBytes();
 			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
+			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(sliceFileName, slice1D));
 
 			slicePtr->~Image4DSimple();
 			operator delete(slicePtr);
@@ -45,7 +49,9 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 		currImgCase.imgAlias = caseID;
 		
 		string sliceFullName = this->inputSingleCaseSingleSliceFullPath;
-		string fileName = this->inputSingleCaseSingleSliceFullPath.substr(this->inputSingleCaseSingleSliceFullPath.length() - 9, 9);
+		vector<string> sliceFullNameParse;
+		boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+		string sliceFileName = sliceFullNameParse.back();
 		const char* sliceFullNameC = sliceFullName.c_str();
 		Image4DSimple* slicePtr = new Image4DSimple;
 		slicePtr->loadImage(sliceFullNameC);
@@ -55,7 +61,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 		long int totalbyteSlice = slicePtr->getTotalBytes();
 		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
+		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(sliceFileName, slice1D));
 
 		slicePtr->~Image4DSimple();
 		operator delete(slicePtr);

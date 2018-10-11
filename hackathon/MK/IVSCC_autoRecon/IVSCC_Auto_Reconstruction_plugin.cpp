@@ -131,6 +131,21 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		float distThre = distThreQ.toFloat();
 		segPipePtr->getSomaCandidates(distThre);
 	}
+	else if (func_name == tr("getDenSkeletonStart"))
+	{
+		if (infiles[1])
+		{
+			segPipePtr->inputSWCRootPath.clear();
+			segPipePtr->inputSWCRootPath = infiles[1];
+		}
+		if (outfiles[0]) segPipePtr->outputSWCRootPath = outfiles[0];
+		segPipePtr->getDendriteSkeletonStart();
+	}
+	else if (func_name == tr("getSomaBlended"))
+	{
+		if (infiles[1])	segPipePtr->inputCaseRootPath2 = infiles[1];
+		segPipePtr->getSomaBlendedImgs();
+	}
 	else if (func_name == tr("swcMapBack"))
 	{
 		if (inparas[0]) segPipePtr->refSWCRootPath = inparas[0];

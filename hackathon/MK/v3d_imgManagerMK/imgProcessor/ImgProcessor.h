@@ -36,21 +36,6 @@ class ImgProcessor
 {
 
 public:
-	/******** Constructors *********/
-	ImgProcessor() {};
-	ImgProcessor(unsigned char* inputImg1DPtr);
-	ImgProcessor(unsigned char** inputImg2DPtr);
-	ImgProcessor(unsigned char*** inputImg3DPtr);
-	/*******************************/
-
-
-	/***************** Data Members *****************/
-	unsigned char*   inputImg1DPtr;
-	unsigned char**  inputImg2DPtr;
-	unsigned char*** inputImg3DPtr;
-	/************************************************/
-
-
 	/***************** Basic Image Operations *****************/
 	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);

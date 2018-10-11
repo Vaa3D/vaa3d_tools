@@ -435,6 +435,63 @@ void SegPipe_Controller::makeDescentSkeletons()
 	}
 }
 
+void SegPipe_Controller::getSomaBlendedImgs()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
+		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
+		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+
+		myImgManagerPtr->imgDatabase.clear();
+		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
+
+		string sliceName;
+		string threshold;
+		for (map<string, myImg1DPtr>::reverse_iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.rbegin();
+			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.rend(); ++sliceIt)
+		{
+			for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++i)
+				if (sliceIt->second.get()[i] > 0)
+				{
+					sliceName = sliceIt->first;
+					vector<string> sliceItParse;
+					boost::split(sliceItParse, sliceName, boost::is_any_of("_"));
+					vector<string> threParse;
+					boost::split(threParse, sliceItParse.back(), boost::is_any_of("skeleton"));
+					threshold = threParse.front();
+					goto HIGHEST_THRESHOLD;
+				}
+		}
+
+	HIGHEST_THRESHOLD:
+		QString mipFullNameQ = this->inputCaseRootPath2 + "/" + *caseIt + ".tif";
+		QString mipAlias = *caseIt + "_mip";
+		string mipFullName = mipFullNameQ.toStdString();
+		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = mipFullName;
+		myImgManagerPtr->imgEntry(mipAlias, ImgManager::singleCase_singleSlice);
+
+		unsigned char* blendingPtr = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1] * 2];
+		vector<unsigned char*> blending;
+		blending.push_back(myImgManagerPtr->imgDatabase.at((*caseIt).toStdString()).slicePtrs.at(sliceName).get());
+		blending.push_back(myImgManagerPtr->imgDatabase.at(mipAlias.toStdString()).slicePtrs.begin()->second.get());
+		ImgManager::imgsBlend(blending, blendingPtr, myImgManagerPtr->imgDatabase.begin()->second.dims);
+		
+		V3DLONG Dims[4];
+		Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
+		Dims[1] = myImgManagerPtr->imgDatabase.begin()->second.dims[1];
+		Dims[2] = 1;
+		Dims[3] = 2;
+		string saveFullName = this->outputRootPath.toStdString() + "/" + (*caseIt).toStdString() + "_" + threshold + ".tif";
+		const char* saveFullNameC = saveFullName.c_str();
+		ImgManager::saveimage_wrapper(saveFullNameC, blendingPtr, Dims, 1);
+
+		myImgManagerPtr->imgDatabase.clear();
+		delete[] blendingPtr;
+	}
+}
+
 void SegPipe_Controller::sliceGammaCorrect()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
@@ -876,6 +933,11 @@ void SegPipe_Controller::getSomaCandidates(float distThre)
 		QString swcSaveFullNameQ = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(swcSaveFullNameQ, somaOutput);
 	}
+}
+
+void SegPipe_Controller::getDendriteSkeletonStart()
+{
+
 }
 
 void SegPipe_Controller::swcMapBack()
