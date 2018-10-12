@@ -69,6 +69,7 @@ public:
     string yDirPath; // ourdir/RESXXxXXxXX/000000/000000_000000
 
     unsigned int height, width; // 256x256
+    bool toBeCopied;
 
     map<int,Cube> cubes;
 };
@@ -130,11 +131,13 @@ public:
     int readSWC(string filename, float ratio);
     int readMetaData(string filename);
 
-    int copyblock(string filepath, string outputdir);
+    int copyblock(string srcFile, string dstFile);
     int makeDir(string dirname);
 
-    int query(long x, long y, long z);
-
+    int query(float x, float y, float z);
+    vector<string> splitFilePath(string filepath);
+    string getDirName(string filepath);
+    int createDir(string prePath, string dirName);
 
 public:
     OneScaleTree tree;
