@@ -63,6 +63,11 @@ Point::~Point()
 }
 
 //
+Block::Block()
+{
+
+}
+
 Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz)
 {
     filepath = fn;
@@ -177,8 +182,6 @@ int QueryAndCopy::readMetaData(string filename)
 
     struct stat info;
 
-    long sx, sy, sz;
-
     // mdata.bin does not exist
     if( stat( filename.c_str(), &info ) != 0 )
     {
@@ -214,6 +217,8 @@ int QueryAndCopy::readMetaData(string filename)
         sx = layer.dim_H;
         sy = layer.dim_V;
         sz = layer.dim_D;
+
+        int count=0; // get cube size
 
         //
         if(mDataDebug)
@@ -297,12 +302,15 @@ int QueryAndCopy::readMetaData(string filename)
                             long(yxfolder.offset_H), long(yxfolder.offset_V), long(j)*long(layer.dim_D),
                             long(yxfolder.width), long(yxfolder.height), long(layer.dim_D) );
 
-                //cout<<"chunk's name: "<<chunk.filename<<endl;
-
+                if(count==0)
+                {
+                    cubex = yxfolder.width;
+                    cubey = yxfolder.height;
+                    cubez = layer.dim_D;
+                    count++;
+                }
 
                 tree.insert(make_pair(long(block.offset_z)*sx*sy+long(block.offset_y)*sx+long(block.offset_x), block));
-
-                //cout<<"chunks ... "<<chunks.size()<<endl;
 
                 //
                 if(mDataDebug)
@@ -335,6 +343,16 @@ int QueryAndCopy::query(long x, long y, long z)
     // find hit block and 6 neighbors
     if(tree.size()>0)
     {
+        long lx = x/cubex*cubex;
+        long ly = y/cubey*cubey;
+        long lz = z/cubez*cubez;
+
+        long index = lz*sx*sy + ly*sx + lx;
+
+        if(tree.find(index) != tree.end())
+        {
+            Block block = tree[index];
+        }
 
     }
     else

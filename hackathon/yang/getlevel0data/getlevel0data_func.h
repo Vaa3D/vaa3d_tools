@@ -108,6 +108,7 @@ typedef vector<Point> PointCloud;
 class Block
 {
 public:
+    Block();
     Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz);
     ~Block();
 
@@ -134,6 +135,7 @@ public:
 
     int query(long x, long y, long z);
 
+
 public:
     OneScaleTree tree;
     PointCloud pc;
@@ -145,7 +147,8 @@ public:
     float mdata_version; // 2
 
     unsigned int color, bytesPerVoxel; //
-    unsigned int cubex, cubey, cubez;
+    long cubex, cubey, cubez;
+    long sx, sy, sz;
 
     Layer layer;
 };
