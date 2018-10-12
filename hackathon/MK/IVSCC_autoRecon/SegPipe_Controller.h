@@ -71,6 +71,7 @@ public:
 	void getSomaCandidates(float distThre);
 	void getDendriteSkeletonStart();
 	void getSomaBlendedImgs();
+	void skeletonThreFiltered();
 
 	void swc_imgCrop();
 	

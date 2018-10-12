@@ -128,7 +128,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 		V3DLONG totalbytes = inputMask4D->getTotalBytes();
 		unsigned char* input1D = new unsigned char[totalbytes];
 		memcpy(input1D, inputMask4D->getRawData(), totalbytes);
-		ImgProcessor::imageMax(input1D, maskMIP, maskMIP, dims);
+		ImgProcessor::imgMax(input1D, maskMIP, maskMIP, dims);
 		delete inputMask4D;
 	}
 

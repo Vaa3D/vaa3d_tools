@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "blendTest";
+	string funcName = "skeletonCombine";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -374,7 +374,7 @@ int main(int argc, char* argv[])
 		vector<unsigned char*> blendingPtrs;
 		for (map<string, registeredImg>::iterator it = myImgManager.imgDatabase.begin(); it != myImgManager.imgDatabase.end(); ++it)
 			blendingPtrs.push_back(it->second.slicePtrs.begin()->second.get());
-		
+
 		unsigned char* imgArray1D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1] * 2];
 		ImgManager::imgsBlend(blendingPtrs, imgArray1D, myImgManager.imgDatabase.begin()->second.dims);
 
@@ -383,7 +383,7 @@ int main(int argc, char* argv[])
 		Dims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
 		Dims[2] = 1;
 		Dims[3] = 2;
-		
+
 		const char* saveNameC = argv[3];
 		ImgManager::saveimage_wrapper(saveNameC, imgArray1D, Dims, 1);
 	}

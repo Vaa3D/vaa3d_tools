@@ -336,14 +336,14 @@ void SegPipe_Controller::sliceBkgThre()
 
 void SegPipe_Controller::makeMIPimgs()
 {
+	myImgManagerPtr->imgDatabase.clear();
+	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
-		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 
 		unsigned char* MIPptr = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
@@ -352,6 +352,10 @@ void SegPipe_Controller::makeMIPimgs()
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
 		{
+			if (sliceIt->first.find("_") != string::npos) continue;
+			else ImgProcessor::imgMax(sliceIt->second.get(), MIPptr, MIPptr, myImgManagerPtr->imgDatabase.begin()->second.dims);
+		}
+		/*{
 			for (size_t j = 0; j < myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++j)
 			{
 				for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0]; ++i)
@@ -360,7 +364,7 @@ void SegPipe_Controller::makeMIPimgs()
 					MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i] = pixValue;
 				}
 			}
-		}
+		}*/
 
 		V3DLONG Dims[4];
 		Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
@@ -372,6 +376,7 @@ void SegPipe_Controller::makeMIPimgs()
 		ImgManager::saveimage_wrapper(sliceSaveFullNameC, MIPptr, Dims, 1);
 
 		delete[] MIPptr;
+		myImgManagerPtr->imgDatabase.clear();
 	}
 }
 
@@ -437,14 +442,14 @@ void SegPipe_Controller::makeDescentSkeletons()
 
 void SegPipe_Controller::getSomaBlendedImgs()
 {
+	myImgManagerPtr->imgDatabase.clear();
+	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
 
-		myImgManagerPtr->imgDatabase.clear();
-		myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
 		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
 
 		string sliceName;
@@ -489,6 +494,56 @@ void SegPipe_Controller::getSomaBlendedImgs()
 
 		myImgManagerPtr->imgDatabase.clear();
 		delete[] blendingPtr;
+	}
+}
+
+void SegPipe_Controller::skeletonThreFiltered()
+{
+	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
+		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
+		QString caseFullPathQ = this->inputCaseRootPath + "/" + *caseIt;
+	
+		myImgManagerPtr->imgEntry(*caseIt, ImgManager::slices);
+
+		V3DLONG Dims[4];
+		Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
+		Dims[1] = myImgManagerPtr->imgDatabase.begin()->second.dims[1];
+		Dims[2] = 1;
+		Dims[3] = 1;
+
+		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase.at((*caseIt).toStdString()).slicePtrs.begin();
+			sliceIt != myImgManagerPtr->imgDatabase.at((*caseIt).toStdString()).slicePtrs.end(); ++sliceIt)
+		{
+			vector<string> sliceNameParse;
+			boost::split(sliceNameParse, sliceIt->first, boost::is_any_of("_"));
+			vector<string> threParse;
+			boost::split(threParse, sliceNameParse.back(), boost::is_any_of(".tif"));
+			int threshold = stoi(threParse.front());
+			unsigned char* threStep1D = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+			ImgProcessor::simpleThresh_reverse(sliceIt->second.get(), threStep1D, myImgManagerPtr->imgDatabase.begin()->second.dims, threshold);
+			string saveThreFullName = this->outputRootPath.toStdString() + "/" + (*caseIt).toStdString() + "/" + threParse.front() + ".tif";
+			const char* saveThreFullNameC = saveThreFullName.c_str();
+			ImgManager::saveimage_wrapper(saveThreFullNameC, threStep1D, Dims, 1);
+			cout << saveThreFullName << endl;
+
+			unsigned char* skeletonThreStep1D = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+			string sliceName = (*caseIt).toStdString() + "_" + threParse.front() + "skeleton.tif";
+			myImgManagerPtr->inputSingleCaseSingleSliceFullPath = (this->inputCaseRootPath2 + "/" + *caseIt).toStdString() + "/" + sliceName;
+			myImgManagerPtr->imgEntry(QString::fromStdString(threParse.front()), ImgManager::singleCase_singleSlice);
+			ImgProcessor::imgDotMultiply(myImgManagerPtr->imgDatabase.at(threParse.front()).slicePtrs.begin()->second.get(), threStep1D, skeletonThreStep1D, myImgManagerPtr->imgDatabase.begin()->second.dims);
+			string saveSkeFullName = this->outputRootPath2.toStdString() + "/" + (*caseIt).toStdString() + "/" + threParse.front() + ".tif";
+			const char* saveSkeFullNameC = saveSkeFullName.c_str();
+			ImgManager::saveimage_wrapper(saveSkeFullNameC, skeletonThreStep1D, Dims, 1);
+			cout << saveSkeFullName << endl << endl;
+
+			delete[] threStep1D;
+			delete[] skeletonThreStep1D;
+		}
+
+		myImgManagerPtr->imgDatabase.clear();
 	}
 }
 
@@ -742,7 +797,7 @@ void SegPipe_Controller::findSignalBlobs2D()
 		for (map<string, myImg1DPtr>::iterator sliceIt = myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.begin();
 			sliceIt != myImgManagerPtr->imgDatabase[(*caseIt).toStdString()].slicePtrs.end(); ++sliceIt)
 		{
-			ImgProcessor::imageMax(sliceIt->second.get(), MIP1Dptr, MIP1Dptr, dims);
+			ImgProcessor::imgMax(sliceIt->second.get(), MIP1Dptr, MIP1Dptr, dims);
 
 			unsigned char** slice2DPtr = new unsigned char*[dims[1]];
 			for (int j = 0; j < dims[1]; ++j)
