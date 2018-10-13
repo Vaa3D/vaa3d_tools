@@ -104,6 +104,9 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
     //
     long n = pc.size();
+
+    cout<<" ... ... consider "<<n<<" nodes in "<<tree.size()<<" blocks"<<endl;
+
     for(long i=0; i<n; i++)
     {
         Point p = pc[i];
@@ -280,7 +283,7 @@ int QueryAndCopy::readSWC(string filename, float ratio)
 int QueryAndCopy::readMetaData(string filename)
 {
     //
-    bool mDataDebug = true;
+    bool mDataDebug = false;
 
     //
     string inputdir = filename;
@@ -462,6 +465,8 @@ int QueryAndCopy::readMetaData(string filename)
 
 int QueryAndCopy::query(float x, float y, float z)
 {
+    cout<<"query "<<x<<" "<<y<<" "<<z<<endl;
+
     // find hit block and 6 neighbors
     if(tree.size()>0)
     {
@@ -477,9 +482,23 @@ int QueryAndCopy::query(float x, float y, float z)
 
         long index = lz*sx*sy + ly*sx + lx;
 
+        cout<<"index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
+
+        // test
+        map<long, Block>::iterator it = tree.begin();
+        while(it != tree.end())
+        {
+            cout<<(it++)->first<<endl;
+        }
+
+        //
         if(tree.find(index) != tree.end())
         {
+            cout<<"found a block"<<endl;
+
             Block block = tree[index];
+
+            cout<<"block "<<block.filepath<<endl;
 
             string dirName = getDirName(block.filepath);
 
@@ -617,17 +636,28 @@ int QueryAndCopy::query(float x, float y, float z)
 
 vector<string> QueryAndCopy::splitFilePath(string filepath)
 {
+    cout<<filepath<<endl;
+
     vector<string> splits;
     char delimiter = '/';
 
     size_t i = 0;
     size_t pos = filepath.find(delimiter);
 
+    if(pos==0)
+    {
+        // case "/usr/xxx"
+        i = 1;
+        pos = filepath.find(delimiter, i);
+    }
+
     while(pos != string::npos)
     {
         splits.push_back(filepath.substr(i, pos-i));
 
-        i = pos + i;
+        cout<<splits.size()<<" "<<i<<" "<<pos<<endl;
+
+        i = pos + 1;
         pos = filepath.find(delimiter, i);
     }
 
@@ -642,9 +672,14 @@ string QueryAndCopy::getDirName(string filepath)
     // dirName: 000/000_000
     // -------- splits[n-3] + "/" + splits[n-2]
 
-    string dirName;
+    cout<<"call splitFilePath"<<endl;
 
     vector<string> splits = splitFilePath(filepath);
+
+    cout<<"get "<<splits.size()<<" splits"<<endl;
+
+    for(int i=0; i<splits.size(); i++)
+        cout<<splits[i]<<endl;
 
     //
     size_t n = splits.size();
@@ -655,7 +690,7 @@ string QueryAndCopy::getDirName(string filepath)
         return "";
     }
 
-    dirName = splits[n-3] + "/" + splits[n-2];
+    string dirName = splits[n-3] + "/" + splits[n-2];
 
     //
     return dirName;
