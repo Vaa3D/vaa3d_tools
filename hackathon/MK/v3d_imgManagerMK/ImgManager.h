@@ -41,7 +41,7 @@ typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn
 
 struct registeredImg
 {
-	QString imgAlias;
+	string imgAlias;
 	QString imgCaseRootQ;
 
 	//shared_ptr<unsigned char*> imgData1D;
@@ -74,7 +74,7 @@ public:
 
 	/***************** I/O *****************/
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
-	void imgEntry(QString caseID, imgFormat format);
+	void imgEntry(string caseID, imgFormat format);
 
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	

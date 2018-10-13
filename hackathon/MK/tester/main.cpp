@@ -19,9 +19,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
-	string funcName = "skeletonCombine";
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
+	//string funcName = "";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -297,7 +297,7 @@ int main(int argc, char* argv[])
 		string fileName = "319215569.tif";
 		ImgManager myManager;
 		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
-		myManager.imgEntry(QString::fromStdString(fileName), ImgManager::singleCase_singleSlice);
+		myManager.imgEntry(fileName, ImgManager::singleCase_singleSlice);
 		int imgDims[3];
 		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
 		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
 			myImgManager.inputMultiCasesSliceFullPaths.insert(pair<string, string>(caseNum, fileFullName));
 		}
 		
-		myImgManager.imgEntry(QString::fromStdString(caseNum), ImgManager::slices);
+		myImgManager.imgEntry(caseNum, ImgManager::slices);
 		int imgDims[3];
 		imgDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
 		imgDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
@@ -358,34 +358,100 @@ int main(int argc, char* argv[])
 			delete[] outputImgPtr;
 		}
 	}
-	else if (!funcName.compare("blendTest"))
+	else if (!funcName.compare("simpleBlend"))
 	{
-		const char* img1NameC = argv[1];
-		string img1Name(img1NameC);
-		const char* img2NameC = argv[2];
-		string img2Name(img2NameC);
+		const char* folder1C = argv[2];
+		string folder1(folder1C);
+		const char* folder2C = argv[3];
+		string folder2(folder2C);
 
+		for (filesystem::directory_iterator sliceIt(folder1); sliceIt != filesystem::directory_iterator(); ++sliceIt)
+		{
+			string caseName = sliceIt->path().filename().string();
+			string caseNameFullPath = folder1 + "\\" + caseName;
+			caseName = caseName.substr(0, 9);
+			for (filesystem::directory_iterator sliceIt2(folder2); sliceIt2 != filesystem::directory_iterator(); ++sliceIt2)
+			{
+				string caseName2 = sliceIt2->path().filename().string();
+				string caseName2FullPath = folder2 + "\\" + caseName2;
+				caseName2 = caseName2.substr(0, 9);
+				if (!caseName2.compare(caseName))
+				{
+					//cout << caseNameFullPath << endl << caseName2FullPath << endl;
+					ImgManager myImgManager;
+					myImgManager.inputSingleCaseSingleSliceFullPath = caseNameFullPath;
+					myImgManager.imgEntry("img1", ImgManager::singleCase_singleSlice);
+					myImgManager.inputSingleCaseSingleSliceFullPath = caseName2FullPath;
+					myImgManager.imgEntry("img2", ImgManager::singleCase_singleSlice);
+
+					vector<unsigned char*> blendingPtrs;
+					for (map<string, registeredImg>::iterator it = myImgManager.imgDatabase.begin(); it != myImgManager.imgDatabase.end(); ++it)
+						blendingPtrs.push_back(it->second.slicePtrs.begin()->second.get());
+
+					unsigned char* imgArray1D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1] * 2];
+					ImgManager::imgsBlend(blendingPtrs, imgArray1D, myImgManager.imgDatabase.begin()->second.dims);
+
+					V3DLONG Dims[4];
+					Dims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+					Dims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+					Dims[2] = 1;
+					Dims[3] = 2;
+
+					const char* saveNameC = argv[4];
+					string saveName(saveNameC);
+					saveName = saveName + "\\" + caseName2 + ".tif";
+					const char* saveFullNameC = saveName.c_str();
+					ImgManager::saveimage_wrapper(saveFullNameC, imgArray1D, Dims, 1);
+
+					myImgManager.imgDatabase.clear();
+				}
+			}
+		}
+	}
+	else if (!funcName.compare("getImgStats"))
+	{
+		const char* folderNameC = argv[1];
+		string folderName(folderNameC);
+		const char* outputFileNameC = argv[2];
+		string outputFileName(outputFileNameC);
+
+		ofstream outputFile(outputFileName);
+		outputFile << "case\t";
+		for (int i = 255; i >= 100; --i) outputFile << i << "\t";
+		outputFile << endl;
+		//outputFile << "case\tmean\tstd\tmedian" << endl;
 		ImgManager myImgManager;
-		myImgManager.inputSingleCaseSingleSliceFullPath = img1Name;
-		myImgManager.imgEntry("img1", ImgManager::singleCase_singleSlice);
-		myImgManager.inputSingleCaseSingleSliceFullPath = img2Name;
-		myImgManager.imgEntry("img2", ImgManager::singleCase_singleSlice);
+		/*for (filesystem::directory_iterator imgIt(folderName); imgIt != filesystem::directory_iterator(); ++imgIt)
+		{
+			string sliceFullName = imgIt->path().string();
+			myImgManager.inputSingleCaseSingleSliceFullPath = sliceFullName;
+			myImgManager.imgEntry(imgIt->path().filename().string(), ImgManager::singleCase_singleSlice);
+			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myImgManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), myImgManager.imgDatabase.begin()->second.dims);
+			outputFile << imgIt->path().filename().string() << "\t" << imgStats.at("mean") << "\t" << imgStats.at("std") << "\t" << imgStats.at("median") << endl;
 
-		vector<unsigned char*> blendingPtrs;
-		for (map<string, registeredImg>::iterator it = myImgManager.imgDatabase.begin(); it != myImgManager.imgDatabase.end(); ++it)
-			blendingPtrs.push_back(it->second.slicePtrs.begin()->second.get());
+			myImgManager.imgDatabase.clear();
+		}*/
 
-		unsigned char* imgArray1D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1] * 2];
-		ImgManager::imgsBlend(blendingPtrs, imgArray1D, myImgManager.imgDatabase.begin()->second.dims);
+		for (filesystem::directory_iterator imgIt(folderName); imgIt != filesystem::directory_iterator(); ++imgIt)
+		{
+			string sliceFullName = imgIt->path().string();
+			myImgManager.inputSingleCaseSingleSliceFullPath = sliceFullName;
+			myImgManager.imgEntry(imgIt->path().filename().string(), ImgManager::singleCase_singleSlice);
+			map<int, size_t> histMap = ImgProcessor::histQuickList(myImgManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), myImgManager.imgDatabase.begin()->second.dims);
+			outputFile << imgIt->path().filename().string() << "\t";
+			for (int j = 255; j >= 100; --j)
+			{
+				if (histMap.find(j) == histMap.end())
+				{	
+					if (j < 200) break;
+					else continue;
+				}
+				else outputFile << histMap.at(j) << "\t";
+			}
+			outputFile << endl;
 
-		V3DLONG Dims[4];
-		Dims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
-		Dims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
-		Dims[2] = 1;
-		Dims[3] = 2;
-
-		const char* saveNameC = argv[3];
-		ImgManager::saveimage_wrapper(saveNameC, imgArray1D, Dims, 1);
+			myImgManager.imgDatabase.clear();
+		}
 	}
 
 	return 0;
