@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost::filesystem;
 
-void ImgManager::imgEntry(QString caseID, imgFormat format) 
+void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
 	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
 	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
@@ -19,7 +19,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
-		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID.toStdString());
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID);
 		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
 		{
 			string sliceFullName = it->second;
@@ -41,7 +41,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 			operator delete(slicePtr);
 		}
 
-		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
 	}
 	else if (format == singleCase_singleSlice)
 	{
@@ -66,7 +66,7 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 		slicePtr->~Image4DSimple();
 		operator delete(slicePtr);
 
-		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
 	}
 }
 

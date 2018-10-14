@@ -359,7 +359,7 @@ inline map<string, float> ImgProcessor::getBasicStats_no0(T inputImgPtr[], int i
 	basicStats.insert(pair<string, float>("mean", mean));
 
 	float varSum = 0;
-	for (size_t i = 0; i < validPixCount; ++i) varSum = varSum + (inputImgPtr[i] - mean) * (inputImgPtr[i] - mean);
+	for (size_t i = 0; i < validPixCount; ++i) varSum = varSum + (img1DVec.at(i) - mean) * (img1DVec.at(i) - mean);
 	var = varSum / float(validPixCount);
 	std = sqrtf(var);
 	basicStats.insert(pair<string, float>("var", var));

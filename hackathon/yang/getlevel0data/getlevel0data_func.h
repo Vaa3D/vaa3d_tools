@@ -69,6 +69,7 @@ public:
     string yDirPath; // ourdir/RESXXxXXxXX/000000/000000_000000
 
     unsigned int height, width; // 256x256
+    bool toBeCopied;
 
     map<int,Cube> cubes;
 };
@@ -108,6 +109,7 @@ typedef vector<Point> PointCloud;
 class Block
 {
 public:
+    Block();
     Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz);
     ~Block();
 
@@ -129,10 +131,13 @@ public:
     int readSWC(string filename, float ratio);
     int readMetaData(string filename);
 
-    int copyblock(string filepath, string outputdir);
+    int copyblock(string srcFile, string dstFile);
     int makeDir(string dirname);
 
-    int query(long x, long y, long z);
+    int query(float x, float y, float z);
+    vector<string> splitFilePath(string filepath);
+    string getDirName(string filepath);
+    int createDir(string prePath, string dirName);
 
 public:
     OneScaleTree tree;
@@ -145,7 +150,8 @@ public:
     float mdata_version; // 2
 
     unsigned int color, bytesPerVoxel; //
-    unsigned int cubex, cubey, cubez;
+    long cubex, cubey, cubez;
+    long sx, sy, sz;
 
     Layer layer;
 };

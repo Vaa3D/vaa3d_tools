@@ -29,6 +29,7 @@ YXFolder::YXFolder()
 {
     lengthFileName = 25;
     lengthDirName = 21;
+    toBeCopied = false;
 }
 
 YXFolder::~YXFolder()
@@ -63,6 +64,11 @@ Point::~Point()
 }
 
 //
+Block::Block()
+{
+
+}
+
 Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz)
 {
     filepath = fn;
@@ -82,6 +88,10 @@ Block::~Block()
 //
 QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio)
 {
+    // inputdir: "xxxx/RES(123x345x456)"
+    // outputdir: "yyyy/RES(123x345x456)"
+
+    // load input .swc file and mdata.bin
 
     //
     readSWC(swcfile, ratio);
@@ -89,8 +99,120 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
     //
     readMetaData(inputdir);
 
-    //
 
+    // find hit & neighbor blocks
+
+    //
+    long n = pc.size();
+
+    cout<<" ... ... consider "<<n<<" nodes in "<<tree.size()<<" blocks"<<endl;
+
+    for(long i=0; i<n; i++)
+    {
+        Point p = pc[i];
+
+        query(p.x, p.y, p.z);
+    }
+
+    // copying blocks and saving mdata.bin
+
+    //
+    DIR *outdir = opendir(outputdir.c_str());
+    if(outdir == NULL)
+    {
+        // mkdir outdir
+        if(makeDir(outputdir))
+        {
+            cout<<"fail in mkdir "<<outputdir<<endl;
+            return;
+        }
+    }
+    else
+    {
+        closedir(outdir);
+    }
+
+    //
+    string mdatabin = outputdir + "/mdata.bin";
+
+    struct stat info;
+
+    // mdata.bin does not exist
+    if( stat( mdatabin.c_str(), &info ) != 0 )
+    {
+        // save mdata.bin
+        FILE *file;
+
+        file = fopen(mdatabin.c_str(), "wb");
+
+        fwrite(&(mdata_version), sizeof(float), 1, file);
+        fwrite(&(reference_V), sizeof(axis), 1, file);
+        fwrite(&(reference_H), sizeof(axis), 1, file);
+        fwrite(&(reference_D), sizeof(axis), 1, file);
+        fwrite(&(layer.vs_x), sizeof(float), 1, file);
+        fwrite(&(layer.vs_y), sizeof(float), 1, file);
+        fwrite(&(layer.vs_z), sizeof(float), 1, file);
+        fwrite(&(layer.vs_x), sizeof(float), 1, file);
+        fwrite(&(layer.vs_y), sizeof(float), 1, file);
+        fwrite(&(layer.vs_z), sizeof(float), 1, file);
+        fwrite(&(org_V), sizeof(float), 1, file);
+        fwrite(&(org_H), sizeof(float), 1, file);
+        fwrite(&(org_D), sizeof(float), 1, file);
+        fwrite(&(layer.dim_V), sizeof(unsigned int), 1, file);
+        fwrite(&(layer.dim_H), sizeof(unsigned int), 1, file);
+        fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file);
+        fwrite(&(layer.rows), sizeof(unsigned short), 1, file);
+        fwrite(&(layer.cols), sizeof(unsigned short), 1, file);
+
+        //
+        map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
+        while(iter != layer.yxfolders.end())
+        {
+            //
+            YXFolder yxfolder = (iter++)->second;
+
+            if(yxfolder.toBeCopied==false)
+                continue;
+
+            createDir(outputdir, yxfolder.dirName);
+
+            //
+            fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
+            fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
+            fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
+            fwrite(&layer.ncubes, sizeof(unsigned int), 1, file);
+            fwrite(&(color), sizeof(unsigned int), 1, file);
+            fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
+            fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
+            fwrite(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
+            fwrite(const_cast<char *>(yxfolder.dirName.c_str()), yxfolder.lengthDirName, 1, file);
+
+            //
+            map<int, Cube>::iterator it = yxfolder.cubes.begin();
+            while(it != yxfolder.cubes.end())
+            {
+                //
+                Cube cube = (it++)->second;
+
+                if(cube.toBeCopied==false)
+                    continue;
+
+                //
+                string srcFilePath = inputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+                string dstFilePath = outputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+
+                copyblock(srcFilePath, dstFilePath);
+
+                //
+                fwrite(&(yxfolder.lengthFileName), sizeof(unsigned short), 1, file);
+                fwrite(const_cast<char *>(cube.fileName.c_str()), yxfolder.lengthFileName, 1, file);
+                fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
+                fwrite(&(cube.offset_D), sizeof(int), 1, file);
+            }
+            fwrite(&(bytesPerVoxel), sizeof(unsigned int), 1, file);
+        }
+        fclose(file);
+    }
 }
 
 QueryAndCopy::~QueryAndCopy()
@@ -117,8 +239,16 @@ int QueryAndCopy::makeDir(string dirname)
     return 0;
 }
 
-int QueryAndCopy::copyblock(string filepath, string outputdir)
+int QueryAndCopy::copyblock(string srcFile, string dstFile)
 {
+    //
+    std::ifstream  src(srcFile.c_str(), std::ios::binary);
+    std::ofstream  dst(dstFile.c_str(), std::ios::binary);
+
+    dst << src.rdbuf();
+
+    src.close();
+    dst.close();
 
     //
     return 0;
@@ -153,7 +283,7 @@ int QueryAndCopy::readSWC(string filename, float ratio)
 int QueryAndCopy::readMetaData(string filename)
 {
     //
-    bool mDataDebug = true;
+    bool mDataDebug = false;
 
     //
     string inputdir = filename;
@@ -176,8 +306,6 @@ int QueryAndCopy::readMetaData(string filename)
     filename = inputdir + "/mdata.bin";
 
     struct stat info;
-
-    long sx, sy, sz;
 
     // mdata.bin does not exist
     if( stat( filename.c_str(), &info ) != 0 )
@@ -214,6 +342,8 @@ int QueryAndCopy::readMetaData(string filename)
         sx = layer.dim_H;
         sy = layer.dim_V;
         sz = layer.dim_D;
+
+        int count=0; // get cube size
 
         //
         if(mDataDebug)
@@ -297,12 +427,15 @@ int QueryAndCopy::readMetaData(string filename)
                             long(yxfolder.offset_H), long(yxfolder.offset_V), long(j)*long(layer.dim_D),
                             long(yxfolder.width), long(yxfolder.height), long(layer.dim_D) );
 
-                //cout<<"chunk's name: "<<chunk.filename<<endl;
-
+                if(count==0)
+                {
+                    cubex = yxfolder.width;
+                    cubey = yxfolder.height;
+                    cubez = layer.dim_D;
+                    count++;
+                }
 
                 tree.insert(make_pair(long(block.offset_z)*sx*sy+long(block.offset_y)*sx+long(block.offset_x), block));
-
-                //cout<<"chunks ... "<<chunks.size()<<endl;
 
                 //
                 if(mDataDebug)
@@ -330,17 +463,284 @@ int QueryAndCopy::readMetaData(string filename)
     return 0;
 }
 
-int QueryAndCopy::query(long x, long y, long z)
+int QueryAndCopy::query(float x, float y, float z)
 {
+    cout<<"query "<<x<<" "<<y<<" "<<z<<endl;
+
     // find hit block and 6 neighbors
     if(tree.size()>0)
     {
+        long nx = long(x)/cubex;
+        long ny = long(y)/cubey;
+        long nz = long(z)/cubez;
+
+        // hit block
+
+        long lx = nx*cubex;
+        long ly = ny*cubey;
+        long lz = nz*cubez;
+
+        long index = lz*sx*sy + ly*sx + lx;
+
+        cout<<"index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
+
+        // test
+        map<long, Block>::iterator it = tree.begin();
+        while(it != tree.end())
+        {
+            cout<<(it++)->first<<endl;
+        }
+
+        //
+        if(tree.find(index) != tree.end())
+        {
+            cout<<"found a block"<<endl;
+
+            Block block = tree[index];
+
+            cout<<"block "<<block.filepath<<endl;
+
+            string dirName = getDirName(block.filepath);
+
+            cout<<"check dirName: "<<dirName<<endl;
+
+            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+            layer.yxfolders[dirName].toBeCopied = true;
+        }
+
+        // 6 neighbors
+
+        // x-
+        if(nx-1>0)
+        {
+            lx = (nx - 1) * cubex;
+            index = lz*sx*sy + ly*sx + lx;
+
+            if(tree.find(index) != tree.end())
+            {
+                Block block = tree[index];
+
+                string dirName = getDirName(block.filepath);
+
+                cout<<"check dirName: "<<dirName<<endl;
+
+                layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+                layer.yxfolders[dirName].toBeCopied = true;
+            }
+        }
+
+        // x+
+        lx = (nx + 1) * cubex;
+        index = lz*sx*sy + ly*sx + lx;
+
+        if(tree.find(index) != tree.end())
+        {
+            Block block = tree[index];
+
+            string dirName = getDirName(block.filepath);
+
+            cout<<"check dirName: "<<dirName<<endl;
+
+            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+            layer.yxfolders[dirName].toBeCopied = true;
+        }
+
+        // y-
+        lx = nx*cubex;
+
+        if(ny-1>0)
+        {
+            ly = (ny - 1)*cubey;
+
+            index = lz*sx*sy + ly*sx + lx;
+
+            if(tree.find(index) != tree.end())
+            {
+                Block block = tree[index];
+
+                string dirName = getDirName(block.filepath);
+
+                cout<<"check dirName: "<<dirName<<endl;
+
+                layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+                layer.yxfolders[dirName].toBeCopied = true;
+            }
+        }
+
+        // y+
+        ly = (ny + 1)*cubey;
+
+        index = lz*sx*sy + ly*sx + lx;
+
+        if(tree.find(index) != tree.end())
+        {
+            Block block = tree[index];
+
+            string dirName = getDirName(block.filepath);
+
+            cout<<"check dirName: "<<dirName<<endl;
+
+            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+            layer.yxfolders[dirName].toBeCopied = true;
+        }
+
+        // z-
+        ly = ny*cubey;
+
+        if(nz-1>0)
+        {
+            lz = (nz - 1)*cubez;
+
+            index = lz*sx*sy + ly*sx + lx;
+
+            if(tree.find(index) != tree.end())
+            {
+                Block block = tree[index];
+
+                string dirName = getDirName(block.filepath);
+
+                cout<<"check dirName: "<<dirName<<endl;
+
+                layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+                layer.yxfolders[dirName].toBeCopied = true;
+            }
+        }
+
+        // z+
+        lz = (nz + 1)*cubez;
+
+        index = lz*sx*sy + ly*sx + lx;
+
+        if(tree.find(index) != tree.end())
+        {
+            Block block = tree[index];
+
+            string dirName = getDirName(block.filepath);
+
+            cout<<"check dirName: "<<dirName<<endl;
+
+            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+            layer.yxfolders[dirName].toBeCopied = true;
+        }
 
     }
     else
     {
         cout<<"Read mdata.bin then query."<<endl;
         return -1;
+    }
+
+    //
+    return 0;
+}
+
+vector<string> QueryAndCopy::splitFilePath(string filepath)
+{
+    cout<<filepath<<endl;
+
+    vector<string> splits;
+    char delimiter = '/';
+
+    size_t i = 0;
+    size_t pos = filepath.find(delimiter);
+
+    if(pos==0)
+    {
+        // case "/usr/xxx"
+        i = 1;
+        pos = filepath.find(delimiter, i);
+    }
+
+    while(pos != string::npos)
+    {
+        splits.push_back(filepath.substr(i, pos-i));
+
+        cout<<splits.size()<<" "<<i<<" "<<pos<<endl;
+
+        i = pos + 1;
+        pos = filepath.find(delimiter, i);
+    }
+
+    splits.push_back(filepath.substr(i, min(pos, filepath.length()) - i + 1));
+
+    return splits;
+}
+
+string QueryAndCopy::getDirName(string filepath)
+{
+    // filepath: xxxx/RES(123x456x789)/000/000_000/000_000_000.tif
+    // dirName: 000/000_000
+    // -------- splits[n-3] + "/" + splits[n-2]
+
+    cout<<"call splitFilePath"<<endl;
+
+    vector<string> splits = splitFilePath(filepath);
+
+    cout<<"get "<<splits.size()<<" splits"<<endl;
+
+    for(int i=0; i<splits.size(); i++)
+        cout<<splits[i]<<endl;
+
+    //
+    size_t n = splits.size();
+
+    if(n<3)
+    {
+        cout<<"Invalid filepath "<<filepath<<endl;
+        return "";
+    }
+
+    string dirName = splits[n-3] + "/" + splits[n-2];
+
+    //
+    return dirName;
+}
+
+int QueryAndCopy::createDir(string prePath, string dirName)
+{
+    //
+    vector<string> splits = splitFilePath(dirName);
+
+    if( splits.size() != 2 )
+    {
+        cout<<"Invalid dirName"<<endl;
+        return -1;
+    }
+
+    string folder = prePath + "/" + splits[0];
+    layer.yxfolders[dirName].xDirPath = folder;
+
+    DIR *outdir = opendir(folder.c_str());
+    if(outdir == NULL)
+    {
+        //
+        if(makeDir(folder))
+        {
+            cout<<"fail in makeDir "<<folder<<endl;
+            return -1;
+        }
+    }
+    else
+    {
+        closedir(outdir);
+    }
+
+    folder = folder + "/" + splits[1];
+    layer.yxfolders[dirName].yDirPath = folder;
+
+    outdir = opendir(folder.c_str());
+    if(outdir == NULL)
+    {
+        //
+        if(makeDir(folder))
+        {
+            cout<<"fail in makeDir "<<folder<<endl;
+            return -1;
+        }
+    }
+    else
+    {
+        closedir(outdir);
     }
 
     //
@@ -400,14 +800,12 @@ bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     QString inputdir = QString(inlist->at(0));
     QString swcfile = QString(inlist->at(1));
 
-    if(swcfile.toUpper().endsWith(".SWC"))
-    {
-        NeuronTree nt = readSWC_file(swcfile);
-    }
+    QString outputdir = QString(outlist->at(0));
+
+    float ratio = pow(2.0, scale);
 
     //
-
-
+    QueryAndCopy qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
 
     //
     return true;
