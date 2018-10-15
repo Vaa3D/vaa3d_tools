@@ -8,7 +8,10 @@
 #include "v3d_message.h"
 #include <vector>
 #include "new_ray-shooting.h"
+#include "../../../released_plugins/v3d_plugins/gsdt/main/fastmarching_dt.h"
 //#include "../../zhi/APP2_large_scale/my_surf_objs.h"
+#include"../../../released_plugins/v3d_plugins/gsdt/common_dialog.h"
+
 #define PI 3.1415926
 using namespace std;
 struct delete_piont
@@ -25,7 +28,8 @@ QStringList TestPlugin::menulist() const
         <<tr("3D_Branch_points_detection")
         <<tr("3D_thin_branch_points_detection")
         <<tr("3D_Branch_points_detection_single_plane")
-        <<tr("3D_thin_branch_points_detection_single_plane");
+        <<tr("3D_thin_branch_points_detection_single_plane")
+        <<tr("run gsdt");
 }
 
 QStringList TestPlugin::funclist() const
@@ -61,6 +65,10 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
            v3d_msg(tr("branch points detection completed!"));
         }
+    }
+    else if(menu_name==tr("run gsdt"))
+    {
+        gsdt(callback,parent);
     }
     else if(menu_name==tr("3D_thin_branch_points_detection_single_plane"))
     {
@@ -904,14 +912,14 @@ int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent)
                    }
            }
        }
-        Image4DSimple * new4DImage = new Image4DSimple();
-        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
-        v3dhandle newwin = callback.newImageWindow();
-        callback.setImage(newwin, new4DImage);
-        callback.setImageName(newwin, "maximum intensity projection image");
-        callback.updateImageWindow(newwin);
+//        Image4DSimple * new4DImage = new Image4DSimple();
+//        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
+//        v3dhandle newwin = callback.newImageWindow();
+//        callback.setImage(curwin, new4DImage);
+//        callback.setImageName(newwin, "maximum intensity projection image");
+        callback.updateImageWindow(curwin);
         v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
-        callback.setLandmark(newwin, curlist);
+        callback.setLandmark(curwin, curlist);
         if(block) {delete []block; block = 0;}
         if(project) {delete []project; project = 0;}
         if(seg_project) {delete []seg_project; seg_project = 0;}
@@ -935,9 +943,10 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
             }
             Image4DSimple *p4DImage = callback.getImage(curwin);
             int ray_numbers_2d = 64;
-            int thres_2d =25;
+            int thres_2d =50;
             int ray_length_2d = 8;
             int radiu_block=8;
+            int z_radiu_block=3;
 
 
             //set update the dialog
@@ -968,6 +977,10 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
         radiu_block_spinbox->setRange(1,255);
         radiu_block_spinbox->setValue(radiu_block);
 
+        QSpinBox * z_radiu_block_spinbox = new QSpinBox();
+        z_radiu_block_spinbox->setRange(1,255);
+        z_radiu_block_spinbox->setValue(radiu_block);
+
         layout->addWidget(new QLabel("ray numbers"),0,0);
         layout->addWidget(ray_numbers_2d_spinbox, 0,1,1,5);
 
@@ -979,6 +992,9 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
 
         layout->addWidget(new QLabel("size of block"),3,0);
         layout->addWidget(radiu_block_spinbox, 3,1,1,5);
+
+        layout->addWidget(new QLabel("size of z_block"),4,0);
+        layout->addWidget(z_radiu_block_spinbox, 4,1,1,5);
 
 
         QHBoxLayout * hbox2 = new QHBoxLayout();
@@ -1011,6 +1027,8 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
         thres_2d = thres_2d_spinbox->value();
         ray_length_2d = ray_length_2d_spinbox->value();
         radiu_block=radiu_block_spinbox->value();
+        z_radiu_block=z_radiu_block_spinbox->value();
+
 
         if (dialog)
             {
@@ -1021,10 +1039,11 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
 
             }
 
-        V3DLONG sz[3];
+        V3DLONG sz[4];
         sz[0] = p4DImage->getXDim();
         sz[1] = p4DImage->getYDim();
         sz[2] = p4DImage->getZDim();
+        sz[3]=1;
 
         unsigned char* datald=0;
         datald = p4DImage->getRawData();
@@ -1058,11 +1077,53 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
         int length_block=2*radiu_block+1;
         int size_plane=length_block*length_block;
         int size_block=size_plane*length_block;
-        int neighbor[8];
+        int neighbor[9];
         int sum_points;
-        int new_neighbor[8];
+        int new_neighbor[9];
         vector<delete_piont> delete_list;
         V3DLONG spage=nx*ny*nz;
+
+        //  run the gsdt to reduce the pixe;
+        int bkg_thresh = thres_2d, cnn_type = 2, channel = 0, z_thickness = 1;
+        unsigned char * inimg1d = p4DImage->getRawDataAtChannel(channel);
+        float * phi = 0;
+
+        switch(p4DImage->getDatatype())
+        {
+        case V3D_UINT8:
+            fastmarching_dt(inimg1d, phi, sz[0], sz[1], sz[2], cnn_type, bkg_thresh, z_thickness);
+            break;
+        case V3D_UINT16:
+            fastmarching_dt((unsigned short int *)inimg1d, phi, sz[0], sz[1], sz[2], cnn_type, bkg_thresh, z_thickness);
+            break;
+        case V3D_FLOAT32:
+            fastmarching_dt((float *)inimg1d, phi, sz[0], sz[1], sz[2], cnn_type, bkg_thresh, z_thickness);
+            break;
+        default:
+            v3d_msg("You should have never seen this warning in GSDT.");
+            return false;
+        }
+
+        float min_val = phi[0], max_val = phi[0];
+        V3DLONG tol_sz = nx*ny*nz;
+
+        unsigned char * outimg1d = new unsigned char[tol_sz];
+        for(V3DLONG i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
+        cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
+        max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
+        for(V3DLONG i = 0; i < tol_sz; i++)
+        {
+            if(phi[i] == INF) outimg1d[i] = 0;
+            else if(phi[i] ==0) outimg1d[i] = 0;
+            else
+            {
+                outimg1d[i] = (phi[i] - min_val)/max_val * 255 + 0.5;
+                outimg1d[i] = MAX(outimg1d[i], 1);
+            }
+        }
+        delete [] phi; phi = 0;
+
+        cout<<"run the gsdt"<<endl;
 
         unsigned char *mip_datald;
         try{mip_datald=new unsigned char [spage];}
@@ -1072,7 +1133,7 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
         try{binar_datald=new unsigned char [spage];}
         catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
 
-        XY_mip(nx,ny,nz,datald,mip_datald);
+        XY_mip(nx,ny,nz,outimg1d,mip_datald);
         thres_segment(nx*ny,mip_datald,binar_datald,thres_2d);
 
         unsigned char *block;
@@ -1087,7 +1148,10 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
         try{seg_xy_project=new unsigned char [size_block];}
         catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
 
-        for(V3DLONG j=radiu_block;j<nz-radiu_block;j++)
+       cout<<"allocate memory  success"<<endl;
+
+
+        for(V3DLONG j=z_radiu_block;j<nz-z_radiu_block;j++)
         {
            for(V3DLONG i=radiu_block;i<ny-radiu_block;i++)
            {
@@ -1097,8 +1161,9 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                    V3DLONG num_block=0;
                    if(pixe>thres_2d)
                    {
+
 //                    v3d_msg(QString("pixe is %1").arg(pixe));
-                       for(V3DLONG a=j-radiu_block;a<=j+radiu_block;a++)
+                       for(V3DLONG a=j-z_radiu_block;a<=j+z_radiu_block;a++)
                        {
                             V3DLONG z_location=a*nx*ny;
                             for(V3DLONG b=i-radiu_block;b<=i+radiu_block;b++)
@@ -1106,18 +1171,23 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                                 V3DLONG y_location=b*nx;
                                 for(V3DLONG c=k-radiu_block;c<=k+radiu_block;c++)
                                 {
+                                    if((z_location+y_location+c)<nx*ny*nz)
+                                    {
                                       block[num_block]=datald[z_location+y_location+c];
                                       num_block++;
+                                      }
+                                    else{
+                                        v3d_msg(QString("bug"));
+                                    }
 
                                 }
                             }
                        }
 
-                       XY_mip(length_block,length_block,length_block,block,xy_project);
-                       thres_segment(size_plane,xy_project,seg_xy_project,thres_2d);
-
-
-                       //thined the block
+                      XY_mip(length_block,length_block,length_block,block,xy_project);
+                      thres_segment(size_plane,xy_project,seg_xy_project,thres_2d);
+                      cout<<"block success"<<endl;
+                        //thined the block
                        while(true)
                        {
                            for(int j2=1;j2<length_block;j2++)
@@ -1243,8 +1313,9 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                            }
                            delete_list.clear();
                        }
+                       cout<<"thin success"<<endl;
 
-                       // find the candidate
+//                       // find the candidate
                        for(int j1=1;j1<length_block-1;j1++)
                        {
                            for(int i1=1;i1<length_block-1;i1++)
@@ -1292,9 +1363,7 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                                            }
                                            else
                                            {
-//                                               // add largr multiscale ray-shooting model
                                               int xy_flag8=rayinten_2D(i,k,ray_numbers_2d,ray_length_2d,ray_x,ray_y,binar_datald,nx,ny);
-    //                                          v3d_msg(QString(" x is %1, y is %2").arg(i1).arg(j1));
                                               int xy_flag10=rayinten_2D(i,k,ray_numbers_2d,(ray_length_2d+2),ray_x,ray_y,binar_datald,nx,ny);
                                               int xy_flag12=rayinten_2D(i,k,ray_numbers_2d,(ray_length_2d+4),ray_x,ray_y,binar_datald,nx,ny);
                                               int xy_flag14=rayinten_2D(i,k,ray_numbers_2d,(ray_length_2d+6),ray_x,ray_y,binar_datald,nx,ny);
@@ -1315,6 +1384,7 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
                                        }
                                    }
                                }
+
                            }
                        }
                    }
@@ -1366,7 +1436,7 @@ int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *p
 //        callback.setImage(newwin, new4DImage);
 //        callback.setImageName(newwin, "maximum intensity projection image");
 //        callback.updateImageWindow(newwin);
-//        v3d_msg(QString("single numble of marker is %1").arg(curlist.size()));
+        v3d_msg(QString("single numble of marker is %1").arg(curlist.size()));
         callback.setLandmark(curwin, curlist);
         callback.updateImageWindow(curwin);
 
@@ -1521,9 +1591,9 @@ int Thin_branch_points_detection(V3DPluginCallback2&callback,QWidget *parent)
         int length_block=2*radiu_block+1;
         int size_plane=length_block*length_block;
         int size_block=size_plane*length_block;
-        int neighbor[8];
+        int neighbor[9];
         int sum_points;
-        int new_neighbor[8];
+        int new_neighbor[9];
         vector<delete_piont> delete_list;
         int sum_flag=0;
 
@@ -2086,7 +2156,7 @@ int Thin_branch_points_detection(V3DPluginCallback2&callback,QWidget *parent)
                                     }
                                 }
                             }
-                            if(sum_flag>=1)
+                            if(sum_flag>=2)
                             {
                                 s.x=k;
                                 s.y=i;
@@ -2137,14 +2207,14 @@ int Thin_branch_points_detection(V3DPluginCallback2&callback,QWidget *parent)
             }
         }
 
-        Image4DSimple * new4DImage = new Image4DSimple();
-        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
-        v3dhandle newwin = callback.newImageWindow();
-        callback.setImage(newwin, new4DImage);
-        callback.setImageName(newwin, "maximum intensity projection image");
-        callback.updateImageWindow(newwin);
-        v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
-        callback.setLandmark(newwin, curlist);
+//        Image4DSimple * new4DImage = new Image4DSimple();
+//        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
+//        v3dhandle newwin = callback.newImageWindow();
+//        callback.setImage(curwin, datald);
+//        callback.setImageName(newwin, "maximum intensity projection image");
+        callback.updateImageWindow(curwin);
+//        v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
+        callback.setLandmark(curwin, curlist);
         if(block) {delete []block; block = 0;}
         if(project) {delete []project; project = 0;}
         if(seg_project) {delete []seg_project; seg_project = 0;}
@@ -2285,9 +2355,9 @@ int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *p
         int length_block=2*radiu_block+1;
         int size_plane=length_block*length_block;
         int size_block=size_plane*length_block;
-        int neighbor[8];
+        int neighbor[9];
         int sum_points;
-        int new_neighbor[8];
+        int new_neighbor[9];
         vector<delete_piont> delete_list;
 
 
@@ -2302,6 +2372,8 @@ int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *p
         unsigned char *seg_xy_project;
         try{seg_xy_project=new unsigned char [size_block];}
         catch(...) {v3d_msg("cannot allocate memory for image_mip."); return 0;}
+
+        //cout<<"allocate memory success"<<endl;
 
         for(V3DLONG j=radiu_block;j<nz-radiu_block;j++)
         {
@@ -2328,19 +2400,11 @@ int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *p
                                 }
                             }
                        }
-                       double sum_block=0;
-                       for(int num=0;num<num_block;num++)
-                       {
-                           sum_block=sum_block+block[num];
-                       }
-                       if(sum_block==0)
-                       {
-                           v3d_msg(QString("sum of pixe is zero"));
-                       }
-
-
+                       //cout<<"creat block success"<<endl;
                        XY_mip(length_block,length_block,length_block,block,xy_project);
+                      // cout<<"creat mip success"<<endl;
                        thres_segment(size_plane,xy_project,seg_xy_project,thres_2d);
+                       //cout<<"creat segment success"<<endl;
 
 
                        //thined the block
@@ -2560,17 +2624,109 @@ int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *p
             }
         }
 
-
-        Image4DSimple * new4DImage = new Image4DSimple();
-        new4DImage->setData((unsigned char *)datald, p4DImage->getXDim(), p4DImage->getYDim(), p4DImage->getZDim(), p4DImage->getCDim(), p4DImage->getDatatype());
-        v3dhandle newwin = callback.newImageWindow();
-        callback.setImage(newwin, new4DImage);
-        callback.setImageName(newwin, "maximum intensity projection image");
-        callback.updateImageWindow(newwin);
+        callback.updateImageWindow(curwin);
         v3d_msg(QString("numble of marker is %1").arg(curlist.size()));
-        callback.setLandmark(newwin, curlist);
-//        if(block) {delete []block; block = 0;}
-//        if(xy_project) {delete []xy_project; xy_project = 0;}
-//        if(seg_xy_project) {delete []seg_xy_project; seg_xy_project = 0;}
+        callback.setLandmark(curwin, curlist);
+        if(block) {delete []block; block = 0;}
+        if(xy_project) {delete []xy_project; xy_project = 0;}
+        if(seg_xy_project) {delete []seg_xy_project; seg_xy_project = 0;}
         return 1;
+}
+
+bool gsdt(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    const QString title = QObject::tr("Grayscale Distance Transformation Plugin");
+    v3dhandleList win_list = callback.getImageWindowList();
+
+    if(win_list.size()<1)
+    {
+        QMessageBox::information(0, title, QObject::tr("No image is open."));
+        return -1;
+    }
+    v3dhandle curwin = callback.currentImageWindow();
+    Image4DSimple * p4DImage = callback.getImage(curwin);
+    if (!p4DImage || !p4DImage->valid())
+    {
+        v3d_msg("The image is not valid. Do nothing.");
+        return false;
+    }
+
+    V3DLONG sz0 = p4DImage->getXDim();
+    V3DLONG sz1 = p4DImage->getYDim();
+    V3DLONG sz2 = p4DImage->getZDim();
+    V3DLONG sz3 = p4DImage->getCDim();
+
+    vector<string> items;
+    items.push_back("Background Threshold (0 ~ 255)");
+    items.push_back("Connection Type (1 ~ 3)");
+    items.push_back("Channel (0 ~ )");
+    items.push_back("Z_thickness");
+    CommonDialog dialog(items);
+    dialog.setWindowTitle(title);
+    if(dialog.exec() != QDialog::Accepted) return 0;
+
+    int bkg_thresh = 0, cnn_type = 2, channel = 0, z_thickness = 1.0;
+    dialog.get_num("Background Threshold (0 ~ 255)", bkg_thresh);
+    dialog.get_num("Connection Type (1 ~ 3)", cnn_type);
+    dialog.get_num("Channel (0 ~ )", channel);
+    dialog.get_num("Z_thickness", z_thickness);
+    if(bkg_thresh < 0) bkg_thresh = 0;
+    if(z_thickness == 0.0) z_thickness = 1.0;
+    if(cnn_type < 1 || cnn_type > 3 || channel < 0 || channel >= sz3)
+    {
+        v3d_msg(QObject::tr("Connection type or channel value is out of range").arg(sz3-1));
+        return false;
+    }
+
+    cout<<"bkg_thresh = "<<bkg_thresh<<endl;
+    cout<<"cnn_type = "<<cnn_type<<endl;
+    cout<<"channel = "<<channel<<endl;
+    cout<<"z_thickness = "<<z_thickness<<endl;
+
+    unsigned char * inimg1d = p4DImage->getRawDataAtChannel(channel);
+    float * phi = 0;
+
+    switch(p4DImage->getDatatype())
+    {
+    case V3D_UINT8:
+        fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+        break;
+    case V3D_UINT16:
+        fastmarching_dt((unsigned short int *)inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+        break;
+    case V3D_FLOAT32:
+        fastmarching_dt((float *)inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+        break;
+    default:
+        v3d_msg("You should have never seen this warning in GSDT.");
+        return false;
+    }
+
+    float min_val = phi[0], max_val = phi[0];
+    V3DLONG tol_sz = sz0 * sz1 * sz2;
+
+    unsigned char * outimg1d = new unsigned char[tol_sz];
+    for(V3DLONG i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
+    cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
+    max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
+    for(V3DLONG i = 0; i < tol_sz; i++)
+    {
+        if(phi[i] == INF) outimg1d[i] = 0;
+        else if(phi[i] ==0) outimg1d[i] = 0;
+        else
+        {
+            outimg1d[i] = (phi[i] - min_val)/max_val * 255 + 0.5;
+            outimg1d[i] = MAX(outimg1d[i], 1);
+        }
+    }
+    delete [] phi; phi = 0;
+
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData(outimg1d, sz0, sz1, sz2, 1, V3D_UINT8);
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, new4DImage);
+    callback.setImageName(newwin, title);
+    callback.updateImageWindow(newwin);
+
+    return true;
 }
