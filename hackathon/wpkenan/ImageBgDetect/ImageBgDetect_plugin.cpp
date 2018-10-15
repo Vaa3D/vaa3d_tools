@@ -14,18 +14,20 @@ using namespace std;
 Q_EXPORT_PLUGIN2(ImageBgDetect,ImageBgDetectPlugin);
 void gmm(V3DPluginCallback2 &callback,QWidget *parent);
 bool gmm(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPluginArgList &output,QWidget *parent);
-template <class T> bool gmmFilter(T* data1d,V3DLONG *in_sz,V3DLONG c,float* &outimg);
+template <class T> bool gmmFilter(QString fileName,T* data1d,V3DLONG *in_sz,V3DLONG c,float* &outimg);
 const QString title = QObject::tr("ImageBgDetect");
 
 QStringList ImageBgDetectPlugin::menulist() const{
 	return QStringList()
 		<< tr("gmmAlgorithm")
+		<< tr("exportGrayValueToTxt")
 		<< tr("about");
 }
 
 QStringList ImageBgDetectPlugin::funclist() const{
 	return QStringList()
 		<< tr("gmmAlgorithm")
+		<< tr("exportGrayValueToTxt")
 		<< tr("help");
 }
 
@@ -57,22 +59,19 @@ void gmm(V3DPluginCallback2 &callback,QWidget *parent){
 
 
 	Image4DSimple *p4DImage=callback.getImage(curwin);
-
 	if (!p4DImage)
 	{
 		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
 		return;
 	}
 	unsigned char* data1d = p4DImage->getRawData();
-
 	QString fileName=QString(QLatin1String(p4DImage->getFileName()));
 	v3d_msg(fileName,1);
-
+	v3d_msg(QString("datatype=%1").arg(int(p4DImage->getDatatype())), 1);
+	
 	//input
-	bool ok1;
 	V3DLONG c=1;
 	V3DLONG in_sz[4];
-
 	in_sz[0] = p4DImage->getXDim();
 	in_sz[1] = p4DImage->getYDim();
 	in_sz[2] = p4DImage->getZDim();
@@ -81,18 +80,16 @@ void gmm(V3DPluginCallback2 &callback,QWidget *parent){
 	float * outimg = 0;
 	bool isOk;
 
-	v3d_msg(QString("datatype=%1").arg(int(p4DImage->getDatatype())), 1);
-
 	switch(p4DImage->getDatatype())
 	{
 	case V3D_UINT8:
-		isOk = gmmFilter(data1d, in_sz, c-1,outimg);
+		isOk = gmmFilter(fileName,data1d, in_sz, c-1,outimg);
 		break;
 	case V3D_UINT16:
-		isOk = gmmFilter((unsigned short int *)data1d, in_sz, c-1, outimg);
+		isOk = gmmFilter(fileName,(unsigned short int *)data1d, in_sz, c-1, outimg);
 		break;
 	case V3D_FLOAT32:
-		isOk = gmmFilter((float *)data1d, in_sz, c-1, outimg);
+		isOk = gmmFilter(fileName,(float *)data1d, in_sz, c-1, outimg);
 		break;
 	default:
 		isOk = false;
@@ -114,7 +111,7 @@ void gmm(V3DPluginCallback2 &callback,QWidget *parent){
 	callback.updateImageWindow(newwin);
 }
 
-template <class T> bool gmmFilter(T* data1d,V3DLONG *in_sz,V3DLONG c,float* &outimg){
+template <class T> bool gmmFilter(QString fileName,T* data1d,V3DLONG *in_sz,V3DLONG c,float* &outimg){
 	if(!data1d||!in_sz||c<0||outimg){
 		return false;
 	}
@@ -147,23 +144,51 @@ template <class T> bool gmmFilter(T* data1d,V3DLONG *in_sz,V3DLONG c,float* &out
 	}
 	}
 	*/
-	QFile data("C:/Users/admin/Desktop/ImageBgDetect.txt");
+
+	//exportGrayValueToTxt
+	QString rawStr=fileName.split(".")[0];
+	QFile data(rawStr+"_gray.txt");
 	if(!data.open(QFile::WriteOnly | QIODevice::Text)){
 		return -1;
 	}
-	
 	QTextStream out(&data);
-
 	float _min=100000000;
 	float _max=-1;
-
 	for(V3DLONG i=0;i<N*M*P;i++){
-		if(data1d[i]>_max) _max=data1d[i];
-		if(data1d[i]<_min) _min=data1d[i];
+		//if(data1d[i]>_max) _max=data1d[i];
+		//if(data1d[i]<_min) _min=data1d[i];
 		out<<data1d[i]<<"\n";
 	}
+	data.close();
+	//v3d_msg(QString("_min=%1 _max=%2").arg(_min).arg(_max), 0);
 
-	v3d_msg(QString("_min=%1 _max=%2").arg(_min).arg(_max), 1);
+
+	//QFile classByGmmFile("C:/Users/admin/Desktop/ImageBgDetect_gmm.txt");
+	
+
+	/*QStringList args;
+	args.append("D:/wpkenan/Project/Pycharm/20180924/gmmSklearn.py");
+	args.append(rawStr+"_gray.txt");
+	QProcess::execute(QString("Python.exe"), args);*/
+
+
+	QFile inputFile(rawStr+"_gray_gmm.txt");
+	if (inputFile.open(QIODevice::ReadOnly|QIODevice::Text))
+	{
+		QTextStream in(&inputFile);
+		int i=0;
+		while (!in.atEnd())
+		{
+			QString line = in.readLine();
+			if(line.toInt()==3){
+				outimg[i++]=line.toInt();
+			}else{
+				outimg[i++]=0;
+			}
+			
+		}
+		inputFile.close();
+	}
 
 
 	return true;
