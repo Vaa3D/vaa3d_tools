@@ -31,6 +31,7 @@ public:
 
 	folderStruct inputContent;
 	QString inputCaseRootPath;
+	QString inputCaseRootPath2;
 	QString inputSWCRootPath;
 	QString refSWCRootPath;
 	QString outputRootPath;
@@ -68,6 +69,9 @@ public:
 	void findSomaMass(int somaSizeThre = 27);
 	void getChebyshevCenters(QString caseNum);
 	void getSomaCandidates(float distThre);
+	void getDendriteSkeletonStart();
+	void getSomaBlendedImgs();
+	void skeletonThreFiltered();
 
 	void swc_imgCrop();
 	

@@ -41,7 +41,7 @@ typedef boost::shared_array<unsigned char> myImg1DPtr; // --> Since GNU 4.8 hasn
 
 struct registeredImg
 {
-	QString imgAlias;
+	string imgAlias;
 	QString imgCaseRootQ;
 
 	//shared_ptr<unsigned char*> imgData1D;
@@ -73,10 +73,12 @@ public:
 	/*******************************************************/
 
 	/***************** I/O *****************/
+	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
+	void imgEntry(string caseID, imgFormat format);
+
 	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
 	
-	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
-	void imgEntry(QString caseID, imgFormat format);
+	static inline void imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[]);
 	/***************************************/
 
 	/***************** Image - SWC Functionalities *****************/
@@ -133,6 +135,26 @@ inline bool ImgManager::saveimage_wrapper(const char* filename, unsigned char pd
 	outimg->saveImage(filename);
 	
 	return true;
+}
+
+inline void ImgManager::imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[])
+{
+	size_t totalPixNum = size_t(imgDims[0]) * size_t(imgDims[1]) * size_t(imgDims[2]) * size_t(inputImgPtrs.size());
+	size_t pixI = 0;
+	for (size_t l = 0; l < size_t(inputImgPtrs.size()); ++l)
+	{
+		for (size_t k = 0; k < size_t(imgDims[2]); ++k)
+		{
+			for (size_t j = 0; j < size_t(imgDims[1]); ++j)
+			{
+				for (size_t i = 0; i < size_t(imgDims[0]); ++i)
+				{
+					outputImgPtr[pixI] = inputImgPtrs.at(l)[size_t(imgDims[0] * imgDims[1]) * k + size_t(imgDims[0]) * j + size_t(i)];
+					++pixI;
+				}
+			}
+		}
+	}
 }
 
 inline vector<int> ImgManager::retreiveSWCcropDnParam_imgBased(const registeredImg& inputImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin, bool zShift)

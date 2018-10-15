@@ -75,7 +75,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					currSlice1D[currSliceI] = (*it)[j][i];
 				}
 			}
-			ImgProcessor::imageMax(currSlice1D, maxIP1D, maxIP1D, dims);
+			ImgProcessor::imgMax(currSlice1D, maxIP1D, maxIP1D, dims);
 		}
 		cout << " MIP done." << endl;
 

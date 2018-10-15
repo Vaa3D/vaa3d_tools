@@ -36,27 +36,17 @@ class ImgProcessor
 {
 
 public:
-	/******** Constructors *********/
-	ImgProcessor() {};
-	ImgProcessor(unsigned char* inputImg1DPtr);
-	ImgProcessor(unsigned char** inputImg2DPtr);
-	ImgProcessor(unsigned char*** inputImg3DPtr);
-	/*******************************/
-
-
-	/***************** Data Members *****************/
-	unsigned char*   inputImg1DPtr;
-	unsigned char**  inputImg2DPtr;
-	unsigned char*** inputImg3DPtr;
-	/************************************************/
-
-
 	/***************** Basic Image Operations *****************/
 	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
 	template<class T>
+	static inline void simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	template<class T>
 	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	static inline void imgDotMultiply(unsigned char inputImgPtr1[], unsigned char inputImgPtr2[], unsigned char outputImgPtr[], int imgDims[]);
 	
 	template<class T>
 	static inline void cropImg2D(T InputImagePtr[], T OutputImagePtr[], int xlb, int xhb, int ylb, int yhb, int imgDims[]);
@@ -68,7 +58,7 @@ public:
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
 	template<class T>
-	static inline void imageMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[]); // Between 2 input images, pixel-wisely pick the one with greater value. 
+	static inline void imgMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[]); // Between 2 input images, pixel-wisely pick the one with greater value. 
 
 	template<class T>
 	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
@@ -133,6 +123,21 @@ inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int im
 }
 
 template<class T>
+inline void ImgProcessor::simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] > threshold)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
 inline void ImgProcessor::imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -144,6 +149,17 @@ inline void ImgProcessor::imgMasking(T inputImgPtr[], T outputImgPtr[], int imgD
 			continue;
 		}
 		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+inline void ImgProcessor::imgDotMultiply(unsigned char inputImgPtr1[], unsigned char inputImgPtr2[], unsigned char outputImgPtr[], int imgDims[])
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		int value = int(inputImgPtr1[i]) * int(inputImgPtr2[i]);
+		if (value > 255) value = 255;
+		outputImgPtr[i] = unsigned char(value);
 	}
 }
 
@@ -162,7 +178,7 @@ inline void ImgProcessor::cropImg2D(T InputImagePtr[], T OutputImagePtr[], int x
 }
 
 template<class T>
-inline void ImgProcessor::imageMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[])
+inline void ImgProcessor::imgMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[])
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -343,7 +359,7 @@ inline map<string, float> ImgProcessor::getBasicStats_no0(T inputImgPtr[], int i
 	basicStats.insert(pair<string, float>("mean", mean));
 
 	float varSum = 0;
-	for (size_t i = 0; i < validPixCount; ++i) varSum = varSum + (inputImgPtr[i] - mean) * (inputImgPtr[i] - mean);
+	for (size_t i = 0; i < validPixCount; ++i) varSum = varSum + (img1DVec.at(i) - mean) * (img1DVec.at(i) - mean);
 	var = varSum / float(validPixCount);
 	std = sqrtf(var);
 	basicStats.insert(pair<string, float>("var", var));
