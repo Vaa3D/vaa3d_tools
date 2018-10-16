@@ -23,7 +23,7 @@ QStringList apo_to_marker::menulist() const
 QStringList apo_to_marker::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
+        <<tr("apo_to_individual_markers")
 		<<tr("help");
 }
 
@@ -240,14 +240,53 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
+
+
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
+
+    if (func_name == tr("apo_to_individual_markers"))
+    {
+//        v3d_msg("Now extract individual markers from apo");
+        QList<CellAPO> file_inmarkers;
+        file_inmarkers= readAPO_file(QString(infiles[0]));
+        QList <ImageMarker> listLandmarks;
+        int scale;
+        scale= atoi(inparas[0]);
+
+        for (int i=0; i< file_inmarkers.size(); i++)
+        {
+            ImageMarker t;
+            t.x = file_inmarkers[i].x/scale;
+            t.y = file_inmarkers[i].y/scale;
+            t.z = file_inmarkers[i].z/scale;
+            t.color = file_inmarkers[i].color;
+            listLandmarks.push_back(t);
+            QString fileDefaultName;
+
+            if(i<9)
+                fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+            else if(i<99)
+                fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+            else
+                fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+
+            writeMarker_file(fileDefaultName,listLandmarks);
+            listLandmarks.clear();
+        }
+
+
+
+
+
+
+
+
+
+
 	}
 	else if (func_name == tr("help"))
 	{
