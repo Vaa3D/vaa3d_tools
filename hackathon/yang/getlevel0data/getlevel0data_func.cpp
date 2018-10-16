@@ -78,6 +78,7 @@ Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long 
     size_x = sx;
     size_y = sy;
     size_z = sz;
+    visited = false;
 }
 
 Block::~Block()
@@ -86,12 +87,20 @@ Block::~Block()
 }
 
 //
-QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio)
+QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio, bool qcDebug)
 {
     // inputdir: "xxxx/RES(123x345x456)"
     // outputdir: "yyyy/RES(123x345x456)"
 
     // load input .swc file and mdata.bin
+
+    // testing
+
+    if(qcDebug)
+    {
+        readMetaData(outputdir, true);
+        return;
+    }
 
     //
     readSWC(swcfile, ratio);
@@ -132,6 +141,41 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
         closedir(outdir);
     }
 
+    // based on hits, update the layer
+    unsigned short nrows = 0;
+    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
+    while(iter != layer.yxfolders.end())
+    {
+        //
+        YXFolder yxfolder = (iter++)->second;
+
+        unsigned int ncubes = 0;
+
+        //
+        if(yxfolder.toBeCopied==false)
+            continue;
+
+        //
+        nrows++;
+
+        //
+        map<int, Cube>::iterator it = yxfolder.cubes.begin();
+        while(it != yxfolder.cubes.end())
+        {
+            //
+            Cube cube = (it++)->second;
+
+            if(cube.toBeCopied==false)
+                continue;
+
+            ncubes++;
+        }
+
+        layer.yxfolders[yxfolder.dirName].ncubes = ncubes;
+    }
+    layer.cols = 1;
+    layer.rows = nrows;
+
     //
     string mdatabin = outputdir + "/mdata.bin";
 
@@ -161,8 +205,10 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
         fwrite(&(layer.dim_V), sizeof(unsigned int), 1, file);
         fwrite(&(layer.dim_H), sizeof(unsigned int), 1, file);
         fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file);
-        fwrite(&(layer.rows), sizeof(unsigned short), 1, file);
-        fwrite(&(layer.cols), sizeof(unsigned short), 1, file);
+        fwrite(&(layer.rows), sizeof(unsigned short), 1, file); // need to be updated by hits
+        fwrite(&(layer.cols), sizeof(unsigned short), 1, file); // need to be updated by hits
+
+        cout<<layer.yxfolders.size()<<endl;
 
         //
         map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
@@ -171,8 +217,12 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
             //
             YXFolder yxfolder = (iter++)->second;
 
+            cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
+
             if(yxfolder.toBeCopied==false)
                 continue;
+
+            cout<<"write ... "<<yxfolder.dirName<<endl;
 
             createDir(outputdir, yxfolder.dirName);
 
@@ -180,7 +230,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
             fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
             fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
             fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-            fwrite(&layer.ncubes, sizeof(unsigned int), 1, file);
+            fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
             fwrite(&(color), sizeof(unsigned int), 1, file);
             fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
             fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
@@ -280,11 +330,8 @@ int QueryAndCopy::readSWC(string filename, float ratio)
     return 0;
 }
 
-int QueryAndCopy::readMetaData(string filename)
+int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
 {
-    //
-    bool mDataDebug = false;
-
     //
     string inputdir = filename;
 
@@ -485,28 +532,16 @@ int QueryAndCopy::query(float x, float y, float z)
         cout<<"index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // test
-        map<long, Block>::iterator it = tree.begin();
-        while(it != tree.end())
-        {
-            cout<<(it++)->first<<endl;
-        }
+//        map<long, Block>::iterator it = tree.begin();
+//        while(it != tree.end())
+//        {
+//            cout<<(it++)->first<<endl;
+//        }
+
+        cout<<"hit blocks ... "<<tree.size()<<endl;
 
         //
-        if(tree.find(index) != tree.end())
-        {
-            cout<<"found a block"<<endl;
-
-            Block block = tree[index];
-
-            cout<<"block "<<block.filepath<<endl;
-
-            string dirName = getDirName(block.filepath);
-
-            cout<<"check dirName: "<<dirName<<endl;
-
-            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-            layer.yxfolders[dirName].toBeCopied = true;
-        }
+        label(index);
 
         // 6 neighbors
 
@@ -516,34 +551,14 @@ int QueryAndCopy::query(float x, float y, float z)
             lx = (nx - 1) * cubex;
             index = lz*sx*sy + ly*sx + lx;
 
-            if(tree.find(index) != tree.end())
-            {
-                Block block = tree[index];
-
-                string dirName = getDirName(block.filepath);
-
-                cout<<"check dirName: "<<dirName<<endl;
-
-                layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-                layer.yxfolders[dirName].toBeCopied = true;
-            }
+            label(index);
         }
 
         // x+
         lx = (nx + 1) * cubex;
         index = lz*sx*sy + ly*sx + lx;
 
-        if(tree.find(index) != tree.end())
-        {
-            Block block = tree[index];
-
-            string dirName = getDirName(block.filepath);
-
-            cout<<"check dirName: "<<dirName<<endl;
-
-            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-            layer.yxfolders[dirName].toBeCopied = true;
-        }
+        label(index);
 
         // y-
         lx = nx*cubex;
@@ -554,17 +569,7 @@ int QueryAndCopy::query(float x, float y, float z)
 
             index = lz*sx*sy + ly*sx + lx;
 
-            if(tree.find(index) != tree.end())
-            {
-                Block block = tree[index];
-
-                string dirName = getDirName(block.filepath);
-
-                cout<<"check dirName: "<<dirName<<endl;
-
-                layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-                layer.yxfolders[dirName].toBeCopied = true;
-            }
+            label(index);
         }
 
         // y+
@@ -572,17 +577,7 @@ int QueryAndCopy::query(float x, float y, float z)
 
         index = lz*sx*sy + ly*sx + lx;
 
-        if(tree.find(index) != tree.end())
-        {
-            Block block = tree[index];
-
-            string dirName = getDirName(block.filepath);
-
-            cout<<"check dirName: "<<dirName<<endl;
-
-            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-            layer.yxfolders[dirName].toBeCopied = true;
-        }
+        label(index);
 
         // z-
         ly = ny*cubey;
@@ -593,17 +588,7 @@ int QueryAndCopy::query(float x, float y, float z)
 
             index = lz*sx*sy + ly*sx + lx;
 
-            if(tree.find(index) != tree.end())
-            {
-                Block block = tree[index];
-
-                string dirName = getDirName(block.filepath);
-
-                cout<<"check dirName: "<<dirName<<endl;
-
-                layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-                layer.yxfolders[dirName].toBeCopied = true;
-            }
+            label(index);
         }
 
         // z+
@@ -611,18 +596,7 @@ int QueryAndCopy::query(float x, float y, float z)
 
         index = lz*sx*sy + ly*sx + lx;
 
-        if(tree.find(index) != tree.end())
-        {
-            Block block = tree[index];
-
-            string dirName = getDirName(block.filepath);
-
-            cout<<"check dirName: "<<dirName<<endl;
-
-            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-            layer.yxfolders[dirName].toBeCopied = true;
-        }
-
+        label(index);
     }
     else
     {
@@ -636,8 +610,6 @@ int QueryAndCopy::query(float x, float y, float z)
 
 vector<string> QueryAndCopy::splitFilePath(string filepath)
 {
-    cout<<filepath<<endl;
-
     vector<string> splits;
     char delimiter = '/';
 
@@ -654,9 +626,6 @@ vector<string> QueryAndCopy::splitFilePath(string filepath)
     while(pos != string::npos)
     {
         splits.push_back(filepath.substr(i, pos-i));
-
-        cout<<splits.size()<<" "<<i<<" "<<pos<<endl;
-
         i = pos + 1;
         pos = filepath.find(delimiter, i);
     }
@@ -672,14 +641,7 @@ string QueryAndCopy::getDirName(string filepath)
     // dirName: 000/000_000
     // -------- splits[n-3] + "/" + splits[n-2]
 
-    cout<<"call splitFilePath"<<endl;
-
     vector<string> splits = splitFilePath(filepath);
-
-    cout<<"get "<<splits.size()<<" splits"<<endl;
-
-    for(int i=0; i<splits.size(); i++)
-        cout<<splits[i]<<endl;
 
     //
     size_t n = splits.size();
@@ -744,6 +706,30 @@ int QueryAndCopy::createDir(string prePath, string dirName)
     }
 
     //
+    return 0;
+}
+
+int QueryAndCopy::label(long index)
+{
+    //
+    if(tree.find(index) != tree.end())
+    {
+        Block block = tree[index];
+
+        if(block.visited == false)
+        {
+            cout<<"hits the block "<<block.filepath<<endl;
+
+            string dirName = getDirName(block.filepath);
+
+            cout<<"check dirName: "<<dirName<<endl;
+
+            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+            layer.yxfolders[dirName].toBeCopied = true;
+            tree[index].visited = true;
+        }
+    }
+
     return 0;
 }
 

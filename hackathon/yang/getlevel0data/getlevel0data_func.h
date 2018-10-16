@@ -70,6 +70,7 @@ public:
 
     unsigned int height, width; // 256x256
     bool toBeCopied;
+    unsigned int ncubes; // adaptive for keep only a few cubes
 
     map<int,Cube> cubes;
 };
@@ -117,6 +118,7 @@ public:
     string filepath;
     long offset_x, offset_y, offset_z;
     long size_x, size_y, size_z;
+    bool visited;
 };
 
 typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offset_x
@@ -125,11 +127,11 @@ typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offse
 class QueryAndCopy
 {
 public:
-    QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio);
+    QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio, bool qcDebug=false);
     ~QueryAndCopy();
 public:
     int readSWC(string filename, float ratio);
-    int readMetaData(string filename);
+    int readMetaData(string filename, bool mDataDebug=false);
 
     int copyblock(string srcFile, string dstFile);
     int makeDir(string dirname);
@@ -138,6 +140,7 @@ public:
     vector<string> splitFilePath(string filepath);
     string getDirName(string filepath);
     int createDir(string prePath, string dirName);
+    int label(long index);
 
 public:
     OneScaleTree tree;
