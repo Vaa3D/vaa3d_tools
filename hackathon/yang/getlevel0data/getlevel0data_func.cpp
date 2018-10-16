@@ -95,7 +95,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
     // load input .swc file and mdata.bin
 
     // testing
-
+    // qcDebug = true;
     if(qcDebug)
     {
         readMetaData(outputdir, true);
@@ -471,15 +471,30 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
 
                 //
                 Block block(blockNamePrefix + yxfolder.dirName + "/" + cube.fileName,
-                            long(yxfolder.offset_H), long(yxfolder.offset_V), long(j)*long(layer.dim_D),
-                            long(yxfolder.width), long(yxfolder.height), long(layer.dim_D) );
+                            long(yxfolder.offset_H), long(yxfolder.offset_V), long(cube.offset_D),
+                            long(yxfolder.width), long(yxfolder.height), long(cube.depth) );
 
                 if(count==0)
                 {
                     cubex = yxfolder.width;
                     cubey = yxfolder.height;
-                    cubez = layer.dim_D;
+                    cubez = cube.depth;
                     count++;
+                }
+
+                if (std::find(xoff.begin(), xoff.end(), long(block.offset_x)) == xoff.end())
+                {
+                    xoff.push_back(long(block.offset_x));
+                }
+
+                if (std::find(yoff.begin(), yoff.end(), long(block.offset_y)) == yoff.end())
+                {
+                    yoff.push_back(long(block.offset_y));
+                }
+
+                if (std::find(zoff.begin(), zoff.end(), long(block.offset_z)) == zoff.end())
+                {
+                    zoff.push_back(long(block.offset_z));
                 }
 
                 tree.insert(make_pair(long(block.offset_z)*sx*sy+long(block.offset_y)*sx+long(block.offset_x), block));
@@ -517,26 +532,33 @@ int QueryAndCopy::query(float x, float y, float z)
     // find hit block and 6 neighbors
     if(tree.size()>0)
     {
-        long nx = long(x)/cubex;
-        long ny = long(y)/cubey;
-        long nz = long(z)/cubez;
+//        long nx = long(x)/cubex;
+//        long ny = long(y)/cubey;
+//        long nz = long(z)/cubez;
 
         // hit block
 
-        long lx = nx*cubex;
-        long ly = ny*cubey;
-        long lz = nz*cubez;
+//        long lx = nx*cubex;
+//        long ly = ny*cubey;
+//        long lz = nz*cubez;
+
+
+        long lx = findClosest(xoff, long(x));
+        long ly = findClosest(yoff, long(y));
+        long lz = findClosest(zoff, long(z));
 
         long index = lz*sx*sy + ly*sx + lx;
 
         cout<<"index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
+        cout<<"size "<<sx<<" "<<sy<<" "<<sz<<endl;
 
         // test
 //        map<long, Block>::iterator it = tree.begin();
 //        while(it != tree.end())
 //        {
-//            cout<<(it++)->first<<endl;
+//            cout<<(it++)->first<<", ";
 //        }
+//        cout<<endl;
 
         cout<<"hit blocks ... "<<tree.size()<<endl;
 
@@ -546,57 +568,89 @@ int QueryAndCopy::query(float x, float y, float z)
         // 6 neighbors
 
         // x-
-        if(nx-1>0)
-        {
-            lx = (nx - 1) * cubex;
-            index = lz*sx*sy + ly*sx + lx;
+//        if(nx-1>0)
+//        {
+//            lx = (nx - 1) * cubex;
+//            index = lz*sx*sy + ly*sx + lx;
 
+//            label(index);
+//        }
+
+        lx = findClosest(xoff, long(x-cubex));
+        if(lx>0)
+        {
+            index = lz*sx*sy + ly*sx + lx;
             label(index);
         }
 
-        // x+
-        lx = (nx + 1) * cubex;
-        index = lz*sx*sy + ly*sx + lx;
 
-        label(index);
+        // x+
+//        lx = (nx + 1) * cubex;
+
+        lx = findClosest(xoff, long(x+cubex));
+        if(lx>0)
+        {
+            index = lz*sx*sy + ly*sx + lx;
+            label(index);
+        }
 
         // y-
-        lx = nx*cubex;
+//        lx = nx*cubex;
 
-        if(ny-1>0)
+//        if(ny-1>0)
+//        {
+//            ly = (ny - 1)*cubey;
+
+//            index = lz*sx*sy + ly*sx + lx;
+
+//            label(index);
+//        }
+
+        ly = findClosest(yoff, long(y-cubey));
+        if(ly>0)
         {
-            ly = (ny - 1)*cubey;
-
             index = lz*sx*sy + ly*sx + lx;
-
             label(index);
         }
 
         // y+
-        ly = (ny + 1)*cubey;
+//        ly = (ny + 1)*cubey;
 
-        index = lz*sx*sy + ly*sx + lx;
-
-        label(index);
+        ly = findClosest(yoff, long(y+cubey));
+        if(ly>0)
+        {
+            index = lz*sx*sy + ly*sx + lx;
+            label(index);
+        }
 
         // z-
-        ly = ny*cubey;
+//        ly = ny*cubey;
 
-        if(nz-1>0)
+//        if(nz-1>0)
+//        {
+//            lz = (nz - 1)*cubez;
+
+//            index = lz*sx*sy + ly*sx + lx;
+
+//            label(index);
+//        }
+
+        lz = findClosest(yoff, long(z-cubez));
+        if(lz>0)
         {
-            lz = (nz - 1)*cubez;
-
             index = lz*sx*sy + ly*sx + lx;
-
             label(index);
         }
 
         // z+
-        lz = (nz + 1)*cubez;
+//        lz = (nz + 1)*cubez;
 
-        index = lz*sx*sy + ly*sx + lx;
-
-        label(index);
+        lz = findClosest(yoff, long(z+cubez));
+        if(lz>0)
+        {
+            index = lz*sx*sy + ly*sx + lx;
+            label(index);
+        }
     }
     else
     {
@@ -731,6 +785,43 @@ int QueryAndCopy::label(long index)
     }
 
     return 0;
+}
+
+long QueryAndCopy::findClosest(OffsetType offsets, long idx)
+{
+    long n = offsets.size();
+    long thresh = 5;
+
+    //
+    if(n<1 || idx<0)
+    {
+        cout<<"Invalid offsets/index"<<endl;
+        return -1;
+    }
+
+    long mindist = abs(idx - offsets[0]);
+
+    long offset = offsets[0];
+
+    if(mindist<thresh)
+        return offset;
+
+    //
+    for(long i=1; i<offsets.size(); i++)
+    {
+        long dist = abs(idx - offsets[i]);
+
+        if(dist<mindist)
+        {
+            mindist = dist;
+            offset = offsets[i];
+
+            if(mindist<thresh)
+                return offset;
+        }
+    }
+
+    return offset;
 }
 
 //

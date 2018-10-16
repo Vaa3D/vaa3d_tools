@@ -122,6 +122,7 @@ public:
 };
 
 typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offset_x
+typedef vector<long> OffsetType;
 
 //
 class QueryAndCopy
@@ -141,6 +142,7 @@ public:
     string getDirName(string filepath);
     int createDir(string prePath, string dirName);
     int label(long index);
+    long findClosest(OffsetType offsets, long idx);
 
 public:
     OneScaleTree tree;
@@ -155,6 +157,8 @@ public:
     unsigned int color, bytesPerVoxel; //
     long cubex, cubey, cubez;
     long sx, sy, sz;
+
+    OffsetType xoff, yoff, zoff;
 
     Layer layer;
 };
