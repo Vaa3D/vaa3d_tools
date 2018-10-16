@@ -631,7 +631,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
             P.markerfilename = inmarker_file;
 
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
-        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+        P.soma = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
 
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
@@ -640,6 +640,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
+        P.adap_win= 1;
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.global_name = true;
