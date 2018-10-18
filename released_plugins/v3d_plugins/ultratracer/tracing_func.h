@@ -90,6 +90,7 @@ bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PAR
 
 vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString& filename,NeuronTree nt);
 NeuronTree smartPrune(NeuronTree nt, double length);
+void smartFuse(V3DPluginCallback2 &callback,QString inputFolder, QString outputFile);
 
 #endif
 

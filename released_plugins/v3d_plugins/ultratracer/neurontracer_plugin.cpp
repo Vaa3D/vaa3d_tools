@@ -50,6 +50,8 @@ QStringList neurontracer::funclist() const
     <<tr("trace_Rivulet2")
     <<tr("trace_GD_curveline")
     <<tr("trace_pairs")
+    <<tr("generate_final_result")
+    <<tr("fusion")
     <<tr("help");
 }
 
@@ -753,6 +755,29 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         list<string> infostring;
         processSmartScan_3D(callback,infostring,txtfilenName);
+    }
+    else if (func_name == tr("fusion"))
+    {
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc folder"<<endl;
+            return false;
+        }
+
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString inputName = QString(inimg_file);
+        QString outputName;
+
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        if(!outfiles.empty())
+        {
+            outputName = outfiles[0];
+        }
+        else
+            outputName = QString(inimg_file) + "_fused.swc";
+
+        smartFuse(callback,inputName,outputName);
     }
 	else if (func_name == tr("help"))
 	{
