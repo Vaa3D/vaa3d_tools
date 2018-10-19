@@ -143,6 +143,7 @@ public:
     int createDir(string prePath, string dirName);
     int label(long index);
     long findClosest(OffsetType offsets, long idx);
+    long findOffset(OffsetType offsets, long idx);
 
 public:
     OneScaleTree tree;

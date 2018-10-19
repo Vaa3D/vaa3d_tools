@@ -94,8 +94,9 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
     // load input .swc file and mdata.bin
 
-    // testing
+    // test
     // qcDebug = true;
+    cout<<qcDebug<<endl;
     if(qcDebug)
     {
         readMetaData(outputdir, true);
@@ -115,6 +116,15 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
     long n = pc.size();
 
     cout<<" ... ... consider "<<n<<" nodes in "<<tree.size()<<" blocks"<<endl;
+
+    // test
+//    map<long, Block>::iterator it = tree.begin();
+//    while(it != tree.end())
+//    {
+//        cout<<(it++)->first<<", ";
+//    }
+//    cout<<endl;
+
 
     for(long i=0; i<n; i++)
     {
@@ -309,12 +319,25 @@ int QueryAndCopy::readSWC(string filename, float ratio)
     //
     NeuronTree nt = readSWC_file(QString(filename.c_str()));
 
+//    float minX = 1000, minY = 1000, minZ = 1000;
+
     if(ratio>1)
     {
         for (long i =0; i< nt.listNeuron.size(); i++)
         {
             Point p(nt.listNeuron[i].x/ratio, nt.listNeuron[i].y/ratio, nt.listNeuron[i].z/ratio);
             pc.push_back(p);
+
+            // cout<<"node ... "<<nt.listNeuron[i].x<<" "<<nt.listNeuron[i].y<<" "<<nt.listNeuron[i].z<<" : "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
+
+//            if(minX>p.x)
+//                minX = p.x;
+
+//            if(minY>p.y)
+//                minY = p.y;
+
+//            if(minZ>p.z)
+//                minZ = p.z;
         }
     }
     else
@@ -325,6 +348,8 @@ int QueryAndCopy::readSWC(string filename, float ratio)
             pc.push_back(p);
         }
     }
+
+    // cout<<"min ... ... "<<minX<<" "<<minY<<" "<<minZ<<endl;
 
     //
     return 0;
@@ -527,7 +552,10 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
 
 int QueryAndCopy::query(float x, float y, float z)
 {
-    cout<<"query "<<x<<" "<<y<<" "<<z<<endl;
+    //cout<<"query "<<x<<" "<<y<<" "<<z<<endl;
+    //cout<<"size "<<sx<<" "<<sy<<" "<<sz<<endl;
+    //cout<<"cube size "<<cubex<<" "<<cubey<<" "<<cubez<<endl;
+    //cout<<"search in "<<tree.size()<<" blocks"<<endl;
 
     // find hit block and 6 neighbors
     if(tree.size()>0)
@@ -542,15 +570,18 @@ int QueryAndCopy::query(float x, float y, float z)
 //        long ly = ny*cubey;
 //        long lz = nz*cubez;
 
+        long lx = findOffset(xoff, long(x));
+        long ly = findOffset(yoff, long(y));
+        long lz = findOffset(zoff, long(z));
 
-        long lx = findClosest(xoff, long(x));
-        long ly = findClosest(yoff, long(y));
-        long lz = findClosest(zoff, long(z));
+        long olx = lx;
+        long oly = ly;
+        long olz = lz;
 
         long index = lz*sx*sy + ly*sx + lx;
 
-        cout<<"index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
-        cout<<"size "<<sx<<" "<<sy<<" "<<sz<<endl;
+        //cout<<"node's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
+
 
         // test
 //        map<long, Block>::iterator it = tree.begin();
@@ -559,8 +590,6 @@ int QueryAndCopy::query(float x, float y, float z)
 //            cout<<(it++)->first<<", ";
 //        }
 //        cout<<endl;
-
-        cout<<"hit blocks ... "<<tree.size()<<endl;
 
         //
         label(index);
@@ -576,23 +605,22 @@ int QueryAndCopy::query(float x, float y, float z)
 //            label(index);
 //        }
 
-        lx = findClosest(xoff, long(x-cubex));
-        if(lx>0)
-        {
-            index = lz*sx*sy + ly*sx + lx;
-            label(index);
-        }
+        lx = findOffset(xoff, long(x-cubex));
+        index = lz*sx*sy + ly*sx + lx;
+        label(index);
 
+        //cout<<"node's x- neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // x+
 //        lx = (nx + 1) * cubex;
 
-        lx = findClosest(xoff, long(x+cubex));
-        if(lx>0)
-        {
-            index = lz*sx*sy + ly*sx + lx;
-            label(index);
-        }
+        lx = findOffset(xoff, long(x+cubex));
+        index = lz*sx*sy + ly*sx + lx;
+        label(index);
+
+        //cout<<"node's x+ neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
+
+        lx = olx;
 
         // y-
 //        lx = nx*cubex;
@@ -606,22 +634,22 @@ int QueryAndCopy::query(float x, float y, float z)
 //            label(index);
 //        }
 
-        ly = findClosest(yoff, long(y-cubey));
-        if(ly>0)
-        {
-            index = lz*sx*sy + ly*sx + lx;
-            label(index);
-        }
+        ly = findOffset(yoff, long(y-cubey));
+        index = lz*sx*sy + ly*sx + lx;
+        label(index);
+
+        //cout<<"node's y- neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // y+
 //        ly = (ny + 1)*cubey;
 
-        ly = findClosest(yoff, long(y+cubey));
-        if(ly>0)
-        {
-            index = lz*sx*sy + ly*sx + lx;
-            label(index);
-        }
+        ly = findOffset(yoff, long(y+cubey));
+        index = lz*sx*sy + ly*sx + lx;
+        label(index);
+
+        //cout<<"node's y+ neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
+
+        ly = oly;
 
         // z-
 //        ly = ny*cubey;
@@ -635,22 +663,20 @@ int QueryAndCopy::query(float x, float y, float z)
 //            label(index);
 //        }
 
-        lz = findClosest(yoff, long(z-cubez));
-        if(lz>0)
-        {
-            index = lz*sx*sy + ly*sx + lx;
-            label(index);
-        }
+        lz = findOffset(yoff, long(z-cubez));
+        index = lz*sx*sy + ly*sx + lx;
+        label(index);
+
+        //cout<<"node's z- neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // z+
 //        lz = (nz + 1)*cubez;
 
-        lz = findClosest(yoff, long(z+cubez));
-        if(lz>0)
-        {
-            index = lz*sx*sy + ly*sx + lx;
-            label(index);
-        }
+        lz = findOffset(yoff, long(z+cubez));
+        index = lz*sx*sy + ly*sx + lx;
+        label(index);
+
+        //cout<<"node's z+ neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
     }
     else
     {
@@ -772,7 +798,7 @@ int QueryAndCopy::label(long index)
 
         if(block.visited == false)
         {
-            cout<<"hits the block "<<block.filepath<<endl;
+            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
 
             string dirName = getDirName(block.filepath);
 
@@ -793,12 +819,29 @@ long QueryAndCopy::findClosest(OffsetType offsets, long idx)
     long thresh = 5;
 
     //
-    if(n<1 || idx<0)
+    if(n<1)
     {
         cout<<"Invalid offsets/index"<<endl;
         return -1;
     }
+    else
+    {
+        // test
+        cout<<"... offset ... ";
+        for(int i=0; i<n; i++)
+        {
+            cout<<offsets[i]<<" ";
+        }
+        cout<<endl;
+    }
 
+    //
+    if(idx<0)
+    {
+        idx = 0;
+    }
+
+    //
     long mindist = abs(idx - offsets[0]);
 
     long offset = offsets[0];
@@ -820,6 +863,48 @@ long QueryAndCopy::findClosest(OffsetType offsets, long idx)
                 return offset;
         }
     }
+
+    return offset;
+}
+
+long QueryAndCopy::findOffset(OffsetType offsets, long idx)
+{
+    long n = offsets.size();
+
+    //
+    if(n<1)
+    {
+        cout<<"Invalid offsets/index"<<endl;
+        return -1;
+    }
+
+    //
+    if(idx<0)
+    {
+        idx = 0;
+    }
+
+    //
+    long mindist = abs(idx - offsets[0]);
+
+    long offset = offsets[0];
+    size_t index = 0;
+
+    //
+    for(long i=1; i<offsets.size(); i++)
+    {
+        long dist = abs(idx - offsets[i]);
+
+        if(dist<mindist)
+        {
+            mindist = dist;
+            offset = offsets[i];
+            index = i;
+        }
+    }
+
+    if(idx<offsets[index])
+        offset = offsets[index-1];
 
     return offset;
 }
