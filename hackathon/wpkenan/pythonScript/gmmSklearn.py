@@ -5,7 +5,9 @@ import pandas as pd
 import sys
 
 def main():
+    # rawStr = "C:\\Users\\admin\\Desktop\\wp_data\\x_3136_y_1239_z_2218_gray.txt"
     rawStr = "C:\\Users\\admin\\Desktop\\wp_data\\041_x_9225_y_9875_z_2493_gray.txt"
+    # rawStr = "C:\\Users\\admin\\Desktop\\wp_data\\066_x_9183_y_8016_z_2321_gray.txt"
     if len(sys.argv)==2:
         rawStr=sys.argv[1];
     elif len(sys.argv)>2:
@@ -27,11 +29,11 @@ def main():
 
     content=np.array(content);
     content.shape=len(content),1
-    gmm=mixture.GaussianMixture(n_components=4).fit(content)
+    gmm=mixture.GaussianMixture(n_components=3).fit(content)
     print("均值:")
     print(gmm.means_)
-    print("方差: ")
-    print(gmm.covariances_)
+    # print("方差: ")
+    # print(gmm.covariances_)
 
     # 获取预测值
     index=[]
@@ -43,6 +45,8 @@ def main():
     for i in range(len(gmm.means_)):
         dict[index[i][0]]=i;
 
+    for i in range(len(index)):
+        print("%d %f"%(i,index[i][1]));
     y = gmm.predict(content)
     for i in range(len(y)):
         y[i]=dict[y[i]];
@@ -54,7 +58,7 @@ def main():
     outFile.close()
 
     pdy=pd.value_counts(y);
-    print(pdy)
+    print(pdy.sort_index())
 
 if __name__=="__main__":
     main();
