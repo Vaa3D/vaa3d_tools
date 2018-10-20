@@ -149,39 +149,39 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
     }
 
     // based on hits, update the layer
-    unsigned short nrows = 0;
-    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
-    while(iter != layer.yxfolders.end())
-    {
-        //
-        YXFolder yxfolder = (iter++)->second;
+//    unsigned short nrows = 0;
+//    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
+//    while(iter != layer.yxfolders.end())
+//    {
+//        //
+//        YXFolder yxfolder = (iter++)->second;
 
-        unsigned int ncubes = 0;
+//        unsigned int ncubes = 0;
 
-        //
-        if(yxfolder.toBeCopied==false)
-            continue;
+//        //
+//        if(yxfolder.toBeCopied==false)
+//            continue;
 
-        //
-        nrows++;
+//        //
+//        nrows++;
 
-        //
-        map<int, Cube>::iterator it = yxfolder.cubes.begin();
-        while(it != yxfolder.cubes.end())
-        {
-            //
-            Cube cube = (it++)->second;
+//        //
+//        map<int, Cube>::iterator it = yxfolder.cubes.begin();
+//        while(it != yxfolder.cubes.end())
+//        {
+//            //
+//            Cube cube = (it++)->second;
 
-            if(cube.toBeCopied==false)
-                continue;
+//            if(cube.toBeCopied==false)
+//                continue;
 
-            ncubes++;
-        }
+//            ncubes++;
+//        }
 
-        layer.yxfolders[yxfolder.dirName].ncubes = ncubes;
-    }
-    layer.cols = 1;
-    layer.rows = nrows;
+//        layer.yxfolders[yxfolder.dirName].ncubes = ncubes;
+//    }
+//    layer.cols = 1;
+//    layer.rows = nrows;
 
     //
     string mdatabin = outputdir + "/mdata.bin";
