@@ -217,7 +217,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
         cout<<layer.yxfolders.size()<<endl;
 
-        string dirName = "zeroblockszeroblocks"; //
+        string dirName = "zeroblocks/zeroblock"; //
 
         //
         map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
@@ -233,21 +233,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 // continue;
 
                 // trick: create a "zeroblocks" folder holds blocks with zeros
-                string folder = outputdir + "/" + dirName;
-                DIR *outdir = opendir(folder.c_str());
-                if(outdir == NULL)
-                {
-                    //
-                    if(makeDir(folder))
-                    {
-                        cout<<"fail in makeDir "<<folder<<endl;
-                        return;
-                    }
-                }
-                else
-                {
-                    closedir(outdir);
-                }
+                createDir(outputdir, dirName);
 
                 //
                 fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
@@ -276,6 +262,8 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                     {
                         char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
                         cout<<"create a zero block "<<errorMsg<<endl;
+
+                        zeroblocks.insert(make_pair(cubeIndex, cubeName));
                     }
 
                     //
