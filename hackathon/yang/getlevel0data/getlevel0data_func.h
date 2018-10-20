@@ -30,9 +30,16 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include "tiffio.h"
+
 using namespace std;
 
+#define COMPPRESSION_METHOD COMPRESSION_LZW
+
 enum  axis { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0 };
+
+//
+char *initTiff3DFile(char *filename, int sz0, int  sz1, int  sz2, int  sz3, int datatype);
 
 // cube
 class Cube
@@ -123,12 +130,14 @@ public:
 
 typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offset_x
 typedef vector<long> OffsetType;
+typedef map<long, string> ZeroBlock;
 
 //
 class QueryAndCopy
 {
 public:
-    QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio, bool qcDebug=false);
+    QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio);
+    QueryAndCopy(string inputdir);
     ~QueryAndCopy();
 public:
     int readSWC(string filename, float ratio);
@@ -160,6 +169,7 @@ public:
     long sx, sy, sz;
 
     OffsetType xoff, yoff, zoff;
+    ZeroBlock zeroblocks;
 
     Layer layer;
 };

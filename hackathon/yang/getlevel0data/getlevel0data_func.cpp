@@ -87,21 +87,18 @@ Block::~Block()
 }
 
 //
-QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio, bool qcDebug)
+QueryAndCopy::QueryAndCopy(string inputdir)
+{
+    // test
+    readMetaData(inputdir, true);
+}
+
+QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio)
 {
     // inputdir: "xxxx/RES(123x345x456)"
     // outputdir: "yyyy/RES(123x345x456)"
 
     // load input .swc file and mdata.bin
-
-    // test
-    // qcDebug = true;
-    cout<<qcDebug<<endl;
-    if(qcDebug)
-    {
-        readMetaData(outputdir, true);
-        return;
-    }
 
     //
     readSWC(swcfile, ratio);
@@ -220,6 +217,8 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
         cout<<layer.yxfolders.size()<<endl;
 
+        string dirName = "zeroblockszeroblocks"; //
+
         //
         map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
         while(iter != layer.yxfolders.end())
@@ -230,44 +229,122 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
             cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
 
             if(yxfolder.toBeCopied==false)
-                continue;
-
-            cout<<"write ... "<<yxfolder.dirName<<endl;
-
-            createDir(outputdir, yxfolder.dirName);
-
-            //
-            fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
-            fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
-            fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-            fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
-            fwrite(&(color), sizeof(unsigned int), 1, file);
-            fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
-            fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
-            fwrite(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
-            fwrite(const_cast<char *>(yxfolder.dirName.c_str()), yxfolder.lengthDirName, 1, file);
-
-            //
-            map<int, Cube>::iterator it = yxfolder.cubes.begin();
-            while(it != yxfolder.cubes.end())
             {
+                // continue;
+
+                // trick: create a "zeroblocks" folder holds blocks with zeros
+                string folder = outputdir + "/" + dirName;
+                DIR *outdir = opendir(folder.c_str());
+                if(outdir == NULL)
+                {
+                    //
+                    if(makeDir(folder))
+                    {
+                        cout<<"fail in makeDir "<<folder<<endl;
+                        return;
+                    }
+                }
+                else
+                {
+                    closedir(outdir);
+                }
+
                 //
-                Cube cube = (it++)->second;
-
-                if(cube.toBeCopied==false)
-                    continue;
+                fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
+                fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
+                fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
+                fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
+                fwrite(&(color), sizeof(unsigned int), 1, file);
+                fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
+                fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
+                fwrite(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
+                fwrite(const_cast<char *>(dirName.c_str()), yxfolder.lengthDirName, 1, file);
 
                 //
-                string srcFilePath = inputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
-                string dstFilePath = outputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+                map<int, Cube>::iterator it = yxfolder.cubes.begin();
+                while(it != yxfolder.cubes.end())
+                {
+                    //
+                    Cube cube = (it++)->second;
 
-                copyblock(srcFilePath, dstFilePath);
+                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
+                    unsigned short lengthCubeName = cubeName.length();
+                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
+                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
+
+                    if(zeroblocks.find(cubeIndex) == zeroblocks.end())
+                    {
+                        char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
+                        cout<<"create a zero block "<<errorMsg<<endl;
+                    }
+
+                    //
+                    fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
+                    fwrite(const_cast<char *>(cubeName.c_str()), lengthCubeName, 1, file);
+                    fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
+                    fwrite(&(cube.offset_D), sizeof(int), 1, file);
+                }
+            }
+            else
+            {
+                cout<<"write ... "<<yxfolder.dirName<<endl;
+
+                createDir(outputdir, yxfolder.dirName);
 
                 //
-                fwrite(&(yxfolder.lengthFileName), sizeof(unsigned short), 1, file);
-                fwrite(const_cast<char *>(cube.fileName.c_str()), yxfolder.lengthFileName, 1, file);
-                fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
-                fwrite(&(cube.offset_D), sizeof(int), 1, file);
+                fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
+                fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
+                fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
+                fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
+                fwrite(&(color), sizeof(unsigned int), 1, file);
+                fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
+                fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
+                fwrite(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
+                fwrite(const_cast<char *>(yxfolder.dirName.c_str()), yxfolder.lengthDirName, 1, file);
+
+                //
+                map<int, Cube>::iterator it = yxfolder.cubes.begin();
+                while(it != yxfolder.cubes.end())
+                {
+                    //
+                    Cube cube = (it++)->second;
+
+                    if(cube.toBeCopied==false)
+                    {
+                        //continue;
+
+                        string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
+                        unsigned short lengthCubeName = cubeName.length();
+                        long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
+                        string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
+
+                        if(zeroblocks.find(cubeIndex) == zeroblocks.end())
+                        {
+                            char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
+                            cout<<"create a zero block "<<errorMsg<<endl;
+                        }
+
+                        //
+                        fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
+                        fwrite(const_cast<char *>(cubeName.c_str()), lengthCubeName, 1, file);
+                        fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
+                        fwrite(&(cube.offset_D), sizeof(int), 1, file);
+                    }
+                    else
+                    {
+                        //
+                        string srcFilePath = inputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+                        string dstFilePath = outputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+
+                        copyblock(srcFilePath, dstFilePath);
+
+                        //
+                        fwrite(&(yxfolder.lengthFileName), sizeof(unsigned short), 1, file);
+                        fwrite(const_cast<char *>(cube.fileName.c_str()), yxfolder.lengthFileName, 1, file);
+                        fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
+                        fwrite(&(cube.offset_D), sizeof(int), 1, file);
+                    }
+                }
             }
             fwrite(&(bytesPerVoxel), sizeof(unsigned int), 1, file);
         }
@@ -909,6 +986,194 @@ long QueryAndCopy::findOffset(OffsetType offsets, long idx)
     return offset;
 }
 
+// save a 3D chunk tif image with all zeros
+char *initTiff3DFile(char *filename, int sz0, int sz1, int sz2, int sz3, int datatype)
+{
+    //
+    uint32 XSIZE  = sz0;
+    uint32 YSIZE  = sz1;
+    uint16 Npages = sz2;
+    uint16 spp    = sz3;
+
+    uint16 bpp=8 * datatype;
+
+    int rowsPerStrip = -1;
+
+    int check;
+
+    if ( sz3 == 1 )
+        spp = sz3;
+    else if ( sz3 < 4 )
+        spp = 3;
+    else
+        return ((char *) "More than 3 channels in Tiff files.");
+
+    //
+    long szSlice = (long)XSIZE * (long)YSIZE * (long)spp * (long)datatype;
+    unsigned char *fakeData=NULL;
+    try
+    {
+        fakeData = new unsigned char[ szSlice ];
+        memset(fakeData,0,szSlice);
+    }
+    catch(...)
+    {
+        return ((char *)"Fail to alloc memory\n");
+    }
+
+    //disable warning and error handlers to avoid messages on unrecognized tags
+    TIFFSetWarningHandler(0);
+    TIFFSetErrorHandler(0);
+
+    TIFF *output;
+
+    long expectedSize = ((long) sz0) * ((long) sz1) * ((long) sz2) * ((long) sz3) * ((long) datatype);
+    long fourGBSize = 4;
+    fourGBSize *= 1024;
+    fourGBSize *= 1024;
+    fourGBSize *= 1024;
+
+    if ( expectedSize > (fourGBSize) )
+    {
+        if ( (rowsPerStrip == -1 && (((long) sz0) * ((long) sz1)) > (fourGBSize)) || ((rowsPerStrip * ((long) sz0)) > (fourGBSize)) )
+            return ((char *) "Too many rows per strip for this image width.");
+        else
+            output = TIFFOpen(filename,"w8");
+    }
+    else
+    {
+        output = TIFFOpen(filename,"w");
+    }
+
+    if (!output)
+    {
+        return ((char *) "Cannot open the file.");
+    }
+
+    //
+    if ( rowsPerStrip == -1 )
+    {
+        for(long slice=0; slice<Npages; slice++)
+        {
+            //
+            TIFFSetDirectory(output, slice);
+
+            //
+            check = TIFFSetField(output, TIFFTAG_IMAGEWIDTH, XSIZE);
+            if (!check) {
+                return ((char *) "Cannot set the image width.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_IMAGELENGTH, YSIZE);
+            if (!check) {
+                return ((char *) "Cannot set the image height.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, bpp);
+            if (!check) {
+                return ((char *) "Cannot set the image bit per sample.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, spp);
+            if (!check) {
+                return ((char *) "Cannot set the image sample per pixel.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, (rowsPerStrip == -1) ? YSIZE : (uint32)rowsPerStrip);
+            if (!check) {
+                return ((char *) "Cannot set the image rows per strip.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+            if (!check) {
+                return ((char *) "Cannot set the image orientation.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_COMPRESSION, COMPPRESSION_METHOD);
+            if (!check) {
+                return ((char *) "Cannot set the compression tag.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+            if (!check) {
+                return ((char *) "Cannot set the planarconfig tag.");
+            }
+
+            if ( spp == 1 )
+                check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+            else // spp == 3
+                check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+            if (!check) {
+                return ((char *) "Cannot set the photometric tag.");
+            }
+
+            /* We are writing single page of the multipage file */
+            check = TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+            if (!check) {
+                return ((char *) "Cannot set the subfiletype tag.");
+            }
+
+            check = TIFFSetField(output, TIFFTAG_PAGENUMBER, slice, Npages);
+            if (!check) {
+                return ((char *) "Cannot set the page number.");
+            }
+
+            if(!TIFFWriteEncodedStrip(output, 0, fakeData, szSlice))
+            {
+                return ((char *) "Cannot write encoded strip to file.");
+            }
+
+            //
+            if (!TIFFWriteDirectory(output))
+            {
+                return ((char *) "Cannot write a new directory.");
+            }
+        }
+    }
+    else
+    {
+        // TODO: modify codes to save 3D image stack later
+
+        //
+        // save one slice
+        //
+        int check,StripsPerImage,LastStripSize;
+        uint32 rps = (uint32)rowsPerStrip;
+        unsigned char *buf = fakeData;
+
+        StripsPerImage =  (YSIZE + rps - 1) / rps;
+        LastStripSize = YSIZE % rps;
+        if (LastStripSize==0)
+            LastStripSize=rps;
+
+        for (int i=0; i < StripsPerImage-1; i++){
+            check = TIFFWriteEncodedStrip(output, i, buf, spp * rps * XSIZE * (bpp/8));
+            if (!check) {
+                return ((char *) "Cannot write encoded strip to file.");
+            }
+            buf = buf + spp * rps * XSIZE * (bpp/8);
+        }
+
+        check = TIFFWriteEncodedStrip(output, StripsPerImage-1, buf, spp * LastStripSize * XSIZE * (bpp/8));
+        if (!check) {
+            return ((char *) "Cannot write encoded strip to file.");
+        }
+        buf = buf + spp * LastStripSize * XSIZE * (bpp/8);
+    }
+
+    //
+    if(fakeData)
+    {
+        delete[] fakeData;
+    }
+
+    //
+    TIFFClose(output);
+
+    //
+    return (char *) 0;
+}
+
 //
 bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
@@ -967,6 +1232,7 @@ bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     float ratio = pow(2.0, scale);
 
     //
+    // QueryAndCopy qc(inputdir.toStdString());
     QueryAndCopy qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
 
     //
