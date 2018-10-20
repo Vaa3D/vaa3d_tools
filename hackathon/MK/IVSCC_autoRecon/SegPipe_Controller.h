@@ -33,6 +33,7 @@ public:
 	QString inputCaseRootPath;
 	QString inputCaseRootPath2;
 	QString inputSWCRootPath;
+	QString inputSWCRootPath2;
 	QString refSWCRootPath;
 	QString outputRootPath;
 	QString outputRootPath2;
@@ -69,7 +70,6 @@ public:
 	void findSomaMass(int somaSizeThre = 27);
 	void getChebyshevCenters(QString caseNum);
 	void getSomaCandidates(float distThre);
-	void getDendriteSkeletonStart();
 	void getSomaBlendedImgs();
 	void skeletonThreFiltered();
 
@@ -94,6 +94,8 @@ public:
 
 	void nodeIdentify();
 	void swcSeparate(QString outputRoot2);
+	void swcTypeSeparate(int type);
+	void swcSubtraction(int type);
 	void cleanUpzFor2Dcentroids();
 
 private:

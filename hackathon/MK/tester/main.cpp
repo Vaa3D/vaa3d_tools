@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
-	//string funcName = "";
+	//string funcName(funcNameC);
+	string funcName = "swcSubtract";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -452,6 +452,23 @@ int main(int argc, char* argv[])
 
 			myImgManager.imgDatabase.clear();
 		}
+	}
+	else if (!funcName.compare("swcSubtract"))
+	{
+		//const char* targetSWCNameC = argv[1];
+		//string targetSWCName(targetSWCNameC);
+		QString targetSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569_RESULT.swc";
+		//const char* refSWCNameC = argv[2];
+		//string refSWCName(refSWCNameC);
+		QString refSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569_denDiff.swc";
+		//NeuronTree targetTree = readSWC_file(QString::fromStdString(targetSWCName));
+		//NeuronTree refTree = readSWC_file(QString::fromStdString(refSWCName));
+		NeuronTree targetTree = readSWC_file(targetSWCNameQ);
+		NeuronTree refTree = readSWC_file(refSWCNameQ);
+
+		NeuronTree subTree = NeuronStructUtil::swcSubtraction(targetTree, refTree, 2);
+		QString saveName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test.swc";
+		writeSWC_file(saveName, subTree);
 	}
 
 	return 0;

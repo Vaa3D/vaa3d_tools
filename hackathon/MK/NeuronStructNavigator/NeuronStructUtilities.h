@@ -50,6 +50,8 @@ public:
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
 	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
+	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0);
 	/************************************************************************/
 	
 	/***************** Neuron Struct Profiling Methods *****************/

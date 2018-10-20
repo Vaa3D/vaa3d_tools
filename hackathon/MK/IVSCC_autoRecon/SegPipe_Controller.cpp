@@ -497,11 +497,6 @@ void SegPipe_Controller::getSomaBlendedImgs()
 	}
 }
 
-void SegPipe_Controller::simpleBlend()
-{
-
-}
-
 void SegPipe_Controller::skeletonThreFiltered()
 {
 	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
@@ -995,11 +990,6 @@ void SegPipe_Controller::getSomaCandidates(float distThre)
 	}
 }
 
-void SegPipe_Controller::getDendriteSkeletonStart()
-{
-
-}
-
 void SegPipe_Controller::swcMapBack()
 {
 	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
@@ -1442,6 +1432,39 @@ void SegPipe_Controller::swcSeparate(QString outputRoot2)
 		QString outputSWCPath2 = outputRoot2 + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, sigTree);
 		writeSWC_file(outputSWCPath2, noiseTree);
+	}
+}
+
+void SegPipe_Controller::swcTypeSeparate(int type)
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+	
+		map<int, QList<NeuronSWC>> nodeTypeMap = NeuronStructUtil::swcSplitByType(inputTree);
+		NeuronTree axonTree;
+		axonTree.listNeuron = nodeTypeMap.at(type);
+
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, axonTree);
+	}
+}
+
+void SegPipe_Controller::swcSubtraction(int type)
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		QString refSwcFullPath = this->inputSWCRootPath2 + "/" + *caseIt;
+		NeuronTree refTree = readSWC_file(refSwcFullPath);
+		qDebug() << swcFullPath << " " << refSwcFullPath;
+
+		NeuronTree outputTree = NeuronStructUtil::swcSubtraction(inputTree, refTree, type);
+
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
 	}
 }
 
