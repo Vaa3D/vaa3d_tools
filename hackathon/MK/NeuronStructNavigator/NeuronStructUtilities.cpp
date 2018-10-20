@@ -138,6 +138,114 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 		outputTrees.push_back(*it);
 }
 
+map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& inputTree)
+{
+	map<int, QList<NeuronSWC>> outputNodeTypeMap;
+	map<int, boost::container::flat_set<int>> nodeIDsetMap;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		outputNodeTypeMap[it->type].append(*it);
+		nodeIDsetMap[it->type].insert(it->n);
+	}
+	for (map<int, QList<NeuronSWC>>::iterator mapIt = outputNodeTypeMap.begin(); mapIt != outputNodeTypeMap.end(); ++mapIt)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+		{
+			if (nodeIt->parent == -1) continue;
+			else if (nodeIDsetMap.at(nodeIt->type).find(nodeIt->parent) == nodeIDsetMap.at(nodeIt->type).end()) nodeIt->parent = -1;
+		}
+	}
+
+	return outputNodeTypeMap;
+}
+
+NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type)
+{
+	boost::container::flat_map<string, QList<NeuronSWC>> targetNodeTileMap;
+	boost::container::flat_map<string, QList<NeuronSWC>> refNodeTileMap;
+	for (QList<NeuronSWC>::const_iterator it = targetTree.listNeuron.begin(); it != targetTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / 100));
+		string yLabel = to_string(int(it->y / 100));
+		string zLabel = to_string(int(it->z / 100));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (targetNodeTileMap.find(keyLabel) != targetNodeTileMap.end()) targetNodeTileMap.at(keyLabel).push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			targetNodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+	for (QList<NeuronSWC>::const_iterator it = refTree.listNeuron.begin(); it != refTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / 100));
+		string yLabel = to_string(int(it->y / 100));
+		string zLabel = to_string(int(it->z / 100));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (refNodeTileMap.find(keyLabel) != refNodeTileMap.end()) refNodeTileMap.at(keyLabel).push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			refNodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+
+	if (type == 0)
+	{
+		vector<ptrdiff_t> delLocs;
+		for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator targetTileIt = targetNodeTileMap.begin(); targetTileIt != targetNodeTileMap.end(); ++targetTileIt)
+		{
+			if (refNodeTileMap.find(targetTileIt->first) != refNodeTileMap.end())
+			{
+				for (QList<NeuronSWC>::iterator checkIt1 = targetTileIt->second.begin(); checkIt1 != targetTileIt->second.end(); ++checkIt1)
+				{
+					for (QList<NeuronSWC>::iterator checkIt2 = refNodeTileMap.at(targetTileIt->first).begin(); checkIt2 != refNodeTileMap.at(targetTileIt->first).end(); ++checkIt2)
+					{
+						if (checkIt1->x == checkIt2->x && checkIt1->y == checkIt2->y && checkIt1->z == checkIt2->z)
+							delLocs.push_back(ptrdiff_t(checkIt1 - targetTileIt->second.begin()));
+					}
+				}
+			}
+			else continue;
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			delLocs.clear();
+		}
+	}
+	else
+	{
+		vector<ptrdiff_t> delLocs;
+		for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator targetTileIt = targetNodeTileMap.begin(); targetTileIt != targetNodeTileMap.end(); ++targetTileIt)
+		{
+			if (refNodeTileMap.find(targetTileIt->first) != refNodeTileMap.end())
+			{
+				for (QList<NeuronSWC>::iterator checkIt1 = targetTileIt->second.begin(); checkIt1 != targetTileIt->second.end(); ++checkIt1)
+				{
+					for (QList<NeuronSWC>::iterator checkIt2 = refNodeTileMap.at(targetTileIt->first).begin(); checkIt2 != refNodeTileMap.at(targetTileIt->first).end(); ++checkIt2)
+					{
+						if (checkIt1->x == checkIt2->x && checkIt1->y == checkIt2->y && checkIt1->z == checkIt2->z && checkIt2->type == type)
+							delLocs.push_back(ptrdiff_t(checkIt1 - targetTileIt->second.begin()));
+					}
+				}
+			}
+			else continue;
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			delLocs.clear();
+		}
+	}
+
+	NeuronTree outputTree;
+	for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator mapIt = targetNodeTileMap.begin(); mapIt != targetNodeTileMap.end(); ++mapIt)
+		outputTree.listNeuron.append(mapIt->second);
+
+	return outputTree;
+}
+
 
 // ========================================== SWC Profiling Methods =========================================
 QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
