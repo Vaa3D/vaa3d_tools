@@ -13,6 +13,12 @@ using namespace std;
 
 #define MAXSIZE 100000
 
+bool isEqual(float x, float y)
+{
+  const float epsilon = 1e-5f;
+  return (fabs(x - y) <= epsilon);
+}
+
 NeuronTree neuron_deepcopy(NeuronTree nt){
     QList<NeuronSWC> new_list;
     for(int i=0; i<nt.listNeuron.size(); i++){
@@ -38,7 +44,7 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
     QHash <int, int>  hashNeuron;
     listNeuron.clear();
     hashNeuron.clear();
-
+//    qDebug()<<"creating new neuronlist";
     for (int i = 0; i < neuronlist.size(); i++)
     {
         NeuronSWC node=neuronlist.at(i);
@@ -98,6 +104,23 @@ CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, d
     marker.color.g = color_g;
     marker.color.b = color_b;
     return marker;
+}
+NeuronSWC CellAPO_to_NeuronSWC(CellAPO marker){
+    NeuronSWC node;
+    node.x = marker.x;
+    node.y = marker.y;
+    node.z = marker.z;
+    return node;
+}
+int count_root(NeuronTree nt){
+    int ct = 0;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        if(node.pn == -1){
+            ct++;
+        }
+    }
+    return ct;
 }
 
 bool my_saveANO(QString fileNameHeader, bool swc, bool apo, QString swc_name){
@@ -503,6 +526,12 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
 QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
     // Concatenate nl2 after nl1;
     // id's of nl1/2 should start from 1;
+    if(nl1.size()==0){
+        return nl2;
+    }
+    if(nl2.size()==0){
+        return nl1;
+    }
     QList<NeuronSWC> empty_list;
     if(nl1.at(0).n != 1 || nl2.at(0).n != 1){
         printf("names of neuron trees must begin with 1!\n");
@@ -511,7 +540,9 @@ QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
     int nl1_size = nl1.size();
     for(int i=0; i<nl2.size(); i++){
         nl2[i].n += nl1_size;
-        nl2[i].pn += nl1_size;
+        if(nl2.at(i).pn != -1){  // Keep root node as it was.
+            nl2[i].pn += nl1_size;
+        }
     }
     nl1.append(nl2);
     return nl1;

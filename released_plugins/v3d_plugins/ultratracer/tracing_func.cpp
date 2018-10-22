@@ -364,54 +364,54 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
     }
 
-    qint64 etime1 = timer1.elapsed();
+//    qint64 etime1 = timer1.elapsed();
 
-    list<string> infostring;
-    string tmpstr; QString qtstr;
-    if(P.method==app1)
-    {
-        tmpstr =  qPrintable( qtstr.prepend("## UT_APP1")); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.visible_thresh).prepend("#visible_thresh = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+//    list<string> infostring;
+//    string tmpstr; QString qtstr;
+//    if(P.method==app1)
+//    {
+//        tmpstr =  qPrintable( qtstr.prepend("## UT_APP1")); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.visible_thresh).prepend("#visible_thresh = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
-    }
-    else if(P.method==app2)
-    {
-        tmpstr =  qPrintable( qtstr.prepend("## UT_APP2")); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+//    }
+//    else if(P.method==app2)
+//    {
+//        tmpstr =  qPrintable( qtstr.prepend("## UT_APP2")); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
-        tmpstr =  qPrintable( qtstr.setNum(P.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
-        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-    }
+//        tmpstr =  qPrintable( qtstr.setNum(P.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(P.adap_win).prepend("#adaptive_window = ") ); infostring.push_back(tmpstr);
+//        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+//    }
 
-    if(P.method != gd)
-    {
-        if(P.tracing_3D)
-            processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
-        else
-            processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
-    }else
-        processSmartScan_3D_wofuison(callback,infostring,tmpfolder +"/scanData.txt");
-
-
+//    if(P.method != gd)
+//    {
+//        if(P.tracing_3D)
+//            processSmartScan_3D(callback,infostring,tmpfolder +"/scanData.txt");
+//        else
+//            processSmartScan(callback,infostring,tmpfolder +"/scanData.txt");
+//    }else
+//        processSmartScan_3D_wofuison(callback,infostring,tmpfolder +"/scanData.txt");
 
 
-    v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
-                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), bmenu);
+
+
+//    v3d_msg(QString("The tracing uses %1 for tracing. Now you can drag and drop the generated swc fle [%2] into Vaa3D."
+//                    ).arg(etime1).arg(tmpfolder +"/scanData.txt.swc"), bmenu);
 
     return true;
 }
@@ -1537,14 +1537,14 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-    if(!ifs_swc)
+    if(!ifs_swc && P.soma)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
 
 
 #if  defined(Q_OS_LINUX)
-    QString cmd_predict = QString("%1/vaa3d -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p /local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt /local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel /local1/work/caffe_unet/HeartSeg/3D-DSN/snapshot/HVSMR_iter_138000.caffemodel")
+    QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
             .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
     system(qPrintable(cmd_predict));
 #endif
@@ -1685,7 +1685,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 RootNewLocation.y = inputRootList.at(i).y - total4DImage->getOriginY();
                 RootNewLocation.z = inputRootList.at(i).z - total4DImage->getOriginZ();
 
-                if(!ifs_swc)
+                if(!ifs_swc && P.soma)
                 {
                     LandmarkList marklist_tmp;
                     marklist_tmp.push_back(RootNewLocation);
@@ -2729,9 +2729,108 @@ void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & i
     }
 
     export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
-
-
 }
+
+void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSaveName)
+{
+    QDir dir(inputFolder);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return;
+    }
+    QStringList imgSuffix;
+    imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
+
+    string swcfilepath;
+    vector<MyMarker*> outswc,inputswc;
+    int node_type = 3;
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        swcfilepath = QFileInfo(dir, file).absoluteFilePath().toStdString();
+        if(node_type == 3)
+        {
+            inputswc = readSWC_file(swcfilepath);;
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->type = node_type;
+                outswc.push_back(inputswc[d]);
+            }
+            saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+        }
+        else
+        {
+            inputswc = readSWC_file(swcfilepath);
+            NeuronTree nt = readSWC_file(QString(swcfilepath.c_str()));
+            QVector<QVector<V3DLONG> > childs;
+            V3DLONG neuronNum = nt.listNeuron.size();
+            childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+            for (V3DLONG i=0;i<neuronNum;i++)
+            {
+                V3DLONG par = nt.listNeuron[i].pn;
+                if (par<0) continue;
+                childs[nt.hashNeuron.value(par)].push_back(i);
+            }
+            if(inputswc.size()>0 && childs[0].size()==1)
+            {
+                int count=1;
+                int current = childs[0].at(0);
+                while(childs[current].size()==1)
+                {
+                    current=childs[current].at(0);
+                    count++;
+                }
+                if(count<10)
+                {
+                    inputswc[current]->parent = inputswc[0]->parent;
+                    inputswc.erase(inputswc.begin(),inputswc.begin()+count);
+                }
+            }
+
+            outswc = readSWC_file(fileSaveName.toStdString());
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->type = node_type;
+                int flag_prune = 0;
+                for(int dd = 0; dd < outswc.size();dd++)
+                {
+                    int dis_prun = sqrt(pow2(inputswc[d]->x - outswc[dd]->x) + pow2(inputswc[d]->y - outswc[dd]->y) + pow2(inputswc[d]->z - outswc[dd]->z));
+                    if( (inputswc[d]->radius + outswc[dd]->radius - dis_prun)/dis_prun > 0.2)
+                    {
+                        if(childs[d].size() > 0) inputswc[childs[d].at(0)]->parent = outswc[dd];
+                        flag_prune = 1;
+                        break;
+                    }
+
+                }
+                if(flag_prune == 0)
+                {
+                   outswc.push_back(inputswc[d]);
+                }
+
+            }
+            saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+        }
+        node_type++;
+    }
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc);
+    NeuronTree nt_final = readSWC_file(fileSaveName);
+    QList<NeuronSWC> neuron_final_sorted;
+    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, 10))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+    }
+
+    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+    NeuronTree nt_b4_prune = readSWC_file(fileSaveName);
+    NeuronTree nt_pruned = smartPrune(nt_b4_prune,10);
+    NeuronTree nt_pruned_2nd = smartPrune(nt_pruned,10);
+
+    writeSWC_file(fileSaveName,nt_pruned_2nd);
+    return;
+}
+
+
 
 bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
 {

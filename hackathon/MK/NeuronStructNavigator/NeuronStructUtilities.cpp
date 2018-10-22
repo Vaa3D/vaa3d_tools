@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  This library provides functionalities for neuron struct operations, such as crop, register, sample, data extraction, etc.
+*  NeuronStructUtil class is desinged to take NeuronTree struct as the input and as well output NeuronTree struct for most of the methods.
+*  This class intends to operate on the whole neuron struct level, as 'utility' it is called.
+*
+*  Many NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
+*  A typical function call would need at least three input arguments:
+*
+*		NeuronStructUtil::func(const NeuronTree& inputTree, NeuronTree& outputTree, other input arguments);
+*
+********************************************************************************/
+
 #include <iostream>
 #include <string>
 #include <iterator>
@@ -118,6 +136,114 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 
 	for (QList<NeuronTree>::iterator it = slicedTrees.begin(); it != slicedTrees.end(); ++it)
 		outputTrees.push_back(*it);
+}
+
+map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& inputTree)
+{
+	map<int, QList<NeuronSWC>> outputNodeTypeMap;
+	map<int, boost::container::flat_set<int>> nodeIDsetMap;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		outputNodeTypeMap[it->type].append(*it);
+		nodeIDsetMap[it->type].insert(it->n);
+	}
+	for (map<int, QList<NeuronSWC>>::iterator mapIt = outputNodeTypeMap.begin(); mapIt != outputNodeTypeMap.end(); ++mapIt)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+		{
+			if (nodeIt->parent == -1) continue;
+			else if (nodeIDsetMap.at(nodeIt->type).find(nodeIt->parent) == nodeIDsetMap.at(nodeIt->type).end()) nodeIt->parent = -1;
+		}
+	}
+
+	return outputNodeTypeMap;
+}
+
+NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type)
+{
+	boost::container::flat_map<string, QList<NeuronSWC>> targetNodeTileMap;
+	boost::container::flat_map<string, QList<NeuronSWC>> refNodeTileMap;
+	for (QList<NeuronSWC>::const_iterator it = targetTree.listNeuron.begin(); it != targetTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / 100));
+		string yLabel = to_string(int(it->y / 100));
+		string zLabel = to_string(int(it->z / 100));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (targetNodeTileMap.find(keyLabel) != targetNodeTileMap.end()) targetNodeTileMap.at(keyLabel).push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			targetNodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+	for (QList<NeuronSWC>::const_iterator it = refTree.listNeuron.begin(); it != refTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / 100));
+		string yLabel = to_string(int(it->y / 100));
+		string zLabel = to_string(int(it->z / 100));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (refNodeTileMap.find(keyLabel) != refNodeTileMap.end()) refNodeTileMap.at(keyLabel).push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			refNodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+
+	if (type == 0)
+	{
+		vector<ptrdiff_t> delLocs;
+		for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator targetTileIt = targetNodeTileMap.begin(); targetTileIt != targetNodeTileMap.end(); ++targetTileIt)
+		{
+			if (refNodeTileMap.find(targetTileIt->first) != refNodeTileMap.end())
+			{
+				for (QList<NeuronSWC>::iterator checkIt1 = targetTileIt->second.begin(); checkIt1 != targetTileIt->second.end(); ++checkIt1)
+				{
+					for (QList<NeuronSWC>::iterator checkIt2 = refNodeTileMap.at(targetTileIt->first).begin(); checkIt2 != refNodeTileMap.at(targetTileIt->first).end(); ++checkIt2)
+					{
+						if (checkIt1->x == checkIt2->x && checkIt1->y == checkIt2->y && checkIt1->z == checkIt2->z)
+							delLocs.push_back(ptrdiff_t(checkIt1 - targetTileIt->second.begin()));
+					}
+				}
+			}
+			else continue;
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			delLocs.clear();
+		}
+	}
+	else
+	{
+		vector<ptrdiff_t> delLocs;
+		for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator targetTileIt = targetNodeTileMap.begin(); targetTileIt != targetNodeTileMap.end(); ++targetTileIt)
+		{
+			if (refNodeTileMap.find(targetTileIt->first) != refNodeTileMap.end())
+			{
+				for (QList<NeuronSWC>::iterator checkIt1 = targetTileIt->second.begin(); checkIt1 != targetTileIt->second.end(); ++checkIt1)
+				{
+					for (QList<NeuronSWC>::iterator checkIt2 = refNodeTileMap.at(targetTileIt->first).begin(); checkIt2 != refNodeTileMap.at(targetTileIt->first).end(); ++checkIt2)
+					{
+						if (checkIt1->x == checkIt2->x && checkIt1->y == checkIt2->y && checkIt1->z == checkIt2->z && checkIt2->type == type)
+							delLocs.push_back(ptrdiff_t(checkIt1 - targetTileIt->second.begin()));
+					}
+				}
+			}
+			else continue;
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			delLocs.clear();
+		}
+	}
+
+	NeuronTree outputTree;
+	for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator mapIt = targetNodeTileMap.begin(); mapIt != targetNodeTileMap.end(); ++mapIt)
+		outputTree.listNeuron.append(mapIt->second);
+
+	return outputTree;
 }
 
 
@@ -664,6 +790,153 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	return outputConnCompList;
 }
 // =============================== END of [SWC <-> Connected Components] ===============================
+
+
+// ==================================== Neuron Struct Clustering Methods ========================================
+vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronTree& inputTree, float dist)
+{
+	QList<NeuronSWC> inputList = inputTree.listNeuron;
+	vector<connectedComponent> outputConnCompList;
+	outputConnCompList.clear();
+	connectedComponent connComp1;
+	vector<int> node1Coord(3);
+	node1Coord.at(0) = int(inputList.begin()->x);
+	node1Coord.at(1) = int(inputList.begin()->y);
+	node1Coord.at(2) = int(inputList.begin()->z);
+	set<vector<int>> connComp1Set;
+	connComp1Set.insert(node1Coord);
+	connComp1.coordSets.insert(pair<int, set<vector<int>>>(node1Coord.at(2), connComp1Set));
+	connComp1.size = 1;
+	outputConnCompList.push_back(connComp1);
+	inputList.erase(inputList.begin());
+
+	while (inputList.size() > 0)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = inputList.begin(); nodeIt != inputList.end(); ++nodeIt)
+		{
+			for (vector<connectedComponent>::iterator cluIt = outputConnCompList.begin(); cluIt != outputConnCompList.end(); ++cluIt)
+			{
+				for (map<int, set<vector<int>>>::iterator zIt = cluIt->coordSets.begin(); zIt != cluIt->coordSets.end(); ++zIt)
+				{
+					for (set<vector<int>>::iterator cluNodeIt = zIt->second.begin(); cluNodeIt != zIt->second.end(); ++cluNodeIt)
+					{
+						if (sqrt((nodeIt->x - float(cluNodeIt->at(0))) * (nodeIt->x - float(cluNodeIt->at(0))) +
+							     (nodeIt->y - float(cluNodeIt->at(1))) * (nodeIt->y - float(cluNodeIt->at(1))) +
+							     (nodeIt->z - float(cluNodeIt->at(2))) * (nodeIt->z - float(cluNodeIt->at(2))) * zRATIO * zRATIO) <= dist)
+						{
+							if (cluIt->coordSets.find(nodeIt->z) != cluIt->coordSets.end())
+							{
+								vector<int> newPoint(3);
+								newPoint.at(0) = int(nodeIt->x);
+								newPoint.at(1) = int(nodeIt->y);
+								newPoint.at(2) = int(nodeIt->z);
+								cluIt->coordSets[newPoint.at(2)].insert(newPoint);
+								++cluIt->size;
+							}
+							else
+							{
+								vector<int> newPoint(3);
+								newPoint.at(0) = int(nodeIt->x);
+								newPoint.at(1) = int(nodeIt->y);
+								newPoint.at(2) = int(nodeIt->z);
+								set<vector<int>> newSet;
+								newSet.insert(newPoint);
+								cluIt->coordSets.insert(pair<int, set<vector<int>>>(newPoint.at(2), newSet));
+								++cluIt->size;
+							}
+
+							inputList.erase(nodeIt);
+							goto NODE_PROCESSED;
+						}
+					}
+				}
+			}
+
+			connectedComponent newComp;
+			vector<int> newCompPoint(3);
+			newCompPoint.at(0) = int(nodeIt->x);
+			newCompPoint.at(1) = int(nodeIt->y);
+			newCompPoint.at(2) = int(nodeIt->z);
+			set<vector<int>> newCompSet;
+			newCompSet.insert(newCompPoint);
+			newComp.coordSets.insert(pair<int, set<vector<int>>>(newCompPoint.at(2), newCompSet));
+			newComp.size = 1;
+			outputConnCompList.push_back(newComp);
+			inputList.erase(nodeIt);
+			break;
+		}
+
+	NODE_PROCESSED:
+		continue;
+	}
+
+	vector<connectedComponent>::iterator mergeIt;
+	vector<connectedComponent>::iterator currCompIt;
+	while (1)
+	{
+		for (vector<connectedComponent>::iterator compBaseIt = outputConnCompList.begin(); compBaseIt != outputConnCompList.end(); ++compBaseIt)
+		{
+			for (vector<connectedComponent>::iterator checkCompIt = compBaseIt + 1; checkCompIt != outputConnCompList.end(); ++checkCompIt)
+			{
+				for (map<int, set<vector<int>>>::iterator checkIt = checkCompIt->coordSets.begin(); checkIt != checkCompIt->coordSets.end(); ++checkIt)
+				{
+					for (set<vector<int>>::iterator checkNodeIt = checkIt->second.begin(); checkNodeIt != checkIt->second.end(); ++checkNodeIt)
+					{
+						for (map<int, set<vector<int>>>::iterator currIt = compBaseIt->coordSets.begin(); currIt != compBaseIt->coordSets.end(); ++currIt)
+						{
+							for (set<vector<int>>::iterator currNodeIt = currIt->second.begin(); currNodeIt != currIt->second.end(); ++currNodeIt)
+							{
+								if (sqrt((float(currNodeIt->at(0)) - float(checkNodeIt->at(0))) * (float(currNodeIt->at(0)) - float(checkNodeIt->at(0))) +
+										 (float(currNodeIt->at(1)) - float(checkNodeIt->at(1))) * (float(currNodeIt->at(1)) - float(checkNodeIt->at(1))) +
+										 (float(currNodeIt->at(2)) - float(checkNodeIt->at(2))) * (float(currNodeIt->at(2)) - float(checkNodeIt->at(2))) * zRATIO * zRATIO) <= dist)
+								{
+									mergeIt = checkCompIt;
+									currCompIt = compBaseIt;
+									goto CLUSTER_MERGE;
+								}
+							}
+						}
+					}
+				}
+			}		
+		}
+		break;
+
+	CLUSTER_MERGE:
+		{
+			for (map<int, set<vector<int>>>::iterator zIt = mergeIt->coordSets.begin(); zIt != mergeIt->coordSets.end(); ++zIt)
+			{
+				for (set<vector<int>>::iterator nodeIt = zIt->second.begin(); nodeIt != zIt->second.end(); ++nodeIt)
+				{
+					if (currCompIt->coordSets.find(nodeIt->at(0)) != currCompIt->coordSets.end())
+					{
+						vector<int> newPoint(3);
+						newPoint.at(0) = nodeIt->at(0);
+						newPoint.at(1) = nodeIt->at(1);
+						newPoint.at(2) = nodeIt->at(2);
+						currCompIt->coordSets[newPoint.at(2)].insert(newPoint);
+					}
+					else
+					{
+						vector<int> newPoint(3);
+						newPoint.at(0) = nodeIt->at(0);
+						newPoint.at(1) = nodeIt->at(1);
+						newPoint.at(2) = nodeIt->at(2);
+						set<vector<int>> newSet;
+						newSet.insert(newPoint);
+						currCompIt->coordSets.insert(pair<int, set<vector<int>>>(newPoint.at(2), newSet));
+					}
+				}
+			}
+
+			outputConnCompList.erase(mergeIt);
+			continue;
+		}
+	}
+
+	return outputConnCompList;
+}
+// ================================ END of [Neuron Struct Clustering Methods] ===================================
 
 
 /* =================================== Volumetric SWC sampling methods =================================== */

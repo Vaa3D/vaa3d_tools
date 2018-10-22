@@ -19,9 +19,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
+	const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "interAccuracy";
+	string funcName = "swcSubtract";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -251,6 +251,224 @@ int main(int argc, char* argv[])
 			string swcFullName = inputPathName + "\\" + swcName;
 			NeuronStructUtil::linkerFileGen_forSWC(swcFullName);
 		}
+	}
+	else if (!funcName.compare("somaPointsCluster"))
+	{
+		const char* inputFileNameC = argv[1];
+		string inputFileName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCentroid3D\\472599722.swc";
+		//string inputFileName(inputFileNameC);
+		QString inputFileNameQ = QString::fromStdString(inputFileName);
+		NeuronTree nt = readSWC_file(inputFileNameQ);
+
+		vector<connectedComponent> compList = NeuronStructUtil::swc2clusters_distance(nt, 20);
+		for (vector<connectedComponent>::iterator compIt = compList.begin(); compIt != compList.end(); ++compIt)
+		{
+			cout << "[";
+			ImgAnalyzer::ChebyshevCenter_connComp(*compIt);
+			for (map<int, set<vector<int>>>::iterator it = compIt->coordSets.begin(); it != compIt->coordSets.end(); ++it)
+			{
+				for (set<vector<int>>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+				{
+					cout << it2->at(0) << "_" << it2->at(1) << "_" << it2->at(2) << ", ";
+				}
+			}
+			cout << "] ";
+			cout << compIt->ChebyshevCenter[0] << " " << compIt->ChebyshevCenter[1] << " " << compIt->ChebyshevCenter[2] << endl;
+		}
+	}
+	else if (!funcName.compare("multipleSomaCandidates"))
+	{
+		string inputFileName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCandidates\\";
+		vector<string> fileList;
+		for (filesystem::directory_iterator fileIt(inputFileName); fileIt != filesystem::directory_iterator(); ++fileIt)
+		{
+			string fileName = fileIt->path().string();
+			QString fileNameQ = QString::fromStdString(fileName);
+			NeuronTree nt = readSWC_file(fileNameQ);
+
+			if (nt.listNeuron.size() == 2) fileList.push_back(fileName);
+		}
+
+		for (vector<string>::iterator it = fileList.begin(); it != fileList.end(); ++it) cout << *it << endl;
+	}
+	else if (!funcName.compare("skeleton"))
+	{
+		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
+		string fileName = "319215569.tif";
+		ImgManager myManager;
+		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
+		myManager.imgEntry(fileName, ImgManager::singleCase_singleSlice);
+		int imgDims[3];
+		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
+		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
+		imgDims[2] = 1;
+		unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+		ImgProcessor::skeleton2D(myManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+		
+		V3DLONG Dims[4];
+		Dims[0] = imgDims[0];
+		Dims[1] = imgDims[1];
+		Dims[2] = 1;
+		Dims[3] = 1;
+		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.tif";
+		const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+		ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
+
+		delete[] outputImgPtr;
+	}
+	else if (!funcName.compare("skeletonSlices"))
+	{
+		const char* inputPathNameC = argv[1];
+		string inputPathName(inputPathNameC);
+		const char* outputPathNameC = argv[2];
+		string outputPathName(outputPathNameC);
+		//cout << outputPathName << endl;
+		vector<string> inputFullPathParse;
+		boost::split(inputFullPathParse, inputPathName, boost::is_any_of("/"));
+		string caseNum = *(inputFullPathParse.end() - 1);
+		QString caseNumQ = QString::fromStdString(caseNum);
+		
+		ImgManager myImgManager;
+		for (filesystem::directory_iterator fileIt(inputPathName); fileIt != filesystem::directory_iterator(); ++fileIt)
+		{
+			string fileFullName = fileIt->path().string();
+			myImgManager.inputMultiCasesSliceFullPaths.insert(pair<string, string>(caseNum, fileFullName));
+		}
+		
+		myImgManager.imgEntry(caseNum, ImgManager::slices);
+		int imgDims[3];
+		imgDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+		imgDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+		imgDims[2] = 1;
+		for (map<string, myImg1DPtr>::iterator it = myImgManager.imgDatabase.begin()->second.slicePtrs.begin(); it != myImgManager.imgDatabase.begin()->second.slicePtrs.end(); ++it)
+		{
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			ImgProcessor::skeleton2D(it->second.get(), outputImgPtr, imgDims);
+
+			V3DLONG Dims[4];
+			Dims[0] = imgDims[0];
+			Dims[1] = imgDims[1];
+			Dims[2] = 1;
+			Dims[3] = 1;
+			string sliceSaveFullName = outputPathName + "\\" + it->first;
+			cout << sliceSaveFullName << endl;
+			const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
+			ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
+
+			delete[] outputImgPtr;
+		}
+	}
+	else if (!funcName.compare("simpleBlend"))
+	{
+		const char* folder1C = argv[2];
+		string folder1(folder1C);
+		const char* folder2C = argv[3];
+		string folder2(folder2C);
+
+		for (filesystem::directory_iterator sliceIt(folder1); sliceIt != filesystem::directory_iterator(); ++sliceIt)
+		{
+			string caseName = sliceIt->path().filename().string();
+			string caseNameFullPath = folder1 + "\\" + caseName;
+			caseName = caseName.substr(0, 9);
+			for (filesystem::directory_iterator sliceIt2(folder2); sliceIt2 != filesystem::directory_iterator(); ++sliceIt2)
+			{
+				string caseName2 = sliceIt2->path().filename().string();
+				string caseName2FullPath = folder2 + "\\" + caseName2;
+				caseName2 = caseName2.substr(0, 9);
+				if (!caseName2.compare(caseName))
+				{
+					//cout << caseNameFullPath << endl << caseName2FullPath << endl;
+					ImgManager myImgManager;
+					myImgManager.inputSingleCaseSingleSliceFullPath = caseNameFullPath;
+					myImgManager.imgEntry("img1", ImgManager::singleCase_singleSlice);
+					myImgManager.inputSingleCaseSingleSliceFullPath = caseName2FullPath;
+					myImgManager.imgEntry("img2", ImgManager::singleCase_singleSlice);
+
+					vector<unsigned char*> blendingPtrs;
+					for (map<string, registeredImg>::iterator it = myImgManager.imgDatabase.begin(); it != myImgManager.imgDatabase.end(); ++it)
+						blendingPtrs.push_back(it->second.slicePtrs.begin()->second.get());
+
+					unsigned char* imgArray1D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1] * 2];
+					ImgManager::imgsBlend(blendingPtrs, imgArray1D, myImgManager.imgDatabase.begin()->second.dims);
+
+					V3DLONG Dims[4];
+					Dims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+					Dims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+					Dims[2] = 1;
+					Dims[3] = 2;
+
+					const char* saveNameC = argv[4];
+					string saveName(saveNameC);
+					saveName = saveName + "\\" + caseName2 + ".tif";
+					const char* saveFullNameC = saveName.c_str();
+					ImgManager::saveimage_wrapper(saveFullNameC, imgArray1D, Dims, 1);
+
+					myImgManager.imgDatabase.clear();
+				}
+			}
+		}
+	}
+	else if (!funcName.compare("getImgStats"))
+	{
+		const char* folderNameC = argv[1];
+		string folderName(folderNameC);
+		const char* outputFileNameC = argv[2];
+		string outputFileName(outputFileNameC);
+
+		ofstream outputFile(outputFileName);
+		outputFile << "case\t";
+		for (int i = 255; i >= 100; --i) outputFile << i << "\t";
+		outputFile << endl;
+		//outputFile << "case\tmean\tstd\tmedian" << endl;
+		ImgManager myImgManager;
+		/*for (filesystem::directory_iterator imgIt(folderName); imgIt != filesystem::directory_iterator(); ++imgIt)
+		{
+			string sliceFullName = imgIt->path().string();
+			myImgManager.inputSingleCaseSingleSliceFullPath = sliceFullName;
+			myImgManager.imgEntry(imgIt->path().filename().string(), ImgManager::singleCase_singleSlice);
+			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myImgManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), myImgManager.imgDatabase.begin()->second.dims);
+			outputFile << imgIt->path().filename().string() << "\t" << imgStats.at("mean") << "\t" << imgStats.at("std") << "\t" << imgStats.at("median") << endl;
+
+			myImgManager.imgDatabase.clear();
+		}*/
+
+		for (filesystem::directory_iterator imgIt(folderName); imgIt != filesystem::directory_iterator(); ++imgIt)
+		{
+			string sliceFullName = imgIt->path().string();
+			myImgManager.inputSingleCaseSingleSliceFullPath = sliceFullName;
+			myImgManager.imgEntry(imgIt->path().filename().string(), ImgManager::singleCase_singleSlice);
+			map<int, size_t> histMap = ImgProcessor::histQuickList(myImgManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), myImgManager.imgDatabase.begin()->second.dims);
+			outputFile << imgIt->path().filename().string() << "\t";
+			for (int j = 255; j >= 100; --j)
+			{
+				if (histMap.find(j) == histMap.end())
+				{	
+					if (j < 200) break;
+					else continue;
+				}
+				else outputFile << histMap.at(j) << "\t";
+			}
+			outputFile << endl;
+
+			myImgManager.imgDatabase.clear();
+		}
+	}
+	else if (!funcName.compare("swcSubtract"))
+	{
+		//const char* targetSWCNameC = argv[1];
+		//string targetSWCName(targetSWCNameC);
+		QString targetSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569_RESULT.swc";
+		//const char* refSWCNameC = argv[2];
+		//string refSWCName(refSWCNameC);
+		QString refSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569_denDiff.swc";
+		//NeuronTree targetTree = readSWC_file(QString::fromStdString(targetSWCName));
+		//NeuronTree refTree = readSWC_file(QString::fromStdString(refSWCName));
+		NeuronTree targetTree = readSWC_file(targetSWCNameQ);
+		NeuronTree refTree = readSWC_file(refSWCNameQ);
+
+		NeuronTree subTree = NeuronStructUtil::swcSubtraction(targetTree, refTree, 2);
+		QString saveName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test.swc";
+		writeSWC_file(saveName, subTree);
 	}
 
 	return 0;

@@ -165,6 +165,11 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
     }
     else{
         root = idlist.indexOf(LUT.value(newrootid));
+//        QList<V3DLONG> test = LUT.keys();
+//        for(int i=0; i<test.size();i++){
+//            qDebug()<<i<<test.at(i)<<test.indexOf(test.at(i));
+//        }
+//        qDebug()<<test.size()<<test.at(0)<<newrootid<<test.indexOf(newrootid);
 
         if (LUT.keys().indexOf(newrootid)==-1)
         {

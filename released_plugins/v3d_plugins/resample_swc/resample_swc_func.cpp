@@ -26,7 +26,13 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
 	myfile<<"# source file(s): "<<fileOpenName<<endl;
 	myfile<<"# id,type,x,y,z,r,pid"<<endl;
 	for (V3DLONG i=0;i<lN.size();i++)
-		myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
+    {
+        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " "
+               <<lN.at(i).pn <<" " << lN.at(i).seg_id <<" " << lN.at(i).level;
+        for (int j=0;j<lN.at(i).fea_val.size();j++)
+            myfile <<" " << lN.at(i).fea_val.at(j);
+        myfile << "\n";
+    }
 
 	file.close();
 	cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
@@ -53,12 +59,17 @@ int resample_swc(V3DPluginCallback2 &callback, QWidget *parent)
 	
 	NeuronTree result = resample(nt, step);
 	
-	QString fileDefaultName = fileOpenName+QString("_resampled.swc");
+    QString fileDefaultName;
+    if(fileOpenName.toUpper().endsWith(".SWC"))
+        fileDefaultName = fileOpenName+QString("_resampled.swc");
+    else
+        fileDefaultName = fileOpenName+QString("_resampled.eswc");
+
 	//write new SWC to file
 	QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
 			fileDefaultName,
 			QObject::tr("Supported file (*.swc)"
-				";;Neuron structure	(*.swc)"
+                ";;Neuron structure	(*.eswc)"
 				));
 	if (!export_list2file(result.listNeuron,fileSaveName,fileOpenName))
 	{

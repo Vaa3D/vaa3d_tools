@@ -3,10 +3,13 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external
+
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
+INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/newmat11
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
@@ -20,7 +23,8 @@ HEADERS	+= preprocess_plugin.h \
     split_neuron_main.h \
     qc_main.h \
     preprocess_batch_main.h \
-    crop_swc_main.h
+    crop_swc_main.h \
+    check_connection.h
 HEADERS += pre_processing_main.h
 SOURCES	+= preprocess_plugin.cpp \
     neurite_analysis_main.cpp \
@@ -31,7 +35,8 @@ SOURCES	+= preprocess_plugin.cpp \
     split_neuron_main.cpp \
     qc_main.cpp \
     preprocess_batch_main.cpp \
-    crop_swc_main.cpp
+    crop_swc_main.cpp \
+    check_connection_main.cpp
 SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
@@ -46,6 +51,17 @@ SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/neuron
 
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/calculate_reliability_score_main.h
+SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/calculate_reliability_score_main.cpp
+
+HEADERS += $$VAA3DPATH/v3d_main/neuron_editing/neuron_format_converter.h
+SOURCES	+= $$VAA3DPATH/v3d_main/neuron_editing/neuron_format_converter.cpp
+HEADERS	+= $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.h
+SOURCES	+= $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.cpp
+
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/src/my_surf_objs.h
+SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliability_score/src/my_surf_objs.cpp
 
 win32 {
     contains(QMAKE_HOST.arch, x86_64) {

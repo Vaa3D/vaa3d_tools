@@ -1352,7 +1352,7 @@ char* find_shortest_path_graphimg(unsigned char ***img3d, V3DLONG dim0, V3DLONG 
 				break; //STOP back tracing
 			}
 		}
-   //remove the false path by WangChao 2018/01/05
+      //remove the false path by WangChao 2018/01/05
 	  printf("start remove false path\n");
 
       double false_nodenumber = 0;
@@ -1605,7 +1605,7 @@ char* find_shortest_path_graphpointset(V3DLONG n_all_nodes,
 	}
 	
 	else
-		for (int npath=0; npath<n_end_nodes; npath++) // n path of back tracing end-->start
+        for (int npath=0; npath<n_end_nodes; npath++) // n path of back tracing end-->start n points have n shorting path
 		{
 #define _output_shortest_path_N_
 			printf("the #%d path of back tracing end-->start \n", npath+1);
@@ -1626,6 +1626,8 @@ char* find_shortest_path_graphpointset(V3DLONG n_all_nodes,
 			printf("\n");
 			
 			mUnit.push_back(cc);
+            v3d_msg(QString("lengths is %1").arg(mUnit.size()));
+            mUnit.size();
 			
 			for (k=0;k<n;k++) //at most n edge links
 			{

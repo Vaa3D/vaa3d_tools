@@ -2,23 +2,30 @@
 #include <fstream>
 #include <set>
 
+#include <boost\algorithm\string.hpp>
+
 #include "ImgProcessor.h"
 #include "ImgManager.h"
 
 using namespace std;
 using namespace boost::filesystem;
 
-void ImgManager::imgEntry(QString caseID, imgFormat format)
+void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
+	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
+	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
+
 	if (format == slices)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
-		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID.toStdString());
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID);
 		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
 		{
 			string sliceFullName = it->second;
-			string fileName = it->second.substr(it->second.length() - 9, 9);
+			vector<string> sliceFullNameParse;
+			boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+			string sliceFileName = sliceFullNameParse.back();
 			const char* sliceFullNameC = sliceFullName.c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
 			slicePtr->loadImage(sliceFullNameC);
@@ -28,24 +35,23 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 			long int totalbyteSlice = slicePtr->getTotalBytes();
 			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
+			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(sliceFileName, slice1D));
 
 			slicePtr->~Image4DSimple();
 			operator delete(slicePtr);
 		}
 
-		//for (map<string, myImg1DPtr>::iterator sliceIt = currImgCase.slicePtrs.begin(); sliceIt != currImgCase.slicePtrs.end(); ++sliceIt)
-		//	qDebug() << QString::fromStdString(sliceIt->first) << " " << sliceIt->second[805985];
-
-		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
 	}
-	else if (format == single2D)
+	else if (format == singleCase_singleSlice)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
 		
-		string sliceFullName = *(this->inputSingleCaseSliceFullPaths.begin());
-		string fileName = (*(this->inputSingleCaseSliceFullPaths.begin())).substr((*(this->inputSingleCaseSliceFullPaths.begin())).length() - 9, 9);
+		string sliceFullName = this->inputSingleCaseSingleSliceFullPath;
+		vector<string> sliceFullNameParse;
+		boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+		string sliceFileName = sliceFullNameParse.back();
 		const char* sliceFullNameC = sliceFullName.c_str();
 		Image4DSimple* slicePtr = new Image4DSimple;
 		slicePtr->loadImage(sliceFullNameC);
@@ -55,12 +61,12 @@ void ImgManager::imgEntry(QString caseID, imgFormat format)
 		long int totalbyteSlice = slicePtr->getTotalBytes();
 		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(fileName, slice1D));
+		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(sliceFileName, slice1D));
 
 		slicePtr->~Image4DSimple();
 		operator delete(slicePtr);
-		
-		this->imgDatabase.insert(pair<string, registeredImg>(caseID.toStdString(), currImgCase));
+
+		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
 	}
 }
 
@@ -122,7 +128,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 		V3DLONG totalbytes = inputMask4D->getTotalBytes();
 		unsigned char* input1D = new unsigned char[totalbytes];
 		memcpy(input1D, inputMask4D->getRawData(), totalbytes);
-		ImgProcessor::imageMax(input1D, maskMIP, maskMIP, dims);
+		ImgProcessor::imgMax(input1D, maskMIP, maskMIP, dims);
 		delete inputMask4D;
 	}
 
