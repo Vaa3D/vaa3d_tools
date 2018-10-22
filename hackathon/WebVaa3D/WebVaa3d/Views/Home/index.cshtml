@@ -6,7 +6,8 @@
 <script src="/statics/OrbitControls.js"></script>
 <script src="/statics/FirstPersonControls.js"></script>
 <script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
-<script src="/js/JavaScript.js"></script>
+<script src="~/js/VirtualPyramid.js"></script>
+<script src="~/js/SingleFile.js"></script>
 <script src="~/js/mainstyle.js"></script>
 <script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -44,7 +45,7 @@
                                <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
                                 <ul id="thrid-nave-open">
 
-                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" /></li>
+                                    <li id="open-local"  ><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="readlocalfile()" /></li>
 
                                     <li id="open-server" onclick="getPictures()"><i class="fa  fa-server fa-fw"></i>&nbsp;open from server</li> <!--待完善-->
                                     <li id="open-url"><i class="fa fa-globe fa-fw "></i>&nbsp;open by URL</li>
