@@ -79,6 +79,7 @@ struct topoCharacter
 struct segUnit
 {
 	segUnit() : to_be_deted(false) {};
+	segUnit(const segUnit& sourceSegUnit) {};
 
 	int segID;
 	int head;
@@ -94,6 +95,7 @@ struct segUnit
 struct profiledTree
 {
 	profiledTree() {};
+	profiledTree(const profiledTree& sourceProfiledTree) {};
 	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
 
 	double connAngleThre;
@@ -123,11 +125,14 @@ public:
 	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = tileXY_LENGTH);
 	inline void profiledTreeReInit(profiledTree& inputProfiledTree);
+	
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
 	/***************************************************************/
 
 	/***************** Neuron Struct Processing Functions *****************/
+	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree);
+	
 	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);

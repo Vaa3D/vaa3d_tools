@@ -1392,7 +1392,7 @@ void SegPipe_Controller::nodeIdentify()
 		QString refSWCfullPath = this->refSWCRootPath + "/" + *caseIt;
 		NeuronTree refTree = readSWC_file(refSWCfullPath);
 
-		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree, 50, 20);
+		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree, 20);
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, diffTree);
 	}

@@ -34,20 +34,8 @@ using namespace std;
 profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 {
 	this->tree = inputTree;
-	for (QList<NeuronSWC>::iterator it = this->tree.listNeuron.begin(); it != this->tree.listNeuron.end(); ++it)
-	{
-		string xLabel = to_string(int(it->x / 30));
-		string yLabel = to_string(int(it->y / 30));
-		string zLabel = to_string(int(it->z / (30 / zRATIO)));
-		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
-		if (this->nodeTileMap.find(keyLabel) != this->nodeTileMap.end()) this->nodeTileMap[keyLabel].push_back(it->n);
-		else
-		{
-			vector<int> newSet;
-			newSet.push_back(it->n);
-			this->nodeTileMap.insert(pair<string, vector<int>>(keyLabel, newSet));
-		}
-	}
+	
+	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap);
 
 	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 	
@@ -235,6 +223,14 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 			}
 		}
 		return outputSegTileMap;
+	}
+}
+
+void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree)
+{
+	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+
 	}
 }
 

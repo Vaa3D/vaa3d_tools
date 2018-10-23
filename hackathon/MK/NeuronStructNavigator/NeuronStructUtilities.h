@@ -9,7 +9,7 @@
 *  NeuronStructUtil class is desinged to take NeuronTree struct as the input and as well output NeuronTree struct for most of the methods.
 *  This class intends to operate on the whole neuron struct level, as 'utility' it is called.
 *
-*  Many NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
+*  Most NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
 *  A typical function call would need at least three input arguments:
 *
 *		NeuronStructUtil::func(const NeuronTree& inputTree, NeuronTree& outputTree, other input arguments);
@@ -23,6 +23,8 @@
 #include <string>
 #include <fstream>
 
+#include <boost\container\flat_set.hpp>
+#include <boost\container\flat_map.hpp>
 #include <boost\algorithm\string.hpp>
 
 #include <qlist.h>
@@ -33,6 +35,10 @@
 #include "ImgAnalyzer.h"
 
 using namespace std;
+
+#ifndef NODE_TILE_LENGTH
+#define NODE_TILE_LENGTH 100
+#endif
 
 #ifndef zRATIO // This is the ratio of z resolution to x and y in IVSCC images.
 #define zRATIO (0.28 / 0.1144) 
@@ -46,15 +52,24 @@ public:
 	/***************** Basic Neuron Struct Files Operations *****************/
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
-	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+	
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0);
 	/************************************************************************/
 	
 	/***************** Neuron Struct Profiling Methods *****************/
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, QList<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+	static inline void nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
+
 	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
 	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
@@ -62,7 +77,7 @@ public:
 	/*******************************************************************/
 
 	/***************** Inter-SWC Comparison/Analysis *****************/
-	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
+	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
 	/*****************************************************************/
 
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
@@ -157,6 +172,114 @@ void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& ou
 			it->x = it->x / 2;
 			it->y = it->y / 2;
 			it->z = it->z / 2;
+		}
+	}
+}
+
+inline void NeuronStructUtil::nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(it->n);
+		else
+		{
+			vector<int> newSet;
+			newSet.push_back(it->n);
+			nodeTileMap.insert(pair<string, vector<int>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructUtil::nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructUtil::nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<int>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(it->n);
+		else
+		{
+			vector<int> newSet;
+			newSet.push_back(it->n);
+			nodeTileMap.insert(pair<string, vector<int>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructUtil::nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, QList<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			QList<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructUtil::nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
+		}
+	}
+}
+
+inline void NeuronStructUtil::nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / nodeTileLength));
+		string yLabel = to_string(int(it->y / nodeTileLength));
+		string zLabel = to_string(int(it->z / (nodeTileLength / zRATIO)));
+		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
+		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			nodeTileMap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
 		}
 	}
 }
