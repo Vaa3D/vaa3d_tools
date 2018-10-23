@@ -290,21 +290,22 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                     //
                     Cube cube = (it++)->second;
 
-                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
+//                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
+                    string cubeName = "NULL.tif";
                     unsigned short lengthCubeName = cubeName.length();
 
-                    cout<<"write/link ... "<<dirName<<" / "<<cubeName<<endl;
+                    cout<<"write/link ... "<<dirName<<" / "<<cubeName<<" "<<lengthCubeName<<endl;
 
-                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
-                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
+//                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
+//                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
 
-                    if(zeroblocks.find(cubeIndex) == zeroblocks.end())
-                    {
-                        char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-                        // cout<<"create a zero block: "<<errorMsg<<endl;
+//                    if(zeroblocks.find(cubeIndex) == zeroblocks.end())
+//                    {
+//                        char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
+//                        // cout<<"create a zero block: "<<errorMsg<<endl;
 
-                        zeroblocks.insert(make_pair(cubeIndex, cubeName));
-                    }
+//                        zeroblocks.insert(make_pair(cubeIndex, cubeName));
+//                    }
 
                     //
                     fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
@@ -562,8 +563,7 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
             //
             YXFolder yxfolder;
 
-            char dirName[100]; // 21
-            char fileName[100]; // 25
+            // char dirName[100]; // 21
 
             //
             fread(&(yxfolder.height), sizeof(unsigned int), 1, file);
@@ -574,7 +574,10 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
             fread(&(yxfolder.offset_V), sizeof(int), 1, file);
             fread(&(yxfolder.offset_H), sizeof(int), 1, file);
             fread(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
-            fread(&(dirName), yxfolder.lengthDirName, 1, file);
+
+            string dirName(yxfolder.lengthDirName, '\0');
+
+            fread(&(dirName[0]), sizeof(char), yxfolder.lengthDirName, file);
 
             yxfolder.dirName = dirName;
 
@@ -594,17 +597,20 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
                 // printf("DIR_NAME: %s\n",yxfolder.dirName.c_str());
             }
 
-            cout<<"... ... yxfolder.ncubes "<<yxfolder.ncubes<<endl;
-
             //
             for(int j=0; j<yxfolder.ncubes; j++)
             {
                 //
                 Cube cube;
 
+                // char fileName[100]; // 25
+
                 //
                 fread(&(yxfolder.lengthFileName), sizeof(unsigned short), 1, file);
-                fread(&(fileName), yxfolder.lengthFileName, 1, file);
+
+                string fileName(yxfolder.lengthFileName, '\0');
+
+                fread(&(fileName[0]), sizeof(char), yxfolder.lengthFileName, file);
                 fread(&(cube.depth), sizeof(unsigned int), 1, file);
                 fread(&(cube.offset_D), sizeof(int), 1, file);
 
