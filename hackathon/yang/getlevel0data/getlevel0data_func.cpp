@@ -183,6 +183,16 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 //    layer.cols = 1;
 //    layer.rows = nrows;
 
+
+    //
+    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
+    while(iter != layer.yxfolders.end())
+    {
+        YXFolder yxfolder = (iter++)->second;
+        cout<<"yxfolder.ncubes "<<yxfolder.ncubes<<endl;
+        layer.yxfolders[yxfolder.dirName].ncubes = yxfolder.cubes.size();
+    }
+
     //
     string mdatabin = outputdir + "/mdata.bin";
 
@@ -219,12 +229,29 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
         string dirName = "zeroblocks/zeroblock"; //
 
+        cout<<"layer.yxfolders.size "<<layer.yxfolders.size()<<endl;
+
         //
+        int count = 0;
+        int nyxfolders = layer.yxfolders.size();
         map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
         while(iter != layer.yxfolders.end())
         {
+            cout<<"testing count "<<count<<endl;
+
+            //
+            if(count++ >= nyxfolders)
+            {
+                iter++;
+                continue;
+            }
+
+            // cout<<"count "<<count<<" >= "<<nyxfolders<<endl;
+
             //
             YXFolder yxfolder = (iter++)->second;
+
+            // cout<<"check ncubes ... "<<yxfolder.ncubes<<" at "<<count<<endl;
 
             cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
 
@@ -239,7 +266,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
                 fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-                fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
+                fwrite(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
                 fwrite(&(color), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
                 fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
@@ -247,21 +274,34 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(const_cast<char *>(dirName.c_str()), yxfolder.lengthDirName, 1, file);
 
                 //
+                int countCube = 0;
+                int ncubes = yxfolder.cubes.size();
                 map<int, Cube>::iterator it = yxfolder.cubes.begin();
                 while(it != yxfolder.cubes.end())
                 {
+                    if(countCube++ >= ncubes)
+                    {
+                        iter++;
+                        continue;
+                    }
+
+                    // cout<<"countCube "<<countCube<<" >= "<<ncubes<<endl;
+
                     //
                     Cube cube = (it++)->second;
 
                     string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
                     unsigned short lengthCubeName = cubeName.length();
+
+                    cout<<"write/link ... "<<dirName<<" / "<<cubeName<<endl;
+
                     long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
                     string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
 
                     if(zeroblocks.find(cubeIndex) == zeroblocks.end())
                     {
                         char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-                        cout<<"create a zero block "<<errorMsg<<endl;
+                        // cout<<"create a zero block: "<<errorMsg<<endl;
 
                         zeroblocks.insert(make_pair(cubeIndex, cubeName));
                     }
@@ -283,7 +323,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
                 fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-                fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
+                fwrite(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
                 fwrite(&(color), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
                 fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
@@ -291,9 +331,20 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(const_cast<char *>(yxfolder.dirName.c_str()), yxfolder.lengthDirName, 1, file);
 
                 //
+                int countCube = 0;
+                int ncubes = yxfolder.cubes.size();
                 map<int, Cube>::iterator it = yxfolder.cubes.begin();
                 while(it != yxfolder.cubes.end())
                 {
+                    //
+                    if(countCube++ >= ncubes)
+                    {
+                        iter++;
+                        continue;
+                    }
+
+                    // cout<<"countCube "<<countCube<<" >= "<<ncubes<<endl;
+
                     //
                     Cube cube = (it++)->second;
 
@@ -309,7 +360,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                         if(zeroblocks.find(cubeIndex) == zeroblocks.end())
                         {
                             char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-                            cout<<"create a zero block "<<errorMsg<<endl;
+                            // cout<<"create a zero block "<<errorMsg<<endl;
                         }
 
                         //
@@ -511,14 +562,14 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
             //
             YXFolder yxfolder;
 
-            char dirName[21];
-            char fileName[25];
+            char dirName[100]; // 21
+            char fileName[100]; // 25
 
             //
             fread(&(yxfolder.height), sizeof(unsigned int), 1, file);
             fread(&(yxfolder.width), sizeof(unsigned int), 1, file);
             fread(&(layer.dim_D), sizeof(unsigned int), 1, file);
-            fread(&layer.ncubes, sizeof(unsigned int), 1, file);
+            fread(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
             fread(&(color), sizeof(unsigned int), 1, file);
             fread(&(yxfolder.offset_V), sizeof(int), 1, file);
             fread(&(yxfolder.offset_H), sizeof(int), 1, file);
@@ -534,7 +585,7 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
                 cout<<"HEIGHT "<<yxfolder.height<<endl;
                 cout<<"WIDTH "<<yxfolder.width<<endl;
                 cout<<"DEPTH "<<layer.dim_D<<endl;
-                cout<<"N_BLOCKS "<<layer.ncubes<<endl;
+                cout<<"N_BLOCKS "<<yxfolder.ncubes<<endl;
                 cout<<"N_CHANS "<<color<<endl;
                 cout<<"ABS_V "<<yxfolder.offset_V<<endl;
                 cout<<"ABS_H "<<yxfolder.offset_H<<endl;
@@ -543,8 +594,10 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
                 // printf("DIR_NAME: %s\n",yxfolder.dirName.c_str());
             }
 
+            cout<<"... ... yxfolder.ncubes "<<yxfolder.ncubes<<endl;
+
             //
-            for(int j=0; j<layer.ncubes; j++)
+            for(int j=0; j<yxfolder.ncubes; j++)
             {
                 //
                 Cube cube;
@@ -1220,7 +1273,7 @@ bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     float ratio = pow(2.0, scale);
 
     //
-    // QueryAndCopy qc(inputdir.toStdString());
+    // QueryAndCopy qc(outputdir.toStdString()); // test mdata.bin writing
     QueryAndCopy qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
 
     //
