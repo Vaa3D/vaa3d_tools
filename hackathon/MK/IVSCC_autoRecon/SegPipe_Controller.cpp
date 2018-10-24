@@ -1468,6 +1468,21 @@ void SegPipe_Controller::swcSubtraction(int type)
 	}
 }
 
+void SegPipe_Controller::swcUpSample()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		profiledTree inputProfiledTree(inputTree);
+		profiledTree outputProfiledTree;
+		NeuronStructExplorer::treeUpSample(inputProfiledTree, outputProfiledTree);
+
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputProfiledTree.tree);
+	}
+}
+
 void SegPipe_Controller::segElongation()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)

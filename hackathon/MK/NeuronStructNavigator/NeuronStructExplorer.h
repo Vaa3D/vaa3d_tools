@@ -79,7 +79,7 @@ struct topoCharacter
 struct segUnit
 {
 	segUnit() : to_be_deted(false) {};
-	segUnit(const segUnit& sourceSegUnit) {};
+	//segUnit(const segUnit& sourceSegUnit) {};
 
 	int segID;
 	int head;
@@ -95,8 +95,10 @@ struct segUnit
 struct profiledTree
 {
 	profiledTree() {};
-	profiledTree(const profiledTree& sourceProfiledTree) {};
 	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
+
+	//profiledTree(const profiledTree& sourceProfiledTree) {};
+
 
 	double connAngleThre;
 	NeuronTree tree;
@@ -131,7 +133,7 @@ public:
 	/***************************************************************/
 
 	/***************** Neuron Struct Processing Functions *****************/
-	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree);
+	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
 	
 	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);

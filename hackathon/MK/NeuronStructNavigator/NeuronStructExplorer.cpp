@@ -226,11 +226,61 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 	}
 }
 
-void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree)
+void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength)
 {
+	size_t maxNodeID = 0;
+	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
+		if (it->n > maxNodeID) maxNodeID = it->n;
+	
 	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
 	{
+		QList<NeuronSWC> newSegNodes;
+		map<int, vector<QList<NeuronSWC>>> interpolatedNodeMap;
+		for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			vector<size_t> childLocs = segIt->second.seg_childLocMap.at(nodeIt->n);
+			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
+			{
+				float dist = sqrt((segIt->second.nodes.at(*childLocIt).x - nodeIt->x) * (segIt->second.nodes.at(*childLocIt).x - nodeIt->x) +
+								  (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) * (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) +
+								  (segIt->second.nodes.at(*childLocIt).z - nodeIt->z) * (segIt->second.nodes.at(*childLocIt).z - nodeIt->z));
+				int intervals = int(dist / intervalLength) - 1;
 
+				QList<NeuronSWC> interpolatedNodes;
+				for (int i = 1; i <= intervals; ++i)
+				{
+					NeuronSWC newNode;
+					newNode.x = nodeIt->x + ((segIt->second.nodes.at(*childLocIt).x - nodeIt->x) / float(intervals)) * float(i);
+					newNode.y = nodeIt->y + ((segIt->second.nodes.at(*childLocIt).y - nodeIt->y) / float(intervals)) * float(i);
+					newNode.z = nodeIt->z + ((segIt->second.nodes.at(*childLocIt).z - nodeIt->z) / float(intervals)) * float(i);
+					newNode.type = nodeIt->type;
+					++maxNodeID;
+					newNode.n = maxNodeID;
+					newNode.parent = maxNodeID - 1;
+					interpolatedNodes.push_back(newNode);
+				}
+				interpolatedNodes.push_back(segIt->second.nodes.at(*childLocIt));
+				if (interpolatedNodes.size() >= 2)
+				{
+					interpolatedNodes.back().parent = (interpolatedNodes.end() - 2)->n;
+					interpolatedNodes.begin()->parent = nodeIt->n;
+				}
+				else interpolatedNodes.back().parent = nodeIt->n;
+
+				interpolatedNodeMap[nodeIt->n].push_back(interpolatedNodes);
+			}
+		}
+
+		for (map<int, vector<QList<NeuronSWC>>>::iterator mapIt = interpolatedNodeMap.begin(); mapIt != interpolatedNodeMap.end(); ++mapIt)
+		{
+			for (vector<QList<NeuronSWC>>::iterator qlistIt = mapIt->second.begin(); qlistIt != mapIt->second.end(); ++qlistIt) newSegNodes.append(*qlistIt);
+			newSegNodes.push_front(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head)));
+		}
+
+		segUnit newSegUnit;
+		newSegUnit.nodes = newSegNodes;
+		outputProfiledTree.segs.insert(pair<int, segUnit>(segIt->first, newSegUnit));
+		outputProfiledTree.tree.listNeuron.append(newSegUnit.nodes);
 	}
 }
 

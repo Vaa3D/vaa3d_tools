@@ -96,6 +96,7 @@ public:
 	void swcSeparate(QString outputRoot2);
 	void swcTypeSeparate(int type);
 	void swcSubtraction(int type);
+	void swcUpSample();
 	void cleanUpzFor2Dcentroids();
 
 private:

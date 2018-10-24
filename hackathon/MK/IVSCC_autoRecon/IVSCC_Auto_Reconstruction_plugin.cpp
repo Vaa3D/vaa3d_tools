@@ -230,6 +230,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		segPipePtr->swcSubtraction(type);
 	}
+	else if (func_name == tr("swcUpSample")) segPipePtr->swcUpSample();
 	else if (func_name == tr("cleanUp2DcentroidZ")) segPipePtr->cleanUpzFor2Dcentroids();
 	else if (func_name == tr("segElongation")) segPipePtr->segElongation();
 	else if (func_name == tr("segTerminalize")) segPipePtr->segTerminalize();
