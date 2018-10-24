@@ -475,7 +475,7 @@ int main(int argc, char* argv[])
 		//const char* targetSWCNameC = argv[2];
 		//string targetSWCName(targetSWCNameC);
 		//QString targetSWCNameQ = QString::fromStdString(targetSWCName);
-		QString targetSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569.swc";
+		QString targetSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569.swc";
 		NeuronTree inputTree = readSWC_file(targetSWCNameQ);
 
 		profiledTree inputProfiledTree(inputTree);
@@ -486,7 +486,7 @@ int main(int argc, char* argv[])
 		//const char* saveSWCNameC = argv[3];
 		//string saveSWCName(saveSWCNameC);
 		//QString saveSWCNameQ = QString::fromStdString(saveSWCName);
-		QString saveSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test_upsampled.swc";
+		QString saveSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test_upsampled.swc";
 		writeSWC_file(saveSWCNameQ, outputProfiledTree.tree);
 	}
 

@@ -244,7 +244,7 @@ void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, p
 				float dist = sqrt((segIt->second.nodes.at(*childLocIt).x - nodeIt->x) * (segIt->second.nodes.at(*childLocIt).x - nodeIt->x) +
 								  (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) * (segIt->second.nodes.at(*childLocIt).y - nodeIt->y) +
 								  (segIt->second.nodes.at(*childLocIt).z - nodeIt->z) * (segIt->second.nodes.at(*childLocIt).z - nodeIt->z));
-				int intervals = int(dist / intervalLength) - 1;
+				int intervals = int(floorf(dist / intervalLength) - 1);
 
 				QList<NeuronSWC> interpolatedNodes;
 				for (int i = 1; i <= intervals; ++i)
@@ -265,7 +265,6 @@ void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, p
 					interpolatedNodes.back().parent = (interpolatedNodes.end() - 2)->n;
 					interpolatedNodes.begin()->parent = nodeIt->n;
 				}
-				else interpolatedNodes.back().parent = nodeIt->n;
 
 				interpolatedNodeMap[nodeIt->n].push_back(interpolatedNodes);
 			}
@@ -273,8 +272,14 @@ void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, p
 
 		for (map<int, vector<QList<NeuronSWC>>>::iterator mapIt = interpolatedNodeMap.begin(); mapIt != interpolatedNodeMap.end(); ++mapIt)
 		{
-			for (vector<QList<NeuronSWC>>::iterator qlistIt = mapIt->second.begin(); qlistIt != mapIt->second.end(); ++qlistIt) newSegNodes.append(*qlistIt);
-			newSegNodes.push_front(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head)));
+			for (vector<QList<NeuronSWC>>::iterator qlistIt = mapIt->second.begin(); qlistIt != mapIt->second.end(); ++qlistIt)
+			{
+				if ((*qlistIt).size() >= 2)
+				{
+					newSegNodes.append(*qlistIt);
+					newSegNodes.push_front(segIt->second.nodes.at(segIt->second.seg_nodeLocMap.at(segIt->second.head)));
+				}
+			}		
 		}
 
 		segUnit newSegUnit;
