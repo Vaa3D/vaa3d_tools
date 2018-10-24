@@ -282,6 +282,15 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     // 1.3 Match axon and lpa
     QList<int> lpa_id = match_axon_and_lpa(axon, lpa);
     lpa = get_subtree_by_name(axon, lpa_id);
+    QList<double> path_distance;
+    path_distance.append(0);
+    double cur_distance = 0;
+    for(int i=1; i<lpa.listNeuron.size(); i++){
+        cur_distance += computeDist2(lpa.listNeuron.at(i-1), lpa.listNeuron.at(i), 0.2,0.2,1);
+        path_distance.append(cur_distance);
+    }
+    double total_path_distance = cur_distance;
+    qDebug()<<"Long projection axon path distance:\t"<<total_path_distance;
 
     QList<bool> is_proximal;
     QList<bool> is_distal;
@@ -289,21 +298,24 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     NeuronTree distal_axon;
     for(int i=0; i<lpa.listNeuron.size();i++){
         NeuronSWC node=lpa.listNeuron.at(i);
-        if((i*1.0/lpa.listNeuron.size())<0.2){
+        if((path_distance.at(i)/total_path_distance)<0.2){
             is_proximal.append(1);
+//            lpa.listNeuron[i].type=0;
             proximal_axon.listNeuron.append(node);
         }
         else{
             is_proximal.append(0);
         }
-        if((i*1.0/lpa.listNeuron.size())>0.8){
+        if((path_distance.at(i)/total_path_distance)>0.7){
             is_distal.append(1);
+//            lpa.listNeuron[i].type=1;
             distal_axon.listNeuron.append(node);
         }
         else{
             is_distal.append(0);
         }
     }
+//    export_listNeuron_2swc(lpa.listNeuron, "proximal_distal.swc");
 
     // 2. label non-long-projection axon braches
     // 2.1 default mode: retype axon clusters as proximal or distal

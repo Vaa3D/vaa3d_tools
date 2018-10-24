@@ -370,6 +370,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     printf("\tRemoving duplicates\n");
     // Maybe not the best solution. Use it for now.
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
+    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".dedup.swc"));
 
     //2.1 Resample
     printf("\tResampling\n");
@@ -379,6 +380,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }else{
         printf("Skip Resampling\n");
     }
+    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".resample.swc"));
 
     //2.2 Prune
     printf("\tPruning short branches\n");
@@ -388,6 +390,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         return 1;
     }
     nt.deepCopy(cur_nt);
+    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
 
     //2.3 Short distance connection
     cur_nt.deepCopy(nt);
@@ -398,6 +401,8 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".short_connection.apo", 255,0,0));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".short_connection.apo", 0,0,0).size()/2<<count_root(nt);
+    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".short_connection.swc"));
+
 
     //2.4 Connect to soma
     if ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo")))){
@@ -406,7 +411,8 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
         S_list[0].r = 1;
         cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
-        nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, return_maintree));
+//        nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, return_maintree));
+        nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
         // Keep track of new_edges
         new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
         // Keep track of nodes
@@ -429,6 +435,12 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     markers.append(get_new_marker(infileLabel+".long_connection.apo", 0,0,255));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".long_connection.apo", 0,0,0).size()/2<<count_root(nt);
     nt.deepCopy(color_lost_branch(nt));
+    if(return_maintree){
+        int soma = 0;
+        nt.deepCopy(single_tree(nt, soma));
+    }
+    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".long_connection.swc"));
+
 
     //2.6 Align axis
     cur_nt.listNeuron = nt.listNeuron;
