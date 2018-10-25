@@ -405,6 +405,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
 
     //2.4 Connect to soma
+    bool connect_soma_performed = 1;
     if ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo")))){
         printf("\tConnecting to soma\n");
         QList<CellAPO> soma_markers = readAPO_file(infileLabel + QString(".apo"));
@@ -423,6 +424,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         // If the input swc is already connected to soma, then the apo file is not required
         // and one can skip the soma connecting step.
         printf("\tSkip connecting to soma\n");
+        connect_soma_performed=0;
     }
 
     // 2.5 Long connection
@@ -434,7 +436,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".long_connection.apo", 0,0,255));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".long_connection.apo", 0,0,0).size()/2<<count_root(nt);
-    nt.deepCopy(color_lost_branch(nt));
+    if(connect_soma_performed){
+        nt.deepCopy(color_lost_branch(nt));
+    }
     if(return_maintree){
         int soma = 0;
         nt.deepCopy(single_tree(nt, soma));
