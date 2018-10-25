@@ -13,7 +13,6 @@
 #include "v3d_message.h"
 #include <iostream>
 #include "basic_4dimage.h"
-#include "algorithm"
 #include <map>
 #include <cmath>
 #include <climits>
@@ -21,6 +20,7 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
+#include <cstring>
 #include <tuple>
 #include <stack>
 #include <fstream>
@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include "tiffio.h"
+// #include "tiffio.h"
 
 using namespace std;
 
@@ -39,7 +39,7 @@ using namespace std;
 enum  axis { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0 };
 
 //
-char *initTiff3DFile(char *filename, int sz0, int  sz1, int  sz2, int  sz3, int datatype);
+// char *initTiff3DFile(char *filename, int sz0, int  sz1, int  sz2, int  sz3, int datatype);
 
 // cube
 class Cube
@@ -143,7 +143,7 @@ public:
     int readSWC(string filename, float ratio);
     int readMetaData(string filename, bool mDataDebug=false);
 
-    int copyblock(string srcFile, string dstFile);
+    int copyblock(QString srcFile, QString dstFile);
     int makeDir(string dirname);
 
     int query(float x, float y, float z);
