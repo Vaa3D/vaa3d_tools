@@ -38,25 +38,25 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
     // 2. center and crop swc
     // 2.1 center swc and decide which nodes are within certain distance
     NeuronSWC soma_node = nt.listNeuron.at(soma);
-    if(center){
-        xshift -= soma_node.x;
-        yshift -= soma_node.y;
-        zshift -= soma_node.z;
-    }
-    NeuronSWC new_soma_node = nt.listNeuron.at(soma);
-    new_soma_node.x += xshift;
-    new_soma_node.y += yshift;
-    new_soma_node.z += zshift;
+//    if(center){
+//        xshift -= soma_node.x;
+//        yshift -= soma_node.y;
+//        zshift -= soma_node.z;
+//    }
+//    NeuronSWC new_soma_node = nt.listNeuron.at(soma);
+//    new_soma_node.x += xshift;
+//    new_soma_node.y += yshift;
+//    new_soma_node.z += zshift;
 
     QList <int> inside_nlist;
     for(int i=0; i<nt.listNeuron.size(); i++){
-        nt.listNeuron[i].x += xshift;
-        nt.listNeuron[i].y += yshift;
-        nt.listNeuron[i].z += zshift;
+        nt.listNeuron[i].x -= soma_node.x;
+        nt.listNeuron[i].y -= soma_node.y;
+        nt.listNeuron[i].z -= soma_node.z;
         NeuronSWC node = nt.listNeuron.at(i);
         if(radius<0){inside_nlist.append(node.n);}
         else{
-            if(computeDist2(node, new_soma_node, 1, 1, 5)<radius){
+            if(computeDist2(node, soma_node, 0.2, 0.2, 1)<radius){
                 inside_nlist.append(node.n);
             }
         }
@@ -88,7 +88,6 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));
     }
 
-
     // 3. resample
     if (resample_step>0){
         printf("\tResampling\n");
@@ -104,6 +103,18 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
     }
     else{
         printf("\tSkip PCA alignment\n");
+    }
+
+    soma_node = nt.listNeuron.at(0);
+    if(center){
+        xshift -= soma_node.x;
+        yshift -= soma_node.y;
+        zshift -= soma_node.z;
+    }
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        nt.listNeuron[i].x += xshift;
+        nt.listNeuron[i].y += yshift;
+        nt.listNeuron[i].z += zshift;
     }
 
     // 4. save output

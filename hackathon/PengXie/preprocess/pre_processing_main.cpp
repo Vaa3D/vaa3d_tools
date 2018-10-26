@@ -426,6 +426,8 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tSkip connecting to soma\n");
         connect_soma_performed=0;
     }
+    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));
+
 
     // 2.5 Long connection
     printf("\tLong distance connection\n");
