@@ -247,7 +247,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
         string dirName = "zeroblocks/zeroblock"; //
 
-        cout<<"layer.yxfolders.size "<<layer.yxfolders.size()<<endl;
+        // cout<<"layer.yxfolders.size "<<layer.yxfolders.size()<<endl;
 
         //
         int count = 0;
@@ -255,7 +255,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
         map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
         while(iter != layer.yxfolders.end())
         {
-            cout<<"testing count "<<count<<endl;
+            cout<<"testing count "<<count<<" of "<<nyxfolders<<endl;
 
             //
             if(count++ >= nyxfolders)
@@ -271,14 +271,14 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
             // cout<<"check ncubes ... "<<yxfolder.ncubes<<" at "<<count<<endl;
 
-            cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
+            // cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
 
             if(yxfolder.toBeCopied==false)
             {
                 // continue;
 
                 // trick: create a "zeroblocks" folder holds blocks with zeros
-                createDir(outputdir, dirName);
+                // createDir(outputdir, dirName);
 
                 //
                 fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
@@ -312,7 +312,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                     string cubeName = "NULL.tif";
                     unsigned short lengthCubeName = cubeName.length();
 
-                    cout<<"write/link ... "<<dirName<<" / "<<cubeName<<" "<<lengthCubeName<<endl;
+                    // cout<<"write/link ... "<<dirName<<" / "<<cubeName<<" "<<lengthCubeName<<endl;
 
 //                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
 //                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
@@ -334,7 +334,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
             }
             else
             {
-                cout<<"write ... "<<yxfolder.dirName<<endl;
+                // cout<<"write ... "<<yxfolder.dirName<<endl;
 
                 createDir(outputdir, yxfolder.dirName);
 
