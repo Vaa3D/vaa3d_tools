@@ -181,7 +181,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 
 		NeuronTree somaTreePartial;
 		somaTreePartial.listNeuron = path1;
-		QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
+		QString name = this->outputPath + "/" + QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 		writeSWC_file(name, somaTreePartial);
 		return path1;
 	}
@@ -194,7 +194,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 			
 			NeuronTree somaTreePartial;
 			somaTreePartial.listNeuron = path;
-			QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
+			QString name = this->outputPath + "/" + QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 			writeSWC_file(name, somaTreePartial);
 			return path;
 		}
@@ -205,7 +205,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 			
 			NeuronTree somaTreePartial;
 			somaTreePartial.listNeuron = path;
-			QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
+			QString name = this->outputPath + "/" + QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 			writeSWC_file(name, somaTreePartial);
 			return path;
 		}
@@ -592,11 +592,11 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 	QVector< QVector<V3DLONG> > segmentChildTable = mkChildTableScratch(segment);
 	nodeCheck* nodePathScreen = new nodeCheck[segSize];
 
-	for (int i=0; i<segSize; ++i)
+	for (int i = 0; i < segSize; ++i)
 	{
 		double distCheck;
-		double distance1 = (head.x-segment[i].x)*(head.x-segment[i].x) + (head.y-segment[i].y)*(head.y-segment[i].y) + (head.z-segment[i].z)*(head.z-segment[i].z);
-		double distance2 = (tail.x-segment[i].x)*(tail.x-segment[i].x) + (tail.y-segment[i].y)*(tail.y-segment[i].y) + (tail.z-segment[i].z)*(tail.z-segment[i].z);
+		double distance1 = (head.x - segment[i].x) * (head.x - segment[i].x) + (head.y - segment[i].y) * (head.y - segment[i].y) + (head.z - segment[i].z) * (head.z - segment[i].z);
+		double distance2 = (tail.x - segment[i].x) * (tail.x - segment[i].x) + (tail.y - segment[i].y) * (tail.y - segment[i].y) + (tail.z - segment[i].z) * (tail.z - segment[i].z);
 		double nodeNorm[3];
 		nodeCheck nodeScanned;
 
@@ -604,17 +604,17 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 		{
 			nodeScanned.closerToHead = false;
 			distCheck = sqrt(distance2);
-			nodeNorm[0] = (segment[i].x-tail.x) / distCheck;
-			nodeNorm[1] = (segment[i].y-tail.y) / distCheck;
-			nodeNorm[2] = (segment[i].z-tail.z) / distCheck;
+			nodeNorm[0] = (segment[i].x - tail.x) / distCheck;
+			nodeNorm[1] = (segment[i].y - tail.y) / distCheck;
+			nodeNorm[2] = (segment[i].z - tail.z) / distCheck;
 		}
 		else 
 		{
 			nodeScanned.closerToHead = true;
 			distCheck = sqrt(distance1);
-			nodeNorm[0] = (segment[i].x-head.x) / distCheck;
-			nodeNorm[1] = (segment[i].y-head.y) / distCheck;
-			nodeNorm[2] = (segment[i].z-head.z) / distCheck;
+			nodeNorm[0] = (segment[i].x - head.x) / distCheck;
+			nodeNorm[1] = (segment[i].y - head.y) / distCheck;
+			nodeNorm[2] = (segment[i].z - head.z) / distCheck;
 		}
 						
 		nodeScanned.node = segment[i];
@@ -627,22 +627,22 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 		nodePathScreen[i] = nodeScanned;
 	}
 
-	for (int i=1; i<segSize-1; ++i)
+	for (int i = 1; i < segSize-1; ++i)
 	{
 		//cout << nodePathScreen[i].somaBranchNorm[0] << " " << nodePathScreen[i].somaBranchNorm[1] << " " << nodePathScreen[i].somaBranchNorm[2] << endl;
 		
 		//nodeCheck child = nodePathScreen[nodePathScreen[i].childLocOnPath];
 		if (nodePathScreen[i].closerToHead == true)
 		{
-			nodePathScreen[i].dirIndex = (nodePathScreen[i+1].node.x-nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] + 
-										 (nodePathScreen[i+1].node.y-nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
-										 (nodePathScreen[i+1].node.z-nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
+			nodePathScreen[i].dirIndex = (nodePathScreen[i + 1].node.x - nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] +
+										 (nodePathScreen[i + 1].node.y - nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
+										 (nodePathScreen[i + 1].node.z - nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
 		}
 		else if (nodePathScreen[i].closerToHead == false)
 		{
-			nodePathScreen[i].dirIndex = (nodePathScreen[i-1].node.x-nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] + 
-										 (nodePathScreen[i-1].node.y-nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
-										 (nodePathScreen[i-1].node.z-nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
+			nodePathScreen[i].dirIndex = (nodePathScreen[i - 1].node.x - nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] +
+										 (nodePathScreen[i - 1].node.y - nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
+										 (nodePathScreen[i - 1].node.z - nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
 		}
 		//cout << nodePathScreen[i].dirIndex << " ";
 	}

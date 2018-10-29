@@ -60,6 +60,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		QString swc_circle = inparas.at(0);
 		QString inputSWCfile = infiles.at(0);
 		QString inputSomas = infiles.at(1);
+		this->outputPath = outfiles[0];
 
 		if (swc_circle == "y") this->circle = true;
 		else if (swc_circle == "n")	this->circle = false;
@@ -67,7 +68,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		vector<long int> targetSoma;
 		if (inparas.size() > 1)
 		{
-			for (size_t i=1; i<inparas.size(); ++i)
+			for (size_t i = 1; i < inparas.size(); ++i)
 			{
 				QString inputSomaID = inparas.at(i);
 				targetSoma.push_back(inputSomaID.toLong());
@@ -115,7 +116,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		getMergedPath(this->somaPath, this->locLabel, this->paths, this->inputSWCTree); // put individual soma path together
 		NeuronTree pathTree;
 		pathTree.listNeuron = this->somaPath;
-		QString pathTreeFileName = "somasTree.swc";
+		QString pathTreeFileName = this->outputPath + "/somasTree.swc";
 		writeSWC_file(pathTreeFileName, pathTree);
 		// -------- END of [Identify the path of any pair of given soma locations and merge the paths] --------
 		
@@ -184,7 +185,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout << endl << endl;
 		NeuronTree brokenWholeTree;
 		brokenWholeTree.listNeuron = this->brokenInputSWC;
-		QString brokenName = "brokenWholeSWC.swc";
+		QString brokenName = this->outputPath + "/brokenWholeSWC.swc";
 		writeSWC_file(brokenName, brokenWholeTree);
 
 		QList<NeuronSWC> extracted;
@@ -197,7 +198,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			extracted = swcTrace(this->brokenInputSWC, ID, startNode);
 			NeuronTree extTree;
 			extTree.listNeuron = extracted;
-			QString name = "extracted_" + QString::number(ID) + ".swc";
+			QString name = this->outputPath + "/extracted_" + QString::number(ID) + ".swc";
 			writeSWC_file(name, extTree);
 			extracted.clear();
 		}
