@@ -59,12 +59,39 @@ void scale(QString inputfile, QString outputlabel, double xscale, double yscale,
         outformat = QString("swc");
         QString outputfile = outputlabel + QString(".")+ outformat;
         NeuronTree nt = readSWC_file(inputfile);
+        QList<double> min_XYZ;
+        QList<double> max_XYZ;
         for(int i=0;i<nt.listNeuron.size(); i++){
+            NeuronSWC node = nt.listNeuron.at(i);
+            if(i==0){
+                min_XYZ.append(node.x);
+                min_XYZ.append(node.y);
+                min_XYZ.append(node.z);
+                max_XYZ.append(node.x);
+                max_XYZ.append(node.y);
+                max_XYZ.append(node.z);
+            }
+            else{
+                min_XYZ[0] = (min_XYZ[0]<node.x) ? min_XYZ[0] : node.x;
+                min_XYZ[1] = (min_XYZ[1]<node.y) ? min_XYZ[1] : node.y;
+                min_XYZ[2] = (min_XYZ[2]<node.z) ? min_XYZ[2] : node.z;
+                max_XYZ[0] = (max_XYZ[0]>node.x) ? max_XYZ[0] : node.x;
+                max_XYZ[1] = (max_XYZ[1]>node.y) ? max_XYZ[1] : node.y;
+                max_XYZ[2] = (max_XYZ[2]>node.z) ? max_XYZ[2] : node.z;
+            }
             nt.listNeuron[i].x *= xscale;
             nt.listNeuron[i].y *= yscale;
             nt.listNeuron[i].z *= zscale;
         }
         writeSWC_file(outputfile, nt);
+        printf("Raw\tMin\tMax\n");
+        printf("X:\t%f\t%f\n", min_XYZ[0], max_XYZ[0]);
+        printf("Y:\t%f\t%f\n", min_XYZ[1], max_XYZ[1]);
+        printf("Z:\t%f\t%f\n", min_XYZ[2], max_XYZ[2]);
+        printf("Scaled\tMin\tMax\n");
+        printf("X:\t%f\t%f\n", min_XYZ[0]*xscale, max_XYZ[0]*xscale);
+        printf("Y:\t%f\t%f\n", min_XYZ[1]*yscale, max_XYZ[1]*yscale);
+        printf("Z:\t%f\t%f\n", min_XYZ[2]*zscale, max_XYZ[2]*zscale);
     }
     else{
         fprintf(stderr, "input file format is wrong");
