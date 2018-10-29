@@ -12,4 +12,4 @@ SOURCES	+= checked_mark_plugin.cpp \
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(checked_mark)
-DESTDIR	= $$VAA3DPATH/bin/plugins/checked_mark/
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_tracing/checked_mark/

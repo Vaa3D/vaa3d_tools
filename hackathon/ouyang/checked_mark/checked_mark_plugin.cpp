@@ -13,7 +13,7 @@ Q_EXPORT_PLUGIN2(checked_mark, checked_mark_backup);
 QStringList checked_mark_backup::menulist() const
 {
 	return QStringList() 
-        <<tr("checked_mark")
+        <<tr("checked_to_mark")
         <<tr("checked_return")
 		<<tr("about");
 }
@@ -28,7 +28,7 @@ QStringList checked_mark_backup::funclist() const
 
 void checked_mark_backup::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("checked_mark"))
+    if (menu_name == tr("checked_to_mark"))
 	{
         checked_mark_type(callback,parent);
 	}

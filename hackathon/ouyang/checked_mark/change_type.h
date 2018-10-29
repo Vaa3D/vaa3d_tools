@@ -15,6 +15,7 @@ public:
     QList<NeuronSWC> backup;
     QList<NeuronSWC> backupelse;
     QList<NeuronSWC> backup_current_type0,current_block_all,current_block_all_else;
+    vector<double> all_current_xtype0,all_current_ytype0,all_current_ztype0;//all backup x,y,z of type0
     vector<double> all_current_x,all_current_y,all_current_z;//all backup x,y,z
     vector<int> all_current_type;
 };

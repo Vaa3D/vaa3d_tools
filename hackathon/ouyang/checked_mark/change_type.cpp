@@ -18,7 +18,7 @@ void checked_mark_type(V3DPluginCallback2 &callback, QWidget *parent)
     const Image4DSimple *curr_block=callback.getImageTeraFly();
     NeuronTree nt=callback.getSWCTeraFly();
     int swcnum=nt.listNeuron.size();
-    v3d_msg(QString("There are totally [%1] swc nodes in your neuron!").arg(swcnum));
+    //v3d_msg(QString("There are totally [%1] swc nodes in your neuron!").arg(swcnum));
     NeuronTree result;
     QList<NeuronSWC> neuron = nt.listNeuron;
     //for (int i=0;i<100;i++)
@@ -49,6 +49,7 @@ void checked_mark_type(V3DPluginCallback2 &callback, QWidget *parent)
            double x_ie,y_ie,z_ie;
            double x_ae,y_ae,z_ae,x_e,y_e,z_e;
            int swc_num_of_block=0;
+           int detect_have_type0=0;
            x_ie=curr_block->getOriginX();
            x_e=curr_block->getRezX();
            x_ae=x_e+x_ie-1;
@@ -60,6 +61,11 @@ void checked_mark_type(V3DPluginCallback2 &callback, QWidget *parent)
            z_ae=x_e+z_ie-1;
            for (int i=0;i<neuron.size();i++)
            {
+               if(x_ie==1 && y_ie==1)
+               {
+                  v3d_msg("You don't need to change all the annotations to type 0!");
+                  return;
+               }
                NeuronSWC s;
                s.x=neuron.at(i).x;
                s.y=neuron.at(i).y;
@@ -74,20 +80,43 @@ void checked_mark_type(V3DPluginCallback2 &callback, QWidget *parent)
                    savetheblock.current_block_all.append(s);
                    if(s.type!=0)
                    {
+
                        //savetheblock.backup.append(s);
                        savetheblock.all_current_x.push_back(neuron.at(i).x);
                        savetheblock.all_current_y.push_back(neuron.at(i).y);
                        savetheblock.all_current_z.push_back(neuron.at(i).z);
                        savetheblock.all_current_type.push_back(neuron.at(i).type);
                    }
-                   //if(s.type!=0) {savetheblock.backup.append(s);}//all the new change of type in current block
-                   //else if (s.type==0) {backup_current_type0.append(s);}
+                   if(s.type==0)
+                   {
+                       detect_have_type0+=1;
+                   }
                 }
                else
                 {
-                     savetheblock.current_block_all_else.append(s);
-                     //if(s.type!=0) {savetheblock.backupelse.append(s);}
+                   if(savetheblock.all_current_xtype0.empty())
+                   {
+                       savetheblock.current_block_all_else.append(s);
+                   }
+                   else
+                   {
+                       if((find(savetheblock.all_current_xtype0.begin(), savetheblock.all_current_xtype0.end(),s.x) !=savetheblock.all_current_xtype0.end()) && (find(savetheblock.all_current_ytype0.begin(), savetheblock.all_current_ytype0.end(),s.y)!=savetheblock.all_current_ytype0.end()))
+                       {
+                          s.type=0;
+                          savetheblock.current_block_all_else.append(s);
+                       }
+                       else //((find(savetheblock.all_current_xtype0.begin(), savetheblock.all_current_xtype0.end(),s.x) ==savetheblock.all_current_xtype0.end()) && (find(savetheblock.all_current_ytype0.begin(), savetheblock.all_current_ytype0.end(),s.y)==savetheblock.all_current_ytype0.end()))
+                       {
+                          savetheblock.current_block_all_else.append(s);
+                       }
+                   }
+
                 }
+           }
+           if((swc_num_of_block==swcnum) && (detect_have_type0>1))
+           {
+               v3d_msg("There are some annotations with the check type(type=0) in this neuron,please change them to other type firstly!");
+               return;
            }
            //v3d_msg(QString("backup size[%1]!").arg(savetheblock.backup.size()));
            //v3d_msg(QString("backupelse size[%1]!").arg(savetheblock.backupelse.size()));
@@ -102,6 +131,9 @@ void checked_mark_type(V3DPluginCallback2 &callback, QWidget *parent)
                s.pn=savetheblock.current_block_all.at(i).pn;
                s.n=savetheblock.current_block_all.at(i).n;
                tochange.append(s);
+               savetheblock.all_current_xtype0.push_back(s.x);
+               savetheblock.all_current_ytype0.push_back(s.y);
+               savetheblock.all_current_ztype0.push_back(s.z);
            }
            for (int i=0;i<savetheblock.current_block_all_else.size();i++)
            {
@@ -116,7 +148,7 @@ void checked_mark_type(V3DPluginCallback2 &callback, QWidget *parent)
            result.listNeuron=tochange;
            //v3d_msg(QString("tochange size[%1]!").arg(tochange.size()));
            result.hashNeuron=hashNeuron;
-           callback.setSWCTeraFly(result);
+           callback.setSWCTeraFly(result);          
         }
    }
    else
@@ -129,6 +161,11 @@ void return_checked(V3DPluginCallback2 &callback, QWidget *parent)
 {
     //QList<NeuronSWC> toreturn=savetheblock.backupelse;
     //QList<NeuronSWC> toreturnbackup=savetheblock.backup;
+    if(savetheblock.all_current_x.empty())
+    {
+        v3d_msg("There are nothing you need to put back in terafly!");
+        return;
+    }
     QList<NeuronSWC> current_to_return,currentelse_to_return;
     NeuronTree nt=callback.getSWCTeraFly();
     QList<NeuronSWC> neuron = nt.listNeuron;
@@ -239,7 +276,7 @@ void return_checked(V3DPluginCallback2 &callback, QWidget *parent)
         result1.hashNeuron=hashNeuron;
         //v3d_msg(QString("There are totally [%1] swc nodes you wanna to return back!").arg(current_to_return.size()));
         callback.setSWCTeraFly(result1);
-        v3d_msg("All the annotations you have chenged have been put back to terafly!");
+        //v3d_msg("All the annotations you have chenged have been put back to terafly!");
  }
 
 
