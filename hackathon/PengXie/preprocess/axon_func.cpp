@@ -107,7 +107,7 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
         {
             if((nt.listNeuron.at(*i).pn)==nt.listNeuron.at(pid).n && distance.at(*i)==(-1.0)){
                 pstack.push(*i);
-                distance[*i]=distance.at(pid)+1;
+                distance[*i]=distance.at(pid)+computeDist2(nt.listNeuron.at(pid), nt.listNeuron.at(*i), 0.2,0.2,1);
                 is_push=true;
                 break;
             }
@@ -282,6 +282,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     // 1.3 Match axon and lpa
     QList<int> lpa_id = match_axon_and_lpa(axon, lpa);
     lpa = get_subtree_by_name(axon, lpa_id);
+
     QList<double> path_distance;
     path_distance.append(0);
     double cur_distance = 0;

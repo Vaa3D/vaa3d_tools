@@ -26,7 +26,9 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
     printf("welcome to crop_swc\n");
     // 1. read input
     NeuronTree nt = readSWC_file(qs_input);
+    NeuronSWC soma_node = nt.listNeuron.at(soma);
     int soma_name = nt.listNeuron.at(soma).n;
+    int soma_type = nt.listNeuron.at(soma).type;
     QList <int> plist;
     QList <int> nlist;
     for(int i=0; i<nt.listNeuron.size(); i++){
@@ -36,23 +38,10 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         nlist.append(node.n);
     }
     // 2. center and crop swc
-    // 2.1 center swc and decide which nodes are within certain distance
-    NeuronSWC soma_node = nt.listNeuron.at(soma);
-//    if(center){
-//        xshift -= soma_node.x;
-//        yshift -= soma_node.y;
-//        zshift -= soma_node.z;
-//    }
-//    NeuronSWC new_soma_node = nt.listNeuron.at(soma);
-//    new_soma_node.x += xshift;
-//    new_soma_node.y += yshift;
-//    new_soma_node.z += zshift;
+    // 2.1 decide which nodes are within certain distance
 
     QList <int> inside_nlist;
     for(int i=0; i<nt.listNeuron.size(); i++){
-        nt.listNeuron[i].x -= soma_node.x;
-        nt.listNeuron[i].y -= soma_node.y;
-        nt.listNeuron[i].z -= soma_node.z;
         NeuronSWC node = nt.listNeuron.at(i);
         if(radius<0){inside_nlist.append(node.n);}
         else{
@@ -75,26 +64,38 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
             node.pn = -1;
         }
         new_tree.listNeuron.append(node);
-//        export_listNeuron_2swc(new_tree.listNeuron, "test.swc");
     }
+//    export_listNeuron_2swc(nt.listNeuron, "test.swc");
 
     // 2.3 return single tree
     if(report_single_tree){
-        qDebug()<<soma_name;
+        qDebug()<<"Soma name"<<soma_name;
         nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));  // Sort the tree so "soma" is the root;
         nt.deepCopy(single_tree(nt, 0));
     }
     else{
         nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));
     }
+    export_listNeuron_2swc(nt.listNeuron, "before_resample.swc");
 
     // 3. resample
     if (resample_step>0){
         printf("\tResampling\n");
         nt = resample(nt, resample_step);
+        // The resample step will change the order and name of nodes, but the parent node won't change.
+        for(int i=0; i<nt.listNeuron.length(); i++){
+            NeuronSWC node=nt.listNeuron.at(i);
+            if((node.pn == -1) && (computeDist2(node, soma_node, 0.2, 0.2, 1)<1)){
+                soma_name = node.n;
+                nt.listNeuron[i].type = soma_type;
+            }
+        }
+        nt.deepCopy(my_SortSWC(nt, soma_name, 0));
     }else{
         printf("\tSkip resampling\n");
     }
+    export_listNeuron_2swc(nt.listNeuron, "aftre_resample.swc");
+
     //2.6 Align axis
     if (rotation)
     {
@@ -105,17 +106,20 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         printf("\tSkip PCA alignment\n");
     }
 
+
     soma_node = nt.listNeuron.at(0);
     if(center){
         xshift -= soma_node.x;
         yshift -= soma_node.y;
         zshift -= soma_node.z;
     }
+
     for(int i=0; i<nt.listNeuron.size(); i++){
         nt.listNeuron[i].x += xshift;
         nt.listNeuron[i].y += yshift;
         nt.listNeuron[i].z += zshift;
     }
+
 
     // 4. save output
     export_list2file(nt.listNeuron, qs_output);

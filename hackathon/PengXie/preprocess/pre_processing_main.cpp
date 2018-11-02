@@ -10,9 +10,13 @@
 #endif
 
 #define DEFAULT 1000000000
-
+#define XSCALE 0.2
+#define YSCALE 0.2
+#define ZSCALE 1
 #include "pre_processing_main.h"
 #include "cmath"  /* for std::abs(double) */
+
+
 
 NeuronTree color_lost_branch(NeuronTree new_tree){
     QList <int> components = get_components(new_tree);
@@ -140,7 +144,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         QList<double> edist; // distance from end to soma
         QList<int> eid; // end id
         for(int i=0; i<tip_list.size();i++){
-            edist.append(computeDist2(component_i.listNeuron.at(tip_list.at(i)), S, 1,1,5));
+            edist.append(computeDist2(component_i.listNeuron.at(tip_list.at(i)), S, XSCALE, YSCALE, ZSCALE));
             eid.append(tip_list.at(i));
         }
 
@@ -395,7 +399,8 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     //2.3 Short distance connection
     cur_nt.deepCopy(nt);
     printf("\tShort distance connection\n");
-    nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, thres, 0, false, 1));
+
+    nt.deepCopy(my_connectall(nt, XSCALE, YSCALE, ZSCALE, 60, thres, 0, false, 1));
     // Keep track of new_edges
     new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".short_connection.apo", 5));
     // Keep track of nodes
@@ -412,7 +417,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
         S_list[0].r = 1;
         cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
-//        nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, return_maintree));
         nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
         // Keep track of new_edges
         new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
@@ -432,7 +436,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // 2.5 Long connection
     printf("\tLong distance connection\n");
     cur_nt.deepCopy(nt);
-    nt.deepCopy(my_connectall(nt, 1, 1, 5, 60, thres_long, 1, false, 1));
+    nt.deepCopy(my_connectall(nt, XSCALE, YSCALE, ZSCALE, 60, thres_long, 1, false, 1));
     // Keep track of new_edges
     new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".long_connection.apo", 7));
     // Keep track of nodes
@@ -461,6 +465,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
     if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
+    }
+
+    for(int i=0;i<markers.size(); i++){
+        markers[i].volsize=500;
     }
     writeAPO_file(outfileLabel+".apo", markers);
     my_saveANO(outfileLabel, true, true, qs_output);
@@ -528,7 +536,7 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
 	char *dfile_result = NULL;
     double prune_size = 2; //default case
     double step_size = 0;
-    double connect_soma_dist = 70;
+    double connect_soma_dist = 20;
     double thres = 2;
     double thres_long = 10;
     bool rotation = false;
