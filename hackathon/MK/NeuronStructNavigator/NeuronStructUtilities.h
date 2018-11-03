@@ -23,9 +23,9 @@
 #include <string>
 #include <fstream>
 
-#include <boost\container\flat_set.hpp>
-#include <boost\container\flat_map.hpp>
-#include <boost\algorithm\string.hpp>
+#include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <qlist.h>
 #include <qstring.h>

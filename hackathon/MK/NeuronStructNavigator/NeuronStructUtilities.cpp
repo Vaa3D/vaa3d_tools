@@ -22,7 +22,7 @@
 #include <set>
 #include <cmath>
 
-#include <boost\filesystem.hpp>
+#include <boost/filesystem.hpp>
 
 #include "basic_4dimage.h"
 #include "NeuronStructUtilities.h"

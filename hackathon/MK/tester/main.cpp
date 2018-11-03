@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "swcUpSample";
+	string funcName = "interAccuracy";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -209,32 +209,68 @@ int main(int argc, char* argv[])
 		const char* inputPathNameC = argv[1];
 		string inputPathName(inputPathNameC);
 		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\interAccuracy.txt");
-		outputFile << "case num\t" << "avgDist\t" << "structure diff" << endl;
+		outputFile << "case num\t" << "avgDist 1-2\t" << "structure diff 1-2\t" << "avgDist 2-1\t" << "structure diff 2-1\t" << "avfDist all\t" << "structure diff all" << endl;
 
 		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
 		{
 			string csvName = swcIt->path().filename().string();
 			string csvFullName = inputPathName + "\\" + csvName;
+			string caseName = csvName.substr(0, 9);
 			//cout << csvFullName << endl;
 			ifstream inputCSV(csvFullName);
 			string inputLine;
-			int count = 0;
+			int count1_2 = 0;
+			int count2_1 = 0;
+			vector<string> values(7);
+			values[0] = caseName;
 			while (getline(inputCSV, inputLine))
 			{
 				if (inputLine.find("from neuron 1 to 2") != string::npos)
 				{
-					++count;
+					++count1_2;
 					vector<string> inputs;
 					boost::split(inputs, inputLine, boost::is_any_of(" "));
 					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
 					//cout << inputs.size() << " ";
-					float measure = stof(inputs.back());
-					string caseName = csvName.substr(0, 9);
+					string measure = inputs.back();			
 					
-					if (count == 1) outputFile << caseName << "\t" << measure << "\t";
-					else if (count == 2) outputFile << measure << endl;
+					if (count1_2 == 1) values[1] = measure;
+					else if (count1_2 == 2) values[2] = measure;
+				}
+				else if (inputLine.find("from neuron 2 to 1") != string::npos)
+				{
+					++count2_1;
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					string measure = inputs.back();
+
+					if (count2_1 == 1) values[3] = measure;
+					else if (count2_1 == 2) values[4] = measure;
+				}
+				else if (inputLine.find("structure-averages") != string::npos)
+				{
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					string measure = inputs.back();
+					values[5] = measure;
+				}
+				else if (inputLine.find("(average)") != string::npos)
+				{
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					string measure = inputs.back();
+					values[6] = measure;
 				}
 			}
+			for (vector<string>::iterator it = values.begin(); it != values.end(); ++it) outputFile << *it << "\t";
+			outputFile << endl;
+			values.clear();
 			inputLine.clear();
 		}
 	}

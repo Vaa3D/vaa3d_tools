@@ -1443,11 +1443,11 @@ void SegPipe_Controller::swcTypeSeparate(int type)
 		NeuronTree inputTree = readSWC_file(swcFullPath);
 	
 		map<int, QList<NeuronSWC>> nodeTypeMap = NeuronStructUtil::swcSplitByType(inputTree);
-		NeuronTree axonTree;
-		axonTree.listNeuron = nodeTypeMap.at(type);
+		NeuronTree signalTree;
+		signalTree.listNeuron = nodeTypeMap.at(type);
 
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCPath, axonTree);
+		writeSWC_file(outputSWCPath, signalTree);
 	}
 }
 
@@ -1476,7 +1476,7 @@ void SegPipe_Controller::swcUpSample()
 		NeuronTree inputTree = readSWC_file(swcFullPath);
 		profiledTree inputProfiledTree(inputTree);
 		profiledTree outputProfiledTree;
-		NeuronStructExplorer::treeUpSample(inputProfiledTree, outputProfiledTree);
+		NeuronStructExplorer::treeUpSample(inputProfiledTree, outputProfiledTree, 5);
 
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, outputProfiledTree.tree);
