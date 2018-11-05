@@ -218,7 +218,7 @@ inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr
 	{
 		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i)
 		{
-			outputImgPtr[i] = ImgProcessor::imageMax(it, outputImgPtr, outputImgPtr, imgDims);
+			outputImgPtr[i] = ImgProcessor::imgMax(it, outputImgPtr, outputImgPtr, imgDims);
 		}
 	}
 }
