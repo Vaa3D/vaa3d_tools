@@ -31,13 +31,12 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += ../v3d_imgManagerMK/imgProcessor
 INCLUDEPATH += ../v3d_imgManagerMK/imgAnalyzer
 INCLUDEPATH += $$VAA3DPATH/v3d_main/neuron_editing
-INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtGui
 INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtCore
 
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_unix64
-LIBS += -L$$Vaa3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0
+LIBS += -L/usr/lib64
 LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtGui
 LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtCore
 
@@ -54,5 +53,4 @@ HEADERS += ./NeuronStructUtilities.h
 HEADERS += $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h
 HEADERS += ../v3d_imgManagerMK/imgProcessor/ImgProcessor.h
-#HEADERS += /local1/vaa3d_test/vaa3d_tools/hackathon/MK/v3d_imgManagerMK/imgProcessor/ImgProcessor.h
-
+HEADERS += ../v3d_imgManagerMK/imgAnalyzer/ImgAnalyzer.h
