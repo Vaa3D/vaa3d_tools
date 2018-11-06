@@ -8,10 +8,16 @@ VAA3DPATH = ../../../v3d_main
 VAA3DTOOLSPATH = ../../../../vaa3d_tools
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/neuron_editing
-INCLUDEPATH     += $$VAA3DTOOLSPATH/hackathon/PengXie/preprocess/
-#INCLUDEPATH     += $$VAA3DTOOLSPATH/hackathon/MK/NeuronStructNavigator/
-#INCLUDEPATH     += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/imgProcessor/
-#INCLUDEPATH     += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/imgAnalyzer/
+INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/PengXie/preprocess/
+INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/NeuronStructNavigator/
+INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/imgProcessor/
+INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/imgAnalyzer/
+INCLUDEPATH	+= $$VAA3DPATH/common_lib/include/
+
+unix:!macx {
+	LIBS += -L$$VAA3DPATH/common_lib/lib -lNeuronStructNavigator
+	LIBS += -L/usr/lib64/ -lboost_system
+}
 
 HEADERS	+= neuron_dist_plugin.h
 HEADERS	+= neuron_dist_func.h
@@ -30,10 +36,3 @@ SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_mas
 
 TARGET	= $$qtLibraryTarget(neuron_overlap)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_overlap
-
-#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../MK/NeuronStructNavigator/release/ -lNeuronStructNavigator
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../MK/NeuronStructNavigator/debug/ -lNeuronStructNavigator
-#else:unix: LIBS += -L$$PWD/../../MK/NeuronStructNavigator/ -lNeuronStructNavigator
-
-#INCLUDEPATH += $$PWD/../../MK/NeuronStructNavigator
-#DEPENDPATH += $$PWD/../../MK/NeuronStructNavigator
