@@ -13,7 +13,7 @@
 //#include "../swc_to_maskimage/filter_dialog.h"
 //#include "utilities.h"
 //#include "pre_processing_main.h"
-//#include "NeuronStructExplorer.h"
+#include "NeuronStructExplorer.h"
 #include <vector>
 #include <iostream>
 #include <fstream>

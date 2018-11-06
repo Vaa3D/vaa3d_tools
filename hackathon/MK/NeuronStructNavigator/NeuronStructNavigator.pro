@@ -24,7 +24,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-DESTDIR = ./
+DESTDIR = ../../../../v3d_external/v3d_main/common_lib/lib
 
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
@@ -35,8 +35,8 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtGui
 INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtCore
 
-LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_unix64
-LIBS += -L/usr/lib64
+LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib
+#LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0/lib -lboost_system
 LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtGui
 LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtCore
 
