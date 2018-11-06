@@ -159,7 +159,7 @@ inline void ImgProcessor::imgDotMultiply(unsigned char inputImgPtr1[], unsigned 
 	{
 		int value = int(inputImgPtr1[i]) * int(inputImgPtr2[i]);
 		if (value > 255) value = 255;
-		outputImgPtr[i] = unsigned char(value);
+		outputImgPtr[i] = (unsigned char)(value);
 	}
 }
 
@@ -213,8 +213,8 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 template<class T>
 inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[])
 {
-	for (int i = 0; i < dims[0] * dims[1]; ++i) outputImgPtr[i] = 0;
-	for (vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
+	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
+	for (typename vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
 	{
 		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i)
 		{
