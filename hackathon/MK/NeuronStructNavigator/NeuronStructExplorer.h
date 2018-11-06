@@ -63,7 +63,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 #define radANGLE_THRE 0.25
 #endif
 
-static enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
+enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
 
 struct topoCharacter
 {
