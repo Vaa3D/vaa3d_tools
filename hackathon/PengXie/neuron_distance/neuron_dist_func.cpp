@@ -136,8 +136,8 @@ CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, d
     marker.color.b = color_b;
     return marker;
 }
-V3DLONG get_total_length(NeuronTree nt){
-    V3DLONG total_length=0;
+double get_total_length(NeuronTree nt){
+    double total_length=0;
     for(int i=0;i<nt.listNeuron.size(); i++){
         NeuronSWC node=nt.listNeuron.at(i);
         if(node.pn != -1){
@@ -357,6 +357,7 @@ bool neuron_overlap_io(const V3DPluginArgList & input, V3DPluginArgList & output
     cout<<"Total length (neuron 2):\t" << ss.nt2_length<<endl;
 
     if (output.size() == 1)
+//    if ((output.size() == 1) && (ss.overlap_length>0))
     {
         char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
@@ -513,7 +514,7 @@ bool neuron_overlap_io(const V3DPluginArgList & input, V3DPluginArgList & output
 void printHelp()
 {
 	cout<<"\nNeuron Distance: compute the distance between two neurons. distance is defined as the average distance among all nearest point pairs. 2012-05-04 by Yinan Wan"<<endl;
-    cout<<"Usage: v3d -x neuron_distance -f neuron_distance -i <input_filename1> <input_filename2> -p <dist_thres> -o <output_file>"<<endl;
+    cout<<"Usage: v3d -x neuron_overlap -f overlap -i <input_filename1> <input_filename2> -p <dist_thres> <overlap_apo> -o <output_file>"<<endl;
 	cout<<"Parameters:"<<endl;
 	cout<<"\t-i <input_filename1> <input_filename2>: input neuron structure file (*.swc *.eswc)"<<endl;
 	cout<<"Distance result will be printed on the screen\n"<<endl;
