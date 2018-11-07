@@ -19,9 +19,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
+	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "interAccuracy";
+	string funcName = "getPixValue";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -524,6 +524,22 @@ int main(int argc, char* argv[])
 		//QString saveSWCNameQ = QString::fromStdString(saveSWCName);
 		QString saveSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test_upsampled.swc";
 		writeSWC_file(saveSWCNameQ, outputProfiledTree.tree);
+	}
+	else if (!funcName.compare("getPixValue"))
+	{
+		QString inputSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCandidates\\319215569.swc";
+		NeuronTree inputTree = readSWC_file(inputSWCNameQ);
+		profiledTree inputProfiledTree(inputTree);
+		ImgManager myImgManager;
+		myImgManager.inputSingleCaseSingleSliceFullPath = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
+		myImgManager.imgEntry("inputImg", ImgManager::singleCase_singleSlice);
+
+		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+		{
+			unsigned char value = ImgProcessor::getPixValue2D(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), myImgManager.imgDatabase.at("inputImg").dims, int(it->x), int(it->y));
+			int valueInt = int(value);
+			cout << valueInt << endl;
+		}
 	}
 
 	return 0;

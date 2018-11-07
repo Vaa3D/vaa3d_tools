@@ -38,6 +38,9 @@ class ImgProcessor
 public:
 	/***************** Basic Image Operations *****************/
 	template<class T>
+	static inline unsigned char getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y);
+	
+	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
 	template<class T>
@@ -107,6 +110,13 @@ public:
 };
 
 // ========================================= BASIC IMAGE OPERATION =========================================
+template<class T>
+inline unsigned char ImgProcessor::getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y)
+{
+	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
+	return inputImgPtr[pix1Dindex];
+}
+
 template<class T>
 inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
 {
