@@ -15,6 +15,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
 	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
 
+	cout << " -- Input image name: " << caseID << endl;
 	if (format == slices)
 	{
 		registeredImg currImgCase;
@@ -42,6 +43,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		}
 
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
+		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 	else if (format == singleCase_singleSlice)
 	{

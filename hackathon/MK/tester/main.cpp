@@ -540,6 +540,15 @@ int main(int argc, char* argv[])
 			int valueInt = int(value);
 			cout << valueInt << endl;
 		}
+
+		int inputX = int(inputTree.listNeuron.at(0).x);
+		int inputY = int(inputTree.listNeuron.at(0).y);
+		ImgAnalyzer myAnalyzer;
+		set<vector<int>> whitePixSet = myAnalyzer.somaDendrite_radialDetect2D(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), inputX, inputY, myImgManager.imgDatabase.at("inputImg").dims);
+		for (set<vector<int>>::iterator it = whitePixSet.begin(); it != whitePixSet.end(); ++it)
+		{
+			cout << it->at(0) << " " << it->at(1) << endl;
+		}
 	}
 
 	return 0;
