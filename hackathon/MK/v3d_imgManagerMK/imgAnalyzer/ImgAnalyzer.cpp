@@ -190,7 +190,6 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 	int round = 1;
 	do
 	{
-		cout << round << endl;
 		int startCoordX = xCoord - round;
 		int startCoordY = yCoord - round;	
 		vector<int> coord(2);
@@ -258,6 +257,9 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 			zeroCount = 0;
 		}
 		++round;
+
+		if (round > 30) break;
+
 	} while (zeroPortion < 0.5);
 
 	return dendriteSigSet;

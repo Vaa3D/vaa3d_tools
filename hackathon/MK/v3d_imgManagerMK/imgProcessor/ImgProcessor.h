@@ -113,9 +113,7 @@ public:
 template<class T>
 inline T ImgProcessor::getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y)
 {
-	cout << x << " " << y << endl;
 	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
-	cout << pix1Dindex << endl;
 	return inputImgPtr[pix1Dindex];
 }
 

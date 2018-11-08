@@ -993,13 +993,13 @@ void SegPipe_Controller::getSomaCandidates(float distThre)
 void SegPipe_Controller::somaDendriteMask()
 {
 	myImgManagerPtr->imgDatabase.clear();
-	myImgManagerPtr->inputMultiCasesSliceFullPaths = this->inputMultiCasesSliceFullPaths;
+	myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
 		QStringList nameSplit = (*caseIt).split(".");
 		string caseName = nameSplit.at(0).toStdString();
-		myImgManagerPtr->imgEntry(caseName, ImgManager::slices);
-
+		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = this->inputCaseRootPath.toStdString() + "/" + (*caseIt).toStdString();
+		myImgManagerPtr->imgEntry(caseName, ImgManager::singleCase_singleSlice);
 		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + QString::fromStdString(caseName) + ".swc";
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
 
@@ -1014,7 +1014,6 @@ void SegPipe_Controller::somaDendriteMask()
 				zCoord = int(it->z);
 			}
 		}
-		cout << xCoord << " " << yCoord << endl;
 		
 		set<vector<int>> whitePixSet = myImgAnalyzerPtr->somaDendrite_radialDetect2D(myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin()->second.get(),
 			xCoord, yCoord, myImgManagerPtr->imgDatabase.begin()->second.dims);
@@ -1025,7 +1024,7 @@ void SegPipe_Controller::somaDendriteMask()
 
 		for (set<vector<int>>::iterator coordIt = whitePixSet.begin(); coordIt != whitePixSet.end(); ++coordIt)
 		{
-			size_t index = size_t((coordIt->at(1) - 1) * myImgManagerPtr->imgDatabase.begin()->second.dims[1]) + size_t(coordIt->at(0));
+			size_t index = size_t((coordIt->at(1) - 1) * myImgManagerPtr->imgDatabase.begin()->second.dims[0]) + size_t(coordIt->at(0));
 			dendriteDetect2D[index] = 255;
 		}
 	
