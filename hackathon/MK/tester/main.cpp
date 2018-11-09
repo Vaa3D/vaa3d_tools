@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "getPixValue";
+	string funcName = "histEq";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -329,8 +329,8 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("skeleton"))
 	{
-		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
-		string fileName = "319215569.tif";
+		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEq_ada_thre.tif";
+		string fileName = "319215569_histEq_ada_thre.tif";
 		ImgManager myManager;
 		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
 		myManager.imgEntry(fileName, ImgManager::singleCase_singleSlice);
@@ -346,7 +346,7 @@ int main(int argc, char* argv[])
 		Dims[1] = imgDims[1];
 		Dims[2] = 1;
 		Dims[3] = 1;
-		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.tif";
+		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEq_ada_thre_skele.tif";
 		const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
 		ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
 
@@ -531,7 +531,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCNameQ);
 		profiledTree inputProfiledTree(inputTree);
 		ImgManager myImgManager;
-		myImgManager.inputSingleCaseSingleSliceFullPath = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
+		myImgManager.inputSingleCaseSingleSliceFullPath = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEq.tif";
 		myImgManager.imgEntry("inputImg", ImgManager::singleCase_singleSlice);
 
 		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
@@ -545,10 +545,56 @@ int main(int argc, char* argv[])
 		int inputY = int(inputTree.listNeuron.at(0).y);
 		ImgAnalyzer myAnalyzer;
 		set<vector<int>> whitePixSet = myAnalyzer.somaDendrite_radialDetect2D(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), inputX, inputY, myImgManager.imgDatabase.at("inputImg").dims);
-		for (set<vector<int>>::iterator it = whitePixSet.begin(); it != whitePixSet.end(); ++it)
+		
+		unsigned char* dendriteDetect2D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1]];
+		for (size_t i = 0; i < myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1]; ++i)
+			dendriteDetect2D[i] = 0;
+
+		for (set<vector<int>>::iterator coordIt = whitePixSet.begin(); coordIt != whitePixSet.end(); ++coordIt)
 		{
-			cout << it->at(0) << " " << it->at(1) << endl;
+			size_t index = size_t((coordIt->at(1) - 1) * myImgManager.imgDatabase.begin()->second.dims[0]) + size_t(coordIt->at(0));
+			dendriteDetect2D[index] = 255;
 		}
+
+		V3DLONG saveDims[4];
+		saveDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+		saveDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+		saveDims[2] = 1;
+		saveDims[3] = 1;
+		QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_detected.tif";
+		string saveFileName = saveFileNameQ.toStdString();
+		const char* saveFileNameC = saveFileName.c_str();
+		ImgManager::saveimage_wrapper(saveFileNameC, dendriteDetect2D, saveDims, 1);
+
+		delete[] dendriteDetect2D;
+		myImgManager.imgDatabase.clear();
+	}
+	else if (!funcName.compare("histEq"))
+	{
+		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
+		string fileName = "319215569.tif";
+		ImgManager myManager;
+		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
+		myManager.imgEntry(fileName, ImgManager::singleCase_singleSlice);
+		int imgDims[3];
+		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
+		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
+		imgDims[2] = 1;
+		unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+		ImgProcessor::histEqual_unit8(myManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+
+		V3DLONG saveDims[4];
+		saveDims[0] = imgDims[0];
+		saveDims[1] = imgDims[1];
+		saveDims[2] = 1;
+		saveDims[3] = 1;
+		QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEqTest.tif";
+		string saveFileName = saveFileNameQ.toStdString();
+		const char* saveFileNameC = saveFileName.c_str();
+		ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+		delete[] outputImgPtr;
+		myManager.imgDatabase.clear();
 	}
 
 	return 0;

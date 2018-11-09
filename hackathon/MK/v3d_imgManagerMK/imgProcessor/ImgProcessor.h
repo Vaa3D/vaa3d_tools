@@ -95,6 +95,9 @@ public:
 
 	template<class T>
 	static inline void reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+
+	template<class T>
+	static inline void histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero = true);
 	/**************************************************************/
 
 
@@ -434,6 +437,31 @@ inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], 
 		if (transformedValue > starting_intensity) outputImgPtr[i] = transformedValue;
 		else if (transformedValue / (starting_intensity - transformedValue + 1) < 1) outputImgPtr[i] = 0;
 		else outputImgPtr[i] = transformedValue / (starting_intensity - transformedValue + 1);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero)
+{
+	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
+	if (noZero) histMap.erase(histMap.find(0));
+	
+	map<int, double> histCumul;
+	double totalNum = 0;
+	for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it)
+	{
+		totalNum = totalNum + it->second;
+		histCumul.insert(pair<int, double>(it->first, double(totalNum)));
+	}
+
+	map<int, int> binMap;
+	for (map<int, double>::iterator it = histCumul.begin(); it != histCumul.end(); ++it)
+		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(255)) * 255))));
+
+	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
+	{
+		if (inputImgPtr[i] == 0) continue;
+		else outputImgPtr[i] = T(binMap.at(int(inputImgPtr[i])));
 	}
 }
 // ================================ END of [IMAGE PROCESSING/FILTERING] ================================
