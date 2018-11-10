@@ -118,10 +118,10 @@ public:
 	/********* Constructors and Basic Data/Function Members *********/
 	NeuronStructExplorer() {};
 	NeuronStructExplorer(QString neuronFileName);
-	NeuronStructExplorer(const NeuronTree inputTree) { this->treeEntry(inputTree, "originalTree"); }
+	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
 
-	NeuronTree* singleTreePtr;
-	NeuronTree singleTree;
+	NeuronTree* singleTree_onHoldPtr;
+	NeuronTree singleTree_onHold;
 	NeuronTree processedTree;
 
 	map<string, profiledTree> treeDataBase;

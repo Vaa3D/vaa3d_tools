@@ -172,9 +172,10 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		
 
 		// ------ Break nodes on input SWC ------
-		breakPathMorph(this->somaTreePtr); // -> Identify the IDs of nodes to be cut.
-		
-		QHash<int, int> inputSWCHash = this->inputSWCTree.hashNeuron;
+		//breakPathMorph(); // -> Identify the IDs of nodes to be cut.
+		breakPathMorph2(inputSWCTree);
+
+		/*QHash<int, int> inputSWCHash = this->inputSWCTree.hashNeuron;
 		this->brokenInputSWC = this->inputSWCTree.listNeuron;
 		cout << "IDs of nodes to be cut: ";
 		for (vector<long int>::iterator cutIt=this->nodeToBeCutID.begin(); cutIt!=this->nodeToBeCutID.end(); ++cutIt)
@@ -202,7 +203,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			writeSWC_file(name, extTree);
 			extracted.clear();
 		}
-		cout << endl;
+		cout << endl;*/
 		
 		/*long int somaID = 1;
 		NeuronSWC startNode = this->brokenInputSWC[inputSWCHash[somaID]];
@@ -230,7 +231,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 	{
 		cout << 
 			"\n-------------------------------\n" << 
-			"Usage: vaa3d_msvc.exe /x neuron_separator /f separate_neuron /i <input swc file name> <soma location marker file> /p [swc_circle] \n" << 
+			"Usage: vaa3d_msvc.exe /x neuron_separator /f separate_neuron /i <input swc file name> <soma location marker file> /p [swc_circle] /o <output directory> \n" << 
 			"\n - swc_circle: the parameter allows or prohibits circling strcture to happen; can only be 'y' or 'n'. \n-------------------------------" << endl;
 	}
 	else return false;

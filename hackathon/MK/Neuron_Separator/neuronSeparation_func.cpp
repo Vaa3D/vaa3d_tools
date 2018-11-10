@@ -1,11 +1,16 @@
-#include "neuron_separator_plugin.h"
 #include <iostream>
-#include <math.h>
-#include "basic_surf_objs.h"
 #include <vector>
-#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 #include <algorithm>
-#include <vector>
+#include <math.h>
+
+#include "basic_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+
+#include "NeuronStructExplorer.h"
+#include "NeuronStructUtilities.h"
+
+#include "neuron_separator_plugin.h"
+
 
 using namespace std;
 
@@ -446,7 +451,190 @@ void neuronSeparator::buildSomaTree()
 	} while (childrenCount > 0);	
 }
 
-void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
+void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
+{
+	map<int, size_t> nodeLocMap;
+	map<int, vector<size_t>> node2childLocMap;
+	map<int, vector<size_t>> branch2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(originalTree.listNeuron, nodeLocMap, node2childLocMap);
+	for (map<int, vector<size_t>>::iterator it = node2childLocMap.begin(); it != node2childLocMap.end(); ++it)
+		if (it->second.size() > 1) branch2childLocMap.insert(pair<int, vector<size_t>>(it->first, it->second));
+	
+	map<int, size_t> somaNodeLocMap;
+	map<int, vector<size_t>> somaNode2childLocMap;
+	map<int, vector<size_t>> somaBranch2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(this->somaPath, somaNodeLocMap, somaNode2childLocMap);
+	
+	cout << endl << "===== Identifying nodes to break =====" << endl;
+	cout << "crucial node number: " << this->crucialNodes.size() << endl;
+
+	vector<somaNode*> curLevelPtr, nextLevelPtr;
+	curLevelPtr.push_back(this->somaTreePtr);
+	this->brokenSomaPath = this->somaPath;
+
+	NeuronSWC head, tail;
+	int childrenCount;
+	long int segmentHeadID;
+	long int segmentTailID;
+	do
+	{
+		childrenCount = 0;
+		int childrenSize = 0;
+		nextLevelPtr.clear();
+		for (vector<somaNode*>::iterator it = curLevelPtr.begin(); it != curLevelPtr.end(); ++it) // parent crucial-node loop
+		{
+			segmentHeadID = (*it)->node.n;
+			childrenSize = (*it)->childrenSomas.size();
+			childrenCount = childrenCount + childrenSize;
+			cout << endl << endl << "children size of " << segmentHeadID << ": " << childrenSize << " -> ";
+
+			somaNode** childrenAddr = new somaNode*[childrenSize];
+			int childCount = 0;
+			for (vector<somaNode*>::iterator listIt = ((*it)->childrenSomas).begin(); listIt != ((*it)->childrenSomas).end(); ++listIt)
+			{
+				childrenAddr[childCount] = *listIt;
+				nextLevelPtr.push_back(childrenAddr[childCount]);
+				cout << childrenAddr[childCount]->node.n << " ";
+				++childCount;
+			} cout << endl;
+
+			//if (branchCutHash[(*it)->node.n] == true) continue;
+
+			for (size_t i = 0; i<childrenSize; ++i) // children crucial-node loop
+			{
+				segmentTailID = childrenAddr[i]->node.n;
+				cout << "--\n Head: " << segmentHeadID << endl << " Tail: " << segmentTailID << endl;
+
+				if ((*it)->soma == true) // parent crucial node
+				{
+					/*if (childrenAddr[i]->soma == true)
+					{
+						QList<NeuronSWC> pathAnalyze;
+						pathAnalyze.push_back()
+						do
+						{
+
+						} while ()
+
+
+
+						head = this->inputSWCTree.listNeuron[IDloc[segmentHeadID]];
+						tail = this->inputSWCTree.listNeuron[IDloc[segmentTailID]];
+						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						//QVector< QVector<V3DLONG> > segmentChildTable = mkChildTableScratch(pathAnalyze);
+						cout << " path size: " << pathAnalyze.size() << endl << "--" << endl;
+
+						long int ID = pathScissor(pathAnalyze);
+						if (ID > 0)
+						{
+							this->nodeToBeCutID.push_back(ID);
+							size_t location = somaPathHash[ID];
+							this->brokenSomaPath[location].parent = -1;
+						}
+						//size_t location = somaPathHash[ID];
+					}
+					else if ((childrenAddr[i]->branch == true) && (childrenAddr[i]->soma == false))
+					{
+						bool allSoma = true;
+						for (vector<somaNode*>::iterator somaIt = childrenAddr[i]->childrenSomas.begin();
+							somaIt != childrenAddr[i]->childrenSomas.end(); ++somaIt)
+						{
+							if ((*somaIt)->soma == false)
+							{
+								allSoma = false;
+								break;
+							}
+						}
+
+						if (allSoma)
+						{
+							long int ID = childrenAddr[i]->node.n;
+							size_t brLoc = somaPathHash[ID];
+							QVector<V3DLONG> nodeAfterBr = somaPathChildTable[brLoc];
+
+							int nodeAfterBrSize = nodeAfterBr.size();
+							for (int nodei = 0; nodei<nodeAfterBrSize; ++nodei)
+							{
+								this->brokenSomaPath[nodeAfterBr[nodei]].parent = -1;
+								this->nodeToBeCutID.push_back(brokenSomaPath[nodeAfterBr[nodei]].n);
+							}
+							branchCutHash[ID] = true;
+							cout << " branch to be cut ID: " << ID << endl;
+						}
+					}*/
+				}
+				else if ((*it)->branch == true && (*it)->soma == false)
+				{
+					if (childrenAddr[i]->soma == true)
+					{
+						QList<NeuronSWC> pathAnalyze;
+						head = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentHeadID));
+						tail = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentTailID));
+						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						cout << "path size: " << pathAnalyze.size() << endl;
+
+						double radAngleMax = 0;
+						int twistedBranchID = 0;
+						for (QList<NeuronSWC>::iterator it = pathAnalyze.begin(); it != pathAnalyze.end(); ++it)
+						{
+							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
+							{
+								vector<NeuronSWC> upstream;
+								int parentID = it->parent;
+								while (upstream.size() <= 10)
+								{
+									upstream.push_back(originalTree.listNeuron.at(nodeLocMap.at(parentID)));
+									parentID = upstream.back().parent;
+									if (parentID == -1) break;
+								}
+
+								vector<NeuronSWC> downstream;
+								int childID = originalTree.listNeuron.at(*node2childLocMap.at(it->n).begin()).n;
+								while (downstream.size() <= 10)
+								{
+									downstream.push_back(originalTree.listNeuron.at(nodeLocMap.at(childID)));
+									childID = originalTree.listNeuron.at(*node2childLocMap.at(childID).begin()).n;
+								}
+
+								vector<float> vector1(3);
+								vector1[0] = upstream.front().x - upstream.back().x;
+								vector1[1] = upstream.front().y - upstream.back().y;
+								vector1[2] = upstream.front().z - upstream.back().z;
+								vector<float> vector2(3);
+								vector2[0] = downstream.back().x - downstream.front().x;
+								vector2[1] = downstream.back().y - downstream.front().y;
+								vector2[2] = downstream.back().z - downstream.front().z;
+								double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+
+								if (radAngle > radAngleMax)
+								{
+									radAngleMax = radAngle;
+									twistedBranchID = it->n;
+								}
+							}
+						}
+						if (radAngleMax >= 0.5)
+						{
+							int nodeCutID = originalTree.listNeuron.at(nodeLocMap.at(twistedBranchID)).parent;
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}
+					}
+				}
+			}
+
+			delete[] childrenAddr;
+		}
+		cout << "  --  Finished determining branch/path break" << endl;
+
+		curLevelPtr.clear();
+		for (vector<somaNode*>::iterator levelIt = nextLevelPtr.begin(); levelIt != nextLevelPtr.end(); ++levelIt)
+			curLevelPtr.push_back(*levelIt);
+	} while (childrenCount > 0);
+	cout << "====================================================" << endl << endl;
+}
+
+void neuronSeparator::breakPathMorph()
 {
 	cout << endl << "===== Identifying nodes to break =====" << endl;
 	cout << "crucial node number: " << this->crucialNodes.size() << endl;

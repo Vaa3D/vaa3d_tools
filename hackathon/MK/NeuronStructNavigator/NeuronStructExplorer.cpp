@@ -51,6 +51,8 @@ profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 }
 
+
+
 NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
 {
 	QStringList fileNameParse1 = inputFileName.split(".");
