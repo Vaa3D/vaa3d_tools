@@ -162,6 +162,7 @@ public:
 public:
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
+	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
@@ -239,10 +240,31 @@ inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, co
 	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
 	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
 	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
-
 	double angle = acos(dot / sqrt(sq1 * sq2));
 	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
 	else return angle / PI;
+}
+
+inline double NeuronStructExplorer::selfTurningRadAngleSum(const vector<vector<float>>& inputSegment)
+{
+	double radAngleSum = 0;
+	for (vector<vector<float>>::const_iterator it = inputSegment.begin() + 1; it != inputSegment.end() - 1; ++it)
+	{
+		vector<float> vector1(3), vector2(3);
+		vector1[0] = it->at(0) - (it - 1)->at(0);
+		vector1[1] = it->at(1) - (it - 1)->at(1);
+		vector1[2] = it->at(2) - (it - 1)->at(2);
+		vector2[0] = (it + 1)->at(0) - it->at(0);
+		vector2[1] = (it + 1)->at(1) - it->at(1);
+		vector2[2] = (it + 1)->at(2) - it->at(2);
+		//cout << "(" << vector1[0] << ", " << vector1[1] << ", " << vector1[2] << ") (" << vector2[0] << ", " << vector2[1] << ", " << vector2[2] << ")" << endl;
+		double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+		
+		if (radAngle == -1) continue;
+		else radAngleSum = radAngleSum + radAngle;
+	}
+
+	return radAngleSum;
 }
 
 inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)

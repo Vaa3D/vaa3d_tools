@@ -175,7 +175,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		//breakPathMorph(); // -> Identify the IDs of nodes to be cut.
 		breakPathMorph2(inputSWCTree);
 
-		/*QHash<int, int> inputSWCHash = this->inputSWCTree.hashNeuron;
+		QHash<int, int> inputSWCHash = this->inputSWCTree.hashNeuron;
 		this->brokenInputSWC = this->inputSWCTree.listNeuron;
 		cout << "IDs of nodes to be cut: ";
 		for (vector<long int>::iterator cutIt=this->nodeToBeCutID.begin(); cutIt!=this->nodeToBeCutID.end(); ++cutIt)
@@ -188,6 +188,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		brokenWholeTree.listNeuron = this->brokenInputSWC;
 		QString brokenName = this->outputPath + "/brokenWholeSWC.swc";
 		writeSWC_file(brokenName, brokenWholeTree);
+		cout << endl;
 
 		QList<NeuronSWC> extracted;
 		for (vector<long int>::iterator extIt=this->somaIDs.begin(); extIt!=this->somaIDs.end(); ++extIt)
@@ -203,7 +204,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			writeSWC_file(name, extTree);
 			extracted.clear();
 		}
-		cout << endl;*/
+		cout << endl;
 		
 		/*long int somaID = 1;
 		NeuronSWC startNode = this->brokenInputSWC[inputSWCHash[somaID]];
