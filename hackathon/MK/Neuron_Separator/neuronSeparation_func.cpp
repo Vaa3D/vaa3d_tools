@@ -477,6 +477,9 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 	int childrenCount;
 	long int segmentHeadID;
 	long int segmentTailID;
+	NeuronTree somaTree;
+	somaTree.listNeuron = this->somaPath;
+	profiledTree profiledSomaTree(somaTree);
 	do
 	{
 		childrenCount = 0;
@@ -646,35 +649,89 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							cout << " ID of node to be cut: " << nodeCutID << endl;
 						}
 					}
-					/*else if ((childrenAddr[i]->branch == true) && (childrenAddr[i]->soma == false))
+					else if ((childrenAddr[i]->branch == true) && (childrenAddr[i]->soma == false))
 					{
-						bool allSoma = true;
-						for (vector<somaNode*>::iterator somaIt = childrenAddr[i]->childrenSomas.begin();
-							somaIt != childrenAddr[i]->childrenSomas.end(); ++somaIt)
+						QList<NeuronSWC> pathAnalyze;
+						head = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentHeadID));
+						tail = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentTailID));
+						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						cout << "path size: " << pathAnalyze.size() << endl;
+
+						double radAngleMax = 0;
+						int twistedBranchID = 0;
+						deque<vector<float>> upstreamMaxAngleQue;
+						deque<vector<float>> downstreamMaxAngleQue;
+						for (QList<NeuronSWC>::iterator it = pathAnalyze.begin(); it != pathAnalyze.end(); ++it)
 						{
-							if ((*somaIt)->soma == false)
+							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
 							{
-								allSoma = false;
-								break;
+								profiledSomaTree.addTopoUnit(it->n);
+								if (profiledSomaTree.topoList.at(it->n).upstream.size() < 3 || profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.size() < 3) 
+									continue;								
+
+								vector<float> vector1(3);
+								vector1[0] = profiledSomaTree.topoList.at(it->n).upstream.front().x - profiledSomaTree.topoList.at(it->n).upstream.back().x;
+								vector1[1] = profiledSomaTree.topoList.at(it->n).upstream.front().y - profiledSomaTree.topoList.at(it->n).upstream.back().y;
+								vector1[2] = profiledSomaTree.topoList.at(it->n).upstream.front().z - profiledSomaTree.topoList.at(it->n).upstream.back().z;
+								vector<float> vector2(3);
+								vector2[0] = profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.back().x - profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.front().x;
+								vector2[1] = profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.back().y - profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.front().y;
+								vector2[2] = profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.back().z - profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.front().z;
+								double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+								cout << it->n << ": " << radAngle << endl;
+
+								if (radAngle > radAngleMax)
+								{
+									radAngleMax = radAngle;
+									twistedBranchID = it->n;
+									upstreamMaxAngleQue.clear();
+									downstreamMaxAngleQue.clear();
+									vector<float> locVec(3);
+
+									for (deque<NeuronSWC>::iterator vecIt = profiledSomaTree.topoList.at(it->n).upstream.begin(); vecIt != profiledSomaTree.topoList.at(it->n).upstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										upstreamMaxAngleQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									upstreamMaxAngleQue.push_front(locVec);
+
+									for (deque<NeuronSWC>::iterator vecIt = profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.begin(); vecIt != profiledSomaTree.topoList.at(it->n).downstreams.begin()->second.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										downstreamMaxAngleQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									downstreamMaxAngleQue.push_front(locVec);
+								}
+							}
+
+							if (radAngleMax >= 0.5)
+							{
+								vector<vector<float>> upstreamMax;
+								upstreamMax.insert(upstreamMax.begin(), upstreamMaxAngleQue.begin(), upstreamMaxAngleQue.end());
+								vector<vector<float>> downstreamMax;
+								downstreamMax.insert(downstreamMax.begin(), downstreamMaxAngleQue.begin(), downstreamMaxAngleQue.end());
+								double upTurning = NeuronStructExplorer::selfTurningRadAngleSum(upstreamMax);
+								double downTurning = NeuronStructExplorer::selfTurningRadAngleSum(downstreamMax);
+
+								int nodeCutID;
+								if (upTurning > downTurning) nodeCutID = originalTree.listNeuron.at(nodeLocMap.at(twistedBranchID)).parent;
+								else if (downTurning > upTurning) nodeCutID = originalTree.listNeuron.at(*node2childLocMap.at(twistedBranchID).begin()).n;
+
+								this->nodeToBeCutID.push_back(nodeCutID);
+								cout << " ID of node to be cut: " << nodeCutID << endl;
 							}
 						}
-
-						if (allSoma)
-						{
-							long int ID = childrenAddr[i]->node.n;
-							size_t brLoc = somaPathHash[ID];
-							QVector<V3DLONG> nodeAfterBr = somaPathChildTable[brLoc];
-
-							int nodeAfterBrSize = nodeAfterBr.size();
-							for (int nodei = 0; nodei<nodeAfterBrSize; ++nodei)
-							{
-								this->brokenSomaPath[nodeAfterBr[nodei]].parent = -1;
-								this->nodeToBeCutID.push_back(brokenSomaPath[nodeAfterBr[nodei]].n);
-							}
-							branchCutHash[ID] = true;
-							cout << " branch to be cut ID: " << ID << endl;
-						}
-					}*/
+					}
 				}
 				else if ((*it)->branch == true && (*it)->soma == false)
 				{

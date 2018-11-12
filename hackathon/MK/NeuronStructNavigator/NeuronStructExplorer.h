@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <list>
+#include <deque>
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -67,13 +68,11 @@ enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail
 
 struct topoCharacter
 {
-	topoCharacter(NeuronSWC centerNode) : topoCenter(centerNode) {};
+	topoCharacter() {};
+	topoCharacter(NeuronSWC centerNode, int streamLength = 10) : topoCenter(centerNode) {};
 	NeuronSWC topoCenter;
-	NeuronSWC topoCenterPa;
-	vector<NeuronSWC> topoCenterImmedChildren;
-	double childAngle;
-	map<int, double> immedChildrenLengths;
-	map<int, double> subsequentChildrenAngles;
+	deque<NeuronSWC> upstream;
+	map<int, deque<NeuronSWC>> downstreams;
 };
 
 struct segUnit
@@ -96,20 +95,20 @@ struct profiledTree
 {
 	profiledTree() {};
 	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
+	profiledTree(const NeuronTree& inputTree, bool profileSeg);
 
-	//profiledTree(const profiledTree& sourceProfiledTree) {};
-
-
-	double connAngleThre;
 	NeuronTree tree;
-	map<string, vector<int>> nodeTileMap; // tile label -> node ID
-	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
-	map<string, vector<int>> segTailMap;  // tile label -> seg ID
-
 	map<int, size_t> node2LocMap;
 	map<int, vector<size_t>> node2childLocMap;
 
+	double connAngleThre;
+	map<string, vector<int>> nodeTileMap; // tile label -> node ID
+	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
+	map<string, vector<int>> segTailMap;  // tile label -> seg ID
 	map<int, segUnit> segs; // key = seg ID
+
+	map<int, topoCharacter> topoList;
+	void addTopoUnit(int nodeID);
 };
 
 class NeuronStructExplorer
@@ -144,7 +143,6 @@ public:
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
-	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 	
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	
@@ -163,6 +161,7 @@ public:
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
+
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);

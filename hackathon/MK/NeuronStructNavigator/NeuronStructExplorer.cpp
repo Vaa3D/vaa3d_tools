@@ -8,12 +8,12 @@
 *  This library intends to provide functionalities for neuron struct analysis, including graph and geometry analysis, etc.
 *  Typically NeuronStructExplorer class methods need a profiledTree struct as part of the input arguments. A profiledTree can be assigned when the class is initiated or later.
 *
-*  profiledTree is the core data type in NeuronStructExplorer class. It profiles the NeuronTree and carries crucial information of it.
+*  profiledTree is the core data type in NeuronStructExplorer class. It profiles the NeuronTree and carries crucial information.
 *  Particularly profiledTree provides node-location, child-location, and detailed segment information of a NeuronTree.
 *  Each segment of a NeuronTree is represented as a segUnit struct. A segUnit struct carries within-segment node-location, child-location, head, and tails information.
 *  All segments are stored and sorted in profiledTree's map<int, segUnit> data member.
 
-*  The class can be initiated with or without a profiledTree being initiated at the same time. A profiledTree can be stored and indexed in NeuronStructExplorer's treeDatabe.
+*  The class can be initialized with or without a profiledTree being initialized at the same time. A profiledTree can be stored and indexed in NeuronStructExplorer's treeDatabe.
 *
 ********************************************************************************/
 
@@ -51,7 +51,43 @@ profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
 }
 
+void profiledTree::addTopoUnit(int nodeID)
+{
+	if (this->node2LocMap.empty() || this->node2childLocMap.empty())
+	{
+		cerr << "The tree profile hasn't been initialized yet. Do 'profiledTree(NeuronTree)' before calling to this method.\n Do nothing and return." << endl;
+		return;
+	}
 
+	topoCharacter topoUnit(this->tree.listNeuron.at(this->node2LocMap.at(nodeID)));
+	topoUnit.upstream.clear();
+	topoUnit.downstreams.clear();
+	
+	int parentID = topoUnit.topoCenter.parent;
+	while (topoUnit.upstream.size() <= 10)
+	{
+		if (this->node2LocMap.find(parentID) == this->node2LocMap.end()) break;
+		topoUnit.upstream.push_back(this->tree.listNeuron.at(this->node2LocMap.at(parentID)));
+		parentID = topoUnit.upstream.back().parent;
+		if (parentID == -1) break;
+	}
+
+	for (vector<size_t>::iterator it = this->node2childLocMap.at(nodeID).begin(); it != this->node2childLocMap.at(nodeID).end(); ++it)
+	{
+		deque<NeuronSWC> downstream;
+		int childID = this->tree.listNeuron.at(*it).n;
+		while (downstream.size() <= 10)
+		{
+			if (this->node2LocMap.find(childID) == this->node2LocMap.end()) break;
+			downstream.push_back(this->tree.listNeuron.at(this->node2LocMap.at(childID)));
+			cout << downstream.back().n << " ";
+			childID = this->tree.listNeuron.at(*node2childLocMap.at(childID).begin()).n;
+		}
+		topoUnit.downstreams.insert(pair<int, deque<NeuronSWC>>(downstream.begin()->n, downstream));
+	}
+
+	this->topoList.insert(pair<int, topoCharacter>(nodeID, topoUnit));
+}
 
 NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
 {
@@ -1025,216 +1061,6 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 	}
 
 	return outputProfiledTree.tree;
-}
-
-vector<segUnit> NeuronStructExplorer::MSTtreeTrim(vector<segUnit>& inputSegUnits)
-{
-	vector<segUnit> outputSegUnits = inputSegUnits;
-
-	for (vector<segUnit>::iterator segIt = outputSegUnits.begin(); segIt != outputSegUnits.end(); ++segIt)
-	{
-		if (segIt->nodes.size() <= 3) continue;
-
-		NeuronStructUtil::node2loc_node2childLocMap(segIt->nodes, segIt->seg_nodeLocMap, segIt->seg_childLocMap);
-		for (QList<NeuronSWC>::iterator nodeIt = segIt->nodes.begin(); nodeIt != segIt->nodes.end(); ++nodeIt)
-		{
-			if (segIt->seg_childLocMap[nodeIt->n].size() == 2)
-			{
-				if (nodeIt->parent == -1) continue;
-
-				topoCharacter newTopoCenter(*nodeIt);
-				newTopoCenter.topoCenterPa = segIt->nodes.at(segIt->seg_nodeLocMap[nodeIt->parent]);
-				for (vector<size_t>::iterator immedChildLocIt = segIt->seg_childLocMap[nodeIt->n].begin(); immedChildLocIt != segIt->seg_childLocMap[nodeIt->n].end(); ++immedChildLocIt)
-					newTopoCenter.topoCenterImmedChildren.push_back(segIt->nodes.at(*immedChildLocIt));
-
-				if (segIt->seg_childLocMap[newTopoCenter.topoCenterImmedChildren.at(0).n].size() == 0 || segIt->seg_childLocMap[newTopoCenter.topoCenterImmedChildren.at(1).n].size() == 0)
-					continue;
-				
-				double dot = (newTopoCenter.topoCenterImmedChildren.at(0).x - nodeIt->x) * (newTopoCenter.topoCenterImmedChildren.at(1).x - nodeIt->x) +
-							 (newTopoCenter.topoCenterImmedChildren.at(0).y - nodeIt->y) * (newTopoCenter.topoCenterImmedChildren.at(1).y - nodeIt->y) +
-							 (newTopoCenter.topoCenterImmedChildren.at(0).z - nodeIt->z) * (newTopoCenter.topoCenterImmedChildren.at(1).z - nodeIt->z);
-
-				double sq1 = (newTopoCenter.topoCenterImmedChildren.at(0).x - nodeIt->x) * (newTopoCenter.topoCenterImmedChildren.at(0).x - nodeIt->x) +
-							 (newTopoCenter.topoCenterImmedChildren.at(0).y - nodeIt->y) * (newTopoCenter.topoCenterImmedChildren.at(0).y - nodeIt->y) +
-							 (newTopoCenter.topoCenterImmedChildren.at(0).z - nodeIt->z) * (newTopoCenter.topoCenterImmedChildren.at(0).z - nodeIt->z);
-
-				double sq2 = (newTopoCenter.topoCenterImmedChildren.at(1).x - nodeIt->x) * (newTopoCenter.topoCenterImmedChildren.at(1).x - nodeIt->x) +
-							 (newTopoCenter.topoCenterImmedChildren.at(1).y - nodeIt->y) * (newTopoCenter.topoCenterImmedChildren.at(1).y - nodeIt->y) +
-							 (newTopoCenter.topoCenterImmedChildren.at(1).z - nodeIt->z) * (newTopoCenter.topoCenterImmedChildren.at(1).z - nodeIt->z);
-
-				newTopoCenter.childAngle = acos(dot / sqrt(sq1 * sq2));
-				if (isnan(acos(dot / sqrt(sq1 * sq2)))) newTopoCenter.childAngle = -1;
-
-				newTopoCenter.immedChildrenLengths.insert(pair<int, double>(newTopoCenter.topoCenterImmedChildren.at(0).n, sqrt(sq1)));
-				newTopoCenter.immedChildrenLengths.insert(pair<int, double>(newTopoCenter.topoCenterImmedChildren.at(1).n, sqrt(sq2)));
-
-				segIt->topoCenters.push_back(newTopoCenter);
-			}
-		}
-	}
-
-	for (vector<segUnit>::iterator segIt = outputSegUnits.begin(); segIt != outputSegUnits.end(); ++segIt)
-	{
-		for (vector<topoCharacter>::iterator topoIt = segIt->topoCenters.begin(); topoIt != segIt->topoCenters.end(); ++topoIt)
-		{
-			if (topoIt->childAngle / PI <= 0.55 && topoIt->childAngle / PI >= 0.45) segIt->nodes[segIt->seg_nodeLocMap[topoIt->topoCenter.n]].type = 3;
-		}
-	}
-
-	return outputSegUnits;
-
-	/*if (inputSeg.size() <= 3) return;
-
-#define PI 3.1415926
-	//long segInfoNodeCount = 0;
-
-	double dot, sq1, sq2, dist, turnCost, radAngle, turnCostMean = 0;
-	double mainSqr = ((inputSeg.end() - 1)->x - inputSeg.begin()->x)*((inputSeg.end() - 1)->x - inputSeg.begin()->x) +
-		((inputSeg.end() - 1)->y - inputSeg.begin()->y)*((inputSeg.end() - 1)->y - inputSeg.begin()->y) +
-		((inputSeg.end() - 1)->z - inputSeg.begin()->z)*((inputSeg.end() - 1)->z - inputSeg.begin()->z);
-	double segDist = sqrt(mainSqr);
-	double nodeHeadDot, nodeHeadSqr, nodeHeadRadAngle, nodeToMainDist, nodeToMainDistMean = 0;
-	//cout << "segment displacement: " << segDist << endl << endl;
-
-	cout << "    -- nodes contained in the segment to be straightned: " << segInfoPtr->nodeCount << endl;
-	for (vector<V_NeuronSWC_unit>::iterator check = inputSeg.begin(); check != inputSeg.end(); ++check) cout << "[" << check->x << " " << check->y << " " << check->z << "] ";
-	cout << endl;
-	vector<nodeInfo> pickedNode;
-	for (vector<V_NeuronSWC_unit>::iterator it = inputSeg.begin() + 1; it != inputSeg.end() - 1; ++it)
-	{
-		dot = ((it - 1)->x - it->x)*((it + 1)->x - it->x) + ((it - 1)->y - it->y)*((it + 1)->y - it->y) + ((it - 1)->z - it->z)*((it + 1)->z - it->z);
-		sq1 = ((it - 1)->x - it->x)*((it - 1)->x - it->x) + ((it - 1)->y - it->y)*((it - 1)->y - it->y) + ((it - 1)->z - it->z)*((it - 1)->z - it->z);
-		sq2 = ((it + 1)->x - it->x)*((it + 1)->x - it->x) + ((it + 1)->y - it->y)*((it + 1)->y - it->y) + ((it + 1)->z - it->z)*((it + 1)->z - it->z);
-		if (isnan(acos(dot / sqrt(sq1*sq2)))) return;
-		radAngle = acos(dot / sqrt(sq1*sq2));
-		nodeHeadDot = (it->x - inputSeg.begin()->x)*((inputSeg.end() - 1)->x - inputSeg.begin()->x) +
-			(it->y - inputSeg.begin()->y)*((inputSeg.end() - 1)->y - inputSeg.begin()->y) +
-			(it->z - inputSeg.begin()->z)*((inputSeg.end() - 1)->z - inputSeg.begin()->z);
-		nodeHeadSqr = (it->x - inputSeg.begin()->x)*(it->x - inputSeg.begin()->x) + (it->y - inputSeg.begin()->y)*(it->y - inputSeg.begin()->y) + (it->z - inputSeg.begin()->z)*(it->z - inputSeg.begin()->z);
-		nodeHeadRadAngle = PI - acos(nodeHeadDot / sqrt(mainSqr*nodeHeadSqr));
-		nodeToMainDist = sqrt(nodeHeadSqr) * sin(nodeHeadRadAngle);
-		nodeToMainDistMean = nodeToMainDistMean + nodeToMainDist;
-		cout << "       d(node-main):" << nodeToMainDist << " radian/pi:" << (radAngle / PI) << " turning cost:" << (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI) << " " << it->x << " " << it->y << " " << it->z << endl;
-
-		if ((radAngle / PI) < 0.6) // Detecting sharp turns and distance outliers => a) obviously errorneous depth situation
-		{
-			nodeInfo sharp;
-			sharp.x = it->x; sharp.y = it->y; sharp.z = it->z;
-			cout << "this node is picked" << endl;
-
-			sharp.segID = it->seg_id;
-			sharp.distToMain = nodeToMainDist;
-			sharp.sqr1 = sq1; sharp.sqr2 = sq2; sharp.dot = dot;
-			sharp.radAngle = radAngle;
-			sharp.nodeAddress = it;
-			sharp.turnCost = (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI);
-
-			pickedNode.push_back(sharp);
-			turnCostMean = turnCostMean + sharp.turnCost;
-		}
-	}
-	if (pickedNode.empty()) return;
-
-	nodeToMainDistMean = nodeToMainDistMean / (inputSeg.size() - 2);
-	turnCostMean = turnCostMean / pickedNode.size();
-	cout << endl << endl << "  ==== start deleting nodes... " << endl;
-
-	int delete_count = 0;
-	ptrdiff_t order = 0;
-	vector<V_NeuronSWC> preservedSegs;
-	for (vector<nodeInfo>::iterator it = pickedNode.begin(); it != pickedNode.end(); ++it)
-	{
-		cout << "  Avg(d(node_main)):" << nodeToMainDistMean << " d(node-main):" << it->distToMain << " Avg(turning cost):" << turnCostMean << " turning cost:" << it->turnCost;
-		cout << " [" << it->x << " " << it->y << " " << it->z << "] " << endl;
-		if (it->distToMain >= nodeToMainDistMean || it->turnCost >= turnCostMean || it->distToMain >= segDist)
-		{
-			++delete_count;
-			if (connectEdit == segmentEdit) curImgPtr->tracedNeuron.seg[it->segID].to_be_deleted = true;
-			--(segInfoPtr->nodeCount);
-
-			V_NeuronSWC preservedNode;
-			preservedNode.row.push_back(*(it->nodeAddress - order));
-			preservedNode.row[0].data[6] = -1;
-			preservedSegs.push_back(preservedNode);
-			cout << "delete [" << (it->nodeAddress - order)->x << " " << (it->nodeAddress - order)->y << " " << (it->nodeAddress - order)->z << "] " << delete_count << endl;
-			inputSeg.erase(it->nodeAddress - order);
-			++order;
-			cout << "----" << endl;
-		}
-	}
-
-	cout << endl << "  ==== cheking angles... " << endl;
-
-	int deleteCount2;
-	do
-	{
-		deleteCount2 = 0;
-		for (vector<V_NeuronSWC_unit>::iterator it = inputSeg.begin() + 1; it != inputSeg.end() - 1; ++it)
-		{
-			double dot2 = (it->x - (it - 1)->x)*((it + 1)->x - it->x) + (it->y - (it - 1)->y)*((it + 1)->y - it->y) + (it->z - (it - 1)->z)*((it + 1)->z - it->z);
-			double sq1_2 = ((it - 1)->x - it->x)*((it - 1)->x - it->x) + ((it - 1)->y - it->y)*((it - 1)->y - it->y) + ((it - 1)->z - it->z)*((it - 1)->z - it->z);
-			double sq2_2 = ((it + 1)->x - it->x)*((it + 1)->x - it->x) + ((it + 1)->y - it->y)*((it + 1)->y - it->y) + ((it + 1)->z - it->z)*((it + 1)->z - it->z);
-			if (isnan(acos(dot2 / sqrt(sq1_2*sq2_2)))) break;
-			double radAngle_2 = acos(dot2 / sqrt(sq1_2*sq2_2));
-			cout << "2nd rad Angle:" << radAngle_2 << " [" << it->x << " " << it->y << " " << it->z << "]" << endl;
-
-			if ((radAngle_2 / PI) * 180 > 75)
-			{
-				if (sqrt(sq1_2) > (1 / 10)*sqrt(sq2_2))
-				{
-					--(segInfoPtr->nodeCount);
-					++deleteCount2;
-					cout << "delete " << " [" << it->x << " " << it->y << " " << it->z << "] " << deleteCount2 << endl;
-					if ((inputSeg.size() - deleteCount2) <= 2)
-					{
-						--deleteCount2;
-						++(segInfoPtr->nodeCount);
-						break;
-					}
-					if (connectEdit == segmentEdit) curImgPtr->tracedNeuron.seg[it->seg_id].to_be_deleted = true;
-
-					V_NeuronSWC preservedNode;
-					preservedNode.row.push_back(*it);
-					preservedNode.row[0].data[6] = -1;
-					preservedSegs.push_back(preservedNode);
-					inputSeg.erase(it);
-				}
-			}
-		}
-		cout << "deleted nodes: " << deleteCount2 << "\n=================" << endl;
-	} while (deleteCount2 > 0);
-
-	size_t label = 1;
-	cout << "number of nodes after straightening process: " << inputSeg.size() << " ( segID = " << segInfoPtr->segID << " )" << endl;
-	//cout << "seg num: " << curImgPtr->tracedNeuron.seg.size() << endl;
-	for (vector<V_NeuronSWC_unit>::iterator it = inputSeg.begin(); it != inputSeg.end(); ++it)
-	{
-		it->seg_id = segInfoPtr->segID;
-		it->data[0] = label;
-		it->data[6] = label + 1;
-		++label;
-		cout << "[" << it->seg_id << ": " << it->x << " " << it->y << " " << it->z << "] ";
-	}
-	cout << endl;
-	(inputSeg.end() - 1)->data[6] = -1;
-
-	if (connectEdit == segmentEdit)
-	{
-		V_NeuronSWC newSeg;
-		newSeg.row = inputSeg;
-		curImgPtr->tracedNeuron.seg[segInfoPtr->segID] = newSeg;
-
-		size_t singleNodeCount = 1;
-		for (vector<V_NeuronSWC>::iterator nodeIt = preservedSegs.begin(); nodeIt != preservedSegs.end(); ++nodeIt)
-		{
-			nodeIt->row[0].seg_id = curImgPtr->tracedNeuron.seg.size() + singleNodeCount;
-			++singleNodeCount;
-			curImgPtr->tracedNeuron.seg.push_back(*nodeIt);
-			//cout << "seg num: " << curImgPtr->tracedNeuron.seg.size() << endl;
-		}
-	}
-
-	return;*/
 }
 
 void NeuronStructExplorer::falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold)
