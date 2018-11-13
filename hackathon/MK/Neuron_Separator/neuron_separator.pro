@@ -9,6 +9,9 @@ NEURONLIBPATH = ../NeuronStructNavigator
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$NEURONLIBPATH
 INCLUDEPATH += $$VAA3DPATH/v3d_main/neuron_editing
+INCLUDEPATH += ../v3d_imgManagerMK/imgProcessor/
+INCLUDEPATH += ../v3d_imgManagerMK/imgAnalyzer/
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include/
 
 unix:!macx {
 	LIBS += -L$$VAA3DPATH/v3d_man/common_lib/lib -lNeuronStructNavigator
