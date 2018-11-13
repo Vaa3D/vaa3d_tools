@@ -14,8 +14,8 @@ INCLUDEPATH += ../v3d_imgManagerMK/imgAnalyzer/
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include/
 
 unix:!macx {
-	LIBS += -L$$VAA3DPATH/v3d_man/common_lib/lib -lNeuronStructNavigator
-	#LIBS += -L/usr/lib64/ -lboost_system
+        LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib -lNeuronStructNavigator
+        #LIBS += -L/usr/lib64/ -lboost_system
 }
 
 HEADERS	+= neuron_separator_plugin.h
