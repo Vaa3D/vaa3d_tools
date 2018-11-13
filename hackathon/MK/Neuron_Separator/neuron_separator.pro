@@ -7,6 +7,7 @@ QMAKE_CXXFLAGS += -std=c++11
 VAA3DPATH = ../../../../v3d_external
 NEURONLIBPATH = ../NeuronStructNavigator
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH += $$NEURONLIBPATH
 
 unix:!macx {
 	LIBS += -L$$VAA3DPATH/v3d_man/common_lib/lib -lNeuronStructNavigator
