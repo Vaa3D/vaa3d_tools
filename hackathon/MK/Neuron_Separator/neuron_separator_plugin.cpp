@@ -205,6 +205,8 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			extracted.clear();
 		}
 		cout << endl;
+
+		this->crucialNodes.clear();
 		
 		/*long int somaID = 1;
 		NeuronSWC startNode = this->brokenInputSWC[inputSWCHash[somaID]];

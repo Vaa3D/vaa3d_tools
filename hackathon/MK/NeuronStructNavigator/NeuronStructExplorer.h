@@ -239,6 +239,7 @@ inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, co
 	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
 	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
 	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
+	cout << dot << " " << sqrt(sq1 * sq2) << endl;
 	double angle = acos(dot / sqrt(sq1 * sq2));
 	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
 	else return angle / PI;
