@@ -47,19 +47,14 @@ bool readfirsttree::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("downsample"))
 	{
-		v3d_msg("To be implemented.");
+        downsample25(input,output);
 	}
-	else if (func_name == tr("func2"))
+    else
 	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else return false;
-
-	return true;
+       printf("downsample25     downsample 25 times for all swcs in a folder.\n");
+       printf("vaa3d -x readtree -f downsmple25 -i neuron_folder -o result_folder\n");
+       return true;
+    }
 }

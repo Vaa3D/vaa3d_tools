@@ -34,7 +34,11 @@ struct connectedComponent
 class ImgAnalyzer
 {
 public:
+	/***************** Image Segmentation *****************/
 	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
+
+	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
+	/******************************************************/
 
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
 	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);

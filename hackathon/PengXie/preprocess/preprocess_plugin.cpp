@@ -29,7 +29,6 @@ QStringList neuron_analysis::funclist() const
         <<tr("preprocess_batch")
         <<tr("split_neuron")
         <<tr("qc")
-//        <<tr("get_main_component")
         <<tr("crop_swc")
         <<tr("check_connection")
         <<tr("help");

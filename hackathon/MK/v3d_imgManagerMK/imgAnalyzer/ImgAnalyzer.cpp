@@ -178,3 +178,89 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 
 	return connList;
 }
+
+set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[])
+{
+	set<vector<int>> dendriteSigSet;
+
+	float zeroCount = 0;	
+	float zeroPortion = 0;
+	vector<int> intensitySeries;
+	vector<vector<int>> coords;
+	int round = 1;
+	do
+	{
+		int startCoordX = xCoord - round;
+		int startCoordY = yCoord - round;	
+		vector<int> coord(2);
+		coord[0] = startCoordX;
+		coord[1] = startCoordY;
+		coords.push_back(coord);
+		intensitySeries.push_back(int(ImgProcessor::getPixValue2D(inputImgPtr, imgDims, startCoordX, startCoordY)));
+
+		int displace = round * 2;
+		for (int i = 1; i <= displace; ++i)
+		{
+			intensitySeries.push_back(int(ImgProcessor::getPixValue2D(inputImgPtr, imgDims, ++startCoordX, startCoordY)));
+			vector<int> coord(2);
+			coord[0] = startCoordX;
+			coord[1] = startCoordY;
+			coords.push_back(coord);
+		}
+		for (int i = 1; i <= displace; ++i)
+		{
+			intensitySeries.push_back(int(ImgProcessor::getPixValue2D(inputImgPtr, imgDims, startCoordX, ++startCoordY)));
+			vector<int> coord(2);
+			coord[0] = startCoordX;
+			coord[1] = startCoordY;
+			coords.push_back(coord);
+		}
+		for (int i = displace; i >= 1; --i)
+		{
+			intensitySeries.push_back(int(ImgProcessor::getPixValue2D(inputImgPtr, imgDims, --startCoordX, startCoordY)));
+			vector<int> coord(2);
+			coord[0] = startCoordX;
+			coord[1] = startCoordY;
+			coords.push_back(coord);
+		}
+		for (int i = displace; i >= 2; --i)
+		{
+			intensitySeries.push_back(int(ImgProcessor::getPixValue2D(inputImgPtr, imgDims, startCoordX, --startCoordY)));
+			vector<int> coord(2);
+			coord[0] = startCoordX;
+			coord[1] = startCoordY;
+			coords.push_back(coord);
+		}
+		--startCoordY;
+
+		set<vector<int>> tempDendriteSigSet;
+		for (int index = 1; index < intensitySeries.size() - 1; ++index)
+		{
+			if (intensitySeries.at(index) == 0) ++zeroCount;
+			if (intensitySeries.at(index) > intensitySeries.at(index - 1) && intensitySeries.at(index) > intensitySeries.at(index + 1))
+			{
+				vector<int> coord(2);
+				coord[0] = coords.at(index).at(0);
+				coord[1] = coords.at(index).at(1);
+				tempDendriteSigSet.insert(coord);
+			}
+		}
+
+		zeroPortion = zeroCount / float(intensitySeries.size());
+		if (zeroPortion > 0.5) break;
+		else
+		{
+			dendriteSigSet.insert(tempDendriteSigSet.begin(), tempDendriteSigSet.end());
+			intensitySeries.clear();
+			coords.clear();
+			tempDendriteSigSet.clear();
+			zeroCount = 0;
+		}
+		++round;
+
+		if (round > 30) break;
+
+	} while (zeroPortion < 0.5);
+
+	return dendriteSigSet;
+}

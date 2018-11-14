@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
 {
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
-	string funcName = "swcSubtract";
+	string funcName(funcNameC);
+	//string funcName = "histEq";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -209,32 +209,68 @@ int main(int argc, char* argv[])
 		const char* inputPathNameC = argv[1];
 		string inputPathName(inputPathNameC);
 		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\interAccuracy.txt");
-		outputFile << "case num\t" << "avgDist\t" << "structure diff" << endl;
+		outputFile << "case num\t" << "avgDist 1-2\t" << "structure diff 1-2\t" << "avgDist 2-1\t" << "structure diff 2-1\t" << "avfDist all\t" << "structure diff all" << endl;
 
 		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
 		{
 			string csvName = swcIt->path().filename().string();
 			string csvFullName = inputPathName + "\\" + csvName;
+			string caseName = csvName.substr(0, 9);
 			//cout << csvFullName << endl;
 			ifstream inputCSV(csvFullName);
 			string inputLine;
-			int count = 0;
+			int count1_2 = 0;
+			int count2_1 = 0;
+			vector<string> values(7);
+			values[0] = caseName;
 			while (getline(inputCSV, inputLine))
 			{
 				if (inputLine.find("from neuron 1 to 2") != string::npos)
 				{
-					++count;
+					++count1_2;
 					vector<string> inputs;
 					boost::split(inputs, inputLine, boost::is_any_of(" "));
 					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
 					//cout << inputs.size() << " ";
-					float measure = stof(inputs.back());
-					string caseName = csvName.substr(0, 9);
+					string measure = inputs.back();			
 					
-					if (count == 1) outputFile << caseName << "\t" << measure << "\t";
-					else if (count == 2) outputFile << measure << endl;
+					if (count1_2 == 1) values[1] = measure;
+					else if (count1_2 == 2) values[2] = measure;
+				}
+				else if (inputLine.find("from neuron 2 to 1") != string::npos)
+				{
+					++count2_1;
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					string measure = inputs.back();
+
+					if (count2_1 == 1) values[3] = measure;
+					else if (count2_1 == 2) values[4] = measure;
+				}
+				else if (inputLine.find("structure-averages") != string::npos)
+				{
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					string measure = inputs.back();
+					values[5] = measure;
+				}
+				else if (inputLine.find("(average)") != string::npos)
+				{
+					vector<string> inputs;
+					boost::split(inputs, inputLine, boost::is_any_of(" "));
+					//for (vector<string>::iterator checkit = inputs.begin(); checkit != inputs.end(); ++checkit) cout << *checkit << " ";
+					//cout << inputs.size() << " ";
+					string measure = inputs.back();
+					values[6] = measure;
 				}
 			}
+			for (vector<string>::iterator it = values.begin(); it != values.end(); ++it) outputFile << *it << "\t";
+			outputFile << endl;
+			values.clear();
 			inputLine.clear();
 		}
 	}
@@ -293,8 +329,8 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("skeleton"))
 	{
-		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
-		string fileName = "319215569.tif";
+		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEq_ada_thre.tif";
+		string fileName = "319215569_histEq_ada_thre.tif";
 		ImgManager myManager;
 		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
 		myManager.imgEntry(fileName, ImgManager::singleCase_singleSlice);
@@ -310,7 +346,7 @@ int main(int argc, char* argv[])
 		Dims[1] = imgDims[1];
 		Dims[2] = 1;
 		Dims[3] = 1;
-		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.tif";
+		string sliceSaveFullName = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEq_ada_thre_skele.tif";
 		const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
 		ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
 
@@ -469,6 +505,101 @@ int main(int argc, char* argv[])
 		NeuronTree subTree = NeuronStructUtil::swcSubtraction(targetTree, refTree, 2);
 		QString saveName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test.swc";
 		writeSWC_file(saveName, subTree);
+	}
+	else if (!funcName.compare("swcUpSample"))
+	{
+		//const char* targetSWCNameC = argv[2];
+		//string targetSWCName(targetSWCNameC);
+		//QString targetSWCNameQ = QString::fromStdString(targetSWCName);
+		QString targetSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569.swc";
+		NeuronTree inputTree = readSWC_file(targetSWCNameQ);
+
+		profiledTree inputProfiledTree(inputTree);
+		profiledTree outputProfiledTree;
+		outputProfiledTree.tree.listNeuron.clear();
+		NeuronStructExplorer::treeUpSample(inputProfiledTree, outputProfiledTree);
+
+		//const char* saveSWCNameC = argv[3];
+		//string saveSWCName(saveSWCNameC);
+		//QString saveSWCNameQ = QString::fromStdString(saveSWCName);
+		QString saveSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test_upsampled.swc";
+		writeSWC_file(saveSWCNameQ, outputProfiledTree.tree);
+	}
+	else if (!funcName.compare("getPixValue"))
+	{
+		QString inputSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_somaCandidates\\319215569.swc";
+		NeuronTree inputTree = readSWC_file(inputSWCNameQ);
+		profiledTree inputProfiledTree(inputTree);
+		ImgManager myImgManager;
+		myImgManager.inputSingleCaseSingleSliceFullPath = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEq.tif";
+		myImgManager.imgEntry("inputImg", ImgManager::singleCase_singleSlice);
+
+		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+		{
+			unsigned char value = ImgProcessor::getPixValue2D(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), myImgManager.imgDatabase.at("inputImg").dims, int(it->x), int(it->y));
+			int valueInt = int(value);
+			cout << valueInt << endl;
+		}
+
+		int inputX = int(inputTree.listNeuron.at(0).x);
+		int inputY = int(inputTree.listNeuron.at(0).y);
+		ImgAnalyzer myAnalyzer;
+		set<vector<int>> whitePixSet = myAnalyzer.somaDendrite_radialDetect2D(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), inputX, inputY, myImgManager.imgDatabase.at("inputImg").dims);
+		
+		unsigned char* dendriteDetect2D = new unsigned char[myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1]];
+		for (size_t i = 0; i < myImgManager.imgDatabase.begin()->second.dims[0] * myImgManager.imgDatabase.begin()->second.dims[1]; ++i)
+			dendriteDetect2D[i] = 0;
+
+		for (set<vector<int>>::iterator coordIt = whitePixSet.begin(); coordIt != whitePixSet.end(); ++coordIt)
+		{
+			size_t index = size_t((coordIt->at(1) - 1) * myImgManager.imgDatabase.begin()->second.dims[0]) + size_t(coordIt->at(0));
+			dendriteDetect2D[index] = 255;
+		}
+
+		V3DLONG saveDims[4];
+		saveDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
+		saveDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
+		saveDims[2] = 1;
+		saveDims[3] = 1;
+		QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_detected.tif";
+		string saveFileName = saveFileNameQ.toStdString();
+		const char* saveFileNameC = saveFileName.c_str();
+		ImgManager::saveimage_wrapper(saveFileNameC, dendriteDetect2D, saveDims, 1);
+
+		delete[] dendriteDetect2D;
+		myImgManager.imgDatabase.clear();
+	}
+	else if (!funcName.compare("histEq"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+		ImgManager myManager(folderNameQ);
+
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		{
+			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
+			myManager.imgEntry(caseIt->first, ImgManager::singleCase_singleSlice);
+
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			ImgProcessor::histEqual_unit8(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP_histEq\\" + QString::fromStdString(caseIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+		}
 	}
 
 	return 0;

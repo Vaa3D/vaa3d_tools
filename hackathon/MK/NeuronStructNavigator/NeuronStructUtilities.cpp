@@ -22,9 +22,7 @@
 #include <set>
 #include <cmath>
 
-#include <boost\filesystem.hpp>
-#include <boost\container\flat_set.hpp>
-#include <boost\container\flat_map.hpp>
+#include <boost/filesystem.hpp>
 
 #include "basic_4dimage.h"
 #include "NeuronStructUtilities.h"
@@ -163,34 +161,8 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 {
 	boost::container::flat_map<string, QList<NeuronSWC>> targetNodeTileMap;
 	boost::container::flat_map<string, QList<NeuronSWC>> refNodeTileMap;
-	for (QList<NeuronSWC>::const_iterator it = targetTree.listNeuron.begin(); it != targetTree.listNeuron.end(); ++it)
-	{
-		string xLabel = to_string(int(it->x / 100));
-		string yLabel = to_string(int(it->y / 100));
-		string zLabel = to_string(int(it->z / 100));
-		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
-		if (targetNodeTileMap.find(keyLabel) != targetNodeTileMap.end()) targetNodeTileMap.at(keyLabel).push_back(*it);
-		else
-		{
-			QList<NeuronSWC> newSet;
-			newSet.push_back(*it);
-			targetNodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
-		}
-	}
-	for (QList<NeuronSWC>::const_iterator it = refTree.listNeuron.begin(); it != refTree.listNeuron.end(); ++it)
-	{
-		string xLabel = to_string(int(it->x / 100));
-		string yLabel = to_string(int(it->y / 100));
-		string zLabel = to_string(int(it->z / 100));
-		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
-		if (refNodeTileMap.find(keyLabel) != refNodeTileMap.end()) refNodeTileMap.at(keyLabel).push_back(*it);
-		else
-		{
-			QList<NeuronSWC> newSet;
-			newSet.push_back(*it);
-			refNodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
-		}
-	}
+	NeuronStructUtil::nodeTileMapGen(targetTree, targetNodeTileMap);
+	NeuronStructUtil::nodeTileMapGen(refTree, refNodeTileMap);
 
 	if (type == 0)
 	{
@@ -253,20 +225,7 @@ QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 	// -- This method removes dupliated nodes.
 
 	boost::container::flat_map<string, QList<NeuronSWC>> nodeTileMap;
-	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
-	{
-		string xLabel = to_string(int(it->x / 100));
-		string yLabel = to_string(int(it->y / 100));
-		string zLabel = to_string(int(it->z / 100));
-		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
-		if (nodeTileMap.find(keyLabel) != nodeTileMap.end()) nodeTileMap[keyLabel].push_back(*it);
-		else
-		{
-			QList<NeuronSWC> newSet;
-			newSet.push_back(*it);
-			nodeTileMap.insert(pair<string, QList<NeuronSWC>>(keyLabel, newSet));
-		}
-	}
+	NeuronStructUtil::nodeTileMapGen(inputTree, nodeTileMap);
 	cout << "SWC tile number: " << nodeTileMap.size() << endl;
 
 	QList<NeuronSWC> outputNodeList;
@@ -371,20 +330,7 @@ map<string, float> NeuronStructUtil::selfNodeDist(const QList<NeuronSWC>& inputN
 	// -- The output is a map that contains 4 measures: mean, std, var, median. 
 
 	boost::container::flat_map<string, vector<NeuronSWC>> labeledNodeMap;
-	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
-	{
-		string xLabel = to_string(int(it->x / 30));
-		string yLabel = to_string(int(it->y / 30));
-		string zLabel = to_string(int(it->z / 30));
-		string labelKey = xLabel + "_" + yLabel + "_" + zLabel;
-		if (labeledNodeMap.find(labelKey) != labeledNodeMap.end()) labeledNodeMap[labelKey].push_back(*it);
-		else
-		{
-			vector<NeuronSWC> newSet;
-			newSet.push_back(*it);
-			labeledNodeMap.insert(pair<string, vector<NeuronSWC>>(labelKey, newSet));
-		}
-	}
+	NeuronStructUtil::nodeTileMapGen(inputNodeList, labeledNodeMap, 30);
 
 	float distSum = 0;
 	vector<float> distVec;
@@ -442,7 +388,7 @@ map<string, float> NeuronStructUtil::selfNodeDist(const QList<NeuronSWC>& inputN
 	return outputMap;
 }
 
-NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre)
+NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength)
 {
 	// -- This method identifies positive signal nodes from noise with given reference NeuronTree.
 	// -- radius: tile length
@@ -451,28 +397,15 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 	map<string, vector<NeuronSWC>> gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
 	// This can cause complication if the element is a data struct.
 
-	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
-	{
-		string xLabel = to_string(int((refIt->x) / (radius * 2)));
-		string yLabel = to_string(int((refIt->y) / (radius * 2)));
-		string zLabel = to_string(int((refIt->z) / (radius * 2 / zRATIO)));
-		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
-		if (gridSWCmap.find(keyLabel) != gridSWCmap.end()) gridSWCmap[keyLabel].push_back(*refIt);
-		else
-		{
-			vector<NeuronSWC> newSet;
-			newSet.push_back(*refIt);
-			gridSWCmap.insert(pair<string, vector<NeuronSWC>>(keyLabel, newSet));
-		}
-	}
+	NeuronStructUtil::nodeTileMapGen(refTree, gridSWCmap, nodeTileLength);
 
 	NeuronTree outputTree;
 	NeuronTree refConfinedFilteredTree;
 	for (QList<NeuronSWC>::const_iterator suIt = subjectTree.listNeuron.begin(); suIt != subjectTree.listNeuron.end(); ++suIt)
 	{
-		string xLabel = to_string(int((suIt->x) / (radius * 2)));
-		string yLabel = to_string(int((suIt->y) / (radius * 2)));
-		string zLabel = to_string(int((suIt->z) / (radius * 2 / zRATIO)));
+		string xLabel = to_string(int((suIt->x) / (nodeTileLength)));
+		string yLabel = to_string(int((suIt->y) / (nodeTileLength)));
+		string zLabel = to_string(int((suIt->z) / (nodeTileLength / zRATIO)));
 		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 
 		if (gridSWCmap.find(keyLabel) != gridSWCmap.end())

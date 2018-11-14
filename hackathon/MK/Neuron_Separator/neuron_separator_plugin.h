@@ -57,6 +57,8 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+
+	QString outputPath;
 	
 	/* -------------------------------------------------------------------------------------------------------------------------------------------- */
 	neuronSeparator();
@@ -102,7 +104,8 @@ public:
 
 protected:
 	void buildSomaTree(); // This method produces [crucialNodes] and establishes hierarchical orders. 
-	void breakPathMorph(somaNode* somaTreePtr); // This is the method that does the job => CUTS THE SOMA TREE AND PARTITIONS NEURONS
+	void breakPathMorph(); // This is the method that does the job => CUTS THE SOMA TREE AND PARTITIONS NEURONS
+	void breakPathMorph2(const NeuronTree& originalTree);
 	long int pathScissor(QList<NeuronSWC>& segment); // This method gets called by breakSomaMorph.
 
 private:

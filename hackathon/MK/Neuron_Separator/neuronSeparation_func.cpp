@@ -1,11 +1,17 @@
-#include "neuron_separator_plugin.h"
 #include <iostream>
-#include <math.h>
-#include "basic_surf_objs.h"
 #include <vector>
-#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+#include <deque>
 #include <algorithm>
-#include <vector>
+#include <math.h>
+
+#include "basic_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+
+#include "NeuronStructExplorer.h"
+#include "NeuronStructUtilities.h"
+
+#include "neuron_separator_plugin.h"
+
 
 using namespace std;
 
@@ -181,7 +187,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 
 		NeuronTree somaTreePartial;
 		somaTreePartial.listNeuron = path1;
-		QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
+		QString name = this->outputPath + "/" + QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 		writeSWC_file(name, somaTreePartial);
 		return path1;
 	}
@@ -194,7 +200,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 			
 			NeuronTree somaTreePartial;
 			somaTreePartial.listNeuron = path;
-			QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
+			QString name = this->outputPath + "/" + QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 			writeSWC_file(name, somaTreePartial);
 			return path;
 		}
@@ -205,7 +211,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 			
 			NeuronTree somaTreePartial;
 			somaTreePartial.listNeuron = path;
-			QString name = QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
+			QString name = this->outputPath + "/" + QString::number(wishedSomaID) + "_" + QString::number(excludedSomaID) + ".swc";
 			writeSWC_file(name, somaTreePartial);
 			return path;
 		}
@@ -446,7 +452,535 @@ void neuronSeparator::buildSomaTree()
 	} while (childrenCount > 0);	
 }
 
-void neuronSeparator::breakPathMorph(somaNode* headSomaPtr)
+void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
+{
+	map<int, size_t> nodeLocMap;
+	map<int, vector<size_t>> node2childLocMap;
+	map<int, vector<size_t>> branch2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(originalTree.listNeuron, nodeLocMap, node2childLocMap);
+	for (map<int, vector<size_t>>::iterator it = node2childLocMap.begin(); it != node2childLocMap.end(); ++it)
+		if (it->second.size() > 1) branch2childLocMap.insert(pair<int, vector<size_t>>(it->first, it->second));
+	
+	map<int, size_t> somaNodeLocMap;
+	map<int, vector<size_t>> somaNode2childLocMap;
+	map<int, vector<size_t>> somaBranch2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(this->somaPath, somaNodeLocMap, somaNode2childLocMap);
+	
+	cout << endl << "===== Identifying nodes to break =====" << endl;
+	cout << "crucial node number: " << this->crucialNodes.size() << endl;
+
+	vector<somaNode*> curLevelPtr, nextLevelPtr;
+	curLevelPtr.push_back(this->somaTreePtr);
+	this->brokenSomaPath = this->somaPath;
+
+	NeuronSWC head, tail;
+	int childrenCount;
+	long int segmentHeadID;
+	long int segmentTailID;
+	do
+	{
+		childrenCount = 0;
+		int childrenSize = 0;
+		nextLevelPtr.clear();
+		for (vector<somaNode*>::iterator it = curLevelPtr.begin(); it != curLevelPtr.end(); ++it) // parent crucial-node loop
+		{
+			segmentHeadID = (*it)->node.n;
+			childrenSize = (*it)->childrenSomas.size();
+			childrenCount = childrenCount + childrenSize;
+			cout << endl << endl << "children size of " << segmentHeadID << ": " << childrenSize << " -> ";
+
+			somaNode** childrenAddr = new somaNode*[childrenSize];
+			int childCount = 0;
+			for (vector<somaNode*>::iterator listIt = ((*it)->childrenSomas).begin(); listIt != ((*it)->childrenSomas).end(); ++listIt)
+			{
+				childrenAddr[childCount] = *listIt;
+				nextLevelPtr.push_back(childrenAddr[childCount]);
+				cout << childrenAddr[childCount]->node.n << " ";
+				++childCount;
+			} cout << endl;
+
+			//if (branchCutHash[(*it)->node.n] == true) continue;
+
+			for (size_t i = 0; i<childrenSize; ++i) // children crucial-node loop
+			{
+				segmentTailID = childrenAddr[i]->node.n;
+				cout << "--\n Head: " << segmentHeadID << endl << " Tail: " << segmentTailID << endl;
+
+				if ((*it)->soma == true) // parent crucial node
+				{
+					if (childrenAddr[i]->soma == true)
+					{
+						QList<NeuronSWC> pathAnalyze;
+						head = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentHeadID));
+						tail = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentTailID));
+						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						cout << "Path type: soma to soma, path size: " << pathAnalyze.size() << endl;
+
+						double radAngleMax = 0;
+						int twistedBranchID = 0;
+						deque<vector<float>> upstreamMaxQue;
+						deque<vector<float>> downstreamMaxQue;
+						for (QList<NeuronSWC>::iterator it = pathAnalyze.begin(); it != pathAnalyze.end(); ++it)
+						{
+							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
+							{
+								vector<NeuronSWC> upstream;
+								upstream.push_back(*it);
+								int parentID = it->parent;
+								while (upstream.size() < 10)
+								{
+									cout << parentID << " ";
+									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
+									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
+									parentID = upstream.back().parent;
+									if (parentID == -1) break;
+								}
+
+								vector<NeuronSWC> downstream;
+								downstream.push_back(*it);
+								if (somaNode2childLocMap.find(it->n) == somaNode2childLocMap.end())
+								{
+									upstream.clear();
+									downstream.clear();
+									continue;
+								}
+								int childID = this->somaPath.at(*somaNode2childLocMap.at(it->n).begin()).n;
+								cout << "| ";
+								while (downstream.size() < 10)
+								{
+									cout << childID << " ";
+									downstream.push_back(this->somaPath.at(somaNodeLocMap.at(childID)));
+									if (somaNode2childLocMap.find(childID) == somaNode2childLocMap.end()) break;
+									childID = this->somaPath.at(*somaNode2childLocMap.at(childID).begin()).n;
+								}
+
+								if (upstream.size() <= 3 || downstream.size() <= 3)
+								{
+									cout << endl;
+									continue;
+								}
+
+								vector<float> vector1(3);
+								vector1[0] = upstream.front().x - upstream.back().x;
+								vector1[1] = upstream.front().y - upstream.back().y;
+								vector1[2] = upstream.front().z - upstream.back().z;
+								vector<float> vector2(3);
+								vector2[0] = downstream.back().x - downstream.front().x;
+								vector2[1] = downstream.back().y - downstream.front().y;
+								vector2[2] = downstream.back().z - downstream.front().z;
+								double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+								cout << it->n << ": " << radAngle << endl;
+
+								if (radAngle > radAngleMax)
+								{
+									radAngleMax = radAngle;
+									twistedBranchID = it->n;
+									upstreamMaxQue.clear();
+									downstreamMaxQue.clear();
+									vector<float> locVec(3);
+
+									for (vector<NeuronSWC>::iterator vecIt = upstream.begin(); vecIt != upstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										upstreamMaxQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									upstreamMaxQue.push_front(locVec);
+
+									for (vector<NeuronSWC>::iterator vecIt = downstream.begin(); vecIt != downstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										downstreamMaxQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									downstreamMaxQue.push_front(locVec);
+								}
+								upstream.clear();
+								downstream.clear();
+							}
+						}
+
+						if (radAngleMax >= 0.5)
+						{
+							vector<vector<float>> upstreamMax;
+							upstreamMax.insert(upstreamMax.begin(), upstreamMaxQue.begin(), upstreamMaxQue.end());
+							vector<vector<float>> downstreamMax;
+							downstreamMax.insert(downstreamMax.begin(), downstreamMaxQue.begin(), downstreamMaxQue.end());
+							double upTurning = NeuronStructExplorer::selfTurningRadAngleSum(upstreamMax);
+							double downTurning = NeuronStructExplorer::selfTurningRadAngleSum(downstreamMax);
+
+							int nodeCutID;
+							if (upTurning > downTurning) nodeCutID = originalTree.listNeuron.at(nodeLocMap.at(twistedBranchID)).parent;
+							else if (downTurning > upTurning) nodeCutID = originalTree.listNeuron.at(*node2childLocMap.at(twistedBranchID).begin()).n;
+
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}	
+						else
+						{
+							int nodeCutID = 0;
+
+							vector<vector<int>> consecutive1s_vector;
+							vector<int> consecutive1s;
+							consecutive1s_vector.push_back(consecutive1s);
+							for (QList<NeuronSWC>::iterator rIt = pathAnalyze.begin(); rIt != pathAnalyze.end(); ++rIt)
+							{
+								if (rIt->radius == 1) consecutive1s_vector.back().push_back(rIt->n);
+								else
+								{
+									consecutive1s.clear();
+									consecutive1s_vector.push_back(consecutive1s);
+								}
+							}
+
+							vector<int> consecutive1sMax;
+							consecutive1sMax.clear();
+							for (vector<vector<int>>::iterator conIt = consecutive1s_vector.begin(); conIt != consecutive1s_vector.end(); ++conIt)
+								if (conIt->size() > consecutive1sMax.size()) consecutive1sMax = *conIt;
+							if (consecutive1sMax.size() >= 3) nodeCutID = *(consecutive1sMax.begin() + ptrdiff_t(consecutive1sMax.size() / 2));
+							else
+							{
+								nodeCutID = this->pathScissor(pathAnalyze);
+								if (nodeCutID == 0)
+								{
+									ptrdiff_t pathMiddle = ptrdiff_t(pathAnalyze.size() / 2);
+									nodeCutID = (pathAnalyze.begin() + pathMiddle)->n;
+								}
+							}
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}
+					}
+					else if ((childrenAddr[i]->branch == true) && (childrenAddr[i]->soma == false)) // pure branch
+					{
+						QList<NeuronSWC> pathAnalyze;
+						head = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentHeadID));
+						tail = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentTailID));
+						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						cout << "Path type: soma to branch, path size: " << pathAnalyze.size() << endl;
+						if (pathAnalyze.size() <= 20)
+						{
+							cout << " -- segment too short to be cut, move to the next level.." << endl;
+							continue;
+						}
+
+						double radAngleMax = 0;
+						int twistedBranchID = 0;
+						deque<vector<float>> upstreamMaxQue;
+						deque<vector<float>> downstreamMaxQue;
+						for (QList<NeuronSWC>::iterator it = pathAnalyze.begin(); it != pathAnalyze.end(); ++it)
+						{
+							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
+							{
+								vector<NeuronSWC> upstream;
+								upstream.push_back(*it);
+								int parentID = it->parent;
+								while (upstream.size() < 10)
+								{
+									cout << parentID << " ";
+									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
+									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
+									parentID = upstream.back().parent;
+									if (parentID == -1) break;
+								}
+
+								vector<NeuronSWC> downstream;
+								downstream.push_back(*it);
+								int childID = this->somaPath.at(*somaNode2childLocMap.at(it->n).begin()).n;
+								cout << "| ";
+								while (downstream.size() < 10)
+								{
+									cout << childID << " ";
+									downstream.push_back(this->somaPath.at(somaNodeLocMap.at(childID)));
+									if (somaNode2childLocMap.find(childID) == somaNode2childLocMap.end()) break;
+									childID = this->somaPath.at(*somaNode2childLocMap.at(childID).begin()).n;
+								}
+
+								if (upstream.size() <= 3 || downstream.size() <= 3)
+								{
+									cout << endl;
+									continue;
+								}
+
+								vector<float> vector1(3);
+								vector1[0] = upstream.front().x - upstream.back().x;
+								vector1[1] = upstream.front().y - upstream.back().y;
+								vector1[2] = upstream.front().z - upstream.back().z;
+								vector<float> vector2(3);
+								vector2[0] = downstream.back().x - downstream.front().x;
+								vector2[1] = downstream.back().y - downstream.front().y;
+								vector2[2] = downstream.back().z - downstream.front().z;
+								double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+								cout << " -- " << it->n << ": " << radAngle << endl;
+								
+
+								if (radAngle > radAngleMax)
+								{
+									radAngleMax = radAngle;
+									twistedBranchID = it->n;
+									upstreamMaxQue.clear();
+									downstreamMaxQue.clear();
+									vector<float> locVec(3);
+
+									for (vector<NeuronSWC>::iterator vecIt = upstream.begin(); vecIt != upstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										upstreamMaxQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									upstreamMaxQue.push_front(locVec);
+
+									for (vector<NeuronSWC>::iterator vecIt = downstream.begin(); vecIt != downstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										downstreamMaxQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									downstreamMaxQue.push_front(locVec);
+								}
+								upstream.clear();
+								downstream.clear();
+							}
+						}
+
+						if (radAngleMax >= 0.5)
+						{
+							vector<vector<float>> upstreamMax;
+							upstreamMax.insert(upstreamMax.begin(), upstreamMaxQue.begin(), upstreamMaxQue.end());
+							vector<vector<float>> downstreamMax;
+							downstreamMax.insert(downstreamMax.begin(), downstreamMaxQue.begin(), downstreamMaxQue.end());
+							double upTurning = NeuronStructExplorer::selfTurningRadAngleSum(upstreamMax);
+							double downTurning = NeuronStructExplorer::selfTurningRadAngleSum(downstreamMax);
+							cout << upTurning << " " << downTurning << endl;
+
+							int nodeCutID;
+							if (upTurning > downTurning) nodeCutID = originalTree.listNeuron.at(nodeLocMap.at(twistedBranchID)).parent;
+							else if (downTurning > upTurning) nodeCutID = this->somaPath.at(*somaNode2childLocMap.at(twistedBranchID).begin()).n;
+
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}
+						else
+						{
+							int nodeCutID = 0;
+
+							vector<vector<int>> consecutive1s_vector;
+							vector<int> consecutive1s;
+							consecutive1s_vector.push_back(consecutive1s);
+							for (QList<NeuronSWC>::iterator rIt = pathAnalyze.begin(); rIt != pathAnalyze.end(); ++rIt)
+							{
+								if (rIt->radius == 1) consecutive1s_vector.back().push_back(rIt->n);
+								else
+								{
+									consecutive1s.clear();
+									consecutive1s_vector.push_back(consecutive1s);
+								}
+							}
+
+							vector<int> consecutive1sMax;
+							consecutive1sMax.clear();
+							for (vector<vector<int>>::iterator conIt = consecutive1s_vector.begin(); conIt != consecutive1s_vector.end(); ++conIt)
+								if (conIt->size() > consecutive1sMax.size()) consecutive1sMax = *conIt;
+							if (consecutive1sMax.size() >= 3) nodeCutID = *(consecutive1sMax.begin() + ptrdiff_t(consecutive1sMax.size() / 2));
+							else
+							{
+								nodeCutID = this->pathScissor(pathAnalyze);
+								if (nodeCutID == 0)
+								{
+									ptrdiff_t pathMiddle = ptrdiff_t(pathAnalyze.size() / 2);
+									nodeCutID = (pathAnalyze.begin() + pathMiddle)->n;
+								}
+							}
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}
+					}
+				}
+				else if ((*it)->branch == true && (*it)->soma == false)
+				{
+					if (childrenAddr[i]->soma == true)
+					{
+						QList<NeuronSWC> pathAnalyze;
+						head = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentHeadID));
+						tail = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentTailID));
+						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						cout << "Path type: branch to soma, path size: " << pathAnalyze.size() << endl;
+
+						double radAngleMax = 0;
+						int twistedBranchID = 0;
+						deque<vector<float>> upstreamMaxQue;
+						deque<vector<float>> downstreamMaxQue;
+						for (QList<NeuronSWC>::iterator it = pathAnalyze.begin(); it != pathAnalyze.end(); ++it)
+						{
+							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
+							{
+								vector<NeuronSWC> upstream;
+								upstream.push_back(*it);
+								int parentID = it->parent;
+								while (upstream.size() < 10)
+								{
+									cout << parentID << " ";
+									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
+									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
+									parentID = upstream.back().parent;
+									if (parentID == -1) break;
+								}
+
+								vector<NeuronSWC> downstream;
+								downstream.push_back(*it);
+								if (somaNode2childLocMap.find(it->n) == somaNode2childLocMap.end())
+								{
+									upstream.clear();
+									downstream.clear();
+									continue;
+								}
+								int childID = this->somaPath.at(*somaNode2childLocMap.at(it->n).begin()).n;
+								cout << "| ";
+								while (downstream.size() < 10)
+								{
+									cout << childID << " ";
+									downstream.push_back(this->somaPath.at(somaNodeLocMap.at(childID)));
+									if (somaNode2childLocMap.find(childID) == somaNode2childLocMap.end()) break;
+									childID = this->somaPath.at(*somaNode2childLocMap.at(childID).begin()).n;
+								}
+
+								if (upstream.size() <= 3 || downstream.size() <= 3)
+								{
+									cout << endl;
+									continue;
+								}
+
+								vector<float> vector1(3);
+								vector1[0] = upstream.front().x - upstream.back().x;
+								vector1[1] = upstream.front().y - upstream.back().y;
+								vector1[2] = upstream.front().z - upstream.back().z;
+								vector<float> vector2(3);
+								vector2[0] = downstream.back().x - downstream.front().x;
+								vector2[1] = downstream.back().y - downstream.front().y;
+								vector2[2] = downstream.back().z - downstream.front().z;
+								double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+								cout << it->n << ": " << radAngle << endl;
+
+								if (radAngle > radAngleMax)
+								{
+									radAngleMax = radAngle;
+									twistedBranchID = it->n;
+									upstreamMaxQue.clear();
+									downstreamMaxQue.clear();
+									vector<float> locVec(3);
+					
+									for (vector<NeuronSWC>::iterator vecIt = upstream.begin(); vecIt != upstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										upstreamMaxQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									upstreamMaxQue.push_front(locVec);
+								
+									for (vector<NeuronSWC>::iterator vecIt = downstream.begin(); vecIt != downstream.end(); ++vecIt)
+									{
+										locVec[0] = vecIt->x;
+										locVec[1] = vecIt->y;
+										locVec[2] = vecIt->z;
+										downstreamMaxQue.push_back(locVec);
+									}
+									locVec[0] = it->x;
+									locVec[1] = it->y;
+									locVec[2] = it->z;
+									downstreamMaxQue.push_front(locVec);
+								}
+								upstream.clear();
+								downstream.clear();
+							}
+						}
+						if (upstreamMaxQue.empty() || downstreamMaxQue.empty()) continue;
+
+						if (radAngleMax >= 0.5)
+						{
+							vector<vector<float>> upstreamMax;
+							upstreamMax.insert(upstreamMax.begin(), upstreamMaxQue.begin(), upstreamMaxQue.end());
+							vector<vector<float>> downstreamMax;
+							downstreamMax.insert(downstreamMax.begin(), downstreamMaxQue.begin(), downstreamMaxQue.end());
+							double upTurning = NeuronStructExplorer::selfTurningRadAngleSum(upstreamMax);
+							double downTurning = NeuronStructExplorer::selfTurningRadAngleSum(downstreamMax);
+							
+							int nodeCutID;
+							if (upTurning > downTurning) nodeCutID = originalTree.listNeuron.at(nodeLocMap.at(twistedBranchID)).parent;
+							else if (downTurning > upTurning) nodeCutID = originalTree.listNeuron.at(*node2childLocMap.at(twistedBranchID).begin()).n;
+							
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}
+						else
+						{
+							int nodeCutID = 0;
+
+							vector<vector<int>> consecutive1s_vector;
+							vector<int> consecutive1s;
+							consecutive1s_vector.push_back(consecutive1s);
+							for (QList<NeuronSWC>::iterator rIt = pathAnalyze.begin(); rIt != pathAnalyze.end(); ++rIt)
+							{
+								if (rIt->radius == 1) consecutive1s_vector.back().push_back(rIt->n);
+								else
+								{
+									consecutive1s.clear();
+									consecutive1s_vector.push_back(consecutive1s);
+								}
+							}
+
+							vector<int> consecutive1sMax;
+							consecutive1sMax.clear();
+							for (vector<vector<int>>::iterator conIt = consecutive1s_vector.begin(); conIt != consecutive1s_vector.end(); ++conIt)
+								if (conIt->size() > consecutive1sMax.size()) consecutive1sMax = *conIt;
+							if (consecutive1sMax.size() >= 3) nodeCutID = *(consecutive1sMax.begin() + ptrdiff_t(consecutive1sMax.size() / 2));
+							else
+							{
+								nodeCutID = this->pathScissor(pathAnalyze);
+								if (nodeCutID == 0)
+								{
+									ptrdiff_t pathMiddle = ptrdiff_t(pathAnalyze.size() / 2);
+									nodeCutID = (pathAnalyze.begin() + pathMiddle)->n;
+								}
+							}
+							this->nodeToBeCutID.push_back(nodeCutID);
+							cout << " ID of node to be cut: " << nodeCutID << endl;
+						}
+					}
+				}
+			}
+
+			delete[] childrenAddr;
+		}
+		cout << "  --  Finished determining branch/path break" << endl;
+
+		curLevelPtr.clear();
+		for (vector<somaNode*>::iterator levelIt = nextLevelPtr.begin(); levelIt != nextLevelPtr.end(); ++levelIt)
+			curLevelPtr.push_back(*levelIt);
+	} while (childrenCount > 0);
+	cout << "====================================================" << endl << endl;
+}
+
+void neuronSeparator::breakPathMorph()
 {
 	cout << endl << "===== Identifying nodes to break =====" << endl;
 	cout << "crucial node number: " << this->crucialNodes.size() << endl;
@@ -592,11 +1126,11 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 	QVector< QVector<V3DLONG> > segmentChildTable = mkChildTableScratch(segment);
 	nodeCheck* nodePathScreen = new nodeCheck[segSize];
 
-	for (int i=0; i<segSize; ++i)
+	for (int i = 0; i < segSize; ++i)
 	{
 		double distCheck;
-		double distance1 = (head.x-segment[i].x)*(head.x-segment[i].x) + (head.y-segment[i].y)*(head.y-segment[i].y) + (head.z-segment[i].z)*(head.z-segment[i].z);
-		double distance2 = (tail.x-segment[i].x)*(tail.x-segment[i].x) + (tail.y-segment[i].y)*(tail.y-segment[i].y) + (tail.z-segment[i].z)*(tail.z-segment[i].z);
+		double distance1 = (head.x - segment[i].x) * (head.x - segment[i].x) + (head.y - segment[i].y) * (head.y - segment[i].y) + (head.z - segment[i].z) * (head.z - segment[i].z);
+		double distance2 = (tail.x - segment[i].x) * (tail.x - segment[i].x) + (tail.y - segment[i].y) * (tail.y - segment[i].y) + (tail.z - segment[i].z) * (tail.z - segment[i].z);
 		double nodeNorm[3];
 		nodeCheck nodeScanned;
 
@@ -604,17 +1138,17 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 		{
 			nodeScanned.closerToHead = false;
 			distCheck = sqrt(distance2);
-			nodeNorm[0] = (segment[i].x-tail.x) / distCheck;
-			nodeNorm[1] = (segment[i].y-tail.y) / distCheck;
-			nodeNorm[2] = (segment[i].z-tail.z) / distCheck;
+			nodeNorm[0] = (segment[i].x - tail.x) / distCheck;
+			nodeNorm[1] = (segment[i].y - tail.y) / distCheck;
+			nodeNorm[2] = (segment[i].z - tail.z) / distCheck;
 		}
 		else 
 		{
 			nodeScanned.closerToHead = true;
 			distCheck = sqrt(distance1);
-			nodeNorm[0] = (segment[i].x-head.x) / distCheck;
-			nodeNorm[1] = (segment[i].y-head.y) / distCheck;
-			nodeNorm[2] = (segment[i].z-head.z) / distCheck;
+			nodeNorm[0] = (segment[i].x - head.x) / distCheck;
+			nodeNorm[1] = (segment[i].y - head.y) / distCheck;
+			nodeNorm[2] = (segment[i].z - head.z) / distCheck;
 		}
 						
 		nodeScanned.node = segment[i];
@@ -627,22 +1161,22 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 		nodePathScreen[i] = nodeScanned;
 	}
 
-	for (int i=1; i<segSize-1; ++i)
+	for (int i = 1; i < segSize-1; ++i)
 	{
 		//cout << nodePathScreen[i].somaBranchNorm[0] << " " << nodePathScreen[i].somaBranchNorm[1] << " " << nodePathScreen[i].somaBranchNorm[2] << endl;
 		
 		//nodeCheck child = nodePathScreen[nodePathScreen[i].childLocOnPath];
 		if (nodePathScreen[i].closerToHead == true)
 		{
-			nodePathScreen[i].dirIndex = (nodePathScreen[i+1].node.x-nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] + 
-										 (nodePathScreen[i+1].node.y-nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
-										 (nodePathScreen[i+1].node.z-nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
+			nodePathScreen[i].dirIndex = (nodePathScreen[i + 1].node.x - nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] +
+										 (nodePathScreen[i + 1].node.y - nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
+										 (nodePathScreen[i + 1].node.z - nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
 		}
 		else if (nodePathScreen[i].closerToHead == false)
 		{
-			nodePathScreen[i].dirIndex = (nodePathScreen[i-1].node.x-nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] + 
-										 (nodePathScreen[i-1].node.y-nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
-										 (nodePathScreen[i-1].node.z-nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
+			nodePathScreen[i].dirIndex = (nodePathScreen[i - 1].node.x - nodePathScreen[i].node.x) * nodePathScreen[i].somaBranchNorm[0] +
+										 (nodePathScreen[i - 1].node.y - nodePathScreen[i].node.y) * nodePathScreen[i].somaBranchNorm[1] +
+										 (nodePathScreen[i - 1].node.z - nodePathScreen[i].node.z) * nodePathScreen[i].somaBranchNorm[2];
 		}
 		//cout << nodePathScreen[i].dirIndex << " ";
 	}
@@ -658,10 +1192,10 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 	}
 	if (minIndex == 0) 
 	{
-		cout << " no node to be cut" << endl;
+		cout << " no node to be cut by geometry scissor." << endl;
 		return 0;
 	}
-	cout << " ID of node to be cut: " << nodeCutID << endl;
+	//cout << " ID of node to be cut: " << nodeCutID << endl;
 	
 	return nodeCutID;
 }

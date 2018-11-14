@@ -10,11 +10,73 @@
 using namespace std;
 using namespace boost::filesystem;
 
+ImgManager::ImgManager(QString inputPath)
+{
+	// boost::filesystem conflicts with Qt's QFile and QDir libraries. 
+	// Since the library is bound to be under Vaa3D framework (Qt UI), boost::filesystem is not chosen.
+
+	this->caseList.clear();
+	QDir inputDir(inputPath);
+	inputDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+	this->caseList = inputDir.entryList();
+
+	if (caseList.empty()) // No directories found.
+	{
+		inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->caseList = inputDir.entryList();
+
+		int swcFileCount = 0;
+		int tifFileCount = 0;
+		for (QStringList::iterator caseCheckIt = this->caseList.begin(); caseCheckIt != this->caseList.end(); ++caseCheckIt)
+		{
+			if ((*caseCheckIt).contains(".swc")) ++swcFileCount;
+			else if ((*caseCheckIt).contains(".tif")) ++tifFileCount;
+		}
+
+		if (swcFileCount == this->caseList.size())
+		{
+			this->inputSWCRootPath = inputPath;
+			this->inputCaseRootPath = "";
+		}
+		else if (tifFileCount == this->caseList.size())
+		{
+			this->inputSWCRootPath = "";
+			this->inputCaseRootPath = inputPath;
+			for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+			{
+				QString imgFullPath = this->inputCaseRootPath + "/" + *caseIt;
+				QStringList nameParse = (*caseIt).split(".");
+				*caseIt = nameParse.at(0);
+				this->inputMultiCasesSliceFullPaths.insert(pair<string, string>((*caseIt).toStdString(), imgFullPath.toStdString()));
+			}
+		}
+	}
+	else
+	{
+		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+		{
+			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
+			QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
+			QDir caseFolder(caseFullPath);
+			caseFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+			QStringList caseSlices = caseFolder.entryList();
+			if (caseSlices.empty()) cout << "case " << (*caseIt).toStdString() << " is empty. Skip." << endl;
+
+			for (QStringList::iterator sliceIt = caseSlices.begin(); sliceIt != caseSlices.end(); ++sliceIt)
+			{
+				QString sliceFullPath = caseFullPath + "/" + *sliceIt;
+				this->inputMultiCasesSliceFullPaths.insert(pair<string, string>((*caseIt).toStdString(), sliceFullPath.toStdString()));
+			}
+		}
+	}
+}
+
 void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
 	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
 	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
 
+	cout << " -- Input image name: " << caseID << endl;
 	if (format == slices)
 	{
 		registeredImg currImgCase;
@@ -42,6 +104,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		}
 
 		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
+		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 	else if (format == singleCase_singleSlice)
 	{

@@ -72,6 +72,7 @@ public:
 	void getSomaCandidates(float distThre);
 	void getSomaBlendedImgs();
 	void skeletonThreFiltered();
+	void somaDendriteMask();
 
 	void swc_imgCrop();
 	
@@ -96,6 +97,7 @@ public:
 	void swcSeparate(QString outputRoot2);
 	void swcTypeSeparate(int type);
 	void swcSubtraction(int type);
+	void swcUpSample();
 	void cleanUpzFor2Dcentroids();
 
 private:

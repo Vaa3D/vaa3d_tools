@@ -38,6 +38,9 @@ class ImgProcessor
 public:
 	/***************** Basic Image Operations *****************/
 	template<class T>
+	static inline T getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y);
+	
+	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
 	template<class T>
@@ -92,6 +95,9 @@ public:
 
 	template<class T>
 	static inline void reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+
+	template<class T>
+	static inline void histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero = true);
 	/**************************************************************/
 
 
@@ -107,6 +113,13 @@ public:
 };
 
 // ========================================= BASIC IMAGE OPERATION =========================================
+template<class T>
+inline T ImgProcessor::getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y)
+{
+	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
+	return inputImgPtr[pix1Dindex];
+}
+
 template<class T>
 inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
 {
@@ -159,7 +172,7 @@ inline void ImgProcessor::imgDotMultiply(unsigned char inputImgPtr1[], unsigned 
 	{
 		int value = int(inputImgPtr1[i]) * int(inputImgPtr2[i]);
 		if (value > 255) value = 255;
-		outputImgPtr[i] = unsigned char(value);
+		outputImgPtr[i] = (unsigned char)(value);
 	}
 }
 
@@ -213,12 +226,12 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 template<class T>
 inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[])
 {
-	for (int i = 0; i < dims[0] * dims[1]; ++i) outputImgPtr[i] = 0;
-	for (vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
+	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
+	for (typename vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
 	{
 		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i)
 		{
-			outputImgPtr[i] = ImgProcessor::imageMax(it, outputImgPtr, outputImgPtr, imgDims);
+			outputImgPtr[i] = ImgProcessor::imgMax(it, outputImgPtr, outputImgPtr, imgDims);
 		}
 	}
 }
@@ -424,6 +437,33 @@ inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], 
 		if (transformedValue > starting_intensity) outputImgPtr[i] = transformedValue;
 		else if (transformedValue / (starting_intensity - transformedValue + 1) < 1) outputImgPtr[i] = 0;
 		else outputImgPtr[i] = transformedValue / (starting_intensity - transformedValue + 1);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero)
+{
+	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
+	if (noZero) histMap.erase(histMap.find(0));
+	
+	map<int, double> histCumul;
+	double totalNum = 0;
+	int maxIntensity = 0;
+	for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it)
+	{
+		totalNum = totalNum + it->second;
+		histCumul.insert(pair<int, double>(it->first, double(totalNum)));
+		maxIntensity = it->first;
+	}
+	
+	map<int, int> binMap;
+	for (map<int, double>::iterator it = histCumul.begin(); it != histCumul.end(); ++it)
+		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(maxIntensity)) * 255))));
+	
+	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
+	{
+		if (inputImgPtr[i] == 0) continue;
+		else outputImgPtr[i] = T(binMap.at(int(inputImgPtr[i])));
 	}
 }
 // ================================ END of [IMAGE PROCESSING/FILTERING] ================================
