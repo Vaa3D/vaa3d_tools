@@ -58,11 +58,13 @@ class ImgManager
 public: 
 	/********* Constructors and Basic Data Members *********/
 	ImgManager() {};
+	ImgManager(QString inputPath);
 	ImgManager(string wholeImgName);
 
 	QString inputCaseRootPath;
-	QString inputSWCPath;
+	QString inputSWCRootPath;
 	QString outputRootPath;
+	
 	QStringList caseList;
 	string inputSingleCaseSingleSliceFullPath;
 	string outputSingleCaseSingleSliceFullPath;

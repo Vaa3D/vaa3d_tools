@@ -448,16 +448,18 @@ inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int
 	
 	map<int, double> histCumul;
 	double totalNum = 0;
+	int maxIntensity = 0;
 	for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it)
 	{
 		totalNum = totalNum + it->second;
 		histCumul.insert(pair<int, double>(it->first, double(totalNum)));
+		maxIntensity = it->first;
 	}
-
+	
 	map<int, int> binMap;
 	for (map<int, double>::iterator it = histCumul.begin(); it != histCumul.end(); ++it)
-		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(255)) * 255))));
-
+		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(maxIntensity)) * 255))));
+	
 	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
 	{
 		if (inputImgPtr[i] == 0) continue;

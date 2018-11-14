@@ -19,9 +19,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
-	string funcName = "histEq";
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
+	//string funcName = "histEq";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -571,30 +571,35 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("histEq"))
 	{
-		string fileFullName = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP\\319215569.tif";
-		string fileName = "319215569.tif";
-		ImgManager myManager;
-		myManager.inputSingleCaseSingleSliceFullPath = fileFullName;
-		myManager.imgEntry(fileName, ImgManager::singleCase_singleSlice);
-		int imgDims[3];
-		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
-		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
-		imgDims[2] = 1;
-		unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-		ImgProcessor::histEqual_unit8(myManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+		ImgManager myManager(folderNameQ);
 
-		V3DLONG saveDims[4];
-		saveDims[0] = imgDims[0];
-		saveDims[1] = imgDims[1];
-		saveDims[2] = 1;
-		saveDims[3] = 1;
-		QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569_histEqTest.tif";
-		string saveFileName = saveFileNameQ.toStdString();
-		const char* saveFileNameC = saveFileName.c_str();
-		ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		{
+			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
+			myManager.imgEntry(caseIt->first, ImgManager::singleCase_singleSlice);
 
-		delete[] outputImgPtr;
-		myManager.imgDatabase.clear();
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			ImgProcessor::histEqual_unit8(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP_histEq\\" + QString::fromStdString(caseIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+		}
 	}
 
 	return 0;
