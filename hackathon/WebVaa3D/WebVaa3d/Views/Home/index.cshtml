@@ -10,6 +10,14 @@
 <script src="~/js/SingleFile.js"></script>
 <script src="~/js/mainstyle.js"></script>
 <script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
+
+<script src="~/js/volumeRendering.js"></script>
+<script src="~/js/VolumeShader.js"></script>
+<script src="~/js/WebGL.js"></script>
+<script src="~/js/Lut.js"></script>
+
+
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -42,10 +50,10 @@
                         <i class="fa fa-file "></i>&nbsp;File
                         <ul id="openfile">
                             <li>
-                               <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
+                                <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
                                 <ul id="thrid-nave-open">
 
-                                    <li id="open-local"  ><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="readlocalfile()" /></li>
+                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="VolumeRender()" /></li>
 
                                     <li id="open-server" onclick="getPictures()"><i class="fa  fa-server fa-fw"></i>&nbsp;open from server</li> <!--待完善-->
                                     <li id="open-url"><i class="fa fa-globe fa-fw "></i>&nbsp;open by URL</li>
@@ -64,7 +72,7 @@
 
 
                     <li id="Edit" class="show" data-content="second-nave-edit" tabindex="0">
-                       <i class="fa  fa-edit fa-fw"></i>&nbsp;Edit
+                        <i class="fa  fa-edit fa-fw"></i>&nbsp;Edit
                         <ul id="second-nave-edit">
                             <li onclick="draw()"><i class="fa fa-pencil fa-fw "></i>&nbsp;draw</li>
                             <li><i class="fa fa-trash fa-fw "></i>&nbsp;delete</li>
@@ -87,7 +95,7 @@
             <div class="panel" id="Vaa3Dweb-panel">
                 <div class="panel-body">
                     <div class="panel-group1" id="Waa3Dweb-panelgroup-img">
-                        <div id="title1" ><p><h2 style="text-align:center;">Img</h2></p></div><br />
+                        <div id="title1"><p><h2 style="text-align:center;">Img</h2></p></div><br />
                         <div class="contrast">
                             <span>Contrast</span><br /><br />
                             <p><input type="range" min="0" max="10" id="contrast" name="point1" style="" /></p>
@@ -99,7 +107,7 @@
 
 
                     <div class="panel-group2" id="Waa3Dweb-panelgroup-draw">
-                        <div id="title2" ><p><h2 style="text-align:center;">Draw</h2></p></div><br />
+                        <div id="title2"><p><h2 style="text-align:center;">Draw</h2></p></div><br />
                         <div>
                             <span>Line Size</span>&nbsp;&nbsp;&nbsp;&nbsp;
                             <select id="line-size-select">
@@ -132,7 +140,7 @@
 
         </div>
     </div>
-  
+
 </body>
 
 <script type="text/javascript">
@@ -172,12 +180,12 @@
             type: 1,
             area: ['29%', '360px'],
             shadeClose: true, //点击遮罩关闭
-            content:'help information',
+            content: 'help information',
             title: ['HELP', 'font-size:18px;background-color:rgba(25, 104, 150, 0.91)'],
-            offset:['5%','70%'],
+            offset: ['5%', '70%'],
         });
-       
-      
+
+
     });
 
     $('#about').on('click', function () {
@@ -186,49 +194,49 @@
             area: ['29%', '360px'],
             shadeClose: true, //点击遮罩关闭
             content: 'introduce information',
-            title:false,//不显示标题
+            title: false,//不显示标题
             offset: ['5%', '70%'],
         });
-      
+
     });
 
 
     //        页面加载状态改变时的事件，未实现-------------------
-   // document.onreadystatechange = function () {
-   //     if (document.readyState == 'complete') {   //判断页面加载完成，加载的图标就隐藏  进度条------------------------
+    // document.onreadystatechange = function () {
+    //     if (document.readyState == 'complete') {   //判断页面加载完成，加载的图标就隐藏  进度条------------------------
     //        $("#loading").fadeOut();
-     //   }
-  //  }
+    //   }
+    //  }
 
     function show_panel() {//淡入显示面板-----------待改善
         $('#right-content').fadeIn("slow");
         $('#show-panel').hide();
         $('#left-content').css('width', '70%');
-        if (document.webkitIsFullScreen) {         
+        if (document.webkitIsFullScreen) {
         }
         else {//不是全屏状态时重新render一下，恢复到原来状态
             renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
         }
-       
-       
-    }
-   
-       
 
-   
+
+    }
+
+
+
+
     //隐藏面板
     $('#view').on("click", function () {
         if (document.webkitIsFullScreen) {//全屏是自动隐藏控制面板  ****************存在全屏时，全屏退出过后如果不提前打开菜单栏会出现菜单栏无法显示
 
-            
+
             $('#right-content').hide();
             $('#left-content').css('width', '99%');
-            $('#show-panel').show();//  
+            $('#show-panel').show();//
         }
-       
+
     });
-    
-       
+
+
 
     //document.addEventListener("webkitfullscreenchange", show_panel());
 
@@ -240,7 +248,7 @@
   //          $('#left-content').css('width', '99%');
   //          $('#show-panel').show();
   //      });
-  //    
+  //
  //   }
  //   $('#open-url').on('click', function () {
 
