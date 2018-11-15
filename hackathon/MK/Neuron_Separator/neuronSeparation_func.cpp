@@ -669,21 +669,29 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 
 								if (branch2childLocMap.find(bParentID) != branch2childLocMap.end())
 								{
-									branchCheckRangeIDs.push_front(bParentID);
-									up = true;
-
-									branchRouteID = bParentID;
-									vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
-									for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
+									for (QList<NeuronSWC>::iterator withinIt = pathAnalyze.begin(); withinIt != pathAnalyze.end() - 1; ++withinIt)
 									{
-										if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+										if (withinIt->n == bParentID)
 										{
-											int branchCount = 0;
-											branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
-											while (branchCount <= 9)
+											branchCheckRangeIDs.push_front(bParentID);
+											up = true;
+
+											branchRouteID = bParentID;
+											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
-												++branchCount;
-												branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+												{
+													int branchCount = 0;
+													branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
+													while (branchCount <= 9)
+													{
+														++branchCount;
+														if (node2childLocMap.find(branchRouteID) == node2childLocMap.end()) break;
+														branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+													}
+													break;
+												}
 											}
 											break;
 										}
@@ -691,23 +699,30 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								}
 								else if (branch2childLocMap.find(bChildID) != branch2childLocMap.end())
 								{
-									branchCheckRangeIDs.push_back(bChildID);
-									down = true;
-
-									branchRouteID = bChildID;
-									vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
-									for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
+									for (QList<NeuronSWC>::iterator withinIt = pathAnalyze.begin(); withinIt != pathAnalyze.end() - 1; ++withinIt)
 									{
-										if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+										if (withinIt->n == bChildID)
 										{
-											int branchCount = 0;
-											branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
-											while (branchCount <= 9)
+											branchCheckRangeIDs.push_back(bChildID);
+											down = true;
+
+											branchRouteID = bChildID;
+											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
-												++branchCount;
-												branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+												{
+													int branchCount = 0;
+													branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
+													while (branchCount <= 9)
+													{
+														++branchCount;
+														if (node2childLocMap.find(branchRouteID) == node2childLocMap.end()) break;
+														branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+													}
+													break;
+												}
 											}
-											break;
 										}
 									}
 								}
@@ -749,7 +764,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 						cout << "Path type: soma to branch, path size: " << pathAnalyze.size() << endl;
 						if (pathAnalyze.size() <= 20)
 						{
-							cout << " -- segment too short to be cut, move to the next level.." << endl;
+							cout << " -- segment too short to be cut, move to the next crucial child node.." << endl;
 							continue;
 						}
 
@@ -848,7 +863,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							downstreamMax.insert(downstreamMax.begin(), downstreamMaxQue.begin(), downstreamMaxQue.end());
 							double upTurning = NeuronStructExplorer::selfTurningRadAngleSum(upstreamMax);
 							double downTurning = NeuronStructExplorer::selfTurningRadAngleSum(downstreamMax);
-							cout << upTurning << " " << downTurning << endl;
+							//cout << upTurning << " " << downTurning << endl;
 
 							int nodeCutID;
 							if (upTurning > downTurning) nodeCutID = originalTree.listNeuron.at(nodeLocMap.at(twistedBranchID)).parent;
@@ -902,21 +917,29 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 
 								if (branch2childLocMap.find(bParentID) != branch2childLocMap.end())
 								{
-									branchCheckRangeIDs.push_front(bParentID);
-									up = true;
-
-									branchRouteID = bParentID;
-									vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
-									for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
+									for (QList<NeuronSWC>::iterator withinIt = pathAnalyze.begin(); withinIt != pathAnalyze.end() - 1; ++withinIt)
 									{
-										if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+										if (withinIt->n == bParentID)
 										{
-											int branchCount = 0;
-											branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
-											while (branchCount <= 9)
+											branchCheckRangeIDs.push_front(bParentID);
+											up = true;
+
+											branchRouteID = bParentID;
+											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
-												++branchCount;
-												branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+												{
+													int branchCount = 0;
+													branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
+													while (branchCount <= 9)
+													{
+														++branchCount;
+														if (node2childLocMap.find(branchRouteID) == node2childLocMap.end()) break;
+														branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+													}
+													break;
+												}
 											}
 											break;
 										}
@@ -924,23 +947,30 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								}
 								else if (branch2childLocMap.find(bChildID) != branch2childLocMap.end())
 								{
-									branchCheckRangeIDs.push_back(bChildID);
-									down = true;
-
-									branchRouteID = bChildID;
-									vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
-									for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
+									for (QList<NeuronSWC>::iterator withinIt = pathAnalyze.begin(); withinIt != pathAnalyze.end() - 1; ++withinIt)
 									{
-										if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+										if (withinIt->n == bChildID)
 										{
-											int branchCount = 0;
-											branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
-											while (branchCount <= 9)
+											branchCheckRangeIDs.push_back(bChildID);
+											down = true;
+
+											branchRouteID = bChildID;
+											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
-												++branchCount;
-												branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+												{
+													int branchCount = 0;
+													branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
+													while (branchCount <= 9)
+													{
+														++branchCount;
+														if (node2childLocMap.find(branchRouteID) == node2childLocMap.end()) break;
+														branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+													}
+													break;
+												}
 											}
-											break;
 										}
 									}
 								}
@@ -985,7 +1015,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 						cout << "Path type: branch to soma, path size: " << pathAnalyze.size() << endl;
 						if (pathAnalyze.size() <= 20)
 						{
-							cout << " -- segment too short to be cut, move to the next level.." << endl;
+							cout << " -- segment too short to be cut, move to the next crucial child node.." << endl;
 							continue;
 						}
 
@@ -1143,21 +1173,29 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 
 								if (branch2childLocMap.find(bParentID) != branch2childLocMap.end())
 								{
-									branchCheckRangeIDs.push_front(bParentID);
-									up = true;
-
-									branchRouteID = bParentID;
-									vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
-									for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
+									for (QList<NeuronSWC>::iterator withinIt = pathAnalyze.begin(); withinIt != pathAnalyze.end() - 1; ++withinIt)
 									{
-										if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+										if (withinIt->n == bParentID)
 										{
-											int branchCount = 0;
-											branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
-											while (branchCount <= 9)
+											branchCheckRangeIDs.push_front(bParentID);
+											up = true;
+
+											branchRouteID = bParentID;
+											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
-												++branchCount;
-												branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+												{
+													int branchCount = 0;
+													branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
+													while (branchCount <= 9)
+													{
+														++branchCount;
+														if (node2childLocMap.find(branchRouteID) == node2childLocMap.end()) break;
+														branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+													}
+													break;
+												}
 											}
 											break;
 										}
@@ -1165,25 +1203,32 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								}
 								else if (branch2childLocMap.find(bChildID) != branch2childLocMap.end())
 								{
-									branchCheckRangeIDs.push_back(bChildID);
-									down = true;
-
-									branchRouteID = bChildID;
-									vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
-									for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
+									for (QList<NeuronSWC>::iterator withinIt = pathAnalyze.begin(); withinIt != pathAnalyze.end() - 1; ++withinIt)
 									{
-										if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+										if (withinIt->n == bChildID)
 										{
-											int branchCount = 0;
-											branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
-											while (branchCount <= 9)
+											branchCheckRangeIDs.push_back(bChildID);
+											down = true;
+
+											branchRouteID = bChildID;
+											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
-												++branchCount;
-												branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
+												{
+													int branchCount = 0;
+													branchRouteID = inputSWCTree.listNeuron.at(*branchChildIt).n;
+													while (branchCount <= 9)
+													{
+														++branchCount;
+														if (node2childLocMap.find(branchRouteID) == node2childLocMap.end()) break;
+														branchRouteID = this->inputSWCTree.listNeuron.at(*node2childLocMap.at(branchRouteID).begin()).n;
+													}
+													break;
+												}
 											}
-											break;
 										}
-									}
+									}	
 								}
 
 								bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
@@ -1194,7 +1239,6 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							{
 								vector<float> somaRouteVec = NeuronStructExplorer::getVector_NeuronSWC(this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())), this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.back())));
 								vector<float> branchVec = NeuronStructExplorer::getVector_NeuronSWC(this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())), this->inputSWCTree.listNeuron.at(nodeLocMap.at(branchRouteID)));
-								cout << somaRouteVec.at(0) * branchVec.at(0) + somaRouteVec.at(1) * branchVec.at(1) + somaRouteVec.at(2) * branchVec.at(2) << endl;
 								if (somaRouteVec.at(0) * branchVec.at(0) + somaRouteVec.at(1) * branchVec.at(1) + somaRouteVec.at(2) * branchVec.at(2) < 0)
 								{
 									nodeCutID = this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())).parent;
