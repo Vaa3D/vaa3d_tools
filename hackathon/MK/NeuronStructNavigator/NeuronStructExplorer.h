@@ -114,7 +114,7 @@ struct profiledTree
 class NeuronStructExplorer
 {
 public:
-	/********* Constructors and Basic Data/Function Members *********/
+	/***************** Constructors and Basic Data/Function Members *****************/
 	NeuronStructExplorer() {};
 	NeuronStructExplorer(QString neuronFileName);
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
@@ -129,7 +129,7 @@ public:
 	
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
-	/***************************************************************/
+	/********************************************************************************/
 
 	/***************** Neuron Struct Processing Functions *****************/
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
@@ -158,6 +158,7 @@ public:
 
 	/***************** Geometry *****************/
 public:
+	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
@@ -219,6 +220,15 @@ inline connectOrientation NeuronStructExplorer::getConnOrientation(connectOrient
 	else if (orit1 == head && orit2 == tail) return head_tail;
 	else if (orit1 == tail && orit2 == head) return tail_head;
 	else if (orit1 == tail && orit2 == tail) return tail_tail;
+}
+
+inline vector<float> NeuronStructExplorer::getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode)
+{
+	vector<float> vec(3);
+	vec[0] = endNode.x - startNode.x;
+	vec[1] = endNode.y - startNode.y;
+	vec[2] = endNode.z - startNode.z;
+	return vec;
 }
 
 inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector)

@@ -12,6 +12,9 @@
 #include <fstream>
 #include <iomanip>
 
+#include "NeuronStructExplorer.h"
+#include "NeuronStructUtilities.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(Neuron_Separator, neuronSeparator);
  
@@ -82,18 +85,40 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		QList<NeuronSWC> nodeList = inputSWCTree.listNeuron;
 		QList<ImageMarker> somas = readMarker_file(inputSomas);
 		this->childsTable = childIndexTable(inputSWCTree);
+
+		map<string, vector<int>> nodeTileMap;
+		NeuronStructUtil::nodeTileMapGen(inputSWCTree, nodeTileMap, 30);
+		map<int, size_t> nodeLocMap;
+		map<int, vector<size_t>> node2childLocMap;
+		NeuronStructUtil::node2loc_node2childLocMap(inputSWCTree.listNeuron, nodeLocMap, node2childLocMap);
 		
-        long distth = 4;
-		for (QList<ImageMarker>::iterator it=somas.begin(); it!=somas.end(); ++it)  // collecting all soma locations
+		for (QList<ImageMarker>::iterator it = somas.begin(); it != somas.end(); ++it)  // collecting all soma locations
 		{
-			for (QList<NeuronSWC>::iterator nodeIt=nodeList.begin(); nodeIt!=nodeList.end(); ++nodeIt)
+			string keyLabel = NeuronStructUtil::getNodeTileKey(*it, 30);
+			vector<int> tileIDs = nodeTileMap.at(keyLabel);
+			float distSqr = 1000;
+			int somaID;
+			for (vector<int>::iterator idIt = tileIDs.begin(); idIt != tileIDs.end(); ++idIt)
 			{
-                if (abs(long(nodeIt->x-it->x-1))<4 && abs(long(nodeIt->y-it->y-1))<4 && abs(long(nodeIt->z-it->z-1))<4)
+				float thisDistSqr = ((it->x - 1) - inputSWCTree.listNeuron.at(nodeLocMap.at(*idIt)).x) * ((it->x - 1) - inputSWCTree.listNeuron.at(nodeLocMap.at(*idIt)).x) +
+									((it->y - 1) - inputSWCTree.listNeuron.at(nodeLocMap.at(*idIt)).y) * ((it->y - 1) - inputSWCTree.listNeuron.at(nodeLocMap.at(*idIt)).y) +
+									((it->z - 1) - inputSWCTree.listNeuron.at(nodeLocMap.at(*idIt)).z) * ((it->z - 1) - inputSWCTree.listNeuron.at(nodeLocMap.at(*idIt)).z);
+				if (thisDistSqr < distSqr)
+				{
+					distSqr = thisDistSqr;
+					somaID = *idIt;
+				}
+			}
+			this->somaIDs.push_back(somaID);
+
+			/*for (QList<NeuronSWC>::iterator nodeIt = nodeList.begin(); nodeIt != nodeList.end(); ++nodeIt)
+			{
+                if (abs(long(nodeIt->x - it->x - 1)) < 4 && abs(long(nodeIt->y - it->y - 1)) < 4 && abs(long(nodeIt->z - it->z - 1)) < 4)
 				{
 					this->somaIDs.push_back(nodeIt->n);
 					break;
 				}
-			}
+			}*/
 		}
         cout << "number of somas: " << this->somaIDs.size() << endl;
 
@@ -191,18 +216,21 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout << endl;
 
 		QList<NeuronSWC> extracted;
-		for (vector<long int>::iterator extIt=this->somaIDs.begin(); extIt!=this->somaIDs.end(); ++extIt)
+		int typeCount = 0;
+		for (vector<long int>::iterator extIt = this->somaIDs.begin(); extIt != this->somaIDs.end(); ++extIt)
 		{
 			long int ID = *extIt;
 			cout << "soma ID: " << ID << endl;
 			size_t loc = inputSWCHash[ID];
 			NeuronSWC startNode = this->inputSWCTree.listNeuron[loc];
 			extracted = swcTrace(this->brokenInputSWC, ID, startNode);
+			for (QList<NeuronSWC>::iterator it = extracted.begin(); it != extracted.end(); ++it) it->type = typeCount;
 			NeuronTree extTree;
 			extTree.listNeuron = extracted;
 			QString name = this->outputPath + "/extracted_" + QString::number(ID) + ".swc";
 			writeSWC_file(name, extTree);
 			extracted.clear();
+			++typeCount;
 		}
 		cout << endl;
 
