@@ -43,6 +43,7 @@ struct morphStructElement2D
 	int xLength, yLength, radius;
 
 	unsigned char* structElePtr;
+	void printOutStructEle();
 };
 
 class ImgProcessor 

@@ -19,9 +19,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
-	string funcName = "imgErode";
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
+	//string funcName = "imgErode";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -334,6 +334,10 @@ int main(int argc, char* argv[])
 		QString folderNameQ = QString::fromStdString(folderName);
 		ImgManager myManager(folderNameQ);
 
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
 		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
@@ -351,7 +355,7 @@ int main(int argc, char* argv[])
 			saveDims[1] = imgDims[1];
 			saveDims[2] = 1;
 			saveDims[3] = 1;
-			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP_histEq_ada_ske\\" + QString::fromStdString(caseIt->first) + ".tif";
+			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
@@ -476,6 +480,10 @@ int main(int argc, char* argv[])
 		QString folderNameQ = QString::fromStdString(folderName);
 		ImgManager myManager(folderNameQ);
 
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
 		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
@@ -487,14 +495,14 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("median"))));
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean"))));
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
 			saveDims[1] = imgDims[1];
 			saveDims[2] = 1;
 			saveDims[3] = 1;
-			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP_histEq_medianThre\\" + QString::fromStdString(caseIt->first) + ".tif";
+			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
@@ -590,6 +598,10 @@ int main(int argc, char* argv[])
 		QString folderNameQ = QString::fromStdString(folderName);
 		ImgManager myManager(folderNameQ);
 
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
 		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
@@ -607,7 +619,7 @@ int main(int argc, char* argv[])
 			saveDims[1] = imgDims[1];
 			saveDims[2] = 1;
 			saveDims[3] = 1;
-			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP_histEq\\" + QString::fromStdString(caseIt->first) + ".tif";
+			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
@@ -618,24 +630,38 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("imgErode"))
 	{
-		ImgManager myManager;
-		myManager.inputSingleCaseSingleSliceFullPath = "Z:\\IVSCC_mouse_inhibitory\\442_max_thr_999_ROIcropped_MIP_histEq_medianThre\\319215569.tif";
-		myManager.imgEntry("inputImg", ImgManager::singleCase_singleSlice);
-		unsigned char* outputImgPtr = new unsigned char[myManager.imgDatabase.begin()->second.dims[0] * myManager.imgDatabase.begin()->second.dims[1]];
-		morphStructElement2D structEle("circle", 5);
-		ImgProcessor::erode2D(myManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), outputImgPtr, myManager.imgDatabase.begin()->second.dims, structEle);
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+		ImgManager myManager(folderNameQ);
 
-		V3DLONG imgDims[3];
-		imgDims[0] = myManager.imgDatabase.at("inputImg").dims[0];
-		imgDims[1] = myManager.imgDatabase.at("inputImg").dims[1];
-		imgDims[2] = 1;
-		imgDims[3] = 1;
-		QString saveFullNameQ = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\319215569.tif";
-		string saveFullName = saveFullNameQ.toStdString();
-		const char* saveFullNameC = saveFullName.c_str();
-		ImgManager::saveimage_wrapper(saveFullNameC, outputImgPtr, imgDims, 1);
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		{
+			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
+			myManager.imgEntry(caseIt->first, ImgManager::singleCase_singleSlice);
 
-		delete[] outputImgPtr;
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
+			morphStructElement2D structEle("circle", 3);
+			ImgProcessor::erode2D(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, structEle);
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = "H:\\IVSCC_mouse_inhibitory\\max_442_ROIcropped_thre999_MIP_histEq_medianThre_ero3\\" + QString::fromStdString(caseIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+			myManager.imgDatabase.clear();
+		}
 	}
 
 	return 0;

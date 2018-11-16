@@ -12,16 +12,25 @@ morphStructElement2D::morphStructElement2D(string shape, int length) : eleShape(
 	{
 		this->radius = length / 2;
 		this->structElePtr = new unsigned char[(this->radius * 2 + 1) * (this->radius * 2 + 1)];
-		int count = 0;
-		for (int j = -this->radius; j <= this->radius; ++j)
+		if (length == 3)
 		{
-			for (int i = -this->radius; i <= this->radius; ++i)
+			this->structElePtr[0] = 0; this->structElePtr[1] = 1; this->structElePtr[2] = 0;
+			this->structElePtr[3] = 1; this->structElePtr[4] = 1; this->structElePtr[5] = 1;
+			this->structElePtr[6] = 0; this->structElePtr[7] = 1; this->structElePtr[8] = 0;
+		}
+		else
+		{
+			int count = 0;
+			for (int j = -this->radius; j <= this->radius; ++j)
 			{
-				int rounded_dist = int(roundf(sqrt(float(i * i) + float(j * j))));
-				if (rounded_dist > this->radius) this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 0;
-				else this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 1;
+				for (int i = -this->radius; i <= this->radius; ++i)
+				{
+					int rounded_dist = int(roundf(sqrt(float(i * i) + float(j * j))));
+					if (rounded_dist > this->radius) this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 0;
+					else this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 1;
 
-				++count;
+					++count;
+				}
 			}
 		}
 	}
@@ -30,6 +39,16 @@ morphStructElement2D::morphStructElement2D(string shape, int length) : eleShape(
 morphStructElement2D::~morphStructElement2D()
 {
 	if (this->structElePtr != nullptr) delete[] this->structElePtr;
+}
+
+void morphStructElement2D::printOutStructEle()
+{
+	for (int j = 0; j < this->radius * 2 + 1; ++j)
+	{
+		for (int i = 0; i < this->radius * 2 + 1; ++i)
+			cout << int(this->structElePtr[(this->radius * 2 + 1)*j + i]) << " ";
+		cout << endl;
+	}
 }
 
 void ImgProcessor::skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[])
@@ -377,23 +396,21 @@ void ImgProcessor::erode2D(unsigned char inputImgPtr[], unsigned char outputImgP
 	{
 		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
 		{
-			int count = 0;
-			for (int q = -structEle.radius; q < structEle.radius; ++q)
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
 			{
-				for (int p = -structEle.radius; p < structEle.radius; ++p)
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
 				{
 					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
 				}
 			}
 			
-			int maxValue = 0;
+			int minValue = 1000;
 			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
 			{
 				if (int(structEle.structElePtr[maski]) == 0) continue;
-				else if (int(roiPtr[maski]) > maxValue) maxValue = int(roiPtr[maski]);
+				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
 			}
-
-			outputImgPtr[imgDims[0] * j + i] = (unsigned char)(maxValue);
+			if (minValue > 0) outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
 		}
 	}
 
