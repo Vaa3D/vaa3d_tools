@@ -62,6 +62,7 @@ public:
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0);
 	/************************************************************************/
 	
+
 	/***************** Neuron Struct Profiling Methods *****************/
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
@@ -79,9 +80,11 @@ public:
 	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
 	/*******************************************************************/
 
+
 	/***************** Inter-SWC Comparison/Analysis *****************/
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
 	/*****************************************************************/
+
 
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
@@ -89,15 +92,18 @@ public:
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 	/**************************************************************************/
 
+
 	/***************** Neuron Struct Clustering Method *****************/
 	static vector<connectedComponent> swc2clusters_distance(const NeuronTree& inputTree, float dist = 30);
 	/*******************************************************************/
+
 
 	/***************** Sampling Methods for Simulated Volumetric Patch Generation *****************/
 	static void sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance);
 	static void bkgNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, int dims[], float ratio, float distance);
 	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
 	/**********************************************************************************************/
+
 
 	/***************** Miscellaneious *****************/
 	static inline void linkerFileGen_forSWC(string swcFullFileName);

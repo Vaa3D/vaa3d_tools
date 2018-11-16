@@ -32,6 +32,19 @@ using namespace std;
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 #define getMin(a, b) ((a) <= (b)? (a):(b))
 
+struct morphStructElement2D
+{
+	morphStructElement2D();
+	morphStructElement2D(string shape, int length = 5);
+	morphStructElement2D(string shape, int xLength, int yLength);
+	~morphStructElement2D();
+
+	string eleShape;
+	int xLength, yLength, radius;
+
+	unsigned char* structElePtr;
+};
+
 class ImgProcessor 
 {
 
@@ -103,7 +116,8 @@ public:
 
 	/********* Morphological Operations *********/
 	static void skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[]);
-	static void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
+
+	static void erode2D(unsigned char inputPtr[], unsigned char outputPtr[], int imgDims[], const morphStructElement2D& structEle);
 	/********************************************/
 
 
@@ -444,9 +458,9 @@ template<class T>
 inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero)
 {
 	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
-	if (noZero) histMap.erase(histMap.find(0));
+	if (noZero) histMap.erase(histMap.find(0)); // exclude 0 from the histogram profile
 	
-	map<int, double> histCumul;
+	map<int, double> histCumul; // generate CDF
 	double totalNum = 0;
 	int maxIntensity = 0;
 	for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it)
@@ -456,13 +470,13 @@ inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int
 		maxIntensity = it->first;
 	}
 	
-	map<int, int> binMap;
+	map<int, int> binMap; // mapping intensity
 	for (map<int, double>::iterator it = histCumul.begin(); it != histCumul.end(); ++it)
 		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(maxIntensity)) * 255))));
 	
 	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
 	{
-		if (inputImgPtr[i] == 0) continue;
+		if (inputImgPtr[i] == 0) outputImgPtr[i] = 0;
 		else outputImgPtr[i] = T(binMap.at(int(inputImgPtr[i])));
 	}
 }

@@ -4,55 +4,12 @@
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 
-morphStructElement::morphStructElement() : eleShape("square"), xLength(3), yLength(3)
-{
-	vector<int> array1(3, 1);
-	this->structEle2D.push_back(array1);
-	this->structEle2D.push_back(array1);
-	this->structEle2D.push_back(array1);
-}
-
-morphStructElement::morphStructElement(string shape) : eleShape(shape)
-{
-	if (this->eleShape.compare("square") == 0)
-	{
-		vector<int> array1(3, 1);
-		this->structEle2D.push_back(array1);
-		this->structEle2D.push_back(array1);
-		this->structEle2D.push_back(array1);
-	}
-	else if (this->eleShape.compare("circle") == 0)
-	{
-		this->xLength = 7;
-		this->yLength = 7;
-
-		vector<int> array1(7, 1);
-		vector<int> array2(7, 1);
-		vector<int> array3(7, 1);
-		array1.at(0) = 0; array1.at(1) = 0; array1.at(5) = 0; array1.at(6) = 0;
-		array2.at(0) = 0; array2.at(6) = 0;
-
-		this->structEle2D.push_back(array1);
-		this->structEle2D.push_back(array2);
-		this->structEle2D.push_back(array3);
-		this->structEle2D.push_back(array3);
-		this->structEle2D.push_back(array3);
-		this->structEle2D.push_back(array2);
-		this->structEle2D.push_back(array1);
-	}
-}
-
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
-	// Finds connected components from a image statck using slice-by-slice approach.
-	// All components are stored in the form of ImgAnalyzer::connectedComponent.
-	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
-	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
-
 	vector<connectedComponent> connList;
 	cout << "slice dimension: " << dims[0] << " " << dims[1] << endl;
 
-	// --------- Only enter this selection block when MIP image is not provided ---------
+	// --------- Enter this selection block only when MIP image is not provided ---------
 	if (maxIP1D == nullptr) 
 	{
 		unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
@@ -82,7 +39,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 		delete[] currSlice1D;
 		currSlice1D = nullptr;
 	}
-	// ------- END [Onlu get into this selection when MIP image is not provided] -------
+	// ------- END [Enter this selection block only when MIP image is not provided] -------
 
 	// ----------- Prepare white pixel address book ------------
 	set<vector<int>> whitePixAddress;
