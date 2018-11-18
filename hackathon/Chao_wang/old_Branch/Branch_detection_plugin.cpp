@@ -539,7 +539,6 @@ int raymodel(V3DPluginCallback2 &callback, QWidget *parent)
     //QString raynkdh = QString ("ray-shooting.swc");
     writeSWC_file(outswc_file,nt);
 
-   // v3d_msg(QString("okokookokokoko"));
 }
 
 int curve_detection(V3DPluginCallback2 &callback, QWidget *parent)

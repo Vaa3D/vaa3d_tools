@@ -64,6 +64,8 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 
 QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 {
+	// -- This method removes dupliated nodes.
+
 	boost::container::flat_map<string, QList<NeuronSWC>> nodeTileMap;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
@@ -405,8 +407,12 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre)
 {
+	// -- This method identifies positive signal nodes from noise with given reference NeuronTree.
+	// -- radius: tile length
+	// -- distThre: distance threshold for nearest node pair
+
 	map<string, vector<NeuronSWC>> gridSWCmap; // Better use vector instead of set here, as set by default sorts the elements.
-												// This can cause complication if the element is a data struct.
+											   // This can cause complication if the element is a data struct.
 
 	for (QList<NeuronSWC>::const_iterator refIt = refTree.listNeuron.begin(); refIt != refTree.listNeuron.end(); ++refIt)
 	{
@@ -463,6 +469,10 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 
 NeuronTree NeuronStructUtil::swcZclenUP(const NeuronTree& inputTree, float zThre)
 {
+	// -- This method removes signal nodes from different depths that share the same x-y coordinates due to 2D connected component procedure for 3D structure.
+	// -- zThre: depth window allowance.
+	// -- Nodes that share the same x-y coordinates but belong to different zThre groups will still be considered different nodes.
+
 	map<string, vector<NeuronSWC>> xyLabeledNodeMap;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
@@ -512,6 +522,79 @@ NeuronTree NeuronStructUtil::swcZclenUP(const NeuronTree& inputTree, float zThre
 	}
 
 	return outputTree;
+}
+
+map<string, float> NeuronStructUtil::selfNodeDist(const QList<NeuronSWC>& inputNodeList)
+{
+	boost::container::flat_map<string, vector<NeuronSWC>> labeledNodeMap;
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
+	{
+		string xLabel = to_string(int(it->x / 30));
+		string yLabel = to_string(int(it->y / 30));
+		string zLabel = to_string(int(it->z / 30));
+		string labelKey = xLabel + "_" + yLabel + "_" + zLabel;
+		if (labeledNodeMap.find(labelKey) != labeledNodeMap.end()) labeledNodeMap[labelKey].push_back(*it);
+		else
+		{
+			vector<NeuronSWC> newSet;
+			newSet.push_back(*it);
+			labeledNodeMap.insert(pair<string, vector<NeuronSWC>>(labelKey, newSet));
+		}
+	}
+
+	float distSum = 0;
+	vector<float> distVec;
+	for (boost::container::flat_map<string, vector<NeuronSWC>>::iterator it = labeledNodeMap.begin(); it != labeledNodeMap.end(); ++it)
+	{
+		if (it->second.size() == 1)
+		{
+			float dist = 10000;
+			for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
+			{
+				if (it->second.begin()->x == nodeIt->x && it->second.begin()->y == nodeIt->y && it->second.begin()->z == nodeIt->z)
+					continue;
+
+				float tempDist = sqrtf((it->second.begin()->x - nodeIt->x) * (it->second.begin()->x - nodeIt->x) +
+									   (it->second.begin()->y - nodeIt->y) * (it->second.begin()->y - nodeIt->y) +
+									   (it->second.begin()->z - nodeIt->z) * (it->second.begin()->z - nodeIt->z) * zRATIO * zRATIO);
+				if (tempDist < dist) dist = tempDist;
+			}
+			distVec.push_back(dist);
+			distSum = distSum + dist;
+		}
+
+		for (vector<NeuronSWC>::iterator nodeIt1 = it->second.begin(); nodeIt1 != it->second.end(); ++nodeIt1)
+		{
+			float dist = 10000;
+			for (vector<NeuronSWC>::iterator nodeIt2 = it->second.begin(); nodeIt2 != it->second.end(); ++nodeIt2)
+			{
+				if (nodeIt1 == nodeIt2) continue;
+
+				float tempDist = sqrtf((nodeIt1->x - nodeIt2->x) * (nodeIt1->x - nodeIt2->x) +
+									   (nodeIt1->y - nodeIt2->y) * (nodeIt1->y - nodeIt2->y) +
+									   (nodeIt1->z - nodeIt2->z) * (nodeIt1->z - nodeIt2->z) * zRATIO * zRATIO);
+				if (tempDist < dist) dist = tempDist;
+			}
+			distVec.push_back(dist);
+			distSum = distSum + dist;
+		}
+	}
+
+	float distMean = distSum / float(distVec.size());
+	float distVarSum = 0;
+	for (vector<float>::iterator it = distVec.begin(); it != distVec.end(); ++it) distVarSum = distVarSum + (*it - distMean) * (*it - distMean);
+	float distVar = distVarSum / float(distVec.size());
+	float distStd = sqrtf(distVar);
+	sort(distVec.begin(), distVec.end());
+	float distMedian = float(distVec.at(floor(distVec.size() / 2)));
+
+	map<string, float> outputMap;
+	outputMap.insert(pair<string, float>("mean", distMean));
+	outputMap.insert(pair<string, float>("std", distStd));
+	outputMap.insert(pair<string, float>("var", distVar));
+	outputMap.insert(pair<string, float>("median", distMedian));
+
+	return outputMap;
 }
 
 void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)

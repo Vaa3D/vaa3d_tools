@@ -35,9 +35,12 @@ public:
 	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
 	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
+	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
 	/***************************************************/
 
+	/***************** Inter-SWC Comparison/Analysis *****************/
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float radius, float distThre);
+	/*****************************************************************/
 
 	/********* SWC to ImgAnalyzer::connectedComponent *********/
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
@@ -133,24 +136,43 @@ void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& ou
 
 inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap)
 {
+	// This method profiles node-location node-child_location of a given NeuronTree.
+	// In current implementation, a single node will carry a node.n-vector<size_t> pair in node2childLocMap where its vector<size> is empty.
+	// However, any tip node will not have an entry in node2childLocMap.
+
 	nodeLocMap.clear();
 	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
 		nodeLocMap.insert(pair<int, size_t>(it->n, (it - inputNodeList.begin())));
-	//cout << " Node - Locations mapping done." << endl;
+	//cout << " Node - Locations mapping done. size: " << nodeLocMap.size() << endl;
 
 	node2childLocMap.clear();
-	for (size_t i = 0; i < inputNodeList.size(); ++i)
+	for (QList<NeuronSWC>::const_iterator it = inputNodeList.begin(); it != inputNodeList.end(); ++it)
 	{
-		int paID = inputNodeList.at(i).parent;
-		if (node2childLocMap.find(paID) != node2childLocMap.end()) node2childLocMap[paID].push_back(i);
-		else
+		int paID = it->parent;
+		if (paID == -1)
 		{
 			vector<size_t> childSet;
-			childSet.push_back(i);
-			node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
+			childSet.clear();
+			node2childLocMap.insert(pair<int, vector<size_t>>(it->n, childSet));
+		}
+		else
+		{
+			if (node2childLocMap.find(paID) != node2childLocMap.end())
+			{
+				node2childLocMap[paID].push_back(size_t(it - inputNodeList.begin()));
+				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
+			}
+			else
+			{
+				vector<size_t> childSet;
+				childSet.clear();
+				childSet.push_back(size_t(it - inputNodeList.begin()));
+				node2childLocMap.insert(pair<int, vector<size_t>>(paID, childSet));
+				//cout << paID << " " << size_t(it - inputNodeList.begin()) << endl;
+			}
 		}
 	}
-	//cout << " node - Child location mapping done." << endl;
+	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
 }
 
 #endif 

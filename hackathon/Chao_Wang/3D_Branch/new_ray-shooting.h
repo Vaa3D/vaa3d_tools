@@ -23,4 +23,11 @@ void mip(V3DLONG nx,V3DLONG ny,V3DLONG nz,unsigned char * datald,unsigned char *
 void YZ_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_mip);
 void XZ_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_mip);
 void XY_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_mip);
+template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* data1d,
+                                       V3DLONG *in_sz,
+                                       unsigned int c,
+                                       double th_global,
+                                       T* &outimg,
+                                       QString temp_gf,
+                                       QString temp_gsdt);
 #endif // NEW_RAYSHOOTING_H

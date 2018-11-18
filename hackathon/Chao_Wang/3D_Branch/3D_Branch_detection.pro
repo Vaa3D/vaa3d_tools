@@ -1,4 +1,3 @@
-
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
@@ -24,7 +23,8 @@ HEADERS	+= new_ray-shooting.h
 #HEADERS	+= ../../zhi/APP2_large_scale/my_surf_objs.h
 
 
-SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp \
+    ../../../../v3d_external/released_plugins_more/v3d_plugins/gsdt/release/moc_common_dialog.cpp
 SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= Branch_detection_plugin.cpp
 SOURCES	+= new_ray-shooting.cpp

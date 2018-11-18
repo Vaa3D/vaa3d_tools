@@ -22,7 +22,7 @@ using namespace std;
 
 bool fexists(QString filename);
 CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, double color_b);
-bool my_saveANO(QString fileNameHeader, bool swc=true, bool apo=true);
+bool my_saveANO(QString fileNameHeader, bool swc=true, bool apo=true, QString swc_name=NULL);
 NeuronTree rm_nodes(NeuronTree nt, QList<int> list);
 int get_soma(NeuronTree nt);
 QList<int> get_components(NeuronTree nt);

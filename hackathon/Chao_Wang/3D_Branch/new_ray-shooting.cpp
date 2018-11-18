@@ -37,19 +37,17 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
 {
     int count=0;
     float pixe = 0.0;
-    float sum=0;
-    float max_indd=10;
+    float sum=0.0;
+    float max_indd=1000.0;
     int branch_flag=1;
     vector<int> indd,ind1;//ind1 is the all piex of each ray
 
     for(int i = 0; i < m; i++)   //m is the numble of the ray
     {
-       sum=0;
+         sum=0;
      for(int j = 0; j < n; j++)    // n is the numble of the points of the each ray
         {
             pixe = project_interp_2d(point_y+ray_y[i][j], point_x+ray_x[i][j], P, sz0,sz1 , point_x, point_y);
-            pixe=exp(0.05*(j+1))*pixe;
-//            v3d_msg(QString("pixe is %1").arg(pixe));
             sum=sum+pixe;
         }
         ind1.push_back(sum);
@@ -65,13 +63,10 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
     }
 
     int max_number=0;
-    if((max_indd/n)>5)
-    {
         for(int num=0;num<ind1.size();num++)
         {
             if (ind1[num] >= max_indd*0.5)
                 {
-//                     v3d_msg(QString("location is %1").arg(num));
                      indd.push_back(num);
                      if(num>=max_number)
                      {
@@ -80,23 +75,19 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
                      count++;
                 }
         }
-//        v3d_msg(QString("max_number is %1").arg(max_number));
-
         int ray_distance=0;
-//        v3d_msg(QString("count is %1").arg(count));
         if (count > 1)
             {
-                for (int i = 0;i < count - 2;i++)
+                for (int i = 0;i < count - 1;i++)
                 {
                    ray_distance=abs(indd[i]-indd[i+1]);
                    if(ray_distance>=2)
                    {
-//                       v3d_msg(QString("indd[i] is %1, indd[i+1] is %2").arg(indd[i]).arg(indd[i+1]));
                        branch_flag=branch_flag+1;
                    }
                 }
-//                v3d_msg(QString("indd[0] is %1, indd[count] is %2").arg(indd[0]).arg(indd[count-1]));
-                long dis=indd[0]-indd[count];
+
+                long dis=indd[0]-indd[count-1];
 
                 if(abs(dis)==(m-1))
                 {
@@ -105,9 +96,7 @@ int rayinten_2D(int point_y,int point_x,int m,int n, vector<vector<float> > ray_
 
             }
 
-    }
-//    v3d_msg(QString("flag is %1").arg(branch_flag));
-    if(branch_flag>2)
+    if(branch_flag==3)
     {
 
         return 1;
@@ -142,18 +131,19 @@ float project_interp_2d(float point_y,float point_x,unsigned char * PP,V3DLONG s
     }
     else
     {
+        int d = get_2D_ValueUINT8(ceil(point_y), ceil(point_x),PP,sz0,sz1);  // for example ceil(1.2)=2;
+        int b = get_2D_ValueUINT8(floor(point_y), ceil(point_x),PP, sz0,sz1); // for examaple floor(1.2)=1;
+        int c = get_2D_ValueUINT8(ceil(point_y), floor(point_x),PP, sz0,sz1);
+        int a = get_2D_ValueUINT8(floor(point_y), floor(point_x),PP, sz0,sz1);
 
-        int y1 = get_2D_ValueUINT8(ceil(point_y), ceil(point_x),PP,sz0,sz1);
-        int y0 = get_2D_ValueUINT8(floor(point_y), ceil(point_x),PP, sz0,sz1);
-        int x1 = get_2D_ValueUINT8(ceil(point_y), floor(point_x),PP, sz0,sz1);
-        int x0 = get_2D_ValueUINT8(floor(point_y), floor(point_x),PP, sz0,sz1);
 
-
-        result = x0*(point_x-floor(point_x))*(point_y-floor(point_y))+x1*(ceil(point_x)-point_x)*(point_y-floor(point_y))
-            +y0*(point_x-floor(point_x))*(ceil(point_y)-point_y)+y1*(ceil(point_x)-point_x)*(ceil(point_y)-point_y);
+//        result = a*(point_x-floor(point_x))*(point_y-floor(point_y))+x1*(ceil(point_x)-point_x)*(point_y-floor(point_y))
+//            +y0*(point_x-floor(point_x))*(ceil(point_y)-point_y)+y1*(ceil(point_x)-point_x)*(ceil(point_y)-point_y);
+//        return result;
+        result=a*(ceil(point_x)-point_x)*(ceil(point_y)-point_y)+b*(ceil(point_y)-point_y)*(point_x-floor(point_x))+c*(ceil(point_x)-point_x)*(point_y-floor(point_y))+d*(point_x-floor(point_x))*(point_y-floor(point_y));
         return result;
-
     }
+
 }
 
 v3d_uint8  get_2D_ValueUINT8(V3DLONG  y,  V3DLONG  x, unsigned char * T, V3DLONG  sz0, V3DLONG  sz1)
@@ -163,7 +153,9 @@ v3d_uint8  get_2D_ValueUINT8(V3DLONG  y,  V3DLONG  x, unsigned char * T, V3DLONG
     V3DLONG idx = y*sz0 + x;
     if (idx < im_total_sz)
     {
-        return T[idx];//是否要用this指针
+       return T[idx];
+        //v3d_msg(QString("pixe is %1").arg(T[idx]));
+        //return T[idx];//是否要用this指针
     }
     else
     {
@@ -432,35 +424,35 @@ void thres_segment(V3DLONG size_image, unsigned char * old_image, unsigned char 
 {
     for(V3DLONG i = 0; i < size_image; i++)
     {
-        if(old_image[i] > thres)
-            binary_image[i] = 255;
-        else
+        if(old_image[i] <=thres)
+        {
             binary_image[i] = 0;
+        }
+        else
+        {
+            binary_image[i] = 255;
+        }
     }
 }
 
 void XZ_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_mip)
 {
-    v3d_msg(QString("come here"));
 
-    for(int iz = 0; iz < nz; iz++)
+    for(int iz = 0; iz < nz; iz++)    
     {
         int offsetk = iz*nx*ny;
         for(int ix = 0; ix < nx; ix++)
         {
-            unsigned char max_mip = 0;
+            int max_mip = 0;
             for(int iy = 0; iy < ny; iy++)
             {
                 int offsetj = iy*nx;
                 if(datald[offsetk + offsetj + ix] >= max_mip)
                 {
-                    v3d_msg(QString("come here"));
-                    v3d_msg(QString("pixe of mip is %1").arg(image_mip[0]));
                     image_mip[iz*nx + ix] = datald[offsetk + offsetj + ix];
                     max_mip = datald[offsetk + offsetj + ix];
                 }
             }
-            v3d_msg(QString("xz_mip is %1").arg(max_mip));
         }
     }
 
@@ -468,12 +460,9 @@ void XZ_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_m
 
 void YZ_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_mip)
 {
-    v3d_msg(QString("come here"));
     for(int iz = 0; iz < nz; iz++)
     {
-        v3d_msg(QString("come here"));
         int offsetk = iz*nx*ny;
-        v3d_msg(QString("offsetk is %1").arg(offsetk));
         for(int iy = 0; iy < ny; iy++)
         {
             int offsetj = iy*nx;
@@ -484,14 +473,13 @@ void YZ_mip(int nx,int ny,int nz,unsigned char * datald,unsigned char * &image_m
                 {
                     image_mip[iz*ny + iy] = datald[offsetk + offsetj + ix];
                     max_mip = datald[offsetk + offsetj + ix];
-                    v3d_msg(QString("location is %1, pixe is %2").arg(offsetk + offsetj + ix).arg(datald[offsetk + offsetj + ix]));
                 }
             }
-            v3d_msg(QString("yz_mip is %1").arg(max_mip));
         }
     }
 
 }
+
 
 
 

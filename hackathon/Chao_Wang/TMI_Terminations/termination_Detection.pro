@@ -21,11 +21,10 @@ unix:!macx {
 }
 HEADERS	+= Tip_Detection_plugin.h
 HEADERS	+= ray_shooting.h
-SOURCES += ../Branch/new_ray-shooting.cpp
 SOURCES	+= Tip_Detection_plugin.cpp
 SOURCES	+= ray_shooting.cpp
 SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$V3DMAINPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(Tip_Detection)
-DESTDIR	= $$V3DMAINPATH/bin/plugins/Tip_Detection/
+DESTDIR	= $$V3DMAINPATH/bin/plugins/Termination_Detection/

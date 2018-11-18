@@ -100,7 +100,7 @@ CellAPO get_marker(NeuronSWC node, double vol, double color_r, double color_g, d
     return marker;
 }
 
-bool my_saveANO(QString fileNameHeader, bool swc, bool apo){
+bool my_saveANO(QString fileNameHeader, bool swc, bool apo, QString swc_name){
     FILE * fp=0;
     fp = fopen((char *)qPrintable(fileNameHeader+QString(".ano")), "wt");
     if (!fp)
@@ -112,7 +112,15 @@ bool my_saveANO(QString fileNameHeader, bool swc, bool apo){
         fileNameHeader = fileNameHeader.right(fileNameHeader.size()-fileNameHeader.lastIndexOf("/")-1);
     }
 
-    if(swc){fprintf(fp, "SWCFILE=%s\n", qPrintable(fileNameHeader+QString(".swc")));}
+    if(swc){
+        if(swc_name.length()==0){
+            fprintf(fp, "SWCFILE=%s\n", qPrintable(fileNameHeader+QString(".swc")));
+        }
+        else{
+            swc_name = swc_name.right(swc_name.size()-swc_name.lastIndexOf("/")-1);
+            fprintf(fp, "SWCFILE=%s\n", qPrintable(swc_name));
+        }
+    }
     if(apo){fprintf(fp, "APOFILE=%s\n", qPrintable(fileNameHeader+QString(".apo")));}
     if(fp){fclose(fp);}
     return true;
@@ -232,7 +240,7 @@ QList<int> get_components(NeuronTree nt){
             pid = pstack.top();
             // whether exist unvisited children of pid
             // if yes, push child to stack;
-            for(auto i=children[pid].begin(); i!=children[pid].end(); ++i){  // This loop can be more efficient, improve it later!
+            for(V3DLONG *i=children[pid].begin(); i!=children[pid].end(); ++i){  // This loop can be more efficient, improve it later!
                 if(visited.at(*i)==0){
                     pstack.push(*i);
                     visited[*i]=1;
@@ -335,7 +343,7 @@ NeuronTree single_tree(NeuronTree nt, int soma){
             pid = pstack.top();
             // whether exist unvisited children of pid
             // if yes, push child to stack;
-            for (auto i = children[pid].begin(); i != children[pid].end(); ++i)
+            for (V3DLONG *i = children[pid].begin(); i != children[pid].end(); ++i)
             {
                 NeuronSWC node = nt.listNeuron.at(*i);
                 if(nList.lastIndexOf(node.pn)==pid && visited.at(*i)==0){

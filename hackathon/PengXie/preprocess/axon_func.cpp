@@ -103,7 +103,7 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
         // whether exist unvisited children of pid
         // if yes, push child to stack;
 //        for(int i=0; i<nt.listNeuron.size();i++){  // This loop can be more efficient, improve it later!
-        for(auto i=children[pid].begin(); i!=children[pid].end(); ++i)
+        for(V3DLONG *i=children[pid].begin(); i!=children[pid].end(); ++i)
         {
             if((nt.listNeuron.at(*i).pn)==nt.listNeuron.at(pid).n && distance.at(*i)==(-1.0)){
                 pstack.push(*i);
@@ -193,7 +193,7 @@ QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
                 // whether exist unvisited children of pid
                 // if yes, push child to stack;
 //                for(int j=0; j<axon.listNeuron.size();j++){  // This loop can be more efficient, improve it later!
-                for(auto j=children[pid].begin(); j!=children[pid].end(); ++j){
+                for(V3DLONG *j=children[pid].begin(); j!=children[pid].end(); ++j){
                     if((axon.listNeuron.at(*j).pn)==nlist.at(pid) && visited.at(*j)==0){
                         pstack.push(*j);
                         visited[*j]=1;
@@ -353,7 +353,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
                 // whether exist unvisited children of pid
                 // if yes, push child to stack;
 //                for(int j=0; j<axon.listNeuron.size();j++){  // This loop can be more efficient, improve it later!
-                for(auto j=children[pid].begin(); j!=children[pid].end(); ++j)
+                for(V3DLONG *j=children[pid].begin(); j!=children[pid].end(); ++j)
                 {
                     if((axon.listNeuron.at(*j).pn)==nlist.at(pid) && visited.at(*j)==0){
                         pstack.push(*j);

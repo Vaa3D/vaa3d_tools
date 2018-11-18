@@ -24,19 +24,17 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
-
+int use_rayshooting(V3DPluginCallback2 &callback, QWidget *parent);
 int branch_detection(V3DPluginCallback2 &callback, QWidget *parent);
-int mip_corner_detection(V3DPluginCallback2 &callback, QWidget *parent);
 int rayshoot_model(V3DPluginCallback2 &callback, QWidget *parent);
-int corner_detection(V3DPluginCallback2 &callback, QWidget *parent);
-int curve_detection(V3DPluginCallback2 &callback, QWidget *parent);
-int gassion_filter(V3DPluginCallback2 &callback, QWidget *parent);
 int MIPZSlices( V3DPluginCallback2 &callback, QWidget *parent);
 bool mip_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
 void printHelp();
+int branch_detection_single(V3DPluginCallback2 &callback, QWidget *parent);
 int new_branch_detection(V3DPluginCallback2 &callback, QWidget *parent);
 int skeletonization(V3DPluginCallback2 &callback, QWidget *parent);
+int thin(V3DPluginCallback2 &callback, QWidget *parent);
 
 #endif
 

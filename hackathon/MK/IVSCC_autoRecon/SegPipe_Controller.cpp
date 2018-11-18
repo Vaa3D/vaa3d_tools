@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <cmath>
 #include <unordered_map>
@@ -851,7 +852,7 @@ void SegPipe_Controller::cutMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 25);
+		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 30);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
@@ -897,7 +898,7 @@ void SegPipe_Controller::breakMSTbranch()
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
 		myNeuronStructExpPtr->treeEntry(currTree, "currTree");
-		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"]);
+		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"], 20);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
@@ -908,8 +909,7 @@ void SegPipe_Controller::breakMSTbranch()
 
 void SegPipe_Controller::getTiledMST()
 {
-	float xyLength = 30;
-	float zLength = 10;
+	float xyLength = 40;
 	map<string, QList<NeuronSWC>> tiledSWCmap;
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 	{
@@ -922,7 +922,7 @@ void SegPipe_Controller::getTiledMST()
 		{
 			int tileXlabel = int(floor(it->x / xyLength));
 			int tileYlabel = int(floor(it->y / xyLength));
-			int tileZlabel = int(floor(it->z / zLength));
+			int tileZlabel = int(floor(it->z / (xyLength / zRATIO)));
 			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
 			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));  
 			tiledSWCmap[swcTileKey].push_back(*it);
@@ -930,7 +930,6 @@ void SegPipe_Controller::getTiledMST()
 		cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
 
 		NeuronTree assembledTree;
-		//NeuronTree testTree;
 		for (map<string, QList<NeuronSWC>>::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
 		{
 			NeuronTree tileTree;
@@ -938,7 +937,6 @@ void SegPipe_Controller::getTiledMST()
 			NeuronTree tileMSTtree = myNeuronStructExpPtr->SWC2MSTtree(tileTree);
 
 			int currnodeNum = assembledTree.listNeuron.size();
-			//if (currnodeNum > 50) break;	
 			for (QList<NeuronSWC>::iterator nodeIt = tileMSTtree.listNeuron.begin(); nodeIt != tileMSTtree.listNeuron.end(); ++nodeIt)
 			{
 				nodeIt->n = nodeIt->n + currnodeNum;
@@ -948,14 +946,12 @@ void SegPipe_Controller::getTiledMST()
 					//cout << "  " << nodeIt->parent << " " << currnodeNum << endl;
 				}
 
-				//if (currnodeNum >= 2900 && currnodeNum <= 3000) testTree.listNeuron.push_back(*nodeIt);
 				//cout << nodeIt->n << " " << nodeIt->parent << endl;
 				assembledTree.listNeuron.push_back(*nodeIt);
 			}
 		}
 
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt; 
-		//writeSWC_file(outputSWCPath, assembledTree);
 		writeSWC_file(outputSWCPath, assembledTree);
 	}
 }
@@ -1099,11 +1095,104 @@ void SegPipe_Controller::segElongation()
 		string treeName = (*caseIt).toStdString();
 		treeName = treeName.substr(0, treeName.length() - 3);
 
-		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
-		NeuronTree elongedTree = myNeuronStructExpPtr->segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second);
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName, 80);
+		profiledTree elongatedTree = myNeuronStructExpPtr->itered_segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second, 0.30);
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCPath, elongedTree);
+		writeSWC_file(outputSWCPath, elongatedTree.tree);
 
 		myNeuronStructExpPtr->treeDataBase.clear();
 	}
+}
+
+void SegPipe_Controller::segTerminalize()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
+		NeuronTree outputTree = NeuronStructExplorer::segTerminalize(myNeuronStructExpPtr->treeDataBase.begin()->second);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
+
+		myNeuronStructExpPtr->treeDataBase.clear();
+	}
+}
+
+void SegPipe_Controller::dotRemove()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
+		NeuronTree outputTree = NeuronStructExplorer::singleDotRemove(myNeuronStructExpPtr->treeDataBase.begin()->second, 2);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
+
+		myNeuronStructExpPtr->treeDataBase.clear();
+	}
+}
+
+void SegPipe_Controller::longConnCut()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
+		NeuronTree outputTree = NeuronStructExplorer::longConnCut(myNeuronStructExpPtr->treeDataBase.begin()->second, 100);
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
+
+		myNeuronStructExpPtr->treeDataBase.clear();
+	}
+}
+
+void SegPipe_Controller::treeUnion()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree MST2ndTree = readSWC_file(swcFullPath);
+		profiledTree profiledMST2ndTree(MST2ndTree);
+
+		QString refSWCfullPath = this->refSWCRootPath + "/" + *caseIt;
+		NeuronTree baseTree = readSWC_file(refSWCfullPath);
+		profiledTree profiledBaseTree(baseTree);
+
+		profiledTree outputProfiledTree = myNeuronStructExpPtr->treeUnion_MSTbased(profiledMST2ndTree, profiledBaseTree);
+		NeuronTree outputTree = outputProfiledTree.tree;
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputTree);
+	}
+}
+
+void SegPipe_Controller::treeWithinDist()
+{
+	string dist2D = "dist2D.txt";
+	string dist3D = "dist3D.txt";
+	string outputName = outputRootPath.toStdString() + "/" + dist2D;
+	ofstream outputFile(outputName.c_str());
+	outputFile << "case num\t" << "mean\t" << "std\t" << "median" << endl;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		string treeName = (*caseIt).toStdString();
+		treeName = treeName.substr(0, treeName.length() - 3);
+
+		map<string, float> swcWithinStats = NeuronStructUtil::selfNodeDist(inputTree.listNeuron);
+		outputFile << (*caseIt).toStdString() << "\t" << swcWithinStats["mean"] << "\t" << swcWithinStats["std"] << "\t" << swcWithinStats["median"] << endl;
+	}
+	outputFile.close();
 }

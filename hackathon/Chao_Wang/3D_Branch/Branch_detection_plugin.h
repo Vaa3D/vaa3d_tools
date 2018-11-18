@@ -27,6 +27,13 @@ public:
 
 int Branch_Point_Detection(V3DPluginCallback2 &callback, QWidget *parent);
 int Branch_Point_Detection_single_plane(V3DPluginCallback2 &callback, QWidget *parent);
+int Branch_Point_Detection_new(V3DPluginCallback2 &callback, QWidget *parent);
+int Thin_branch_points_detection(V3DPluginCallback2&callback,QWidget *parent);
+int Thin_branch_points_detection_single(V3DPluginCallback2 &callback, QWidget *parent);
 void printHelp();
+int discard_block(V3DPluginCallback2 &callback, QWidget *parent);
+bool gsdt(V3DPluginCallback2 &callback, QWidget *parent);
+int display_rayshooting_model(V3DPluginCallback2 &callback, QWidget *parent);
+int display_rayshooting_model_in_xyproject(V3DPluginCallback2 &callback, QWidget *parent);
 #endif
 
