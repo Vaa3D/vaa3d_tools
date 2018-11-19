@@ -355,16 +355,6 @@ void SegPipe_Controller::makeMIPimgs()
 			if (sliceIt->first.find("_") != string::npos) continue;
 			else ImgProcessor::imgMax(sliceIt->second.get(), MIPptr, MIPptr, myImgManagerPtr->imgDatabase.begin()->second.dims);
 		}
-		/*{
-			for (size_t j = 0; j < myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++j)
-			{
-				for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0]; ++i)
-				{
-					unsigned char pixValue = getMax(MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i], sliceIt->second[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i]);
-					MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i] = pixValue;
-				}
-			}
-		}*/
 
 		V3DLONG Dims[4];
 		Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];

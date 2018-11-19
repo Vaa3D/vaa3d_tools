@@ -389,7 +389,7 @@ void ImgProcessor::skeleton2D(unsigned char inputImgPtr[], unsigned char outputI
 	}
 }
 
-void ImgProcessor::erode2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[], const morphStructElement2D& structEle)
+void ImgProcessor::erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
 {
 	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
 	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
@@ -415,4 +415,36 @@ void ImgProcessor::erode2D(unsigned char inputImgPtr[], unsigned char outputImgP
 	}
 
 	delete[] roiPtr;
+}
+
+void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			if (int(inputImgPtr[imgDims[0] * j + i]) > threshold)
+			{
+				outputImgPtr[imgDims[0] * j + i] = inputImgPtr[imgDims[0] * j + i];
+				continue;
+			}
+
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+
+			int minValue = 1000;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
+			}
+			if (minValue > 0) outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
+		}
+	}
 }
