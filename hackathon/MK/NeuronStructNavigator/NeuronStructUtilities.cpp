@@ -206,7 +206,11 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 			else continue;
 
 			sort(delLocs.rbegin(), delLocs.rend());
-			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+			{
+				if (targetTileIt->second.begin() + *delIt >= targetTileIt->second.end()) continue;
+				else targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			}
 			delLocs.clear();
 		}
 	}

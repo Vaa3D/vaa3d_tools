@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
 	string funcName(funcNameC);
-	//string funcName = "imgErode";
+	//string funcName = "swcSubtract";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -206,15 +206,19 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("interAccuracy"))
 	{
-		const char* inputPathNameC = argv[1];
-		string inputPathName(inputPathNameC);
-		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\interAccuracy.txt");
+		const char* inputFolderNameC = argv[2];
+		string inputFolderName(inputFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(inputFolderName);
+
+		const char* savePathNameC = argv[3];
+		string savePathName(savePathNameC);
+		ofstream outputFile(savePathName);
 		outputFile << "case num\t" << "avgDist 1-2\t" << "structure diff 1-2\t" << "avgDist 2-1\t" << "structure diff 2-1\t" << "avfDist all\t" << "structure diff all" << endl;
 
-		for (filesystem::directory_iterator swcIt(inputPathName); swcIt != filesystem::directory_iterator(); ++swcIt)
+		for (filesystem::directory_iterator swcIt(inputFolderName); swcIt != filesystem::directory_iterator(); ++swcIt)
 		{
 			string csvName = swcIt->path().filename().string();
-			string csvFullName = inputPathName + "\\" + csvName;
+			string csvFullName = inputFolderName + "\\" + csvName;
 			string caseName = csvName.substr(0, 9);
 			//cout << csvFullName << endl;
 			ifstream inputCSV(csvFullName);
@@ -513,39 +517,83 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("swcSubtract"))
 	{
-		//const char* targetSWCNameC = argv[1];
-		//string targetSWCName(targetSWCNameC);
-		QString targetSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569_RESULT.swc";
-		//const char* refSWCNameC = argv[2];
-		//string refSWCName(refSWCNameC);
-		QString refSWCNameQ = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569_denDiff.swc";
-		//NeuronTree targetTree = readSWC_file(QString::fromStdString(targetSWCName));
-		//NeuronTree refTree = readSWC_file(QString::fromStdString(refSWCName));
-		NeuronTree targetTree = readSWC_file(targetSWCNameQ);
-		NeuronTree refTree = readSWC_file(refSWCNameQ);
+		/*const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
 
-		NeuronTree subTree = NeuronStructUtil::swcSubtraction(targetTree, refTree, 2);
-		QString saveName = "Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test.swc";
-		writeSWC_file(saveName, subTree);
+		const char* swcFolderNameC = argv[3];
+		string swcFolderName(swcFolderNameC);
+		QString swcFolderNameQ = QString::fromStdString(swcFolderName);
+
+		const char* saveFolderNameC = argv[4];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
+
+		QString folderNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_BOTH\\combined_noiseRemoved_up5";
+		QString swcFolderNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_BOTH\\1";
+		QString saveFolderNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_BOTH\\combined_noiseRemoved_up5_DENDRITE";
+
+		ImgManager myManager(folderNameQ);
+		myManager.outputRootPath = saveFolderNameQ;
+
+		for (QStringList::iterator caseIt = myManager.caseList.begin(); caseIt != myManager.caseList.end(); ++caseIt)
+		{
+			NeuronTree nt1 = readSWC_file(folderNameQ + "\\" + *caseIt);
+			NeuronTree nt2 = readSWC_file(swcFolderNameQ + "\\" + *caseIt);
+			NeuronTree outputTree = NeuronStructUtil::swcSubtraction(nt1, nt2, 2);
+		
+			writeSWC_file(saveFolderNameQ + "\\" + *caseIt, outputTree);
+		}
 	}
 	else if (!funcName.compare("swcUpSample"))
 	{
-		//const char* targetSWCNameC = argv[2];
-		//string targetSWCName(targetSWCNameC);
-		//QString targetSWCNameQ = QString::fromStdString(targetSWCName);
-		QString targetSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\319215569.swc";
-		NeuronTree inputTree = readSWC_file(targetSWCNameQ);
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
 
-		profiledTree inputProfiledTree(inputTree);
-		profiledTree outputProfiledTree;
-		outputProfiledTree.tree.listNeuron.clear();
-		NeuronStructExplorer::treeUpSample(inputProfiledTree, outputProfiledTree);
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		//const char* saveSWCNameC = argv[3];
-		//string saveSWCName(saveSWCNameC);
-		//QString saveSWCNameQ = QString::fromStdString(saveSWCName);
-		QString saveSWCNameQ = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test_upsampled.swc";
-		writeSWC_file(saveSWCNameQ, outputProfiledTree.tree);
+		ImgManager myManager(folderNameQ);
+		for (QStringList::iterator it = myManager.caseList.begin(); it != myManager.caseList.end(); ++it)
+		{
+			QString inputSWCfullName = folderNameQ + "\\" + *it;
+			NeuronTree nt = readSWC_file(inputSWCfullName);
+			profiledTree profiledNt(nt);
+			profiledTree outputProfiledTree;
+			NeuronStructExplorer::treeUpSample(profiledNt, outputProfiledTree);
+			writeSWC_file(saveFolderNameQ + "\\" + *it, outputProfiledTree.tree);
+		}
+	}
+	else if (!funcName.compare("swcCombine"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+
+		const char* swcFolderNameC = argv[3];
+		string swcFolderName(swcFolderNameC);
+		QString swcFolderNameQ = QString::fromStdString(swcFolderName);
+
+		const char* saveFolderNameC = argv[4];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		ImgManager myManager(folderNameQ);
+		myManager.outputRootPath = saveFolderNameQ;
+
+		for (QStringList::iterator caseIt = myManager.caseList.begin(); caseIt != myManager.caseList.end(); ++caseIt)
+		{
+			NeuronTree nt1 = readSWC_file(folderNameQ + "\\" + *caseIt);
+			NeuronTree nt2 = readSWC_file(swcFolderNameQ + "\\" + *caseIt);
+			vector<NeuronTree> treeVector(2);
+			treeVector[0] = nt1;
+			treeVector[1] = nt2;
+			NeuronTree outputTree = NeuronStructUtil::swcCombine(treeVector);
+
+			writeSWC_file(saveFolderNameQ + "\\" + *caseIt, outputTree);
+		}
 	}
 	else if (!funcName.compare("getPixValue"))
 	{

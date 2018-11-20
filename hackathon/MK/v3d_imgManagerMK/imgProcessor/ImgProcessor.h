@@ -116,7 +116,7 @@ public:
 
 
 	/********* Morphological Operations *********/
-	static void skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[]);
+	static void skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[]);
 
 	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	static void conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold);

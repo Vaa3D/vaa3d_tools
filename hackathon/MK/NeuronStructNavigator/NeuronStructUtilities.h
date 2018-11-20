@@ -53,6 +53,7 @@ public:
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
@@ -164,7 +165,7 @@ inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& o
 	}
 }
 
-void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink)
+inline void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
 	outputTree.listNeuron.clear();
@@ -183,6 +184,30 @@ void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& ou
 			it->z = it->z / 2;
 		}
 	}
+}
+
+inline NeuronTree NeuronStructUtil::swcCombine(const vector<NeuronTree>& inputTrees)
+{
+	NeuronTree outputTree;
+	ptrdiff_t listSize = 0;
+	int nodeIDmax = 0;
+	for (vector<NeuronTree>::const_iterator it = inputTrees.begin(); it != inputTrees.end(); ++it)
+	{
+		for (QList<NeuronSWC>::iterator outputNodeIt = outputTree.listNeuron.begin(); outputNodeIt != outputTree.listNeuron.end(); ++outputNodeIt)
+			if (outputNodeIt->n > nodeIDmax) nodeIDmax = outputNodeIt->n;
+
+		outputTree.listNeuron.append(it->listNeuron);
+		for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin() + listSize; nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		{
+			nodeIt->n = nodeIt->n + nodeIDmax;
+			if (nodeIt->parent == -1) continue;
+			else nodeIt->parent = nodeIt->parent + nodeIDmax;
+		}
+
+		listSize = ptrdiff_t(outputTree.listNeuron.size());
+	}
+
+	return outputTree;
 }
 
 inline string NeuronStructUtil::getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength)
