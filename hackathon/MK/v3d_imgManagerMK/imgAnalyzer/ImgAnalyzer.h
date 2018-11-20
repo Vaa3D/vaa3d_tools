@@ -7,6 +7,9 @@
 #include <set>
 #include <cmath>
 
+#include "ImgManager.h"
+#include "ImgProcessor.h"
+
 using namespace std;
 
 struct connectedComponent
@@ -32,6 +35,8 @@ public:
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
 	/******************************************************/
+
+	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
 
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
 	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);

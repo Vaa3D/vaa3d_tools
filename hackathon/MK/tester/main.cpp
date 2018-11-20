@@ -462,7 +462,7 @@ int main(int argc, char* argv[])
 		QString folderNameQ = QString::fromStdString(folderName);
 		ImgManager myManager(folderNameQ);
 
-		ofstream outputFile("H:\\IVSCC_mouse_inhibitory\\imgStats.txt");
+		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\imgStats.txt");
 		outputFile << "case num\tmean\tstd\tmedian" << endl;
 		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
 		{
@@ -495,7 +495,7 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean")) - floor(imgStats.at("std") / 2)));
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean"))));
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
@@ -648,7 +648,7 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
 			morphStructElement2D structEle("circle", 3);
 			map<string, float> statsMap = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), imgDims);
-			int threshold = int(statsMap.at("mean"));
+			int threshold = int(statsMap.at("mean") - statsMap.at("std"));
 			ImgProcessor::conditionalErode2D_imgStats(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, structEle, threshold);
 
 			V3DLONG saveDims[4];
@@ -656,7 +656,7 @@ int main(int argc, char* argv[])
 			saveDims[1] = imgDims[1];
 			saveDims[2] = 1;
 			saveDims[3] = 1;
-			QString saveFileNameQ = "H:\\IVSCC_mouse_inhibitory\\max_442_ROIcropped_thre999_MIP_histEq_mean0.5stdThre_ada_meanThre_conditionalEro3\\" + QString::fromStdString(caseIt->first) + ".tif";
+			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\max_442_ROIcropped_thre999_MIP_histEq_mean0.5stdThre_ada_conditionalEro3mean-1std\\" + QString::fromStdString(caseIt->first) + ".tif";
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
@@ -685,7 +685,13 @@ int main(int argc, char* argv[])
 			double countLog10Min = 10;
 			int threshold;
 			for (map<int, double>::iterator threIt = myManager.imgDatabase.at((*caseIt).toStdString()).histMap_log10.begin(); threIt != myManager.imgDatabase.at((*caseIt).toStdString()).histMap_log10.end(); ++threIt)
-				if (threIt->second < countLog10Min) threshold = threIt->first;
+			{
+				if (threIt->second < countLog10Min)
+				{
+					countLog10Min = threIt->second;
+					threshold = threIt->first;
+				}
+			}
 
 			int imgDims[3];
 			imgDims[0] = myManager.imgDatabase.at((*caseIt).toStdString()).dims[0];
@@ -729,6 +735,56 @@ int main(int argc, char* argv[])
 			QString saveName = saveFolderNameQ + "\\" + *caseIt + ".swc";
 			writeSWC_file(saveName, outputTree);
 			myManager.imgDatabase.clear();
+		}
+	}
+	else if (!funcName.compare("getZ"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+
+		const char* swcFolderNameC = argv[3];
+		string swcFolderName(swcFolderNameC);
+		QString swcFolderNameQ = QString::fromStdString(swcFolderName);
+
+		const char* saveFolderNameC = argv[4];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		ImgManager myManager(folderNameQ);
+		myManager.outputRootPath = saveFolderNameQ;
+
+		for (QStringList::iterator caseIt = myManager.caseList.begin(); caseIt != myManager.caseList.end(); ++caseIt)
+		{
+			NeuronTree nt = readSWC_file(swcFolderNameQ + "\\" + *caseIt + ".swc");
+			myManager.imgEntry((*caseIt).toStdString(), ImgManager::slices);
+			ImgAnalyzer::findZ4swc_maxIntensity(nt.listNeuron, myManager.imgDatabase.at((*caseIt).toStdString()));
+
+			writeSWC_file(saveFolderNameQ + "\\" + *caseIt + ".swc", nt);
+			myManager.imgDatabase.clear();
+		}
+	}
+	else if (!funcName.compare("clean1"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		ImgManager myManager(folderNameQ);
+		for (QStringList::iterator it = myManager.caseList.begin(); it != myManager.caseList.end(); ++it)
+		{
+			QString inputSWCfullName = folderNameQ + "\\" + *it;
+			NeuronTree nt = readSWC_file(inputSWCfullName);
+			NeuronTree newTree;
+			for (QList<NeuronSWC>::iterator nodeIt = nt.listNeuron.begin(); nodeIt != nt.listNeuron.end(); ++nodeIt)
+			{
+				if (nodeIt->z != 1) newTree.listNeuron.append(*nodeIt);
+			}
+			writeSWC_file(saveFolderNameQ + "\\" + *it, newTree);
 		}
 	}
 

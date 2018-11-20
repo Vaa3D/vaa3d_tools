@@ -103,6 +103,7 @@ ImgManager::ImgManager(QString inputPath)
 	{
 		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 		{
+			this->inputCaseRootPath = inputPath;
 			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
 			QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
 			QDir caseFolder(caseFullPath);
@@ -119,6 +120,8 @@ ImgManager::ImgManager(QString inputPath)
 	}
 }
 
+
+// ======================================= I/O and Image Property Profile ======================================= //
 void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
 	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
@@ -181,7 +184,9 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 }
+// ===================================== END of [I/O and Image Property Profile] ===================================== //
 
+// ======================================= Image - SWC Methods ======================================= //
 NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
 {
 	NeuronTree outputTree;
@@ -213,6 +218,9 @@ NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
 
 	return outputTree;
 }
+
+
+// =================================== END of [Image - SWC Methods] ===================================== //
 
 // ================= Methods for generating binary masks from SWC files ================= //
 void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)

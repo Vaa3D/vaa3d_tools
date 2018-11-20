@@ -1,9 +1,8 @@
 #include <ctime>
 
-#include "ImgManager.h"
 #include "ImgAnalyzer.h"
-#include "ImgProcessor.h"
 
+// ======================================= Image Segmentation ======================================= //
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
 	vector<connectedComponent> connList;
@@ -220,4 +219,29 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 	} while (zeroPortion < 0.5);
 
 	return dendriteSigSet;
+}
+// ===================================== END of [Image Segmentation] ===================================== //
+
+void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg)
+{
+	for (QList<NeuronSWC>::iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
+	{
+		int intensity = 0;
+		int imgDims[3];
+		int sliceCount = 0;
+		int currSliceIntensity;
+		imgDims[0] = inputImg.dims[0];
+		imgDims[1] = inputImg.dims[1];
+		imgDims[2] = 1;
+		for (map<string, myImg1DPtr>::const_iterator sliceIt = inputImg.slicePtrs.begin(); sliceIt != inputImg.slicePtrs.end(); ++sliceIt)
+		{
+			++sliceCount;
+			currSliceIntensity = int(ImgProcessor::getPixValue2D(sliceIt->second.get(), imgDims, int(nodeIt->x), int(nodeIt->y)));
+			if (currSliceIntensity > intensity)
+			{
+				intensity = currSliceIntensity;
+				nodeIt->z = sliceCount;
+			}
+		}
+	}
 }
