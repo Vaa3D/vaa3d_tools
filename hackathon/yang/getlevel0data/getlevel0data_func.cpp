@@ -310,7 +310,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
 //                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
                     string cubeName = "NULL.tif";
-                    unsigned short lengthCubeName = cubeName.length();
+                    unsigned short lengthCubeName = cubeName.length() + 1; // consider the end is '\0'
 
                     // cout<<"write/link ... "<<dirName<<" / "<<cubeName<<" "<<lengthCubeName<<endl;
 
@@ -973,7 +973,7 @@ int QueryAndCopy::query(float x, float y, float z)
 
         long olx = lx;
         long oly = ly;
-        long olz = lz;
+//        long olz = lz;
 
         long index = lz*sx*sy + ly*sx + lx;
 
