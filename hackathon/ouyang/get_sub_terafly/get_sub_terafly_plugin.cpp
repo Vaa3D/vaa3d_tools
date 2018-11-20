@@ -83,15 +83,16 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
     TRACE_LS_PARA P;
     vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
     vector<char*> * image = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
-    //vector<char*> * image2 = (input.size() >= 3) ? (vector<char*> *) input[1].p : 0;
     vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
     vector<char*> paras = (image != 0) ? * image : vector<char*>();
-    //vector<char*> paras2 = (image2 != 0) ? * image2 : vector<char*>();
+
     vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+    vector<char*> * outimage = (output.size() >= 2) ? (vector<char*> *) output[1].p : 0;
     vector<char*> outlist = (poutfiles != 0) ? * poutfiles : vector<char*>();
+    vector<char*> parasimg = (outimage != 0) ? * outimage : vector<char*>();
     //vector<char*>* outlist = NULL;
 
-    cout<< "++++++++++++++++++++++++++++++++"<<endl;
+    //cout<< "++++++++++++++++++++++++++++++++"<<endl;
 
     if (func_name == tr("get_block"))
 	{
@@ -103,32 +104,30 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
         }
 
         P.swc_file2 = infiles[0];
-
         P.inimg_file1 =paras[0];
         P.inimg_file2=paras[1];
-
-        //P.inimg_file2 =paras2[0];
         P.image = 0;
 
         QString swc_folder_path;
         QString image1_folder_path;
         QString image2_folder_path;
-        QString fileSaveFolder;
+        QString fileSaveFolder1,fileSaveFolder2;
         swc_folder_path=P.swc_file2;
         image1_folder_path=P.inimg_file1;
         image2_folder_path=P.inimg_file2;
+        fileSaveFolder2=parasimg[0];
 
         //fileSaveFolder="/mnt/DATA_DRIVE/mouseID_321237-17302/test";
         if (output.size()==1)
         {
             //outlist = (vector<char*>*)(output.at(0).p);
-            fileSaveFolder = outlist[0];
+            fileSaveFolder1= outlist[0];
         }
         else {printf("You must specify one result folder.\n");return false; }
 
 
         // read swc files from a folder
-    cout<< "0++++++++++++++++++++++++++++++++"<<endl;
+        //cout<< "0++++++++++++++++++++++++++++++++"<<endl;
         QStringList swcList = importFileList_addnumbersort(QString(swc_folder_path));
         vector<NeuronTree> nt_list;
 
@@ -148,9 +147,9 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
             }
             random_shuffle(alltheN.begin(),alltheN.end());*/
             int totall=currswc.size();
-            //int maxnumN=currswc.at(totall-1).n;
+            int maxnumN=currswc.at(totall-1).n;
             cout<<"max number:\t"<<maxnumN<<endl;
-            cout<< "3++++++++++++++++++++++++++++++++"<<endl;
+            //cout<< "3++++++++++++++++++++++++++++++++"<<endl;
             int arr[10]={ 0 };
 
             srand((unsigned)time(NULL));
@@ -179,7 +178,7 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
                   v3d_msg("Cannot open file for writing!");
                   return false;
               }
-              cout<< "3++++++++++++++++++++++++++++++++"<<endl;
+              //cout<< "3++++++++++++++++++++++++++++++++"<<endl;
 
               QTextStream out(&qf_anofile);
               out << "SWCFILE=" << QFileInfo(curPathSWC).fileName()<<endl;
@@ -188,6 +187,7 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
 
               V3DLONG im_cropped_sz[4];
               unsigned char * im_cropped = 0;
+              unsigned char * im_cropped2 = 0;
               double xe=currswc.at(arr[i]).x;
               double ye=currswc.at(arr[i]).y;
               double ze=currswc.at(arr[i]).z;
@@ -208,19 +208,23 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
               im_cropped_sz[1] = yn-yb+1;
               im_cropped_sz[2] = zn-zb+1;
               im_cropped_sz[3] = 1;
-              cout<< "4++++++++++++++++++++++++++++++++"<<endl;
+              //cout<< "4++++++++++++++++++++++++++++++++"<<endl;
 
 
               try {im_cropped = new unsigned char [pagesz];}
               catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return false;}
-              cout<< "5++++++++++++++++++++++++++++++++"<<endl;
+              try {im_cropped2 = new unsigned char [pagesz];}
+              catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return false;}
+              //cout<< "5++++++++++++++++++++++++++++++++"<<endl;
+
+              //****************the first image file************************
 
 
               im_cropped = callback.getSubVolumeTeraFly(image1_folder_path.toStdString(),xb,xn+1,
                                                         yb,yn+1,zb,zn+1);
 
 
-              cout<< "6++++++++++++++++++++++++++++++++"<<endl;
+              //cout<< "6++++++++++++++++++++++++++++++++"<<endl;
               QString outimg_file;
               QString numofrandom=QString("%1").arg(arr[i]);
               QString outimg_file1= "random_check.tif";
@@ -233,7 +237,7 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
               //cout<<"im_cropped:\t"<<im_cropped[0]<<im_cropped[100]<<im_cropped[2]<<im_cropped[31]<<endl;
               //outimg_file=QFileInfo(fileSaveFolder).append("/").append(QString(numofrandom)).append(QString(outimg_file1));
 
-              outimg_file=fileSaveFolder+"/"+QString(numofrandom)+QString(outimg_file1);
+              outimg_file=fileSaveFolder1+"/"+QString(numofrandom)+"."+QString(outimg_file1);
 //              cout<<"numofrandom:\t"<<numofrandom.toStdString().c_str()<<endl;
 //              cout<<"outimg_file1:\t"<<outimg_file1.toStdString().c_str()<<endl;
 //              cout<<"outimg_file:\t"<<outimg_file.toStdString().c_str()<<endl;
@@ -241,6 +245,19 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
 
               simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
               if(im_cropped) {delete []im_cropped; im_cropped = 0;}
+
+
+
+              //****************the second image file************************
+              im_cropped2 = callback.getSubVolumeTeraFly(image2_folder_path.toStdString(),xb,xn+1,yb,yn+1,zb,zn+1);
+              QString outimg_file2;
+              QString numofrandom2=QString("%1").arg(arr[i]);
+              QString outimg_file3= "random_check.tif";
+              outimg_file2=fileSaveFolder2+"/"+QString(numofrandom2)+"."+QString(outimg_file3);
+              simple_saveimage_wrapper(callback, outimg_file2.toStdString().c_str(),(unsigned char *)im_cropped2,im_cropped_sz,1);
+              if(im_cropped2) {delete []im_cropped2; im_cropped2= 0;}
+
+
             }
          }
        }
