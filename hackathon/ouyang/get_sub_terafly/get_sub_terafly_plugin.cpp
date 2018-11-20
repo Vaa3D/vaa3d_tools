@@ -148,7 +148,8 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
             }
             random_shuffle(alltheN.begin(),alltheN.end());*/
             int totall=currswc.size();
-            int maxnumN=currswc.at(totall-1).n;
+            //int maxnumN=currswc.at(totall-1).n;
+            cout<<"max number:\t"<<maxnumN<<endl;
             cout<< "3++++++++++++++++++++++++++++++++"<<endl;
             int arr[10]={ 0 };
 
@@ -203,9 +204,9 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
 
               V3DLONG pagesz;
               pagesz = (xn-xb+1)*(yn-yb+1)*(zn-zb+1);
-              im_cropped_sz[0] = xe-xb+1;
-              im_cropped_sz[1] = ye-yb+1;
-              im_cropped_sz[2] = ze-zb+1;
+              im_cropped_sz[0] = xn-xb+1;
+              im_cropped_sz[1] = yn-yb+1;
+              im_cropped_sz[2] = zn-zb+1;
               im_cropped_sz[3] = 1;
               cout<< "4++++++++++++++++++++++++++++++++"<<endl;
 
@@ -223,11 +224,21 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
               QString outimg_file;
               QString numofrandom=QString("%1").arg(arr[i]);
               QString outimg_file1= "random_check.tif";
+
+
              // outswc_file = "test.swc";
              // writeSWC_file(outswc_file,outswc);
 
              // export_list2file(outswc,outswc_file,outswc_file);
-              outimg_file=QFileInfo(fileSaveFolder).path().append(QString(numofrandom)).append(QString(outimg_file1));
+              //cout<<"im_cropped:\t"<<im_cropped[0]<<im_cropped[100]<<im_cropped[2]<<im_cropped[31]<<endl;
+              //outimg_file=QFileInfo(fileSaveFolder).append("/").append(QString(numofrandom)).append(QString(outimg_file1));
+
+              outimg_file=fileSaveFolder+"/"+QString(numofrandom)+QString(outimg_file1);
+//              cout<<"numofrandom:\t"<<numofrandom.toStdString().c_str()<<endl;
+//              cout<<"outimg_file1:\t"<<outimg_file1.toStdString().c_str()<<endl;
+//              cout<<"outimg_file:\t"<<outimg_file.toStdString().c_str()<<endl;
+
+
               simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
               if(im_cropped) {delete []im_cropped; im_cropped = 0;}
             }
