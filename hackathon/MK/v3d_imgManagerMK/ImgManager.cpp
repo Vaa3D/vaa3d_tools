@@ -3,7 +3,7 @@
 #include <set>
 #include <cmath>
 
-#include <boost\algorithm\string.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "ImgProcessor.h"
 #include "ImgManager.h"
