@@ -12,6 +12,7 @@
 #include <v3d_interface.h>
 #include <QtGui>
 #include <string>
+#include <stdio.h>
 using namespace std;
 Q_EXPORT_PLUGIN2(get_sub_terafly, GETBLOCK);
 struct TRACE_LS_PARA
@@ -130,9 +131,8 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
 
         for(V3DLONG i = 0; i < swcList.size(); i++)
         {
-            cout<< "2++++++++++++++++++++++++++++++++"<<endl;
-            QString curPathSWC = swcList.at(i);
 
+            QString curPathSWC = swcList.at(i);
             NeuronTree temp = readSWC_file(curPathSWC);
             QList<NeuronSWC> currswc=temp.listNeuron;
 
@@ -193,9 +193,31 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
               try {im_cropped2 = new unsigned char [pagesz];}
               catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return false;}
 
-
               //****************the first image file************************//
               im_cropped = callback.getSubVolumeTeraFly(image1_folder_path.toStdString(),xb,xn+1,yb,yn+1,zb,zn+1);
+
+
+
+              V3DLONG ccou=0;
+              for (int i=0;i<sizeof(im_cropped);i++)
+              {
+                  //int numof_iden=atoi(im_cropped[i]);
+                  int numof_iden=(int)(im_cropped[i]);
+                  if (numof_iden==0) ccou+=1;continue;
+              }
+              if (ccou==pagesz)
+              {
+                  v3d_msg(QString("[%1] file have no values!").arg(QString (image1_folder_path)));
+                  QString outfileLabel = "NO_IDN";
+                  // check report
+                  FILE * fp=0;
+                  fp = fopen((char *)qPrintable(outfileLabel+QString(".txt")), "wt");
+                  // check.1
+                  QString writename=curPathSWC;
+                  fprintf(fp, "images to be double checked \t%s\n",writename);
+                  fclose(fp);
+              }
+
 
               QString outimg_file;
               QString numofrandom=QString("%1").arg(arr[i]);

@@ -215,7 +215,7 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
               catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return false;}
               try {im_cropped2 = new unsigned char [pagesz];}
               catch(...)  {cout<<"cannot allocate memory for image_mip."<<endl; return false;}
-              //cout<< "5++++++++++++++++++++++++++++++++"<<endl;
+              cout<< "5++++++++++++++++++++++++++++++++"<<endl;
 
               //****************the first image file************************
 
@@ -224,25 +224,18 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
                                                         yb,yn+1,zb,zn+1);
 
 
-              //cout<< "6++++++++++++++++++++++++++++++++"<<endl;
               QString outimg_file;
               QString numofrandom=QString("%1").arg(arr[i]);
               QString outimg_file1= "random_check.tif";
 
 
-             // outswc_file = "test.swc";
-             // writeSWC_file(outswc_file,outswc);
-
-             // export_list2file(outswc,outswc_file,outswc_file);
+              // outswc_file = "test.swc";
+              // writeSWC_file(outswc_file,outswc);
+              // export_list2file(outswc,outswc_file,outswc_file);
               //cout<<"im_cropped:\t"<<im_cropped[0]<<im_cropped[100]<<im_cropped[2]<<im_cropped[31]<<endl;
               //outimg_file=QFileInfo(fileSaveFolder).append("/").append(QString(numofrandom)).append(QString(outimg_file1));
 
               outimg_file=fileSaveFolder1+"/"+QString(numofrandom)+"."+QString(outimg_file1);
-//              cout<<"numofrandom:\t"<<numofrandom.toStdString().c_str()<<endl;
-//              cout<<"outimg_file1:\t"<<outimg_file1.toStdString().c_str()<<endl;
-//              cout<<"outimg_file:\t"<<outimg_file.toStdString().c_str()<<endl;
-
-
               simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
               if(im_cropped) {delete []im_cropped; im_cropped = 0;}
 
