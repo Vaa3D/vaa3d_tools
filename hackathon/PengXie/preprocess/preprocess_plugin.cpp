@@ -9,6 +9,7 @@
 #include "split_neuron_main.h"
 #include "neurite_analysis_main.h"
 #include "crop_swc_main.h"
+#include "crop_swc_cuboid_main.h"
 #include "check_connection.h"
 
 using namespace std;
@@ -30,6 +31,7 @@ QStringList neuron_analysis::funclist() const
         <<tr("split_neuron")
         <<tr("qc")
         <<tr("crop_swc")
+        <<tr("crop_swc_cuboid")
         <<tr("check_connection")
         <<tr("help");
 }
@@ -89,6 +91,10 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
     if (func_name == "crop_swc")
     {
         return (crop_swc_dofunc(input, output));
+    }
+    if (func_name == "crop_swc_cuboid")
+    {
+        return (crop_swc_cuboid_dofunc(input, output));
     }
     if (func_name == "check_connection"){
         return (check_connection_dofunc(input, output, callback));

@@ -1,5 +1,6 @@
-#ifndef CROP_SWC_MAIN_H
-#define CROP_SWC_MAIN_H
+#ifndef CROP_SWC_CUBOID_MAIN_H
+#define CROP_SWC_CUBOID_MAIN_H
+
 
 #include "QtGlobal"
 #include "vector"
@@ -29,9 +30,12 @@ using namespace std;
 #include "io.h"
 #endif
 
-bool crop_swc(QString qs_input, QString qs_output, double radius, int soma=0, bool center=1, int resample_step=2,
-              double xshift=0, double yshift=0, double zshift=0, bool rotation=0, bool report_single_tree=1);
+bool crop_swc_cuboid(QString qs_input, QString qs_output,
+              double xs=0, double ys=0, double zs=0,
+              double xe=0, double ye=0, double ze=0,
+              double xshift=0, double yshift=0, double zshift=0
+              );
 
-bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
-void printHelp_crop_swc();
-#endif // CROP_SWC_MAIN_H
+bool crop_swc_cuboid_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
+void printHelp_crop_swc_cuboid();
+#endif // CROP_SWC_CUBOID_H
