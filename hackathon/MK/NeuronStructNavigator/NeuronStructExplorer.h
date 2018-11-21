@@ -95,7 +95,9 @@ struct profiledTree
 {
 	profiledTree() {};
 	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
-	profiledTree(const NeuronTree& inputTree, bool profileSeg);
+	float segTileSize;
+	float nodeTileSize;
+	void nodeTileResize(float nodeTileLength);
 
 	NeuronTree tree;
 	map<int, size_t> node2LocMap;

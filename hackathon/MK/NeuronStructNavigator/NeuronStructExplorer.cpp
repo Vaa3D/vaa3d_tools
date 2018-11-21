@@ -34,8 +34,10 @@ using namespace std;
 profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 {
 	this->tree = inputTree;
-	
-	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap);
+	this->segTileSize = segTileLength;
+	this->nodeTileSize = NODE_TILE_LENGTH;
+
+	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileSize);
 
 	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 	
@@ -49,6 +51,24 @@ profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 	}
 	this->segHeadMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength);
 	this->segTailMap = NeuronStructExplorer::segTileMap(allSegs, segTileLength, false);
+}
+
+void profiledTree::nodeTileResize(float nodeTileLength)
+{
+	if (nodeTileLength == NODE_TILE_LENGTH) return;
+	else
+	{
+		if (!this->nodeTileMap.empty())
+		{
+			this->nodeTileMap.clear();
+			NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileLength);
+		}
+		else
+		{
+			this->nodeTileSize = nodeTileLength;
+			return;
+		}
+	}
 }
 
 void profiledTree::addTopoUnit(int nodeID)
