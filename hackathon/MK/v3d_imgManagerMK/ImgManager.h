@@ -25,8 +25,8 @@
 #include <deque>
 #include <map>
 
-#include <boost\filesystem.hpp>
-#include <boost\shared_array.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/shared_array.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
