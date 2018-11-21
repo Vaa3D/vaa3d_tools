@@ -87,7 +87,7 @@ public:
 	static inline void maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[]);
 
 	template<class T>
-	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
+	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
 	/**********************************************************/
 
 
@@ -253,9 +253,8 @@ inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr
 }
 
 template<class T>
-vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
+inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[])
 {
-	vector<vector<T>> outputSlices;
 	for (int k = 0; k < imgDims[2]; ++k)
 	{
 		vector<T> thisSlice;
@@ -270,8 +269,6 @@ vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
 		outputSlices.push_back(thisSlice);
 		thisSlice.clear();
 	}
-
-	return outputSlices;
 }
 
 template<class T>

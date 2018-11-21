@@ -68,6 +68,7 @@ public:
 	
 	QStringList caseList;
 	string inputSingleCaseSingleSliceFullPath;
+	string inputSingleCaseSingleCubeFullPath;
 	string outputSingleCaseSingleSliceFullPath;
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;

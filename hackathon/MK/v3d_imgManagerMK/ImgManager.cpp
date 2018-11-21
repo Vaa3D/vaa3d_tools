@@ -171,7 +171,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		slicePtr->loadImage(sliceFullNameC);
 		currImgCase.dims[0] = int(slicePtr->getXDim());
 		currImgCase.dims[1] = int(slicePtr->getYDim());
-		currImgCase.dims[2] = 1;
+		currImgCase.dims[2] = int(slicePtr->getZDim());
 		long int totalbyteSlice = slicePtr->getTotalBytes();
 		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);

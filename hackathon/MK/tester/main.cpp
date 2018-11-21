@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
 		const char* savePathNameC = argv[3];
 		string savePathName(savePathNameC);
 		ofstream outputFile(savePathName);
-		outputFile << "case num\t" << "avgDist 1-2\t" << "structure diff 1-2\t" << "avgDist 2-1\t" << "structure diff 2-1\t" << "avfDist all\t" << "structure diff all" << endl;
+		outputFile << "case num\t" << "avgDist 1-2\t" << "structure diff 1-2\t" << "avgDist 2-1\t" << "structure diff 2-1\t" << "avgDist all\t" << "structure diff all" << endl;
 
 		for (filesystem::directory_iterator swcIt(inputFolderName); swcIt != filesystem::directory_iterator(); ++swcIt)
 		{
@@ -466,7 +466,7 @@ int main(int argc, char* argv[])
 		QString folderNameQ = QString::fromStdString(folderName);
 		ImgManager myManager(folderNameQ);
 
-		ofstream outputFile("Z:\\IVSCC_mouse_inhibitory\\imgStats.txt");
+		ofstream outputFile("C:\\Users\\hsienchik\\Desktop\\Work\\boutonTest\\imgStats.txt");
 		outputFile << "case num\tmean\tstd\tmedian" << endl;
 		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
 		{
@@ -499,7 +499,7 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean"))));
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean") + 3 * imgStats.at("std"))));
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
@@ -833,6 +833,52 @@ int main(int argc, char* argv[])
 				if (nodeIt->z != 1) newTree.listNeuron.append(*nodeIt);
 			}
 			writeSWC_file(saveFolderNameQ + "\\" + *it, newTree);
+		}
+	}
+	else if (!funcName.compare("stackSlice"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		ImgManager myManager;
+		myManager.inputSingleCaseSingleSliceFullPath = "C:\\Users\\hsienchik\\Desktop\\Work\\boutonTest\\17302AS1Rd.tif";
+		myManager.imgEntry("stack", ImgManager::singleCase_singleSlice);
+		vector<vector<unsigned char>> imgSlices;
+		int imgDims[3];
+		imgDims[0] = 900;
+		imgDims[1] = 900;
+		imgDims[2] = 251;
+		ImgProcessor::imgStackSlicer(myManager.imgDatabase.at("stack").slicePtrs.begin()->second.get(), imgSlices, imgDims);
+
+		int sliceCount = 0;
+		string saveSliceName;
+		for (vector<vector<unsigned char>>::iterator sliceIt = imgSlices.begin(); sliceIt != imgSlices.end(); ++sliceIt)
+		{
+			++sliceCount;
+			unsigned char* slicePtr = new unsigned char[imgDims[0] * imgDims[1]];
+			for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
+				slicePtr[i] = sliceIt->at(i);
+			
+			if (sliceCount / 10 == 0) saveSliceName = "00" + to_string(sliceCount) + ".tif";
+			else if (sliceCount / 100 == 0) saveSliceName = "0" + to_string(sliceCount) + ".tif";
+			else saveSliceName = to_string(sliceCount) + ".tif";
+
+			string saveFullName = saveFolderName + "\\" + saveSliceName;
+			const char* saveFullNameC = saveFullName.c_str();
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			ImgManager::saveimage_wrapper(saveFullNameC, slicePtr, saveDims, 1);
+
+			delete[] slicePtr;
 		}
 	}
 
