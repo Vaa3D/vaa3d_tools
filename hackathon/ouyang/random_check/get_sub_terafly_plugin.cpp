@@ -135,12 +135,6 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
             QString curPathSWC = swcList.at(i);
             NeuronTree temp = readSWC_file(curPathSWC);
             QList<NeuronSWC> currswc=temp.listNeuron;
-
-            /*for(int i=0;i<currswc.size();i++)
-            {
-              alltheN.push_back(currswc.at(i).n);
-            }
-            random_shuffle(alltheN.begin(),alltheN.end());*/
             int totall=currswc.size();
             int maxnumN=currswc.at(totall-1).n;
             cout<<"max number:\t"<<maxnumN<<endl;
@@ -151,8 +145,6 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
             for(int i=0;i<10;i++)
             {
               arr[i]=rand() % maxnumN+0;
-
-
               CellAPO t;
                   t.x = currswc.at(arr[i]).x;
                   t.y = currswc.at(arr[i]).y;
@@ -201,14 +193,13 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
               V3DLONG ccou=0;
               for (int i=0;i<sizeof(im_cropped);i++)
               {
-                  //int numof_iden=atoi(im_cropped[i]);
                   int numof_iden=(int)(im_cropped[i]);
                   if (numof_iden==0) ccou+=1;continue;
               }
               if (ccou==pagesz)
               {
                   v3d_msg(QString("[%1] file have no values!").arg(QString (image1_folder_path)));
-                  QString outfileLabel = "NO_IDN";
+                 /* QString outfileLabel = "NO_IDN";
                   // check report
                   FILE * fp=0;
                   fp = fopen((char *)qPrintable(outfileLabel+QString(".txt")), "wt");
@@ -216,21 +207,17 @@ bool GETBLOCK::dofunc(const QString & func_name, const V3DPluginArgList & input,
                   QString writename=curPathSWC;
                   fprintf(fp, "images to be double checked \t%s\n",writename);
                   fclose(fp);
+                  */
               }
-
-
               QString outimg_file;
               QString numofrandom=QString("%1").arg(arr[i]);
               QString outimg_file1= "random_check.tif";
-              // writeSWC_file(outswc_file,outswc);
-              // export_list2file(outswc,outswc_file,outswc_file);
               //cout<<"im_cropped:\t"<<im_cropped[0]<<im_cropped[100]<<im_cropped[2]<<im_cropped[31]<<endl;
-              //outimg_file=QFileInfo(fileSaveFolder).append("/").append(QString(numofrandom)).append(QString(outimg_file1));
 
               outimg_file=fileSaveFolder1+"/"+"J."+QString(numofrandom)+"."+QString(outimg_file1);
-//              cout<<"numofrandom:\t"<<numofrandom.toStdString().c_str()<<endl;
-//              cout<<"outimg_file1:\t"<<outimg_file1.toStdString().c_str()<<endl;
-//              cout<<"outimg_file:\t"<<outimg_file.toStdString().c_str()<<endl;
+//            cout<<"numofrandom:\t"<<numofrandom.toStdString().c_str()<<endl;
+//            cout<<"outimg_file1:\t"<<outimg_file1.toStdString().c_str()<<endl;
+//            cout<<"outimg_file:\t"<<outimg_file.toStdString().c_str()<<endl;
               simple_saveimage_wrapper(callback, outimg_file.toStdString().c_str(),(unsigned char *)im_cropped,im_cropped_sz,1);
               if(im_cropped) {delete []im_cropped; im_cropped = 0;}
               //****************the first image file************************//
