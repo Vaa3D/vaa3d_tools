@@ -64,6 +64,10 @@ public:
 	/************************************************************************/
 	
 
+	/***************** SWC Tracing-related Operations *****************/
+	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode);
+	/******************************************************************/
+
 	/***************** Neuron Struct Profiling Methods *****************/
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 

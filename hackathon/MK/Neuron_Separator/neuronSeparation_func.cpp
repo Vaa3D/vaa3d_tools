@@ -514,6 +514,9 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 						head = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentHeadID));
 						tail = this->inputSWCTree.listNeuron.at(nodeLocMap.at(segmentTailID));
 						backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
+						pathAnalyze.pop_front();
+						pathAnalyze.pop_back();
+						cout << "Excluded somas at the 2 ends..";
 						cout << "Path type: soma to soma, path size: " << pathAnalyze.size() << endl;
 
 						double radAngleMax = 0;
@@ -1544,6 +1547,8 @@ void neuronSeparator::downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& in
 		parents = children;
 	} while (children.size() > 0);
 	
+	if (start.parent == -1) tracedSWC.push_front(start);
+
 	return;
 }
 
@@ -1552,7 +1557,8 @@ QList<NeuronSWC> neuronSeparator::swcTrace(QList<NeuronSWC>& list, long int star
 	long parent, id;
 	QList<NeuronSWC> traced;
 	NeuronSWC root;
-	if (startNode.parent == -1) downward(traced, list, startNode);
+	//if (startNode.parent == -1) downward(traced, list, startNode);
+	if (startNode.parent == -1) NeuronStructUtil::downstream_subTreeExtract(list, traced, startNode);
 	else
 	{
 		long parent = startNode.parent, tempParent;

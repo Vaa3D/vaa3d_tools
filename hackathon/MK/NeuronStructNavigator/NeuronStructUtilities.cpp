@@ -223,7 +223,43 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 }
 
 
-// ========================================== SWC Profiling Methods =========================================
+// ======================================= SWC Tracing-related Operations =======================================
+void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode)
+{
+	map<int, size_t> node2locMap;
+	map<int, vector<size_t>> node2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+	
+	QList<NeuronSWC> parents;
+	QList<NeuronSWC> children;
+	parents.push_back(startingNode);
+	vector<size_t> childLocs;
+	do
+	{
+		children.clear();
+		childLocs.clear();
+		for (QList<NeuronSWC>::iterator pasIt = parents.begin(); pasIt != parents.end(); ++pasIt)
+		{
+			if (node2childLocMap.find(pasIt->n) != node2childLocMap.end()) childLocs = node2childLocMap.at(pasIt->n);
+			else continue;
+			
+			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
+			{
+				subTreeList.append(inputList.at(*childLocIt));
+				children.push_back(inputList.at(*childLocIt));
+			}
+		}
+		parents = children;
+	} while (childLocs.size() > 0);
+	
+	if (startingNode.parent == -1) subTreeList.push_front(startingNode);
+
+	return;
+}
+//============================================================================================================
+
+
+// ========================================== SWC Profiling Methods ==========================================
 QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 {
 	// -- This method removes dupliated nodes.
