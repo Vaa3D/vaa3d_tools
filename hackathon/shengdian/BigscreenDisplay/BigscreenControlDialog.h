@@ -207,9 +207,26 @@ public slots:
         controlPara.displaycolumn=displaycolumn->text().toInt();
         controlPara.displayrow=displayrow->text().toInt();
         controlPara.isneuronCombined=combineNeuron->isChecked();
+        if(!controlPara.isneuronCombined)
+        {
+            downSampleCombined->setCheckable(false);
+            downSampleRate->setVisible(false);
+            controlPara.isDownSampleCombined=downSampleCombined->checkState();
+            controlPara.downsamplerate=0;
+        }
+        else
+        {
+            downSampleCombined->setCheckable(true);
+            controlPara.isDownSampleCombined=downSampleCombined->isChecked();
+            controlPara.downsamplerate=downSampleRate->text().toInt();
+            if(!downSampleCombined->isChecked())
+            {
+                downSampleRate->setValue(0);
+                controlPara.downsamplerate=downSampleRate->text().toInt();
+            }
+
+        }
         controlPara.isDownSample=downSample->isChecked();
-        controlPara.isDownSampleCombined=downSampleCombined->isChecked();
-        controlPara.downsamplerate=downSampleRate->text().toInt();
         controlPara.sampleRate=zmovieSamplingrate->text().toInt();
     }
 

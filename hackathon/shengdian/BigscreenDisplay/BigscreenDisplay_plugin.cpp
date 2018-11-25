@@ -33,8 +33,9 @@ void BigscreenDisplay::domenu(const QString &menu_name, V3DPluginCallback2 &call
     }
 	else
 	{
-        v3d_msg(tr("Using this plugin to control the bigscreen.. "
-			"Developed by Shengdian Jiang, 2018-10-15"));
+        HelpText();
+//        v3d_msg(tr("Using this plugin to control the bigscreen.. "
+//			"Developed by Shengdian Jiang, 2018-10-15"));
 	}
 }
 

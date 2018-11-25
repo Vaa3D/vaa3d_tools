@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <QApplication>
 #include <QTime>
+#include <QtGui>
 #include <cmath>
 #include "BigScreenDispaly_func.h"
 #include "BigscreenControlDialog.h"
@@ -203,10 +204,156 @@ void bigscreenDisplay(V3DPluginCallback2 &callback, QWidget *parent)
     MethodForBigScreenDisplay(callback,parent,controlPara);
 
 }
+void HelpText()
+{
+    QString helptext=
+            "This plugin is developed by Shengdian Jiang. 2018-10-15 <br>"
+            "The BigScreenDisplay plugin is used to display specity number of new finished annotation file at screen.<br>"
+            "<br>============================================="
+            "<H2>Help Information</H2>"
+            "=============================================<br>"
+            "<br><table border=\"1\">"
+            "<tr><td>Choose the display directory </td><td>The folder you chosed should include all the SWC/ESWC file.</td></tr>"
+            "<tr><td>start point X </td><td>The start pixel of the height of display panel.</td></tr>"
+            "<tr><td>start point Y </td><td>The start pixel of the width of display panel.</td></tr>"
+            "<tr><td>display number </td><td>Display number is the  displayed number of annotation file.</td></tr>"
+            "<tr><td>Combine checkbox </td><td>Set it true if you want to display the combined file.</td></tr>"
+            "<tr><td>Down Sample(combined) checkbox </td><td>Set it true if you want to down sample the combined file.</td></tr>"
+            "<tr><td>Window Size </td><td>The Window Size of the displayed window.</td></tr>"
+            "<tr><td>update interval </td><td>The plugin will update the window every 'update interval' time.</td></tr>"
+            "<tr><td>down sample rate </td><td>Down sample rate of the combined file.</td></tr>"
+            "<tr><td>Choose the anchor file </td><td>For the zmoive plugin.</td></tr>"
+            "<tr><td>zmovie sampling rate </td><td>For the zmoive plugin.</td></tr>"
+            "</table><br>"
+            ;
+    QTextEdit *textEdit=new QTextEdit(helptext);textEdit->setWindowTitle("BigScreen Control Document");
+    //textEdit->setDocumentTitle("BigScreen Control Document");
+    textEdit->resize(700, 700); //use the QWidget function
+    textEdit->setReadOnly(true);
+    textEdit->setFontPointSize(12);
+    textEdit->show();
+}
+
+QStringList CheckFileandFloder(DisplayPARA controlPara)
+{
+    QStringList /*outSWCFile,*/allSWCFile;
+    allSWCFile.clear();
+
+    QDir displaydir(controlPara.openfolder);
+    QString supposeSuffixeswc="eswc";
+    QString supposeSuffixswc="swc";
+    QString supposeSuffixESWC="ESWC";
+    QString supposeSuffixSWC="SWC";
+    foreach(QFileInfo mfi,displaydir.entryInfoList())
+    {
+        if(mfi.isFile())
+        {
+            //cout<<"File name is "<<mfi.fileName().toStdString()<<endl;
+            if(QString::compare(mfi.suffix(), supposeSuffixeswc, Qt::CaseInsensitive) == 0
+                    ||QString::compare(mfi.suffix(), supposeSuffixswc, Qt::CaseInsensitive) == 0
+                    ||QString::compare(mfi.suffix(), supposeSuffixESWC, Qt::CaseInsensitive) == 0
+                    ||QString::compare(mfi.suffix(), supposeSuffixSWC, Qt::CaseInsensitive) == 0)
+            {
+                allSWCFile+=mfi.absoluteFilePath();
+            }
+        }
+        else
+        {
+            if(mfi.fileName()=="."|| mfi.fileName()=="..")
+                continue;
+            cout<<"dir is "<<mfi.absoluteFilePath().toStdString()<<endl;
+            DisplayPARA controlParaTemp;
+            //controlParaTemp.displaynumber=controlPara.displaynumber;
+            controlParaTemp.openfolder=mfi.absoluteFilePath();
+            CheckFileandFloder(controlParaTemp);
+        }
+    }
+    if(allSWCFile.size()==0)
+        cout<<"can't find any swc or eswc file."<<endl;
+    return allSWCFile;
+
+}
+QStringList FindNewSWCFile(QStringList allSWCFile,int displayNumber)
+{
+    QStringList outSWCFile;
+    outSWCFile.clear();
+    if(allSWCFile.size()==0)
+    {
+        cout<<"can't find any swc or eswc file."<<endl;
+        return outSWCFile;
+    }
+    map <int,QDateTime> swcFinishDate;
+    for(int i=0;i<allSWCFile.size();i++)
+    {
+
+        QFileInfo swcFile(allSWCFile.at(i));
+        QString swcBaseName=swcFile.baseName();
+        if(swcBaseName.toStdString().find("_stamp_")!=string::npos)
+        {
+            QStringList swcBaseNameSplit=swcBaseName.split("_stamp_");
+            if(!swcBaseNameSplit.size())
+            {
+                cout<<"SWC file don't have time stamp."<<endl;
+                return outSWCFile;
+            }
+            QString swcDate=swcBaseNameSplit[swcBaseNameSplit.size()-1];
+            QStringList swcDateTime=swcDate.split("_");
+            if(swcDateTime.size()!=5)
+                continue;
+            QDateTime theswcdate(QDate(swcDateTime[0].toInt(),swcDateTime[1].toInt(),swcDateTime[2].toInt()),QTime(swcDateTime[3].toInt(),swcDateTime[4].toInt()));
+            swcFinishDate[i]=theswcdate;
+            cout<<"swc date is "<<theswcdate.toString("yyyy_MM_dd_hh_mm").toStdString()<<endl;
+            //do the date count.
+        }
+        else
+        {
+            cout<<"SWC file don't have time stamp."<<endl;
+            return outSWCFile;
+        }
+    }
+    //sort the swc file based on finished datetime.
+    map<int,int> sortSWCresult;
+    for(int d=0;d<displayNumber;d++)
+    {
+
+        if(d==0)
+        {
+            sortSWCresult[d]=0;
+            swcFinishDate[allSWCFile.size()+1]=swcFinishDate[d];
+            for(int i=0;i<allSWCFile.size();i++)
+            {
+                if(swcFinishDate[i]>=swcFinishDate[allSWCFile.size()+1])
+                {
+                    swcFinishDate[allSWCFile.size()+1]=swcFinishDate[i];
+                    sortSWCresult[d]=i;
+                }
+            }
+        }
+        else
+        {
+            swcFinishDate[allSWCFile.size()+1]=swcFinishDate[0];
+            for(int i=0;i<allSWCFile.size();i++)
+            {
+                if(swcFinishDate[i]>=swcFinishDate[allSWCFile.size()+1]&&swcFinishDate[i]<swcFinishDate[sortSWCresult[d-1]])
+                {
+                    swcFinishDate[allSWCFile.size()+1]=swcFinishDate[i];
+                    sortSWCresult[d]=i;
+                }
+            }
+        }
+    }
+    //extract the new finished swc file from allswcfile to outswcfile
+    for(int d=0;d<displayNumber;d++)
+    {
+        outSWCFile+=allSWCFile.at(sortSWCresult[d]);
+//        cout<<"swc file name is "<<outSWCFile.at(d).toStdString()<<endl;
+    }
+    return outSWCFile;
+}
+
 void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,DisplayPARA controlPara)
 {
-    /*QString*/ m_InputfolderName = controlPara.openfolder;
-    int displayNum=controlPara.displaynumber;
+    //int displayNum=controlPara.displaynumber;
     int col=controlPara.displaycolumn;
     int row=controlPara.displayrow;
     int xRez=controlPara.spositionX/*3840*/, yRez=controlPara.spositionY/*2160*/;
@@ -217,7 +364,9 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,Dis
 //    int downSampleRate=controlPara.downsamplerate;
     int updateInterval=controlPara.updateinterval;
 
-    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+//    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+    QStringList allswcList = CheckFileandFloder(controlPara);
+    QStringList swcList= FindNewSWCFile(allswcList,controlPara.displaynumber);
     WriteNewFinishedNeuronsFileName(swcList);
     V3dR_MainWindow * new3DWindow = NULL;
     int offsety = -1;
@@ -257,18 +406,25 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,Dis
         callback.setHideDisplayControlButton(cur_list_3dviewer.at(i));
     }
     int samplingRate=controlPara.sampleRate;
-    ZmovieMaker(callback,parent,samplingRate);
-    int updateCount=0;
-    while(true)
+    if(samplingRate>0)
     {
-        //sleep(updateInterval);
-        if(updateCount==updateInterval)
-        {
-            MethodForUpdateSWCDispaly(callback,parent,controlPara);
-            updateCount=0;
-        }
         ZmovieMaker(callback,parent,samplingRate);
-        updateCount++;
+        int updateCount=0;
+        while(true)
+        {
+            //sleep(updateInterval);
+            if(updateCount==updateInterval)
+            {
+                MethodForUpdateSWCDispaly(callback,parent,controlPara);
+                updateCount=0;
+            }
+            ZmovieMaker(callback,parent,samplingRate);
+            updateCount++;
+        }
+    }
+    else
+    {
+        cout<<"need to be completed."<<endl;
     }
 
 }
@@ -575,15 +731,12 @@ void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent,Dis
         callback.update_3DViewer(cur_list_3dviewer.at(i));
     }
     //update SWC list
-    if(m_InputfolderName.size()==0)
-        return;
-
-    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
+    QStringList allswcList = CheckFileandFloder(controlPara);
+    QStringList swcList= FindNewSWCFile(allswcList,controlPara.displaynumber);
     WriteNewFinishedNeuronsFileName(swcList);
     for(int i=0;i<swcList.size();i++)
     {
         QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (cur_list_3dviewer.at(i));
-        //new_treeList->clear();
 
         QString curPathSWC = swcList.at(i);
         QFileInfo curSWCBase(curPathSWC);
