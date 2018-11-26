@@ -223,7 +223,8 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			cout << "soma ID: " << ID << endl;
 			size_t loc = inputSWCHash[ID];
 			NeuronSWC startNode = this->inputSWCTree.listNeuron[loc];
-			extracted = swcTrace(this->brokenInputSWC, ID, startNode);
+			NeuronStructUtil::wholeSingleTree_extract(this->brokenInputSWC, extracted, startNode);
+			//extracted = swcTrace(this->brokenInputSWC, ID, startNode);
 			for (QList<NeuronSWC>::iterator it = extracted.begin(); it != extracted.end(); ++it) it->type = typeCount;
 			NeuronTree extTree;
 			extTree.listNeuron = extracted;

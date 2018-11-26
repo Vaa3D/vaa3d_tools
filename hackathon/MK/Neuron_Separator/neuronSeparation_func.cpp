@@ -161,6 +161,10 @@ void neuronSeparator::backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, 
 
 QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childList, NeuronTree& nt, long int wishedSomaID, long int excludedSomaID)
 {
+	map<int, size_t> node2locMap;
+	map<int, vector<size_t>> node2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(nt.listNeuron, node2locMap, node2childLocMap);
+
 	QList<NeuronSWC> nodeList = nt.listNeuron;
 	QList<NeuronSWC>::iterator startIt_wished = nodeList.begin();
 	QList<NeuronSWC>::iterator startIt_excluded = nodeList.begin();
@@ -179,11 +183,12 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 	if (this->branchAncestor == true)
 	{
 		QList<NeuronSWC> path1, path2;
+		//NeuronStructUtil::upstreamPath(nt.listNeuron, path1, latestAncestor, *startIt_excluded, node2locMap);
+		//NeuronStructUtil::upstreamPath(nt.listNeuron, path2, latestAncestor, *startIt_wished, node2locMap);
 		backwardPath(path1, nt, *startIt_excluded, latestAncestor);
 		backwardPath(path2, nt, *startIt_wished, latestAncestor);
 		//cout << path1.size() << " " << path2.size() << endl;
 		for (QList<NeuronSWC>::iterator it=path2.begin(); it!=path2.end()-1; ++it) path1.push_back(*it);
-		//cout << path1.size() << endl;
 
 		NeuronTree somaTreePartial;
 		somaTreePartial.listNeuron = path1;
@@ -196,6 +201,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 		if (this->forward == 1)
 		{
 			QList<NeuronSWC> path;
+			//NeuronStructUtil::upstreamPath(nt.listNeuron, path, *startIt_wished, *startIt_excluded, node2locMap);
 			backwardPath(path, nt, *startIt_excluded, *startIt_wished);
 			
 			NeuronTree somaTreePartial;
@@ -207,6 +213,7 @@ QList<NeuronSWC> neuronSeparator::findPath(QVector< QVector<V3DLONG> >& childLis
 		else if (forward == 0)
 		{
 			QList<NeuronSWC> path;
+			//NeuronStructUtil::upstreamPath(nt.listNeuron, path, *startIt_excluded, *startIt_wished, node2locMap);
 			backwardPath(path, nt, *startIt_wished, *startIt_excluded);
 			
 			NeuronTree somaTreePartial;
@@ -730,8 +737,10 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 									}
 								}
 
-								bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
-								bChildID = this->somaPath.at(*somaNode2childLocMap.at(bChildID).begin()).n;
+								if (somaNodeLocMap.find(bParentID) != somaNodeLocMap.end())
+									bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
+								if (somaNode2childLocMap.find(bChildID) != somaNode2childLocMap.end())
+									bChildID = this->somaPath.at(*somaNode2childLocMap.at(bChildID).begin()).n;
 							}
 
 							if (up)
@@ -978,8 +987,10 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 									}
 								}
 
-								bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
-								bChildID = this->somaPath.at(*somaNode2childLocMap.at(bChildID).begin()).n;
+								if (somaNodeLocMap.find(bParentID) != somaNodeLocMap.end())
+									bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
+								if (somaNode2childLocMap.find(bChildID) != somaNode2childLocMap.end())
+									bChildID = this->somaPath.at(*somaNode2childLocMap.at(bChildID).begin()).n;
 							}
 
 							if (up)
@@ -1162,7 +1173,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 									nodeCutID = (pathAnalyze.begin() + pathMiddle)->n;
 								}
 							}
-
+							
 							deque<int> branchCheckRangeIDs;
 							branchCheckRangeIDs.push_back(nodeCutID);
 							int bParentID = this->somaPath.at(somaNodeLocMap.at(nodeCutID)).parent;
@@ -1185,6 +1196,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 
 											branchRouteID = bParentID;
 											vector<size_t> childLocs = node2childLocMap.at(branchRouteID);
+											cout << childLocs.size() << endl;
 											for (vector<size_t>::iterator branchChildIt = childLocs.begin(); branchChildIt != childLocs.end(); ++branchChildIt)
 											{
 												if (somaNodeLocMap.find(inputSWCTree.listNeuron.at(*branchChildIt).n) == somaNodeLocMap.end())
@@ -1234,10 +1246,12 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 									}	
 								}
 
-								bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
-								bChildID = this->somaPath.at(*somaNode2childLocMap.at(bChildID).begin()).n;
+								if (somaNodeLocMap.find(bParentID) != somaNodeLocMap.end())
+									bParentID = this->somaPath.at(somaNodeLocMap.at(bParentID)).parent;
+								if (somaNode2childLocMap.find(bChildID) != somaNode2childLocMap.end())
+									bChildID = this->somaPath.at(*somaNode2childLocMap.at(bChildID).begin()).n;
 							}
-
+							
 							if (up)
 							{
 								vector<float> somaRouteVec = NeuronStructExplorer::getVector_NeuronSWC(this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())), this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.back())));
@@ -1554,11 +1568,15 @@ void neuronSeparator::downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& in
 
 QList<NeuronSWC> neuronSeparator::swcTrace(QList<NeuronSWC>& list, long int startID, NeuronSWC& startNode)
 {	
+	map<int, size_t> node2locMap;
+	map<int, vector<size_t>> node2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(list, node2locMap, node2childLocMap);
+
 	long parent, id;
 	QList<NeuronSWC> traced;
 	NeuronSWC root;
 	//if (startNode.parent == -1) downward(traced, list, startNode);
-	if (startNode.parent == -1) NeuronStructUtil::downstream_subTreeExtract(list, traced, startNode);
+	if (startNode.parent == -1) NeuronStructUtil::downstream_subTreeExtract(list, traced, startNode, node2locMap, node2childLocMap);
 	else
 	{
 		long parent = startNode.parent, tempParent;

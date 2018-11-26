@@ -224,10 +224,8 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 
 
 // ======================================= SWC Tracing-related Operations =======================================
-void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode)
+void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
 {
-	map<int, size_t> node2locMap;
-	map<int, vector<size_t>> node2childLocMap;
 	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
 	
 	QList<NeuronSWC> parents;
@@ -252,9 +250,33 @@ void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputLi
 		parents = children;
 	} while (childLocs.size() > 0);
 	
-	if (startingNode.parent == -1) subTreeList.push_front(startingNode);
+	subTreeList.push_front(startingNode);
 
 	return;
+}
+
+void NeuronStructUtil::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode)
+{
+	map<int, size_t> node2locMap;
+	map<int, vector<size_t>> node2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+
+	if (startingNode.parent == -1) NeuronStructUtil::downstream_subTreeExtract(inputList, tracedList, startingNode, node2locMap, node2childLocMap);
+	else
+	{
+		int parentID = startingNode.parent;
+		int somaNodeID;
+
+		while (1)
+		{
+			parentID = inputList.at(node2locMap.at(parentID)).parent;
+			if (parentID != -1) somaNodeID = inputList.at(node2locMap.at(parentID)).n;
+			else break;
+		}
+		
+		NeuronSWC rootNode = inputList.at(node2locMap.at(somaNodeID));
+		NeuronStructUtil::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
+	}
 }
 //============================================================================================================
 

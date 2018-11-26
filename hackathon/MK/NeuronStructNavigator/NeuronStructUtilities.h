@@ -65,7 +65,9 @@ public:
 	
 
 	/***************** SWC Tracing-related Operations *****************/
-	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode);
+	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, map<int, size_t>& node2locMap);
+	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap);
+	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 	/******************************************************************/
 
 	/***************** Neuron Struct Profiling Methods *****************/
@@ -212,6 +214,13 @@ inline NeuronTree NeuronStructUtil::swcCombine(const vector<NeuronTree>& inputTr
 	}
 
 	return outputTree;
+}
+
+inline void NeuronStructUtil::upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, map<int, size_t>& node2locMap)
+{
+	tracedList.push_front(downstreamEnd);
+	while (tracedList.front().parent != upstreamEnd.n) tracedList.push_front(inputList.at(node2locMap.at(tracedList.front().parent)));
+	tracedList.push_front(upstreamEnd);
 }
 
 inline string NeuronStructUtil::getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength)
