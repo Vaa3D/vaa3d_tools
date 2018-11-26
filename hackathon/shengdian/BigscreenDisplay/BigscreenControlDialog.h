@@ -51,20 +51,24 @@ public:
         winSizeY->setRange(700,10000);
         winSizeY->setValue(1080);
 
-        displaycolumn=new QSpinBox();
-        displaycolumn->setRange(1,5);
-        displaycolumn->setValue(3);
-
-        displayrow=new QSpinBox();
-        displayrow->setRange(1,3);
-        displayrow->setValue(3);
-
         displayNum=new QSpinBox();
+        displayNum->setObjectName("displayNum");
         displayNum->setRange(1,15);
         displayNum->setValue(9);
 
+        displaycolumn=new QSpinBox();
+        displaycolumn->setObjectName("displaycolumn");
+        displaycolumn->setRange(1,displayNum->maximum());
+        displaycolumn->setValue(3);
+
+        displayrow=new QSpinBox();
+        displayrow->setObjectName("displayrow");
+        displayrow->setRange(1,displayNum->maximum());
+        displayrow->setValue(3);
+        displayrow->setDisabled(true);
+
         updateInterval=new QSpinBox();
-        updateInterval->setRange(0,100);
+        updateInterval->setRange(1,100);
         updateInterval->setValue(30);
 
         downSample=new QCheckBox();
@@ -73,6 +77,7 @@ public:
 
         combineNeuron=new QCheckBox();
         combineNeuron->setText(tr("Combine"));
+        combineNeuron->setObjectName("combine neuron");
         combineNeuron->setChecked(true);
 
         downSampleRate=new QSpinBox();
@@ -85,6 +90,7 @@ public:
 
         downSampleCombined=new QCheckBox();
         downSampleCombined->setText(tr("Down Sample (combined)"));
+        downSampleCombined->setObjectName("downSampleCombined");
         downSampleCombined->setChecked("true");
 
         ok = new QPushButton(tr("ok"));
@@ -135,6 +141,10 @@ public:
 
         connect(button_displaypath,SIGNAL(clicked()),this,SLOT(setFolderPath()));
         connect(button_anchorfile,SIGNAL(clicked()),this,SLOT(setAnchorFile()));
+        connect(displayNum,SIGNAL(valueChanged(int)),this,SLOT(changeDisplayNumber()));
+        connect(displaycolumn,SIGNAL(valueChanged(int)),this,SLOT(changeDisplayNumber()));
+        connect(combineNeuron,SIGNAL(clicked()),this,SLOT(combineStateCheck()));
+        connect(downSampleCombined,SIGNAL(clicked()),this,SLOT(combineStateCheck()));
         connect(ok,SIGNAL(clicked()),this,SLOT(accept()));
         connect(cancel,SIGNAL(clicked()),this,SLOT(reject()));
 
@@ -144,7 +154,64 @@ public:
         this->setWindowTitle("Display Control Center");
     }
     ~BigscreenControlDialog(){}
+    void checkPara()
+    {
+
+
+        //3.update interval and zmoive sampling rate need to be set more than zero.
+
+    }
+
 public slots:
+     //1.displayNumber=displaycloumn*displayrow && displayNumber >= displaycloumn
+    void changeDisplayNumber()
+    {
+        QString checkBoxName=this->sender()->objectName();
+        if(!QString::compare(checkBoxName,"displayNum"))
+        {
+            displaycolumn->setValue(displayNum->value()/2);
+            displayrow->setValue((displayNum->value()%displaycolumn->value()==0)?
+                                     (displayNum->value()/displaycolumn->value()):((displayNum->value()-displayNum->value()%displaycolumn->value())/displaycolumn->value())+1);
+        }
+        else if(!QString::compare(checkBoxName,"displaycolumn"))
+        {
+            displayrow->setValue((displayNum->value()%displaycolumn->value()==0)?
+                                     (displayNum->value()/displaycolumn->value()):((displayNum->value()-displayNum->value()%displaycolumn->value())/displaycolumn->value())+1);
+        }
+    }
+    //2.if not combine, downsample disabled
+    void combineStateCheck()
+    {
+        QString checkBoxName=this->sender()->objectName();
+        if(!QString::compare(checkBoxName,"combine neuron"))
+        {
+            if(combineNeuron->checkState())
+            {
+                downSampleCombined->setEnabled(true);
+                downSampleCombined->setCheckState(Qt::Checked);
+                downSampleRate->setEnabled(true);
+                //downSampleRate->setValue(20);
+            }
+            else
+            {
+                downSampleCombined->setCheckState(Qt::Unchecked);
+                downSampleCombined->setDisabled(true);
+                downSampleRate->setDisabled(true);
+            }
+        }
+        else if(!QString::compare(checkBoxName,"downSampleCombined"))
+        {
+            if(downSampleCombined->checkState())
+            {
+                downSampleRate->setEnabled(true);
+                //downSampleRate->setValue(20);
+            }
+            else
+            {
+                downSampleRate->setDisabled(true);
+            }
+        }
+    }
 
     void accept()
     {
@@ -207,27 +274,12 @@ public slots:
         controlPara.displaycolumn=displaycolumn->text().toInt();
         controlPara.displayrow=displayrow->text().toInt();
         controlPara.isneuronCombined=combineNeuron->isChecked();
-        if(!controlPara.isneuronCombined)
-        {
-            downSampleCombined->setCheckable(false);
-            downSampleRate->setVisible(false);
-            controlPara.isDownSampleCombined=downSampleCombined->checkState();
-            controlPara.downsamplerate=0;
-        }
-        else
-        {
-            downSampleCombined->setCheckable(true);
-            controlPara.isDownSampleCombined=downSampleCombined->isChecked();
-            controlPara.downsamplerate=downSampleRate->text().toInt();
-            if(!downSampleCombined->isChecked())
-            {
-                downSampleRate->setValue(0);
-                controlPara.downsamplerate=downSampleRate->text().toInt();
-            }
 
-        }
-        controlPara.isDownSample=downSample->isChecked();
+        controlPara.isDownSampleCombined=downSampleCombined->checkState();
+        controlPara.downsamplerate=downSampleRate->text().toInt();
         controlPara.sampleRate=zmovieSamplingrate->text().toInt();
+
+
     }
 
 public:

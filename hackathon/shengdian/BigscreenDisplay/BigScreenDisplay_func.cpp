@@ -225,12 +225,15 @@ void HelpText()
             "<tr><td>Choose the anchor file </td><td>For the zmoive plugin.</td></tr>"
             "<tr><td>zmovie sampling rate </td><td>For the zmoive plugin.</td></tr>"
             "</table><br>"
+            "<H3>Note</H3>"
+            "1.SWC/ESWC file should be named like 'BrainID_NeuronID_FirAnnotator_SecAnnotator_FinalAnnotator_stamp_Year_Month_Day_Hour_Min' format.<br>"
+            "for example:18454_00098_SYY_YLL_LJL_stamp_2018_1_22_14_36.ano.eswc.<br>"
             ;
     QTextEdit *textEdit=new QTextEdit(helptext);textEdit->setWindowTitle("BigScreen Control Document");
     //textEdit->setDocumentTitle("BigScreen Control Document");
-    textEdit->resize(700, 700); //use the QWidget function
+    textEdit->resize(850, 700); //use the QWidget function
     textEdit->setReadOnly(true);
-    textEdit->setFontPointSize(12);
+    textEdit->setFontPointSize(16);
     textEdit->show();
 }
 
@@ -421,10 +424,6 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,Dis
             ZmovieMaker(callback,parent,samplingRate);
             updateCount++;
         }
-    }
-    else
-    {
-        cout<<"need to be completed."<<endl;
     }
 
 }
