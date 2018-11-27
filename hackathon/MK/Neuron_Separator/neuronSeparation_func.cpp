@@ -539,16 +539,8 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
 							{
 								vector<NeuronSWC> upstream;
-								upstream.push_back(*it);
-								int parentID = it->parent;
-								while (upstream.size() < 10)
-								{
-									cout << parentID << " ";
-									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
-									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
-									parentID = upstream.back().parent;
-									if (parentID == -1) break;
-								}
+								NeuronStructUtil::upstreamPath(this->somaPath, upstream, *it, somaNodeLocMap);
+								reverse(upstream.begin(), upstream.end());
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -795,16 +787,8 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
 							{
 								vector<NeuronSWC> upstream;
-								upstream.push_back(*it);
-								int parentID = it->parent;
-								while (upstream.size() < 10)
-								{
-									cout << parentID << " ";
-									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
-									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
-									parentID = upstream.back().parent;
-									if (parentID == -1) break;
-								}
+								NeuronStructUtil::upstreamPath(this->somaPath, upstream, *it, somaNodeLocMap);
+								reverse(upstream.begin(), upstream.end());
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -1058,16 +1042,8 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
 							{
 								vector<NeuronSWC> upstream;
-								upstream.push_back(*it);
-								int parentID = it->parent;
-								while (upstream.size() < 10)
-								{
-									cout << parentID << " ";
-									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
-									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
-									parentID = upstream.back().parent;
-									if (parentID == -1) break;
-								}
+								NeuronStructUtil::upstreamPath(this->somaPath, upstream, *it, somaNodeLocMap);
+								reverse(upstream.begin(), upstream.end());
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -1316,16 +1292,8 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							if (branch2childLocMap.find(it->n) != branch2childLocMap.end())
 							{
 								vector<NeuronSWC> upstream;
-								upstream.push_back(*it);
-								int parentID = it->parent;
-								while (upstream.size() < 10)
-								{
-									cout << parentID << " ";
-									if (somaNodeLocMap.find(parentID) == somaNodeLocMap.end()) break;
-									upstream.push_back(this->somaPath.at(somaNodeLocMap.at(parentID)));
-									parentID = upstream.back().parent;
-									if (parentID == -1) break;
-								}
+								NeuronStructUtil::upstreamPath(somaPath, upstream, *it, somaNodeLocMap);
+								reverse(upstream.begin(), upstream.end());
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
