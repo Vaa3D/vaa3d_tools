@@ -61,6 +61,8 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 		
 		QString swc_circle = inparas.at(0);
+		QString somaRange;
+		//if (inparas.at(1)) somaRange = inparas.at(1);
 		QString inputSWCfile = infiles.at(0);
 		QString inputSomas = infiles.at(1);
 		this->outputPath = outfiles[0];

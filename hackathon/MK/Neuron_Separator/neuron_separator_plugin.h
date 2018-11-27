@@ -109,6 +109,7 @@ protected:
 	long int pathScissor(QList<NeuronSWC>& segment); // This method gets called by breakSomaMorph.
 
 private:
+	bool branchSomaMerge;
 	bool circle;
 	bool branchAncestor;
 	int forward;
