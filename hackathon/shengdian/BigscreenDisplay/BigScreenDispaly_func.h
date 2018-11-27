@@ -20,11 +20,12 @@ struct Point
     V3DLONG level,seg_id;
     QList<float> fea_val;
 };
+
 typedef vector<Point*> Segment;
 typedef vector<Point*> Tree;
 void resample_path(Segment * seg, double step);
 NeuronTree resample(NeuronTree input, double step);
-QStringList CheckFileandFloder(DisplayPARA controlPara);
+/*QStringList*/void CheckFileandFloder(DisplayPARA controlPara);
 QStringList FindNewSWCFile(QStringList allSWCFile,int displayNumber);
 void bigscreenDisplay(V3DPluginCallback2 &callback, QWidget *parent);
 void HelpText();

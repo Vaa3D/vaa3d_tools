@@ -156,8 +156,6 @@ public:
     ~BigscreenControlDialog(){}
     void checkPara()
     {
-
-
         //3.update interval and zmoive sampling rate need to be set more than zero.
 
     }

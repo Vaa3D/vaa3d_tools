@@ -14,6 +14,7 @@
 
 const double pi = 3.1415926535897;
 QString m_InputfolderName="";
+QStringList displaySWCList,allSWCFile;
 struct ZMovieFileType
 {
     QString anchor_file_path;
@@ -228,6 +229,7 @@ void HelpText()
             "<H3>Note</H3>"
             "1.SWC/ESWC file should be named like 'BrainID_NeuronID_FirAnnotator_SecAnnotator_FinalAnnotator_stamp_Year_Month_Day_Hour_Min' format.<br>"
             "for example:18454_00098_SYY_YLL_LJL_stamp_2018_1_22_14_36.ano.eswc.<br>"
+            "2.If you want to display Level1/Level2 annotation files of different brain, you'd better set the combine checkbox false."
             ;
     QTextEdit *textEdit=new QTextEdit(helptext);textEdit->setWindowTitle("BigScreen Control Document");
     //textEdit->setDocumentTitle("BigScreen Control Document");
@@ -237,10 +239,10 @@ void HelpText()
     textEdit->show();
 }
 
-QStringList CheckFileandFloder(DisplayPARA controlPara)
+/*QStringList*/void CheckFileandFloder(DisplayPARA controlPara)
 {
-    QStringList /*outSWCFile,*/allSWCFile;
-    allSWCFile.clear();
+//    QStringList /*outSWCFile,*/allSWCFile;
+//    allSWCFile.clear();
 
     QDir displaydir(controlPara.openfolder);
     QString supposeSuffixeswc="eswc";
@@ -273,7 +275,7 @@ QStringList CheckFileandFloder(DisplayPARA controlPara)
     }
     if(allSWCFile.size()==0)
         cout<<"can't find any swc or eswc file."<<endl;
-    return allSWCFile;
+    //return allSWCFile;
 
 }
 QStringList FindNewSWCFile(QStringList allSWCFile,int displayNumber)
@@ -297,7 +299,8 @@ QStringList FindNewSWCFile(QStringList allSWCFile,int displayNumber)
             if(!swcBaseNameSplit.size())
             {
                 cout<<"SWC file don't have time stamp."<<endl;
-                return outSWCFile;
+                continue;
+//                return outSWCFile;
             }
             QString swcDate=swcBaseNameSplit[swcBaseNameSplit.size()-1];
             QStringList swcDateTime=swcDate.split("_");
@@ -305,13 +308,14 @@ QStringList FindNewSWCFile(QStringList allSWCFile,int displayNumber)
                 continue;
             QDateTime theswcdate(QDate(swcDateTime[0].toInt(),swcDateTime[1].toInt(),swcDateTime[2].toInt()),QTime(swcDateTime[3].toInt(),swcDateTime[4].toInt()));
             swcFinishDate[i]=theswcdate;
-            cout<<"swc date is "<<theswcdate.toString("yyyy_MM_dd_hh_mm").toStdString()<<endl;
+            //cout<<"swc date is "<<theswcdate.toString("yyyy_MM_dd_hh_mm").toStdString()<<endl;
             //do the date count.
         }
         else
         {
             cout<<"SWC file don't have time stamp."<<endl;
-            return outSWCFile;
+            continue;
+//            return outSWCFile;
         }
     }
     //sort the swc file based on finished datetime.
@@ -368,21 +372,25 @@ void MethodForBigScreenDisplay(V3DPluginCallback2 &callback, QWidget *parent,Dis
     int updateInterval=controlPara.updateinterval;
 
 //    QStringList swcList = importFileList_addnumbersort(m_InputfolderName, 1,displayNum);
-    QStringList allswcList = CheckFileandFloder(controlPara);
-    QStringList swcList= FindNewSWCFile(allswcList,controlPara.displaynumber);
-    WriteNewFinishedNeuronsFileName(swcList);
+    displaySWCList.clear();allSWCFile.clear();
+    CheckFileandFloder(controlPara);
+     QStringList allswcList =allSWCFile;
+//    QStringList allswcList = CheckFileandFloder(controlPara);
+    displaySWCList=FindNewSWCFile(allswcList,controlPara.displaynumber);
+//    QStringList swcList= FindNewSWCFile(allswcList,controlPara.displaynumber);
+//    WriteNewFinishedNeuronsFileName(swcList);
     V3dR_MainWindow * new3DWindow = NULL;
     int offsety = -1;
-    for(V3DLONG i = 0; i < swcList.size(); i++)
+    for(V3DLONG i = 0; i < displaySWCList.size(); i++)
     {
-        QString curPathSWC = swcList.at(i);
+        QString curPathSWC = displaySWCList.at(i);
         QFileInfo curSWCBase(curPathSWC);
         new3DWindow = callback.open3DViewerForSingleSurfaceFile(curPathSWC);
         //reset window title to basename instead of path name
         callback.setWindowDataTitle(new3DWindow,curSWCBase.baseName());
     }
     if(iscombined)
-        MethodForCombineSWCDisplay(callback,parent,swcList,controlPara);
+        MethodForCombineSWCDisplay(callback,parent,displaySWCList,controlPara);
     LoadAnchorFile(controlPara);
     QList <V3dR_MainWindow *> cur_list_3dviewer = callback.getListAll3DViewers();
 
@@ -730,14 +738,17 @@ void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent,Dis
         callback.update_3DViewer(cur_list_3dviewer.at(i));
     }
     //update SWC list
-    QStringList allswcList = CheckFileandFloder(controlPara);
-    QStringList swcList= FindNewSWCFile(allswcList,controlPara.displaynumber);
-    WriteNewFinishedNeuronsFileName(swcList);
-    for(int i=0;i<swcList.size();i++)
+    displaySWCList.clear();allSWCFile.clear();
+    CheckFileandFloder(controlPara);
+    QStringList allswcList = allSWCFile;
+//    QStringList allswcList = CheckFileandFloder(controlPara);
+    /*QStringList swcList*/displaySWCList= FindNewSWCFile(allswcList,controlPara.displaynumber);
+    //WriteNewFinishedNeuronsFileName(swcList);
+    for(int i=0;i<displaySWCList.size();i++)
     {
         QList<NeuronTree> * new_treeList = callback.getHandleNeuronTrees_Any3DViewer (cur_list_3dviewer.at(i));
 
-        QString curPathSWC = swcList.at(i);
+        QString curPathSWC = displaySWCList.at(i);
         QFileInfo curSWCBase(curPathSWC);
         NeuronTree tmp=readSWC_file(curPathSWC);
         new_treeList->push_back(tmp);
@@ -753,10 +764,10 @@ void MethodForUpdateSWCDispaly(V3DPluginCallback2 &callback, QWidget *parent,Dis
         V3dR_MainWindow * surface_combine_win=cur_list_3dviewer.at(cur_list_3dviewer.size()-1);
         QList<NeuronTree> * new_treeList_combine = callback.getHandleNeuronTrees_Any3DViewer (surface_combine_win);
         QString combine_file_name="Combined Latest Finished Neurons";
-        int neuronNum = swcList.size();
+        int neuronNum = displaySWCList.size();
         for (V3DLONG i=0;i<neuronNum;i++)
         {
-            NeuronTree tmp = readSWC_file(swcList.at(i));
+            NeuronTree tmp = readSWC_file(displaySWCList.at(i));
             for(int j=0;j<tmp.listNeuron.size();j++)
                 tmp.listNeuron[j].type=i+2;
             if(iscombineddownsample)
