@@ -541,6 +541,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								vector<NeuronSWC> upstream;
 								NeuronStructUtil::upstreamPath(this->somaPath, upstream, *it, somaNodeLocMap);
 								reverse(upstream.begin(), upstream.end());
+								for (vector<NeuronSWC>::iterator upIt = upstream.begin(); upIt != upstream.end(); ++upIt) cout << upIt->n << " ";
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -789,6 +790,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								vector<NeuronSWC> upstream;
 								NeuronStructUtil::upstreamPath(this->somaPath, upstream, *it, somaNodeLocMap);
 								reverse(upstream.begin(), upstream.end());
+								for (vector<NeuronSWC>::iterator upIt = upstream.begin(); upIt != upstream.end(); ++upIt) cout << upIt->n << " ";
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -1044,6 +1046,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								vector<NeuronSWC> upstream;
 								NeuronStructUtil::upstreamPath(this->somaPath, upstream, *it, somaNodeLocMap);
 								reverse(upstream.begin(), upstream.end());
+								for (vector<NeuronSWC>::iterator upIt = upstream.begin(); upIt != upstream.end(); ++upIt) cout << upIt->n << " ";
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -1082,8 +1085,8 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 
 								if (radAngle > radAngleMax)
 								{
-									radAngleMax = radAngle;
 									twistedBranchID = it->n;
+									radAngleMax = radAngle;
 									upstreamMaxQue.clear();
 									downstreamMaxQue.clear();
 									vector<float> locVec(3);
@@ -1294,6 +1297,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								vector<NeuronSWC> upstream;
 								NeuronStructUtil::upstreamPath(somaPath, upstream, *it, somaNodeLocMap);
 								reverse(upstream.begin(), upstream.end());
+								for (vector<NeuronSWC>::iterator upIt = upstream.begin(); upIt != upstream.end(); ++upIt) cout << upIt->n << " ";
 
 								vector<NeuronSWC> downstream;
 								downstream.push_back(*it);
@@ -1305,7 +1309,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 								}
 								int childID = this->somaPath.at(*somaNode2childLocMap.at(it->n).begin()).n;
 								cout << "| ";
-								while (downstream.size() < 10)
+								while (downstream.size() < 5)
 								{
 									cout << childID << " ";
 									downstream.push_back(this->somaPath.at(somaNodeLocMap.at(childID)));

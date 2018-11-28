@@ -218,21 +218,78 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout << endl;
 
 		QList<NeuronSWC> extracted;
-		int typeCount = 0;
+		
+		map<int, QList<NeuronSWC>> partitionedNeuronMap;
+		vector<int> partitionedIDs;
 		for (vector<long int>::iterator extIt = this->somaIDs.begin(); extIt != this->somaIDs.end(); ++extIt)
 		{
 			long int ID = *extIt;
-			cout << "soma ID: " << ID << endl;
+			//cout << "soma ID: " << ID << " ";
 			size_t loc = inputSWCHash[ID];
 			NeuronSWC startNode = this->inputSWCTree.listNeuron[loc];
 			NeuronStructUtil::wholeSingleTree_extract(this->brokenInputSWC, extracted, startNode);
-			//extracted = swcTrace(this->brokenInputSWC, ID, startNode);
-			for (QList<NeuronSWC>::iterator it = extracted.begin(); it != extracted.end(); ++it) it->type = typeCount;
-			NeuronTree extTree;
-			extTree.listNeuron = extracted;
-			QString name = this->outputPath + "/extracted_" + QString::number(ID) + ".swc";
-			writeSWC_file(name, extTree);
+			extracted = swcTrace(this->brokenInputSWC, ID, startNode);
+			//cout << extracted.size() << endl;
+			//for (QList<NeuronSWC>::iterator it = extracted.begin(); it != extracted.end(); ++it) it->type = typeCount;
+			//NeuronTree extTree;
+			//extTree.listNeuron = extracted;
+			partitionedNeuronMap.insert({ ID, extracted });
+			partitionedIDs.push_back(ID);
+
+			//QString name = this->outputPath + "/extracted_" + QString::number(ID) + ".swc";
+			//writeSWC_file(name, extTree);
 			extracted.clear();
+		}
+
+		set<vector<int>> markerMergeGroup;
+		while (partitionedIDs.size() > 0)
+		{
+			vector<int> newSet;
+			newSet.push_back(*partitionedIDs.begin());
+			partitionedIDs.erase(partitionedIDs.begin());
+			bool merge = true;
+		
+			vector<int>::iterator groupIt = newSet.begin();
+			while (groupIt != newSet.end())
+			{
+				NeuronSWC groupedNode = this->inputSWCTree.listNeuron.at(nodeLocMap.at(*groupIt));
+				vector<ptrdiff_t> delLocs;
+				for (vector<int>::iterator it1 = partitionedIDs.begin(); it1 != partitionedIDs.end(); ++it1)
+				{
+					NeuronSWC restNode = this->inputSWCTree.listNeuron.at(nodeLocMap.at(*it1));
+					if ((restNode.x - groupedNode.x) * (restNode.x - groupedNode.x) + (restNode.y - groupedNode.y) * (restNode.y - groupedNode.y) + (restNode.z - groupedNode.z) * (restNode.z - groupedNode.z) <= 900)
+					{
+						newSet.push_back(*it1);
+						groupIt = newSet.begin();
+						delLocs.push_back(it1 - partitionedIDs.begin());
+					}
+				}
+				sort(delLocs.rbegin(), delLocs.rend());
+				for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) partitionedIDs.erase(partitionedIDs.begin() + *delIt);
+
+				++groupIt;
+			}
+			markerMergeGroup.insert(newSet);
+		}
+
+		int typeCount = 0;
+		for (set<vector<int>>::iterator setIt = markerMergeGroup.begin(); setIt != markerMergeGroup.end(); ++setIt)
+		{
+			cout << "soma ID: " ;
+			QList<NeuronSWC> mergedList;
+			vector<int> thisGroup = *setIt;
+			sort(thisGroup.begin(), thisGroup.end());
+			for (vector<int>::iterator markerIt = thisGroup.begin(); markerIt != thisGroup.end(); ++markerIt)
+			{	
+				cout << *markerIt << " ";
+				mergedList.append(partitionedNeuronMap.at(*markerIt));
+			}
+			cout << endl;
+			for (QList<NeuronSWC>::iterator nodeIt = mergedList.begin(); nodeIt != mergedList.end(); ++nodeIt) nodeIt->type = typeCount;
+			QString name = this->outputPath + "/extracted_" + QString::number(*thisGroup.begin()) + ".swc";
+			NeuronTree newTree;
+			newTree.listNeuron = mergedList;
+			writeSWC_file(name, newTree);
 			++typeCount;
 		}
 		cout << endl;
