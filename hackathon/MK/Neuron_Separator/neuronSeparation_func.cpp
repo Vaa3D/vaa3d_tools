@@ -527,8 +527,13 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 						//backwardPath(pathAnalyze, this->inputSWCTree, tail, head); // extract the path of given head node and tail node
 						pathAnalyze.pop_front();
 						pathAnalyze.pop_back();
-						cout << "Excluded somas at the 2 ends..";
+						cout << "Excluded somas at the 2 ends.." << endl;
 						cout << "Path type: soma to soma, path size: " << pathAnalyze.size() << endl;
+						if (pathAnalyze.size() <= 5)
+						{
+							cout << "The 2 somas are too close to each other. They are considered to be the same one. Skip to the next child node." << endl;
+							continue;
+						}
 
 						double radAngleMax = 0;
 						int twistedBranchID = 0;
@@ -989,7 +994,7 @@ void neuronSeparator::breakPathMorph2(const NeuronTree& originalTree)
 							{
 								vector<float> somaRouteVec = NeuronStructExplorer::getVector_NeuronSWC(this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())), this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.back())));
 								vector<float> branchVec = NeuronStructExplorer::getVector_NeuronSWC(this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())), this->inputSWCTree.listNeuron.at(nodeLocMap.at(branchRouteID)));
-								cout << somaRouteVec.at(0) * branchVec.at(0) + somaRouteVec.at(1) * branchVec.at(1) + somaRouteVec.at(2) * branchVec.at(2) << endl;
+								//cout << somaRouteVec.at(0) * branchVec.at(0) + somaRouteVec.at(1) * branchVec.at(1) + somaRouteVec.at(2) * branchVec.at(2) << endl;
 								if (somaRouteVec.at(0) * branchVec.at(0) + somaRouteVec.at(1) * branchVec.at(1) + somaRouteVec.at(2) * branchVec.at(2) < 0)
 								{
 									nodeCutID = this->somaPath.at(somaNodeLocMap.at(branchCheckRangeIDs.front())).parent;

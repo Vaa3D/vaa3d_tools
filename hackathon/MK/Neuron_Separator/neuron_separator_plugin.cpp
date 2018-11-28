@@ -241,6 +241,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			extracted.clear();
 		}
 
+		cout << "test1" << endl;
 		set<vector<int>> markerMergeGroup;
 		while (partitionedIDs.size() > 0)
 		{
@@ -272,6 +273,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			markerMergeGroup.insert(newSet);
 		}
 
+		cout << "test2" << endl;
 		int typeCount = 0;
 		for (set<vector<int>>::iterator setIt = markerMergeGroup.begin(); setIt != markerMergeGroup.end(); ++setIt)
 		{
