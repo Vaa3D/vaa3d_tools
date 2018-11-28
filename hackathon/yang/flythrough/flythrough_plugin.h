@@ -60,6 +60,9 @@ public:
     QSpinBox* v_size_y;
     QSpinBox* v_size_z;
 
+    float speed; // fly through
+    float vx, vy, vz; // directional vector (0, 0, 1) by default
+
     QPushButton* ok;
     QPushButton* cancel;
 };

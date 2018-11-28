@@ -91,6 +91,14 @@ Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long 
     visited = false;
 }
 
+bool Block::compare(Block b)
+{
+    if(offset_x == b.offset_x && offset_y == b.offset_y && offset_z == b.offset_z)
+        return true;
+    else
+        return false;
+}
+
 Block::~Block()
 {
 

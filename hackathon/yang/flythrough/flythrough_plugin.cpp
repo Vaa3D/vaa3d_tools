@@ -5,7 +5,7 @@
 
 #include "flythrough_plugin.h"
 #include "flythrough_func.h"
-
+#include "neuron_format_converter.h"
 
 Q_EXPORT_PLUGIN2(flythrough, FlyThroughPlugin);
 
@@ -54,8 +54,42 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
         qDebug()<<"size ... "<<bsx<<bsy<<bsz;
 
         // step 1. swc into fragments (stacking)
+        V_NeuronSWC_list neulist;
+        if(swcFilePath.toUpper().endsWith(".SWC") || swcFilePath.toUpper().endsWith(".ESWC"))
+        {
+            NeuronTree nt = readSWC_file(swcFilePath);
+            neulist = NeuronTree__2__V_NeuronSWC_list(&nt);
 
-        /// for each fragment: (p switch bwteen play and pause)
+            cout<<"neuron segments "<<neulist.seg.size()<<endl;
+        }
+        else
+        {
+            cout<<"Need input a neuron reconstruction in swc/eswc format"<<endl;
+            return;
+        }
+
+
+        // step 2. for each fragment: (p switch bwteen play and pause)
+
+//        for(V3DLONG i=0; i<neulist.nsegs(); i++)
+//        {
+//            cout<<i<<": "<<neulist.seg[i].row.size()<<endl;
+//        }
+
+        V3DLONG i = 31; // for test
+        V_NeuronSWC neuseg = neulist.seg[i];
+
+
+        for(V3DLONG j=0; j<neuseg.row.size(); j++)
+        {
+            Point p(neuseg.row[j].x, neuseg.row[j].y, neuseg.row[j].z);
+
+            // p.x, p.y, p.z
+
+
+        }
+
+        cout<<"pc "<<pc.size()<<endl;
 
         // step 2.1. load related blocks (caching)
 
@@ -65,7 +99,9 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         // step 2.4. push to 3d viewer
 
-        // play/pause
+        // step 2.5. flythrough
+
+        // step 2.5.1. view angle, ...
 
 
 

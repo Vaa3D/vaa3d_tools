@@ -122,10 +122,13 @@ public:
     ~Block();
 
 public:
+    bool compare(Block b); // check whether this block is in the list
+
+public:
     string filepath;
     long offset_x, offset_y, offset_z;
     long size_x, size_y, size_z;
-    bool visited;
+    bool visited; // in/out of memory
 };
 
 typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offset_x
@@ -172,6 +175,19 @@ public:
     ZeroBlock zeroblocks;
 
     Layer layer;
+};
+
+//
+class Chunk
+{
+
+};
+
+//
+class DataFlow
+{
+public:
+    QCache<V3DLONG, Chunk> dataLoaded; // in memory, by default its capacity is 100 < 5*27 less than 5 GB for each chunk with 256x256x256
 };
 
 
