@@ -89,8 +89,6 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         }
 
-        cout<<"pc "<<pc.size()<<endl;
-
         // step 2.1. load related blocks (caching)
 
         // step 2.2. re-orientation (transform)

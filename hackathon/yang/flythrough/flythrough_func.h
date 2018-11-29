@@ -104,11 +104,20 @@ public:
 class Point
 {
 public:
+    Point();
     Point(float a, float b, float c);
     ~Point();
 
 public:
+    void release(); // pop out
+    unsigned char* data();
+
+public:
     float x,y,z;
+
+    vector<long> blocks; // hit blocks' IDs in OneScaleTree
+    unsigned char *p; // cropped data
+    long sx, sy, sz; // size: [x-sx/2-1, x+sx/2], ...
 };
 
 typedef vector<Point> PointCloud;
@@ -123,25 +132,35 @@ public:
 
 public:
     bool compare(Block b); // check whether this block is in the list
+    int load();
+    void release();
+    unsigned char* data();
+    void setID(long key);
 
 public:
     string filepath;
     long offset_x, offset_y, offset_z;
     long size_x, size_y, size_z;
-    bool visited; // in/out of memory
+    long id; // key
+
+    bool visited; // used, in/out of memory
+
+    unsigned char *p;
 };
 
-typedef map<long, Block> OneScaleTree; // offset_z*dimx*dimy+offset_y*dimx+offset_x
+typedef map<long, Block> OneScaleTree; // key: offset_z*dimx*dimy+offset_y*dimx+offset_x
 typedef vector<long> OffsetType;
 typedef map<long, string> ZeroBlock;
 
 //
-class QueryAndCopy
+class DataFlow
 {
 public:
-    QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio);
-    QueryAndCopy(string inputdir);
-    ~QueryAndCopy();
+    DataFlow();
+    DataFlow(string swcfile, string inputdir, string outputdir, float ratio);
+    DataFlow(string inputdir);
+    ~DataFlow();
+
 public:
     int readSWC(string filename, float ratio);
     int readMetaData(string filename, bool mDataDebug=false);
@@ -175,21 +194,11 @@ public:
     ZeroBlock zeroblocks;
 
     Layer layer;
+
+    // fly through
+    QCache<V3DLONG, Block> dataLoaded; // in memory, by default its capacity is 100 < 5*27 less than 5 GB for each chunk with 256x256x256
+    int flydirection; // forward 1 / backward 0
 };
-
-//
-class Chunk
-{
-
-};
-
-//
-class DataFlow
-{
-public:
-    QCache<V3DLONG, Chunk> dataLoaded; // in memory, by default its capacity is 100 < 5*27 less than 5 GB for each chunk with 256x256x256
-};
-
 
 // functions
 bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback);

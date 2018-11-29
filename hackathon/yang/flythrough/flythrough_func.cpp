@@ -61,11 +61,29 @@ Layer::~Layer()
 }
 
 //
+Point::Point()
+{
+
+}
+
 Point::Point(float a, float b, float c)
 {
     x = a;
     y = b;
     z = c;
+}
+
+void Point::release()
+{
+
+}
+
+unsigned char* Point::data()
+{
+    // crop data from hit blocks
+
+    //
+    return p;
 }
 
 Point::~Point()
@@ -76,11 +94,23 @@ Point::~Point()
 //
 Block::Block()
 {
+    p = NULL;
+    visited = false;
 
+    filepath = "";
+    offset_x = 0;
+    offset_y = 0;
+    offset_z = 0;
+    size_x = 1;
+    size_y = 1;
+    size_z = 1;
 }
 
 Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz)
 {
+    p = NULL;
+    visited = false;
+
     filepath = fn;
     offset_x = xoff;
     offset_y = yoff;
@@ -88,15 +118,40 @@ Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long 
     size_x = sx;
     size_y = sy;
     size_z = sz;
-    visited = false;
 }
 
 bool Block::compare(Block b)
 {
-    if(offset_x == b.offset_x && offset_y == b.offset_y && offset_z == b.offset_z)
+    // if(offset_x == b.offset_x && offset_y == b.offset_y && offset_z == b.offset_z)
+
+    //
+    if(id == b.id)
         return true;
     else
         return false;
+}
+
+int Block::load()
+{
+
+}
+
+void Block::release()
+{
+    if(p)
+    {
+        delete []p;
+    }
+}
+
+unsigned char* Block::data()
+{
+    return p;
+}
+
+void Block::setID(long key)
+{
+    id = key;
 }
 
 Block::~Block()
@@ -105,13 +160,13 @@ Block::~Block()
 }
 
 //
-QueryAndCopy::QueryAndCopy(string inputdir)
+DataFlow::DataFlow(string inputdir)
 {
     // test
     readMetaData(inputdir, true);
 }
 
-QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, float ratio)
+DataFlow::DataFlow(string swcfile, string inputdir, string outputdir, float ratio)
 {
     // inputdir: "xxxx/RES(123x345x456)"
     // outputdir: "yyyy/RES(123x345x456)"
@@ -425,12 +480,12 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
     }
 }
 
-QueryAndCopy::~QueryAndCopy()
+DataFlow::~DataFlow()
 {
 
 }
 
-int QueryAndCopy::makeDir(string dirname)
+int DataFlow::makeDir(string dirname)
 {
     //
     struct stat info;
@@ -449,7 +504,7 @@ int QueryAndCopy::makeDir(string dirname)
     return 0;
 }
 
-int QueryAndCopy::copyblock(QString srcFile, QString dstFile)
+int DataFlow::copyblock(QString srcFile, QString dstFile)
 {
 
 
@@ -712,7 +767,7 @@ int QueryAndCopy::copyblock(QString srcFile, QString dstFile)
     return 0;
 }
 
-int QueryAndCopy::readSWC(string filename, float ratio)
+int DataFlow::readSWC(string filename, float ratio)
 {
     //
     NeuronTree nt = readSWC_file(QString(filename.c_str()));
@@ -753,7 +808,7 @@ int QueryAndCopy::readSWC(string filename, float ratio)
     return 0;
 }
 
-int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
+int DataFlow::readMetaData(string filename, bool mDataDebug)
 {
     //
     string inputdir = filename;
@@ -927,7 +982,9 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
                     zoff.push_back(long(block.offset_z));
                 }
 
-                tree.insert(make_pair(long(block.offset_z)*sx*sy+long(block.offset_y)*sx+long(block.offset_x), block));
+                block.setID(long(block.offset_z)*sx*sy+long(block.offset_y)*sx+long(block.offset_x));
+
+                tree.insert(make_pair(block.id, block));
 
                 //
                 if(mDataDebug)
@@ -955,7 +1012,7 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
     return 0;
 }
 
-int QueryAndCopy::query(float x, float y, float z)
+int DataFlow::query(float x, float y, float z)
 {
     //cout<<"query "<<x<<" "<<y<<" "<<z<<endl;
     //cout<<"size "<<sx<<" "<<sy<<" "<<sz<<endl;
@@ -1093,7 +1150,7 @@ int QueryAndCopy::query(float x, float y, float z)
     return 0;
 }
 
-vector<string> QueryAndCopy::splitFilePath(string filepath)
+vector<string> DataFlow::splitFilePath(string filepath)
 {
     vector<string> splits;
     char delimiter = '/';
@@ -1120,7 +1177,7 @@ vector<string> QueryAndCopy::splitFilePath(string filepath)
     return splits;
 }
 
-string QueryAndCopy::getDirName(string filepath)
+string DataFlow::getDirName(string filepath)
 {
     // filepath: xxxx/RES(123x456x789)/000/000_000/000_000_000.tif
     // dirName: 000/000_000
@@ -1143,7 +1200,7 @@ string QueryAndCopy::getDirName(string filepath)
     return dirName;
 }
 
-int QueryAndCopy::createDir(string prePath, string dirName)
+int DataFlow::createDir(string prePath, string dirName)
 {
     //
     vector<string> splits = splitFilePath(dirName);
@@ -1194,7 +1251,7 @@ int QueryAndCopy::createDir(string prePath, string dirName)
     return 0;
 }
 
-int QueryAndCopy::label(long index)
+int DataFlow::label(long index)
 {
     //
     if(tree.find(index) != tree.end())
@@ -1218,7 +1275,7 @@ int QueryAndCopy::label(long index)
     return 0;
 }
 
-long QueryAndCopy::findClosest(OffsetType offsets, long idx)
+long DataFlow::findClosest(OffsetType offsets, long idx)
 {
     long n = offsets.size();
     long thresh = 5;
@@ -1272,7 +1329,7 @@ long QueryAndCopy::findClosest(OffsetType offsets, long idx)
     return offset;
 }
 
-long QueryAndCopy::findOffset(OffsetType offsets, long idx)
+long DataFlow::findOffset(OffsetType offsets, long idx)
 {
     long n = offsets.size();
 
@@ -1562,8 +1619,8 @@ bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     float ratio = pow(2.0, scale);
 
     //
-    // QueryAndCopy qc(outputdir.toStdString()); // test mdata.bin writing
-    QueryAndCopy qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
+    // DataFlow qc(outputdir.toStdString()); // test mdata.bin writing
+    DataFlow qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
 
     //
     return true;
