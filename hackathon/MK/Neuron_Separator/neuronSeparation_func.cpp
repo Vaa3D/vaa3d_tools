@@ -130,7 +130,7 @@ void neuronSeparator::getMergedPath(QList<NeuronSWC>& somaPath, QHash<long int, 
 
 void neuronSeparator::backwardPath(QList<NeuronSWC>& tracedSWC, NeuronTree& nt, NeuronSWC& start, NeuronSWC& end)
 {
-	// This method traces a path backward; from end to start.
+	// This method traces a path backward; from end to start ===> REIMPLEMENTED in NeuronStructUtil class.
 
 	QList<NeuronSWC> inputList = nt.listNeuron;
 
@@ -1827,6 +1827,8 @@ long int neuronSeparator::pathScissor(QList<NeuronSWC>& segment)
 
 void neuronSeparator::downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& inputList, NeuronSWC& start)
 {
+	// REIMPLEMENTED in NeuronStructUtil class
+
 	vector<size_t> loc;
 	long parent, id, child, uncle;
 	QList<NeuronSWC> parents;
@@ -1884,6 +1886,8 @@ void neuronSeparator::downward(QList<NeuronSWC>& tracedSWC, QList<NeuronSWC>& in
 
 QList<NeuronSWC> neuronSeparator::swcTrace(QList<NeuronSWC>& list, long int startID, NeuronSWC& startNode)
 {	
+	// ===> REIMPLEMENTED in NeuronStructUtil class
+
 	map<int, size_t> node2locMap;
 	map<int, vector<size_t>> node2childLocMap;
 	NeuronStructUtil::node2loc_node2childLocMap(list, node2locMap, node2childLocMap);

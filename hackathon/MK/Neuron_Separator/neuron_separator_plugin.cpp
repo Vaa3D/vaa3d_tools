@@ -296,22 +296,6 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout << endl;
 
 		this->crucialNodes.clear();
-		
-		/*long int somaID = 1;
-		NeuronSWC startNode = this->brokenInputSWC[inputSWCHash[somaID]];
-		QList<NeuronSWC> traced = swcTrace(this->brokenInputSWC, somaID, startNode);
-		NeuronTree extTree;
-		extTree.listNeuron = traced;
-		QString name = "test_extracted_" + QString::number(somaID) + ".swc";
-		writeSWC_file(name, extTree);*/
-
-		/*unordered_map<long int, size_t> brokenSomaHash = hashScratch(this->brokenSomaPath);
-		NeuronSWC testNode = this->brokenSomaPath[brokenSomaHash[2161]];
-		QList<NeuronSWC> tracedTest = swcTrace(this->brokenSomaPath, 2161, testNode);
-		NeuronTree testTree;
-		testTree.listNeuron = tracedTest;
-		QString name = "testTraced.swc";
-		writeSWC_file(name, testTree);*/
 
 		return true;
 	}
