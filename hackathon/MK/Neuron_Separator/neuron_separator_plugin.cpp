@@ -221,6 +221,7 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 		
 		map<int, QList<NeuronSWC>> partitionedNeuronMap;
 		vector<int> partitionedIDs;
+		//int typeCount = 0;
 		for (vector<long int>::iterator extIt = this->somaIDs.begin(); extIt != this->somaIDs.end(); ++extIt)
 		{
 			long int ID = *extIt;
@@ -231,17 +232,16 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			extracted = swcTrace(this->brokenInputSWC, ID, startNode);
 			//cout << extracted.size() << endl;
 			//for (QList<NeuronSWC>::iterator it = extracted.begin(); it != extracted.end(); ++it) it->type = typeCount;
-			//NeuronTree extTree;
-			//extTree.listNeuron = extracted;
+			NeuronTree extTree;
+			extTree.listNeuron = extracted;
 			partitionedNeuronMap.insert({ ID, extracted });
 			partitionedIDs.push_back(ID);
 
 			//QString name = this->outputPath + "/extracted_" + QString::number(ID) + ".swc";
 			//writeSWC_file(name, extTree);
-			extracted.clear();
+			//extracted.clear();
 		}
 
-		cout << "test1" << endl;
 		set<vector<int>> markerMergeGroup;
 		while (partitionedIDs.size() > 0)
 		{
@@ -273,7 +273,6 @@ bool neuronSeparator::dofunc(const QString & func_name, const V3DPluginArgList &
 			markerMergeGroup.insert(newSet);
 		}
 
-		cout << "test2" << endl;
 		int typeCount = 0;
 		for (set<vector<int>>::iterator setIt = markerMergeGroup.begin(); setIt != markerMergeGroup.end(); ++setIt)
 		{

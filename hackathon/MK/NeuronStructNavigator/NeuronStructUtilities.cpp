@@ -265,7 +265,7 @@ void NeuronStructUtil::wholeSingleTree_extract(const QList<NeuronSWC>& inputList
 	else
 	{
 		int parentID = startingNode.parent;
-		int somaNodeID;
+		int somaNodeID = inputList.at(node2locMap.at(parentID)).n;
 
 		while (1)
 		{
