@@ -80,6 +80,39 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 
 void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
 {
+	QList<NeuronSWC> inputList = inputTree.listNeuron;
+	int zMax = 0;
+	ptrdiff_t thicknessPtrDiff = ptrdiff_t(thickness); // Determining largest number of z in inputTree.
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		int z = round(it->z);
+		if (z >= zMax) zMax = z;
+	}
+
+	int treeNum = zMax / thickness + 1;
+	vector<ptrdiff_t> delLocs;
+	for (int i = 0; i < treeNum; ++i)
+	{
+		NeuronTree outputTree;
+		outputTrees.push_back(outputTree);
+		for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+		{
+			if (it->z <= thickness * (i + 1))
+			{
+				outputTrees.at(i).listNeuron.push_back(*it);
+				delLocs.push_back(it - inputList.begin());
+			}
+		}
+
+		sort(delLocs.rbegin(), delLocs.rend());
+		for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) inputList.erase(inputList.begin() + *delIt);
+		delLocs.clear();
+	}
+}
+
+
+void NeuronStructUtil::swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
+{
 	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
 	// thickness * 2 + 1 = the number of consecutive z slices for one SWC node to appear. This is for the purpose producing continous masks.
 

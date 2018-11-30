@@ -488,6 +488,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
+		clock_t start = clock();
 		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
@@ -499,7 +500,7 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean") + 3 * imgStats.at("std"))));
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean")))); //+imgStats.at("std"))));
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
@@ -514,6 +515,8 @@ int main(int argc, char* argv[])
 			delete[] outputImgPtr;
 			myManager.imgDatabase.clear();
 		}
+		double duration = double(clock() - start) / double(CLOCKS_PER_SEC);
+		cout << "time elapsed: " << duration << endl;
 	}
 	else if (!funcName.compare("swcSubtract"))
 	{
@@ -694,7 +697,7 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
-			morphStructElement2D structEle("circle", 3);
+			morphStructElement2D structEle("circle", 31);
 			map<string, float> statsMap = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), imgDims);
 			int threshold = int(statsMap.at("mean") - statsMap.at("std"));
 			ImgProcessor::conditionalErode2D_imgStats(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, structEle, threshold);
@@ -704,7 +707,7 @@ int main(int argc, char* argv[])
 			saveDims[1] = imgDims[1];
 			saveDims[2] = 1;
 			saveDims[3] = 1;
-			QString saveFileNameQ = "Z:\\IVSCC_mouse_inhibitory\\max_442_ROIcropped_thre999_MIP_histEq_mean0.5stdThre_ada_conditionalEro3mean-1std\\" + QString::fromStdString(caseIt->first) + ".tif";
+			QString saveFileNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\boutonTest\\adaThre_mean_conditional_ero31_mean-1std\\" + QString::fromStdString(caseIt->first) + ".tif";
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
@@ -845,6 +848,8 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
+		double duration;
+		clock_t start = clock();
 		ImgManager myManager;
 		myManager.inputSingleCaseSingleSliceFullPath = "C:\\Users\\hsienchik\\Desktop\\Work\\boutonTest\\17302AS1Rd.tif";
 		myManager.imgEntry("stack", ImgManager::singleCase_singleSlice);
@@ -880,7 +885,54 @@ int main(int argc, char* argv[])
 
 			delete[] slicePtr;
 		}
+		duration = (clock() - start) / double(CLOCKS_PER_SEC);
+		cout << "time elapsed: " << duration << endl;
 	}
+	else if (!funcName.compare("swcSlice"))
+	{
+		const char* swcNameC = argv[2];
+		string swcName(swcNameC);
+		QString swcNameQ = QString::fromStdString(swcName);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		NeuronTree inputTree = readSWC_file(swcNameQ);
+		vector<NeuronTree> outputTrees;
+		NeuronStructUtil::swcSlicer(inputTree, outputTrees, 25);
+
+		for (int i = 0; i < outputTrees.size(); ++i)
+		{
+			QString saveNameQ = saveFolderNameQ + "\\" + QString::fromStdString(to_string(i)) + ".swc";
+			writeSWC_file(saveNameQ, outputTrees.at(i));
+		}
+	}
+	else if (!funcName.compare("combineAllswc"))
+	{
+		const char* swcFolderNameC = argv[2];
+		string swcFolderName(swcFolderNameC);
+		QString swcFolderNameQ = QString::fromStdString(swcFolderName);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		vector<NeuronTree> trees;
+		for (filesystem::directory_iterator swcIt(swcFolderName); swcIt != filesystem::directory_iterator(); ++swcIt)
+		{
+			string swcName = swcIt->path().filename().string();
+			string swcFullName = swcIt->path().string();
+			QString swcFullNameQ = QString::fromStdString(swcFullName);
+			NeuronTree nt = readSWC_file(swcFullNameQ);
+			trees.push_back(nt);
+		}
+
+		NeuronTree combinedTree = NeuronStructUtil::swcCombine(trees);
+		QString saveFullNameQ = swcFolderNameQ + "\\combinedTree.swc";
+		writeSWC_file(saveFullNameQ, combinedTree);
+	}
+	
 
 	return 0;
 }

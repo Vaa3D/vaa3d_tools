@@ -1312,9 +1312,9 @@ void SegPipe_Controller::getTiledMST()
 		tileSWCList.clear();
 		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 		{
-			int tileXlabel = int(floor(it->x / xyLength));
-			int tileYlabel = int(floor(it->y / xyLength));
-			int tileZlabel = int(floor(it->z / (xyLength / zRATIO)));
+			int tileXlabel = int(floor(it->x / 300));
+			int tileYlabel = int(floor(it->y / 300));
+			int tileZlabel = int(floor(it->z / (62.5 / zRATIO)));
 			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
 			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));  
 			tiledSWCmap[swcTileKey].push_back(*it);
@@ -1590,7 +1590,7 @@ void SegPipe_Controller::longConnCut()
 		treeName = treeName.substr(0, treeName.length() - 3);
 
 		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
-		NeuronTree outputTree = NeuronStructExplorer::longConnCut(myNeuronStructExpPtr->treeDataBase.begin()->second, 30); // for axon, it was set to be 100
+		NeuronTree outputTree = NeuronStructExplorer::longConnCut(myNeuronStructExpPtr->treeDataBase.begin()->second, 50); // for axon, it was set to be 100
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, outputTree);
 

@@ -40,8 +40,9 @@ using namespace std;
 #define NODE_TILE_LENGTH 100
 #endif
 
-#ifndef zRATIO // This is the ratio of z resolution to x and y in IVSCC images.
-#define zRATIO (0.28 / 0.1144) 
+#ifndef zRATIO
+#define zRATIO (1 / 0.2)
+//#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
 #endif
 
 class NeuronStructUtil
@@ -50,7 +51,7 @@ public:
 	NeuronStructUtil() {};
 
 	/***************** Basic Neuron Struct Files Operations *****************/
-	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
+	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
@@ -109,6 +110,7 @@ public:
 
 
 	/***************** Sampling Methods for Simulated Volumetric Patch Generation *****************/
+	static void swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static void sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance);
 	static void bkgNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, int dims[], float ratio, float distance);
 	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
