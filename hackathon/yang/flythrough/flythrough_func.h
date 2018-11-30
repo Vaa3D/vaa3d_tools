@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-// #include "tiffio.h"
+#include "tiffio.h"
 
 using namespace std;
 
@@ -39,7 +39,7 @@ using namespace std;
 enum  axis { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0 };
 
 //
-// char *initTiff3DFile(char *filename, int sz0, int  sz1, int  sz2, int  sz3, int datatype);
+char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype);
 
 // cube
 class Cube
@@ -151,6 +151,58 @@ public:
 typedef map<long, Block> OneScaleTree; // key: offset_z*dimx*dimy+offset_y*dimx+offset_x
 typedef vector<long> OffsetType;
 typedef map<long, string> ZeroBlock;
+
+//
+const int NNodes = 10;
+
+QSemaphore freeNodes(NNodes);
+QSemaphore usedNodes;
+
+//
+class GetData : public QThread
+{
+    Q_OBJECT
+public:
+    void run()
+    {
+//        qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+//        for (int i = 0; i < DataSize; ++i) {
+//            freeBytes.acquire();
+//            buffer[i % BufferSize] = "ACGT"[(int)qrand() % 4];
+//            usedBytes.release();
+//        }
+    }
+
+public:
+
+};
+
+class PutData : public QThread
+{
+    Q_OBJECT
+public:
+    void run()
+    {
+//        for (int i = 0; i < DataSize; ++i) {
+//            usedBytes.acquire();
+//    #ifdef Q_WS_S60
+//            QString text(buffer[i % BufferSize]);
+//            freeBytes.release();
+//            emit stringConsumed(text);
+//    #else
+//            fprintf(stderr, "%c", buffer[i % BufferSize]);
+//            freeBytes.release();
+//    #endif
+//        }
+//        fprintf(stderr, "\n");
+    }
+
+signals:
+    void stringConsumed(const QString &text);
+
+protected:
+    bool finish;
+};
 
 //
 class DataFlow

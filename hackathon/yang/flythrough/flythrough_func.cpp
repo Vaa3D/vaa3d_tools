@@ -160,6 +160,11 @@ Block::~Block()
 }
 
 //
+DataFlow::DataFlow()
+{
+
+}
+
 DataFlow::DataFlow(string inputdir)
 {
     // test
@@ -1371,195 +1376,124 @@ long DataFlow::findOffset(OffsetType offsets, long idx)
     return offset;
 }
 
-/*
-// save a 3D chunk tif image with all zeros
-char *initTiff3DFile(char *filename, int sz0, int sz1, int sz2, int sz3, int datatype)
+//
+char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype)
 {
     //
-    uint32 XSIZE  = sz0;
-    uint32 YSIZE  = sz1;
-    uint16 Npages = sz2;
-    uint16 spp    = sz3;
-
-    uint16 bpp=8 * datatype;
-
-    int rowsPerStrip = -1;
-
-    int check;
-
-    if ( sz3 == 1 )
-        spp = sz3;
-    else if ( sz3 < 4 )
-        spp = 3;
-    else
-        return ((char *) "More than 3 channels in Tiff files.");
-
-    //
-    long szSlice = (long)XSIZE * (long)YSIZE * (long)spp * (long)datatype;
-    unsigned char *fakeData=NULL;
-    try
-    {
-        fakeData = new unsigned char[ szSlice ];
-        memset(fakeData,0,szSlice);
-    }
-    catch(...)
-    {
-        return ((char *)"Fail to alloc memory\n");
-    }
-
-    //disable warning and error handlers to avoid messages on unrecognized tags
-    TIFFSetWarningHandler(0);
-    TIFFSetErrorHandler(0);
-
-    TIFF *output;
-
-    long expectedSize = ((long) sz0) * ((long) sz1) * ((long) sz2) * ((long) sz3) * ((long) datatype);
-    long fourGBSize = 4;
-    fourGBSize *= 1024;
-    fourGBSize *= 1024;
-    fourGBSize *= 1024;
-
-    if ( expectedSize > (fourGBSize) )
-    {
-        if ( (rowsPerStrip == -1 && (((long) sz0) * ((long) sz1)) > (fourGBSize)) || ((rowsPerStrip * ((long) sz0)) > (fourGBSize)) )
-            return ((char *) "Too many rows per strip for this image width.");
-        else
-            output = TIFFOpen(filename,"w8");
-    }
-    else
-    {
-        output = TIFFOpen(filename,"w");
-    }
-
-    if (!output)
+    TIFF *input = TIFFOpen(filename,"r");
+    if (!input)
     {
         return ((char *) "Cannot open the file.");
     }
 
-    //
-    if ( rowsPerStrip == -1 )
+    if (!TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &sz0))
     {
-        for(long slice=0; slice<Npages; slice++)
+        TIFFClose(input);
+        return ((char *) "Image width of undefined.");
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_IMAGELENGTH, &sz1))
+    {
+        TIFFClose(input);
+        return ((char *) "Image length of undefined.");
+    }
+
+    if (!TIFFGetField(input, TIFFTAG_BITSPERSAMPLE, &datatype))
+    {
+        TIFFClose(input);
+        return ((char *) "Undefined bits per sample.");
+    }
+
+    uint16 Cpage;
+    if (!TIFFGetField(input, TIFFTAG_PAGENUMBER, &Cpage, &sz2) || sz2==0)
+    {
+        sz2 = 1;
+        while ( TIFFReadDirectory(input) )
         {
-            //
-            TIFFSetDirectory(output, slice);
-
-            //
-            check = TIFFSetField(output, TIFFTAG_IMAGEWIDTH, XSIZE);
-            if (!check) {
-                return ((char *) "Cannot set the image width.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_IMAGELENGTH, YSIZE);
-            if (!check) {
-                return ((char *) "Cannot set the image height.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, bpp);
-            if (!check) {
-                return ((char *) "Cannot set the image bit per sample.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, spp);
-            if (!check) {
-                return ((char *) "Cannot set the image sample per pixel.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, (rowsPerStrip == -1) ? YSIZE : (uint32)rowsPerStrip);
-            if (!check) {
-                return ((char *) "Cannot set the image rows per strip.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-            if (!check) {
-                return ((char *) "Cannot set the image orientation.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_COMPRESSION, COMPPRESSION_METHOD);
-            if (!check) {
-                return ((char *) "Cannot set the compression tag.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
-            if (!check) {
-                return ((char *) "Cannot set the planarconfig tag.");
-            }
-
-            if ( spp == 1 )
-                check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-            else // spp == 3
-                check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-            if (!check) {
-                return ((char *) "Cannot set the photometric tag.");
-            }
-
-            // We are writing single page of the multipage file
-            check = TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-            if (!check) {
-                return ((char *) "Cannot set the subfiletype tag.");
-            }
-
-            check = TIFFSetField(output, TIFFTAG_PAGENUMBER, slice, Npages);
-            if (!check) {
-                return ((char *) "Cannot set the page number.");
-            }
-
-            if(!TIFFWriteEncodedStrip(output, 0, fakeData, szSlice))
-            {
-                return ((char *) "Cannot write encoded strip to file.");
-            }
-
-            //
-            if (!TIFFWriteDirectory(output))
-            {
-                return ((char *) "Cannot write a new directory.");
-            }
+            sz2++;
         }
     }
-    else
+    datatype /= 8;
+
+    //cout<<"test "<<sz0<<" "<<sz1<<" "<<sz2<<" "<<datatype<<endl;
+
+    long imgsz = (long)sz0*(long)sz1*(long)sz2*(long)datatype;
+
+    //
+    try
     {
-        // TODO: modify codes to save 3D image stack later
-
-        //
-        // save one slice
-        //
-        int check,StripsPerImage,LastStripSize;
-        uint32 rps = (uint32)rowsPerStrip;
-        unsigned char *buf = fakeData;
-
-        StripsPerImage =  (YSIZE + rps - 1) / rps;
-        LastStripSize = YSIZE % rps;
-        if (LastStripSize==0)
-            LastStripSize=rps;
-
-        for (int i=0; i < StripsPerImage-1; i++){
-            check = TIFFWriteEncodedStrip(output, i, buf, spp * rps * XSIZE * (bpp/8));
-            if (!check) {
-                return ((char *) "Cannot write encoded strip to file.");
-            }
-            buf = buf + spp * rps * XSIZE * (bpp/8);
-        }
-
-        check = TIFFWriteEncodedStrip(output, StripsPerImage-1, buf, spp * LastStripSize * XSIZE * (bpp/8));
-        if (!check) {
-            return ((char *) "Cannot write encoded strip to file.");
-        }
-        buf = buf + spp * LastStripSize * XSIZE * (bpp/8);
+        p = new unsigned char [imgsz];
     }
-
-    //
-    if(fakeData)
+    catch(...)
     {
-        delete[] fakeData;
+        return ((char*) "fail to alloc memory for loading a tiff image.");
     }
 
     //
-    TIFFClose(output);
+    uint32 rps;
+    int StripsPerImage,LastStripSize;
 
     //
-    return (char *) 0;
+    if (!TIFFGetField(input, TIFFTAG_ROWSPERSTRIP, &rps))
+    {
+        TIFFClose(input);
+        return ((char *) "Undefined rowsperstrip.");
+    }
+
+    uint16 comp;
+    if (!TIFFGetField(input, TIFFTAG_COMPRESSION, &comp))
+    {
+        TIFFClose(input);
+        return ((char *) "Undefined compression.");
+    }
+
+    StripsPerImage =  (sz1 + rps - 1) / rps;
+    LastStripSize = sz1 % rps;
+    if (LastStripSize==0)
+        LastStripSize=rps;
+
+    if (!TIFFSetDirectory(input, 0)) // init
+    {
+        TIFFClose(input);
+        return ((char *) "fail to setdir.");
+    }
+
+    unsigned char *buf = p;
+
+    do{
+        for (int i=0; i < StripsPerImage-1; i++)
+        {
+            if (comp==1)
+            {
+                TIFFReadRawStrip(input, i, buf,  rps * sz0 * datatype);
+                buf = buf + rps * sz0 * datatype;
+            }
+            else
+            {
+                TIFFReadEncodedStrip(input, i, buf, rps * sz0 * datatype);
+                buf = buf + rps * sz0 * datatype;
+            }
+        }
+
+        if (comp==1)
+        {
+            TIFFReadRawStrip(input, StripsPerImage-1, buf, LastStripSize * sz0 * datatype);
+        }
+        else
+        {
+            TIFFReadEncodedStrip(input, StripsPerImage-1, buf, LastStripSize * sz0 * datatype);
+        }
+        buf = buf + LastStripSize * sz0 * datatype;
+
+    }
+    while (TIFFReadDirectory(input)); // while (TIFFReadDirectory(input));
+
+    //
+    TIFFClose(input);
+
+    //
+    return ((char *) 0);
 }
-*/
 
 //
 bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
@@ -1625,3 +1559,5 @@ bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     //
     return true;
 }
+
+
