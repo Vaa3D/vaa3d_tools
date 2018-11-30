@@ -1312,9 +1312,9 @@ void SegPipe_Controller::getTiledMST()
 		tileSWCList.clear();
 		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 		{
-			int tileXlabel = int(floor(it->x / 300));
-			int tileYlabel = int(floor(it->y / 300));
-			int tileZlabel = int(floor(it->z / (62.5 / zRATIO)));
+			int tileXlabel = int(floor(it->x / 500));
+			int tileYlabel = int(floor(it->y / 500));
+			int tileZlabel = int(floor(it->z / (125 / zRATIO)));
 			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
 			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));  
 			tiledSWCmap[swcTileKey].push_back(*it);

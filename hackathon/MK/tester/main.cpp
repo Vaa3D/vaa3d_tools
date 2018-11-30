@@ -500,7 +500,7 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean")))); //+imgStats.at("std"))));
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean") + 2 * imgStats.at("std"))));
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
@@ -900,7 +900,7 @@ int main(int argc, char* argv[])
 
 		NeuronTree inputTree = readSWC_file(swcNameQ);
 		vector<NeuronTree> outputTrees;
-		NeuronStructUtil::swcSlicer(inputTree, outputTrees, 25);
+		NeuronStructUtil::swcSlicer(inputTree, outputTrees, 50);
 
 		for (int i = 0; i < outputTrees.size(); ++i)
 		{
