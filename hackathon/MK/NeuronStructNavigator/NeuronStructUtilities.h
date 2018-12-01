@@ -41,7 +41,7 @@ using namespace std;
 #endif
 
 #ifndef zRATIO
-#define zRATIO (1 / 0.2)
+#define zRATIO (1 / 0.2) // This is the ratio of z resolution to x and y in fMOST images.
 //#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
 #endif
 
@@ -51,8 +51,10 @@ public:
 	NeuronStructUtil() {};
 
 	/***************** Basic Neuron Struct Files Operations *****************/
+	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
+	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb);
 	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 
@@ -122,6 +124,32 @@ public:
 	/**************************************************/
 };
 
+inline vector<int> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
+{
+	int xMin = 10000, xMax = 0, yMin = 10000, yMax = 0, zMin = 10000, zMax = 0;
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		if (it->x > xMax) xMax = it->x;
+		else if (it->x < xMin) xMin = it->x;
+
+		if (it->y > yMax) yMax = it->y;
+		else if (it->y < yMin) yMin = it->y;
+
+		if (it->z > zMax) zMax = it->z;
+		else if (it->z < zMin) zMin = it->z;
+	}
+
+	vector<int> boundaries(6);
+	boundaries[0] = xMin;
+	boundaries[1] = xMax;
+	boundaries[2] = yMin;
+	boundaries[3] = yMax;
+	boundaries[4] = zMin;
+	boundaries[5] = zMax;
+
+	return boundaries;
+}
+
 inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale)
 {
 	NeuronTree outputTree;
@@ -156,23 +184,19 @@ inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, float 
 
 inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
 {
-	if (zlb == 0 && zhb == 0)
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
-		for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
-		{
-			if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb) continue;
-			else
-			{
-				NeuronSWC newNode;
-				newNode.x = it->x - (xlb - 1);
-				newNode.y = it->y - (ylb - 1);
-				newNode.z = it->z;
-				newNode.type = it->type;
-				newNode.n = it->n;
-				newNode.parent = it->parent;
-				outputTree.listNeuron.push_back(newNode);
-			}
-		}
+		if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb || it->z < zlb || it->z > zhb) continue;
+		else outputTree.listNeuron.push_back(*it);
+	}
+}
+
+inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb)
+{
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb || it->z < zlb || it->z > zhb) continue;
+		else outputTree.listNeuron.push_back(*it);
 	}
 }
 

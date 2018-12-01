@@ -932,6 +932,29 @@ int main(int argc, char* argv[])
 		QString saveFullNameQ = swcFolderNameQ + "\\combinedTree.swc";
 		writeSWC_file(saveFullNameQ, combinedTree);
 	}
+	else if (!funcName.compare("swcCrop"))
+	{
+		const char* targetSWCnameC = argv[2];
+		string targetSWCname(targetSWCnameC);
+		QString targetSWCnameQ = QString::fromStdString(targetSWCname);
+
+		const char* refSWCnameC = argv[3];
+		string refSWCname(refSWCnameC);
+		QString refSWCnameQ = QString::fromStdString(refSWCname);
+
+		const char* manualCropNameC = argv[4];
+		string manualCropName(manualCropNameC);
+		QString manualCropNameQ = QString::fromStdString(manualCropName);
+
+		NeuronTree refTree = readSWC_file(refSWCnameQ);
+		NeuronTree targetTree = readSWC_file(targetSWCnameQ);
+		vector<int> bounds = NeuronStructUtil::getSWCboundary(refTree);
+		NeuronTree outputTree;
+		cout << bounds.at(0) << " " << bounds.at(1) << " " << bounds.at(2) << " " << bounds.at(3) << " " << bounds.at(4) << " " << bounds.at(5) << endl;
+		NeuronStructUtil::swcCrop(targetTree, outputTree, bounds.at(0), bounds.at(1), bounds.at(2), bounds.at(3), bounds.at(4), bounds.at(5));
+
+		writeSWC_file(manualCropNameQ, outputTree);
+	}
 	
 
 	return 0;
