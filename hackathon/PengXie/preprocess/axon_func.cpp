@@ -434,7 +434,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
 //    proximal_axon = missing_parent(proximal_axon);
 //    proximal_axon = my_SortSWC(proximal_axon, proximal_axon.listNeuron.at(0).n, 0);
 //    writeSWC_file(proximal_swc, proximal_axon);
-    crop_swc(whole_axon_swc, proximal_swc, 1000, 0, 0, 1);
+    crop_swc(whole_axon_swc, proximal_swc, 200, 0, 0, 1);
     distal_axon = missing_parent(distal_axon);
     distal_axon = my_SortSWC(distal_axon, distal_axon.listNeuron.at(0).n, 0);
     writeSWC_file(output_swc, axon);

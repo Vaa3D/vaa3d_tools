@@ -137,7 +137,7 @@ bool crop_swc_cuboid_dofunc(const V3DPluginArgList & input, V3DPluginArgList & o
             printHelp_crop_swc_cuboid();
 
         int c;
-        static char optstring[]="ha:b:c:d:e:f:r:s:t";
+        static char optstring[]="ha:b:c:d:e:f:r:s:t:";
         extern char * optarg;
         extern int optind, opterr;
         optind = 1;

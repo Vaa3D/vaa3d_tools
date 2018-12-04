@@ -7,10 +7,10 @@
 #include "v3d_message.h"
 #include "v3d_interface.h"
 
-#include "prune_short_branch.h"
-#include "resampling.h"
-#include "align_axis.h"
-#include "neuron_connector_func.h"
+//#include "prune_short_branch.h"
+//#include "resampling.h"
+//#include "align_axis.h"
+//#include "neuron_connector_func.h"
 using namespace std;
 
 #include "QtGui"
@@ -19,7 +19,7 @@ using namespace std;
 #include "neurite_analysis_main.h"
 #include "connnect_swc_redefined.h"
 #include "utilities.h"
-#include "axon_func.h"
+//#include "axon_func.h"
 
 #if !defined(Q_OS_WIN32)
 #include "unistd.h"
