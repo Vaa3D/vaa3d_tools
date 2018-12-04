@@ -374,7 +374,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     printf("\tRemoving duplicates\n");
     // Maybe not the best solution. Use it for now.
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".dedup.swc"));
+    export_listNeuron_2eswc(nt.listNeuron, qPrintable(outfileLabel+".dedup.eswc"));
 
     //2.1 Resample
     printf("\tResampling\n");
@@ -384,7 +384,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }else{
         printf("Skip Resampling\n");
     }
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".resample.swc"));
+    export_listNeuron_2eswc(nt.listNeuron, qPrintable(outfileLabel+".resample.eswc"));
 
     //2.2 Prune
     printf("\tPruning short branches\n");
@@ -394,7 +394,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         return 1;
     }
     nt.deepCopy(cur_nt);
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
+    export_listNeuron_2eswc(nt.listNeuron, qPrintable(outfileLabel+".prune.eswc"));
 
     //2.3 Short distance connection
     cur_nt.deepCopy(nt);
@@ -406,7 +406,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".short_connection.apo", 255,0,0));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".short_connection.apo", 0,0,0).size()/2<<count_root(nt);
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".short_connection.swc"));
+    export_listNeuron_2eswc(nt.listNeuron, qPrintable(outfileLabel+".short_connection.eswc"));
 
 
     //2.4 Connect to soma
@@ -430,7 +430,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tSkip connecting to soma\n");
         connect_soma_performed=0;
     }
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));
+    export_listNeuron_2eswc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.eswc"));
 
 
     // 2.5 Long connection
@@ -449,7 +449,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         int soma = 0;
         nt.deepCopy(single_tree(nt, soma));
     }
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".long_connection.swc"));
+    export_listNeuron_2eswc(nt.listNeuron, qPrintable(outfileLabel+".long_connection.eswc"));
 
 
     //2.6 Align axis
@@ -463,7 +463,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tSkip PCA alignment\n");
     }
 
-    if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
+    if (export_listNeuron_2eswc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     }
 
@@ -473,8 +473,8 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     writeAPO_file(outfileLabel+".apo", markers);
     my_saveANO(outfileLabel, true, true, qs_output);
 
-    if (export_listNeuron_2swc(new_connection,qPrintable(outfileLabel+".new_connection.swc"))){
-        printf("\t %s has been generated successfully.\n",qPrintable(outfileLabel+".new_connection.swc"));
+    if (export_listNeuron_2eswc(new_connection,qPrintable(outfileLabel+".new_connection.eswc"))){
+        printf("\t %s has been generated successfully.\n",qPrintable(outfileLabel+".new_connection.eswc"));
     }
 
     return 1;

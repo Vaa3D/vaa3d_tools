@@ -56,6 +56,10 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
         S.z 	= node.z;
         S.r 	= node.r;
         S.pn 	= node.pn;
+        S.seg_id 	= node.seg_id;
+        S.level 	= node.level;
+        S.creatmode = node.creatmode;
+        S.timestamp = node.timestamp;
         listNeuron.append(S);
         hashNeuron.insert(S.n, i);
     }

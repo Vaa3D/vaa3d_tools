@@ -98,7 +98,7 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
             QFile temp_apo_file(temp_apo);
         }
         // temp_swc
-        QString temp_swc = outswcdir + inswcName + QString(".temp.swc");
+        QString temp_swc = outswcdir + inswcName + QString(".temp.eswc");
         QFile temp_swc_file(temp_swc);
         QFile qs_inswc_file(qs_inswc);
         if(temp_swc_file.exists()){
@@ -108,7 +108,7 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
 
 
         // 0.3 Output
-        QString qs_outswc = outswcdir + inswcName + QString(".processed.swc");
+        QString qs_outswc = outswcdir + inswcName + QString(".processed.eswc");
         // 1. Run preprocess
         if((!skip_existing) || (!fexists(qs_outswc))){
             bool preprocessed = pre_processing(temp_swc, qs_outswc);
