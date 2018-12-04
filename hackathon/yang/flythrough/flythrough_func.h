@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <unordered_map>
 
 #include "tiffio.h"
 
@@ -109,15 +110,16 @@ public:
     ~Point();
 
 public:
-    void release(); // pop out
-    unsigned char* data();
+    void release();
+    unsigned char* data(); // crop recentered block data
+    void setBoundingBox(V3DLONG x, V3DLONG y, V3DLONG z);
 
 public:
     float x,y,z;
 
-    vector<long> blocks; // hit blocks' IDs in OneScaleTree
+    vector<V3DLONG> blocks; // hit blocks' IDs in OneScaleTree
     unsigned char *p; // cropped data
-    long sx, sy, sz; // size: [x-sx/2-1, x+sx/2], ...
+    V3DLONG sx, sy, sz; // size: [x-sx/2-1, x+sx/2], ...
 };
 
 typedef vector<Point> PointCloud;
@@ -127,110 +129,119 @@ class Block
 {
 public:
     Block();
-    Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz);
+    Block(string fn, V3DLONG xoff, V3DLONG yoff, V3DLONG zoff, V3DLONG sx, V3DLONG sy, V3DLONG sz);
     ~Block();
 
 public:
     bool compare(Block b); // check whether this block is in the list
-    int load();
+    void load();
     void release();
     unsigned char* data();
-    void setID(long key);
+    void setID(V3DLONG key);
 
 public:
     string filepath;
-    long offset_x, offset_y, offset_z;
-    long size_x, size_y, size_z;
-    long id; // key
+    V3DLONG offset_x, offset_y, offset_z;
+    V3DLONG size_x, size_y, size_z;
+    V3DLONG id; // key
 
     bool visited; // used, in/out of memory
 
     unsigned char *p;
+    uint16 datatype; // in byte(s)
 };
 
-typedef map<long, Block> OneScaleTree; // key: offset_z*dimx*dimy+offset_y*dimx+offset_x
-typedef vector<long> OffsetType;
-typedef map<long, string> ZeroBlock;
+// metadata
+typedef map<V3DLONG, Block> OneScaleTree; // key: offset_z*dimx*dimy+offset_y*dimx+offset_x
+typedef vector<V3DLONG> OffsetType;
+typedef map<V3DLONG, string> ZeroBlock;
+
+// data flow
 
 //
-const int NNodes = 10;
+template<class T>
+class Node
+{
+public:
+    Node();
+    ~Node();
 
-QSemaphore freeNodes(NNodes);
-QSemaphore usedNodes;
+public:
+    V3DLONG key; // block id
+    T value; // block
+    Node *prev, *next;
+};
 
-//
+// caching blocks in the storage
+template<class T>
+class LRUCache
+{
+public:
+    LRUCache(int _capacity);
+    ~LRUCache();
+
+public:
+    void add(V3DLONG key, T value);
+    T get(V3DLONG key); // add one hit (use)
+    void put(V3DLONG key, T value);
+    void display(); // display contents of cache
+
+public:
+    int capacity, sz;
+    unordered_map<V3DLONG, Node<T> *> lookup;
+    Node<T> *head, *tail;
+};
+
+// producer
 class GetData : public QThread
 {
-    Q_OBJECT
+   // Q_OBJECT
 public:
-    void run()
-    {
-//        qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
-//        for (int i = 0; i < DataSize; ++i) {
-//            freeBytes.acquire();
-//            buffer[i % BufferSize] = "ACGT"[(int)qrand() % 4];
-//            usedBytes.release();
-//        }
-    }
+    void run();
 
 public:
-
+    int size;
 };
 
+// consumer
 class PutData : public QThread
 {
     Q_OBJECT
+
 public:
-    void run()
-    {
-//        for (int i = 0; i < DataSize; ++i) {
-//            usedBytes.acquire();
-//    #ifdef Q_WS_S60
-//            QString text(buffer[i % BufferSize]);
-//            freeBytes.release();
-//            emit stringConsumed(text);
-//    #else
-//            fprintf(stderr, "%c", buffer[i % BufferSize]);
-//            freeBytes.release();
-//    #endif
-//        }
-//        fprintf(stderr, "\n");
-    }
+    explicit PutData(int dataSize, QObject *parent = 0);
+
+public:
+    void run();
 
 signals:
-    void stringConsumed(const QString &text);
+    void nodeProcessed(const int &n);
 
-protected:
-    bool finish;
+public:
+    int size;
 };
 
 //
 class DataFlow
 {
+    //Q_OBJECT
 public:
-    DataFlow();
-    DataFlow(string swcfile, string inputdir, string outputdir, float ratio);
-    DataFlow(string inputdir);
+    DataFlow(PointCloud *&pc, string inputdir, V3DLONG sx, V3DLONG sy, V3DLONG sz);
     ~DataFlow();
 
 public:
     int readSWC(string filename, float ratio);
     int readMetaData(string filename, bool mDataDebug=false);
 
-    int copyblock(QString srcFile, QString dstFile);
-    int makeDir(string dirname);
-
-    int query(float x, float y, float z);
+    int query(V3DLONG idx);
     vector<string> splitFilePath(string filepath);
     string getDirName(string filepath);
-    int createDir(string prePath, string dirName);
-    int label(long index);
-    long findClosest(OffsetType offsets, long idx);
-    long findOffset(OffsetType offsets, long idx);
+    int label(V3DLONG index);
+    V3DLONG findOffset(OffsetType offsets, V3DLONG idx);
 
 public:
     OneScaleTree tree;
-    PointCloud pc;
+    PointCloud *points;
 
 public:
     // mdata.bin
@@ -239,8 +250,8 @@ public:
     float mdata_version; // 2
 
     unsigned int color, bytesPerVoxel; //
-    long cubex, cubey, cubez;
-    long sx, sy, sz;
+    V3DLONG cubex, cubey, cubez;
+    V3DLONG sx, sy, sz;
 
     OffsetType xoff, yoff, zoff;
     ZeroBlock zeroblocks;

@@ -20,6 +20,12 @@
 #include <omp.h>
 #endif
 
+// producer-consumer control nodes in neuron fragment
+const int NNodes = 4; // buffer size
+
+QSemaphore freeNodes(NNodes);
+QSemaphore usedNodes;
+
 //
 const QString title = QObject::tr("get level 0 data");
 
@@ -75,7 +81,17 @@ Point::Point(float a, float b, float c)
 
 void Point::release()
 {
+    if(p)
+    {
+        delete []p;
+    }
+}
 
+void Point::setBoundingBox(V3DLONG x, V3DLONG y, V3DLONG z)
+{
+    sx = x;
+    sy = y;
+    sz = z;
 }
 
 unsigned char* Point::data()
@@ -88,7 +104,7 @@ unsigned char* Point::data()
 
 Point::~Point()
 {
-
+    release();
 }
 
 //
@@ -106,7 +122,7 @@ Block::Block()
     size_z = 1;
 }
 
-Block::Block(string fn, long xoff, long yoff, long zoff, long sx, long sy, long sz)
+Block::Block(string fn, V3DLONG xoff, V3DLONG yoff, V3DLONG zoff, V3DLONG sx, V3DLONG sy, V3DLONG sz)
 {
     p = NULL;
     visited = false;
@@ -131,9 +147,24 @@ bool Block::compare(Block b)
         return false;
 }
 
-int Block::load()
+void Block::load()
 {
+    QString skipBlock = "NULL.tif";
+    QString blockPath = QString::fromAscii(filepath.c_str());
 
+    // load non-empty image
+    if(blockPath.indexOf(skipBlock)==-1)
+    {
+        uint32 sx, sy, sz;
+        char *errormessage = tiffread(const_cast<char*>(blockPath.toUtf8().constData()),p,sx,sy,sz,datatype);
+
+        // update sx, sy, sz again
+        size_x = sx;
+        size_y = sy;
+        size_z = sz;
+
+        cout<<"load "<<filepath<<" "<<errormessage<<endl;
+    }
 }
 
 void Block::release()
@@ -149,627 +180,280 @@ unsigned char* Block::data()
     return p;
 }
 
-void Block::setID(long key)
+void Block::setID(V3DLONG key)
 {
     id = key;
 }
 
 Block::~Block()
 {
+    release();
+}
+
+//
+template<class T>
+Node<T>::Node()
+{
+    prev = NULL;
+    next = NULL;
+}
+
+template<class T>
+Node<T>::~Node()
+{
+    prev = NULL;
+    next = NULL;
+
+    if(value.p)
+    {
+        value.release();
+    }
+}
+
+//
+template<class T>
+LRUCache<T>::LRUCache(int _capacity)
+{
+    capacity = _capacity;
+    sz = 0;
+    lookup.clear();
+
+    head = NULL;
+    tail = NULL;
+}
+
+template<class T>
+LRUCache<T>::~LRUCache()
+{
+    // release memory of lookup
+}
+
+template<class T>
+void LRUCache<T>::add(V3DLONG key, T value)
+{
+    // pop head if necessary
+    if(sz == capacity)
+    {
+        Node<T> *cur = lookup[head->key];
+
+        if(head->next)
+        {
+            head->next->prev = NULL;
+        }
+
+        if(head == tail)
+        {
+            head = NULL;
+            tail = NULL;
+        }
+        else
+        {
+            head = head->next;
+        }
+
+        lookup.erase(cur->key);
+        delete cur;
+        sz--;
+    }
+
+    // insert
+    Node<T> *newNode = new Node<T>();
+    newNode->key = key;
+    newNode->value = value;
+    newNode->prev = NULL;
+    newNode->next = NULL;
+    lookup[key] = newNode;
+
+    if(head == NULL)
+    {
+        head = newNode;
+        tail = newNode;
+    }
+    else
+    {
+        tail->next = newNode;
+        newNode->prev = tail;
+        tail = newNode;
+    }
+
+    sz++;
+
+    // load data ????
+    lookup[key]->value.load();
+}
+
+template<class T>
+T LRUCache<T>::get(V3DLONG key) // add one hit (use)
+{
+    if(lookup.find(key) != lookup.end())
+    {
+        // move node to tail
+        Node<T> *node = lookup[key];
+
+        if(node != tail && head != tail)
+        {
+            if(head == node)
+            {
+                head = head->next;
+            }
+
+            if(node->prev)
+            {
+                node->prev->next = node->next;
+            }
+
+            if(node->next)
+            {
+                node->next->prev = node->prev;
+            }
+
+            node->next = NULL;
+            tail->next = node;
+            node->prev = tail;
+            tail = node;
+        }
+
+        //
+        return lookup[key]->value;
+    }
+
+    return -1;
+}
+
+template<class T>
+void LRUCache<T>::put(V3DLONG key, T value)
+{
+    if(lookup.find(key) == lookup.end())
+    {
+        add(key, value);
+    }
+    else
+    {
+        // move value to tail
+        Node<T> *node = lookup[key];
+        node->value = value;
+
+        if(node == tail)
+        {
+            return;
+        }
+
+        if(head == tail)
+        {
+            return;
+        }
+
+        if(head == node)
+        {
+            head = head->next;
+        }
+
+        if(node->prev)
+        {
+            node->prev->next = node->next;
+        }
+
+        if(node->next)
+        {
+            node->next->prev = node->prev;
+        }
+
+        node->next = NULL;
+        tail->next = node;
+        node->prev = tail;
+        tail = node;
+    }
+}
+
+// display contents of cache
+template<class T>
+void LRUCache<T>::display()
+{
+    Node<T> * node = head;
+    while(node != NULL)
+    {
+        cout << node->key << " ";
+        node = node->next;
+    }
+
+    cout << endl;
+}
+
+//
+void GetData::run()
+{
+    for(int i=0; i<size; ++i)
+    {
+        //
+        freeNodes.acquire();
+
+        // get data
+
+
+
+        //
+        usedNodes.release();
+    }
+}
+
+void PutData::run()
+{
+//        for (int i = 0; i < DataSize; ++i) {
+//            usedBytes.acquire();
+//    #ifdef Q_WS_S60
+//            QString text(buffer[i % BufferSize]);
+//            freeBytes.release();
+//            emit stringConsumed(text);
+//    #else
+//            fprintf(stderr, "%c", buffer[i % BufferSize]);
+//            freeBytes.release();
+//    #endif
+//        }
+//        fprintf(stderr, "\n");
+
+    for(int i=0; i<size; ++i)
+    {
+        //
+        usedNodes.acquire();
+
+        //
+
+
+        //
+        freeNodes.release();
+    }
 
 }
 
 //
-DataFlow::DataFlow()
+DataFlow::DataFlow(PointCloud *&pc, string inputdir, V3DLONG sx, V3DLONG sy, V3DLONG sz)
 {
+    // neuron reconstruction (fragments/whole) with nodes/points coordinates (x, y, z)
+    if(pc->size()<1)
+    {
+        cout<<"Need a valid neuron segment to work with"<<endl;
+        return;
+    }
 
-}
+    points = pc;
 
-DataFlow::DataFlow(string inputdir)
-{
-    // test
-    readMetaData(inputdir, true);
-}
-
-DataFlow::DataFlow(string swcfile, string inputdir, string outputdir, float ratio)
-{
-    // inputdir: "xxxx/RES(123x345x456)"
-    // outputdir: "yyyy/RES(123x345x456)"
-
-    // load input .swc file and mdata.bin
-
-
-//    QString str = "a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f g h i j k l m n o p q r s t u v w x y z";
-//    // cout<<"str: "<<str.c_str()<<endl;
-
-//    cout<<str.toUtf8().constData()<<endl;
-
-
-
-    //
-    readSWC(swcfile, ratio);
-
-    //
+    // read a tree from "mdata.bin" in inputdir: "xxxx/RES(123x345x456)"
     readMetaData(inputdir);
 
-
-    // find hit & neighbor blocks
-
-    //
-    long n = pc.size();
-
-    cout<<" ... ... consider "<<n<<" nodes in "<<tree.size()<<" blocks"<<endl;
-
-    // test
-//    map<long, Block>::iterator it = tree.begin();
-//    while(it != tree.end())
-//    {
-//        cout<<(it++)->first<<", ";
-//    }
-//    cout<<endl;
-
-
-    for(long i=0; i<n; i++)
+    // update relations between points and tree blocks
+    for(V3DLONG i=0; i<points->size(); i++)
     {
-        Point p = pc[i];
-
-        query(p.x, p.y, p.z);
-    }
-
-    // copying blocks and saving mdata.bin
-
-    //
-    DIR *outdir = opendir(outputdir.c_str());
-    if(outdir == NULL)
-    {
-        // mkdir outdir
-        if(makeDir(outputdir))
-        {
-            cout<<"fail in mkdir "<<outputdir<<endl;
-            return;
-        }
-    }
-    else
-    {
-        closedir(outdir);
-    }
-
-    // based on hits, update the layer
-//    unsigned short nrows = 0;
-//    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
-//    while(iter != layer.yxfolders.end())
-//    {
-//        //
-//        YXFolder yxfolder = (iter++)->second;
-
-//        unsigned int ncubes = 0;
-
-//        //
-//        if(yxfolder.toBeCopied==false)
-//            continue;
-
-//        //
-//        nrows++;
-
-//        //
-//        map<int, Cube>::iterator it = yxfolder.cubes.begin();
-//        while(it != yxfolder.cubes.end())
-//        {
-//            //
-//            Cube cube = (it++)->second;
-
-//            if(cube.toBeCopied==false)
-//                continue;
-
-//            ncubes++;
-//        }
-
-//        layer.yxfolders[yxfolder.dirName].ncubes = ncubes;
-//    }
-//    layer.cols = 1;
-//    layer.rows = nrows;
-
-
-    //
-    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
-    while(iter != layer.yxfolders.end())
-    {
-        YXFolder yxfolder = (iter++)->second;
-        // cout<<"yxfolder.ncubes "<<yxfolder.ncubes<<endl;
-        layer.yxfolders[yxfolder.dirName].ncubes = yxfolder.cubes.size();
+        points->at(i).setBoundingBox(sx, sy, sz);
+        query(i);
     }
 
     //
-    string mdatabin = outputdir + "/mdata.bin";
 
-    struct stat info;
-
-    // mdata.bin does not exist
-    if( stat( mdatabin.c_str(), &info ) != 0 )
-    {
-        // save mdata.bin
-        FILE *file;
-
-        file = fopen(mdatabin.c_str(), "wb");
-
-        fwrite(&(mdata_version), sizeof(float), 1, file);
-        fwrite(&(reference_V), sizeof(axis), 1, file);
-        fwrite(&(reference_H), sizeof(axis), 1, file);
-        fwrite(&(reference_D), sizeof(axis), 1, file);
-        fwrite(&(layer.vs_x), sizeof(float), 1, file);
-        fwrite(&(layer.vs_y), sizeof(float), 1, file);
-        fwrite(&(layer.vs_z), sizeof(float), 1, file);
-        fwrite(&(layer.vs_x), sizeof(float), 1, file);
-        fwrite(&(layer.vs_y), sizeof(float), 1, file);
-        fwrite(&(layer.vs_z), sizeof(float), 1, file);
-        fwrite(&(org_V), sizeof(float), 1, file);
-        fwrite(&(org_H), sizeof(float), 1, file);
-        fwrite(&(org_D), sizeof(float), 1, file);
-        fwrite(&(layer.dim_V), sizeof(unsigned int), 1, file);
-        fwrite(&(layer.dim_H), sizeof(unsigned int), 1, file);
-        fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file);
-        fwrite(&(layer.rows), sizeof(unsigned short), 1, file); // need to be updated by hits
-        fwrite(&(layer.cols), sizeof(unsigned short), 1, file); // need to be updated by hits
-
-        cout<<layer.yxfolders.size()<<endl;
-
-        string dirName = "zeroblocks/zeroblock"; //
-
-        // cout<<"layer.yxfolders.size "<<layer.yxfolders.size()<<endl;
-
-        //
-        int count = 0;
-        int nyxfolders = layer.yxfolders.size();
-        map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
-        while(iter != layer.yxfolders.end())
-        {
-            cout<<"testing count "<<count<<" of "<<nyxfolders<<endl;
-
-            //
-            if(count++ >= nyxfolders)
-            {
-                iter++;
-                continue;
-            }
-
-            // cout<<"count "<<count<<" >= "<<nyxfolders<<endl;
-
-            //
-            YXFolder yxfolder = (iter++)->second;
-
-            // cout<<"check ncubes ... "<<yxfolder.ncubes<<" at "<<count<<endl;
-
-            // cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
-
-            if(yxfolder.toBeCopied==false)
-            {
-                // continue;
-
-                // trick: create a "zeroblocks" folder holds blocks with zeros
-                // createDir(outputdir, dirName);
-
-                //
-                fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
-                fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
-                fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-                fwrite(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
-                fwrite(&(color), sizeof(unsigned int), 1, file);
-                fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
-                fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
-                fwrite(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
-                fwrite(const_cast<char *>(dirName.c_str()), yxfolder.lengthDirName, 1, file);
-
-                //
-                int countCube = 0;
-                int ncubes = yxfolder.cubes.size();
-                map<int, Cube>::iterator it = yxfolder.cubes.begin();
-                while(it != yxfolder.cubes.end())
-                {
-                    if(countCube++ >= ncubes)
-                    {
-                        iter++;
-                        continue;
-                    }
-
-                    // cout<<"countCube "<<countCube<<" >= "<<ncubes<<endl;
-
-                    //
-                    Cube cube = (it++)->second;
-
-//                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
-                    string cubeName = "NULL.tif";
-                    unsigned short lengthCubeName = cubeName.length();
-
-                    // cout<<"write/link ... "<<dirName<<" / "<<cubeName<<" "<<lengthCubeName<<endl;
-
-//                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
-//                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
-
-//                    if(zeroblocks.find(cubeIndex) == zeroblocks.end())
-//                    {
-//                        char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-//                        // cout<<"create a zero block: "<<errorMsg<<endl;
-
-//                        zeroblocks.insert(make_pair(cubeIndex, cubeName));
-//                    }
-
-                    //
-                    fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
-                    fwrite(const_cast<char *>(cubeName.c_str()), lengthCubeName, 1, file);
-                    fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
-                    fwrite(&(cube.offset_D), sizeof(int), 1, file);
-                }
-            }
-            else
-            {
-                // cout<<"write ... "<<yxfolder.dirName<<endl;
-
-                createDir(outputdir, yxfolder.dirName);
-
-                //
-                fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
-                fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
-                fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-                fwrite(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
-                fwrite(&(color), sizeof(unsigned int), 1, file);
-                fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
-                fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
-                fwrite(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
-                fwrite(const_cast<char *>(yxfolder.dirName.c_str()), yxfolder.lengthDirName, 1, file);
-
-                //
-                int countCube = 0;
-                int ncubes = yxfolder.cubes.size();
-                map<int, Cube>::iterator it = yxfolder.cubes.begin();
-                while(it != yxfolder.cubes.end())
-                {
-                    //
-                    if(countCube++ >= ncubes)
-                    {
-                        iter++;
-                        continue;
-                    }
-
-                    // cout<<"countCube "<<countCube<<" >= "<<ncubes<<endl;
-
-                    //
-                    Cube cube = (it++)->second;
-
-                    if(cube.toBeCopied==false)
-                    {
-                        //continue;
-
-//                        string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
-//                        unsigned short lengthCubeName = cubeName.length();
-//                        long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
-//                        string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
-
-//                        if(zeroblocks.find(cubeIndex) == zeroblocks.end())
-//                        {
-//                            char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-//                            // cout<<"create a zero block "<<errorMsg<<endl;
-//                        }
-
-                        string cubeName = "NULL.tif";
-                        unsigned short lengthCubeName = cubeName.length();
-
-                        //
-                        fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
-                        fwrite(const_cast<char *>(cubeName.c_str()), lengthCubeName, 1, file);
-                        fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
-                        fwrite(&(cube.offset_D), sizeof(int), 1, file);
-                    }
-                    else
-                    {
-                        //
-//                        string srcFilePath = inputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
-//                        string dstFilePath = outputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
-
-                        QString filePath = QString::fromAscii(yxfolder.dirName.c_str()).append(QString("/")).append(QString::fromAscii(cube.fileName.c_str()));
-                        QString srcFilePath = QString::fromStdString(inputdir) + "/" + filePath;
-                        QString dstFilePath = QString::fromStdString(outputdir) + "/" + filePath;
-
-                        copyblock(srcFilePath, dstFilePath);
-
-                        //
-                        fwrite(&(yxfolder.lengthFileName), sizeof(unsigned short), 1, file);
-                        fwrite(const_cast<char *>(cube.fileName.c_str()), yxfolder.lengthFileName, 1, file);
-                        fwrite(&(cube.depth), sizeof(unsigned int), 1, file);
-                        fwrite(&(cube.offset_D), sizeof(int), 1, file);
-                    }
-                }
-            }
-            fwrite(&(bytesPerVoxel), sizeof(unsigned int), 1, file);
-        }
-        fclose(file);
-    }
 }
 
 DataFlow::~DataFlow()
 {
-
-}
-
-int DataFlow::makeDir(string dirname)
-{
-    //
-    struct stat info;
-
-    // if dir does not exist
-    if( stat(dirname.c_str(), &info ) != 0 )
-    {
-        if(mkdir(dirname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
-        {
-            cout<<"Fail to create folder: "<< dirname <<endl;
-            return -1;
-        }
-    }
-
-    //
-    return 0;
-}
-
-int DataFlow::copyblock(QString srcFile, QString dstFile)
-{
-
-
-//    qDebug()<<"srcFile "<<srcFile;
-//    qDebug()<<"dstFile "<<dstFile;
-
-
-    std::ifstream  src(srcFile.toUtf8().constData(), std::ios_base::in | std::ios_base::binary);
-
-    if(src.is_open())
-    {
-        std::ofstream  dst(dstFile.toUtf8().constData(), std::ios_base::out | std::ios_base::binary);
-
-        if(dst.is_open())
-        {
-            dst << src.rdbuf();
-
-            if(dst.bad())
-            {
-                cout<<"Error writing file "<<dstFile.toUtf8().constData()<<endl;
-            }
-        }
-        else
-        {
-            cout<<"Error opening file "<<dstFile.toUtf8().constData()<<endl;
-        }
-
-        dst.close();
-    }
-    else
-    {
-        cout<<"Error opening file "<<srcFile.toUtf8().constData()<<endl;
-    }
-
-    src.close();
-
-
-////    cout<<"... ... test ... ..."<<endl;
-//    // QString qstr = QString(QString("cp \'")).append(QString::fromStdString(srcFile)).append(QString("\' \'")).append(QString::fromStdString(dstFile)).append(QString("\'"));
-
-////    cout<<str<<endl;
-
-////    QString qstr = QString::fromAscii(str);
-
-//    QString qstr = QString("cp \'").append(srcFile).append(QString("\' \'")).append(dstFile).append(QString("\'"));
-
-
-//    qDebug()<<"qstr ... "<<qstr;
-
-
-//    cout<<"str "<<qstr.toUtf8().constData()<<endl;
-
-
-//    const char *cstr = qstr.toUtf8().constData();
-
-//    cout<<"cstr "<<cstr<<endl;
-
-
-//    cout<<" length "<<str.length()<<endl;
-
-//    char * cstr = new char [str.length()+1];
-//    std::strcpy (cstr, str.c_str());
-
-
-//    cout<<"... cstr ... "<<cstr<<endl;
-
-
-//    for(int i=0; i<str.length(); i++)
-//        cout<<cstr[i];
-//    cout<<endl;
-
-
-//    char * p = std::strtok (cstr," ");
-//    while (p!=0)
-//    {
-//        std::cout << p << endl;
-//        p = std::strtok(NULL," ");
-//    }
-//    cout<<endl;
-
-//    delete[] cstr;
-
-
-
-
-//    char cpcmd[1024];
-
-//    // string command = "cp \'" + srcFile + "\' \'" + dstFile +"\'\0";
-
-//    // cout<<command.c_str()<<endl;
-
-//    int i;
-
-//    char const *src = &srcFile[0];
-//    char const *dst = &dstFile[0];
-
-//    strcpy(cpcmd, "cp \'");
-
-//    cout<<"copy ... src name ... \n";
-//    for(i=4; i-4<srcFile.length(); i++)
-//    {
-//        cpcmd[i] = src[i-4];
-//        printf("%c", src[i-4]);
-//    }
-//    cout<<endl;
-
-//    // strcat(command, src);
-//    // strcat(command, "\' \'");
-
-//    cpcmd[i] = '\'';
-//    cpcmd[++i] = ' ';
-//    cpcmd[++i] = '\'';
-
-//    int j = ++i;
-
-//    cout<<"copy ... dst name ... \n";
-//    for(i=j; i-j<dstFile.length(); i++)
-//    {
-//        cpcmd[i] = dst[i-j];
-//        printf("%c", dst[i-j]);
-//    }
-//    cout<<endl;
-
-//    // strcat(command, dst);
-//    // strcat(command, "\'\0");
-
-//    cpcmd[i] = '\'';
-//    cpcmd[++i] = '\0';
-
-
-//    cout<<"command ... \n";
-//    for(j=0; j<i; j++)
-//        printf("%c", cpcmd[j]);
-//    cout<<endl;
-
-
-
-//    const char *a = cpcmd;
-
-//    cout<<"a ... "<<a<<endl;
-
-//    string str(a, j);
-
-////    cout<<"... test ... "<<str<<" "<<str.length()<<" comparing to "<<j<<endl;
-//    std::cout << "capacity: " << str.capacity() << "\n";
-////    std::cout << "max_size: " << str.max_size() << "\n";
-
-//    cout<<"str ... "<<str.c_str()<<endl;
-
-//    // cout<<"command "<<command<<endl;
-
-//    system(cpcmd);
-
-
-//    int read_fd;
-//    int write_fd;
-//    struct stat stat_buf;
-//    off_t offset = 0;
-
-//    /* Open the input file. */
-//    read_fd = open (srcFile.c_str(), O_RDONLY);
-//    /* Stat the input file to obtain its size. */
-//    fstat (read_fd, &stat_buf);
-//    /* Open the output file for writing, with the same permissions as the
-//      source file. */
-//    write_fd = open (dstFile.c_str(), O_WRONLY | O_CREAT, stat_buf.st_mode);
-
-//    cout<<"write fd "<<write_fd<<endl;
-
-//    /* Blast the bytes from one file to the other. */
-//    ssize_t result = sendfile (write_fd, read_fd, &offset, stat_buf.st_size);
-
-//    cout<<"sendfile "<<result<<endl;
-
-//    /* Close up. */
-//    close (read_fd);
-//    close (write_fd);
-
-
-
-//    //
-//    std::ifstream  src(srcFile.c_str(), std::ios_base::in | std::ios_base::binary);
-
-////    if(src.is_open())
-////    {
-////        std::ofstream  dst(dstFile.c_str(), std::ios_base::out | std::ios_base::binary);
-
-////        if(dst.is_open())
-////        {
-////            dst << src.rdbuf();
-
-////            if(dst.bad())
-////            {
-////                cout<<"Error writing file "<<dstFile<<endl;
-////            }
-////        }
-////        else
-////        {
-////            cout<<"Error opening file "<<dstFile<<endl;
-////        }
-
-////        dst.close();
-////    }
-////    else
-////    {
-////        cout<<"Error opening file "<<srcFile<<endl;
-////    }
-
-//    // std::ofstream  dst(dstFile.c_str(), std::ios_base::out | std::ios_base::binary);
-//    std::ofstream dst;
-//    dst.open(dstFile, std::ios::binary);
-
-//    if(!dst)
-//    {
-//        cout<<"error in opening dst file"<<endl;
-//    }
-
-//    if(dst.is_open())
-//    {
-//        dst << src.rdbuf();
-
-//        if(dst.bad())
-//        {
-//            cout<<"Error writing file "<<dstFile<<endl;
-//        }
-//    }
-//    else
-//    {
-//        cout<<"Error opening file "<<dstFile<<endl;
-//    }
-
-//    // file size
-//    src.seekg(0, ios::end);
-//    ifstream::pos_type size = src.tellg();
-//    src.seekg(0);
-//    // allocate memory for buffer
-//    char* buffer = new char[size];
-
-//    // copy file
-//    src.read(buffer, size);
-//    dst.write(buffer, size);
-
-//    // clean up
-//    delete[] buffer;
-//    dst.close();
-
-////    const static int BUF_SIZE = 4096;
-
-////    char buf[BUF_SIZE];
-
-////    do {
-////        src.read(&buf[0], BUF_SIZE);      // Read at most n bytes into
-////        dst.write(&buf[0], src.gcount()); // buf, then write the buf to
-////    } while (src.gcount() > 0);          // the output.
-
-
-//    src.close();
-
-    //
-    return 0;
+    // release memory
 }
 
 int DataFlow::readSWC(string filename, float ratio)
@@ -777,37 +461,22 @@ int DataFlow::readSWC(string filename, float ratio)
     //
     NeuronTree nt = readSWC_file(QString(filename.c_str()));
 
-//    float minX = 1000, minY = 1000, minZ = 1000;
-
     if(ratio>1)
     {
-        for (long i =0; i< nt.listNeuron.size(); i++)
+        for (V3DLONG i =0; i< nt.listNeuron.size(); i++)
         {
             Point p(nt.listNeuron[i].x/ratio, nt.listNeuron[i].y/ratio, nt.listNeuron[i].z/ratio);
-            pc.push_back(p);
-
-            // cout<<"node ... "<<nt.listNeuron[i].x<<" "<<nt.listNeuron[i].y<<" "<<nt.listNeuron[i].z<<" : "<<p.x<<" "<<p.y<<" "<<p.z<<endl;
-
-//            if(minX>p.x)
-//                minX = p.x;
-
-//            if(minY>p.y)
-//                minY = p.y;
-
-//            if(minZ>p.z)
-//                minZ = p.z;
+            points->push_back(p);
         }
     }
     else
     {
-        for (long i =0; i< nt.listNeuron.size(); i++)
+        for (V3DLONG i =0; i< nt.listNeuron.size(); i++)
         {
             Point p(nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
-            pc.push_back(p);
+            points->push_back(p);
         }
     }
-
-    // cout<<"min ... ... "<<minX<<" "<<minY<<" "<<minZ<<endl;
 
     //
     return 0;
@@ -961,8 +630,8 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
 
                 //
                 Block block(blockNamePrefix + yxfolder.dirName + "/" + cube.fileName,
-                            long(yxfolder.offset_H), long(yxfolder.offset_V), long(cube.offset_D),
-                            long(yxfolder.width), long(yxfolder.height), long(cube.depth) );
+                            V3DLONG(yxfolder.offset_H), V3DLONG(yxfolder.offset_V), V3DLONG(cube.offset_D),
+                            V3DLONG(yxfolder.width), V3DLONG(yxfolder.height), V3DLONG(cube.depth) );
 
                 if(count==0)
                 {
@@ -972,22 +641,22 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
                     count++;
                 }
 
-                if (std::find(xoff.begin(), xoff.end(), long(block.offset_x)) == xoff.end())
+                if (std::find(xoff.begin(), xoff.end(), V3DLONG(block.offset_x)) == xoff.end())
                 {
-                    xoff.push_back(long(block.offset_x));
+                    xoff.push_back(V3DLONG(block.offset_x));
                 }
 
-                if (std::find(yoff.begin(), yoff.end(), long(block.offset_y)) == yoff.end())
+                if (std::find(yoff.begin(), yoff.end(), V3DLONG(block.offset_y)) == yoff.end())
                 {
-                    yoff.push_back(long(block.offset_y));
+                    yoff.push_back(V3DLONG(block.offset_y));
                 }
 
-                if (std::find(zoff.begin(), zoff.end(), long(block.offset_z)) == zoff.end())
+                if (std::find(zoff.begin(), zoff.end(), V3DLONG(block.offset_z)) == zoff.end())
                 {
-                    zoff.push_back(long(block.offset_z));
+                    zoff.push_back(V3DLONG(block.offset_z));
                 }
 
-                block.setID(long(block.offset_z)*sx*sy+long(block.offset_y)*sx+long(block.offset_x));
+                block.setID(V3DLONG(block.offset_z)*sx*sy+V3DLONG(block.offset_y)*sx+V3DLONG(block.offset_x));
 
                 tree.insert(make_pair(block.id, block));
 
@@ -1017,131 +686,104 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
     return 0;
 }
 
-int DataFlow::query(float x, float y, float z)
+int DataFlow::query(V3DLONG idx)
 {
-    //cout<<"query "<<x<<" "<<y<<" "<<z<<endl;
-    //cout<<"size "<<sx<<" "<<sy<<" "<<sz<<endl;
-    //cout<<"cube size "<<cubex<<" "<<cubey<<" "<<cubez<<endl;
-    //cout<<"search in "<<tree.size()<<" blocks"<<endl;
+    //
+    if(idx<0)
+    {
+        cout<<"Invalid index"<<endl;
+        return -1;
+    }
+
+    float x = points->at(idx).x;
+    float y = points->at(idx).y;
+    float z = points->at(idx).z;
 
     // find hit block and 6 neighbors
     if(tree.size()>0)
     {
-//        long nx = long(x)/cubex;
-//        long ny = long(y)/cubey;
-//        long nz = long(z)/cubez;
-
         // hit block
+        V3DLONG lx = findOffset(xoff, V3DLONG(x));
+        V3DLONG ly = findOffset(yoff, V3DLONG(y));
+        V3DLONG lz = findOffset(zoff, V3DLONG(z));
 
-//        long lx = nx*cubex;
-//        long ly = ny*cubey;
-//        long lz = nz*cubez;
+        V3DLONG olx = lx;
+        V3DLONG oly = ly;
 
-        long lx = findOffset(xoff, long(x));
-        long ly = findOffset(yoff, long(y));
-        long lz = findOffset(zoff, long(z));
-
-        long olx = lx;
-        long oly = ly;
-//        long olz = lz;
-
-        long index = lz*sx*sy + ly*sx + lx;
+        V3DLONG index = lz*sx*sy + ly*sx + lx;
 
         //cout<<"node's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
-
-        // test
-//        map<long, Block>::iterator it = tree.begin();
-//        while(it != tree.end())
-//        {
-//            cout<<(it++)->first<<", ";
-//        }
-//        cout<<endl;
-
         //
-        label(index);
+        // label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         // 6 neighbors
 
         // x-
-//        if(nx-1>0)
-//        {
-//            lx = (nx - 1) * cubex;
-//            index = lz*sx*sy + ly*sx + lx;
-
-//            label(index);
-//        }
-
-        lx = findOffset(xoff, long(x-cubex));
+        lx = findOffset(xoff, V3DLONG(x-cubex));
         index = lz*sx*sy + ly*sx + lx;
-        label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         //cout<<"node's x- neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // x+
-//        lx = (nx + 1) * cubex;
-
-        lx = findOffset(xoff, long(x+cubex));
+        lx = findOffset(xoff, V3DLONG(x+cubex));
         index = lz*sx*sy + ly*sx + lx;
-        label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         //cout<<"node's x+ neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         lx = olx;
 
         // y-
-//        lx = nx*cubex;
-
-//        if(ny-1>0)
-//        {
-//            ly = (ny - 1)*cubey;
-
-//            index = lz*sx*sy + ly*sx + lx;
-
-//            label(index);
-//        }
-
-        ly = findOffset(yoff, long(y-cubey));
+        ly = findOffset(yoff, V3DLONG(y-cubey));
         index = lz*sx*sy + ly*sx + lx;
-        label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         //cout<<"node's y- neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // y+
-//        ly = (ny + 1)*cubey;
-
-        ly = findOffset(yoff, long(y+cubey));
+        ly = findOffset(yoff, V3DLONG(y+cubey));
         index = lz*sx*sy + ly*sx + lx;
-        label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         //cout<<"node's y+ neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         ly = oly;
 
         // z-
-//        ly = ny*cubey;
-
-//        if(nz-1>0)
-//        {
-//            lz = (nz - 1)*cubez;
-
-//            index = lz*sx*sy + ly*sx + lx;
-
-//            label(index);
-//        }
-
-        lz = findOffset(yoff, long(z-cubez));
+        lz = findOffset(yoff, V3DLONG(z-cubez));
         index = lz*sx*sy + ly*sx + lx;
-        label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         //cout<<"node's z- neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
 
         // z+
-//        lz = (nz + 1)*cubez;
-
-        lz = findOffset(yoff, long(z+cubez));
+        lz = findOffset(yoff, V3DLONG(z+cubez));
         index = lz*sx*sy + ly*sx + lx;
-        label(index);
+        if(tree.find(index) != tree.end())
+        {
+            points->at(idx).blocks.push_back(index);
+        }
 
         //cout<<"node's z+ neighbor's index "<<lx<<" "<<ly<<" "<<lz<<" "<<index<<endl;
     }
@@ -1205,138 +847,34 @@ string DataFlow::getDirName(string filepath)
     return dirName;
 }
 
-int DataFlow::createDir(string prePath, string dirName)
-{
-    //
-    vector<string> splits = splitFilePath(dirName);
-
-    if( splits.size() != 2 )
-    {
-        cout<<"Invalid dirName"<<endl;
-        return -1;
-    }
-
-    string folder = prePath + "/" + splits[0];
-    layer.yxfolders[dirName].xDirPath = folder;
-
-    DIR *outdir = opendir(folder.c_str());
-    if(outdir == NULL)
-    {
-        //
-        if(makeDir(folder))
-        {
-            cout<<"fail in makeDir "<<folder<<endl;
-            return -1;
-        }
-    }
-    else
-    {
-        closedir(outdir);
-    }
-
-    folder = folder + "/" + splits[1];
-    layer.yxfolders[dirName].yDirPath = folder;
-
-    outdir = opendir(folder.c_str());
-    if(outdir == NULL)
-    {
-        //
-        if(makeDir(folder))
-        {
-            cout<<"fail in makeDir "<<folder<<endl;
-            return -1;
-        }
-    }
-    else
-    {
-        closedir(outdir);
-    }
-
-    //
-    return 0;
-}
-
-int DataFlow::label(long index)
+int DataFlow::label(V3DLONG index)
 {
     //
     if(tree.find(index) != tree.end())
     {
-        Block block = tree[index];
 
-        if(block.visited == false)
-        {
-            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
+//        Block block = tree[index];
 
-            string dirName = getDirName(block.filepath);
+//        if(block.visited == false)
+//        {
+//            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
 
-            cout<<"check dirName: "<<dirName<<endl;
+//            string dirName = getDirName(block.filepath);
 
-            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-            layer.yxfolders[dirName].toBeCopied = true;
-            tree[index].visited = true;
-        }
+//            cout<<"check dirName: "<<dirName<<endl;
+
+//            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+//            layer.yxfolders[dirName].toBeCopied = true;
+//            tree[index].visited = true;
+//        }
     }
 
     return 0;
 }
 
-long DataFlow::findClosest(OffsetType offsets, long idx)
+V3DLONG DataFlow::findOffset(OffsetType offsets, V3DLONG idx)
 {
-    long n = offsets.size();
-    long thresh = 5;
-
-    //
-    if(n<1)
-    {
-        cout<<"Invalid offsets/index"<<endl;
-        return -1;
-    }
-    else
-    {
-        // test
-        cout<<"... offset ... ";
-        for(int i=0; i<n; i++)
-        {
-            cout<<offsets[i]<<" ";
-        }
-        cout<<endl;
-    }
-
-    //
-    if(idx<0)
-    {
-        idx = 0;
-    }
-
-    //
-    long mindist = abs(idx - offsets[0]);
-
-    long offset = offsets[0];
-
-    if(mindist<thresh)
-        return offset;
-
-    //
-    for(long i=1; i<offsets.size(); i++)
-    {
-        long dist = abs(idx - offsets[i]);
-
-        if(dist<mindist)
-        {
-            mindist = dist;
-            offset = offsets[i];
-
-            if(mindist<thresh)
-                return offset;
-        }
-    }
-
-    return offset;
-}
-
-long DataFlow::findOffset(OffsetType offsets, long idx)
-{
-    long n = offsets.size();
+    V3DLONG n = offsets.size();
 
     //
     if(n<1)
@@ -1352,15 +890,15 @@ long DataFlow::findOffset(OffsetType offsets, long idx)
     }
 
     //
-    long mindist = abs(idx - offsets[0]);
+    V3DLONG mindist = abs(idx - offsets[0]);
 
-    long offset = offsets[0];
+    V3DLONG offset = offsets[0];
     size_t index = 0;
 
     //
-    for(long i=1; i<offsets.size(); i++)
+    for(V3DLONG i=1; i<offsets.size(); i++)
     {
-        long dist = abs(idx - offsets[i]);
+        V3DLONG dist = abs(idx - offsets[i]);
 
         if(dist<mindist)
         {
@@ -1417,7 +955,7 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
 
     //cout<<"test "<<sz0<<" "<<sz1<<" "<<sz2<<" "<<datatype<<endl;
 
-    long imgsz = (long)sz0*(long)sz1*(long)sz2*(long)datatype;
+    V3DLONG imgsz = (V3DLONG)sz0*(V3DLONG)sz1*(V3DLONG)sz2*(V3DLONG)datatype;
 
     //
     try
@@ -1518,7 +1056,7 @@ bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
         else
         {
             cout<<"Invalid input"<<endl;
-            cout<<"vaa3d -x flythrough -f flythrough -i inputdir input.swc -o outputdir -p scale<0/1/2/3/4/5/...>"<<endl;
+            cout<<"vaa3d -x flythrough -f flythrough -i inputdir input.swc -p scale<0/1/2/3/4/5/...>"<<endl;
             return false;
         }
     }
@@ -1548,13 +1086,12 @@ bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     QString inputdir = QString(inlist->at(0));
     QString swcfile = QString(inlist->at(1));
 
-    QString outputdir = QString(outlist->at(0));
+    // QString outputdir = QString(outlist->at(0));
 
     float ratio = pow(2.0, scale);
 
     //
-    // DataFlow qc(outputdir.toStdString()); // test mdata.bin writing
-    DataFlow qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
+    // DataFlow qc(swcfile.toStdString(), inputdir.toStdString(), ratio);
 
     //
     return true;

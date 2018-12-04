@@ -79,14 +79,20 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
         V3DLONG i = 31; // for test
         V_NeuronSWC neuseg = neulist.seg[i];
 
-
+        PointCloud *pc;
         for(V3DLONG j=0; j<neuseg.row.size(); j++)
         {
             Point p(neuseg.row[j].x, neuseg.row[j].y, neuseg.row[j].z);
 
             // p.x, p.y, p.z
+            pc->push_back(p);
+        }
 
+        DataFlow df(pc, dataDirPath.toStdString(), bsx, bsy, bsz);
 
+        for(V3DLONG k=0; k<pc->size(); k++)
+        {
+            cout<<"test ... "<<k<<" "<<pc->at(k).blocks.size()<<endl;
         }
 
         // step 2.1. load related blocks (caching)
