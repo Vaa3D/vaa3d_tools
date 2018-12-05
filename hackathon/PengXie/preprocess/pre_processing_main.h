@@ -33,7 +33,7 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent);
 bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, double thres = 0, double thres_long = 10,
                     double step_size = 0, double connect_soma_dist = 70, bool rotation = false,
-                    bool colorful = false, bool return_maintree = false);
+                    bool colorful = false, bool return_maintree = false, bool return_temp=false);
 bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & output);
 

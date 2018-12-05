@@ -331,7 +331,7 @@ QList<CellAPO> get_new_marker(QString APO_file, int r, int g, int b){
 
 bool pre_processing(QString qs_input, QString qs_output, double prune_size, double thres, double thres_long,
                     double step_size, double connect_soma_dist, bool rotation,
-                    bool colorful, bool return_maintree)
+                    bool colorful, bool return_maintree, bool return_temp)
 {
     printf("welcome to use pre_processing!\n");
 
@@ -374,7 +374,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     printf("\tRemoving duplicates\n");
     // Maybe not the best solution. Use it for now.
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".dedup.swc"));
+    if(return_temp)
+    {
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".dedup.swc"));
+    }
 
     //2.1 Resample
     printf("\tResampling\n");
@@ -384,7 +387,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     }else{
         printf("Skip Resampling\n");
     }
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".resample.swc"));
+    if(return_temp)
+    {
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".resample.swc"));
+    }
 
     //2.2 Prune
     printf("\tPruning short branches\n");
@@ -394,7 +400,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         return 1;
     }
     nt.deepCopy(cur_nt);
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
+    if(return_temp)
+    {
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
+    }
 
     //2.3 Short distance connection
     cur_nt.deepCopy(nt);
@@ -406,8 +415,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".short_connection.apo", 255,0,0));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".short_connection.apo", 0,0,0).size()/2<<count_root(nt);
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".short_connection.swc"));
-
+    if(return_temp)
+    {
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".short_connection.swc"));
+    }
 
     //2.4 Connect to soma
     bool connect_soma_performed = 1;
@@ -430,7 +441,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tSkip connecting to soma\n");
         connect_soma_performed=0;
     }
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));
+    if(return_temp)
+    {
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));
+    }
 
 
     // 2.5 Long connection
@@ -449,8 +463,10 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         int soma = 0;
         nt.deepCopy(single_tree(nt, soma));
     }
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".long_connection.swc"));
-
+    if(return_temp)
+    {
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".long_connection.swc"));
+    }
 
     //2.6 Align axis
     cur_nt.listNeuron = nt.listNeuron;
@@ -473,9 +489,13 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     writeAPO_file(outfileLabel+".apo", markers);
     my_saveANO(outfileLabel, true, true, qs_output);
 
-    if (export_listNeuron_2swc(new_connection,qPrintable(outfileLabel+".new_connection.swc"))){
-        printf("\t %s has been generated successfully.\n",qPrintable(outfileLabel+".new_connection.swc"));
+    if(return_temp)
+    {
+        if (export_listNeuron_2swc(new_connection,qPrintable(outfileLabel+".new_connection.swc"))){
+            printf("\t %s has been generated successfully.\n",qPrintable(outfileLabel+".new_connection.swc"));
+        }
     }
+
 
     return 1;
 }
@@ -537,7 +557,7 @@ bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & ou
     double prune_size = 2; //default case
     double step_size = 0;
     double connect_soma_dist = 20;
-    double thres = 2;
+    double thres = 0.5;
     double thres_long = 10;
     bool rotation = false;
     bool colorful = false;
@@ -700,12 +720,14 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 
     double prune_size = 2; //default case
     double step_size = 0;
-    double connect_soma_dist = 70;
-    double thres = 2;
+    double connect_soma_dist = 20;
+    double thres = 0.5;
     double thres_long = 10;
     bool rotation = false;
     bool colorful = false;
     bool return_maintree = false;
+    bool return_temp = false;
+
 
     //choose a directory that contain swc files
     QString qs_input;
