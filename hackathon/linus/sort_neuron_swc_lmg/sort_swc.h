@@ -68,15 +68,100 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
 	}
 };
 
-bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newrootid, double thres, double root_dist_thres)
+bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newrootid, double thres, double root_dist_thres, QList<CellAPO> markers)
 {
 
     //get all root ids and parents of each node
     QList<V3DLONG> rootlist;
+    vector<long> parents0;
     vector<long> parents;
+    vector<long> ids0;
     vector<long> ids;
     QList<V3DLONG> tips;
     //QList<NeuronSWC> neuron = neurons;
+
+    //Remove duplicated nodes
+    //get ids and reorder tree with ids following list
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        ids0.push_back(neuron.at(i).n);
+    }
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        neuron[i].n=i+1;
+        if(neuron.at(i).pn !=-1)
+        {
+            neuron[i].pn=find(ids0.begin(), ids0.end(),neuron.at(i).pn) - ids0.begin()+1;
+            parents0.push_back(neuron.at(i).pn);
+        }
+    }
+    QList<V3DLONG>  child_num0;
+    for(V3DLONG i=0;i<neuron.size();i++)// 0 or 1? check!
+    {
+        child_num0.push_back(count(parents0.begin(),parents0.end(),neuron.at(i).n));
+    }
+
+    vector<bool> dupnodes;
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        dupnodes.push_back(false);
+    }
+    for(V3DLONG h=0;h<neuron.size();h++)
+    {
+        for(V3DLONG i=h+1;i<neuron.size();i++)
+        {
+            if(neuron.at(h).x == neuron.at(i).x && neuron.at(h).y == neuron.at(i).y && neuron.at(h).z == neuron.at(i).z)
+            {
+                if(neuron.at(i).pn != -1)
+                {
+                    if(child_num0.at(i)!=0)
+                    {
+                        //find nodes that pointed to i and make them point to its parent node
+                        for(V3DLONG j=0;j<neuron.size();j++)
+                        {
+                            if(neuron.at(j).pn==neuron.at(i).n)
+                            {
+                                neuron[j].pn = neuron.at(i).pn;
+                            }
+                        }
+                    }
+                    dupnodes[i]=true;
+                }
+                else
+                {
+                    dupnodes[h]=true;
+                    dupnodes[i]=false;
+                    if(child_num0.at(h)!=0)
+                    {
+                        //find nodes that pointed to i-1 and make them point to its parent node
+                        for(V3DLONG j=0;j<neuron.size();j++)
+                        {
+                            if(neuron.at(j).pn==neuron.at(h).n)
+                            {
+                                neuron[j].pn = neuron.at(h).pn;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //dupnodes.push_back(false);
+                dupnodes[i]=false;
+            }
+        }
+    }
+    QList<NeuronSWC> neuron2;
+    neuron2.append(neuron.at(0));
+    for(V3DLONG i=1;i<neuron.size();i++)
+    {
+        if(dupnodes.at(i) == false) neuron2.append(neuron.at(i));
+        //else qDebug()<<i;
+    }
+    neuron = neuron2;
+    qDebug()<<"Removed" << count(dupnodes.begin(),dupnodes.end(),true) << " duplicated nodes";
+
+
     //get ids and reorder tree with ids following list
     for(V3DLONG i=0;i<neuron.size();i++)
     {
@@ -85,7 +170,6 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         {
             newrootid=i;
         }
-        //qDebug()<<neuron.at(i).n<<newrootid;
     }
     for(V3DLONG i=0;i<neuron.size();i++)
     {
@@ -100,10 +184,64 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
             parents.push_back(neuron.at(i).pn);
         }
     }
-    qDebug()<<"Root ids and parents found";
 
-    //check if new root id is valid and take first root in the list otherwise
-    if(newrootid!=VOID)
+    //find branches
+    QList<V3DLONG>  child_num;
+    QList<V3DLONG>  tiplist;
+    for(V3DLONG i=0;i<neuron.size();i++)// 0 or 1? check!
+    {
+        child_num.push_back(count(parents.begin(),parents.end(),neuron.at(i).n));
+        if(child_num.at(i)==0 && neuron.at(i).pn!=-1)
+        {
+            tiplist.push_back(i);
+        }
+    }
+
+    qDebug()<<"Root, tip ids and parents found";
+
+    //check if marker exists and use it as root
+    if(markers.size()>0)
+    {
+        if(markers.size()==1)
+        {
+            NeuronSWC S;
+            //markers.at(0).operator XYZ;
+            S.x = markers.at(0).x;
+            S.y = markers.at(0).y;
+            S.z = markers.at(0).z;
+            S.r = markers.at(0).volsize;
+            S.n = neuron.size();
+            S.pn = -1;
+            neuron.append(S);
+
+            qDebug()<< "Marker found. Using it as root."; //<< neuron.size()<< neuron.at(neuron.size()-1).pn;
+        }
+        else{
+            int count=0;
+            for(int i=0;i<markers.size();i++)
+            {
+                if(count==0 && markers.at(i).comment == "soma")//markers.at(i).color.r == 0 && markers.at(i).color.g == 0 && markers.at(i).color.b == 255)
+                {
+                    NeuronSWC S;
+                    //markers.at(0).operator XYZ;
+                    S.x = markers.at(i).x;
+                    S.y = markers.at(i).y;
+                    S.z = markers.at(i).z;
+                    S.r = markers.at(i).volsize;
+                    S.n = neuron.size();
+                    S.pn = -1;
+                    neuron.append(S);
+                    count++;
+                }
+            }
+            qDebug()<< "Warning: more than one marker in the file, taking one commented as 'soma'";// << neuron.size();
+        }
+        newrootid = neuron.size()-1;
+        rootlist.push_back(newrootid);
+        //tiplist.push_back(newrootid);
+        parents.push_back(-1);
+
+    }else if(newrootid!=VOID) //check if new root id is valid and take first root in the list otherwise
     {
         //newrootid = newrootid;
         if(neuron.at(newrootid).pn==-1)
@@ -117,50 +255,289 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         qDebug()<<"Selected node is not a root, taking first root node:" << newrootid+1;
     }
 
-    //connect all local roots directly to soma
-    double dist2 = 0;
+    //assign segids
+    int segid = 0;
+    int rootsegid = VOID;
+    V3DLONG walknode = 0;
+    vector<int> visited_walknodes;
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        visited_walknodes.push_back(0);
+    }
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        if(child_num.at(i) ==0)
+        {
+            vector<int> segment;
+            walknode = i;
+            //neuron[walknode].seg_id = segid;
+            while(neuron.at(walknode).pn!=-1)
+            {
+                neuron[walknode].seg_id = segid;
+                segment.push_back(walknode);
+                visited_walknodes[walknode] = 1;
+                walknode = neuron.at(walknode).pn-1;//find(ids.begin(), ids.end(),neuron.at(walknode).pn) - ids.begin();
+            }
+            if(visited_walknodes.at(walknode)==0)
+            {
+                visited_walknodes[walknode] = 1;
+                neuron[walknode].seg_id = segid;
+                //qDebug()<<walknode<<segid;
+                if(walknode == newrootid)
+                {
+                    rootsegid=segid;
+                }
+                segid++;
+            }
+            else
+            {
+                for(int j=0;j<segment.size();j++)
+                {
+                    neuron[segment.at(j)].seg_id =  neuron.at(walknode).seg_id;
+                }
+                qDebug() << "Visited segid:" << neuron.at(walknode).seg_id;
+            }
+        }
+    }
+
+    //connect all local branches directly to soma
     int counter = 0;
-    for(int i=0;i<rootlist.size();i++)
+    for(V3DLONG ii=0;ii<segid;ii++)
+    {
+        //double dist2 = MAX_DOUBLE;
+        double distroot = MAX_DOUBLE;
+        double disttip = MAX_DOUBLE;
+        int localroot = VOID;
+        int localtip = VOID;
+        //vector<int> localtips;
+        for(V3DLONG i=0;i<neuron.size();i++)
+        {
+            if(neuron.at(i).seg_id==ii && ii!=rootsegid && neuron.at(i).pn==-1)
+            {
+                localroot = i;
+                distroot = computeDist2(neuron.at(i),neuron.at(newrootid));
+            }
+            if(neuron.at(i).seg_id==ii && ii!=rootsegid && child_num.at(i)==0 && neuron.at(i).pn!=-1)
+            {
+                //localtips.push_back(i);
+                if(computeDist2(neuron.at(i),neuron.at(newrootid))<disttip)
+                {
+                    localtip = i;
+                    disttip = computeDist2(neuron.at(i),neuron.at(newrootid));
+                }
+            }
+        }
+        if(distroot<disttip && distroot<=root_dist_thres)
+        {
+            neuron[localroot].pn = newrootid+1;
+            counter++;
+            qDebug() << "Segment" << neuron.at(localroot).seg_id << "root connected to soma.";
+        }
+        else if(disttip<distroot && disttip<=root_dist_thres)
+        {
+            //neuron[localtip].pn
+            int walknode1 = newrootid;
+            int maxit = 0;
+            int walknode2 = neuron.at(localtip).n-1;
+            int lastnode = walknode2;
+            int walknode3 = neuron.at(walknode2).pn-1;
+            if(neuron.at(walknode3).pn==-1)
+            {
+                neuron[walknode2].pn = walknode1+1;
+                neuron[walknode3].pn = walknode2+1;
+                counter++;
+                qDebug() << "Segment" << neuron.at(lastnode).seg_id << "tip connected to soma.";
+            }
+            else while(neuron.at(walknode3).pn!=-1 && maxit<neuron.size())
+            {
+                walknode1 = walknode2;
+                walknode2 = walknode3;
+                walknode3 = neuron.at(walknode2).pn-1;
+                neuron[walknode2].pn = walknode1+1;
+                if(maxit == 0)
+                {
+                    neuron[lastnode].pn = newrootid+1;
+                    counter++;
+                    qDebug() << "Segment" << neuron.at(lastnode).seg_id << "tip connected to soma.";
+                }
+                //qDebug()<<walknode1+1<<walknode2+1<<walknode3+1<<neuron.at(walknode2).pn;
+                maxit++;
+            }
+            if(maxit == neuron.size())
+            {
+                qDebug() << "Careful, while broke"; // << walknode1+1 << walknode2+1 << walknode3+1 <<  neuron.at(tiplist.at(i)).n <<  neuron.at(tiplist.at(i)).pn << newrootid + 1;
+            }
+            if(neuron.at(walknode3).pn==-1 && walknode3 != newrootid)
+            {
+                neuron[walknode3].pn = walknode2+1;
+            }
+        }
+    }
+
+    /*for(int i=0;i<rootlist.size();i++)
     {
         //qDebug()<<i<<rootlist.at(5)<<neuron.size();
         dist2 = computeDist2(neuron.at(rootlist.at(i)),neuron.at(newrootid));
         if(dist2 <= root_dist_thres && rootlist.at(i) != newrootid)
         {
-            neuron[rootlist.at(i)].pn = newrootid+1;
-            counter++;
+            int jj = VOID;
+            for(int j=0;j<tiplist.size();j++)
+            {
+                if(neuron.at(tiplist.at(j)).seg_id == neuron.at(rootlist.at(i)).seg_id) jj=j;
+            }
+            if(jj!=VOID && tiplist.at(jj)!=newrootid)
+            {
+                disttip = computeDist2(neuron.at(tiplist.at(jj)),neuron.at(newrootid));
+                if(dist2<=disttip)
+                {
+                    neuron[rootlist.at(i)].pn = newrootid+1;
+                    qDebug() << "Segid " << neuron.at(rootlist.at(i)).seg_id << " connected to soma.";
+                    //qDebug() << neuron.at(rootlist.at(i)).n << neuron.at(rootlist.at(i)).seg_id << neuron.at(rootlist.at(i)).pn << neuron.at(neuron.at(rootlist.at(i)).pn-1).seg_id;
+                    counter++;
+                }
+            }
         }
     }
-    qDebug()<<counter<<"local roots connected";
+    for(int i=0;i<tiplist.size();i++)
+    {
+        //qDebug()<<i<<rootlist.at(5)<<neuron.size();
+        int walknode,walknode1,walknode2,walknode3,lastnode;
+        dist2 = computeDist2(neuron.at(tiplist.at(i)),neuron.at(newrootid));
+        if(dist2 <= root_dist_thres && tiplist.at(i) != newrootid && neuron.at(tiplist.at(i)).pn != -1)
+        {
+            walknode = neuron.at(tiplist.at(i)).n-1;
+            while(neuron.at(walknode).pn !=-1)
+            {
+                walknode = neuron.at(walknode).pn -1;
+            }
+            distroot = computeDist2(neuron.at(walknode),neuron.at(newrootid));
+            if(dist2<distroot && walknode != newrootid)
+            {
+                walknode1 = newrootid;
+                int maxit = 0;
+                walknode2 = neuron.at(tiplist.at(i)).n-1;
+                lastnode = walknode2;
+                walknode3 = neuron.at(walknode2).pn-1;
+                while(neuron.at(walknode3).pn!=-1 && maxit<neuron.size())
+                {
+                    walknode1 = walknode2;
+                    walknode2 = walknode3;
+                    walknode3 = neuron.at(walknode2).pn-1;//find(ids.begin(), ids.end(), neuron.at(walknode2).pn) - ids.begin();
+                    //walknode3 = neuron.at(walknode2).pn-1;
+                    neuron[walknode2].pn = walknode1+1;//neuron.at(walknode1).n;
+                    if(maxit == 0)
+                    {
+                        neuron[lastnode].pn = newrootid+1;
+                        qDebug() << "Segid " << neuron.at(lastnode).seg_id << " connected to soma.";
+                        //qDebug() << neuron.at(lastnode).n << neuron.at(lastnode).seg_id << neuron.at(lastnode).pn << neuron.at(neuron.at(lastnode).pn-1).seg_id;
+                    }
+                    //qDebug()<<walknode1+1<<walknode2+1<<walknode3+1<<neuron.at(walknode2).pn;
+                    maxit++;
+                }
+                if(maxit == neuron.size())
+                {
+                    qDebug() << "Careful, while broke"; // << walknode1+1 << walknode2+1 << walknode3+1 <<  neuron.at(tiplist.at(i)).n <<  neuron.at(tiplist.at(i)).pn << newrootid + 1;
+                }
+                if(neuron.at(walknode3).pn==-1 && walknode3 != newrootid)
+                {
+                    neuron[walknode3].pn = walknode2+1;
+                    //qDebug() << walknode3+1 << neuron.at(walknode3).pn;
+                    //qDebug() << neuron.at(tiplist.at(i)).n << neuron.at(tiplist.at(i)).pn << neuron.at(neuron.at(tiplist.at(i)).pn-1).pn;
+                }
+            }
+            //qDebug()<<walknode2<<walknode3;
+
+            //neuron[lastnode].pn = newrootid+1;
+            //neuron[tiplist.at(i)].pn = newrootid+1;
+            //qDebug()<<newrootid+1;
+            counter++;
+        }
+    }*/
+    if(counter==0 && markers.size()>0)
+    {
+        tiplist.push_back(newrootid);
+    }
+    qDebug()<<counter<<"local branches connected";
+
+    //re-obtain roots and tips
+    QList<V3DLONG> rootlist2;
+    vector<long> parents2;
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        neuron[i].n=i+1;
+        if(neuron.at(i).pn ==-1)
+        {
+            rootlist2.push_back(i);//neuron.at(i).n-1);
+        }
+        else
+        {
+            parents2.push_back(neuron.at(i).pn);
+        }
+    }
+    rootlist = rootlist2;
+    parents = parents2;
 
     //find branches
-    QList<V3DLONG>  child_num;
+    QList<V3DLONG>  child_num2;
+    QList<V3DLONG>  tiplist2;
     for(V3DLONG i=0;i<neuron.size();i++)// 0 or 1? check!
     {
-        child_num.push_back(count(parents.begin(),parents.end(),neuron.at(i).n));
+        child_num2.push_back(count(parents2.begin(),parents2.end(),neuron.at(i).n));
+        if(child_num2.at(i)==0 )
+        {
+            tiplist2.push_back(i);
+        }
     }
+    child_num = child_num2;
+    tiplist = tiplist2;
 
-    //assign segids
+    //re-assign segids
     vector<int> rootsegids;
-    int segid = 0;
-    V3DLONG walknode = 0;
+    vector<int> visited_walknodes2;
+    for(V3DLONG i=0;i<neuron.size();i++)
+    {
+        visited_walknodes2.push_back(0);
+    }
+    visited_walknodes = visited_walknodes2;
+    segid = 0;
+    walknode = 0;
     for(V3DLONG i=0;i<neuron.size();i++)
     {
         if(child_num.at(i) ==0)
         {
+            vector<int> segment;
             walknode = i;
-            neuron[walknode].seg_id = segid;
+            ///neuron[walknode].seg_id = segid;
+            //segment.push_back(walknode);
+            //visited_walknodes[walknode] = 1;
             while(neuron.at(walknode).pn!=-1)
             {
-                walknode = neuron.at(walknode).pn-1;//find(ids.begin(), ids.end(),neuron.at(walknode).pn) - ids.begin();
                 neuron[walknode].seg_id = segid;
+                segment.push_back(walknode);
+                visited_walknodes[walknode] = 1;
+                walknode = neuron.at(walknode).pn-1;//find(ids.begin(), ids.end(),neuron.at(walknode).pn) - ids.begin();
                 //qDebug()<<walknode<<segid;
             }
-            neuron[walknode].seg_id = segid;
-            if(neuron.at(walknode)==newrootid)
+            //qDebug()<<walknode<<newrootid<<visited_walknodes.at(walknode);
+            if(visited_walknodes.at(walknode)==0)
             {
-                rootsegids.push_back(segid);
+                visited_walknodes[walknode] = 1;
+                neuron[walknode].seg_id = segid;
+                /*if(neuron.at(walknode).n == newrootid+1)
+                {
+                    rootsegids.push_back(segid);
+                    //qDebug()<<segid;
+                }*/
+                segid++;
             }
-            segid++;
+            else
+            {
+                for(int j=0;j<segment.size();j++)
+                {
+                    neuron[segment.at(j)].seg_id =  neuron.at(walknode).seg_id;
+                }
+                //qDebug() << "Visited root segid:" << neuron.at(walknode).seg_id;
+            }
         }
     }
     //qDebug()<<neuron.at(0).seg_id<<neuron.at(newrootid).seg_id;
@@ -219,7 +596,7 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
         //qDebug()<<ii<<count(rootsegids.begin(),rootsegids.end(),ii);
         if(count(rootsegids.begin(),rootsegids.end(),ii)==0)
         {
-            dist2 = MAX_DOUBLE;
+            double dist2 = MAX_DOUBLE;
             min=VOID;
             //int pidchild = VOID;
             cout << "\r" <<"Connecting segments: "<< ii << " /" << segid;
@@ -273,13 +650,17 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
                     }
                     if(maxit==neuron.size())
                     {
-                        qDebug()<<"Careful, while broke";
+                        qDebug()<<"Careful, while broke" << ii << count(rootsegids.begin(),rootsegids.end(),ii) << cid << pid << walknode1 << walknode2 << walknode3;
                     }
                     if(walknode3!=newrootid)// && neuron.at(walknode3).seg_id==segid)//is this condition necessary?
                     {
                         neuron[walknode3].pn = walknode2+1;//neuron.at(walknode2).n;
                     }
                     neuron[cid].pn = pid+1;//neuron.at(pid).n;
+                    if(ii==segid)
+                    {
+                        qDebug() << cid+1 << pid+1;
+                    }
 
                 }
                 int parentsegid = neuron.at(pid).seg_id;
@@ -305,7 +686,10 @@ bool SortSWC(QList<NeuronSWC> & neuron, QList<NeuronSWC> & result, V3DLONG newro
     if(rootnum!=1)
     {
         qDebug()<<rootnum;
-        v3d_msg("Error, 0 or more than 1 root!");
+        if(rootnum>1)
+        {v3d_msg("Error, more than 1 root!");}
+        if(rootnum==0)
+        {v3d_msg("Error, 0 roots!");}
         return(false);
     }
     else

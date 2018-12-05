@@ -1,9 +1,9 @@
 #include <iostream>
-#include <set>
-#include <iterator>
 #include <fstream>
+#include <set>
+#include <cmath>
 
-#include <boost\filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "ImgProcessor.h"
 #include "ImgManager.h"
@@ -11,46 +11,216 @@
 using namespace std;
 using namespace boost::filesystem;
 
-registeredImg::registeredImg(string inputImgName)
+void registeredImg::getHistMap_no0()
 {
-	this->imgFullPathName = inputImgName;
-	const char* imgName = inputImgName.c_str();
-	this->thisImg4DPtr = new Image4DSimple;
-	this->thisImg4DPtr->loadImage(imgName);
-	this->imgData1D = new unsigned char;
-	ImgManager::img1Ddumpster(this->thisImg4DPtr, this->imgData1D, this->dims, this->datatype);
+	if (slicePtrs.empty())
+	{
+		cerr << "No existing images. Do nothing and return." << endl;
+		return;
+	}
+
+	int sliceDims[3];
+	sliceDims[0] = this->dims[0];
+	sliceDims[1] = this->dims[1];
+	sliceDims[2] = 1;
+
+	for (map<string, myImg1DPtr>::iterator it = this->slicePtrs.begin(); it != this->slicePtrs.end(); ++it)
+	{
+		map<int, size_t> currSliceHistMap = ImgProcessor::histQuickList(it->second.get(), sliceDims);
+		for (map<int, size_t>::iterator cummIt = currSliceHistMap.begin(); cummIt != currSliceHistMap.end(); ++cummIt)
+		{
+			if (!this->histMap.insert({ cummIt->first, cummIt->second }).second)
+				this->histMap[cummIt->first] = this->histMap[cummIt->first] = cummIt->second;
+		}
+	}
 }
 
-bool ImgManager::img1Ddumpster(Image4DSimple* inputImgPtr, unsigned char*& data1D, long int dims[4], int datatype)
+void registeredImg::getHistMap_no0_log10()
 {
-	if (!inputImgPtr || !inputImgPtr->valid())
-		return false;
-
-	if (data1D) { delete[] data1D; data1D = 0; }
-
-	V3DLONG totalbytes = inputImgPtr->getTotalBytes();
-	try
+	if (slicePtrs.empty())
 	{
-		data1D = new unsigned char[totalbytes];
-		if (!data1D) goto Label_error_simple_loadimage_wrapper;
-
-		memcpy(data1D, inputImgPtr->getRawData(), totalbytes);
-		datatype = inputImgPtr->getUnitBytes(); // 1, 2, or 4
-		dims[0] = inputImgPtr->getXDim();
-		dims[1] = inputImgPtr->getYDim();
-		dims[2] = inputImgPtr->getZDim();
-		dims[3] = inputImgPtr->getCDim();
+		cerr << "No existing images. Do nothing and return." << endl;
+		return;
 	}
-	catch (...)
+
+	if (!this->histMap.empty())
 	{
-		goto Label_error_simple_loadimage_wrapper;
+		for (map<int, size_t>::iterator it = this->histMap.begin(); it != this->histMap.end(); ++it)
+		{
+			double countLog10 = log10(float(it->second));
+			this->histMap_log10.insert({ it->first, countLog10 });
+		}
 	}
-	return true;
-
-Label_error_simple_loadimage_wrapper:
-	if (inputImgPtr) { delete inputImgPtr; inputImgPtr = 0; }
-	return false;
+	else
+	{
+		this->getHistMap_no0();
+		this->getHistMap_no0_log10();
+	}
 }
+
+ImgManager::ImgManager(QString inputPath)
+{
+	// boost::filesystem conflicts with Qt's QFile and QDir libraries. 
+	// Since the library is bound to be under Vaa3D framework (Qt UI), boost::filesystem is not chosen.
+
+	this->caseList.clear();
+	QDir inputDir(inputPath);
+	inputDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+	this->caseList = inputDir.entryList();
+
+	if (caseList.empty()) // No directories found.
+	{
+		inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+		this->caseList = inputDir.entryList();
+
+		int swcFileCount = 0;
+		int tifFileCount = 0;
+		for (QStringList::iterator caseCheckIt = this->caseList.begin(); caseCheckIt != this->caseList.end(); ++caseCheckIt)
+		{
+			if ((*caseCheckIt).contains(".swc")) ++swcFileCount;
+			else if ((*caseCheckIt).contains(".tif")) ++tifFileCount;
+		}
+
+		if (swcFileCount == this->caseList.size())
+		{
+			this->inputSWCRootPath = inputPath;
+			this->inputCaseRootPath = "";
+		}
+		else if (tifFileCount == this->caseList.size())
+		{
+			this->inputSWCRootPath = "";
+			this->inputCaseRootPath = inputPath;
+			for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+			{
+				QString imgFullPath = this->inputCaseRootPath + "/" + *caseIt;
+				QStringList nameParse = (*caseIt).split(".");
+				*caseIt = nameParse.at(0);
+				this->inputMultiCasesSliceFullPaths.insert({ (*caseIt).toStdString(), imgFullPath.toStdString() });
+			}
+		}
+	}
+	else
+	{
+		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+		{
+			this->inputCaseRootPath = inputPath;
+			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
+			QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
+			QDir caseFolder(caseFullPath);
+			caseFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+			QStringList caseSlices = caseFolder.entryList();
+			if (caseSlices.empty()) cout << "case " << (*caseIt).toStdString() << " is empty. Skip." << endl;
+
+			for (QStringList::iterator sliceIt = caseSlices.begin(); sliceIt != caseSlices.end(); ++sliceIt)
+			{
+				QString sliceFullPath = caseFullPath + "/" + *sliceIt;
+				this->inputMultiCasesSliceFullPaths.insert({ (*caseIt).toStdString(), sliceFullPath.toStdString() });
+			}
+		}
+	}
+}
+
+
+// ======================================= I/O and Image Property Profile ======================================= //
+void ImgManager::imgEntry(string caseID, imgFormat format) 
+{
+	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
+	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
+
+	cout << " -- Input image name: " << caseID << endl;
+	if (format == slices)
+	{
+		registeredImg currImgCase;
+		currImgCase.imgAlias = caseID;
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID);
+		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
+		{
+			string sliceFullName = it->second;
+			vector<string> sliceFullNameParse;
+			boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+			string sliceFileName = sliceFullNameParse.back();
+			const char* sliceFullNameC = sliceFullName.c_str();
+			Image4DSimple* slicePtr = new Image4DSimple;
+			slicePtr->loadImage(sliceFullNameC);
+			currImgCase.dims[0] = int(slicePtr->getXDim());
+			currImgCase.dims[1] = int(slicePtr->getYDim());
+			currImgCase.dims[2] = 1;
+			long int totalbyteSlice = slicePtr->getTotalBytes();
+			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
+			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
+			currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
+
+			slicePtr->~Image4DSimple();
+			operator delete(slicePtr);
+		}
+
+		this->imgDatabase.insert({ caseID, currImgCase });
+		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
+	}
+	else if (format == singleCase_singleSlice)
+	{
+		registeredImg currImgCase;
+		currImgCase.imgAlias = caseID;
+		
+		string sliceFullName = this->inputSingleCaseSingleSliceFullPath;
+		vector<string> sliceFullNameParse;
+		boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+		string sliceFileName = sliceFullNameParse.back();
+		const char* sliceFullNameC = sliceFullName.c_str();
+		Image4DSimple* slicePtr = new Image4DSimple;
+		slicePtr->loadImage(sliceFullNameC);
+		currImgCase.dims[0] = int(slicePtr->getXDim());
+		currImgCase.dims[1] = int(slicePtr->getYDim());
+		currImgCase.dims[2] = int(slicePtr->getZDim());
+		long int totalbyteSlice = slicePtr->getTotalBytes();
+		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
+		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
+		currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
+
+		slicePtr->~Image4DSimple();
+		operator delete(slicePtr);
+
+		this->imgDatabase.insert({ caseID, currImgCase });
+		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
+	}
+}
+// ===================================== END of [I/O and Image Property Profile] ===================================== //
+
+// ======================================= Image - SWC Methods ======================================= //
+NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
+{
+	NeuronTree outputTree;
+	int zCoord = 0;
+	int nodeCount = 0;
+	for (map<string, myImg1DPtr>::const_iterator sliceIt = sourceImg.slicePtrs.begin(); sliceIt != sourceImg.slicePtrs.end(); ++sliceIt)
+	{
+		++zCoord;
+		for (size_t i = 0; i < sourceImg.dims[0] * sourceImg.dims[1]; ++i)
+		{
+			if (sliceIt->second.get()[i] > 0)
+			{
+				int yCoord = int(i + 1) / sourceImg.dims[0];
+				int xCoord = int(i + 1) % sourceImg.dims[0];
+
+				++nodeCount;
+				NeuronSWC newNode;
+				newNode.x = xCoord;
+				newNode.y = yCoord;
+				newNode.z = zCoord;
+				newNode.type = type;
+				newNode.n = nodeCount;
+				newNode.parent = -1;
+
+				outputTree.listNeuron.append(newNode);
+			}
+		}
+	}
+
+	return outputTree;
+}
+
+
+// =================================== END of [Image - SWC Methods] ===================================== //
 
 // ================= Methods for generating binary masks from SWC files ================= //
 void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)
@@ -89,9 +259,11 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 	const char* firstImgC = firstImg.c_str();
 	Image4DSimple* tempPtr = new Image4DSimple;
 	tempPtr->loadImage(firstImgC);
-	long int dims[2];
+	int dims[2];
 	dims[0] = tempPtr->getXDim();
 	dims[1] = tempPtr->getYDim();
+	dims[2] = tempPtr->getZDim();
+	dims[3] = tempPtr->getCDim();
 	cout << "image dimension: " << dims[0] << " " << dims[1] << endl;
 	
 	unsigned char* maskMIP = new unsigned char[dims[0] * dims[1]];
@@ -108,7 +280,7 @@ void ImgManager::MaskMIPfrom2Dseries(string path)
 		V3DLONG totalbytes = inputMask4D->getTotalBytes();
 		unsigned char* input1D = new unsigned char[totalbytes];
 		memcpy(input1D, inputMask4D->getRawData(), totalbytes);
-		ImgProcessor::imageMax(input1D, maskMIP, totalbytes);
+		ImgProcessor::imgMax(input1D, maskMIP, maskMIP, dims);
 		delete inputMask4D;
 	}
 
@@ -231,13 +403,14 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 	unsigned char* img1D = new unsigned char[totalbytes];
 	memcpy(img1D, inputImg4D->getRawData(), totalbytes);
 
-	int imgX = inputImg4D->getXDim();
-	int imgY = inputImg4D->getYDim();
-	int channel = inputImg4D->getCDim();
-	cout << "x dimension: " << imgX << "    y dimension: " << imgY << endl;
+	int dims[3];
+	dims[0] = inputImg4D->getXDim();
+	dims[1] = inputImg4D->getYDim();
+	dims[2] = inputImg4D->getCDim();
+	cout << "x dimension: " << dims[0] << "    y dimension: " << dims[1] << endl;
 
-	int i_tileSteps = imgX / tileSize;
-	int j_tileSteps = imgY / tileSize;
+	int i_tileSteps = dims[0] / tileSize;
+	int j_tileSteps = dims[1] / tileSize;
 	cout << "tiles in x: " << i_tileSteps << "    tiles in y: " << j_tileSteps << endl;
 	ImgProcessor* imgProcPtr = new ImgProcessor;
 	for (int j = 0; j < j_tileSteps; ++j)
@@ -254,8 +427,8 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 			ROIxyz[0] = tileSize;
 			ROIxyz[1] = tileSize;
 			ROIxyz[2] = 1;
-			ROIxyz[3] = channel;
-			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, imgX, imgY);
+			ROIxyz[3] = dims[2];
+			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, dims);
 
 			QString patchPath = QString::fromStdString(imgName) + "_patches";
 			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);

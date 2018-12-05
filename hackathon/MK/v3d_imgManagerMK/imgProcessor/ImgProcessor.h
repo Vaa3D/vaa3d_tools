@@ -4,9 +4,17 @@
 //------------------------------------------------------------------------------
 
 /*******************************************************************************
-* This library intends to fascilitate basic image operations
-
-*/
+*
+*  This library intends to fascilitate Vaa3D image operations in the lowest level.
+*  ImgProcessor class only takes array pointers as the input and as well outputs array pointers. 
+*  It does not involve in any image I/O and only operates arrays in the memory.
+*  
+*  Most ImgProcessor class methods are implemented as static template functions.   
+*  A typical function call would need at least three input arguments:
+*
+*		ImgProcessor::func(unsigned char[] inputImgArray, unsigned char[] outputImgArray, int[] inputImgDimensions, other input arguments);
+*
+********************************************************************************/
 
 #ifndef IMGPROCESSOR_H
 #define IMGPROCESSOR_H
@@ -14,44 +22,51 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
+#include <cmath>
 #include <algorithm>
 
 using namespace std;
 
 #define getMax(a, b) ((a) >= (b)? (a):(b))
+#define getMin(a, b) ((a) <= (b)? (a):(b))
 
-enum MIPOrientation {Mxy, Myz, Mxz};
-enum mipOrientation {mxy, myz, mxz};
-
-struct morphStructElement
+struct morphStructElement2D
 {
-	std::string eleShape;
-	int xLength, yLength;
+	morphStructElement2D();
+	morphStructElement2D(string shape, int length = 5);
+	morphStructElement2D(string shape, int xLength, int yLength);
+	~morphStructElement2D();
 
-	morphStructElement();
-	morphStructElement(string shape);
-	morphStructElement(string shape, int length1, int length2);
+	string eleShape;
+	int xLength, yLength, radius;
 
-	vector<vector<int>> structEle2D;
-	vector<vector<vector<int>>> structEle3D;
+	unsigned char* structElePtr;
+	void printOutStructEle();
 };
 
 class ImgProcessor 
 {
 
 public:
-	/******** Constructors *********/
-	ImgProcessor() : MIPDirection(Mxy), mipDirection(mxy) {};
-	ImgProcessor(MIPOrientation);
-	/*******************************/
+	/***************** Basic Image Operations *****************/
+	template<class T>
+	static inline T getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y);
+	
+	template<class T>
+	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
-	// These 2 enums decide in which direction to make projection.
-	MIPOrientation MIPDirection;
-	mipOrientation mipDirection;
+	template<class T>
+	static inline void simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
-	/********* Basic Image Operations *********/
-	template<class T1, class T2>
-	static inline void cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY);
+	template<class T>
+	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	static inline void imgDotMultiply(unsigned char inputImgPtr1[], unsigned char inputImgPtr2[], unsigned char outputImgPtr[], int imgDims[]);
+	
+	template<class T>
+	static inline void cropImg2D(T InputImagePtr[], T OutputImagePtr[], int xlb, int xhb, int ylb, int yhb, int imgDims[]);
 
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
@@ -59,8 +74,8 @@ public:
 	template<class T1, class T2>
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
-	template<class T1, class T2>
-	static inline void imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum); // Between 2 input images, pixel-wisely pick the one with greater value. 
+	template<class T>
+	static inline void imgMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[]); // Between 2 input images, pixel-wisely pick the one with greater value. 
 
 	template<class T>
 	static inline void imgDownSample2D(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
@@ -69,40 +84,135 @@ public:
 	static inline void imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], int imgDims[], int downSampFactor);
 
 	template<class T>
-	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
-	/******************************************/
+	static inline void maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[]);
+
+	template<class T>
+	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
+	/**********************************************************/
+
+
+	/***************** Image Statistics *****************/
+	template<class T>
+	static inline map<string, float> getBasicStats(T inputImgPtr[], int imgDims[]);
+
+	template<class T>
+	static inline map<string, float> getBasicStats_no0(T inputImgPtr[], int imgDims[]);
+
+	template<class T>
+	static inline map<int, size_t> histQuickList(T inputImgPtr[], int imgDims[]);
+	/****************************************************/
+
+
+	/***************** Image Processing/Filtering *****************/
+	template<class T>
+	static inline void gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
+
+	template<class T>
+	static inline void reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+
+	template<class T>
+	static inline void histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero = true);
+	/**************************************************************/
+
 
 	/********* Morphological Operations *********/
-	void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
+	static void skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[]);
+
+	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	static void conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold);
 	/********************************************/
 
-	/********* Other utilities *********/
-	void maxIPStack(unsigned char inputVOIPtr[], unsigned char OutputImage2DPtr[],
-		long int MIPxDim, long int MIPyDim, long int MIPzDim); // make MIP out of an input 1D image data array	
 
+	/***************** Other utilities *****************/
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
+	/***************************************************/
 };
 
-template<class T1, class T2>
-inline void ImgProcessor::cropImg2D(T1 InputImagePtr[], T1 OutputImagePtr[], T2 xlb, T2 xhb, T2 ylb, T2 yhb, T2 imgX, T2 imgY)
+// ========================================= BASIC IMAGE OPERATION =========================================
+template<class T>
+inline T ImgProcessor::getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y)
+{
+	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
+	return inputImgPtr[pix1Dindex];
+}
+
+template<class T>
+inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] < threshold)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] > threshold)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] > threshold)
+		{
+			outputImgPtr[i] = 255;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+inline void ImgProcessor::imgDotMultiply(unsigned char inputImgPtr1[], unsigned char inputImgPtr2[], unsigned char outputImgPtr[], int imgDims[])
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		int value = int(inputImgPtr1[i]) * int(inputImgPtr2[i]);
+		if (value > 255) value = 255;
+		outputImgPtr[i] = (unsigned char)(value);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::cropImg2D(T InputImagePtr[], T OutputImagePtr[], int xlb, int xhb, int ylb, int yhb, int imgDims[])
 {
 	long int OutputArrayi = 0;
-	for (T2 yi = ylb; yi <= yhb; ++yi)
+	for (int yi = ylb; yi <= yhb; ++yi)
 	{
-		for (T2 xi = xlb; xi <= xhb; ++xi)
+		for (int xi = xlb; xi <= xhb; ++xi)
 		{
-			OutputImagePtr[OutputArrayi] = InputImagePtr[imgX*(yi - 1) + (xi - 1)];
+			OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * (yi - 1) + (xi - 1)];
 			++OutputArrayi;
 		}
 	}
 }
 
-template<class T1, class T2>
-inline void ImgProcessor::imageMax(T1 inputPtr[], T1 outputPtr[], T2 pixelNum)
+template<class T>
+inline void ImgProcessor::imgMax(T inputPtr1[], T inputPtr2[], T outputPtr[], int imgDims[])
 {
-	for (size_t i = 0; i < pixelNum; ++i)
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
 	{
-		T1 updatedVal = getMax(inputPtr[i], outputPtr[i]);
+		T updatedVal = getMax(inputPtr1[i], inputPtr2[i]);
 		outputPtr[i] = updatedVal;
 	}
 }
@@ -130,9 +240,21 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 }
 
 template<class T>
-vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
+inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[])
 {
-	vector<vector<T>> outputSlices;
+	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
+	for (typename vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
+	{
+		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i)
+		{
+			outputImgPtr[i] = ImgProcessor::imgMax(it, outputImgPtr, outputImgPtr, imgDims);
+		}
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[])
+{
 	for (int k = 0; k < imgDims[2]; ++k)
 	{
 		vector<T> thisSlice;
@@ -147,8 +269,6 @@ vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
 		outputSlices.push_back(thisSlice);
 		thisSlice.clear();
 	}
-
-	return outputSlices;
 }
 
 template<class T>
@@ -197,5 +317,168 @@ inline void ImgProcessor::imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], 
 		}
 	}
 }
+// ====================================== END of [BASIC IMAGE OPERATION] ======================================
+
+
+// ==================================== IMAGE STATISTICS ====================================
+template<class T>
+inline map<string, float> ImgProcessor::getBasicStats(T inputImgPtr[], int imgDims[])
+{
+	map<string, float> basicStats;
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	vector<T> img1DVec;
+
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		img1DVec.push_back(inputImgPtr[i]);
+		sum = sum + inputImgPtr[i];
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (size_t i = 0; i < totalPixNum; ++i) varSum = varSum + (inputImgPtr[i] - mean) * (inputImgPtr[i] - mean);
+	var = varSum / float(totalPixNum);
+	std = sqrtf(var);
+	basicStats.insert(pair<string, float>("var", var));
+	basicStats.insert(pair<string, float>("std", std));
+
+	sort(img1DVec.begin(), img1DVec.end());
+	median = float(img1DVec[floor(totalPixNum / 2)]);
+	basicStats.insert(pair<string, float>("median", median));
+
+	return basicStats;
+}
+
+template<class T>
+inline map<string, float> ImgProcessor::getBasicStats_no0(T inputImgPtr[], int imgDims[])
+{
+	map<string, float> basicStats;
+	vector<T> img1DVec;
+	float validPixCount = 0;
+
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	for (size_t i = 0; i < imgDims[0] * imgDims[1] * imgDims[2]; ++i)
+	{
+		if (inputImgPtr[i] == 0) continue;
+
+		++validPixCount;
+		img1DVec.push_back(inputImgPtr[i]);
+		sum = sum + inputImgPtr[i];
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(validPixCount);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (size_t i = 0; i < validPixCount; ++i) varSum = varSum + (img1DVec.at(i) - mean) * (img1DVec.at(i) - mean);
+	var = varSum / float(validPixCount);
+	std = sqrtf(var);
+	basicStats.insert(pair<string, float>("var", var));
+	basicStats.insert(pair<string, float>("std", std));
+
+	sort(img1DVec.begin(), img1DVec.end());
+	median = float(img1DVec[floor(validPixCount / 2)]);
+	basicStats.insert(pair<string, float>("median", median));
+
+	return basicStats;
+}
+
+template<class T>
+inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims[])
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	map<int, size_t> histMap;
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		int value = int(inputImgPtr[i]);
+		++histMap.insert(pair<int, size_t>(value, 0)).first->second;
+	}
+
+	return histMap;
+}
+// ================================== END of [IMAGE STATISTICS] ==================================
+
+
+// ================================== IMAGE PROCESSING/FILTERING ==================================
+template<class T>
+inline void ImgProcessor::gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+
+		int transformedValue = int(inputImgPtr[i]);
+		if (transformedValue < starting_intensity) outputImgPtr[i] = 0;
+		else if (transformedValue * (transformedValue - starting_intensity + 2) >= 255) outputImgPtr[i] = 255;
+		else outputImgPtr[i] = transformedValue * (transformedValue - starting_intensity + 2);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+
+		int transformedValue = int(inputImgPtr[i]);
+		if (transformedValue > starting_intensity) outputImgPtr[i] = transformedValue;
+		else if (transformedValue / (starting_intensity - transformedValue + 1) < 1) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = transformedValue / (starting_intensity - transformedValue + 1);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero)
+{
+	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
+	if (noZero) histMap.erase(histMap.find(0)); // exclude 0 from the histogram profile
+	
+	map<int, double> histCumul; // generate CDF
+	double totalNum = 0;
+	int maxIntensity = 0;
+	for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it)
+	{
+		totalNum = totalNum + it->second;
+		histCumul.insert(pair<int, double>(it->first, double(totalNum)));
+		maxIntensity = it->first;
+	}
+	
+	map<int, int> binMap; // mapping intensity
+	for (map<int, double>::iterator it = histCumul.begin(); it != histCumul.end(); ++it)
+		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(maxIntensity)) * 255))));
+	
+	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
+	{
+		if (inputImgPtr[i] == 0) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = T(binMap.at(int(inputImgPtr[i])));
+	}
+}
+// ================================ END of [IMAGE PROCESSING/FILTERING] ================================
 
 #endif

@@ -19,15 +19,17 @@ using namespace std;
 Q_EXPORT_PLUGIN2(neurontracer,neurontracer);
 static lookPanel *panel = 0;
 LocationSimple next_m,next_m_rebase;
-NeuronTree trace_result_p,trace_result,resultTree_rebase,resultTree;
+NeuronTree trace_result_pp,trace_result_p,trace_result,resultTree_rebase,resultTree;
 extern LandmarkList marker_rebase,marker_rebase2; //original marker and marker which use for app2
 extern LandmarkList marker_rebase3; //only original marker
 extern V3DLONG thres_rebase;
 bool change = true;
 int check_void=0;
 extern QString outimg_file;
+extern bool is_soma;
 int thresh=42;
 int func_name;
+bool enhance = false;
 struct relationship
 {
     double datald;
@@ -79,8 +81,10 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 {
 
 
+
     if (menu_name == tr("trace_APP2"))     //finished
 	{
+
 
 
         TRACE_LS_PARA P;
@@ -141,33 +145,35 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         if(!crawler_raw_app(callback,parent,P,bmenu))return;
 
         QString name = P.inimg_file+"_app2.swc";
-        trace_result_p = readSWC_file(name);
+        trace_result_pp = readSWC_file(name);
 
 
-        if(trace_result_p.listNeuron.size()!=0)   //check if the tracing result is void
+        if(trace_result_pp.listNeuron.size()!=0)   //check if the tracing result is void
         {
             marker_rebase = marker_rebase2;
         }
         else
         {
             check_void++;
-            cout<<"check  "<<check_void<<endl;
+            //cout<<"check  "<<check_void<<endl;
             v3d_msg("this tracing has no result,please press A to have another try.If there is still no result,please make sure your marker is in the right position!");
-            //thresh = thresh - 15 ;
+            thresh = thres_rebase ;
             return;
 
         }
-        for(V3DLONG i=0;i<trace_result_p.listNeuron.size();i++)   //use ratio to update the coordinate
+        for(V3DLONG i=0;i<trace_result_pp.listNeuron.size();i++)   //use ratio to update the coordinate
         {
-            trace_result_p.listNeuron[i].x = trace_result_p.listNeuron[i].x*P.ratio_x + P.o_x;
-            trace_result_p.listNeuron[i].y = trace_result_p.listNeuron[i].y*P.ratio_y + P.o_y;
-            trace_result_p.listNeuron[i].z = trace_result_p.listNeuron[i].z*P.ratio_z + P.o_z;
+            trace_result_pp.listNeuron[i].x = trace_result_pp.listNeuron[i].x*P.ratio_x + P.o_x;
+            trace_result_pp.listNeuron[i].y = trace_result_pp.listNeuron[i].y*P.ratio_y + P.o_y;
+            trace_result_pp.listNeuron[i].z = trace_result_pp.listNeuron[i].z*P.ratio_z + P.o_z;
         }
 
         trace_result.listNeuron.clear();
         vector<int> count_v;
         vector<NeuronSWC> point_b;
         //v3d_msg("remove point at boundry");
+        trace_result_p = trace_result_pp; //tmp need to be modified&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
         for(V3DLONG i=0;i<trace_result_p.listNeuron.size();i++)  //remove point at boundry
         {
             if(point_at_boundry(callback,trace_result_p.listNeuron[i],count_v,point_b))
@@ -198,6 +204,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             next_m.color.b = 0;
             next_m.color.g = 0;
             next_m.color.r = 0;
+            next_m.comments = "a";
         }
         cout<<"trace_result_p = "<<trace_result_p.listNeuron.size()<<endl;
         cout<<"trace_result = "<<trace_result.listNeuron.size()<<endl;
@@ -260,8 +267,6 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         writeSWC_file(final_name,resultTree);
 
 
-
-
         if (panel)
         {
             panel->show();
@@ -280,103 +285,14 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         }
 
 
+
+
         /******************************next marker*************************/
 
 
         //next_m = next_marker(callback,curr_window_nt);
 
 
-    }else if (menu_name == tr("trace_APP1"))
-	{
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_app1_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.bkg_thresh = dialog.bkg_thresh;
-        P.channel = dialog.channel;
-        P.b_256cube = dialog.b_256cube;
-        P.visible_thresh = dialog.visible_thresh;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.method = app1;
-        P.tracing_3D = false;
-
-        crawler_raw_app(callback,parent,P,bmenu);
-	}
-    else if (menu_name == tr("trace_MOST"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_most_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        if(dialog.teraflyfilename.isEmpty())
-            P.inimg_file = dialog.rawfilename;
-        else
-            P.inimg_file = dialog.teraflyfilename;
-        P.bkg_thresh = dialog.bkg_thresh;
-        P.channel = dialog.channel;
-        P.seed_win = dialog.seed_win;
-        P.slip_win = dialog.slip_win;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.method = most;
-        P.tracing_3D = dialog.tracing_3D;
-        crawler_raw_all(callback,parent,P,bmenu);
     }
     else if (menu_name == tr("trace_NEUTUBE"))  //finished
     {
@@ -447,6 +363,9 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
         const Image4DSimple *curr = callback.getImageTeraFly();
         NeuronTree curr_win_nt = callback.getSWCTeraFly();
+        cout<<"trace_result.size = "<<trace_result.listNeuron.size()<<endl;
+        cout<<"curr_window_nt.size = "<<curr_win_nt.listNeuron.size()<<endl;
+        v3d_msg("check_size");
         NeuronTree curr_window_nt = match_area(curr,callback,trace_result,curr_win_nt);
         //NeuronTree resultTree;
         QList <NeuronSWC> listNeuron;
@@ -503,299 +422,13 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 
 
-    }else if (menu_name == tr("trace_SNAKE"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = snake;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_NeuroGPSTree"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = neurogpstree;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_Advantra"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = advantra;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_TReMAP"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = tremap;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_MST"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = mst;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_NeuronChaser"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = neuronchaser;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }else if (menu_name == tr("trace_Rivulet2"))
-    {
-        TRACE_LS_PARA P;
-        bool bmenu = true;
-        neurontracer_neutube_raw dialog(callback, parent);
-
-        if (dialog.image && dialog.listLandmarks.size()==0)
-            return;
-
-        if (dialog.exec()!=QDialog::Accepted)
-            return;
-
-        if(dialog.rawfilename.isEmpty() && dialog.teraflyfilename.isEmpty())
-        {
-            v3d_msg("Please select the image file.");
-            return;
-        }
-
-        if(dialog.markerfilename.isEmpty() && ! dialog.image)
-        {
-            v3d_msg("Please select the marker file.");
-            return;
-        }
-
-        if(!dialog.image)
-        {
-            P.markerfilename = dialog.markerfilename;
-            P.image = 0;
-        }else
-        {
-            P.image = dialog.image;
-            P.listLandmarks = dialog.listLandmarks;
-        }
-        P.inimg_file = dialog.rawfilename;
-        P.block_size = dialog.block_size;
-        P.adap_win = dialog.adap_win;
-        P.tracing_3D = dialog.tracing_3D;
-        P.method = rivulet2;
-        crawler_raw_all(callback,parent,P,bmenu);
-    }
-    else if (menu_name == tr("generate_final_result(3D)"))
-    {
-        QString txtfilenName = QFileDialog::getOpenFileName(0, QObject::tr("Open TXT File"),
-                                                        "",
-                                                        QObject::tr("Supported file (*.txt *.TXT)"));
-        if(txtfilenName.isEmpty())
-            return;
-
-        list<string> infostring;
-        processSmartScan_3D(callback,infostring,txtfilenName);
-        v3d_msg("Done!");
-
     }
     else if(menu_name == tr("move_to_another_block_with_marker"))
     {
 
         resultTree_rebase = callback.getSWCTeraFly();
 
-        cout<<"next_m ="<<next_m.x<<"  "<<next_m.y<<"  "<<next_m.z<<endl;
+        cout<<"next_m ="<<next_m.x<<"  "<<next_m.y<<"  "<<next_m.z<<"  "<<next_m.comments<<endl;
         //v3d_msg("check next_m");
         if(next_m.x == 0&&next_m.y == 0&&next_m.z == 0)
         {
@@ -856,6 +489,7 @@ void neurontracer::domenu(const QString &menu_name, V3DPluginCallback2 &callback
                 next_m_rebase.x = next.x;
                 next_m_rebase.y = next.y;
                 next_m_rebase.z = next.z;
+              //  callback.setLandmarkTeraFly(marker_rebase3);       //20180610
             }
         }
 
@@ -925,68 +559,6 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 //        P.global_name = true;
         crawler_raw_app(callback,parent,P,bmenu);
 	}
-    else if (func_name == tr("trace_pairs"))
-	{
-        if(infiles.empty())
-        {
-            cout<<"Need input image"<<endl;
-            return false;
-        }
-
-        P.inimg_file = infiles[0];
-        P.image = 0;
-        int k=0;
-
-        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
-        if(inmarker_file.isEmpty())
-        {
-            cout<<"Need a marker file"<<endl;
-            return false;
-        }else
-            P.markerfilename = inmarker_file;
-
-        P.inimg_file_2nd = (paras.size() >= k+1) ? paras[k] : "NULL";
-        P.method = gd;
-        tracing_pair_app(callback,parent,P,bmenu);
-	}
-    else if (func_name == tr("trace_APP2_GD"))
-    {
-        if(infiles.empty())
-        {
-            cout<<"Need input image"<<endl;
-            return false;
-        }
-
-        P.inimg_file = infiles[0];
-        P.image = 0;
-        int k=0;
-
-        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
-        if(inmarker_file.isEmpty())
-        {
-            cerr<<"Need a marker file"<<endl;
-            return false;
-        }else
-            P.markerfilename = inmarker_file;
-
-        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
-        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
-
-        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
-        P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-        P.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-        P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
-        P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
-        P.tracing_3D = true;
-        P.tracing_comb = false;
-        P.global_name = true;
-        P.method = app2;
-        crawler_raw_app(callback,parent,P,bmenu);
-        //extract_tips(callback,parent,P);
-
-    }
     else if (func_name == tr("trace_NEUTUBE"))
     {
         if(infiles.empty())
@@ -1017,48 +589,6 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
             grid_raw_all(callback,parent,P,bmenu);
 //        else
 //            crawler_raw_all(callback,parent,P,bmenu);
-    }
-    else if (func_name == tr("trace_MOST"))
-    {
-        if(infiles.empty())
-        {
-            cerr<<"Need input image"<<endl;
-            return false;
-        }
-
-        P.inimg_file = infiles[0];
-        P.image = 0;
-        int k=0;
-
-        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
-        if(inmarker_file.isEmpty())
-        {
-            cerr<<"Need a marker file"<<endl;
-            return false;
-        }else
-            P.markerfilename = inmarker_file;
-
-        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
-        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
-
-        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-      //  QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
-        if(inmarker_file.isEmpty())
-        {
-            cerr<<"Need a marker file"<<endl;
-            return false;
-        }else
-            P.markerfilename = inmarker_file;
-
-        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
-        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
-        P.seed_win = (paras.size() >= k+1) ? atoi(paras[k]) : 32; k++;
-        P.swcfilename = (paras.size() >= k+1) ? paras[k] : ""; k++;
-        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        P.tracing_3D = true;
-        P.tracing_comb = false;
-        P.method = gd;
-        crawler_raw_app(callback,parent,P,bmenu);
     }
 	else if (func_name == tr("help"))
 	{
@@ -1111,18 +641,25 @@ lookPanel::lookPanel(V3DPluginCallback2 &callback, QWidget *parent) :
 {
 
     gridLayout = new QGridLayout();
-    QPushButton* set_thresh     = new QPushButton("Set Thresh");
-    QPushButton* move_block     = new QPushButton("move_block");
-    QPushButton* use_landmark     = new QPushButton("use_landmark");
+    QPushButton* set_thresh     = new QPushButton("                  Set Thresh                  ");
+    QPushButton* blank1     = new QPushButton("                                              ");
+    QPushButton* blank2     = new QPushButton("                                              ");
+   // QPushButton* move_block     = new QPushButton("move_block");
+    QPushButton* use_landmark     = new QPushButton("                use_landmark                ");
+    QPushButton* enhance_img     = new QPushButton("                 enhance_img                ");
     gridLayout->addWidget(set_thresh, 0,0);
-    gridLayout->addWidget(use_landmark, 1,0);
-    gridLayout->addWidget(move_block, 2,0);
+    gridLayout->addWidget(set_thresh, 1,0);
+    //gridLayout->addWidget(blank2, 2,0);
+    gridLayout->addWidget(use_landmark, 2,0);
+    gridLayout->addWidget(set_thresh, 3,0);
+    gridLayout->addWidget(enhance_img, 4,0);
+    //gridLayout->addWidget(move_block, 2,0);
 
     setLayout(gridLayout);
     setWindowTitle(QString("Synchronize annotation "));
     connect(set_thresh,     SIGNAL(clicked()), this, SLOT(_slot_set_thresh()));
-    connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
-    connect(use_landmark,     SIGNAL(clicked()), this, SLOT(_slot_use_landmarker()));
+    //connect(move_block,     SIGNAL(clicked()), this, SLOT(_slot_move_block()));
+    connect(enhance_img,     SIGNAL(clicked()), this, SLOT(_slot_enhance_img()));
 
 
 }
@@ -1224,7 +761,7 @@ void lookPanel::_slot_move_block()
         all_marker.push_back(marker_rebase3[i]);
     }
     all_marker.push_back(next_m);
-    v3d_msg("lllllllllll");
+    //v3d_msg("lllllllllll");
     callback.setLandmarkTeraFly(all_marker);
     v3d_msg("move_to_another_block_with_marker");
 
@@ -1250,6 +787,11 @@ void lookPanel::_slot_use_landmarker()
         next_m.y = 0;
         next_m.z = 0;
 
+}
+void lookPanel::_slot_enhance_img()
+{
+    enhance = true;
+    v3d_msg("The first time to use this function in current block would be a little bit slow,please wait.");
 }
 bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &count_v,vector<NeuronSWC> &point_b)
 {
@@ -1344,7 +886,12 @@ bool next_landmarker(V3DPluginCallback2 &callback,LocationSimple &next)
     //v3d_msg("check size");
     for(V3DLONG i=0;i<terafly_landmarks_terafly.size();i++)
     {
+        //LocationSimple n;
         LocationSimple s = terafly_landmarks_terafly[i];
+        if(s.comments == "a")
+        {
+            next = s;return true;
+        }
         if(s.x<ox+lx&&s.y<oy+ly&&s.z<oz+lz&&s.x>ox&&s.y>oy&&s.z>oz)
         {
             terafly_landmarks.push_back(s);
@@ -1609,6 +1156,7 @@ bool mean_shift_marker(V3DPluginCallback2 &callback,LocationSimple &next_m,Locat
      next.color.g = 0;
      next.color.b = 0;
      next.color.a = 0;
+     next.comments = "a";
 
 
            if(datald) {delete []datald; datald = 0;}

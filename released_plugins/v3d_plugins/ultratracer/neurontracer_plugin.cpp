@@ -50,6 +50,8 @@ QStringList neurontracer::funclist() const
     <<tr("trace_Rivulet2")
     <<tr("trace_GD_curveline")
     <<tr("trace_pairs")
+    <<tr("generate_final_result")
+    <<tr("fusion")
     <<tr("help");
 }
 
@@ -631,7 +633,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
             P.markerfilename = inmarker_file;
 
         P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
-        P.adap_win = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
+        P.soma = (paras.size() >= k+1) ? atof(paras[k]) : 0; k++;
 
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
@@ -640,6 +642,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.length_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 5;  k++;
+        P.adap_win= 1;
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.global_name = true;
@@ -739,6 +742,42 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
         P.tracing_comb = false;
         P.method = gd;
         crawler_raw_app(callback,parent,P,bmenu);
+    }
+    else if (func_name == tr("generate_final_result"))
+    {
+        if(infiles.empty())
+        {
+            cerr<<"Need input txt file"<<endl;
+            return false;
+        }
+
+        QString txtfilenName = infiles[0];
+
+        list<string> infostring;
+        processSmartScan_3D(callback,infostring,txtfilenName);
+    }
+    else if (func_name == tr("fusion"))
+    {
+        if(infiles.empty())
+        {
+            cerr<<"Need input swc folder"<<endl;
+            return false;
+        }
+
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString inputName = QString(inimg_file);
+        QString outputName;
+
+        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+        if(!outfiles.empty())
+        {
+            outputName = outfiles[0];
+        }
+        else
+            outputName = QString(inimg_file) + "_fused.swc";
+
+        smartFuse(callback,inputName,outputName);
     }
 	else if (func_name == tr("help"))
 	{

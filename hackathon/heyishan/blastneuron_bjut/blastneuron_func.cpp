@@ -1,3 +1,4 @@
+
 #include "blastneuron_bjut_func.h"
 #include "local_alignment.h"
 #include <cstring>

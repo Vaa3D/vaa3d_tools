@@ -6,6 +6,8 @@ VAA3DPATH = ../../../../v3d_external
 V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH	+= $$V3DMAINPATH/common_lib/include
+INCLUDEPATH	+= $$V3DMAINPATH/neuron_editing
+
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 
 macx{
@@ -25,7 +27,10 @@ unix:!macx {
 
 HEADERS	+= calculate_reliability_score_plugin.h
 SOURCES	+= calculate_reliability_score_plugin.cpp
+SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
+SOURCES	+= $$VAA3DPATH/v3d_main/neuron_editing/neuron_format_converter.cpp
+SOURCES	+= $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.cpp
 
 HEADERS += src/common_macro.h
 HEADERS += src/fastmarching_linker.h

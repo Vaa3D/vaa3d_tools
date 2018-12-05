@@ -27,6 +27,7 @@ struct TRACE_LS_PARA
     int tracing_comb;
     int grid_trace;
     int global_name;
+    int soma;
 
     V3DLONG in_sz[3];
 
@@ -88,6 +89,8 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
 bool tracing_pair_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &p,bool bmenu);
 
 vector<MyMarker> extract_branch_pts(V3DPluginCallback2 &callback, const QString& filename,NeuronTree nt);
+NeuronTree smartPrune(NeuronTree nt, double length);
+void smartFuse(V3DPluginCallback2 &callback,QString inputFolder, QString outputFile);
 
 #endif
 
