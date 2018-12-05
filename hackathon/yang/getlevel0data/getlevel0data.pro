@@ -8,7 +8,7 @@ VAA3DPLUGINPATH = ../../../released_plugins/v3d_plugins
 
 #
 INCLUDEPATH += $$VAA3DMAINPATH/basic_c_fun
-INCLUDEPATH += $$VAA3DMAINPATH/common_lib/tiff4/include
+#INCLUDEPATH += $$VAA3DMAINPATH/common_lib/tiff4/include
 
 # basic func
 HEADERS += $$VAA3DMAINPATH/basic_c_fun/v3d_message.h
@@ -26,13 +26,14 @@ SOURCES	+= getlevel0data_func.cpp
 #
 macx{
     QMAKE_CXXFLAGS += -stdlib=libc++ -Wno-c++11-narrowing -mmacosx-version-min=10.7
-    LIBS += -L$$VAA3DMAINPATH/common_lib/tiff4/lib_mac -ltiff -lc++
+    LIBS += -lc++
+    #LIBS += -L$$VAA3DMAINPATH/common_lib/tiff4/lib_mac -ltiff -lc++
 }
 
 unix:!macx {
     QMAKE_CXXFLAGS += -fopenmp -pthread
     LIBS += -fopenmp
-    LIBS += -L$$VAA3DMAINPATH/common_lib/tiff4/lib_linux -ltiff
+    #LIBS += -L$$VAA3DMAINPATH/common_lib/tiff4/lib_linux -ltiff
 }
 
 TARGET	= $$qtLibraryTarget(getlevel0data)

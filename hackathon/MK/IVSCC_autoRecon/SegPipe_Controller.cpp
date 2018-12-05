@@ -355,16 +355,6 @@ void SegPipe_Controller::makeMIPimgs()
 			if (sliceIt->first.find("_") != string::npos) continue;
 			else ImgProcessor::imgMax(sliceIt->second.get(), MIPptr, MIPptr, myImgManagerPtr->imgDatabase.begin()->second.dims);
 		}
-		/*{
-			for (size_t j = 0; j < myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++j)
-			{
-				for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0]; ++i)
-				{
-					unsigned char pixValue = getMax(MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i], sliceIt->second[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i]);
-					MIPptr[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * j + i] = pixValue;
-				}
-			}
-		}*/
 
 		V3DLONG Dims[4];
 		Dims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
@@ -990,6 +980,59 @@ void SegPipe_Controller::getSomaCandidates(float distThre)
 	}
 }
 
+void SegPipe_Controller::somaDendriteMask()
+{
+	myImgManagerPtr->imgDatabase.clear();
+	myImgManagerPtr->inputCaseRootPath = this->inputCaseRootPath;
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QStringList nameSplit = (*caseIt).split(".");
+		string caseName = nameSplit.at(0).toStdString();
+		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = this->inputCaseRootPath.toStdString() + "/" + (*caseIt).toStdString();
+		myImgManagerPtr->imgEntry(caseName, ImgManager::singleCase_singleSlice);
+		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + QString::fromStdString(caseName) + ".swc";
+		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
+
+		int xCoord, yCoord;
+		float zCoord = 0;
+		for (QList<NeuronSWC>::iterator it = currTree.listNeuron.begin(); it != currTree.listNeuron.end(); ++it)
+		{
+			if (it->z > zCoord)
+			{
+				xCoord = int(it->x);
+				yCoord = int(it->y);
+				zCoord = int(it->z);
+			}
+		}
+		
+		set<vector<int>> whitePixSet = myImgAnalyzerPtr->somaDendrite_radialDetect2D(myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin()->second.get(),
+			xCoord, yCoord, myImgManagerPtr->imgDatabase.begin()->second.dims);
+		
+		unsigned char* dendriteDetect2D = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
+		for (size_t i = 0; i < myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]; ++i)
+			dendriteDetect2D[i] = 0;
+
+		for (set<vector<int>>::iterator coordIt = whitePixSet.begin(); coordIt != whitePixSet.end(); ++coordIt)
+		{
+			size_t index = size_t((coordIt->at(1) - 1) * myImgManagerPtr->imgDatabase.begin()->second.dims[0]) + size_t(coordIt->at(0));
+			dendriteDetect2D[index] = 255;
+		}
+	
+		V3DLONG saveDims[4];
+		saveDims[0] = myImgManagerPtr->imgDatabase.begin()->second.dims[0];
+		saveDims[1] = myImgManagerPtr->imgDatabase.begin()->second.dims[1];
+		saveDims[2] = 1;
+		saveDims[3] = 1;
+		QString saveFileNameQ = this->outputRootPath + "/" + *caseIt;
+		string saveFileName = saveFileNameQ.toStdString();
+		const char* saveFileNameC = saveFileName.c_str();
+		ImgManager::saveimage_wrapper(saveFileNameC, dendriteDetect2D, saveDims, 1);
+
+		delete[] dendriteDetect2D;
+		myImgManagerPtr->imgDatabase.clear();
+	}
+}
+
 void SegPipe_Controller::swcMapBack()
 {
 	QString scaledSWC_saveRootQ = this->outputSWCRootPath;
@@ -1201,7 +1244,7 @@ void SegPipe_Controller::cutMST()
 			continue;
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
-		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 30);
+		NeuronTree outputTree = NeuronStructExplorer::MSTtreeCut(currTree, 50);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
@@ -1247,7 +1290,7 @@ void SegPipe_Controller::breakMSTbranch()
 		}
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
 		myNeuronStructExpPtr->treeEntry(currTree, "currTree");
-		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"], 20);
+		NeuronTree outputTree = myNeuronStructExpPtr->MSTbranchBreak(myNeuronStructExpPtr->treeDataBase["currTree"], 20, false);
 
 		QString outputSWCFullPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCFullPath, outputTree);
@@ -1269,9 +1312,9 @@ void SegPipe_Controller::getTiledMST()
 		tileSWCList.clear();
 		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 		{
-			int tileXlabel = int(floor(it->x / xyLength));
-			int tileYlabel = int(floor(it->y / xyLength));
-			int tileZlabel = int(floor(it->z / (xyLength / zRATIO)));
+			int tileXlabel = int(floor(it->x / 500));
+			int tileYlabel = int(floor(it->y / 500));
+			int tileZlabel = int(floor(it->z / (125 / zRATIO)));
 			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
 			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));  
 			tiledSWCmap[swcTileKey].push_back(*it);
@@ -1392,7 +1435,7 @@ void SegPipe_Controller::nodeIdentify()
 		QString refSWCfullPath = this->refSWCRootPath + "/" + *caseIt;
 		NeuronTree refTree = readSWC_file(refSWCfullPath);
 
-		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree, 50, 20);
+		NeuronTree diffTree = NeuronStructUtil::swcIdentityCompare(inputTree, refTree, 20);
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, diffTree);
 	}
@@ -1443,11 +1486,11 @@ void SegPipe_Controller::swcTypeSeparate(int type)
 		NeuronTree inputTree = readSWC_file(swcFullPath);
 	
 		map<int, QList<NeuronSWC>> nodeTypeMap = NeuronStructUtil::swcSplitByType(inputTree);
-		NeuronTree axonTree;
-		axonTree.listNeuron = nodeTypeMap.at(type);
+		NeuronTree signalTree;
+		signalTree.listNeuron = nodeTypeMap.at(type);
 
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
-		writeSWC_file(outputSWCPath, axonTree);
+		writeSWC_file(outputSWCPath, signalTree);
 	}
 }
 
@@ -1468,6 +1511,21 @@ void SegPipe_Controller::swcSubtraction(int type)
 	}
 }
 
+void SegPipe_Controller::swcUpSample()
+{
+	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+	{
+		QString swcFullPath = this->inputSWCRootPath + "/" + *caseIt;
+		NeuronTree inputTree = readSWC_file(swcFullPath);
+		profiledTree inputProfiledTree(inputTree);
+		profiledTree outputProfiledTree;
+		NeuronStructExplorer::treeUpSample(inputProfiledTree, outputProfiledTree, 5);
+
+		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
+		writeSWC_file(outputSWCPath, outputProfiledTree.tree);
+	}
+}
+
 void SegPipe_Controller::segElongation()
 {
 	for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
@@ -1477,8 +1535,8 @@ void SegPipe_Controller::segElongation()
 		string treeName = (*caseIt).toStdString();
 		treeName = treeName.substr(0, treeName.length() - 3);
 
-		myNeuronStructExpPtr->treeEntry(inputTree, treeName, 80);
-		profiledTree elongatedTree = myNeuronStructExpPtr->itered_segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second, 0.30);
+		myNeuronStructExpPtr->treeEntry(inputTree, treeName, 50); // for axon, treeTileLength = 80; 
+		profiledTree elongatedTree = myNeuronStructExpPtr->itered_segElongate(myNeuronStructExpPtr->treeDataBase.begin()->second, 0.40); // for axon, angle threshold = 0.30; 
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, elongatedTree.tree);
 
@@ -1532,7 +1590,7 @@ void SegPipe_Controller::longConnCut()
 		treeName = treeName.substr(0, treeName.length() - 3);
 
 		myNeuronStructExpPtr->treeEntry(inputTree, treeName);
-		NeuronTree outputTree = NeuronStructExplorer::longConnCut(myNeuronStructExpPtr->treeDataBase.begin()->second, 100);
+		NeuronTree outputTree = NeuronStructExplorer::longConnCut(myNeuronStructExpPtr->treeDataBase.begin()->second, 50); // for axon, it was set to be 100
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt;
 		writeSWC_file(outputSWCPath, outputTree);
 

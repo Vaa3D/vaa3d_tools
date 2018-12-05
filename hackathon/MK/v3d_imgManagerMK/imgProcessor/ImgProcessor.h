@@ -32,11 +32,28 @@ using namespace std;
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 #define getMin(a, b) ((a) <= (b)? (a):(b))
 
+struct morphStructElement2D
+{
+	morphStructElement2D();
+	morphStructElement2D(string shape, int length = 5);
+	morphStructElement2D(string shape, int xLength, int yLength);
+	~morphStructElement2D();
+
+	string eleShape;
+	int xLength, yLength, radius;
+
+	unsigned char* structElePtr;
+	void printOutStructEle();
+};
+
 class ImgProcessor 
 {
 
 public:
 	/***************** Basic Image Operations *****************/
+	template<class T>
+	static inline T getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y);
+	
 	template<class T>
 	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
@@ -70,7 +87,7 @@ public:
 	static inline void maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[]);
 
 	template<class T>
-	static vector<vector<T>> imgStackSlicer(T inputImgPtr[], int imgDims[]);
+	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
 	/**********************************************************/
 
 
@@ -92,12 +109,17 @@ public:
 
 	template<class T>
 	static inline void reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+
+	template<class T>
+	static inline void histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero = true);
 	/**************************************************************/
 
 
 	/********* Morphological Operations *********/
-	static void skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[]);
-	static void erode2D(unsigned char inputPtr[], unsigned char outputPtr[]);
+	static void skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[]);
+
+	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	static void conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold);
 	/********************************************/
 
 
@@ -107,6 +129,13 @@ public:
 };
 
 // ========================================= BASIC IMAGE OPERATION =========================================
+template<class T>
+inline T ImgProcessor::getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y)
+{
+	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
+	return inputImgPtr[pix1Dindex];
+}
+
 template<class T>
 inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
 {
@@ -159,7 +188,7 @@ inline void ImgProcessor::imgDotMultiply(unsigned char inputImgPtr1[], unsigned 
 	{
 		int value = int(inputImgPtr1[i]) * int(inputImgPtr2[i]);
 		if (value > 255) value = 255;
-		outputImgPtr[i] = unsigned char(value);
+		outputImgPtr[i] = (unsigned char)(value);
 	}
 }
 
@@ -213,20 +242,19 @@ inline void ImgProcessor::flipY2D(T1 input[], T1 output[], T2 xLength, T2 yLengt
 template<class T>
 inline void ImgProcessor::maxIPSeries(vector<T[]> inputSlicePtrs, T outputImgPtr[], int imgDims[])
 {
-	for (int i = 0; i < dims[0] * dims[1]; ++i) outputImgPtr[i] = 0;
-	for (vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
+	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
+	for (typename vector<T[]>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
 	{
 		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i)
 		{
-			outputImgPtr[i] = ImgProcessor::imageMax(it, outputImgPtr, outputImgPtr, imgDims);
+			outputImgPtr[i] = ImgProcessor::imgMax(it, outputImgPtr, outputImgPtr, imgDims);
 		}
 	}
 }
 
 template<class T>
-vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
+inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[])
 {
-	vector<vector<T>> outputSlices;
 	for (int k = 0; k < imgDims[2]; ++k)
 	{
 		vector<T> thisSlice;
@@ -241,8 +269,6 @@ vector<vector<T>> ImgProcessor::imgStackSlicer(T inputImgPtr[], int imgDims[])
 		outputSlices.push_back(thisSlice);
 		thisSlice.clear();
 	}
-
-	return outputSlices;
 }
 
 template<class T>
@@ -424,6 +450,33 @@ inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], 
 		if (transformedValue > starting_intensity) outputImgPtr[i] = transformedValue;
 		else if (transformedValue / (starting_intensity - transformedValue + 1) < 1) outputImgPtr[i] = 0;
 		else outputImgPtr[i] = transformedValue / (starting_intensity - transformedValue + 1);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero)
+{
+	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
+	if (noZero) histMap.erase(histMap.find(0)); // exclude 0 from the histogram profile
+	
+	map<int, double> histCumul; // generate CDF
+	double totalNum = 0;
+	int maxIntensity = 0;
+	for (map<int, size_t>::iterator it = histMap.begin(); it != histMap.end(); ++it)
+	{
+		totalNum = totalNum + it->second;
+		histCumul.insert(pair<int, double>(it->first, double(totalNum)));
+		maxIntensity = it->first;
+	}
+	
+	map<int, int> binMap; // mapping intensity
+	for (map<int, double>::iterator it = histCumul.begin(); it != histCumul.end(); ++it)
+		binMap.insert(pair<int, int>(it->first, int(round((it->second / histCumul.at(maxIntensity)) * 255))));
+	
+	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i)
+	{
+		if (inputImgPtr[i] == 0) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = T(binMap.at(int(inputImgPtr[i])));
 	}
 }
 // ================================ END of [IMAGE PROCESSING/FILTERING] ================================

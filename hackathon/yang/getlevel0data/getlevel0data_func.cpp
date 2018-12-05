@@ -4,6 +4,16 @@
  */
 
 //
+//#include <fcntl.h>
+//#include <stdlib.h>
+//#include <stdio.h>
+//#include <sys/sendfile.h>
+//#include <sys/stat.h>
+//#include <sys/types.h>
+//#include <unistd.h>
+
+
+//
 #include "getlevel0data_func.h"
 
 #if  defined(Q_OS_LINUX)
@@ -100,6 +110,14 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
     // load input .swc file and mdata.bin
 
+
+//    QString str = "a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f g h i j k l m n o p q r s t u v w x y z a b c d e f g h i j k l m n o p q r s t u v w x y z";
+//    // cout<<"str: "<<str.c_str()<<endl;
+
+//    cout<<str.toUtf8().constData()<<endl;
+
+
+
     //
     readSWC(swcfile, ratio);
 
@@ -183,6 +201,16 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 //    layer.cols = 1;
 //    layer.rows = nrows;
 
+
+    //
+    map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
+    while(iter != layer.yxfolders.end())
+    {
+        YXFolder yxfolder = (iter++)->second;
+        // cout<<"yxfolder.ncubes "<<yxfolder.ncubes<<endl;
+        layer.yxfolders[yxfolder.dirName].ncubes = yxfolder.cubes.size();
+    }
+
     //
     string mdatabin = outputdir + "/mdata.bin";
 
@@ -219,27 +247,44 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
 
         string dirName = "zeroblocks/zeroblock"; //
 
+        // cout<<"layer.yxfolders.size "<<layer.yxfolders.size()<<endl;
+
         //
+        int count = 0;
+        int nyxfolders = layer.yxfolders.size();
         map<string, YXFolder>::iterator iter = layer.yxfolders.begin();
         while(iter != layer.yxfolders.end())
         {
+            cout<<"testing count "<<count<<" of "<<nyxfolders<<endl;
+
+            //
+            if(count++ >= nyxfolders)
+            {
+                iter++;
+                continue;
+            }
+
+            // cout<<"count "<<count<<" >= "<<nyxfolders<<endl;
+
             //
             YXFolder yxfolder = (iter++)->second;
 
-            cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
+            // cout<<"check ncubes ... "<<yxfolder.ncubes<<" at "<<count<<endl;
+
+            // cout<<"check "<<layer.yxfolders[yxfolder.dirName].toBeCopied<<endl;
 
             if(yxfolder.toBeCopied==false)
             {
                 // continue;
 
                 // trick: create a "zeroblocks" folder holds blocks with zeros
-                createDir(outputdir, dirName);
+                // createDir(outputdir, dirName);
 
                 //
                 fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
                 fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-                fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
+                fwrite(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
                 fwrite(&(color), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
                 fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
@@ -247,24 +292,38 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(const_cast<char *>(dirName.c_str()), yxfolder.lengthDirName, 1, file);
 
                 //
+                int countCube = 0;
+                int ncubes = yxfolder.cubes.size();
                 map<int, Cube>::iterator it = yxfolder.cubes.begin();
                 while(it != yxfolder.cubes.end())
                 {
+                    if(countCube++ >= ncubes)
+                    {
+                        iter++;
+                        continue;
+                    }
+
+                    // cout<<"countCube "<<countCube<<" >= "<<ncubes<<endl;
+
                     //
                     Cube cube = (it++)->second;
 
-                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
-                    unsigned short lengthCubeName = cubeName.length();
-                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
-                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
+//                    string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
+                    string cubeName = "NULL.tif";
+                    unsigned short lengthCubeName = cubeName.length() + 1; // consider the end is '\0'
 
-                    if(zeroblocks.find(cubeIndex) == zeroblocks.end())
-                    {
-                        char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-                        cout<<"create a zero block "<<errorMsg<<endl;
+                    // cout<<"write/link ... "<<dirName<<" / "<<cubeName<<" "<<lengthCubeName<<endl;
 
-                        zeroblocks.insert(make_pair(cubeIndex, cubeName));
-                    }
+//                    long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
+//                    string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
+
+//                    if(zeroblocks.find(cubeIndex) == zeroblocks.end())
+//                    {
+//                        char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
+//                        // cout<<"create a zero block: "<<errorMsg<<endl;
+
+//                        zeroblocks.insert(make_pair(cubeIndex, cubeName));
+//                    }
 
                     //
                     fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
@@ -275,7 +334,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
             }
             else
             {
-                cout<<"write ... "<<yxfolder.dirName<<endl;
+                // cout<<"write ... "<<yxfolder.dirName<<endl;
 
                 createDir(outputdir, yxfolder.dirName);
 
@@ -283,7 +342,7 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(&(yxfolder.height), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.width), sizeof(unsigned int), 1, file);
                 fwrite(&(layer.dim_D), sizeof(unsigned int), 1, file); // depth of all blocks
-                fwrite(&yxfolder.ncubes, sizeof(unsigned int), 1, file); // need to be updated based on hits
+                fwrite(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
                 fwrite(&(color), sizeof(unsigned int), 1, file);
                 fwrite(&(yxfolder.offset_V), sizeof(int), 1, file);
                 fwrite(&(yxfolder.offset_H), sizeof(int), 1, file);
@@ -291,9 +350,20 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                 fwrite(const_cast<char *>(yxfolder.dirName.c_str()), yxfolder.lengthDirName, 1, file);
 
                 //
+                int countCube = 0;
+                int ncubes = yxfolder.cubes.size();
                 map<int, Cube>::iterator it = yxfolder.cubes.begin();
                 while(it != yxfolder.cubes.end())
                 {
+                    //
+                    if(countCube++ >= ncubes)
+                    {
+                        iter++;
+                        continue;
+                    }
+
+                    // cout<<"countCube "<<countCube<<" >= "<<ncubes<<endl;
+
                     //
                     Cube cube = (it++)->second;
 
@@ -301,16 +371,19 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                     {
                         //continue;
 
-                        string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
-                        unsigned short lengthCubeName = cubeName.length();
-                        long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
-                        string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
+//                        string cubeName = "zeroblock_" + to_string(yxfolder.height) + "_" + to_string(yxfolder.width) + "_" + to_string(cube.depth) + ".tif";
+//                        unsigned short lengthCubeName = cubeName.length();
+//                        long cubeIndex = cube.depth*sx*sy + yxfolder.height*sx + yxfolder.width;
+//                        string dstFilePath = outputdir + "/" + dirName + "/" + cubeName;
 
-                        if(zeroblocks.find(cubeIndex) == zeroblocks.end())
-                        {
-                            char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
-                            cout<<"create a zero block "<<errorMsg<<endl;
-                        }
+//                        if(zeroblocks.find(cubeIndex) == zeroblocks.end())
+//                        {
+//                            char *errorMsg = initTiff3DFile(const_cast<char*>(dstFilePath.c_str()), int(yxfolder.width), int(yxfolder.height), int(cube.depth), 1, bytesPerVoxel);
+//                            // cout<<"create a zero block "<<errorMsg<<endl;
+//                        }
+
+                        string cubeName = "NULL.tif";
+                        unsigned short lengthCubeName = cubeName.length();
 
                         //
                         fwrite(&(lengthCubeName), sizeof(unsigned short), 1, file);
@@ -321,8 +394,12 @@ QueryAndCopy::QueryAndCopy(string swcfile, string inputdir, string outputdir, fl
                     else
                     {
                         //
-                        string srcFilePath = inputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
-                        string dstFilePath = outputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+//                        string srcFilePath = inputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+//                        string dstFilePath = outputdir + "/" + yxfolder.dirName + "/" + cube.fileName;
+
+                        QString filePath = QString::fromAscii(yxfolder.dirName.c_str()).append(QString("/")).append(QString::fromAscii(cube.fileName.c_str()));
+                        QString srcFilePath = QString::fromStdString(inputdir) + "/" + filePath;
+                        QString dstFilePath = QString::fromStdString(outputdir) + "/" + filePath;
 
                         copyblock(srcFilePath, dstFilePath);
 
@@ -364,16 +441,264 @@ int QueryAndCopy::makeDir(string dirname)
     return 0;
 }
 
-int QueryAndCopy::copyblock(string srcFile, string dstFile)
+int QueryAndCopy::copyblock(QString srcFile, QString dstFile)
 {
-    //
-    std::ifstream  src(srcFile.c_str(), std::ios::binary);
-    std::ofstream  dst(dstFile.c_str(), std::ios::binary);
 
-    dst << src.rdbuf();
+
+//    qDebug()<<"srcFile "<<srcFile;
+//    qDebug()<<"dstFile "<<dstFile;
+
+
+    std::ifstream  src(srcFile.toUtf8().constData(), std::ios_base::in | std::ios_base::binary);
+
+    if(src.is_open())
+    {
+        std::ofstream  dst(dstFile.toUtf8().constData(), std::ios_base::out | std::ios_base::binary);
+
+        if(dst.is_open())
+        {
+            dst << src.rdbuf();
+
+            if(dst.bad())
+            {
+                cout<<"Error writing file "<<dstFile.toUtf8().constData()<<endl;
+            }
+        }
+        else
+        {
+            cout<<"Error opening file "<<dstFile.toUtf8().constData()<<endl;
+        }
+
+        dst.close();
+    }
+    else
+    {
+        cout<<"Error opening file "<<srcFile.toUtf8().constData()<<endl;
+    }
 
     src.close();
-    dst.close();
+
+
+////    cout<<"... ... test ... ..."<<endl;
+//    // QString qstr = QString(QString("cp \'")).append(QString::fromStdString(srcFile)).append(QString("\' \'")).append(QString::fromStdString(dstFile)).append(QString("\'"));
+
+////    cout<<str<<endl;
+
+////    QString qstr = QString::fromAscii(str);
+
+//    QString qstr = QString("cp \'").append(srcFile).append(QString("\' \'")).append(dstFile).append(QString("\'"));
+
+
+//    qDebug()<<"qstr ... "<<qstr;
+
+
+//    cout<<"str "<<qstr.toUtf8().constData()<<endl;
+
+
+//    const char *cstr = qstr.toUtf8().constData();
+
+//    cout<<"cstr "<<cstr<<endl;
+
+
+//    cout<<" length "<<str.length()<<endl;
+
+//    char * cstr = new char [str.length()+1];
+//    std::strcpy (cstr, str.c_str());
+
+
+//    cout<<"... cstr ... "<<cstr<<endl;
+
+
+//    for(int i=0; i<str.length(); i++)
+//        cout<<cstr[i];
+//    cout<<endl;
+
+
+//    char * p = std::strtok (cstr," ");
+//    while (p!=0)
+//    {
+//        std::cout << p << endl;
+//        p = std::strtok(NULL," ");
+//    }
+//    cout<<endl;
+
+//    delete[] cstr;
+
+
+
+
+//    char cpcmd[1024];
+
+//    // string command = "cp \'" + srcFile + "\' \'" + dstFile +"\'\0";
+
+//    // cout<<command.c_str()<<endl;
+
+//    int i;
+
+//    char const *src = &srcFile[0];
+//    char const *dst = &dstFile[0];
+
+//    strcpy(cpcmd, "cp \'");
+
+//    cout<<"copy ... src name ... \n";
+//    for(i=4; i-4<srcFile.length(); i++)
+//    {
+//        cpcmd[i] = src[i-4];
+//        printf("%c", src[i-4]);
+//    }
+//    cout<<endl;
+
+//    // strcat(command, src);
+//    // strcat(command, "\' \'");
+
+//    cpcmd[i] = '\'';
+//    cpcmd[++i] = ' ';
+//    cpcmd[++i] = '\'';
+
+//    int j = ++i;
+
+//    cout<<"copy ... dst name ... \n";
+//    for(i=j; i-j<dstFile.length(); i++)
+//    {
+//        cpcmd[i] = dst[i-j];
+//        printf("%c", dst[i-j]);
+//    }
+//    cout<<endl;
+
+//    // strcat(command, dst);
+//    // strcat(command, "\'\0");
+
+//    cpcmd[i] = '\'';
+//    cpcmd[++i] = '\0';
+
+
+//    cout<<"command ... \n";
+//    for(j=0; j<i; j++)
+//        printf("%c", cpcmd[j]);
+//    cout<<endl;
+
+
+
+//    const char *a = cpcmd;
+
+//    cout<<"a ... "<<a<<endl;
+
+//    string str(a, j);
+
+////    cout<<"... test ... "<<str<<" "<<str.length()<<" comparing to "<<j<<endl;
+//    std::cout << "capacity: " << str.capacity() << "\n";
+////    std::cout << "max_size: " << str.max_size() << "\n";
+
+//    cout<<"str ... "<<str.c_str()<<endl;
+
+//    // cout<<"command "<<command<<endl;
+
+//    system(cpcmd);
+
+
+//    int read_fd;
+//    int write_fd;
+//    struct stat stat_buf;
+//    off_t offset = 0;
+
+//    /* Open the input file. */
+//    read_fd = open (srcFile.c_str(), O_RDONLY);
+//    /* Stat the input file to obtain its size. */
+//    fstat (read_fd, &stat_buf);
+//    /* Open the output file for writing, with the same permissions as the
+//      source file. */
+//    write_fd = open (dstFile.c_str(), O_WRONLY | O_CREAT, stat_buf.st_mode);
+
+//    cout<<"write fd "<<write_fd<<endl;
+
+//    /* Blast the bytes from one file to the other. */
+//    ssize_t result = sendfile (write_fd, read_fd, &offset, stat_buf.st_size);
+
+//    cout<<"sendfile "<<result<<endl;
+
+//    /* Close up. */
+//    close (read_fd);
+//    close (write_fd);
+
+
+
+//    //
+//    std::ifstream  src(srcFile.c_str(), std::ios_base::in | std::ios_base::binary);
+
+////    if(src.is_open())
+////    {
+////        std::ofstream  dst(dstFile.c_str(), std::ios_base::out | std::ios_base::binary);
+
+////        if(dst.is_open())
+////        {
+////            dst << src.rdbuf();
+
+////            if(dst.bad())
+////            {
+////                cout<<"Error writing file "<<dstFile<<endl;
+////            }
+////        }
+////        else
+////        {
+////            cout<<"Error opening file "<<dstFile<<endl;
+////        }
+
+////        dst.close();
+////    }
+////    else
+////    {
+////        cout<<"Error opening file "<<srcFile<<endl;
+////    }
+
+//    // std::ofstream  dst(dstFile.c_str(), std::ios_base::out | std::ios_base::binary);
+//    std::ofstream dst;
+//    dst.open(dstFile, std::ios::binary);
+
+//    if(!dst)
+//    {
+//        cout<<"error in opening dst file"<<endl;
+//    }
+
+//    if(dst.is_open())
+//    {
+//        dst << src.rdbuf();
+
+//        if(dst.bad())
+//        {
+//            cout<<"Error writing file "<<dstFile<<endl;
+//        }
+//    }
+//    else
+//    {
+//        cout<<"Error opening file "<<dstFile<<endl;
+//    }
+
+//    // file size
+//    src.seekg(0, ios::end);
+//    ifstream::pos_type size = src.tellg();
+//    src.seekg(0);
+//    // allocate memory for buffer
+//    char* buffer = new char[size];
+
+//    // copy file
+//    src.read(buffer, size);
+//    dst.write(buffer, size);
+
+//    // clean up
+//    delete[] buffer;
+//    dst.close();
+
+////    const static int BUF_SIZE = 4096;
+
+////    char buf[BUF_SIZE];
+
+////    do {
+////        src.read(&buf[0], BUF_SIZE);      // Read at most n bytes into
+////        dst.write(&buf[0], src.gcount()); // buf, then write the buf to
+////    } while (src.gcount() > 0);          // the output.
+
+
+//    src.close();
 
     //
     return 0;
@@ -511,19 +836,21 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
             //
             YXFolder yxfolder;
 
-            char dirName[21];
-            char fileName[25];
+            // char dirName[100]; // 21
 
             //
             fread(&(yxfolder.height), sizeof(unsigned int), 1, file);
             fread(&(yxfolder.width), sizeof(unsigned int), 1, file);
             fread(&(layer.dim_D), sizeof(unsigned int), 1, file);
-            fread(&layer.ncubes, sizeof(unsigned int), 1, file);
+            fread(&(yxfolder.ncubes), sizeof(unsigned int), 1, file);
             fread(&(color), sizeof(unsigned int), 1, file);
             fread(&(yxfolder.offset_V), sizeof(int), 1, file);
             fread(&(yxfolder.offset_H), sizeof(int), 1, file);
             fread(&(yxfolder.lengthDirName), sizeof(unsigned short), 1, file);
-            fread(&(dirName), yxfolder.lengthDirName, 1, file);
+
+            string dirName(yxfolder.lengthDirName, '\0');
+
+            fread(&(dirName[0]), sizeof(char), yxfolder.lengthDirName, file);
 
             yxfolder.dirName = dirName;
 
@@ -534,7 +861,7 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
                 cout<<"HEIGHT "<<yxfolder.height<<endl;
                 cout<<"WIDTH "<<yxfolder.width<<endl;
                 cout<<"DEPTH "<<layer.dim_D<<endl;
-                cout<<"N_BLOCKS "<<layer.ncubes<<endl;
+                cout<<"N_BLOCKS "<<yxfolder.ncubes<<endl;
                 cout<<"N_CHANS "<<color<<endl;
                 cout<<"ABS_V "<<yxfolder.offset_V<<endl;
                 cout<<"ABS_H "<<yxfolder.offset_H<<endl;
@@ -544,14 +871,19 @@ int QueryAndCopy::readMetaData(string filename, bool mDataDebug)
             }
 
             //
-            for(int j=0; j<layer.ncubes; j++)
+            for(int j=0; j<yxfolder.ncubes; j++)
             {
                 //
                 Cube cube;
 
+                // char fileName[100]; // 25
+
                 //
                 fread(&(yxfolder.lengthFileName), sizeof(unsigned short), 1, file);
-                fread(&(fileName), yxfolder.lengthFileName, 1, file);
+
+                string fileName(yxfolder.lengthFileName, '\0');
+
+                fread(&(fileName[0]), sizeof(char), yxfolder.lengthFileName, file);
                 fread(&(cube.depth), sizeof(unsigned int), 1, file);
                 fread(&(cube.offset_D), sizeof(int), 1, file);
 
@@ -641,7 +973,7 @@ int QueryAndCopy::query(float x, float y, float z)
 
         long olx = lx;
         long oly = ly;
-        long olz = lz;
+//        long olz = lz;
 
         long index = lz*sx*sy + ly*sx + lx;
 
@@ -974,6 +1306,7 @@ long QueryAndCopy::findOffset(OffsetType offsets, long idx)
     return offset;
 }
 
+/*
 // save a 3D chunk tif image with all zeros
 char *initTiff3DFile(char *filename, int sz0, int sz1, int sz2, int sz3, int datatype)
 {
@@ -1095,7 +1428,7 @@ char *initTiff3DFile(char *filename, int sz0, int sz1, int sz2, int sz3, int dat
                 return ((char *) "Cannot set the photometric tag.");
             }
 
-            /* We are writing single page of the multipage file */
+            // We are writing single page of the multipage file
             check = TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
             if (!check) {
                 return ((char *) "Cannot set the subfiletype tag.");
@@ -1161,6 +1494,7 @@ char *initTiff3DFile(char *filename, int sz0, int sz1, int sz2, int sz3, int dat
     //
     return (char *) 0;
 }
+*/
 
 //
 bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
@@ -1220,7 +1554,7 @@ bool getlevel0data_func(const V3DPluginArgList & input, V3DPluginArgList & outpu
     float ratio = pow(2.0, scale);
 
     //
-    // QueryAndCopy qc(inputdir.toStdString());
+    // QueryAndCopy qc(outputdir.toStdString()); // test mdata.bin writing
     QueryAndCopy qc(swcfile.toStdString(), inputdir.toStdString(), outputdir.toStdString(), ratio);
 
     //

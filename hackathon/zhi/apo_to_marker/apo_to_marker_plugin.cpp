@@ -165,9 +165,19 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
         QList<CellAPO> file_inmarkers;
         file_inmarkers = readAPO_file(fileOpenName);
+
+
+        int scale;
+        bool ok1;
+        scale = QInputDialog::getDouble(0, "Scale factor ",
+                                      "Enter scale factor:",
+                                      2, 1, INT_MAX, 1, &ok1);
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
             file_inmarkers[i].name = QString("%1").arg(i+1);
+            file_inmarkers[i].x=file_inmarkers[i].x*scale;
+            file_inmarkers[i].y=file_inmarkers[i].y*scale;
+            file_inmarkers[i].z=file_inmarkers[i].z*scale;
         }
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
@@ -290,10 +300,14 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printf("\nThis is a plugin to convert apo to individual markers\n");
+        printf("Usage: v3d -x apo_to_marker -f apo_to_individual_markers -i <input_apo_file> -o <output_markers_directory> -p <scalefactor>\n");
+        printf("-p scalefactor for downsample scale\n");
+        printf("Demo: v3d -x apo_to_marker -f apo_to_individual_markers -i myano.apo -o /home/penglab/mymarkers -p 1 \n");
 	}
 	else return false;
 
 	return true;
 }
+
 

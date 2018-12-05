@@ -80,7 +80,7 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
             }
         }
         // 0.2 Temp
-        // temp_spo
+        // temp_apo
         QString temp_apo = outswcdir + inswcName + QString(".temp.apo");
         QString inswcID = inswcName.right(inswcName.length()-inswcName.indexOf("_")-1);
         if(inswcID.indexOf("_")>=0){

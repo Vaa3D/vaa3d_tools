@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <list>
+#include <deque>
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -63,22 +64,21 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 #define radANGLE_THRE 0.25
 #endif
 
-static enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
+enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
 
 struct topoCharacter
 {
-	topoCharacter(NeuronSWC centerNode) : topoCenter(centerNode) {};
+	topoCharacter() {};
+	topoCharacter(NeuronSWC centerNode, int streamLength = 10) : topoCenter(centerNode) {};
 	NeuronSWC topoCenter;
-	NeuronSWC topoCenterPa;
-	vector<NeuronSWC> topoCenterImmedChildren;
-	double childAngle;
-	map<int, double> immedChildrenLengths;
-	map<int, double> subsequentChildrenAngles;
+	deque<NeuronSWC> upstream;
+	map<int, deque<NeuronSWC>> downstreams;
 };
 
 struct segUnit
 {
 	segUnit() : to_be_deted(false) {};
+	//segUnit(const segUnit& sourceSegUnit) {};
 
 	int segID;
 	int head;
@@ -95,54 +95,65 @@ struct profiledTree
 {
 	profiledTree() {};
 	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
+	float segTileSize;
+	float nodeTileSize;
+	void nodeTileResize(float nodeTileLength);
 
-	double connAngleThre;
 	NeuronTree tree;
-	map<string, vector<int>> nodeTileMap; // tile label -> node ID
-	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
-	map<string, vector<int>> segTailMap;  // tile label -> seg ID
-
 	map<int, size_t> node2LocMap;
 	map<int, vector<size_t>> node2childLocMap;
 
+	double connAngleThre;
+	map<string, vector<int>> nodeTileMap; // tile label -> node ID
+	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
+	map<string, vector<int>> segTailMap;  // tile label -> seg ID
 	map<int, segUnit> segs; // key = seg ID
+
+	map<int, topoCharacter> topoList;
+	void addTopoUnit(int nodeID);
 };
 
 class NeuronStructExplorer
 {
 public:
-	/********* Constructors and Basic Data/Function Members *********/
+	/***************** Constructors and Basic Data/Function Members *****************/
 	NeuronStructExplorer() {};
 	NeuronStructExplorer(QString neuronFileName);
-	NeuronStructExplorer(const NeuronTree inputTree) { this->treeEntry(inputTree, "originalTree"); }
+	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
 
-	NeuronTree* singleTreePtr;
-	NeuronTree singleTree;
+	NeuronTree* singleTree_onHoldPtr;
+	NeuronTree singleTree_onHold;
 	NeuronTree processedTree;
 
 	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = tileXY_LENGTH);
 	inline void profiledTreeReInit(profiledTree& inputProfiledTree);
+	
+	V_NeuronSWC_list segmentList;
+	void segmentDecompose(NeuronTree* inputTreePtr);
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
-	/***************************************************************/
+	/********************************************************************************/
+
 
 	/***************** Neuron Struct Processing Functions *****************/
+	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
+	
 	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
 	/**********************************************************************/
 
+
 	/***************** Neuron Struct Connecting Functions *****************/
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
-	vector<segUnit> MSTtreeTrim(vector<segUnit>& inputSegUnits); 
 	
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre);
-	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+	inline profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1 = nullptr, NeuronSWC* tailNodePtr2 = nullptr);
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
@@ -151,14 +162,19 @@ public:
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
 	/**********************************************************************/
 
+
 	/***************** Geometry *****************/
 public:
+	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
+	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
+
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	/********************************************/
+
 
 	/********* Distance-based SWC analysis *********/
 public:
@@ -172,11 +188,6 @@ public:
 	map<int, long int> nodeDistPDF;
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
 	/***********************************************/
-
-	/********* Segment <-> Image assessment functionalities *********/
-	V_NeuronSWC_list segmentList;
-	void segmentDecompose(NeuronTree* inputTreePtr);
-	/****************************************************************/
 };
 
 inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double distThre)
@@ -214,6 +225,15 @@ inline connectOrientation NeuronStructExplorer::getConnOrientation(connectOrient
 	else if (orit1 == tail && orit2 == tail) return tail_tail;
 }
 
+inline vector<float> NeuronStructExplorer::getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode)
+{
+	vector<float> vec(3);
+	vec[0] = endNode.x - startNode.x;
+	vec[1] = endNode.y - startNode.y;
+	vec[2] = endNode.z - startNode.z;
+	return vec;
+}
+
 inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector)
 {
 	float disp = sqrt((headVector.at(0) - tailVector.at(0)) * (headVector.at(0) - tailVector.at(0)) +
@@ -232,10 +252,31 @@ inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, co
 	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
 	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
 	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
-
 	double angle = acos(dot / sqrt(sq1 * sq2));
-	if (isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
+    if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
 	else return angle / PI;
+}
+
+inline double NeuronStructExplorer::selfTurningRadAngleSum(const vector<vector<float>>& inputSegment)
+{
+	double radAngleSum = 0;
+	for (vector<vector<float>>::const_iterator it = inputSegment.begin() + 1; it != inputSegment.end() - 1; ++it)
+	{
+		vector<float> vector1(3), vector2(3);
+		vector1[0] = it->at(0) - (it - 1)->at(0);
+		vector1[1] = it->at(1) - (it - 1)->at(1);
+		vector1[2] = it->at(2) - (it - 1)->at(2);
+		vector2[0] = (it + 1)->at(0) - it->at(0);
+		vector2[1] = (it + 1)->at(1) - it->at(1);
+		vector2[2] = (it + 1)->at(2) - it->at(2);
+		//cout << "(" << vector1[0] << ", " << vector1[1] << ", " << vector1[2] << ") (" << vector2[0] << ", " << vector2[1] << ", " << vector2[2] << ")" << endl;
+		double radAngle = NeuronStructExplorer::getRadAngle(vector1, vector2);
+		
+		if (radAngle == -1) continue;
+		else radAngleSum = radAngleSum + radAngle;
+	}
+
+	return radAngleSum;
 }
 
 inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap)

@@ -131,6 +131,13 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		float distThre = distThreQ.toFloat();
 		segPipePtr->getSomaCandidates(distThre);
 	}
+	else if (func_name == tr("somaDendriteDetect"))
+	{
+		if (infiles[1]) segPipePtr->inputSWCRootPath = infiles[1];
+		if (outfiles[0]) segPipePtr->outputRootPath = outfiles[0];
+
+		segPipePtr->somaDendriteMask();
+	}
 	else if (func_name == tr("getSomaBlended"))
 	{
 		if (infiles[1])	segPipePtr->inputCaseRootPath2 = infiles[1];
@@ -230,6 +237,7 @@ bool IVSCC_autoRecon::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		segPipePtr->swcSubtraction(type);
 	}
+	else if (func_name == tr("swcUpSample")) segPipePtr->swcUpSample();
 	else if (func_name == tr("cleanUp2DcentroidZ")) segPipePtr->cleanUpzFor2Dcentroids();
 	else if (func_name == tr("segElongation")) segPipePtr->segElongation();
 	else if (func_name == tr("segTerminalize")) segPipePtr->segTerminalize();
