@@ -40,7 +40,7 @@ using namespace std;
 enum  axis { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0 };
 
 //
-char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype);
+char *tiffread(const char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype);
 
 // cube
 class Cube
@@ -101,28 +101,9 @@ public:
     map<string, YXFolder> yxfolders; // <dirName, YXFolder>
 };
 
-// swc
-class Point
-{
-public:
-    Point();
-    Point(float a, float b, float c);
-    ~Point();
-
-public:
-    void release();
-    unsigned char* data(); // crop recentered block data
-    void setBoundingBox(V3DLONG x, V3DLONG y, V3DLONG z);
-
-public:
-    float x,y,z;
-
-    vector<V3DLONG> blocks; // hit blocks' IDs in OneScaleTree
-    unsigned char *p; // cropped data
-    V3DLONG sx, sy, sz; // size: [x-sx/2-1, x+sx/2], ...
-};
-
-typedef vector<Point> PointCloud;
+template<class T>
+void copyData(T *&p, V3DLONG psx, V3DLONG pex, V3DLONG psy, V3DLONG pey, V3DLONG psz, V3DLONG pez,
+              T *q, V3DLONG qsx, V3DLONG qex, V3DLONG qsy, V3DLONG qey, V3DLONG qsz, V3DLONG qez);
 
 // nodes of tree
 class Block
@@ -155,6 +136,35 @@ public:
 typedef map<V3DLONG, Block> OneScaleTree; // key: offset_z*dimx*dimy+offset_y*dimx+offset_x
 typedef vector<V3DLONG> OffsetType;
 typedef map<V3DLONG, string> ZeroBlock;
+
+// swc
+class Point
+{
+public:
+    Point();
+    Point(float a, float b, float c);
+    ~Point();
+
+public:
+    void release();
+    unsigned char* data(unsigned int datatype, OneScaleTree tree); // crop recentered block data
+    V3DLONG getSize(); // size of buffer
+    V3DLONG getVoxels();
+    void setBoundingBox(V3DLONG x, V3DLONG y, V3DLONG z);
+    void setDatatype(unsigned int datatype);
+
+public:
+    float x,y,z;
+
+    vector<V3DLONG> blocks; // hit blocks' IDs in OneScaleTree
+    unsigned char *p; // cropped data
+    V3DLONG sx, sy, sz; // size: [x-sx/2-1, x+sx/2], ...
+    V3DLONG size;
+    V3DLONG voxels;
+    V3DLONG bytesPerVoxel; // bytes per voxel
+};
+
+typedef vector<Point> PointCloud;
 
 // data flow
 

@@ -33,6 +33,8 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
         // data dir
         // size x,y,z
 
+        QString winname = QString("fly through");
+
         QString swcFilePath, dataDirPath;
         V3DLONG bsx, bsy, bsz;
 
@@ -79,20 +81,146 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
         V3DLONG i = 31; // for test
         V_NeuronSWC neuseg = neulist.seg[i];
 
-        PointCloud *pc;
+        //
+        NeuronTree fragment;
+        fragment.name=winname;
+        fragment.listNeuron.clear();
+        fragment.hashNeuron.clear();
+        fragment.color.r = fragment.color.g = fragment.color.b = fragment.color.a = 0;
+
+        float x_offset = bsx/2 - neuseg.row[0].x;
+        float y_offset = bsy/2 - neuseg.row[0].y;
+        float z_offset = bsz/2 - neuseg.row[0].z;
+
+        PointCloud *pc = new PointCloud;
         for(V3DLONG j=0; j<neuseg.row.size(); j++)
         {
             Point p(neuseg.row[j].x, neuseg.row[j].y, neuseg.row[j].z);
-
-            // p.x, p.y, p.z
             pc->push_back(p);
+
+            //
+            NeuronSWC S;
+            S.n = neuseg.row[j].n;
+            S.type = neuseg.row[j].type;
+            S.x = neuseg.row[j].x+x_offset-1;
+            S.y = neuseg.row[j].y+y_offset-1;
+            S.z = neuseg.row[j].z+z_offset-1;
+            S.r = neuseg.row[j].r;
+            S.pn = neuseg.row[j].parent;
+            fragment.listNeuron.append(S);
+            fragment.hashNeuron.insert(S.n, fragment.listNeuron.size()-1);
         }
 
+        //
         DataFlow df(pc, dataDirPath.toStdString(), bsx, bsy, bsz);
 
+        // demo
         for(V3DLONG k=0; k<pc->size(); k++)
         {
             cout<<"test ... "<<k<<" "<<pc->at(k).blocks.size()<<endl;
+
+            // update swc visualization offset
+            if(k>0)
+            {
+                x_offset = bsx/2 - pc->at(k).x;
+                y_offset = bsy/2 - pc->at(k).y;
+                z_offset = bsz/2 - pc->at(k).z;
+
+                for(V3DLONG j=0; j<neuseg.row.size(); j++)
+                {
+                    //
+                    fragment.listNeuron[j].x = neuseg.row[j].x+x_offset-1;
+                    fragment.listNeuron[j].y = neuseg.row[j].y+y_offset-1;
+                    fragment.listNeuron[j].z = neuseg.row[j].z+z_offset-1;
+                }
+            }
+
+            // update centered image stack
+            unsigned char *pCropImage = pc->at(k).data(df.bytesPerVoxel, df.tree); // will replace tree to lrucache later
+
+            cout<<"test pointer ... 1 "<<(void*)pCropImage<<endl;
+            // cout<<"test "<<((unsigned short*)pCropImage)[0]<<endl;
+
+            unsigned char *p;
+            try
+            {
+                V3DLONG size = pc->at(k).getSize();
+
+                p = new unsigned char [size];
+                //memcpy(p, pCropImage, size);
+                pc->at(k).release();
+                memset(p, 0, size);
+            }
+            catch(...)
+            {
+                cout<<"failed in allocate memory and copy the cropped image"<<endl;
+                return;
+            }
+
+            cout<<"test pointer ... 1.2 "<<(void*)p<<endl;
+            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+
+            // view
+            Image4DSimple *tmpimg = new Image4DSimple();
+            tmpimg->setData(p,bsx,bsy,bsz,1,V3D_UINT16);
+
+            cout<<"test ... "<<pc->at(k).getVoxels()<<" == "<<bsx*bsy*bsz<<endl;
+
+//            int maxval = 0;
+//            unsigned short * pTest = (unsigned short *)(p);
+//            for(int i=0; i<32*32*32; i++)
+//            {
+//                if(pTest[i]>maxval)
+//                    maxval = pTest[i];
+//            }
+//            cout<<"max val ... ... "<<maxval<<endl;
+
+            cout<<"test pointer ... 2 "<<(void*)p<<endl;
+            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+
+            //
+            v3dhandleList allWindowList = callback.getImageWindowList();
+            v3dhandle localwin = 0;
+            for (V3DLONG i=0;i<allWindowList.size();i++)
+            {
+                if(callback.getImageName(allWindowList.at(i)).contains(winname)){
+                    localwin = allWindowList[i];
+                    break;
+                }
+            }
+
+            cout<<"test pointer ... 3 "<<(void*)p<<endl;
+            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+
+            if(localwin == 0)
+            {
+                localwin = callback.newImageWindow(winname);
+                callback.setImage(localwin, tmpimg);
+                //callback->setLandmark(localwin, local_landmark);
+                callback.setSWC(localwin, fragment);
+                //callback.updateImageWindow(localwin);
+                callback.open3DWindow(localwin);
+                callback.pushObjectIn3DWindow(localwin);
+                callback.pushImageIn3DWindow(localwin);
+            }
+            else
+            {
+                callback.setImage(localwin, tmpimg);
+                //callback->setLandmark(localwin, local_landmark);
+                callback.setSWC(localwin, fragment);
+                //callback.updateImageWindow(localwin);
+                callback.open3DWindow(localwin);
+                callback.pushImageIn3DWindow(localwin);
+                callback.pushObjectIn3DWindow(localwin);
+            }
+
+            cout<<"test pointer ... 4 "<<(void*)p<<endl;
+            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+
+//            if(p)
+//            {
+//                delete []p;
+//            }
         }
 
         // step 2.1. load related blocks (caching)
@@ -157,9 +285,9 @@ FlyThroughDialog::FlyThroughDialog(V3DPluginCallback &callback, QWidget *parentW
     v_size_y = new QSpinBox();
     v_size_z = new QSpinBox();
 
-    v_size_x->setMaximum(4096); v_size_x->setMinimum(1); v_size_x->setValue(256);
-    v_size_y->setMaximum(4096); v_size_y->setMinimum(1); v_size_y->setValue(256);
-    v_size_z->setMaximum(4096); v_size_z->setMinimum(1); v_size_z->setValue(256);
+    v_size_x->setMaximum(4096); v_size_x->setMinimum(1); v_size_x->setValue(32); // 256
+    v_size_y->setMaximum(4096); v_size_y->setMinimum(1); v_size_y->setValue(32);
+    v_size_z->setMaximum(4096); v_size_z->setMinimum(1); v_size_z->setValue(32);
 
     label_size = new  QLabel(QObject::tr("Image Size: "));
     label_size_x = new QLabel(QObject::tr(" x "));
