@@ -141,28 +141,28 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
             cout<<"test pointer ... 1 "<<(void*)pCropImage<<endl;
             // cout<<"test "<<((unsigned short*)pCropImage)[0]<<endl;
 
-            unsigned char *p;
-            try
-            {
-                V3DLONG size = pc->at(k).getSize();
+//            unsigned char *p;
+//            try
+//            {
+//                V3DLONG size = pc->at(k).getSize();
 
-                p = new unsigned char [size];
-                //memcpy(p, pCropImage, size);
-                pc->at(k).release();
-                memset(p, 0, size);
-            }
-            catch(...)
-            {
-                cout<<"failed in allocate memory and copy the cropped image"<<endl;
-                return;
-            }
+//                p = new unsigned char [size];
+//                memcpy(p, pCropImage, size);
+//                pc->at(k).release();
+//                //memset(p, 0, size);
+//            }
+//            catch(...)
+//            {
+//                cout<<"failed in allocate memory and copy the cropped image"<<endl;
+//                return;
+//            }
 
-            cout<<"test pointer ... 1.2 "<<(void*)p<<endl;
-            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+            //cout<<"test pointer ... 1.2 "<<(void*)p<<endl;
+            //cout<<"test "<<((unsigned short*)p)[0]<<endl;
 
             // view
             Image4DSimple *tmpimg = new Image4DSimple();
-            tmpimg->setData(p,bsx,bsy,bsz,1,V3D_UINT16);
+            tmpimg->setData(pCropImage,bsx,bsy,bsz,1,V3D_UINT16);
 
             cout<<"test ... "<<pc->at(k).getVoxels()<<" == "<<bsx*bsy*bsz<<endl;
 
@@ -175,8 +175,8 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
 //            }
 //            cout<<"max val ... ... "<<maxval<<endl;
 
-            cout<<"test pointer ... 2 "<<(void*)p<<endl;
-            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+//            cout<<"test pointer ... 2 "<<(void*)p<<endl;
+//            cout<<"test "<<((unsigned short*)p)[0]<<endl;
 
             //
             v3dhandleList allWindowList = callback.getImageWindowList();
@@ -189,8 +189,8 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 }
             }
 
-            cout<<"test pointer ... 3 "<<(void*)p<<endl;
-            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+//            cout<<"test pointer ... 3 "<<(void*)p<<endl;
+//            cout<<"test "<<((unsigned short*)p)[0]<<endl;
 
             if(localwin == 0)
             {
@@ -214,8 +214,8 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 callback.pushObjectIn3DWindow(localwin);
             }
 
-            cout<<"test pointer ... 4 "<<(void*)p<<endl;
-            cout<<"test "<<((unsigned short*)p)[0]<<endl;
+//            cout<<"test pointer ... 4 "<<(void*)p<<endl;
+//            cout<<"test "<<((unsigned short*)p)[0]<<endl;
 
 //            if(p)
 //            {
