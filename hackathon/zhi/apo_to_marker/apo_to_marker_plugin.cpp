@@ -167,7 +167,7 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         file_inmarkers = readAPO_file(fileOpenName);
 
 
-        int scale;
+        double scale;
         bool ok1;
         scale = QInputDialog::getDouble(0, "Scale factor ",
                                       "Enter scale factor:",
@@ -175,9 +175,9 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
             file_inmarkers[i].name = QString("%1").arg(i+1);
-            file_inmarkers[i].x=file_inmarkers[i].x*scale;
-            file_inmarkers[i].y=file_inmarkers[i].y*scale;
-            file_inmarkers[i].z=file_inmarkers[i].z*scale;
+            file_inmarkers[i].x=file_inmarkers[i].x/scale;
+            file_inmarkers[i].y=file_inmarkers[i].y/scale;
+            file_inmarkers[i].z=file_inmarkers[i].z/scale;
         }
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
