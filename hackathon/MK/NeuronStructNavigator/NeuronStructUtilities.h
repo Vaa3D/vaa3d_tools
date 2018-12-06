@@ -48,8 +48,6 @@ using namespace std;
 class NeuronStructUtil
 {
 public: 
-	NeuronStructUtil() {};
-
 	/***************** Basic Neuron Struct Files Operations *****************/
 	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);

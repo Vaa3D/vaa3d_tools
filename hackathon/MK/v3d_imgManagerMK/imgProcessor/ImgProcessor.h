@@ -43,7 +43,7 @@ struct morphStructElement2D
 	int xLength, yLength, radius;
 
 	unsigned char* structElePtr;
-	void printOutStructEle();
+	inline void printOutStructEle();
 };
 
 class ImgProcessor 
@@ -127,6 +127,18 @@ public:
 	static void shapeMask2D(int imgDims[2], unsigned char outputMask1D[], int coords[2], int regionDims[2], string shape = "square");
 	/***************************************************/
 };
+
+
+inline void morphStructElement2D::printOutStructEle()
+{
+	for (int j = 0; j < this->radius * 2 + 1; ++j)
+	{
+		for (int i = 0; i < this->radius * 2 + 1; ++i)
+			cout << int(this->structElePtr[(this->radius * 2 + 1)*j + i]) << " ";
+		cout << endl;
+	}
+}
+
 
 // ========================================= BASIC IMAGE OPERATION =========================================
 template<class T>

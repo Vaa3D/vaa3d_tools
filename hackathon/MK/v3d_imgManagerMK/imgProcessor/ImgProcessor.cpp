@@ -41,16 +41,6 @@ morphStructElement2D::~morphStructElement2D()
 	if (this->structElePtr != nullptr) delete[] this->structElePtr;
 }
 
-void morphStructElement2D::printOutStructEle()
-{
-	for (int j = 0; j < this->radius * 2 + 1; ++j)
-	{
-		for (int i = 0; i < this->radius * 2 + 1; ++i)
-			cout << int(this->structElePtr[(this->radius * 2 + 1)*j + i]) << " ";
-		cout << endl;
-	}
-}
-
 void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
 {
 	unsigned char** inputImg2Dptr = new unsigned char*[imgDims[1] + 2]; // imputImg2DPtr -> enlarged 2D binaray image. (1 v 0)
