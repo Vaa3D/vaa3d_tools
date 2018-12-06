@@ -7,6 +7,7 @@
 #define __FRAGMENTED_AUTO_TRACE_PLUGIN_H__
 
 #include <QtGui>
+
 #include <v3d_interface.h>
 
 class FragmentedAutoTracePlugin : public QObject, public V3DPluginInterface2_1
