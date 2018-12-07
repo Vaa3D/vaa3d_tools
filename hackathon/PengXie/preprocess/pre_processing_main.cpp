@@ -735,7 +735,7 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
                 parent,
                 "Please select input file (*.swc)\n",
                 QDir::currentPath(),
-                "All files (*.*) ;; swc files (*.swc *.eswc)"
+                "All files (*.*)" ";; swc files (*.swc *.eswc)"
                 );
     QString qs_output(qPrintable(qs_input));
     if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
