@@ -1,16 +1,15 @@
-/* Fragmented_Auto-trace_plugin.h
- * This plugin can be called from v3dr_glwidget with hot key Alt+F. Thus it can work like a standard feature in Vaa3D.
- * 2018-12-3 : by MK
+/* refine_swc_plugin.h
+ * This is a test plugin, you can use it as a demo.
+ * 2018-12-6 : by Zhi Zhou
  */
  
-#ifndef __FRAGMENTED_AUTO_TRACE_PLUGIN_H__
-#define __FRAGMENTED_AUTO_TRACE_PLUGIN_H__
+#ifndef __REFINE_SWC_PLUGIN_H__
+#define __REFINE_SWC_PLUGIN_H__
 
 #include <QtGui>
-
 #include <v3d_interface.h>
 
-class FragmentedAutoTracePlugin : public QObject, public V3DPluginInterface2_1
+class refine_swc : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
@@ -24,6 +23,10 @@ public:
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
+
+NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt);
+NeuronTree breakSWC(NeuronTree nt, double dist);
+
 
 #endif
 

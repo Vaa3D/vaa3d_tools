@@ -78,15 +78,17 @@ void copyData(T *&p, V3DLONG psx, V3DLONG pex, V3DLONG psy, V3DLONG pey, V3DLONG
     {
         return;
     }
-    cout<<"copydata ... ..."<<endl;
 
-    V3DLONG pw = pex - psx + 1;
-    V3DLONG ph = pey - psy + 1;
-    V3DLONG pd = pez - psz + 1;
+    V3DLONG pw = pex - psx;
+    V3DLONG ph = pey - psy;
+    V3DLONG pd = pez - psz;
 
-    V3DLONG qw = qex - qsx + 1;
-    V3DLONG qh = qey - qsy + 1;
-    V3DLONG qd = qez - qsz + 1;
+    V3DLONG qw = qex - qsx;
+    V3DLONG qh = qey - qsy;
+    V3DLONG qd = qez - qsz;
+
+    //cout<<"test ... ... size ... "<<pw<<" "<<ph<<" "<<pd<<endl;
+    //cout<<"test ... ... size ... "<<qw<<" "<<qh<<" "<<qd<<endl;
 
     // x overlap
     if(psx<=qsx && pex>=qsx && pex<=qex)
@@ -217,29 +219,29 @@ void copyData(T *&p, V3DLONG psx, V3DLONG pex, V3DLONG psy, V3DLONG pey, V3DLONG
         cout<<"what z-conditions fall in here?"<<endl;
     }
 
-    cout<<"copying ... ... "<<endl;
-
-    cout <<"p ... "<<rpsx<<" "<<rpex<<" "<<rpsy<<" "<<rpey<<" "<<rpsz<<" "<<rpez<<endl;
-    cout <<"q ... "<<rqsx<<" "<<rqex<<" "<<rqsy<<" "<<rqey<<" "<<rqsz<<" "<<rqez<<endl;
+    //cout <<"p ... "<<rpsx<<" "<<rpex<<" "<<rpsy<<" "<<rpey<<" "<<rpsz<<" "<<rpez<<endl;
+    //cout <<"q ... "<<rqsx<<" "<<rqex<<" "<<rqsy<<" "<<rqey<<" "<<rqsz<<" "<<rqez<<endl;
 
     //
     V3DLONG pz,qz,py,qy,qx,px;
-    for(qz=rqsz, pz=rpsz; qz<=rqez; qz++, pz++)
+    for(qz=rqsz, pz=rpsz; qz<rqez; qz++, pz++)
     {
         V3DLONG ofqz = qz*qw*qh;
         V3DLONG ofpz = pz*pw*ph;
-        for(qy=rqsy, py=rpsy; qy<=rqey; qy++, py++)
+        for(qy=rqsy, py=rpsy; qy<rqey; qy++, py++)
         {
             V3DLONG ofqy = ofqz + qy*qw;
             V3DLONG ofpy = ofpz + py*pw;
-            for(qx=rqsx, px=rpsx; qx<=rqex; qx++, px++)
+            for(qx=rqsx, px=rpsx; qx<rqex; qx++, px++)
             {
+                //cout<<"copy "<<ofqy+qx<<" -> "<<ofpy+px<<endl;
+
                 p[ofpy + px] = q[ofqy + qx];
             }
         }
     }
 
-    cout<<"done copy"<<endl;
+    //cout<<"done copy"<<endl;
 }
 
 //
@@ -644,23 +646,23 @@ unsigned char* Point::data(unsigned int datatype, OneScaleTree tree)
 
             cout<<"3 pointer p: "<<(void*)pBlock<<endl;
 
-//            if(pBlock)
-//            {
-//                if(bytesPerVoxel == 1)
-//                {
+            if(pBlock)
+            {
+                if(bytesPerVoxel == 1)
+                {
 
-//                }
-//                else if(bytesPerVoxel == 2)
-//                {
-//                    cout<<"16-bit data"<<endl;
+                }
+                else if(bytesPerVoxel == 2)
+                {
+                    cout<<"16-bit data"<<endl;
 
-//                    unsigned short *pImg = (unsigned short *)p;
-//                    unsigned short *qImg = (unsigned short *)pBlock;
+                    unsigned short *pImg = (unsigned short *)p;
+                    unsigned short *qImg = (unsigned short *)pBlock;
 
-//                    copyData<unsigned short>(pImg, x-sx/2, x+sx/2, y-sy/2, y+sy/2, z-sz/2, z+sz/2,
-//                                             qImg, block.offset_x, block.offset_x+block.size_x, block.offset_y, block.offset_y+block.size_y, block.offset_z, block.offset_z+block.size_z);
-//                }
-//            }
+                    copyData<unsigned short>(pImg, x-sx/2, x+sx/2, y-sy/2, y+sy/2, z-sz/2, z+sz/2,
+                                             qImg, block.offset_x, block.offset_x+block.size_x, block.offset_y, block.offset_y+block.size_y, block.offset_z, block.offset_z+block.size_z);
+                }
+            }
         }
 
 
