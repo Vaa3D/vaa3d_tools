@@ -53,15 +53,6 @@ public:
 	/***************** Basic Image Operations *****************/
 	template<class T>
 	static inline T getPixValue2D(T inputImgPtr[], int imgDims[], int x, int y);
-	
-	template<class T>
-	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
-
-	template<class T>
-	static inline void simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
-
-	template<class T>
-	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
 
 	static inline void imgDotMultiply(unsigned char inputImgPtr1[], unsigned char inputImgPtr2[], unsigned char outputImgPtr[], int imgDims[]);
 	
@@ -104,6 +95,18 @@ public:
 
 
 	/***************** Image Processing/Filtering *****************/
+	template<class T>
+	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	template<class T>
+	static inline void simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	template<class T>
+	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+
+	template<class T>
+	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[]);
+	
 	template<class T>
 	static inline void gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
 
