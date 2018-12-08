@@ -12,6 +12,9 @@
 
 using namespace std;
 #define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
+
 Q_EXPORT_PLUGIN2(refine_swc, refine_swc);
 
 struct Point;
@@ -97,11 +100,16 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         int max_length = (paras.size() >= k+1) ? atof(paras[k]) : 200;  k++;
 
         NeuronTree nt = readSWC_file(QString(infiles[1]));
-        NeuronTree nt_broken = breakSWC(nt,max_length);
-        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt_broken);
-        NeuronTree nt_new = V_NeuronSWC_list__2__NeuronTree(nt_decomposed);
-        NeuronTree nt_refined = refineSWCTerafly(callback,infiles[0],nt_new);
-        writeESWC_file(QString(outfiles[0]),nt_refined);
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        V_NeuronSWC nt_joined = join_V_NeuronSWC_vec(nt_decomposed.seg);
+        NeuronTree nt2 = V_NeuronSWC__2__NeuronTree(nt_joined);
+
+
+        NeuronTree nt2_broken = breakSWC(nt2,max_length);
+        V_NeuronSWC_list nt2_decomposed = NeuronTree__2__V_NeuronSWC_list(nt2_broken);
+        NeuronTree nt2_new = V_NeuronSWC_list__2__NeuronTree(nt2_decomposed);
+        NeuronTree nt2_refined = refineSWCTerafly(callback,infiles[0],nt2_new);
+        writeESWC_file(QString(outfiles[0]),nt2_refined);
 
 	}
 	else if (func_name == tr("func2"))
@@ -242,7 +250,31 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
             seg->at(j)->y -= start_y;
             seg->at(j)->z -= start_z;
         }
-        double dist  = distTwoSegs(nt_gd, seg);
+        double dist;
+        //check angle
+        QList<NeuronSWC> nt_seg = nt_gd.listNeuron;
+        int angle_size = 2;
+        bool flag = false;
+        if(nt_seg.size() > 2*angle_size)
+        {
+            for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
+            {
+                double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
+                if(angle_j>=179 &&
+                   ((abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2)||
+                   (abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)||
+                   (abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)))
+                {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+        if(flag)
+            dist = DBL_MAX;
+        else
+            dist = distTwoSegs(nt_gd, seg);
+
         V3DLONG nt_length = result.listNeuron.size();
         V3DLONG index;
         if(nt_length>0)
@@ -250,19 +282,39 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         else
             index = 0;
 
-        for (int d=0;d<nt_gd.listNeuron.size();d++)
+        if(dist<5)
         {
-            NeuronSWC curr = nt_gd.listNeuron.at(d);
-            NeuronSWC S;
-            S.n 	= curr.n + index;
-            S.type 	= (dist>5)? 2:3;
-            S.x 	= curr.x + start_x;
-            S.y 	= curr.y + start_y;
-            S.z 	= curr.z + start_z;
-            S.r 	= curr.r;
-            S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
-            result.listNeuron.append(S);
-            result.hashNeuron.insert(S.n, result.listNeuron.size()-1);
+            for (int d=0;d<nt_gd.listNeuron.size();d++)
+            {
+                NeuronSWC curr = nt_gd.listNeuron.at(d);
+                NeuronSWC S;
+                S.n 	= curr.n + index;
+                S.type 	= seg->at(0)->type;
+                S.x 	= curr.x + start_x;
+                S.y 	= curr.y + start_y;
+                S.z 	= curr.z + start_z;
+                S.r 	= curr.r;
+                S.pn 	= (curr.pn == -1)?  curr.pn : curr.pn + index;
+                result.listNeuron.append(S);
+                result.hashNeuron.insert(S.n, result.listNeuron.size()-1);
+            }
+        }else
+        {
+            for(int d=0; d<seg->size(); d++)
+            {
+                Point* p = seg->at(d);
+                NeuronSWC S;
+                S.n 	= d + index + 1;
+                S.type 	= 6;
+                S.x 	= p->x + start_x;
+                S.y 	= p->y + start_y;
+                S.z 	= p->z + start_z;
+                S.r 	= p->r;
+                S.pn 	= (p->p == NULL)? -1 : d + index + 2;
+                result.listNeuron.append(S);
+                result.hashNeuron.insert(S.n, result.listNeuron.size()-1);
+            }
+
         }
         pp.clear();
         if(total1dData) {delete [] total1dData; total1dData=0;}
@@ -374,10 +426,12 @@ void break_path(Segment * seg, double step)
             pt->x = seg->at(i)->x;
             pt->y = seg->at(i)->y;
             pt->z = seg->at(i)->z;
+            pt->r = seg->at(i)->r;
             pt->type = seg->at(i)->type;
             pt->p = NULL;
             seg->at(i-1)->p = pt;
             seg->push_back(pt);
+            seg->at(i)->p == NULL;
             path_length=0;
         }
     }
