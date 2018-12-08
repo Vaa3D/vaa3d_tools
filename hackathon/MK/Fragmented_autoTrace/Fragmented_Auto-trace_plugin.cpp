@@ -34,8 +34,7 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 {
 	if (menu_name == tr("start_tracing"))
 	{
-		FragTraceControlPanel* panelPtr = new FragTraceControlPanel;
-		panelPtr->traceButtonClicked();
+		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, false);
 		panelPtr->~FragTraceControlPanel();
 	}
 	else if (menu_name == tr("settings"))

@@ -628,10 +628,10 @@ unsigned char* Point::data(unsigned int datatype, OneScaleTree tree)
     }
     else
     {
-//        for(int i=0; i<blocks.size(); i++)
-//        {
+        //        for(int i=0; i<blocks.size(); i++)
+        //        {
 
-//        }
+        //        }
 
         cout<<"blocks are not empty ... "<<endl;
 
@@ -695,18 +695,18 @@ void GetData::run()
 
 void PutData::run()
 {
-//        for (int i = 0; i < DataSize; ++i) {
-//            usedBytes.acquire();
-//    #ifdef Q_WS_S60
-//            QString text(buffer[i % BufferSize]);
-//            freeBytes.release();
-//            emit stringConsumed(text);
-//    #else
-//            fprintf(stderr, "%c", buffer[i % BufferSize]);
-//            freeBytes.release();
-//    #endif
-//        }
-//        fprintf(stderr, "\n");
+    //        for (int i = 0; i < DataSize; ++i) {
+    //            usedBytes.acquire();
+    //    #ifdef Q_WS_S60
+    //            QString text(buffer[i % BufferSize]);
+    //            freeBytes.release();
+    //            emit stringConsumed(text);
+    //    #else
+    //            fprintf(stderr, "%c", buffer[i % BufferSize]);
+    //            freeBytes.release();
+    //    #endif
+    //        }
+    //        fprintf(stderr, "\n");
 
     for(int i=0; i<size; ++i)
     {
@@ -788,6 +788,7 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
 {
     //
     string inputdir = filename;
+    inputdir.erase(std::remove_if(inputdir.begin(), inputdir.end(), [](unsigned char x){return std::isspace(x);}));
 
     DIR *outdir = opendir(inputdir.c_str());
     if(outdir == NULL)
@@ -1156,20 +1157,20 @@ int DataFlow::label(V3DLONG index)
     if(tree.find(index) != tree.end())
     {
 
-//        Block block = tree[index];
+        //        Block block = tree[index];
 
-//        if(block.visited == false)
-//        {
-//            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
+        //        if(block.visited == false)
+        //        {
+        //            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
 
-//            string dirName = getDirName(block.filepath);
+        //            string dirName = getDirName(block.filepath);
 
-//            cout<<"check dirName: "<<dirName<<endl;
+        //            cout<<"check dirName: "<<dirName<<endl;
 
-//            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-//            layer.yxfolders[dirName].toBeCopied = true;
-//            tree[index].visited = true;
-//        }
+        //            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+        //            layer.yxfolders[dirName].toBeCopied = true;
+        //            tree[index].visited = true;
+        //        }
     }
 
     return 0;
@@ -1337,6 +1338,112 @@ char *tiffread(const char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz
 }
 
 //
+int readASWC_file(const QString& filename, QString &datapath, NeuronTree &nt)
+{
+    // aswc file
+    nt.file = QFileInfo(filename).absoluteFilePath();
+    QFile qf(filename);
+    if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        cout<<"Invalid aswc file"<<endl;
+        return -1;
+    }
+
+    //
+    int count = 0;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    QString name = "";
+    QString comment = "";
+
+    qDebug("-------------------------------------------------------");
+    while (! qf.atEnd())
+    {
+        char _buf[1000], *buf;
+        qf.readLine(_buf, sizeof(_buf));
+        for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
+
+        //  add #name, #comment
+        if (buf[0]=='\0')	continue;
+        if (buf[0]=='#')
+        {
+            for (buf++; (*buf && *buf==' '); buf++); //skip space
+
+            if (buf[0]=='n'&&buf[1]=='a'&&buf[2]=='m'&&buf[3]=='e'&&buf[4]==' ')
+            {
+                name = buf+5;
+            }
+            else if (buf[0]=='c'&&buf[1]=='o'&&buf[2]=='m'&&buf[3]=='m'&&buf[4]=='e'&&buf[5]=='n'&&buf[6]=='t'&&buf[7]==' ')
+            {
+                comment = buf+89;
+            }
+            else if(buf[0]=='!')
+            {
+                QString finestscaledir = buf+1;
+                QDir filepath = QFileInfo(filename).absoluteDir();
+                datapath = filepath.absolutePath().append("/").append(finestscaledir);
+
+                qDebug()<<"... ... finest resolution folder: "<<datapath;
+            }
+
+            continue;
+        }
+
+        count++;
+        NeuronSWC S;
+
+        QStringList qsl = QString(buf).trimmed().split(" ",QString::SkipEmptyParts);
+        if (qsl.size()==0)   continue;
+
+        for (int i=0; i<qsl.size(); i++)
+        {
+            qsl[i].truncate(99);
+            if (i==0) S.n = qsl[i].toInt();
+            else if (i==1) S.type = qsl[i].toInt();
+            else if (i==2) S.x = qsl[i].toFloat();
+            else if (i==3) S.y = qsl[i].toFloat();
+            else if (i==4) S.z = qsl[i].toFloat();
+            else if (i==5) S.r = qsl[i].toFloat();
+            else if (i==6) S.pn = qsl[i].toInt();
+            //the ESWC extension, by PHC, 20120217
+            else if (i==7) S.seg_id = qsl[i].toInt();
+            else if (i==8) S.level = qsl[i].toInt();
+            else if (i==9) S.creatmode = qsl[i].toInt();
+            else if (i==10) S.timestamp = qsl[i].toInt();
+            //change ESWC format to adapt to flexible feature number, by WYN, 20150602
+            else
+                S.fea_val.append(qsl[i].toFloat());
+        }
+
+        //if (! listNeuron.contains(S)) // 081024
+        {
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+    qDebug("---------------------read %d lines, %d remained lines", count, listNeuron.size());
+
+    if (listNeuron.size()<1)
+    {
+        cout<<"Empty aswc file"<<endl;
+        return -2;
+    }
+
+    //now update other NeuronTree members
+    nt.n = 1; //only one neuron if read from a file
+    nt.listNeuron = listNeuron;
+    nt.hashNeuron = hashNeuron;
+    nt.color = XYZW(0,0,0,0); /// alpha==0 means using default neuron color, 081115
+    nt.on = true;
+    nt.name = name.remove('\n'); if (nt.name.isEmpty()) nt.name = QFileInfo(filename).baseName();
+    nt.comment = comment.remove('\n');
+
+    return 0;
+}
+
+//
 bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     //
@@ -1399,5 +1506,4 @@ bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     //
     return true;
 }
-
 

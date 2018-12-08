@@ -5,17 +5,20 @@
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 
-class FragTraceManager
+class FragTraceManager: public QObject
 {
+	Q_OBJECT
 
 public:
-	FragTraceManager();
-	~FragTraceManager();
+	FragTraceManager() {};
+	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, bool slices = true);
 
+public slots:
+	void imgProcPipe_wholeBlock();
 
-
-
-
+private:
+	vector<vector<unsigned char>> imgSlices;
+	ImgManager fragTraceImgManager;
 };
 
 

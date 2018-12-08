@@ -6,35 +6,27 @@
 
 using namespace std;
 
-FragTraceControlPanel::FragTraceControlPanel()
+FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, bool showMenu) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent)
 {
-
-}
-
-FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback) : uiPtr(new Ui::FragmentedTraceUI), QDialog(parent)
-{
-	uiPtr->setupUi(this);
-
-
-
-	QSettings callOldSettings("SEU-Allen", "Fragment tracing");
-	if (callOldSettings.value("wholeBlock") == true)
+	if (showMenu)
 	{
-		uiPtr->radioButton->setChecked(true);
-		uiPtr->radioButton_2->setChecked(false);
+		uiPtr->setupUi(this);
+
+		QSettings callOldSettings("SEU-Allen", "Fragment tracing");
+		if (callOldSettings.value("wholeBlock") == true)
+		{
+			uiPtr->radioButton->setChecked(true);
+			uiPtr->radioButton_2->setChecked(false);
+		}
+		else if (callOldSettings.value("withSeed") == true)
+		{
+			uiPtr->radioButton->setChecked(false);
+			uiPtr->radioButton_2->setChecked(true);
+		}
+
+		this->show();
 	}
-	else if (callOldSettings.value("withSeed") == true)
-	{
-		uiPtr->radioButton->setChecked(false);
-		uiPtr->radioButton_2->setChecked(true);
-	}
-
-	this->show();
-}
-
-FragTraceControlPanel::~FragTraceControlPanel()
-{
-
+	else this->traceButtonClicked();
 }
 
 void FragTraceControlPanel::saveSettingsClicked()
@@ -54,6 +46,21 @@ void FragTraceControlPanel::saveSettingsClicked()
 
 void FragTraceControlPanel::traceButtonClicked()
 {
-	cout << "haha" << endl;
-	
+	QSettings currSettings("SEU-Allen", "Fragment tracing");
+	cout << "Fragment tracing procedure initiated." << endl;
+	if (currSettings.value("wholeBlock") == true && currSettings.value("withSeed") == false)
+	{
+		cout << " whole block tracing, acquiring image information.." << endl;
+		const Image4DSimple* currImgPtr = thisCallback->getImageTeraFly();
+		cout << " -- Current image block dimensions: " << currImgPtr->getXDim() << " " << currImgPtr->getYDim() << " " << currImgPtr->getZDim() << endl;
+		
+		this->traceManager = new FragTraceManager(currImgPtr);
+		connect(this, SIGNAL(switchOnSegPipe()), this->traceManager, SLOT(imgProcPipe_wholeBlock()));
+		emit switchOnSegPipe();
+	}
+	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)
+	{
+		cout << " trace with given seed point, acquiring image information.." << endl;
+	}
+
 }
