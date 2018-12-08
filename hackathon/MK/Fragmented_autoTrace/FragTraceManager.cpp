@@ -36,6 +36,8 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, boo
 		inputRegisteredImg.slicePtrs.insert({ sliceName, my1Dslice });
 		delete[] slicePtr;
 	}
+
+	this->fragTraceImgManager.imgDatabase.clear();
 	this->fragTraceImgManager.imgDatabase.insert({ inputRegisteredImg.imgAlias, inputRegisteredImg });
 }
 
@@ -45,16 +47,23 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	V3DLONG dims[4];
 	dims[0] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[0];
 	dims[1] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[1];
-	dims[2] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[2];
+	dims[2] = 1;
 	dims[3] = 1;
+	this->fragTraceImgManager.imgDatabase.begin()->second.dims[2] = 1;
 	string saveRoot = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testFolder\\";
-
 
 	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.begin(); sliceIt != this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.end(); ++sliceIt)
 	{
+		//cout << sliceIt->first << endl;
+		unsigned char* adaSlicePtr = new unsigned char[dims[0] * dims[1]];
+		
+		ImgProcessor::simpleAdaThre(sliceIt->second.get(), adaSlicePtr, this->fragTraceImgManager.imgDatabase.begin()->second.dims, 5, 3);
+
 		string saveFullPath = saveRoot + sliceIt->first;
 		const char* saveFullPathC = saveFullPath.c_str();
-		this->fragTraceImgManager.saveimage_wrapper(saveFullPathC, sliceIt->second.get(), dims, 1);
-	}
+		this->fragTraceImgManager.saveimage_wrapper(saveFullPathC, adaSlicePtr, dims, 1);
 
+		delete[] adaSlicePtr;
+	}
+	
 }
