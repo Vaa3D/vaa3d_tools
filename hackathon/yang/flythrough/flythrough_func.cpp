@@ -788,7 +788,7 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
 {
     //
     string inputdir = filename;
-    inputdir.erase(std::remove_if(inputdir.begin(), inputdir.end(), [](unsigned char x){return std::isspace(x);}));
+    inputdir.erase(std::remove_if(inputdir.begin(), inputdir.end(), [](unsigned char x){return isspace(x);}));
 
     DIR *outdir = opendir(inputdir.c_str());
     if(outdir == NULL)

@@ -111,9 +111,9 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
             NeuronSWC S;
             S.n = neuseg.row[j].n;
             S.type = neuseg.row[j].type;
-            S.x = neuseg.row[j].x+x_offset-1;
-            S.y = neuseg.row[j].y+y_offset-1;
-            S.z = neuseg.row[j].z+z_offset-1;
+            S.x = neuseg.row[j].x+x_offset;
+            S.y = neuseg.row[j].y+y_offset;
+            S.z = neuseg.row[j].z+z_offset;
             S.r = neuseg.row[j].r;
             S.pn = neuseg.row[j].parent;
             fragment.listNeuron.append(S);
@@ -139,9 +139,9 @@ void FlyThroughPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
                 for(V3DLONG j=0; j<neuseg.row.size(); j++)
                 {
                     //
-                    fragment.listNeuron[j].x = neuseg.row[j].x+x_offset-1;
-                    fragment.listNeuron[j].y = neuseg.row[j].y+y_offset-1;
-                    fragment.listNeuron[j].z = neuseg.row[j].z+z_offset-1;
+                    fragment.listNeuron[j].x = neuseg.row[j].x+x_offset;
+                    fragment.listNeuron[j].y = neuseg.row[j].y+y_offset;
+                    fragment.listNeuron[j].z = neuseg.row[j].z+z_offset;
                 }
             }
 
