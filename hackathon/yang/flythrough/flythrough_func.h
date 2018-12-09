@@ -41,6 +41,7 @@ enum  axis { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth
 
 //
 char *tiffread(const char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype);
+int readASWC_file(const QString& filename, QString &datapath, NeuronTree &nt);
 
 // cube
 class Cube

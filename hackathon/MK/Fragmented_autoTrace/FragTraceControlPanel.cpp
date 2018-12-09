@@ -54,8 +54,8 @@ void FragTraceControlPanel::traceButtonClicked()
 		const Image4DSimple* currImgPtr = thisCallback->getImageTeraFly();
 		cout << " -- Current image block dimensions: " << currImgPtr->getXDim() << " " << currImgPtr->getYDim() << " " << currImgPtr->getZDim() << endl;
 		
-		this->traceManager = new FragTraceManager(currImgPtr);
-		connect(this, SIGNAL(switchOnSegPipe()), this->traceManager, SLOT(imgProcPipe_wholeBlock()));
+		this->traceManagerPtr = new FragTraceManager(currImgPtr);
+		connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 		emit switchOnSegPipe();
 	}
 	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)

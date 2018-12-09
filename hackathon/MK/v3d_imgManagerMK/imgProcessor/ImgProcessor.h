@@ -84,37 +84,37 @@ public:
 
 	/***************** Image Statistics *****************/
 	template<class T>
-	static inline map<string, float> getBasicStats(T inputImgPtr[], int imgDims[]);
+	static inline map<string, float> getBasicStats(const T inputImgPtr[], const int imgDims[]);
 
 	template<class T>
-	static inline map<string, float> getBasicStats_no0(T inputImgPtr[], int imgDims[]);
+	static inline map<string, float> getBasicStats_no0(const T inputImgPtr[], const int imgDims[]);
 
 	template<class T>
-	static inline map<int, size_t> histQuickList(T inputImgPtr[], int imgDims[]);
+	static inline map<int, size_t> histQuickList(const T inputImgPtr[], const int imgDims[]);
 	/****************************************************/
 
 
 	/***************** Image Processing/Filtering *****************/
 	template<class T>
-	static inline void simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+	static inline void simpleThresh(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
 	template<class T>
-	static inline void simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+	static inline void simpleThresh_reverse(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
 	template<class T>
-	static inline void imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold);
+	static inline void imgMasking(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
 	template<class T>
-	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[]);
+	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 	template<class T>
-	static inline void gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 0);
+	static inline void gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
 
 	template<class T>
-	static inline void reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity = 255);
+	static inline void reversed_gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 255);
 
 	template<class T>
-	static inline void histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero = true);
+	static inline void histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero = true);
 	/**************************************************************/
 
 
@@ -149,51 +149,6 @@ inline T ImgProcessor::getPixValue2D(T inputImgPtr[], int imgDims[], int x, int 
 {
 	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
 	return inputImgPtr[pix1Dindex];
-}
-
-template<class T>
-inline void ImgProcessor::simpleThresh(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
-{
-	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
-	for (size_t i = 0; i < totalPixNum; ++i)
-	{
-		if (inputImgPtr[i] < threshold)
-		{
-			outputImgPtr[i] = 0;
-			continue;
-		}
-		else outputImgPtr[i] = inputImgPtr[i];
-	}
-}
-
-template<class T>
-inline void ImgProcessor::simpleThresh_reverse(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
-{
-	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
-	for (size_t i = 0; i < totalPixNum; ++i)
-	{
-		if (inputImgPtr[i] > threshold)
-		{
-			outputImgPtr[i] = 0;
-			continue;
-		}
-		else outputImgPtr[i] = inputImgPtr[i];
-	}
-}
-
-template<class T>
-inline void ImgProcessor::imgMasking(T inputImgPtr[], T outputImgPtr[], int imgDims[], int threshold)
-{
-	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
-	for (size_t i = 0; i < totalPixNum; ++i)
-	{
-		if (inputImgPtr[i] > threshold)
-		{
-			outputImgPtr[i] = 255;
-			continue;
-		}
-		else outputImgPtr[i] = inputImgPtr[i];
-	}
 }
 
 inline void ImgProcessor::imgDotMultiply(unsigned char inputImgPtr1[], unsigned char inputImgPtr2[], unsigned char outputImgPtr[], int imgDims[])
@@ -273,7 +228,7 @@ inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>
 	for (int k = 0; k < imgDims[2]; ++k)
 	{
 		vector<T> thisSlice;
-		long int outi = 0;
+		int outi = 0;
 		for (int j = 0; j < imgDims[1]; ++j)
 		{
 			for (int i = 0; i < imgDims[0]; ++i)
@@ -337,7 +292,7 @@ inline void ImgProcessor::imgDownSample2DMax(T inputImgPtr[], T outputImgPtr[], 
 
 // ==================================== IMAGE STATISTICS ====================================
 template<class T>
-inline map<string, float> ImgProcessor::getBasicStats(T inputImgPtr[], int imgDims[])
+inline map<string, float> ImgProcessor::getBasicStats(const T inputImgPtr[], const int imgDims[])
 {
 	map<string, float> basicStats;
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
@@ -374,7 +329,7 @@ inline map<string, float> ImgProcessor::getBasicStats(T inputImgPtr[], int imgDi
 }
 
 template<class T>
-inline map<string, float> ImgProcessor::getBasicStats_no0(T inputImgPtr[], int imgDims[])
+inline map<string, float> ImgProcessor::getBasicStats_no0(const T inputImgPtr[], const int imgDims[])
 {
 	map<string, float> basicStats;
 	vector<T> img1DVec;
@@ -414,7 +369,7 @@ inline map<string, float> ImgProcessor::getBasicStats_no0(T inputImgPtr[], int i
 }
 
 template<class T>
-inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims[])
+inline map<int, size_t> ImgProcessor::histQuickList(const T inputImgPtr[], const int imgDims[])
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	map<int, size_t> histMap;
@@ -431,7 +386,52 @@ inline map<int, size_t> ImgProcessor::histQuickList(T inputImgPtr[], int imgDims
 
 // ================================== IMAGE PROCESSING/FILTERING ==================================
 template<class T>
-inline void ImgProcessor::gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+inline void ImgProcessor::simpleThresh(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] < threshold)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::simpleThresh_reverse(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] > threshold)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgMasking(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] > threshold)
+		{
+			outputImgPtr[i] = 255;
+			continue;
+		}
+		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -450,7 +450,7 @@ inline void ImgProcessor::gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputI
 }
 
 template<class T>
-inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], T outputImgPtr[], int imgDims[], int starting_intensity)
+inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -469,7 +469,7 @@ inline void ImgProcessor::reversed_gammaCorrect_eqSeriesFactor(T inputImgPtr[], 
 }
 
 template<class T>
-inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int imgDims[], bool noZero)
+inline void ImgProcessor::histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero)
 {
 	map<int, size_t> histMap = ImgProcessor::histQuickList(inputImgPtr, imgDims);
 	if (noZero) histMap.erase(histMap.find(0)); // exclude 0 from the histogram profile
@@ -492,6 +492,37 @@ inline void ImgProcessor::histEqual_unit8(T inputImgPtr[], T outputImgPtr[], int
 	{
 		if (inputImgPtr[i] == 0) outputImgPtr[i] = 0;
 		else outputImgPtr[i] = T(binMap.at(int(inputImgPtr[i])));
+	}
+}
+
+template<class T>
+inline void ImgProcessor::simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate)
+{
+	int kpos, jpos, ipos;
+	int sampCount = 0, sampSum = 0; 
+	float residue = 0;
+	for (int k = 0; k < imgDims[2]; ++k)
+	{
+		for (int j = 0; j < imgDims[1]; ++j)
+		{
+			for (int i = 0; i < imgDims[0]; ++i)
+			{
+				sampCount = 0;
+				sampSum = 0;
+				for (int rate = 1; rate <= sampRate; ++rate)
+				{
+					if (k - stepSize * rate >= 0) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * (k - stepSize * rate) + imgDims[0] * j + i]); }
+					if (k + stepSize * rate < imgDims[2]) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * (k + stepSize * rate) + imgDims[0] * j + i]); }
+					if (j - stepSize * rate >= 0) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * (j - stepSize * rate) + i]); }
+					if (j + stepSize * rate < imgDims[1]) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * (j + stepSize * rate) + i]); }
+					if (i - stepSize * rate >= 0) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + (i - stepSize * rate)]); }
+					if (i + stepSize * rate < imgDims[0]) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + (i + stepSize * rate)]); }
+				}
+
+				residue = float(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + i]) - float(sampSum) / float(sampCount);
+				outputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + i] = (residue > 0) ? residue : 0;
+			}
+		}
 	}
 }
 // ================================ END of [IMAGE PROCESSING/FILTERING] ================================

@@ -22,9 +22,9 @@ public slots:
 
 private:
 	V3DPluginCallback2* thisCallback;
-
 	Ui::FragmentedTraceUI* uiPtr;
-	FragTraceManager* traceManager;
+
+	FragTraceManager* traceManagerPtr;
 };
 
 
