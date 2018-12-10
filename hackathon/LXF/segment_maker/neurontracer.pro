@@ -39,7 +39,14 @@ HEADERS	+= neurontracer_plugin.h \
     ../anisodiffusion_LXF/src/q_derivatives3D.h \
     ../anisodiffusion_LXF/src/q_AnisoDiff3D.h \
     ../anisodiffusion_LXF/src/EigenDecomposition3.h \
+<<<<<<< HEAD
     ../../../../v3d_external/v3d_main/basic_c_fun/stackutil.h
+=======
+    ../../../../v3d_external/v3d_main/basic_c_fun/stackutil.h \
+    ../soma_remove/soma_remove_main.h \
+    ../soma_remove/openfileDialog.h \
+    ../soma_remove/data_training.h
+>>>>>>> remove_glio version which is operational
 HEADERS	+= tracing_func.h
 
 HEADERS	+= $$VAA3DPATH/../../vaa3d_tools/hackathon/zhi/APP2_large_scale/readrawfile_func.h
@@ -61,7 +68,14 @@ SOURCES	+= neurontracer_plugin.cpp \
     ../anisodiffusion_LXF/src/q_EigenVectors3D.cpp \
     ../anisodiffusion_LXF/src/q_derivatives3D.cpp \
     ../anisodiffusion_LXF/src/q_AnisoDiff3D.cpp \
+<<<<<<< HEAD
     ../anisodiffusion_LXF/src/EigenDecomposition3.cpp
+=======
+    ../anisodiffusion_LXF/src/EigenDecomposition3.cpp \
+    ../soma_remove/soma_remove_main.cpp \
+    ../soma_remove/openfileDialog.cpp \
+    ../soma_remove/data_training.cpp
+>>>>>>> remove_glio version which is operational
 SOURCES	+= tracing_func.cpp
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp

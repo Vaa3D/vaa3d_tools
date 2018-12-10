@@ -17,6 +17,10 @@ struct Each_line
     double x3;
     double x4;
     double x5;
+<<<<<<< HEAD
+=======
+    double x6;
+>>>>>>> remove_glio version which is operational
 };
 struct Chart
 {
@@ -35,6 +39,10 @@ struct Feature
     vector<double> D;
     vector<double> grey_mean;
     vector<double> grey_std;
+<<<<<<< HEAD
+=======
+    vector<double> overlap_all;
+>>>>>>> remove_glio version which is operational
     vector<inf> inff;
 };
 
@@ -50,7 +58,11 @@ struct Feature
 //    void show();
 //    void chuShi(vector<vector<double> > &V1);
 //};
+<<<<<<< HEAD
 bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName);
+=======
+bool export_TXT(Each_line &E1,Each_line &E2,double &logsigma,vector<vector<double> >&R_new,QString fileSaveName);
+>>>>>>> remove_glio version which is operational
 double get_D(vector<double> &v1,vector<double> &v2);
 Each_line E_calculate(Feature &feature);
 bool Cov_calculate(Chart &chart,Feature &feature);

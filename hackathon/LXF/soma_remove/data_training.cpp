@@ -7,6 +7,10 @@
 #include "SVD.h"
 #include "matrix.h"
 #include<math.h>
+<<<<<<< HEAD
+=======
+#include "svds.h"
+>>>>>>> remove_glio version which is operational
 #include "soma_remove_main.h"
 ///////////////////////////////////线性
 //parameter list
@@ -22,8 +26,13 @@
 #define ifKernel  1
 #define d 0.2
 
+<<<<<<< HEAD
 #define N 5    //测试矩阵维数定义
 vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<vector<double> > &R,double &sum_log);
+=======
+#define N 6    //测试矩阵维数定义
+
+>>>>>>> remove_glio version which is operational
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 vector<bool> classify_glio2(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method);
 bool GetMatrixInverse(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
@@ -31,6 +40,10 @@ void  getAStart(vector<vector<double> > &V1,int n,vector<vector<double> > &V2);
 vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<vector<double> > &arrB);
 double getA(vector<vector<double> > &V1,int n);
 vector<Coordinate> readtxt_LXF(const QString& filename,const string &inf1);
+<<<<<<< HEAD
+=======
+vector<vector<double> >matrix_multi_LXF(vector<vector<double> >&matrix_a,vector<vector<double> >&matrix_b);
+>>>>>>> remove_glio version which is operational
 bool export_feature(Feature &feature,QString &fileSaveName);
 int size_all;
 using namespace std;
@@ -285,7 +298,13 @@ void Split(const string &s,vector<string> &v,const string &c)
         pos2 = s.find(c,pos1);
     }
     if(pos1 != s.length())
+<<<<<<< HEAD
         v.push_back(s.substr(pos1));
+=======
+    {
+        v.push_back(s.substr(pos1));
+    }
+>>>>>>> remove_glio version which is operational
 }
 
 
@@ -414,14 +433,20 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     QStringList fileList1,fileList2,predict1,predict2;
     vector<Coordinate> tmp,tmp2,tmp3,tmp4;
     vector<vector<Coordinate> > coor_v,coor_v2,coor_v3,coor_v4;
+<<<<<<< HEAD
     //first folderlist1
+=======
+>>>>>>> remove_glio version which is operational
     for(int i=2;i<folderList1.size();i++)
     {
         fileList1 = importFileList_addnumbersort(QString(folderList1[i]));
         vector<string> v1;
         Split(folderList1[i].toStdString(),v1,"/");
+<<<<<<< HEAD
         cout<<"v1 = "<<v1[7]<<endl;
         //v3d_msg("kkk");
+=======
+>>>>>>> remove_glio version which is operational
         for(int i=2;i<fileList1.size();i++)
         {
             tmp.clear();
@@ -489,8 +514,11 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         }
 
     }
+<<<<<<< HEAD
 //cout<<tmp[0].inf1<<endl;
 //v3d_msg("kkk");
+=======
+>>>>>>> remove_glio version which is operational
     vector<inf> inf_v,inf_v2,inf_v3,inf_v4;
     vector<double> y_n,y_n2,y_n3,y_n4;
     vector<double> overlap_level,overlap_level2,overlap_level3,overlap_level4;
@@ -499,6 +527,7 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     vector<double> D,D2,D3,D4;
     vector<double> grey_mean,grey_mean2,grey_mean3,grey_mean4;
     vector<double> grey_std,grey_std2,grey_std3,grey_std4;
+<<<<<<< HEAD
 
 
     feature_calculate(inf_v,y_n,overlap_level,ratio_v,count_v,D,grey_mean,grey_std,coor_v);
@@ -506,6 +535,18 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
     feature_calculate(inf_v3,y_n3,overlap_level3,ratio_v3,count_v3,D3,grey_mean3,grey_std3,coor_v3);
     feature_calculate(inf_v4,y_n4,overlap_level4,ratio_v4,count_v4,D3,grey_mean4,grey_std4,coor_v4);
+=======
+    vector<double> overlap_all,overlap_all2,overlap_all3,overlap_all4;
+    QList<ImageMarker> center,center2,center3,center4;
+
+    feature_calculate(inf_v,y_n,overlap_level,ratio_v,count_v,D,grey_mean,grey_std,center,coor_v,overlap_all);
+    cout<<"-----------------------------------------------------"<<endl;
+    //v3d_msg();
+    feature_calculate(inf_v2,y_n2,overlap_level2,ratio_v2,count_v2,D2,grey_mean2,grey_std2,center2,coor_v2,overlap_all2);
+
+    feature_calculate(inf_v3,y_n3,overlap_level3,ratio_v3,count_v3,D3,grey_mean3,grey_std3,center3,coor_v3,overlap_all3);
+    feature_calculate(inf_v4,y_n4,overlap_level4,ratio_v4,count_v4,D3,grey_mean4,grey_std4,center4,coor_v4,overlap_all4);
+>>>>>>> remove_glio version which is operational
 
     Feature feature,feature2,feature3,feature4;
     Chart chart,chart2,chart3,chart4;
@@ -518,6 +559,10 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature.grey_mean = grey_mean;
     feature.grey_std = grey_std;
     feature.inff = inf_v;
+<<<<<<< HEAD
+=======
+    feature.overlap_all = overlap_all;
+>>>>>>> remove_glio version which is operational
 
     feature2.y_n = y_n2;
     feature2.overlap_level = overlap_level2;
@@ -527,6 +572,10 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature2.grey_mean = grey_mean2;
     feature2.grey_std = grey_std2;
     feature2.inff = inf_v2;
+<<<<<<< HEAD
+=======
+    feature2.overlap_all = overlap_all2;
+>>>>>>> remove_glio version which is operational
 
     feature3.y_n = y_n3;
     feature3.overlap_level = overlap_level3;
@@ -536,6 +585,10 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature3.grey_mean = grey_mean3;
     feature3.grey_std = grey_std3;
     feature3.inff = inf_v3;
+<<<<<<< HEAD
+=======
+    feature3.overlap_all = overlap_all3;
+>>>>>>> remove_glio version which is operational
 
     feature4.y_n = y_n4;
     feature4.overlap_level = overlap_level4;
@@ -545,15 +598,30 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     feature4.grey_mean = grey_mean4;
     feature4.grey_std = grey_std4;
     feature4.inff = inf_v4;
+<<<<<<< HEAD
 
     QString name = "feature.txt";
     QString name2 = "feature2.txt";
     export_feature(feature,name);
     export_feature(feature2,name2);
+=======
+    feature4.overlap_all = overlap_all4;
+
+    QString name = "feature.txt";
+    QString name2 = "feature2.txt";
+    QString name3 = "feature3.txt";
+    QString name4 = "feature4.txt";
+    export_feature(feature,name);
+    export_feature(feature2,name2);
+    export_feature(feature3,name3);
+    export_feature(feature4,name4);
+
+>>>>>>> remove_glio version which is operational
     Cov_calculate(chart,feature);
     Cov_calculate(chart2,feature2);
     E = E_calculate(feature);
     E2 = E_calculate(feature2);
+<<<<<<< HEAD
     E3 = E_calculate(feature3);
     E4 = E_calculate(feature4);
 
@@ -567,11 +635,57 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     for(int i=0;i<K;i++)
     {
         vector<float> a;
+=======
+    for(int i=0;i<1;i++)
+    {
+        cout<<"E = "<<E.x1<<endl;
+        cout<<"E = "<<E.x2<<endl;
+        cout<<"E = "<<E.x3<<endl;
+        cout<<"E = "<<E.x4<<endl;
+        cout<<"E = "<<E.x5<<endl;
+        cout<<"E = "<<E.x6<<endl;
+    }
+    for(int i=0;i<1;i++)
+    {
+        cout<<"E2 = "<<E2.x1<<endl;
+        cout<<"E2 = "<<E2.x2<<endl;
+        cout<<"E2 = "<<E2.x3<<endl;
+        cout<<"E2 = "<<E2.x4<<endl;
+        cout<<"E2 = "<<E2.x5<<endl;
+        cout<<"E2 = "<<E2.x6<<endl;
+    }
+    E3 = E_calculate(feature3);
+    E4 = E_calculate(feature4);
+
+
+    int K = y_n.size();
+    int U = y_n2.size();
+    vector<vector<double> >A,A2;
+
+    for(int i=0;i<U;i++)
+    {
+        vector<double> a;
+        a.push_back(feature2.y_n[i]-E2.x1);
+        //cout<<feature2.y_n[i]-E2.x1<<"  "<<feature2.ratio_v[i]-E2.x2<<"     "<<feature2.overlap_level[i]-E2.x3<<"   "<<"    "<<feature2.grey_std[i]-E2.x4<<"    "<<feature2.count_v[i]-E2.x5<<endl;
+      //  cout<<feature2.y_n[i]<<"  "<<feature2.ratio_v[i]<<"     "<<feature2.overlap_level[i]<<"   "<<"    "<<feature2.grey_std[i]<<"    "<<feature2.count_v[i]<<endl;
+        a.push_back(feature2.ratio_v[i]-E2.x2);
+        a.push_back(feature2.overlap_level[i]-E2.x3);
+        a.push_back(feature2.grey_std[i]-E2.x4);
+        a.push_back(feature2.count_v[i]-E2.x5);
+        a.push_back(feature2.overlap_all[i]-E2.x6);
+        A.push_back(a);
+
+    }
+    for(int i=0;i<K;i++)
+    {
+        vector<double> a;
+>>>>>>> remove_glio version which is operational
         a.push_back(feature.y_n[i]-E.x1);
         a.push_back(feature.ratio_v[i]-E.x2);
         a.push_back(feature.overlap_level[i]-E.x3);
         a.push_back(feature.grey_std[i]-E.x4);
         a.push_back(feature.count_v[i]-E.x5);
+<<<<<<< HEAD
         A.push_back(a);
 
     }
@@ -613,10 +727,42 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         R2_new.push_back(r);
     }
     int k=5;
+=======
+        a.push_back(feature.overlap_all[i]-E.x6);
+        A.push_back(a);
+     //   cout<<feature.y_n[i]-E.x1<<"  "<<feature.ratio_v[i]-E.x2<<"     "<<feature.overlap_level[i]-E.x3<<"   "<<"    "<<feature.grey_std[i]-E.x4<<"    "<<feature.count_v[i]-E.x5<<endl;
+       // cout<<feature.y_n[i]<<"  "<<feature.ratio_v[i]<<"     "<<feature.overlap_level[i]<<"   "<<"    "<<feature.grey_std[i]<<"    "<<feature.count_v[i]<<endl;
+
+    }
+
+    int l = A.size();
+    vector<vector<double> >Q2,R2;
+    vector<vector<double> >R_new,R2_new;
+    vector<vector<double> > Q(l,vector<double>(l,0));
+    vector<vector<double> > R(l,vector<double>(l,0));
+    cout<<"对矩阵A进行QR Factorization"<<endl;
+    QRFactorization(A,Q,R);
+
+
+    cout<<"K+U = "<<K+U<<endl;
+    for(int i=0;i<6;i++)
+    {
+        vector<double> r;
+        r.push_back(R[i][0]/sqrt(K+U-2));
+        r.push_back(R[i][1]/sqrt(K+U-2));
+        r.push_back(R[i][2]/sqrt(K+U-2));
+        r.push_back(R[i][3]/sqrt(K+U-2));
+        r.push_back(R[i][4]/sqrt(K+U-2));
+        r.push_back(R[i][5]/sqrt(K+U-2));
+        R_new.push_back(r);
+    }
+    int k=6;
+>>>>>>> remove_glio version which is operational
     vector<vector<double> > UU,UU2;
     vector<double> S,S2;
     vector<vector<double> > V,V2;
     svd(R_new,k,UU,S,V);
+<<<<<<< HEAD
     svd(R2_new,k,UU2,S2,V2);
 
 
@@ -625,12 +771,22 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 //    {
 //        cout<<setw(7)<<S[i]<<' ';
 //    }
+=======
+
+
+    cout<<"S="<<endl;
+    for(int i=0;i<S.size();i++)
+    {
+        cout<<setw(7)<<S[i]<<' ';
+    }
+>>>>>>> remove_glio version which is operational
     cout<<endl;
     double sum_log=0;
     for(int i=0;i<S.size();i++)
     {
         sum_log = sum_log + log(S[i]);
     }
+<<<<<<< HEAD
     double sum_log2=0;
     for(int i=0;i<S2.size();i++)
     {
@@ -669,11 +825,48 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
 
 //    }
+=======
+
+    cout<<endl<<"Matrix R_new:"<<endl;
+
+    for(int i=0;i<R_new.size();i++)
+    {
+        for(int j=0;j<6;j++)
+        {
+            cout<<setw(8)<<R_new[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<R_new.size()<<endl;
+    vector<double> cl,cl2,cl3,cl4;
+
+    cout<<"sum_log = "<<2*sum_log<<endl;
+    double logsigma = 2*sum_log;
+    //QString fileSaveName = "glio.txt";
+   // QString fileSaveName2 = "signal.txt";
+   // export_TXT(E,feature,logsigma,fileSaveName);
+ //   export_TXT(E2,feature2,logsigma,fileSaveName2);
+    QString model_name = "model.txt";
+    export_TXT(E,E2,logsigma,R_new,model_name);
+
+
+    cl = classify_glio_Y(feature3,E,R_new,logsigma);//glio
+    cl2 = classify_glio_Y(feature3,E2,R_new,logsigma);//signal
+
+    cl3 = classify_glio_Y(feature4,E,R_new,logsigma);//glio
+    cl4 = classify_glio_Y(feature4,E2,R_new,logsigma);//signal
+
+>>>>>>> remove_glio version which is operational
 
     vector<bool> result1,result2;
     for(int i=0;i<cl.size();i++)
     {
+<<<<<<< HEAD
       //  cout<<"cl cl2 = "<<cl[i]<<"    "<<cl2[i]<<endl;
+=======
+        //cout<<"cl[i] cl2[i] = "<<cl[i]<<"       "<<cl2[i]<<endl;
+>>>>>>> remove_glio version which is operational
         if(cl[i]>cl2[i])
         {
             //cout<<"yes = "<<inf_v[i].inf1<<"  "<<inf_v[i].name<<"     "<<feature.y_n[i]<<"    "<<feature.ratio_v[i]<<"  "<<feature.overlap_level[i]<<"        "<<feature.count_v[i]<<"     "<<feature.grey_std[i]<<endl;
@@ -691,10 +884,17 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 
     for(int i=0;i<cl3.size();i++)
     {
+<<<<<<< HEAD
       //  cout<<"cl3 cl4 = "<<cl3[i]<<"    "<<cl4[i]<<endl;
         if(cl3[i]>cl4[i]||y_n2[i]==0)
         {
             //if(y_n[i]==1)
+=======
+       // cout<<"cl3[i] cl4[i] = "<<cl3[i]<<"       "<<cl4[i]<<endl;
+        //if(cl3[i]<cl4[i]||feature4.count_v[i]<50)
+        if(cl3[i]<cl4[i]||y_n4[i]==0||feature4.count_v[i]<50||feature4.overlap_all[i]<0.1)
+        {
+>>>>>>> remove_glio version which is operational
             result2.push_back(1);//is signal
         }
         else
@@ -703,10 +903,13 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
         }
     }
 
+<<<<<<< HEAD
 
 //    bool method=false;
 //    vector<bool> result1 = classify_glio2(chart,E,chart2,E2,chart3,E3,feature3,method);
 //    vector<bool> result2 = classify_glio2(chart,E,chart2,E2,chart4,E4,feature4,method);
+=======
+>>>>>>> remove_glio version which is operational
     double sum1=0;
     for(int i=0;i<result1.size();i++)
     {
@@ -726,15 +929,23 @@ bool data_training(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     cout<<"result2.size = "<<result2.size()<<endl;
     double per2 = sum2/result2.size();
     cout<<"per = "<<per1<<"  "<<per2<<endl;
+<<<<<<< HEAD
 
 }
 bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName)
+=======
+    cout<<"all = "<<(sum1+sum2)/(result1.size()+result2.size())<<endl;
+
+}
+bool export_TXT(Each_line &E1,Each_line &E2,double &logsigma,vector<vector<double> >&R_new,QString fileSaveName)
+>>>>>>> remove_glio version which is operational
 {
     QFile file(fileSaveName);
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
         return false;
     QTextStream myfile(&file);
 
+<<<<<<< HEAD
 //    cout << E.x1 <<"    "<<chart.first_line.x1<<"    "<<chart.first_line.x2<<"    "<<chart.first_line.x3<<"    "<<chart.first_line.x4<<"    "<<chart.first_line.x5<<endl;
 //    cout << E.x2 <<"    "<<chart.second_line.x1<<"    "<<chart.second_line.x2<<"    "<<chart.second_line.x3<<"    "<<chart.second_line.x4<<"    "<<chart.second_line.x5<<endl;
 //    cout << E.x3 <<"    "<<chart.third_line.x1<<"    "<<chart.third_line.x2<<"    "<<chart.third_line.x3<<"    "<<chart.third_line.x4<<"    "<<chart.third_line.x5<<endl;
@@ -747,6 +958,22 @@ bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName)
         myfile << E.x3 <<"   "<<chart.third_line.x1<<"   "<<chart.third_line.x2<<"   "<<chart.third_line.x3<<"   "<<chart.third_line.x4<<"   "<<chart.third_line.x5<<endl;
         myfile << E.x4 <<"   "<<chart.forth_line.x1<<"   "<<chart.forth_line.x2<<"   "<<chart.forth_line.x3<<"   "<<chart.forth_line.x4<<"   "<<chart.forth_line.x5<<endl;
         myfile << E.x5 <<"   "<<chart.fifth_line.x1<<"   "<<chart.fifth_line.x2<<"   "<<chart.fifth_line.x3<<"   "<<chart.fifth_line.x4<<"   "<<chart.fifth_line.x5<<endl;
+=======
+
+        myfile << logsigma <<endl;
+        myfile << E1.x1 <<"   "<<E1.x2<<"   "<<E1.x3<<"   "<<E1.x4<<"   "<<E1.x5<<"   "<<E1.x6<<endl;
+        myfile << E2.x1 <<"   "<<E2.x2<<"   "<<E2.x3<<"   "<<E2.x4<<"   "<<E2.x5<<"   "<<E2.x6<<endl;
+        for(int i=0;i<R_new.size();i++)
+        {
+            for(int j=0;j<R_new[0].size();j++)
+            {
+                myfile << R_new[i][j] <<"   ";
+            }
+            myfile<<endl;
+        }
+
+
+>>>>>>> remove_glio version which is operational
 
 
     file.close();
@@ -760,14 +987,22 @@ bool export_feature(Feature &feature,QString &fileSaveName)
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
         return false;
     QTextStream myfile(&file);
+<<<<<<< HEAD
     myfile <<"name        "<< "y_n" <<"    "<<"ratio(x/y)" <<"    "<<"overlap_level" <<"    "<<"count"<<"    "<<"grey_std"<<endl;
+=======
+    myfile <<"name        "<< "y_n" <<"    "<<"ratio(x/y)" <<"    "<<"overlap_level" <<"    "<<"count"<<"    "<<"grey_std"<<"    "<<"overlap_all"<<endl;
+>>>>>>> remove_glio version which is operational
     for(int i=0;i<feature.count_v.size();i++)
     {
 
         QString inf1 = QString::fromStdString(feature.inff[i].inf1);
         QString name = QString::fromStdString(feature.inff[i].name);
 
+<<<<<<< HEAD
         myfile << name <<"     " << feature.y_n[i] <<"   "<<feature.ratio_v[i]<<"   "<<feature.overlap_level[i]<<"   "<<feature.count_v[i]<<"   "<<feature.grey_std[i]<<endl;
+=======
+        myfile << name <<"     " << feature.y_n[i] <<"   "<<feature.ratio_v[i]<<"   "<<feature.overlap_level[i]<<"   "<<feature.count_v[i]<<"   "<<feature.grey_std[i]<<"    "<<feature.overlap_all[i]<<endl;
+>>>>>>> remove_glio version which is operational
 
     }
     file.close();
@@ -806,10 +1041,18 @@ vector<Coordinate> readtxt_LXF(const QString& filename,const string &inf1)
 
             Coordinate S;
 
+<<<<<<< HEAD
             S.x = qsl[0].toFloat();
             S.y = qsl[1].toFloat();
             S.z = qsl[2].toFloat();
             S.bri = qsl[3].toFloat();
+=======
+           // S.x = qsl[0].toFloat();
+            S.x = qsl[0].toDouble();
+            S.y = qsl[1].toDouble();
+            S.z = qsl[2].toDouble();
+            S.bri = qsl[3].toDouble();
+>>>>>>> remove_glio version which is operational
             S.inf1 = inf1;
             S.name = filename.toStdString();
             tmp_list.push_back(S);
@@ -887,24 +1130,39 @@ Each_line E_calculate(Feature &feature)
 {
     int size = feature.y_n.size();
     Each_line sum,E;
+<<<<<<< HEAD
     sum.x1=sum.x2=sum.x3=sum.x4=sum.x5=0;
+=======
+    sum.x1=sum.x2=sum.x3=sum.x4=sum.x5=sum.x6=0;
+>>>>>>> remove_glio version which is operational
     for(int i=0;i<size;i++)
     {
         sum.x1 = sum.x1 + feature.y_n[i];
         sum.x2 = sum.x2 + feature.ratio_v[i];
         sum.x3 = sum.x3 + feature.overlap_level[i];
         sum.x4 = sum.x4 + feature.grey_std[i];
+<<<<<<< HEAD
        // cout<<"feature.grey_std = "<<feature.grey_std[i]<<endl;
        // cout<<"sum.x4 = "<<sum.x4<<endl;
         sum.x5 = sum.x5 + feature.count_v[i];
     }
   //  cout<<"sum = "<<sum.x1<<"   "<<sum.x2<<"    "<<sum.x3<<"    "<<sum.x4<<"    "<<sum.x5<<endl;
+=======
+        sum.x5 = sum.x5 + feature.count_v[i];
+        sum.x6 = sum.x6 + feature.overlap_all[i];
+    }
+    //cout<<"sum = "<<sum.x1<<"   "<<sum.x2<<"    "<<sum.x3<<"    "<<sum.x4<<"    "<<sum.x5<<endl;
+>>>>>>> remove_glio version which is operational
   //  cout<<"size = "<<size<<endl;
     E.x1=sum.x1/size;
     E.x2=sum.x2/size;
     E.x3=sum.x3/size;
     E.x4=sum.x4/size;
     E.x5=sum.x5/size;
+<<<<<<< HEAD
+=======
+    E.x6=sum.x6/size;
+>>>>>>> remove_glio version which is operational
  //   cout<<"sum.x4 size = "<<sum.x4<<"   "<<size<<endl;
   //  cout<<"E = "<<E.x1<<"   "<<E.x2<<"    "<<E.x3<<"    "<<E.x4<<"    "<<E.x5<<endl;
    // v3d_msg("E");
@@ -992,15 +1250,25 @@ vector<bool> classify_glio2(Chart &chart1,Each_line &E1,Chart &chart2,Each_line 
     }
 
 }
+<<<<<<< HEAD
 vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<vector<double> > &R,double &sum_log)
 {
     //cout<<"in classify"<<endl;
+=======
+vector<double> classify_glio_Y(Feature &f,Each_line &E,vector<vector<double> > &R,double &sum_log)
+{
+    cout<<"in classify"<<endl;
+>>>>>>> remove_glio version which is operational
     int size = f.count_v.size();
     double m1;
     double m2;
     double m3;
     double m4;
     double m5;
+<<<<<<< HEAD
+=======
+    double m6;
+>>>>>>> remove_glio version which is operational
     vector<vector<double> > re;
     for(int i=0;i<size;i++)
     {
@@ -1010,11 +1278,17 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
        m3 = f.overlap_level[i]-E.x3;
        m4 = f.grey_std[i]-E.x4;
        m5 = f.count_v[i]-E.x5;
+<<<<<<< HEAD
+=======
+       m6 = f.overlap_all[i]-E.x6;
+       cout<<"m = "<<m1<<"  "<<m2<<endl;
+>>>>>>> remove_glio version which is operational
        r.push_back(m1);
        r.push_back(m2);
        r.push_back(m3);
        r.push_back(m4);
        r.push_back(m5);
+<<<<<<< HEAD
        re.push_back(r);
     }
     vector<vector<double> > result;
@@ -1024,20 +1298,38 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
     for(int i=0;i<R.size();i++)
     {
         for(int j=0;j<5;j++)
+=======
+       r.push_back(m6);
+       re.push_back(r);
+    }
+   // v3d_msg("chel");
+    vector<vector<double> > result;
+
+    double R_m[6][6],R_inv[6][6];
+    for(int i=0;i<R.size();i++)
+    {
+        for(int j=0;j<R[0].size();j++)
+>>>>>>> remove_glio version which is operational
         {
             R_m[i][j] = R[i][j];
         }
     }
 
+<<<<<<< HEAD
 
     GetMatrixInverse(R_m,5,R_inv);
 
 
+=======
+//v3d_msg("che2");
+    GetMatrixInverse(R_m,6,R_inv);
+>>>>>>> remove_glio version which is operational
        vector<double> R_Inv_v;
        vector<vector<double> > R_Inv_vv;
         for(int i=0;i<R.size();i++)
         {
             R_Inv_v.clear();
+<<<<<<< HEAD
             for(int j=0;j<5;j++)
             {
                 R_Inv_v.push_back(R_inv[i][j]);
@@ -1046,6 +1338,18 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
         }
         result = matrix_multiply(re,R_Inv_vv);
 
+=======
+            for(int j=0;j<R[0].size();j++)
+            {
+                R_Inv_v.push_back(R_inv[i][j]);
+            }
+
+            R_Inv_vv.push_back(R_Inv_v);
+        }
+       // v3d_msg("che4");
+        result = matrix_multi_LXF(re,R_Inv_vv);
+//v3d_msg("che3");
+>>>>>>> remove_glio version which is operational
 
 
 
@@ -1055,12 +1359,18 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
     {
         prior.push_back(0.5);
     }
+<<<<<<< HEAD
    // v3d_msg("check");
+=======
+>>>>>>> remove_glio version which is operational
     vector<double> sum;
     for(int i=0;i<size;i++)
     {
         double tmp = result[i][0]*result[i][0] + result[i][1]*result[i][1] + result[i][2]*result[i][2] + result[i][3]*result[i][3] + result[i][4]*result[i][4];
+<<<<<<< HEAD
      //   cout<<"tmp = "<<tmp<<"      ";
+=======
+>>>>>>> remove_glio version which is operational
         sum.push_back(tmp);
     }
 
@@ -1068,7 +1378,11 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
     vector<double> D;
     for(int i=0;i<size;i++)
     {
+<<<<<<< HEAD
         double t = log(prior[i])-0.5*sum[i]+2*sum_log;
+=======
+        double t = log(prior[i])-0.5*sum[i]+sum_log;
+>>>>>>> remove_glio version which is operational
      //   cout<<"t = "<<t<<endl;
         D.push_back(t);
     }
@@ -1078,7 +1392,10 @@ vector<double> classify_glio_Y(vector<double> &S,Feature &f,Each_line &E,vector<
 
 vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<vector<double> > &arrB)
 {
+<<<<<<< HEAD
 //    cout<<"ppppppppppppp"<<endl;
+=======
+>>>>>>> remove_glio version which is operational
     //矩阵arrA的行数
     int rowA = arrA.size();
     //矩阵arrA的列数
@@ -1106,7 +1423,10 @@ vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<ve
 //        }
 
         //矩阵相乘
+<<<<<<< HEAD
      //   cout<<"uuuuuuuuuuuu"<<endl;
+=======
+>>>>>>> remove_glio version which is operational
         for (int i = 0; i < rowA; ++i)
         {
             for (int j = 0; j < colB; ++j)
@@ -1131,6 +1451,7 @@ vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<ve
     return res;
 }
 
+<<<<<<< HEAD
 
 
 //int main()
@@ -1141,4 +1462,42 @@ vector<vector<double> > matrix_multiply(vector<vector<double> > &arrA, vector<ve
 //    a.qiuNi();
 //    return 0;
 //}
+=======
+vector<vector<double> >matrix_multi_LXF(vector<vector<double> >&matrix_a,vector<vector<double> >&matrix_b)
+{
+
+    vector<vector<double> > result;
+    int SIZE_M = matrix_a.size();
+    int SIZE_N = matrix_a[0].size();
+    int SIZE_S = matrix_b[0].size();
+    double matrix_result[SIZE_M][SIZE_S];
+
+    for(int m=0;m<SIZE_M;m++)
+    {
+         for(int s=0;s<SIZE_S;s++)
+         {
+             matrix_result[m][s]=0;//变量使用前记得初始化,否则结果具有不确定性
+             for(int n=0;n<SIZE_N;n++)
+             {
+                 matrix_result[m][s]+=matrix_a[m][n]*matrix_b[n][s];
+             }
+         }
+     }
+
+    for(int i=0;i<SIZE_M;i++)
+    {
+        vector<double> r;
+        for(int j=0;j<SIZE_S;j++)
+        {
+
+            r.push_back(matrix_result[i][j]);
+
+        }
+         result.push_back(r);
+    }
+
+    return result;
+}
+
+>>>>>>> remove_glio version which is operational
 
