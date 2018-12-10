@@ -12,13 +12,21 @@ class FragTraceControlPanel : public QDialog
 
 public:
 	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, bool showMenu = true);
+	~FragTraceControlPanel();
+
+	QString saveSWCFullName;
+	QString adaSaveRoot;
+	QString histMaskRoot;
 
 signals:
 	void switchOnSegPipe();
 
 public slots:
+	void imgFmtChecked(bool checked);
+	void saveSegStepsResultChecked(bool checked);
 	void saveSettingsClicked();
 	void traceButtonClicked();
+	void browseSavePathClicked();
 
 private:
 	V3DPluginCallback2* thisCallback;

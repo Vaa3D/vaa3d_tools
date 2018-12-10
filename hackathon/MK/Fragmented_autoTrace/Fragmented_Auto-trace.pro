@@ -28,9 +28,6 @@ FORMS += fragmentedTraceUI.ui
 HEADERS	+= Fragmented_Auto-trace_plugin.h
 HEADERS += FragTraceControlPanel.h
 HEADERS += FragTraceManager.h
-HEADERS += $$IMGMANAGERPATH/ImgManager.h
-HEADERS += $$IMGMANAGERPATH/imgAnalyzer/ImgAnalyzer.h
-HEADERS += $$IMGMANAGERPATH/imgProcessor/ImgProcessor.h
 HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp

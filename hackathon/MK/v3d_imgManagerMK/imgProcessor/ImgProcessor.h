@@ -498,7 +498,6 @@ inline void ImgProcessor::histEqual_unit8(const T inputImgPtr[], T outputImgPtr[
 template<class T>
 inline void ImgProcessor::simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate)
 {
-	int kpos, jpos, ipos;
 	int sampCount = 0, sampSum = 0; 
 	float residue = 0;
 	for (int k = 0; k < imgDims[2]; ++k)
@@ -511,11 +510,11 @@ inline void ImgProcessor::simpleAdaThre(const T inputImgPtr[], T outputImgPtr[],
 				sampSum = 0;
 				for (int rate = 1; rate <= sampRate; ++rate)
 				{
-					if (k - stepSize * rate >= 0) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * (k - stepSize * rate) + imgDims[0] * j + i]); }
+					if (k - stepSize * rate >= 0)		  { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * (k - stepSize * rate) + imgDims[0] * j + i]); }
 					if (k + stepSize * rate < imgDims[2]) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * (k + stepSize * rate) + imgDims[0] * j + i]); }
-					if (j - stepSize * rate >= 0) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * (j - stepSize * rate) + i]); }
+					if (j - stepSize * rate >= 0)		  { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * (j - stepSize * rate) + i]); }
 					if (j + stepSize * rate < imgDims[1]) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * (j + stepSize * rate) + i]); }
-					if (i - stepSize * rate >= 0) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + (i - stepSize * rate)]); }
+					if (i - stepSize * rate >= 0)		  { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + (i - stepSize * rate)]); }
 					if (i + stepSize * rate < imgDims[0]) { ++sampCount; sampSum += int(inputImgPtr[imgDims[0] * imgDims[1] * k + imgDims[0] * j + (i + stepSize * rate)]); }
 				}
 
