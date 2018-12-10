@@ -23,10 +23,7 @@
 #include "../anisodiffusion_LXF/src/q_EigenVectors3D.h"
 #include "../anisodiffusion_LXF/src/q_derivatives3D.h"
 #include "../anisodiffusion_LXF/src/q_AnisoDiff3D.h"
-<<<<<<< HEAD
-=======
 #include "../soma_remove/soma_remove_main.h"
->>>>>>> remove_glio version which is operational
 //#include "../anisodiffusion_LXF/src/EigenDecomposition3.h"
 //#include "../anisodiffusion_LXF/src/EigenDecomposition3.h"
 bool export_2dtif(V3DPluginCallback & cb,const char * filename, unsigned char * pdata, V3DLONG sz[3], int datatype);
@@ -504,22 +501,12 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
          _file.open(str_outimg_filename.toStdString().c_str(),ios::in);
         if(!_file)
         {
-<<<<<<< HEAD
-            //v3d_msg("gggggg");
-            if(enhance)
-            {
-                //v3d_msg("llllllllllll");
-                thresh = 30;
-                PARA.channel = 1;
-                anisodiff_func(callback,parent,PARA,bmenu);
-=======
             if(enhance)
             {
                 thresh = 30;
                 PARA.channel = 1;
                 anisodiff_func(callback,parent,PARA,bmenu);
 
->>>>>>> remove_glio version which is operational
             }
         }
 
@@ -573,12 +560,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         cout<<"p2"<<p2.inmarker_file.size()<<endl;
         if(enhance)
         {
-<<<<<<< HEAD
-            p2.inimg_file = str_outimg_filename;
-=======
             //p2.inimg_file = str_outimg_filename;
             p2.inimg_file = "final_img.v3draw";
->>>>>>> remove_glio version which is operational
         }
         else
         {
@@ -1142,12 +1125,8 @@ bool anisodiff_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &P
     {
         printf("5. Save the processed image to file. \n");
         QString str_outimg_filename = PARA.inimg_file + "_anisodiff.raw";
-<<<<<<< HEAD
-        saveImage(qPrintable(str_outimg_filename),p_img8u_output,sz_img_input,1);
-=======
         //saveImage(qPrintable(str_outimg_filename),p_img8u_output,sz_img_input,1);
         soma_remove_main_2(p_img8u_output,sz_img_input,callback);
->>>>>>> remove_glio version which is operational
 
         if(p_img8u_output) 		{delete []p_img8u_output;		p_img8u_output=0;}
     }

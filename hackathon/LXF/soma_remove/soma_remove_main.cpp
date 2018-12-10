@@ -1,15 +1,9 @@
-<<<<<<< HEAD
-#include "soma_remove_main.h"
-
-#include <iostream>
-=======
 ﻿#include "soma_remove_main.h"
 #include "v3d_interface.h"
 //#include "../../../../v3d_external/v3d_main/plugin_loader/v3d_plugin_loader.h"
 #include "openfileDialog.h"
 #include <iostream>
 #include <set>
->>>>>>> remove_glio version which is operational
 #include "string.h"
  using namespace std;
 //#define DIS((x,y,z),b) (x-b.x)*(x-b.x)+(y-b.y)*(y-b.y)+(z-b.z)*(z-b.z)
@@ -17,12 +11,6 @@
 //#define NTDISs(a,b) (sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z)))
 bool FAR = 0;
 bool CLOSE = 1;
-<<<<<<< HEAD
-int dis_thresh = 3;
-
-vector<bool> classify_glio(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method);
-bool export_training_data(const QString &fileOpenName,Chart &chart,Each_line &E);
-=======
 int dis_thresh = 2;
 QString model;
 bool bo=false;
@@ -34,7 +22,6 @@ vector<bool> classify_glio(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &
 bool export_training_data(const QString &fileOpenName,Each_line &E1,Each_line &E2,double &logsigma,vector<vector<double> >&R);
 void bubblesort(vector<int> &A);
 bool simple_saveimage_wrapper_lxf(V3DPluginCallback2 & cb, const char * filename, unsigned char * pdata, V3DLONG sz[4], int datatype);
->>>>>>> remove_glio version which is operational
 //bool if_is_connect(Coordinate* &curr,Coordinate* &b,vector<vector<vector<V3DLONG> > > &mark3D);
 uint qHash(const Coordinate key)
 {
@@ -135,10 +122,6 @@ bool soma_remove_main(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback2 
                              {
                                  for(int l=0;l<d;l++)
                                  {
-<<<<<<< HEAD
-                                     cout<<"33333333333333"<<endl;
-=======
->>>>>>> remove_glio version which is operational
                                      if(ix+l>M-1)continue;
                                      if(iy+k>N-1)continue;
                                      coodinate3D[iz][iy+k][ix+l]=0;
@@ -173,11 +156,7 @@ bool soma_remove_main(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback2 
                                  {
                                      if(ix-r/2+l>M-1)continue;
                                      if(iy+k>N-1)continue;
-<<<<<<< HEAD
-                                     cout<<"22222222222222"<<endl;
-=======
 
->>>>>>> remove_glio version which is operational
                                      coodinate3D[iz][iy+k][ix-r/2+l]=0;
                                  }
                              }
@@ -207,10 +186,6 @@ bool soma_remove_main(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback2 
              }
          }
      }
-<<<<<<< HEAD
-     cout<<"hahhahaa"<<endl;
-=======
->>>>>>> remove_glio version which is operational
      //int u=0;
      for(V3DLONG iz = 0; iz < P; iz++)
      {
@@ -268,8 +243,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     V3DLONG signal = signal_all/pagesz;
     cout<<"signal_all = "<<signal_all<<endl;
     cout<<"signal = "<<signal<<endl;
-<<<<<<< HEAD
-=======
     double lll=0;
     for(V3DLONG i=0;i<pagesz;i++)
     {
@@ -278,7 +251,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             lll++;
         }
     }
->>>>>>> remove_glio version which is operational
     for(V3DLONG i=0;i<pagesz;i++)
     {
         if(int(data1d[i]) < signal+10)
@@ -291,12 +263,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         }
     }
     simple_saveimage_wrapper(callback,QString("binary.v3draw").toStdString().c_str(),im_cropped,in_sz,1);
-<<<<<<< HEAD
-    cout<<"2.make connected area."<<endl;
-    vector<vector<vector<V3DLONG> > > coodinate3D,mark3D;
-    vector<vector<V3DLONG> > coodinate2D,mark2D;
-    vector<V3DLONG> coodinate1D,mark1D;
-=======
    // simple_saveimage_wrapper(callback,QString("ori_img.v3draw").toStdString().c_str(),data1d,in_sz,1);
  //   v3d_msg("llllllll");
     cout<<lll/pagesz<<endl;
@@ -307,7 +273,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     vector<vector<vector<V3DLONG> > > coordinate3D,mark3D,bri3D;
     vector<vector<V3DLONG> > coodinate2D,mark2D,bri2D;
     vector<V3DLONG> coodinate1D,mark1D,bri1D;
->>>>>>> remove_glio version which is operational
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         V3DLONG offsetk = iz*M*N;
@@ -317,18 +282,11 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             for(V3DLONG ix = 0; ix < M; ix++)
             {
                 V3DLONG tmp = im_cropped[offsetk + offsetj + ix];
-<<<<<<< HEAD
-                ImageMarker coord_curr;
-=======
                 V3DLONG bri = int(data1d[offsetk + offsetj + ix]);
->>>>>>> remove_glio version which is operational
                 if(tmp==255)
                 {
                     int one=1;
                     mark1D.push_back(one);
-<<<<<<< HEAD
-
-=======
                 }
                 else
                 {
@@ -772,7 +730,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                 {
                     int one=1;
                     mark1D.push_back(one);
->>>>>>> remove_glio version which is operational
                 }
                 else
                 {
@@ -780,18 +737,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                     mark1D.push_back(zero);
                 }
                 coodinate1D.push_back(tmp);
-<<<<<<< HEAD
-            }
-            coodinate2D.push_back(coodinate1D);
-            mark2D.push_back(mark1D);
-            coodinate1D.clear();
-            mark1D.clear();
-        }
-        coodinate3D.push_back(coodinate2D);
-        mark3D.push_back(mark2D);
-        coodinate2D.clear();
-        mark2D.clear();
-=======
                 b_t.push_back(bri);
             }
             coodinate2D.push_back(coodinate1D);
@@ -807,7 +752,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
         coodinate2D.clear();
         mark2D.clear();
         B_t.clear();
->>>>>>> remove_glio version which is operational
     }
     int j = 1;
     int u = 0;
@@ -833,19 +777,12 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                 if(coodinate3D[iz][iy][ix]==255)
                 {
 
-<<<<<<< HEAD
-                    if(!first_floor)
-=======
                     if(ix==1)
->>>>>>> remove_glio version which is operational
                     {
                         coord_curr.x = ix;
                         coord_curr.y = iy;
                         coord_curr.z = iz;
-<<<<<<< HEAD
-=======
                         coord_curr.bri = B[iz][iy][ix];
->>>>>>> remove_glio version which is operational
                         each_region1.push_back(coord_curr);
                         connected_region.push_back(each_region1);
                         map_index.insert(coord_curr,j);
@@ -862,11 +799,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                     black++;
                     continue;
                 }
-<<<<<<< HEAD
-                if(first_floor)
-=======
                 if(ix!=1) //first_floor
->>>>>>> remove_glio version which is operational
                 {
                     if(coodinate3D[iz][iy][ix]==255)
                     {
@@ -877,10 +810,7 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
                         coord_curr.x = ix;
                         coord_curr.y = iy;
                         coord_curr.z = iz;
-<<<<<<< HEAD
-=======
                         coord_curr.bri = B[iz][iy][ix];
->>>>>>> remove_glio version which is operational
                         ImageMarker m;
                         m.x = coord_curr.x;
                         m.y = coord_curr.y;
@@ -936,23 +866,17 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
 
     }
     QHash<vector<Coordinate>,vector<Coordinate> > relation;
-<<<<<<< HEAD
-=======
     QHash<int,vector<int> > rela2;
->>>>>>> remove_glio version which is operational
     int count_ind=1;
     //vector<int> count;
     vector<V3DLONG> index;
     vector<V3DLONG> reminder;
-<<<<<<< HEAD
-=======
 
 
 
 
     cout<<"connected_region.size() = "<<connected_region.size()<<endl;
     int c_sum=0;
->>>>>>> remove_glio version which is operational
     for(int l=0;l<connected_region.size();l++)
     {
         int zero = 0;
@@ -960,14 +884,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     }
     for(int l=0;l<connected_region.size();l++)
     {
-<<<<<<< HEAD
-        for(int j=l+1;j<connected_region.size();j++)
-        {
-            if(reminder[l+1]!=0)continue;
-            double min_dis = 1000000000000;
-            for(int k=0;k<connected_region[l].size();k++)
-            {
-=======
        // bool fag=0;
         if(reminder[l]!=0)continue;
         for(int j=l;j<connected_region.size();j++)//for(int j=l+1;j<connected_region.size();j++)
@@ -977,7 +893,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
             for(int k=0;k<connected_region[l].size();k++)
             {
 
->>>>>>> remove_glio version which is operational
                 for(int h=0;h<connected_region[j].size();h++)
                 {
 
@@ -989,55 +904,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
 
                 }
             }
-<<<<<<< HEAD
-            if(min_dis<dis_thresh)
-            {
-                relation.insert(connected_region[l],connected_region[j]);
-                reminder[l] = 1;
-                reminder[j] = 1;
-                index.push_back(l);
-                count_ind++;
-            }
-        }
-    }
-    int n=2;
-    vector<vector<Coordinate> >connected_region_final;
-    vector<V3DLONG> reminder2;
-    for(int l=0;l<connected_region.size();l++)
-    {
-        int zero = 0;
-        reminder2.push_back(zero);
-    }
-    for(int l=0;l<connected_region.size();l++)
-    {
-        if(reminder2[l]!=0)
-        {
-            continue;
-        }
-        if(relation[connected_region[l]].size()==0)
-        {
-            connected_region_final.push_back(connected_region[l]);
-            reminder2[l]=1;
-        }
-        else
-        {
-            vector<Coordinate> tmp;
-            for(int y=0;y<connected_region[l].size();y++)
-            {
-                tmp.push_back(connected_region[l][y]);
-            }
-            reminder2[l]=1;
-            find_relation(relation,connected_region[l],tmp,reminder2,map_index);
-            connected_region_final.push_back(tmp);
-        }
-    }
-
-    cout<<"3.train_data"<<endl;
-    Chart chart,chart2;
-    Each_line E,E2;
-    export_training_data(QString("signal.txt"),chart,E);
-    export_training_data(QString("glio.txt"),chart2,E2);
-=======
             cout<<"min_dis = "<<min_dis<<endl;
             if(min_dis<=dis_thresh)
             {
@@ -1126,7 +992,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
 
     export_training_data(model,E1,E2,logsigma,R);
 
->>>>>>> remove_glio version which is operational
 
 
 
@@ -1141,18 +1006,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     vector<double> D;
     vector<double> grey;
     vector<double> grey_std;
-<<<<<<< HEAD
-    vector<inf> inf_v;
-    feature_calculate(inf_v,y_n,overlap_level,ratio_v,count_v,D,grey,grey_std,connected_region_final);
-
-
-
-
-
-    Feature feature_curr;
-    Chart chart_curr;
-    Each_line E_curr;
-=======
     vector<double> overlap_all;
     vector<inf> inf_v;
     QList<ImageMarker> center;
@@ -1161,7 +1014,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
 
 
     Feature feature_curr;
->>>>>>> remove_glio version which is operational
     feature_curr.y_n = y_n;
     feature_curr.overlap_level = overlap_level;
     feature_curr.ratio_v = ratio_v;
@@ -1169,20 +1021,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
     feature_curr.D = D;
     feature_curr.grey_mean = grey;
     feature_curr.grey_std = grey_std;
-<<<<<<< HEAD
-   // Cov_calculate(chart_curr,feature_curr);
-    //E_curr = E_calculate(feature_curr);
-    bool method=false;
-    vector<bool> classify;
-
-    classify = classify_glio(chart,E,chart2,E2,chart_curr,E_curr,feature_curr,method);
-    for(int i=0;i<classify.size();i++)
-    {
-        cout<<"classify = "<<classify[i]<<endl;
-    }
-
-    if(im_cropped){delete []im_cropped;im_cropped=0;}
-=======
     feature_curr.overlap_all = overlap_all;
 // int t = y_n.size();
 // cout<<"t = "<<t<<endl;
@@ -1389,7 +1227,6 @@ bool soma_remove_main_2(unsigned char* data1d,V3DLONG in_sz[4],V3DPluginCallback
      simple_saveimage_wrapper(callback,QString("final_img.v3draw").toStdString().c_str(),(unsigned char *)im_cropped2,in_sz,1);
   //  if(im_cropped){delete []im_cropped;im_cropped=0;}
    //  if(im_cropped2){delete []im_cropped2;im_cropped2=0;}
->>>>>>> remove_glio version which is operational
 
 }
 void find_relation(QHash<vector<Coordinate>,vector<Coordinate> > &relation,vector<Coordinate> &curr,vector<Coordinate> &tmp,vector<V3DLONG> &reminder2,QHash<Coordinate,int> &map_index)
@@ -1409,11 +1246,7 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
 {
 
     double dist = NTDIS(curr,b);
-<<<<<<< HEAD
-    if(dist<3)
-=======
     if(dist<2)
->>>>>>> remove_glio version which is operational
     {
         return true;//this
         if(mark3D[curr.z][curr.y][curr.x]==1)
@@ -1431,18 +1264,6 @@ bool if_is_connect(Coordinate &curr,Coordinate &b,vector<vector<vector<V3DLONG> 
         return false;
     }
 }
-<<<<<<< HEAD
-bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,vector<vector<Coordinate> >&connected_region_final)
-{
-    int n=2;
-   // cout<<"  <1>.the most big two floor is next to each other or not "<<endl;
-    int ind1;
-    int ind2;
-    vector<Max_level> two_level;
-    for(int i=0;i<connected_region_final.size();i++)
-    {
-        QHash<int,int> hashlinker;
-=======
 bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &overlap_level,vector<double> &ratio_v,vector<double> &count_v,vector<double> &D,vector<double> &grey,vector<double> &grey_std,QList<ImageMarker> &center,vector<vector<Coordinate> >&connected_region_final,vector<double> &overlap_all)
 {
     int n=2;
@@ -1460,14 +1281,10 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
         QHash<int,int> hashlinker;
         z_s.clear();
         z_v.clear();
->>>>>>> remove_glio version which is operational
         for(int j=0;j<connected_region_final[i].size();j++)
         {
             Coordinate curr = connected_region_final[i][j];
             hashlinker[curr.z]++;
-<<<<<<< HEAD
-        }
-=======
             z_s.insert(curr.z);
         }
         for(set<int>::iterator it=z_s.begin();it!=z_s.end();++it)
@@ -1475,38 +1292,10 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             z_v.push_back(*it);
         }
         bubblesort(z_v);
->>>>>>> remove_glio version which is operational
         int max1=0;
         int max2=0;
         ind1=0;
         ind2=0;
-<<<<<<< HEAD
-
-        for(QHash<int,int>::iterator it=hashlinker.begin();it!=hashlinker.end();it++)
-        {
-            if(it.value()>max1)
-            {
-                max1 = it.value();
-                ind1 = it.key();
-            }
-        }
-        for(QHash<int,int>::iterator it=hashlinker.begin();it!=hashlinker.end();it++)
-        {
-            if(it.value()==max1)continue;
-            if(it.value()>max2)
-            {
-                max2 = it.value();
-                ind2 = it.key();
-            }
-        }
-        Max_level max_l;
-        //cout<<"max = "<<max1<<"  "<<max2<<endl;
-        //cout<<"ind = "<<ind1<<"  "<<ind2<<endl;
-        max_l.level1=ind1;
-        max_l.level2=ind2;
-        two_level.push_back(max_l);
-        if((ind1-ind2==1)||(ind2-ind1==1))
-=======
         ind2_rebase=0;
         ind2_rebase2=0;
         vector<double> S,T;
@@ -1573,21 +1362,11 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
 
         if((max_l.level1 - max_l.level2==1)||(max_l.level2 - max_l.level1==1)||(max_l.level2 == max_l.level1))
->>>>>>> remove_glio version which is operational
         {
             y_n.push_back(true);
         }
         else
         {
-<<<<<<< HEAD
-            //v3d_msg("check");
-            y_n.push_back(false);
-        }
-    }
-
-
-  //  cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
-=======
             y_n.push_back(false);
         }
 
@@ -1595,13 +1374,10 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
 
     cout<<"  <2><3><4>.calculate overlap,ratio and volume of this two level "<<endl;
->>>>>>> remove_glio version which is operational
     double maxx;
     double maxy;
     double minx;
     double miny;
-<<<<<<< HEAD
-=======
     double maxz;
     double minz;
     double maxx_all;
@@ -1610,7 +1386,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
     double miny_all;
     double maxz_all;
     double minz_all;
->>>>>>> remove_glio version which is operational
     double count_level,count_tmp;
     for(int i=0;i<connected_region_final.size();i++)
     {
@@ -1618,17 +1393,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
         count_tmp=0;
         maxx=0;
         maxy=0;
-<<<<<<< HEAD
-        minx=100000000;
-        miny=100000000;
-        for(int j=0;j<connected_region_final[i].size();j++)
-        {
-            Coordinate curr = connected_region_final[i][j];
-            //cout<<"curr.z = "<<curr.z<<endl;
-            //cout<<"two_level[i] = "<<two_level[i].level1<<"  "<<two_level[i].level2<<endl;
-            count_level++;
-            if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2))||two_level[i].level2==0||two_level[i].level1==0)
-=======
         maxz=0;
 
         maxx_all=0;
@@ -1660,7 +1424,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             }
 
             if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2)))
->>>>>>> remove_glio version which is operational
             {
                 continue;
             }
@@ -1673,26 +1436,15 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             {
                 maxy=curr.y;
             }
-<<<<<<< HEAD
-=======
             if(curr.z>maxz)
             {
                 maxz=curr.z;
             }
->>>>>>> remove_glio version which is operational
         }
         count_v.push_back(count_level);
         for(int j=0;j<connected_region_final[i].size();j++)
         {
             Coordinate curr = connected_region_final[i][j];
-<<<<<<< HEAD
-            //cout<<"curr.z = "<<curr.z<<endl;
-            //cout<<"two_level[i] = "<<two_level[i].level1<<"  "<<two_level[i].level2<<endl;
-            if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2))||two_level[i].level2==0||two_level[i].level1==0)
-            {
-                //ratio_v.push_back(-1);
-                //overlap_level.push_back(-1);
-=======
 
             if(curr.x<minx_all)
             {
@@ -1709,7 +1461,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
             if(((curr.z!=two_level[i].level1)&&(curr.z!=two_level[i].level2)))
             {
->>>>>>> remove_glio version which is operational
                 continue;
             }
             if(curr.x<minx)
@@ -1720,13 +1471,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             {
                 miny=curr.y;
             }
-<<<<<<< HEAD
-        }
-        double minus_x=maxx-minx+1;
-        double minus_y=maxy-miny+1;
-        double overl=count_tmp/(minus_x*minus_y*2);
-        cout<<"x/y = "<<minus_x<<"  "<<minus_y<<endl;
-=======
             if(curr.z<minz)
             {
                 minz=curr.z;
@@ -1736,20 +1480,10 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
         double minus_y=maxy-miny+1;
         double minus_z=maxz-minz+1;
         double overl=count_tmp/(minus_x*minus_y*2);
->>>>>>> remove_glio version which is operational
 
         double ratio1=minus_x/minus_y;
         double ratio2=minus_y/minus_x;
         double ratio;
-<<<<<<< HEAD
-//        if(ratio1>ratio2)
-//            ratio=ratio1;
-//        else
-//            ratio=ratio2;
-        ratio = ratio1;
-        ratio_v.push_back(ratio);
-        overlap_level.push_back(overl);
-=======
         if(ratio1>ratio2)
             ratio=ratio2;
         else
@@ -1773,20 +1507,14 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             double each_overlap_all = count_level/(minus_x_all*minus_y_all*minus_z_all);
             overlap_all.push_back(each_overlap_all);
 
->>>>>>> remove_glio version which is operational
 
     }
 
 
-<<<<<<< HEAD
-    cout<<"size = "<<overlap_level.size()<<endl;
-    cout<<"connected_region_final.size() = "<<connected_region_final.size()<<endl;
-=======
 
 
    // cout<<"size = "<<overlap_level.size()<<endl;
    // cout<<"connected_region_final.size() = "<<connected_region_final.size()<<endl;
->>>>>>> remove_glio version which is operational
 
 
 
@@ -1798,11 +1526,7 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
     QList<ImageMarker> marker_all;
     QList<QList<ImageMarker> > marker_all_each;
-<<<<<<< HEAD
-    QList<ImageMarker> center;
-=======
     //QList<ImageMarker> center;
->>>>>>> remove_glio version which is operational
     int size_thresh = 80;
 
     for(V3DLONG l=0;l<connected_region_final.size();l++)
@@ -1821,28 +1545,17 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             marker_all.push_back(m);
         }
         marker_all_each.push_back(marker);
-<<<<<<< HEAD
-        //writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
-=======
        // writeMarker_file(QString("marker"+QString::number(l)+".marker"),marker);
->>>>>>> remove_glio version which is operational
     }
     //writeMarker_file(QString("marker_all.marker"),marker_all);
     vector<MyMarker*> inswc;
     vector<Soma> soma_v;
 
 
-<<<<<<< HEAD
-   // cout<<"  <5>.calculate D "<<endl;
-
-
-  //  cout<<"find_center"<<endl;
-=======
     cout<<"  <5>.calculate D "<<endl;
 
 
     cout<<"find_center"<<endl;
->>>>>>> remove_glio version which is operational
     for(V3DLONG l=0;l<connected_region_final.size();l++)
     {
         double sumx=0;
@@ -1926,11 +1639,7 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             sum_dis2 = sum_dis2+(dis-mean_dis)*(dis-mean_dis);
         }
         max_dis_v.push_back(max_dis);
-<<<<<<< HEAD
-        double Dd = sum_dis2/(connected_region_final[d].size()-1);
-=======
         double Dd = sum_dis2/(connected_region_final[d].size());
->>>>>>> remove_glio version which is operational
         D.push_back(Dd);
 
     }
@@ -1941,13 +1650,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
     {
         double x_dis = soma_v[d].x_e - soma_v[d].x_b;
         double y_dis = soma_v[d].y_e - soma_v[d].y_b;
-<<<<<<< HEAD
-     //   cout<<"d = "<<d<<endl;
- //       cout<<"connected_region_final[d].size() = "<<connected_region_final[d].size()<<endl;
- //       cout<<"max_dis = "<<max_dis_v[d]<<endl;
-   //     cout<<"D = "<<D[d]<<endl;
-=======
->>>>>>> remove_glio version which is operational
         if(connected_region_final[d].size()<size_thresh)
             continue;
         //if(marker_all_each[d].size()/(max_dis_v[d]*max_dis_v[d]*max_dis_v[d]*8)<0.7)
@@ -1964,11 +1666,7 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
     }
 
-<<<<<<< HEAD
- //   cout<<"  <6>.calculate mean grey "<<endl;
-=======
     cout<<"  <6>.calculate mean grey "<<endl;
->>>>>>> remove_glio version which is operational
 
     double mean_grey;
     for(int i=0;i<connected_region_final.size();i++)
@@ -1990,26 +1688,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
         {
             sum_grey = (connected_region_final[i][d].bri-grey[i])*(connected_region_final[i][d].bri-grey[i]) + sum_grey;
         }
-<<<<<<< HEAD
-        std_grey = sum_grey/(connected_region_final[i].size()-1);
-      //  cout<<"sum_grey = "<<sum_grey<<"      "<<(connected_region_final[i].size()-1)<<"    "<<i<<endl;
-
-        grey_std.push_back(sqrt(std_grey));
-    }
-       // v3d_msg("gggggggggggg");
-//    for(int i=0;i<D.size();i++)
-//    {
-//        cout<<"y_n = "<<y_n[i]<<endl;
-//        cout<<"D = "<<D[i]<<endl;
-//        cout<<"overlap_level = "<<overlap_level[i]<<endl;
-//        cout<<"ratio_v = "<<ratio_v[i]<<endl;
-//        cout<<"count_v = "<<count_v[i]<<endl;
-//        cout<<"grey_mean = "<<grey[i]<<endl;
-//        cout<<"grey_std = "<<grey_std[i]<<endl;
-//        cout<<"*************************************************"<<endl;
-//    }
- //   cout<<"  <7>.get information from folder "<<endl;
-=======
         if(connected_region_final[i].size()-1==0)
         {
             std_grey=0;
@@ -2023,7 +1701,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
     }
 
     cout<<"  <8>.get information from folder "<<endl;
->>>>>>> remove_glio version which is operational
     for(int i=0;i<connected_region_final.size();i++)
     {
         //vector<inf> inf_tmp_v;
@@ -2032,11 +1709,8 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
             inf inf_tmp;
             inf_tmp.inf1 =  connected_region_final[i][0].inf1;
             inf_tmp.name = connected_region_final[i][0].name;
-<<<<<<< HEAD
-=======
             //cout<<"inf_tmp.inf1 = "<<inf_tmp.inf1<<endl;
            // cout<<"inf_tmp.name = "<<inf_tmp.name<<endl;
->>>>>>> remove_glio version which is operational
             inf_v.push_back(inf_tmp);
       //  }
         //inf_v.push_back(inf_tmp_v);
@@ -2045,9 +1719,6 @@ bool feature_calculate(vector<inf> &inf_v,vector<double> &y_n,vector<double> &ov
 
 
 }
-<<<<<<< HEAD
-bool export_training_data(const QString &fileOpenName,Chart &chart,Each_line &E)
-=======
 void bubblesort(vector<int> &A)
 {
     int n = A.size();
@@ -2065,7 +1736,6 @@ void bubblesort(vector<int> &A)
     }
 }
 bool export_training_data(const QString &fileOpenName,Each_line &E1,Each_line &E2,double &logsigma,vector<vector<double> >&R)
->>>>>>> remove_glio version which is operational
 {
 
 
@@ -2090,43 +1760,6 @@ bool export_training_data(const QString &fileOpenName,Each_line &E1,Each_line &E
             QStringList qsl = QString(curline).trimmed().split("   ");
             int qsl_count=qsl.size();
             cout<<"qls.size = "<<qsl_count<<endl;
-<<<<<<< HEAD
-            if (qsl_count<6)   continue;
-
-            switch(j)
-            {
-                case 1: E.x1 = qsl[0].toFloat();
-                        chart.first_line.x1 = qsl[1].toFloat();
-                        chart.first_line.x2 = qsl[2].toFloat();
-                        chart.first_line.x3 = qsl[3].toFloat();
-                        chart.first_line.x4 = qsl[4].toFloat();
-                        chart.first_line.x5 = qsl[5].toFloat();break;
-                case 2: E.x2 = qsl[0].toFloat();
-                        chart.second_line.x1 = qsl[1].toFloat();
-                        chart.second_line.x2 = qsl[2].toFloat();
-                        chart.second_line.x3 = qsl[3].toFloat();
-                        chart.second_line.x4 = qsl[4].toFloat();
-                        chart.second_line.x5 = qsl[5].toFloat();break;
-                case 3: E.x3 = qsl[0].toFloat();
-                        chart.third_line.x1 = qsl[1].toFloat();
-                        chart.third_line.x2 = qsl[2].toFloat();
-                        chart.third_line.x3 = qsl[3].toFloat();
-                        chart.third_line.x4 = qsl[4].toFloat();
-                        chart.third_line.x5 = qsl[5].toFloat();break;
-                case 4: E.x4 = qsl[0].toFloat();
-                        chart.forth_line.x1 = qsl[1].toFloat();
-                        chart.forth_line.x2 = qsl[2].toFloat();
-                        chart.forth_line.x3 = qsl[3].toFloat();
-                        chart.forth_line.x4 = qsl[4].toFloat();
-                        chart.forth_line.x5 = qsl[5].toFloat();break;
-                case 5: E.x5 = qsl[0].toFloat();
-                        chart.fifth_line.x1 = qsl[1].toFloat();
-                        chart.fifth_line.x2 = qsl[2].toFloat();
-                        chart.fifth_line.x3 = qsl[3].toFloat();
-                        chart.fifth_line.x4 = qsl[4].toFloat();
-                        chart.fifth_line.x5 = qsl[5].toFloat();break;
-            default:break;
-=======
             //if (qsl_count<5)   continue;
             vector<double> R_each;
             switch(j)
@@ -2199,21 +1832,12 @@ bool export_training_data(const QString &fileOpenName,Each_line &E1,Each_line &E
                         R.push_back(R_each);
                         break;
                 default:break;
->>>>>>> remove_glio version which is operational
 
             }
             j++;
 
         }
     }
-<<<<<<< HEAD
-    cout << E.x1 <<"    "<<chart.first_line.x1<<"    "<<chart.first_line.x2<<"    "<<chart.first_line.x3<<"    "<<chart.first_line.x4<<"    "<<chart.first_line.x5<<endl;
-    cout << E.x2 <<"    "<<chart.second_line.x1<<"    "<<chart.second_line.x2<<"    "<<chart.second_line.x3<<"    "<<chart.second_line.x4<<"    "<<chart.second_line.x5<<endl;
-    cout << E.x3 <<"    "<<chart.third_line.x1<<"    "<<chart.third_line.x2<<"    "<<chart.third_line.x3<<"    "<<chart.third_line.x4<<"    "<<chart.third_line.x5<<endl;
-    cout << E.x4 <<"    "<<chart.forth_line.x1<<"    "<<chart.forth_line.x2<<"    "<<chart.forth_line.x3<<"    "<<chart.forth_line.x4<<"    "<<chart.forth_line.x5<<endl;
-    cout << E.x5 <<"    "<<chart.fifth_line.x1<<"    "<<chart.fifth_line.x2<<"    "<<chart.fifth_line.x3<<"    "<<chart.fifth_line.x4<<"    "<<chart.fifth_line.x5<<endl;
-=======
->>>>>>> remove_glio version which is operational
     return true;
 }
 vector<bool> classify_glio(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &E2,Chart &chart_curr,Each_line &E_curr,Feature &feature_curr,bool &method)
@@ -2298,8 +1922,6 @@ vector<bool> classify_glio(Chart &chart1,Each_line &E1,Chart &chart2,Each_line &
     }
 
 }
-<<<<<<< HEAD
-=======
 vector<vector<Coordinate> > build_rela2(vector<vector<Coordinate> >&connected_region,QHash<int,vector<int> > &rela2)
 {
     vector<V3DLONG> reminder;
@@ -2397,4 +2019,3 @@ cout<<"kkk"<<endl;
     return cb.saveImage(outimg, (char *)filename);
     //in this case no need to delete "outimg" pointer as it is just a container and will not use too much memory
 }
->>>>>>> remove_glio version which is operational

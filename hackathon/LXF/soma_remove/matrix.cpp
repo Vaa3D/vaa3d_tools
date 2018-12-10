@@ -338,21 +338,21 @@ Matrix Matrix::Inverse()//Inverse Matrix
            {throw logic_error ("Solving for Inverse fail: Not a square    matrix!");
             //return (*this);
            }
-        v3d_msg("check");
+        //v3d_msg("check");
         if(fabs(this->det()-0)<0.000000001)
            {
              throw logic_error ("determinant equal to zero, can not do inverse");
            }
-        v3d_msg("check2");
+       // v3d_msg("check2");
         Matrix A;
         A=this->Adjugate();
-        v3d_msg("check222");
+        //v3d_msg("check222");
         cout<<this->buf<<endl;
        //  v3d_msg("check2");
-        v3d_msg("check3");
+       // v3d_msg("check3");
 
         tmp=(1/this->det())*A;
-        v3d_msg("check4");
+      //  v3d_msg("check4");
     return tmp;
 }
 Matrix Matrix::Null(int n) //make a "zero" Matrix, with a new dimension, change "this"
