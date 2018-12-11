@@ -409,7 +409,7 @@ NeuronTree smoothSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         int index = -1;
         for (int j=0;j<neuronNum;j++)
         {
-            if(NTDIS(break_points.at(i),list.at(j))<1)
+            if(NTDIS(break_points.at(i),list.at(j))<1 && list.at(j).type !=6)
             {
                 index = j;
                 start_x = list.at(index).x;
