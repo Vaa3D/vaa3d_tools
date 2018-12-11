@@ -43,6 +43,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, boo
 
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
+	cout << " -- Image slice preparation done." << endl;
 }
 
 void FragTraceManager::imgProcPipe_wholeBlock()
@@ -56,6 +57,9 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
 	if (this->histThre) this->histThreImg(this->adaImgName, dims, this->histThreImgName);
+
+	this->mask2swc(this->histThreImgName, "blobTree");
+
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
@@ -119,4 +123,77 @@ void FragTraceManager::histThreImg(const string inputRegImgName, V3DLONG dims[],
 		QString saveRootQ = this->histThreSaveDirQ + "\\" + QString::fromStdString(outputRegImgName) + "_std" + QString::fromStdString(to_string(this->stdFold));
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
+}
+
+void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName)
+{
+	int sliceDims[3];
+	sliceDims[0] = this->fragTraceImgManager.imgDatabase.at(*(this->imgThreSeq.end() - 1)).dims[0];
+	sliceDims[1] = this->fragTraceImgManager.imgDatabase.at(*(this->imgThreSeq.end() - 1)).dims[1];
+	sliceDims[2] = 1;
+
+	vector<unsigned char**> slice2DVector;
+	unsigned char* mipPtr = new unsigned char[sliceDims[0] * sliceDims[1]];
+	for (int i = 0; i < sliceDims[0] * sliceDims[1]; ++i) mipPtr[i] = 0;
+	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputImgName).slicePtrs.begin(); 
+		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputImgName).slicePtrs.end(); ++sliceIt)
+	{
+		ImgProcessor::imgMax(sliceIt->second.get(), mipPtr, mipPtr, sliceDims);
+
+		unsigned char** slice2DPtr = new unsigned char*[sliceDims[1]];
+		for (int j = 0; j < sliceDims[1]; ++j)
+		{
+			slice2DPtr[j] = new unsigned char[sliceDims[0]];
+			for (int i = 0; i < sliceDims[0]; ++i) slice2DPtr[j][i] = sliceIt->second.get()[sliceDims[0] * j + i];
+		}
+		slice2DVector.push_back(slice2DPtr);
+	}
+
+	this->signalBlobs.clear();
+	ImgAnalyzer* myImgAnalyzerPtr = new ImgAnalyzer;
+	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs_2Dcombine(slice2DVector, sliceDims, mipPtr);
+
+	// ----------- Releasing memory ------------
+	delete[] mipPtr;
+	mipPtr = nullptr;
+	for (vector<unsigned char**>::iterator slice2DPtrIt = slice2DVector.begin(); slice2DPtrIt != slice2DVector.end(); ++slice2DPtrIt)
+	{
+		for (int yi = 0; yi < sliceDims[1]; ++yi)
+		{
+			delete[](*slice2DPtrIt)[yi];
+			(*slice2DPtrIt)[yi] = nullptr;
+		}
+		delete[] * slice2DPtrIt;
+		*slice2DPtrIt = nullptr;
+	}
+	slice2DVector.clear();
+	// ------- END of [Releasing memory] -------
+
+	QList<NeuronSWC> allSigs;
+	for (vector<connectedComponent>::iterator connIt = this->signalBlobs.begin(); connIt != this->signalBlobs.end(); ++connIt)
+	{
+		for (map<int, set<vector<int>>>::iterator sliceSizeIt = connIt->coordSets.begin(); sliceSizeIt != connIt->coordSets.end(); ++sliceSizeIt)
+		{
+			for (set<vector<int>>::iterator nodeIt = sliceSizeIt->second.begin(); nodeIt != sliceSizeIt->second.end(); ++nodeIt)
+			{
+				NeuronSWC sig;
+				V3DLONG blobID = connIt->islandNum;
+				sig.n = blobID;
+				sig.x = nodeIt->at(1);
+				sig.y = nodeIt->at(0);
+				sig.z = sliceSizeIt->first;
+				sig.type = 2;
+				sig.parent = -1;
+				allSigs.push_back(sig);
+			}
+		}
+	}
+	NeuronTree sigTree;
+	sigTree.listNeuron = allSigs;
+	QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
+	writeSWC_file(blobTreeFullFilenameQ, sigTree);
+	allSigs.clear();
+
+	profiledTree profiledSigTree(sigTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 }

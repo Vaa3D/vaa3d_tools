@@ -94,6 +94,18 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 		uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
 
+		if (callOldSettings.value("smallRemove") == true)
+		{
+			uiPtr->groupBox_7->setChecked(true);
+			uiPtr->lineEdit_4->setText(callOldSettings.value("sizeThre").toString());
+		}
+		else
+		{
+			uiPtr->groupBox_7->setChecked(false);
+			uiPtr->lineEdit_4->setEnabled(false);
+			uiPtr->lineEdit_4->setText("");
+		}
+
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
 		this->show();
@@ -187,7 +199,6 @@ void FragTraceControlPanel::browseSavePathClicked()
 
 		uiPtr->lineEdit_3->setText(this->histMaskRoot);
 	}
-	
 }
 
 void FragTraceControlPanel::saveSettingsClicked()
@@ -273,28 +284,51 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 
+	if (uiPtr->groupBox_7->isChecked())
+	{
+		settings.setValue("smallRemove", true);
+		settings.setValue("sizeThre", uiPtr->lineEdit_4->text());
+	}
+	else
+	{
+		settings.setValue("smallRemove", false);
+		settings.setValue("sizeThre", "");
+	}
+	settings.setValue("smallRemoveTreeName", uiPtr->groupBox_7->title());
+
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
 
 void FragTraceControlPanel::traceButtonClicked()
 {
 	QSettings currSettings("SEU-Allen", "Fragment tracing");
-	cout << "Fragment tracing procedure initiated." << endl;
+	if (currSettings.value("savePath").isNull())
+	{
+		cerr << " ==> Result save path not specified. Do nothing and return." << endl;
+		return;
+	}
 	
+	cout << "Fragment tracing procedure initiated." << endl;
 	if (currSettings.value("wholeBlock") == true && currSettings.value("withSeed") == false)
 	{
 		cout << " whole block tracing, acquiring image information.." << endl;
 		
 		if (this->isVisible())
 		{
+			QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
+			QString rootQ;
+			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+
 			if (uiPtr->checkBox->isChecked())
 			{
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly());
+				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 				if (uiPtr->groupBox_3->isChecked())
 				{
 					this->traceManagerPtr->ada = true;
 					this->traceManagerPtr->adaImgName = uiPtr->groupBox_3->title().toStdString();
+					this->traceManagerPtr->imgEnhanceSeq.push_back(this->traceManagerPtr->adaImgName);
 					this->traceManagerPtr->simpleAdaStepsize = uiPtr->spinBox->value();
 					this->traceManagerPtr->simpleAdaRate = uiPtr->spinBox_2->value();
 					if (uiPtr->checkBox_4->isChecked())
@@ -309,27 +343,44 @@ void FragTraceControlPanel::traceButtonClicked()
 				if (uiPtr->groupBox_6->isChecked())
 				{
 					this->traceManagerPtr->histThre = true;
+					this->traceManagerPtr->histThreImgName = uiPtr->groupBox_6->title().toStdString();
+					this->traceManagerPtr->imgThreSeq.push_back(this->traceManagerPtr->histThreImgName);
 					this->traceManagerPtr->stdFold = uiPtr->spinBox_3->value();
 					if (uiPtr->checkBox_5->isChecked())
 					{
 						this->traceManagerPtr->saveHistThreResults = true;
-						this->traceManagerPtr->histThreImgName = uiPtr->groupBox_6->title().toStdString();
 						this->traceManagerPtr->histThreSaveDirQ = uiPtr->lineEdit_3->text();
 					}
 					else this->traceManagerPtr->saveHistThreResults = false;
 				}
+				else this->traceManagerPtr->histThre = false;
+
+				if (uiPtr->groupBox_7->isChecked())
+				{
+					this->traceManagerPtr->smallBlobRemove = true;
+					this->traceManagerPtr->smallBlobRemovalName = uiPtr->groupBox_7->title().toStdString();
+					this->traceManagerPtr->smallBlobThreshold = uiPtr->lineEdit_4->text().toInt();
+				}
+				else this->traceManagerPtr->smallBlobRemove = false;
 			}
 		}
 		else if (!this->isVisible())
 		{
+			QString saveFullNameQ = currSettings.value("savePath").toString();
+			QStringList saveFullNameParse = saveFullNameQ.split("/");
+			QString rootQ;
+			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+
 			if (currSettings.value("terafly") == true)
 			{
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly());
+				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 				if (currSettings.value("ada") == true)
 				{
 					this->traceManagerPtr->ada = true;
 					this->traceManagerPtr->adaImgName = currSettings.value("ada_imgName").toString().toStdString();
+					this->traceManagerPtr->imgEnhanceSeq.push_back(this->traceManagerPtr->adaImgName);
 					this->traceManagerPtr->simpleAdaStepsize = currSettings.value("ada_stepsize").toInt();
 					this->traceManagerPtr->simpleAdaRate = currSettings.value("ada_rate").toInt();
 					if (currSettings.value("ada_saveCheck") == true)
@@ -344,16 +395,25 @@ void FragTraceControlPanel::traceButtonClicked()
 				if (currSettings.value("histThre") == true)
 				{
 					this->traceManagerPtr->histThre = true;
+					this->traceManagerPtr->histThreImgName = currSettings.value("histThre_imgName").toString().toStdString();
+					this->traceManagerPtr->imgThreSeq.push_back(this->traceManagerPtr->histThreImgName);
 					this->traceManagerPtr->stdFold = currSettings.value("histThre_std").toInt();
 					if (currSettings.value("histThre_saveCheck") == true)
 					{
 						this->traceManagerPtr->saveHistThreResults = true;
-						this->traceManagerPtr->histThreImgName = currSettings.value("histThre_imgName").toString().toStdString();
 						this->traceManagerPtr->histThreSaveDirQ = currSettings.value("histThre_savePath").toString();
 					}
 					else this->traceManagerPtr->saveHistThreResults = false;
 				}
 				else this->traceManagerPtr->histThre = false;
+
+				if (currSettings.value("smallRemove") == true)
+				{
+					this->traceManagerPtr->smallBlobRemove = true;
+					this->traceManagerPtr->smallBlobRemovalName = currSettings.value("smallRemoveTreeName").toString().toStdString();
+					this->traceManagerPtr->smallBlobThreshold = uiPtr->lineEdit_4->text().toInt();
+				}
+				else this->traceManagerPtr->smallBlobRemove = false;
 			}
 		}
 		

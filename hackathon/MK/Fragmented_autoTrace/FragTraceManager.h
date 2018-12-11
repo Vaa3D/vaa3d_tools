@@ -4,6 +4,8 @@
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
+#include "NeuronStructExplorer.h"
+#include "NeuronStructUtilities.h"
 
 class FragTraceManager: public QObject
 {
@@ -12,6 +14,10 @@ class FragTraceManager: public QObject
 public:
 	FragTraceManager() {};
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, bool slices = true);
+
+	QString finalSaveRootQ;
+	vector<string> imgEnhanceSeq;
+	vector<string> imgThreSeq;
 
 	bool ada;
 	string adaImgName;
@@ -26,20 +32,31 @@ public:
 	bool saveHistThreResults;
 	QString histThreSaveDirQ;
 
+	bool smallBlobRemove;
+	string smallBlobRemovalName;
+	int smallBlobThreshold;
+	bool saveSmallBlobRemovalResults;
+	QString smallBlobRemoveDirQ;
+
+	vector<connectedComponent> signalBlobs;
+
 public slots:
 	void imgProcPipe_wholeBlock();
 
 private:
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
+	NeuronStructExplorer fragTraceTreeManager;
 
 	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 
-	inline void saveIntermediateResult(string imgName, QString saveRootQ, V3DLONG dims[]);
+	void mask2swc(const string inputImgName, string outputTreeName);
+	void smallBlobRemoval(const string inputTreeName, string outputTreeName);
 };
 
-inline void FragTraceManager::saveIntermediateResult(string imgName, QString saveRootQ, V3DLONG dims[])
+inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
 {
 	if (this->fragTraceImgManager.imgDatabase.find(imgName) == this->fragTraceImgManager.imgDatabase.end())
 	{
@@ -49,13 +66,13 @@ inline void FragTraceManager::saveIntermediateResult(string imgName, QString sav
 
 	qint64 timeStamp_qint64 = QDateTime::currentMSecsSinceEpoch();
 	QString timeStampQ = QString::number(timeStamp_qint64);
-	saveRootQ = saveRootQ + "\\" + timeStampQ;
-	if (!QDir(saveRootQ).exists()) QDir().mkpath(saveRootQ);
+	QString fullSaveRootQ = saveRootQ + "\\" + timeStampQ;
+	if (!QDir(fullSaveRootQ).exists()) QDir().mkpath(fullSaveRootQ);
 
 	for (map<string, myImg1DPtr>::iterator it = this->fragTraceImgManager.imgDatabase.at(imgName).slicePtrs.begin();
 		it != this->fragTraceImgManager.imgDatabase.at(imgName).slicePtrs.end(); ++it)
 	{
-		string saveFullPath = saveRootQ.toStdString() + "\\" + it->first;
+		string saveFullPath = fullSaveRootQ.toStdString() + "\\" + it->first;
 		const char* saveFullPathC = saveFullPath.c_str();
 		this->fragTraceImgManager.saveimage_wrapper(saveFullPathC, it->second.get(), dims, 1);
 	}

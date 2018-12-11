@@ -14,13 +14,17 @@ INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
+INCLUDEPATH += ../NeuronStructNavigator
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
+INCLUDEPATH += $$VAA3DPATH/neuron_editing
 win32: {
     BOOSTPATH = $$(BOOST_PATH)
     INCLUDEPATH += $$BOOSTPATH
     INCLUDEPATH += $$BOOSTPATH/lib64-msvc-12.0
-    LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK
     LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
+
+    LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK
+    LIBS += -L../NeuronStructNavigator -lNeuronStructNavigator
 }
 
 FORMS += fragmentedTraceUI.ui
