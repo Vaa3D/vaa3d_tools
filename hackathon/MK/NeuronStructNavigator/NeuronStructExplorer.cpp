@@ -957,29 +957,33 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 }
 // ============================================= End of [Geometry] =============================================
 
-NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
+NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTree)
 {
 	NeuronTree MSTtrees;
-	undirectedGraph graph(inputTreePtr.listNeuron.size());
-	for (int i = 0; i < inputTreePtr.listNeuron.size(); ++i)
+	undirectedGraph graph(inputTree.listNeuron.size());
+	cout << "processing nodes: \n -- " << endl;
+	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
 	{
 
 		float x1, y1, z1;
-		x1 = inputTreePtr.listNeuron.at(i).x;
-		y1 = inputTreePtr.listNeuron.at(i).y;
-		z1 = inputTreePtr.listNeuron.at(i).z;
-		for (int j = 0; j < inputTreePtr.listNeuron.size(); ++j)
+		x1 = inputTree.listNeuron.at(i).x;
+		y1 = inputTree.listNeuron.at(i).y;
+		z1 = inputTree.listNeuron.at(i).z;
+		for (int j = 0; j < inputTree.listNeuron.size(); ++j)
 		{
 			float x2, y2, z2;
-			x2 = inputTreePtr.listNeuron.at(j).x;
-			y2 = inputTreePtr.listNeuron.at(j).y;
-			z2 = inputTreePtr.listNeuron.at(j).z;
+			x2 = inputTree.listNeuron.at(j).x;
+			y2 = inputTree.listNeuron.at(j).y;
+			z2 = inputTree.listNeuron.at(j).z;
 
 			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + zRATIO * zRATIO * double(z1 - z2) * double(z1 - z2));
 			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
 			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
 		}
+
+		if (i % 1000 == 0) cout << i << " ";
 	}
+	cout << endl;
 
 	vector <boost::graph_traits<undirectedGraph>::vertex_descriptor > p(num_vertices(graph));
 	boost::prim_minimum_spanning_tree(graph, &p[0]);
@@ -998,9 +1002,9 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTreePtr)
 		NeuronSWC S;
 		S.n = ii + 1;
 		S.type = 7;
-		S.x = inputTreePtr.listNeuron.at(ii).x;
-		S.y = inputTreePtr.listNeuron.at(ii).y;
-		S.z = inputTreePtr.listNeuron.at(ii).z;
+		S.x = inputTree.listNeuron.at(ii).x;
+		S.y = inputTree.listNeuron.at(ii).y;
+		S.z = inputTree.listNeuron.at(ii).z;
 		S.r = 1;
 		S.pn = pn;
 		listNeuron.append(S);

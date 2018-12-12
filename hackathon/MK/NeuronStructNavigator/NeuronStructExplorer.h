@@ -146,7 +146,7 @@ public:
 
 
 	/***************** Neuron Struct Connecting Functions *****************/
-	NeuronTree SWC2MSTtree(NeuronTree const& inputTreePtr);
+	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	

@@ -23,6 +23,7 @@ signals:
 
 public slots:
 	void imgFmtChecked(bool checked);
+	void nestedChecks(bool checked);
 	void saveSegStepsResultChecked(bool checked);
 	void saveSettingsClicked();
 	void traceButtonClicked();

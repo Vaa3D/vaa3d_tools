@@ -97,13 +97,23 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		if (callOldSettings.value("smallRemove") == true)
 		{
 			uiPtr->groupBox_7->setChecked(true);
-			uiPtr->lineEdit_4->setText(callOldSettings.value("sizeThre").toString());
+			uiPtr->spinBox_2->setEnabled(true);
+			uiPtr->spinBox_7->setValue(callOldSettings.value("sizeThre").toInt());
 		}
 		else
 		{
 			uiPtr->groupBox_7->setChecked(false);
-			uiPtr->lineEdit_4->setEnabled(false);
-			uiPtr->lineEdit_4->setText("");
+			uiPtr->spinBox_7->setValue(callOldSettings.value("sizeThre").toInt());
+			uiPtr->spinBox_7->setEnabled(false);
+		}
+
+		if (callOldSettings.value("MST") == true)
+		{
+			uiPtr->groupBox_8->setChecked(true);
+			uiPtr->spinBox_5->setValue(callOldSettings.value("largestDist").toInt());
+			uiPtr->spinBox_6->setValue(callOldSettings.value("minNodes").toInt());
+
+			if (callOldSettings.value("tiledMST") == true) uiPtr->spinBox_4->setValue(callOldSettings.value("tileLength").toInt());
 		}
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -142,6 +152,27 @@ void FragTraceControlPanel::imgFmtChecked(bool checked)
 		{
 			uiPtr->checkBox->setChecked(false);
 			uiPtr->checkBox_2->setChecked(false);
+		}
+	}
+}
+
+void FragTraceControlPanel::nestedChecks(bool checked)
+{
+	QObject* signalSender = sender();
+	QString checkBoxName = signalSender->objectName();
+
+	if (checked)
+	{
+		if (checkBoxName == "groupBox_7")
+		{
+			uiPtr->spinBox_7->setEnabled(true);
+		}
+	}
+	else
+	{
+		if (checkBoxName == "groupBox_7")
+		{
+			uiPtr->spinBox_7->setEnabled(false);
 		}
 	}
 }
@@ -287,7 +318,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	if (uiPtr->groupBox_7->isChecked())
 	{
 		settings.setValue("smallRemove", true);
-		settings.setValue("sizeThre", uiPtr->lineEdit_4->text());
+		settings.setValue("sizeThre", uiPtr->spinBox_7->value());
 	}
 	else
 	{
@@ -295,6 +326,31 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("sizeThre", "");
 	}
 	settings.setValue("smallRemoveTreeName", uiPtr->groupBox_7->title());
+
+	if (uiPtr->groupBox_8->isChecked())
+	{
+		settings.setValue("MST", true);
+		settings.setValue("largestDist", uiPtr->spinBox_5->value());
+		settings.setValue("minNodes", uiPtr->spinBox_6->value());
+
+		if (uiPtr->groupBox_9->isChecked())
+		{
+			settings.setValue("tiledMST", true);
+			settings.setValue("tileLength", uiPtr->spinBox_4->value());
+		}
+		else
+		{
+			settings.setValue("tiledMST", false);
+			settings.setValue("tileLength", "");
+		}
+	}
+	else
+	{
+		settings.setValue("MST", false);
+		settings.setValue("largestDist", "");
+		settings.setValue("minNodes", "");
+	}
+	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
@@ -359,9 +415,29 @@ void FragTraceControlPanel::traceButtonClicked()
 				{
 					this->traceManagerPtr->smallBlobRemove = true;
 					this->traceManagerPtr->smallBlobRemovalName = uiPtr->groupBox_7->title().toStdString();
-					this->traceManagerPtr->smallBlobThreshold = uiPtr->lineEdit_4->text().toInt();
+					this->traceManagerPtr->smallBlobThreshold = uiPtr->spinBox_7->value();
 				}
 				else this->traceManagerPtr->smallBlobRemove = false;
+
+				if (uiPtr->groupBox_8->isChecked())
+				{
+					this->traceManagerPtr->MST = true;
+					this->traceManagerPtr->MSTtreeName = uiPtr->groupBox_8->title().toStdString();
+					this->traceManagerPtr->segLengthLimit = uiPtr->spinBox_5->value();
+					this->traceManagerPtr->minNodeNum = uiPtr->spinBox_6->value();
+
+					if (uiPtr->groupBox_9->isChecked())
+					{
+						this->traceManagerPtr->tiledMST = true;
+						this->traceManagerPtr->tileLength = uiPtr->spinBox_4->value();
+					}
+					else this->traceManagerPtr->tiledMST = false;
+				}
+				else
+				{
+					this->traceManagerPtr->MST = false;
+					this->traceManagerPtr->tiledMST = false;
+				}
 			}
 		}
 		else if (!this->isVisible())
@@ -411,9 +487,29 @@ void FragTraceControlPanel::traceButtonClicked()
 				{
 					this->traceManagerPtr->smallBlobRemove = true;
 					this->traceManagerPtr->smallBlobRemovalName = currSettings.value("smallRemoveTreeName").toString().toStdString();
-					this->traceManagerPtr->smallBlobThreshold = uiPtr->lineEdit_4->text().toInt();
+					this->traceManagerPtr->smallBlobThreshold = currSettings.value("sizeThre").toInt();
 				}
 				else this->traceManagerPtr->smallBlobRemove = false;
+
+				if (currSettings.value("MST") == true)
+				{
+					this->traceManagerPtr->MST = true;
+					this->traceManagerPtr->MSTtreeName = currSettings.value("MSTtreeName").toString().toStdString();
+					this->traceManagerPtr->segLengthLimit = currSettings.value("largestDist").toInt();
+					this->traceManagerPtr->minNodeNum = currSettings.value("minNodes").toInt();
+
+					if (currSettings.value("tiledMST") == true)
+					{
+						this->traceManagerPtr->tiledMST = true;
+						this->traceManagerPtr->tileLength = currSettings.value("tileLength").toInt();
+					}
+					else this->traceManagerPtr->tiledMST = false;
+				}
+				else
+				{
+					this->traceManagerPtr->MST = false;
+					this->traceManagerPtr->tiledMST = false;
+				}
 			}
 		}
 		
