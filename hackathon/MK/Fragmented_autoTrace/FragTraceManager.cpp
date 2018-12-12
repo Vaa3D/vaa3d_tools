@@ -80,6 +80,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 	QString finalSaveFullName = this->finalSaveRootQ + "\\traced.swc";
 	writeSWC_file(finalSaveFullName, this->fragTraceTreeManager.treeDataBase.at("MST_longCut_noBranch").tree);
+
+	emit emitTracedTree(this->fragTraceTreeManager.treeDataBase.at("MST_longCut_noBranch").tree);
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)

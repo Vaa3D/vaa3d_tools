@@ -514,8 +514,15 @@ void FragTraceControlPanel::traceButtonClicked()
 		}
 		
 		this->connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
+		this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
+
 		emit switchOnSegPipe();
+
 		this->disconnect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
+		this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
+
+		this->scaleTracedTree();
+		this->thisCallback->setSWCTeraFly(this->tracedTree);
 	}
 	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)
 	{
@@ -530,5 +537,26 @@ void FragTraceControlPanel::traceButtonClicked()
 
 		}
 	}
+}
 
+void FragTraceControlPanel::scaleTracedTree()
+{
+	float imgDims[3];
+	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
+	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
+	imgDims[2] = this->thisCallback->getImageTeraFly()->getZDim();
+
+	float imgRes[3];
+	imgRes[0] = this->thisCallback->getImageTeraFly()->getRezX();
+	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
+	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
+
+	float imgOri[3];
+	imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
+	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
+	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+
+	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]);
+	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
+	this->tracedTree = scaledShiftedTree;
 }

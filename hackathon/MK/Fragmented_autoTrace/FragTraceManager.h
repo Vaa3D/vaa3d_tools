@@ -51,6 +51,9 @@ public:
 public slots:
 	void imgProcPipe_wholeBlock();
 
+signals:
+	void emitTracedTree(NeuronTree tracedTree);
+
 private:
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;

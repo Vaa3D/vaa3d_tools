@@ -18,6 +18,9 @@ public:
 	QString adaSaveRoot;
 	QString histMaskRoot;
 
+	NeuronTree tracedTree;
+	void scaleTracedTree();
+
 signals:
 	void switchOnSegPipe();
 
@@ -28,6 +31,8 @@ public slots:
 	void saveSettingsClicked();
 	void traceButtonClicked();
 	void browseSavePathClicked();
+
+	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
 	V3DPluginCallback2* thisCallback;
