@@ -73,6 +73,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			}
 		}
 		uiPtr->lineEdit_2->setText(callOldSettings.value("ada_savePath").toString());
+		if (callOldSettings.value("gamma") == true) uiPtr->checkBox_6->setChecked(true);
 
 		if (callOldSettings.value("histThre") == true)
 		{
@@ -302,6 +303,8 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("ada_rate", 0);
 	}
 
+	if (uiPtr->checkBox_6->isChecked()) settings.setValue("gamma", true);
+
 	if (uiPtr->groupBox_6->isChecked())
 	{
 		settings.setValue("histThre", true);
@@ -402,6 +405,9 @@ void FragTraceControlPanel::traceButtonClicked()
 				}
 				else this->traceManagerPtr->ada = false;
 
+				if (uiPtr->checkBox_6->isChecked()) this->traceManagerPtr->gammaCorrection = true;
+				else this->traceManagerPtr->gammaCorrection = false;
+
 				if (uiPtr->groupBox_6->isChecked())
 				{
 					this->traceManagerPtr->histThre = true;
@@ -474,6 +480,9 @@ void FragTraceControlPanel::traceButtonClicked()
 					else this->traceManagerPtr->saveAdaResults = false;
 				}
 				else this->traceManagerPtr->ada = false;
+
+				if (currSettings.value("gamma") == true) this->traceManagerPtr->gammaCorrection = true;
+				else this->traceManagerPtr->gammaCorrection = false;
 
 				if (currSettings.value("histThre") == true)
 				{

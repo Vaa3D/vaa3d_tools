@@ -26,6 +26,8 @@ public:
 	bool saveAdaResults;
 	QString simpleAdaSaveDirQ;
 
+	bool gammaCorrection;
+
 	bool histThre;
 	string histThreImgName;
 	int stdFold;
@@ -60,9 +62,10 @@ private:
 	NeuronStructExplorer fragTraceTreeManager;
 	NeuronStructUtil fragTraceTreeUtil;
 
-	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
+	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 
 	void mask2swc(const string inputImgName, string outputTreeName);
 	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);

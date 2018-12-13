@@ -299,13 +299,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>220</height>
+                  <height>200</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>250</height>
+                  <height>300</height>
                  </size>
                 </property>
                 <property name="font">
@@ -526,28 +526,47 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QGroupBox" name="groupBox_5">
-                   <property name="minimumSize">
+                  <widget class="QFrame" name="frame_14">
+                   <property name="maximumSize">
                     <size>
-                     <width>0</width>
+                     <width>16777215</width>
                      <height>40</height>
                     </size>
                    </property>
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
                    </property>
-                   <property name="title">
-                    <string>Gamma Correction</string>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
                    </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <property name="checked">
-                    <bool>false</bool>
-                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_10">
+                    <item>
+                     <widget class="QCheckBox" name="checkBox_6">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Gamma correction</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_7">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>477</width>
+                        <height>13</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
                   </widget>
                  </item>
                 </layout>
@@ -813,7 +832,7 @@
                        <item>
                         <widget class="QSpinBox" name="spinBox_7">
                          <property name="value">
-                          <number>9</number>
+                          <number>1</number>
                          </property>
                         </widget>
                        </item>
@@ -1040,7 +1059,7 @@
                        <item>
                         <widget class="QSpinBox" name="spinBox_8">
                          <property name="value">
-                          <number>4</number>
+                          <number>1</number>
                          </property>
                         </widget>
                        </item>
@@ -1106,7 +1125,7 @@
                        </font>
                       </property>
                       <property name="value">
-                       <number>2</number>
+                       <number>1</number>
                       </property>
                      </widget>
                     </item>

@@ -56,7 +56,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	dims[3] = 1;
 
 	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
-	if (this->histThre) this->histThreImg(this->adaImgName, dims, this->histThreImgName);
+	if (this->gammaCorrection) this->gammaCorrect(this->adaImgName, dims, "gammaCorrected");
+	if (this->histThre) this->histThreImg("gammaCorrected", dims, this->histThreImgName);
 	this->mask2swc(this->histThreImgName, "blobTree");
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	/*cout << "original connected component number: " << this->signalBlobs2D.size();
@@ -145,6 +146,51 @@ void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], con
 	if (this->saveAdaResults)
 	{
 		QString saveRootQ = this->simpleAdaSaveDirQ + "\\" + QString::fromStdString(outputRegImgName) + "_" + QString::fromStdString(to_string(this->simpleAdaStepsize)) + "_" + QString::fromStdString(to_string(this->simpleAdaRate));
+		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
+	}
+}
+
+void FragTraceManager::gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
+{
+	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
+	{
+		cerr << "No source image found. Do nothing and return.";
+	}
+
+	int imgDims[3];
+	imgDims[0] = dims[0];
+	imgDims[1] = dims[1];
+	imgDims[2] = dims[2];
+	registeredImg regGamma;
+	regGamma.imgAlias = outputRegImgName;
+	regGamma.dims[0] = imgDims[0];
+	regGamma.dims[1] = imgDims[1];
+	regGamma.dims[2] = imgDims[2];
+	imgDims[2] = 1;
+	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.begin();
+		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.end(); ++sliceIt)
+	{
+		map<int, size_t> histList = ImgProcessor::histQuickList(sliceIt->second.get(), imgDims);
+		//histList.erase(histList.begin());
+		int cutoffIntensity;
+		for (int binI = 1; binI < histList.size(); ++binI)
+		{
+			if (histList.at(binI) > histList.at(binI - 1) && histList.at(binI) < histList.at(binI + 1))
+			{
+				cutoffIntensity = binI;
+				break;
+			}
+		}
+		myImg1DPtr my1Dslice(new unsigned char[imgDims[0] * imgDims[1]]);
+		ImgProcessor::stepped_gammaCorrection(sliceIt->second.get(), my1Dslice.get(), imgDims, cutoffIntensity);
+		regGamma.slicePtrs.insert({ sliceIt->first, my1Dslice });
+		cout << sliceIt->first << endl;
+	}
+	this->fragTraceImgManager.imgDatabase.insert({ regGamma.imgAlias, regGamma });
+
+	if (this->saveAdaResults)
+	{
+		QString saveRootQ = this->finalSaveRootQ + "\\testFolder1\\";
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
 }

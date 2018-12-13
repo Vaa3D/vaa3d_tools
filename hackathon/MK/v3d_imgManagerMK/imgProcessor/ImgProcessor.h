@@ -114,6 +114,9 @@ public:
 	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 	template<class T>
+	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
+
+	template<class T>
 	static inline void gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
 
 	template<class T>
@@ -452,6 +455,25 @@ inline void ImgProcessor::imgMasking(const T inputImgPtr[], T outputImgPtr[], co
 			continue;
 		}
 		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+
+		int transformedValue = int(inputImgPtr[i]);
+		if (transformedValue < cutoffIntensity) outputImgPtr[i] = 0;
+		else if (transformedValue * (transformedValue - cutoffIntensity) >= 255) outputImgPtr[i] = 255;
+		else outputImgPtr[i] = transformedValue * (transformedValue - cutoffIntensity);
 	}
 }
 
