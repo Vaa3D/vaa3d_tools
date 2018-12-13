@@ -41,7 +41,7 @@ public:
 	bool MST;
 	bool tiledMST;
 	string MSTtreeName;
-	int segLengthLimit, minNodeNum, tileLength;
+	int segLengthLimit, minNodeNum, tileLength, zSectionNum;
 	bool saveMSTresults;
 	QString saveMSTDirQ;
 
@@ -65,7 +65,7 @@ private:
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 
 	void mask2swc(const string inputImgName, string outputTreeName);
-	void smallBlobRemoval(vector<connectedComponent> signalBlobs, const int sizeThre, string outputTreeName);
+	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 };
 

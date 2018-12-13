@@ -54,6 +54,9 @@ public:
 	template<class T>
 	static inline T getPixValue2D(const T inputImgPtr[], const int imgDims[], const int x, const int y);
 
+	template<class T>
+	static inline void imgSubtraction(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
+
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 	template<class T>
@@ -152,6 +155,17 @@ inline T ImgProcessor::getPixValue2D(const T inputImgPtr[], const int imgDims[],
 {
 	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
 	return inputImgPtr[pix1Dindex];
+}
+
+template<class T>
+inline void ImgProcessor::imgSubtraction(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor)
+{
+	size_t totalPixNum = size_t(imgDims[0] * imgDims[1] * imgDims[2]);
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (int(inputImgPtr[i]) - subFactor <= 0) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = T(int(inputImgPtr[i] - subFactor));
+	}
 }
 
 inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[])

@@ -113,7 +113,11 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->spinBox_5->setValue(callOldSettings.value("largestDist").toInt());
 			uiPtr->spinBox_6->setValue(callOldSettings.value("minNodes").toInt());
 
-			if (callOldSettings.value("tiledMST") == true) uiPtr->spinBox_4->setValue(callOldSettings.value("tileLength").toInt());
+			if (callOldSettings.value("tiledMST") == true)
+			{
+				uiPtr->spinBox_4->setValue(callOldSettings.value("tileLength").toInt());
+				uiPtr->spinBox_8->setValue(callOldSettings.value("zSection").toInt());
+			}
 		}
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -337,11 +341,13 @@ void FragTraceControlPanel::saveSettingsClicked()
 		{
 			settings.setValue("tiledMST", true);
 			settings.setValue("tileLength", uiPtr->spinBox_4->value());
+			settings.setValue("zSection", uiPtr->spinBox_8->value());
 		}
 		else
 		{
 			settings.setValue("tiledMST", false);
 			settings.setValue("tileLength", "");
+			settings.setValue("zSection", "");
 		}
 	}
 	else
@@ -430,6 +436,7 @@ void FragTraceControlPanel::traceButtonClicked()
 					{
 						this->traceManagerPtr->tiledMST = true;
 						this->traceManagerPtr->tileLength = uiPtr->spinBox_4->value();
+						this->traceManagerPtr->zSectionNum = uiPtr->spinBox_8->value();
 					}
 					else this->traceManagerPtr->tiledMST = false;
 				}
@@ -502,6 +509,7 @@ void FragTraceControlPanel::traceButtonClicked()
 					{
 						this->traceManagerPtr->tiledMST = true;
 						this->traceManagerPtr->tileLength = currSettings.value("tileLength").toInt();
+						this->traceManagerPtr->zSectionNum = currSettings.value("zSection").toInt();
 					}
 					else this->traceManagerPtr->tiledMST = false;
 				}

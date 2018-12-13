@@ -59,18 +59,47 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	if (this->histThre) this->histThreImg(this->adaImgName, dims, this->histThreImgName);
 	this->mask2swc(this->histThreImgName, "blobTree");
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
-	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs2D, this->smallBlobThreshold, smallBlobRemovalName);
+	/*cout << "original connected component number: " << this->signalBlobs2D.size();
+	int connCompSize = 10000;
+	int islandIndex;
+	for (vector<connectedComponent>::iterator checkIt = this->signalBlobs2D.begin(); checkIt != this->signalBlobs2D.end(); ++checkIt)
+	{
+		if (checkIt->size < connCompSize)
+		{
+			connCompSize = checkIt->size;
+			islandIndex = checkIt->islandNum;
+		}
+	}
+	cout << ", smallest component: " << islandIndex << ", size = " << connCompSize << endl;*/
+	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs2D, this->smallBlobThreshold);
+	//cout << "connected component number after removing small ones (threshold = " << this->smallBlobThreshold << ", 2D): " << this->signalBlobs2D.size() << endl;
 	
 	this->get2DcentroidsTree(this->signalBlobs2D);
 	NeuronTree cleanedUpTree = NeuronStructUtil::swcZclenUP(this->fragTraceTreeManager.treeDataBase.at("centerTree").tree);
 	profiledTree profiledCleanedTree(cleanedUpTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "centerTreeCleaned", profiledCleanedTree });
+	QString centerCleanedTreeNameQ = this->finalSaveRootQ + "\\centerCleaned.swc";
+	writeSWC_file(centerCleanedTreeNameQ, this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree);
 	
-	NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree);
-	profiledTree profiledMSTtree(MSTtree);
-	this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree", profiledMSTtree });
+	if (this->MST)
+	{
+		if (this->tiledMST)
+		{
+			NeuronTree tiledMSTtree = this->fragTraceTreeManager.SWC2MSTtree_tiled(this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree, float(this->tileLength), float(this->zSectionNum));
+			profiledTree profiledTiledMSTtree(tiledMSTtree);
+			this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree", profiledTiledMSTtree });
+		}
+		else
+		{
+			NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree);
+			profiledTree profiledMSTtree(MSTtree);
+			this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree", profiledMSTtree });
+		}
+	}
+	QString tiledMSTtreeNameQ = this->finalSaveRootQ + "\\tiledMSTtree.swc";
+	writeSWC_file(tiledMSTtreeNameQ, this->fragTraceTreeManager.treeDataBase.at("MSTtree").tree);
 	
-	NeuronTree noLongSegTree = NeuronStructExplorer::longConnCut(this->fragTraceTreeManager.treeDataBase.at("MSTtree"));
+	NeuronTree noLongSegTree = NeuronStructExplorer::longConnCut(this->fragTraceTreeManager.treeDataBase.at("MSTtree"), this->segLengthLimit);
 	profiledTree profiledCleanedCutTree(noLongSegTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree_longCut", profiledCleanedCutTree });
 	
@@ -78,10 +107,18 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	profiledTree profiledNoBranchTree(noBranchTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "MST_longCut_noBranch", profiledNoBranchTree });
 
-	QString finalSaveFullName = this->finalSaveRootQ + "\\traced.swc";
-	writeSWC_file(finalSaveFullName, this->fragTraceTreeManager.treeDataBase.at("MST_longCut_noBranch").tree);
+	profiledTree profiledElongatedTree = this->fragTraceTreeManager.itered_segElongate(this->fragTraceTreeManager.treeDataBase.at("MST_longCut_noBranch"));
+	this->fragTraceTreeManager.treeDataBase.insert({ "MSTelongatedTree", profiledElongatedTree });
+	QString elongatedTreeNameQ = this->finalSaveRootQ + "\\elongated.swc";
+	writeSWC_file(elongatedTreeNameQ, profiledElongatedTree.tree);
 
-	emit emitTracedTree(this->fragTraceTreeManager.treeDataBase.at("MST_longCut_noBranch").tree);
+	NeuronTree noDotTree = NeuronStructExplorer::singleDotRemove(this->fragTraceTreeManager.treeDataBase.at("MSTelongatedTree"), this->minNodeNum);
+	profiledTree profiledCleanedUpTree(noDotTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "MSTelongatedClean", profiledCleanedUpTree });
+	QString finalSaveFullName = this->finalSaveRootQ + "\\traced.swc";
+	writeSWC_file(finalSaveFullName, this->fragTraceTreeManager.treeDataBase.at("MSTelongatedClean").tree);
+
+	emit emitTracedTree(this->fragTraceTreeManager.treeDataBase.at("MSTelongatedClean").tree);
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
@@ -220,7 +257,7 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 }
 
-void FragTraceManager::smallBlobRemoval(vector<connectedComponent> signalBlobs, const int sizeThre, string outputTreeName)
+void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)
 {
 	if (signalBlobs.empty())
 	{
@@ -228,9 +265,11 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent> signalBlobs, 
 		return;
 	}
 
+	cout << " ==> removing small blob, size threshold = " << sizeThre << endl;
+
 	vector<ptrdiff_t> delLocs;
 	for (vector<connectedComponent>::iterator compIt = signalBlobs.begin(); compIt != signalBlobs.end(); ++compIt)
-		if (compIt->size < sizeThre) delLocs.push_back(compIt - signalBlobs.begin());
+		if (compIt->size <= sizeThre) delLocs.push_back(compIt - signalBlobs.begin());
 	
 	sort(delLocs.rbegin(), delLocs.rend());
 	for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)

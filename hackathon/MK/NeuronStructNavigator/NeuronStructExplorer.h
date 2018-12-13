@@ -147,13 +147,14 @@ public:
 
 	/***************** Neuron Struct Connecting Functions *****************/
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
+	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = tileXY_LENGTH, float zDivideNum = 1);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre);
-	inline profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1 = nullptr, NeuronSWC* tailNodePtr2 = nullptr);
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
@@ -299,23 +300,6 @@ inline void NeuronStructExplorer::tileSegConnOrganizer_angle(const map<string, d
 			elongConnMap.insert(pair<int, int>(seg1, seg2));
 		}
 	}
-}
-
-inline profiledTree NeuronStructExplorer::itered_segElongate(profiledTree& inputProfiledTree, double angleThre)
-{
-	cout << "iteration 1 ";
-	int iterCount = 1;
-	profiledTree elongatedTree = this->segElongate(inputProfiledTree, angleThre);
-	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
-	{
-		++iterCount;
-		cout << "iterator " << iterCount << " " << endl;
-		inputProfiledTree = elongatedTree;
-		elongatedTree = this->segElongate(inputProfiledTree, angleThre);
-	}
-	cout << endl;
-
-	return elongatedTree;
 }
 
 inline NeuronTree NeuronStructExplorer::segTerminalize(const profiledTree& inputProfiledTree)

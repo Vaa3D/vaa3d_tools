@@ -42,7 +42,7 @@ profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
 	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 	
 	this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
-	cout << "segs num: " << this->segs.size() << endl;
+	//cout << "segs num: " << this->segs.size() << endl;
 	vector<segUnit> allSegs;
 	for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
 	{	
@@ -680,6 +680,23 @@ profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiled
 	return outputProfiledTree;
 }
 
+profiledTree NeuronStructExplorer::itered_segElongate(profiledTree& inputProfiledTree, double angleThre)
+{
+	cout << "iteration 1 ";
+	int iterCount = 1;
+	profiledTree elongatedTree = this->segElongate(inputProfiledTree, angleThre);
+	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
+	{
+		++iterCount;
+		cout << "iterator " << iterCount << " " << endl;
+		inputProfiledTree = elongatedTree;
+		elongatedTree = this->segElongate(inputProfiledTree, angleThre);
+	}
+	cout << endl;
+
+	return elongatedTree;
+}
+
 profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree)
 {
 	set<int> connectedSegs;
@@ -961,7 +978,7 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTree)
 {
 	NeuronTree MSTtrees;
 	undirectedGraph graph(inputTree.listNeuron.size());
-	cout << "processing nodes: \n -- " << endl;
+	//cout << "processing nodes: \n -- " << endl;
 	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
 	{
 
@@ -981,9 +998,9 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTree)
 			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
 		}
 
-		if (i % 1000 == 0) cout << i << " ";
+		//if (i % 1000 == 0) cout << i << " ";
 	}
-	cout << endl;
+	//cout << endl;
 
 	vector <boost::graph_traits<undirectedGraph>::vertex_descriptor > p(num_vertices(graph));
 	boost::prim_minimum_spanning_tree(graph, &p[0]);
@@ -1014,6 +1031,48 @@ NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTree)
 	MSTtree.hashNeuron = hashNeuron;
 
 	return MSTtree;
+}
+
+NeuronTree NeuronStructExplorer::SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength, float zDivideNum)
+{
+	map<string, QList<NeuronSWC>> tiledSWCmap;
+
+		QList<NeuronSWC> tileSWCList;
+		tileSWCList.clear();
+		for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+		{
+			int tileXlabel = int(floor(it->x / tileLength));
+			int tileYlabel = int(floor(it->y / tileLength));
+			int tileZlabel = int(floor(it->z / ((tileLength / zRATIO) / zDivideNum)));
+			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
+			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));
+			tiledSWCmap[swcTileKey].push_back(*it);
+		}
+		cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
+
+		NeuronTree assembledTree;
+		for (map<string, QList<NeuronSWC>>::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
+		{
+			NeuronTree tileTree;
+			tileTree.listNeuron = it->second;
+			NeuronTree tileMSTtree = this->SWC2MSTtree(tileTree);
+
+			int currnodeNum = assembledTree.listNeuron.size();
+			for (QList<NeuronSWC>::iterator nodeIt = tileMSTtree.listNeuron.begin(); nodeIt != tileMSTtree.listNeuron.end(); ++nodeIt)
+			{
+				nodeIt->n = nodeIt->n + currnodeNum;
+				if (nodeIt->parent != -1)
+				{
+					nodeIt->parent = nodeIt->parent + currnodeNum;
+					//cout << "  " << nodeIt->parent << " " << currnodeNum << endl;
+				}
+
+				//cout << nodeIt->n << " " << nodeIt->parent << endl;
+				assembledTree.listNeuron.push_back(*nodeIt);
+			}
+		}
+
+		return assembledTree;
 }
 
 NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre, bool spikeRemove)

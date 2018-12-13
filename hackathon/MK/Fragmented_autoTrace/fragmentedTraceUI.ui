@@ -646,6 +646,9 @@
                          <height>22</height>
                         </rect>
                        </property>
+                       <property name="value">
+                        <number>2</number>
+                       </property>
                       </widget>
                       <widget class="QLabel" name="label_5">
                        <property name="geometry">
@@ -776,7 +779,7 @@
                     <bool>true</bool>
                    </property>
                    <property name="checked">
-                    <bool>true</bool>
+                    <bool>false</bool>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_10">
                     <item>
@@ -867,13 +870,13 @@
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>250</height>
+                  <height>300</height>
                  </size>
                 </property>
                 <property name="font">
                  <font>
-                  <weight>50</weight>
-                  <bold>false</bold>
+                  <weight>75</weight>
+                  <bold>true</bold>
                  </font>
                 </property>
                 <property name="title">
@@ -900,6 +903,12 @@
                    <layout class="QHBoxLayout" name="horizontalLayout_6">
                     <item>
                      <widget class="QLabel" name="label_8">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
                       <property name="text">
                        <string>Largest connecting distance:</string>
                       </property>
@@ -907,8 +916,14 @@
                     </item>
                     <item>
                      <widget class="QSpinBox" name="spinBox_5">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
                       <property name="value">
-                       <number>50</number>
+                       <number>10</number>
                       </property>
                      </widget>
                     </item>
@@ -930,11 +945,23 @@
                  </item>
                  <item>
                   <widget class="QGroupBox" name="groupBox_9">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>150</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>80</height>
+                     <height>150</height>
                     </size>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <weight>50</weight>
+                     <bold>false</bold>
+                    </font>
                    </property>
                    <property name="title">
                     <string>Tiled MST-based Signal Connection</string>
@@ -943,38 +970,95 @@
                     <bool>true</bool>
                    </property>
                    <property name="checked">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_7">
+                   <layout class="QVBoxLayout" name="verticalLayout_14">
                     <item>
-                     <widget class="QLabel" name="label_7">
-                      <property name="text">
-                       <string>Tile length: </string>
+                     <widget class="QFrame" name="frame_12">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
                       </property>
+                      <property name="frameShape">
+                       <enum>QFrame::StyledPanel</enum>
+                      </property>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
+                      </property>
+                      <layout class="QHBoxLayout" name="horizontalLayout_9">
+                       <item>
+                        <widget class="QLabel" name="label_7">
+                         <property name="text">
+                          <string>Tile length: </string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="spinBox_4">
+                         <property name="maximum">
+                          <number>1024</number>
+                         </property>
+                         <property name="value">
+                          <number>128</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_4">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>463</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QSpinBox" name="spinBox_4">
-                      <property name="maximum">
-                       <number>1024</number>
+                     <widget class="QFrame" name="frame_13">
+                      <property name="frameShape">
+                       <enum>QFrame::StyledPanel</enum>
                       </property>
-                      <property name="value">
-                       <number>512</number>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
                       </property>
+                      <layout class="QHBoxLayout" name="horizontalLayout_7">
+                       <item>
+                        <widget class="QLabel" name="label_10">
+                         <property name="text">
+                          <string>Number of z sections:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="spinBox_8">
+                         <property name="value">
+                          <number>4</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_6">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>397</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
                      </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_4">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>487</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
                     </item>
                    </layout>
                   </widget>
@@ -1002,6 +1086,12 @@
                    <layout class="QHBoxLayout" name="horizontalLayout_8">
                     <item>
                      <widget class="QLabel" name="label_9">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
                       <property name="text">
                        <string>Minimum number of nodes in one segment:</string>
                       </property>
@@ -1009,6 +1099,12 @@
                     </item>
                     <item>
                      <widget class="QSpinBox" name="spinBox_6">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
                       <property name="value">
                        <number>2</number>
                       </property>
