@@ -26,6 +26,8 @@ public:
 	bool saveAdaResults;
 	QString simpleAdaSaveDirQ;
 
+	bool gammaCorrection;
+
 	bool histThre;
 	string histThreImgName;
 	int stdFold;
@@ -38,22 +40,36 @@ public:
 	bool saveSmallBlobRemovalResults;
 	QString smallBlobRemoveDirQ;
 
+	bool MST;
+	bool tiledMST;
+	string MSTtreeName;
+	int segLengthLimit, minNodeNum, tileLength, zSectionNum;
+	bool saveMSTresults;
+	QString saveMSTDirQ;
+
 	vector<connectedComponent> signalBlobs;
+	vector<connectedComponent> signalBlobs2D;
 
 public slots:
 	void imgProcPipe_wholeBlock();
+
+signals:
+	void emitTracedTree(NeuronTree tracedTree);
 
 private:
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
 	NeuronStructExplorer fragTraceTreeManager;
+	NeuronStructUtil fragTraceTreeUtil;
 
-	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
-	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
+	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 
 	void mask2swc(const string inputImgName, string outputTreeName);
-	void smallBlobRemoval(const string inputTreeName, string outputTreeName);
+	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
+	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
@@ -76,6 +92,26 @@ inline void FragTraceManager::saveIntermediateResult(const string imgName, const
 		const char* saveFullPathC = saveFullPath.c_str();
 		this->fragTraceImgManager.saveimage_wrapper(saveFullPathC, it->second.get(), dims, 1);
 	}
+}
+
+inline void FragTraceManager::get2DcentroidsTree(vector<connectedComponent> signalBlobs)
+{
+	NeuronTree centerTree;
+	for (vector<connectedComponent>::iterator it = signalBlobs.begin(); it != signalBlobs.end(); ++it)
+	{
+		ImgAnalyzer::ChebyshevCenter_connComp(*it);
+		NeuronSWC centerNode;
+		centerNode.n = it->islandNum;
+		centerNode.x = it->ChebyshevCenter[0];
+		centerNode.y = it->ChebyshevCenter[1];
+		centerNode.z = it->ChebyshevCenter[2];
+		centerNode.type = 2;
+		centerNode.parent = -1;
+		centerTree.listNeuron.push_back(centerNode);
+	}
+
+	profiledTree profiledCenterTree(centerTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "centerTree", profiledCenterTree });
 }
 
 #endif

@@ -6,7 +6,7 @@
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
 	vector<connectedComponent> connList;
-	cout << "slice dimension: " << dims[0] << " " << dims[1] << endl;
+	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
 
 	// --------- Enter this selection block only when MIP image is not provided ---------
 	if (maxIP1D == nullptr) 

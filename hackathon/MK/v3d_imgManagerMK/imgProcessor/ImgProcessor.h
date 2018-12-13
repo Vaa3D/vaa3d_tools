@@ -54,6 +54,9 @@ public:
 	template<class T>
 	static inline T getPixValue2D(const T inputImgPtr[], const int imgDims[], const int x, const int y);
 
+	template<class T>
+	static inline void imgSubtraction(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
+
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 	template<class T>
@@ -111,6 +114,9 @@ public:
 	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 	template<class T>
+	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
+
+	template<class T>
 	static inline void gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
 
 	template<class T>
@@ -152,6 +158,17 @@ inline T ImgProcessor::getPixValue2D(const T inputImgPtr[], const int imgDims[],
 {
 	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
 	return inputImgPtr[pix1Dindex];
+}
+
+template<class T>
+inline void ImgProcessor::imgSubtraction(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor)
+{
+	size_t totalPixNum = size_t(imgDims[0] * imgDims[1] * imgDims[2]);
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (int(inputImgPtr[i]) - subFactor <= 0) outputImgPtr[i] = 0;
+		else outputImgPtr[i] = T(int(inputImgPtr[i] - subFactor));
+	}
 }
 
 inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[])
@@ -438,6 +455,25 @@ inline void ImgProcessor::imgMasking(const T inputImgPtr[], T outputImgPtr[], co
 			continue;
 		}
 		else outputImgPtr[i] = inputImgPtr[i];
+	}
+}
+
+template<class T>
+inline void ImgProcessor::stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity)
+{
+	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
+	for (size_t i = 0; i < totalPixNum; ++i)
+	{
+		if (inputImgPtr[i] == 0)
+		{
+			outputImgPtr[i] = 0;
+			continue;
+		}
+
+		int transformedValue = int(inputImgPtr[i]);
+		if (transformedValue < cutoffIntensity) outputImgPtr[i] = 0;
+		else if (transformedValue * (transformedValue - cutoffIntensity) >= 255) outputImgPtr[i] = 255;
+		else outputImgPtr[i] = transformedValue * (transformedValue - cutoffIntensity);
 	}
 }
 

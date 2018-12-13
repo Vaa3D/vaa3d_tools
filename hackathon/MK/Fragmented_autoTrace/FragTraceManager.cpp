@@ -56,10 +56,70 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	dims[3] = 1;
 
 	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
-	if (this->histThre) this->histThreImg(this->adaImgName, dims, this->histThreImgName);
-
+	if (this->gammaCorrection) this->gammaCorrect(this->adaImgName, dims, "gammaCorrected");
+	if (this->histThre) this->histThreImg("gammaCorrected", dims, this->histThreImgName);
 	this->mask2swc(this->histThreImgName, "blobTree");
+	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
+	/*cout << "original connected component number: " << this->signalBlobs2D.size();
+	int connCompSize = 10000;
+	int islandIndex;
+	for (vector<connectedComponent>::iterator checkIt = this->signalBlobs2D.begin(); checkIt != this->signalBlobs2D.end(); ++checkIt)
+	{
+		if (checkIt->size < connCompSize)
+		{
+			connCompSize = checkIt->size;
+			islandIndex = checkIt->islandNum;
+		}
+	}
+	cout << ", smallest component: " << islandIndex << ", size = " << connCompSize << endl;*/
+	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs2D, this->smallBlobThreshold);
+	//cout << "connected component number after removing small ones (threshold = " << this->smallBlobThreshold << ", 2D): " << this->signalBlobs2D.size() << endl;
+	
+	this->get2DcentroidsTree(this->signalBlobs2D);
+	NeuronTree cleanedUpTree = NeuronStructUtil::swcZclenUP(this->fragTraceTreeManager.treeDataBase.at("centerTree").tree);
+	profiledTree profiledCleanedTree(cleanedUpTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "centerTreeCleaned", profiledCleanedTree });
+	QString centerCleanedTreeNameQ = this->finalSaveRootQ + "\\centerCleaned.swc";
+	writeSWC_file(centerCleanedTreeNameQ, this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree);
+	
+	if (this->MST)
+	{
+		if (this->tiledMST)
+		{
+			NeuronTree tiledMSTtree = this->fragTraceTreeManager.SWC2MSTtree_tiled(this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree, float(this->tileLength), float(this->zSectionNum));
+			profiledTree profiledTiledMSTtree(tiledMSTtree);
+			this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree", profiledTiledMSTtree });
+		}
+		else
+		{
+			NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(this->fragTraceTreeManager.treeDataBase.at("centerTreeCleaned").tree);
+			profiledTree profiledMSTtree(MSTtree);
+			this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree", profiledMSTtree });
+		}
+	}
+	QString tiledMSTtreeNameQ = this->finalSaveRootQ + "\\tiledMSTtree.swc";
+	writeSWC_file(tiledMSTtreeNameQ, this->fragTraceTreeManager.treeDataBase.at("MSTtree").tree);
+	
+	NeuronTree noLongSegTree = NeuronStructExplorer::longConnCut(this->fragTraceTreeManager.treeDataBase.at("MSTtree"), this->segLengthLimit);
+	profiledTree profiledCleanedCutTree(noLongSegTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "MSTtree_longCut", profiledCleanedCutTree });
+	
+	NeuronTree noBranchTree = NeuronStructExplorer::MSTbranchBreak(this->fragTraceTreeManager.treeDataBase.at("MSTtree_longCut"));
+	profiledTree profiledNoBranchTree(noBranchTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "MST_longCut_noBranch", profiledNoBranchTree });
 
+	profiledTree profiledElongatedTree = this->fragTraceTreeManager.itered_segElongate(this->fragTraceTreeManager.treeDataBase.at("MST_longCut_noBranch"));
+	this->fragTraceTreeManager.treeDataBase.insert({ "MSTelongatedTree", profiledElongatedTree });
+	QString elongatedTreeNameQ = this->finalSaveRootQ + "\\elongated.swc";
+	writeSWC_file(elongatedTreeNameQ, profiledElongatedTree.tree);
+
+	NeuronTree noDotTree = NeuronStructExplorer::singleDotRemove(this->fragTraceTreeManager.treeDataBase.at("MSTelongatedTree"), this->minNodeNum);
+	profiledTree profiledCleanedUpTree(noDotTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "MSTelongatedClean", profiledCleanedUpTree });
+	QString finalSaveFullName = this->finalSaveRootQ + "\\traced.swc";
+	writeSWC_file(finalSaveFullName, this->fragTraceTreeManager.treeDataBase.at("MSTelongatedClean").tree);
+
+	emit emitTracedTree(this->fragTraceTreeManager.treeDataBase.at("MSTelongatedClean").tree);
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
@@ -86,6 +146,51 @@ void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], con
 	if (this->saveAdaResults)
 	{
 		QString saveRootQ = this->simpleAdaSaveDirQ + "\\" + QString::fromStdString(outputRegImgName) + "_" + QString::fromStdString(to_string(this->simpleAdaStepsize)) + "_" + QString::fromStdString(to_string(this->simpleAdaRate));
+		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
+	}
+}
+
+void FragTraceManager::gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
+{
+	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
+	{
+		cerr << "No source image found. Do nothing and return.";
+	}
+
+	int imgDims[3];
+	imgDims[0] = dims[0];
+	imgDims[1] = dims[1];
+	imgDims[2] = dims[2];
+	registeredImg regGamma;
+	regGamma.imgAlias = outputRegImgName;
+	regGamma.dims[0] = imgDims[0];
+	regGamma.dims[1] = imgDims[1];
+	regGamma.dims[2] = imgDims[2];
+	imgDims[2] = 1;
+	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.begin();
+		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.end(); ++sliceIt)
+	{
+		map<int, size_t> histList = ImgProcessor::histQuickList(sliceIt->second.get(), imgDims);
+		//histList.erase(histList.begin());
+		int cutoffIntensity;
+		for (int binI = 1; binI < histList.size(); ++binI)
+		{
+			if (histList.at(binI) > histList.at(binI - 1) && histList.at(binI) < histList.at(binI + 1))
+			{
+				cutoffIntensity = binI;
+				break;
+			}
+		}
+		myImg1DPtr my1Dslice(new unsigned char[imgDims[0] * imgDims[1]]);
+		ImgProcessor::stepped_gammaCorrection(sliceIt->second.get(), my1Dslice.get(), imgDims, cutoffIntensity);
+		regGamma.slicePtrs.insert({ sliceIt->first, my1Dslice });
+		cout << sliceIt->first << endl;
+	}
+	this->fragTraceImgManager.imgDatabase.insert({ regGamma.imgAlias, regGamma });
+
+	if (this->saveAdaResults)
+	{
+		QString saveRootQ = this->finalSaveRootQ + "\\testFolder1\\";
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
 }
@@ -197,3 +302,23 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	profiledTree profiledSigTree(sigTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 }
+
+void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)
+{
+	if (signalBlobs.empty())
+	{
+		cerr << "No signal blobs data exists. Do nothing and return." << endl;
+		return;
+	}
+
+	cout << " ==> removing small blob, size threshold = " << sizeThre << endl;
+
+	vector<ptrdiff_t> delLocs;
+	for (vector<connectedComponent>::iterator compIt = signalBlobs.begin(); compIt != signalBlobs.end(); ++compIt)
+		if (compIt->size <= sizeThre) delLocs.push_back(compIt - signalBlobs.begin());
+	
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+		signalBlobs.erase(signalBlobs.begin() + *delIt);
+}
+

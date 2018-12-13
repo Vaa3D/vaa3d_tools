@@ -433,8 +433,8 @@ NeuronTree smoothSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
                 index_begin=getParent(index_begin,nt);
                 cnt++;
             }
+            if(cnt==0) break;
             index_begin=childs[index_last].at(0);
-
 
             cnt = 0;
             while(cnt<5 && childs[index_end].size()==1)
@@ -442,6 +442,7 @@ NeuronTree smoothSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
                 index_end=childs[index_end].at(0);
                 cnt++;
             }
+            if(cnt==0) break;
 
             for(V3DLONG j=index_begin; j<index_end;j++)
             {
