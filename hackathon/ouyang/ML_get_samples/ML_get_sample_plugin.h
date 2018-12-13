@@ -8,6 +8,7 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "get_tip_block.h"
 
 class ML_sample : public QObject, public V3DPluginInterface2_1
 {

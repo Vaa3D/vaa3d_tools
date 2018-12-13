@@ -7,8 +7,22 @@
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 using namespace std;
 
-void get_terminal(QString image_file, QString swc_file, QString output_dir, XYZ block_size, V3DPluginCallback2 & callback)
+void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString image_file=infiles.at(0);
+    QString swc_file=infiles.at(1);
+    QString output_dir=outfiles.at(0);
+    QString output_apo;
+    XYZ block_size=XYZ(100,100,20);
+
+    if(outfiles.size()>1)
+    {
+        output_apo=outfiles.at(1);
+    }
     printf("welcome to use get_termial\n");
     NeuronTree nt = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
@@ -26,7 +40,7 @@ void get_terminal(QString image_file, QString swc_file, QString output_dir, XYZ 
     QList<QString> output_suffix;
     output_suffix.append(QString("tif"));
     output_suffix.append(QString("swc"));
-    printf("welcome to use get_termial\n");    
+    printf("welcome to use get_termial\n");
     for(int i=0; i<tip_list.size(); i++){
         int tipnum=i;
         NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
@@ -46,10 +60,9 @@ void get_terminal(QString image_file, QString swc_file, QString output_dir, XYZ 
     return;
 }
 
-
 void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char * data1d_crop,V3DPluginCallback2 & callback,QString output_format,int tipnum,XYZ tip)
 {
-    V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
+   V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
    unsigned char* data1d_mask = 0;
    data1d_mask = new unsigned char [pagesz];
    memset(data1d_mask,0,pagesz*sizeof(unsigned char));
@@ -101,14 +114,101 @@ void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char *
 
    mysz[2] = 1;
    mysz[3] = 3;
-   //separate two situations of tip image into different folders
-
-
-
 
    QString mipoutpuut = output_format +QString("%1").arg(tipnum)+"_"+QString("%1_%2_%3").arg(tip.x).arg(tip.y).arg(tip.z)+ "_mip.tif";
    simple_saveimage_wrapper(callback,mipoutpuut.toStdString().c_str(),data1d_2D,mysz,1);
-   //printf("welcome to use crop_img+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+   if(data1d_crop) {delete [] data1d_crop; data1d_crop=0;}
+   if(data1d_mask) {delete [] data1d_mask; data1d_mask=0;}
+   if(data1d_2D) {delete [] data1d_2D; data1d_2D=0;}
+   if(image_mip) {delete [] image_mip; image_mip=0;}
+   if(label_mip) {delete [] label_mip; label_mip=0;}
+   //listNeuron.clear();
+}
+
+
+void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_swc=infiles.at(0);
+    QString input_image=inparas.at(0);
+    QString output_2d_dir=outfiles.at(0);
+    if(!output_2d_dir.endsWith("/")){
+        output_2d_dir = output_2d_dir+"/";
+    }
+    QString flag=input_swc.right(input_swc.length()-43);
+    QString flag1=flag.left(flag.length()-4);
+    //printf("______________:%s\n",output_2d_dir.data());
+    qDebug()<<input_swc;
+    qDebug("number:%s",qPrintable(flag1));
+    NeuronTree nt_crop_sorted=readSWC_file(input_swc);
+    Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
+    int nChannel = p4dImage->getCDim();
+
+    V3DLONG mysz[4];
+    mysz[0] = p4dImage->getXDim();
+    mysz[1] = p4dImage->getYDim();
+    mysz[2] = p4dImage->getZDim();
+    mysz[3] = nChannel;
+    cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
+    unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
+    //printf("+++++++++++:%p\n",p4dImage);
+
+   V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
+   unsigned char* data1d_mask = 0;
+   data1d_mask = new unsigned char [pagesz];
+   memset(data1d_mask,0,pagesz*sizeof(unsigned char));
+   double margin=0;//by PHC 20170531
+   ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2], margin);
+   //QString labelSaveString = pathname + ".v3draw_label.tif";
+   //simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
+
+   V3DLONG stacksz =mysz[0]*mysz[1];
+   unsigned char *image_mip=0;
+   image_mip = new unsigned char [stacksz];//2D orignal image
+   unsigned char *label_mip=0;
+   label_mip = new unsigned char [stacksz];//2D annotation
+   for(V3DLONG iy = 0; iy < mysz[1]; iy++)
+   {
+       V3DLONG offsetj = iy*mysz[0];
+       for(V3DLONG ix = 0; ix < mysz[0]; ix++)
+       {
+           int max_mip = 0;
+           int max_label = 0;
+           for(V3DLONG iz = 0; iz < mysz[2]; iz++)
+           {
+               V3DLONG offsetk = iz*mysz[1]*mysz[0];
+               if(data1d_crop[offsetk + offsetj + ix] >= max_mip)
+               {
+                   image_mip[iy*mysz[0] + ix] = data1d_crop[offsetk + offsetj + ix];
+                   max_mip = data1d_crop[offsetk + offsetj + ix];
+               }
+               if(data1d_mask[offsetk + offsetj + ix] >= max_label)
+               {
+                   label_mip[iy*mysz[0] + ix] = data1d_mask[offsetk + offsetj + ix];
+                   max_label = data1d_mask[offsetk + offsetj + ix];
+               }
+           }
+       }
+   }
+   unsigned char* data1d_2D = 0;
+   data1d_2D = new unsigned char [3*stacksz];//3 channels image
+   for(V3DLONG i=0; i<stacksz; i++)
+       data1d_2D[i] = image_mip[i];
+
+   for(V3DLONG i=0; i<stacksz; i++)
+   {
+       data1d_2D[i+stacksz] = (label_mip[i] ==255) ? 255: image_mip[i];
+   }
+   for(V3DLONG i=0; i<stacksz; i++)
+       data1d_2D[i+2*stacksz] = image_mip[i];
+
+   mysz[2] = 1;
+   mysz[3] = 3;
+   QString mipoutpuut = output_2d_dir +flag1+"_"+"mip.tif";
+   simple_saveimage_wrapper(callback,mipoutpuut.toStdString().c_str(),(unsigned char *)data1d_2D,mysz,1);
    if(data1d_crop) {delete [] data1d_crop; data1d_crop=0;}
    if(data1d_mask) {delete [] data1d_mask; data1d_mask=0;}
    if(data1d_2D) {delete [] data1d_2D; data1d_2D=0;}
@@ -170,7 +270,6 @@ XYZ offset_XYZ(XYZ input, XYZ offset){
     input.z += offset.z;
     return input;
 }
-
 
 block offset_block(block input_block, XYZ offset)
 {
@@ -282,5 +381,15 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-i<file name>:\t\t input .tif file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_ML_sample -i original image & input .swcfile -o output image dir.\n";
+
+}
+void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+    cout<<"This plugin for generet 2D images"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t get_2D_sample\n";
+    cout<<"-i<file name>:\t\t input .swc and .tiff file\n";
+    cout<<"-o<file name>:\t\t ouput dir\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_sample -i original swc -p input .image -o output image dir.\n";
 
 }
