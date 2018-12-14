@@ -97,6 +97,10 @@ public:
 
 	template<class T>
 	static inline map<int, size_t> histQuickList(const T inputImgPtr[], const int imgDims[]);
+
+	static map<string, float> getBasicStats_fromHist(const map<int, size_t>& inputHistList);
+
+	static map<string, float> getBasicStats_no0_fromHist(const map<int, size_t>& inputHistList);
 	/****************************************************/
 
 

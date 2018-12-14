@@ -21,8 +21,7 @@ public:
 
 	bool ada;
 	string adaImgName;
-	int simpleAdaStepsize;
-	int simpleAdaRate;
+	int simpleAdaStepsize, simpleAdaRate, cutoffIntensity;
 	bool saveAdaResults;
 	QString simpleAdaSaveDirQ;
 
@@ -64,8 +63,10 @@ private:
 
 	inline void saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[]);
 	void adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	void simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
+	void histThreImg3D(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 
 	void mask2swc(const string inputImgName, string outputTreeName);
 	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);

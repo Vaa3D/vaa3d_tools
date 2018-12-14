@@ -351,7 +351,7 @@
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>40</height>
+                        <height>45</height>
                        </size>
                       </property>
                       <property name="frameShape">
@@ -360,82 +360,113 @@
                       <property name="frameShadow">
                        <enum>QFrame::Raised</enum>
                       </property>
-                      <widget class="QLabel" name="label_2">
-                       <property name="geometry">
-                        <rect>
-                         <x>0</x>
-                         <y>10</y>
-                         <width>71</width>
-                         <height>21</height>
-                        </rect>
-                       </property>
-                       <property name="cursor">
-                        <cursorShape>WhatsThisCursor</cursorShape>
-                       </property>
-                       <property name="mouseTracking">
-                        <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Step size refers to the interval between every sampled pixel/voxel. Usually step size it set to be roughly the same size as the object to be segmented. The default value is 5.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                       </property>
-                       <property name="text">
-                        <string>Step size:</string>
-                       </property>
-                      </widget>
-                      <widget class="QSpinBox" name="spinBox">
-                       <property name="geometry">
-                        <rect>
-                         <x>80</x>
-                         <y>10</y>
-                         <width>46</width>
-                         <height>21</height>
-                        </rect>
-                       </property>
-                       <property name="minimum">
-                        <number>1</number>
-                       </property>
-                       <property name="value">
-                        <number>5</number>
-                       </property>
-                      </widget>
-                      <widget class="QLabel" name="label_3">
-                       <property name="geometry">
-                        <rect>
-                         <x>150</x>
-                         <y>10</y>
-                         <width>111</width>
-                         <height>21</height>
-                        </rect>
-                       </property>
-                       <property name="cursor">
-                        <cursorShape>WhatsThisCursor</cursorShape>
-                       </property>
-                       <property name="mouseTracking">
-                        <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Sampling rate refers to how many pixels/voxels to be sampled in one direction. The simple adaptive thresholding samples the image in 6 direction with the pixel/voxel to be thresholded in the center: x+, x-, y+, y-, z+, z-. Smaller step size prefers larger sampling rate to cover sufficient area to be sampled. The default value is 3.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                       </property>
-                       <property name="text">
-                        <string>Sampling rate:</string>
-                       </property>
-                      </widget>
-                      <widget class="QSpinBox" name="spinBox_2">
-                       <property name="geometry">
-                        <rect>
-                         <x>260</x>
-                         <y>10</y>
-                         <width>46</width>
-                         <height>22</height>
-                        </rect>
-                       </property>
-                       <property name="minimum">
-                        <number>1</number>
-                       </property>
-                       <property name="value">
-                        <number>3</number>
-                       </property>
-                      </widget>
+                      <layout class="QHBoxLayout" name="horizontalLayout_11">
+                       <item>
+                        <widget class="QLabel" name="label_2">
+                         <property name="cursor">
+                          <cursorShape>WhatsThisCursor</cursorShape>
+                         </property>
+                         <property name="mouseTracking">
+                          <bool>true</bool>
+                         </property>
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Step size refers to the interval between every sampled pixel/voxel. Usually step size it set to be roughly the same size as the object to be segmented. The default value is 5.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
+                         <property name="text">
+                          <string>Step size:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="spinBox">
+                         <property name="minimum">
+                          <number>1</number>
+                         </property>
+                         <property name="value">
+                          <number>5</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_8">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>24</width>
+                           <height>18</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_3">
+                         <property name="cursor">
+                          <cursorShape>WhatsThisCursor</cursorShape>
+                         </property>
+                         <property name="mouseTracking">
+                          <bool>true</bool>
+                         </property>
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Sampling rate refers to how many pixels/voxels to be sampled in one direction. The simple adaptive thresholding samples the image in 6 direction with the pixel/voxel to be thresholded in the center: x+, x-, y+, y-, z+, z-. Smaller step size prefers larger sampling rate to cover sufficient area to be sampled. The default value is 3.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
+                         <property name="text">
+                          <string>Sampling rate:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="spinBox_2">
+                         <property name="minimum">
+                          <number>1</number>
+                         </property>
+                         <property name="value">
+                          <number>3</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_9">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>24</width>
+                           <height>18</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_11">
+                         <property name="text">
+                          <string>Cutoff intensity:</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QSpinBox" name="spinBox_9">
+                         <property name="value">
+                          <number>10</number>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_10">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>62</width>
+                           <height>18</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
                      </widget>
                     </item>
                     <item>
@@ -666,7 +697,7 @@
                         </rect>
                        </property>
                        <property name="value">
-                        <number>2</number>
+                        <number>0</number>
                        </property>
                       </widget>
                       <widget class="QLabel" name="label_5">

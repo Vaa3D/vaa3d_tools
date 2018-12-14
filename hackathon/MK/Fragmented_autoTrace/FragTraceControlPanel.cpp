@@ -58,6 +58,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->groupBox_3->setChecked(true);
 			uiPtr->spinBox->setValue(callOldSettings.value("ada_stepsize").toInt());
 			uiPtr->spinBox_2->setValue(callOldSettings.value("ada_rate").toInt());
+			uiPtr->spinBox_9->setValue(callOldSettings.value("cutoffIntensity").toInt());
 
 			if (callOldSettings.value("ada_saveCheck") == true)
 			{
@@ -284,6 +285,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("ada", true);
 		settings.setValue("ada_stepsize", uiPtr->spinBox->value());
 		settings.setValue("ada_rate", uiPtr->spinBox_2->value());
+		settings.setValue("cutoffIntensity", uiPtr->spinBox_9->value());
 		if (uiPtr->checkBox_4->isChecked())
 		{
 			settings.setValue("ada_saveCheck", true);
@@ -301,6 +303,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("ada", false);
 		settings.setValue("ada_stepsize", 0);
 		settings.setValue("ada_rate", 0);
+		settings.setValue("cutoffIntensity", 0);
 	}
 
 	if (uiPtr->checkBox_6->isChecked()) settings.setValue("gamma", true);
@@ -396,6 +399,7 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->traceManagerPtr->imgEnhanceSeq.push_back(this->traceManagerPtr->adaImgName);
 					this->traceManagerPtr->simpleAdaStepsize = uiPtr->spinBox->value();
 					this->traceManagerPtr->simpleAdaRate = uiPtr->spinBox_2->value();
+					this->traceManagerPtr->cutoffIntensity = uiPtr->spinBox_9->value();
 					if (uiPtr->checkBox_4->isChecked())
 					{
 						this->traceManagerPtr->saveAdaResults = true;
@@ -472,6 +476,7 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->traceManagerPtr->imgEnhanceSeq.push_back(this->traceManagerPtr->adaImgName);
 					this->traceManagerPtr->simpleAdaStepsize = currSettings.value("ada_stepsize").toInt();
 					this->traceManagerPtr->simpleAdaRate = currSettings.value("ada_rate").toInt();
+					this->traceManagerPtr->cutoffIntensity = currSettings.value("cutoffIntensity").toInt();
 					if (currSettings.value("ada_saveCheck") == true)
 					{
 						this->traceManagerPtr->saveAdaResults = true;

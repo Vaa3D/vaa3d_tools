@@ -56,8 +56,16 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	dims[3] = 1;
 
 	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
-	if (this->gammaCorrection) this->gammaCorrect(this->adaImgName, dims, "gammaCorrected");
-	if (this->histThre) this->histThreImg("gammaCorrected", dims, this->histThreImgName);
+	//if (this->gammaCorrection) this->gammaCorrect(this->adaImgName, dims, "gammaCorrected");
+	if (this->cutoffIntensity != 0)
+	{
+		this->simpleThre(this->adaImgName, dims, "ada_cutoff");
+		this->histThreImg3D("ada_cutoff", dims, this->histThreImgName);
+	}
+	else this->histThreImg3D(this->adaImgName, dims, this->histThreImgName);
+	
+	//if (this->histThre) this->histThreImg ("gammaCorrected", dims, this->histThreImgName);
+	
 	this->mask2swc(this->histThreImgName, "blobTree");
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	/*cout << "original connected component number: " << this->signalBlobs2D.size();
@@ -150,6 +158,34 @@ void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], con
 	}
 }
 
+void FragTraceManager::simpleThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
+{
+	registeredImg adaSlices;
+	adaSlices.imgAlias = outputRegImgName;
+	adaSlices.dims[0] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[0];
+	adaSlices.dims[1] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[1];
+	adaSlices.dims[2] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[2];
+
+	int sliceDims[3];
+	sliceDims[0] = adaSlices.dims[0];
+	sliceDims[1] = adaSlices.dims[1];
+	sliceDims[2] = 1;
+	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.begin();
+		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.end(); ++sliceIt)
+	{
+		myImg1DPtr my1Dslice(new unsigned char[sliceDims[0] * sliceDims[1]]);
+		ImgProcessor::simpleThresh(sliceIt->second.get(), my1Dslice.get(), sliceDims, this->cutoffIntensity);
+		adaSlices.slicePtrs.insert({ sliceIt->first, my1Dslice });
+	}
+	this->fragTraceImgManager.imgDatabase.insert({ adaSlices.imgAlias, adaSlices });
+
+	if (this->saveAdaResults)
+	{
+		QString saveRootQ = this->simpleAdaSaveDirQ + "\\" + QString::fromStdString(outputRegImgName) + "_" + QString::fromStdString(to_string(this->cutoffIntensity));
+		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
+	}
+}
+
 void FragTraceManager::gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
 {
 	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
@@ -219,6 +255,52 @@ void FragTraceManager::histThreImg(const string inputRegImgName, V3DLONG dims[],
 		myImg1DPtr my1Dslice(new unsigned char[sliceDims[0] * sliceDims[1]]);
 		map<string, float> imgStats = ImgProcessor::getBasicStats_no0(sliceIt->second.get(), sliceDims);
 		ImgProcessor::simpleThresh(sliceIt->second.get(), my1Dslice.get(), sliceDims, int(floor(imgStats.at("mean") + this->stdFold * imgStats.at("std"))));
+		histThreSlices.slicePtrs.insert({ sliceIt->first, my1Dslice });
+	}
+	this->fragTraceImgManager.imgDatabase.insert({ histThreSlices.imgAlias, histThreSlices });
+
+	if (this->saveHistThreResults)
+	{
+		QString saveRootQ = this->histThreSaveDirQ + "\\" + QString::fromStdString(outputRegImgName) + "_std" + QString::fromStdString(to_string(this->stdFold));
+		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
+	}
+}
+
+void FragTraceManager::histThreImg3D(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
+{
+	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
+	{
+		cerr << "No source image found. Do nothing and return.";
+	}
+
+	registeredImg histThreSlices;
+	histThreSlices.imgAlias = outputRegImgName;
+	histThreSlices.dims[0] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[0];
+	histThreSlices.dims[1] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[1];
+	histThreSlices.dims[2] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[2];
+
+	int sliceDims[3];
+	sliceDims[0] = histThreSlices.dims[0];
+	sliceDims[1] = histThreSlices.dims[1];
+	sliceDims[2] = 1;
+	map<int, size_t> binMap3D;
+	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.begin();
+		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.end(); ++sliceIt)
+	{
+		map<int, size_t> sliceHistMap = ImgProcessor::histQuickList(sliceIt->second.get(), sliceDims);
+		for (map<int, size_t>::iterator binIt = sliceHistMap.begin(); binIt != sliceHistMap.end(); ++binIt)
+		{
+			if (binMap3D.find(binIt->first) == binMap3D.end()) binMap3D.insert(*binIt);
+			else binMap3D[binIt->first] = binMap3D[binIt->first] + binIt->second;
+		}
+	}
+	map<string, float> histList3D = ImgProcessor::getBasicStats_no0_fromHist(binMap3D);
+
+	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.begin();
+		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.end(); ++sliceIt)
+	{
+		myImg1DPtr my1Dslice(new unsigned char[sliceDims[0] * sliceDims[1]]);
+		ImgProcessor::simpleThresh(sliceIt->second.get(), my1Dslice.get(), sliceDims, int(floor(histList3D.at("mean") + this->stdFold * histList3D.at("std"))));
 		histThreSlices.slicePtrs.insert({ sliceIt->first, my1Dslice });
 	}
 	this->fragTraceImgManager.imgDatabase.insert({ histThreSlices.imgAlias, histThreSlices });
