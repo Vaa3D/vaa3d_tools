@@ -4,13 +4,13 @@
 #endif
 
 #ifndef BX
-#define BX 100
+#define BX 200
 #endif
 #ifndef BY
-#define BY 100
+#define BY 200
 #endif
 #ifndef BZ
-#define BZ 20
+#define BZ 40
 #endif
 
 #ifndef RX
@@ -21,6 +21,10 @@
 #endif
 #ifndef RZ
 #define RZ 1
+#endif
+
+#ifndef NODE_RADIUS
+#define NODE_RADIUS 1
 #endif
 
 #ifndef MIN_DIST
@@ -96,11 +100,11 @@ bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2)
     double D = sqrt(A*A + B*B + C*C);
     A = A/D; B = B/D; C = C/D; R = R/D;
 
-    double ctz = A/sqrt(A*A + B*B);
-    double stz = B/sqrt(A*A + B*B);
+//    double ctz = A/sqrt(A*A + B*B);
+//    double stz = B/sqrt(A*A + B*B);
 
-    double cty = C/sqrt(A*A + B*B + C*C);
-    double sty = sqrt(A*A + B*B)/sqrt(A*A + B*B + C*C);
+//    double cty = C/sqrt(A*A + B*B + C*C);
+//    double sty = sqrt(A*A + B*B)/sqrt(A*A + B*B + C*C);
 
     double x0 = m1.x;
     double y0 = m1.y;
@@ -126,11 +130,10 @@ bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2)
                 {
                     if(i * i + j * j + k * k > radius2) continue;
                     double x = i, y = j, z = k;
-                    double x1, y1, z1;
-
-                    y1 = y * ctz - x * stz; x1 = x * ctz + y * stz; y = y1; x = x1;
-                    x1 = x * cty + z * sty; z1 = z * cty - x * sty; x = x1; z = z1;
-                    z1 = z * ctz + y * stz; y1 = y * ctz - z * stz; z = z1; y = y1;
+//                    double x1, y1, z1;
+//                    y1 = y * ctz - x * stz; x1 = x * ctz + y * stz; y = y1; x = x1;
+//                    x1 = x * cty + z * sty; z1 = z * cty - x * sty; x = x1; z = z1;
+//                    z1 = z * ctz + y * stz; y1 = y * ctz - z * stz; z = z1; y = y1;
                     x += cx; y += cy; z += cz;
                     marker = MyMarker(x, y, z);
                     marker = readjust_size(marker, ratio_x, ratio_y, ratio_z);
@@ -187,9 +190,11 @@ double signal_between_markers(unsigned char * data1d, NeuronSWC n1, NeuronSWC n2
     m1.radius = SWC_RADIUS;
     m2.radius = SWC_RADIUS;
     getMarkersBetween(allmarkers, m1, m2);
-    // Signal: average signal at allmarkers;
-//    qDebug()<<"size of marker list:"<<allmarkers.size();
+    // Signal: average signal at allmarkers;  
     double signal = signal_at_markers(allmarkers, data1d, sz0, sz1, sz2);
+    if(signal<MIN_DIST){
+        qDebug()<<"size of marker list:"<<allmarkers.size();
+    }
     return signal;
 }
 
@@ -247,11 +252,25 @@ vector<MyMarker> swc2marker(NeuronTree nt, int tip_id)
 int find_tip(NeuronTree nt, long sz0, long sz1, long sz2)
 {
     // Return the node at center of the image as tip node
+    QList<int> tip_list = get_tips(nt, true);
     MyMarker center = MyMarker(BX/2, BY/2, BZ/2);
-    for(int i=0; i<nt.listNeuron.size(); i++){
-        MyMarker node=MyMarker(nt.listNeuron.at(i).x, nt.listNeuron.at(i).y, nt.listNeuron.at(i).z);
+//    for(int i=0; i<nt.listNeuron.size(); i++){
+//        MyMarker node=MyMarker((int) nt.listNeuron.at(i).x, (int) nt.listNeuron.at(i).y, (int) nt.listNeuron.at(i).z);
+//        if(marker_dist(center, node, true)<MIN_DIST){
+//            return i;
+//        }
+//    }
+    for(int i=0; i<tip_list.size(); i++){
+        int n_id = tip_list.at(i);
+        NeuronSWC tip_node = nt.listNeuron.at(n_id);
+        tip_node.x = int (tip_node.x);
+        tip_node.y = int (tip_node.y);
+        tip_node.z = int (tip_node.z);
+//        qDebug()<<"Tip"<<n_id<<tip_node.x<<tip_node.y<<tip_node.z;
+        MyMarker node=MyMarker(tip_node.x, tip_node.y, tip_node.z);
+//        qDebug()<<"Tip_to_center"<<marker_dist(center, node, true);
         if(marker_dist(center, node, true)<MIN_DIST){
-            return i;
+            return n_id;
         }
     }
     printf("No tip found!\n");
@@ -352,6 +371,7 @@ QList<NeuronSWC> trace_back(NeuronTree nt, int tip_id)
     QList<NeuronSWC> n_list;
     double step_size = 0.2; // Unit: micron
     NeuronSWC node = nt.listNeuron.at(tip_id);
+    qDebug()<<node.n<<node.x<<node.y<<node.z;
 
     // 1. Get a single branch
     while(node.pn != -1)
@@ -452,7 +472,7 @@ QList<double> get_terminal_signal(QString input_swc, QString input_image, V3DPlu
     // <meta_len : (meta_len + upstream_len - 1)> Upstream signal;
     // <(meta_len + upstream_len - 1) : end> Downstream signal;
     QList<double> result;
-    for(int i=0; i<result_len; i++){result.append(0);}
+    for(int i=0; i<result_len; i++){result.append(-1);}
 
     // 1. load input_image:
     qDebug()<<"Load image";
@@ -465,19 +485,28 @@ QList<double> get_terminal_signal(QString input_swc, QString input_image, V3DPlu
     // 2. load swc file
     qDebug()<<"Load swc";
     NeuronTree nt=readSWC_file(input_swc);
-    if(nt.listNeuron.size()<10){return result;}
+    if(nt.listNeuron.size()<10)
+    {
+        printf("SWC file size too small!");
+        return result;
+    }
 
     // 2.1 Find tip node: tip node must be at the center of image
     int tip_id = find_tip(nt, img_sz[0], img_sz[1], img_sz[2]);
-    if(tip_id<0){return result;}  // Return if no tip found.
+    if(tip_id<0){
+        qDebug()<<input_image<<input_swc;
+        return result;
+    }  // Return if no tip found.
     double dist_branch_point = tip_to_branch(nt, tip_id);
     int tip_type = nt.listNeuron.at(tip_id).type;
+//    writeSWC_file("tp_0.swc", nt);
 
     // 2.2 Move upstream and resample.
     qDebug()<<"trace_back";
     QList<NeuronSWC> n_list = trace_back(nt, tip_id);
     if(n_list.size()<1){return result;}
     nt.deepCopy(neuronlist_2_neurontree(n_list));
+//    writeSWC_file("tp_1.swc", nt);
 
     // 2.3 Extend downstream.
     qDebug()<<"proceed";
@@ -488,7 +517,12 @@ QList<double> get_terminal_signal(QString input_swc, QString input_image, V3DPlu
         return result;
     }
     nt.deepCopy(neuronlist_2_neurontree(n_list));
+    for(int i=0; i<nt.listNeuron.size(); i++)
+    {
+        nt.listNeuron[i].r = NODE_RADIUS;
+    }
     tip_id = nt.listNeuron.size()-1;  // New tip position
+//    writeSWC_file("tp_2.swc", nt);
 
     // 3. Get signal at each sub-segment
     qDebug()<<"Get signal";
@@ -502,6 +536,7 @@ QList<double> get_terminal_signal(QString input_swc, QString input_image, V3DPlu
         int pn_id = nt.hashNeuron.value(node.pn);
         if((pn_id>=nt.listNeuron.size()) || (pn_id<0)){break;}
 //        qDebug()<<ct;
+//        qDebug()<<node.n<<node.x<<node.y<<node.z<<node.pn;
         double cur_sig = signal_between_markers(data1d, node, nt.listNeuron.at(pn_id),
                                                 img_sz[0], img_sz[1], img_sz[2], img_sz[3], callback);
 //        qDebug()<<cur_sig;
@@ -549,10 +584,14 @@ void get_all_terminal_signal(QString input_folder, QString out_file, V3DPluginCa
             QString input_swc = input_folder+cell_name+".swc";
             QString input_img = input_folder+cell_name+".nrrd";
             qDebug()<<input_swc<<input_img;
-//            if(exists_file(Qstring_to_char(input_img))) // To be implemented
+
+//            QByteArray array = input_img.toLatin1();
+//            array = array.replace(" ", "");
+//            const char* fileName = array.data();
+//            if(exists_file(fileName)) // To be implemented
             if(true)
             {
-                QList<double> cur_sigvector = get_terminal_signal(input_swc, input_img, callback);
+                QList<double> cur_sigvector = get_terminal_signal(input_swc, input_img, callback);               
                 if(cur_sigvector.size()>0){
                     fprintf(fp, qPrintable(cell_name));
                     for(int j=0; j<cur_sigvector.size(); j++){
@@ -561,6 +600,8 @@ void get_all_terminal_signal(QString input_folder, QString out_file, V3DPluginCa
                     }
                     fprintf(fp, "\n");
                     ct++;
+//                    break;
+//                    if(cur_sigvector.at(0)<0){break;}
 //                    if(ct>10000){break;}
                 }
             }

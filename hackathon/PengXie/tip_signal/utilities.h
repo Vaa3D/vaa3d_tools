@@ -4,7 +4,7 @@
 #endif // UTILITIES_H
 
 #include "v3d_interface.h"
-#include "NeuronStructExplorer.h"
+#include "my_surf_objs.h"
 #include "math.h"
 #include "v3d_basicdatatype.h"
 #include "bits/stdc++.h"
@@ -61,12 +61,6 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
 void crop_swc(QString input_swc, QString output_swc, block crop_block);
 bool my_saveANO(QString ano_dir, QString fileNameHeader, QList<QString> suffix);
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
-
-// For bouton detection
-QList<block> get_blocks(QString swc);
-void run_matlab(QString data_dir, QString block_name);
-block string_to_block(QString block_name);
-QList<block> nse_to_blocks(NeuronStructExplorer nse);
 
 // For get_terminal
 QList<int> get_tips(NeuronTree nt, bool include_root);

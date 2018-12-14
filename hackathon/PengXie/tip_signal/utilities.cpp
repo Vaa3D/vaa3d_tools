@@ -109,49 +109,6 @@ void read_directory(QString name, QList<QString> & files)
 }
 
 // functions for getting blocks
-block string_to_block(QString block_name)
-{
-    block res_block;
-    res_block.name=block_name;
-    QStringList tp=block_name.split("_");
-    if(tp.size()!=3){
-        qDebug()<<"Invalid block name format!";
-        return res_block;
-    }
-    res_block.small = XYZ(tp.at(0).toFloat()*X_TILE_LENGTH,
-                          tp.at(1).toFloat()*Y_TILE_LENGTH,
-                          tp.at(2).toFloat()*Z_TILE_LENGTH
-                          );
-    res_block.large = XYZ(res_block.small.x+X_TILE_LENGTH,
-                          res_block.small.y+Y_TILE_LENGTH,
-                          res_block.small.z+Z_TILE_LENGTH
-                          );
-    return res_block;
-}
-
-QList<block> nse_to_blocks(NeuronStructExplorer nse)
-{
-    qDebug()<<"welcome to use nse_to_blocks";
-    QList<block> block_list;
-
-    // Traverse the nse
-    profiledTree tp = nse.treeDataBase.begin()->second;
-    tp.nodeTileResize(RESIZE_TILE_LENGTH);
-    map<string, vector<int>> nodetilemap = tp.nodeTileMap;
-    for(auto it=nodetilemap.begin(); it!=nodetilemap.end();it++){
-        QString block_name=QString::fromStdString(it->first);
-        block_list.append(string_to_block(block_name));
-    }
-    // Convert nse coordinate
-    return block_list;
-}
-
-QList<block> get_blocks(QString swc)
-{
-    NeuronStructExplorer nse = NeuronStructExplorer(swc);
-    QList<block> block_list = nse_to_blocks(nse);
-    return block_list;
-}
 
 void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format)
 {
@@ -159,7 +116,13 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     if(output_format.size()==0){output_format=QString(".tiff");}
 
     QString saveName = outputdir_img + "/" + crop_block.name + output_format;
-    const char* fileName = Qstring_to_char(saveName);
+
+    // Qstring to const char*
+//    const char* fileName = Qstring_to_char(saveName);
+    QByteArray array = saveName.toLatin1();
+    array = array.replace(" ", "");
+    const char* fileName = array.data();
+
     qDebug()<<"Output image:"<<QString(fileName);
 
     V3DLONG *in_zz;
@@ -169,15 +132,15 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
         return;
     }
     // 1. When cropping, ranges must be integers
-    // pixels at large values won't be included, so set large.x/y/z as large.x/y/z + 1
     XYZ small=XYZ(crop_block.small);
     XYZ large=XYZ(crop_block.large);
-    small.x = floor(small.x);
-    small.y = floor(small.y);
-    small.z = floor(small.z);
-    large.x = ceil(large.x)+1;
-    large.y = ceil(large.y)+1;
-    large.z = ceil(large.z)+1;
+//     // pixels at large values won't be included, so set large.x/y/z as large.x/y/z + 1
+//    small.x = floor(small.x);
+//    small.y = floor(small.y);
+//    small.z = floor(small.z);
+//    large.x = ceil(large.x)+1;
+//    large.y = ceil(large.y)+1;
+//    large.z = ceil(large.z)+1;
 
     // 2. Crop image. image is stored as 1d array. 2 parameters needed for cropping:
     // 2.1. 'cropped_image' is a pointer to the beginning of the region of interest
@@ -200,7 +163,8 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
         simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
     }
     else{
-        qDebug()<<"bad name:"<<fileName;
+        printf("bad output image name:%s\n", fileName);
+//        qDebug()<<"bad name:"<<QString(fileName);
     }
 
     return;
@@ -292,8 +256,17 @@ QList<CellAPO> offset_apo(QString input_apo, XYZ offset)
 
 const char * Qstring_to_char(QString qs)
 {
-    QByteArray array = qs.toLatin1();
-    array = array.replace(" ", "");
-    const char* result = array.data();
-    return result;
+//    QByteArray array = qs.toLatin1();
+//    array = array.replace(" ", "");
+//    const char* result = array.data();
+//    return result;
+
+    const char * str;
+    QString path;
+    QByteArray ba;
+    ba = qs.toLatin1();
+    str = ba.data();
+//    printf("the string path will be:%s\n", str);
+
+    return str;
 }

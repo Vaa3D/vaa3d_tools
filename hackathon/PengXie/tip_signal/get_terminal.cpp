@@ -23,14 +23,23 @@ void get_terminal(QString image_file, QString swc_file, QString output_dir, XYZ 
     output_suffix.append(QString("swc"));
 
     for(int i=0; i<tip_list.size(); i++){
+//        if(i>0){break;}
         NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
         qDebug()<<node.n;
         if(node.type > 5){continue;}
         // create a tip-centered block
-        block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+        XYZ shift;
+        shift.x = (int)node.x;
+        shift.y = (int)node.y;
+        shift.z = (int)node.z;
+
+        block crop_block = offset_block(zcenter_block, shift);
         crop_block.name = cell_name + "_"+QString::number(i);
         // crop image
         qDebug()<<crop_block.name;
+        qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
+        qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
+
         crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
         // crop swc
         QString output_swc = output_dir+crop_block.name+".swc";
