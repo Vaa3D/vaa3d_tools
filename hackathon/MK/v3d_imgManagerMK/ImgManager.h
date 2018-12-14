@@ -80,7 +80,7 @@ public:
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
 	void imgEntry(string caseID, imgFormat format);
 
-	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
+	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata,  V3DLONG sz[], int datatype);
 	
 	static inline void imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[]);
 	/******************************************************************/

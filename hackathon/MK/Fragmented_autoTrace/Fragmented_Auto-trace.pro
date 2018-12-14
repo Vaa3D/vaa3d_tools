@@ -14,13 +14,17 @@ INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
+INCLUDEPATH += ../NeuronStructNavigator
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
+INCLUDEPATH += $$VAA3DPATH/neuron_editing
 win32: {
     BOOSTPATH = $$(BOOST_PATH)
     INCLUDEPATH += $$BOOSTPATH
     INCLUDEPATH += $$BOOSTPATH/lib64-msvc-12.0
-    LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK
     LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
+
+    LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK
+    LIBS += -L../NeuronStructNavigator -lNeuronStructNavigator
 }
 
 FORMS += fragmentedTraceUI.ui
@@ -28,9 +32,6 @@ FORMS += fragmentedTraceUI.ui
 HEADERS	+= Fragmented_Auto-trace_plugin.h
 HEADERS += FragTraceControlPanel.h
 HEADERS += FragTraceManager.h
-HEADERS += $$IMGMANAGERPATH/ImgManager.h
-HEADERS += $$IMGMANAGERPATH/imgAnalyzer/ImgAnalyzer.h
-HEADERS += $$IMGMANAGERPATH/imgProcessor/ImgProcessor.h
 HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h
 
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp

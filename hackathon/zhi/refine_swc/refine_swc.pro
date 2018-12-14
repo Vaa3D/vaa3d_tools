@@ -13,7 +13,11 @@ INCLUDEPATH     += ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2
 
 
 HEADERS	+= refine_swc_plugin.h
+HEADERS	+= refine_swc_funcs.h
+
 SOURCES	+= refine_swc_plugin.cpp
+SOURCES	+= refine_swc_funcs.cpp
+
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/neuron_editing/neuron_format_converter.cpp

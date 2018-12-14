@@ -29,23 +29,32 @@ void Matrix_QR_Factorization(vector<vector<float> >&A_a,vector<vector<float> >&Q
     float *p=new float[M];
     int i,j;
     for(i=0;i<M;i++)
+    {
         for(j=0;j<N;j++)
+        {
             R[i][j]=0;
-    for(k=0;k<N;k++){
-        for(j=0;j<M;j++){
+        }
+    }
+    for(k=0;k<N;k++)
+    {
+        for(j=0;j<M;j++)
+        {
           temp[j]=A[j][k];//取出第 j 列  即X_k
         }
         //先求Q矩阵
-        if(k==0){
+        if(k==0)
+        {
             temp_len=Get_Norm(temp,M);
             R[0][0]=temp_len;
             p=VectorDivNum(temp,temp_len,M);
-            for(j=0;j<M;j++){
-                Q[j][k]=p[j];
+            for(j=0;j<M;j++)
+            {
+                Q[j][k]=p[j];//p
             }
 
         }
-        if(k>0){
+        if(k>0)
+        {
             float *Tempmul=new float[M];
             float *sum=new float[M];
             float tempAj[M];
@@ -53,8 +62,10 @@ void Matrix_QR_Factorization(vector<vector<float> >&A_a,vector<vector<float> >&Q
             for(i=0;i<M;i++){
                 sum[i]=0;
             }
-            for(int tempK=0;tempK<k;tempK++){
-                for(i=0;i<M;i++){
+            for(int tempK=0;tempK<k;tempK++)
+            {
+                for(i=0;i<M;i++)
+                {
                     tempQj[i]=Q[i][tempK];//从Q矩阵取出第k列 即Q_k
                 }
                 R[tempK][k]=VectorMUL(temp,tempQj,M);
@@ -72,23 +83,33 @@ void Matrix_QR_Factorization(vector<vector<float> >&A_a,vector<vector<float> >&Q
             p=VectorDivNum(uk,uk_len,M);
             for(j=0;j<M;j++)
                 Q[j][k]=p[j];
+
+        if(uk){delete [] uk; uk = 0;}
+        if(sum){delete [] sum; sum = 0;}
+        if(Tempmul){delete [] Tempmul; Tempmul = 0;}
+        if(p){delete [] p; p = 0;}
         }
+       // Tempmul
+        //if(uk)
     }
-//    cout<<endl<<"Matrix Q:"<<endl;
-//    for(int i=0;i<M;i++){
-//        for(int j=0;j<N;j++){
-//           //cout<<setw(8)<<Q[i][j]<<" ";
-//        }
-//        cout<<endl;
-//    }
+    cout<<endl<<"Matrix Q:"<<endl;
+    for(int i=0;i<M;i++)
+    {
+        for(int j=0;j<N;j++)
+        {
+           cout<<setw(8)<<Q[i][j]<<" ";
+        }
+        cout<<endl;
+    }
 //    cout<<endl<<"Matrix R:"<<endl;
-//    for(int i=0;i<M;i++){
-//        for(int j=0;j<N;j++){
-//            //cout<<setw(8)<<R[i][j]<<" ";
+//    for(int i=0;i<N;i++)
+//    {
+//        for(int j=0;j<N;j++)
+//        {
+//            cout<<setw(8)<<R[i][j]<<" ";
 //        }
 //        cout<<endl;
 //    }
-    //v3d_msg("kkkkkkkk");
     for(int i=0;i<M;i++)
     {
         vector<float> q;
@@ -111,14 +132,16 @@ void Matrix_QR_Factorization(vector<vector<float> >&A_a,vector<vector<float> >&Q
     }
 }
 /*向量求模*/
-float Get_Norm(float a[],int size){
+float Get_Norm(float a[],int size)
+{
     float sum=0;
     for(int i=0;i<size;i++)
         sum+=a[i]*a[i];
     return sqrt(sum);
 }
 /*向量除以一个数*/
-float *VectorDivNum(float a[],float num,int len){
+float *VectorDivNum(float a[],float num,int len)
+{
     float *p;
     p=new float[len];
     for(int i=0;i<len;i++)
@@ -126,7 +149,8 @@ float *VectorDivNum(float a[],float num,int len){
     return p;
 }
 /*向量数乘*/
-float * VectorMULNum(float a[],float num,int len){
+float * VectorMULNum(float a[],float num,int len)
+{
     float *p;
     p=new float[len];
     for(int i=0;i<len;i++)
@@ -134,7 +158,8 @@ float * VectorMULNum(float a[],float num,int len){
     return p;
 }
 /*向量内积*/
-float  VectorMUL(float a[],float b[],int len){
+float  VectorMUL(float a[],float b[],int len)
+{
     float *p;
     float result=0;
     for(int i=0;i<len;i++)
@@ -142,7 +167,8 @@ float  VectorMUL(float a[],float b[],int len){
     return result;
 }
 /*向量加法*/
-float * VectorADD(float a[],float b[],int len){
+float * VectorADD(float a[],float b[],int len)
+{
     float *p;
     p=new float[len];
     for(int i=0;i<len;i++)
@@ -150,7 +176,8 @@ float * VectorADD(float a[],float b[],int len){
     return p;
 }
 /*向量减法*/
-float * VectorSUB(float a[],float b[],int len){
+float * VectorSUB(float a[],float b[],int len)
+{
     float *p;
     p=new float[len];
     for(int i=0;i<len;i++)

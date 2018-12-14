@@ -706,10 +706,10 @@ NeuronTree match_area(const Image4DSimple* curr,V3DPluginCallback2 &m_v3d,Neuron
 
             }
 
-            cout<<"min______________________dis = "<<min_dis<<endl;
+          //  cout<<"min______________________dis = "<<min_dis<<endl;
 
             double para = curr->getRezX()/curr->getXDim();
-            cout<<"min_dis/para = "<<min_dis/para<<endl;
+         //   cout<<"min_dis/para = "<<min_dis/para<<endl;
             vector<int> count_v;
             vector<NeuronSWC> point_b;
             if(min_dis/para>10)  //rebase 15
@@ -817,7 +817,7 @@ bool point_at_boundry(V3DPluginCallback2 &callback,NeuronSWC &s,vector<int> &cou
     double dis_z2 = (oz+lz-s.z)/para_ratio;
     if(dis_z2<min_dis)min_dis = dis_z2;
 
-    cout<<"min_dis = "<<min_dis<<endl;
+   // cout<<"min_dis = "<<min_dis<<endl;
     //v3d_msg("check inside2");
 
     if(min_dis<6)    //5
