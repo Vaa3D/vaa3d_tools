@@ -544,7 +544,17 @@ void FragTraceControlPanel::traceButtonClicked()
 		this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
 		this->scaleTracedTree();
-		this->thisCallback->setSWCTeraFly(this->tracedTree);
+		NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
+		NeuronTree finalTree;
+		if (existingTree.listNeuron.isEmpty()) this->thisCallback->setSWCTeraFly(this->tracedTree);
+		else
+		{
+			vector<NeuronTree> trees;
+			trees.push_back(existingTree);
+			trees.push_back(this->tracedTree);
+			finalTree = NeuronStructUtil::swcCombine(trees);
+		}
+		this->thisCallback->setSWCTeraFly(finalTree);
 	}
 	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)
 	{
