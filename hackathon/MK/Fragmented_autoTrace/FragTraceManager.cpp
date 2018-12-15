@@ -68,6 +68,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	
 	this->mask2swc(this->histThreImgName, "blobTree");
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
+	this->signalBlobs = this->fragTraceTreeUtil.swc2signal3DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	/*cout << "original connected component number: " << this->signalBlobs2D.size();
 	int connCompSize = 10000;
 	int islandIndex;
@@ -81,7 +82,16 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	}
 	cout << ", smallest component: " << islandIndex << ", size = " << connCompSize << endl;*/
 	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs2D, this->smallBlobThreshold);
+	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs, this->smallBlobThreshold);
 	//cout << "connected component number after removing small ones (threshold = " << this->smallBlobThreshold << ", 2D): " << this->signalBlobs2D.size() << endl;
+	
+	NeuronTree blob2Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs2D, true);
+	QString blob2DTreeName = this->finalSaveRootQ + "\\2DblobTree.swc";
+	writeSWC_file(blob2DTreeName, blob2Dtree);
+	
+	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
+	QString blob3DTreeName = this->finalSaveRootQ + "\\3DblobTree.swc";
+	writeSWC_file(blob3DTreeName, blob3Dtree);
 	
 	this->get2DcentroidsTree(this->signalBlobs2D);
 	NeuronTree cleanedUpTree = NeuronStructUtil::swcZclenUP(this->fragTraceTreeManager.treeDataBase.at("centerTree").tree);

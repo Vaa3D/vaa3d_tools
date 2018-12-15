@@ -15,7 +15,7 @@ using namespace std;
 struct connectedComponent
 {
 	int islandNum;
-	map<int, set<vector<int>>> coordSets;
+	map<int, set<vector<int>>> coordSets;  // The key is the number of slice. If there is only 1 slice, there will be only one pair<int, set<vector<int>>> in the map.
 	int xMax, xMin, yMax, yMin, zMax, zMin;
 	int size;
 	float ChebyshevCenter[3];

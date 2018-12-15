@@ -553,8 +553,8 @@ void FragTraceControlPanel::traceButtonClicked()
 			trees.push_back(existingTree);
 			trees.push_back(this->tracedTree);
 			finalTree = NeuronStructUtil::swcCombine(trees);
+			this->thisCallback->setSWCTeraFly(finalTree);
 		}
-		this->thisCallback->setSWCTeraFly(finalTree);
 	}
 	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)
 	{
