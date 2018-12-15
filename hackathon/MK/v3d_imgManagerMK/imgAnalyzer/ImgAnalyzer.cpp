@@ -81,9 +81,9 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1)
 							{
 								vector<int> newCoord(3);
-								newCoord[0] = mipIt->at(0) + 1;
-								newCoord[1] = mipIt->at(1) + 1;
-								newCoord[2] = sliceNum + 1;
+								newCoord[0] = mipIt->at(0);
+								newCoord[1] = mipIt->at(1);
+								newCoord[2] = sliceNum;
 								connIt->coordSets[sliceNum].insert(newCoord);
 
 								if (newCoord[0] < connIt->xMin) connIt->xMin = newCoord[0];
@@ -108,9 +108,9 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					connectedComponent newIsland;
 					newIsland.islandNum = islandCount;
 					vector<int> newCoord(3);
-					newCoord[0] = mipIt->at(0) + 1;
-					newCoord[1] = mipIt->at(1) + 1;
-					newCoord[2] = sliceNum + 1;
+					newCoord[0] = mipIt->at(0);
+					newCoord[1] = mipIt->at(1);
+					newCoord[2] = sliceNum;
 					set<vector<int>> coordSet;
 					coordSet.insert(newCoord);
 					newIsland.coordSets.insert(pair<int, set<vector<int>>>(sliceNum, coordSet));

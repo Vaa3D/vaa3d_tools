@@ -802,14 +802,31 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		newComp.zMax = 0; newComp.zMin = 0;
 		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
-			newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
-			newComp.xMax = getMax(newComp.xMax, compsMap[*it2].xMax);
-			newComp.xMin = getMin(newComp.xMin, compsMap[*it2].xMin);
-			newComp.yMax = getMax(newComp.yMax, compsMap[*it2].yMax);
-			newComp.yMin = getMin(newComp.yMin, compsMap[*it2].yMin);
-			newComp.zMax = getMax(newComp.zMax, compsMap[*it2].zMax);
-			newComp.zMin = getMin(newComp.zMin, compsMap[*it2].zMin);
-			newComp.size = newComp.size + compsMap[*it2].size;
+			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())
+			{
+				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin();
+					it3 != compsMap.at(*it2).coordSets.begin()->second.end(); ++it3)
+					newComp.coordSets.at(compsMap.at(*it2).coordSets.begin()->first).insert(*it3);
+				
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
+			else
+			{
+				newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap.at(*it2).coordSets.begin()->first, compsMap.at(*it2).coordSets.begin()->second));
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
 		}
 
 		outputConnCompList.push_back(newComp);
