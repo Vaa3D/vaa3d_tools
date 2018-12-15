@@ -229,6 +229,7 @@ bool retype_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         for(V3DLONG i=0; i<nt_refined.listNeuron.size();i++)
         {
+            nt_refined.listNeuron[i].level = 20;
             if(nt_refined.listNeuron.at(i).type == 6)
             {
                 for(V3DLONG j=0; j<nt_original.listNeuron.size();j++)
@@ -236,6 +237,7 @@ bool retype_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                     if(NTDIS(nt_refined.listNeuron[i], nt_original.listNeuron[j])<1)
                     {
                         nt_refined.listNeuron[i].type = nt_original.listNeuron[j].type;
+                        nt_refined.listNeuron[i].level = 180;
                         break;
                     }
                 }

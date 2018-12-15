@@ -27,7 +27,7 @@ QStringList refine_swc::funclist() const
 {
 	return QStringList()
 		<<tr("refine")
-		<<tr("func2")
+        <<tr("initial_4ds")
 		<<tr("help");
 }
 
@@ -50,20 +50,14 @@ void refine_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
 bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+    vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+    vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
 	if (func_name == tr("refine"))
 	{
-        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
-        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
-        vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
-        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
-        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
-        vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
-
         if(infiles.size()<2)
         {
             fprintf (stderr, "Need input terafly image path and swc. \n");
@@ -84,21 +78,36 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         NeuronTree nt2 = SortSWC_pipeline(nt.listNeuron,VOID, 0);
         NeuronTree nt2_broken = breakSWC(nt2,max_length, break_points);
-
-
         V_NeuronSWC_list nt2_decomposed = NeuronTree__2__V_NeuronSWC_list(nt2_broken);
         NeuronTree nt2_new = V_NeuronSWC_list__2__NeuronTree(nt2_decomposed);
         NeuronTree nt2_refined = refineSWCTerafly(callback,infiles[0],nt2_new);
         NeuronTree nt2_sorted = SortSWC_pipeline(nt2_refined.listNeuron,VOID, 0);
         NeuronTree nt2_smoothed = smoothSWCTerafly(callback,infiles[0],nt2_sorted,break_points);
         NeuronTree nt2_smoothed_sorted = SortSWC_pipeline(nt2_smoothed.listNeuron,VOID, 0);
-
         writeESWC_file(QString(outfiles[0]),nt2_smoothed_sorted);
-
 	}
-	else if (func_name == tr("func2"))
+    else if (func_name == tr("initial_4ds"))
 	{
-		v3d_msg("To be implemented.");
+        if(infiles.size()<2)
+        {
+            fprintf (stderr, "Need input terafly image path and swc. \n");
+            return false;
+        }
+
+        if(outfiles.empty())
+        {
+            fprintf (stderr, "Need output file name. \n");
+            return false;
+        }
+
+        int k=0;
+        int ds_rate = (paras.size() >= k+1) ? atof(paras[k]) : 4;  k++;
+
+        NeuronTree nt = readSWC_file(QString(infiles[1]));
+        NeuronTree nt2 = SortSWC_pipeline(nt.listNeuron,VOID, 0);
+        NeuronTree nt2_checked = initialSWCTerafly(callback,infiles[0],nt2,ds_rate);
+        writeESWC_file(QString(outfiles[0]),nt2_checked);
+
 	}
 	else if (func_name == tr("help"))
 	{
