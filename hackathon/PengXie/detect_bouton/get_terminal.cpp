@@ -7,6 +7,8 @@ void get_terminal(QString image_file, QString swc_file, QString output_dir, XYZ 
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";
     }
+    QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
+    cell_name = cell_name.left(cell_name.indexOf("."));
 
     // Find tips
     QList<int> tip_list = get_tips(nt, false);
@@ -26,13 +28,14 @@ void get_terminal(QString image_file, QString swc_file, QString output_dir, XYZ 
         if(node.type > 5){continue;}
         // create a tip-centered block
         block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
-        crop_block.name = QString::number(i);
+        crop_block.name = cell_name + "_"+QString::number(i);
         // crop image
+        qDebug()<<crop_block.name;
         crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
         // crop swc
         QString output_swc = output_dir+crop_block.name+".swc";
         crop_swc(swc_file, output_swc, crop_block);
-        my_saveANO(output_dir, crop_block.name, output_suffix);
+//        my_saveANO(output_dir, crop_block.name, output_suffix);
     }
     return;
 }

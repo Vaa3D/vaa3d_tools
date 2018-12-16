@@ -87,12 +87,25 @@ inline bool exists_file (const std::string& name) {
   struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0);
 }
-
+//inline bool exists_file_qs (QString name) {
+//  struct stat buffer;
+//  std::string string_name = qPrintable(name);
+//  return (stat (string_name.c_str(), &buffer) == 0);
+//}
 void my_mkdir(QString path)
 {
     // Creating a directory
     if (mkdir(qPrintable(path), 0777) == 0)
         printf("Directory created:%s\n", qPrintable(path));
+}
+void read_directory(QString name, QList<QString> & files)
+{
+    DIR* dirp = opendir(qPrintable(name));
+    struct dirent * dp;
+    while ((dp = readdir(dirp)) != NULL) {
+        files.append(dp->d_name);
+    }
+    closedir(dirp);
 }
 
 // functions for getting blocks
@@ -145,6 +158,10 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     printf("welcome to use crop_img\n");
     if(output_format.size()==0){output_format=QString(".tiff");}
 
+    QString saveName = outputdir_img + "/" + crop_block.name + output_format;
+    const char* fileName = Qstring_to_char(saveName);
+    qDebug()<<"Output image:"<<QString(fileName);
+
     V3DLONG *in_zz;
     if(!callback.getDimTeraFly(image.toStdString(), in_zz))
     {
@@ -178,9 +195,14 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     in_sz[3] = in_zz[3];   // channel information
 
     // 3. Save image
-    QString saveName = outputdir_img + "/" + crop_block.name + output_format;
-    const char* fileName = saveName.toAscii();
-    simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
+    if(QString(fileName).endsWith(".nrrd"))
+    {
+        simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
+    }
+    else{
+        qDebug()<<"bad name:"<<fileName;
+    }
+
     return;
 }
 
@@ -266,4 +288,12 @@ QList<CellAPO> offset_apo(QString input_apo, XYZ offset)
         }
     }
     return apo_list;
+}
+
+const char * Qstring_to_char(QString qs)
+{
+    QByteArray array = qs.toLatin1();
+    array = array.replace(" ", "");
+    const char* result = array.data();
+    return result;
 }

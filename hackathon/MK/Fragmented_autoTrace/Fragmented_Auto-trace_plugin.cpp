@@ -3,17 +3,22 @@
  * 2018-12-3 : by MK
  */
  
-#include "v3d_message.h"
 #include <vector>
+
+#include "v3d_message.h"
+
 #include "Fragmented_Auto-trace_plugin.h"
+#include "FragTraceControlPanel.h"
+
 using namespace std;
+
 Q_EXPORT_PLUGIN2(Fragmented_Auto-trace, FragmentedAutoTracePlugin);
  
 QStringList FragmentedAutoTracePlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("menu1")
-		<<tr("menu2")
+		<<tr("start_tracing")
+		<<tr("settings")
 		<<tr("about");
 }
 
@@ -27,13 +32,16 @@ QStringList FragmentedAutoTracePlugin::funclist() const
 
 void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("menu1"))
+	if (menu_name == tr("start_tracing"))
 	{
-		v3d_msg("To be implemented.");
+		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, false);
+		panelPtr->~FragTraceControlPanel();
 	}
-	else if (menu_name == tr("menu2"))
+	else if (menu_name == tr("settings"))
 	{
-		v3d_msg("To be implemented.");
+		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
+		panelPtr->exec(); // This forces the dialog to stay, then moves to the next line only when 'cancel' or 'x' is hit.
+		panelPtr->~FragTraceControlPanel();
 	}
 	else
 	{
@@ -65,4 +73,3 @@ bool FragmentedAutoTracePlugin::dofunc(const QString & func_name, const V3DPlugi
 
 	return true;
 }
-

@@ -17,6 +17,7 @@ struct Each_line
     double x3;
     double x4;
     double x5;
+    double x6;
 };
 struct Chart
 {
@@ -35,6 +36,7 @@ struct Feature
     vector<double> D;
     vector<double> grey_mean;
     vector<double> grey_std;
+    vector<double> overlap_all;
     vector<inf> inff;
 };
 
@@ -50,7 +52,7 @@ struct Feature
 //    void show();
 //    void chuShi(vector<vector<double> > &V1);
 //};
-bool export_TXT(Each_line &E,Chart &chart,QString fileSaveName);
+bool export_TXT(Each_line &E1,Each_line &E2,double &logsigma,vector<vector<double> >&R_new,QString fileSaveName);
 double get_D(vector<double> &v1,vector<double> &v2);
 Each_line E_calculate(Feature &feature);
 bool Cov_calculate(Chart &chart,Feature &feature);

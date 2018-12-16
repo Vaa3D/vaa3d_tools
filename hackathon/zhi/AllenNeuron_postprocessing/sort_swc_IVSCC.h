@@ -277,6 +277,7 @@ NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, doubl
 		S.y = neurons.at(oripos).y;
 		S.z = neurons.at(oripos).z;
 		S.r = neurons.at(oripos).r;
+        S.level = neurons.at(oripos).level;
 		S.type = neurons.at(oripos).type;
         listNeuron.append(S);
         hashNeuron.insert(S.n, listNeuron.size()-1);
@@ -300,6 +301,7 @@ NeuronTree SortSWC_pipeline(QList<NeuronSWC> & neurons, V3DLONG newrootid, doubl
                         S.y = neurons.at(oripos).y;
                         S.z = neurons.at(oripos).z;
                         S.r = neurons.at(oripos).r;
+                        S.level = neurons.at(oripos).level;
                         S.type = neurons.at(oripos).type;
                         listNeuron.append(S);
                         hashNeuron.insert(S.n, listNeuron.size()-1);
@@ -1223,6 +1225,7 @@ void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double
                 tmpNeuron.y = nt.listNeuron.at(oid).y;
                 tmpNeuron.z = nt.listNeuron.at(oid).z;
                 tmpNeuron.type = nt.listNeuron.at(oid).type;
+                tmpNeuron.level = nt.listNeuron.at(oid).level;
                 tmpNeuron.r = nt.listNeuron.at(oid).r;
                 tmpNeuron.fea_val = nt.listNeuron.at(oid).fea_val;
                 tmpNeuron.pn = newpn.at(oid);

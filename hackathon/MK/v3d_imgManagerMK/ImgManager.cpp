@@ -145,7 +145,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 			currImgCase.dims[0] = int(slicePtr->getXDim());
 			currImgCase.dims[1] = int(slicePtr->getYDim());
 			currImgCase.dims[2] = 1;
-			long int totalbyteSlice = slicePtr->getTotalBytes();
+			int totalbyteSlice = slicePtr->getTotalBytes();
 			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
 			currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
@@ -172,7 +172,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		currImgCase.dims[0] = int(slicePtr->getXDim());
 		currImgCase.dims[1] = int(slicePtr->getYDim());
 		currImgCase.dims[2] = int(slicePtr->getZDim());
-		long int totalbyteSlice = slicePtr->getTotalBytes();
+		int totalbyteSlice = slicePtr->getTotalBytes();
 		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
 		currImgCase.slicePtrs.insert({ sliceFileName, slice1D });

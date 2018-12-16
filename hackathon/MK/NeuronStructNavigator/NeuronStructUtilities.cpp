@@ -640,11 +640,11 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	// -- I notice that boost's container templates are able to lift up the performace by ~30%.
 	boost::container::flat_map<int, boost::container::flat_set<int>> b2Dtob3Dmap;
 	b2Dtob3Dmap.clear();
-	boost::container::flat_map<int, boost::container::flat_set<int>> b3Dcomps;
+	boost::container::flat_map<int, boost::container::flat_set<int>> b3Dcomps;  // a map from 3D connected components to all of its associated 2D connected components
 	b3Dcomps.clear();
 	// ---------------------------------------------------------------------------------------
 
-	// --------- First slice, container initiation --------------
+	// --------- First slice, container initialization --------------
 	int sliceBlobCount = 0;
 	for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 	{
@@ -674,7 +674,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 		increasedSize = 0;
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
-			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it);
+			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it); // collect all connected components from the current slice
 		if (currSliceConnComps.empty())
 		{
 			cout << i << "->0 ";
@@ -683,7 +683,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 		cout << i << "->";
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
-			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);
+			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);  // collect all connected components from the previous slice
 		if (preSliceConnComps.empty())
 		{
 			for (vector<connectedComponent>::iterator newCompsIt = currSliceConnComps.begin(); newCompsIt != currSliceConnComps.end(); ++newCompsIt)
@@ -760,9 +760,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
 		{
 			if (checkIt1->first < currBaseBlob) continue;
-			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 			{
-				if (checkIt2 == checkIt1) continue;
+				//if (checkIt2 == checkIt1) continue;
 				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 				{
 					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
@@ -802,20 +802,63 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		newComp.zMax = 0; newComp.zMin = 0;
 		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
-			newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
-			newComp.xMax = getMax(newComp.xMax, compsMap[*it2].xMax);
-			newComp.xMin = getMin(newComp.xMin, compsMap[*it2].xMin);
-			newComp.yMax = getMax(newComp.yMax, compsMap[*it2].yMax);
-			newComp.yMin = getMin(newComp.yMin, compsMap[*it2].yMin);
-			newComp.zMax = getMax(newComp.zMax, compsMap[*it2].zMax);
-			newComp.zMin = getMin(newComp.zMin, compsMap[*it2].zMin);
-			newComp.size = newComp.size + compsMap[*it2].size;
+			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())
+			{
+				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin();
+					it3 != compsMap.at(*it2).coordSets.begin()->second.end(); ++it3)
+					newComp.coordSets.at(compsMap.at(*it2).coordSets.begin()->first).insert(*it3);
+				
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
+			else
+			{
+				newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap.at(*it2).coordSets.begin()->first, compsMap.at(*it2).coordSets.begin()->second));
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
 		}
 
 		outputConnCompList.push_back(newComp);
 	}
 
 	return outputConnCompList;
+}
+
+NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputconnComp, bool usingRadius2compNum)
+{
+	NeuronTree outputTree;
+	for (vector<connectedComponent>::const_iterator it = inputconnComp.begin(); it != inputconnComp.end(); ++it)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = it->coordSets.begin(); sliceIt != it->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = pointIt->at(0);
+				newNode.y = pointIt->at(1);
+				newNode.z = pointIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				
+				if (usingRadius2compNum) newNode.radius = it->islandNum;
+
+				outputTree.listNeuron.push_back(newNode);
+			}
+		}
+	}
+
+	return outputTree;
 }
 // =============================== END of [SWC <-> Connected Components] ===============================
 

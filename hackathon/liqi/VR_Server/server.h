@@ -20,6 +20,7 @@ public:
     void sendUserList();
     void sendToAll(const QString&);
 	void sendColorMsg();
+        void sendCreatorMsg();
 	void AddToNTList(QString &msg, int type);
 	bool DeleteSegment(QString segName);
 public slots:
@@ -40,5 +41,6 @@ struct clientproperty{
 	int number;
 	QString name;
 	int colortype;
+        bool Creator;
 };
 #endif // SERVER_H

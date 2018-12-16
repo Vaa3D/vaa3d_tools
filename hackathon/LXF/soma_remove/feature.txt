@@ -1,123 +1,123 @@
-name        y_n    ratio(x/y)    overlap_level    count    grey_std
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/1/marker_all_308.marker_color.txt     1   0.95   0.685526   912   2.59681
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/1/marker_all_319.marker_color.txt     1   0.846154   0.458042   131   2.38295
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_13.marker_color.txt     1   1.28571   0.490079   431   9.70598
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_15.marker_color.txt     1   0.833333   0.638542   1178   2.83901
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_26.marker_color.txt     1   0.894737   0.611455   649   1.4899
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_3.marker_color.txt     1   1.05882   0.658497   683   0.911275
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_32.marker_color.txt     1   0.894737   0.5   478   0.703628
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_33.marker_color.txt     1   0.9375   0.554167   537   0.930818
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_39.marker_color.txt     1   0.857143   0.619048   772   1.42692
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_416.marker_color.txt     1   0.888889   0.598958   473   0.933811
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_43.marker_color.txt     1   1.04545   0.61166   1038   2.66531
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_448.marker_color.txt     1   0.95   0.685526   912   2.59681
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_450.marker_color.txt     1   0.789474   0.638596   487   1.76229
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_454.marker_color.txt     1   0.944444   0.691176   554   3.12696
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/10/marker_all_56.marker_color.txt     1   1.17647   0.651471   793   1.53055
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_0.marker_color.txt     1   1   0.701183   286   0.631057
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_1.marker_color.txt     1   0.941176   0.619485   428   0.97346
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_2.marker_color.txt     1   1   0.606509   206   0.667219
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_331.marker_color.txt     1   0.933333   0.535714   293   0.920339
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_342.marker_color.txt     1   0.789474   0.489474   343   0.626589
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_358.marker_color.txt     1   0.782609   0.667874   1248   5.56539
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_362.marker_color.txt     1   0.809524   0.72409   925   2.17947
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_364.marker_color.txt     1   1   0.643991   1278   6.66963
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_366.marker_color.txt     1   1   0.660494   788   2.22769
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_369.marker_color.txt     1   1.125   0.560764   481   1.64671
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_371.marker_color.txt     1   0.764706   0.638009   374   1.26712
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_372.marker_color.txt     1   0.904762   0.660401   934   3.20795
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_373.marker_color.txt     1   1.13333   0.5   256   0.35138
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_374.marker_color.txt     1   0.833333   0.624074   511   0.917389
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_376.marker_color.txt     1   1.23077   0.557692   329   0.456865
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_382.marker_color.txt     1   0.863636   0.677033   1118   3.39588
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_39.marker_color.txt     1   1   0.41358   302   0.480059
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/11/marker_all_95.marker_color.txt     1   1.1875   0.623355   614   7.2514
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_109.marker_color.txt     1   1   0.519531   362   0.983294
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_15.marker_color.txt     1   0.9   0.463889   427   0.254264
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_16.marker_color.txt     1   1   0.535494   503   1.74657
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_220.marker_color.txt     1   0.772727   0.68984   1046   5.74371
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_269.marker_color.txt     1   0.95   0.781579   1151   5.78736
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_289.marker_color.txt     1   0.826087   0.62357   958   2.49031
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_292.marker_color.txt     1   0.952381   0.678571   1073   3.14182
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_298.marker_color.txt     1   1.15385   0.453846   236   0.695096
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_299.marker_color.txt     1   1.05263   0.663158   1014   3.59616
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_300.marker_color.txt     1   1.23077   0.550481   295   0.9361
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_301.marker_color.txt     1   0.947368   0.622807   518   1.18849
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_303.marker_color.txt     1   0.952381   0.7   1089   7.24554
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_5.marker_color.txt     1   0.947368   0.726608   1308   5.56965
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/13/marker_all_6.marker_color.txt     1   0.863636   0.54067   977   1.42978
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/14/marker_all_32.marker_color.txt     1   1.5625   0.38125   579   2.08886
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_2.marker_color.txt     1   1.625   0.509615   188   5.08376
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_27.marker_color.txt     1   1.22222   0.565657   112   1.00561
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_7.marker_color.txt     1   0.8   0.66875   107   1.07224
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_777.marker_color.txt     1   1.1   0.627273   180   4.46458
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_781.marker_color.txt     1   1.11111   0.5   90   0
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_791.marker_color.txt     1   0.75   0.705729   467   4.33986
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_797.marker_color.txt     1   0.933333   0.654762   394   1.87258
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_808.marker_color.txt     1   1   0.671875   546   2.54034
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_816.marker_color.txt     1   1.0625   0.597426   424   2.85898
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_818.marker_color.txt     1   0.941176   0.639706   539   3.33057
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/2/marker_all_859.marker_color.txt     1   1.07692   0.576923   297   1.47009
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_0.marker_color.txt     1   0.888889   0.743056   128   1.30027
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_15.marker_color.txt     1   0.75   0.726852   214   2.27588
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_169.marker_color.txt     1   0.9   0.627778   113   1.27252
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_186.marker_color.txt     1   1.11111   0.444444   107   7.21887
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_2.marker_color.txt     1   1   0.679688   87   0.709842
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_237.marker_color.txt     1   0.8   0.6875   110   1.45952
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_342.marker_color.txt     1   1   0.728395   118   1.50023
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_372.marker_color.txt     1   1   0.611111   99   1.60415
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/3/marker_all_384.marker_color.txt     1   0.615385   0.625   177   3.14352
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_223.marker_color.txt     1   0.857143   0.723545   967   4.5181
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_594.marker_color.txt     1   0.882353   0.643137   449   0.814603
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_663.marker_color.txt     1   0.833333   0.47963   326   0.480679
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_679.marker_color.txt     1   0.941176   0.602941   481   1.20351
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_689.marker_color.txt     1   0.916667   0.344697   97   0.203069
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_697.marker_color.txt     1   1   0.660494   648   2.25651
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_700.marker_color.txt     1   0.722222   0.685897   531   1.60952
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_701.marker_color.txt     1   1.0625   0.700368   668   1.68003
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/4/marker_all_703.marker_color.txt     1   0.833333   0.631481   503   0.966517
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/5/marker_all_17.marker_color.txt     1   1.05   0.710714   1192   6.11476
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/5/marker_all_276.marker_color.txt     1   1.66667   0.422222   163   3.72057
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/5/marker_all_332.marker_color.txt     1   0.916667   0.647727   1437   3.21554
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/5/marker_all_541.marker_color.txt     1   0.882353   0.643137   449   0.814603
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/5/marker_all_592.marker_color.txt     1   0.833333   0.47963   326   0.480679
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/5/marker_all_606.marker_color.txt     1   0.941176   0.602941   481   1.20351
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_186.marker_color.txt     1   0.956522   0.613636   1095   2.07158
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_193.marker_color.txt     1   1.5   0.556667   228   3.60436
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_198.marker_color.txt     1   1   0.6825   1155   2.95013
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_2.marker_color.txt     0   1   0   224   3.59798
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_22.marker_color.txt     1   0.944444   0.28268   196   0.142857
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_38.marker_color.txt     1   0.823529   0.394958   250   0.306712
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_383.marker_color.txt     1   1   0.673469   1292   4.82106
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_524.marker_color.txt     1   1.71429   0.482143   87   0.693653
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_533.marker_color.txt     1   1   0.489796   202   0.525682
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_535.marker_color.txt     1   0.733333   0.678788   319   1.0494
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_536.marker_color.txt     1   1   0.713333   467   1.1599
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_538.marker_color.txt     1   0.857143   0.33631   149   0.361387
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/6/marker_all_540.marker_color.txt     1   1.05882   0.629085   710   1.04892
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/7/marker_all_563.marker_color.txt     1   1   0.704444   438   0.822045
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/7/marker_all_639.marker_color.txt     1   0.833333   0.47963   326   0.480679
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/7/marker_all_655.marker_color.txt     1   0.941176   0.602941   481   1.20351
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/7/marker_all_673.marker_color.txt     1   1   0.660494   648   2.25651
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/7/marker_all_676.marker_color.txt     1   0.722222   0.685897   531   1.60952
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/7/marker_all_677.marker_color.txt     1   1.0625   0.700368   668   1.68003
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/8/marker_all_2.marker_color.txt     1   1.21053   0.662471   980   2.65051
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/8/marker_all_454.marker_color.txt     1   0.833333   0.8   358   5.79698
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/8/marker_all_477.marker_color.txt     1   0.95   0.685526   912   2.59681
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/8/marker_all_485.marker_color.txt     1   1   0.685185   787   2.99156
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/8/marker_all_489.marker_color.txt     1   1.15385   0.515385   210   0.67105
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/8/marker_all_70.marker_color.txt     1   0.875   0.549107   346   1.15241
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_13.marker_color.txt     1   1.28571   0.490079   431   9.70598
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_15.marker_color.txt     1   0.833333   0.638542   1178   2.83901
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_245.marker_color.txt     1   2.16667   0.378205   90   6.15493
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_26.marker_color.txt     1   0.894737   0.611455   649   1.4899
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_3.marker_color.txt     1   1.05882   0.658497   683   0.911275
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_32.marker_color.txt     1   0.894737   0.5   478   0.703628
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_33.marker_color.txt     1   0.9375   0.554167   537   0.930818
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_39.marker_color.txt     1   0.857143   0.619048   772   1.42692
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_416.marker_color.txt     1   0.888889   0.598958   473   0.933811
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_43.marker_color.txt     1   1.04545   0.61166   1038   2.66531
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_448.marker_color.txt     1   0.95   0.685526   912   2.59681
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_450.marker_color.txt     1   0.789474   0.638596   487   1.76229
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_454.marker_color.txt     1   0.944444   0.691176   554   3.12696
-/media/lxf/8213-B4FE/7_5/take_away/soma_need_remove/9/marker_all_56.marker_color.txt     1   1.17647   0.651471   793   1.53055
+name        y_n    ratio(x/y)    overlap_level    count    grey_std    overlap_all
+/home/lxf/Downloads/soma_need_remove/1/marker_all_308.marker_color.txt     1   0.95   0.685526   912   2.59681    0.48
+/home/lxf/Downloads/soma_need_remove/1/marker_all_319.marker_color.txt     1   0.846154   0.458042   131   2.38295    0.458042
+/home/lxf/Downloads/soma_need_remove/10/marker_all_13.marker_color.txt     1   0.777778   0.490079   431   9.70598    0.252047
+/home/lxf/Downloads/soma_need_remove/10/marker_all_15.marker_color.txt     1   0.833333   0.638542   1178   2.83901    0.350595
+/home/lxf/Downloads/soma_need_remove/10/marker_all_26.marker_color.txt     1   0.894737   0.611455   649   1.4899    0.287041
+/home/lxf/Downloads/soma_need_remove/10/marker_all_3.marker_color.txt     1   0.944444   0.658497   683   0.911275    0.372004
+/home/lxf/Downloads/soma_need_remove/10/marker_all_32.marker_color.txt     1   0.894737   0.5   478   0.703628    0.234314
+/home/lxf/Downloads/soma_need_remove/10/marker_all_33.marker_color.txt     1   0.9375   0.554167   537   0.930818    0.262207
+/home/lxf/Downloads/soma_need_remove/10/marker_all_39.marker_color.txt     1   0.857143   0.619048   772   1.42692    0.340388
+/home/lxf/Downloads/soma_need_remove/10/marker_all_416.marker_color.txt     1   0.888889   0.598958   473   0.933811    0.328472
+/home/lxf/Downloads/soma_need_remove/10/marker_all_43.marker_color.txt     1   0.956522   0.61166   1038   2.66531    0.341897
+/home/lxf/Downloads/soma_need_remove/10/marker_all_448.marker_color.txt     1   0.95   0.685526   912   2.59681    0.48
+/home/lxf/Downloads/soma_need_remove/10/marker_all_450.marker_color.txt     1   0.789474   0.638596   487   1.76229    0.427193
+/home/lxf/Downloads/soma_need_remove/10/marker_all_454.marker_color.txt     1   0.944444   0.691176   554   3.12696    0.452614
+/home/lxf/Downloads/soma_need_remove/10/marker_all_56.marker_color.txt     1   0.85   0.651471   793   1.53055    0.440556
+/home/lxf/Downloads/soma_need_remove/11/marker_all_0.marker_color.txt     1   1   0.701183   286   0.631057    0.423077
+/home/lxf/Downloads/soma_need_remove/11/marker_all_1.marker_color.txt     1   0.941176   0.619485   428   0.97346    0.52451
+/home/lxf/Downloads/soma_need_remove/11/marker_all_2.marker_color.txt     1   1   0.606509   206   0.667219    0.406312
+/home/lxf/Downloads/soma_need_remove/11/marker_all_331.marker_color.txt     1   0.933333   0.535714   293   0.920339    0.436012
+/home/lxf/Downloads/soma_need_remove/11/marker_all_342.marker_color.txt     1   0.789474   0.489474   343   0.626589    0.40117
+/home/lxf/Downloads/soma_need_remove/11/marker_all_358.marker_color.txt     1   0.782609   0.667874   1248   5.56539    0.317315
+/home/lxf/Downloads/soma_need_remove/11/marker_all_362.marker_color.txt     1   0.809524   0.72409   925   2.17947    0.32388
+/home/lxf/Downloads/soma_need_remove/11/marker_all_364.marker_color.txt     1   1   0.643991   1278   6.66963    0.293996
+/home/lxf/Downloads/soma_need_remove/11/marker_all_366.marker_color.txt     1   1   0.660494   788   2.22769    0.48642
+/home/lxf/Downloads/soma_need_remove/11/marker_all_369.marker_color.txt     1   0.888889   0.560764   481   1.64671    0.417535
+/home/lxf/Downloads/soma_need_remove/11/marker_all_371.marker_color.txt     1   0.764706   0.638009   374   1.26712    0.564103
+/home/lxf/Downloads/soma_need_remove/11/marker_all_372.marker_color.txt     1   0.904762   0.660401   934   3.20795    0.319207
+/home/lxf/Downloads/soma_need_remove/11/marker_all_373.marker_color.txt     1   0.882353   0.5   256   0.35138    0.334641
+/home/lxf/Downloads/soma_need_remove/11/marker_all_374.marker_color.txt     1   0.833333   0.624074   511   0.917389    0.358596
+/home/lxf/Downloads/soma_need_remove/11/marker_all_376.marker_color.txt     1   0.8125   0.557692   329   0.456865    0.395433
+/home/lxf/Downloads/soma_need_remove/11/marker_all_382.marker_color.txt     1   0.863636   0.677033   1118   3.39588    0.445774
+/home/lxf/Downloads/soma_need_remove/11/marker_all_39.marker_color.txt     1   1   0.41358   302   0.480059    0.3107
+/home/lxf/Downloads/soma_need_remove/11/marker_all_95.marker_color.txt     1   0.842105   0.623355   614   7.2514    0.158903
+/home/lxf/Downloads/soma_need_remove/13/marker_all_109.marker_color.txt     1   1   0.519531   362   0.983294    0.353516
+/home/lxf/Downloads/soma_need_remove/13/marker_all_15.marker_color.txt     1   0.9   0.463889   427   0.254264    0.296528
+/home/lxf/Downloads/soma_need_remove/13/marker_all_16.marker_color.txt     1   1   0.535494   503   1.74657    0.388117
+/home/lxf/Downloads/soma_need_remove/13/marker_all_220.marker_color.txt     1   0.772727   0.68984   1046   5.74371    0.22749
+/home/lxf/Downloads/soma_need_remove/13/marker_all_269.marker_color.txt     1   0.95   0.781579   1151   5.78736    0.504825
+/home/lxf/Downloads/soma_need_remove/13/marker_all_289.marker_color.txt     1   0.826087   0.62357   958   2.49031    0.36537
+/home/lxf/Downloads/soma_need_remove/13/marker_all_292.marker_color.txt     1   0.952381   0.678571   1073   3.14182    0.487727
+/home/lxf/Downloads/soma_need_remove/13/marker_all_298.marker_color.txt     1   0.866667   0.453846   236   0.695096    0.230469
+/home/lxf/Downloads/soma_need_remove/13/marker_all_299.marker_color.txt     1   0.95   0.663158   1014   3.59616    0.444737
+/home/lxf/Downloads/soma_need_remove/13/marker_all_300.marker_color.txt     1   0.8125   0.550481   295   0.9361    0.472756
+/home/lxf/Downloads/soma_need_remove/13/marker_all_301.marker_color.txt     1   0.947368   0.622807   518   1.18849    0.378655
+/home/lxf/Downloads/soma_need_remove/13/marker_all_303.marker_color.txt     1   0.952381   0.7   1089   7.24554    0.450932
+/home/lxf/Downloads/soma_need_remove/13/marker_all_5.marker_color.txt     1   0.947368   0.726608   1308   5.56965    0.254971
+/home/lxf/Downloads/soma_need_remove/13/marker_all_6.marker_color.txt     1   0.863636   0.54067   977   1.42978    0.176993
+/home/lxf/Downloads/soma_need_remove/14/marker_all_32.marker_color.txt     1   0.64   0.38125   579   2.08886    0.18381
+/home/lxf/Downloads/soma_need_remove/2/marker_all_2.marker_color.txt     1   0.615385   0.509615   188   5.08376    0.241026
+/home/lxf/Downloads/soma_need_remove/2/marker_all_27.marker_color.txt     1   0.818182   0.565657   112   1.00561    0.565657
+/home/lxf/Downloads/soma_need_remove/2/marker_all_7.marker_color.txt     1   0.8   0.66875   107   1.07224    0.66875
+/home/lxf/Downloads/soma_need_remove/2/marker_all_777.marker_color.txt     1   0.909091   0.627273   180   4.46458    0.545455
+/home/lxf/Downloads/soma_need_remove/2/marker_all_781.marker_color.txt     1   0.9   0.5   90   0    0.5
+/home/lxf/Downloads/soma_need_remove/2/marker_all_791.marker_color.txt     1   0.75   0.705729   467   4.33986    0.324306
+/home/lxf/Downloads/soma_need_remove/2/marker_all_797.marker_color.txt     1   0.933333   0.654762   394   1.87258    0.469048
+/home/lxf/Downloads/soma_need_remove/2/marker_all_808.marker_color.txt     1   1   0.671875   546   2.54034    0.379167
+/home/lxf/Downloads/soma_need_remove/2/marker_all_816.marker_color.txt     1   0.941176   0.597426   424   2.85898    0.368056
+/home/lxf/Downloads/soma_need_remove/2/marker_all_818.marker_color.txt     1   0.941176   0.639706   539   3.33057    0.396324
+/home/lxf/Downloads/soma_need_remove/2/marker_all_859.marker_color.txt     1   0.928571   0.576923   297   1.47009    0.407967
+/home/lxf/Downloads/soma_need_remove/3/marker_all_0.marker_color.txt     1   0.888889   0.743056   128   1.30027    0.592593
+/home/lxf/Downloads/soma_need_remove/3/marker_all_15.marker_color.txt     1   0.75   0.726852   214   2.27588    0.49537
+/home/lxf/Downloads/soma_need_remove/3/marker_all_169.marker_color.txt     1   0.9   0.627778   113   1.27252    0.627778
+/home/lxf/Downloads/soma_need_remove/3/marker_all_186.marker_color.txt     1   0.9   0.444444   107   7.21887    0.222917
+/home/lxf/Downloads/soma_need_remove/3/marker_all_2.marker_color.txt     1   1   0.679688   87   0.709842    0.679688
+/home/lxf/Downloads/soma_need_remove/3/marker_all_237.marker_color.txt     1   0.8   0.6875   110   1.45952    0.6875
+/home/lxf/Downloads/soma_need_remove/3/marker_all_342.marker_color.txt     1   1   0.728395   118   1.50023    0.728395
+/home/lxf/Downloads/soma_need_remove/3/marker_all_372.marker_color.txt     1   1   0.611111   99   1.60415    0.611111
+/home/lxf/Downloads/soma_need_remove/3/marker_all_384.marker_color.txt     1   0.615385   0.625   177   3.14352    0.567308
+/home/lxf/Downloads/soma_need_remove/4/marker_all_223.marker_color.txt     1   0.857143   0.723545   967   4.5181    0.233575
+/home/lxf/Downloads/soma_need_remove/4/marker_all_594.marker_color.txt     1   0.882353   0.643137   449   0.814603    0.352157
+/home/lxf/Downloads/soma_need_remove/4/marker_all_663.marker_color.txt     1   0.833333   0.47963   326   0.480679    0.301852
+/home/lxf/Downloads/soma_need_remove/4/marker_all_679.marker_color.txt     1   0.941176   0.602941   481   1.20351    0.442096
+/home/lxf/Downloads/soma_need_remove/4/marker_all_689.marker_color.txt     1   0.916667   0.344697   97   0.203069    0.209957
+/home/lxf/Downloads/soma_need_remove/4/marker_all_697.marker_color.txt     1   1   0.660494   648   2.25651    0.4
+/home/lxf/Downloads/soma_need_remove/4/marker_all_700.marker_color.txt     1   0.722222   0.685897   531   1.60952    0.378205
+/home/lxf/Downloads/soma_need_remove/4/marker_all_701.marker_color.txt     1   0.941176   0.700368   668   1.68003    0.409314
+/home/lxf/Downloads/soma_need_remove/4/marker_all_703.marker_color.txt     1   0.833333   0.631481   503   0.966517    0.372593
+/home/lxf/Downloads/soma_need_remove/5/marker_all_17.marker_color.txt     1   0.952381   0.710714   1192   6.11476    0.516017
+/home/lxf/Downloads/soma_need_remove/5/marker_all_276.marker_color.txt     1   0.6   0.422222   163   3.72057    0.21224
+/home/lxf/Downloads/soma_need_remove/5/marker_all_332.marker_color.txt     1   0.916667   0.647727   1437   3.21554    0.340199
+/home/lxf/Downloads/soma_need_remove/5/marker_all_541.marker_color.txt     1   0.882353   0.643137   449   0.814603    0.352157
+/home/lxf/Downloads/soma_need_remove/5/marker_all_592.marker_color.txt     1   0.833333   0.47963   326   0.480679    0.301852
+/home/lxf/Downloads/soma_need_remove/5/marker_all_606.marker_color.txt     1   0.941176   0.602941   481   1.20351    0.442096
+/home/lxf/Downloads/soma_need_remove/6/marker_all_186.marker_color.txt     1   0.956522   0.613636   1095   2.07158    0.360672
+/home/lxf/Downloads/soma_need_remove/6/marker_all_193.marker_color.txt     1   0.666667   0.556667   228   3.60436    0.292308
+/home/lxf/Downloads/soma_need_remove/6/marker_all_198.marker_color.txt     1   1   0.6825   1155   2.95013    0.375
+/home/lxf/Downloads/soma_need_remove/6/marker_all_2.marker_color.txt     1   0.809524   0.313725   224   3.59798    0.627451
+/home/lxf/Downloads/soma_need_remove/6/marker_all_22.marker_color.txt     1   0.944444   0.28268   196   0.142857    0.160131
+/home/lxf/Downloads/soma_need_remove/6/marker_all_38.marker_color.txt     1   0.823529   0.394958   250   0.306712    0.262605
+/home/lxf/Downloads/soma_need_remove/6/marker_all_383.marker_color.txt     1   1   0.673469   1292   4.82106    0.366213
+/home/lxf/Downloads/soma_need_remove/6/marker_all_524.marker_color.txt     1   0.583333   0.482143   87   0.693653    0.258929
+/home/lxf/Downloads/soma_need_remove/6/marker_all_533.marker_color.txt     1   1   0.489796   202   0.525682    0.343537
+/home/lxf/Downloads/soma_need_remove/6/marker_all_535.marker_color.txt     1   0.733333   0.678788   319   1.0494    0.302083
+/home/lxf/Downloads/soma_need_remove/6/marker_all_536.marker_color.txt     1   1   0.713333   467   1.1599    0.345926
+/home/lxf/Downloads/soma_need_remove/6/marker_all_538.marker_color.txt     1   0.857143   0.33631   149   0.361387    0.295635
+/home/lxf/Downloads/soma_need_remove/6/marker_all_540.marker_color.txt     1   0.944444   0.629085   710   1.04892    0.290033
+/home/lxf/Downloads/soma_need_remove/7/marker_all_563.marker_color.txt     1   1   0.704444   438   0.822045    0.389333
+/home/lxf/Downloads/soma_need_remove/7/marker_all_639.marker_color.txt     1   0.833333   0.47963   326   0.480679    0.301852
+/home/lxf/Downloads/soma_need_remove/7/marker_all_655.marker_color.txt     1   0.941176   0.602941   481   1.20351    0.442096
+/home/lxf/Downloads/soma_need_remove/7/marker_all_673.marker_color.txt     1   1   0.660494   648   2.25651    0.4
+/home/lxf/Downloads/soma_need_remove/7/marker_all_676.marker_color.txt     1   0.722222   0.685897   531   1.60952    0.378205
+/home/lxf/Downloads/soma_need_remove/7/marker_all_677.marker_color.txt     1   0.941176   0.700368   668   1.68003    0.409314
+/home/lxf/Downloads/soma_need_remove/8/marker_all_2.marker_color.txt     1   0.826087   0.662471   980   2.65051    0.37376
+/home/lxf/Downloads/soma_need_remove/8/marker_all_454.marker_color.txt     1   0.833333   0.8   358   5.79698    0.372917
+/home/lxf/Downloads/soma_need_remove/8/marker_all_477.marker_color.txt     1   0.95   0.685526   912   2.59681    0.48
+/home/lxf/Downloads/soma_need_remove/8/marker_all_485.marker_color.txt     1   1   0.685185   787   2.99156    0.404835
+/home/lxf/Downloads/soma_need_remove/8/marker_all_489.marker_color.txt     1   0.866667   0.515385   210   0.67105    0.358974
+/home/lxf/Downloads/soma_need_remove/8/marker_all_70.marker_color.txt     1   0.875   0.549107   346   1.15241    0.228836
+/home/lxf/Downloads/soma_need_remove/9/marker_all_13.marker_color.txt     1   0.777778   0.490079   431   9.70598    0.252047
+/home/lxf/Downloads/soma_need_remove/9/marker_all_15.marker_color.txt     1   0.833333   0.638542   1178   2.83901    0.350595
+/home/lxf/Downloads/soma_need_remove/9/marker_all_245.marker_color.txt     1   0.461538   0.378205   90   6.15493    0.144231
+/home/lxf/Downloads/soma_need_remove/9/marker_all_26.marker_color.txt     1   0.894737   0.611455   649   1.4899    0.287041
+/home/lxf/Downloads/soma_need_remove/9/marker_all_3.marker_color.txt     1   0.944444   0.658497   683   0.911275    0.372004
+/home/lxf/Downloads/soma_need_remove/9/marker_all_32.marker_color.txt     1   0.894737   0.5   478   0.703628    0.234314
+/home/lxf/Downloads/soma_need_remove/9/marker_all_33.marker_color.txt     1   0.9375   0.554167   537   0.930818    0.262207
+/home/lxf/Downloads/soma_need_remove/9/marker_all_39.marker_color.txt     1   0.857143   0.619048   772   1.42692    0.340388
+/home/lxf/Downloads/soma_need_remove/9/marker_all_416.marker_color.txt     1   0.888889   0.598958   473   0.933811    0.328472
+/home/lxf/Downloads/soma_need_remove/9/marker_all_43.marker_color.txt     1   0.956522   0.61166   1038   2.66531    0.341897
+/home/lxf/Downloads/soma_need_remove/9/marker_all_448.marker_color.txt     1   0.95   0.685526   912   2.59681    0.48
+/home/lxf/Downloads/soma_need_remove/9/marker_all_450.marker_color.txt     1   0.789474   0.638596   487   1.76229    0.427193
+/home/lxf/Downloads/soma_need_remove/9/marker_all_454.marker_color.txt     1   0.944444   0.691176   554   3.12696    0.452614
+/home/lxf/Downloads/soma_need_remove/9/marker_all_56.marker_color.txt     1   0.85   0.651471   793   1.53055    0.440556

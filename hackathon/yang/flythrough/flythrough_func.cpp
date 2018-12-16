@@ -66,45 +66,182 @@ Layer::~Layer()
 
 }
 
-//
-Point::Point()
+template<class T>
+void copyData(T *&p, V3DLONG psx, V3DLONG pex, V3DLONG psy, V3DLONG pey, V3DLONG psz, V3DLONG pez,
+              T *q, V3DLONG qsx, V3DLONG qex, V3DLONG qsy, V3DLONG qey, V3DLONG qsz, V3DLONG qez)
 {
+    V3DLONG rpsx, rpex, rpsy, rpey, rpsz, rpez;
+    V3DLONG rqsx, rqex, rqsy, rqey, rqsz, rqez;
 
-}
-
-Point::Point(float a, float b, float c)
-{
-    x = a;
-    y = b;
-    z = c;
-}
-
-void Point::release()
-{
-    if(p)
+    // w/ overlap
+    if(psx>qex || pex<qsx || psy>qey || pey<qsy || psz>qez || pez<qsz)
     {
-        delete []p;
+        return;
     }
-}
 
-void Point::setBoundingBox(V3DLONG x, V3DLONG y, V3DLONG z)
-{
-    sx = x;
-    sy = y;
-    sz = z;
-}
+    V3DLONG pw = pex - psx;
+    V3DLONG ph = pey - psy;
+    V3DLONG pd = pez - psz;
 
-unsigned char* Point::data()
-{
-    // crop data from hit blocks
+    V3DLONG qw = qex - qsx;
+    V3DLONG qh = qey - qsy;
+    V3DLONG qd = qez - qsz;
+
+    //cout<<"test ... ... size ... "<<pw<<" "<<ph<<" "<<pd<<endl;
+    //cout<<"test ... ... size ... "<<qw<<" "<<qh<<" "<<qd<<endl;
+
+    // x overlap
+    if(psx<=qsx && pex>=qsx && pex<=qex)
+    {
+        // ... |---------|
+        // +-----+
+
+        rqsx = 0;
+        rqex = pex - qsx;
+
+        rpsx = qsx - psx;
+        rpex = pw-1;
+
+    }
+    else if(psx>=qsx && pex<=qex)
+    {
+        // |-------------|
+        // ... +-----+
+
+        rqsx = psx - qsx;
+        rqex = rqsx + pw - 1;
+
+        rpsx = 0;
+        rpex = pw-1;
+    }
+    else if(psx<=qsx && pex>=qex)
+    {
+        // ... |------|
+        // +-------------+
+
+        rqsx = 0;
+        rqex = qw-1;
+
+        rpsx = qsx - psx;
+        rpex = rpsx + qw - 1;
+    }
+    else if(psx>=qsx && psx<=qex && pex>=qex)
+    {
+        // |----------|
+        // ... ... +-----+
+
+        rqsx = psx - qsx;
+        rqex = qw-1;
+
+        rpsx = 0;
+        rpex = qex - psx;
+    }
+    else
+    {
+        cout<<"what x-conditions fall in here?"<<endl;
+    }
+
+    // y overlap
+    if(psy<=qsy && pey>=qsy && pey<=qey)
+    {
+        rqsy = 0;
+        rqey = pey - qsy;
+
+        rpsy = qsy - psy;
+        rpey = ph-1;
+
+    }
+    else if(psy>=qsy && pey<=qey)
+    {
+        rqsy = psy - qsy;
+        rqey = rqsy + ph - 1;
+
+        rpsy = 0;
+        rpey = ph-1;
+    }
+    else if(psy<=qsy && pey>=qey)
+    {
+        rqsy = 0;
+        rqey = qh-1;
+
+        rpsy = qsy - psy;
+        rpey = rpsy + qh - 1;
+    }
+    else if(psy>=qsy && psy<=qey && pey>=qey)
+    {
+        rqsy = psy - qsy;
+        rqey = qh-1;
+
+        rpsy = 0;
+        rpey = qey - psy;
+    }
+    else
+    {
+        cout<<"what y-conditions fall in here?"<<endl;
+    }
+
+    // z overlap
+    if(psz<=qsz && pez>=qsz && pez<=qez)
+    {
+        rqsz = 0;
+        rqez = pez - qsz;
+
+        rpsz = qsz - psz;
+        rpez = pd-1;
+
+    }
+    else if(psz>=qsz && pez<=qez)
+    {
+        rqsz = psz - qsz;
+        rqez = rqsz + pd - 1;
+
+        rpsz = 0;
+        rpez = pd-1;
+    }
+    else if(psz<=qsz && pez>=qez)
+    {
+        rqsz = 0;
+        rqez = qd-1;
+
+        rpsz = qsz - psz;
+        rpez = rpsz + qd - 1;
+    }
+    else if(psz>=qsz && psz<=qez && pez>=qez)
+    {
+        rqsz = psz - qsz;
+        rqez = qd-1;
+
+        rpsz = 0;
+        rpez = qez - psz;
+    }
+    else
+    {
+        cout<<"what z-conditions fall in here?"<<endl;
+    }
+
+    //cout <<"p ... "<<rpsx<<" "<<rpex<<" "<<rpsy<<" "<<rpey<<" "<<rpsz<<" "<<rpez<<endl;
+    //cout <<"q ... "<<rqsx<<" "<<rqex<<" "<<rqsy<<" "<<rqey<<" "<<rqsz<<" "<<rqez<<endl;
 
     //
-    return p;
-}
+    V3DLONG pz,qz,py,qy,qx,px;
+    for(qz=rqsz, pz=rpsz; qz<rqez; qz++, pz++)
+    {
+        V3DLONG ofqz = qz*qw*qh;
+        V3DLONG ofpz = pz*pw*ph;
+        for(qy=rqsy, py=rpsy; qy<rqey; qy++, py++)
+        {
+            V3DLONG ofqy = ofqz + qy*qw;
+            V3DLONG ofpy = ofpz + py*pw;
+            for(qx=rqsx, px=rpsx; qx<rqex; qx++, px++)
+            {
+                //cout<<"copy "<<ofqy+qx<<" -> "<<ofpy+px<<endl;
 
-Point::~Point()
-{
-    release();
+                p[ofpy + px] = q[ofqy + qx];
+            }
+        }
+    }
+
+    //cout<<"done copy"<<endl;
 }
 
 //
@@ -149,22 +286,29 @@ bool Block::compare(Block b)
 
 void Block::load()
 {
-    QString skipBlock = "NULL.tif";
-    QString blockPath = QString::fromAscii(filepath.c_str());
+    //QString skipBlock = "NULL.tif";
+    // QString blockPath = QString::fromAscii(filepath.c_str());
 
     // load non-empty image
-    if(blockPath.indexOf(skipBlock)==-1)
+    //if(blockPath.indexOf(skipBlock)==-1)
+    if(filepath.find("NULL.tif")==std::string::npos)
     {
         uint32 sx, sy, sz;
-        char *errormessage = tiffread(const_cast<char*>(blockPath.toUtf8().constData()),p,sx,sy,sz,datatype);
+        // char *errormessage = tiffread(const_cast<char*>(blockPath.toUtf8().constData()),p,sx,sy,sz,datatype);
+        char *errormessage = tiffread(filepath.c_str(),p,sx,sy,sz,datatype);
+
+        cout<<"pointer p: "<<(void*)p<<endl;
 
         // update sx, sy, sz again
         size_x = sx;
         size_y = sy;
         size_z = sz;
 
-        cout<<"load "<<filepath<<" "<<errormessage<<endl;
+        if(errormessage)
+            cout<<"load "<<filepath<<" "<<errormessage<<endl;
     }
+
+    visited = true;
 }
 
 void Block::release()
@@ -177,6 +321,14 @@ void Block::release()
 
 unsigned char* Block::data()
 {
+    if(visited==false)
+    {
+        load();
+    }
+
+    cout<<"2 pointer p: "<<(void*)p<<endl;
+
+    //
     return p;
 }
 
@@ -187,7 +339,7 @@ void Block::setID(V3DLONG key)
 
 Block::~Block()
 {
-    release();
+    //release();
 }
 
 //
@@ -380,6 +532,151 @@ void LRUCache<T>::display()
 }
 
 //
+Point::Point()
+{
+
+}
+
+Point::Point(float a, float b, float c)
+{
+    x = a;
+    y = b;
+    z = c;
+
+    bytesPerVoxel = 1;
+    voxels = 1;
+    size = 1;
+
+    p = NULL;
+}
+
+void Point::release()
+{
+    if(p)
+    {
+        delete []p;
+    }
+}
+
+void Point::setBoundingBox(V3DLONG x, V3DLONG y, V3DLONG z)
+{
+    sx = x;
+    sy = y;
+    sz = z;
+}
+
+void Point::setDatatype(unsigned int datatype)
+{
+    bytesPerVoxel = datatype;
+}
+
+V3DLONG Point::getVoxels()
+{
+    return voxels;
+}
+
+V3DLONG Point::getSize()
+{
+    return size;
+}
+
+unsigned char* Point::data(unsigned int datatype, OneScaleTree tree)
+{
+    // tree will be replaced by LRUCache later
+
+    setDatatype(datatype);
+
+    // crop data from hit blocks
+    try
+    {
+        V3DLONG startx,endx,starty,endy,startz,endz;
+
+        startx = x - sx/2;
+
+        if(startx<0)
+            startx = 0;
+
+        starty = y - sy/2;
+
+        if(starty<0)
+            starty = 0;
+
+        startz = z - sz/2;
+
+        if(startz<0)
+            startz = 0;
+
+
+        voxels = sx*sy*sz;
+        size = voxels*bytesPerVoxel;
+
+        p = new unsigned char [size];
+        memset(p, 0, size);
+    }
+    catch(...)
+    {
+        cout<<"fail to allocate memory for point: ("<<x<<", "<<y<<", "<<z<<")"<<endl;
+        return NULL;
+    }
+
+    if(blocks.empty())
+    {
+        cout<<"No hit blocks"<<endl;
+
+        //
+        return p;
+    }
+    else
+    {
+        //        for(int i=0; i<blocks.size(); i++)
+        //        {
+
+        //        }
+
+        cout<<"blocks are not empty ... "<<endl;
+
+        // test one block
+        if(tree.find(blocks[0]) != tree.end())
+        {
+
+            cout<<"... block ... "<<blocks[0]<<" ... datatype ... "<<bytesPerVoxel<<endl;
+
+            Block block = tree[blocks[0]];
+            unsigned char *pBlock = block.data();
+
+            cout<<"3 pointer p: "<<(void*)pBlock<<endl;
+
+            if(pBlock)
+            {
+                if(bytesPerVoxel == 1)
+                {
+
+                }
+                else if(bytesPerVoxel == 2)
+                {
+                    cout<<"16-bit data"<<endl;
+
+                    unsigned short *pImg = (unsigned short *)p;
+                    unsigned short *qImg = (unsigned short *)pBlock;
+
+                    copyData<unsigned short>(pImg, x-sx/2, x+sx/2, y-sy/2, y+sy/2, z-sz/2, z+sz/2,
+                                             qImg, block.offset_x, block.offset_x+block.size_x, block.offset_y, block.offset_y+block.size_y, block.offset_z, block.offset_z+block.size_z);
+                }
+            }
+        }
+
+
+        //
+        return p;
+    }
+}
+
+Point::~Point()
+{
+    //release();
+}
+
+//
 void GetData::run()
 {
     for(int i=0; i<size; ++i)
@@ -398,18 +695,18 @@ void GetData::run()
 
 void PutData::run()
 {
-//        for (int i = 0; i < DataSize; ++i) {
-//            usedBytes.acquire();
-//    #ifdef Q_WS_S60
-//            QString text(buffer[i % BufferSize]);
-//            freeBytes.release();
-//            emit stringConsumed(text);
-//    #else
-//            fprintf(stderr, "%c", buffer[i % BufferSize]);
-//            freeBytes.release();
-//    #endif
-//        }
-//        fprintf(stderr, "\n");
+    //        for (int i = 0; i < DataSize; ++i) {
+    //            usedBytes.acquire();
+    //    #ifdef Q_WS_S60
+    //            QString text(buffer[i % BufferSize]);
+    //            freeBytes.release();
+    //            emit stringConsumed(text);
+    //    #else
+    //            fprintf(stderr, "%c", buffer[i % BufferSize]);
+    //            freeBytes.release();
+    //    #endif
+    //        }
+    //        fprintf(stderr, "\n");
 
     for(int i=0; i<size; ++i)
     {
@@ -428,6 +725,8 @@ void PutData::run()
 //
 DataFlow::DataFlow(PointCloud *&pc, string inputdir, V3DLONG sx, V3DLONG sy, V3DLONG sz)
 {
+    cout<<"call DataFlow "<<pc->size()<<endl;
+
     // neuron reconstruction (fragments/whole) with nodes/points coordinates (x, y, z)
     if(pc->size()<1)
     {
@@ -435,10 +734,13 @@ DataFlow::DataFlow(PointCloud *&pc, string inputdir, V3DLONG sx, V3DLONG sy, V3D
         return;
     }
 
+    cout<<"points = pc"<<endl;
     points = pc;
+    cout<<"test ... points "<<points->size()<<endl;
 
     // read a tree from "mdata.bin" in inputdir: "xxxx/RES(123x345x456)"
     readMetaData(inputdir);
+    cout<<"test ... tree "<<tree.size()<<endl;
 
     // update relations between points and tree blocks
     for(V3DLONG i=0; i<points->size(); i++)
@@ -486,6 +788,7 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
 {
     //
     string inputdir = filename;
+    inputdir.erase(std::remove_if(inputdir.begin(), inputdir.end(), [](unsigned char x){return isspace(x);}));
 
     DIR *outdir = opendir(inputdir.c_str());
     if(outdir == NULL)
@@ -629,7 +932,8 @@ int DataFlow::readMetaData(string filename, bool mDataDebug)
                 yxfolder.cubes.insert(make_pair(cube.offset_D, cube));
 
                 //
-                Block block(blockNamePrefix + yxfolder.dirName + "/" + cube.fileName,
+                QString qstrPath = QString::fromAscii(blockNamePrefix.c_str()).append(QString::fromAscii(yxfolder.dirName.c_str())).append(QString("/")).append(QString::fromAscii(cube.fileName.c_str()));
+                Block block(qstrPath.toStdString(), //blockNamePrefix + yxfolder.dirName + "/" + cube.fileName,
                             V3DLONG(yxfolder.offset_H), V3DLONG(yxfolder.offset_V), V3DLONG(cube.offset_D),
                             V3DLONG(yxfolder.width), V3DLONG(yxfolder.height), V3DLONG(cube.depth) );
 
@@ -853,20 +1157,20 @@ int DataFlow::label(V3DLONG index)
     if(tree.find(index) != tree.end())
     {
 
-//        Block block = tree[index];
+        //        Block block = tree[index];
 
-//        if(block.visited == false)
-//        {
-//            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
+        //        if(block.visited == false)
+        //        {
+        //            cout<<"hits the block "<<block.filepath<<" "<<block.offset_x<<" "<<block.offset_y<<" "<<block.offset_z<<" "<<index<<endl;
 
-//            string dirName = getDirName(block.filepath);
+        //            string dirName = getDirName(block.filepath);
 
-//            cout<<"check dirName: "<<dirName<<endl;
+        //            cout<<"check dirName: "<<dirName<<endl;
 
-//            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
-//            layer.yxfolders[dirName].toBeCopied = true;
-//            tree[index].visited = true;
-//        }
+        //            layer.yxfolders[dirName].cubes[block.offset_z].toBeCopied = true;
+        //            layer.yxfolders[dirName].toBeCopied = true;
+        //            tree[index].visited = true;
+        //        }
     }
 
     return 0;
@@ -915,7 +1219,7 @@ V3DLONG DataFlow::findOffset(OffsetType offsets, V3DLONG idx)
 }
 
 //
-char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype)
+char *tiffread(const char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uint32  &sz2, uint16 &datatype)
 {
     //
     TIFF *input = TIFFOpen(filename,"r");
@@ -997,10 +1301,11 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
     }
 
     unsigned char *buf = p;
-
     do{
         for (int i=0; i < StripsPerImage-1; i++)
         {
+            cout<<"i "<<i<<endl;
+
             if (comp==1)
             {
                 TIFFReadRawStrip(input, i, buf,  rps * sz0 * datatype);
@@ -1023,14 +1328,119 @@ char *tiffread(char* filename, unsigned char *&p, uint32 &sz0, uint32  &sz1, uin
         }
         buf = buf + LastStripSize * sz0 * datatype;
 
-    }
-    while (TIFFReadDirectory(input)); // while (TIFFReadDirectory(input));
+    } while(TIFFReadDirectory(input));
 
     //
     TIFFClose(input);
 
     //
     return ((char *) 0);
+}
+
+//
+int readASWC_file(const QString& filename, QString &datapath, NeuronTree &nt)
+{
+    // aswc file
+    nt.file = QFileInfo(filename).absoluteFilePath();
+    QFile qf(filename);
+    if (! qf.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        cout<<"Invalid aswc file"<<endl;
+        return -1;
+    }
+
+    //
+    int count = 0;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    QString name = "";
+    QString comment = "";
+
+    qDebug("-------------------------------------------------------");
+    while (! qf.atEnd())
+    {
+        char _buf[1000], *buf;
+        qf.readLine(_buf, sizeof(_buf));
+        for (buf=_buf; (*buf && *buf==' '); buf++); //skip space
+
+        //  add #name, #comment
+        if (buf[0]=='\0')	continue;
+        if (buf[0]=='#')
+        {
+            for (buf++; (*buf && *buf==' '); buf++); //skip space
+
+            if (buf[0]=='n'&&buf[1]=='a'&&buf[2]=='m'&&buf[3]=='e'&&buf[4]==' ')
+            {
+                name = buf+5;
+            }
+            else if (buf[0]=='c'&&buf[1]=='o'&&buf[2]=='m'&&buf[3]=='m'&&buf[4]=='e'&&buf[5]=='n'&&buf[6]=='t'&&buf[7]==' ')
+            {
+                comment = buf+89;
+            }
+            else if(buf[0]=='!')
+            {
+                QString finestscaledir = buf+1;
+                QDir filepath = QFileInfo(filename).absoluteDir();
+                datapath = filepath.absolutePath().append("/").append(finestscaledir);
+
+                qDebug()<<"... ... finest resolution folder: "<<datapath;
+            }
+
+            continue;
+        }
+
+        count++;
+        NeuronSWC S;
+
+        QStringList qsl = QString(buf).trimmed().split(" ",QString::SkipEmptyParts);
+        if (qsl.size()==0)   continue;
+
+        for (int i=0; i<qsl.size(); i++)
+        {
+            qsl[i].truncate(99);
+            if (i==0) S.n = qsl[i].toInt();
+            else if (i==1) S.type = qsl[i].toInt();
+            else if (i==2) S.x = qsl[i].toFloat();
+            else if (i==3) S.y = qsl[i].toFloat();
+            else if (i==4) S.z = qsl[i].toFloat();
+            else if (i==5) S.r = qsl[i].toFloat();
+            else if (i==6) S.pn = qsl[i].toInt();
+            //the ESWC extension, by PHC, 20120217
+            else if (i==7) S.seg_id = qsl[i].toInt();
+            else if (i==8) S.level = qsl[i].toInt();
+            else if (i==9) S.creatmode = qsl[i].toInt();
+            else if (i==10) S.timestamp = qsl[i].toInt();
+            //change ESWC format to adapt to flexible feature number, by WYN, 20150602
+            else
+                S.fea_val.append(qsl[i].toFloat());
+        }
+
+        //if (! listNeuron.contains(S)) // 081024
+        {
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+    }
+    qDebug("---------------------read %d lines, %d remained lines", count, listNeuron.size());
+
+    if (listNeuron.size()<1)
+    {
+        cout<<"Empty aswc file"<<endl;
+        return -2;
+    }
+
+    //now update other NeuronTree members
+    nt.n = 1; //only one neuron if read from a file
+    nt.listNeuron = listNeuron;
+    nt.hashNeuron = hashNeuron;
+    nt.color = XYZW(0,0,0,0); /// alpha==0 means using default neuron color, 081115
+    nt.on = true;
+    nt.name = name.remove('\n'); if (nt.name.isEmpty()) nt.name = QFileInfo(filename).baseName();
+    nt.comment = comment.remove('\n');
+
+    return 0;
 }
 
 //
@@ -1096,5 +1506,4 @@ bool flythrough_func(const V3DPluginArgList & input, V3DPluginArgList & output, 
     //
     return true;
 }
-
 

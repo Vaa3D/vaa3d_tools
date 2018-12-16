@@ -41,14 +41,98 @@ morphStructElement2D::~morphStructElement2D()
 	if (this->structElePtr != nullptr) delete[] this->structElePtr;
 }
 
-void morphStructElement2D::printOutStructEle()
+map<string, float> ImgProcessor::getBasicStats_fromHist(const map<int, size_t>& inputHistList)
 {
-	for (int j = 0; j < this->radius * 2 + 1; ++j)
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	map<string, float> basicStats;
+	size_t totalPixNum = 0;
+
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
 	{
-		for (int i = 0; i < this->radius * 2 + 1; ++i)
-			cout << int(this->structElePtr[(this->radius * 2 + 1)*j + i]) << " ";
-		cout << endl;
+		totalPixNum = totalPixNum + it->second;
+		sum = sum + float(it->first) * float(it->second);
 	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+		varSum = varSum + (it->first - mean) * (it->first - mean) * it->second;
+	var = float(varSum) / totalPixNum;
+	std = sqrt(var);
+	basicStats.insert({ "var", var });
+	basicStats.insert({ "std", std });
+
+	size_t count = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		count = count + it->second;
+		if (float(count) / float(totalPixNum) >= 0.5)
+		{
+			median = it->first;
+			break;
+		}
+	}
+	basicStats.insert({ "median", median });
+
+	return basicStats;
+}
+
+
+map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_t>& inputHistList)
+{
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	map<string, float> basicStats;
+	size_t totalPixNum = 0;
+
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		totalPixNum = totalPixNum + it->second;
+		sum = sum + float(it->first) * float(it->second);
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		varSum = varSum + (it->first - mean) * (it->first - mean) * it->second;
+	}
+	var = float(varSum) / totalPixNum;
+	std = sqrt(var);
+	basicStats.insert({ "var", var });
+	basicStats.insert({ "std", std });
+
+	size_t count = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		count = count + it->second;
+		if (float(count) / float(totalPixNum) >= 0.5)
+		{
+			median = it->first;
+			break;
+		}
+	}
+	basicStats.insert({ "median", median });
+
+	return basicStats;
 }
 
 void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])

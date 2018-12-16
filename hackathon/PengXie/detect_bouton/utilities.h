@@ -11,7 +11,7 @@
 #include "iostream"
 #include "sys/stat.h"
 #include "sys/types.h"
-
+#include "dirent.h"
 using namespace std;
 
 #ifndef NODE_TILE_LENGTH
@@ -45,12 +45,18 @@ struct block{
     XYZ large;
 };
 #endif
+
+// File manipulation
+inline bool exists_file (const std::string& name);
+//inline bool exists_file_qs (QString name);
+void read_directory(QString name, QList<QString> & files);
+void my_mkdir(QString path);
+const char * Qstring_to_char(QString qs);
+
 // Generic functions
 XYZ offset_XYZ(XYZ input, XYZ offset);
 QList<CellAPO> offset_apo(QString input_apo, XYZ offset);
 block offset_block(block input_block, XYZ offset);
-void my_mkdir(QString path);
-inline bool exists_file (const std::string& name);
 void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format);
 void crop_swc(QString input_swc, QString output_swc, block crop_block);
 bool my_saveANO(QString ano_dir, QString fileNameHeader, QList<QString> suffix);

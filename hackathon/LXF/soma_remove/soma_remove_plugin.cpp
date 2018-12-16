@@ -1,4 +1,4 @@
-/* soma_remove_plugin.cpp
+    /* soma_remove_plugin.cpp
  * This is a test plugin, you can use it as a demo.
  * 2018-7-11 : by LXF
  */
@@ -10,12 +10,14 @@
 #include "data_training.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(soma_remove, soma_removePlugin);
+#define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
  
 QStringList soma_removePlugin::menulist() const
 {
 	return QStringList() 
         <<tr("soma_remove")
         <<tr("data_training")
+          <<tr("distance_between_two_connected_area")
 		<<tr("about");
 }
 
@@ -24,6 +26,7 @@ QStringList soma_removePlugin::funclist() const
 	return QStringList()
         <<tr("soma_remove")
         <<tr("data_training")
+          <<tr("distance_between_two_connected_area")
 		<<tr("help");
 }
 
@@ -45,8 +48,12 @@ void soma_removePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 	}
 	else if (menu_name == tr("menu2"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("To be implemented.");
 	}
+    else if (menu_name == tr("distance_between_two_connected_area"))
+    {
+        v3d_msg("To be implemented.");
+    }
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
@@ -73,8 +80,34 @@ bool soma_removePlugin::dofunc(const QString & func_name, const V3DPluginArgList
         data_training(input,output,callback);
 		v3d_msg("To be implemented.");
 	}
-	else if (func_name == tr("help"))
+    else if (func_name == tr("distance_between_two_connected_area"))
 	{
+        if(infiles.size()!=2)
+        {
+            //v3d_msg("Please input two files,first one is offset result,anther one is markerlist for all center");
+            return false;
+        }
+        QString fileOpenName1 = QString(infiles.at(0));
+        QString fileOpenName2 = QString(infiles.at(1));
+        QList <ImageMarker> markerlist1 = readMarker_file(fileOpenName1);
+        QList <ImageMarker> markerlist2 = readMarker_file(fileOpenName2);
+        QList <ImageMarker> marker_result;
+        double min_dis=100000000000;
+        for(int i=0;i<markerlist1.size();i++)
+        {
+            for(int j=0;j<markerlist2.size();j++)
+            {
+                double dis = NTDIS(markerlist1[i],markerlist2[j]);
+               // cout<<"dis = "<<dis<<endl;
+                if(dis<min_dis)
+                {
+                    min_dis = dis;
+                  //  cout<<min_dis<<endl;
+                }
+            }
+        }
+        cout<<"min_dis = "<<min_dis<<endl;
+
 		v3d_msg("To be implemented.");
 	}
 	else return false;

@@ -48,8 +48,6 @@ using namespace std;
 class NeuronStructUtil
 {
 public: 
-	NeuronStructUtil() {};
-
 	/***************** Basic Neuron Struct Files Operations *****************/
 	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
@@ -103,6 +101,8 @@ public:
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
+
+	static NeuronTree blobs2tree(const vector<connectedComponent>& inputConnCompList, bool usingRadius2compNum = false);
 	/**************************************************************************/
 
 
