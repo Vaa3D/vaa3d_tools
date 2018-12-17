@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <cmath>
+#include <ctime>
 
 #include "basic_surf_objs.h" //added by PHC, 2013-01-03
 
@@ -237,6 +238,7 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & outmarkers, list<string> 
 
 	cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
 	map<MyMarker*, int> ind;	
+	
 	ofstream ofs(swc_file.c_str()); 
 	
 	if(ofs.fail())
@@ -244,6 +246,7 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & outmarkers, list<string> 
 		cout<<"open swc file error"<<endl; 
 		return false;
 	}
+	
 	ofs<<"#name "<<swc_file<<endl;
 	ofs<<"#comment "<<endl;
     

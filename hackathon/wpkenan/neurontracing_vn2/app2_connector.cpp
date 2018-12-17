@@ -11,6 +11,7 @@
 #include "volimg_proc.h"
 
 //add by wp 20181206
+bool prunThinBranch(vector<MyMarker*> &outmarkers,float thresh);
 template <class T1, class T2> bool otsu(T1 *data, V3DLONG n, T2 & thres){
 	
 	if (!data || n<=0)
@@ -105,6 +106,14 @@ bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<str
 
     cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
     map<MyMarker*, int> ind;
+	//swc_file=swc_file+""
+	/*time_t now = time(0);
+	char* dt = ctime(&now);
+	string st1 = dt;
+
+	cout << "swc_file: " << swc_file << endl;
+	swc_file=swc_file+st1+".swc";
+	cout << "swc_file: " << swc_file << endl;*/
     ofstream ofs(swc_file.c_str());
 
     if(ofs.fail())
@@ -128,8 +137,13 @@ bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<str
         int parent_id;
         if(marker->parent == 0) parent_id = -1;
         else parent_id = ind[marker->parent];
+		/*if(marker->radius <=1 ){
+		marker->radius=-1;
+		}*/
+		if(marker->radius==-1) continue;
         ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
     }
+
     ofs.close();
     return true;
 }
@@ -820,10 +834,13 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 {
 	vector<MyMarker> file_inmarkers_tmp; 
 	file_inmarkers_tmp=readMarker_file(string(qPrintable(p.inmarker_file)));
-	for(int tmpI=0;tmpI<file_inmarkers_tmp.size();tmpI++){
+	
+	cout << "marker size: " << file_inmarkers_tmp.size() << endl;
 		//cout << file_inmarkers_tmp.size() << endl;
 		//  bool b_menu = true;
-		bool b_dofunc = false;
+	bool b_dofunc = false;
+	for(int tmpI=0;tmpI<file_inmarkers_tmp.size();tmpI++){
+		p.landmarks.clear();
 		if (!p.p4dImage || !p.p4dImage->valid())
 		{
 			if (p.inimg_file.isEmpty()) return false;
@@ -848,6 +865,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 			LocationSimple t;
 			for(int i = 0; i < file_inmarkers.size(); i++)
 			{
+				
 				t.x = file_inmarkers[i].x;
 				t.y = file_inmarkers[i].y;
 				t.z = file_inmarkers[i].z;
@@ -866,11 +884,11 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 
 		if(p.landmarks.size() < 2 && p.b_intensity ==1)
 		{
-		   v3d_msg("You have to select at least two markers if using high intensity background option.",p.b_menu);
-		   return false;
+			v3d_msg("You have to select at least two markers if using high intensity background option.",p.b_menu);
+			return false;
 		}
 
-
+	
 		int i;
 		list<string>::iterator it;
     
@@ -1056,10 +1074,10 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 				cout << "imgAve+0.5*td: " << imgAve +0.5*imgStd << endl;
 
 				//add by wp 20181206
-				/*double thres;
-				otsu(p4dImageNew->getRawDataAtChannel(0),p4dImageNew->getTotalUnitNumberPerChannel(),thres);
-				cout << "otsu: " << thres << endl;
-				p.bkg_thresh=thres-1;*/
+				double thres;
+				//otsu(p4dImageNew->getRawDataAtChannel(0),p4dImageNew->getTotalUnitNumberPerChannel(),thres);
+				//cout << "otsu: " << thres << endl;
+				//p.bkg_thresh=thres-1;
 	//            p.bkg_thresh = imgAve; //+0.5*imgStd ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5;
 				double td= (imgStd<10)? 10: imgStd;
 				p.bkg_thresh = imgAve +0.5*td ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5; //20170523, PHC
@@ -1082,12 +1100,15 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 	
 		float * phi = 0;
 		vector<MyMarker> inmarkers;
+		cout << p.landmarks.size() << endl;
 		for(i = tmpI; i < tmpI+p.landmarks.size(); i++)
 		{
+			
 			double x = p.landmarks[i%p.landmarks.size()].x - p.xc0 -1;
 			double y = p.landmarks[i%p.landmarks.size()].y - p.yc0 -1;
 			double z = p.landmarks[i%p.landmarks.size()].z - p.zc0 -1;
-        
+
+			cout << "xyz" << p.landmarks[i%p.landmarks.size()].x << " " << p.landmarks[i%p.landmarks.size()].y << " " << p.landmarks[i%p.landmarks.size()].z << endl;
 			//add scaling by PHC 121127
 			x /= dfactor_xy;
 			y /= dfactor_xy;
@@ -1095,6 +1116,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
         
 			inmarkers.push_back(MyMarker(x,y,z));
 		}
+		cout << inmarkers.size() << endl;
 		qint64 etime1 = timer1.elapsed();
 		qDebug() << " **** neuron preprocessing takes [" << etime1 << " milliseconds]";
     
@@ -1224,6 +1246,8 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 				{
 					case V3D_UINT8:
 						//fastmarching_tree(inmarkers[0], target, indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type);
+						cout << "p.bkg_thresh: " << p.bkg_thresh << endl;
+						cout << "p.is_break_accept: " << endl;
 						fastmarching_tree_wp(inmarkers,indata1d, indexOfSoma,outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type,p.bkg_thresh,p.is_break_accept);//wp
 						break;
 					case V3D_UINT16:
@@ -1401,11 +1425,12 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
        
 			tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 			tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+			
+
 			saveSWC_file(outswc_file.toStdString(), outswc, infostring);
 
 			if(outswc.size()>1)
 			{
-
 			//call sort_swc function
 
 				V3DPluginArgItem arg;
@@ -1432,6 +1457,10 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 				callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
             
 				vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
+				//cout << temp_out_swc.size() << endl;
+
+				prunThinBranch(temp_out_swc,1);
+				
 				saveSWC_file_app2(outswc_file.toStdString(), temp_out_swc, infostring);
 			}
 			//v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
@@ -1474,3 +1503,108 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 	return true;
 }
 
+bool prunThinBranch(vector<MyMarker*> &outmarkers,float thresh){
+
+	vector<MyMarker*> leafNodes;
+	vector<int> degreeOfNodes;
+	degreeOfNodes.resize(outmarkers.size(),0);
+
+	map<MyMarker*, int> ind;
+	for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i;
+
+	for(int i = 0; i < outmarkers.size(); i++)
+	{
+		MyMarker * marker = outmarkers[i];
+		int parent_id;
+		if(marker->parent == 0) continue;
+		else parent_id = ind[marker->parent];
+		degreeOfNodes[parent_id]++;//¶È+1
+	}
+
+	int numOfLeaf=0;
+	for(int i=0;i<outmarkers.size();i++){
+		if(degreeOfNodes[i]==0){
+			numOfLeaf++;
+			leafNodes.push_back(outmarkers[i]);
+		}
+	}
+	cout << __FUNCTION__ << " numOfLeaf: " << numOfLeaf << endl;
+
+	int typeNum=0;
+	for(int i=0;i<outmarkers.size();i++){
+		if(outmarkers[i]->radius==1){
+			typeNum++;
+		}
+	}
+	cout << __FUNCTION__ << " typeNum: " << typeNum << endl;
+
+	
+	
+	//step1ÐÞ½¨³¤Ï¸
+	for(int i=0;i<leafNodes.size();i++){
+		MyMarker* marker=new MyMarker;
+		marker=leafNodes[i];
+		int index=ind[marker];
+
+		float length=0;
+		int nodesOfBranch=0;
+		float avgRadius=0;
+		while(degreeOfNodes[index]<2){
+			length=length+marker->radius;
+			marker=marker->parent;
+			index=ind[marker];
+			nodesOfBranch++;
+		}
+
+		length=length-marker->radius;
+		nodesOfBranch--;
+
+		avgRadius=length/(nodesOfBranch*1.0);
+		cout << ind[leafNodes[i]]+1 << ": " << nodesOfBranch << " " << avgRadius << endl;
+
+		if(avgRadius<1.2){
+			marker=leafNodes[i];
+			int index=ind[marker];
+			while(degreeOfNodes[index]<2){
+				marker->radius=-1;
+				marker=marker->parent;
+				index=ind[marker];
+			}
+		}
+		/*else{
+		marker=leafNodes[i];
+		int index=ind[marker];
+		while(degreeOfNodes[index]<2){
+		marker->radius=avgRadius;
+		marker=marker->parent;
+		index=ind[marker];
+		}
+		}*/
+	}
+
+	//step2ÐÞ¼ô¶ÌÏ¸
+	for(int i=0;i<leafNodes.size();i++){
+		MyMarker* marker=new MyMarker;
+		marker=leafNodes[i];
+		int index=ind[marker];
+
+		float length=0;
+		int nodesOfBranch=0;
+		float avgRadius=0;
+		while(degreeOfNodes[index]<=1){
+			if(marker->radius==1){
+				marker->radius=-1;
+				marker=marker->parent;
+				index=ind[marker];
+				nodesOfBranch++;
+			}else{
+				break;
+			}
+			
+			
+		}
+	}
+	
+	
+	return true;
+}
