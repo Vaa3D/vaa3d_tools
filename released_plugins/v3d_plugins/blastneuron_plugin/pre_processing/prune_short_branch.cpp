@@ -127,3 +127,22 @@ bool export_listNeuron_2swc(QList<NeuronSWC> & list, const char* filename)
 	fclose(fp);
 	return true;
 }
+
+bool export_listNeuron_2eswc(QList<NeuronSWC> & list, const char* filename)
+{
+    FILE * fp;
+    fp = fopen(filename,"w");
+    if (fp==NULL)
+    {
+        fprintf(stderr,"ERROR: %s: failed to open file to write!\n",filename);
+        return false;
+    }
+    fprintf(fp,"##n,type,x,y,z,radius,parent,segid,confscore,creatmode,timestamp\n");
+    for (int i=0;i<list.size();i++)
+    {
+        NeuronSWC curr = list.at(i);
+        fprintf(fp,"%d %d %.2f %.2f %.2f %.2f %d %d %d %d %.0f\n",curr.n,curr.type,curr.x,curr.y,curr.z,curr.r,curr.pn,curr.seg_id,curr.level,curr.creatmode,curr.timestamp);
+    }
+    fclose(fp);
+    return true;
+}

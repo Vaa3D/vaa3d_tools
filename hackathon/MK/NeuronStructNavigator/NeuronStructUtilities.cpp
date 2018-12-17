@@ -80,6 +80,39 @@ NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree
 
 void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
 {
+	QList<NeuronSWC> inputList = inputTree.listNeuron;
+	int zMax = 0;
+	ptrdiff_t thicknessPtrDiff = ptrdiff_t(thickness); // Determining largest number of z in inputTree.
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		int z = round(it->z);
+		if (z >= zMax) zMax = z;
+	}
+
+	int treeNum = zMax / thickness + 1;
+	vector<ptrdiff_t> delLocs;
+	for (int i = 0; i < treeNum; ++i)
+	{
+		NeuronTree outputTree;
+		outputTrees.push_back(outputTree);
+		for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+		{
+			if (it->z <= thickness * (i + 1))
+			{
+				outputTrees.at(i).listNeuron.push_back(*it);
+				delLocs.push_back(it - inputList.begin());
+			}
+		}
+
+		sort(delLocs.rbegin(), delLocs.rend());
+		for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) inputList.erase(inputList.begin() + *delIt);
+		delLocs.clear();
+	}
+}
+
+
+void NeuronStructUtil::swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
+{
 	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
 	// thickness * 2 + 1 = the number of consecutive z slices for one SWC node to appear. This is for the purpose producing continous masks.
 
@@ -206,7 +239,11 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 			else continue;
 
 			sort(delLocs.rbegin(), delLocs.rend());
-			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+			{
+				if (targetTileIt->second.begin() + *delIt >= targetTileIt->second.end()) continue;
+				else targetTileIt->second.erase(targetTileIt->second.begin() + *delIt);
+			}
 			delLocs.clear();
 		}
 	}
@@ -219,7 +256,65 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 }
 
 
-// ========================================== SWC Profiling Methods =========================================
+// ======================================= SWC Tracing-related Operations =======================================
+void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
+{
+	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+	
+	QList<NeuronSWC> parents;
+	QList<NeuronSWC> children;
+	parents.push_back(startingNode);
+	vector<size_t> childLocs;
+	do
+	{
+		children.clear();
+		childLocs.clear();
+		for (QList<NeuronSWC>::iterator pasIt = parents.begin(); pasIt != parents.end(); ++pasIt)
+		{
+			if (node2childLocMap.find(pasIt->n) != node2childLocMap.end()) childLocs = node2childLocMap.at(pasIt->n);
+			else continue;
+			
+			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
+			{
+				subTreeList.append(inputList.at(*childLocIt));
+				children.push_back(inputList.at(*childLocIt));
+			}
+		}
+		parents = children;
+	} while (childLocs.size() > 0);
+	
+	subTreeList.push_front(startingNode);
+
+	return;
+}
+
+void NeuronStructUtil::wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode)
+{
+	map<int, size_t> node2locMap;
+	map<int, vector<size_t>> node2childLocMap;
+	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
+
+	if (startingNode.parent == -1) NeuronStructUtil::downstream_subTreeExtract(inputList, tracedList, startingNode, node2locMap, node2childLocMap);
+	else
+	{
+		int parentID = startingNode.parent;
+		int somaNodeID = inputList.at(node2locMap.at(parentID)).n;
+
+		while (1)
+		{
+			parentID = inputList.at(node2locMap.at(parentID)).parent;
+			if (parentID != -1) somaNodeID = inputList.at(node2locMap.at(parentID)).n;
+			else break;
+		}
+		
+		NeuronSWC rootNode = inputList.at(node2locMap.at(somaNodeID));
+		NeuronStructUtil::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
+	}
+}
+//============================================================================================================
+
+
+// ========================================== SWC Profiling Methods ==========================================
 QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 {
 	// -- This method removes dupliated nodes.
@@ -545,17 +640,17 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	// -- I notice that boost's container templates are able to lift up the performace by ~30%.
 	boost::container::flat_map<int, boost::container::flat_set<int>> b2Dtob3Dmap;
 	b2Dtob3Dmap.clear();
-	boost::container::flat_map<int, boost::container::flat_set<int>> b3Dcomps;
+	boost::container::flat_map<int, boost::container::flat_set<int>> b3Dcomps;  // a map from 3D connected components to all of its associated 2D connected components
 	b3Dcomps.clear();
 	// ---------------------------------------------------------------------------------------
 
-	// --------- First slice, container initiation --------------
+	// --------- First slice, container initialization --------------
 	int sliceBlobCount = 0;
 	for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
 	{
 		if (it->coordSets.begin()->first > zMax) zMax = it->coordSets.begin()->first;
 
-		if (it->coordSets.begin()->first == 0)
+		if (it->coordSets.begin()->first == 0) // 1st slice connected components profile initialization
 		{
 			++sliceBlobCount;
 			boost::container::flat_set<int> blob3D;
@@ -579,7 +674,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 		increasedSize = 0;
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
-			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it);
+			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it); // collect all connected components from the current slice
 		if (currSliceConnComps.empty())
 		{
 			cout << i << "->0 ";
@@ -588,9 +683,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 		cout << i << "->";
 		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
-			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);
+			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);  // collect all connected components from the previous slice
 		if (preSliceConnComps.empty())
 		{
+			// If the previous slice is empty, all 2D components found in the current slice will be part of new 3D components.
 			for (vector<connectedComponent>::iterator newCompsIt = currSliceConnComps.begin(); newCompsIt != currSliceConnComps.end(); ++newCompsIt)
 			{
 				++sliceBlobCount;
@@ -610,8 +706,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			bool merged = false;
 			for (vector<connectedComponent>::iterator preIt = preSliceConnComps.begin(); preIt != preSliceConnComps.end(); ++preIt)
 			{
+				// First, use component boundaries to quickly exclude those pixels that can't be connected to any existing components.
+				// And then create new components for these pixels.
 				if (currIt->xMin > preIt->xMax + 2 || currIt->xMax < preIt->xMin - 2 ||
-					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue;
+					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue; 
 
 				for (set<vector<int>>::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
 				{
@@ -621,8 +719,13 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 							currDotIt->at(1) >= preDotIt->at(1) - 1 && currDotIt->at(1) <= preDotIt->at(1) + 1)
 						{
 							merged = true;
+							// Find out to which 3D component the 2D component connected to the pixel belong.    
 							boost::container::flat_set<int> asso3Dblob = b2Dtob3Dmap[preIt->islandNum];
+							
+							// Register the component of the pixel in the current slice to b2Dtob3Dmap.
 							b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(currIt->islandNum, asso3Dblob));
+							
+							// Add a new entry of newly identified 2D component that is connected to the existing 3D component to b3Dcomps.
 							for (boost::container::flat_set<int>::iterator blob3DIt = asso3Dblob.begin(); blob3DIt != asso3Dblob.end(); ++blob3DIt)
 								b3Dcomps[*blob3DIt].insert(currIt->islandNum);
 
@@ -637,7 +740,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 				merged = true;
 			}
 
-			if (!merged)
+			if (!merged) // All 2D blobs in the current slice fail to find its associated 3D blobs. Create new 3D blobs for them here.
 			{
 				++sliceBlobCount;
 				boost::container::flat_set<int> newBlob3D;
@@ -656,8 +759,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	// ---------------------------------------- END of [Merge 2D blobs from 2 adjacent slices] -------------------------------------------
 
 	// ------------------------------------------ Merge 3D blobs --------------------------------------------
+	// Merge any 3D blobs if any of them share the same 2D blob members.
 	cout << "Now merging 3D blobs.." << endl;
-	cout << "-- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
 	while (!mergeFinish)
@@ -665,9 +769,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
 		{
 			if (checkIt1->first < currBaseBlob) continue;
-			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 			{
-				if (checkIt2 == checkIt1) continue;
+				//if (checkIt2 == checkIt1) continue;
 				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 				{
 					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
@@ -689,9 +793,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	MERGED:
 		continue;
 	}
-	cout << "-- new 3D blobs number: " << b3Dcomps.size() << endl;
+	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 
+	// ------------------------------------- Create 3D connected component data -------------------------------------
 	map<int, connectedComponent> compsMap;
 	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)
 		compsMap.insert(pair<int, connectedComponent>(inputIt->islandNum, *inputIt));
@@ -707,20 +812,65 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		newComp.zMax = 0; newComp.zMin = 0;
 		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
-			newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap[*it2].coordSets.begin()->first, compsMap[*it2].coordSets.begin()->second));
-			newComp.xMax = getMax(newComp.xMax, compsMap[*it2].xMax);
-			newComp.xMin = getMin(newComp.xMin, compsMap[*it2].xMin);
-			newComp.yMax = getMax(newComp.yMax, compsMap[*it2].yMax);
-			newComp.yMin = getMin(newComp.yMin, compsMap[*it2].yMin);
-			newComp.zMax = getMax(newComp.zMax, compsMap[*it2].zMax);
-			newComp.zMin = getMin(newComp.zMin, compsMap[*it2].zMin);
-			newComp.size = newComp.size + compsMap[*it2].size;
+			// A 3D connected component may contain different 2D components from the same slice.
+			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())
+			{
+				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin();
+					it3 != compsMap.at(*it2).coordSets.begin()->second.end(); ++it3)
+					newComp.coordSets.at(compsMap.at(*it2).coordSets.begin()->first).insert(*it3);
+				
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
+			else
+			{
+				newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap.at(*it2).coordSets.begin()->first, compsMap.at(*it2).coordSets.begin()->second));
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
 		}
 
 		outputConnCompList.push_back(newComp);
 	}
+	// --------------------------------- END of [Create 3D connected component data] ---------------------------------
 
 	return outputConnCompList;
+}
+
+NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputconnComp, bool usingRadius2compNum)
+{
+	NeuronTree outputTree;
+	for (vector<connectedComponent>::const_iterator it = inputconnComp.begin(); it != inputconnComp.end(); ++it)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = it->coordSets.begin(); sliceIt != it->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = pointIt->at(0);
+				newNode.y = pointIt->at(1);
+				newNode.z = pointIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				
+				if (usingRadius2compNum) newNode.radius = it->islandNum;
+
+				outputTree.listNeuron.push_back(newNode);
+			}
+		}
+	}
+
+	return outputTree;
 }
 // =============================== END of [SWC <-> Connected Components] ===============================
 

@@ -4,6 +4,7 @@
 
 
 std::vector<clientproperty> clientsproperty;
+QString Creator;
 Server::Server(QObject* parent) : QObject(parent) {
     server = new QTcpServer(this);
     connect(server, SIGNAL(newConnection()),
@@ -42,7 +43,19 @@ void Server::sendColorMsg() {
 	}
 
 }
+void Server::sendCreatorMsg()
+{
+    foreach (QTcpSocket* socket, clients.keys()) {
+            QString username = clients.value(socket);
+            for(int i=0;i<clientsproperty.size();i++)
+            {
+                    if(clientsproperty.at(i).name!=username) continue;
+                    if(clientsproperty.at(i).Creator)
+                    sendToAll(QString("/creator:"+username+"\n"));
+            }
+    }
 
+}
 void Server::onNewConnection() {
     QTcpSocket* socket = server->nextPendingConnection();
     qDebug() << "Client connected: " << socket->peerAddress().toString();
@@ -86,13 +99,12 @@ void Server::onReadyRead() {
         if (loginRex.indexIn(line) != -1) {
             QString user = loginRex.cap(1);
             clients[socket] = user;
-            sendToAll(QString("/system:" + user + " joined .\n"));
-            sendUserList();
             qDebug() << user << "logged in.";
 			clientproperty client00={
 									clientNum,
 									user,
-									21
+                                                                        21,
+                                                                        false
 			}; 
 			
 			if(!historyclients.contains(user))
@@ -109,8 +121,17 @@ void Server::onReadyRead() {
 				qDebug()<<"the num of this client is " <<clientNum;
 				qDebug()<<"this client's colortype is  " <<client00.colortype;
 			}
+                        if(historyclients.size()==1||user == Creator)
+                        {
+                            client00.Creator = true;
+                            qDebug()<<"current creator is "<<user;
+                            Creator = user;
+                        }
+                        sendToAll(QString("/system:" + user + " joined.\n"));
+                        sendUserList();
 			clientsproperty.push_back(client00);
 			sendColorMsg();
+                        sendCreatorMsg();
         }
         else if (messageRex.indexIn(line) != -1) {
             QString user = clients.value(socket);

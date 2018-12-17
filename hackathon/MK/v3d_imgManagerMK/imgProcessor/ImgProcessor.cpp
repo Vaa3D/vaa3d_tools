@@ -1,12 +1,141 @@
 #include <iostream>
 
-#include <boost\container\flat_set.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include "ImgProcessor.h"
 
 using namespace std;
 
-void ImgProcessor::skeleton2D(unsigned char inputImgPtr[], unsigned char outputImgPtr[], int imgDims[])
+morphStructElement2D::morphStructElement2D(string shape, int length) : eleShape(shape), xLength(length), yLength(length)
+{
+	if (!this->eleShape.compare("circle"))
+	{
+		this->radius = length / 2;
+		this->structElePtr = new unsigned char[(this->radius * 2 + 1) * (this->radius * 2 + 1)];
+		if (length == 3)
+		{
+			this->structElePtr[0] = 0; this->structElePtr[1] = 1; this->structElePtr[2] = 0;
+			this->structElePtr[3] = 1; this->structElePtr[4] = 1; this->structElePtr[5] = 1;
+			this->structElePtr[6] = 0; this->structElePtr[7] = 1; this->structElePtr[8] = 0;
+		}
+		else
+		{
+			int count = 0;
+			for (int j = -this->radius; j <= this->radius; ++j)
+			{
+				for (int i = -this->radius; i <= this->radius; ++i)
+				{
+					int rounded_dist = int(roundf(sqrt(float(i * i) + float(j * j))));
+					if (rounded_dist > this->radius) this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 0;
+					else this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 1;
+
+					++count;
+				}
+			}
+		}
+	}
+}
+
+morphStructElement2D::~morphStructElement2D()
+{
+	if (this->structElePtr != nullptr) delete[] this->structElePtr;
+}
+
+map<string, float> ImgProcessor::getBasicStats_fromHist(const map<int, size_t>& inputHistList)
+{
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	map<string, float> basicStats;
+	size_t totalPixNum = 0;
+
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		totalPixNum = totalPixNum + it->second;
+		sum = sum + float(it->first) * float(it->second);
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+		varSum = varSum + (it->first - mean) * (it->first - mean) * it->second;
+	var = float(varSum) / totalPixNum;
+	std = sqrt(var);
+	basicStats.insert({ "var", var });
+	basicStats.insert({ "std", std });
+
+	size_t count = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		count = count + it->second;
+		if (float(count) / float(totalPixNum) >= 0.5)
+		{
+			median = it->first;
+			break;
+		}
+	}
+	basicStats.insert({ "median", median });
+
+	return basicStats;
+}
+
+
+map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_t>& inputHistList)
+{
+	float sum = 0;
+	float mean = 0;
+	float var = 0;
+	float std = 0;
+	float median = 0;
+
+	map<string, float> basicStats;
+	size_t totalPixNum = 0;
+
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		totalPixNum = totalPixNum + it->second;
+		sum = sum + float(it->first) * float(it->second);
+	}
+	basicStats.insert(pair<string, float>("sum", sum));
+
+	mean = sum / float(totalPixNum);
+	basicStats.insert(pair<string, float>("mean", mean));
+
+	float varSum = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		varSum = varSum + (it->first - mean) * (it->first - mean) * it->second;
+	}
+	var = float(varSum) / totalPixNum;
+	std = sqrt(var);
+	basicStats.insert({ "var", var });
+	basicStats.insert({ "std", std });
+
+	size_t count = 0;
+	for (map<int, size_t>::const_iterator it = inputHistList.begin(); it != inputHistList.end(); ++it)
+	{
+		if (it->first == 0) continue;
+		count = count + it->second;
+		if (float(count) / float(totalPixNum) >= 0.5)
+		{
+			median = it->first;
+			break;
+		}
+	}
+	basicStats.insert({ "median", median });
+
+	return basicStats;
+}
+
+void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
 {
 	unsigned char** inputImg2Dptr = new unsigned char*[imgDims[1] + 2]; // imputImg2DPtr -> enlarged 2D binaray image. (1 v 0)
 	for (int j = 1; j <= imgDims[1]; ++j)
@@ -340,6 +469,66 @@ void ImgProcessor::skeleton2D(unsigned char inputImgPtr[], unsigned char outputI
 			if (inputImg2Dptr[j][i] == 1) outputImgPtr[outputCountI] = 255;
 			else outputImgPtr[outputCountI] = 0;
 			++outputCountI;
+		}
+	}
+}
+
+void ImgProcessor::erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+			
+			int minValue = 1000;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
+			}
+			if (minValue > 0) outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
+		}
+	}
+
+	delete[] roiPtr;
+}
+
+void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			if (int(inputImgPtr[imgDims[0] * j + i]) > threshold)
+			{
+				outputImgPtr[imgDims[0] * j + i] = inputImgPtr[imgDims[0] * j + i];
+				continue;
+			}
+
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+
+			int minValue = 1000;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
+			}
+			if (minValue > 0) outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
 		}
 	}
 }

@@ -7,25 +7,15 @@
 #include <set>
 #include <cmath>
 
+#include "ImgManager.h"
+#include "ImgProcessor.h"
+
 using namespace std;
-
-struct morphStructElement
-{
-	std::string eleShape;
-	int xLength, yLength;
-
-	morphStructElement();
-	morphStructElement(string shape);
-	morphStructElement(string shape, int length1, int length2);
-
-	vector<vector<int>> structEle2D;
-	vector<vector<vector<int>>> structEle3D;
-};
 
 struct connectedComponent
 {
 	int islandNum;
-	map<int, set<vector<int>>> coordSets;
+	map<int, set<vector<int>>> coordSets;  // The key is the number of slice. If there is only 1 slice, there will be only one pair<int, set<vector<int>>> in the map.
 	int xMax, xMin, yMax, yMin, zMax, zMin;
 	int size;
 	float ChebyshevCenter[3];
@@ -35,10 +25,18 @@ class ImgAnalyzer
 {
 public:
 	/***************** Image Segmentation *****************/
+
+	// Finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
+	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
+	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
 
+	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
+	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
 	/******************************************************/
+
+	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
 
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
 	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);

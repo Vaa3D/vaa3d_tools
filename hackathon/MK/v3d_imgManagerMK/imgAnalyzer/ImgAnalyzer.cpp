@@ -1,60 +1,18 @@
 #include <ctime>
 
-#include "ImgManager.h"
 #include "ImgAnalyzer.h"
-#include "ImgProcessor.h"
 
-morphStructElement::morphStructElement() : eleShape("square"), xLength(3), yLength(3)
-{
-	vector<int> array1(3, 1);
-	this->structEle2D.push_back(array1);
-	this->structEle2D.push_back(array1);
-	this->structEle2D.push_back(array1);
-}
-
-morphStructElement::morphStructElement(string shape) : eleShape(shape)
-{
-	if (this->eleShape.compare("square") == 0)
-	{
-		vector<int> array1(3, 1);
-		this->structEle2D.push_back(array1);
-		this->structEle2D.push_back(array1);
-		this->structEle2D.push_back(array1);
-	}
-	else if (this->eleShape.compare("circle") == 0)
-	{
-		this->xLength = 7;
-		this->yLength = 7;
-
-		vector<int> array1(7, 1);
-		vector<int> array2(7, 1);
-		vector<int> array3(7, 1);
-		array1.at(0) = 0; array1.at(1) = 0; array1.at(5) = 0; array1.at(6) = 0;
-		array2.at(0) = 0; array2.at(6) = 0;
-
-		this->structEle2D.push_back(array1);
-		this->structEle2D.push_back(array2);
-		this->structEle2D.push_back(array3);
-		this->structEle2D.push_back(array3);
-		this->structEle2D.push_back(array3);
-		this->structEle2D.push_back(array2);
-		this->structEle2D.push_back(array1);
-	}
-}
-
+// ======================================= Image Segmentation ======================================= //
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
-	// Finds connected components from a image statck using slice-by-slice approach.
-	// All components are stored in the form of ImgAnalyzer::connectedComponent.
-	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
-	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
-
 	vector<connectedComponent> connList;
-	cout << "slice dimension: " << dims[0] << " " << dims[1] << endl;
+	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
 
-	// --------- Only enter this selection block when MIP image is not provided ---------
+	// --------- Enter this selection block only when MIP image is not provided ---------
 	if (maxIP1D == nullptr) 
 	{
+		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
+
 		unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
 		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
 		for (int i = 0; i < dims[0] * dims[1]; ++i)
@@ -62,7 +20,8 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 			maxIP1D[i] = 0;
 			currSlice1D[i] = 0;
 		}
-		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
+		
+		cout << "scanning slices.. ";
 		for (vector<unsigned char**>::iterator it = inputSlicesVector.begin(); it != inputSlicesVector.end(); ++it)
 		{
 			cout << ptrdiff_t(it - inputSlicesVector.begin() + 1) << " ";
@@ -82,7 +41,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 		delete[] currSlice1D;
 		currSlice1D = nullptr;
 	}
-	// ------- END [Onlu get into this selection when MIP image is not provided] -------
+	// ------- END [Enter this selection block only when MIP image is not provided] -------
 
 	// ----------- Prepare white pixel address book ------------
 	set<vector<int>> whitePixAddress;
@@ -103,15 +62,15 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 	
 	// -------------------- Finding connected components slice by slice -------------------
 	int islandCount = 0;
-	cout << "  -- white pixel number: " << whitePixAddress.size() << endl;
-	cout << "Processing slices: ";
+	cout << "  -- white pixel number: " << whitePixAddress.size() << endl << endl;
+	cout << "Processing each slice to identify connected components: ";
 	for (vector<unsigned char**>::iterator sliceIt = inputSlicesVector.begin(); sliceIt != inputSlicesVector.end(); ++sliceIt)
 	{
 		int sliceNum = int(sliceIt - inputSlicesVector.begin());
 		cout << sliceNum << " ";
 		for (set<vector<int>>::iterator mipIt = whitePixAddress.begin(); mipIt != whitePixAddress.end(); ++mipIt)
 		{
-			if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0)
+			if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0) // use mip image to narraow down search region for every slice.
 			{
 				bool connected = false;
 				for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
@@ -122,7 +81,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 						for (set<vector<int>>::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
 						{
 							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
-								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1)
+								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1) // using 8-connectivity
 							{
 								vector<int> newCoord(3);
 								newCoord[0] = mipIt->at(0);
@@ -263,4 +222,29 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 	} while (zeroPortion < 0.5);
 
 	return dendriteSigSet;
+}
+// ===================================== END of [Image Segmentation] ===================================== //
+
+void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg)
+{
+	for (QList<NeuronSWC>::iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
+	{
+		int intensity = 0;
+		int imgDims[3];
+		int sliceCount = 0;
+		int currSliceIntensity;
+		imgDims[0] = inputImg.dims[0];
+		imgDims[1] = inputImg.dims[1];
+		imgDims[2] = 1;
+		for (map<string, myImg1DPtr>::const_iterator sliceIt = inputImg.slicePtrs.begin(); sliceIt != inputImg.slicePtrs.end(); ++sliceIt)
+		{
+			++sliceCount;
+			currSliceIntensity = int(ImgProcessor::getPixValue2D(sliceIt->second.get(), imgDims, int(nodeIt->x), int(nodeIt->y)));
+			if (currSliceIntensity > intensity)
+			{
+				intensity = currSliceIntensity;
+				nodeIt->z = sliceCount;
+			}
+		}
+	}
 }

@@ -1,0 +1,1 @@
+/bin/gcc     CMakeFiles/pseudo_emulator.dir/pseudo_emulator.c.o  -o pseudo_emulator -rdynamic 

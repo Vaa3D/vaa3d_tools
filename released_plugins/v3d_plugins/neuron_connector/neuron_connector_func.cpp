@@ -325,6 +325,10 @@ void connectall(NeuronTree* nt, QList<NeuronSWC>& newNeuron, double xscale, doub
                 tmpNeuron.type = nt->listNeuron.at(oid).type;
                 tmpNeuron.r = nt->listNeuron.at(oid).r;
                 tmpNeuron.fea_val = nt->listNeuron.at(oid).fea_val;
+                tmpNeuron.seg_id = nt->listNeuron.at(oid).seg_id;
+                tmpNeuron.level = nt->listNeuron.at(oid).level;
+                tmpNeuron.creatmode = nt->listNeuron.at(oid).creatmode;
+                tmpNeuron.timestamp = nt->listNeuron.at(oid).timestamp;
                 tmpNeuron.pn = newpn.at(oid);
                 newNeuron.append(tmpNeuron);
             }

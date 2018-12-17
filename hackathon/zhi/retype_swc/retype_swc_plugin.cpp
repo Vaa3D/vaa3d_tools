@@ -107,60 +107,22 @@ void retype_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
              //assign all sub_trees
              QVector<int> visit(nt.listNeuron.size(),0);
+             for(int i=1; i<nt.listNeuron.size();i++)
+             {
+                 if(NTDIS(nt.listNeuron.at(i),nt.listNeuron.at(0))<=40)
+                     visit[i]=1;
+
+             }
+
              for(int i=0; i<nt.listNeuron.size();i++)
              {
-                 if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
-                 {
-                     QQueue<int> q;
-                     visit[i]=1;
-                     q.push_back(i);
-                     while(!q.empty())
-                     {
-                         int current = q.front(); q.pop_front();
-                         for(int j=0; j<childs[current].size();j++)
-                         {
-                             int current_child = childs[current].at(j);
-                             if(visit[current_child]==0)
-                             {
-                                 visit[current_child]=1;
-                                 if(childs[current_child].size()<2)
-                                     q.push_back(current_child);
-                             }
-                         }
-                     }
-                     q.clear();
-                 }
+                 NeuronSWC current = nt.listNeuron[i];
+                 bool boundary=false;
+                 if(current.x<=3 || current.y<=3 || current.z<=3 || current.x>=128-4 ||
+                         current.y>=128-4 || current.z>=128-4)
+                     boundary=true;
 
-                 int diff_radius;
-                 if(nt.listNeuron[i].type<=130 && nt.listNeuron[i].radius<2 && visit[i]==0)
-                 {
-                     int count=0;
-                     int pre_sum=0;
-                     int next_sum=0;
-                     int pre=i, next=i;
-                     while(count<15 && childs[next].size()>0 && nt.listNeuron[pre].pn>0)
-                     {
-                         pre_sum += nt.listNeuron[pre].radius;
-                         next_sum += nt.listNeuron[next].radius;
-                         pre = nt.hashNeuron.value(nt.listNeuron[pre].pn);
-                         next = childs[next].at(0);
-                         count++;
-                     }
-
-                     if(count==15)
-                     {
-                         diff_radius = (next_sum-pre_sum);
-                         double node_angle = angle(nt.listNeuron[i], nt.listNeuron[pre], nt.listNeuron[next]);
-
-                         if(diff_radius>15)
-                         {
-                             nt.listNeuron[i].type=255;
-                            v3d_msg(QString("%1,%2").arg(node_angle).arg(diff_radius),0);
-                         }
-                     }
-                 }
-
-                 if(nt.listNeuron[i].type>130 && visit[i]==0 && childs[i].size()==1)
+                 if((current.radius>=8 || boundary)&& visit[i]==0)
                  {
                      QQueue<int> q;
                      visit[i]=1;
@@ -248,6 +210,42 @@ bool retype_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             v3d_msg("fail to write the output swc file.");
             return false;
         }
+    }else if (func_name == tr("retype_reference"))
+    {
+        if(infiles.size()<2)
+        {
+            cerr<<"Need two input swc files"<<endl;
+            return false;
+        }
+
+        if(outfiles.empty())
+        {
+            cerr<<"Need output file name"<<endl;
+            return false;
+        }
+
+        NeuronTree nt_original = readSWC_file(QString(infiles[0]));
+        NeuronTree nt_refined = readSWC_file(QString(infiles[1]));
+
+        for(V3DLONG i=0; i<nt_refined.listNeuron.size();i++)
+        {
+            nt_refined.listNeuron[i].level = 20;
+            if(nt_refined.listNeuron.at(i).type == 6)
+            {
+                for(V3DLONG j=0; j<nt_original.listNeuron.size();j++)
+                {
+                    if(NTDIS(nt_refined.listNeuron[i], nt_original.listNeuron[j])<1)
+                    {
+                        nt_refined.listNeuron[i].type = nt_original.listNeuron[j].type;
+                        nt_refined.listNeuron[i].level = 180;
+                        break;
+                    }
+                }
+
+            }
+        }
+
+        writeESWC_file(QString(outfiles[0]),nt_refined);
     }
     else if (func_name == tr("help"))
     {

@@ -35,10 +35,11 @@ struct somaNode // This structure carries crucial node properties on a soma tree
 	somaNode* selfAddr;
 	int level;
 	bool branch, headSoma, tailSoma, middleSoma, soma;
+	bool cut;
 
 	somaNode() 
 	{
-		branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false;
+		branch = false; headSoma = false; tailSoma = false; middleSoma = false; soma = false, cut = false;
 		childrenSomas.clear();
 		parent.clear();
 	}
@@ -109,6 +110,7 @@ protected:
 	long int pathScissor(QList<NeuronSWC>& segment); // This method gets called by breakSomaMorph.
 
 private:
+	bool branchSomaMerge;
 	bool circle;
 	bool branchAncestor;
 	int forward;

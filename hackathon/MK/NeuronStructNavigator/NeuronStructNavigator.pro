@@ -27,19 +27,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DESTDIR = ../../../../v3d_external/v3d_main/common_lib/lib
 
 VAA3DPATH = ../../../../v3d_external
+V3DTOOLPATH = ../../../released_plugins/v3d_plugins
 INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH += ../v3d_imgManagerMK
 INCLUDEPATH += ../v3d_imgManagerMK/imgProcessor
 INCLUDEPATH += ../v3d_imgManagerMK/imgAnalyzer
 INCLUDEPATH += $$VAA3DPATH/v3d_main/neuron_editing
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtGui
 INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtCore
+INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
 
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib
 #LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0/lib -lboost_system
 LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtGui
 LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtCore
-
 
 SOURCES += ./NeuronStructExplorer.cpp
 SOURCES += ./NeuronStructUtilities.cpp
@@ -54,3 +56,5 @@ HEADERS += $$VAA3DPATH/v3d_main/neuron_editing/v_neuronswc.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h
 HEADERS += ../v3d_imgManagerMK/imgProcessor/ImgProcessor.h
 HEADERS += ../v3d_imgManagerMK/imgAnalyzer/ImgAnalyzer.h
+HEADERS += ../v3d_imgManagerMK/ImgManager.h
+HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h

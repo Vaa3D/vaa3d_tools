@@ -25,8 +25,8 @@
 #include <deque>
 #include <map>
 
-#include <boost\filesystem.hpp>
-#include <boost\shared_array.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/shared_array.hpp>
 
 #include <qstring.h>
 #include <qstringlist.h>
@@ -44,11 +44,12 @@ struct registeredImg
 	string imgAlias;
 	QString imgCaseRootQ;
 
-	//shared_ptr<unsigned char*> imgData1D;
-	//shared_ptr<unsigned char**> imgData2D;
-	//shared_ptr<unsigned char***> imgData3D;
-
 	map<string, myImg1DPtr> slicePtrs;
+
+	map<int, size_t> histMap;
+	map<int, double> histMap_log10;
+	void getHistMap_no0();
+	void getHistMap_no0_log10();
 	
 	int dims[3];
 };
@@ -67,6 +68,7 @@ public:
 	
 	QStringList caseList;
 	string inputSingleCaseSingleSliceFullPath;
+	string inputSingleCaseSingleCubeFullPath;
 	string outputSingleCaseSingleSliceFullPath;
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
@@ -74,17 +76,19 @@ public:
 	enum imgFormat { cube, slices, singleCase_singleSlice };
 	/*******************************************************/
 
-	/***************** I/O *****************/
+	/***************** I/O and Image Property Profile *****************/
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
 	void imgEntry(string caseID, imgFormat format);
 
-	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata, V3DLONG sz[], int datatype);
+	static inline bool saveimage_wrapper(const char* filename, unsigned char* pdata,  V3DLONG sz[], int datatype);
 	
 	static inline void imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[]);
-	/***************************************/
+	/******************************************************************/
 
 	/***************** Image - SWC Functionalities *****************/
 	static inline vector<int> retreiveSWCcropDnParam_imgBased(const registeredImg& originalImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin = 10, bool zShift = false);
+	
+	static NeuronTree imgSignal2SWC(const registeredImg& sourceImg, int type = 2);
 	/***************************************************************/
 
 	/********* Methods for Generating Binary Masks from SWC Files *********/

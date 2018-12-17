@@ -65,7 +65,6 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         }
         new_tree.listNeuron.append(node);
     }
-//    export_listNeuron_2swc(nt.listNeuron, "test.swc");
 
     // 2.3 return single tree
     if(report_single_tree){
@@ -76,7 +75,6 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
     else{
         nt.deepCopy(my_SortSWC(new_tree, soma_name, 0));
     }
-    export_listNeuron_2swc(nt.listNeuron, "before_resample.swc");
 
     // 3. resample
     if (resample_step>0){
@@ -94,7 +92,6 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
     }else{
         printf("\tSkip resampling\n");
     }
-    export_listNeuron_2swc(nt.listNeuron, "aftre_resample.swc");
 
     //2.6 Align axis
     if (rotation)

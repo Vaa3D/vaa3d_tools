@@ -1,14 +1,62 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <cmath>
 
-#include <boost\algorithm\string.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "ImgProcessor.h"
 #include "ImgManager.h"
 
 using namespace std;
 using namespace boost::filesystem;
+
+void registeredImg::getHistMap_no0()
+{
+	if (slicePtrs.empty())
+	{
+		cerr << "No existing images. Do nothing and return." << endl;
+		return;
+	}
+
+	int sliceDims[3];
+	sliceDims[0] = this->dims[0];
+	sliceDims[1] = this->dims[1];
+	sliceDims[2] = 1;
+
+	for (map<string, myImg1DPtr>::iterator it = this->slicePtrs.begin(); it != this->slicePtrs.end(); ++it)
+	{
+		map<int, size_t> currSliceHistMap = ImgProcessor::histQuickList(it->second.get(), sliceDims);
+		for (map<int, size_t>::iterator cummIt = currSliceHistMap.begin(); cummIt != currSliceHistMap.end(); ++cummIt)
+		{
+			if (!this->histMap.insert({ cummIt->first, cummIt->second }).second)
+				this->histMap[cummIt->first] = this->histMap[cummIt->first] = cummIt->second;
+		}
+	}
+}
+
+void registeredImg::getHistMap_no0_log10()
+{
+	if (slicePtrs.empty())
+	{
+		cerr << "No existing images. Do nothing and return." << endl;
+		return;
+	}
+
+	if (!this->histMap.empty())
+	{
+		for (map<int, size_t>::iterator it = this->histMap.begin(); it != this->histMap.end(); ++it)
+		{
+			double countLog10 = log10(float(it->second));
+			this->histMap_log10.insert({ it->first, countLog10 });
+		}
+	}
+	else
+	{
+		this->getHistMap_no0();
+		this->getHistMap_no0_log10();
+	}
+}
 
 ImgManager::ImgManager(QString inputPath)
 {
@@ -47,7 +95,7 @@ ImgManager::ImgManager(QString inputPath)
 				QString imgFullPath = this->inputCaseRootPath + "/" + *caseIt;
 				QStringList nameParse = (*caseIt).split(".");
 				*caseIt = nameParse.at(0);
-				this->inputMultiCasesSliceFullPaths.insert(pair<string, string>((*caseIt).toStdString(), imgFullPath.toStdString()));
+				this->inputMultiCasesSliceFullPaths.insert({ (*caseIt).toStdString(), imgFullPath.toStdString() });
 			}
 		}
 	}
@@ -55,6 +103,7 @@ ImgManager::ImgManager(QString inputPath)
 	{
 		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
 		{
+			this->inputCaseRootPath = inputPath;
 			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
 			QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
 			QDir caseFolder(caseFullPath);
@@ -65,12 +114,14 @@ ImgManager::ImgManager(QString inputPath)
 			for (QStringList::iterator sliceIt = caseSlices.begin(); sliceIt != caseSlices.end(); ++sliceIt)
 			{
 				QString sliceFullPath = caseFullPath + "/" + *sliceIt;
-				this->inputMultiCasesSliceFullPaths.insert(pair<string, string>((*caseIt).toStdString(), sliceFullPath.toStdString()));
+				this->inputMultiCasesSliceFullPaths.insert({ (*caseIt).toStdString(), sliceFullPath.toStdString() });
 			}
 		}
 	}
 }
 
+
+// ======================================= I/O and Image Property Profile ======================================= //
 void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
 	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
@@ -94,16 +145,16 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 			currImgCase.dims[0] = int(slicePtr->getXDim());
 			currImgCase.dims[1] = int(slicePtr->getYDim());
 			currImgCase.dims[2] = 1;
-			long int totalbyteSlice = slicePtr->getTotalBytes();
+			int totalbyteSlice = slicePtr->getTotalBytes();
 			myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 			memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-			currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(sliceFileName, slice1D));
+			currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
 
 			slicePtr->~Image4DSimple();
 			operator delete(slicePtr);
 		}
 
-		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
+		this->imgDatabase.insert({ caseID, currImgCase });
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 	else if (format == singleCase_singleSlice)
@@ -120,18 +171,56 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		slicePtr->loadImage(sliceFullNameC);
 		currImgCase.dims[0] = int(slicePtr->getXDim());
 		currImgCase.dims[1] = int(slicePtr->getYDim());
-		currImgCase.dims[2] = 1;
-		long int totalbyteSlice = slicePtr->getTotalBytes();
+		currImgCase.dims[2] = int(slicePtr->getZDim());
+		int totalbyteSlice = slicePtr->getTotalBytes();
 		myImg1DPtr slice1D(new unsigned char[totalbyteSlice]);
 		memcpy(slice1D.get(), slicePtr->getRawData(), totalbyteSlice);
-		currImgCase.slicePtrs.insert(pair<string, myImg1DPtr>(sliceFileName, slice1D));
+		currImgCase.slicePtrs.insert({ sliceFileName, slice1D });
 
 		slicePtr->~Image4DSimple();
 		operator delete(slicePtr);
 
-		this->imgDatabase.insert(pair<string, registeredImg>(caseID, currImgCase));
+		this->imgDatabase.insert({ caseID, currImgCase });
+		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 }
+// ===================================== END of [I/O and Image Property Profile] ===================================== //
+
+// ======================================= Image - SWC Methods ======================================= //
+NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
+{
+	NeuronTree outputTree;
+	int zCoord = 0;
+	int nodeCount = 0;
+	for (map<string, myImg1DPtr>::const_iterator sliceIt = sourceImg.slicePtrs.begin(); sliceIt != sourceImg.slicePtrs.end(); ++sliceIt)
+	{
+		++zCoord;
+		for (size_t i = 0; i < sourceImg.dims[0] * sourceImg.dims[1]; ++i)
+		{
+			if (sliceIt->second.get()[i] > 0)
+			{
+				int yCoord = int(i + 1) / sourceImg.dims[0];
+				int xCoord = int(i + 1) % sourceImg.dims[0];
+
+				++nodeCount;
+				NeuronSWC newNode;
+				newNode.x = xCoord;
+				newNode.y = yCoord;
+				newNode.z = zCoord;
+				newNode.type = type;
+				newNode.n = nodeCount;
+				newNode.parent = -1;
+
+				outputTree.listNeuron.append(newNode);
+			}
+		}
+	}
+
+	return outputTree;
+}
+
+
+// =================================== END of [Image - SWC Methods] ===================================== //
 
 // ================= Methods for generating binary masks from SWC files ================= //
 void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)

@@ -1,0 +1,1 @@
+/bin/gcc     CMakeFiles/pseudo_tidy.dir/pseudo_tidy.c.o  -o pseudo_tidy -rdynamic 
