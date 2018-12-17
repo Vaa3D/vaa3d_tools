@@ -6,8 +6,8 @@
 <script src="/statics/OrbitControls.js"></script>
 <script src="/statics/FirstPersonControls.js"></script>
 <script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
-<script src="~/js/VirtualPyramid.js"></script>
-<script src="~/js/SingleFile.js"></script>
+<script src="~/js/VirtualPyramid5.js"></script>
+<script src="~/js/SingleFile5.js"></script>
 <script src="~/js/mainstyle.js"></script>
 <script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
 
@@ -15,8 +15,13 @@
 <script src="~/js/VolumeShader.js"></script>
 <script src="~/js/WebGL.js"></script>
 <script src="~/js/Lut.js"></script>
+<script src="~/js/imagefunction.js"></script>
 
-
+<script src="~/js/EffectComposer.js"></script>
+<script src="~/js/RenderPass.js"></script>
+<script src="~/js/ShaderPass.js"></script>
+<script src="~/js/CopyShader.js"></script>
+<script src="~/js/VolumeShader2.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -53,7 +58,7 @@
                                 <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
                                 <ul id="thrid-nave-open">
 
-                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="VolumeRender()" /></li>
+                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="readlocalfile()" /></li>
 
                                     <li id="open-server" onclick="getPictures()"><i class="fa  fa-server fa-fw"></i>&nbsp;open from server</li> <!--待完善-->
                                     <li id="open-url"><i class="fa fa-globe fa-fw "></i>&nbsp;open by URL</li>

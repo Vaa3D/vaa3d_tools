@@ -84,37 +84,37 @@ function VolumeRender() {
                 UTIF.decodeImages(e.target.result, ifds);
 
 
-                bbox = new THREE.BoxGeometry(ifds[0].width,ifds[0].height,  ifds.length);
+                bbox = new THREE.BoxGeometry(ifds[0].width, ifds[0].height, ifds.length);
                 //console.log(ifds[0].height, ifds[0].width, ifds.length);
                 var edges = new THREE.EdgesGeometry(bbox);
                 var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
-                line.position.set( Math.ceil(ifds[0].width / 2),Math.ceil(ifds[0].height / 2), Math.ceil(ifds.length / 2));
+                line.position.set(Math.ceil(ifds[0].width / 2), Math.ceil(ifds[0].height / 2), Math.ceil(ifds.length / 2));
                 scene.add(line);
-                controls.target.set( Math.ceil(ifds[0].width / 2),Math.ceil(ifds[0].height / 2), Math.ceil(ifds.length / 2));
+                controls.target.set(Math.ceil(ifds[0].width / 2), Math.ceil(ifds[0].height / 2), Math.ceil(ifds.length / 2));
 
 
 
                 //console.log(ifds);
-                var rgba = new Float32Array();
-                rgba= UTIF.toRGBA8(ifds[0]);
-
-                for (j = 1; j < ifds.length; j++) {
-                    var data = UTIF.toRGBA8(ifds[j]);
-     
-                    rgba = mergeTypedArraysUnsafe(rgba, data);
-                   
+                var rgba = new Uint8Array(UTIF.toRGBA8(ifds[0]).length * ifds.length);
+                //console.log(rgba);
+                //rgba = UTIF.toRGBA8(ifds[0]);
+                var data = 0;
+                for (j = 0; j < ifds.length; j++) {
+                  data = UTIF.toRGBA8(ifds[j]);
+                    rgba.set(data, j * UTIF.toRGBA8(ifds[0]).length);
+                    //console.log(data);
                 }
                 //console.log(rgba);
                 //var rgba2 = new Float32Array(rgba.length / 4);
-                
+
 
                 //for (j = 0; j < rgba.length / 4; j++) {
                 //    rgba2[j] = rgba[j * 4]/255;
                 //}
                 //console.log(rgba2);
 
-                var texture = new THREE.DataTexture3D(rgba, ifds[0].width,ifds[0].height, ifds.length);
-               //texture.format = THREE.RedFormat;
+                var texture = new THREE.DataTexture3D(rgba, ifds[0].width, ifds[0].height, ifds.length);
+                //texture.format = THREE.RedFormat;
                 texture.format = THREE.RGBAFormat;
                 texture.type = THREE.UnsignedByteType;
                 texture.minFilter = texture.magFilter = THREE.LinearFilter;
@@ -122,23 +122,23 @@ function VolumeRender() {
                 texture.needsUpdate = true;
                 console.log(texture);
                 // Colormap textures
-                
+
 
                 cmtextures = {
                     viridis: new THREE.TextureLoader().load('textures/cm_viridis.png', render),
                     gray: new THREE.TextureLoader().load('textures/cm_gray.png', render),
-                    
+
                 };
 
-               // console.log(cmtextures);
+                // console.log(cmtextures);
 
                 // Material
-                var shader = THREE.VolumeRenderShader1;
+                var shader = THREE.VolumeRenderShader2;
 
                 var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
                 uniforms.u_data.value = texture;
-                uniforms.u_size.value.set( ifds[0].width,ifds[0].height, ifds.length);
+                uniforms.u_size.value.set(ifds[0].width, ifds[0].height, ifds.length);
                 uniforms.u_clim.value.set(volconfig.clim1, volconfig.clim2);
                 uniforms.u_renderstyle.value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
                 uniforms.u_renderthreshold.value = volconfig.isothreshold; // For ISO renderstyle
@@ -152,7 +152,7 @@ function VolumeRender() {
                 });
                 material.transparent = true;
                 // Mesh
-                var geometry = new THREE.BoxGeometry(ifds[0].width,ifds[0].height,  ifds.length);
+                var geometry = new THREE.BoxGeometry(ifds[0].width, ifds[0].height, ifds.length);
                 geometry.translate(ifds[0].width / 2 - 0.5, ifds[0].height / 2 - 0.5, ifds.length / 2 - 0.5);
 
                 var mesh = new THREE.Mesh(geometry, material);
@@ -196,7 +196,7 @@ function VolumeRender() {
 
                 //}
 
-                
+
             };
         })(file);
         reader.readAsArrayBuffer(file);

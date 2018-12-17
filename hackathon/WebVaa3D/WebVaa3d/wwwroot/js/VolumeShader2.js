@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @author Almar Klein / http://almarklein.org
  *
  * Shaders to render 3D volumes using raycasting.
@@ -6,7 +6,7 @@
  * This is not the only approach, therefore it's marked 1.
  */
 
-THREE.VolumeRenderShader1 = {
+THREE.VolumeRenderShader2 = {
     uniforms: {
         "u_size": { value: new THREE.Vector3(1, 1, 1) },
         "u_renderstyle": { value: 0 },
@@ -92,14 +92,14 @@ THREE.VolumeRenderShader1 = {
     ].join('\n'),
     fragmentShader: [
         'precision highp float;',
-        'precision mediump sampler3D;',
+        'precision mediump sampler2D;',
 
         'uniform vec3 u_size;',
         'uniform int u_renderstyle;',
         'uniform float u_renderthreshold;',
         'uniform vec2 u_clim;',
 
-        'uniform sampler3D u_data;',
+        'uniform sampler2D u_data[500];',
         'uniform sampler2D u_cmdata;',
 
         'varying vec3 v_position;',
@@ -122,9 +122,8 @@ THREE.VolumeRenderShader1 = {
         'const float shininess = 4.0;',
 
         'void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);',
-        'void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);',
 
-        'float sample1(vec3 texcoords);',
+
         'vec3 sample2(vec3 texcoords);',
         'vec4 apply_colormap(float val);',
         'vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);',
@@ -169,22 +168,18 @@ THREE.VolumeRenderShader1 = {
         'if (u_renderstyle == 0)',
         //'gl_FragColor = vec4(sample2(v_position),1);',
         'cast_mip(start_loc, step, nsteps, view_ray);',
-        'else if (u_renderstyle == 1)',
-        'cast_iso(start_loc, step, nsteps, view_ray);',
+     
 
         'if (gl_FragColor.a < 0.05)',
         'discard;',
         '}',
 
 
-        'float sample1(vec3 texcoords) {',
-        '/* Sample float value from a 3D texture. Assumes intensity data. */',
-        'return texture(u_data, texcoords.xyz).r;',
-        '}',
 
         'vec3 sample2(vec3 texcoords) {',
         '/* Sample float value from a 3D texture. Assumes intensity data. */',
-        'return texture(u_data, texcoords.xyz).rgb;',
+        'int index=int(texcoords.z);',
+        'return texture2D(u_data[index], texcoords.xy).rgb;',
         '}',
 
 
@@ -230,114 +225,12 @@ THREE.VolumeRenderShader1 = {
         //'}',
 
         // Resolve final color
-        //'if (max_val2.r==0.) {alpha=0.;} else {alpha=1.;}',
+        'if (max_val2.r==0.) {alpha=0.;} else {alpha=1.;}',
         'gl_FragColor = vec4(max_val2,alpha); ',
         '}',
 
 
-        'void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {',
-
-        'gl_FragColor = vec4(0.0);  // init transparent',
-        'vec4 color3 = vec4(0.0);  // final color',
-        'vec3 dstep = 1.5 / u_size;  // step to sample derivative',
-        'vec3 loc = start_loc;',
-
-        'float low_threshold = u_renderthreshold - 0.02 * (u_clim[1] - u_clim[0]);',
-
-        // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
-        // non-constant expression. So we use a hard-coded max, and an additional condition
-        // inside the loop.
-        'for (int iter=0; iter<MAX_STEPS; iter++) {',
-        'if (iter >= nsteps)',
-        'break;',
-
-        // Sample from the 3D texture
-        'float val = sample1(loc);',
-
-        'if (val > low_threshold) {',
-        // Take the last interval in smaller steps
-        'vec3 iloc = loc - 0.5 * step;',
-        'vec3 istep = step / float(REFINEMENT_STEPS);',
-        'for (int i=0; i<REFINEMENT_STEPS; i++) {',
-        'val = sample1(iloc);',
-        'if (val > u_renderthreshold) {',
-        'gl_FragColor = add_lighting(val, iloc, dstep, view_ray);',
-        'return;',
-        '}',
-        'iloc += istep;',
-        '}',
-        '}',
-
-        // Advance location deeper into the volume
-        'loc += step;',
-        '}',
-        '}',
-
-
-        'vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)',
-        '{',
-        // Calculate color by incorporating lighting
-
-        // View direction
-        'vec3 V = normalize(view_ray);',
-
-        // calculate normal vector from gradient
-        'vec3 N;',
-        'float val1, val2;',
-        'val1 = sample1(loc + vec3(-step[0], 0.0, 0.0));',
-        'val2 = sample1(loc + vec3(+step[0], 0.0, 0.0));',
-        'N[0] = val1 - val2;',
-        'val = max(max(val1, val2), val);',
-        'val1 = sample1(loc + vec3(0.0, -step[1], 0.0));',
-        'val2 = sample1(loc + vec3(0.0, +step[1], 0.0));',
-        'N[1] = val1 - val2;',
-        'val = max(max(val1, val2), val);',
-        'val1 = sample1(loc + vec3(0.0, 0.0, -step[2]));',
-        'val2 = sample1(loc + vec3(0.0, 0.0, +step[2]));',
-        'N[2] = val1 - val2;',
-        'val = max(max(val1, val2), val);',
-
-        'float gm = length(N); // gradient magnitude',
-        'N = normalize(N);',
-
-        // Flip normal so it points towards viewer
-        'float Nselect = float(dot(N, V) > 0.0);',
-        'N = (2.0 * Nselect - 1.0) * N;  // ==  Nselect * N - (1.0-Nselect)*N;',
-
-        // Init colors
-        'vec4 ambient_color = vec4(0.0, 0.0, 0.0, 0.0);',
-        'vec4 diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);',
-        'vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);',
-
-        // note: could allow multiple lights
-        'for (int i=0; i<1; i++)',
-        '{',
-        // Get light direction (make sure to prevent zero devision)
-        'vec3 L = normalize(view_ray);  //lightDirs[i];',
-        'float lightEnabled = float( length(L) > 0.0 );',
-        'L = normalize(L + (1.0 - lightEnabled));',
-
-        // Calculate lighting properties
-        'float lambertTerm = clamp(dot(N, L), 0.0, 1.0);',
-        'vec3 H = normalize(L+V); // Halfway vector',
-        'float specularTerm = pow(max(dot(H, N), 0.0), shininess);',
-
-        // Calculate mask
-        'float mask1 = lightEnabled;',
-
-        // Calculate colors
-        'ambient_color +=  mask1 * ambient_color;  // * gl_LightSource[i].ambient;',
-        'diffuse_color +=  mask1 * lambertTerm;',
-        'specular_color += mask1 * specularTerm * specular_color;',
-        '}',
-
-        // Calculate final color by componing different components
-        'vec4 final_color;',
-        'vec4 color = apply_colormap(val);',
-        'final_color = color * (ambient_color + diffuse_color) + specular_color;',
-        'final_color.a = color.a;',
-        'return final_color;',
-        '}',
+       
     ].join('\n')
 };
 

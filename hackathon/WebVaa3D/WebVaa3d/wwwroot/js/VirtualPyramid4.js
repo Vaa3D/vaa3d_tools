@@ -1,13 +1,19 @@
 ﻿const axios = window.axios;
-renderer = new THREE.WebGLRenderer({ alpha: false } );
+var canvas = document.createElement('canvas');
+var context = canvas.getContext('webgl2');
+renderer = new THREE.WebGLRenderer({ canvas: canvas, context: context });
 //camera = new THREE.PerspectiveCamera();
 //scene = new THREE.Scene();
 mouse = new THREE.Vector2();
 clock = new THREE.Clock();
-bbox = new THREE.BoxGeometry(853, 537, 153);
+bbox = new THREE.BoxGeometry(537, 853, 153);
 level = 0;
 
 scene = [];
+tiffwidth = 0;
+tiffheight = 0;
+
+rgba = new Uint8Array();
 for (var i = 0; i <= 5; i++) {
 
     scene[i] = new THREE.Scene;
@@ -37,14 +43,17 @@ function init() {
 
     for (var i = 0; i <= 5; i++) {
 
-        camera[i] = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+         camera[i] = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+        //var h = 512; // frustum height
+        //var aspect = width / height;
+        //camera[i] = new THREE.OrthographicCamera(- h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 10000);
     }
-    
+
     document.getElementById("view").appendChild(renderer.domElement);
 
     controls = new THREE.OrbitControls(camera[0], document.getElementById('view'));//创建控件对象
     controls.addEventListener('change', render);//监听鼠标、键盘事件
-    controls.target.set(427, 269, 77);
+    controls.target.set(269, 427, 77);
 
     camera[0].position.x = 431;
     camera[0].position.y = 494;
@@ -52,10 +61,10 @@ function init() {
 
     //renderer.setClearColor(0x000000, 1.0);
     renderer.setClearColor(0x000000, 1.0);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    //renderer.setPixelRatio(window.devicePixelRatio);
     document.getElementById("view").appendChild(renderer.domElement);
 
-    
+
     //var material = new THREE.MeshBasicMaterial({ color: 0x000000 });
     //material.transparent = true;
     //material.opacity = 0;
@@ -65,13 +74,14 @@ function init() {
     //scene.add(cube);
 
 
-    camera[0].lookAt(427, 269, 77);
+    //camera[0].lookAt(269, 427, 77);
+    // camera[0].up.set(1, 0, 0);
 
     var axesHelper = new THREE.AxesHelper(1000);
     scene[0].add(axesHelper);
 
 
-    
+
     //console.log(cube);
     render();
 
@@ -94,105 +104,166 @@ render();
 //}
 
 
-async function getPictures()
-{
+async function getPictures() {
     init();
     var id = 0;
     const res = await axios.get(`api/tiff/${+id}`);
     var files = res.data;
-    for (index in files)
-    {   
+    for (index in files) {
         const file = files[index];
         const response = await axios.get(`api/tiff/${+id}/${file}`, { responseType: "arraybuffer" });
 
 
         var fileName = $("#file").val();
         console.log(file);
+       
         var regex = /\d+/g;
         var filestr = file.match(regex);
-
+        //console.log(Math.round(filestr[1] / 114560), int(filestr[0] / 136960));
         var tiff = new Tiff({ buffer: response.data });
         var count = tiff.countDirectory();
+        tiff.setDirectory(0);
+        //var rgba = new Uint8Array(tiff.readRGBAImage());
+        //rgba = tiff.readRGBAImage();
+        //console.log(rgba);
+
+        if (index == 0) {
+            rgba = new Uint8Array(tiff.width()*tiff.height()*count*4*12);
+           // console.log(rgba);
+            console.log(tiff.width(), tiff.height(), count);
+        }
+
+        //if (index == 0) {
+        //    var rgba = new Uint8Array(tiff.readRGBAImage());
+            
+        //    console.log(rgba);
+        //}
+      
 
         var j;
         for (j = 0; j < count; j++) {
+           
             tiff.setDirectory(j);
-            var buffer = tiff.readRGBAImage();
-            //console.log(tiff.width(),tiff.height());
-            const rgba = new Uint8Array(buffer);
-
-            var k; var contrast = 12; var thresh = 2;
-            for (k = 0; k < rgba.byteLength; k = k + 4) {
-                if (rgba[k] < thresh) { rgba[k + 3] = 0; }
-                rgba[k] *= contrast;
-                rgba[k + 1] *= contrast;
-                rgba[k + 2] *= contrast;
-                if (rgba[k] == 0 && rgba[k + 1] == 0 && rgba[k + 1] == 0)
-                    rgba[k + 3] = 0;
+            var buffer = new Uint8Array(tiff.readRGBAImage());
+            var k; var contrast = 12; var thresh = 0;
+            for (k = 0; k < buffer.byteLength; k = k + 4) {
+                if (buffer[k] < thresh) { buffer[k + 3] = 0; }
+                buffer[k] *= contrast;
+                buffer[k + 1] *= contrast;
+                buffer[k + 2] *= contrast;
+                if (buffer[k] == 0 && buffer[k + 1] == 0 && buffer[k + 2] == 0)
+                    buffer[k + 3] = 0;
 
             }
-            //console.log(filestr[1] / 114560);
+            //console.log(buffer);
+            //console.log(buffer.slice(0,  tiff.width() * 4));
+            for (x = 0; x < tiff.height(); x++) {
+                rgba.set(buffer.slice(x * tiff.width() * 4, (x + 1) * tiff.width() * 4), j * tiff.width() * tiff.height() * 4 * 12 + (Math.round(filestr[0] / 136960 )* tiff.height() + x) * 3 * tiff.width() * 4 + Math.round(filestr[1] / 114560) * tiff.width() * 4);
 
 
-
-            const gl = this.gl;
-
-
-
-            // A begin
-            var geometry = new THREE.Geometry(); //创建一个空几何体对象
-            /**顶点坐标(纹理映射位置)*/
+            }
+            //console.log(rgba);
+           
 
 
-            var p1 = new THREE.Vector3(0 + filestr[0] / 136960 * tiff.height(), 0 + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点1坐标
-            var p2 = new THREE.Vector3(0 + filestr[0] / 136960 * tiff.height(), tiff.width() + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点2坐标
-            var p3 = new THREE.Vector3(tiff.height() + filestr[0] / 136960 * tiff.height(), tiff.width() + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点3坐标
-            var p4 = new THREE.Vector3(tiff.height() + filestr[0] / 136960 * tiff.height(), 0 + filestr[1] / 114560 * tiff.width(), j + filestr[2] / 49280 * count); //顶点4坐标
-            geometry.vertices.push(p1, p2, p3, p4); //顶点坐标添加到geometry对象
-            //console.log(p1, p2, p3, p4);
-
-
-            /** 三角面1、三角面2*/
-            var normal = new THREE.Vector3(0, 0, 1); //三角面法向量
-            var face0 = new THREE.Face3(0, 1, 2, normal); //三角面1
-            var face1 = new THREE.Face3(0, 2, 3, normal); //三角面2
-            geometry.faces.push(face0, face1); //三角面1、2添加到几何体
-            /**纹理坐标*/
-            var t0 = new THREE.Vector2(0, 0);//图片左下角
-            var t1 = new THREE.Vector2(1, 0);//图片右下角
-            var t2 = new THREE.Vector2(1, 1);//图片右上角
-            var t3 = new THREE.Vector2(0, 1);//图片左上角
-            uv1 = [t0, t1, t2];//选中图片一个三角区域像素——映射到三角面1
-            uv2 = [t0, t2, t3];//选中图片一个三角区域像素——映射到三角面2
-            geometry.faceVertexUvs[0].push(uv1, uv2);//纹理坐标传递给纹理三角面属性
-
-
-
-            //var texture2 = new THREE.TextureLoader().load( rgba );
-
-            //console.log(texture2);
-            var texture = new THREE.DataTexture(rgba, tiff.width(), tiff.height(), THREE.RGBAFormat);
-            texture.needsUpdate = true;
-            //console.log(texture);
-            var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-            material.transparent = true;
-            //material.opacity = 0.5;
-            material.blending = THREE["CustomBlending"];
-            material.blendEquation = THREE.MaxEquation;
-            //material.depthWrite = false,
-            //material.depthTest = false,
-            material.alphaTest = 0.5;
-
-            var mesh = new THREE.Mesh(geometry, material);
-
-            scene[0].add(mesh);
-
-
+            //console.log(rgba, buffer);
+           // rgba = mergeTypedArraysUnsafe(rgba, buffer);
+            buffer = null;
         }
+
+        //var k; var contrast = 12; var thresh = 0;
+        //for (k = 0; k < rgba.byteLength; k = k + 4) {
+        //    if (rgba[k] < thresh) { rgba[k + 3] = 0; }
+        //    rgba[k] *= contrast;
+        //    rgba[k + 1] *= contrast;
+        //    rgba[k + 2] *= contrast;
+        //    if (rgba[k] == 0 && rgba[k + 1] == 0 && rgba[k + 2] == 0)
+        //        rgba[k + 3] = 0;
+
+        //}
+       // console.log(rgba);
+        tiffwidth = tiff.width();
+        tiffheight = tiff.height();
+        const gl = this.gl;
         tiff.close();
 
-
     }
+
+    console.log(tiffwidth, tiffheight,count);
+        // A begin
+    var geometry = new THREE.BoxGeometry(tiffwidth * 3, tiffheight * 4, count);
+
+        /**顶点坐标(纹理映射位置)*/
+    geometry.translate(tiffwidth * 1.5, tiffheight * 2, count/2);
+
+        console.log(geometry);
+        //var p1 = new THREE.Vector3(0 + filestr[0] / 136960 * tiffheight, 0 + filestr[1] / 114560 * tiffwidth, j + filestr[2] / 49280 * count); //顶点1坐标
+        //var p2 = new THREE.Vector3(0 + filestr[0] / 136960 * tiffheight, tiffwidth + filestr[1] / 114560 * tiffwidth, j + filestr[2] / 49280 * count); //顶点2坐标
+        //var p3 = new THREE.Vector3(tiffheight + filestr[0] / 136960 * tiffheight, tiffwidth + filestr[1] / 114560 * tiffwidth, j + filestr[2] / 49280 * count); //顶点3坐标
+        //var p4 = new THREE.Vector3(tiffheight + filestr[0] / 136960 * tiffheight, 0 + filestr[1] / 114560 * tiffwidth, j + filestr[2] / 49280 * count); //顶点4坐标
+        //geometry.vertices.push(p1, p2, p3, p4); //顶点坐标添加到geometry对象
+        ////console.log(p1, p2, p3, p4);
+
+
+        ///** 三角面1、三角面2*/
+        //var normal = new THREE.Vector3(0, 0, 1); //三角面法向量
+        //var face0 = new THREE.Face3(0, 1, 2, normal); //三角面1
+        //var face1 = new THREE.Face3(0, 2, 3, normal); //三角面2
+        //geometry.faces.push(face0, face1); //三角面1、2添加到几何体
+        ///**纹理坐标*/
+        //var t0 = new THREE.Vector2(0, 0);//图片左下角
+        //var t1 = new THREE.Vector2(1, 0);//图片右下角
+        //var t2 = new THREE.Vector2(1, 1);//图片右上角
+        //var t3 = new THREE.Vector2(0, 1);//图片左上角
+        //uv1 = [t0, t1, t2];//选中图片一个三角区域像素——映射到三角面1
+        //uv2 = [t0, t2, t3];//选中图片一个三角区域像素——映射到三角面2
+        //geometry.faceVertexUvs[0].push(uv1, uv2);//纹理坐标传递给纹理三角面属性
+
+
+
+        ////var texture2 = new THREE.TextureLoader().load( rgba );
+
+        var texture = new THREE.DataTexture3D(rgba, tiffwidth*3, tiffheight*4, count);
+        //texture.format = THREE.RedFormat;
+        texture.format = THREE.RGBAFormat;
+        texture.type = THREE.UnsignedByteType;
+        texture.minFilter = texture.magFilter = THREE.LinearFilter;
+       // texture.unpackAlignment = 1;
+        texture.needsUpdate = true;
+        // console.log(texture);
+        var shader = THREE.VolumeRenderShader1;
+
+        var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+
+        volconfig = { clim1: 0, clim2: 1, renderstyle: 'mip', isothreshold: 0.15, colormap: 'gray' };
+
+        uniforms.u_data.value = texture;
+        uniforms.u_size.value.set(tiffwidth*3, tiffheight*4, count);
+        uniforms.u_clim.value.set(volconfig.clim1, volconfig.clim2);
+        uniforms.u_renderstyle.value = volconfig.renderstyle == 'mip' ? 0 : 1; // 0: MIP, 1: ISO
+        uniforms.u_renderthreshold.value = volconfig.isothreshold; // For ISO renderstyle
+        //uniforms.u_cmdata.value = cmtextures[volconfig.colormap];
+
+        material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: shader.vertexShader,
+            fragmentShader: shader.fragmentShader,
+            side: THREE.BackSide // The volume shader uses the backface as its "reference point"
+        });
+    material.transparent = true;
+    material.alphaTest = 0.1;
+        // Mesh
+
+        var mesh = new THREE.Mesh(geometry, material);
+        scene[0].add(mesh);
+
+        render();
+
+       
+
+
+
+    
 
     var sphereGeometry = new THREE.SphereBufferGeometry(0.1, 32, 32);
     var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
@@ -204,16 +275,16 @@ async function getPictures()
 
     var edges = new THREE.EdgesGeometry(bbox);
     var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
-    line.position.set(427, 269, 77);
+    line.position.set(269, 427, 77);
     scene[0].add(line);
-   
+
 
 
 
     var raycaster = new THREE.Raycaster();
     var mouse = new THREE.Vector2();
 
- 
+
 
     tiff_width = [179, 215, 239, 253, 253];
     tiff_height = [213, 244, 244, 253, 253];
@@ -223,12 +294,12 @@ async function getPictures()
     unit_depth = [98560, 49280, 32800, 19680, 9840];
 
     async function onMouseClick(event) {
-        
+
         //通过鼠标点击的位置计算出raycaster所需要的点的位置，以屏幕中心为原点，值的范围为-1到1.
 
         mouse.x = (event.clientX / width) * 2 - 1;
         mouse.y = - (event.clientY / height) * 2 + 1;
-        console.log(width,height,mouse.x,mouse.y)
+        console.log(width, height, mouse.x, mouse.y)
 
         // 通过鼠标点的位置和当前相机的矩阵计算出raycaster
         raycaster.setFromCamera(mouse, camera[level]);
@@ -237,7 +308,7 @@ async function getPictures()
         var intersects = raycaster.intersectObjects(scene[level].children);
         var intensity = new Array();
         for (var i = 0; i < intersects.length; i++) {
- 
+
             intensity[i] = intersects[i].object.material.map.image.data[(parseInt(intersects[i].point.y % tiff_width[level]) - 1) * tiff_height[level] + parseInt(intersects[i].point.x % tiff_height[level])];
             //intensity[i] = intersects[i].object.material.map.image.data[((parseInt(intersects[i].point.y % tiff_width[level])) + (parseInt(intersects[i].point.x % tiff_height[level]) * tiff_width[level])) * 4];
         }
@@ -249,7 +320,7 @@ async function getPictures()
         //console.log(parseInt(intersects[0].point.x % 213), parseInt(intersects[0].point.y % 179));
         //console.log((parseInt(intersects[0].point.y % tiff_width[level]) - 1) * tiff_height[level] + parseInt(intersects[0].point.x % tiff_height[level]));
         //console.log(intersects[0].object.material.map.image.data[(parseInt(intersects[0].point.y % tiff_width[level])-1) * tiff_height[level] + parseInt(intersects[0].point.x % tiff_height[level])]);
-            
+
         zoomin_width = Math.floor(intersects[indexOfMaxintensity].point.x / tiff_height[level] * unit_height[level] / unit_height[level + 1]) * unit_height[level + 1];
         zoomin_height = Math.floor(intersects[indexOfMaxintensity].point.y / tiff_width[level] * unit_width[level] / unit_width[level + 1]) * unit_width[level + 1];
         zoomin_depth = Math.floor(intersects[indexOfMaxintensity].point.z / tiff_depth[level] * unit_depth[level] / unit_depth[level + 1]) * unit_depth[level + 1];
@@ -259,7 +330,7 @@ async function getPictures()
         //while (scene[0].children.length > 0) { scene[0].remove(scene[0].children[0]); }
 
 
-       
+
 
 
 
@@ -292,7 +363,7 @@ async function getPictures()
                 for (j = 0; j < count; j++) {
                     tiff.setDirectory(j);
                     var buffer = tiff.readRGBAImage();
-                    //console.log(tiff.width(),tiff.height());
+                    //console.log(tiffwidth,tiffheight);
                     const rgba = new Uint8Array(buffer);
 
                     var k; var contrast = 12; var thresh = 2;
@@ -311,9 +382,9 @@ async function getPictures()
 
 
                     // A begin
-                    var geometry = new THREE.Geometry(); //创建一个空几何体对象
+                    var geometry = new THREE.BoxGeometry(tiffwidth, tiff.height, count);
                     /**顶点坐标(纹理映射位置)*/
-
+                    geometry.translate(tiff_width[level + 1] / 2 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], ifds[0].height / 2 - 0.5, ifds.length / 2 - 0.5);
 
                     var p1 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], 0 + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点1坐标
                     var p2 = new THREE.Vector3(0 + filestr[0] / unit_height[level + 1] * tiff_height[level + 1], tiff_width[level + 1] + filestr[1] / unit_width[level + 1] * tiff_width[level + 1], j + filestr[2] / unit_depth[level + 1] * count); //顶点2坐标
@@ -350,11 +421,11 @@ async function getPictures()
                     //var texture2 = new THREE.TextureLoader().load( rgba );
 
                     //console.log(texture2);
-                    var texture = new THREE.DataTexture(rgba, tiff.width(), tiff.height(), THREE.RGBAFormat);
+                    var texture = new THREE.DataTexture(rgba, tiffwidth*3, tiffheight*4, THREE.RGBAFormat);
 
                     texture.needsUpdate = true;
                     //console.log(texture);
-                    var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide});
+                    var material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
                     material.transparent = true;
                     //material.blending = THREE[ "MultiplyBlending"];
                     //material.depthWrite = false,
@@ -365,9 +436,9 @@ async function getPictures()
 
                     var mesh = new THREE.Mesh(geometry, material);
                     //mesh.position.set(128, 128, j);
-                    scene[level+1].add(mesh);
-                   
-                    
+                    scene[level + 1].add(mesh);
+
+
                 }
                 tiff.close();
                 //renderscene2();
@@ -375,7 +446,7 @@ async function getPictures()
             }
         }
 
-       
+
 
         var sphereGeometry = new THREE.SphereBufferGeometry(0.1, 32, 32);
         var sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
@@ -388,39 +459,39 @@ async function getPictures()
         bbox2 = new THREE.BoxGeometry(tiff_height[level + 1], tiff_width[level + 1], tiff_depth[level + 1]);
         var edges = new THREE.EdgesGeometry(bbox2);
         var line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
-        line.position.set(tiff_height[level + 1] / 2+p1.x, tiff_width[level + 1] / 2+p1.y, p1.z-tiff_depth[level + 1] / 2);
+        line.position.set(tiff_height[level + 1] / 2 + p1.x, tiff_width[level + 1] / 2 + p1.y, p1.z - tiff_depth[level + 1] / 2);
         scene[level + 1].add(line);
         //console.log(line.position);
-        controls = new THREE.OrbitControls(camera[level+1], document.getElementById('view'));//创建控件对象
+        controls = new THREE.OrbitControls(camera[level + 1], document.getElementById('view'));//创建控件对象
         controls.addEventListener('change', render);//监听鼠标、键盘事件
         controls.target.copy(line.position);
 
 
 
         var axesHelper = new THREE.AxesHelper(300);
-        axesHelper.position.set(p1.x, p1.y, p1.z - tiff_depth[level+1]);
+        axesHelper.position.set(p1.x, p1.y, p1.z - tiff_depth[level + 1]);
         //console.log(axesHelper.position);
         scene[level + 1].add(axesHelper);
 
-        
+
         camera[level + 1].position.x = line.position.x;
 
         //camera.position.x = 146;
-        camera[level + 1].position.y = line.position.y+30;
-        camera[level + 1].position.z = line.position.z +450;
- 
+        camera[level + 1].position.y = line.position.y + 30;
+        camera[level + 1].position.z = line.position.z + 450;
+
         //camera.position.addVectors(p1, p3);
         //camera.position.divideScalar(2);
         camera[level + 1].lookAt(line.position);
         //console.log(camera.position);
-        
+
 
         level = level + 1;
         render();
 
     }
 
-    
+
     // 添加window 的resize事件监听
     window.addEventListener('resize', onWindowResize);
     function onWindowResize() {
@@ -438,8 +509,8 @@ async function getPictures()
 
 
     window.addEventListener('dblclick', onMouseClick, false);
-   // window.addEventListener('resize', onWindowResize, false);
-    
+    // window.addEventListener('resize', onWindowResize, false);
+
     document.getElementById('left-content').addEventListener('fullscreenchange', render);
 
 
@@ -452,7 +523,14 @@ async function getPictures()
 
 }
 
+function mergeTypedArraysUnsafe(a, b) {
+    var c = new a.constructor(a.length + b.length);
+    console.log(c);
+    c.set(a);
+    c.set(b, a.length);
 
+    return c;
+}
 
 function VF(event) {
     width = document.getElementById('view').clientWidth;
@@ -478,19 +556,19 @@ function VF(event) {
     //console.log(intersects[indexOfMaxintensity].point);
     //console.log(intersects[0].point);
 
-    
-    if (intersects!== null) {
+
+    if (intersects !== null) {
         spheres[spheresIndex].position.copy(intersects[indexOfMaxintensity].point);
         spheres[spheresIndex].scale.set(1, 1, 1);
         spheresIndex = (spheresIndex + 1) % spheres.length;
-      
+
     }
     //for (var i = 0; i < spheres.length; i++) {
     //    var sphere = spheres[i];
     //    //sphere.scale.multiplyScalar(0.98);
     //    //sphere.scale.clampScalar(0.01, 1);
     //}
-   
+
     render();
     //console.log(spheres);
 
@@ -510,37 +588,36 @@ function onkeydown(event) {
     }
 }
 
-window.addEventListener('keydown',onkeydown,false);
-function draw()
-{
+window.addEventListener('keydown', onkeydown, false);
+function draw() {
     //window.addEventListener('dblclick', window.addEventListener('mousemove', VF, false), false);
     document.addEventListener('mousemove', VF, false);
 
-  
+
     //window.addEventListener('mouseup', quitVF, false);
     //function VF(event) {
 
-        //controls.removeEventListener('change', render);
-        //points = new Array();
-        //var raycaster = new THREE.Raycaster();
-        
-        //raycaster.setFromCamera(mouse, camera);
-        //var intersects = raycaster.intersectObjects(scene.children);
-        //console.log(intersects[0].point);
-         
-      
+    //controls.removeEventListener('change', render);
+    //points = new Array();
+    //var raycaster = new THREE.Raycaster();
+
+    //raycaster.setFromCamera(mouse, camera);
+    //var intersects = raycaster.intersectObjects(scene.children);
+    //console.log(intersects[0].point);
+
+
     //}
 
     //function quitVF(event) {
     //    window.removeEventListener('mousedown', window.addEventListener('mousemove', VF, false), false);
     //    window.removeEventListener('mousemove', VF, false);
     //    controls.addEventListener('change', render);
-        
+
 
 
 
     //}
-   
+
 }
 
 function goback() {
