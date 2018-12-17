@@ -650,7 +650,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	{
 		if (it->coordSets.begin()->first > zMax) zMax = it->coordSets.begin()->first;
 
-		if (it->coordSets.begin()->first == 0)
+		if (it->coordSets.begin()->first == 0) // 1st slice connected components profile initialization
 		{
 			++sliceBlobCount;
 			boost::container::flat_set<int> blob3D;
@@ -686,6 +686,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);  // collect all connected components from the previous slice
 		if (preSliceConnComps.empty())
 		{
+			// If the previous slice is empty, all 2D components found in the current slice will be part of new 3D components.
 			for (vector<connectedComponent>::iterator newCompsIt = currSliceConnComps.begin(); newCompsIt != currSliceConnComps.end(); ++newCompsIt)
 			{
 				++sliceBlobCount;
@@ -705,8 +706,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 			bool merged = false;
 			for (vector<connectedComponent>::iterator preIt = preSliceConnComps.begin(); preIt != preSliceConnComps.end(); ++preIt)
 			{
+				// First, use component boundaries to quickly exclude those pixels that can't be connected to any existing components.
+				// And then create new components for these pixels.
 				if (currIt->xMin > preIt->xMax + 2 || currIt->xMax < preIt->xMin - 2 ||
-					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue;
+					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue; 
 
 				for (set<vector<int>>::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
 				{
@@ -716,8 +719,13 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 							currDotIt->at(1) >= preDotIt->at(1) - 1 && currDotIt->at(1) <= preDotIt->at(1) + 1)
 						{
 							merged = true;
+							// Find out to which 3D component the 2D component connected to the pixel belong.    
 							boost::container::flat_set<int> asso3Dblob = b2Dtob3Dmap[preIt->islandNum];
+							
+							// Register the component of the pixel in the current slice to b2Dtob3Dmap.
 							b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(currIt->islandNum, asso3Dblob));
+							
+							// Add a new entry of newly identified 2D component that is connected to the existing 3D component to b3Dcomps.
 							for (boost::container::flat_set<int>::iterator blob3DIt = asso3Dblob.begin(); blob3DIt != asso3Dblob.end(); ++blob3DIt)
 								b3Dcomps[*blob3DIt].insert(currIt->islandNum);
 
@@ -732,7 +740,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 				merged = true;
 			}
 
-			if (!merged)
+			if (!merged) // All 2D blobs in the current slice fail to find its associated 3D blobs. Create new 3D blobs for them here.
 			{
 				++sliceBlobCount;
 				boost::container::flat_set<int> newBlob3D;
@@ -751,8 +759,9 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	// ---------------------------------------- END of [Merge 2D blobs from 2 adjacent slices] -------------------------------------------
 
 	// ------------------------------------------ Merge 3D blobs --------------------------------------------
+	// Merge any 3D blobs if any of them share the same 2D blob members.
 	cout << "Now merging 3D blobs.." << endl;
-	cout << "-- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
 	while (!mergeFinish)
@@ -784,9 +793,10 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 	MERGED:
 		continue;
 	}
-	cout << "-- new 3D blobs number: " << b3Dcomps.size() << endl;
+	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 
+	// ------------------------------------- Create 3D connected component data -------------------------------------
 	map<int, connectedComponent> compsMap;
 	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)
 		compsMap.insert(pair<int, connectedComponent>(inputIt->islandNum, *inputIt));
@@ -802,6 +812,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 		newComp.zMax = 0; newComp.zMin = 0;
 		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
+			// A 3D connected component may contain different 2D components from the same slice.
 			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())
 			{
 				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin();
@@ -831,6 +842,7 @@ vector<connectedComponent> NeuronStructUtil::merge2DConnComponent(const vector<c
 
 		outputConnCompList.push_back(newComp);
 	}
+	// --------------------------------- END of [Create 3D connected component data] ---------------------------------
 
 	return outputConnCompList;
 }
