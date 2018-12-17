@@ -1022,55 +1022,24 @@ template<class T1, class T2> bool fastmarching_tracing(MyMarker root, vector<MyM
 	return true;
 }
 
-template<class T> bool fastmarching_tree_wp(
-	vector<MyMarker> roots,
+template<class T> void phi_parent_state(
+	MyMarker root,
 	T * inimg1d, 
-	int indexOfSoma,
-	vector<MyMarker*> &outtree, 
 	long sz0, 
 	long sz1, 
-	long sz2, 
+	long sz2,
+	float* & phi,
+	long* & parent,
+	char* & state,
 	int cnn_type = 3,
 	double bkg_thresh = 20,
-	bool is_break_accept = false)
-{//wp
-	for(int i=0;i<roots.size();i++){
-		cout << roots[i].x << endl;
-	}
-
-	MyMarker root=roots[0];
-	MyMarker root1=roots[1];
+	bool is_break_accept = false
+	)
+{
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
-
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
-	long i;
-	//int cnn_type = 3;  // ?
-
-	float * phi = 0;
-	long * parent = 0;
-	char * state = 0;
-
-	try
-	{
-		phi = new float[tol_sz];
-		parent = new long[tol_sz];
-		state = new char[tol_sz];
-		for(i = 0; i < tol_sz; i++)
-		{
-			phi[i] = INF;
-			parent[i] = i;  // each pixel point to itself at the         statements beginning
-			state[i] = FAR;
-		}
-	}
-	catch (...)
-	{
-		cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
-		if (phi) {delete []phi; phi=0;}
-		if (parent) {delete []parent; parent=0;}
-		if (state) {delete []state; state=0;}
-		return false;
-	}
+	long i=0;
 
 	// GI parameter min_int, max_int, li
 	double max_int = 0; // maximum intensity, used in GI
@@ -1192,72 +1161,70 @@ template<class T> bool fastmarching_tree_wp(
 			}
 		}
 	}
+}
 
-	float * phi1 = 0;
-	long * parent1 = 0;
-	char * state1 = 0;
-
-	try
-	{
-		phi1 = new float[tol_sz];
-		parent1 = new long[tol_sz];
-		state1 = new char[tol_sz];
-		for(i = 0; i < tol_sz; i++)
-		{
-			phi1[i] = INF;
-			parent1[i] = i;  // each pixel point to itself at the         state1ments beginning
-			state1[i] = FAR;
-		}
-	}
-	catch (...)
-	{
-		cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
-		if (phi1) {delete []phi1; phi1=0;}
-		if (parent1) {delete []parent1; parent1=0;}
-		if (state1) {delete []state1; state1=0;}
-		return false;
-	}
+template<class T> void phi_parent_state(
+	MyMarker root,
+	T * inimg1d, 
+	long sz0, 
+	long sz1, 
+	long sz2,
+	float* & phi,
+	long* & parent,
+	char* & state,
+	int* label,
+	int cnn_type = 3,
+	double bkg_thresh = 20,
+	bool is_break_accept = false
+	)
+{
+	//cout << "label[root_ind]: " << label[root_ind] << endl;
+	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+	long tol_sz = sz0 * sz1 * sz2;
+	long sz01 = sz0 * sz1;
+	long i=0;
 
 	// GI parameter min_int, max_int, li
-	max_int = 0; // maximum intensity, used in GI
-	min_int = INF;
+	double max_int = 0; // maximum intensity, used in GI
+	double min_int = INF;
 	for(i = 0; i < tol_sz; i++) 
 	{
 		if (inimg1d[i] > max_int) max_int = inimg1d[i];
 		else if (inimg1d[i] < min_int) min_int = inimg1d[i];
 	}
 	max_int -= min_int;
-	li = 10;
+	double li = 10;
 
 	// initialization
 
-	// init state1 and phi1 for root1
-	long root1x = root1.x + 0.5;
-	long root1y = root1.y + 0.5;
-	long root1z = root1.z + 0.5;
+	// init state and phi for root
+	long rootx = root.x + 0.5;
+	long rooty = root.y + 0.5;
+	long rootz = root.z + 0.5;
 
-	long root1_ind = root1z*sz01 + root1y*sz0 + root1x;
+	long root_ind = rootz*sz01 + rooty*sz0 + rootx;
 
-	state1[root1_ind] = ALIVE; 
-	phi1[root1_ind] = 0.0;
+	//cout << "label[root_ind]: " << label[root_ind] << endl;
+	state[root_ind] = ALIVE; 
+	phi[root_ind] = 0.0;
 
-	BasicHeap<HeapElemX> heap1;
-	map<long, HeapElemX*> elems1;
+	BasicHeap<HeapElemX> heap;
+	map<long, HeapElemX*> elems;
 
-	// init heap1
+	// init heap
 	{
-		long index = root1_ind;
-		HeapElemX *elem = new HeapElemX(index, phi1[index]);
+		long index = root_ind;
+		HeapElemX *elem = new HeapElemX(index, phi[index]);
 		elem->prev_ind = index;
-		heap1.insert(elem);
-		elems1[index] = elem;
+		heap.insert(elem);
+		elems[index] = elem;
 	}
 
 	// loop
-	time_counter = 1;
-	process1 = 0;
+	int time_counter = 1;
+	double process1 = 0;
 
-	while(!heap1.empty())
+	while(!heap.empty())
 	{
 		double process2 = (time_counter++)*10000.0/tol_sz;
 		//cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush();
@@ -1266,16 +1233,16 @@ template<class T> bool fastmarching_tree_wp(
 			cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush(); process1 = process2;
 		}
 
-		HeapElemX* min_elem = heap1.delete_min();
-		elems1.erase(min_elem->img_ind);
+		HeapElemX* min_elem = heap.delete_min();
+		elems.erase(min_elem->img_ind);
 
 		long min_ind = min_elem->img_ind;
 		long prev_ind = min_elem->prev_ind;
 		delete min_elem;
 
-		parent1[min_ind] = prev_ind;
+		parent[min_ind] = prev_ind;
 
-		state1[min_ind] = ALIVE;
+		state[min_ind] = ALIVE;
 		int i = min_ind % sz0; 
 		int j = (min_ind/sz0) % sz1; 
 		int k = (min_ind/sz01) % sz2;
@@ -1309,27 +1276,27 @@ template<class T> bool fastmarching_tree_wp(
 							continue;
 					}
 
-					if(state1[index] != ALIVE)
+					if(state[index] != ALIVE&&label[index]==label[root_ind])
 					{
-						double new_dist = phi1[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
+						double new_dist = phi[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
 						long prev_ind = min_ind;
 
-						if(state1[index] == FAR)
+						if(state[index] == FAR)
 						{
-							phi1[index] = new_dist;
-							HeapElemX * elem = new HeapElemX(index, phi1[index]);
+							phi[index] = new_dist;
+							HeapElemX * elem = new HeapElemX(index, phi[index]);
 							elem->prev_ind = prev_ind;
-							heap1.insert(elem);
-							elems1[index] = elem;
-							state1[index] = TRIAL;
+							heap.insert(elem);
+							elems[index] = elem;
+							state[index] = TRIAL;
 						}
-						else if(state1[index] == TRIAL)
+						else if(state[index] == TRIAL)
 						{
-							if (phi1[index] > new_dist)
+							if (phi[index] > new_dist)
 							{
-								phi1[index] = new_dist;
-								HeapElemX * elem = elems1[index];
-								heap1.adjust(elem->heap_id, phi1[index]);
+								phi[index] = new_dist;
+								HeapElemX * elem = elems[index];
+								heap.adjust(elem->heap_id, phi[index]);
 								elem->prev_ind = prev_ind;
 							}
 						}
@@ -1338,227 +1305,129 @@ template<class T> bool fastmarching_tree_wp(
 			}
 		}
 	}
+}
+
+template<class T> bool fastmarching_tree_wp(
+	vector<MyMarker> roots,
+	T * inimg1d, 
+	int indexOfSoma,
+	vector<MyMarker*> &outtree, 
+	long sz0, 
+	long sz1, 
+	long sz2, 
+	int cnn_type = 3,
+	double bkg_thresh = 20,
+	bool is_break_accept = false)
+{//wp
+	for(int i=0;i<roots.size();i++){
+		cout << roots[i].x << endl;
+	}
+
+	if(roots.size()<2){
+		cout << "marker size is at least 2" << endl;
+		return false;
+	}
+	
+	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
+
+	long tol_sz = sz0 * sz1 * sz2;
+	long sz01 = sz0 * sz1;
+	//int cnn_type = 3;  // ?
+
+	float **phi=new float*[roots.size()];
+	long **parent=new long*[roots.size()];
+	char **state=new char*[roots.size()];
+	for(int i=0;i<roots.size();i++){
+		try
+		{
+			phi[i] = new float[tol_sz];
+			parent[i] = new long[tol_sz];
+			state[i] = new char[tol_sz];
+			for(int j = 0; j < tol_sz; j++)
+			{
+				phi[i][j] = INF;
+				parent[i][j] = j;  // each pixel point to itself at the         statements beginning
+				state[i][j] = FAR;
+			}
+		}
+		catch (...)
+		{
+			cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
+			if (phi[i]) {delete []phi[i]; phi[i]=0;}
+			if (parent[i]) {delete []parent[i]; parent[i]=0;}
+			if (state[i]) {delete []state[i]; state[i]=0;}
+			return false;
+		}
+		phi_parent_state(roots[i],inimg1d,sz0,sz1,sz2,phi[i],parent[i],state[i],cnn_type,bkg_thresh,is_break_accept);
+	}
+	
+	for(int j=0;j<roots.size();j++){
+		cout << "j: " << j << endl;
+		for(int i=0;i<roots.size();i++){
+			long rootx = roots[i].x + 0.5;
+			long rooty = roots[i].y + 0.5;
+			long rootz = roots[i].z + 0.5;
+			long root_ind = rootz*sz01 + rooty*sz0 + rootx;
+			cout << "phi[j][root_ind]: " << j << " " << i << ": " << phi[j][root_ind] << endl;
+
+		}
+	}
 	
 
-	int *label=0;
-	label=new int[tol_sz];
+	int *label=new int[tol_sz];
 	int count=0;
 	int count1=0;
 	int countNotZero=0;
-	for(i=0;i<tol_sz;i++){
-		if(phi[i]<phi1[i]){
-			count++;
-			label[i]=0;
-		}else if(phi[i]>phi1[i]){
-			count1++;
-			label[i]=1;
-		}
-		if(phi1[i]==phi[i]&&parent[i]!=i){
-			countNotZero++;
-		}
+	for(int j=0;j<tol_sz;j++){
+		label[j]=-1;
 	}
-	cout << " phi[i]<phi1[i]: " << count << " phi[i]>phi1[i]: " << count1 << " tol: " << tol_sz << " countNotZero: " << countNotZero << endl;
-	
-
-
-	float * phi2 = 0;
-	long * parent2 = 0;
-	char * state2 = 0;
-
-	try
-	{
-		phi2 = new float[tol_sz];
-		parent2 = new long[tol_sz];
-		state2 = new char[tol_sz];
-		for(i = 0; i < tol_sz; i++)
-		{
-			phi2[i] = INF;
-			parent2[i] = i;  // each pixel point to itself at the         state2ments beginning
-			state2[i] = FAR;
-		}
-	}
-	catch (...)
-	{
-		cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
-		if (phi2) {delete []phi2; phi2=0;}
-		if (parent2) {delete []parent2; parent2=0;}
-		if (state2) {delete []state2; state2=0;}
-		return false;
-	}
-
-	// GI parameter min_int, max_int, li
-	max_int = 0; // maximum intensity, used in GI
-	min_int = INF;
-	for(i = 0; i < tol_sz; i++) 
-	{
-		if (inimg1d[i] > max_int) max_int = inimg1d[i];
-		else if (inimg1d[i] < min_int) min_int = inimg1d[i];
-	}
-	max_int -= min_int;
-	li = 10;
-
-	// initialization
-
-	// init state2 and phi2 for root
-	rootx = root.x + 0.5;
-	rooty = root.y + 0.5;
-	rootz = root.z + 0.5;
-
-	root_ind = rootz*sz01 + rooty*sz0 + rootx;
-
-	state2[root_ind] = ALIVE; 
-	phi2[root_ind] = 0.0;
-
-	BasicHeap<HeapElemX> heap2;
-	map<long, HeapElemX*> elems2;
-
-	// init heap2
-	{
-		long index = root_ind;
-		HeapElemX *elem = new HeapElemX(index, phi2[index]);
-		elem->prev_ind = index;
-		heap2.insert(elem);
-		elems2[index] = elem;
-	}
-
-	// loop
-	time_counter = 1;
-	process1 = 0;
-
-	while(!heap2.empty())
-	{
-		double process2 = (time_counter++)*10000.0/tol_sz;
-		//cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush();
-		if(process2 - process1 >= 1)
-		{
-			cout<<"\r"<<((int)process2)/100.0<<"%";cout.flush(); process1 = process2;
-		}
-
-		HeapElemX* min_elem = heap2.delete_min();
-		elems2.erase(min_elem->img_ind);
-
-		long min_ind = min_elem->img_ind;
-		long prev_ind = min_elem->prev_ind;
-		delete min_elem;
-
-		parent2[min_ind] = prev_ind;
-
-		state2[min_ind] = ALIVE;
-		int i = min_ind % sz0; 
-		int j = (min_ind/sz0) % sz1; 
-		int k = (min_ind/sz01) % sz2;
-
-		int w, h, d;
-		for(int kk = -1; kk <= 1; kk++)
-		{
-			d = k+kk;
-			if(d < 0 || d >= sz2) continue;
-			for(int jj = -1; jj <= 1; jj++)
-			{
-				h = j+jj;
-				if(h < 0 || h >= sz1) continue;
-				for(int ii = -1; ii <= 1; ii++)
-				{
-					w = i+ii;
-					if(w < 0 || w >= sz0) continue;
-					int offset = ABS(ii) + ABS(jj) + ABS(kk);
-					if(offset == 0 || offset > cnn_type) continue;
-					double factor = (offset == 1) ? 1.0 : ((offset == 2) ? 1.414214 : ((offset == 3) ? 1.732051 : 0.0));
-					long index = d*sz01 + h*sz0 + w;
-					if (is_break_accept)
-					{
-						if(inimg1d[index] <= bkg_thresh &&
-							inimg1d[min_ind] <= bkg_thresh)
-							continue;
-					}
-					else
-					{
-						if(inimg1d[index] <= bkg_thresh)
-							continue;
-					}
-
-					if(state2[index] != ALIVE&&label[index]==label[root_ind])
-					{
-						double new_dist = phi2[min_ind] + (GI(index) + GI(min_ind))*factor*0.5;
-						long prev_ind = min_ind;
-
-						if(state2[index] == FAR)
-						{
-							phi2[index] = new_dist;
-							HeapElemX * elem = new HeapElemX(index, phi2[index]);
-							elem->prev_ind = prev_ind;
-							heap2.insert(elem);
-							elems2[index] = elem;
-							state2[index] = TRIAL;
-						}
-						else if(state2[index] == TRIAL)
-						{
-							if (phi2[index] > new_dist)
-							{
-								phi2[index] = new_dist;
-								HeapElemX * elem = elems2[index];
-								heap2.adjust(elem->heap_id, phi2[index]);
-								elem->prev_ind = prev_ind;
-							}
-						}
-					}
-				}
+	//freopen("D:\soamdata\7\test\log.txt","w",stdout);
+	int countTmp[4];
+	countTmp[0]=0;countTmp[1]=0;countTmp[2]=0,countTmp[3]=0;
+	for(int j=0;j<tol_sz;j++){
+		int indexMin=0;
+		for(int i=1;i<roots.size();i++){
+			if(phi[i][j]==phi[indexMin][j]){
+				indexMin=-1;
+				break;
+			}
+			if(phi[i][j]<phi[indexMin][j]){
+				indexMin=i;
 			}
 		}
+		label[j]=indexMin;
+		//cout << indexMax << endl;
+		//countTmp[indexMin+1]++;
 	}
-	/*for(i=0;i<tol_sz;i++){
-		if(phi[i]!=phi2[i]){
-			cout << i << ":" << phi[i] << " " << phi2[i] << endl;
-		}
+	//cout << "\ncountTmp:" << endl;
+	/*for(int i=1;i<4;i++){
+		cout << countTmp[i] << endl;
 	}*/
+	//freopen("CON","w",stdout);
 	
-	//vector<MyMarker*> tempMarker;
-	//if(1){
-	//	MyMarker root1=roots[1];
-	//	int root1x=root1->x+0.5;
-	//	int root1y=root1->y+0.5;
-	//	int root1z=root1->z+0.5;
-
-	//	int i = -1, j = -1, k = -1;
-	//	map<long, MyMarker*> tmp_map;
-	//	for(long ind = 0; ind < tol_sz; ind++) 
-	//	{
-	//		i++; if(i%sz0 == 0){i=0;j++; if(j%sz1 == 0) {j=0; k++;}}
-	//		if(state[ind] != ALIVE) continue;
-	//		MyMarker * marker = new MyMarker(i,j,k);
-	//		tmp_map[ind] = marker;
-	//		tempMarker.push_back(marker);
-	//	}
-
-	//	i=-1; j = -1; k = -1;
-	//	for(long ind = 0; ind < tol_sz; ind++)
-	//	{
-	//		i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
-	//		if(state[ind] != ALIVE) continue;
-	//		long ind2 = parent[ind];
-	//		MyMarker * marker1 = tmp_map[ind];
-	//		MyMarker * marker2 = tmp_map[ind2];
-	//		if(marker1 == marker2) marker1->parent = 0;
-	//		else marker1->parent = marker2;
-	//		//tmp_map[ind]->parent = tmp_map[ind2];
-	//	}
+	
 
 
-	//	while(root1!=root[0]){
-	//		root1=
-	//	}
-	//	
-	//}
+
+	//输出第一个
+	for(int j=0;j<tol_sz;j++){
+		phi[0][j] = INF;
+		parent[0][j] = j;  // each pixel point to itself at the         statements beginning
+		state[0][j] = FAR;
+
+	}
+
+	phi_parent_state(roots[0],inimg1d,sz0,sz1,sz2,phi[0],parent[0],state[0],label,cnn_type,bkg_thresh,is_break_accept);
 
 	// save current swc tree
-	if (1)
+	if(1)
 	{
 		int i = -1, j = -1, k = -1;
 		map<long, MyMarker*> tmp_map;
 		for(long ind = 0; ind < tol_sz; ind++) 
 		{
 			i++; if(i%sz0 == 0){i=0;j++; if(j%sz1 == 0) {j=0; k++;}}
-			if(state2[ind] != ALIVE) continue;
+			if(state[0][ind] != ALIVE) continue;
 			MyMarker * marker = new MyMarker(i,j,k);
 			tmp_map[ind] = marker;
 			outtree.push_back(marker);
@@ -1567,8 +1436,8 @@ template<class T> bool fastmarching_tree_wp(
 		for(long ind = 0; ind < tol_sz; ind++)
 		{
 			i++; if(i%sz0 == 0){i=0; j++; if(j%sz1==0){j=0; k++;}}
-			if(state2[ind] != ALIVE) continue;
-			long ind2 = parent2[ind];
+			if(state[0][ind] != ALIVE) continue;
+			long ind2 = parent[0][ind];
 			MyMarker * marker1 = tmp_map[ind];
 			MyMarker * marker2 = tmp_map[ind2];
 			if(marker1 == marker2) marker1->parent = 0;
@@ -1576,23 +1445,12 @@ template<class T> bool fastmarching_tree_wp(
 			//tmp_map[ind]->parent = tmp_map[ind2];
 		}
 	}
-	// over
+	delete phi;
+	delete parent;
+	delete state;
+	delete label;
 
-	map<long, HeapElemX*>::iterator mit = elems.begin();
-	while (mit != elems.end())
-	{
-		HeapElemX * elem = mit->second; delete elem; mit++;
-	}
-
-
-	if(phi){delete [] phi; phi = 0;}
-	if(parent){delete [] parent; parent = 0;}
-	if(state) {delete [] state; state = 0;}
-	if(phi1){delete [] phi1; phi1 = 0;}
-	if(parent1){delete [] parent1; parent1 = 0;}
-	if(state1) {delete [] state1; state1 = 0;}
-	return true;
-	//return true;
 }
+
 
 #endif
