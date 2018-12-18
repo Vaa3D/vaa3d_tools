@@ -381,6 +381,12 @@ inline map<string, float> ImgProcessor::getBasicStats_no0(const T inputImgPtr[],
 		img1DVec.push_back(inputImgPtr[i]);
 		sum = sum + inputImgPtr[i];
 	}
+	if (img1DVec.size() == 0)
+	{
+		cerr << "This is a blank image. No stats will be computed." << endl;
+		basicStats.clear();
+		return basicStats;
+	}
 	basicStats.insert(pair<string, float>("sum", sum));
 
 	mean = sum / float(validPixCount);
