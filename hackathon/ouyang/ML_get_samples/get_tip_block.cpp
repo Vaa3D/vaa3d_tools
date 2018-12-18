@@ -5,6 +5,12 @@
 #include "qlist.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#define MIN_DIST 0.0000001
+
+double marker_dist(MyMarker a, MyMarker b)
+{
+    return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
+}
 using namespace std;
 
 void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
@@ -216,7 +222,155 @@ void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DP
    if(label_mip) {delete [] label_mip; label_mip=0;}
    //listNeuron.clear();
 }
+void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString input_swc=infiles.at(0);
+    QString input_image=inparas.at(0);
+    QString output_2d_dir=outfiles.at(0);
+    if(!output_2d_dir.endsWith("/")){
+        output_2d_dir = output_2d_dir+"/";
+    }
+    QString flag=input_swc.right(input_swc.length()-43);
+    QString flag1=flag.left(flag.length()-4);
+    //printf("______________:%s\n",output_2d_dir.data());
+    qDebug()<<input_swc;
+    qDebug("number:%s",qPrintable(flag1));
+    //1.read croped swc.file
+    NeuronTree nt_crop_sorted=readSWC_file(input_swc);
+    //2.read croped tiff.file
+    Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
+    int nChannel = p4dImage->getCDim();
+    long mysz[4];
+    mysz[0] = p4dImage->getXDim();
+    mysz[1] = p4dImage->getYDim();
+    mysz[2] = p4dImage->getZDim();
+    mysz[3] = nChannel;
+    cout<<mysz[0]<<endl<<mysz[1]<<endl<<mysz[2]<<endl<<mysz[3]<<endl;
+    unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
+    //printf("+++++++++++:%p\n",p4dImage);
+    // 3.Find tip node: and make tip node to the center of tip image signal
+    int tip_id = find_tip(nt_crop_sorted, mysz[0], mysz[1], mysz[2]);
+    MyMarker tip;
+    cout<<"--------"<<tip_id<<endl;
+    vector<MyMarker> all_cube_markers;
+    double ave_signal;
+    tip.x=nt_crop_sorted.listNeuron.at(tip_id).x;
+    tip.y=nt_crop_sorted.listNeuron.at(tip_id).y;
+    tip.z=nt_crop_sorted.listNeuron.at(tip_id).z;
+    //3.1 delete fake tip with weak signal(sample num. 002_10 swc. file)
+    //to be implemented
+    //3.2 return average signal back to nodes in cube
+    int radius=5;
+    all_cube_markers=get_in_circle_nodes(tip,radius);//R=5
+    cout<<"--------"<<all_cube_markers.size()<<endl;
+    ave_signal=get_circle_signal(all_cube_markers,data1d_crop,mysz[0],mysz[1],mysz[2]);
+    cout<<"--------"<<ave_signal<<endl;
+    unsigned char *result;
+    //if (!return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip)) return;
+    result=return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip);
+    printf("+++++++++++:%p\n",data1d_crop);
+    QString mipoutput = output_2d_dir +flag1+"_"+"average.tif";
+    V3DLONG mysz1[4];
+    mysz1[0] = mysz[0];
+    mysz1[1] = mysz[0];
+    mysz1[2] = mysz[0];
+    mysz1[3] = nChannel;
+    qDebug("number:%s",qPrintable(mipoutpuut));
+    simple_saveimage_wrapper(callback,mipoutput.toStdString().c_str(),result,mysz1,1);
+}
 
+double get_circle_signal(vector<MyMarker> allmarkers, unsigned char * data1d,long sz0, long sz1, long sz2)
+{
+
+    double signal = 0;
+    double in_block_ct = 0;
+    long sz01 = sz0 * sz1;
+    long total_sz = sz0 * sz1 * sz2;
+
+    for(int i=0; i<allmarkers.size();i++){
+        int x = allmarkers[i].x;
+        int y = allmarkers[i].y;
+        int z = allmarkers[i].z;
+        int id = z*sz01+y*sz0+x;
+        if(id<total_sz){
+            signal += data1d[id];
+            in_block_ct += 1;
+        }
+
+    }
+    if(in_block_ct>0)
+    {
+        signal = signal / in_block_ct;
+    }
+    return signal;
+
+}
+int find_tip(NeuronTree nt, long sz0, long sz1, long sz2)
+{
+    // Return the node at center of the image as tip node
+    MyMarker center = MyMarker((sz0-1)/2, (sz1-1)/2, (sz2-1)/2);
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        MyMarker node=MyMarker(nt.listNeuron.at(i).x, nt.listNeuron.at(i).y, nt.listNeuron.at(i).z);
+        if(marker_dist(center, node)<MIN_DIST){
+            return i;
+        }
+    }
+    printf("No tip found!\n");
+    return 0;
+}
+vector<MyMarker> get_in_circle_nodes(MyMarker center_marker, double circle_radius){
+     //get nodes in cube
+    vector<MyMarker> all_cube_markers;
+     double length=circle_radius*2;//R=5pixels
+     double total_node_num=length*length*length;
+     double cube_bx=center_marker.x-circle_radius;
+     double cube_by=center_marker.y-circle_radius;
+     double cube_bz=center_marker.z-circle_radius;
+     cout<<"+++++++++++++"<<cube_bx<<cube_by<<cube_bz<<endl;
+     for (int i=0;i<length;i++){
+          MyMarker node;
+          for(int j=0;j<length;j++){
+               for(int k=0;k<length;k++){
+                   node.x=cube_bx+i;node.y=cube_by+j;node.z=cube_bz+k;
+                   //cout<<"+++++++++++++"<<i<<j<<k<<endl;
+                   all_cube_markers.push_back(node);}
+          }
+         }
+     cout<<"+++++++++++++"<<all_cube_markers.size()<<endl;
+     return all_cube_markers;
+}
+unsigned char * return_signal_in_circle_nodes(int circle_radius, double ave_signal,long mysz[4],unsigned char * data1d,MyMarker center_marker){
+
+    unsigned char * result=0;
+    double length=2*circle_radius;
+    double cube_bx=center_marker.x-circle_radius;
+    double cube_by=center_marker.y-circle_radius;
+    double cube_bz=center_marker.z-circle_radius;
+    long sz01 = mysz[0] * mysz[1];
+    long total_sz = mysz[0] * mysz[1] * mysz[2];
+    result = new unsigned char [total_sz];
+    for (int i=0;i<length;i++){
+          MyMarker node;
+          for(int j=0;j<length;j++){
+               for(int k=0;k<length;k++){
+                   node.x=cube_bx+i;node.y=cube_by+j;node.z=cube_bz+k;
+                   int id = node.z*sz01+node.y*mysz[0]+node.x;
+                   for (int i=0;i<total_sz;i++){
+                       if(i!=id) result[i]=data1d[i];
+                       else{
+                            if (id>total_sz) return data1d;
+                            double min=1;double max=255;
+                            result[id] = (data1d[id]<ave_signal) ? min:max;cout<<"___________"<<result[id]<<endl;}}
+                   //data1d[id] = (data1d[id]>=ave_signal) ? 255:0;//cout<<"___________"<<data1d[id]<<endl;
+               }
+          }
+         }
+    return result;
+}
 
 QList<int> get_tips(NeuronTree nt, bool include_root){
     // whether a node is a tip;
@@ -380,16 +534,24 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-f<func name>:\t\t get_ML_sample\n";
     cout<<"-i<file name>:\t\t input .tif file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_ML_sample -i original image & input .swcfile -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_ML_sample -i original image input .swc file -o output image dir.\n";
 
 }
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
+    //2.
     cout<<"This plugin for generet 2D images"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_2D_sample\n";
     cout<<"-i<file name>:\t\t input .swc and .tiff file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_sample -i original swc -p input .image -o output image dir.\n";
+    //3.
+    cout<<"This plugin for getting image signal in tip"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t get_ML_sample\n";
+    cout<<"-i<file name>:\t\t input .tif file\n";
+    cout<<"-o<file name>:\t\t ouput dir\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i original swc -p input .image  -o output image dir.\n";
 
 }

@@ -6,7 +6,8 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= ML_get_sample_plugin.h \
-    get_tip_block.h
+    get_tip_block.h \
+    ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h
 SOURCES	+= ML_get_sample_plugin.cpp \
     get_tip_block.cpp \
 
