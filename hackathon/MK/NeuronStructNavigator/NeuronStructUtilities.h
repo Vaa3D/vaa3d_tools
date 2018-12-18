@@ -79,6 +79,7 @@ public:
 	/******************************************************************/
 
 	/***************** Neuron Struct Profiling Methods *****************/
+
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
@@ -99,12 +100,14 @@ public:
 
 
 	/***************** Inter-SWC Comparison/Analysis *****************/
+
 	// Recognize the same nodes with given distance threshold.
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
 	/*****************************************************************/
 
 
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
+
 	// Identify the connectivity of every node in the input swc and generate connected component data from it.
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);

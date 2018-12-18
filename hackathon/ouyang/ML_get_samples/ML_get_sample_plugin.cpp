@@ -21,6 +21,7 @@ QStringList ML_sample::funclist() const
 	return QStringList()
         <<tr("get_ML_sample")
         <<tr("get_2D_sample")
+        <<tr("get_tip_sample")
         <<tr("help")
         <<tr("help1");
 }
@@ -48,6 +49,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     else if (func_name == tr("get_2D_sample"))
     {
         get2d_image(input,output,callback);
+    }
+    else if (func_name == tr("get_tip_sample"))
+    {
+        get_tip_image(input,output,callback);
     }
 	else if (func_name == tr("help"))
 	{

@@ -1057,7 +1057,8 @@ int main(int argc, char* argv[])
 			for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
 			map<int, size_t> binMap = ImgProcessor::histQuickList(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), imgDims);
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), imgDims);
-			
+			if (imgStats.size() == 0) continue;
+
 			size_t largestCount = 0;
 			int bin;
 			for (map<int, size_t>::iterator binIt = binMap.begin(); binIt != binMap.end(); ++binIt)
@@ -1073,17 +1074,17 @@ int main(int argc, char* argv[])
 			double percentage = double(largestCount) / double(imgDims[0] * imgDims[1]);
 			cout << bin << ": " << percentage * 100 << "%" << endl;
 			cout << imgStats.at("mean") << " " << imgStats.at("std") << endl;
-			/*ImgProcessor::stepped_gammaCorrection(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+			ImgProcessor::stepped_gammaCorrection(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, bin);
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
 			saveDims[1] = imgDims[1];
 			saveDims[2] = 1;
 			saveDims[3] = 1;
-			QString saveFileNameQ = saveFolderNameQ + QString::fromStdString(sliceIt->first) + ".tif";
+			QString saveFileNameQ = outputFolerNameQ + "\\" + QString::fromStdString(sliceIt->first) + ".tif";
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
-			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);*/
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
 
 			delete[] outputImgPtr;
 			myManager.imgDatabase.clear();
