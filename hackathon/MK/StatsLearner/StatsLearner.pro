@@ -6,10 +6,10 @@
 
 QT       -= gui
 
-TARGET = StatsLearningManager
+TARGET = StatsLearner
 TEMPLATE = lib
 
-DEFINES += STATSLEARNINGMANAGER_LIBRARY
+DEFINES += STATSLEARNER_LIBRARY
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -23,8 +23,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 
-DESTDIR = ./
+DESTDIR = ../../../../v3d_external/v3d_main/common_lib/lib
 
-SOURCES += StatsLearningManager.cpp
+INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
-HEADERS += StatsLearningManager.h
+HEADERS += ./StatsLearningManager.h
+
+SOURCES += ./StatsLearningManager.cpp
