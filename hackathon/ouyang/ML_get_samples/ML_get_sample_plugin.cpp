@@ -48,7 +48,7 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
 	}
     else if (func_name == tr("get_2D_sample"))
     {
-        get2d_image(input,output,callback);
+        get_2d_image(input,output,callback);
     }
     else if (func_name == tr("get_tip_sample"))
     {
