@@ -24,6 +24,11 @@ struct connectedComponent
 class ImgAnalyzer
 {
 public:
+	/***************** Constructors and Basic Data/Function Members *****************/
+	// Not needed at the moment. Will implement later if necessary.
+	/********************************************************************************/
+
+
 	/***************** Image Segmentation *****************/
 
 	// Finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.

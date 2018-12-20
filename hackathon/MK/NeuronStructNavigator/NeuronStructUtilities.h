@@ -48,6 +48,11 @@ using namespace std;
 class NeuronStructUtil
 {
 public: 
+	/***************** Constructors and Basic Data/Function Members *****************/
+	// Not needed at the moment. Will implement later if necessary.
+	/********************************************************************************/
+
+
 	/***************** Basic Neuron Struct Files Operations *****************/
 	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
@@ -77,6 +82,7 @@ public:
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 	/******************************************************************/
+
 
 	/***************** Neuron Struct Profiling Methods *****************/
 
