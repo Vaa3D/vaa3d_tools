@@ -28,5 +28,7 @@ DESTDIR = ../../../../v3d_external/v3d_main/common_lib/lib
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
 HEADERS += ./StatsLearningManager.h
+HEADERS += ./FeatureExtractor.h
 
 SOURCES += ./StatsLearningManager.cpp
+SOURCES += ./FeatureExtractor.cpp
