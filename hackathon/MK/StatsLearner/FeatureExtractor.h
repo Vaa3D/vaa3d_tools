@@ -21,7 +21,7 @@ public:
 
 	/***************** Object-based Feature Extraction *****************/
 	static boost::container::flat_map<string, double> objMorphFeature(const connectedComponent& inputSample);
-
+	static connectedComponent getSurfaceObj(const connectedComponent& inputObj);
 	/*******************************************************************/
 };
 
