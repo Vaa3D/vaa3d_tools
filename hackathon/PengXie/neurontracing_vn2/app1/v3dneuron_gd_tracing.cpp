@@ -64,6 +64,13 @@ vector< vector<V_NeuronSWC_unit> > NeuronTree_to_mmUnit(NeuronTree nt){
         qDebug()<<"more than one components found";
         return mmUnit;
     }
+    QList <int> nchild;
+    for(int i=0; i<nt.listNeuron.size(); i++){nchild.append(0);}
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        int pn_id = nt.hashNeuron.value(node.pn);
+        nchild[pn_id]++;
+    }
     vector<V_NeuronSWC_unit> cur_component;
     for(int j=0; j<nt.listNeuron.size(); j++)
     {
@@ -71,7 +78,9 @@ vector< vector<V_NeuronSWC_unit> > NeuronTree_to_mmUnit(NeuronTree nt){
         V_NeuronSWC_unit node_unit;
         node_unit.set(node.x, node.y, node.z, node.r, node.pn, node.type);
         node_unit.n = node.n;
+        node_unit.nchild = nchild.at(j);
         cur_component.push_back(node_unit);
+        qDebug()<<node_unit.type;
     }
     mmUnit.push_back(cur_component);
     return mmUnit;
@@ -89,7 +98,7 @@ NeuronTree v3dneuron_GD_tracing(unsigned char ****p4d, V3DLONG sz[4],
     float *dd = new float [sz[0]*sz[1]*sz[2]];
 
     vector< vector<V_NeuronSWC_unit> > mmUnit = swc_to_mmUnit("test.resampled.radius.swc");
-    save_mmUnit(mmUnit, 0, "test_0.swc");
+    save_mmUnit(mmUnit, 0, "test_0.swc");  // This step somehow changes node type;
     npruned += pruning_covered_leaf_single_cover(mmUnit, p4d[trace_para.channo],  dd, sz, trace_z_thickness);
     save_mmUnit(mmUnit, 0, "test_1.swc");
     npruned += pruning_covered_leaf_multi_covers(mmUnit, p4d[trace_para.channo],  dd, sz, trace_z_thickness);
