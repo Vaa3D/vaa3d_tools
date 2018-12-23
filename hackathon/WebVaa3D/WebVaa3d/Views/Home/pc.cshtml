@@ -5,15 +5,19 @@
 <script src="https://unpkg.com/tiff.js"></script>
 <script src="https://unpkg.com/vue"></script>
 <script src="/statics/UTIF.js"></script>
-<script src="https://unpkg.com/three"></script>
+<script src="~/statics/Three.js"></script>
 <script src="/statics/OrbitControls.js"></script>
 <script src="/statics/FirstPersonControls.js"></script>
 <script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
 <!--
 <script src="~/js/VirtualPyramid.js"></script>  -->
 <!-- <script src="~/js/SingleFile.js"></script> -->
-<link rel="stylesheet" type="text/css" href="~/css/pc.css"/>
-<script src="~/js/mainstyle.js"></script>
+
+<script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
+
+<link rel="stylesheet" type="text/css" href="~/css/pc.css" />
+<link rel="stylesheet" href="~/layui-v2.4.5/layui/css/layui.css" />
+<script src="~/hotcss-master/src/hotcss.js"></script>
 <script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
 <script src="~/js/volumeRendering.js"></script>
 <script src="~/js/VolumeShader.js"></script>
@@ -25,6 +29,8 @@
 <script src="~/js/SingleFile5.js"></script>
 <script src="~/js/imagefunction.js"></script>
 <script src="https://unpkg.com/current-device/umd/current-device.min.js"></script>
+<script src="~/js/css3-mediaqueries.js"></script>
+
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -48,51 +54,49 @@
             <div class=" col-xs-5 col-md-5 col-lg-4" id="right-content">
 
                 <div id="menu">
-                    <ul id="nave" class="row">
-                        <li id="File" class="show col-sm-1 col-md-1 col-xs-1 col-lg-1" data-content="openfile" tabindex="-1">
-                            <a href="#"><i class="fa fa-file "></i><small>File</small></a>
-                            <ul id="openfile" class=" col-sm-1 col-md-1 col-xs-1 col-lg-1">
-                                <li id="openfiles">
-                                    <a href="#"> <i class="fa fa-folder-open fa-fw"></i><small>open...</small> </a>
-                                    <ul id="thrid-nave-open" class=" col-sm-1 col-md-1 col-xs-1 col-lg-1">
+                    <ul id="nave" class="layui-nav layui-bg-cyan">
+                        <li id="File" class="show layui-nav-item" data-content="openfile">
+                            <a href="javascript:;"><i class="fa fa-file "></i><small>File</small></a>
+                            <dl id="openfile" class="layui-nav-child ">
+                                <dd id="openfiles">
+                                    <a href="javascript:;"> <i class="fa fa-folder-open fa-fw"></i><small>open...</small> </a>
+                                    <dl class="thrid-nave">
+                                        <dd id="open-local"><a href="#"><i class="fa fa-desktop fa-fw"></i>&nbsp;<small>open from local</small><input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="openlocal()" /></a></dd>
+                                        <dd id="open-server" onclick="getPictures()"><a href="#"><i class="fa  fa-server fa-fw"></i>&nbsp;<small>open from server</small></a></dd> <!--待完善-->
+                                        <dd id="open-url"><a href="#"><i class="fa fa-globe fa-fw "></i>&nbsp;<small>open by URL</small></a></dd>
+                                    </dl>
+                                </dd>
 
-                                        <li id="open-local"><a href="#"><i class="fa fa-desktop fa-fw"></i>&nbsp;<small>open from local</small><input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="openlocal()" /></a></li>
-
-                                        <li id="open-server" onclick="getPictures()"><a href="#"><i class="fa  fa-server fa-fw"></i>&nbsp;<small>open from server</small></a></li> <!--待完善-->
-                                        <li id="open-url"><a href="#"><i class="fa fa-globe fa-fw "></i>&nbsp;<small>open by URL</small></a></li>
-                                    </ul>
-                                </li>
-
-                                <li id="save">
-                                    <a href="#"><i class="fa fa-save fa-fw "></i><small>save...</small></a>
-                                    <ul id="thrid-nave-save" class=" col-sm-1 col-md-1 col-xs-1 col-lg-1">
-                                        <li><a href="#"><i class="fa fa-save fa-fw"></i><small>save</small></a></li>
-                                        <li><a href="#"><i class="fa fa-folder fa-fw"></i><small>save as</small></a></li>
-                                    </ul>
-                                </li>
-                            </ul>
+                                <dd id="save">
+                                    <a href="javascript:;"><i class="fa fa-save fa-fw "></i><small>save...</small></a>
+                                    <dl class="thrid-nave">
+                                        <dd><a href="#"><i class="fa fa-save fa-fw"></i><small>save</small></a></dd>
+                                        <dd><a href="#"><i class="fa fa-folder fa-fw"></i><small>save as</small></a></dd>
+                                    </dl>
+                                </dd>
+                            </dl>
                         </li>
 
 
-                        <li id="Edit" class="show col-sm-1 col-md-1 col-xs-1 col-lg-1" data-content="second-nave-edit" tabindex="0">
-                            <a href="#"><i class="fa  fa-edit fa-fw"></i>&nbsp;<small>Edit</small></a>
-                            <ul id="second-nave-edit" class=" col-sm-1 col-md-1 col-xs-1 col-lg-1">
-                                <li onclick="draw()"><a href="#"><i class="fa fa-pencil fa-fw "></i>&nbsp;<small>draw</small></a></li>
-                                <li><a href="#"><i class="fa fa-trash fa-fw "></i>&nbsp;<small>delete</small></a></li>
-                                <li><a href="#"><i class="fa fa-undo fa-fw "></i>&nbsp;<small>undo</small></a></li>
-                                <li><a href="#"><i class="fa fa-repeat fa-fw "></i>&nbsp;<small>redo</small></a></li>
-                                <li><a href="#"><i class="fa fa-mouse-pointer fa-fw "></i>&nbsp;<small>select all</small></a></li>
-                            </ul>
+                        <li id="Edit" class="show layui-nav-item">
+                            <a href="javascript:;"><i class="fa  fa-edit fa-fw"></i>&nbsp;<small>Edit</small></a>
+                            <dl class=" layui-nav-child">
+                                <dd onclick="draw()"><a href="javascript:;"><i class="fa fa-pencil fa-fw "></i>&nbsp;<small>draw</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-trash fa-fw "></i>&nbsp;<small>delete</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-undo fa-fw "></i>&nbsp;<small>undo</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-repeat fa-fw "></i>&nbsp;<small>redo</small></a></dd>
+                                <dd><a href="javascript:;"><i class="fa fa-mouse-pointer fa-fw "></i>&nbsp;<small>select all</small></a></dd>
+                            </dl>
                         </li>
-                        <li id="Tools" class="show col-sm-1 col-xs-1 col-md-1 col-lg-1" data-content="second-nave-tools" tabindex="1">
-                            <a href="#"><i class="fa  fa-wrench fa-fw"></i>&nbsp;<small>Tools</small></a>
-                            <ul id="second-nave-tools" class=" col-sm-1 col-md-1 col-xs-1 col-lg-1">
-                                <li><a href="#"><i class="fa  fa-camera fa-fw"></i>&nbsp;<small>screen shot</small></a></li>
-                            </ul>
+                        <li id="Tools" class="show layui-nav-item">
+                            <a href="javascript:;"><i class="fa  fa-wrench fa-fw"></i>&nbsp;<small>Tools</small></a>
+                            <dl id="second-nave-tools" class=" layui-nav-child">
+                                <dd><a href="javascript:;"><i class="fa  fa-camera fa-fw"></i>&nbsp;<small>screen shot</small></a></dd>
+                            </dl>
                         </li>
 
-                        <li id="help" class="col-xs-1 col-md-1 col-sm-1 col-lg-1"><a href="#"> <i class="fa fa-hand-stop-o fa-fw"></i>&nbsp;<small>Help</small></a></li>
-                        <li id="about" class="col-xs-1 col-md-1 col-sm-1 col-lg-1"><a href="#"><i class="fa fa-question-circle-o fa-fw"></i>&nbsp;<small>About</small></a></li>
+                        <li id="help" class="layui-nav-item"><a href="#"> <i class="fa fa-hand-stop-o fa-fw"></i>&nbsp;<small>Help</small></a></li>
+                        <li id="about" class="layui-nav-item"><a href="#"><i class="fa fa-question-circle-o fa-fw"></i>&nbsp;<small>About</small></a></li>
                     </ul>
                 </div>
                 <div class="panel" id="Vaa3Dweb-panel">
@@ -144,10 +148,26 @@
     </div>
 
 </body>
-
+<script src="~/layui-v2.4.5/layui/layui.all.js" charset="utf-8"></script>
 <script type="text/javascript">
+    ; !function () {
+        //无需再执行layui.use()方法加载模块，直接使用即可
+        var form = layui.form
+            , layer = layui.layer;
+
+        //…
+    }();
+    layui.use('element', function () {
+        var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+        //监听导航点击
+        element.on('nav(demo)', function (elem) {
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+
+    });
     //根据设备的不同选择不同的样式表，主要针对移动设备和pc端
-   
+
     //显示文件读取进度
     document.getElementById('vaa3dweb-input-open-local').addEventListener('change', handleFileSelect, false);
     $('.show').on('click', function () {//单击隐藏或显示下拉菜单
@@ -165,6 +185,7 @@
     $('.show').on('blur', function () {//失去光标隐藏下拉菜单
         var code = $(this).data('content');
         $('#' + code).hide();
+        console.log("blur====");
     });
 
 

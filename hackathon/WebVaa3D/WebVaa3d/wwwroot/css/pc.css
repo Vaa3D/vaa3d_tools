@@ -8,7 +8,9 @@
 
  #left-content {
   
-    left: 0px;   
+    left: 0px;
+    padding-left: 5px;
+    padding-top: 2px;
     position: absolute;
     width: 70%;
     height: 100%;
@@ -18,7 +20,8 @@
 
 #right-content {
     right: 0px;
-    
+    padding-left: 5px;
+    padding-top: 2px;
     position: absolute;
   
     width: 30%;
@@ -40,28 +43,17 @@
     cursor: pointer;
 }
 /*进度条*/
-#progress_bar {
-    margin: 10px 0;
-    padding: 3px;
-    border: 1px solid #000;
-    
-    clear: both;
-    opacity: 0;
-    -moz-transition: opacity 1s linear;
-    -o-transition: opacity 1s linear;
-    -webkit-transition: opacity 1s linear;
+#loading{
+    display:none;
 }
-
-    #progress_bar.loading {
-        opacity: 1.0;
-    }
-
-    #progress_bar .percent {
-        background-color: #99ccff;
-        height: auto;
-        width: 0;
-    }
-
+.progress progress-big{
+    width:80%;
+    background-color:rgba(232, 146, 97, 0.93);
+    z-index:3;
+    display:none;
+    position:absolute;
+    bottom:0px;
+}
 
 
 
@@ -74,100 +66,69 @@
 
 /*主导航*/
 #menu {
-   
-    background-color: #bab5b5;
+    padding: 5px 5px 0px 0px;
+    
     text-align: center;
     height: 50px;
     width: 100%;
-    border-radius: 10px;
-    -moz-border-radius: 10px;
+   
 }
 
     #menu ul {
         list-style-type: none;
         position: absolute;
-        left: 0px;
-        float: left;
+        
+        
         width: 100%;
         height: 50px;
         font-family: 'Microsoft YaHei';
         cursor: context-menu; /*解决鼠标显示问题*/
+        border-radius: 10px;
+        -moz-border-radius: 10px;
     }
 
 #menu ul li {
     float: left;
-    width: 18%;
+    width: 20%;
+    
     line-height: 30px;
     text-align: center;
     display: inline;
     }
 
-#menu ul a{
-    float:left;
-    text-align:center;
-    width:100%;
+a{
+    height:25px;
+    margin:0 0 2px 0;
 }
-/*二级列表显示宽度有问题*/
-        #menu ul li ul {
-            display: none;
-            background-color: rgba(237, 230, 230, 0.93);
-            position: relative;
-            width: auto;
-            height: auto;
-            text-align: left;
-            box-shadow: 2px 2px 3px #808080;
-            border: 1px groove #808080;
-           
-        }
+
+
 /*second nave*/
 /*#nave li:hover ul{
    
     display:block;
     
 }鼠标悬浮在上面就出现下一级菜单，显示有问题，先采用js控制*/
-#nave li ul li {
-   padding:0px 2px 1px 2px;
-    display: block;
-    float: none;
-    width: auto;
-    white-space: nowrap;/*不换行*/
-   
-  text-align:left;
-}
-#nave li ul li span{
-    font-size-adjust:inherit;
-    position:relative;
-    display:block;
-  
-  
 
-}
 
 /*thrid nave*/
-#menu ul li ul li ul {
+.thrid-nave {
     display: none;
     text-align: center;
     position: absolute;
     left: 70%;
-    top:1%;
+    top: 20%;
     width: auto;
     height: auto;
     box-shadow: 2px 2px 3px #808080;
     border: 1px groove #808080;
 }
-#menu ul li ul li:hover ul{
+
+dd:hover dl{
     display:block;
+    
 }
 
-#nave li ul li ul li {
-    display: block;
-    float: none;
-    position: relative;
-    text-align: left;
-    width: auto;
-    height: auto;
-   
-}
+ 
 /*隐藏部分框架设计*/
 #show-panel {
     display: none;
@@ -251,7 +212,7 @@
     text-align: center;
 }
 span{
-    font-size:1.5em;
+    font-size:150%;
     margin:5px;
     font-weight:500;
 }
@@ -269,6 +230,3 @@ span{
     position:absolute;
    right:10%;
 }
-
-
-
