@@ -7,7 +7,7 @@
 #include <iterator>
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
-#define MIN_DIST 0.0000001
+#define MIN_DIST 2
 
 double marker_dist(MyMarker a, MyMarker b)
 {
@@ -148,7 +148,7 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     }
     cout<<"+++++++++++"<<endl;
     QStringList list=input_swc.split("/");
-    QString flag=list[6]; QStringList list1=flag.split(".");
+    QString flag=list[6]; QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
     QString flag1=list1[0];
 //    QString flag=input_swc.right(input_swc.length()-43);
 //    QString flag1=flag.left(flag.length()-4);
@@ -157,7 +157,6 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     qDebug()<<input_swc;
     qDebug("number:%s",qPrintable(flag1));
     NeuronTree nt_crop_sorted=readSWC_file(input_swc);
-    cout<<"+++++++++++"<<endl;
     Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
     int nChannel = p4dImage->getCDim();
 
@@ -237,13 +236,27 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString input_swc=infiles.at(0);
-    QString input_image=inparas.at(0);
+    QString input_image=infiles.at(1);
+    //QString input_radius=inparas.at(0);
     QString output_2d_dir=outfiles.at(0);
     if(!output_2d_dir.endsWith("/")){
         output_2d_dir = output_2d_dir+"/";
     }
+    int radius=5;
+    if (inparas.size()==1)
+    {
+        int tmp=atoi(inparas.at(0));
+        if (tmp>1 && tmp<=20)
+        {
+            radius=tmp;
+            qDebug()<<"mean shift search window radius is set to: "<<tmp;
+        }
+        else
+            v3d_msg("The parameter of window radius is not valid, the program will use default value of 5",0);
+    }
+
     QStringList list=input_swc.split("/");
-    QString flag1=(list[4].split("."))[0];
+    QString flag1=(list[6].split("."))[0];//the id in list should not be added 1 to the exact string
 //    QString flag=input_swc.right(input_swc.length()-43);
 //    QString flag1=flag.left(flag.length()-4);
     //printf("______________:%s\n",output_2d_dir.data());
@@ -252,7 +265,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     //1.read croped swc.file
     NeuronTree nt_crop_sorted=readSWC_file(input_swc);
     QList<NeuronSWC> nt_crop_swc=nt_crop_sorted.listNeuron;
-    //2.read croped tiff.file
+    //2.read croped tif.file
     Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
     int nChannel = p4dImage->getCDim();
     long mysz[4];
@@ -269,13 +282,14 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     cout<<"tip id in input swc:"<<tip_id<<endl;
     vector<MyMarker> all_cube_markers;
     double ave_signal;
-    tip.x=nt_crop_sorted.listNeuron.at(tip_id).x;
-    tip.y=nt_crop_sorted.listNeuron.at(tip_id).y;
-    tip.z=nt_crop_sorted.listNeuron.at(tip_id).z;
+    tip.x=ceil(nt_crop_sorted.listNeuron.at(tip_id).x);
+    tip.y=ceil(nt_crop_sorted.listNeuron.at(tip_id).y);
+    tip.z=ceil(nt_crop_sorted.listNeuron.at(tip_id).z);
+    cout<<"tip location x:"<<tip.x<<" y:"<<tip.y<<" z:"<<tip.z<<endl;
     //3.1 delete fake tip with weak signal(sample num. 002_10 swc. file)
     //to be implemented
     //3.2 return average signal back to nodes in cube
-    int radius=5;
+    //int radius=5;
     all_cube_markers=get_in_circle_nodes(tip,radius);//R=5
     cout<<"cube size(number of pixels):"<<all_cube_markers.size()<<endl;
     ave_signal=get_circle_signal(all_cube_markers,data1d_crop,mysz[0],mysz[1],mysz[2]);
@@ -283,7 +297,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 //    unsigned char *result;
 //    long total_sz = mysz[0] * mysz[1] * mysz[2];
 //    result = new unsigned char [total_sz];
-    //if (!return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip)) return;
+//    if (!return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip)) return;
       node_and_id max_info;
       max_info=return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip);
       center=node_to_center(max_info,nt_crop_swc,mysz,data1d_crop);
@@ -319,7 +333,7 @@ double get_circle_signal(vector<MyMarker> allmarkers, unsigned char * data1d,lon
         }
 
     }
-    cout<<"total signal:"<<signal<<endl;
+    //cout<<"total signal:"<<signal<<endl;
     if(in_block_ct>0)
     {
         signal = signal / in_block_ct;
@@ -332,14 +346,29 @@ int find_tip(NeuronTree nt, long sz0, long sz1, long sz2)
 {
     // Return the node at center of the image as tip node
     MyMarker center = MyMarker((sz0-1)/2, (sz1-1)/2, (sz2-1)/2);
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
     for(int i=0; i<nt.listNeuron.size(); i++){
         MyMarker node=MyMarker(nt.listNeuron.at(i).x, nt.listNeuron.at(i).y, nt.listNeuron.at(i).z);
-        if(marker_dist(center, node)<MIN_DIST){
+        if(marker_dist(center, node)<MIN_DIST & childs[i].size()==0) {
+            return i;
+        }
+        else if(marker_dist(center, node)<MIN_DIST+1 & childs[i].size()==0) {
+            return i;
+        }
+        else if(marker_dist(center, node)<MIN_DIST+2 & childs[i].size()==0) {
             return i;
         }
     }
     printf("No tip found!\n");
-    return 0;
 }
 
 QList<NeuronSWC> change_tip_xyz(QList<NeuronSWC>input_swc,int tip_node,MyMarker center){
@@ -445,12 +474,12 @@ node_and_id return_signal_in_circle_nodes(int circle_radius, double ave_signal,l
                        if(cc!=id) result[cc]=data1d[cc];
                        else{
                             if (id<=total_sz){
-                            double min=0;double max=28;
+                            double min=0;double max=1;
                             if(data1d[id]<=ave_signal) result[id]=min;
                             if(data1d[id]>ave_signal) {result[id]=max;num+=1;
                                 all_roi_nodes.all_nodes.push_back(node);
                                 all_roi_nodes.all_id.push_back(id);
-                            }//get the foreground node's id,it is wroten for generate an 0-1 image firstly
+                            }//get the foreground node's id,it is wroten for generating an 0-1 image firstly
                             //result[id] = (data1d[id]<=ave_signal) ? min:max;
                             //cout<<"max_id size:"<<max_list.size()<<endl;
                             }
@@ -468,10 +497,10 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
     vector<MyMarker> nodes=all_max_nodes.all_nodes;
     vector<int> ids=all_max_nodes.all_id;
     node_and_id info;
-    for(int i=0;i<ids.size();i++){
+//    for(int i=0;i<ids.size();i++){
 
-       cout<<"id:"<<ids.at(i)<<endl;
-    }
+//       cout<<"id:"<<ids.at(i)<<endl;
+//    }
     sort(nodes.begin(),nodes.end());
     vector<int> id_numofneibs,total_signal;
     for(int i=0;i<nodes.size();i++){
@@ -482,11 +511,11 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
         set_intersection(ids.begin(),ids.end(),info.all_id.begin(),info.all_id.end(),back_inserter(result));
         int num_inters=result.size();
         total_signal.push_back(info.total_signal);
-        cout<<"total signal size:"<<info.total_signal<<endl;
+        //cout<<"total signal size:"<<info.total_signal<<endl;
         id_numofneibs.push_back(num_inters);
         result.clear();
     }
-     //method 1. using neibs who is with signal num to define center location
+     //method 1. using neibs total num who is in signal to define center location
 //    vector<int>::iterator max=std::max_element(id_numofneibs.begin(),id_numofneibs.end());
 //    int pos=distance(id_numofneibs.begin(),max);
 //    MyMarker center=nodes.at(pos);
@@ -712,8 +741,9 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"This plugin for getting image signal in tip"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_ML_sample\n";
-    cout<<"-i<file name>:\t\t input .tif file\n";
+    cout<<"-i<file name>:\t\t input .swc file\n";
+    cout<<"-p<file name>:\t\t input image file(tif,nrrd,v3draw)\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i original swc -p input .image  -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i <original swc> <input .image> -p <radius> -o <output swc.file dir>\n";
 
 }
