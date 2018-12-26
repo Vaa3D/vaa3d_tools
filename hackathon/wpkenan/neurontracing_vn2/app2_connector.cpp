@@ -1459,7 +1459,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 				vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
 				//cout << temp_out_swc.size() << endl;
 
-				prunThinBranch(temp_out_swc,1);
+				//prunThinBranch(temp_out_swc,1);//add wp
 				
 				saveSWC_file_app2(outswc_file.toStdString(), temp_out_swc, infostring);
 			}
