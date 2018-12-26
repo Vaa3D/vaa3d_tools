@@ -107,7 +107,7 @@ THREE.VolumeRenderShader1 = {
         'varying vec4 v_farpos;',
 
         // The maximum distance through our rendering volume is sqrt(3).
-        'const int MAX_STEPS = 887;  // 887 for 512^3, 1774 for 1024^3',
+        'const int MAX_STEPS = 1774;  // 887 for 512^3, 1774 for 1024^3',
         'const int REFINEMENT_STEPS = 4;',
         'const float relative_step_size = 1.0;',
 
@@ -167,6 +167,7 @@ THREE.VolumeRenderShader1 = {
         //'return;',
 
         'if (u_renderstyle == 0)',
+        //'gl_FragColor = vec4(sample2(v_position),1);',
         'cast_mip(start_loc, step, nsteps, view_ray);',
         'else if (u_renderstyle == 1)',
         'cast_iso(start_loc, step, nsteps, view_ray);',
@@ -198,6 +199,7 @@ THREE.VolumeRenderShader1 = {
         'float max_val = -1e6;',
 
         'int max_i = 100;',
+        'float alpha = 1.0;',
         'vec3 loc = start_loc;',
         'vec3 max_val2 = sample2(loc);',
 
@@ -228,7 +230,8 @@ THREE.VolumeRenderShader1 = {
         //'}',
 
         // Resolve final color
-        'gl_FragColor = vec4(max_val2,1); ',
+        //'if (max_val2.r==0.) {alpha=0.;} else {alpha=1.;}',
+        'gl_FragColor = vec4(max_val2,alpha); ',
         '}',
 
 

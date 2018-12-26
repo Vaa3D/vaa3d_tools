@@ -103,9 +103,14 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         int k=0;
         int ds_rate = (paras.size() >= k+1) ? atof(paras[k]) : 4;  k++;
 
+        QList<ImageMarker> break_points;
         NeuronTree nt = readSWC_file(QString(infiles[1]));
         NeuronTree nt2 = SortSWC_pipeline(nt.listNeuron,VOID, 0);
-        NeuronTree nt2_checked = initialSWCTerafly(callback,infiles[0],nt2,ds_rate);
+
+        NeuronTree nt2_broken = breakSWC(nt2,2000, break_points);
+        V_NeuronSWC_list nt2_decomposed = NeuronTree__2__V_NeuronSWC_list(nt2_broken);
+        NeuronTree nt2_new = V_NeuronSWC_list__2__NeuronTree(nt2_decomposed);
+        NeuronTree nt2_checked = initialSWCTerafly(callback,infiles[0],nt2_new,ds_rate);
         writeESWC_file(QString(outfiles[0]),nt2_checked);
 
 	}

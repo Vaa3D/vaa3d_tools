@@ -1,4 +1,7 @@
-﻿function show(file) {
+﻿var light, pointLight, ambientLight;
+
+
+function show(file) {
     renderer = new THREE.WebGLRenderer({ alpha: false });
     width = document.getElementById('view').clientWidth;
     height = document.getElementById('view').clientHeight;
@@ -33,11 +36,13 @@
 
     controls.target.set(427, 269, 77);
 
-    
+    //materials = generateMaterials();
+    //current_material = "shiny";
 
+    // MARCHING CUBES
 
-
-
+    resolution = 28;
+    numBlobs = 10;
 
 
     var reader = new FileReader();
@@ -76,7 +81,7 @@
                     rgba[k] *= contrast;
                     rgba[k + 1] *= contrast;
                     rgba[k + 2] *= contrast;
-                    if (rgba[k] == 0 && rgba[k + 1] == 0 && rgba[k + 1] == 0)
+                    if (rgba[k] == 0 && rgba[k + 1] == 0 && rgba[k + 2] == 0)
                         rgba[k + 3] = 0;
                    
                 }
@@ -133,17 +138,13 @@
 
                 var mesh = new THREE.Mesh(geometry, material);
 
+              
+
                 scene.add(mesh);
                 render();
 
             }
 
-
-
-
-
-
-           
         };
     })(file);
     reader.readAsArrayBuffer(file);
@@ -158,3 +159,4 @@ function readlocalfile() {
         //console.log(event.target.files[0]);
    });
 }
+

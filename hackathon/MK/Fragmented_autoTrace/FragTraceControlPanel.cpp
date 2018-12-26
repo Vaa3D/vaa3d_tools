@@ -75,6 +75,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 		uiPtr->lineEdit_2->setText(callOldSettings.value("ada_savePath").toString());
 		if (callOldSettings.value("gamma") == true) uiPtr->checkBox_6->setChecked(true);
+		else uiPtr->checkBox_6->setChecked(false);
 
 		if (callOldSettings.value("histThre") == true)
 		{
@@ -307,6 +308,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 
 	if (uiPtr->checkBox_6->isChecked()) settings.setValue("gamma", true);
+	else settings.setValue("gamma", false);
 
 	if (uiPtr->groupBox_6->isChecked())
 	{

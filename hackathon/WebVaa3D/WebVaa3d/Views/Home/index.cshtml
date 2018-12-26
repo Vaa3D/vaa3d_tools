@@ -2,148 +2,155 @@
 <script src="https://unpkg.com/tiff.js"></script>
 <script src="https://unpkg.com/vue"></script>
 <script src="/statics/UTIF.js"></script>
-<script src="https://unpkg.com/three"></script>
+<script src="~/statics/Three.js"></script>
 <script src="/statics/OrbitControls.js"></script>
 <script src="/statics/FirstPersonControls.js"></script>
 <script src="http://code.jquery.com/jquery-3.0.0.min.js"></script>
-<script src="~/js/VirtualPyramid.js"></script>
-<script src="~/js/SingleFile.js"></script>
-<script src="~/js/mainstyle.js"></script>
+<!--
+<script src="~/js/VirtualPyramid.js"></script>  -->
+<!-- <script src="~/js/SingleFile.js"></script> -->
+
 <script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
 
+<link rel="stylesheet" type="text/css" href="~/css/moblie.css" />
+<link rel="stylesheet" href="~/layui-v2.4.5/layui/css/layui.css" />
+<script src="~/hotcss-master/src/hotcss.js"></script>
+<script src="~/layer-v3.1.1/layer-v3.1.1/layer/layer.js"></script>
 <script src="~/js/volumeRendering.js"></script>
 <script src="~/js/VolumeShader.js"></script>
 <script src="~/js/WebGL.js"></script>
 <script src="~/js/Lut.js"></script>
+<script src="~/js/progressbar.js"></script>
+<script src="~/js/openlocal.js"></script>
+<script src="~/js/VirtualPyramid5.js"></script>
+<script src="~/js/SingleFile5.js"></script>
+<script src="~/js/imagefunction.js"></script>
+<script src="https://unpkg.com/current-device/umd/current-device.min.js"></script>
+<script src="~/js/css3-mediaqueries.js"></script>
 
 
+<meta name="hotcss" content="design-width=640" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-@*<link rel="stylesheet" href="~/css/mainstyle.css"/>*@
 <body>
-    <div id="main-content">
+    <div class="layui-container">
 
 
-        <div id="left-content">
+        <ul id="nave" class=" layui-nav layui-bg-cyan " lay-filter="">
+            <li id="File" class="layui-nav-item ">
+                <a href="javascript:;"><i class="fa fa-file"> File</i></a>
+                <dl id="openfile" class="layui-nav-child">
+                    <dd id="openfiles">
+                        <a href="javascript:;" onclick="getPictures()"> <i class="fa fa-globe"> open</i></a>
+                    </dd>
+
+                    <dd id="save">
+                        <a href="javascript:;"><i class="fa fa-save"> save</i></a>
+                    </dd>
+                </dl>
+            </li>
+
+            <li id="Edit" class="layui-nav-item ">
+                <a href="javascript:;"><i class="fa  fa-edit"> Edit</i></a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;" onclick="draw()"><i class="fa fa-pencil"> draw</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-trash "> delete</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-undo"> undo</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-repeat"> redo</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-mouse-pointer"> select all</i></a></dd>
+                </dl>
+            </li>
+
+            <li id="Tools" class="layui-nav-item ">
+                <a href="javascript:;"><i class="fa  fa-wrench "> Tools</i></a>
+                <dl id="second-nave-tools" class="layui-nav-child">
+                    <dd><a href="#"><i class="fa  fa-camera "> screen shot</i></a></dd>
+                </dl>
+            </li>
+
+            <li id="help" class="layui-nav-item ">
+                <a href="javascript:;"> <i class="fa fa-hand-stop-o "> Help</i></a>
+            </li>
+
+        </ul>
+
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">网站名</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav">
+                        <li class="active"><a href="#">主页</a></li>
+                        <li><a href="#">页面 2</a></li>
+                        <li><a href="#">页面 3</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div id="bigneuron">
             <div id="view">
-                <div id="loading" class="progress progress-big" lay-showpercent="true" lay-filter="demo">
-                    <div class="progress-bar bg-red" lay-percent="0%"></div>
-                </div>
 
             </div>
         </div>
 
 
-        <div id="show-panel" onmouseover="show_panel()"></div>
-
-        <div id="right-content">
-
-            <div id="logo">
-                <img /><!--logo-->
-            </div>
-
-            <div id="menu">
-                <ul id="nave">
-                    <li id="File" class="show" data-content="openfile" tabindex="-1">
-                        <i class="fa fa-file "></i>&nbsp;File
-                        <ul id="openfile">
-                            <li>
-                                <i class="fa fa-folder-open fa-fw"></i>&nbsp; open...
-                                <ul id="thrid-nave-open">
-
-                                    <li id="open-local"><i class="fa fa-desktop fa-fw"></i>&nbsp;open from local<input type="file" class="form-control hidden" id="vaa3dweb-input-open-local" accept="" multiple="multiple" onclick="VolumeRender()" /></li>
-
-                                    <li id="open-server" onclick="getPictures()"><i class="fa  fa-server fa-fw"></i>&nbsp;open from server</li> <!--待完善-->
-                                    <li id="open-url"><i class="fa fa-globe fa-fw "></i>&nbsp;open by URL</li>
-                                </ul>
-                            </li>
-
-                            <li id="save">
-                                <i class="fa fa-save fa-fw"></i>&nbsp;save...
-                                <ul id="thrid-nave-save">
-                                    <li><i class="fa fa-save fa-fw"></i>save</li>
-                                    <li><i class="fa fa-folder fa-fw"></i>save as</li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-
-
-                    <li id="Edit" class="show" data-content="second-nave-edit" tabindex="0">
-                        <i class="fa  fa-edit fa-fw"></i>&nbsp;Edit
-                        <ul id="second-nave-edit">
-                            <li onclick="draw()"><i class="fa fa-pencil fa-fw "></i>&nbsp;draw</li>
-                            <li><i class="fa fa-trash fa-fw "></i>&nbsp;delete</li>
-                            <li><i class="fa fa-undo fa-fw "></i>&nbsp;undo</li>
-                            <li><i class="fa fa-repeat fa-fw "></i>&nbsp;redo</li>
-                            <li><i class="fa fa-mouse-pointer fa-fw "></i>&nbsp;select all</li>
-                        </ul>
-                    </li>
-                    <li id="Tools" class="show" data-content="second-nave-tools" tabindex="1">
-                        <i class="fa  fa-wrench fa-fw"></i>&nbsp;Tools
-                        <ul id="second-nave-tools">
-                            <li><i class="fa  fa-camera fa-fw"></i>&nbsp;screen shot</li>
-                        </ul>
-                    </li>
-
-                    <li id="help"> <i class="fa fa-hand-stop-o fa-fw"></i>&nbsp;Help</li>
-                    <li id="about"><i class="fa fa-question-circle-o fa-fw"></i>&nbsp;About</li>
-                </ul>
-            </div>
-            <div class="panel" id="Vaa3Dweb-panel">
-                <div class="panel-body">
-                    <div class="panel-group1" id="Waa3Dweb-panelgroup-img">
-                        <div id="title1"><p><h2 style="text-align:center;">Img</h2></p></div><br />
-                        <div class="contrast">
-                            <span>Contrast</span><br /><br />
-                            <p><input type="range" min="0" max="10" id="contrast" name="point1" style="" /></p>
-
-                            <input id="fullscreen" type="button" value="full screen" />
-                        </div>
-                        <br /><br />
-                    </div>
-
-
-                    <div class="panel-group2" id="Waa3Dweb-panelgroup-draw">
-                        <div id="title2"><p><h2 style="text-align:center;">Draw</h2></p></div><br />
-                        <div>
-                            <span>Line Size</span>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <select id="line-size-select">
-                                <option label="1pt" value="1pt" selected>1pt</option>
-                                <option label="2pt" value="2pt">2pt</option>
-                                <option label="3pt" value="3pt">3pt</option>
-                            </select>
-                        </div><br />
-
-                        <div class="color">
-                            <span>Line Color</span>&nbsp;&nbsp;&nbsp;&nbsp;<input type="color" id="color" />
 
 
 
-                        </div>
-                        <br />
-                        <div><input type="button" id="close" value="close" />  </div>
-                        <br /><br />
-                    </div>
-
-
-
-
-
-                </div>
-            </div>
-
-
-
-
-        </div>
     </div>
+
+
+
+
+
+
 
 </body>
 
+<script src="~/layui-v2.4.5/layui/layui.all.js" charset="utf-8"></script>
 <script type="text/javascript">
+    hotcss.designWidth = 320;
+
+    console.log(hotcss.px2rem(20));//每个单位像素值及设计屏幕尺寸
+    console.log(hotcss.rem2px(1));
+
+    //一般直接写在一个js文件中
+    ; !function () {
+        //无需再执行layui.use()方法加载模块，直接使用即可
+        var form = layui.form
+            , layer = layui.layer;
+
+        //…
+    }();
+    layui.use('element', function () {
+        var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+        //监听导航点击
+        element.on('nav(demo)', function (elem) {
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+
+    });
+    //根据设备的不同选择不同的样式表，主要针对移动设备和pc端
+    var isMobile = device.mobile();
+    var isTable = device.tablet();
+    if (isMobile | isTable) {
+        window.open('', '_self');
+        console.log("mobile");
+    }
+    else {
+        window.open('/Home/pc', '_self');
+        //window.location.href = '/Home/About';
+        console.log("pc");
+    }
+    //显示文件读取进度
+    // document.getElementById('vaa3dweb-input-open-local').addEventListener('change', handleFileSelect, false);
     $('.show').on('click', function () {//单击隐藏或显示下拉菜单
         var code = $(this).data('content');
         if ($('#' + code).css('display') == 'none') {

@@ -76,6 +76,7 @@ public:
 	enum imgFormat { cube, slices, singleCase_singleSlice };
 	/*******************************************************/
 
+
 	/***************** I/O and Image Property Profile *****************/
 	map<string, registeredImg> imgDatabase;  // --> All images are managed and stored in the form of 'regesteredImg' in this library.
 	void imgEntry(string caseID, imgFormat format);
@@ -85,11 +86,13 @@ public:
 	static inline void imgsBlend(const vector<unsigned char*>& inputImgPtrs, unsigned char outputImgPtr[], int imgDims[]);
 	/******************************************************************/
 
+
 	/***************** Image - SWC Functionalities *****************/
 	static inline vector<int> retreiveSWCcropDnParam_imgBased(const registeredImg& originalImg, const QList<NeuronSWC>& refNodeList, float xDnFactor, float yDnFactor, float zDnFactor, int boundaryMargin = 10, bool zShift = false);
 	
 	static NeuronTree imgSignal2SWC(const registeredImg& sourceImg, int type = 2);
 	/***************************************************************/
+
 
 	/********* Methods for Generating Binary Masks from SWC Files *********/
 	void swc2Mask_2D(string swcFileName, long int dims[2], unsigned char*& mask1D); // Generate a 2D mask based on the corresponding "SWC slice."
@@ -98,9 +101,11 @@ public:
 	void detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D);
 	/**********************************************************************/
 
+
 	/********* Assemble All SWC Masks Together as An "SWC Mip Mask." *********/
 	void MaskMIPfrom2Dseries(string path);                       
 	/*************************************************************************/
+
 
 	/********* Dessemble Image/Stack Into Tiles. This Is For Caffe's Memory Leak Issue *********/
 	static void imgSliceDessemble(string imgName, int tileSize);

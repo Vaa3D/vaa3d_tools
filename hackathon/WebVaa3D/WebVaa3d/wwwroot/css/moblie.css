@@ -1,0 +1,223 @@
+﻿body, div, li, ol, p, td, th, ul {
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}
+
+li {
+    list-style: none
+}
+
+img {
+    border: 0;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    
+}
+
+table {
+    border-spacing: 0;
+    border-collapse: collapse
+}
+
+html {
+    font-family: sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%
+}
+
+:focus {
+    outline: 0
+}
+
+:link, :visited {
+    text-decoration: none
+}
+
+a:active, a:hover {
+    outline: 0
+}
+
+.clearfix:after {
+    display: block;
+    clear: both;
+    height: 0;
+    font-size: 0;
+    content: ''
+}
+
+.pull-left {
+    float: left
+}
+
+.pull-right {
+    float: right
+}
+
+.show {
+    display: block !important
+}
+
+.hide {
+    display: none !important
+}
+
+.visible {
+    visibility: visible
+}
+
+.invisible {
+    visibility: hidden
+}
+
+.text-left {
+    text-align: left
+}
+
+.text-center {
+    text-align: center
+}
+
+.text-right {
+    text-align: right
+}
+
+.dv {
+    display: inline-block;
+    vertical-align: middle
+}
+
+.di {
+    display: inline-block
+}
+
+.text-hide {
+    border: 0;
+    background-color: transparent;
+    font: 0/0 a;
+    color: transparent;
+    text-shadow: none
+}
+
+.text-ellipsis {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis
+}
+
+.btn {
+    display: inline-block;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent
+}
+
+    .btn:hover {
+        text-decoration: none
+    }
+
+* {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box
+}
+
+
+body {
+    width: 16rem;
+    margin: 0 0 0 0;
+    padding: 0 0 0;
+    background-size: cover;
+}
+
+
+
+.layui-container {
+   
+    width: 16rem;
+    margin:0 0 0 0;
+    padding:.001rem .001rem 0 0;
+   
+}
+
+#nave {
+    height:1rem/2rem;
+    display:block;
+    margin:0 0 0 0;
+   
+}
+li{
+    width:3rem;
+    height:1rem/1.5rem;
+}
+
+a {
+    height:1rem;
+    width:2rem/3.5rem;
+   
+}
+
+dl{
+    padding:0 .01rem .01rem 0;
+    float:left ;
+
+}
+dd a{
+    height:0.8rem;
+    background-size:cover;
+}
+i {
+    height:0.5rem/1rem;    
+    width:0.5rem/1rem;
+    font: .3rem/1.06667rem 'simhei';
+    padding:0 0 0 0;
+    margin:.1rem 0 0 0;
+    float:left;
+}
+
+
+#bigneuron {
+    
+    height:27.2rem;
+    bottom: 0;
+    background-color: black;
+}
+
+#view {
+    height: 100%;
+   
+}
+#progress_bar {
+    margin: 0 0;
+    padding: .1rem;
+    border: .1rem solid #000;
+    clear: both;
+    opacity: 0;
+    -moz-transition: opacity 1s linear;
+    -o-transition: opacity 1s linear;
+    -webkit-transition: opacity 1s linear;
+    background-color:black;
+}
+
+    #progress_bar.loading {
+        opacity: 1.0;
+    }
+
+    #progress_bar .percent {
+        background-color: white;
+        height: .2rem;
+        width: 0;
+    }
+#container1 {
+    font: .55467rem/1.06667rem 'simhei';
+}
+.file {
+    font: .55467rem/1.06667rem 'simhei';
+}

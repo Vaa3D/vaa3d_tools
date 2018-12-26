@@ -248,7 +248,7 @@ template<class T>
 inline void ImgProcessor::maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[])
 {
 	for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
-	for (vector<vector<T>>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
+	for (typename vector<vector<T>>::iterator it = inputSlicePtrs.begin(); it != inputSlicePtrs.end(); ++it)
 	{
 		for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = ImgProcessor::imgMax(it, outputImgPtr, outputImgPtr, imgDims);
 	}
@@ -380,6 +380,12 @@ inline map<string, float> ImgProcessor::getBasicStats_no0(const T inputImgPtr[],
 		++validPixCount;
 		img1DVec.push_back(inputImgPtr[i]);
 		sum = sum + inputImgPtr[i];
+	}
+	if (img1DVec.size() == 0)
+	{
+		cerr << "This is a blank image. No stats will be computed." << endl;
+		basicStats.clear();
+		return basicStats;
 	}
 	basicStats.insert(pair<string, float>("sum", sum));
 

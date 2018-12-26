@@ -48,20 +48,26 @@ using namespace std;
 class NeuronStructUtil
 {
 public: 
+	/***************** Constructors and Basic Data/Function Members *****************/
+	// Not needed at the moment. Will implement later if necessary.
+	/********************************************************************************/
+
+
 	/***************** Basic Neuron Struct Files Operations *****************/
 	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
+
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb);
-	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
-	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
-
-	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale);
-	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
-	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree);
 	
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale); // NOTE: the scaling factor is put as dividers!!
+	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
+	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); // Align inputTree with refTree.
+	
+	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
-	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0);
+	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); // Subtract refTree from targetTree.
 	/************************************************************************/
 	
 
@@ -70,13 +76,20 @@ public:
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, vector<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
 
+	// Extract a subtree that is the downstream of the original tree with a given starting node.
 	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap);
+	
+	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 	/******************************************************************/
 
+
 	/***************** Neuron Struct Profiling Methods *****************/
+
+	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
 
+	// Node tile functions
 	static inline string getNodeTileKey(const NeuronSWC& inputNode);
 	static inline string getNodeTileKey(const ImageMarker& inputMarker, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, map<string, vector<int>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
@@ -93,15 +106,22 @@ public:
 
 
 	/***************** Inter-SWC Comparison/Analysis *****************/
+
+	// Recognize the same nodes with given distance threshold.
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
 	/*****************************************************************/
 
 
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
+
+	// Identify the connectivity of every node in the input swc and generate connected component data from it.
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
+
+	// Merge 2D connected components into 3D ones.
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 
+	// Convert connected component data type into swc format.
 	static NeuronTree blobs2tree(const vector<connectedComponent>& inputConnCompList, bool usingRadius2compNum = false);
 	/**************************************************************************/
 

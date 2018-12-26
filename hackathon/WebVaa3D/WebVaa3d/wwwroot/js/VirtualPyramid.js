@@ -13,7 +13,7 @@ for (var i = 0; i <= 5; i++) {
     scene[i] = new THREE.Scene;
 }
 
-console.log(scene);
+//console.log(scene);
 camera = [];
 for (var i = 0; i <= 5; i++) {
 

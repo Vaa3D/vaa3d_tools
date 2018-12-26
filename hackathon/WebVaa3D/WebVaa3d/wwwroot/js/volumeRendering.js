@@ -43,7 +43,6 @@ function VolumeRender() {
 
         var h = 512; // frustum height
         var aspect = width / height;
-
         camera = new THREE.OrthographicCamera(- h * aspect / 2, h * aspect / 2, h / 2, - h / 2, 1, 1000);
         camera.position.set(0, 0, 128);
         camera.up.set(0, 0, 1); // In our data, z is up
