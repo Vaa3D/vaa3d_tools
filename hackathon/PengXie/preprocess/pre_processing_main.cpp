@@ -139,6 +139,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         NeuronTree component_i = get_ith_component(nt, components, cid);
         cout << "\t\t# Nodes:\t" << component_i.listNeuron.size() <<endl;
         QList<int> tip_list = get_tips(component_i, true);
+        qDebug()<<"Tips found.";
 
         // Find closet ends
         QList<double> edist; // distance from end to soma
@@ -150,10 +151,13 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 
         QList<double> dsorted = edist;
         qSort(dsorted);
+        qDebug()<<"Closest tip found.";
 
         // Whether to connect subtrees to soma
         int cend = eid.at(edist.indexOf(dsorted.at(0))); // end to be connected to soma
         NeuronTree component_i_sorted;
+        qDebug()<<"Sort swc with new root name:"<<cend;
+        if(cid==0){writeSWC_file("component_1.swc", component_i);}
         SortSWC(component_i.listNeuron, component_i_sorted.listNeuron, component_i.listNeuron.at(cend).n, 0);
         int new_cend = listneuron.size();
 
