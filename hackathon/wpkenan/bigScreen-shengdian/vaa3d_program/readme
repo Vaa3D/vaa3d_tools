@@ -1,3 +1,0 @@
-replace the given three file to vaa3d main program.
-mainwindow.cpp>>>>[v3d_external/v3d_main/v3d/]
-v3dr_common.h,v3dr_control_singal.cpp>>>>>[v3d_external/v3d_main/3drenderer/]
