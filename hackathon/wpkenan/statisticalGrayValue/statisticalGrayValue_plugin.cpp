@@ -123,13 +123,72 @@ template <class T> bool statisticalProcess(T* data1d,V3DLONG *in_sz,V3DLONG c){
 	for(V3DLONG i=0;i<N*M*P;i++){
 		grayCounts[data1d[i]]++;
 	}
-	QString strTmp=QString("%1 grayLevel in all\n").arg(grayCounts.size());
-	for(map<T,V3DLONG>::iterator iter=grayCounts.begin();iter!=grayCounts.end();iter++){
+	QString strTmp=QString("%1 grayLevels in all\nGraylevel   Counts\n").arg(grayCounts.size());
+	map<T,V3DLONG>::iterator iter=grayCounts.begin();
+	int count=0;
+	for(iter=grayCounts.begin();iter!=grayCounts.end();iter++){
 		//cout << iter->first << " " << iter->second << endl;
-		strTmp+=QString("%1      %2\n").arg(iter->first).arg(iter->second);
-		
+		count++;
+		strTmp+=QString("%1       %2\n").arg(iter->first,3).arg(iter->second,10);
+		if(count>52){
+			break;
+		}
 	}
+	if(count!=0)v3d_msg(strTmp);
 
-	v3d_msg(strTmp);
+	count=0;
+	strTmp.clear();
+	strTmp=QString("%1 grayLevels in all\nGraylevel   Counts\n").arg(grayCounts.size());
+	for(;iter!=grayCounts.end();iter++){
+		//cout << iter->first << " " << iter->second << endl;
+		count++;
+		strTmp+=QString("%1       %2\n").arg(iter->first,3).arg(iter->second,10);
+		if(count>52){
+			break;
+		}
+	}
+	if(count!=0)v3d_msg(strTmp);
+
+	count=0;
+	strTmp.clear();
+	strTmp=QString("%1 grayLevels in all\nGraylevel   Counts\n").arg(grayCounts.size());
+	for(;iter!=grayCounts.end();iter++){
+		//cout << iter->first << " " << iter->second << endl;
+		count++;
+		strTmp+=QString("%1       %2\n").arg(iter->first,3).arg(iter->second,10);
+		if(count>52){
+			break;
+		}
+	}
+	if(count!=0)v3d_msg(strTmp);
+	
+
+	count=0;
+	strTmp.clear();
+	strTmp=QString("%1 grayLevels in all\nGraylevel   Counts\n").arg(grayCounts.size());
+	for(;iter!=grayCounts.end();iter++){
+		//cout << iter->first << " " << iter->second << endl;
+		count++;
+		strTmp+=QString("%1       %2\n").arg(iter->first,3).arg(iter->second,10);
+		if(count>52){
+			break;
+		}
+	}
+	if(count!=0)v3d_msg(strTmp);
+
+	count=0;
+	strTmp.clear();
+	strTmp=QString("%1 grayLevels in all\nGraylevel   Counts\n").arg(grayCounts.size());
+	for(;iter!=grayCounts.end();iter++){
+		//cout << iter->first << " " << iter->second << endl;
+		count++;
+		strTmp+=QString("%1       %2\n").arg(iter->first,3).arg(iter->second,10);
+		if(count>52){
+			break;
+		}
+	}
+	if(count!=0)v3d_msg(strTmp);
+
+
 	return true;
 }
