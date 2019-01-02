@@ -85,14 +85,93 @@ bool somadetect(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPl
 	in_sz[1]=p4dImage->getYDim();
 	in_sz[2]=p4dImage->getZDim();
 	in_sz[3]=p4dImage->getCDim();
-	
 	unsigned char* data1d=p4dImage->getRawData();
 	
+	freopen("D:/soamdata/somaDetection/raw.txt","w",stdout);
+	for(int i=0;i<in_sz[0]*in_sz[1]*in_sz[2];i++){
+		cout << (int)data1d[i] << ' ';
+	}
+	cout << endl;
+	freopen("CON","w",stdout);
+
 	simple_saveimage_wrapper(callback,outfiles[0],(unsigned char*)data1d,in_sz,1);
 
-	
-	
 
 	return true;
 }
 
+bool conv(unsigned char * data1d,V3DLONG in_sz[4],V3DLONG root[4],V3DLONG xL=50,V3DLONG yL=50,V3DLONG zL=5){
+	return true;
+}
+
+//bool test(){
+//	else if (func_name == tr("cropTerafly"))
+//	{
+//		vector<char*> infiles, inparas, outfiles;
+//		if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+//		if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+//		if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+//		QString length1 = inparas.at(0);
+//		QString length2 = inparas.at(1);
+//		QString length3 = inparas.at(2);
+//		QString m_InputfolderName = infiles.at(0);
+//		QString inputListFile = infiles.at(1);
+//		QString savePath = infiles.at(2);
+//
+//
+//		V3DLONG *in_zz;
+//		if(!callback.getDimTeraFly(m_InputfolderName.toStdString(), in_zz))
+//		{
+//			v3d_msg("Cannot load terafly images.",0);
+//			return false;
+//		}
+//
+//		long cubeSideLength1 = length1.toLong();
+//		long cubeSideLength2 = length2.toLong();
+//		long cubeSideLength3 = length3.toLong();
+//		V3DLONG in_sz[4];
+//		in_sz[0] = cubeSideLength1;
+//		in_sz[1] = cubeSideLength2;
+//		in_sz[2] = cubeSideLength3;
+//		in_sz[3] = in_zz[3];
+//
+//		QFile inputFile(inputListFile);
+//		QTextStream in(&inputFile);
+//		int count = 0;
+//		if (inputFile.open(QIODevice::ReadOnly))
+//		{
+//			while (!in.atEnd())
+//			{
+//				QString line = in.readLine();
+//				QList<QString> coords = line.split(",");
+//				if (coords[0] == "##n") continue;
+//				coords[4] = coords[4].remove(0, 1);
+//				qDebug() << coords[4] << " " << coords[5] << " " << coords[6];
+//
+//				QList<QString> zC = coords[4].split(".");
+//				QList<QString> xC = coords[5].split(".");
+//				QList<QString> yC = coords[6].split(".");
+//
+//				long zcenter = zC[0].toLong() - 1;
+//				long xcenter = xC[0].toLong() - 1;
+//				long ycenter = yC[0].toLong() - 1;
+//				cout << zcenter << " " << xcenter << " " << ycenter << endl;
+//
+//				unsigned char * cropped_image = 0;
+//				cropped_image = callback.getSubVolumeTeraFly(m_InputfolderName.toStdString(),
+//					(xcenter-cubeSideLength2/2), (xcenter+cubeSideLength2/2),
+//					(ycenter-cubeSideLength1/2), (ycenter+cubeSideLength1/2),
+//					(zcenter-cubeSideLength3/2), (zcenter+cubeSideLength3/2));
+//				Image4DSimple* new4DImage = new Image4DSimple();
+//				new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
+//				QString saveName = savePath + "/" + coords[5] + "_" + coords[6] + "_" + coords[4] + ".v3draw";
+//				const char* fileName = saveName.toAscii();
+//
+//				simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
+//			}
+//		}
+//		inputFile.close();
+//
+//		return true;
+//	}
+//}
