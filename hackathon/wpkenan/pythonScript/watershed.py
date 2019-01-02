@@ -1,9 +1,10 @@
-
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-img = cv2.imread('C:/Users/admin/Desktop/wp_data/3.png')
+imgInPath='D:/vaa3d_tools/hackathon/wpkenan/DN_data20181019/1.png';
+imgOutPath=imgInPath.split('.')[0]+"_waterShed"+"."+imgInPath.split('.')[1];
+img = cv2.imread(imgInPath)
 gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 
@@ -35,10 +36,10 @@ markers[unknown==255] = 0
 
 # 执行分水岭
 markers = cv2.watershed(img,markers)
-img[markers == -1] = [255,0,0]
+img[markers == -1] = [0,255,0]
 
-# cv2.imwrite("C:/Users/admin/Desktop/wp_data/3_3.png");
+cv2.imwrite(imgOutPath,img);
 cv2.imshow("img",img)
 
-cv2.waitKey()
+cv2.waitKey(6000)
 cv2.destroyAllWindows()

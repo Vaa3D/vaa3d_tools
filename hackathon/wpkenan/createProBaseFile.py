@@ -167,9 +167,18 @@ def createCpp(solutionName):
         "   return false;\n" \
         "}\n" \
         "\n" \
-        "void function(V3DPluginCallback2 &callback,QWidget *parent){\n\n}\n" \
+        "void function(V3DPluginCallback2 &callback,QWidget *parent){\n" \
         "\n" \
-        "bool function(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPluginArgList &output,QWidget *parent){\nreturn true;\n}\n" \
+        "}\n" \
+        "\n" \
+        "bool function(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPluginArgList &output,QWidget *parent){\n" \
+        "   vector<char*> *pinfiles=(input.size()>=1)?(vector<char*> *) input[0].p : 0;\n" \
+        "   vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;\n" \
+        "   vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;\n" \
+        "   vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();\n" \
+        "   vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();\n" \
+        "   vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();\n" \
+        "   return true;\n}\n" \
         "\n" \
         %(solutionName,time.asctime(time.localtime(time.time())),solutionName,solutionName,solutionName,solutionName,solutionName,solutionName,solutionName,time.asctime(time.localtime(time.time())),solutionName)
 

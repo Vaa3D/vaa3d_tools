@@ -5,7 +5,7 @@
 2. input example: python createProBaseFile.py solutionName
 3. you will see there has been a new folder named solutionName
 4. go into solutionName folder and you will see 3 files:solutionName.pro, solutionName_plugin.h, solutionName_plugin.cpp
-
+5. you can create the .vcxproj by run solutionName.bat
 Sun Oct 14 11:08:29 2018 by wp
 '''
 import sys
@@ -31,8 +31,25 @@ def main():
     createPro(sys.argv[1]);
     createH(sys.argv[1]);
     createCpp(sys.argv[1]);
+    createBat(sys.argv[1])
 
 
+def createBat(solutionName):
+    str=":This file can only be used once\n" \
+        "@echo off\n" \
+        "start \"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Visual Studio 2010\Visual Studio Tools\Visual Studio x64 Win64 Command Prompt (2010).lnk\"" \
+        " qmake -tp vc {}.pro\n" \
+        "echo Now will del this create_vcxproj.bat!!!\n" \
+        "pause\n" \
+        "del create_vcxproj.bat\n".format(solutionName);
+    filePath = os.getcwd() + "\\%s" % (solutionName);
+    if not os.path.exists(filePath):
+        os.makedirs(filePath);
+    filePath = filePath + "\\%s.bat" % ("create_vcxproj");
+
+    if not os.path.exists(filePath):
+        file = open(filePath, "w");
+        file.write(str);
 
 def createPro(solutionName):
     str="\n"\
