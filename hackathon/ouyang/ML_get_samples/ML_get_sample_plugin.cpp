@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "ML_get_sample_plugin.h"
+#include "APP1_pruning.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(ML_get_sample, ML_sample);
  
@@ -22,6 +23,7 @@ QStringList ML_sample::funclist() const
         <<tr("get_ML_sample")
         <<tr("get_2D_sample")
         <<tr("get_tip_sample")
+        <<tr("prune_tip_APP1")
         <<tr("help")
         <<tr("help1");
 }
@@ -53,6 +55,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     else if (func_name == tr("get_tip_sample"))
     {
         get_tip_image(input,output,callback);
+    }
+    else if (func_name == tr("prune_tip_APP1"))
+    {
+        pruning_covered_leaf_single_cover(input,output,callback);
     }
 	else if (func_name == tr("help"))
 	{
