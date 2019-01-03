@@ -223,6 +223,23 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 
 	return dendriteSigSet;
 }
+
+myImg1DPtr ImgAnalyzer::connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
+{
+	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i) output1Dptr.get()[i] = 0;
+
+	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+				output1Dptr.get()[imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
+		}
+	}
+
+	return output1Dptr;
+}
 // ===================================== END of [Image Segmentation] ===================================== //
 
 void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg)

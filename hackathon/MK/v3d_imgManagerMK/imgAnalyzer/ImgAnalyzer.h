@@ -24,11 +24,6 @@ struct connectedComponent
 class ImgAnalyzer
 {
 public:
-	/***************** Constructors and Basic Data/Function Members *****************/
-	// Not needed at the moment. Will implement later if necessary.
-	/********************************************************************************/
-
-
 	/***************** Image Segmentation *****************/
 
 	// Finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
@@ -39,6 +34,8 @@ public:
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
+
+	myImg1DPtr connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
 	/******************************************************/
 
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);

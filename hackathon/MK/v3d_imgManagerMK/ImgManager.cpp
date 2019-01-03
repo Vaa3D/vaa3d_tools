@@ -11,6 +11,31 @@
 using namespace std;
 using namespace boost::filesystem;
 
+void registeredImg::createBlankImg(const int imgDims[])
+{
+	myImg1DPtr blank1D(new unsigned char[imgDims[0] * imgDims[2] * imgDims[2]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[2] * imgDims[2]; ++i) blank1D.get()[i] = 0;
+	
+	for (map<string, myImg1DPtr>::iterator it = this->slicePtrs.begin(); it != this->slicePtrs.end(); ++it)
+	{
+		if (it->first.length() >= 5)
+		{
+			if (!it->first.substr(0, 5).compare("blank"))
+			{
+				char blankNumChar = *(it->first.end() - 1);
+				int blankNum = atoi(&blankNumChar);
+				int newBlankNum = blankNum + 1;
+				string newBlankNumString = "blank" + to_string(newBlankNum);
+				
+				this->slicePtrs.insert({ newBlankNumString, blank1D });
+				return;
+			}
+		}
+	}
+
+	this->slicePtrs.insert({ "blank1", blank1D });
+}
+
 void registeredImg::getHistMap_no0()
 {
 	if (slicePtrs.empty())
