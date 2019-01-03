@@ -119,6 +119,7 @@ NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres){
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
 
+    qDebug()<<"sort swc.";
     //create a LUT, from the original id to the position in the listNeuron, different neurons with the same x,y,z & r are merged into one position
     QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons);
 
@@ -152,7 +153,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
         }
     }
 
-
+    qDebug()<<"Reset root.";
     //do a DFS for the the matrix and re-allocate ids for all the nodes
     V3DLONG root = 0;
     if (newrootid==VOID)
@@ -177,6 +178,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
             return(false);
         }
     }
+    qDebug()<<"Done reset root.";
 
 
     V3DLONG* neworder = new V3DLONG[siz];
@@ -186,18 +188,21 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
     V3DLONG id[] = {0};
 
     int group[] = {1};
+    qDebug()<<"1";
     DFS(matrix,neworder,root,id,siz,numbered,group);
 
     while (*id<siz)
     {
+        qDebug()<<"*id";
         V3DLONG iter;
         (*group)++;
         for (iter=0;iter<siz;iter++)
             if (numbered[iter]==0) break;
         DFS(matrix,neworder,iter,id,siz,numbered,group);
     }
+    qDebug()<<"Done DFS";
 
-
+    qDebug()<<"find the point in non-group 1 that is nearest to group 1";
     //find the point in non-group 1 that is nearest to group 1,
     //include the nearest point as well as its neighbors into group 1, until all the nodes are connected
     while((*group)>1)

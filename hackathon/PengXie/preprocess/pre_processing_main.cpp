@@ -161,8 +161,8 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
 ////            writeSWC_file(outfileLabel+QString("component_1.swc"), component_i);
 //            writeSWC_file("Z:/Peng/Preprocess_0102/component_1.swc", component_i);
 //        }
-        component_i_sorted.deepCopy(my_SortSWC(component_i, cend, 0));
-//        component_i_sorted.deepCopy(my_SortSWC(component_i, component_i.listNeuron.at(cend).n, 0));
+//        component_i_sorted.deepCopy(my_SortSWC(component_i, cend, 0));
+        component_i_sorted.deepCopy(my_SortSWC(component_i, component_i.listNeuron.at(cend).n, 0));
 //        SortSWC(component_i.listNeuron, component_i_sorted.listNeuron, component_i.listNeuron.at(cend).n, 0);
         int new_cend = listneuron.size();
         qDebug()<<"Component sorted."<<endl;
