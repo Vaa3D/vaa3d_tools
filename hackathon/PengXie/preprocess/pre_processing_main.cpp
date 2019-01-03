@@ -156,10 +156,16 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         // Whether to connect subtrees to soma
         int cend = eid.at(edist.indexOf(dsorted.at(0))); // end to be connected to soma
         NeuronTree component_i_sorted;
-        qDebug()<<"Sort swc with new root name:"<<cend;
-        if(cid==0){writeSWC_file("component_1.swc", component_i);}
-        SortSWC(component_i.listNeuron, component_i_sorted.listNeuron, component_i.listNeuron.at(cend).n, 0);
+        qDebug()<<"Sort swc with new root name:"<<cend<<endl;
+//        if(cid==0){
+////            writeSWC_file(outfileLabel+QString("component_1.swc"), component_i);
+//            writeSWC_file("Z:/Peng/Preprocess_0102/component_1.swc", component_i);
+//        }
+        component_i_sorted.deepCopy(my_SortSWC(component_i, cend, 0));
+//        component_i_sorted.deepCopy(my_SortSWC(component_i, component_i.listNeuron.at(cend).n, 0));
+//        SortSWC(component_i.listNeuron, component_i_sorted.listNeuron, component_i.listNeuron.at(cend).n, 0);
         int new_cend = listneuron.size();
+        qDebug()<<"Component sorted."<<endl;
 
         // Case 1: subtree close to soma
         listneuron = neuronlist_cat(listneuron, component_i_sorted.listNeuron);
@@ -498,6 +504,12 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         if (export_listNeuron_2swc(new_connection,qPrintable(outfileLabel+".new_connection.swc"))){
             printf("\t %s has been generated successfully.\n",qPrintable(outfileLabel+".new_connection.swc"));
         }
+    }
+
+    if(!return_temp){
+        remove(qPrintable(infileLabel+".short_connection.apo"));
+        remove(qPrintable(infileLabel+".soma_connection.apo"));
+        remove(qPrintable(infileLabel+".long_connection.apo"));
     }
 
 
