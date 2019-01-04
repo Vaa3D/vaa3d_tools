@@ -66,15 +66,22 @@ QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons)
 
 void DFS(bool** matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG siz, int* numbered, int *group)
 {
+	//cout << "1:" << numbered << " ";
+	//qDebug() << node << numbered[siz - 1];
     if (!numbered[node]){
         numbered[node] = *group;
         neworder[*id] = node;
         (*id)++;
         for (V3DLONG v=0;v<siz;v++)
-            if (!numbered[v] && matrix[v][node])
-            {
-                DFS(matrix, neworder, v, id, siz,numbered,group);
-            }
+			if (!numbered[v])
+			{
+				if (matrix[v][node])
+			{
+				//cout << "2:" << numbered << " ";
+				DFS(matrix, neworder, v, id, siz, numbered, group);
+				//cout << "3:" << numbered << " " << endl;
+			}
+			}
     }
 };
 
@@ -114,7 +121,7 @@ bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combi
 
 bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newrootid, double thres)
 {
-
+	qDebug() << newrootid;
 	//create a LUT, from the original id to the position in the listNeuron, different neurons with the same x,y,z & r are merged into one position
 	QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons);
 
@@ -174,14 +181,15 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 	int* numbered = new int[siz];
 	for (V3DLONG i=0;i<siz;i++) numbered[i] = 0;
 
-	V3DLONG id[] = {0};
+	V3DLONG id2 = 0;
+	V3DLONG* id = &id2;
 
 	int group[] = {1};
 	DFS(matrix,neworder,root,id,siz,numbered,group);
 
 	while (*id<siz)
 	{
-		V3DLONG iter;
+		int iter; // original is V3DLONG type
 		(*group)++;
 		for (iter=0;iter<siz;iter++)
 			if (numbered[iter]==0) break;
