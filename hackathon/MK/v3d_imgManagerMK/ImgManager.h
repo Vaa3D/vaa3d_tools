@@ -68,13 +68,12 @@ public:
 	QString outputRootPath;
 	
 	QStringList caseList;
-	string inputSingleCaseSingleSliceFullPath;
-	string inputSingleCaseSingleCubeFullPath;
-	string outputSingleCaseSingleSliceFullPath;
+	string inputSingleCaseFullPath;
+	string outputSingleCaseFullPath;
 	multimap<string, string> inputMultiCasesSliceFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 
-	enum imgFormat { cube, slices, singleCase_singleSlice };
+	enum imgFormat { multicaseCubes, slices, singleCase };
 	/*******************************************************/
 
 

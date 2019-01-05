@@ -5,6 +5,8 @@
 // ======================================= Image Segmentation ======================================= //
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
+	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
+
 	vector<connectedComponent> connList;
 	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
 
@@ -46,6 +48,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 	// ----------- Prepare white pixel address book ------------
 	set<vector<int>> whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
+	cout << int(maxIP1D[256 * 128 + 142]) << endl;
 	for (int j = 0; j < dims[1]; ++j)
 	{
 		maxIP2D[j] = new unsigned char[dims[0]];
@@ -235,6 +238,23 @@ myImg1DPtr ImgAnalyzer::connectedComponentMask2D(const vector<connectedComponent
 		{
 			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
 				output1Dptr.get()[imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
+		}
+	}
+
+	return output1Dptr;
+}
+
+myImg1DPtr ImgAnalyzer::connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
+{
+	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1] * imgDims[2]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[1] * imgDims[2]; ++i) output1Dptr.get()[i] = 0;
+
+	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+				output1Dptr.get()[imgDims[0] * imgDims[1] * pointIt->at(2) + imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
 		}
 	}
 
