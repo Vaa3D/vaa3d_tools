@@ -13,6 +13,8 @@
 #include "ImgManager.h"
 #include "ImgProcessor.h"
 
+#include "C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
+
 using namespace std;
 using namespace boost;
 
@@ -21,7 +23,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	const char* funcNameC = argv[1];
 	string funcName(funcNameC);
-	//string funcName = "swcSubtract";
+	//string funcName = "sortTest";
 	/************************************/
 
 	if (!funcName.compare("2DblobMerge"))
@@ -353,6 +355,80 @@ int main(int argc, char* argv[])
 			imgDims[2] = 1;
 			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
 			ImgProcessor::skeleton2D(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims);
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+		}
+	}
+	else if (!funcName.compare("imgClose"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+		ImgManager myManager(folderNameQ);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		{
+			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
+			myManager.imgEntry(caseIt->first, ImgManager::singleCase_singleSlice);
+
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			morphStructElement2D structEle(morphStructElement2D::disk, 3);
+			ImgProcessor::imgClose2D(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, structEle);
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+		}
+	}
+	else if (!funcName.compare("imgOpen"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+		ImgManager myManager(folderNameQ);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		{
+			myManager.inputSingleCaseSingleSliceFullPath = caseIt->second;
+			myManager.imgEntry(caseIt->first, ImgManager::singleCase_singleSlice);
+
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			morphStructElement2D structEle(morphStructElement2D::disk, 3);
+			ImgProcessor::imgOpen2D(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, structEle);
 
 			V3DLONG saveDims[4];
 			saveDims[0] = imgDims[0];
@@ -1124,6 +1200,28 @@ int main(int argc, char* argv[])
 
 		map<string, float> img3DStats = ImgProcessor::getBasicStats_no0_fromHist(hist3Dmap);
 		cout << img3DStats.at("mean") << " " << img3DStats.at("std") << endl;
+	}
+	else if (!funcName.compare("sortTest"))
+	{
+		const char* swcNameC = argv[2];
+		string swcName(swcNameC);
+		QString swcNameQ = QString::fromStdString(swcName);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		const char* rootIDC = argv[4];
+		string rootIDstring(rootIDC);
+		int rootID = atoi(rootIDC);
+
+		//QString swcNameQ = "C:\\Users\\hsienchik\\Desktop\\component_1.swc";
+		//int rootID = 3000;
+
+		NeuronTree inputTree = readSWC_file(swcNameQ);
+		QList<NeuronSWC> outputNodeList;
+
+		SortSWC(inputTree.listNeuron, outputNodeList, rootID, 0);
 	}
 
 	return 0;

@@ -19,9 +19,14 @@ public:
 	/********************************************************************************/
 
 
-	/***************** Object-based Feature Extraction *****************/
+	/***************** Object-based Operations *****************/
 	static boost::container::flat_map<string, double> objMorphFeature(const connectedComponent& inputSample);
-	static connectedComponent getSurfaceObj(const connectedComponent& inputObj);
+	static connectedComponent getObjSurface(const connectedComponent& inputObj);
+	/***********************************************************/
+
+
+	/**************** Morphological Feature Extraction *****************/
+	static double irregularity_voxBased(const connectedComponent& inputSample);
 	/*******************************************************************/
 };
 

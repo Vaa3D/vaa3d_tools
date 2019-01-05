@@ -34,12 +34,16 @@ using namespace std;
 
 struct morphStructElement2D
 {
+	enum shape { disk };
+
 	morphStructElement2D();
+	morphStructElement2D(shape structEleShape = morphStructElement2D::disk, int length = 5);
 	morphStructElement2D(string shape, int length = 5);
 	morphStructElement2D(string shape, int xLength, int yLength);
 	~morphStructElement2D();
 
 	string eleShape;
+	shape structEleShape;
 	int xLength, yLength, radius;
 
 	unsigned char* structElePtr;
@@ -136,6 +140,11 @@ public:
 
 	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	static void conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold);
+	
+	static void dilate2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+
+	static void imgClose2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	static void imgOpen2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	/********************************************/
 
 

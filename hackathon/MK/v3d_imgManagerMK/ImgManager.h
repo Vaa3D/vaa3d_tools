@@ -44,6 +44,7 @@ struct registeredImg
 	string imgAlias;
 	QString imgCaseRootQ;
 
+	void createBlankImg(const int imgDims[]);
 	map<string, myImg1DPtr> slicePtrs;
 
 	map<int, size_t> histMap;

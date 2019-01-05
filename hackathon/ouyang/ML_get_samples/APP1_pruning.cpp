@@ -15,30 +15,45 @@
 //        //return npruned; \
 //    }
 
-
-//V3DLONG pruning_covered_leaf_single_cover(vector< NeuronTree >& mmUnit, unsigned char ***imap,  float *dmap, V3DLONG sz[3], double trace_z_thickness)
 void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
-    printf("welcome to tip locationalize");
+    cout<<"welcome to tip locationalize"<<endl;
     double trace_z_thickness=5;
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString input_swc=infiles.at(0);
-    QString input_image=inparas.at(0);
+    QString input_image=infiles.at(1);
+
+    int mode=2;
+    if (inparas.size()==1)
+    {
+        int tmp=atoi(inparas.at(0));
+        if (tmp==2)
+        {
+            qDebug()<<"You are using 2D image to calculate node radius";
+        }
+        else
+        {
+            mode=3;
+            v3d_msg("You are using 3D image to calculate node radius",0);
+        }
+    }
+
+
     QString output_2d_dir=outfiles.at(0);
     if(!output_2d_dir.endsWith("/")){
         output_2d_dir = output_2d_dir+"/";
     }
 
     QStringList list=input_swc.split("/");
-    QString flag=list[6]; QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
-    QString flag1=list1[0];
+    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag1=list1.first();//dont need to match list index
 
     qDebug("number:%s",qPrintable(flag1));
-    NeuronTree mUnittree=readSWC_file(input_swc);
-    QList<NeuronSWC> & mUnit =mUnittree.listNeuron ;
+    NeuronTree mUnittree1=readSWC_file(input_swc);
+    QList<NeuronSWC> & mUnit_ori =mUnittree1.listNeuron ;
     Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
     int nChannel = p4dImage->getCDim();
 
@@ -50,25 +65,33 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
     V3DLONG pagesz = sz[0]*sz[1]*sz[2];
     V3DLONG sz1 = sz[0]*sz[1];
 
+
+    printf("image sizex %d\nsizey %d\nsizez %d\n",sz[0],sz[1],sz[2]);
     vector<MyMarker> allmarkers;
 //generate 1D point to 3D point and get all markers
     unsigned char ***imap;
     unsigned char *data1d_crop=p4dImage->getRawDataAtChannel(nChannel);
-    for (int z=0;z<sz[2];z++){
-        for (int y=0;y<sz[1];y++){
-            for (int x=0;x<sz[0];x++){
-                imap[z][y][x]=data1d_crop[z*sz1+y*sz[0]+x];
-                MyMarker nodes;nodes.x=x;nodes.y=y;nodes.z=z;
-                allmarkers.push_back(nodes);
+//get global average threshold
+    for (int i=0;i<sz[2];i++){
+        for (int j=0;j<sz[1];j++){
+            for (int k=0;k<sz[0];k++){
+                MyMarker node;
+                node.x=k;node.y=j;node.z=i;
+                allmarkers.push_back(node);
             }
         }
     }
-//get global average threshold
+    printf("pixel num of image:%d \n",allmarkers.size());
     double signal;
-    signal=get_circle_signal(allmarkers,data1d_crop,sz[0], sz[1], sz[2]);
+    unsigned char *data2d=get_2d_pixel(data1d_crop, sz);
+    signal=get_aver_signal(allmarkers, data1d_crop, data2d,sz[0], sz[1], sz[2], mode);
+    printf("average image signal:%f \n",signal);
 //caculate all radius of everynode
-    map<int,double> r_and_index;
-    r_and_index=calculate_R(imap,mUnit,signal,trace_z_thickness,sz);
+    map<int,float> r_and_index;
+    r_and_index=calculate_R(data1d_crop,mUnit_ori,signal,trace_z_thickness,sz,mode);
+//revise radius of swc nodes
+    NeuronTree mUnittree=revise_radius(mUnittree1,r_and_index);
+    QList<NeuronSWC>  mUnit =mUnittree.listNeuron ;
 //get child size of every node
     V3DLONG tnodes = mUnit.size();
     V3DLONG neuronNum = mUnittree.listNeuron.size();
@@ -137,7 +160,19 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
             j = i;
             NeuronSWC & curnode = mUnit[i];
 
+            //node in margin should't be calculated
+            double x_cur,y_cur,z_cur;
+            x_cur=curnode.x;y_cur=curnode.y;z_cur=curnode.z;
+            double r_cur=r_and_index[i];
+            if(r_cur>=x_cur || r_cur>=y_cur || r_cur>=z_cur){
+
+                printf("this:%d node's radius is out off image block(nodes in margin),will not be calculated",i);
+                continue;
+            }
+
             double cur_margin = r_and_index[i];//curnode.r;
+
+
             //if (cur_margin > dmap[V3DLONG(curnode.z)*sz[0]*sz[1] + V3DLONG(curnode.y)*sz[0] + V3DLONG(curnode.x)]) cur_margin = dmap[V3DLONG(curnode.z)*sz[0]*sz[1] + V3DLONG(curnode.y)*sz[0] + V3DLONG(curnode.x)];
             //cur_margin = 0;
             while (tmpcnt<10) //to avoid loops
@@ -160,13 +195,17 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
                 NeuronSWC & curpnode = mUnit[pi_rownum];
                 double tmpd = sqrt(distL2square(curnode, curpnode));
                 double pi_radius = r_and_index[pi_rownum];//curpnode.r;
-                //if (pi_radius < dmap[V3DLONG(curpnode.z)*sz[0]*sz[1] + V3DLONG(curpnode.y)*sz[0] + V3DLONG(curpnode.x)]) pi_radius = dmap[V3DLONG(curpnode.z)*sz[0]*sz[1] + V3DLONG(curpnode.y)*sz[0] + V3DLONG(curpnode.x)];
+
                 if (tmpd + cur_margin <= pi_radius ||  //stop when it is out of the control-range (defined by radius)
-                    calculate_overlapping_ratio_n1(curnode, curpnode, imap,  sz, trace_z_thickness,childs,index_map)>0.9)
+                    calculate_overlapping_ratio_n1(curnode, curpnode, data1d_crop, data2d, sz, trace_z_thickness, r_and_index, index_map, mode)>0.9)
                 {
-                    //if (tmpcnt>1) printf("exit at decreasing r (j=%ld) and tmpcnt>=2. tmpcnt=%ld\n", j, tmpcnt);
+                    V3DLONG R =r_and_index[index_map[curnode.n]];
+                    V3DLONG R2=r_and_index[index_map[curpnode.n]];
+                    //cout<<"tip r and it's pn r:"<<R<<","<<R2<<endl;
                     childs[i] = -1;
+                    //printf("tip's parent child size:%d\n",childs[index_map[curnode.parent]]);
                     childs[index_map[curnode.parent]]--;
+                    //printf("tip's parent child size:%d\n",childs[index_map[curnode.parent]]);
                     nleafdelete++;
 
                     if (V3DLONG(mUnit[index_map[curnode.parent]].n)==root_id)
@@ -194,9 +233,8 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
 
     rearrange_and_remove_labeled_deletion_nodes_mmUnit(mUnittree,childs);
 
-    QString swc_name = output_2d_dir+flag1+"."+QString ("tip_APP1_purned.swc");
+    QString swc_name = output_2d_dir+flag1+"."+QString ("purned.swc");
     writeSWC_file(swc_name,mUnittree);
-    qDebug()<<swc_name;
 
 
     printf("done with the pruning_covered_leaf_single_cover() step. \n");
@@ -211,12 +249,14 @@ double distL2square(const NeuronSWC & a, const NeuronSWC & b)
             (a.z-b.z)*(a.z-b.z) );
 }
 
-double calculate_overlapping_ratio_n1(const NeuronSWC & n1, const NeuronSWC & n2, unsigned char ***imap,  V3DLONG sz[3], double trace_z_thickness, QVector<V3DLONG> childs,map<double, V3DLONG> index_map)
+double calculate_overlapping_ratio_n1(const NeuronSWC & n1, const NeuronSWC & n2, unsigned char *data1D, unsigned char *data2D,V3DLONG sz[3], double trace_z_thickness,
+                                      map<int,float> r_and_index,map<double, V3DLONG> index_map,int mode)
 {
     //in this function I intentionally do not check if n2 has been marked as to be deleted (.nchild<0), as this function should be general
 
-    V3DLONG R =childs[index_map[n1.n]];
-    V3DLONG R2=childs[index_map[n2.n]];
+    V3DLONG R =r_and_index[index_map[n1.n]];
+    V3DLONG R2=r_and_index[index_map[n2.n]];
+
     V3DLONG i,j,k;
     //V3DLONG R = ceil(n1.r);
     double r12 = R*R, r22 = R2*R2;
@@ -224,28 +264,61 @@ double calculate_overlapping_ratio_n1(const NeuronSWC & n1, const NeuronSWC & n2
     double n1x = n1.x, n1y = n1.y, n1z = n1.z;
     V3DLONG cx, cy, cz;
     double n1_totalsample = 0, n2_includedsample = 0, n1_totalpixel=0;
-    for (k=-R/trace_z_thickness;k<=R/trace_z_thickness;k++)
-    {
-        cz = V3DLONG(n1z+k+0.5); if (cz<0 || cz>=sz[2]) continue;
-        curr_k = double(k)*k;
-        for (j=-R;j<=R;j++)
-        {
-            cy = V3DLONG(n1y+j+0.5); if (cy<0 || cy>=sz[1]) continue;
-            if ((curr_j = double(j)*j+curr_k) > r12)
-                continue;
 
-            for (i=-R;i<=R;i++)
-            {
-                cx = V3DLONG(n1x+i+0.5); if (cx<0 || cx>=sz[0]) continue;
-                if ((curr_i = double(i)*i+curr_j) > r12)
-                    continue;
+    if(mode=3){
+      for (k=-R/trace_z_thickness;k<=R/trace_z_thickness;k++)
+      {
+          cz = V3DLONG(n1z+k+0.5); if (cz<0 || cz>=sz[2]) continue;
+          curr_k = double(k)*k;
+          for (j=-R;j<=R;j++)
+          {
+              cy = V3DLONG(n1y+j+0.5); if (cy<0 || cy>=sz[1]) continue;
+              if ((curr_j = double(j)*j+curr_k) > r12)
+                  continue;
 
-                n1_totalpixel += 1;
-                n1_totalsample += imap[cz][cy][cx];
-                if ((cz-n2.z)*(cz-n2.z)+(cy-n2.y)*(cy-n2.y)+(cx-n2.x)*(cx-n2.x) <= r22)
-                    n2_includedsample += imap[cz][cy][cx];
-            }
-        }
+              for (i=-R;i<=R;i++)
+              {
+                  cx = V3DLONG(n1x+i+0.5); if (cx<0 || cx>=sz[0]) continue;
+                  if ((curr_i = double(i)*i+curr_j) > r12)
+                      continue;
+
+                  V3DLONG ids=cz*sz[0]*sz[1]+cy*sz[1]+cx;
+
+                  n1_totalpixel += 1;
+                  n1_totalsample += data1D[ids];
+                  if ((cz-n2.z)*(cz-n2.z)+(cy-n2.y)*(cy-n2.y)+(cx-n2.x)*(cx-n2.x) <= r22)
+                      n2_includedsample += data1D[ids];
+              }
+          }
+      }
+    }
+
+    if(mode=2){
+//      for (k=-R/trace_z_thickness;k<=R/trace_z_thickness;k++)
+//      {
+//          cz = V3DLONG(n1z+k+0.5); if (cz<0 || cz>=sz[2]) continue;
+//          curr_k = double(k)*k;
+          for (j=-R;j<=R;j++)
+          {
+              cy = V3DLONG(n1y+j+0.5); if (cy<0 || cy>=sz[1]) continue;
+              if ((curr_j = double(j)*j+curr_k) > r12)
+                  continue;
+
+              for (i=-R;i<=R;i++)
+              {
+                  cx = V3DLONG(n1x+i+0.5); if (cx<0 || cx>=sz[0]) continue;
+                  if ((curr_i = double(i)*i+curr_j) > r12)
+                      continue;
+
+                  V3DLONG ids=cy*sz[1]+cx;
+
+                  n1_totalpixel += 1;
+                  n1_totalsample += data2D[ids];
+                  if ((cy-n2.y)*(cy-n2.y)+(cx-n2.x)*(cx-n2.x) <= r22)
+                      n2_includedsample += data2D[ids];
+              }
+          }
+      //}
     }
 
     if (n1_totalpixel==0)
@@ -305,13 +378,15 @@ void rearrange_and_remove_labeled_deletion_nodes_mmUnit(NeuronTree & mmUnit,QVec
 
             if (mUnit[j].parent<0)
             {
-                if (root_id!=-1)
-                    printf("== [segment %ld] ================== detect a non-unique root!\n", k);
+//                if (root_id!=-1)
+//                    printf("== [segment %ld] ================== detect a non-unique root!\n", k);
                 root_id = V3DLONG(mUnit[j].n);
                 printf("== [segment %ld] ================== nchild of root [%ld, id=%ld] = %ld\n", k, j, V3DLONG(mUnit[j].n), V3DLONG(childs[j]));
             }
 
         }
+        printf("----------------not pruned swc size :%d\n",mUnit.size());
+        printf("--------------------pruned swc size :%d\n",mUnit_new.size());
         NeuronTree result;
         QHash <int, int>  hashNeuron;
         for(V3DLONG j=0; j<mUnit_new.size();j++)
@@ -325,29 +400,36 @@ void rearrange_and_remove_labeled_deletion_nodes_mmUnit(NeuronTree & mmUnit,QVec
 //    }
 }
 
-map<int,double> calculate_R(unsigned char ***imap,QList<NeuronSWC> mUnit,double avr_thres,double trace_z_thickness,V3DLONG sz[4]){
+map<int,float> calculate_R(unsigned char *data1D,QList<NeuronSWC> mUnit,double avr_thres,double trace_z_thickness,V3DLONG sz[4],int mode){
 
+switch(mode){
+  case 3:
+  {
     double tnode=mUnit.size();
     double z_thick=trace_z_thickness;
-    std::map<int,double> index_radius;//note the index and radius of everynode
+    V3DLONG pagesz = sz[0]*sz[1]*sz[2];
+    std::map<int,float> index_radius;//note the index and radius of everynode
     index_radius.clear();
     for (int i=0;i<tnode;i++)
     {
         double n1x=mUnit.at(i).x;
         double n1y=mUnit.at(i).y;
         double n1z=mUnit.at(i).z;
+
         V3DLONG g,j,k;
         V3DLONG cx, cy, cz;
         double ratio=0;
-        double R=0;
+        float R=0;
 
-       while(ratio<0.001){
+     while(ratio<0.001)
+     {
 
        R+=1;
        double less_num=0;
-       if (n1x<R || n1y<R || n1z<R) {index_radius[i]=1;break;}//node's R out off image will not be calculated,this condition is ok for tip node in center
+
+
        trace_z_thickness=(R<5)? R:z_thick;
-       double totalsz=8*R*R*R/trace_z_thickness;
+       float totalsz=8*R*R*R/trace_z_thickness;
        for (k=-R/trace_z_thickness;k<=R/trace_z_thickness;k++)
        {
            cz = int(n1z+k+0.5); if (cz<0 || cz>=sz[2]) continue;
@@ -357,17 +439,209 @@ map<int,double> calculate_R(unsigned char ***imap,QList<NeuronSWC> mUnit,double 
                for (g=-R;g<=R;g++)
                {
                    cx = int(n1x+g+0.5); if (cx<0 || cx>=sz[0]) continue;
-                   if(imap[cz][cy][cx]<avr_thres) less_num += 1;
+                   if ((cz-n1z)*(cz-n1z)+(cy-n1y)*(cy-n1y)+(cx-n1x)*(cx-n1x) <= R*R){  //make sure that the current node is in the range of R
+
+                         V3DLONG ids=cz*sz[0]*sz[1]+cy*sz[1]+cx;
+                         if(data1D[ids]<avr_thres) less_num += 1;
+                   }
                }
            }
        }
           if (less_num<=0) continue;
           ratio=less_num/totalsz;
+     }
+
+       if (n1x<R || n1y<R || n1z<R) {
+
+           index_radius[i]=R;//node's R out off image will not be calculated,and will not change it's radius ,this condition is ok for tip node in center
+           printf("this node's radius out off image: %d\n",i);
+           cout<<"radius:"<<R<<endl;
+        goto here;
        }
-    index_radius[i]=R;
-    printf("this id:%d \n radius:%d \n",i,R);
-    if (R>sz[0] || R>sz[1] || R>sz[2]) cout<<"your node's radius bigger than your image size ,plz check your code!"<<endl;
+
+           index_radius[i]=R;
+           printf("this node's radius is in image block:%d\n",i);
+           cout<<"radius:"<<R<<endl;
+        here:
+           if (R>sz[0] || R>sz[1] || R>sz[2]) cout<<"your node's radius bigger than your image size ,plz check your code!"<<endl;
+       }
+//    for(int i=0;i<index_radius.size();i++){
+
+//        cout<<"id and r:"<<index_radius[i]<<endl;
+//    }
+     return index_radius;
+     break;
     }
-    return index_radius;
+  case 2:
+  {
+    unsigned char *image_mip= get_2d_pixel(data1D,sz);
+    double tnode=mUnit.size();
+    std::map<int,float> index_radius;//note the index and radius of everynode
+    index_radius.clear();
+    for (int i=0;i<tnode;i++)
+    {
+        double n1x=mUnit.at(i).x;
+        double n1y=mUnit.at(i).y;
+
+        V3DLONG g,j,k;
+        V3DLONG cx, cy, cz;
+        double ratio=0;
+        float R=0;
+
+     while(ratio<0.01)//what's the ratio should be in 2D image?
+     {
+
+       R+=1;
+       double less_num=0;
+
+       float totalsz=3.1416*R*R;
+           for (j=-R;j<=R;j++)
+           {
+               cy = int(n1y+j+0.5); if (cy<0 || cy>=sz[1]) continue;
+               for (g=-R;g<=R;g++)
+               {
+                   cx = int(n1x+g+0.5); if (cx<0 || cx>=sz[0]) continue;
+                   if ((cy-n1y)*(cy-n1y)+(cx-n1x)*(cx-n1x) <= R*R){  //make sure that the current node is in the range of R
+
+                         V3DLONG ids=cy*sz[1]+cx;
+                         if(image_mip[ids]<avr_thres) less_num += 1;
+                   }
+               }
+           }
+          if (less_num<=0) continue;
+          ratio=less_num/totalsz;
+     }
+
+     if (n1x<R || n1y<R ) {
+
+           index_radius[i]=R;//node's R out off image will not be calculated,and will not change it's radius ,this condition is ok for tip node in center
+           printf("this node's radius out off image: %d\n",i);
+           cout<<"radius:"<<R<<endl;
+           break;
+     }
+
+        index_radius[i]=R;
+        printf("this id in image block:%d\n",i);
+        cout<<"radius:"<<R<<endl;
+        if (R>sz[0] || R>sz[1] || R>sz[2]) cout<<"your node's radius bigger than your image size ,plz check your code!"<<endl;
+     }
+        return index_radius;
+        break;
+    }
+  }
 }
 
+NeuronTree revise_radius(NeuronTree inputtree,map<int,float> radius){
+
+    QList<NeuronSWC> result;
+    QList<NeuronSWC> swc_line=inputtree.listNeuron;
+    for(int i=0;i<swc_line.size();i++){
+
+        NeuronSWC s;
+        s.x=swc_line.at(i).x;
+        s.y=swc_line.at(i).y;
+        s.z=swc_line.at(i).z;
+        s.type=swc_line.at(i).type;
+        s.radius=radius[i];
+        s.pn=swc_line.at(i).pn;
+        s.n=swc_line.at(i).n;
+        result.push_back(s);
+    }
+    NeuronTree result1;
+    QHash <int, int>  hashNeuron;
+    for(V3DLONG j=0; j<result.size();j++)
+    {
+       hashNeuron.insert(result[j].n, j);
+    }
+    result1.listNeuron=result;
+    result1.hashNeuron=hashNeuron;
+    return result1;
+}
+
+unsigned char * get_2d_pixel(unsigned char *data1d_crop,V3DLONG mysz[4]){
+
+  V3DLONG stacksz =mysz[0]*mysz[1];
+  unsigned char *image_mip=0;
+  image_mip = new unsigned char [stacksz];//2D orignal image
+  unsigned char *label_mip=0;
+  label_mip = new unsigned char [stacksz];//2D annotation
+  for(V3DLONG iy = 0; iy < mysz[1]; iy++)
+  {
+    V3DLONG offsetj = iy*mysz[0];
+    for(V3DLONG ix = 0; ix < mysz[0]; ix++)
+    {
+        int max_mip = 0;
+        int max_label = 0;
+        for(V3DLONG iz = 0; iz < mysz[2]; iz++)
+        {
+            V3DLONG offsetk = iz*mysz[1]*mysz[0];
+            if(data1d_crop[offsetk + offsetj + ix] >= max_mip)
+            {
+                image_mip[iy*mysz[0] + ix] = data1d_crop[offsetk + offsetj + ix];
+                max_mip = data1d_crop[offsetk + offsetj + ix];
+            }
+        }
+    }
+  }
+  return image_mip;
+}
+
+
+double get_aver_signal(vector<MyMarker> allmarkers, unsigned char * data1d,unsigned char * data2d,long sz0, long sz1, long sz2, int mode)
+{
+    switch(mode){
+    case 3:
+    {
+      double signal = 0;
+      double in_block_ct = 0;
+      long sz01 = sz0 * sz1;
+      long total_sz = sz0 * sz1 * sz2;
+
+      for(int i=0; i<allmarkers.size();i++){
+        int x = allmarkers[i].x;
+        int y = allmarkers[i].y;
+        int z = allmarkers[i].z;
+        int id = z*sz01+y*sz0+x;
+        if(id<total_sz){
+            signal += data1d[id];
+            //cout<<"this:"<<id<<" id's signal indensity:"<<data1d[id]<<endl;
+            in_block_ct += 1;
+        }
+
+      }
+      //cout<<"total signal:"<<signal<<endl;
+      if(in_block_ct>0)
+      {
+          signal = signal / in_block_ct;
+          return signal;
+      }
+    }
+    case 2:
+    {
+        double signal = 0;
+        double in_block_ct = 0;
+        long sz01 = sz0 * sz1;
+        long total_sz = sz0 * sz1;
+
+        for(int i=0; i<allmarkers.size();i++){
+          int x = allmarkers[i].x;
+          int y = allmarkers[i].y;
+          //int z = allmarkers[i].z;
+          int id = y*sz0+x;
+          if(id<total_sz){
+              signal += data2d[id];
+              //cout<<"this:"<<id<<" id's signal indensity:"<<data1d[id]<<endl;
+              in_block_ct += 1;
+          }
+
+        }
+        //cout<<"total signal:"<<signal<<endl;
+        if(in_block_ct>0)
+        {
+            signal = signal / in_block_ct;
+            return signal;
+        }
+    }
+   }
+
+}

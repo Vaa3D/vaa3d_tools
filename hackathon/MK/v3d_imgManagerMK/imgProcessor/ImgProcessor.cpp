@@ -6,6 +6,36 @@
 
 using namespace std;
 
+morphStructElement2D::morphStructElement2D(shape selectedEleShape, int length) : structEleShape(selectedEleShape), xLength(length), yLength(length)
+{
+	if (this->structEleShape == morphStructElement2D::disk)
+	{
+		this->radius = length / 2;
+		this->structElePtr = new unsigned char[(this->radius * 2 + 1) * (this->radius * 2 + 1)];
+		if (length == 3)
+		{
+			this->structElePtr[0] = 0; this->structElePtr[1] = 1; this->structElePtr[2] = 0;
+			this->structElePtr[3] = 1; this->structElePtr[4] = 1; this->structElePtr[5] = 1;
+			this->structElePtr[6] = 0; this->structElePtr[7] = 1; this->structElePtr[8] = 0;
+		}
+		else
+		{
+			int count = 0;
+			for (int j = -this->radius; j <= this->radius; ++j)
+			{
+				for (int i = -this->radius; i <= this->radius; ++i)
+				{
+					int rounded_dist = int(roundf(sqrt(float(i * i) + float(j * j))));
+					if (rounded_dist > this->radius) this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 0;
+					else this->structElePtr[(this->radius * 2 + 1) * (j + this->radius) + (i + this->radius)] = 1;
+
+					++count;
+				}
+			}
+		}
+	}
+}
+
 morphStructElement2D::morphStructElement2D(string shape, int length) : eleShape(shape), xLength(length), yLength(length)
 {
 	if (!this->eleShape.compare("circle"))
@@ -494,11 +524,57 @@ void ImgProcessor::erode2D(const unsigned char inputImgPtr[], unsigned char outp
 				if (int(structEle.structElePtr[maski]) == 0) continue;
 				else if (int(roiPtr[maski]) < minValue) minValue = int(roiPtr[maski]);
 			}
-			if (minValue > 0) outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
+			outputImgPtr[imgDims[0] * j + i] = (unsigned char)(minValue);
 		}
 	}
 
 	delete[] roiPtr;
+}
+
+void ImgProcessor::dilate2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
+	for (int j = structEle.radius; j < imgDims[1] - structEle.radius; ++j)
+	{
+		for (int i = structEle.radius; i < imgDims[0] - structEle.radius; ++i)
+		{
+			for (int q = -structEle.radius; q <= structEle.radius; ++q)
+			{
+				for (int p = -structEle.radius; p <= structEle.radius; ++p)
+				{
+					roiPtr[(structEle.radius * 2 + 1) * (q + structEle.radius) + (p + structEle.radius)] = inputImgPtr[imgDims[0] * (j + q) + (i + p)];
+				}
+			}
+
+			int maxValue = 0;
+			for (int maski = 0; maski < (structEle.radius * 2 + 1) * (structEle.radius * 2 + 1); ++maski)
+			{
+				if (int(structEle.structElePtr[maski]) == 0) continue;
+				else if (int(roiPtr[maski]) > maxValue) maxValue = int(roiPtr[maski]);
+			}
+			outputImgPtr[imgDims[0] * j + i] = (unsigned char)(maxValue);
+		}
+	}
+
+	delete[] roiPtr;
+}
+
+void ImgProcessor::imgClose2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* finalOutputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+	ImgProcessor::dilate2D(inputImgPtr, outputImgPtr, imgDims, structEle);
+	ImgProcessor::erode2D(outputImgPtr, finalOutputImgPtr, imgDims, structEle);
+	
+	memcpy(outputImgPtr, finalOutputImgPtr, imgDims[0] * imgDims[1]);
+}
+
+void ImgProcessor::imgOpen2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	unsigned char* finalOutputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+	ImgProcessor::erode2D(inputImgPtr, outputImgPtr, imgDims, structEle);
+	ImgProcessor::dilate2D(outputImgPtr, finalOutputImgPtr, imgDims, structEle);
+
+	memcpy(outputImgPtr, finalOutputImgPtr, imgDims[0] * imgDims[1]);
 }
 
 void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold)

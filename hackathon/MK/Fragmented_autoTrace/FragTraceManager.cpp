@@ -55,6 +55,11 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	dims[2] = 1;
 	dims[3] = 1;
 
+	int imgDims[3];
+	imgDims[0] = dims[0];
+	imgDims[1] = dims[1];
+	imgDims[2] = dims[2];
+
 	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
 	
 	if (this->cutoffIntensity != 0)
@@ -89,6 +94,10 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	this->signalBlobs = this->fragTraceTreeUtil.swc2signal3DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
+	myImg1DPtr blob1DPtr = this->fragTraceImgAnalyzer.connectedComponentMask2D(this->signalBlobs, imgDims);
+	string compMaskNameString = this->finalSaveRootQ.toStdString() + "test.tif";
+	const char* compMaskNameC = compMaskNameString.c_str();
+	this->fragTraceImgManager.saveimage_wrapper(compMaskNameC, blob1DPtr.get(), dims, 1);
 	/*cout << "original connected component number: " << this->signalBlobs2D.size();
 	int connCompSize = 10000;
 	int islandIndex;

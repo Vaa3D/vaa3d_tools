@@ -58,6 +58,7 @@ signals:
 private:
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
+	ImgAnalyzer fragTraceImgAnalyzer;
 	NeuronStructExplorer fragTraceTreeManager;
 	NeuronStructUtil fragTraceTreeUtil;
 
