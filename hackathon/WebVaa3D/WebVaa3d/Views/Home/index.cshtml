@@ -88,17 +88,22 @@
     <div class="drawpanel" style="display:none">
         <div class="contrast">
             <i>Contrast</i><br />
-            <input class="row" type="range" min="0" max="10" id="contrast" name="point1" style="" />
+            <input class="row" type="range" min="0" max="10" id="contrast" name="point1" style="" /><br />
+        </div>
+        <div class="color">
             <i>Line color</i><br />
             <input type="color" id="color" />
+        </div>
+        <br />
+        <div>
             <i>Line size</i><br />
-            <select id="line-size-select">
+            <select id="line-size-select" style="width:80px;height:25px">
                 <option label="1pt" value="1pt" selected>1pt</option>
                 <option label="2pt" value="2pt">2pt</option>
                 <option label="3pt" value="3pt">3pt</option>
             </select>
-
         </div>
+            
     </div>
 
 </body>
@@ -184,6 +189,7 @@
             content: 'help information',
             title: ['HELP', 'font-size:18px;background-color:rgba(25, 104, 150, 0.91)'],
             offset: ['8%', '15%'],//上方，左边
+            closeBtn: 1,//关闭按钮
         });
 
 
@@ -195,9 +201,10 @@
             closeBtn: 0,
             shadeClose: true,
             skin: 'layui-layer-rim',
-            area: ['70%', '40%'],
-            title: ['draw panel'],
+            area: ['70%', '50%'],
+            title: ['Draw Panel','font-size:18px;background-color:cornflowerblue'],
             offset: ['10%', '15%'],
+            closeBtn: 1,//关闭按钮
             content: $('.drawpanel').html()
         });
     });
