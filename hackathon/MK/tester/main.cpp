@@ -22,9 +22,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
-	string funcName(funcNameC);
-	//string funcName = "sortTest";
+	//const char* funcNameC = argv[1];
+	//string funcName(funcNameC);
+	string funcName = "objSurface";
 	/************************************/
 
 	if (!funcName.compare("swcID"))
@@ -1182,20 +1182,33 @@ int main(int argc, char* argv[])
 	}
 	else if (!funcName.compare("objSurface"))
 	{
-		const char* inputImgNameC = argv[2];
+		/*const char* inputImgNameC = argv[2];
 		string inputImgName(inputImgNameC);
 		QString inputImgNameQ = QString::fromStdString(inputImgName);
 
 		const char* saveFolderNameC = argv[3];
 		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
-		ImgManager myManager(inputImgNameQ);
+		//ImgManager myManager(inputImgNameQ);
+		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.tif";
+		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
 		vector<vector<unsigned char>> slices;
 		vector<unsigned char**> slices_array;
 		ImgProcessor::imgStackSlicer(myManager.imgDatabase.at("compMask3D").slicePtrs.begin()->second.get(), slices, myManager.imgDatabase.at("compMask3D").dims);
+		V3DLONG sliceDims[4];
+		sliceDims[0] = myManager.imgDatabase.at("compMask3D").dims[0];
+		sliceDims[1] = myManager.imgDatabase.at("compMask3D").dims[1];
+		sliceDims[2] = 1;
+		sliceDims[3] = 1;
+		int dims[3];
+		dims[0] = myManager.imgDatabase.at("compMask3D").dims[0];
+		dims[1] = myManager.imgDatabase.at("compMask3D").dims[1];
+		dims[2] = 1;
+		unsigned char* mipPtr = new unsigned char[myManager.imgDatabase.at("compMask3D").dims[0] * myManager.imgDatabase.at("compMask3D").dims[1]];
+		for (int i = 0; i < myManager.imgDatabase.at("compMask3D").dims[0] * myManager.imgDatabase.at("compMask3D").dims[1]; ++i) mipPtr[i] = 0;
 		for (vector<vector<unsigned char>>::iterator sliceIt = slices.begin(); sliceIt != slices.end(); ++sliceIt)
 		{
 			unsigned char** slicePtr = new unsigned char*[myManager.imgDatabase.at("compMask3D").dims[1]];
@@ -1204,14 +1217,42 @@ int main(int argc, char* argv[])
 
 			ImgProcessor::slice1Dvector2_2Darray(*sliceIt, slicePtr, myManager.imgDatabase.at("compMask3D").dims);
 			slices_array.push_back(slicePtr);
-		}
-		cout << slices_array.size() << endl;
 
-		int dims[3];
-		dims[0] = myManager.imgDatabase.at("compMask3D").dims[0];
-		dims[1] = myManager.imgDatabase.at("compMask3D").dims[1];
-		dims[2] = 1;
-		vector<connectedComponent> componenetList = myAnalyzer.findSignalBlobs_2Dcombine(slices_array, dims);
+			unsigned char* testSlicePtr = new unsigned char[myManager.imgDatabase.at("compMask3D").dims[0] * myManager.imgDatabase.at("compMask3D").dims[1]];
+			ImgProcessor::slice2Dto1D(*(slices_array.end() - 1), testSlicePtr, myManager.imgDatabase.at("compMask3D").dims);
+			ImgProcessor::imgMax(testSlicePtr, mipPtr, mipPtr, dims);
+		}
+
+		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs_2Dcombine(slices_array, dims, mipPtr);
+		//NeuronTree testTree = NeuronStructUtil::blobs2tree(componenetList, true);
+		//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc", testTree);
+		
+		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
+		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
+		{
+			surfaceMaskPtr[k] = new unsigned char*[myManager.imgDatabase.at("compMask3D").dims[1]];
+			for (int j = 0; j < myManager.imgDatabase.at("compMask3D").dims[1]; ++j) surfaceMaskPtr[k][j] = new unsigned char[myManager.imgDatabase.at("compMask3D").dims[0]];
+		}
+
+		myImg1DPtr surMask1D = myAnalyzer.connectedComponentMask3D(componentList, myManager.imgDatabase.at("compMask3D").dims);
+		V3DLONG saveDims[4];
+		saveDims[0] = myManager.imgDatabase.at("compMask3D").dims[0];
+		saveDims[1] = myManager.imgDatabase.at("compMask3D").dims[1];
+		saveDims[2] = myManager.imgDatabase.at("compMask3D").dims[2];
+		saveDims[3] = 1;
+		//string saveFileName = saveFolderName + "\\test_reversed.tif";
+		//const char* saveFileNameC = saveFileName.c_str();
+		//ImgManager::saveimage_wrapper(saveFileNameC, surMask1D.get(), saveDims, 1);
+
+		vector<connectedComponent> surfObjList;
+		for (vector<connectedComponent>::iterator compIt = componentList.begin(); compIt != componentList.end(); ++compIt)
+		{
+			connectedComponent surfObj = FeatureExtractor::getObjSurface(*compIt);
+			surfObjList.push_back(surfObj);
+		}
+		NeuronTree testTree = NeuronStructUtil::blobs2tree(surfObjList, true);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\surfTest.swc", testTree);
+
 	}
 
 	return 0;

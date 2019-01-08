@@ -102,7 +102,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	this->signalBlobs = this->fragTraceTreeUtil.swc2signal3DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	myImg1DPtr blob1DPtr = this->fragTraceImgAnalyzer.connectedComponentMask3D(this->signalBlobs, imgDims);
-	vector<connectedComponent> surObjs;
+	/*vector<connectedComponent> surObjs;
 	for (vector<connectedComponent>::iterator blobIt = this->signalBlobs.begin(); blobIt != this->signalBlobs.end(); ++blobIt)
 	{
 		connectedComponent surObj = FeatureExtractor::getObjSurface(*blobIt);
@@ -111,7 +111,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	myImg1DPtr blobSur1DPtr = this->fragTraceImgAnalyzer.connectedComponentMask3D(surObjs, imgDims);
 	string compMaskNameString = this->finalSaveRootQ.toStdString() + "objSurfaceTest.tif";
 	const char* compMaskNameC = compMaskNameString.c_str();
-	this->fragTraceImgManager.saveimage_wrapper(compMaskNameC, blobSur1DPtr.get(), testDims, 1);
+	this->fragTraceImgManager.saveimage_wrapper(compMaskNameC, blobSur1DPtr.get(), testDims, 1);*/
 	/*cout << "original connected component number: " << this->signalBlobs2D.size();
 	int connCompSize = 10000;
 	int islandIndex;
@@ -429,8 +429,8 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 				NeuronSWC sig;
 				V3DLONG blobID = connIt->islandNum;
 				sig.n = blobID;
-				sig.x = nodeIt->at(1);
-				sig.y = nodeIt->at(0);
+				sig.x = nodeIt->at(0);
+				sig.y = nodeIt->at(1);
 				sig.z = sliceSizeIt->first;
 				sig.type = 2;
 				sig.parent = -1;

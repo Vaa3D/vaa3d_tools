@@ -92,7 +92,6 @@ inline void FragTraceManager::saveIntermediateResult(const string imgName, const
 	{
 		string saveFullPath = fullSaveRootQ.toStdString() + "\\" + it->first;
 		const char* saveFullPathC = saveFullPath.c_str();
-		 g
 	}
 }
 

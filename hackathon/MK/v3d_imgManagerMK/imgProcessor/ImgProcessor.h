@@ -92,6 +92,9 @@ public:
 
 	template<class T>
 	static inline void slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[]);
+
+	template<class T>
+	static inline void slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[]); // inputImgPtr[x][] cannot guarantee a constant here.
 	/**********************************************************/
 
 
@@ -292,6 +295,20 @@ inline void ImgProcessor::slice1Dvector2_2Darray(const vector<T>& inputSliceVec,
 	{
 		for (int i = 0; i < imgDims[0]; ++i)
 			outputSlice2Dptr[j][i] = inputSliceVec.at((imgDims[0] * j) + i);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[])
+{
+	size_t outi = 0;
+	for (size_t j = 0; j < imgDims[1]; ++j)
+	{
+		for (size_t i = 0; i < imgDims[0]; ++i)
+		{
+			outputImgPtr[outi] = inputImgPtr[j][i];
+			++outi;
+		}
 	}
 }
 

@@ -9,13 +9,15 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 
 	vector<connectedComponent> connList;
 	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
+	bool MIPprovided = true;
 
 	// --------- Enter this selection block only when MIP image is not provided ---------
 	if (maxIP1D == nullptr) 
 	{
+		MIPprovided = false;
 		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
 
-		unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
+		maxIP1D = new unsigned char[dims[0] * dims[1]];
 		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
 		for (int i = 0; i < dims[0] * dims[1]; ++i)
 		{
@@ -42,13 +44,25 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 
 		delete[] currSlice1D;
 		currSlice1D = nullptr;
+
 	}
+
+	/***************** testing block *****************/
+	/*V3DLONG mipDims[4];
+	mipDims[0] = dims[0];
+	mipDims[1] = dims[1];
+	mipDims[2] = 1;
+	mipDims[3] = 1;
+	string testSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testMIP.tif";
+	const char* testSaveNameC = testSaveName.c_str();
+	ImgManager::saveimage_wrapper(testSaveNameC, maxIP1D, mipDims, 1);*/
+	/************ END of [testing block] ************/
+
 	// ------- END [Enter this selection block only when MIP image is not provided] -------
 
 	// ----------- Prepare white pixel address book ------------
 	set<vector<int>> whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
-	cout << int(maxIP1D[256 * 128 + 142]) << endl;
 	for (int j = 0; j < dims[1]; ++j)
 	{
 		maxIP2D[j] = new unsigned char[dims[0]];
@@ -61,7 +75,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
 		}
 	}
-	// ------- END of [Prepare white pixel address book] -------
+	// ------- END of [Prepare white pixel address book] ------
 	
 	// -------------------- Finding connected components slice by slice -------------------
 	int islandCount = 0;
@@ -83,12 +97,13 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					{
 						for (set<vector<int>>::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
 						{
-							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
-								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1) // using 8-connectivity
+						/******* IMPORATANT NOTE: Vaa3D coord system's x and y are flipped from TIF. Needs to switch x and when assigning x and y to swc from tif image! *******/
+							if (it->at(0) >= mipIt->at(1) - 1 && it->at(0) <= mipIt->at(1) + 1 &&
+								it->at(1) >= mipIt->at(0) - 1 && it->at(1) <= mipIt->at(0) + 1) // using 8-connectivity
 							{
 								vector<int> newCoord(3);
-								newCoord[0] = mipIt->at(0);
-								newCoord[1] = mipIt->at(1);
+								newCoord[0] = mipIt->at(1);
+								newCoord[1] = mipIt->at(0);
 								newCoord[2] = sliceNum;
 								connIt->coordSets[sliceNum].insert(newCoord);
 
@@ -114,8 +129,8 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					connectedComponent newIsland;
 					newIsland.islandNum = islandCount;
 					vector<int> newCoord(3);
-					newCoord[0] = mipIt->at(0);
-					newCoord[1] = mipIt->at(1);
+					newCoord[0] = mipIt->at(1);
+					newCoord[1] = mipIt->at(0);
 					newCoord[2] = sliceNum;
 					set<vector<int>> coordSet;
 					coordSet.insert(newCoord);
