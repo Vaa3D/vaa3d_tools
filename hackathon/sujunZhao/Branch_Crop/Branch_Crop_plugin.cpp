@@ -126,16 +126,16 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 vector<int> get_branch_points(NeuronTree nt, bool include_root){
     vector<int> branch_list;
     QList<int> plist;
-    QList<int> childlist;
     map<int, int> t;
+    vector< vector<int> > childlist;
     int N=nt.listNeuron.size();
     for(int i=0; i<N; i++){
         //qDebug() << nt.listNeuron.at(i).n << nt.listNeuron.at(i).pn;
         plist.append(nt.listNeuron.at(i).pn);
-        childlist.append(nt.listNeuron.at(i).n);
         t.insert(pair<int,int>(plist.at(i),0));
     }
     for(int i=0; i<N; i++){
+
         t.at(plist.at(i)) = t.at(plist.at(i))+1;
         if((plist.count(plist.at(i))>1)&(t.at(plist.at(i)) == 1)){
             branch_list.push_back(i);
@@ -147,7 +147,6 @@ vector<int> get_branch_points(NeuronTree nt, bool include_root){
     //for(int i=0;i<n_branch;i++){
     //    p = branch_list.at(i);
     //    for(int j=0; j<3;j++){
-
     //    }
     //}
 
@@ -207,7 +206,7 @@ XYZ offset_XYZ(XYZ input, XYZ offset){
     input.y += offset.y;
     input.z += offset.z;
     return input;
-}
+}getXDim
 
 void crop_swc(QString input_swc, QString output_swc, block crop_block)
 {
@@ -291,8 +290,9 @@ void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DP
     if(!output_2d_dir.endsWith("/")){
         output_2d_dir = output_2d_dir+"/";
     }
-    QString flag=input_swc.right(input_swc.length()-43);
-    QString flag1=flag.left(flag.length()-4);
+    QStringList list=input_swc.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag1=list1.first();//dont need to match list index
     //printf("______________:%s\n",output_2d_dir.data());
     qDebug()<<input_swc;
     qDebug("number:%s",qPrintable(flag1));
@@ -368,4 +368,23 @@ void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DP
    if(image_mip) {delete [] image_mip; image_mip=0;}
    if(label_mip) {delete [] label_mip; label_mip=0;}
    //listNeuron.clear();
+}
+
+// check missing branches
+vector<int> MissingBranch(QString input_swc, QString image){
+    // choose the search range
+    Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(image) ));
+    int nChannel = p4dImage->getCDim();
+
+    V3DLONG mysz[4];
+    mysz[0] = p4dImage->getXDim();
+    mysz[1] = p4dImage->getYDim();
+    mysz[2] = p4dImage->getZDim();
+    mysz[3] = nChannel;
+
+    NeuronTree nt = readSWC_file(swc_file);
+
+
+
+
 }
