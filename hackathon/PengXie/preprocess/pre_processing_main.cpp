@@ -20,7 +20,9 @@
 
 NeuronTree color_lost_branch(NeuronTree new_tree){
     QList <int> components = get_components(new_tree);
+//    v3d_msg("components labeled");
     int soma = get_soma(new_tree);
+//    v3d_msg("Soma found");
     int soma_component = components.at(soma);
 
     // Put the soma_connected component as 1st.
@@ -140,6 +142,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         cout << "\t\t# Nodes:\t" << component_i.listNeuron.size() <<endl;
         QList<int> tip_list = get_tips(component_i, true);
         qDebug()<<"Tips found.";
+//        v3d_msg("Tips found");
 
         // Find closet ends
         QList<double> edist; // distance from end to soma
@@ -152,19 +155,22 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         QList<double> dsorted = edist;
         qSort(dsorted);
         qDebug()<<"Closest tip found.";
+//        v3d_msg("Closet tip found");
 
         // Whether to connect subtrees to soma
         int cend = eid.at(edist.indexOf(dsorted.at(0))); // end to be connected to soma
         NeuronTree component_i_sorted;
-        export_listNeuron_2swc(component_i.listNeuron, "Z:/Peng/Preprocess_0102/input_of_sortSWC.swc");
+//        export_listNeuron_2swc(component_i.listNeuron, "Z:/Peng/Preprocess_0102/input_of_sortSWC.swc");
 //        if(cid==0){
 //            export_listNeuron_2swc(component_i.listNeuron, "Z:\Peng\Preprocess_0102\input_of_sortSWC.swc");
 //        }
 //        component_i_sorted.deepCopy(my_SortSWC(component_i, cend, 0));
-        component_i_sorted.deepCopy(my_SortSWC(component_i, 1, 0));
-//        component_i_sorted.deepCopy(my_SortSWC(component_i, component_i.listNeuron.at(cend).n, 0));
+//        component_i_sorted.deepCopy(my_SortSWC(component_i, 1, 0));
+//        v3d_msg(QString("sort component %1").arg(cid));
+        component_i_sorted.deepCopy(my_SortSWC(component_i, component_i.listNeuron.at(cend).n, 0));
         int new_cend = listneuron.size();
         qDebug()<<"Component sorted."<<endl;
+//        v3d_msg("Component sorted");
 
         // Case 1: subtree close to soma
         listneuron = neuronlist_cat(listneuron, component_i_sorted.listNeuron);
@@ -181,6 +187,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     }
     new_tree.deepCopy(neuronlist_2_neurontree(listneuron));
 //    writeAPO_file(outfileLabel+QString(".apo"), markers);
+//    v3d_msg("Done soma connection");
     return new_tree;
 }
 
@@ -379,10 +386,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     //2. start processing
     NeuronTree cur_nt;
 
-    //2.0 Remove duplicates
-    printf("\tRemoving duplicates\n");
-    // Maybe not the best solution. Use it for now.
-    NeuronTree test_nt;
+//    NeuronTree test_nt;
 //    QList<int> test_newroot;
 //    test_newroot << 1 << 1000 << 3000 << 3005 << 10000 << 30000;
 //    for(int i=0; i<test_newroot.size(); i++){
@@ -391,12 +395,15 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 //        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
 //        writeSWC_file("C:/Users/pengx/Desktop/test/tmp_"+QString::number(newroot_name)+".swc",test_nt);
 //    }
-    for(int i=0; i<nt.listNeuron.size(); i++){
-        int newroot_name = nt.listNeuron.at(i).n;
-        qDebug()<<"Trial newroot name:"<<newroot_name;
-        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
-    }
-    return 1;
+//    for(int i=0; i<nt.listNeuron.size(); i++){
+//        int newroot_name = nt.listNeuron.at(i).n;
+//        qDebug()<<"Trial newroot name:"<<newroot_name;
+//        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
+//    }
+//    return 1;
+
+    //2.0 Remove duplicates
+    printf("\tRemoving duplicates\n");
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
     if(return_temp)
     {
@@ -480,9 +487,12 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".long_connection.apo", 0,0,255));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".long_connection.apo", 0,0,0).size()/2<<count_root(nt);
+//    v3d_msg("color lost branch");
     if(connect_soma_performed){
         nt.deepCopy(color_lost_branch(nt));
     }
+//    v3d_msg("lost branch colored");
+
     if(return_maintree){
         int soma = 0;
         nt.deepCopy(single_tree(nt, soma));
