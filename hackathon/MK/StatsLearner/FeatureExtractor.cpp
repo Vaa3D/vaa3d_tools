@@ -7,6 +7,8 @@ boost::container::flat_map<string, double> FeatureExtractor::objMorphFeature(con
 
 connectedComponent FeatureExtractor::getObjSurface(const connectedComponent& inputObj)
 {
+	cout << "input component label: " << inputObj.islandNum << " " << endl;
+
 	connectedComponent surfaceObj;
 
 	vector<int> objSliceLabel;

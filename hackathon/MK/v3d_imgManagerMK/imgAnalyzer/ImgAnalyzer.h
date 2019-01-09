@@ -7,6 +7,10 @@
 #include <set>
 #include <cmath>
 
+#include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include "ImgManager.h"
 #include "ImgProcessor.h"
 
@@ -26,10 +30,10 @@ class ImgAnalyzer
 public:
 	/***************** Image Segmentation *****************/
 
-	// Finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
-	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
-	// NOTE: [Each output connected component is a 3D blob!], as the function name stated, the output is the result of combining 2D.
-	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
+	// [findSignalBlobs2D] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
+	// Each slice is independent to one another. Therefore, a 3D blob's each 2D slice is labeled as different 2D connected component.
+	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
+	static vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.

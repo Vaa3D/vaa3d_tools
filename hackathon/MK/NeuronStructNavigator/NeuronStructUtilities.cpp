@@ -863,7 +863,7 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 				newNode.x = pointIt->at(0);
 				newNode.y = pointIt->at(1);
 				newNode.z = pointIt->at(2);
-				newNode.type = 2;
+				newNode.type = it->islandNum % 500;
 				newNode.parent = -1;
 				
 				if (usingRadius2compNum) newNode.radius = it->islandNum; // Use SWC's radius column to keep component label information.

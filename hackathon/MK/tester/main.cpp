@@ -1191,7 +1191,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.tif";
+		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1223,9 +1223,10 @@ int main(int argc, char* argv[])
 			ImgProcessor::imgMax(testSlicePtr, mipPtr, mipPtr, dims);
 		}
 
-		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs_2Dcombine(slices_array, dims, mipPtr);
-		//NeuronTree testTree = NeuronStructUtil::blobs2tree(componenetList, true);
-		//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc", testTree);
+		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 2, mipPtr);
+		cout << componentList.size() << endl;
+		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
+		writeSWC_file("D:\\Work\\FragTrace\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1250,8 +1251,8 @@ int main(int argc, char* argv[])
 			connectedComponent surfObj = FeatureExtractor::getObjSurface(*compIt);
 			surfObjList.push_back(surfObj);
 		}
-		NeuronTree testTree = NeuronStructUtil::blobs2tree(surfObjList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\surfTest.swc", testTree);
+		NeuronTree testSurfTree = NeuronStructUtil::blobs2tree(surfObjList, true);
+		writeSWC_file("D:\\Work\\FragTrace\\surfTest.swc", testSurfTree);
 
 	}
 
