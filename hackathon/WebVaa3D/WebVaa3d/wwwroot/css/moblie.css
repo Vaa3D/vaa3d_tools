@@ -134,7 +134,8 @@ body {
     width: 16rem;
     margin: 0 0 0 0;
     padding: 0 0 0;
-    background-size: cover;
+    background-size: contain;
+    height:inherit;
 }
 
 
@@ -148,50 +149,59 @@ body {
 }
 
 #nave {
-    height:1rem/2rem;
+    height:2.2rem;
     display:block;
     margin:0 0 0 0;
-   
+    padding:0.5rem 0 0 .2rem;
+    font-size:.7rem/1rem;
 }
 li{
-    width:3rem;
-    height:1rem/1.5rem;
+    width:3.3rem;
+    height:1.7rem;
+    
 }
 
 a {
-    height:1rem;
-    width:2rem/3.5rem;
+    
+    width:2.5rem/3.3rem;
+    padding:0.05rem;
+    margin:0;
+    background-size:cover;
+    height:1.2rem;
+    font-size:.7rem;
    
 }
 
 dl{
-    padding:0 .01rem .01rem 0;
+    margin:0;
+    padding:0;
     float:left ;
 
 }
-dd a{
-    height:0.8rem;
-    background-size:cover;
-}
+
+
 i {
-    height:0.5rem/1rem;    
-    width:0.5rem/1rem;
-    font: .3rem/1.06667rem 'simhei';
-    padding:0 0 0 0;
-    margin:.1rem 0 0 0;
-    float:left;
-}
-
-
-#bigneuron {
+    height: 1.2rem;
+    width: 3.2rem;    
+    padding:0.1rem 0.2rem 0 0;
+    margin: 0 ;
+    float: left;
+    font-size:.6rem;
     
-    height:27.2rem;
-    bottom: 0;
-    background-color: black;
+   
 }
+
+#test{
+    font-size:1rem;
+    height:1.2rem;
+    width:100%;
+}
+
 
 #view {
-    height: 100%;
+    height: 25.8rem;
+    bottom: 0;
+    background-color: black;
    
 }
 #progress_bar {

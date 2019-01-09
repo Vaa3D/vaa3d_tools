@@ -1,4 +1,5 @@
 #include "FragTraceManager.h"
+#include "FeatureExtractor.h"
 
 FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, bool slices)
 {
@@ -55,10 +56,16 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	dims[2] = 1;
 	dims[3] = 1;
 
+	V3DLONG testDims[4];
+	testDims[0] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[0];
+	testDims[1] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[1];
+	testDims[2] = this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size();
+	testDims[3] = 1;
+
 	int imgDims[3];
 	imgDims[0] = dims[0];
 	imgDims[1] = dims[1];
-	imgDims[2] = dims[2];
+	imgDims[2] = this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size();
 
 	if (this->ada) this->adaThre("currBlockSlices", dims, this->adaImgName);
 	
@@ -94,10 +101,17 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	
 	this->signalBlobs2D = this->fragTraceTreeUtil.swc2signal2DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
 	this->signalBlobs = this->fragTraceTreeUtil.swc2signal3DBlobs(this->fragTraceTreeManager.treeDataBase.at("blobTree").tree);
-	myImg1DPtr blob1DPtr = this->fragTraceImgAnalyzer.connectedComponentMask2D(this->signalBlobs, imgDims);
-	string compMaskNameString = this->finalSaveRootQ.toStdString() + "test.tif";
+	myImg1DPtr blob1DPtr = this->fragTraceImgAnalyzer.connectedComponentMask3D(this->signalBlobs, imgDims);
+	/*vector<connectedComponent> surObjs;
+	for (vector<connectedComponent>::iterator blobIt = this->signalBlobs.begin(); blobIt != this->signalBlobs.end(); ++blobIt)
+	{
+		connectedComponent surObj = FeatureExtractor::getObjSurface(*blobIt);
+		surObjs.push_back(surObj);
+	}
+	myImg1DPtr blobSur1DPtr = this->fragTraceImgAnalyzer.connectedComponentMask3D(surObjs, imgDims);
+	string compMaskNameString = this->finalSaveRootQ.toStdString() + "objSurfaceTest.tif";
 	const char* compMaskNameC = compMaskNameString.c_str();
-	this->fragTraceImgManager.saveimage_wrapper(compMaskNameC, blob1DPtr.get(), dims, 1);
+	this->fragTraceImgManager.saveimage_wrapper(compMaskNameC, blobSur1DPtr.get(), testDims, 1);*/
 	/*cout << "original connected component number: " << this->signalBlobs2D.size();
 	int connCompSize = 10000;
 	int islandIndex;
@@ -415,8 +429,8 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 				NeuronSWC sig;
 				V3DLONG blobID = connIt->islandNum;
 				sig.n = blobID;
-				sig.x = nodeIt->at(1);
-				sig.y = nodeIt->at(0);
+				sig.x = nodeIt->at(0);
+				sig.y = nodeIt->at(1);
 				sig.z = sliceSizeIt->first;
 				sig.type = 2;
 				sig.parent = -1;

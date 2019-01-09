@@ -5,15 +5,19 @@
 // ======================================= Image Segmentation ======================================= //
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
 {
+	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
+
 	vector<connectedComponent> connList;
 	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
+	bool MIPprovided = true;
 
 	// --------- Enter this selection block only when MIP image is not provided ---------
 	if (maxIP1D == nullptr) 
 	{
+		MIPprovided = false;
 		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
 
-		unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
+		maxIP1D = new unsigned char[dims[0] * dims[1]];
 		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
 		for (int i = 0; i < dims[0] * dims[1]; ++i)
 		{
@@ -40,7 +44,20 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 
 		delete[] currSlice1D;
 		currSlice1D = nullptr;
+
 	}
+
+	/***************** testing block *****************/
+	/*V3DLONG mipDims[4];
+	mipDims[0] = dims[0];
+	mipDims[1] = dims[1];
+	mipDims[2] = 1;
+	mipDims[3] = 1;
+	string testSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testMIP.tif";
+	const char* testSaveNameC = testSaveName.c_str();
+	ImgManager::saveimage_wrapper(testSaveNameC, maxIP1D, mipDims, 1);*/
+	/************ END of [testing block] ************/
+
 	// ------- END [Enter this selection block only when MIP image is not provided] -------
 
 	// ----------- Prepare white pixel address book ------------
@@ -58,7 +75,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
 		}
 	}
-	// ------- END of [Prepare white pixel address book] -------
+	// ------- END of [Prepare white pixel address book] ------
 	
 	// -------------------- Finding connected components slice by slice -------------------
 	int islandCount = 0;
@@ -80,12 +97,13 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					{
 						for (set<vector<int>>::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
 						{
-							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
-								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1) // using 8-connectivity
+						/******* IMPORATANT NOTE: Vaa3D coord system's x and y are flipped from TIF. Needs to switch x and when assigning x and y to swc from tif image! *******/
+							if (it->at(0) >= mipIt->at(1) - 1 && it->at(0) <= mipIt->at(1) + 1 &&
+								it->at(1) >= mipIt->at(0) - 1 && it->at(1) <= mipIt->at(0) + 1) // using 8-connectivity
 							{
 								vector<int> newCoord(3);
-								newCoord[0] = mipIt->at(0);
-								newCoord[1] = mipIt->at(1);
+								newCoord[0] = mipIt->at(1);
+								newCoord[1] = mipIt->at(0);
 								newCoord[2] = sliceNum;
 								connIt->coordSets[sliceNum].insert(newCoord);
 
@@ -111,8 +129,8 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					connectedComponent newIsland;
 					newIsland.islandNum = islandCount;
 					vector<int> newCoord(3);
-					newCoord[0] = mipIt->at(0);
-					newCoord[1] = mipIt->at(1);
+					newCoord[0] = mipIt->at(1);
+					newCoord[1] = mipIt->at(0);
 					newCoord[2] = sliceNum;
 					set<vector<int>> coordSet;
 					coordSet.insert(newCoord);
@@ -235,6 +253,23 @@ myImg1DPtr ImgAnalyzer::connectedComponentMask2D(const vector<connectedComponent
 		{
 			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
 				output1Dptr.get()[imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
+		}
+	}
+
+	return output1Dptr;
+}
+
+myImg1DPtr ImgAnalyzer::connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
+{
+	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1] * imgDims[2]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[1] * imgDims[2]; ++i) output1Dptr.get()[i] = 0;
+
+	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+				output1Dptr.get()[imgDims[0] * imgDims[1] * pointIt->at(2) + imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
 		}
 	}
 
