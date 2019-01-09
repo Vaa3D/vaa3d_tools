@@ -316,7 +316,10 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
         S.y = neurons.at(oripos).y;
         S.z = neurons.at(oripos).z;
         S.r = neurons.at(oripos).r;
+        S.level = neurons.at(oripos).level;
         S.type = neurons.at(oripos).type;
+        S.creatmode = neurons.at(oripos).creatmode;
+        S.timestamp = neurons.at(oripos).timestamp;
         result.append(S);
         cnt++;
         qDebug()<<QString("New root %1:").arg(i)<<S.x<<S.y<<S.z;
@@ -339,7 +342,10 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
                         S.y = neurons.at(oripos).y;
                         S.z = neurons.at(oripos).z;
                         S.r = neurons.at(oripos).r;
+                        S.level = neurons.at(oripos).level;
                         S.type = neurons.at(oripos).type;
+                        S.creatmode = neurons.at(oripos).creatmode;
+                        S.timestamp = neurons.at(oripos).timestamp;
                         result.append(S);
                         cnt++;
                         break; //added by CHB to avoid problem caused by loops in swc, 20150313

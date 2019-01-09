@@ -20,9 +20,7 @@
 
 NeuronTree color_lost_branch(NeuronTree new_tree){
     QList <int> components = get_components(new_tree);
-//    v3d_msg("components labeled");
     int soma = get_soma(new_tree);
-//    v3d_msg("Soma found");
     int soma_component = components.at(soma);
 
     // Put the soma_connected component as 1st.
@@ -34,7 +32,7 @@ NeuronTree color_lost_branch(NeuronTree new_tree){
         if(i==soma_component){continue;}
         QList<NeuronSWC> ith_list = get_ith_component(new_tree, components, i).listNeuron;
         for(int j=0; j<ith_list.size(); j++){
-            ith_list[j].type = 7;
+            ith_list[j].level = 7;
         }
         listneuron.append(ith_list);
     }
@@ -120,7 +118,7 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
     //check if marker exists and use it as root
     QList<NeuronSWC> S_list = get_soma_from_APO(markers);
     if(S_list.size()==0){
-        printf("\tNo soma marker found!\n");
+        v3d_msg("No soma marker found!");
         return empty_tree;
     }
 //    markers.clear();
@@ -356,14 +354,22 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     if (qs_input.endsWith(".swc") || qs_input.endsWith(".SWC")){
         infileLabel = qs_input.left(qs_input.length() - 4);
     }
-    if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){
+    else if (qs_input.endsWith(".eswc") || qs_input.endsWith(".ESWC")){
         infileLabel = qs_input.left(qs_input.length() - 5);
+    }
+    else{
+        v3d_msg("Input file is not swc/eswc format.");
+        return 0;
     }
     if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
         outfileLabel = qs_output.left(qs_output.length() - 4);
     }
-    if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
+    else if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
         outfileLabel = qs_output.left(qs_output.length() - 5);
+    }
+    else{
+        v3d_msg("Output file is not swc/eswc format.");
+        return 0;
     }
 
     // 1. Load data
@@ -375,32 +381,18 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     NeuronTree tp_new_tree;
     QList<CellAPO> markers;
     QList<CellAPO> tp_markers;
-    if (qs_input.endsWith("swc") || qs_input.endsWith("SWC"))
-    {
-        nt = readSWC_file(qs_input);
-        for(int i=0; i<nt.listNeuron.size(); i++){
-            nt.listNeuron[i].r = 1;
-        }
-    }
+
+    nt = readSWC_file(qs_input);
+//    if (qs_input.endsWith("swc") || qs_input.endsWith("SWC"))
+//    {
+//        nt = readSWC_file(qs_input);
+//        for(int i=0; i<nt.listNeuron.size(); i++){
+//            nt.listNeuron[i].r = 1;
+//        }
+//    }
 
     //2. start processing
     NeuronTree cur_nt;
-
-//    NeuronTree test_nt;
-//    QList<int> test_newroot;
-//    test_newroot << 1 << 1000 << 3000 << 3005 << 10000 << 30000;
-//    for(int i=0; i<test_newroot.size(); i++){
-//        int newroot_name = nt.listNeuron.at(test_newroot.at(i)).n;
-//        qDebug()<<"Trial newroot name:"<<newroot_name;
-//        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
-//        writeSWC_file("C:/Users/pengx/Desktop/test/tmp_"+QString::number(newroot_name)+".swc",test_nt);
-//    }
-//    for(int i=0; i<nt.listNeuron.size(); i++){
-//        int newroot_name = nt.listNeuron.at(i).n;
-//        qDebug()<<"Trial newroot name:"<<newroot_name;
-//        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
-//    }
-//    return 1;
 
     //2.0 Remove duplicates
     printf("\tRemoving duplicates\n");
@@ -457,24 +449,30 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tConnecting to soma\n");
         QList<CellAPO> soma_markers = readAPO_file(infileLabel + QString(".apo"));
         QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
-        S_list[0].r = 1;
-        cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
-        nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
-        // Keep track of new_edges
-        new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
-        // Keep track of nodes
-        markers.append(get_new_marker(infileLabel+".soma_connection.apo", 0,255,0));
-        qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".soma_connection.apo", 0,0,0).size()/2<<count_root(nt);
+        if(S_list.size()==0){
+            v3d_msg("Please double check the apo file.\nSkip connecting to soma as cannot find soma from the given apo file.");
+            connect_soma_performed = 0;
+        }
+        else{
+            S_list[0].r = 1;
+            cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
+            nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
+            // Keep track of new_edges
+            new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
+            // Keep track of nodes
+            markers.append(get_new_marker(infileLabel+".soma_connection.apo", 0,255,0));
+            qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".soma_connection.apo", 0,0,0).size()/2<<count_root(nt);
+        }
     }
     else{
         // If the input swc is already connected to soma, then the apo file is not required
         // and one can skip the soma connecting step.
-        printf("\tSkip connecting to soma\n");
+        printf("\tSkip connecting to soma as no apo file found.\n");
         connect_soma_performed=0;
     }
     if(return_temp)
     {
-        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));
+        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));        
     }
 
 
@@ -487,7 +485,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     // Keep track of nodes
     markers.append(get_new_marker(infileLabel+".long_connection.apo", 0,0,255));
     qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".long_connection.apo", 0,0,0).size()/2<<count_root(nt);
-//    v3d_msg("color lost branch");
+    // Color un-connected branches
     if(connect_soma_performed){
         nt.deepCopy(color_lost_branch(nt));
     }
@@ -513,7 +511,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tSkip PCA alignment\n");
     }
 
-    if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
+    // In order to color un-connected branches, we will save files as eswc
+    qs_output = outfileLabel + ".eswc";
+    if (export_listNeuron_2eswc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     }
 
@@ -786,7 +786,8 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
     // Pre-process
-    pre_processing(qs_input, qs_output, prune_size, thres, thres_long, step_size, connect_soma_dist, rotation, colorful, return_maintree);
+    pre_processing(qs_input, qs_output, prune_size, thres, thres_long, step_size,
+                   connect_soma_dist, rotation, colorful, return_maintree, return_temp);
 
     return 1;
 }

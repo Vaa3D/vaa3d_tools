@@ -42,6 +42,10 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     {
         pre_processing_domenu(callback, parent);
     }
+//    if(menu_name == tr("preprocess_batch"))
+//    {
+//        preprocess_batch_domenu(callback, parent);
+//    }
     if (menu_name == tr("help"))
     {
         v3d_msg(tr("This plugin performs several tasks: \n"
