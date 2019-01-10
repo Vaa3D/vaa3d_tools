@@ -5,13 +5,9 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
-HEADERS	+= Branch_Crop_plugin.h \
-    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.h \
-    ../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
-SOURCES	+= Branch_Crop_plugin.cpp \
-    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
-    ../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
+HEADERS	+= branch_crop_plugin.h
+SOURCES	+= branch_crop_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
-TARGET	= $$qtLibraryTarget(Branch_Crop)
-DESTDIR	= $$VAA3DPATH/bin/plugins/Branch_Crop/
+TARGET	= $$qtLibraryTarget(branch_crop)
+DESTDIR	= $$VAA3DPATH/bin/plugins/branch_crop/

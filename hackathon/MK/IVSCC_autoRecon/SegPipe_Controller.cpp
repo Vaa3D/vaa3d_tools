@@ -397,8 +397,8 @@ void SegPipe_Controller::makeDescentSkeletons()
 		string saveSkeFullPathRoot = saveSkeFullNameQ.toStdString();
 
 		QString inputFileFullPath = this->inputCaseRootPath + "/" + *caseIt;
-		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = inputFileFullPath.toStdString();
-		myImgManagerPtr->imgEntry((*caseIt).toStdString(), ImgManager::singleCase_singleSlice);
+		myImgManagerPtr->inputSingleCaseFullPath = inputFileFullPath.toStdString();
+		myImgManagerPtr->imgEntry((*caseIt).toStdString(), ImgManager::singleCase);
 
 		map<int, size_t> histMap = ImgProcessor::histQuickList(myImgManagerPtr->imgDatabase.begin()->second.slicePtrs.begin()->second.get(), myImgManagerPtr->imgDatabase.begin()->second.dims);
 		histMap.erase(histMap.begin());
@@ -464,8 +464,8 @@ void SegPipe_Controller::getSomaBlendedImgs()
 		QString mipFullNameQ = this->inputCaseRootPath2 + "/" + *caseIt + ".tif";
 		QString mipAlias = *caseIt + "_mip";
 		string mipFullName = mipFullNameQ.toStdString();
-		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = mipFullName;
-		myImgManagerPtr->imgEntry(mipAlias.toStdString(), ImgManager::singleCase_singleSlice);
+		myImgManagerPtr->inputSingleCaseFullPath = mipFullName;
+		myImgManagerPtr->imgEntry(mipAlias.toStdString(), ImgManager::singleCase);
 
 		unsigned char* blendingPtr = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1] * 2];
 		vector<unsigned char*> blending;
@@ -521,8 +521,8 @@ void SegPipe_Controller::skeletonThreFiltered()
 
 			unsigned char* skeletonThreStep1D = new unsigned char[myImgManagerPtr->imgDatabase.begin()->second.dims[0] * myImgManagerPtr->imgDatabase.begin()->second.dims[1]];
 			string sliceName = (*caseIt).toStdString() + "_" + threParse.front() + "skeleton.tif";
-			myImgManagerPtr->inputSingleCaseSingleSliceFullPath = (this->inputCaseRootPath2 + "/" + *caseIt).toStdString() + "/" + sliceName;
-			myImgManagerPtr->imgEntry(threParse.front(), ImgManager::singleCase_singleSlice);
+			myImgManagerPtr->inputSingleCaseFullPath = (this->inputCaseRootPath2 + "/" + *caseIt).toStdString() + "/" + sliceName;
+			myImgManagerPtr->imgEntry(threParse.front(), ImgManager::singleCase);
 			ImgProcessor::imgDotMultiply(myImgManagerPtr->imgDatabase.at(threParse.front()).slicePtrs.begin()->second.get(), threStep1D, skeletonThreStep1D, myImgManagerPtr->imgDatabase.begin()->second.dims);
 			string saveSkeFullName = this->outputRootPath2.toStdString() + "/" + (*caseIt).toStdString() + "/" + threParse.front() + ".tif";
 			const char* saveSkeFullNameC = saveSkeFullName.c_str();
@@ -988,8 +988,8 @@ void SegPipe_Controller::somaDendriteMask()
 	{
 		QStringList nameSplit = (*caseIt).split(".");
 		string caseName = nameSplit.at(0).toStdString();
-		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = this->inputCaseRootPath.toStdString() + "/" + (*caseIt).toStdString();
-		myImgManagerPtr->imgEntry(caseName, ImgManager::singleCase_singleSlice);
+		myImgManagerPtr->inputSingleCaseFullPath = this->inputCaseRootPath.toStdString() + "/" + (*caseIt).toStdString();
+		myImgManagerPtr->imgEntry(caseName, ImgManager::singleCase);
 		QString swcFileFullPathQ = this->inputSWCRootPath + "/" + QString::fromStdString(caseName) + ".swc";
 		NeuronTree currTree = readSWC_file(swcFileFullPathQ);
 
@@ -1391,8 +1391,8 @@ void SegPipe_Controller::correctSWC()
 		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range;
 		range = this->inputMultiCasesSliceFullPaths.equal_range((*caseIt).toStdString());
 		string inputSliceFullPath = range.first->second;
-		myImgManagerPtr->inputSingleCaseSingleSliceFullPath = inputSliceFullPath;
-		myImgManagerPtr->imgEntry((*caseIt).toStdString(), ImgManager::singleCase_singleSlice);
+		myImgManagerPtr->inputSingleCaseFullPath = inputSliceFullPath;
+		myImgManagerPtr->imgEntry((*caseIt).toStdString(), ImgManager::singleCase);
 
 		QString currInputSWCFile = this->refSWCRootPath + "/" + *caseIt + ".swc";
 		NeuronTree currCaseTree = readSWC_file(currInputSWCFile);
@@ -1421,7 +1421,7 @@ void SegPipe_Controller::correctSWC()
 		QString outputSWCPath = this->outputRootPath + "/" + *caseIt + ".swc";
 		writeSWC_file(outputSWCPath, correctedTree);
 
-		myImgManagerPtr->inputSingleCaseSingleSliceFullPath.clear();
+		myImgManagerPtr->inputSingleCaseFullPath.clear();
 	}
 }
 

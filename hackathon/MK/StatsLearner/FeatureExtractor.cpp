@@ -8,10 +8,23 @@ boost::container::flat_map<string, double> FeatureExtractor::objMorphFeature(con
 connectedComponent FeatureExtractor::getObjSurface(const connectedComponent& inputObj)
 {
 	connectedComponent surfaceObj;
-	
+
 	vector<int> objSliceLabel;
+	objSliceLabel.clear();
 	for (map<int, set<vector<int>>>::const_iterator sliceIt = inputObj.coordSets.begin(); sliceIt != inputObj.coordSets.end(); ++sliceIt)
 		objSliceLabel.push_back(sliceIt->first);
+
+	if (objSliceLabel.size() == 1)
+	{
+		surfaceObj.coordSets.insert({ objSliceLabel.at(0), inputObj.coordSets.at(objSliceLabel.at(0)) });
+		return surfaceObj;
+	}
+	else if (objSliceLabel.size() == 2)
+	{
+		surfaceObj.coordSets.insert({ objSliceLabel.at(0), inputObj.coordSets.at(objSliceLabel.at(0)) });
+		surfaceObj.coordSets.insert({ objSliceLabel.at(1), inputObj.coordSets.at(objSliceLabel.at(1)) });
+		return surfaceObj;
+	}
 	surfaceObj.coordSets.insert({ objSliceLabel.at(0), inputObj.coordSets.at(objSliceLabel.at(0)) });
 	surfaceObj.coordSets.insert({ objSliceLabel.at(*(objSliceLabel.end() - 1)), inputObj.coordSets.at(*(objSliceLabel.end() - 1)) });
 

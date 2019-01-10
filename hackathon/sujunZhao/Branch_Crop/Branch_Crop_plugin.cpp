@@ -1,26 +1,28 @@
-/* Branch_Crop_plugin.cpp
+/* branch_crop_plugin.cpp
  * This is a test plugin, you can use it as a demo.
- * 2018-12-20 : by YourName
+ * 2018-12-19 : by YourName
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "Branch_Crop_plugin.h"
+#include "branch_crop_plugin.h"
 #include <stdio.h>
 #include <iostream>
-#include <map>
-#include "../../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+//#include "../get_terminal.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(Branch_Crop, branch_crop);
+Q_EXPORT_PLUGIN2(branch_crop, TestPlugin)
 
-QStringList branch_crop::menulist() const
+void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+QList<int> get_branch_points(NeuronTree nt, bool include_root);
+
+QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("get_branch_sample")
 		<<tr("about");
 }
 
-QStringList branch_crop::funclist() const
+QStringList TestPlugin::funclist() const
 {
 	return QStringList()
         <<tr("get_branch_point")
@@ -28,100 +30,206 @@ QStringList branch_crop::funclist() const
 		<<tr("help");
 }
 
-void branch_crop::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("get_branch_sample"))
 	{
-		v3d_msg("To be implemented.");
+         v3d_msg("To be implemented.");
 	}
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by YourName, 2018-12-20"));
+			"Developed by YourName, 2018-12-19"));
 	}
 }
 
-bool branch_crop::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
+//	vector<char*> infiles, inparas, outfiles;
+//	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+//	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+//	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
     if (func_name == tr("get_branch_point"))
 	{
-        get_branches(input, output, callback);
-
+        get_branches(input,output,callback);
 	}
-    else if (func_name == tr("get_2D_image"))
+    else if (func_name == tr("branch_point_sample"))
 	{
-        get2d_image(input,output,callback);
+		v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("help"))
-	{
+    {void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+        {
+            vector<char*> infiles, inparas, outfiles;
+            if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+            //if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+            //if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+        //    QString image_file=infiles.at(0);
+        //    QString swc_file = infiles.at(1);
+        //    QString output_dir=outfiles.at(0);
+        //    XYZ block_size=XYZ(100,100,20);
+            QString swc_file = infiles.at(0);
+
+            printf("welcome to use get_branch\n");
+            NeuronTree nt = readSWC_file(swc_file);
+        //    if(!output_dir.endsWith("/")){
+        //        output_dir = output_dir+"/";
+        //    }
+            QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
+            cell_name = cell_name.left(cell_name.indexOf("."));
+
+            // Find branch points
+            QList<int> branch_list = get_branch_points(nt, false);
+        //    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
+
+        //    // Crvoid get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+            {
+                vector<char*> infiles, inparas, outfiles;
+                if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+                //if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+                //if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+            //    QString image_file=infiles.at(0);
+            //    QString swc_file = infiles.at(1);
+            //    QString output_dir=outfiles.at(0);
+            //    XYZ block_size=XYZ(100,100,20);
+                QString swc_file = infiles.at(0);
+
+                printf("welcome to use get_branch\n");
+                NeuronTree nt = readSWC_file(swc_file);
+            //    if(!output_dir.endsWith("/")){
+            //        output_dir = output_dir+"/";
+            //    }
+                QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
+                cell_name = cell_name.left(cell_name.indexOf("."));
+
+                // Find branch points
+                QList<int> branch_list = get_branch_points(nt, false);
+            //    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
+
+            //    // Crop tip-centered regions one by one
+            //    block zcenter_block; // This is a block centered at (0,0,0)
+            //    zcenter_block.small = 0-block_size/2;
+            //    zcenter_block.large = block_size/2;
+            //    QList<QString> output_suffix;
+            //    output_suffix.append(QString("nrrd"));
+            //    output_suffix.append(QString("swc"));
+
+            //    for(int i=0; i<tip_list.size(); i++){
+            ////        if(i>0){break;}
+            //        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+            //        qDebug()<<node.n;
+            //        if(node.type > 5){continue;}
+            //        // create a tip-centered block
+            //        XYZ shift;
+            //        shift.x = (int)node.x;
+            //        shift.y = (int)node.y;
+            //        shift.z = (int)node.z;
+
+            //        block crop_block = offset_block(zcenter_block, shift);
+            //        crop_block.name = cell_name + "_"+QString::number(i);
+            //        // crop image
+            //        qDebug()<<crop_block.name;
+            //        qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
+            //        qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
+
+            //        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
+            //        // crop swc
+            //        QString output_swc = output_dir+crop_block.name+".swc";
+            //        crop_swc(swc_file, output_swc, crop_block);
+            ////        my_saveANO(output_dir, crop_block.name, output_suffix);
+            //    }
+                return;
+            }
+
+            QList<int> get_branch_points(NeuronTree nt, bool include_root){
+                QList<int> branch_list;
+                QList<int> plist;
+                QList<int> alln;
+                int N=nt.listNeuron.size();
+                for(int i=0; i<N; i++){
+                     cout << nt.listNeuron.at(i).n;
+                }
+                return branch_list;
+            }
+//op tip-centered regions one by one
+        //    block zcenter_block; // This is a block centered at (0,0,0)
+        //    zcenter_block.small = 0-block_size/2;
+        //    zcenter_block.large = block_size/2;
+        //    QList<QString> output_suffix;
+        //    output_suffix.append(QString("nrrd"));
+        //    output_suffix.append(QString("swc"));
+
+        //    for(int i=0; i<tip_list.size(); i++){
+        ////        if(i>0){break;}
+        //        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+        //        qDebug()<<node.n;
+        //        if(node.type > 5){continue;}
+        //        // create a tip-centered block
+        //        XYZ shift;
+        //        shift.x = (int)node.x;
+        //        shift.y = (int)node.y;
+        //        shift.z = (int)node.z;
+
+        //        block crop_block = offset_block(zcenter_block, shift);
+        //        crop_block.name = cell_name + "_"+QString::number(i);
+        //        // crop image
+        //        qDebug()<<crop_block.name;
+        //        qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
+        //        qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
+
+        //        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
+        //        // crop swc
+        //        QString output_swc = output_dir+crop_block.name+".swc";
+        //        crop_swc(swc_file, output_swc, crop_block);
+        ////        my_saveANO(output_dir, crop_block.name, output_suffix);
+        //    }
+            return;
+        }
+
+        QList<int> get_branch_points(NeuronTree nt, bool include_root){
+            QList<int> branch_list;
+            QList<int> plist;
+            QList<int> alln;
+            int N=nt.listNeuron.size();
+            for(int i=0; i<N; i++){
+                 cout << nt.listNeuron.at(i).n;
+            }
+            return branch_list;
+        }
+
 		v3d_msg("To be implemented.");
 	}
 	else return false;
 
 	return true;
 }
-
-void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    //if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    //if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    QString image_file=infiles.at(0);
-    QString swc_file = infiles.at(1);
-    QString output_dir=outfiles.at(0);
-    XYZ block_size=XYZ(100,100,20);
-//    QString swc_file = infiles.at(0);
+//    QString image_file=infiles.at(0);
+//    QString swc_file = infiles.at(1);
+//    QString output_dir=outfiles.at(0);
+//    XYZ block_size=XYZ(100,100,20);
+    QString swc_file = infiles.at(0);
 
     printf("welcome to use get_branch\n");
     NeuronTree nt = readSWC_file(swc_file);
-    if(!output_dir.endsWith("/")){
-        output_dir = output_dir+"/";
-    }
+//    if(!output_dir.endsWith("/")){
+//        output_dir = output_dir+"/";
+//    }
     QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
     cell_name = cell_name.left(cell_name.indexOf("."));
 
     // Find branch points
-    vector<int> branch_list = get_branch_points(nt, false);
-    cout<<"Number_of_branch_points\t"<<qPrintable(swc_file)<<"\t"<<branch_list.size()<<endl;
-
-    // Crop tip-centered regions one by one
-    int numbranch=branch_list.size();
-    block zcenter_block; // This is a block centered at (0,0,0)
-    zcenter_block.small = 0-block_size/2;
-    zcenter_block.large = block_size/2;
-    //vector< vector<int> > Nbs = get_close_points(nt,branch_list);
-    QList<QString> output_suffix;
-    output_suffix.append(QString("tif"));
-    output_suffix.append(QString("swc"));
-    printf("welcome to use get_termial\n");
-    for(int i=0; i<branch_list.size(); i++){
-        int branchnum=i;
-        //cout<<"****************************"<<Nbs[i][0]<<endl;
-        NeuronSWC node = nt.listNeuron.at(branch_list.at(i));
-        //cout<<"--------------------"<<node.n<<endl;
-        if(node.type > 5){continue;}
-        // block size
-        // Crop tip-centered regions one by one
-        //block zcenter_block;// This is a block centered at (0,0,0)
-        //XYZ block_size_L = XYZ(-Nbs[i][0],-Nbs[i][1],-Nbs[i][2]);
-        //XYZ block_size_H = XYZ(Nbs[i][0],Nbs[i][1],Nbs[i][2]);
-        //zcenter_block.small = block_size_L;
-        //zcenter_block.large = block_size_H;
-        // create a tip-centered block
-        block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
-        crop_block.name = QString::number(i);
-        XYZ branch=XYZ(node.x, node.y, node.z);
-        // crop swc
-        QString output_swc = output_dir+crop_block.name+".swc";
-        crop_swc(swc_file, output_swc, crop_block);
-        // crop image
-        crop_img(image_file, crop_block, output_dir, callback, QString(".tif"),output_swc,branchnum,branch);
-        //my_saveANO(output_dir, crop_block.name, output_suffix);
-    }
-    return;
-}
+    QList<int> branch_list = get_branch_points(nt, false);
+//    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
 
 vector<int> get_branch_points(NeuronTree nt, bool include_root){
     vector<int> branch_list;
@@ -194,12 +302,16 @@ vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a){
     return neighbours;
 }
 
-block offset_block(block input_block, XYZ offset)
-{
-    input_block.small = offset_XYZ(input_block.small, offset);
-    input_block.large = offset_XYZ(input_block.large, offset);
-    return input_block;
-}
+//    for(int i=0; i<tip_list.size(); i++){
+////        if(i>0){break;}
+//        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+//        qDebug()<<node.n;
+//        if(node.type > 5){continue;}
+//        // create a tip-centered block
+//        XYZ shift;
+//        shift.x = (int)node.x;
+//        shift.y = (int)node.y;
+//        shift.z = (int)node.z;
 
 XYZ offset_XYZ(XYZ input, XYZ offset){
     input.x += offset.x;
@@ -211,71 +323,24 @@ XYZ offset_XYZ(XYZ input, XYZ offset){
 void crop_swc(QString input_swc, QString output_swc, block crop_block)
 {
 
-    printf("welcome to use crop_swc\n");
-    QString cmd = "vaa3d -x preprocess -f crop_swc_cuboid -i " + input_swc + " -o " +output_swc  + " -p "
-             + "\""
-             + "#a " + QString::number(crop_block.small.x)
-             + " #b " + QString::number(crop_block.small.y)
-             + " #c " + QString::number(crop_block.small.z)
-             + " #d " + QString::number(crop_block.large.x)
-             + " #e " + QString::number(crop_block.large.y)
-             + " #f " + QString::number(crop_block.large.z)
-             + " #r " + QString::number(crop_block.small.x)
-             + " #s " + QString::number(crop_block.small.y)
-             + " #t " + QString::number(crop_block.small.z)
-             + "\"";
-    qDebug()<<cmd;
-    system(qPrintable(cmd));
+//        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
+//        // crop swc
+//        QString output_swc = output_dir+crop_block.name+".swc";
+//        crop_swc(swc_file, output_swc, crop_block);
+////        my_saveANO(output_dir, crop_block.name, output_suffix);
+//    }
     return;
 }
 
-void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip)
-{
-    printf("welcome to use crop_img\n");
-    if(output_format.size()==0){output_format=QString(".tiff");}
-
-    V3DLONG *in_zz;
-    if(!callback.getDimTeraFly(image.toStdString(), in_zz))
-    {
-        v3d_msg("Cannot load terafly images.",0);
-        return;
+QList<int> get_branch_points(NeuronTree nt, bool include_root){
+    QList<int> branch_list;
+    QList<int> plist;
+    QList<int> alln;
+    int N=nt.listNeuron.size();
+    for(int i=0; i<N; i++){
+         cout << nt.listNeuron.at(i).n;
     }
-    // 1. When cropping, ranges must be integers
-    // pixels at large values won't be included, so set large.x/y/z as large.x/y/z + 1
-    XYZ small=XYZ(crop_block.small);
-    XYZ large=XYZ(crop_block.large);
-    small.x = floor(small.x);
-    small.y = floor(small.y);
-    small.z = floor(small.z);
-    large.x = ceil(large.x)+1;
-    large.y = ceil(large.y)+1;
-    large.z = ceil(large.z)+1;
-
-    // 2. Crop image. image is stored as 1d array. 2 parameters needed for cropping:
-    // 2.1. 'cropped_image' is a pointer to the beginning of the region of interest
-    unsigned char * cropped_image = 0;
-    qDebug()<<small.x<<small.y<<small.z<<large.x<<large.y<<large.z;
-    cropped_image = callback.getSubVolumeTeraFly(image.toStdString(),
-                                                 small.x, large.x,
-                                                 small.y, large.y,
-                                                 small.z, large.z);
-    // 2.2. 'in_sz' sets the size of the region.
-    V3DLONG in_sz[4];
-    in_sz[0] = large.x-small.x;
-    in_sz[1] = large.y-small.y;
-    in_sz[2] = large.z-small.z;
-    in_sz[3] = in_zz[3];   // channel information
-
-    // 3. Save image
-    QString saveName = outputdir_img + "/" + crop_block.name + output_format;
-    const char* fileName = saveName.toAscii();
-    simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
-
-//    NeuronTree nt_crop_sorted;
-//    nt_crop_sorted=readSWC_file(input_swc);
-//    get2d_label_image(nt_crop_sorted,in_sz,cropped_image,callback,outputdir_img,tipnum,tip);
-
-    return;
+    return branch_list;
 }
 
 void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)

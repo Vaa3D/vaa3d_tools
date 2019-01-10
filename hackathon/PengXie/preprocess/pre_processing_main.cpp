@@ -156,14 +156,13 @@ NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QS
         // Whether to connect subtrees to soma
         int cend = eid.at(edist.indexOf(dsorted.at(0))); // end to be connected to soma
         NeuronTree component_i_sorted;
-        qDebug()<<"Sort swc with new root name:"<<cend<<endl;
+        export_listNeuron_2swc(component_i.listNeuron, "Z:/Peng/Preprocess_0102/input_of_sortSWC.swc");
 //        if(cid==0){
-////            writeSWC_file(outfileLabel+QString("component_1.swc"), component_i);
-//            writeSWC_file("Z:/Peng/Preprocess_0102/component_1.swc", component_i);
+//            export_listNeuron_2swc(component_i.listNeuron, "Z:\Peng\Preprocess_0102\input_of_sortSWC.swc");
 //        }
-        component_i_sorted.deepCopy(my_SortSWC(component_i, cend, 0));
+//        component_i_sorted.deepCopy(my_SortSWC(component_i, cend, 0));
+        component_i_sorted.deepCopy(my_SortSWC(component_i, 1, 0));
 //        component_i_sorted.deepCopy(my_SortSWC(component_i, component_i.listNeuron.at(cend).n, 0));
-//        SortSWC(component_i.listNeuron, component_i_sorted.listNeuron, component_i.listNeuron.at(cend).n, 0);
         int new_cend = listneuron.size();
         qDebug()<<"Component sorted."<<endl;
 
@@ -383,6 +382,21 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     //2.0 Remove duplicates
     printf("\tRemoving duplicates\n");
     // Maybe not the best solution. Use it for now.
+    NeuronTree test_nt;
+//    QList<int> test_newroot;
+//    test_newroot << 1 << 1000 << 3000 << 3005 << 10000 << 30000;
+//    for(int i=0; i<test_newroot.size(); i++){
+//        int newroot_name = nt.listNeuron.at(test_newroot.at(i)).n;
+//        qDebug()<<"Trial newroot name:"<<newroot_name;
+//        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
+//        writeSWC_file("C:/Users/pengx/Desktop/test/tmp_"+QString::number(newroot_name)+".swc",test_nt);
+//    }
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        int newroot_name = nt.listNeuron.at(i).n;
+        qDebug()<<"Trial newroot name:"<<newroot_name;
+        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
+    }
+    return 1;
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
     if(return_temp)
     {

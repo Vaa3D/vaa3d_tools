@@ -28,7 +28,7 @@ public:
 
 	// Finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
-	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
+	// NOTE: [Each output connected component is a 3D blob!], as the function name stated, the output is the result of combining 2D.
 	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
 
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
@@ -36,6 +36,7 @@ public:
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
 
 	myImg1DPtr connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
+	myImg1DPtr connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
 	/******************************************************/
 
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
