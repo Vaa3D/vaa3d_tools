@@ -26,8 +26,12 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
     QString input_swc=infiles.at(0);
     QString input_image=infiles.at(1);
 
+    bool aver_or_threhold = (inparas.size() >= 2) ? atoi(inparas[1]) : 0;
+
+    double threshold = (inparas.size() >= 3) ? atoi(inparas[2]) : 30;
+
     int mode=2;
-    if (inparas.size()==1)
+    if (inparas.size()!=0)
     {
         int tmp=atoi(inparas.at(0));
         if (tmp==2)
@@ -41,7 +45,6 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
         }
     }
 
-
     QString output_2d_dir=outfiles.at(0);
     if(!output_2d_dir.endsWith("/")){
         output_2d_dir = output_2d_dir+"/";
@@ -53,7 +56,7 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
 
     qDebug("number:%s",qPrintable(flag1));
     NeuronTree mUnittree1=readSWC_file(input_swc);
-    QList<NeuronSWC> & mUnit_ori =mUnittree1.listNeuron ;
+
     Image4DSimple * p4dImage = callback.loadImage((char *)(qPrintable(input_image) ));
     int nChannel = p4dImage->getCDim();
 
@@ -83,14 +86,46 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
     }
     printf("pixel num of image:%d \n",allmarkers.size());
     double signal;
-    unsigned char *data2d=get_2d_pixel(data1d_crop, sz);
+    unsigned char *data2d=get_2d_pixel(data1d_crop, sz);//get 2D image signal
     signal=get_aver_signal(allmarkers, data1d_crop, data2d,sz[0], sz[1], sz[2], mode);
     printf("average image signal:%f \n",signal);
+
+//pruning dark tip node
+       //double threshold;
+       trer_and_num mUnittree3;//=pruning_dark_tip_node(mUnittree1,data1d_crop,threshold,sz);
+       mUnittree3.tree=mUnittree1;
+       int off=1;
+       while(off != 0)
+       {
+           //trer_and_num result_struct;
+           mUnittree3=pruning_dark_tip_node(mUnittree3.tree,data1d_crop,threshold,sz);
+           off=mUnittree3.delete_num;
+       }
+       NeuronTree mUnittree2=mUnittree3.tree;
+       int delete_num=mUnittree1.listNeuron.size()-mUnittree2.listNeuron.size();
+       cout<<"-----------------------------pruning dark nodes number:"<<delete_num<<endl;
+
+//get all swc node to marker struct
+    QList<NeuronSWC> & mUnit_ori =mUnittree2.listNeuron ;
+    vector<MyMarker> allmarkersforradius;
+        for (int i=0;i<mUnit_ori.size();i++){
+                    MyMarker node;
+                    node.x=mUnit_ori.at(i).x;node.y=mUnit_ori.at(i).y;node.z=mUnit_ori.at(i).z;
+                     allmarkersforradius.push_back(node);
+        }
+        printf("swc marker num of image:%d \n", allmarkersforradius.size());
+
+//chose threshold based on average signal
+    if (signal>10 && signal<20) threshold=40;
+    else if (signal<10) threshold=45;
+    else if (signal>20) threshold=30;
+
 //caculate all radius of everynode
     map<int,float> r_and_index;
-    r_and_index=calculate_R(data1d_crop,mUnit_ori,signal,trace_z_thickness,sz,mode);
+    //r_and_index=calculate_R(data1d_crop,mUnit_ori,signal,trace_z_thickness,sz,mode);
+    r_and_index=markerRadius_hanchuan_XY(data1d_crop, sz,  allmarkersforradius, threshold ,aver_or_threhold ,signal);
 //revise radius of swc nodes
-    NeuronTree mUnittree=revise_radius(mUnittree1,r_and_index);
+    NeuronTree mUnittree=revise_radius(mUnittree2,r_and_index);
     QList<NeuronSWC>  mUnit =mUnittree.listNeuron ;
 //get child size of every node
     V3DLONG tnodes = mUnit.size();
@@ -109,6 +144,7 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
         childs.push_back(childs1[i].size());//get child size by index i(0~n)
 
     }
+
 //get from APP1 pruning part below
     v3d_msg("pruning_covered_leaf_single_cover()\n", 0);
    // _CHECK_PRUNING_PARAMETERS_();
@@ -201,9 +237,7 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
                 {
                     V3DLONG R =r_and_index[index_map[curnode.n]];
                     V3DLONG R2=r_and_index[index_map[curpnode.n]];
-                    //cout<<"tip r and it's pn r:"<<R<<","<<R2<<endl;
                     childs[i] = -1;
-                    //printf("tip's parent child size:%d\n",childs[index_map[curnode.parent]]);
                     childs[index_map[curnode.parent]]--;
                     //printf("tip's parent child size:%d\n",childs[index_map[curnode.parent]]);
                     nleafdelete++;
@@ -230,11 +264,69 @@ void pruning_covered_leaf_single_cover(const V3DPluginArgList & input, V3DPlugin
     }
 
     //delete those deleted labels and rearrange index
-
-    rearrange_and_remove_labeled_deletion_nodes_mmUnit(mUnittree,childs);
+    int dele_nums=0;
+    rearrange_and_remove_labeled_deletion_nodes_mmUnit(mUnittree,childs,dele_nums);
 
     QString swc_name = output_2d_dir+flag1+"."+QString ("purned.swc");
     writeSWC_file(swc_name,mUnittree);
+
+
+//record result
+    FILE * fp=0;
+    QString out_result = output_2d_dir+flag1;
+    fp = fopen((char *)qPrintable(out_result+QString(".txt")), "wt");
+    qDebug("--------------------------------txt output dir:%s",qPrintable(output_2d_dir));
+
+    QString aver_or_thres;
+    if(!aver_or_threhold)  {aver_or_thres="Yes";}
+    else {aver_or_thres="No";}
+
+    double aver_r;
+        double cnt=0;
+        double total_r=0;
+        V3DLONG sz_R=r_and_index.size();if (sz_R<=0) cout<<"NO radius data in your result"<<endl;
+        for (V3DLONG i=0;i<sz_R;i++){
+
+            total_r+=r_and_index[i];
+            cnt++;
+        }
+        aver_r=total_r/cnt;
+
+
+    fprintf(fp, "Pruned sample name;Input threshold;Average signal value;Average radius;Dark nodes pruning number;Single overlapping nodes pruning number;Use input threshold or not\n");
+    fprintf(fp,"%s %.2f %.2f %.2f %d %d %s",flag1.toStdString().c_str(),threshold,signal,aver_r,delete_num,dele_nums,aver_or_thres.toStdString().c_str());
+    fclose(fp);
+
+
+
+//    // test.1 image ID
+//    fprintf(fp, "Pruned sample name:\t%s\n", input_swc.toStdString().c_str());
+//    // test.2 input threshold
+//    fprintf(fp, "Input threshold:\t%f\n", threhold);
+//    // test.3 average signal value
+//    fprintf(fp, "Average signal value of current image:\t%f\n", signal);
+//    // test.4 use threshold or not
+//    QString aver_or_thres;
+//    if(!aver_or_threhold)  {aver_or_thres="No";}
+//    else {aver_or_thres="Yes";}
+//    fprintf(fp, "Use input threshold/average threshold:\t%s\n", aver_or_thres.toStdString().c_str());// %s is for char not string
+//    // test.5 average radius
+//    double aver_r;
+//    double cnt=0;
+//    double total_r=0;
+//    V3DLONG sz_R=r_and_index.size();if (sz_R<=0) cout<<"NO radius data in your result"<<endl;
+//    for (V3DLONG i=0;i<sz_R;i++){
+
+//        total_r+=r_and_index[i];
+//        cnt++;
+//    }
+//    aver_r=total_r/cnt;
+//    fprintf(fp, "Average radius(input threshold/average threshold):\t%f\n", aver_r);
+//    // test.6 dark nodes pruned number
+//    fprintf(fp, "Dark nodes pruning number:\t%d\n", delete_num);
+//    // test.7 single overlapping nodes pruned number
+//    fprintf(fp, "Single overlapping nodes pruning number:\t%d\n", dele_nums);
+//    fclose(fp);
 
 
     printf("done with the pruning_covered_leaf_single_cover() step. \n");
@@ -332,7 +424,7 @@ double calculate_overlapping_ratio_n1(const NeuronSWC & n1, const NeuronSWC & n2
 }
 
 
-void rearrange_and_remove_labeled_deletion_nodes_mmUnit(NeuronTree & mmUnit,QVector<V3DLONG> childs) //by PHC, 2011-01-15
+void rearrange_and_remove_labeled_deletion_nodes_mmUnit(NeuronTree & mmUnit,QVector<V3DLONG> childs,int delete_nums) //by PHC, 2011-01-15
 {
 
 
@@ -387,6 +479,8 @@ void rearrange_and_remove_labeled_deletion_nodes_mmUnit(NeuronTree & mmUnit,QVec
         }
         printf("----------------not pruned swc size :%d\n",mUnit.size());
         printf("--------------------pruned swc size :%d\n",mUnit_new.size());
+        delete_nums=mUnit.size()-mUnit_new.size();
+
         NeuronTree result;
         QHash <int, int>  hashNeuron;
         for(V3DLONG j=0; j<mUnit_new.size();j++)
@@ -399,6 +493,58 @@ void rearrange_and_remove_labeled_deletion_nodes_mmUnit(NeuronTree & mmUnit,QVec
         mmUnit = result;
 //    }
 }
+
+
+map<int,float> markerRadius_hanchuan_XY(unsigned char *inimg1d, V3DLONG  sz[4], vector<MyMarker> allmarkers, double thresh,bool aver_or_threhold,double aver)
+{
+    //printf("markerRadius_hanchuan   XY 2D\n");
+    if(!aver_or_threhold) thresh=(float)aver;
+    map<int,float> radius;
+    for(int i=0;i<allmarkers.size();i++){
+
+        MyMarker marker=allmarkers.at(i);
+        long sz0 = sz[0];
+        long sz01 = sz[0] * sz[1];
+        double max_r = sz[0]/2;
+        if (max_r > sz[1]/2) max_r = sz[1]/2;
+
+        double total_num, background_num;
+        double ir;
+        for (ir=1; ir<=max_r; ir++)
+        {
+            total_num = background_num = 0;
+
+            double dz, dy, dx;
+            double zlower = 0, zupper = 0;
+            for (dz= zlower; dz <= zupper; ++dz)
+                for (dy= -ir; dy <= +ir; ++dy)
+                    for (dx= -ir; dx <= +ir; ++dx)
+                    {
+                        total_num++;
+
+                        double r = sqrt(dx*dx + dy*dy + dz*dz);
+                        if (r>ir-1 && r<=ir)
+                        {
+                            V3DLONG i = marker.x+dx;   if (i<0 || i>=sz[0]) goto end1;
+                            V3DLONG j = marker.y+dy;   if (j<0 || j>=sz[1]) goto end1;
+                            V3DLONG k = marker.z+dz;   if (k<0 || k>=sz[2]) goto end1;
+
+                            if (inimg1d[k * sz01 + j * sz0 + i] <= thresh)
+                            {
+                                background_num++;
+
+                                if ((background_num/total_num) > 0.001) goto end1; //change 0.01 to 0.001 on 100104
+                            }
+                        }
+                    }
+        }
+    end1:
+        radius[i]=ir;
+ }
+    return radius;
+
+}
+
 
 map<int,float> calculate_R(unsigned char *data1D,QList<NeuronSWC> mUnit,double avr_thres,double trace_z_thickness,V3DLONG sz[4],int mode){
 
@@ -643,5 +789,56 @@ double get_aver_signal(vector<MyMarker> allmarkers, unsigned char * data1d,unsig
         }
     }
    }
-
 }
+
+trer_and_num pruning_dark_tip_node(NeuronTree mmUnit,unsigned char *image3d,double threshold,V3DLONG sz[4]){
+
+    trer_and_num result_struct;
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = mmUnit.listNeuron.size();
+
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = mmUnit.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[mmUnit.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<NeuronSWC> & mUnit = mmUnit.listNeuron;
+    int count=0;
+    int delete_count;
+    int total_count=mUnit.size();
+    //threshold=30;
+
+    V3DLONG i,j,k;
+    QList<NeuronSWC> mUnit_new;
+    long sz0 = sz[0];
+    long sz01 = sz[0] * sz[1];
+    for (j=0; j<total_count; j++)
+        {
+            V3DLONG cx=V3DLONG(mUnit.at(j).x+0.5);
+            V3DLONG cy=V3DLONG(mUnit.at(j).y+0.5);
+            V3DLONG cz=V3DLONG(mUnit.at(j).z+0.5);
+            V3DLONG ids=cz*sz01+cy*sz[1]+cx;
+            if ((image3d[ids] <= threshold) && (childs[j].size() == 0)) continue;
+            else
+            {
+                mUnit_new.push_back(mUnit[j]);
+                count++;
+            }
+        }
+     delete_count=total_count-count;
+     NeuronTree result;
+     QHash <int, int>  hashNeuron;
+     for(V3DLONG j=0; j<mUnit_new.size();j++)
+        {
+           hashNeuron.insert(mUnit_new[j].n, j);
+        }
+     result.listNeuron=mUnit_new;
+     result.hashNeuron=hashNeuron;
+     result_struct.tree=result;
+     result_struct.delete_num=delete_count;
+     return result_struct;
+}
+

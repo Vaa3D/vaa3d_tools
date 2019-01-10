@@ -138,6 +138,9 @@ public:
 
 	template<class T>
 	static inline void histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero = true);
+
+	template<class T>
+	static inline void getGradientImg_voxelBased(const T inputImgPtr[], T outputImgPtr[], const int imgDims[]);
 	/**************************************************************/
 
 
