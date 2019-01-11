@@ -64,7 +64,8 @@ public:
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 	template<class T>
-	static inline void cropImg2D(const T InputImagePtr[], T OutputImagePtr[], const int xlb, const int xhb, const int ylb, const int yhb, const int imgDims[]);
+	static inline void cropImg(const T InputImagePtr[], T OutputImagePtr[], 
+		const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[]);
 
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
@@ -205,15 +206,19 @@ inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], con
 }
 
 template<class T>
-inline void ImgProcessor::cropImg2D(const T InputImagePtr[], T OutputImagePtr[], const int xlb, const int xhb, const int ylb, const int yhb, const int imgDims[])
+inline void ImgProcessor::cropImg(const T InputImagePtr[], T OutputImagePtr[], 
+	const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[])
 {
 	long int OutputArrayi = 0;
-	for (int yi = ylb; yi <= yhb; ++yi)
+	for (int zi = zlb; zi <= zhb; ++zi)
 	{
-		for (int xi = xlb; xi <= xhb; ++xi)
+		for (int yi = ylb; yi <= yhb; ++yi)
 		{
-			OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * (yi - 1) + (xi - 1)];
-			++OutputArrayi;
+			for (int xi = xlb; xi <= xhb; ++xi)
+			{
+				OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * imgDims[1] * (zi - 1) + imgDims[0] * (yi - 1) + (xi - 1)];
+				++OutputArrayi;
+			}
 		}
 	}
 }

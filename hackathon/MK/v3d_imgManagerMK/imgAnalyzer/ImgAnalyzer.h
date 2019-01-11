@@ -30,10 +30,13 @@ class ImgAnalyzer
 public:
 	/***************** Image Segmentation *****************/
 
-	// [findSignalBlobs2D] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
-	// Each slice is independent to one another. Therefore, a 3D blob's each 2D slice is labeled as different 2D connected component.
+	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
+
+	// This method is called by ImgAnalyzer::merge2DConnComponent. Standalone use hasn't been tested yest.
 	static vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
+
+	static boost::container::flat_set<vector<int>> getSectionalCentroids(const connectedComponent& inputConnComp);
 
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.

@@ -153,8 +153,35 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> 
 	cout << endl;
 	// ------------------ END of [Finding connected components slice by slice] -----------------
 
-	// ------- Merge 2D blobs into 3D -------
+	// --------- Merge 2D blobs into 3D, compute the component's final size and boundaries ---------
 	vector<connectedComponent> connList = ImgAnalyzer::merge2DConnComponent(connList2D);
+	for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end(); ++it)
+	{
+		int compSize = 0;
+		int xmax = 0, ymax = 0;
+		int xmin = 10000, ymin = 10000;
+		it->zMin = it->coordSets.begin()->first;
+		for (map<int, set<vector<int>>>::iterator sliceIt = it->coordSets.begin(); sliceIt != it->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::iterator coordIt = sliceIt->second.begin(); coordIt != sliceIt->second.end(); ++coordIt)
+			{
+				if (coordIt->at(0) > xmax) xmax = coordIt->at(0);
+				if (coordIt->at(0) < xmin) xmin = coordIt->at(0);
+				if (coordIt->at(1) > ymax) ymax = coordIt->at(1);
+				if (coordIt->at(1) < ymin) ymin = coordIt->at(1);
+			}
+			it->zMax = sliceIt->first;
+
+			compSize = compSize + sliceIt->second.size();
+		}
+
+		it->xMax = xmax;
+		it->xMin = xmin;
+		it->yMax = ymax;
+		it->yMin = ymin;
+		it->size = compSize;
+	}
+	// ---- END of [Merge 2D blobs into 3D, compute the component's final size and boundaries] ----
 
 	return connList;
 }
@@ -382,6 +409,15 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	// --------------------------------- END of [Create 3D connected component data] ---------------------------------
 
 	return outputConnCompList;
+}
+
+boost::container::flat_set<vector<int>> ImgAnalyzer::getSectionalCentroids(const connectedComponent& inputConnComp)
+{
+	int xLength = inputConnComp.xMax - inputConnComp.xMin + 1;
+	int yLength = inputConnComp.yMax - inputConnComp.yMin + 1;
+	int zLength = inputConnComp.zMax - inputConnComp.zMin + 1;
+
+
 }
 
 set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[])

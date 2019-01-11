@@ -460,7 +460,7 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 			ROIxyz[1] = tileSize;
 			ROIxyz[2] = 1;
 			ROIxyz[3] = dims[2];
-			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, dims);
+			imgProcPtr->cropImg(img1D, ROIPtr, xlb, xhb, ylb, yhb, 1, 1, dims);
 
 			QString patchPath = QString::fromStdString(imgName) + "_patches";
 			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);

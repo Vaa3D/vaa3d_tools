@@ -1191,7 +1191,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.tif";
+		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1224,9 +1224,8 @@ int main(int argc, char* argv[])
 		}
 
 		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 3, mipPtr);
-		cout << componentList.size() << endl;
 		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc", testTree);
+		writeSWC_file("D:\\Work\\FragTrace\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1245,14 +1244,34 @@ int main(int argc, char* argv[])
 		//const char* saveFileNameC = saveFileName.c_str();
 		//ImgManager::saveimage_wrapper(saveFileNameC, surMask1D.get(), saveDims, 1);
 
-		vector<connectedComponent> surfObjList;
-		for (vector<connectedComponent>::iterator compIt = componentList.begin(); compIt != componentList.end(); ++compIt)
+		int componentSize = 0;
+		int index;
+		for (vector<connectedComponent>::iterator it = componentList.begin(); it != componentList.end(); ++it)
 		{
-			connectedComponent surfObj = FeatureExtractor::getObjSurface(*compIt);
-			surfObjList.push_back(surfObj);
+			if (it->size > componentSize)
+			{
+				componentSize = it->size;
+				index = int(it - componentList.begin());
+			}
 		}
-		NeuronTree testSurfTree = NeuronStructUtil::blobs2tree(surfObjList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\surfTest.swc", testSurfTree);
+
+		cout << componentList.at(index).islandNum << ": " << componentList.at(index).size << endl;
+		cout << "x length: " << componentList.at(index).xMax - componentList.at(index).xMin + 1 << " ";
+		cout << "y length: " << componentList.at(index).yMax - componentList.at(index).yMin + 1 << " ";
+		cout << "z length: " << componentList.at(index).zMax - componentList.at(index).zMin + 1 << endl;
+
+		unsigned char* cropped1D = new unsigned char[dims[0] * dims[1] * dims[2]];
+		ImgProcessor::cropImg(myManager.imgDatabase.at("compMask3D").slicePtrs.begin()->second.get(), cropped1D,
+			componentList.at(index).xMin + 1, componentList.at(index).xMax + 1, componentList.at(index).yMin + 1, componentList.at(index).yMax + 1, componentList.at(index).zMin + 1, componentList.at(index).zMax + 1, dims);
+		V3DLONG croppedDims[4];
+		croppedDims[0] = componentList.at(index).xMax - componentList.at(index).xMin + 1;
+		croppedDims[1] = componentList.at(index).yMax - componentList.at(index).yMin + 1;
+		croppedDims[2] = componentList.at(index).zMax - componentList.at(index).zMin + 1;
+		croppedDims[3] = 1;
+		string croppedTestSaveName = "D:\\Work\\FragTrace\\croppedTest.tif";
+		const char* croppedTestSaveNameC = croppedTestSaveName.c_str();
+		ImgManager::saveimage_wrapper(croppedTestSaveNameC, cropped1D, croppedDims, 1);
+
 
 	}
 
