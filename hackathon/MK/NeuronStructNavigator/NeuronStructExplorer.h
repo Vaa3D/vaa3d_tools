@@ -145,7 +145,7 @@ public:
 	/**********************************************************************/
 
 
-	/***************** Neuron Struct Connecting Functions *****************/
+	/***************** Auto-tracing Related Neuron Struct Functions *****************/
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
 	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = tileXY_LENGTH, float zDivideNum = 1);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
@@ -161,7 +161,11 @@ public:
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
-	/**********************************************************************/
+
+	// Auto-traced Result Refinement
+	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
+
+	/********************************************************************************/
 
 
 	/***************** Geometry *****************/

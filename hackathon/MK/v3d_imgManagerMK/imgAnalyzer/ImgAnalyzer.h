@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <map>
 #include <set>
 #include <cmath>
@@ -36,8 +37,11 @@ public:
 	// This method is called by ImgAnalyzer::merge2DConnComponent. Standalone use hasn't been tested yest.
 	static vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 
-	static boost::container::flat_set<vector<int>> getSectionalCentroids(const connectedComponent& inputConnComp);
+	boost::container::flat_set<deque<float>> getSectionalCentroids(const connectedComponent& inputConnComp);
+private:
+	boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd);
 
+public:
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);

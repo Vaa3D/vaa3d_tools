@@ -1,6 +1,7 @@
 #include <ctime>
 
 #include "ImgAnalyzer.h"
+#include "NeuronStructUtilities.h"
 
 // ======================================= Image Segmentation ======================================= //
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
@@ -411,13 +412,121 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	return outputConnCompList;
 }
 
-boost::container::flat_set<vector<int>> ImgAnalyzer::getSectionalCentroids(const connectedComponent& inputConnComp)
+boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(const connectedComponent& inputConnComp)
 {
 	int xLength = inputConnComp.xMax - inputConnComp.xMin + 1;
 	int yLength = inputConnComp.yMax - inputConnComp.yMin + 1;
 	int zLength = inputConnComp.zMax - inputConnComp.zMin + 1;
 
+	vector<int> sectionalDim;
+	vector<int> dim1;
+	vector<int> dim2;
+	int start, end;
+	boost::container::flat_set<deque<float>> sectionalCentroids;
+	if (xLength >= yLength && xLength >= zLength)
+	{
+		start = inputConnComp.xMin;
+		end = inputConnComp.xMax;
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				dim1.push_back(pointIt->at(1));
+				dim2.push_back(pointIt->at(2));
+				sectionalDim.push_back(pointIt->at(0));
+			}
+		}
 
+		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+		for (boost::container::flat_set<deque<float>>::iterator it = sectionalCentroids.begin(); it != sectionalCentroids.end(); ++it)
+		{
+			it->push_front(it->at(2));
+			it->pop_back();
+		}
+	}
+	else if (yLength >= xLength && yLength >= zLength)
+	{
+		start = inputConnComp.yMin;
+		end = inputConnComp.yMax;
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				dim1.push_back(pointIt->at(0));
+				dim2.push_back(pointIt->at(2));
+				sectionalDim.push_back(pointIt->at(1));
+			}
+		}
+
+		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+		for (boost::container::flat_set<deque<float>>::iterator it = sectionalCentroids.begin(); it != sectionalCentroids.end(); ++it)
+		{
+			it->insert((*it).begin() + 1, it->at(2));
+			it->pop_back();
+		}
+	}
+	else if (zLength >= xLength && zLength >= yLength)
+	{
+		start = inputConnComp.zMin;
+		end = inputConnComp.zMax;
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				dim1.push_back(pointIt->at(0));
+				dim2.push_back(pointIt->at(1));
+				sectionalDim.push_back(pointIt->at(2));
+			}
+		}
+
+		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+	}
+
+	return sectionalCentroids;
+}
+
+boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd)
+{
+	vector<size_t> delLocs;
+	NeuronTree sliceTree;
+	NeuronStructUtil myUtil;
+	boost::container::flat_set<deque<float>> centroids;
+	for (int slicei = secDimStart; slicei <= secDimEnd; ++slicei)
+	{
+		sliceTree.listNeuron.clear();
+		for (size_t dotNumi = 0; dotNumi != dim1.size(); ++dotNumi)
+		{
+			if (sectionalDim.at(dotNumi) == slicei)
+			{
+				delLocs.push_back(dotNumi);
+				NeuronSWC pseudoNode;
+				pseudoNode.x = dim1.at(dotNumi);
+				pseudoNode.y = dim2.at(dotNumi);
+				pseudoNode.z = sectionalDim.at(dotNumi);
+				sliceTree.listNeuron.push_back(pseudoNode);
+			}
+		}
+		
+		vector<connectedComponent> slice2Dcomps = myUtil.swc2signal2DBlobs(sliceTree);
+		for (vector<connectedComponent>::iterator it = slice2Dcomps.begin(); it != slice2Dcomps.end(); ++it)
+		{
+			deque<float> newCentroid;
+			newCentroid.push_back(it->ChebyshevCenter[0]);
+			newCentroid.push_back(it->ChebyshevCenter[1]);
+			newCentroid.push_back(it->ChebyshevCenter[2]);
+			centroids.insert(newCentroid);
+		}
+
+		/*sort(delLocs.rbegin(), delLocs.rend());
+		for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+		{
+			dim1.erase(dim1.begin() + ptrdiff_t(*delIt));
+			dim2.erase(dim2.begin() + ptrdiff_t(*delIt));
+			sectionalDim.erase(sectionalDim.begin() + ptrdiff_t(*delIt));
+		}*/
+	}
+
+	return centroids;
 }
 
 set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[])

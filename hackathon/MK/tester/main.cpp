@@ -8,6 +8,7 @@
 
 #include <boost\filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include "SWCtester.h"
 #include "ImgManager.h"
@@ -1191,7 +1192,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
+		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\croppedTest.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1225,7 +1226,7 @@ int main(int argc, char* argv[])
 
 		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 3, mipPtr);
 		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
-		writeSWC_file("D:\\Work\\FragTrace\\test.swc", testTree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1260,7 +1261,7 @@ int main(int argc, char* argv[])
 		cout << "y length: " << componentList.at(index).yMax - componentList.at(index).yMin + 1 << " ";
 		cout << "z length: " << componentList.at(index).zMax - componentList.at(index).zMin + 1 << endl;
 
-		unsigned char* cropped1D = new unsigned char[dims[0] * dims[1] * dims[2]];
+		/*unsigned char* cropped1D = new unsigned char[dims[0] * dims[1] * dims[2]];
 		ImgProcessor::cropImg(myManager.imgDatabase.at("compMask3D").slicePtrs.begin()->second.get(), cropped1D,
 			componentList.at(index).xMin + 1, componentList.at(index).xMax + 1, componentList.at(index).yMin + 1, componentList.at(index).yMax + 1, componentList.at(index).zMin + 1, componentList.at(index).zMax + 1, dims);
 		V3DLONG croppedDims[4];
@@ -1268,11 +1269,45 @@ int main(int argc, char* argv[])
 		croppedDims[1] = componentList.at(index).yMax - componentList.at(index).yMin + 1;
 		croppedDims[2] = componentList.at(index).zMax - componentList.at(index).zMin + 1;
 		croppedDims[3] = 1;
-		string croppedTestSaveName = "D:\\Work\\FragTrace\\croppedTest.tif";
+		string croppedTestSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\croppedTest.tif";
 		const char* croppedTestSaveNameC = croppedTestSaveName.c_str();
-		ImgManager::saveimage_wrapper(croppedTestSaveNameC, cropped1D, croppedDims, 1);
+		ImgManager::saveimage_wrapper(croppedTestSaveNameC, cropped1D, croppedDims, 1);*/
+
+		NeuronStructExplorer myExplorer;
+		NeuronTree finalTree;
+		for (vector<connectedComponent>::iterator it = componentList.begin(); it != componentList.end(); ++it)
+		{
+			if (it->islandNum != 1) continue;
+
+			NeuronTree centroidTree;
+			boost::container::flat_set<deque<float>> sectionalCentroids = myAnalyzer.getSectionalCentroids(*it);
+			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = nodeIt->at(0);
+				newNode.y = nodeIt->at(1);
+				newNode.z = nodeIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				centroidTree.listNeuron.push_back(newNode);
+			}
+			
+			NeuronTree MSTtree = myExplorer.SWC2MSTtree(centroidTree);
+			int currTreeSize = finalTree.listNeuron.size();
+			for (QList<NeuronSWC>::iterator currIt = MSTtree.listNeuron.begin(); currIt != MSTtree.listNeuron.end(); ++currIt)
+			{
+				currIt->n = currIt->n + currTreeSize;
+				currIt->parent = currIt->parent + currTreeSize;
+			}
+			finalTree.listNeuron.append(MSTtree.listNeuron);
+		}
+
+		profiledTree componentTreeProfiled(finalTree);
+		profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(componentTreeProfiled);
 
 
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCentroidTree.swc", smoothedTree.tree);
+	
 	}
 
 	return 0;
