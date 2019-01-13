@@ -141,6 +141,29 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
     return 1;
 }
 
+
+bool preprocess_batch_domenu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+
+    char *swclist = NULL;
+    char *somalist = NULL;
+    char *swcdir = NULL;
+    char *qctable = NULL;
+    bool skip_existing = 0;
+
+    //choose a directory that contain swc files
+    QString qs_input;
+    qs_input=QFileDialog::getOpenFileName(
+                parent,
+                "Please select input file (*.swc)\n",
+                QDir::currentPath(),
+                "All files (*.*)" ";; swc files (*.swc *.eswc)"
+                );
+
+    bool finished = preprocess_batch(QString(swclist), QString(swcdir), QString(somalist), QString(qctable), skip_existing);
+    return finished;
+}
+
 bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 

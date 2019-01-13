@@ -1,21 +1,24 @@
 #include <ctime>
 
 #include "ImgAnalyzer.h"
+#include "NeuronStructUtilities.h"
 
 // ======================================= Image Segmentation ======================================= //
-vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int dims[], unsigned char maxIP1D[])
+vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {
 	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
 
-	vector<connectedComponent> connList;
+	vector<connectedComponent> connList2D;
 	cout << endl << "Identifying 2D signal blobs.. \n slice dimension: " << dims[0] << " " << dims[1] << endl;
+	bool MIPprovided = true;
 
 	// --------- Enter this selection block only when MIP image is not provided ---------
 	if (maxIP1D == nullptr) 
 	{
+		MIPprovided = false;
 		cout << "No maximum intensity projection image provided, preparing MIP now.. " << endl;
 
-		unsigned char* maxIP1D = new unsigned char[dims[0] * dims[1]];
+		maxIP1D = new unsigned char[dims[0] * dims[1]];
 		unsigned char* currSlice1D = new unsigned char[dims[0] * dims[1]];	
 		for (int i = 0; i < dims[0] * dims[1]; ++i)
 		{
@@ -42,13 +45,25 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 
 		delete[] currSlice1D;
 		currSlice1D = nullptr;
+
 	}
+
+	/***************** testing block *****************/
+	/*V3DLONG mipDims[4];
+	mipDims[0] = dims[0];
+	mipDims[1] = dims[1];
+	mipDims[2] = 1;
+	mipDims[3] = 1;
+	string testSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testMIP.tif";
+	const char* testSaveNameC = testSaveName.c_str();
+	ImgManager::saveimage_wrapper(testSaveNameC, maxIP1D, mipDims, 1);*/
+	/************ END of [testing block] ************/
+
 	// ------- END [Enter this selection block only when MIP image is not provided] -------
 
 	// ----------- Prepare white pixel address book ------------
 	set<vector<int>> whitePixAddress;
 	unsigned char** maxIP2D = new unsigned char*[dims[1]];
-	cout << int(maxIP1D[256 * 128 + 142]) << endl;
 	for (int j = 0; j < dims[1]; ++j)
 	{
 		maxIP2D[j] = new unsigned char[dims[0]];
@@ -61,7 +76,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 			if (maxIP2D[j][i] > 0) whitePixAddress.insert(coord);
 		}
 	}
-	// ------- END of [Prepare white pixel address book] -------
+	// ------- END of [Prepare white pixel address book] ------
 	
 	// -------------------- Finding connected components slice by slice -------------------
 	int islandCount = 0;
@@ -76,19 +91,20 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 			if ((*sliceIt)[mipIt->at(0)][mipIt->at(1)] > 0) // use mip image to narraow down search region for every slice.
 			{
 				bool connected = false;
-				for (vector<connectedComponent>::iterator connIt = connList.begin(); connIt != connList.end(); ++connIt)
+				for (vector<connectedComponent>::iterator connIt = connList2D.begin(); connIt != connList2D.end(); ++connIt)
 				{
-					if (connIt->zMax != sliceNum) continue;
+					if (connIt->zMax != sliceNum) continue; // skip those components that don't extend in z direction anymore
 					else
 					{
-						for (set<vector<int>>::iterator it = connIt->coordSets[sliceNum].begin(); it != connIt->coordSets[sliceNum].end(); ++it)
+						for (set<vector<int>>::iterator it = connIt->coordSets.at(sliceNum).begin(); it != connIt->coordSets.at(sliceNum).end(); ++it)
 						{
-							if (it->at(0) >= mipIt->at(0) - 1 && it->at(0) <= mipIt->at(0) + 1 &&
-								it->at(1) >= mipIt->at(1) - 1 && it->at(1) <= mipIt->at(1) + 1) // using 8-connectivity
+						/******* IMPORATANT NOTE: Vaa3D coord system's x and y are flipped from TIF. Needs to switch x and when assigning x and y to swc from tif image! *******/
+							if (it->at(0) >= mipIt->at(1) - distThre && it->at(0) <= mipIt->at(1) + distThre &&
+								it->at(1) >= mipIt->at(0) - distThre && it->at(1) <= mipIt->at(0) + distThre) // using 8-connectivity
 							{
 								vector<int> newCoord(3);
-								newCoord[0] = mipIt->at(0);
-								newCoord[1] = mipIt->at(1);
+								newCoord[0] = mipIt->at(1);
+								newCoord[1] = mipIt->at(0);
 								newCoord[2] = sliceNum;
 								connIt->coordSets[sliceNum].insert(newCoord);
 
@@ -114,8 +130,8 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					connectedComponent newIsland;
 					newIsland.islandNum = islandCount;
 					vector<int> newCoord(3);
-					newCoord[0] = mipIt->at(0);
-					newCoord[1] = mipIt->at(1);
+					newCoord[0] = mipIt->at(1);
+					newCoord[1] = mipIt->at(0);
 					newCoord[2] = sliceNum;
 					set<vector<int>> coordSet;
 					coordSet.insert(newCoord);
@@ -126,7 +142,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 					newIsland.yMin = newCoord[1];
 					newIsland.zMin = sliceNum;
 					newIsland.zMax = sliceNum;
-					connList.push_back(newIsland);
+					connList2D.push_back(newIsland);
 					continue;
 				}
 
@@ -138,7 +154,379 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs_2Dcombine(vector<unsigne
 	cout << endl;
 	// ------------------ END of [Finding connected components slice by slice] -----------------
 
+	// --------- Merge 2D blobs into 3D, compute the component's final size and boundaries ---------
+	vector<connectedComponent> connList = ImgAnalyzer::merge2DConnComponent(connList2D);
+	for (vector<connectedComponent>::iterator it = connList.begin(); it != connList.end(); ++it)
+	{
+		int compSize = 0;
+		int xmax = 0, ymax = 0;
+		int xmin = 10000, ymin = 10000;
+		it->zMin = it->coordSets.begin()->first;
+		for (map<int, set<vector<int>>>::iterator sliceIt = it->coordSets.begin(); sliceIt != it->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::iterator coordIt = sliceIt->second.begin(); coordIt != sliceIt->second.end(); ++coordIt)
+			{
+				if (coordIt->at(0) > xmax) xmax = coordIt->at(0);
+				if (coordIt->at(0) < xmin) xmin = coordIt->at(0);
+				if (coordIt->at(1) > ymax) ymax = coordIt->at(1);
+				if (coordIt->at(1) < ymin) ymin = coordIt->at(1);
+			}
+			it->zMax = sliceIt->first;
+
+			compSize = compSize + sliceIt->second.size();
+		}
+
+		it->xMax = xmax;
+		it->xMin = xmin;
+		it->yMax = ymax;
+		it->yMin = ymin;
+		it->size = compSize;
+	}
+	// ---- END of [Merge 2D blobs into 3D, compute the component's final size and boundaries] ----
+
 	return connList;
+}
+
+vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connectedComponent>& inputConnCompList)
+{
+	// -- This method finds 3D signal blobs by grouping 2D signal blobs together, which are generated by ImgAnalyzer::findSignalBlobs.
+	// -- This method is typically called by ImgAnalyzer::findSignalBlobs when identifying 3D blobs from 2D ones.
+	// -- The approach is consists of 2 stages:
+	//		1. Identifying the same 3D blobs slice by slice.
+	//		2. Merging 3D blobs that contain the same 2D blobs.
+
+	cout << "Merging 2D signal blobs.." << endl;
+	cout << "-- processing slice ";
+
+	vector<connectedComponent> outputConnCompList;
+
+	int zMax = 0;
+
+	// -- I notice that boost's container templates are able to lift up the performace by ~30%.
+	boost::container::flat_map<int, boost::container::flat_set<int>> b2Dtob3Dmap;
+	b2Dtob3Dmap.clear();
+	boost::container::flat_map<int, boost::container::flat_set<int>> b3Dcomps;  // a map from 3D connected components to all of its associated 2D connected components
+	b3Dcomps.clear();
+	// ---------------------------------------------------------------------------------------
+
+	// --------- First slice, container initialization --------------
+	int sliceBlobCount = 0;
+	for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
+	{
+		if (it->coordSets.begin()->first > zMax) zMax = it->coordSets.begin()->first;
+
+		if (it->coordSets.begin()->first == 0) // 1st slice connected components profile initialization
+		{
+			++sliceBlobCount;
+			boost::container::flat_set<int> blob3D;
+			blob3D.insert(sliceBlobCount);
+			b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(it->islandNum, blob3D));
+			boost::container::flat_set<int> comps;
+			comps.insert(it->islandNum);
+			b3Dcomps[sliceBlobCount] = comps;
+		}
+	}
+	// -----------------------------------------------------------
+
+	// ------------------------------------------- Merge 2D blobs from 2 adjacent slices -------------------------------------------
+	vector<connectedComponent> currSliceConnComps;
+	vector<connectedComponent> preSliceConnComps;
+	size_t increasedSize;
+	for (int i = 1; i <= zMax; ++i)
+	{
+		currSliceConnComps.clear();
+		preSliceConnComps.clear();
+
+		increasedSize = 0;
+		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
+			if (it->coordSets.begin()->first == i) currSliceConnComps.push_back(*it); // collect all connected components from the current slice
+		if (currSliceConnComps.empty())
+		{
+			cout << i << "->0 ";
+			continue;
+		}
+
+		cout << i << "->";
+		for (vector<connectedComponent>::const_iterator it = inputConnCompList.begin(); it != inputConnCompList.end(); ++it)
+			if (it->coordSets.begin()->first == i - 1) preSliceConnComps.push_back(*it);  // collect all connected components from the previous slice
+		if (preSliceConnComps.empty())
+		{
+			// If the previous slice is empty, all 2D components found in the current slice will be part of new 3D components.
+			for (vector<connectedComponent>::iterator newCompsIt = currSliceConnComps.begin(); newCompsIt != currSliceConnComps.end(); ++newCompsIt)
+			{
+				++sliceBlobCount;
+				boost::container::flat_set<int> blob3D;
+				blob3D.insert(sliceBlobCount);
+				b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(newCompsIt->islandNum, blob3D));
+				boost::container::flat_set<int> comps;
+				comps.insert(newCompsIt->islandNum);
+				b3Dcomps[sliceBlobCount] = comps;
+				increasedSize = increasedSize + comps.size();
+			}
+			continue;
+		}
+
+		for (vector<connectedComponent>::iterator currIt = currSliceConnComps.begin(); currIt != currSliceConnComps.end(); ++currIt)
+		{
+			bool merged = false;
+			for (vector<connectedComponent>::iterator preIt = preSliceConnComps.begin(); preIt != preSliceConnComps.end(); ++preIt)
+			{
+				// First, use component boundaries to quickly exclude those pixels that can't be connected to any existing components.
+				// And then create new components for these pixels.
+				if (currIt->xMin > preIt->xMax + 2 || currIt->xMax < preIt->xMin - 2 ||
+					currIt->yMin > preIt->yMax + 2 || currIt->yMax < preIt->yMin - 2) continue;
+
+				for (set<vector<int>>::iterator currDotIt = currIt->coordSets.begin()->second.begin(); currDotIt != currIt->coordSets.begin()->second.end(); ++currDotIt)
+				{
+					for (set<vector<int>>::iterator preDotIt = preIt->coordSets.begin()->second.begin(); preDotIt != preIt->coordSets.begin()->second.end(); ++preDotIt)
+					{
+						if (currDotIt->at(0) >= preDotIt->at(0) - 1 && currDotIt->at(0) <= preDotIt->at(0) + 1 &&
+							currDotIt->at(1) >= preDotIt->at(1) - 1 && currDotIt->at(1) <= preDotIt->at(1) + 1)
+						{
+							merged = true;
+							// Find out to which 3D component the 2D component connected to the pixel belong.    
+							boost::container::flat_set<int> asso3Dblob = b2Dtob3Dmap[preIt->islandNum];
+
+							// Register the component of the pixel in the current slice to b2Dtob3Dmap.
+							b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(currIt->islandNum, asso3Dblob));
+
+							// Add a new entry of newly identified 2D component that is connected to the existing 3D component to b3Dcomps.
+							for (boost::container::flat_set<int>::iterator blob3DIt = asso3Dblob.begin(); blob3DIt != asso3Dblob.end(); ++blob3DIt)
+								b3Dcomps[*blob3DIt].insert(currIt->islandNum);
+
+							goto BLOB_MERGED;
+						}
+					}
+				}
+
+				if (!merged) continue;
+
+			BLOB_MERGED:
+				merged = true;
+			}
+
+			if (!merged) // All 2D blobs in the current slice fail to find its associated 3D blobs. Create new 3D blobs for them here.
+			{
+				++sliceBlobCount;
+				boost::container::flat_set<int> newBlob3D;
+				newBlob3D.insert(sliceBlobCount);
+				b2Dtob3Dmap.insert(pair<int, boost::container::flat_set<int>>(currIt->islandNum, newBlob3D));
+				boost::container::flat_set<int> comps;
+				comps.insert(currIt->islandNum);
+				b3Dcomps[sliceBlobCount] = comps;
+				increasedSize = increasedSize + comps.size();
+			}
+		}
+		cout << increasedSize << ", ";
+	}
+	cout << endl << endl;
+	cout << "Done merging 2D blobs from every 2 slices." << endl << endl;
+	// ---------------------------------------- END of [Merge 2D blobs from 2 adjacent slices] -------------------------------------------
+
+	// ------------------------------------------ Merge 3D blobs --------------------------------------------
+	// Merge any 3D blobs if any of them share the same 2D blob members.
+	cout << "Now merging 3D blobs.." << endl;
+	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	bool mergeFinish = false;
+	int currBaseBlob = 1;
+	while (!mergeFinish)
+	{
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+		{
+			if (checkIt1->first < currBaseBlob) continue;
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			{
+				//if (checkIt2 == checkIt1) continue;
+				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+				{
+					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+					{
+						if (*member2 == *member1)
+						{
+							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+							b3Dcomps.erase(checkIt2);
+							currBaseBlob = checkIt1->first;
+							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << endl;
+							goto MERGED;
+						}
+					}
+				}
+			}
+		}
+		mergeFinish = true;
+
+	MERGED:
+		continue;
+	}
+	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
+	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
+
+	// ------------------------------------- Create 3D connected component data -------------------------------------
+	map<int, connectedComponent> compsMap;
+	for (vector<connectedComponent>::const_iterator inputIt = inputConnCompList.begin(); inputIt != inputConnCompList.end(); ++inputIt)
+		compsMap.insert(pair<int, connectedComponent>(inputIt->islandNum, *inputIt));
+	int newLabel = 0;
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = b3Dcomps.begin(); it != b3Dcomps.end(); ++it)
+	{
+		++newLabel;
+		connectedComponent newComp;
+		newComp.islandNum = newLabel;
+		newComp.size = 0;
+		newComp.xMax = 0; newComp.xMin = 0;
+		newComp.yMax = 0; newComp.yMin = 0;
+		newComp.zMax = 0; newComp.zMin = 0;
+		for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			// A 3D connected component may contain different 2D components from the same slice.
+			if (newComp.coordSets.find(compsMap.at(*it2).coordSets.begin()->first) != newComp.coordSets.end())
+			{
+				for (set<vector<int>>::iterator it3 = compsMap.at(*it2).coordSets.begin()->second.begin();
+					it3 != compsMap.at(*it2).coordSets.begin()->second.end(); ++it3)
+					newComp.coordSets.at(compsMap.at(*it2).coordSets.begin()->first).insert(*it3);
+
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
+			else
+			{
+				newComp.coordSets.insert(pair<int, set<vector<int>>>(compsMap.at(*it2).coordSets.begin()->first, compsMap.at(*it2).coordSets.begin()->second));
+				newComp.xMax = getMax(newComp.xMax, compsMap.at(*it2).xMax);
+				newComp.xMin = getMin(newComp.xMin, compsMap.at(*it2).xMin);
+				newComp.yMax = getMax(newComp.yMax, compsMap.at(*it2).yMax);
+				newComp.yMin = getMin(newComp.yMin, compsMap.at(*it2).yMin);
+				newComp.zMax = getMax(newComp.zMax, compsMap.at(*it2).zMax);
+				newComp.zMin = getMin(newComp.zMin, compsMap.at(*it2).zMin);
+				newComp.size = newComp.size + compsMap.at(*it2).size;
+			}
+		}
+
+		outputConnCompList.push_back(newComp);
+	}
+	// --------------------------------- END of [Create 3D connected component data] ---------------------------------
+
+	return outputConnCompList;
+}
+
+boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(const connectedComponent& inputConnComp)
+{
+	int xLength = inputConnComp.xMax - inputConnComp.xMin + 1;
+	int yLength = inputConnComp.yMax - inputConnComp.yMin + 1;
+	int zLength = inputConnComp.zMax - inputConnComp.zMin + 1;
+
+	vector<int> sectionalDim;
+	vector<int> dim1;
+	vector<int> dim2;
+	int start, end;
+	boost::container::flat_set<deque<float>> sectionalCentroids;
+	if (xLength >= yLength && xLength >= zLength)
+	{
+		start = inputConnComp.xMin;
+		end = inputConnComp.xMax;
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				dim1.push_back(pointIt->at(1));
+				dim2.push_back(pointIt->at(2));
+				sectionalDim.push_back(pointIt->at(0));
+			}
+		}
+
+		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+		for (boost::container::flat_set<deque<float>>::iterator it = sectionalCentroids.begin(); it != sectionalCentroids.end(); ++it)
+		{
+			it->push_front(it->at(2));
+			it->pop_back();
+		}
+	}
+	else if (yLength >= xLength && yLength >= zLength)
+	{
+		start = inputConnComp.yMin;
+		end = inputConnComp.yMax;
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				dim1.push_back(pointIt->at(0));
+				dim2.push_back(pointIt->at(2));
+				sectionalDim.push_back(pointIt->at(1));
+			}
+		}
+
+		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+		for (boost::container::flat_set<deque<float>>::iterator it = sectionalCentroids.begin(); it != sectionalCentroids.end(); ++it)
+		{
+			it->insert((*it).begin() + 1, it->at(2));
+			it->pop_back();
+		}
+	}
+	else if (zLength >= xLength && zLength >= yLength)
+	{
+		start = inputConnComp.zMin;
+		end = inputConnComp.zMax;
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+			{
+				dim1.push_back(pointIt->at(0));
+				dim2.push_back(pointIt->at(1));
+				sectionalDim.push_back(pointIt->at(2));
+			}
+		}
+
+		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+	}
+
+	return sectionalCentroids;
+}
+
+boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd)
+{
+	vector<size_t> delLocs;
+	NeuronTree sliceTree;
+	NeuronStructUtil myUtil;
+	boost::container::flat_set<deque<float>> centroids;
+	for (int slicei = secDimStart; slicei <= secDimEnd; ++slicei)
+	{
+		sliceTree.listNeuron.clear();
+		for (size_t dotNumi = 0; dotNumi != dim1.size(); ++dotNumi)
+		{
+			if (sectionalDim.at(dotNumi) == slicei)
+			{
+				delLocs.push_back(dotNumi);
+				NeuronSWC pseudoNode;
+				pseudoNode.x = dim1.at(dotNumi);
+				pseudoNode.y = dim2.at(dotNumi);
+				pseudoNode.z = sectionalDim.at(dotNumi);
+				sliceTree.listNeuron.push_back(pseudoNode);
+			}
+		}
+		
+		vector<connectedComponent> slice2Dcomps = myUtil.swc2signal2DBlobs(sliceTree);
+		for (vector<connectedComponent>::iterator it = slice2Dcomps.begin(); it != slice2Dcomps.end(); ++it)
+		{
+			deque<float> newCentroid;
+			newCentroid.push_back(it->ChebyshevCenter[0]);
+			newCentroid.push_back(it->ChebyshevCenter[1]);
+			newCentroid.push_back(it->ChebyshevCenter[2]);
+			centroids.insert(newCentroid);
+		}
+
+		/*sort(delLocs.rbegin(), delLocs.rend());
+		for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
+		{
+			dim1.erase(dim1.begin() + ptrdiff_t(*delIt));
+			dim2.erase(dim2.begin() + ptrdiff_t(*delIt));
+			sectionalDim.erase(sectionalDim.begin() + ptrdiff_t(*delIt));
+		}*/
+	}
+
+	return centroids;
 }
 
 set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[])

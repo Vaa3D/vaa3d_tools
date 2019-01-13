@@ -30,14 +30,9 @@ using namespace std;
 #define MAX_DOUBLE 1.79768e+308        //actual: 1.79769e+308
 #endif
 
-QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLONG> & idlist, const QHash<V3DLONG,V3DLONG> & LUT);
 QVector< QVector<V3DLONG> > get_neighbors(QList<NeuronSWC> &neurons, const QHash<V3DLONG,V3DLONG> & LUT);
 QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons);
-
-//V3DLONG DFS(QVector< QVector<V3DLONG> > neighbors, V3DLONG* neworder, V3DLONG newrootid,
-//         V3DLONG sorted_size, V3DLONG siz, V3DLONG* numbered, int group);
 QList<V3DLONG> DFS(QVector< QVector<V3DLONG> > neighbors, V3DLONG newrootid, V3DLONG siz);
-void DFS_old(unordered_map <int, int>& matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG siz, V3DLONG* numbered, int *group);
 
 double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2, double xscale=1, double yscale=1, double zscale=1);
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined);

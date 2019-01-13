@@ -64,7 +64,8 @@ public:
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 	template<class T>
-	static inline void cropImg2D(const T InputImagePtr[], T OutputImagePtr[], const int xlb, const int xhb, const int ylb, const int yhb, const int imgDims[]);
+	static inline void cropImg(const T InputImagePtr[], T OutputImagePtr[], 
+		const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[]);
 
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
@@ -92,6 +93,9 @@ public:
 
 	template<class T>
 	static inline void slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[]);
+
+	template<class T>
+	static inline void slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[]); // inputImgPtr[x][] cannot guarantee a constant here.
 	/**********************************************************/
 
 
@@ -135,6 +139,9 @@ public:
 
 	template<class T>
 	static inline void histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero = true);
+
+	template<class T>
+	static inline void getGradientImg_voxelBased(const T inputImgPtr[], T outputImgPtr[], const int imgDims[]);
 	/**************************************************************/
 
 
@@ -199,15 +206,19 @@ inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], con
 }
 
 template<class T>
-inline void ImgProcessor::cropImg2D(const T InputImagePtr[], T OutputImagePtr[], const int xlb, const int xhb, const int ylb, const int yhb, const int imgDims[])
+inline void ImgProcessor::cropImg(const T InputImagePtr[], T OutputImagePtr[], 
+	const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[])
 {
 	long int OutputArrayi = 0;
-	for (int yi = ylb; yi <= yhb; ++yi)
+	for (int zi = zlb; zi <= zhb; ++zi)
 	{
-		for (int xi = xlb; xi <= xhb; ++xi)
+		for (int yi = ylb; yi <= yhb; ++yi)
 		{
-			OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * (yi - 1) + (xi - 1)];
-			++OutputArrayi;
+			for (int xi = xlb; xi <= xhb; ++xi)
+			{
+				OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * imgDims[1] * (zi - 1) + imgDims[0] * (yi - 1) + (xi - 1)];
+				++OutputArrayi;
+			}
 		}
 	}
 }
@@ -292,6 +303,20 @@ inline void ImgProcessor::slice1Dvector2_2Darray(const vector<T>& inputSliceVec,
 	{
 		for (int i = 0; i < imgDims[0]; ++i)
 			outputSlice2Dptr[j][i] = inputSliceVec.at((imgDims[0] * j) + i);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[])
+{
+	size_t outi = 0;
+	for (size_t j = 0; j < imgDims[1]; ++j)
+	{
+		for (size_t i = 0; i < imgDims[0]; ++i)
+		{
+			outputImgPtr[outi] = inputImgPtr[j][i];
+			++outi;
+		}
 	}
 }
 

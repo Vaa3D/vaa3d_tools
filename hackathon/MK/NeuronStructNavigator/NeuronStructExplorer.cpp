@@ -795,6 +795,29 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 }
 // ===================================== END of [Segment Analysis / Operations] =====================================
 
+profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree)
+{
+	QList<NeuronSWC> outputList = inputProfiledTree.tree.listNeuron;
+	
+	vector<size_t> delLocs;
+	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
+	{
+		if (inputProfiledTree.node2childLocMap.find(it->n) == inputProfiledTree.node2childLocMap.end())
+		{
+			if (inputProfiledTree.node2childLocMap.at(it->parent).size() >= 2) delLocs.push_back(inputProfiledTree.node2LocMap.at(it->n));
+		}
+	}
+
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputList.erase(outputList.begin() + ptrdiff_t(*it));
+
+	NeuronTree outputTree;
+	outputTree.listNeuron = outputList;
+	profiledTree outputProfiledTree(outputTree);
+
+	return outputProfiledTree;
+}
+
 
 // ================================================== Geometry =================================================
 double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
