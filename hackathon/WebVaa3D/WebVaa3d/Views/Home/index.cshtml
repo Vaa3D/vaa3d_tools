@@ -28,13 +28,11 @@
 <script src="~/js/css3-mediaqueries.js"></script>
 <script src="~/js/mainstyle.js"></script>
 <link href="~/drawpanel.html"/>
-
-
+<script src="~/js/mainstyle.js"></script>
 <meta name="hotcss" content="design-width=640" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, height=device-height">
 <body>
-    <div class="layui-container">
+    <div class="layui-container" id="mobilecontent">
 
 
         <ul id="nave" class=" layui-nav layui-bg-cyan " lay-filter="">
@@ -156,14 +154,16 @@
         $('#vaa3dweb-input-open-local').click();
 
     });
+    //autodivheight();
     $('#fullscreen').on('click', function () {
         if ($('#nave').css('display') == 'none') {//恢复正常页面
-            $('#nave').show();           
-            $('#view').css('height', '25.8rem');
+            $('#nave').show(); 
+            $('#view').css('height', '25.5rem');
             $('#fullscreen').removeClass();
             $('#fullscreen').addClass('fa fa-expand');
+            document.webkitCancelFullScreen();
             //console.log($('#fullscreen').hasClass('fa fa-compress') );
-           
+            
             renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
             
         }
@@ -172,7 +172,9 @@
             $('#fullscreen').removeClass();
             $('#fullscreen').addClass('fa fa-compress ');
             //full_screen();//全屏
-            $('#view').css('height', '28.2rem');
+            document.getElementById('view').webkitRequestFullScreen();
+            //$('#view').css('height', 'device-height');
+            //full_screen();
             renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
             console.log("full screen");
         }
@@ -197,7 +199,6 @@
     $('#draw').on('click', function () {
         layer.open({
             type: 1,
-            title: false,
             closeBtn: 0,
             shadeClose: true,
             skin: 'layui-layer-rim',
