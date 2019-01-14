@@ -167,6 +167,8 @@ map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_
 
 void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
 {
+	// This method performs 2D skeletonization on 2D gray scale image.
+
 	unsigned char** inputImg2Dptr = new unsigned char*[imgDims[1] + 2]; // imputImg2DPtr -> enlarged 2D binaray image. (1 v 0)
 	for (int j = 1; j <= imgDims[1]; ++j)
 	{
