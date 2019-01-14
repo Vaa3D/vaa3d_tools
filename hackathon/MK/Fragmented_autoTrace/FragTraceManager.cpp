@@ -401,7 +401,7 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 
 	this->signalBlobs.clear();
 	ImgAnalyzer* myImgAnalyzerPtr = new ImgAnalyzer;
-	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs_2Dcombine(slice2DVector, sliceDims, mipPtr);
+	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs(slice2DVector, sliceDims, 1, mipPtr);
 
 	// ----------- Releasing memory ------------
 	delete[] mipPtr;

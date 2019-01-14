@@ -8,6 +8,7 @@
 
 #include <boost\filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include "SWCtester.h"
 #include "ImgManager.h"
@@ -301,7 +302,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -337,7 +338,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -374,7 +375,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -416,7 +417,7 @@ int main(int argc, char* argv[])
 		for (filesystem::directory_iterator fileIt(inputPathName); fileIt != filesystem::directory_iterator(); ++fileIt)
 		{
 			string fileFullName = fileIt->path().string();
-			myImgManager.inputMultiCasesSliceFullPaths.insert(pair<string, string>(caseNum, fileFullName));
+			myImgManager.inputMultiCasesFullPaths.insert(pair<string, string>(caseNum, fileFullName));
 		}
 		
 		myImgManager.imgEntry(caseNum, ImgManager::slices);
@@ -501,7 +502,7 @@ int main(int argc, char* argv[])
 
 		ofstream outputFile("C:\\Users\\hsienchik\\Desktop\\Work\\boutonTest\\imgStats.txt");
 		outputFile << "case num\tmean\tstd\tmedian" << endl;
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			outputFile << caseIt->first << "\t";
 			myManager.inputSingleCaseFullPath = caseIt->second;
@@ -522,7 +523,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
 		clock_t start = clock();
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -562,7 +563,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -680,7 +681,7 @@ int main(int argc, char* argv[])
 
 		for (QList<NeuronSWC>::iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 		{
-			unsigned char value = ImgProcessor::getPixValue2D(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), myImgManager.imgDatabase.at("inputImg").dims, int(it->x), int(it->y));
+			unsigned char value = ImgProcessor::getPixValue(myImgManager.imgDatabase.at("inputImg").slicePtrs.begin()->second.get(), myImgManager.imgDatabase.at("inputImg").dims, int(it->x), int(it->y));
 			int valueInt = int(value);
 			cout << valueInt << endl;
 		}
@@ -724,7 +725,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -757,7 +758,7 @@ int main(int argc, char* argv[])
 		QString folderNameQ = QString::fromStdString(folderName);
 		ImgManager myManager(folderNameQ);
 
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesSliceFullPaths.begin(); caseIt != myManager.inputMultiCasesSliceFullPaths.end(); ++caseIt)
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
 		{
 			myManager.inputSingleCaseFullPath = caseIt->second;
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
@@ -1037,7 +1038,7 @@ int main(int argc, char* argv[])
 		string saveFolderName(saveFolderNameC);
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
 
-		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesSliceFullPaths.begin(); sliceIt != myManager.inputMultiCasesSliceFullPaths.end(); ++sliceIt)
+		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesFullPaths.begin(); sliceIt != myManager.inputMultiCasesFullPaths.end(); ++sliceIt)
 		{
 			myManager.inputSingleCaseFullPath = sliceIt->second;
 			myManager.imgEntry(sliceIt->first, ImgManager::singleCase);
@@ -1077,7 +1078,7 @@ int main(int argc, char* argv[])
 		string outputFileFullName = outputFolderName + "\\histProfile.txt";
 		ofstream outputFile(outputFileFullName.c_str());
 		ImgManager myManager(inputFolderNameQ);
-		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesSliceFullPaths.begin(); sliceIt != myManager.inputMultiCasesSliceFullPaths.end(); ++sliceIt)
+		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesFullPaths.begin(); sliceIt != myManager.inputMultiCasesFullPaths.end(); ++sliceIt)
 		{
 			myManager.inputSingleCaseFullPath = sliceIt->second;
 			myManager.imgEntry(sliceIt->first, ImgManager::singleCase);
@@ -1138,7 +1139,7 @@ int main(int argc, char* argv[])
 
 		map<int, size_t> hist3Dmap;
 		ImgManager myManager(inputFolderNameQ);
-		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesSliceFullPaths.begin(); sliceIt != myManager.inputMultiCasesSliceFullPaths.end(); ++sliceIt)
+		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesFullPaths.begin(); sliceIt != myManager.inputMultiCasesFullPaths.end(); ++sliceIt)
 		{
 			myManager.inputSingleCaseFullPath = sliceIt->second;
 			myManager.imgEntry(sliceIt->first, ImgManager::singleCase);
@@ -1191,7 +1192,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.tif";
+		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1224,9 +1225,8 @@ int main(int argc, char* argv[])
 		}
 
 		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 3, mipPtr);
-		cout << componentList.size() << endl;
 		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc", testTree);
+		writeSWC_file("D:\\Work\\FragTrace\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1245,15 +1245,69 @@ int main(int argc, char* argv[])
 		//const char* saveFileNameC = saveFileName.c_str();
 		//ImgManager::saveimage_wrapper(saveFileNameC, surMask1D.get(), saveDims, 1);
 
-		vector<connectedComponent> surfObjList;
-		for (vector<connectedComponent>::iterator compIt = componentList.begin(); compIt != componentList.end(); ++compIt)
+		int componentSize = 0;
+		int index;
+		for (vector<connectedComponent>::iterator it = componentList.begin(); it != componentList.end(); ++it)
 		{
-			connectedComponent surfObj = FeatureExtractor::getObjSurface(*compIt);
-			surfObjList.push_back(surfObj);
+			if (it->size > componentSize)
+			{
+				componentSize = it->size;
+				index = int(it - componentList.begin());
+			}
 		}
-		NeuronTree testSurfTree = NeuronStructUtil::blobs2tree(surfObjList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\surfTest.swc", testSurfTree);
 
+		cout << componentList.at(index).islandNum << ": " << componentList.at(index).size << endl;
+		cout << "x length: " << componentList.at(index).xMax - componentList.at(index).xMin + 1 << " ";
+		cout << "y length: " << componentList.at(index).yMax - componentList.at(index).yMin + 1 << " ";
+		cout << "z length: " << componentList.at(index).zMax - componentList.at(index).zMin + 1 << endl;
+
+		/*unsigned char* cropped1D = new unsigned char[dims[0] * dims[1] * dims[2]];
+		ImgProcessor::cropImg(myManager.imgDatabase.at("compMask3D").slicePtrs.begin()->second.get(), cropped1D,
+			componentList.at(index).xMin + 1, componentList.at(index).xMax + 1, componentList.at(index).yMin + 1, componentList.at(index).yMax + 1, componentList.at(index).zMin + 1, componentList.at(index).zMax + 1, dims);
+		V3DLONG croppedDims[4];
+		croppedDims[0] = componentList.at(index).xMax - componentList.at(index).xMin + 1;
+		croppedDims[1] = componentList.at(index).yMax - componentList.at(index).yMin + 1;
+		croppedDims[2] = componentList.at(index).zMax - componentList.at(index).zMin + 1;
+		croppedDims[3] = 1;
+		string croppedTestSaveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\croppedTest.tif";
+		const char* croppedTestSaveNameC = croppedTestSaveName.c_str();
+		ImgManager::saveimage_wrapper(croppedTestSaveNameC, cropped1D, croppedDims, 1);*/
+
+		NeuronStructExplorer myExplorer;
+		NeuronTree finalTree;
+		for (vector<connectedComponent>::iterator it = componentList.begin(); it != componentList.end(); ++it)
+		{
+			//if (it->islandNum != 1) continue;
+
+			NeuronTree centroidTree;
+			boost::container::flat_set<deque<float>> sectionalCentroids = myAnalyzer.getSectionalCentroids(*it);
+			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = nodeIt->at(0);
+				newNode.y = nodeIt->at(1);
+				newNode.z = nodeIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				centroidTree.listNeuron.push_back(newNode);
+			}
+			
+			NeuronTree MSTtree = myExplorer.SWC2MSTtree(centroidTree);
+			int currTreeSize = finalTree.listNeuron.size();
+			for (QList<NeuronSWC>::iterator currIt = MSTtree.listNeuron.begin(); currIt != MSTtree.listNeuron.end(); ++currIt)
+			{
+				currIt->n = currIt->n + currTreeSize;
+				currIt->parent = currIt->parent + currTreeSize;
+			}
+			finalTree.listNeuron.append(MSTtree.listNeuron);
+		}
+
+		profiledTree componentTreeProfiled(finalTree);
+		profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(componentTreeProfiled);
+
+
+		writeSWC_file("D:\\Work\\FragTrace\\testCentroidTree.swc", smoothedTree.tree);
+	
 	}
 
 	return 0;

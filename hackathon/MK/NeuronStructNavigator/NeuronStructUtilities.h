@@ -113,14 +113,15 @@ public:
 
 
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
-
 	// Identify the connectivity of every node in the input swc and generate connected component data from it.
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
 
+private:
 	// Merge 2D connected components into 3D ones.
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
 
+public:
 	// Convert connected component data type into swc format.
 	static NeuronTree blobs2tree(const vector<connectedComponent>& inputConnCompList, bool usingRadius2compNum = false);
 	/**************************************************************************/

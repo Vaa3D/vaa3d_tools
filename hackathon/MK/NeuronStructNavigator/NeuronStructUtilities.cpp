@@ -25,8 +25,10 @@
 #include <boost/filesystem.hpp>
 
 #include "basic_4dimage.h"
+
 #include "NeuronStructUtilities.h"
 #include "ImgProcessor.h"
+#include "ImgAnalyzer.h"
 
 using namespace boost;
 
@@ -109,7 +111,6 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 		delLocs.clear();
 	}
 }
-
 
 void NeuronStructUtil::swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
 {
