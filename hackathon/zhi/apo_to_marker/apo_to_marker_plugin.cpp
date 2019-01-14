@@ -24,6 +24,8 @@ QStringList apo_to_marker::funclist() const
 {
 	return QStringList()
         <<tr("apo_to_individual_markers")
+        <<tr("apo_to_swc")
+
 		<<tr("help");
 }
 
@@ -217,12 +219,12 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
         {
             CellAPO t;
-            t.x = nt.listNeuron.at(i).x+1;
-            t.y = nt.listNeuron.at(i).y+1;
-            t.z = nt.listNeuron.at(i).z+1;
-            t.color.r=255;
+            t.x = (nt.listNeuron.at(i).x+1)/25;
+            t.y = (nt.listNeuron.at(i).y+1)/25;
+            t.z = (nt.listNeuron.at(i).z+1)/25;
+            t.color.r=0;
             t.color.g=0;
-            t.color.b=0;
+            t.color.b=255;
 
             t.volsize = Vsize;
             file_inmarkers.push_back(t);
@@ -288,16 +290,29 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
             listLandmarks.clear();
         }
 
+    }else if(func_name == tr("apo_to_swc"))
+    {
+        QList<CellAPO> file_inmarkers;
+        file_inmarkers= readAPO_file(QString(infiles[0]));
+        NeuronTree nt;
+        QList <NeuronSWC> & listNeuron = nt.listNeuron;
 
+        for (int i=0; i< file_inmarkers.size(); i++)
+        {
+            NeuronSWC t;
+            t.x = file_inmarkers[i].x;
+            t.y = file_inmarkers[i].y;
+            t.z = file_inmarkers[i].z;
+            t.n = i;
+            t.type = 2;
+            t.r = 1;
+            t.pn = -1;
+            listNeuron << t;
+        }
+        QString outfilename = QString(infiles[0]) + ".swc";
+        writeSWC_file(outfilename, nt);
 
-
-
-
-
-
-
-
-	}
+    }
 	else if (func_name == tr("help"))
 	{
         printf("\nThis is a plugin to convert apo to individual markers\n");

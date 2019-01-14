@@ -140,30 +140,30 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
             seg->at(j)->y -= start_y;
             seg->at(j)->z -= start_z;
         }
-        double dist;
+        double dist = distTwoSegs(nt_gd, seg);
         //check angle
-        QList<NeuronSWC> nt_seg = nt_gd.listNeuron;
-        int angle_size = 2;
-        bool flag = false;
-        if(nt_seg.size() > 2*angle_size)
-        {
-            for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
-            {
-                double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
-                if(angle_j>=179 &&
-                   ((abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2)||
-                   (abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)||
-                   (abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)))
-                {
-                    flag = true;
-                    break;
-                }
-            }
-        }
-        if(flag)
-            dist = DBL_MAX;
-        else
-            dist = distTwoSegs(nt_gd, seg);
+//        QList<NeuronSWC> nt_seg = nt_gd.listNeuron;
+//        int angle_size = 2;
+//        bool flag = false;
+//        if(nt_seg.size() > 2*angle_size)
+//        {
+//            for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
+//            {
+//                double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
+//                if(angle_j>=179 &&
+//                   ((abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2)||
+//                   (abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)||
+//                   (abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)))
+//                {
+//                    flag = true;
+//                    break;
+//                }
+//            }
+//        }
+//        if(flag)
+//            dist = DBL_MAX;
+//        else
+//            dist = distTwoSegs(nt_gd, seg);
 
         V3DLONG nt_length = result.listNeuron.size();
         V3DLONG index;
@@ -172,7 +172,8 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         else
             index = 0;
 
-        if(dist<5 || (!flag && seg->at(0)->level == 20))
+//        if(dist<5 || (!flag && seg->at(0)->level == 20))
+        if(dist<5 || (seg->at(0)->level == 20))
         {
             for (int d=0;d<nt_gd.listNeuron.size();d++)
             {
