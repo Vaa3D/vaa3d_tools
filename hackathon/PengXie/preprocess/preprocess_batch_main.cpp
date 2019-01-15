@@ -63,129 +63,14 @@ bool preprocess_files_in_dir(QString qs_dir_swc)
     return 1;
 }
 
-//bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
-//{
-
-//    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-//    vector<char*>* outlist = NULL;
-//    vector<char*>* paralist = NULL;
-
-//    if(input.size() != 2)
-//    {
-//        printf("Please specify parameter set.\n");
-//        printHelp_preprocess_batch();
-//        return false;
-//    }
-//    paralist = (vector<char*>*)(input.at(1).p);
-
-
-//    if (paralist->size()!=1)
-//    {
-//        printf("Please specify all paramters in one text string.\n");
-//        printHelp_preprocess_batch();
-//        return false;
-//    }
-
-
-//    char * paras = paralist->at(0);
-//    int argc = 1;
-//    enum {kArgMax = 64};
-//    char *argv[kArgMax];
-//    //parsing parameters
-//    if (paras)
-//    {
-//        int len = strlen(paras);
-//        for (int i=0;i<len;i++)
-//        {
-//            if (paras[i]=='#')
-//                paras[i] = '-';
-//        }
-
-//        char* pch = strtok(paras, " ");
-//        while (pch && argc<kArgMax)
-//        {
-//            argv[argc++] = pch;
-//            pch = strtok(NULL, " ");
-//        }
-//    }
-//    else
-//        printHelp_preprocess_batch();
-
-
-//    //0. read arguments
-
-//    char *swclist = NULL;
-//    char *somalist = NULL;
-//    char *swcdir = NULL;
-//    char *qctable = NULL;
-//    bool skip_existing = 0;
-
-//    int c;
-//    static char optstring[]="hi:o:m:q:s:";
-//    extern char * optarg;
-//    extern int optind, opterr;
-//    optind = 1;
-//    while ((c = getopt(argc, argv, optstring))!=-1)
-//    {
-//        switch (c)
-//        {
-//            case 'h':
-//                printHelp_preprocess_batch();
-//                return 0;
-//                break;
-//            case 'i':
-//                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-//                {
-//                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
-//                    return 1;
-//                }
-//                swclist = optarg;
-//                cout << "Input file name:\t" << swclist <<endl;
-//                break;
-//            case 'o':
-//                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-//                {
-//                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
-//                    return 1;
-//                }
-//                swcdir = optarg;
-//                cout << "Output swc directory:\t" << swcdir <<endl;
-//            break;
-//            case 'm':
-//                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-//                {
-//                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
-//                    return 1;
-//                }
-//                somalist = optarg;
-//                cout << "Somalist:\t" << somalist <<endl;
-//        break;
-//            case 'q':
-//                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-//                {
-//                    fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
-//                    return 1;
-//                }
-//                qctable = optarg;
-//                break;
-//            case 's':
-//                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-//                {
-//                    fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
-//                    return 1;
-//                }
-//                skip_existing=(atoi(optarg)==1);
-//            break;
-//            case '?':
-//                fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
-//                return 1;
-//                break;
-//        }
-//    }
-
-//    bool finished = preprocess_batch(QString(swclist), QString(swcdir), QString(somalist), QString(qctable), skip_existing);
-//    return finished;
-//}
+bool preprocess_batch_dofunc(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //choose a directory that contain swc files
+    QString qs_dir_swc;
+    qs_dir_swc=QFileDialog::getExistingDirectory(parent,QString(QObject::tr("Choose the directory that contains files to be processed")));
+    qs_dir_swc=qs_dir_swc+"/";
+    return preprocess_files_in_dir(qs_dir_swc);
+}
 
 void printHelp_preprocess_batch()
 {

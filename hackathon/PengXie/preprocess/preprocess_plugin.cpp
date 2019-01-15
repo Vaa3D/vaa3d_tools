@@ -75,7 +75,7 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 
     if (func_name == tr("preprocess_batch"))
     {
-        return (preprocess_batch_dofunc(input, output));
+        return (preprocess_batch_dofunc(callback, parent));
     }
     if (func_name == tr("preprocess"))
 	{

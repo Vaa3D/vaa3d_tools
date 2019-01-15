@@ -5,7 +5,7 @@
 #include "qc_main.h"
 
 bool preprocess_batch_domenu(V3DPluginCallback2 &callback, QWidget *parent);
-bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool preprocess_batch_dofunc(V3DPluginCallback2 &callback, QWidget *parent);
 void printHelp_preprocess_batch();
 
 bool preprocess_files_in_dir(QString qs_dir_swc);
