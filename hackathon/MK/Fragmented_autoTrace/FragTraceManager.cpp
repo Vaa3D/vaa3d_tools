@@ -45,6 +45,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, boo
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
 	cout << " -- Image slice preparation done." << endl;
+	cout << "Image acquisition done. Start fragment tracing.." << endl;
 }
 
 void FragTraceManager::imgProcPipe_wholeBlock()
