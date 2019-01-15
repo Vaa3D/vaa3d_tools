@@ -781,9 +781,10 @@ bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     if (qs_output.endsWith(".swc") || qs_output.endsWith(".SWC")){
         qs_output = qs_output.left(qs_output.length() - 4) + QString(".processed.swc");
     }
-    if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
+    else if (qs_output.endsWith(".eswc") || qs_output.endsWith(".ESWC")){
         qs_output = qs_output.left(qs_output.length() - 5) + QString(".processed.eswc");
     }
+    else{return 0;}
 
     // Pre-process
     pre_processing(qs_input, qs_output, prune_size, thres, thres_long, step_size, connect_soma_dist, rotation, colorful, return_maintree);
