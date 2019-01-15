@@ -61,7 +61,6 @@ public:
 	/********* Constructors and Basic Data Members *********/
 	ImgManager() {};
 	ImgManager(QString inputPath);
-	ImgManager(string wholeImgName);
 
 	QString inputCaseRootPath;
 	QString inputSWCRootPath;
@@ -70,10 +69,10 @@ public:
 	QStringList caseList;
 	string inputSingleCaseFullPath;
 	string outputSingleCaseFullPath;
-	multimap<string, string> inputMultiCasesSliceFullPaths;
+	multimap<string, string> inputMultiCasesFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 
-	enum imgFormat { multicaseCubes, slices, singleCase };
+	enum imgFormat { multicaseCubes, slices, singleCase};
 	/*******************************************************/
 
 

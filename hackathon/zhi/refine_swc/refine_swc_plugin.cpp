@@ -82,6 +82,8 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         NeuronTree nt2_new = V_NeuronSWC_list__2__NeuronTree(nt2_decomposed);
         NeuronTree nt2_refined = refineSWCTerafly(callback,infiles[0],nt2_new);
         NeuronTree nt2_sorted = SortSWC_pipeline(nt2_refined.listNeuron,VOID, 0);
+        writeESWC_file(QString(outfiles[0]),nt2_sorted);
+
         NeuronTree nt2_smoothed = smoothSWCTerafly(callback,infiles[0],nt2_sorted,break_points);
         NeuronTree nt2_smoothed_sorted = SortSWC_pipeline(nt2_smoothed.listNeuron,VOID, 0);
         writeESWC_file(QString(outfiles[0]),nt2_smoothed_sorted);
@@ -112,9 +114,106 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         NeuronTree nt2_new = V_NeuronSWC_list__2__NeuronTree(nt2_decomposed);
         NeuronTree nt2_checked = initialSWCTerafly(callback,infiles[0],nt2_new,ds_rate);
         writeESWC_file(QString(outfiles[0]),nt2_checked);
+    }else if (func_name == tr("break_detection"))
+    {
+        if(infiles.size()<2)
+        {
+            cerr<<"Need two input swc files"<<endl;
+            return false;
+        }
 
-	}
-	else if (func_name == tr("help"))
+        if(outfiles.empty())
+        {
+            cerr<<"Need output file name"<<endl;
+            return false;
+        }
+
+        NeuronTree nt_original = readSWC_file(QString(infiles[0]));
+        V_NeuronSWC_list nt2_decomposed = NeuronTree__2__V_NeuronSWC_list(nt_original);
+
+        V3DLONG n_segs = nt2_decomposed.nsegs();
+        if (n_segs<=1) return true;
+
+        V3DLONG *seg_id_array = 0;
+        try{ seg_id_array = new V3DLONG [n_segs];}
+        catch (...) {v3d_msg("fail to allocate memory in proj_trace_joinAllNeuronSegs()");return false;}
+        for (V3DLONG i=0;i<n_segs;i++) seg_id_array[i]=i;
+
+        V_NeuronSWC m_neuron = join_segs_in_V_NeuronSWC_list(nt2_decomposed, seg_id_array, n_segs);
+        nt_original = V_NeuronSWC__2__NeuronTree(m_neuron);
+
+        NeuronTree nt_refined = readSWC_file(QString(infiles[1]));
+        QVector<QVector<V3DLONG> > childs_original;
+        V3DLONG neuronNum = nt_original.listNeuron.size();
+        childs_original = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt_original.listNeuron[i].pn;
+            if (par<0) continue;
+            childs_original[nt_original.hashNeuron.value(par)].push_back(i);
+        }
+        QList<ImageMarker> tips_original;
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            ImageMarker p;
+            if(childs_original[i].size()==0)
+            {
+                p.x = nt_original.listNeuron[i].x;
+                p.y = nt_original.listNeuron[i].y;
+                p.z = nt_original.listNeuron[i].z;
+                tips_original.push_back(p);
+            }
+        }
+//        QString tip1 = QString(infiles[0]) +".marker";
+//        writeMarker_file(tip1,tips_original);
+
+        QVector<QVector<V3DLONG> > childs_refined;
+        neuronNum = nt_refined.listNeuron.size();
+        childs_refined = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            V3DLONG par = nt_refined.listNeuron[i].pn;
+            if (par<0) continue;
+            childs_refined[nt_refined.hashNeuron.value(par)].push_back(i);
+        }
+
+        QList<ImageMarker> tips_refined;
+        for (V3DLONG i=0;i<neuronNum;i++)
+        {
+            ImageMarker p;
+            if(childs_refined[i].size()==0)
+            {
+                p.x = nt_refined.listNeuron[i].x;
+                p.y = nt_refined.listNeuron[i].y;
+                p.z = nt_refined.listNeuron[i].z;
+                bool flag = true;
+                for(V3DLONG j=0; j<tips_original.size();j++)
+                {
+                    if(NTDIS(p,tips_original.at(j))<5)
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+                if(flag)
+                {
+                    nt_refined.listNeuron[i].level=255;
+                    int parent_tip = getParent(i,nt_refined);
+                    while(childs_refined[parent_tip].size()<2)
+                    {
+                        nt_refined.listNeuron[parent_tip].level=255;
+                        parent_tip = getParent(parent_tip,nt_refined);
+                        if(parent_tip == 1000000000)
+                            break;
+                    }
+//                    tips_refined.push_back(p);
+                }
+            }
+        }
+        writeESWC_file(QString(outfiles[0]),nt_refined);
+//        QString tip2 = QString(infiles[1]) +".marker";
+//        writeMarker_file(tip2,tips_refined);
+    }else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
 	}

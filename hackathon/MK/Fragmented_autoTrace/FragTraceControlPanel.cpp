@@ -15,6 +15,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 		QSettings callOldSettings("SEU-Allen", "Fragment tracing");
 
+		// ------- Image Format and Work Mode -------
 		if (callOldSettings.value("terafly") == true)
 		{
 			uiPtr->checkBox->setChecked(true);
@@ -53,6 +54,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->radioButton_3->setChecked(true);
 		}
 
+
+		// ------- Image Enhancement Group Box -------
 		if (callOldSettings.value("ada") == true)
 		{
 			uiPtr->groupBox_3->setChecked(true);
@@ -77,6 +80,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		if (callOldSettings.value("gamma") == true) uiPtr->checkBox_6->setChecked(true);
 		else uiPtr->checkBox_6->setChecked(false);
 
+
+		// ------- Mask Generation Group Box -------
 		if (callOldSettings.value("histThre") == true)
 		{
 			uiPtr->groupBox_6->setChecked(true);
@@ -97,18 +102,23 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 		uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
 
-		if (callOldSettings.value("smallRemove") == true)
+
+		// ------- Object Filter Group Box -------
+		if (callOldSettings.value("objFilter") == true)
 		{
-			uiPtr->groupBox_7->setChecked(true);
-			uiPtr->spinBox_2->setEnabled(true);
-			uiPtr->spinBox_7->setValue(callOldSettings.value("sizeThre").toInt());
+			if (callOldSettings.value("voxelCount") == true)
+			{
+				uiPtr->spinBox_14->setValue(callOldSettings.value("voxelCountThre").toInt());
+				uiPtr->radioButton_5->setChecked(false);
+			}
+			else if (callOldSettings.value("volume") == true)
+			{
+				uiPtr->lineEdit->setText(callOldSettings.value("volumeThre").toString());
+				uiPtr->radioButton_4->setChecked(false);
+			}
 		}
-		else
-		{
-			uiPtr->groupBox_7->setChecked(false);
-			uiPtr->spinBox_7->setValue(callOldSettings.value("sizeThre").toInt());
-			uiPtr->spinBox_7->setEnabled(false);
-		}
+
+
 
 		if (callOldSettings.value("MST") == true)
 		{
@@ -122,6 +132,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 				uiPtr->spinBox_8->setValue(callOldSettings.value("zSection").toInt());
 			}
 		}
+
+		
+
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
@@ -166,20 +179,22 @@ void FragTraceControlPanel::imgFmtChecked(bool checked)
 void FragTraceControlPanel::nestedChecks(bool checked)
 {
 	QObject* signalSender = sender();
-	QString checkBoxName = signalSender->objectName();
+	QString checkName = signalSender->objectName();
 
 	if (checked)
 	{
-		if (checkBoxName == "groupBox_7")
+		// ------- Object Size Radiobuttons -------
+		if (checkName == "radioButton_4")
 		{
-			uiPtr->spinBox_7->setEnabled(true);
+			uiPtr->spinBox_14->setEnabled(true);
+			uiPtr->radioButton_5->setChecked(false);
+			uiPtr->lineEdit_6->setEnabled(false);
 		}
-	}
-	else
-	{
-		if (checkBoxName == "groupBox_7")
+		else if (checkName == "radioButton_5")
 		{
-			uiPtr->spinBox_7->setEnabled(false);
+			uiPtr->lineEdit_6->setEnabled(true);
+			uiPtr->radioButton_4->setChecked(false);
+			uiPtr->spinBox_14->setEnabled(false);
 		}
 	}
 }
@@ -243,6 +258,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 {
 	QSettings settings("SEU-Allen", "Fragment tracing");
 	
+	// ------- Image Format and Work Mode -------
 	if (uiPtr->checkBox->isChecked())
 	{
 		settings.setValue("terafly", true);
@@ -281,6 +297,8 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("bouton", true);
 	}
 
+
+	// ------- Image Enhancement Group Box -------
 	if (uiPtr->groupBox_3->isChecked())
 	{
 		settings.setValue("ada", true);
@@ -310,6 +328,8 @@ void FragTraceControlPanel::saveSettingsClicked()
 	if (uiPtr->checkBox_6->isChecked()) settings.setValue("gamma", true);
 	else settings.setValue("gamma", false);
 
+
+	// ------- Mask Generation Group Box -------
 	if (uiPtr->groupBox_6->isChecked())
 	{
 		settings.setValue("histThre", true);
@@ -327,17 +347,25 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 
-	if (uiPtr->groupBox_7->isChecked())
+
+	// ------- Object Filter Group Box -------
+	if (uiPtr->radioButton_4->isChecked())
 	{
-		settings.setValue("smallRemove", true);
-		settings.setValue("sizeThre", uiPtr->spinBox_7->value());
+		settings.setValue("voxelCount", true);
+		settings.setValue("voxelCountThre", uiPtr->spinBox_14->value());
+		settings.setValue("volume", false);
+		settings.setValue("volumeThre", "");
 	}
-	else
+	else if (uiPtr->radioButton_2->isChecked())
 	{
-		settings.setValue("smallRemove", false);
-		settings.setValue("sizeThre", "");
+		settings.setValue("voxelCount", false);
+		settings.setValue("voxelCountThre", 0);
+		settings.setValue("volume", true);
+		settings.setValue("volumeThre", uiPtr->lineEdit_6->text());
 	}
-	settings.setValue("smallRemoveTreeName", uiPtr->groupBox_7->title());
+	if (uiPtr->groupBox_13->isChecked()) settings.setValue("objFilter", true);
+	else settings.setValue("objFilter", false);
+
 
 	if (uiPtr->groupBox_8->isChecked())
 	{
@@ -366,6 +394,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 
+
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
 
@@ -385,15 +414,19 @@ void FragTraceControlPanel::traceButtonClicked()
 		
 		if (this->isVisible())
 		{
-			QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
-			QString rootQ;
-			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+			QString rootQ = "";
+			if (uiPtr->lineEdit->text() != "")
+			{
+				QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
+				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+			}
 
 			if (uiPtr->checkBox->isChecked())
 			{
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly());
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
+				// ------- Image Enhancement -------
 				if (uiPtr->groupBox_3->isChecked())
 				{
 					this->traceManagerPtr->ada = true;
@@ -414,6 +447,8 @@ void FragTraceControlPanel::traceButtonClicked()
 				if (uiPtr->checkBox_6->isChecked()) this->traceManagerPtr->gammaCorrection = true;
 				else this->traceManagerPtr->gammaCorrection = false;
 
+
+				// ------- Mask Generation -------
 				if (uiPtr->groupBox_6->isChecked())
 				{
 					this->traceManagerPtr->histThre = true;
@@ -429,13 +464,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				}
 				else this->traceManagerPtr->histThre = false;
 
-				if (uiPtr->groupBox_7->isChecked())
-				{
-					this->traceManagerPtr->smallBlobRemove = true;
-					this->traceManagerPtr->smallBlobRemovalName = uiPtr->groupBox_7->title().toStdString();
-					this->traceManagerPtr->smallBlobThreshold = uiPtr->spinBox_7->value();
-				}
-				else this->traceManagerPtr->smallBlobRemove = false;
 
 				if (uiPtr->groupBox_8->isChecked())
 				{
@@ -461,16 +489,20 @@ void FragTraceControlPanel::traceButtonClicked()
 		}
 		else if (!this->isVisible())
 		{
+			QString rootQ = "";
 			QString saveFullNameQ = currSettings.value("savePath").toString();
-			QStringList saveFullNameParse = saveFullNameQ.split("/");
-			QString rootQ;
-			for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+			if (saveFullNameQ != "")
+			{
+				QStringList saveFullNameParse = saveFullNameQ.split("/");
+				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
+			}
 
 			if (currSettings.value("terafly") == true)
 			{
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly());
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
+				// ------- Image Enhancement -------
 				if (currSettings.value("ada") == true)
 				{
 					this->traceManagerPtr->ada = true;
@@ -491,6 +523,8 @@ void FragTraceControlPanel::traceButtonClicked()
 				if (currSettings.value("gamma") == true) this->traceManagerPtr->gammaCorrection = true;
 				else this->traceManagerPtr->gammaCorrection = false;
 
+
+				// ------- Mask Generation -------
 				if (currSettings.value("histThre") == true)
 				{
 					this->traceManagerPtr->histThre = true;
@@ -506,13 +540,6 @@ void FragTraceControlPanel::traceButtonClicked()
 				}
 				else this->traceManagerPtr->histThre = false;
 
-				if (currSettings.value("smallRemove") == true)
-				{
-					this->traceManagerPtr->smallBlobRemove = true;
-					this->traceManagerPtr->smallBlobRemovalName = currSettings.value("smallRemoveTreeName").toString().toStdString();
-					this->traceManagerPtr->smallBlobThreshold = currSettings.value("sizeThre").toInt();
-				}
-				else this->traceManagerPtr->smallBlobRemove = false;
 
 				if (currSettings.value("MST") == true)
 				{
@@ -537,6 +564,7 @@ void FragTraceControlPanel::traceButtonClicked()
 			}
 		}
 		
+
 		this->connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 		this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
@@ -544,6 +572,7 @@ void FragTraceControlPanel::traceButtonClicked()
 
 		this->disconnect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 		this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
+
 
 		this->scaleTracedTree();
 		NeuronTree existingTree = this->thisCallback->getSWCTeraFly();

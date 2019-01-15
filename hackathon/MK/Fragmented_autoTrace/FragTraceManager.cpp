@@ -45,6 +45,7 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, boo
 	this->adaImgName.clear();
 	this->histThreImgName.clear();
 	cout << " -- Image slice preparation done." << endl;
+	cout << "Image acquisition done. Start fragment tracing.." << endl;
 }
 
 void FragTraceManager::imgProcPipe_wholeBlock()
@@ -124,8 +125,6 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		}
 	}
 	cout << ", smallest component: " << islandIndex << ", size = " << connCompSize << endl;*/
-	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs2D, this->smallBlobThreshold);
-	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs, this->smallBlobThreshold);
 	//cout << "connected component number after removing small ones (threshold = " << this->smallBlobThreshold << ", 2D): " << this->signalBlobs2D.size() << endl;
 	
 	NeuronTree blob2Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs2D, true);
@@ -401,7 +400,7 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 
 	this->signalBlobs.clear();
 	ImgAnalyzer* myImgAnalyzerPtr = new ImgAnalyzer;
-	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs_2Dcombine(slice2DVector, sliceDims, mipPtr);
+	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs(slice2DVector, sliceDims, 1, mipPtr);
 
 	// ----------- Releasing memory ------------
 	delete[] mipPtr;

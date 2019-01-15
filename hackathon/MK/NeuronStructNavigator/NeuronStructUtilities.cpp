@@ -25,8 +25,10 @@
 #include <boost/filesystem.hpp>
 
 #include "basic_4dimage.h"
+
 #include "NeuronStructUtilities.h"
 #include "ImgProcessor.h"
+#include "ImgAnalyzer.h"
 
 using namespace boost;
 
@@ -109,7 +111,6 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 		delLocs.clear();
 	}
 }
-
 
 void NeuronStructUtil::swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
 {
@@ -254,6 +255,7 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 
 	return outputTree;
 }
+
 
 
 // ======================================= SWC Tracing-related Operations =======================================
@@ -532,6 +534,7 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 	return outputTree;
 }
 // ===================================== END of [SWC Profiling Methods] =====================================
+
 
 
 // =================================== SWC <-> Connected Components ====================================
@@ -878,6 +881,7 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 // =============================== END of [SWC <-> Connected Components] ===============================
 
 
+
 // ==================================== Neuron Struct Clustering Methods ========================================
 vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronTree& inputTree, float dist)
 {
@@ -1023,6 +1027,7 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 	return outputConnCompList;
 }
 // ================================ END of [Neuron Struct Clustering Methods] ===================================
+
 
 
 /* =================================== Volumetric SWC sampling methods =================================== */
