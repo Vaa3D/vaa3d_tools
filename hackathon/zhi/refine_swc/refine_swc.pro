@@ -28,6 +28,9 @@ SOURCES	+= $$VAA3DPATH/neuron_editing/v_neuronswc.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/calculate_cover_scores.cpp \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.cpp \
 
+#mask generation
+HEADERS	+= ../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
+SOURCES	+= ../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
 
 TARGET	= $$qtLibraryTarget(refine_swc)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/refine_swc/

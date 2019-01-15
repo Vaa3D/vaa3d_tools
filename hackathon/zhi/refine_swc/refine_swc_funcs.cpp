@@ -8,7 +8,7 @@
 #include "refine_swc_funcs.h"
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
-
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 
 using namespace std;
 #define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
@@ -111,6 +111,32 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         mysz[2] = end_z-start_z+1;
         mysz[3] = 1;
 
+        resample_path(seg, 2.0);
+        //convert seg to nt;
+        NeuronTree seg_nt;
+        for(int ii=0; ii<seg->size(); ii++)
+        {
+            Point* p = seg->at(ii);
+            NeuronSWC S;
+            S.n 	= ii + 1;
+            S.type 	= p->type;
+            S.x 	= p->x - start_x;
+            S.y 	= p->y - start_y;
+            S.z 	= p->z - start_z;
+            S.r 	= 1;
+            S.pn 	= (p->p == NULL)? -1 : ii + 2;
+            seg_nt.listNeuron.append(S);
+            seg_nt.hashNeuron.insert(S.n, result.listNeuron.size()-1);
+        }
+        unsigned char* total1dData_mask = 0;
+        total1dData_mask = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
+        memset(total1dData_mask,0,mysz[0]*mysz[1]*mysz[2]*sizeof(unsigned char));
+        double margin;
+        margin = (seg->at(0)->level == 20)?10:5;
+        ComputemaskImage(seg_nt, total1dData_mask, mysz[0], mysz[1], mysz[2],margin);
+        for(V3DLONG j=0;j<mysz[0]*mysz[1]*mysz[2];++j)
+            total1dData[j] = (total1dData_mask[j] ==0)?0:total1dData[j];
+
         unsigned char ****p4d = 0;
         if (!new4dpointer(p4d, mysz[0], mysz[1], mysz[2], mysz[3], total1dData))
         {
@@ -192,6 +218,9 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
             }
         }else
         {
+//            writeSWC_file("/local3/refinement/test_bug/test.swc",seg_nt);
+//            simple_saveimage_wrapper(callback, "/local3/refinement/test_bug/image.v3draw",(unsigned char *)total1dData, mysz, 1);
+//            simple_saveimage_wrapper(callback, "/local3/refinement/test_bug/mask.v3draw",(unsigned char *)total1dData, mysz, 1);
             for(int d=0; d<seg->size(); d++)
             {
                 Point* p = seg->at(d);
@@ -211,6 +240,8 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         }
         pp.clear();
         if(total1dData) {delete [] total1dData; total1dData=0;}
+        if(total1dData_mask) {delete [] total1dData_mask; total1dData_mask=0;}
+
     }
 
     return result;
@@ -759,3 +790,58 @@ NeuronTree initialSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neu
         result.hashNeuron.insert(result.listNeuron[i].n, i);
     return result;
 }
+
+void resample_path(Segment * seg, double step)
+{
+    char c;
+    Segment seg_r;
+    double path_length = 0;
+    Point* start = seg->at(0);
+    Point* seg_par = seg->back()->p;
+    V3DLONG iter_old = 0;
+    seg_r.push_back(start);
+    while (iter_old < seg->size() && start && start->p)
+    {
+        path_length += DISTP(start,start->p);
+        if (path_length<=seg_r.size()*step)
+        {
+            start = start->p;
+            iter_old++;
+        }
+        else//a new point should be created
+        {
+            path_length -= DISTP(start,start->p);
+            Point* pt = new Point;
+            double rate = (seg_r.size()*step-path_length)/(DISTP(start,start->p));
+            pt->x = start->x + rate*(start->p->x-start->x);
+            pt->y = start->y + rate*(start->p->y-start->y);
+            pt->z = start->z + rate*(start->p->z-start->z);
+            pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
+            pt->p = start->p;
+
+            if (rate<0.5)
+            {
+                pt->type = start->type;
+                pt->seg_id = start->seg_id;
+                pt->level = start->level;
+                pt->fea_val = start->fea_val;
+            }
+            else
+            {
+                pt->type = start->p->type;
+                pt->seg_id = start->p->seg_id;
+                pt->level = start->p->level;
+                pt->fea_val = start->p->fea_val;
+
+            }
+            seg_r.back()->p = pt;
+            seg_r.push_back(pt);
+            path_length += DISTP(start,pt);
+            start = pt;
+        }
+    }
+    seg_r.back()->p = seg_par;
+    for (V3DLONG i=0;i<seg->size();i++)
+        if (!seg->at(i)) {delete seg->at(i); seg->at(i) = NULL;}
+    *seg = seg_r;
+};

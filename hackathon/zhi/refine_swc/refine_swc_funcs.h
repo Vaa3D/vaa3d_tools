@@ -29,6 +29,9 @@ void break_path(Segment * seg, double step, QList<ImageMarker>& break_points);
 NeuronTree breakSWC(NeuronTree input, double step, QList<ImageMarker>& break_points);
 
 NeuronTree initialSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt, double ds_rate);
+void resample_path(Segment * seg, double step);
+
+
 
 #endif
 
