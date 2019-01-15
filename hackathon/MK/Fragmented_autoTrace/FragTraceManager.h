@@ -33,12 +33,6 @@ public:
 	bool saveHistThreResults;
 	QString histThreSaveDirQ;
 
-	bool smallBlobRemove;
-	string smallBlobRemovalName;
-	int smallBlobThreshold;
-	bool saveSmallBlobRemovalResults;
-	QString smallBlobRemoveDirQ;
-
 	bool MST;
 	bool tiledMST;
 	string MSTtreeName;
@@ -92,6 +86,7 @@ inline void FragTraceManager::saveIntermediateResult(const string imgName, const
 	{
 		string saveFullPath = fullSaveRootQ.toStdString() + "\\" + it->first;
 		const char* saveFullPathC = saveFullPath.c_str();
+		ImgManager::saveimage_wrapper(saveFullPathC, it->second.get(), dims, 1);
 	}
 }
 

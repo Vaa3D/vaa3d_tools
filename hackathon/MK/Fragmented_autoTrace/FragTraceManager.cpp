@@ -124,8 +124,6 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		}
 	}
 	cout << ", smallest component: " << islandIndex << ", size = " << connCompSize << endl;*/
-	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs2D, this->smallBlobThreshold);
-	if (this->smallBlobRemove) this->smallBlobRemoval(this->signalBlobs, this->smallBlobThreshold);
 	//cout << "connected component number after removing small ones (threshold = " << this->smallBlobThreshold << ", 2D): " << this->signalBlobs2D.size() << endl;
 	
 	NeuronTree blob2Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs2D, true);

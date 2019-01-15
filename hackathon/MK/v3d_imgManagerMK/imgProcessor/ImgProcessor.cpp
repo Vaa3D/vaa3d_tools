@@ -165,6 +165,9 @@ map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_
 	return basicStats;
 }
 
+
+
+// ========================================= Image Processing/Filtering ========================================= //
 void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
 {
 	// This method performs 2D skeletonization on 2D gray scale image.
@@ -610,3 +613,4 @@ void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[]
 		}
 	}
 }
+// ==================================== END of [Image Processing/Filtering] ==================================== //

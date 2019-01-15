@@ -97,18 +97,6 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 		uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
 
-		if (callOldSettings.value("smallRemove") == true)
-		{
-			uiPtr->groupBox_7->setChecked(true);
-			uiPtr->spinBox_2->setEnabled(true);
-			uiPtr->spinBox_7->setValue(callOldSettings.value("sizeThre").toInt());
-		}
-		else
-		{
-			uiPtr->groupBox_7->setChecked(false);
-			uiPtr->spinBox_7->setValue(callOldSettings.value("sizeThre").toInt());
-			uiPtr->spinBox_7->setEnabled(false);
-		}
 
 		if (callOldSettings.value("MST") == true)
 		{
@@ -122,6 +110,21 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 				uiPtr->spinBox_8->setValue(callOldSettings.value("zSection").toInt());
 			}
 		}
+
+		if (callOldSettings.value("objFilter") == true)
+		{
+			if (callOldSettings.value("voxelCount") == true)
+			{
+				uiPtr->spinBox_14->setValue(callOldSettings.value("voxelCountThre").toInt());
+				uiPtr->radioButton_5->setChecked(false);
+			}
+			else if (callOldSettings.value("volume") == true)
+			{
+				uiPtr->lineEdit->setText(callOldSettings.value("volumeThre").toString());
+				uiPtr->radioButton_4->setChecked(false);
+			}
+		}
+
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
@@ -166,20 +169,21 @@ void FragTraceControlPanel::imgFmtChecked(bool checked)
 void FragTraceControlPanel::nestedChecks(bool checked)
 {
 	QObject* signalSender = sender();
-	QString checkBoxName = signalSender->objectName();
+	QString checkName = signalSender->objectName();
 
 	if (checked)
 	{
-		if (checkBoxName == "groupBox_7")
+		if (checkName == "radioButton_4")
 		{
-			uiPtr->spinBox_7->setEnabled(true);
+			uiPtr->spinBox_14->setEnabled(true);
+			uiPtr->radioButton_5->setChecked(false);
+			uiPtr->lineEdit_6->setEnabled(false);
 		}
-	}
-	else
-	{
-		if (checkBoxName == "groupBox_7")
+		else if (checkName == "radioButton_5")
 		{
-			uiPtr->spinBox_7->setEnabled(false);
+			uiPtr->lineEdit_6->setEnabled(true);
+			uiPtr->radioButton_4->setChecked(false);
+			uiPtr->spinBox_14->setEnabled(false);
 		}
 	}
 }
@@ -327,18 +331,6 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
 
-	if (uiPtr->groupBox_7->isChecked())
-	{
-		settings.setValue("smallRemove", true);
-		settings.setValue("sizeThre", uiPtr->spinBox_7->value());
-	}
-	else
-	{
-		settings.setValue("smallRemove", false);
-		settings.setValue("sizeThre", "");
-	}
-	settings.setValue("smallRemoveTreeName", uiPtr->groupBox_7->title());
-
 	if (uiPtr->groupBox_8->isChecked())
 	{
 		settings.setValue("MST", true);
@@ -365,6 +357,23 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("minNodes", "");
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
+
+	if (uiPtr->radioButton_4->isChecked())
+	{
+		settings.setValue("voxelCount", true);
+		settings.setValue("voxelCountThre", uiPtr->spinBox_14->value());
+		settings.setValue("volume", false);
+		settings.setValue("volumeThre", "");
+	}
+	else if (uiPtr->radioButton_2->isChecked())
+	{
+		settings.setValue("voxelCount", false);
+		settings.setValue("voxelCountThre", 0);
+		settings.setValue("volume", true);
+		settings.setValue("volumeThre", uiPtr->lineEdit_6->text());
+	}
+	if (uiPtr->groupBox_13->isChecked()) settings.setValue("objFilter", true);
+	else settings.setValue("objFilter", false);
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
@@ -428,14 +437,6 @@ void FragTraceControlPanel::traceButtonClicked()
 					else this->traceManagerPtr->saveHistThreResults = false;
 				}
 				else this->traceManagerPtr->histThre = false;
-
-				if (uiPtr->groupBox_7->isChecked())
-				{
-					this->traceManagerPtr->smallBlobRemove = true;
-					this->traceManagerPtr->smallBlobRemovalName = uiPtr->groupBox_7->title().toStdString();
-					this->traceManagerPtr->smallBlobThreshold = uiPtr->spinBox_7->value();
-				}
-				else this->traceManagerPtr->smallBlobRemove = false;
 
 				if (uiPtr->groupBox_8->isChecked())
 				{
@@ -505,14 +506,6 @@ void FragTraceControlPanel::traceButtonClicked()
 					else this->traceManagerPtr->saveHistThreResults = false;
 				}
 				else this->traceManagerPtr->histThre = false;
-
-				if (currSettings.value("smallRemove") == true)
-				{
-					this->traceManagerPtr->smallBlobRemove = true;
-					this->traceManagerPtr->smallBlobRemovalName = currSettings.value("smallRemoveTreeName").toString().toStdString();
-					this->traceManagerPtr->smallBlobThreshold = currSettings.value("sizeThre").toInt();
-				}
-				else this->traceManagerPtr->smallBlobRemove = false;
 
 				if (currSettings.value("MST") == true)
 				{

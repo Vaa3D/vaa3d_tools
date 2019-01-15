@@ -1192,7 +1192,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
+		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1226,7 +1226,7 @@ int main(int argc, char* argv[])
 
 		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 3, mipPtr);
 		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
-		writeSWC_file("D:\\Work\\FragTrace\\test.swc", testTree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1274,10 +1274,11 @@ int main(int argc, char* argv[])
 		ImgManager::saveimage_wrapper(croppedTestSaveNameC, cropped1D, croppedDims, 1);*/
 
 		NeuronStructExplorer myExplorer;
+		vector<NeuronTree> objTrees;
 		NeuronTree finalTree;
 		for (vector<connectedComponent>::iterator it = componentList.begin(); it != componentList.end(); ++it)
 		{
-			//if (it->islandNum != 1) continue;
+			if (it->size <= 3) continue;
 
 			NeuronTree centroidTree;
 			boost::container::flat_set<deque<float>> sectionalCentroids = myAnalyzer.getSectionalCentroids(*it);
@@ -1293,21 +1294,17 @@ int main(int argc, char* argv[])
 			}
 			
 			NeuronTree MSTtree = myExplorer.SWC2MSTtree(centroidTree);
-			int currTreeSize = finalTree.listNeuron.size();
-			for (QList<NeuronSWC>::iterator currIt = MSTtree.listNeuron.begin(); currIt != MSTtree.listNeuron.end(); ++currIt)
-			{
-				currIt->n = currIt->n + currTreeSize;
-				currIt->parent = currIt->parent + currTreeSize;
-			}
-			finalTree.listNeuron.append(MSTtree.listNeuron);
+			profiledTree profiledMSTtree(MSTtree);
+			profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
+			objTrees.push_back(profiledMSTtree.tree);
 		}
+		finalTree = NeuronStructUtil::swcCombine(objTrees);
 
-		profiledTree componentTreeProfiled(finalTree);
-		profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(componentTreeProfiled);
+		profiledTree profiledFinalTree(finalTree);
+		profiledTree noSpikeProfiledFinalTree = NeuronStructExplorer::spikeRemove(profiledFinalTree);
+		//NeuronTree noSpikeShiftedTree = NeuronStructUtil::swcShift(smoothedProfiledFinalTree.tree, 1, 1, 1);
 
-
-		writeSWC_file("D:\\Work\\FragTrace\\testCentroidTree.swc", smoothedTree.tree);
-	
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCentroidTree.swc", noSpikeProfiledFinalTree.tree);
 	}
 
 	return 0;

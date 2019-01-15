@@ -161,10 +161,6 @@ public:
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
-
-	// Auto-traced Result Refinement
-	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
-
 	/********************************************************************************/
 
 
@@ -193,6 +189,11 @@ public:
 	map<int, long int> nodeDistPDF;
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
 	/***********************************************/
+
+
+	/***************** Neuron Struct Refining Method *****************/
+	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
+	/*****************************************************************/
 };
 
 inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double distThre)

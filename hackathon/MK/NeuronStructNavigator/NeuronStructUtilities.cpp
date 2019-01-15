@@ -257,6 +257,7 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 }
 
 
+
 // ======================================= SWC Tracing-related Operations =======================================
 void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
 {
@@ -533,6 +534,7 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 	return outputTree;
 }
 // ===================================== END of [SWC Profiling Methods] =====================================
+
 
 
 // =================================== SWC <-> Connected Components ====================================
@@ -879,6 +881,7 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 // =============================== END of [SWC <-> Connected Components] ===============================
 
 
+
 // ==================================== Neuron Struct Clustering Methods ========================================
 vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronTree& inputTree, float dist)
 {
@@ -1024,6 +1027,7 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 	return outputConnCompList;
 }
 // ================================ END of [Neuron Struct Clustering Methods] ===================================
+
 
 
 /* =================================== Volumetric SWC sampling methods =================================== */

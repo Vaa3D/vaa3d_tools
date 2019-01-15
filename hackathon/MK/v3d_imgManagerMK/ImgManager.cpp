@@ -166,6 +166,8 @@ ImgManager::ImgManager(QString inputPath)
 	}
 }
 
+
+
 // ======================================= I/O and Image Property Profile ======================================= //
 void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
