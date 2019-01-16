@@ -75,7 +75,7 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         QList<ImageMarker> break_points;
         NeuronTree nt = readSWC_file(QString(infiles[1]));
-
+        nt = resample(nt,2.0);
         NeuronTree nt2 = SortSWC_pipeline(nt.listNeuron,VOID, 0);
         NeuronTree nt2_broken = breakSWC(nt2,max_length, break_points);
         V_NeuronSWC_list nt2_decomposed = NeuronTree__2__V_NeuronSWC_list(nt2_broken);

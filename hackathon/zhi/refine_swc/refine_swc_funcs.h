@@ -30,6 +30,7 @@ NeuronTree breakSWC(NeuronTree input, double step, QList<ImageMarker>& break_poi
 
 NeuronTree initialSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt, double ds_rate);
 void resample_path(Segment * seg, double step);
+NeuronTree resample(NeuronTree input, double step);
 
 
 
