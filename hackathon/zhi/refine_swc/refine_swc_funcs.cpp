@@ -111,7 +111,6 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         mysz[2] = end_z-start_z+1;
         mysz[3] = 1;
 
-        resample_path(seg, 2.0);
         //convert seg to nt;
         NeuronTree seg_nt;
         for(int ii=0; ii<seg->size(); ii++)
@@ -845,3 +844,93 @@ void resample_path(Segment * seg, double step)
         if (!seg->at(i)) {delete seg->at(i); seg->at(i) = NULL;}
     *seg = seg_r;
 };
+
+NeuronTree resample(NeuronTree input, double step)
+{
+    NeuronTree result;
+    V3DLONG siz = input.listNeuron.size();
+    Tree tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = input.listNeuron[i];
+        Point* pt = new Point;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->r = s.r;
+        pt ->type = s.type;
+        pt->seg_id = s.seg_id;
+        pt->level = s.level;
+        pt->fea_val = s.fea_val;
+        pt->p = NULL;
+        pt->childNum = 0;
+        tree.push_back(pt);
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (input.listNeuron[i].pn<0) continue;
+        V3DLONG pid = input.hashNeuron.value(input.listNeuron[i].pn);
+        tree[i]->p = tree[pid];
+        tree[pid]->childNum++;
+    }
+//	printf("tree constructed.\n");
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->childNum!=1)//tip or branch point
+        {
+            Segment* seg = new Segment;
+            Point* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->p;
+            }
+            while(cur && cur->childNum==1);
+            seg_list.push_back(seg);
+        }
+    }
+//	printf("segment list constructed.\n");
+    for (V3DLONG i=0;i<seg_list.size();i++)
+    {
+        resample_path(seg_list[i], step);
+    }
+
+//	printf("resample done.\n");
+    tree.clear();
+    map<Point*, V3DLONG> index_map;
+    for (V3DLONG i=0;i<seg_list.size();i++)
+        for (V3DLONG j=0;j<seg_list[i]->size();j++)
+        {
+            tree.push_back(seg_list[i]->at(j));
+            index_map.insert(pair<Point*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
+        }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        NeuronSWC S;
+        Point* p = tree[i];
+        S.n = i+1;
+        if (p->p==NULL) S.pn = -1;
+        else
+            S.pn = index_map[p->p]+1;
+        if (p->p==p) printf("There is loop in the tree!\n");
+        S.x = p->x;
+        S.y = p->y;
+        S.z = p->z;
+        S.r = p->r;
+        S.type = p->type;
+        S.seg_id = p->seg_id;
+        S.level = p->level;
+        S.fea_val = p->fea_val;
+        result.listNeuron.push_back(S);
+    }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        if (tree[i]) {delete tree[i]; tree[i]=NULL;}
+    }
+    for (V3DLONG j=0;j<seg_list.size();j++)
+        if (seg_list[j]) {delete seg_list[j]; seg_list[j] = NULL;}
+    for (V3DLONG i=0;i<result.listNeuron.size();i++)
+        result.hashNeuron.insert(result.listNeuron[i].n, i);
+    return result;
+}
