@@ -26,7 +26,8 @@ HEADERS	+= preprocess_plugin.h \
     preprocess_batch_main.h \
     crop_swc_main.h \
     check_connection.h \
-    crop_swc_cuboid_main.h
+    crop_swc_cuboid_main.h \
+    auto_soma_correction.h
 HEADERS += pre_processing_main.h
 SOURCES	+= preprocess_plugin.cpp \
     neurite_analysis_main.cpp \
@@ -39,7 +40,8 @@ SOURCES	+= preprocess_plugin.cpp \
     preprocess_batch_main.cpp \
     crop_swc_main.cpp \
     check_connection_main.cpp \
-    crop_swc_cuboid_main.cpp
+    crop_swc_cuboid_main.cpp \
+    auto_soma_correction.cpp
 SOURCES += pre_processing_main.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

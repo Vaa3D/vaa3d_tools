@@ -19,6 +19,7 @@ using namespace std;
 #include "connnect_swc_redefined.h"
 #include "utilities.h"
 #include "axon_func.h"
+#include "auto_soma_correction.h"
 
 #if !defined(Q_OS_WIN32)
 #include "unistd.h"
@@ -29,10 +30,20 @@ using namespace std;
 #include "io.h"
 #endif
 
+#ifndef XSCALE
+#define XSCALE 0.2
+#endif
+#ifndef YSCALE
+#define YSCALE 0.2
+#endif
+#ifndef ZSCALE
+#define ZSCALE 1
+#endif
+
 bool pre_processing_domenu(V3DPluginCallback2 &callback, QWidget *parent);
 bool pre_processing_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
-bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, double thres = 0, double thres_long = 10,
-                    double step_size = 0, double connect_soma_dist = 70, bool rotation = false,
+bool pre_processing(QString qs_input, QString qs_output, double prune_size = 2, double thres = 0.5, double thres_long = 10,
+                    double step_size = 0, double connect_soma_dist = 20, bool rotation = false,
                     bool colorful = false, bool return_maintree = false, bool return_temp=false);
 bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool neurite_analysis_main(const V3DPluginArgList & input, V3DPluginArgList & output);

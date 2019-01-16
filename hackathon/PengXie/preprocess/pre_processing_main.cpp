@@ -10,9 +10,7 @@
 #endif
 
 #define DEFAULT 1000000000
-#define XSCALE 0.2
-#define YSCALE 0.2
-#define ZSCALE 1
+
 #include "pre_processing_main.h"
 #include "cmath"  /* for std::abs(double) */
 
@@ -46,47 +44,47 @@ NeuronTree color_lost_branch(NeuronTree new_tree){
     new_tree.deepCopy(my_SortSWC(new_tree, soma_id, 0));
     return new_tree;
 }
-QList<NeuronSWC> get_soma_from_APO(QList<CellAPO> markers){
-    QList<NeuronSWC> S_list;
-    NeuronSWC S;
-    int soma_rootid=1;
-    if(markers.size()>0)
-    {
-        if(markers.size()==1)
-        {
-            //markers.at(0).operator XYZ;
-            S.x = markers.at(0).x;
-            S.y = markers.at(0).y;
-            S.z = markers.at(0).z;
-            S.r = 100;
-            S.type = 1;
-            S.n = soma_rootid;
-            S.pn = -1;
-            S_list.append(S);
-            qDebug()<< "Marker found. Using it as root."; //<< neuron.size()<< neuron.at(neuron.size()-1).pn;
-        }
-        else{
-            for(int i=0;i<markers.size();i++)
-            {
-                if(markers.at(i).comment == "soma")//markers.at(i).color.r == 0 && markers.at(i).color.g == 0 && markers.at(i).color.b == 255)
-                {
-                    //markers.at(0).operator XYZ;
-                    S.x = markers.at(i).x;
-                    S.y = markers.at(i).y;
-                    S.z = markers.at(i).z;
-                    S.type = 1;
-                    S.r = 100;
-                    S.n = soma_rootid;
-                    S.pn = -1;
-                    S_list.append(S);
-                    break;
-                }
-            }
-            qDebug()<< "Warning: more than one marker in the file, taking one commented as 'soma'";
-        }
-    }
-    return S_list;
-}
+//QList<NeuronSWC> get_soma_from_APO(QList<CellAPO> markers){
+//    QList<NeuronSWC> S_list;
+//    NeuronSWC S;
+//    int soma_rootid=1;
+//    if(markers.size()>0)
+//    {
+//        if(markers.size()==1)
+//        {
+//            //markers.at(0).operator XYZ;
+//            S.x = markers.at(0).x;
+//            S.y = markers.at(0).y;
+//            S.z = markers.at(0).z;
+//            S.r = 100;
+//            S.type = 1;
+//            S.n = soma_rootid;
+//            S.pn = -1;
+//            S_list.append(S);
+//            qDebug()<< "Marker found. Using it as root."; //<< neuron.size()<< neuron.at(neuron.size()-1).pn;
+//        }
+//        else{
+//            for(int i=0;i<markers.size();i++)
+//            {
+//                if(markers.at(i).comment == "soma")//markers.at(i).color.r == 0 && markers.at(i).color.g == 0 && markers.at(i).color.b == 255)
+//                {
+//                    //markers.at(0).operator XYZ;
+//                    S.x = markers.at(i).x;
+//                    S.y = markers.at(i).y;
+//                    S.z = markers.at(i).z;
+//                    S.type = 1;
+//                    S.r = 100;
+//                    S.n = soma_rootid;
+//                    S.pn = -1;
+//                    S_list.append(S);
+//                    break;
+//                }
+//            }
+//            qDebug()<< "Warning: more than one marker in the file, taking one commented as 'soma'";
+//        }
+//    }
+//    return S_list;
+//}
 NeuronTree connect_soma(NeuronTree nt, QList<CellAPO> markers, double dThres, QString outfileLabel,
                         double drop_thres=1e6, bool colorful=true, bool return_maintree=false)  // Adapted from /home/penglab/Desktop/vaa3d/vaa3d_tools/released_plugins/v3d_plugins/connect_neuron_fragments_extractor/neuron_extractor_plugin.cpp
 {

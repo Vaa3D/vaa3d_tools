@@ -20,6 +20,7 @@ QStringList neuron_analysis::menulist() const
     return QStringList()
             <<tr("preprocess")
             <<tr("preprocess_batch")
+            <<tr("auto_soma_correction")
             <<tr("help")
             <<tr("about");
 }
@@ -46,6 +47,10 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     if(menu_name == tr("preprocess_batch"))
     {
         preprocess_batch_domenu(callback, parent);
+    }
+    if(menu_name == tr("auto_soma_correction"))
+    {
+        auto_soma_correction_domenu(callback, parent);
     }
     if (menu_name == tr("help"))
     {

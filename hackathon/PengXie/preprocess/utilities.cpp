@@ -171,9 +171,8 @@ NeuronTree rm_nodes(NeuronTree nt, QList<int> list){
     for(int i=(list.size()-1); i>=0; i--){
         nt.listNeuron.removeAt(list.at(i));
     }
-    cout << "rm_nodes finished" <<endl;
-
-    return nt;
+    cout << "rm_nodes finished" <<endl;    
+    return missing_parent(nt);
 }
 
 int get_soma(NeuronTree nt){
@@ -653,5 +652,47 @@ NeuronTree missing_parent(NeuronTree nt){
             nt.listNeuron[i].pn = -1;
         }
     }
-    return nt;
+    return neuronlist_2_neurontree(nt.listNeuron);
+}
+
+QList<NeuronSWC> get_soma_from_APO(QList<CellAPO> markers){
+    QList<NeuronSWC> S_list;
+    NeuronSWC S;
+    int soma_rootid=1;
+    if(markers.size()>0)
+    {
+        if(markers.size()==1)
+        {
+            //markers.at(0).operator XYZ;
+            S.x = markers.at(0).x;
+            S.y = markers.at(0).y;
+            S.z = markers.at(0).z;
+            S.r = 100;
+            S.type = 1;
+            S.n = soma_rootid;
+            S.pn = -1;
+            S_list.append(S);
+            qDebug()<< "Marker found. Using it as root."; //<< neuron.size()<< neuron.at(neuron.size()-1).pn;
+        }
+        else{
+            for(int i=0;i<markers.size();i++)
+            {
+                if(markers.at(i).comment == "soma")//markers.at(i).color.r == 0 && markers.at(i).color.g == 0 && markers.at(i).color.b == 255)
+                {
+                    //markers.at(0).operator XYZ;
+                    S.x = markers.at(i).x;
+                    S.y = markers.at(i).y;
+                    S.z = markers.at(i).z;
+                    S.type = 1;
+                    S.r = 100;
+                    S.n = soma_rootid;
+                    S.pn = -1;
+                    S_list.append(S);
+                    break;
+                }
+            }
+            qDebug()<< "Warning: more than one marker in the file, taking one commented as 'soma'";
+        }
+    }
+    return S_list;
 }
