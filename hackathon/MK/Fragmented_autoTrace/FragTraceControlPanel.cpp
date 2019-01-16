@@ -119,22 +119,16 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 
 
-
+		// ------- Object-based MST -------
 		if (callOldSettings.value("MST") == true)
 		{
 			uiPtr->groupBox_8->setChecked(true);
 			uiPtr->spinBox_5->setValue(callOldSettings.value("largestDist").toInt());
-			uiPtr->spinBox_6->setValue(callOldSettings.value("minNodes").toInt());
-
-			if (callOldSettings.value("tiledMST") == true)
-			{
-				uiPtr->spinBox_4->setValue(callOldSettings.value("tileLength").toInt());
-				uiPtr->spinBox_8->setValue(callOldSettings.value("zSection").toInt());
-			}
+			
+			if (callOldSettings.value("breakBranch") == true) uiPtr->checkBox_10->setChecked(true);
 		}
-
 		
-
+	
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
@@ -367,31 +361,19 @@ void FragTraceControlPanel::saveSettingsClicked()
 	else settings.setValue("objFilter", false);
 
 
+	// ------- Object-base MST -------
 	if (uiPtr->groupBox_8->isChecked())
 	{
 		settings.setValue("MST", true);
 		settings.setValue("largestDist", uiPtr->spinBox_5->value());
-		settings.setValue("minNodes", uiPtr->spinBox_6->value());
-
-		if (uiPtr->groupBox_9->isChecked())
-		{
-			settings.setValue("tiledMST", true);
-			settings.setValue("tileLength", uiPtr->spinBox_4->value());
-			settings.setValue("zSection", uiPtr->spinBox_8->value());
-		}
-		else
-		{
-			settings.setValue("tiledMST", false);
-			settings.setValue("tileLength", "");
-			settings.setValue("zSection", "");
-		}
 	}
 	else
 	{
 		settings.setValue("MST", false);
 		settings.setValue("largestDist", "");
-		settings.setValue("minNodes", "");
 	}
+	if (uiPtr->checkBox_10->isChecked()) settings.setValue("breakBranch", true);
+	else settings.setValue("breakBranch", false);
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 
 
@@ -415,7 +397,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		if (this->isVisible())
 		{
 			QString rootQ = "";
-			if (uiPtr->lineEdit->text() != "")
+			if (uiPtr->lineEdit->text() != "") // final result save place
 			{
 				QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
 				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
@@ -439,6 +421,7 @@ void FragTraceControlPanel::traceButtonClicked()
 					{
 						this->traceManagerPtr->saveAdaResults = true;
 						this->traceManagerPtr->simpleAdaSaveDirQ = uiPtr->lineEdit_2->text();
+						this->traceManagerPtr->simpleAdaSaveDirQ.replace(QString(" "), QString("_"));
 					}
 					else this->traceManagerPtr->saveAdaResults = false;
 				}
@@ -459,31 +442,49 @@ void FragTraceControlPanel::traceButtonClicked()
 					{
 						this->traceManagerPtr->saveHistThreResults = true;
 						this->traceManagerPtr->histThreSaveDirQ = uiPtr->lineEdit_3->text();
+						this->traceManagerPtr->histThreSaveDirQ.replace(QString(" "), QString("_"));
 					}
 					else this->traceManagerPtr->saveHistThreResults = false;
 				}
 				else this->traceManagerPtr->histThre = false;
 
 
+				// ------- Object Filter -------
+				// -- size threshold --
+				if (uiPtr->groupBox_13->isChecked())
+				{
+					this->traceManagerPtr->objFilter = true;
+					if (uiPtr->radioButton_4->isChecked())
+					{
+						this->traceManagerPtr->voxelSize = true;
+						this->traceManagerPtr->voxelCount = uiPtr->spinBox_14->value();
+					}
+					else if (uiPtr->radioButton_5->isChecked())
+					{
+						this->traceManagerPtr->actualSize = true;
+						this->traceManagerPtr->volume = atof(uiPtr->lineEdit_6->text().toStdString().c_str());
+					}
+				}
+				else
+				{
+					this->traceManagerPtr->objFilter = false;
+					this->traceManagerPtr->voxelSize = false;
+					this->traceManagerPtr->actualSize = false;
+				}
+
+
+				// ------- Object-base MST -------
 				if (uiPtr->groupBox_8->isChecked())
 				{
 					this->traceManagerPtr->MST = true;
 					this->traceManagerPtr->MSTtreeName = uiPtr->groupBox_8->title().toStdString();
 					this->traceManagerPtr->segLengthLimit = uiPtr->spinBox_5->value();
-					this->traceManagerPtr->minNodeNum = uiPtr->spinBox_6->value();
-
-					if (uiPtr->groupBox_9->isChecked())
-					{
-						this->traceManagerPtr->tiledMST = true;
-						this->traceManagerPtr->tileLength = uiPtr->spinBox_4->value();
-						this->traceManagerPtr->zSectionNum = uiPtr->spinBox_8->value();
-					}
-					else this->traceManagerPtr->tiledMST = false;
+					this->traceManagerPtr->branchBreak = true;
 				}
 				else
 				{
 					this->traceManagerPtr->MST = false;
-					this->traceManagerPtr->tiledMST = false;
+					this->traceManagerPtr->branchBreak = false;
 				}
 			}
 		}
@@ -515,6 +516,7 @@ void FragTraceControlPanel::traceButtonClicked()
 					{
 						this->traceManagerPtr->saveAdaResults = true;
 						this->traceManagerPtr->simpleAdaSaveDirQ = currSettings.value("ada_savePath").toString();
+						this->traceManagerPtr->simpleAdaSaveDirQ.replace(QString(" "), QString("_"));
 					}
 					else this->traceManagerPtr->saveAdaResults = false;
 				}
@@ -535,31 +537,49 @@ void FragTraceControlPanel::traceButtonClicked()
 					{
 						this->traceManagerPtr->saveHistThreResults = true;
 						this->traceManagerPtr->histThreSaveDirQ = currSettings.value("histThre_savePath").toString();
+						this->traceManagerPtr->histThreSaveDirQ.replace(QString(" "), QString("_"));
 					}
 					else this->traceManagerPtr->saveHistThreResults = false;
 				}
 				else this->traceManagerPtr->histThre = false;
 
 
+				// ------- Object Filter -------
+				// -- size threshold --
+				if (currSettings.value("objFilter") == true)
+				{
+					this->traceManagerPtr->objFilter = true;
+					if (currSettings.value("voxelCount") == true)
+					{
+						this->traceManagerPtr->voxelSize = true;
+						this->traceManagerPtr->voxelCount = currSettings.value("voxelCountThre").toInt();
+					}
+					else if (currSettings.value("volume") == true)
+					{
+						this->traceManagerPtr->actualSize = true;
+						this->traceManagerPtr->volume = currSettings.value("volumeThre").toFloat();
+					}
+				}
+				else
+				{
+					this->traceManagerPtr->objFilter = false;
+					this->traceManagerPtr->voxelSize = false;
+					this->traceManagerPtr->actualSize = false;
+				}
+
+
+				// ------- Object-based MST -------
 				if (currSettings.value("MST") == true)
 				{
 					this->traceManagerPtr->MST = true;
 					this->traceManagerPtr->MSTtreeName = currSettings.value("MSTtreeName").toString().toStdString();
 					this->traceManagerPtr->segLengthLimit = currSettings.value("largestDist").toInt();
-					this->traceManagerPtr->minNodeNum = currSettings.value("minNodes").toInt();
-
-					if (currSettings.value("tiledMST") == true)
-					{
-						this->traceManagerPtr->tiledMST = true;
-						this->traceManagerPtr->tileLength = currSettings.value("tileLength").toInt();
-						this->traceManagerPtr->zSectionNum = currSettings.value("zSection").toInt();
-					}
-					else this->traceManagerPtr->tiledMST = false;
+					this->traceManagerPtr->branchBreak = true;
 				}
 				else
 				{
 					this->traceManagerPtr->MST = false;
-					this->traceManagerPtr->tiledMST = false;
+					this->traceManagerPtr->branchBreak = false;
 				}
 			}
 		}
@@ -586,6 +606,9 @@ void FragTraceControlPanel::traceButtonClicked()
 			finalTree = NeuronStructUtil::swcCombine(trees);
 			this->thisCallback->setSWCTeraFly(finalTree);
 		}
+
+		QString finalTreeName = uiPtr->lineEdit->text();
+		writeSWC_file(finalTreeName, finalTree);
 	}
 	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)
 	{

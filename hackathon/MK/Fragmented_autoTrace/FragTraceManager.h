@@ -33,12 +33,15 @@ public:
 	bool saveHistThreResults;
 	QString histThreSaveDirQ;
 
+	bool objFilter;
+	bool voxelSize, actualSize;
+	int voxelCount;
+	float volume;
+
 	bool MST;
-	bool tiledMST;
 	string MSTtreeName;
-	int segLengthLimit, minNodeNum, tileLength, zSectionNum;
-	bool saveMSTresults;
-	QString saveMSTDirQ;
+	int segLengthLimit;
+	bool branchBreak;
 
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;

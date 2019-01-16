@@ -546,13 +546,22 @@ vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree&
 
 	vector<NeuronSWC> allNodes;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it) allNodes.push_back(*it);
+	bool longList = false;
 
 	vector<connectedComponent> connComps2D;
 	int islandCount = 0;
-	cout << "number of SWC nodes processed: ";
+	if (allNodes.size() >= 100000)
+	{
+		longList = true;
+		cout << "number of SWC nodes processed: ";
+	}
 	for (vector<NeuronSWC>::iterator nodeIt = allNodes.begin(); nodeIt != allNodes.end(); ++nodeIt)
 	{
-		if (int(nodeIt - allNodes.begin()) % 10000 == 0) cout << int(nodeIt - allNodes.begin()) << " ";
+		if (longList)
+		{
+			if (int(nodeIt - allNodes.begin()) % 10000 == 0) cout << int(nodeIt - allNodes.begin()) << " ";
+		}
+
 		for (vector<connectedComponent>::iterator connIt = connComps2D.begin(); connIt != connComps2D.end(); ++connIt)
 		{
 			if (connIt->coordSets.empty()) continue;
@@ -606,7 +615,7 @@ vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree&
 	NODE_INSERTED:
 		continue;
 	}
-	cout << endl << endl;
+	//cout << endl << endl;
 
 	vector<float> center(3);
 	for (vector<connectedComponent>::iterator it = connComps2D.begin(); it != connComps2D.end(); ++it)
