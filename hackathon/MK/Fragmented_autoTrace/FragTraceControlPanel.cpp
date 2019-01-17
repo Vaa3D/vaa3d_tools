@@ -597,7 +597,11 @@ void FragTraceControlPanel::traceButtonClicked()
 		this->scaleTracedTree();
 		NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
 		NeuronTree finalTree;
-		if (existingTree.listNeuron.isEmpty()) this->thisCallback->setSWCTeraFly(this->tracedTree);
+		if (existingTree.listNeuron.isEmpty())
+		{
+			this->thisCallback->setSWCTeraFly(this->tracedTree);
+			finalTree = this->tracedTree;
+		}
 		else
 		{
 			vector<NeuronTree> trees;
@@ -607,8 +611,7 @@ void FragTraceControlPanel::traceButtonClicked()
 			this->thisCallback->setSWCTeraFly(finalTree);
 		}
 
-		QString finalTreeName = uiPtr->lineEdit->text();
-		writeSWC_file(finalTreeName, finalTree);
+		if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
 	}
 	else if (currSettings.value("wholeBlock") == false && currSettings.value("withSeed") == true)
 	{

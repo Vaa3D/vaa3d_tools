@@ -369,8 +369,11 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	ImgAnalyzer* myImgAnalyzerPtr = new ImgAnalyzer;
 	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
-	QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
-	writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
+	if (this->finalSaveRootQ != "")
+	{
+		QString blobTreeFullFilenameQ = this->finalSaveRootQ + "\\blob.swc";
+		writeSWC_file(blobTreeFullFilenameQ, blob3Dtree);
+	}
 	profiledTree profiledSigTree(blob3Dtree);
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 
@@ -381,10 +384,10 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	{
 		for (int yi = 0; yi < sliceDims[1]; ++yi)
 		{
-			delete[](*slice2DPtrIt)[yi];
+			delete[] (*slice2DPtrIt)[yi];
 			(*slice2DPtrIt)[yi] = nullptr;
 		}
-		delete[] * slice2DPtrIt;
+		delete[] *slice2DPtrIt;
 		*slice2DPtrIt = nullptr;
 	}
 	slice2DVector.clear();
