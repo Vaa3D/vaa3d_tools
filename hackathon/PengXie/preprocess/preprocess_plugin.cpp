@@ -18,9 +18,10 @@ Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
 QStringList neuron_analysis::menulist() const
 {
     return QStringList()
+            <<tr("auto_soma_correction")
+            <<tr("auto_soma_correction_batch")
             <<tr("preprocess")
             <<tr("preprocess_batch")
-            <<tr("auto_soma_correction")
             <<tr("help")
             <<tr("about");
 }
@@ -51,6 +52,10 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     if(menu_name == tr("auto_soma_correction"))
     {
         auto_soma_correction_domenu(callback, parent);
+    }
+    if(menu_name == tr("auto_soma_correction_batch"))
+    {
+        auto_soma_correction_batch_domenu(callback, parent);
     }
     if (menu_name == tr("help"))
     {

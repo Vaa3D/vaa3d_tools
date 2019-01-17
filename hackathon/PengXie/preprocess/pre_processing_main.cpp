@@ -455,14 +455,22 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         printf("\tConnecting to soma\n");
         QList<CellAPO> soma_markers = readAPO_file(infileLabel + QString(".apo"));
         QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
-        S_list[0].r = 1;
-        cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
-        nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
-        // Keep track of new_edges
-        new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
-        // Keep track of nodes
-        markers.append(get_new_marker(infileLabel+".soma_connection.apo", 0,255,0));
-        qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".soma_connection.apo", 0,0,0).size()/2<<count_root(nt);
+        if(S_list.isEmpty()){
+            v3d_msg(QString("APO file is given but don't know which is soma.\n"
+                            "Soma connection is skiped.\n"
+                            "Please double check %1").arg(infileLabel + QString(".apo")));
+            connect_soma_performed = 0;
+        }
+        else{
+            S_list[0].r = 1;
+            cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
+            nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
+            // Keep track of new_edges
+            new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
+            // Keep track of nodes
+            markers.append(get_new_marker(infileLabel+".soma_connection.apo", 0,255,0));
+            qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".soma_connection.apo", 0,0,0).size()/2<<count_root(nt);
+        }
     }
     else{
         // If the input swc is already connected to soma, then the apo file is not required
