@@ -11,6 +11,8 @@
 #include "crop_swc_main.h"
 #include "crop_swc_cuboid_main.h"
 #include "check_connection.h"
+#include "auto_soma_correction.h"
+#include "preprocess_batch_main.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
