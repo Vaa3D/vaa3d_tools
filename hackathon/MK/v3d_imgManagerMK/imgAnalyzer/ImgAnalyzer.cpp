@@ -547,8 +547,12 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(cons
 	vector<int> dim2;
 	int start, end;
 	boost::container::flat_set<deque<float>> sectionalCentroids;
-	if (xLength >= yLength && xLength >= zLength)
-	{
+	boost::container::flat_set<deque<float>> outputSectionalCentroids;
+	
+	{ // x the deepest
+		dim1.clear();
+		dim2.clear();
+		sectionalDim.clear();
 		start = inputConnComp.xMin;
 		end = inputConnComp.xMax;
 		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
@@ -561,15 +565,20 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(cons
 			}
 		}
 
+		sectionalCentroids.clear();
 		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
 		for (boost::container::flat_set<deque<float>>::iterator it = sectionalCentroids.begin(); it != sectionalCentroids.end(); ++it)
 		{
 			it->push_front(it->at(2));
 			it->pop_back();
 		}
+		outputSectionalCentroids.insert(sectionalCentroids.begin(), sectionalCentroids.end());
 	}
-	else if (yLength >= xLength && yLength >= zLength)
-	{
+	
+	{ // y the deepest
+		dim1.clear();
+		dim2.clear();
+		sectionalDim.clear();
 		start = inputConnComp.yMin;
 		end = inputConnComp.yMax;
 		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
@@ -582,15 +591,20 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(cons
 			}
 		}
 
+		sectionalCentroids.clear();
 		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
 		for (boost::container::flat_set<deque<float>>::iterator it = sectionalCentroids.begin(); it != sectionalCentroids.end(); ++it)
 		{
 			it->insert((*it).begin() + 1, it->at(2));
 			it->pop_back();
 		}
+		outputSectionalCentroids.insert(sectionalCentroids.begin(), sectionalCentroids.end());
 	}
-	else if (zLength >= xLength && zLength >= yLength)
-	{
+
+	{ // z the deepest
+		dim1.clear();
+		dim2.clear();
+		sectionalDim.clear();
 		start = inputConnComp.zMin;
 		end = inputConnComp.zMax;
 		for (map<int, set<vector<int>>>::const_iterator sliceIt = inputConnComp.coordSets.begin(); sliceIt != inputConnComp.coordSets.end(); ++sliceIt)
@@ -603,10 +617,12 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(cons
 			}
 		}
 
+		sectionalCentroids.clear();
 		sectionalCentroids = this->connCompSectionalProc(dim1, dim2, sectionalDim, start, end);
+		outputSectionalCentroids.insert(sectionalCentroids.begin(), sectionalCentroids.end());
 	}
 
-	return sectionalCentroids;
+	return outputSectionalCentroids;
 }
 
 boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd)
