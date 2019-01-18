@@ -111,7 +111,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	{
 		if (it->size < voxelCount) continue;
 
-		if (int(it - this->signalBlobs.begin()) % 1000 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
+		if (int(it - this->signalBlobs.begin()) % 500 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
 		NeuronTree centroidTree;
 		boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
 		for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
@@ -140,13 +140,21 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	profiledTree objBranchBreakTree(MSTbranchBreakTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 
+	NeuronTree shortCleanedUpTree;
+	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(objBranchBreakTree, this->minNodeNum);
+
+	profiledTree profiledShortCleanedUpTree(shortCleanedUpTree);
+	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(profiledShortCleanedUpTree);
+	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
+
+	NeuronTree finalOutputTree = profiledElongatedTree.tree;
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
-		writeSWC_file(localSWCFullName, objBranchBreakTree.tree);
+		writeSWC_file(localSWCFullName, finalOutputTree);
 	}
 
-	emit emitTracedTree(this->fragTraceTreeManager.treeDataBase.at("objBranchBreakTree").tree);
+	emit emitTracedTree(finalOutputTree);
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)

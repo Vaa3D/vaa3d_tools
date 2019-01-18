@@ -12,7 +12,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>790</width>
+    <width>800</width>
     <height>937</height>
    </rect>
   </property>
@@ -289,7 +289,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>714</width>
+               <width>724</width>
                <height>538</height>
               </rect>
              </property>
@@ -687,19 +687,6 @@
                         <string>Threshold: mean + </string>
                        </property>
                       </widget>
-                      <widget class="QSpinBox" name="spinBox_3">
-                       <property name="geometry">
-                        <rect>
-                         <x>150</x>
-                         <y>10</y>
-                         <width>46</width>
-                         <height>22</height>
-                        </rect>
-                       </property>
-                       <property name="value">
-                        <number>0</number>
-                       </property>
-                      </widget>
                       <widget class="QLabel" name="label_5">
                        <property name="geometry">
                         <rect>
@@ -826,7 +813,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>714</width>
+               <width>724</width>
                <height>538</height>
               </rect>
              </property>
@@ -914,7 +901,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>409</width>
+                           <width>419</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -970,7 +957,7 @@
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>250</width>
+                           <width>255</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -1006,7 +993,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>714</width>
+               <width>724</width>
                <height>538</height>
               </rect>
              </property>
@@ -1032,63 +1019,6 @@
                  <bool>true</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_12">
-                 <item>
-                  <widget class="QFrame" name="frame_10">
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_6">
-                    <item>
-                     <widget class="QLabel" name="label_8">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>Largest connecting distance:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="spinBox_5">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="value">
-                       <number>10</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_3">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>376</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
                  <item>
                   <widget class="QFrame" name="frame_11">
                    <property name="maximumSize">
@@ -1124,7 +1054,64 @@
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
-                        <width>495</width>
+                        <width>505</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QFrame" name="frame_10">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <item>
+                     <widget class="QLabel" name="label_8">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Minimum number of nodes in one segment: </string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="spinBox_5">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
+                      <property name="value">
+                       <number>3</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_3">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>376</width>
                         <height>20</height>
                        </size>
                       </property>
@@ -1321,7 +1308,7 @@
    <slot>saveSettingsClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>599</x>
+     <x>598</x>
      <y>900</y>
     </hint>
     <hint type="destinationlabel">
@@ -1337,7 +1324,7 @@
    <slot>traceButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>676</x>
+     <x>675</x>
      <y>900</y>
     </hint>
     <hint type="destinationlabel">
@@ -1353,7 +1340,7 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>753</x>
+     <x>752</x>
      <y>854</y>
     </hint>
     <hint type="destinationlabel">
@@ -1366,10 +1353,10 @@
    <sender>pushButton_3</sender>
    <signal>clicked()</signal>
    <receiver>FragmentedTraceUI</receiver>
-   <slot>close()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>753</x>
+     <x>752</x>
      <y>900</y>
     </hint>
     <hint type="destinationlabel">
@@ -1434,7 +1421,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>689</x>
-     <y>623</y>
+     <y>675</y>
     </hint>
     <hint type="destinationlabel">
      <x>781</x>
@@ -1482,7 +1469,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>119</x>
-     <y>621</y>
+     <y>673</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1517,7 +1504,7 @@
      <y>577</y>
     </hint>
     <hint type="destinationlabel">
-     <x>-4</x>
+     <x>0</x>
      <y>737</y>
     </hint>
    </hints>

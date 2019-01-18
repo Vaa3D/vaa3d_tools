@@ -29,7 +29,7 @@ public:
 
 	bool histThre;
 	string histThreImgName;
-	int stdFold;
+	float stdFold;
 	bool saveHistThreResults;
 	QString histThreSaveDirQ;
 
@@ -40,7 +40,7 @@ public:
 
 	bool MST;
 	string MSTtreeName;
-	int segLengthLimit;
+	int minNodeNum;
 	bool branchBreak;
 
 	vector<connectedComponent> signalBlobs;

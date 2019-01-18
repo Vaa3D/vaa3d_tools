@@ -153,7 +153,7 @@ public:
 	
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	
-	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre);
+	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1 = nullptr, NeuronSWC* tailNodePtr2 = nullptr);
@@ -330,7 +330,7 @@ inline NeuronTree NeuronStructExplorer::singleDotRemove(const profiledTree& inpu
 	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
 	{
 		if (segIt->second.head == *segIt->second.tails.begin()) continue;
-		else if (segIt->second.nodes.size() <= 2) continue;
+		else if (segIt->second.nodes.size() <= shortSegRemove) continue;
 		else
 		{
 			for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
