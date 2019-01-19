@@ -66,6 +66,16 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 
 enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
 
+struct profiledNode
+{
+	int index;
+	bool front, back;
+	long segID, frontSegID, backSegID, nodeNum, x, y, z;
+
+	double innerProduct;
+	double previousSqr, nextSqr, radAngle, distToMainRoute, turnCost;
+};
+
 struct topoCharacter
 {
 	topoCharacter() {};
@@ -77,7 +87,7 @@ struct topoCharacter
 
 struct segUnit
 {
-	segUnit() : to_be_deted(false) {};
+	segUnit() : to_be_deleted(false) {};
 	//segUnit(const segUnit& sourceSegUnit) {};
 
 	int segID;
@@ -88,7 +98,7 @@ struct segUnit
 	map<int, vector<size_t>> seg_childLocMap;
 	vector<topoCharacter> topoCenters;
 
-	bool to_be_deted;
+	bool to_be_deleted;
 };
 
 struct profiledTree
@@ -170,6 +180,8 @@ public:
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
+
+	static segUnit segmentStraighten(const segUnit& inputSeg);
 
 private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);

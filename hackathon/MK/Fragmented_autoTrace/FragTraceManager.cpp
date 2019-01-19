@@ -143,11 +143,11 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(objBranchBreakTree, this->minNodeNum);
 
-	profiledTree profiledShortCleanedUpTree(shortCleanedUpTree);
+	/*profiledTree profiledShortCleanedUpTree(shortCleanedUpTree);
 	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(profiledShortCleanedUpTree);
-	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
+	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });*/
 
-	NeuronTree finalOutputTree = profiledElongatedTree.tree;
+	NeuronTree finalOutputTree = shortCleanedUpTree;
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";

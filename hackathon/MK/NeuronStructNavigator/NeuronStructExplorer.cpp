@@ -435,7 +435,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			if (*headIt == *tailIt) continue;
 			else
 			{
-				if (currProfiledTree.segs.at(*headIt).to_be_deted || currProfiledTree.segs.at(*tailIt).to_be_deted) continue;
+				if (currProfiledTree.segs.at(*headIt).to_be_deleted || currProfiledTree.segs.at(*tailIt).to_be_deleted) continue;
 
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
@@ -453,8 +453,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
 	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
 	{
-		currProfiledTree.segs[it->first].to_be_deted = true;
-		currProfiledTree.segs[it->second].to_be_deted = true;
+		currProfiledTree.segs[it->first].to_be_deleted = true;
+		currProfiledTree.segs[it->second].to_be_deleted = true;
 		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
@@ -474,7 +474,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			if (*headIt == *tailIt) continue;
 			else
 			{
-				if (currProfiledTree.segs.at(*tailIt).to_be_deted || currProfiledTree.segs.at(*headIt).to_be_deted) continue;
+				if (currProfiledTree.segs.at(*tailIt).to_be_deleted || currProfiledTree.segs.at(*headIt).to_be_deleted) continue;
 
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
@@ -492,8 +492,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
 	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
 	{
-		currProfiledTree.segs[it->first].to_be_deted = true;
-		currProfiledTree.segs[it->second].to_be_deted = true;
+		currProfiledTree.segs[it->first].to_be_deleted = true;
+		currProfiledTree.segs[it->second].to_be_deleted = true;
 		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
@@ -513,7 +513,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			if (*headIt1 == *headIt2) continue;
 			else
 			{
-				if (currProfiledTree.segs.at(*headIt1).to_be_deted || currProfiledTree.segs.at(*headIt2).to_be_deted) continue;
+				if (currProfiledTree.segs.at(*headIt1).to_be_deleted || currProfiledTree.segs.at(*headIt2).to_be_deleted) continue;
 
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
@@ -531,8 +531,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
 	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
 	{
-		currProfiledTree.segs[it->first].to_be_deted = true;
-		currProfiledTree.segs[it->second].to_be_deted = true;
+		currProfiledTree.segs[it->first].to_be_deleted = true;
+		currProfiledTree.segs[it->second].to_be_deleted = true;
 		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], head_head);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
@@ -552,7 +552,7 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			if (*tailIt1 == *tailIt2) continue;
 			else
 			{
-				if (currProfiledTree.segs.at(*tailIt1).to_be_deted || currProfiledTree.segs.at(*tailIt2).to_be_deted) continue;
+				if (currProfiledTree.segs.at(*tailIt1).to_be_deleted || currProfiledTree.segs.at(*tailIt2).to_be_deleted) continue;
 
 				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
 				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
@@ -570,8 +570,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 	this->tileSegConnOrganizer_angle(segAngleMap, connectedSegs, elongConnMap);
 	for (map<int, int>::iterator it = elongConnMap.begin(); it != elongConnMap.end(); ++it)
 	{
-		currProfiledTree.segs[it->first].to_be_deted = true;
-		currProfiledTree.segs[it->second].to_be_deted = true;
+		currProfiledTree.segs[it->first].to_be_deleted = true;
+		currProfiledTree.segs[it->second].to_be_deleted = true;
 		segUnit newSeg = this->segUnitConnect_executer(currProfiledTree.segs[it->first], currProfiledTree.segs[it->second], tail_tail);
 		newSeg.segID = currProfiledTree.segs.size() + 1;
 		while (currProfiledTree.segs.find(newSeg.segID) != currProfiledTree.segs.end()) ++newSeg.segID;
@@ -648,7 +648,7 @@ profiledTree NeuronStructExplorer::segElongate(const profiledTree& inputProfiled
 	{
 		for (map<int, segUnit>::iterator it = outputProfiledTree.segs.begin(); it != outputProfiledTree.segs.end(); ++it)
 		{
-			if (it->second.to_be_deted)
+			if (it->second.to_be_deleted)
 			{
 				//cout << it->first << ": " << it->second.nodes.size() << endl;
 				for (QList<NeuronSWC>::iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
@@ -972,6 +972,132 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 		double radAngle = this->getRadAngle(elongDispUnitVec, connPointUnitVec);
 		return radAngle;
 	}
+}
+
+segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
+{
+	segUnit outputSeg = inputSeg;
+
+	if (inputSeg.nodes.size() <= 3) return outputSeg;
+
+	cout << " seg ID: " << inputSeg.segID << "   number of nodes contained in this segment: " << inputSeg.nodes.size() << endl;
+
+	double segDistSqr = ((inputSeg.nodes.end() - 1)->x - inputSeg.nodes.begin()->x) * ((inputSeg.nodes.end() - 1)->x - inputSeg.nodes.begin()->x) + 
+		((inputSeg.nodes.end() - 1)->y - inputSeg.nodes.begin()->y) * ((inputSeg.nodes.end() - 1)->y - inputSeg.nodes.begin()->y) +
+		((inputSeg.nodes.end() - 1)->z - inputSeg.nodes.begin()->z) * ((inputSeg.nodes.end() - 1)->z - inputSeg.nodes.begin()->z);
+	double segDist = sqrt(segDistSqr);
+	cout << "segment displacement: " << segDist << endl << endl;
+	
+	for (QList<NeuronSWC>::const_iterator check = inputSeg.nodes.begin(); check != inputSeg.nodes.end(); ++check) cout << "[" << check->x << " " << check->y << " " << check->z << "] ";
+	cout << endl;
+
+	vector<profiledNode> pickedNode;
+	double dot, sq1, sq2, dist, turnCost, radAngle, turnCostSum = 0, turnCostMean;
+	double nodeDeviation, nodeHeadDistSqr, nodeHeadRadAngle, nodeToMainDist, nodeToMainDistSum = 0, nodeToMainDistMean;
+	for (QList<NeuronSWC>::const_iterator it = inputSeg.nodes.begin() + 1; it != inputSeg.nodes.end() - 1; ++it)
+	{
+		dot = ((it - 1)->x - it->x) * ((it + 1)->x - it->x) + ((it - 1)->y - it->y) * ((it + 1)->y - it->y) + ((it - 1)->z - it->z) * ((it + 1)->z - it->z);
+		sq1 = ((it - 1)->x - it->x) * ((it - 1)->x - it->x) + ((it - 1)->y - it->y) * ((it - 1)->y - it->y) + ((it - 1)->z - it->z) * ((it - 1)->z - it->z);
+		sq2 = ((it + 1)->x - it->x) * ((it + 1)->x - it->x) + ((it + 1)->y - it->y) * ((it + 1)->y - it->y) + ((it + 1)->z - it->z) * ((it + 1)->z - it->z);
+		if (isnan(acos(dot / sqrt(sq1 * sq2)))) return outputSeg;
+		radAngle = acos(dot / sqrt(sq1 * sq2));
+		
+		nodeDeviation = (it->x - inputSeg.nodes.begin()->x) * ((inputSeg.nodes.end() - 1)->x - inputSeg.nodes.begin()->x) +
+			(it->y - inputSeg.nodes.begin()->y) * ((inputSeg.nodes.end() - 1)->y - inputSeg.nodes.begin()->y) +
+			(it->z - inputSeg.nodes.begin()->z) * ((inputSeg.nodes.end() - 1)->z - inputSeg.nodes.begin()->z);
+		nodeHeadDistSqr = (it->x - inputSeg.nodes.begin()->x) * (it->x - inputSeg.nodes.begin()->x) + 
+			(it->y - inputSeg.nodes.begin()->y) * (it->y - inputSeg.nodes.begin()->y) + 
+			(it->z - inputSeg.nodes.begin()->z) * (it->z - inputSeg.nodes.begin()->z);
+		nodeHeadRadAngle = PI - acos(nodeDeviation / sqrt(segDistSqr * nodeHeadDistSqr));
+		nodeToMainDist = sqrt(nodeHeadDistSqr) * sin(nodeHeadRadAngle);
+		nodeToMainDistSum = nodeToMainDistSum + nodeToMainDist;
+		cout << "       d(node-main):" << nodeToMainDist << " radian/pi:" << (radAngle / PI) << " turning cost:" << (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI) << " " << it->x << " " << it->y << " " << it->z << endl;
+
+		if ((radAngle / PI) < 0.6) // Detecting sharp turns and distance outliers => a) obviously errorneous depth situation
+		{
+			profiledNode sharp;
+			sharp.x = it->x; sharp.y = it->y; sharp.z = it->z;
+			cout << "this node is picked" << endl;
+
+			sharp.segID = inputSeg.segID;
+			sharp.distToMainRoute = nodeToMainDist;
+			sharp.previousSqr = sq1; sharp.nextSqr = sq2; sharp.innerProduct = dot;
+			sharp.radAngle = radAngle;
+			sharp.index = int(it - inputSeg.nodes.begin());
+			sharp.turnCost = (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI);
+
+			pickedNode.push_back(sharp);
+			turnCostSum = turnCostSum + sharp.turnCost;
+		}
+	}
+	if (pickedNode.empty()) return outputSeg;
+
+	nodeToMainDistMean = nodeToMainDistSum / (inputSeg.nodes.size() - 2);
+	turnCostMean = turnCostSum / pickedNode.size();
+
+	cout << endl << endl << "  ==== start deleting nodes... " << endl;
+	int delete_count = 0;
+	vector<int> delLocs;
+	for (vector<profiledNode>::iterator it = pickedNode.begin(); it != pickedNode.end(); ++it)
+	{
+		cout << "  Avg(d(node_main)):" << nodeToMainDistMean << " d(node-main):" << it->distToMainRoute << " Avg(turning cost):" << turnCostMean << " turning cost:" << it->turnCost;
+		cout << " [" << it->x << " " << it->y << " " << it->z << "] " << endl;
+		if (it->distToMainRoute >= nodeToMainDistMean || it->turnCost >= turnCostMean || it->distToMainRoute >= segDist)
+		{
+			outputSeg.nodes[it->index + 1].parent = -1;
+			delLocs.push_back(it->index);
+		}
+	}
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<int>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputSeg.nodes.erase(outputSeg.nodes.begin() + ptrdiff_t(*it));
+	delLocs.clear();
+
+	cout << endl << "  ==== cheking angles... " << endl;
+	int deleteCount2;
+	do
+	{
+		deleteCount2 = 0;
+		for (QList<NeuronSWC>::iterator it = outputSeg.nodes.begin() + 1; it != outputSeg.nodes.end() - 1; ++it)
+		{
+			double dot2 = (it->x - (it - 1)->x) * ((it + 1)->x - it->x) + (it->y - (it - 1)->y) * ((it + 1)->y - it->y) + (it->z - (it - 1)->z) * ((it + 1)->z - it->z);
+			double sq1_2 = ((it - 1)->x - it->x) * ((it - 1)->x - it->x) + ((it - 1)->y - it->y) * ((it - 1)->y - it->y) + ((it - 1)->z - it->z) * ((it - 1)->z - it->z);
+			double sq2_2 = ((it + 1)->x - it->x) * ((it + 1)->x - it->x) + ((it + 1)->y - it->y) * ((it + 1)->y - it->y) + ((it + 1)->z - it->z) * ((it + 1)->z - it->z);
+			if (isnan(acos(dot2 / sqrt(sq1_2 * sq2_2)))) break;
+			double radAngle_2 = acos(dot2 / sqrt(sq1_2 * sq2_2));
+			cout << "2nd rad Angle:" << radAngle_2 << " [" << it->x << " " << it->y << " " << it->z << "]" << endl;
+
+			if ((radAngle_2 / PI) * 180 > 75)
+			{
+				if (sqrt(sq1_2) > (1 / 10) * sqrt(sq2_2))
+				{
+					++deleteCount2;
+					cout << "delete " << " [" << it->x << " " << it->y << " " << it->z << "] " << deleteCount2 << endl;
+					if ((outputSeg.nodes.size() - deleteCount2) <= 2)
+					{
+						--deleteCount2;
+						break;
+					}
+
+					(it + 1)->parent = -1;
+					delLocs.push_back(int(it - outputSeg.nodes.begin()));
+				}
+			}
+		}
+		sort(delLocs.rbegin(), delLocs.rend());
+		for (vector<int>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputSeg.nodes.erase(outputSeg.nodes.begin() + ptrdiff_t(*it));
+		delLocs.clear();
+		cout << "deleted nodes: " << deleteCount2 << "\n=================" << endl;
+	} while (deleteCount2 > 0);
+
+	size_t label = 1;
+	cout << "number of nodes after straightening process: " << outputSeg.nodes.size() << " ( segID = " << outputSeg.segID << " )" << endl;
+	//cout << "seg num: " << curImgPtr->tracedNeuron.seg.size() << endl;
+	for (QList<NeuronSWC>::iterator it = outputSeg.nodes.begin() + 1; it != outputSeg.nodes.end() - 1; ++it)
+	{
+		if (it->parent == -1) it->parent = (it - 1)->n;
+	}
+
+	return outputSeg;
 }
 // ============================================= End of [Geometry] =============================================
 
