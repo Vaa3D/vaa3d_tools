@@ -17,6 +17,9 @@ SOURCES	+= \
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
+HEADERS	+= $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+SOURCES	+= $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+
 #HEADERS	+= $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
 #SOURCES	+= $$VAA3DPATH/../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
 
