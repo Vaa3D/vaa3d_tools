@@ -54,17 +54,16 @@ public:
 
 
 	/***************** Basic Neuron Struct Files Operations *****************/
-	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
-
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb);
-	
-	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+
 	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale); // NOTE: the scaling factor is put as dividers!!
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
+	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); // Align inputTree with refTree.
 	
+	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); // Subtract refTree from targetTree.
@@ -72,11 +71,12 @@ public:
 	
 
 	/***************** SWC Tracing-related Operations *****************/
+	// Extract a subtree that is the upstream of a given starting node from the original tree.
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, const map<int, size_t>& node2locMap);
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, vector<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
 
-	// Extract a subtree that is the downstream of the original tree with a given starting node.
+	// Extract a subtree that is the downstream of a given starting node from the original tree.
 	static void downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap);
 	
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
@@ -138,7 +138,7 @@ public:
 	/**********************************************************************************************/
 
 
-	/***************** Miscellaneious *****************/
+	/***************** Miscellaneous *****************/
 	static inline void linkerFileGen_forSWC(string swcFullFileName);
 	/**************************************************/
 };

@@ -1192,7 +1192,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase1\\croppedTest.tif";
+		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase2\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1226,7 +1226,7 @@ int main(int argc, char* argv[])
 
 		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 3, mipPtr);
 		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase1\\test.swc", testTree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase2\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1304,7 +1304,7 @@ int main(int argc, char* argv[])
 		profiledTree noSpikeProfiledFinalTree = NeuronStructExplorer::spikeRemove(profiledFinalTree);
 		//NeuronTree noSpikeShiftedTree = NeuronStructUtil::swcShift(smoothedProfiledFinalTree.tree, 1, 1, 1);
 
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase1\\testCroppedCentroidTree.swc", noSpikeProfiledFinalTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase2\\testCroppedCentroidTree.swc", noSpikeProfiledFinalTree.tree);
 	}
 
 	return 0;

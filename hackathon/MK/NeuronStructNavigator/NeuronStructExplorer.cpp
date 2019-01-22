@@ -109,6 +109,9 @@ void profiledTree::addTopoUnit(int nodeID)
 	this->topoList.insert(pair<int, topoCharacter>(nodeID, topoUnit));
 }
 
+
+
+/* ================================ Constructors and Basic Data/Function Members ================================ */
 NeuronStructExplorer::NeuronStructExplorer(QString inputFileName)
 {
 	QStringList fileNameParse1 = inputFileName.split(".");
@@ -284,6 +287,18 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 	}
 }
 
+void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
+{
+	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
+
+	this->segmentList.clear();
+	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
+}
+/* ============================ END of [Constructors and Basic Data/Function Members] ============================ */
+
+
+
+/* ================================== Neuron Struct Processing Functions ================================== */
 void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength)
 {
 	size_t maxNodeID = 0;
@@ -340,9 +355,183 @@ void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, p
 		outputProfiledTree.tree.listNeuron.append(newSegNodes);
 	}
 }
+/* ================================== END of [Neuron Struct Processing Functions] ================================== */
 
 
-// ========================================= Segment Analysis / Operations =========================================
+
+/* ========================================= Auto-tracing Related Neuron Struct Functions ========================================= */
+NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTree)
+{
+	NeuronTree MSTtrees;
+	undirectedGraph graph(inputTree.listNeuron.size());
+	//cout << "processing nodes: \n -- " << endl;
+	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
+	{
+
+		float x1, y1, z1;
+		x1 = inputTree.listNeuron.at(i).x;
+		y1 = inputTree.listNeuron.at(i).y;
+		z1 = inputTree.listNeuron.at(i).z;
+		for (int j = 0; j < inputTree.listNeuron.size(); ++j)
+		{
+			float x2, y2, z2;
+			x2 = inputTree.listNeuron.at(j).x;
+			y2 = inputTree.listNeuron.at(j).y;
+			z2 = inputTree.listNeuron.at(j).z;
+
+			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + zRATIO * zRATIO * double(z1 - z2) * double(z1 - z2));
+			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
+			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
+		}
+
+		//if (i % 1000 == 0) cout << i << " ";
+	}
+	//cout << endl;
+
+	vector <boost::graph_traits<undirectedGraph>::vertex_descriptor > p(num_vertices(graph));
+	boost::prim_minimum_spanning_tree(graph, &p[0]);
+	NeuronTree MSTtree;
+	QList<NeuronSWC> listNeuron;
+	QHash<int, int>  hashNeuron;
+	listNeuron.clear();
+	hashNeuron.clear();
+
+	for (size_t ii = 0; ii != p.size(); ++ii)
+	{
+		int pn;
+		if (p[ii] == ii) pn = -1;
+		else pn = p[ii] + 1;
+
+		NeuronSWC S;
+		S.n = ii + 1;
+		S.type = 7;
+		S.x = inputTree.listNeuron.at(ii).x;
+		S.y = inputTree.listNeuron.at(ii).y;
+		S.z = inputTree.listNeuron.at(ii).z;
+		S.r = 1;
+		S.pn = pn;
+		listNeuron.append(S);
+		hashNeuron.insert(S.n, listNeuron.size() - 1);
+	}
+	MSTtree.listNeuron = listNeuron;
+	MSTtree.hashNeuron = hashNeuron;
+
+	return MSTtree;
+}
+
+NeuronTree NeuronStructExplorer::SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength, float zDivideNum)
+{
+	map<string, QList<NeuronSWC>> tiledSWCmap;
+
+	QList<NeuronSWC> tileSWCList;
+	tileSWCList.clear();
+	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
+	{
+		int tileXlabel = int(floor(it->x / tileLength));
+		int tileYlabel = int(floor(it->y / tileLength));
+		int tileZlabel = int(floor(it->z / ((tileLength / zRATIO) / zDivideNum)));
+		string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
+		tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));
+		tiledSWCmap[swcTileKey].push_back(*it);
+	}
+	cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
+
+	NeuronTree assembledTree;
+	for (map<string, QList<NeuronSWC>>::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
+	{
+		NeuronTree tileTree;
+		tileTree.listNeuron = it->second;
+		NeuronTree tileMSTtree = this->SWC2MSTtree(tileTree);
+
+		int currnodeNum = assembledTree.listNeuron.size();
+		for (QList<NeuronSWC>::iterator nodeIt = tileMSTtree.listNeuron.begin(); nodeIt != tileMSTtree.listNeuron.end(); ++nodeIt)
+		{
+			nodeIt->n = nodeIt->n + currnodeNum;
+			if (nodeIt->parent != -1)
+			{
+				nodeIt->parent = nodeIt->parent + currnodeNum;
+				//cout << "  " << nodeIt->parent << " " << currnodeNum << endl;
+			}
+
+			//cout << nodeIt->n << " " << nodeIt->parent << endl;
+			assembledTree.listNeuron.push_back(*nodeIt);
+		}
+	}
+
+	return assembledTree;
+}
+
+NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre, bool spikeRemove)
+{
+	// -- This method breaks all branching points of a MST-connected tree.
+	// -- When the value of spikeRemove is true, it eliminates spikes on a main route without breaking it. The default value is true. 
+
+	profiledTree outputProfiledTree(inputProfiledTree.tree);
+
+	vector<size_t> spikeLocs;
+	if (spikeRemove)
+	{
+		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
+		{
+			if (outputProfiledTree.node2childLocMap.find(it->n) != outputProfiledTree.node2childLocMap.end())
+			{
+				vector<size_t> childLocs = outputProfiledTree.node2childLocMap.at(it->n);
+				if (childLocs.size() >= 2)
+				{
+					int nodeRemoveCount = 0;
+					for (vector<size_t>::iterator locIt = childLocs.begin(); locIt != childLocs.end(); ++locIt)
+					{
+						if (outputProfiledTree.node2childLocMap.find(outputProfiledTree.tree.listNeuron.at(*locIt).n) == outputProfiledTree.node2childLocMap.end())
+						{
+							double spikeDist = sqrt((outputProfiledTree.tree.listNeuron.at(*locIt).x - it->x) * (outputProfiledTree.tree.listNeuron.at(*locIt).x - it->x) +
+								(outputProfiledTree.tree.listNeuron.at(*locIt).y - it->y) * (outputProfiledTree.tree.listNeuron.at(*locIt).y - it->y) +
+								(outputProfiledTree.tree.listNeuron.at(*locIt).z - it->z) * (outputProfiledTree.tree.listNeuron.at(*locIt).z - it->z) * zRATIO * zRATIO);
+							if (spikeDist <= spikeThre) // Take out splikes.
+							{
+								spikeLocs.push_back(*locIt);
+								++nodeRemoveCount;
+							}
+						}
+					}
+
+					if (nodeRemoveCount == childLocs.size() - 1) continue; // If there is only 1 child left after taking out all spikes, then this node is supposed to be on the main route.
+					else
+					{
+						for (vector<size_t>::iterator locCheckIt = childLocs.begin(); locCheckIt != childLocs.end(); ++locCheckIt)
+						{
+							if (find(spikeLocs.begin(), spikeLocs.end(), *locCheckIt) == spikeLocs.end())
+								outputProfiledTree.tree.listNeuron[*locCheckIt].parent = -1; // 'at' operator treats the container as const, and cannot assign values. Therefore, use [] instead.
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
+		{
+			if (outputProfiledTree.node2childLocMap.find(it->n) != outputProfiledTree.node2childLocMap.end())
+			{
+				if (outputProfiledTree.node2childLocMap.at(it->n).size() >= 2)
+				{
+					for (vector<size_t>::const_iterator locIt = outputProfiledTree.node2childLocMap.at(it->n).begin(); locIt != outputProfiledTree.node2childLocMap.at(it->n).end(); ++locIt)
+						outputProfiledTree.tree.listNeuron[*locIt].parent = -1;
+				}
+			}
+		}
+	}
+
+	if (spikeRemove) // Erase spike nodes from outputTree.listNeuron.
+	{
+		sort(spikeLocs.rbegin(), spikeLocs.rend());
+		for (vector<size_t>::iterator delIt = spikeLocs.begin(); delIt != spikeLocs.end(); ++delIt)
+			outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*delIt));
+	}
+
+	return outputProfiledTree.tree;
+}
+
 segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1, NeuronSWC* tailNodePtr2)
 {
 	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
@@ -793,11 +982,11 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 	return outputProfiledTree;
 }
-// ===================================== END of [Segment Analysis / Operations] =====================================
+/* ===================================== END of [Auto-tracing Related Neuron Struct Functions] ===================================== */
 
 
 
-// ================================================== Geometry =================================================
+/* ================================================== Geometry ================================================= */
 double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
 {
 	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
@@ -1099,183 +1288,11 @@ segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
 
 	return outputSeg;
 }
-// ============================================= End of [Geometry] =============================================
-
-NeuronTree NeuronStructExplorer::SWC2MSTtree(NeuronTree const& inputTree)
-{
-	NeuronTree MSTtrees;
-	undirectedGraph graph(inputTree.listNeuron.size());
-	//cout << "processing nodes: \n -- " << endl;
-	for (int i = 0; i < inputTree.listNeuron.size(); ++i)
-	{
-
-		float x1, y1, z1;
-		x1 = inputTree.listNeuron.at(i).x;
-		y1 = inputTree.listNeuron.at(i).y;
-		z1 = inputTree.listNeuron.at(i).z;
-		for (int j = 0; j < inputTree.listNeuron.size(); ++j)
-		{
-			float x2, y2, z2;
-			x2 = inputTree.listNeuron.at(j).x;
-			y2 = inputTree.listNeuron.at(j).y;
-			z2 = inputTree.listNeuron.at(j).z;
-
-			double Vedge = sqrt(double(x1 - x2) * double(x1 - x2) + double(y1 - y2) * double(y1 - y2) + zRATIO * zRATIO * double(z1 - z2) * double(z1 - z2));
-			pair<undirectedGraph::edge_descriptor, bool> edgeQuery = boost::edge(i, j, graph);
-			if (!edgeQuery.second && i != j) boost::add_edge(i, j, lastVoted(i, weights(Vedge)), graph);
-		}
-
-		//if (i % 1000 == 0) cout << i << " ";
-	}
-	//cout << endl;
-
-	vector <boost::graph_traits<undirectedGraph>::vertex_descriptor > p(num_vertices(graph));
-	boost::prim_minimum_spanning_tree(graph, &p[0]);
-	NeuronTree MSTtree;
-	QList<NeuronSWC> listNeuron;
-	QHash<int, int>  hashNeuron;
-	listNeuron.clear();
-	hashNeuron.clear();
-
-	for (size_t ii = 0; ii != p.size(); ++ii)
-	{
-		int pn;
-		if (p[ii] == ii) pn = -1;
-		else pn = p[ii] + 1;
-
-		NeuronSWC S;
-		S.n = ii + 1;
-		S.type = 7;
-		S.x = inputTree.listNeuron.at(ii).x;
-		S.y = inputTree.listNeuron.at(ii).y;
-		S.z = inputTree.listNeuron.at(ii).z;
-		S.r = 1;
-		S.pn = pn;
-		listNeuron.append(S);
-		hashNeuron.insert(S.n, listNeuron.size() - 1);
-	}
-	MSTtree.listNeuron = listNeuron;
-	MSTtree.hashNeuron = hashNeuron;
-
-	return MSTtree;
-}
-
-NeuronTree NeuronStructExplorer::SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength, float zDivideNum)
-{
-	map<string, QList<NeuronSWC>> tiledSWCmap;
-
-		QList<NeuronSWC> tileSWCList;
-		tileSWCList.clear();
-		for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
-		{
-			int tileXlabel = int(floor(it->x / tileLength));
-			int tileYlabel = int(floor(it->y / tileLength));
-			int tileZlabel = int(floor(it->z / ((tileLength / zRATIO) / zDivideNum)));
-			string swcTileKey = to_string(tileXlabel) + "_" + to_string(tileYlabel) + "_" + to_string(tileZlabel);
-			tiledSWCmap.insert(pair<string, QList<NeuronSWC>>(swcTileKey, tileSWCList));
-			tiledSWCmap[swcTileKey].push_back(*it);
-		}
-		cout << "tiledSWCmap size = " << tiledSWCmap.size() << endl;
-
-		NeuronTree assembledTree;
-		for (map<string, QList<NeuronSWC>>::iterator it = tiledSWCmap.begin(); it != tiledSWCmap.end(); ++it)
-		{
-			NeuronTree tileTree;
-			tileTree.listNeuron = it->second;
-			NeuronTree tileMSTtree = this->SWC2MSTtree(tileTree);
-
-			int currnodeNum = assembledTree.listNeuron.size();
-			for (QList<NeuronSWC>::iterator nodeIt = tileMSTtree.listNeuron.begin(); nodeIt != tileMSTtree.listNeuron.end(); ++nodeIt)
-			{
-				nodeIt->n = nodeIt->n + currnodeNum;
-				if (nodeIt->parent != -1)
-				{
-					nodeIt->parent = nodeIt->parent + currnodeNum;
-					//cout << "  " << nodeIt->parent << " " << currnodeNum << endl;
-				}
-
-				//cout << nodeIt->n << " " << nodeIt->parent << endl;
-				assembledTree.listNeuron.push_back(*nodeIt);
-			}
-		}
-
-		return assembledTree;
-}
-
-NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre, bool spikeRemove)
-{
-	// -- This method breaks all branching points of a MST-connected tree.
-	// -- When the value of spikeRemove is true, it eliminates spikes on a main route without breaking it. The default value is true. 
-
-	profiledTree outputProfiledTree(inputProfiledTree.tree);
-
-	vector<size_t> spikeLocs;
-	if (spikeRemove)
-	{
-		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
-		{
-			if (outputProfiledTree.node2childLocMap.find(it->n) != outputProfiledTree.node2childLocMap.end())
-			{
-				vector<size_t> childLocs = outputProfiledTree.node2childLocMap.at(it->n);
-				if (childLocs.size() >= 2)
-				{
-					int nodeRemoveCount = 0;
-					for (vector<size_t>::iterator locIt = childLocs.begin(); locIt != childLocs.end(); ++locIt)
-					{
-						if (outputProfiledTree.node2childLocMap.find(outputProfiledTree.tree.listNeuron.at(*locIt).n) == outputProfiledTree.node2childLocMap.end())
-						{
-							double spikeDist = sqrt((outputProfiledTree.tree.listNeuron.at(*locIt).x - it->x) * (outputProfiledTree.tree.listNeuron.at(*locIt).x - it->x) +
-								(outputProfiledTree.tree.listNeuron.at(*locIt).y - it->y) * (outputProfiledTree.tree.listNeuron.at(*locIt).y - it->y) +
-								(outputProfiledTree.tree.listNeuron.at(*locIt).z - it->z) * (outputProfiledTree.tree.listNeuron.at(*locIt).z - it->z) * zRATIO * zRATIO);
-							if (spikeDist <= spikeThre) // Take out splikes.
-							{
-								spikeLocs.push_back(*locIt);
-								++nodeRemoveCount;
-							}
-						}
-					}
-
-					if (nodeRemoveCount == childLocs.size() - 1) continue; // If there is only 1 child left after taking out all spikes, then this node is supposed to be on the main route.
-					else
-					{
-						for (vector<size_t>::iterator locCheckIt = childLocs.begin(); locCheckIt != childLocs.end(); ++locCheckIt)
-						{
-							if (find(spikeLocs.begin(), spikeLocs.end(), *locCheckIt) == spikeLocs.end())
-								outputProfiledTree.tree.listNeuron[*locCheckIt].parent = -1; // 'at' operator treats the container as const, and cannot assign values. Therefore, use [] instead.
-						}
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
-		{
-			if (outputProfiledTree.node2childLocMap.find(it->n) != outputProfiledTree.node2childLocMap.end())
-			{
-				if (outputProfiledTree.node2childLocMap.at(it->n).size() >= 2)
-				{
-					for (vector<size_t>::const_iterator locIt = outputProfiledTree.node2childLocMap.at(it->n).begin(); locIt != outputProfiledTree.node2childLocMap.at(it->n).end(); ++locIt)
-						outputProfiledTree.tree.listNeuron[*locIt].parent = -1;
-				}
-			}
-		}
-	}
-
-	if (spikeRemove) // Erase spike nodes from outputTree.listNeuron.
-	{
-		sort(spikeLocs.rbegin(), spikeLocs.rend());
-		for (vector<size_t>::iterator delIt = spikeLocs.begin(); delIt != spikeLocs.end(); ++delIt)
-			outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*delIt));
-	}
-
-	return outputProfiledTree.tree;
-}
+/* ============================================= End of [Geometry] ============================================= */
 
 
 
-// =================================== Neuron Struct Refining Method =================================== //
+/* ====================================== Neuron Struct Refining Method ====================================== */
 profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree)
 {
 	QList<NeuronSWC> outputList = inputProfiledTree.tree.listNeuron;
@@ -1298,7 +1315,7 @@ profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiled
 
 	return outputProfiledTree;
 }
-// =================================================================================================== //
+/* ================================== END of [Neuron Struct Refining Method] ================================== */
 
 
 
@@ -1452,12 +1469,4 @@ void NeuronStructExplorer::shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree
 	}
 	this->nodeDistCDF[0] = this->nodeDistPDF[0];
 	for (int i = 1; i < binNum; ++i) this->nodeDistCDF[i] = this->nodeDistCDF[i - 1] + nodeDistPDF[i];
-}
-
-void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
-{
-	// -- This function used get_link_map and decompose in v_neuronswc.cpp to get segment hierarchical information.
-
-	this->segmentList.clear();
-	this->segmentList = NeuronTree__2__V_NeuronSWC_list(*inputTreePtr);
 }

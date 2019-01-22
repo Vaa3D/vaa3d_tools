@@ -149,9 +149,9 @@ public:
 	/***************** Neuron Struct Processing Functions *****************/
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
 	
-	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
+	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
 	/**********************************************************************/
 
 
@@ -161,11 +161,10 @@ public:
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	
-	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
-	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	
+	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1 = nullptr, NeuronSWC* tailNodePtr2 = nullptr);
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
@@ -189,8 +188,13 @@ private:
 	/********************************************/
 
 
-	/********* Distance-based SWC analysis *********/
+	/***************** Neuron Struct Refining Method *****************/
 public:
+	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
+	/*****************************************************************/
+
+
+	/********* Distance-based SWC analysis *********/
 	vector<vector<float>> FPsList;
 	vector<vector<float>> FNsList;
 	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
@@ -201,11 +205,6 @@ public:
 	map<int, long int> nodeDistPDF;
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
 	/***********************************************/
-
-
-	/***************** Neuron Struct Refining Method *****************/
-	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
-	/*****************************************************************/
 };
 
 inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double distThre)

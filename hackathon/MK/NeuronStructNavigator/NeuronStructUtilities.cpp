@@ -32,6 +32,7 @@
 
 using namespace boost;
 
+/* =============================== Basic Neuron Struct Files Operations =============================== */
 NeuronTree NeuronStructUtil::swcRegister(NeuronTree& inputTree, const NeuronTree& refTree)
 {
 	double xShift, yShift, zShift;
@@ -110,64 +111,6 @@ void NeuronStructUtil::swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>
 		for (vector<ptrdiff_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) inputList.erase(inputList.begin() + *delIt);
 		delLocs.clear();
 	}
-}
-
-void NeuronStructUtil::swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
-{
-	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
-	// thickness * 2 + 1 = the number of consecutive z slices for one SWC node to appear. This is for the purpose producing continous masks.
-
-	QList<NeuronSWC> inputList = inputTree.listNeuron;
-	int zMax = 0;
-	ptrdiff_t thicknessPtrDiff = ptrdiff_t(thickness); // Determining how many z sections to be included in 1 single slice.
-	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
-	{
-		it->z = round(it->z);
-		if (it->z >= zMax) zMax = it->z;
-	}
-
-	QList<NeuronTree> slicedTrees; // Determining number of sliced trees in the list.
-	for (int i = 0; i < zMax; ++i)
-	{
-		NeuronTree nt;
-		slicedTrees.push_back(nt);
-	}
-
-	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
-	{
-		NeuronSWC currNode = *it;
-		ptrdiff_t sliceNo = ptrdiff_t(it->z);
-		(slicedTrees.begin() + sliceNo - 1)->listNeuron.push_back(currNode); // SWC starts with 1.
-		float currZ = currNode.z;
-
-		// -- Project +/- thickness slices onto the same plane, making sure the tube can be connected accross planes. -- //
-		vector<ptrdiff_t> sectionNums;
-		for (ptrdiff_t ptri = 1; ptri <= thicknessPtrDiff; ++ptri)
-		{
-			ptrdiff_t minusDiff = sliceNo - ptri;
-			ptrdiff_t plusDiff = sliceNo + ptri;
-
-			if (minusDiff < 0) continue;
-			else sectionNums.push_back(minusDiff);
-
-			if (plusDiff > ptrdiff_t(zMax)) continue;
-			else sectionNums.push_back(plusDiff);
-		}
-		for (vector<ptrdiff_t>::iterator ptrIt = sectionNums.begin(); ptrIt != sectionNums.end(); ++ptrIt)
-		{
-			//cout << "current node z:" << currNode.z << " " << *ptrIt << "| ";
-			NeuronSWC newNode = currNode;
-			newNode.z = float(*ptrIt);
-			(slicedTrees.begin() + *ptrIt - 1)->listNeuron.push_back(newNode);
-		}
-		//cout << endl;
-
-		sectionNums.clear();
-		// ------------------------------------------------------------------------------------------------------------- //
-	}
-
-	for (QList<NeuronTree>::iterator it = slicedTrees.begin(); it != slicedTrees.end(); ++it)
-		outputTrees.push_back(*it);
 }
 
 map<int, QList<NeuronSWC>> NeuronStructUtil::swcSplitByType(const NeuronTree& inputTree)
@@ -255,10 +198,11 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 
 	return outputTree;
 }
+/* =========================== END of [Basic Neuron Struct Files Operations] =========================== */
 
 
 
-// ======================================= SWC Tracing-related Operations =======================================
+/* ================================== SWC Tracing-related Operations ================================== */
 void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& subTreeList, const NeuronSWC& startingNode, map<int, size_t>& node2locMap, map<int, vector<size_t>>& node2childLocMap)
 {
 	NeuronStructUtil::node2loc_node2childLocMap(inputList, node2locMap, node2childLocMap);
@@ -313,10 +257,11 @@ void NeuronStructUtil::wholeSingleTree_extract(const QList<NeuronSWC>& inputList
 		NeuronStructUtil::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
 	}
 }
-//============================================================================================================
+/* ================================== END of [SWC Tracing-related Operations] ================================== */
 
 
-// ========================================== SWC Profiling Methods ==========================================
+
+// ====================================== Neuron Struct Profiling Methods ====================================== */
 QList<NeuronSWC> NeuronStructUtil::removeRednNode(const NeuronTree& inputTree)
 {
 	// -- This method removes dupliated nodes.
@@ -533,11 +478,11 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 
 	return outputTree;
 }
-// ===================================== END of [SWC Profiling Methods] =====================================
+/* ================================== END of [Neuron Struct Profiling Methods] ================================== */
 
 
 
-// =================================== SWC <-> Connected Components ====================================
+/* ================================== SWC <-> ImgAnalyzer::connectedComponents ================================== */
 vector<connectedComponent> NeuronStructUtil::swc2signal2DBlobs(const NeuronTree& inputTree)
 {
 	// -- Finds signal blobs "slice by slice" from input NeuronTree. Each slice is independent to one another.
@@ -887,11 +832,11 @@ NeuronTree NeuronStructUtil::blobs2tree(const vector<connectedComponent>& inputc
 
 	return outputTree;
 }
-// =============================== END of [SWC <-> Connected Components] ===============================
+/* =============================== END of [SWC <-> ImgAnalyzer::connectedComponents] =============================== */
 
 
 
-// ==================================== Neuron Struct Clustering Methods ========================================
+/* ==================================== Neuron Struct Clustering Methods ======================================== */
 vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronTree& inputTree, float dist)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
@@ -1035,7 +980,7 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 
 	return outputConnCompList;
 }
-// ================================ END of [Neuron Struct Clustering Methods] ===================================
+/* ==================================== END of [Neuron Struct Clustering Methods] ==================================== */
 
 
 
@@ -1194,5 +1139,63 @@ void NeuronStructUtil::bkgNode_Gen_somaArea(const NeuronTree& intputTree, Neuron
 			outputTree.listNeuron.push_back(newBkgNode);
 		}
 	}
+}
+
+void NeuronStructUtil::swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness)
+{
+	// -- Dissemble SWC files into "slices." Each outputSWC file represents only 1 z slice.
+	// thickness * 2 + 1 = the number of consecutive z slices for one SWC node to appear. This is for the purpose producing continous masks.
+
+	QList<NeuronSWC> inputList = inputTree.listNeuron;
+	int zMax = 0;
+	ptrdiff_t thicknessPtrDiff = ptrdiff_t(thickness); // Determining how many z sections to be included in 1 single slice.
+	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+	{
+		it->z = round(it->z);
+		if (it->z >= zMax) zMax = it->z;
+	}
+
+	QList<NeuronTree> slicedTrees; // Determining number of sliced trees in the list.
+	for (int i = 0; i < zMax; ++i)
+	{
+		NeuronTree nt;
+		slicedTrees.push_back(nt);
+	}
+
+	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
+	{
+		NeuronSWC currNode = *it;
+		ptrdiff_t sliceNo = ptrdiff_t(it->z);
+		(slicedTrees.begin() + sliceNo - 1)->listNeuron.push_back(currNode); // SWC starts with 1.
+		float currZ = currNode.z;
+
+		// -- Project +/- thickness slices onto the same plane, making sure the tube can be connected accross planes. -- //
+		vector<ptrdiff_t> sectionNums;
+		for (ptrdiff_t ptri = 1; ptri <= thicknessPtrDiff; ++ptri)
+		{
+			ptrdiff_t minusDiff = sliceNo - ptri;
+			ptrdiff_t plusDiff = sliceNo + ptri;
+
+			if (minusDiff < 0) continue;
+			else sectionNums.push_back(minusDiff);
+
+			if (plusDiff > ptrdiff_t(zMax)) continue;
+			else sectionNums.push_back(plusDiff);
+		}
+		for (vector<ptrdiff_t>::iterator ptrIt = sectionNums.begin(); ptrIt != sectionNums.end(); ++ptrIt)
+		{
+			//cout << "current node z:" << currNode.z << " " << *ptrIt << "| ";
+			NeuronSWC newNode = currNode;
+			newNode.z = float(*ptrIt);
+			(slicedTrees.begin() + *ptrIt - 1)->listNeuron.push_back(newNode);
+		}
+		//cout << endl;
+
+		sectionNums.clear();
+		// ------------------------------------------------------------------------------------------------------------- //
+	}
+
+	for (QList<NeuronTree>::iterator it = slicedTrees.begin(); it != slicedTrees.end(); ++it)
+		outputTrees.push_back(*it);
 }
 /* =================================== Volumetric SWC sampling methods =================================== */
