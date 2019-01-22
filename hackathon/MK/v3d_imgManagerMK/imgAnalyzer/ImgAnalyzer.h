@@ -32,6 +32,8 @@ class ImgAnalyzer
 public:
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
+	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
+	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);
 
 	myImg1DPtr connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
 	myImg1DPtr connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
@@ -55,13 +57,9 @@ public:
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
 
-	
 	/******************************************************/
 
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
-
-	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
-	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);
 };
 
 inline void ImgAnalyzer::ChebyshevCenter(set<vector<int>> allCoords, float center[])

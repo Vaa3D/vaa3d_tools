@@ -6,6 +6,7 @@
 // ======================================= Image Segmentation ======================================= //
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {
+	// -- This method finds connected components from a given 2D or 3D image.
 	// -- For the simplicity when specifying an element in the slice, I decided to use 2D array to represent each slice: vector<unsigned char**>.
 
 	vector<connectedComponent> connList2D;
@@ -412,6 +413,44 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	return outputConnCompList;
 }
 
+myImg1DPtr ImgAnalyzer::connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
+{
+	// -- This method creates binary 2D mask from a given connected component list.
+
+	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i) output1Dptr.get()[i] = 0;
+
+	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+				output1Dptr.get()[imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
+		}
+	}
+
+	return output1Dptr;
+}
+
+myImg1DPtr ImgAnalyzer::connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
+{
+	// -- This method creates binary 3D mask from a given connected component list.
+
+	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1] * imgDims[2]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[1] * imgDims[2]; ++i) output1Dptr.get()[i] = 0;
+
+	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
+	{
+		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
+		{
+			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
+				output1Dptr.get()[imgDims[0] * imgDims[1] * pointIt->at(2) + imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
+		}
+	}
+
+	return output1Dptr;
+}
+
 set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[])
 {
 	set<vector<int>> dendriteSigSet;
@@ -497,47 +536,20 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 
 	return dendriteSigSet;
 }
-
-myImg1DPtr ImgAnalyzer::connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
-{
-	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1]]);
-	for (size_t i = 0; i < imgDims[0] * imgDims[1]; ++i) output1Dptr.get()[i] = 0;
-
-	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
-	{
-		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
-		{
-			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
-				output1Dptr.get()[imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
-		}
-	}
-
-	return output1Dptr;
-}
-
-myImg1DPtr ImgAnalyzer::connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[])
-{
-	myImg1DPtr output1Dptr(new unsigned char[imgDims[0] * imgDims[1] * imgDims[2]]);
-	for (size_t i = 0; i < imgDims[0] * imgDims[1] * imgDims[2]; ++i) output1Dptr.get()[i] = 0;
-
-	for (vector<connectedComponent>::const_iterator compIt = inputComponentList.begin(); compIt != inputComponentList.end(); ++compIt)
-	{
-		for (map<int, set<vector<int>>>::const_iterator sliceIt = compIt->coordSets.begin(); sliceIt != compIt->coordSets.end(); ++sliceIt)
-		{
-			for (set<vector<int>>::const_iterator pointIt = sliceIt->second.begin(); pointIt != sliceIt->second.end(); ++pointIt)
-				output1Dptr.get()[imgDims[0] * imgDims[1] * pointIt->at(2) + imgDims[0] * pointIt->at(1) + pointIt->at(0)] = 255;
-		}
-	}
-
-	return output1Dptr;
-}
 // ================================== END of [Image Segmentation] ================================== //
+
+
 
 
 
 // ============================================ Image Analysis ============================================ //
 boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(const connectedComponent& inputConnComp)
 {
+	// -- This method generates 3D skeletons using plane scannig approach.
+	// -- For an input connected component, the object is scanned plane by plane in 3 dimensions. 
+	// -- The centriod of each object section is identified and mapped back to its original 3D coordinate to form a group of centroids that represent the skeleton.
+	// -- NOTE: If the object happens to form separate islands in 1 one section, multiple centroids will be identified accordingly.
+
 	int xLength = inputConnComp.xMax - inputConnComp.xMin + 1;
 	int yLength = inputConnComp.yMax - inputConnComp.yMin + 1;
 	int zLength = inputConnComp.zMax - inputConnComp.zMin + 1;
@@ -627,6 +639,8 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(cons
 
 boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd)
 {
+	// -- This method finds connected components (2D) on each section and their corresponding centroids on that sectional plane.
+
 	vector<size_t> delLocs;
 	NeuronTree sliceTree;
 	NeuronStructUtil myUtil;
@@ -636,7 +650,7 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 		sliceTree.listNeuron.clear();
 		for (size_t dotNumi = 0; dotNumi != dim1.size(); ++dotNumi)
 		{
-			if (sectionalDim.at(dotNumi) == slicei)
+			if (sectionalDim.at(dotNumi) == slicei) // Collect all nodes in a specified plane.
 			{
 				delLocs.push_back(dotNumi);
 				NeuronSWC pseudoNode;
@@ -647,7 +661,7 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 			}
 		}
 		
-		vector<connectedComponent> slice2Dcomps = myUtil.swc2signal2DBlobs(sliceTree);
+		vector<connectedComponent> slice2Dcomps = myUtil.swc2signal2DBlobs(sliceTree); // Convert nodes into connected components.
 		for (vector<connectedComponent>::iterator it = slice2Dcomps.begin(); it != slice2Dcomps.end(); ++it)
 		{
 			deque<float> newCentroid;
@@ -669,9 +683,6 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 	return centroids;
 }
 // ====================================== END of [Image Analysis] ====================================== //
-
-
-
 
 
 
