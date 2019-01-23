@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "objSurface";
+	string funcName = "fragTraceTest";
 	/************************************/
 
 	if (!funcName.compare("swcID"))
@@ -887,29 +887,6 @@ int main(int argc, char* argv[])
 			myManager.imgDatabase.clear();
 		}
 	}
-	else if (!funcName.compare("clean1"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		ImgManager myManager(folderNameQ);
-		for (QStringList::iterator it = myManager.caseList.begin(); it != myManager.caseList.end(); ++it)
-		{
-			QString inputSWCfullName = folderNameQ + "\\" + *it;
-			NeuronTree nt = readSWC_file(inputSWCfullName);
-			NeuronTree newTree;
-			for (QList<NeuronSWC>::iterator nodeIt = nt.listNeuron.begin(); nodeIt != nt.listNeuron.end(); ++nodeIt)
-			{
-				if (nodeIt->z != 1) newTree.listNeuron.append(*nodeIt);
-			}
-			writeSWC_file(saveFolderNameQ + "\\" + *it, newTree);
-		}
-	}
 	else if (!funcName.compare("stackSlice"))
 	{
 		const char* folderNameC = argv[2];
@@ -1159,29 +1136,7 @@ int main(int argc, char* argv[])
 		map<string, float> img3DStats = ImgProcessor::getBasicStats_no0_fromHist(hist3Dmap);
 		cout << img3DStats.at("mean") << " " << img3DStats.at("std") << endl;
 	}
-	else if (!funcName.compare("sortTest"))
-	{
-		const char* swcNameC = argv[2];
-		string swcName(swcNameC);
-		QString swcNameQ = QString::fromStdString(swcName);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		const char* rootIDC = argv[4];
-		string rootIDstring(rootIDC);
-		int rootID = atoi(rootIDC);
-
-		//QString swcNameQ = "C:\\Users\\hsienchik\\Desktop\\component_1.swc";
-		//int rootID = 3000;
-
-		NeuronTree inputTree = readSWC_file(swcNameQ);
-		QList<NeuronSWC> outputNodeList;
-
-		SortSWC(inputTree.listNeuron, outputNodeList, rootID, 0);
-	}
-	else if (!funcName.compare("objSurface"))
+	else if (!funcName.compare("fragTraceTest"))
 	{
 		/*const char* inputImgNameC = argv[2];
 		string inputImgName(inputImgNameC);
@@ -1192,7 +1147,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase2\\test.tif";
+		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1226,7 +1181,7 @@ int main(int argc, char* argv[])
 
 		vector<connectedComponent> componentList = myAnalyzer.findSignalBlobs(slices_array, dims, 3, mipPtr);
 		NeuronTree testTree = NeuronStructUtil::blobs2tree(componentList, true);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase2\\test.swc", testTree);
+		writeSWC_file("D:\\Work\\FragTrace\\test.swc", testTree);
 		
 		unsigned char*** surfaceMaskPtr = new unsigned char**[myManager.imgDatabase.at("compMask3D").dims[2]];
 		for (int k = 0; k < myManager.imgDatabase.at("compMask3D").dims[2]; ++k)
@@ -1302,9 +1257,12 @@ int main(int argc, char* argv[])
 
 		profiledTree profiledFinalTree(finalTree);
 		profiledTree noSpikeProfiledFinalTree = NeuronStructExplorer::spikeRemove(profiledFinalTree);
+		writeSWC_file("D:\\Work\\FragTrace\\nonDownSampled.swc", noSpikeProfiledFinalTree.tree);
+
+		profiledTree profiledDownSampledTree = myExplorer.treeDownSample(noSpikeProfiledFinalTree, 3);
 		//NeuronTree noSpikeShiftedTree = NeuronStructUtil::swcShift(smoothedProfiledFinalTree.tree, 1, 1, 1);
 
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase2\\testCroppedCentroidTree.swc", noSpikeProfiledFinalTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\testTree.swc", profiledDownSampledTree.tree);
 	}
 
 	return 0;

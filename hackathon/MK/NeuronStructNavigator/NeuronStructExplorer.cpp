@@ -301,6 +301,8 @@ void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
 /* ================================== Neuron Struct Processing Functions ================================== */
 void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength)
 {
+	// -- This method creates interpolated nodes in between each pair of 2 adjacent nodes on the input tree. 
+
 	size_t maxNodeID = 0;
 	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
 		if (it->n > maxNodeID) maxNodeID = it->n;
@@ -358,10 +360,16 @@ void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, p
 
 profiledTree NeuronStructExplorer::treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval)
 {
+	// -- This method "down samples" the input tree segment by segment. 
+	// -- A recursive down sampling method [NeuronStructExplorer::rc_segDownSample] is called in this function to deal with all possible braching points in each segment.
+	// -- NOTE, this method is essentially used for straightening / smoothing segments when there are too many zigzagging.  
+
 	NeuronTree outputTree;
 	QList<NeuronSWC> currSegOutputList;
 	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
 	{
+		if (it->second.seg_childLocMap.empty()) continue;
+
 		currSegOutputList.clear();
 		this->rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
 		outputTree.listNeuron.append(currSegOutputList);
@@ -382,20 +390,20 @@ void NeuronStructExplorer::rc_segDownSample(const segUnit& inputSeg, QList<Neuro
 		count = 0;
 		while (inputSeg.seg_childLocMap.at(currNodeID).size() > 0)
 		{
-			if (inputSeg.seg_childLocMap.at(currNodeID).size() >= 2)
+			if (inputSeg.seg_childLocMap.at(currNodeID).size() >= 2) // branching point found, function recursively called
 			{
 				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
-				outputNodeList.last().parent = (outputNodeList.end() - 1)->n;
+				outputNodeList.last().parent = (outputNodeList.end() - 2)->n;
 				rc_segDownSample(inputSeg, outputNodeList, currNodeID, interval);
 				break;
 			}
 			
 			++count;
 			currNodeID = inputSeg.nodes.at(*(inputSeg.seg_childLocMap.at(currNodeID).begin())).n;
-			if (count % interval == 0 || inputSeg.seg_childLocMap.at(currNodeID).size() == 0)
+			if (count % interval == 0 || inputSeg.seg_childLocMap.at(currNodeID).size() == 0) // The tail(s) of the segment needs to stay.
 			{
 				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
-				outputNodeList.last().parent = (outputNodeList.end() - 1)->n;
+				outputNodeList.last().parent = (outputNodeList.end() - 2)->n;
 			}
 		}
 	}
