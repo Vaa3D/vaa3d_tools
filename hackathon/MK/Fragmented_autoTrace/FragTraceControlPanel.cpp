@@ -657,7 +657,7 @@ void FragTraceControlPanel::scaleTracedTree()
 	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
 	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
 
-	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]);
+	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 	this->tracedTree = scaledShiftedTree;
 }

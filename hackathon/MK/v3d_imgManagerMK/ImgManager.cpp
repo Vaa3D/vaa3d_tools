@@ -83,6 +83,7 @@ void registeredImg::getHistMap_no0_log10()
 	}
 }
 
+/* =============================== Constructors and Basic Data Members =============================== */
 ImgManager::ImgManager(QString inputPath)
 {
 	// boost::filesystem conflicts with Qt's QFile and QDir libraries. 
@@ -165,10 +166,11 @@ ImgManager::ImgManager(QString inputPath)
 		}
 	}
 }
+/* ============================= END of [Constructors and Basic Data Members] ============================= */
 
 
 
-// ======================================= I/O and Image Property Profile ======================================= //
+/* ======================================= I/O and Image Property Profile ======================================= */
 void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
 	// -- This method retrieves images from ImgManager::inputMultiCasesFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
@@ -235,10 +237,10 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 }
-// ===================================== END of [I/O and Image Property Profile] ===================================== //
+/* ===================================== END of [I/O and Image Property Profile] ===================================== */
 
 
-// ======================================= Image - SWC Methods ======================================= //
+/* ======================================= Image - SWC Methods ======================================= */
 NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
 {
 	// This method records every image siganl and stores in SWC format. Each SWC node corresponds to image signal coordinates.
@@ -273,18 +275,11 @@ NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
 
 	return outputTree;
 }
-// =================================== END of [Image - SWC Methods] ===================================== //
+/* =================================== END of [Image - SWC Methods] ===================================== */
 
 
 
-
-
-
-
-
-
-
-// ================= Methods for generating binary masks from SWC files ================= //
+/* ================== Methods for generating binary masks from SWC files ================== */
 void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)
 {
 	// -- Generate 2D masks based on each detected "SWC signal slice". 
@@ -454,7 +449,16 @@ bool ImgManager::getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, My
 	allmarkers.insert(allmarkers.end(), marker_set.begin(), marker_set.end());
 	return true;
 }
-// ================ END of [Methods for generating binary masks from SWC files] ================ //
+/* ================= END of [Methods for generating binary masks from SWC files] ================= */
+
+
+
+
+
+
+
+
+
 
 void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 {

@@ -58,10 +58,15 @@ public:
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
 	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb);
 
-	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale); // NOTE: the scaling factor is put as dividers!!
+	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale); 
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
-	static inline void swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
-	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); // Align inputTree with refTree.
+
+	// -- When using SWC root nodes to represent signals, this method can be used to reduce node density.
+	// -- NOTE, this method can only be used when all nodes are roots. 
+	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+	
+	// -- Align inputTree with refTree.
+	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 	
 	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
@@ -176,9 +181,9 @@ inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float 
 	{
 		NeuronSWC newNode;
 		newNode = *it;
-		newNode.x = it->x / xScale;
-		newNode.y = it->y / yScale;
-		newNode.z = it->z / zScale;
+		newNode.x = it->x * xScale;
+		newNode.y = it->y * yScale;
+		newNode.z = it->z * zScale;
 		outputTree.listNeuron.push_back(newNode);
 	}
 
@@ -219,7 +224,7 @@ inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& o
 	}
 }
 
-inline void NeuronStructUtil::swcDownSample(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink)
+inline void NeuronStructUtil::swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
 	outputTree.listNeuron.clear();

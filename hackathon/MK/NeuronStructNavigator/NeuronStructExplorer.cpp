@@ -355,6 +355,51 @@ void NeuronStructExplorer::treeUpSample(const profiledTree& inputProfiledTree, p
 		outputProfiledTree.tree.listNeuron.append(newSegNodes);
 	}
 }
+
+profiledTree NeuronStructExplorer::treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval)
+{
+	NeuronTree outputTree;
+	QList<NeuronSWC> currSegOutputList;
+	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
+	{
+		currSegOutputList.clear();
+		this->rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
+		outputTree.listNeuron.append(currSegOutputList);
+	}
+	profiledTree outputProfiledTree(outputTree);
+	
+	return outputProfiledTree;
+}
+
+void NeuronStructExplorer::rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC>& outputNodeList, int branchigNodeID, int interval)
+{
+	int currNodeID = 0, count = 0;
+	for (vector<size_t>::const_iterator childIt = inputSeg.seg_childLocMap.at(branchigNodeID).begin(); childIt != inputSeg.seg_childLocMap.at(branchigNodeID).end(); ++childIt)
+	{
+		outputNodeList.push_back(inputSeg.nodes.at(*childIt));
+		outputNodeList.last().parent = branchigNodeID;
+		currNodeID = inputSeg.nodes.at(*childIt).n;
+		count = 0;
+		while (inputSeg.seg_childLocMap.at(currNodeID).size() > 0)
+		{
+			if (inputSeg.seg_childLocMap.at(currNodeID).size() >= 2)
+			{
+				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
+				outputNodeList.last().parent = (outputNodeList.end() - 1)->n;
+				rc_segDownSample(inputSeg, outputNodeList, currNodeID, interval);
+				break;
+			}
+			
+			++count;
+			currNodeID = inputSeg.nodes.at(*(inputSeg.seg_childLocMap.at(currNodeID).begin())).n;
+			if (count % interval == 0 || inputSeg.seg_childLocMap.at(currNodeID).size() == 0)
+			{
+				outputNodeList.push_back(inputSeg.nodes.at(inputSeg.seg_nodeLocMap.at(currNodeID)));
+				outputNodeList.last().parent = (outputNodeList.end() - 1)->n;
+			}
+		}
+	}
+}
 /* ================================== END of [Neuron Struct Processing Functions] ================================== */
 
 

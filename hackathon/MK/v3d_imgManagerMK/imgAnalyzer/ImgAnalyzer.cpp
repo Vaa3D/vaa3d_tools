@@ -3,7 +3,7 @@
 #include "ImgAnalyzer.h"
 #include "NeuronStructUtilities.h"
 
-// ======================================= Image Segmentation ======================================= //
+/* ======================================= Image Segmentation ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {
 	// -- This method finds connected components from a given 2D or 3D image.
@@ -536,13 +536,11 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 
 	return dendriteSigSet;
 }
-// ================================== END of [Image Segmentation] ================================== //
+/* ================================== END of [Image Segmentation] ================================== */
 
 
 
-
-
-// ============================================ Image Analysis ============================================ //
+/* ============================================ Image Analysis ============================================ */
 boost::container::flat_set<deque<float>> ImgAnalyzer::getSectionalCentroids(const connectedComponent& inputConnComp)
 {
 	// -- This method generates 3D skeletons using plane scannig approach.
@@ -682,7 +680,10 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 
 	return centroids;
 }
-// ====================================== END of [Image Analysis] ====================================== //
+/* ====================================== END of [Image Analysis] ====================================== */
+
+
+
 
 
 

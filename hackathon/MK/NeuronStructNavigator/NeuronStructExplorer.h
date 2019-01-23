@@ -148,7 +148,12 @@ public:
 
 	/***************** Neuron Struct Processing Functions *****************/
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
+	profiledTree treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval = 2);
 	
+private:
+	void rc_segDownSample(const segUnit& inputSeg, QList<NeuronSWC>& outputNodeList, int branchingNodeID, int interval);
+	
+public:
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
 	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);

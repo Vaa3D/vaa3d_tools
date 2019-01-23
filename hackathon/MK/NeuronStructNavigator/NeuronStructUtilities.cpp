@@ -28,7 +28,6 @@
 
 #include "NeuronStructUtilities.h"
 #include "ImgProcessor.h"
-#include "ImgAnalyzer.h"
 
 using namespace boost;
 
