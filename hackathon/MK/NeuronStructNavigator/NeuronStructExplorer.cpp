@@ -368,9 +368,12 @@ profiledTree NeuronStructExplorer::treeDownSample(const profiledTree& inputProfi
 	QList<NeuronSWC> currSegOutputList;
 	for (map<int, segUnit>::const_iterator it = inputProfiledTree.segs.begin(); it != inputProfiledTree.segs.end(); ++it)
 	{
-		if (it->second.seg_childLocMap.empty()) continue;
+		//if (it->second.seg_childLocMap.empty()) continue; => Using this line is not safe. Can occasionally result in program crash.
+															// The safety of seg_childLocMap needs to be investigated later.
+		if (it->second.nodes.size() <= 3) continue;
 
 		currSegOutputList.clear();
+		currSegOutputList.push_back(*(it->second.nodes.begin()));
 		this->rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
 		outputTree.listNeuron.append(currSegOutputList);
 	}

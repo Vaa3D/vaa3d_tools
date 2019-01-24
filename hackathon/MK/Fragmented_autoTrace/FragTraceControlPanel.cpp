@@ -611,7 +611,10 @@ void FragTraceControlPanel::traceButtonClicked()
 		NeuronTree finalTree;
 		if (existingTree.listNeuron.isEmpty())
 		{
-			this->thisCallback->setSWCTeraFly(this->tracedTree);
+			NeuronStructExplorer myExplorer;
+			profiledTree tracedProfiledTree(this->tracedTree);
+			profiledTree elongatedProfiledTree = myExplorer.itered_segElongate(tracedProfiledTree);
+			this->thisCallback->setSWCTeraFly(elongatedProfiledTree.tree);
 			finalTree = this->tracedTree;
 		}
 		else
