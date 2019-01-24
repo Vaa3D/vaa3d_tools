@@ -14,6 +14,7 @@ using namespace std;
 #include "QDialog"
 #include "v3d_interface.h"
 #include "utilities.h"
+//#include "unordered_map"
 
 #ifndef VOID
 #define VOID 1000000000
@@ -29,15 +30,11 @@ using namespace std;
 #define MAX_DOUBLE 1.79768e+308        //actual: 1.79769e+308
 #endif
 
-QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLONG> & idlist, const QHash<V3DLONG,V3DLONG> & LUT);
-
+QVector< QVector<V3DLONG> > get_neighbors(QList<NeuronSWC> &neurons, const QHash<V3DLONG,V3DLONG> & LUT);
 QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons);
-
-
-void DFS(bool** matrix, V3DLONG* neworder, V3DLONG node, V3DLONG* id, V3DLONG siz, int* numbered, int *group);;
+QList<V3DLONG> DFS(QVector< QVector<V3DLONG> > neighbors, V3DLONG newrootid, V3DLONG siz);
 
 double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2, double xscale=1, double yscale=1, double zscale=1);
-
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined);
 
 NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);

@@ -13,256 +13,63 @@
 #include "sstream"
 #include "string"
 
+bool preprocess_batch_domenu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //choose a directory that contain swc files
+    QString qs_dir_swc;
+    qs_dir_swc=QFileDialog::getExistingDirectory(parent,QString(QObject::tr("Choose the directory that contains files to be processed")));
+    qs_dir_swc=qs_dir_swc+"/";
+    return preprocess_files_in_dir(qs_dir_swc);
+}
 
-bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QString qctable, bool skip_existing){
+bool preprocess_files_in_dir(QString qs_dir_swc)
+{
+    qDebug()<<"Welcome to use the \"batch preprocessing\" plugin";
+    // Step 1: Find swc files under a folder;
+    QDir dir(qs_dir_swc);
+    QStringList qsl_filelist, qsl_filters;
+    qsl_filters << "*.swc" << "*.eswc";
 
-//#ifdef Q_OS_WIN32
-//    QString sep("\\");
-//#else
-//    QString sep("/");
-//#endif
+    foreach(QString file, dir.entryList(qsl_filters,QDir::Files))
+    {
+        qsl_filelist+=file;
+    }
 
-    QString sep("/");
-    std::ifstream infile(qPrintable(inswclist));
-    std::string line;
-    printf("welcome to use preprocess_batch\n");
-
-    if(!fexists(somalist)){
-        printf("Error: soma list file not found!\n");
+    if(qsl_filelist.size()==0)
+    {
+        v3d_msg("Cannot find swc files in the given directory!\nTry another diretory");
         return 0;
     }
-    QList<CellAPO> soma_apo = readAPO_file(somalist);
-    QList<QString> soma_nlist;
-    for(int i=0; i<soma_apo.size(); i++){
-        QString tp_name = soma_apo.at(i).name;
-        tp_name.replace(QString(" "), QString(""));
-        soma_nlist.append(tp_name);
+
+    // Step 2: Specify output folder
+    const QString output_dir("Processed");
+    if(!dir.mkdir(output_dir)){
+        v3d_msg(QString("Cannot create dir \"%1\" or \"%2\" already exists. Please double check.").arg(output_dir).arg(output_dir));
     }
 
-    if(!fexists(qctable)){
-        FILE * fp=fopen((char *)qPrintable(qctable), "wt");
-        fprintf(fp, "\tType\tPercentage_unconnected(%%)\tNumber_single_trees\tExist_duplicate_nodes\n");
-        fclose(fp);
+    // Step 3: Perform pre-processing through a loop
+    for(int i=0; i<qsl_filelist.size(); i++){
+        // Add prefix
+        QString output_swc=qsl_filelist.at(i);
+        output_swc.prepend(output_dir+"/");
+        // Add suffix
+        int suffix_len = 5;
+        if(qsl_filelist.at(i).endsWith(".swc") || qsl_filelist.at(i).endsWith(".SWC")){suffix_len = 4;}
+        output_swc = output_swc.left(output_swc.size()-suffix_len) + ".processed.eswc";
+        // Add absolute dir
+        qDebug()<<qs_dir_swc+qsl_filelist.at(i)<<qs_dir_swc+output_swc;
+        pre_processing(qs_dir_swc+qsl_filelist.at(i), qs_dir_swc+output_swc);
     }
-    std::ofstream logging;
-    logging.open(qPrintable(qctable), std::ios::app);
-
-    while (std::getline(infile, line))
-    {
-        cout<<line<<endl;
-        std::istringstream iss(line);
-        std::string a;
-        if (!(iss >> a)) { break; }
-        QString qs_inswc = QString::fromStdString(a);
-
-        // 0. Prepare files
-        // 0.1 Input
-        printf("Input swc:\t%s\n", qPrintable(qs_inswc));
-        QString inswcPrefix;
-        if (qs_inswc.endsWith(".swc") || qs_inswc.endsWith(".SWC")){
-            inswcPrefix = qs_inswc.left(qs_inswc.length() - 4);
-        }
-        else if (qs_inswc.endsWith(".eswc") || qs_inswc.endsWith(".ESWC"))
-        {
-            inswcPrefix = qs_inswc.left(qs_inswc.length() - 5);
-        }
-        else{
-            printf("Error: not all input files are swc's!\n");
-        }
-        QString inswcName = inswcPrefix.right(inswcPrefix.length()-inswcPrefix.lastIndexOf(sep)-1);
-        if(outswcdir.size()==0){  // If outswcdir is not specified, processed swc will be put into the same folder as input swc.
-            outswcdir = inswcPrefix;
-            if(inswcPrefix.lastIndexOf(sep)>=0){
-                outswcdir = outswcdir.left(inswcPrefix.lastIndexOf(sep)+1);
-            }
-            else{
-                outswcdir = QString(".")+sep;
-            }
-        }
-        // 0.2 Temp
-        // temp_apo
-        QString temp_apo = outswcdir + inswcName + QString(".temp.apo");
-        QString inswcID = inswcName.right(inswcName.length()-inswcName.indexOf("_")-1);
-        if(inswcID.indexOf("_")>=0){
-            inswcID = inswcID.left(inswcID.indexOf("_"));
-        }
-        int sid = soma_nlist.indexOf(inswcID);
-        if(sid < 0){
-            printf("Error: soma id %s not found in soma_list!\n", qPrintable(inswcID));
-//            continue;
-        }
-        else{
-            QList<CellAPO> this_soma;
-            this_soma.append(soma_apo.at(sid));
-            writeAPO_file(temp_apo, this_soma);
-            QFile temp_apo_file(temp_apo);
-        }
-        // temp_swc
-        QString temp_swc = outswcdir + inswcName + QString(".temp.swc");
-        QFile temp_swc_file(temp_swc);
-        QFile qs_inswc_file(qs_inswc);
-        if(temp_swc_file.exists()){
-            temp_swc_file.remove();
-        }
-        qs_inswc_file.copy(temp_swc);
-
-
-        // 0.3 Output
-        QString qs_outswc = outswcdir + inswcName + QString(".processed.swc");
-        // 1. Run preprocess
-        if((!skip_existing) || (!fexists(qs_outswc))){
-            bool preprocessed = pre_processing(temp_swc, qs_outswc);
-            if(! preprocessed){
-                return 0;
-            }
-
-            // 2. Run QC
-            NeuronTree nt = readSWC_file(qs_outswc);
-            logging << qPrintable(inswcName) << "\t" << "Allneurons\t";
-            // QC.1
-            double percentage_disconnected = get_percentage_disconnected(qs_outswc);
-            logging << percentage_disconnected << "\t";
-            // QC.2
-            QList<int> components = get_components(nt);
-            int ncomponents=components.toSet().size();
-            logging << ncomponents << "\t";
-            // QC.3
-            if(check_duplicate(nt)){
-                logging << 0 << endl;
-            }
-            else{
-                logging << 1 << endl;
-            }
-        }
-//        temp_apo_file.remove();
-        temp_swc_file.remove();
-    }
-    logging.close();
     return 1;
 }
 
-bool preprocess_batch_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool preprocess_batch_dofunc(V3DPluginCallback2 &callback, QWidget *parent)
 {
-
-    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-    vector<char*>* outlist = NULL;
-    vector<char*>* paralist = NULL;
-
-    if(input.size() != 2)
-    {
-        printf("Please specify parameter set.\n");
-        printHelp_preprocess_batch();
-        return false;
-    }
-    paralist = (vector<char*>*)(input.at(1).p);
-
-
-    if (paralist->size()!=1)
-    {
-        printf("Please specify all paramters in one text string.\n");
-        printHelp_preprocess_batch();
-        return false;
-    }
-
-
-    char * paras = paralist->at(0);
-    int argc = 1;
-    enum {kArgMax = 64};
-    char *argv[kArgMax];
-    //parsing parameters
-    if (paras)
-    {
-        int len = strlen(paras);
-        for (int i=0;i<len;i++)
-        {
-            if (paras[i]=='#')
-                paras[i] = '-';
-        }
-
-        char* pch = strtok(paras, " ");
-        while (pch && argc<kArgMax)
-        {
-            argv[argc++] = pch;
-            pch = strtok(NULL, " ");
-        }
-    }
-    else
-        printHelp_preprocess_batch();
-
-
-    //0. read arguments
-
-    char *swclist = NULL;
-    char *somalist = NULL;
-    char *swcdir = NULL;
-    char *qctable = NULL;
-    bool skip_existing = 0;
-
-    int c;
-    static char optstring[]="hi:o:m:q:s:";
-    extern char * optarg;
-    extern int optind, opterr;
-    optind = 1;
-    while ((c = getopt(argc, argv, optstring))!=-1)
-    {
-        switch (c)
-        {
-            case 'h':
-                printHelp_preprocess_batch();
-                return 0;
-                break;
-            case 'i':
-                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-                {
-                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
-                    return 1;
-                }
-                swclist = optarg;
-                cout << "Input file name:\t" << swclist <<endl;
-                break;
-            case 'o':
-                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-                {
-                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
-                    return 1;
-                }
-                swcdir = optarg;
-                cout << "Output swc directory:\t" << swcdir <<endl;
-            break;
-            case 'm':
-                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-                {
-                    fprintf(stderr, "Found illegal or NULL parameter for the option -i.\n");
-                    return 1;
-                }
-                somalist = optarg;
-                cout << "Somalist:\t" << somalist <<endl;
-        break;
-            case 'q':
-                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-                {
-                    fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
-                    return 1;
-                }
-                qctable = optarg;
-                break;
-            case 's':
-                if (strcmp(optarg,"(null)")==0 || optarg[0]=='-')
-                {
-                    fprintf(stderr, "Found illegal or NULL parameter for the option -o.\n");
-                    return 1;
-                }
-                skip_existing=(atoi(optarg)==1);
-            break;
-            case '?':
-                fprintf(stderr,"Unknown option '-%c' or incomplete argument lists.\n",optopt);
-                return 1;
-                break;
-        }
-    }
-
-    bool finished = preprocess_batch(QString(swclist), QString(swcdir), QString(somalist), QString(qctable), skip_existing);
-    return finished;
+    //choose a directory that contain swc files
+    QString qs_dir_swc;
+    qs_dir_swc=QFileDialog::getExistingDirectory(parent,QString(QObject::tr("Choose the directory that contains files to be processed")));
+    qs_dir_swc=qs_dir_swc+"/";
+    return preprocess_files_in_dir(qs_dir_swc);
 }
 
 void printHelp_preprocess_batch()

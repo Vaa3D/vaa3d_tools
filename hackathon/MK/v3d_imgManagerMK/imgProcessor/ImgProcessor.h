@@ -34,12 +34,15 @@ using namespace std;
 
 struct morphStructElement2D
 {
-	morphStructElement2D();
+	enum shape { disk };
+
+	morphStructElement2D(shape structEleShape = morphStructElement2D::disk, int length = 5);
 	morphStructElement2D(string shape, int length = 5);
 	morphStructElement2D(string shape, int xLength, int yLength);
 	~morphStructElement2D();
 
 	string eleShape;
+	shape structEleShape;
 	int xLength, yLength, radius;
 
 	unsigned char* structElePtr;
@@ -52,39 +55,51 @@ class ImgProcessor
 public:
 	/***************** Basic Image Operations *****************/
 	template<class T>
-	static inline T getPixValue2D(const T inputImgPtr[], const int imgDims[], const int x, const int y);
+	static inline T getPixValue(const T inputImgPtr[], const int imgDims[], const int x, const int y, const int z = 1);
+
+	template<class T> // Between 2 input images, pixel-wisely pick the one with greater value. 
+	static inline void imgMax(const T inputPtr1[], const T inputPtr2[], T outputPtr[], const int imgDims[]);
+
+	template<class T> // Same as above, vector version overload.
+	static inline void imgMax(const vector<T>* inputImgPtr1, const T inputImgPtr2[], T outputImgPtr[], const int imgDims[]);
 
 	template<class T>
-	static inline void imgSubtraction(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
+	static inline void imgSubtraction_const(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
 
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
+
 	template<class T>
-	static inline void cropImg2D(const T InputImagePtr[], T OutputImagePtr[], const int xlb, const int xhb, const int ylb, const int yhb, const int imgDims[]);
+	static inline void cropImg(const T InputImagePtr[], T OutputImagePtr[], 
+		const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[]);
 
 	template<class T>
 	static inline void invert8bit(T input1D[], T output1D[]);
 
-	template<class T1, class T2>
+	template<class T1, class T2> // -> to be revised into 3D general form
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
 	template<class T>
-	static inline void imgMax(const T inputPtr1[], const T inputPtr2[], T outputPtr[], const int imgDims[]); // Between 2 input images, pixel-wisely pick the one with greater value. 
+	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
 
-	template<class T>
-	static inline void imgMax(const vector<T>* inputImgPtr1, const T inputImgPtr2[], T outputImgPtr[], const int imgDims[]);
 
-	template<class T>
+
+	template<class T> // -> to be revised into 3D general form
 	static inline void imgDownSample2D(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
-	template<class T>
+	template<class T> // to be revised into 3D general form
 	static inline void imgDownSample2DMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
 	template<class T>
 	static inline void maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[]);
 
+	
+
 	template<class T>
-	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
+	static inline void slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[]);
+
+	template<class T>
+	static inline void slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[]); // inputImgPtr[x][] cannot be guaranteed a constant here.
 	/**********************************************************/
 
 
@@ -117,6 +132,8 @@ public:
 	template<class T>
 	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
+
+
 	template<class T>
 	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
 
@@ -136,6 +153,11 @@ public:
 
 	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	static void conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold);
+	
+	static void dilate2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+
+	static void imgClose2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	static void imgOpen2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	/********************************************/
 
 
@@ -158,14 +180,14 @@ inline void morphStructElement2D::printOutStructEle()
 
 // ========================================= BASIC IMAGE OPERATION =========================================
 template<class T>
-inline T ImgProcessor::getPixValue2D(const T inputImgPtr[], const int imgDims[], const int x, const int y)
+inline T ImgProcessor::getPixValue(const T inputImgPtr[], const int imgDims[], const int x, const int y, const int z)
 {
-	size_t pix1Dindex = size_t((y - 1) * imgDims[0] + x);
+	size_t pix1Dindex = size_t((z - 1) * imgDims[0] * imgDims[1] + (y - 1) * imgDims[0] + x);
 	return inputImgPtr[pix1Dindex];
 }
 
 template<class T>
-inline void ImgProcessor::imgSubtraction(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor)
+inline void ImgProcessor::imgSubtraction_const(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor)
 {
 	size_t totalPixNum = size_t(imgDims[0] * imgDims[1] * imgDims[2]);
 	for (size_t i = 0; i < totalPixNum; ++i)
@@ -187,15 +209,19 @@ inline void ImgProcessor::imgDotMultiply(const unsigned char inputImgPtr1[], con
 }
 
 template<class T>
-inline void ImgProcessor::cropImg2D(const T InputImagePtr[], T OutputImagePtr[], const int xlb, const int xhb, const int ylb, const int yhb, const int imgDims[])
+inline void ImgProcessor::cropImg(const T InputImagePtr[], T OutputImagePtr[], 
+	const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[])
 {
 	long int OutputArrayi = 0;
-	for (int yi = ylb; yi <= yhb; ++yi)
+	for (int zi = zlb; zi <= zhb; ++zi)
 	{
-		for (int xi = xlb; xi <= xhb; ++xi)
+		for (int yi = ylb; yi <= yhb; ++yi)
 		{
-			OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * (yi - 1) + (xi - 1)];
-			++OutputArrayi;
+			for (int xi = xlb; xi <= xhb; ++xi)
+			{
+				OutputImagePtr[OutputArrayi] = InputImagePtr[imgDims[0] * imgDims[1] * (zi - 1) + imgDims[0] * (yi - 1) + (xi - 1)];
+				++OutputArrayi;
+			}
 		}
 	}
 }
@@ -270,6 +296,30 @@ inline void ImgProcessor::imgStackSlicer(const T inputImgPtr[], vector<vector<T>
 		}
 		outputSlices.push_back(thisSlice);
 		thisSlice.clear();
+	}
+}
+
+template<class T>
+inline void ImgProcessor::slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[])
+{
+	for (int j = 0; j < imgDims[1]; ++j)
+	{
+		for (int i = 0; i < imgDims[0]; ++i)
+			outputSlice2Dptr[j][i] = inputSliceVec.at((imgDims[0] * j) + i);
+	}
+}
+
+template<class T>
+inline void ImgProcessor::slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[])
+{
+	size_t outi = 0;
+	for (size_t j = 0; j < imgDims[1]; ++j)
+	{
+		for (size_t i = 0; i < imgDims[0]; ++i)
+		{
+			outputImgPtr[outi] = inputImgPtr[j][i];
+			++outi;
+		}
 	}
 }
 

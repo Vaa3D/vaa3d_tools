@@ -50,7 +50,8 @@ SOURCES += $$V3DMAINPATH/worm_straighten_c/bdb_minus.cpp \
     $$V3DMAINPATH/worm_straighten_c/bfs_1root.cpp \
     $$V3DMAINPATH/graph/dijk.cpp \
     $$V3DMAINPATH/neuron_editing/neuron_sim_scores.cpp \
-    $$V3DMAINPATH/neuron_editing/v_neuronswc.cpp 
+    $$V3DMAINPATH/neuron_editing/v_neuronswc.cpp \
+    $$V3DMAINPATH/neuron_editing/global_feature_compute.cpp
     #$$V3DMAINPATH/neuron_editing/apo_xforms.cpp \
     #$$V3DMAINPATH/neuron_editing/neuron_xforms.cpp \
 

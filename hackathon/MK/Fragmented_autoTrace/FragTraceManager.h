@@ -29,22 +29,19 @@ public:
 
 	bool histThre;
 	string histThreImgName;
-	int stdFold;
+	float stdFold;
 	bool saveHistThreResults;
 	QString histThreSaveDirQ;
 
-	bool smallBlobRemove;
-	string smallBlobRemovalName;
-	int smallBlobThreshold;
-	bool saveSmallBlobRemovalResults;
-	QString smallBlobRemoveDirQ;
+	bool objFilter;
+	bool voxelSize, actualSize;
+	int voxelCount;
+	float volume;
 
 	bool MST;
-	bool tiledMST;
 	string MSTtreeName;
-	int segLengthLimit, minNodeNum, tileLength, zSectionNum;
-	bool saveMSTresults;
-	QString saveMSTDirQ;
+	int minNodeNum;
+	bool branchBreak;
 
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;
@@ -58,6 +55,7 @@ signals:
 private:
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
+	ImgAnalyzer fragTraceImgAnalyzer;
 	NeuronStructExplorer fragTraceTreeManager;
 	NeuronStructUtil fragTraceTreeUtil;
 
@@ -91,7 +89,7 @@ inline void FragTraceManager::saveIntermediateResult(const string imgName, const
 	{
 		string saveFullPath = fullSaveRootQ.toStdString() + "\\" + it->first;
 		const char* saveFullPathC = saveFullPath.c_str();
-		this->fragTraceImgManager.saveimage_wrapper(saveFullPathC, it->second.get(), dims, 1);
+		ImgManager::saveimage_wrapper(saveFullPathC, it->second.get(), dims, 1);
 	}
 }
 

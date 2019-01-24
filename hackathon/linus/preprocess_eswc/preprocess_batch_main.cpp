@@ -86,9 +86,10 @@ bool preprocess_batch(QString inswclist, QString outswcdir, QString somalist, QS
         if(inswcID.indexOf("_")>=0){
             inswcID = inswcID.left(inswcID.indexOf("_"));
         }
-        int sid = soma_nlist.indexOf(inswcID);
+        int sid = soma_nlist.indexOf(inswcID.remove( QRegExp("^[0]*") ));
         if(sid < 0){
             printf("Error: soma id %s not found in soma_list!\n", qPrintable(inswcID));
+            qDebug() << "Soma:" << inswcID << "Soma list size:" << soma_nlist.size();
 //            continue;
         }
         else{

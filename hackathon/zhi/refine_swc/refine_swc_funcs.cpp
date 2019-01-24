@@ -8,7 +8,7 @@
 #include "refine_swc_funcs.h"
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
-
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 
 using namespace std;
 #define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
@@ -111,6 +111,31 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         mysz[2] = end_z-start_z+1;
         mysz[3] = 1;
 
+        //convert seg to nt;
+        NeuronTree seg_nt;
+        for(int ii=0; ii<seg->size(); ii++)
+        {
+            Point* p = seg->at(ii);
+            NeuronSWC S;
+            S.n 	= ii + 1;
+            S.type 	= p->type;
+            S.x 	= p->x - start_x;
+            S.y 	= p->y - start_y;
+            S.z 	= p->z - start_z;
+            S.r 	= 1;
+            S.pn 	= (p->p == NULL)? -1 : ii + 2;
+            seg_nt.listNeuron.append(S);
+            seg_nt.hashNeuron.insert(S.n, result.listNeuron.size()-1);
+        }
+        unsigned char* total1dData_mask = 0;
+        total1dData_mask = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
+        memset(total1dData_mask,0,mysz[0]*mysz[1]*mysz[2]*sizeof(unsigned char));
+        double margin;
+        margin = (seg->at(0)->level == 20)?10:5;
+        ComputemaskImage(seg_nt, total1dData_mask, mysz[0], mysz[1], mysz[2],margin);
+        for(V3DLONG j=0;j<mysz[0]*mysz[1]*mysz[2];++j)
+            total1dData[j] = (total1dData_mask[j] ==0)?0:total1dData[j];
+
         unsigned char ****p4d = 0;
         if (!new4dpointer(p4d, mysz[0], mysz[1], mysz[2], mysz[3], total1dData))
         {
@@ -140,30 +165,30 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
             seg->at(j)->y -= start_y;
             seg->at(j)->z -= start_z;
         }
-        double dist;
+        double dist = distTwoSegs(nt_gd, seg);
         //check angle
-        QList<NeuronSWC> nt_seg = nt_gd.listNeuron;
-        int angle_size = 2;
-        bool flag = false;
-        if(nt_seg.size() > 2*angle_size)
-        {
-            for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
-            {
-                double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
-                if(angle_j>=179 &&
-                   ((abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2)||
-                   (abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)||
-                   (abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)))
-                {
-                    flag = true;
-                    break;
-                }
-            }
-        }
-        if(flag)
-            dist = DBL_MAX;
-        else
-            dist = distTwoSegs(nt_gd, seg);
+//        QList<NeuronSWC> nt_seg = nt_gd.listNeuron;
+//        int angle_size = 2;
+//        bool flag = false;
+//        if(nt_seg.size() > 2*angle_size)
+//        {
+//            for(int j = angle_size; j < nt_seg.size()-angle_size; j++)
+//            {
+//                double angle_j = angle(nt_seg[j], nt_seg[j-angle_size], nt_seg[j+angle_size]);
+//                if(angle_j>=179 &&
+//                   ((abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2)||
+//                   (abs(nt_seg[j-angle_size].x-nt_seg[j+angle_size].x)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)||
+//                   (abs(nt_seg[j-angle_size].y-nt_seg[j+angle_size].y)<=2 && abs(nt_seg[j-angle_size].z-nt_seg[j+angle_size].z)<=2)))
+//                {
+//                    flag = true;
+//                    break;
+//                }
+//            }
+//        }
+//        if(flag)
+//            dist = DBL_MAX;
+//        else
+//            dist = distTwoSegs(nt_gd, seg);
 
         V3DLONG nt_length = result.listNeuron.size();
         V3DLONG index;
@@ -172,7 +197,8 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         else
             index = 0;
 
-        if(dist<5 || (!flag && seg->at(0)->level == 20))
+//        if(dist<5 || (!flag && seg->at(0)->level == 20))
+        if(dist<5 || (seg->at(0)->level == 20))
         {
             for (int d=0;d<nt_gd.listNeuron.size();d++)
             {
@@ -191,6 +217,9 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
             }
         }else
         {
+//            writeSWC_file("/local3/refinement/test_bug/test.swc",seg_nt);
+//            simple_saveimage_wrapper(callback, "/local3/refinement/test_bug/image.v3draw",(unsigned char *)total1dData, mysz, 1);
+//            simple_saveimage_wrapper(callback, "/local3/refinement/test_bug/mask.v3draw",(unsigned char *)total1dData, mysz, 1);
             for(int d=0; d<seg->size(); d++)
             {
                 Point* p = seg->at(d);
@@ -210,6 +239,8 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         }
         pp.clear();
         if(total1dData) {delete [] total1dData; total1dData=0;}
+        if(total1dData_mask) {delete [] total1dData_mask; total1dData_mask=0;}
+
     }
 
     return result;
@@ -721,6 +752,151 @@ NeuronTree initialSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neu
         }
     }
 
+    tree.clear();
+    map<Point*, V3DLONG> index_map;
+    for (V3DLONG i=0;i<seg_list.size();i++)
+        for (V3DLONG j=0;j<seg_list[i]->size();j++)
+        {
+            tree.push_back(seg_list[i]->at(j));
+            index_map.insert(pair<Point*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
+        }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        NeuronSWC S;
+        Point* p = tree[i];
+        S.n = i+1;
+        if (p->p==NULL) S.pn = -1;
+        else
+            S.pn = index_map[p->p]+1;
+        if (p->p==p) printf("There is loop in the tree!\n");
+        S.x = p->x;
+        S.y = p->y;
+        S.z = p->z;
+        S.r = p->r;
+        S.type = p->type;
+        S.seg_id = p->seg_id;
+        S.level = p->level;
+        S.fea_val = p->fea_val;
+        result.listNeuron.push_back(S);
+    }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        if (tree[i]) {delete tree[i]; tree[i]=NULL;}
+    }
+    for (V3DLONG j=0;j<seg_list.size();j++)
+        if (seg_list[j]) {delete seg_list[j]; seg_list[j] = NULL;}
+    for (V3DLONG i=0;i<result.listNeuron.size();i++)
+        result.hashNeuron.insert(result.listNeuron[i].n, i);
+    return result;
+}
+
+void resample_path(Segment * seg, double step)
+{
+    char c;
+    Segment seg_r;
+    double path_length = 0;
+    Point* start = seg->at(0);
+    Point* seg_par = seg->back()->p;
+    V3DLONG iter_old = 0;
+    seg_r.push_back(start);
+    while (iter_old < seg->size() && start && start->p)
+    {
+        path_length += DISTP(start,start->p);
+        if (path_length<=seg_r.size()*step)
+        {
+            start = start->p;
+            iter_old++;
+        }
+        else//a new point should be created
+        {
+            path_length -= DISTP(start,start->p);
+            Point* pt = new Point;
+            double rate = (seg_r.size()*step-path_length)/(DISTP(start,start->p));
+            pt->x = start->x + rate*(start->p->x-start->x);
+            pt->y = start->y + rate*(start->p->y-start->y);
+            pt->z = start->z + rate*(start->p->z-start->z);
+            pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
+            pt->p = start->p;
+
+            if (rate<0.5)
+            {
+                pt->type = start->type;
+                pt->seg_id = start->seg_id;
+                pt->level = start->level;
+                pt->fea_val = start->fea_val;
+            }
+            else
+            {
+                pt->type = start->p->type;
+                pt->seg_id = start->p->seg_id;
+                pt->level = start->p->level;
+                pt->fea_val = start->p->fea_val;
+
+            }
+            seg_r.back()->p = pt;
+            seg_r.push_back(pt);
+            path_length += DISTP(start,pt);
+            start = pt;
+        }
+    }
+    seg_r.back()->p = seg_par;
+    for (V3DLONG i=0;i<seg->size();i++)
+        if (!seg->at(i)) {delete seg->at(i); seg->at(i) = NULL;}
+    *seg = seg_r;
+};
+
+NeuronTree resample(NeuronTree input, double step)
+{
+    NeuronTree result;
+    V3DLONG siz = input.listNeuron.size();
+    Tree tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = input.listNeuron[i];
+        Point* pt = new Point;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->r = s.r;
+        pt ->type = s.type;
+        pt->seg_id = s.seg_id;
+        pt->level = s.level;
+        pt->fea_val = s.fea_val;
+        pt->p = NULL;
+        pt->childNum = 0;
+        tree.push_back(pt);
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (input.listNeuron[i].pn<0) continue;
+        V3DLONG pid = input.hashNeuron.value(input.listNeuron[i].pn);
+        tree[i]->p = tree[pid];
+        tree[pid]->childNum++;
+    }
+//	printf("tree constructed.\n");
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->childNum!=1)//tip or branch point
+        {
+            Segment* seg = new Segment;
+            Point* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->p;
+            }
+            while(cur && cur->childNum==1);
+            seg_list.push_back(seg);
+        }
+    }
+//	printf("segment list constructed.\n");
+    for (V3DLONG i=0;i<seg_list.size();i++)
+    {
+        resample_path(seg_list[i], step);
+    }
+
+//	printf("resample done.\n");
     tree.clear();
     map<Point*, V3DLONG> index_map;
     for (V3DLONG i=0;i<seg_list.size();i++)

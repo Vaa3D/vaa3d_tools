@@ -3,9 +3,14 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <map>
 #include <set>
 #include <cmath>
+
+#include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "ImgManager.h"
 #include "ImgProcessor.h"
@@ -23,28 +28,38 @@ struct connectedComponent
 
 class ImgAnalyzer
 {
-public:
-	/***************** Constructors and Basic Data/Function Members *****************/
-	// Not needed at the moment. Will implement later if necessary.
-	/********************************************************************************/
-
-
 	/***************** Image Segmentation *****************/
+public:
+	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
+	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
+	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
+	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);
 
-	// Finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
-	// Each slice is independent to one another. Therefore, the same 3D blobs are consists of certain amount of 2D "blob slices." 
-	// Each 2D blob slice accounts for 1 ImgAnalyzer::connectedComponent.
-	vector<connectedComponent> findSignalBlobs_2Dcombine(vector<unsigned char**> inputSlicesVector, int imgDims[], unsigned char* maxIP1D = nullptr);
+	myImg1DPtr connectedComponentMask2D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
+	myImg1DPtr connectedComponentMask3D(const vector<connectedComponent>& inputComponentList, const int imgDims[]);
 
+private:
+	// This method is called by ImgAnalyzer::findSignalBlobs because its slice-by-slice approach. 
+	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
+	/******************************************************/
+
+
+	/***************** Image Analysis *****************/
+public:
+	boost::container::flat_set<deque<float>> getSectionalCentroids(const connectedComponent& inputConnComp);
+private:
+	boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd);
+	/**************************************************/
+
+
+public:
 	// Depicts skeleton for star-fish-like object with a given starting point (center), using the intensity profiles of those pixels circling the center.
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
+
 	/******************************************************/
 
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
-
-	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);
-	static inline void ChebyshevCenter(set<vector<int>> allCoords, float center[]);
 };
 
 inline void ImgAnalyzer::ChebyshevCenter(set<vector<int>> allCoords, float center[])

@@ -11,6 +11,31 @@
 using namespace std;
 using namespace boost::filesystem;
 
+void registeredImg::createBlankImg(const int imgDims[])
+{
+	myImg1DPtr blank1D(new unsigned char[imgDims[0] * imgDims[2] * imgDims[2]]);
+	for (size_t i = 0; i < imgDims[0] * imgDims[2] * imgDims[2]; ++i) blank1D.get()[i] = 0;
+	
+	for (map<string, myImg1DPtr>::iterator it = this->slicePtrs.begin(); it != this->slicePtrs.end(); ++it)
+	{
+		if (it->first.length() >= 5)
+		{
+			if (!it->first.substr(0, 5).compare("blank"))
+			{
+				char blankNumChar = *(it->first.end() - 1);
+				int blankNum = atoi(&blankNumChar);
+				int newBlankNum = blankNum + 1;
+				string newBlankNumString = "blank" + to_string(newBlankNum);
+				
+				this->slicePtrs.insert({ newBlankNumString, blank1D });
+				return;
+			}
+		}
+	}
+
+	this->slicePtrs.insert({ "blank1", blank1D });
+}
+
 void registeredImg::getHistMap_no0()
 {
 	if (slicePtrs.empty())
@@ -58,81 +83,109 @@ void registeredImg::getHistMap_no0_log10()
 	}
 }
 
+/* =============================== Constructors and Basic Data Members =============================== */
 ImgManager::ImgManager(QString inputPath)
 {
 	// boost::filesystem conflicts with Qt's QFile and QDir libraries. 
 	// Since the library is bound to be under Vaa3D framework (Qt UI), boost::filesystem is not chosen.
+	// -- The specified constructor checks if the input argument is a filename or a path.
+	//    If it's a path, the constructor parses the path and stores image directories into basic data members, eg, ImgManager::inputMultiCasesSliceFullPath, etc.
 
-	this->caseList.clear();
-	QDir inputDir(inputPath);
-	inputDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-	this->caseList = inputDir.entryList();
-
-	if (caseList.empty()) // No directories found.
+	if (inputPath.contains(".tif"))
 	{
-		inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-		this->caseList = inputDir.entryList();
-
-		int swcFileCount = 0;
-		int tifFileCount = 0;
-		for (QStringList::iterator caseCheckIt = this->caseList.begin(); caseCheckIt != this->caseList.end(); ++caseCheckIt)
-		{
-			if ((*caseCheckIt).contains(".swc")) ++swcFileCount;
-			else if ((*caseCheckIt).contains(".tif")) ++tifFileCount;
-		}
-
-		if (swcFileCount == this->caseList.size())
-		{
-			this->inputSWCRootPath = inputPath;
-			this->inputCaseRootPath = "";
-		}
-		else if (tifFileCount == this->caseList.size())
-		{
-			this->inputSWCRootPath = "";
-			this->inputCaseRootPath = inputPath;
-			for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
-			{
-				QString imgFullPath = this->inputCaseRootPath + "/" + *caseIt;
-				QStringList nameParse = (*caseIt).split(".");
-				*caseIt = nameParse.at(0);
-				this->inputMultiCasesSliceFullPaths.insert({ (*caseIt).toStdString(), imgFullPath.toStdString() });
-			}
-		}
+		this->inputSingleCaseFullPath = inputPath.toStdString();
 	}
 	else
 	{
-		for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
-		{
-			this->inputCaseRootPath = inputPath;
-			QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
-			QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
-			QDir caseFolder(caseFullPath);
-			caseFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-			QStringList caseSlices = caseFolder.entryList();
-			if (caseSlices.empty()) cout << "case " << (*caseIt).toStdString() << " is empty. Skip." << endl;
+		this->caseList.clear();
+		QDir inputDir(inputPath);
+		inputDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+		this->caseList = inputDir.entryList();
 
-			for (QStringList::iterator sliceIt = caseSlices.begin(); sliceIt != caseSlices.end(); ++sliceIt)
+		if (caseList.empty()) // No directories found. Assuming only regular files in the given directory.
+		{
+			inputDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+			this->caseList = inputDir.entryList();
+
+			int swcFileCount = 0;
+			int tifFileCount = 0;
+			for (QStringList::iterator caseCheckIt = this->caseList.begin(); caseCheckIt != this->caseList.end(); ++caseCheckIt)
 			{
-				QString sliceFullPath = caseFullPath + "/" + *sliceIt;
-				this->inputMultiCasesSliceFullPaths.insert({ (*caseIt).toStdString(), sliceFullPath.toStdString() });
+				if ((*caseCheckIt).contains(".swc")) ++swcFileCount;
+				else if ((*caseCheckIt).contains(".tif")) ++tifFileCount;
+			}
+
+			if (swcFileCount == this->caseList.size())
+			{
+				this->inputSWCRootPath = inputPath;
+				this->inputCaseRootPath = "";
+			}
+			else if (tifFileCount == this->caseList.size())
+			{
+				this->inputSWCRootPath = "";
+				this->inputCaseRootPath = inputPath;
+
+				QString firstFileName = this->inputCaseRootPath + "/" + *(this->caseList.begin());
+				QFileInfo firstFileInfo(firstFileName);
+				for (QStringList::iterator it = this->caseList.begin() + 1; it != this->caseList.end(); ++it)
+				{
+					QString currFileName = this->inputCaseRootPath + "/" + *it;
+					QFileInfo currFileInfo(currFileName);
+					if (currFileInfo.size() != firstFileInfo.size()) goto MULTICASES;
+				}
+				this->inputSingleCaseFullPath = this->inputCaseRootPath.toStdString();
+
+			MULTICASES:
+				for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+				{
+					QString imgFullPath = this->inputCaseRootPath + "/" + *caseIt;
+					QStringList nameParse = (*caseIt).split(".");
+					*caseIt = nameParse.at(0);
+					this->inputMultiCasesFullPaths.insert({ (*caseIt).toStdString(), imgFullPath.toStdString() });
+				}
+			}
+		}
+		else
+		{
+			for (QStringList::iterator caseIt = this->caseList.begin(); caseIt != this->caseList.end(); ++caseIt)
+			{
+				this->inputCaseRootPath = inputPath;
+				QString caseFullPath = this->inputCaseRootPath + "/" + *caseIt;
+				QString outputCaseFullPath = this->outputRootPath + "/" + *caseIt;
+				QDir caseFolder(caseFullPath);
+				caseFolder.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+				QStringList caseSlices = caseFolder.entryList();
+				if (caseSlices.empty()) cout << "case " << (*caseIt).toStdString() << " is empty. Skip." << endl;
+
+				for (QStringList::iterator sliceIt = caseSlices.begin(); sliceIt != caseSlices.end(); ++sliceIt)
+				{
+					QString sliceFullPath = caseFullPath + "/" + *sliceIt;
+					this->inputMultiCasesFullPaths.insert({ (*caseIt).toStdString(), sliceFullPath.toStdString() });
+				}
 			}
 		}
 	}
 }
+/* ============================= END of [Constructors and Basic Data Members] ============================= */
 
 
-// ======================================= I/O and Image Property Profile ======================================= //
+
+/* ======================================= I/O and Image Property Profile ======================================= */
 void ImgManager::imgEntry(string caseID, imgFormat format) 
 {
-	// -- This method retrieves images from ImgManager::inputMultiCasesSliceFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
+	// -- This method retrieves images from ImgManager::inputMultiCasesFullPaths with specifed caseID, and then stores them into ImgManager::imgDatabase in the form of registeredImg.	
 	// -- Note: Use QString here instead of string, due to the conflict of Qt library and boost::filesystem.
+	// 
+	// *** format == slices:            image slice series, 1 folder <=> image slices of 1 case. The source is the [parent directory] of the folders of image slices.
+	// *** format == singleCase:        single 2D or 3D image case. The source is the image's full path.
+	// *** format == multicaseCubes:    multiple 3D image cases; The source is the directory where image cubes are stored.
 
 	cout << " -- Input image name: " << caseID << endl;
 	if (format == slices)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
-		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesSliceFullPaths.equal_range(caseID);
+		pair<multimap<string, string>::iterator, multimap<string, string>::iterator> range = this->inputMultiCasesFullPaths.equal_range(caseID);
 		for (multimap<string, string>::iterator it = range.first; it != range.second; ++it)
 		{
 			string sliceFullName = it->second;
@@ -157,16 +210,16 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		this->imgDatabase.insert({ caseID, currImgCase });
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
-	else if (format == singleCase_singleSlice)
+	else if (format == singleCase)
 	{
 		registeredImg currImgCase;
 		currImgCase.imgAlias = caseID;
 		
-		string sliceFullName = this->inputSingleCaseSingleSliceFullPath;
+		string imgFullName = this->inputSingleCaseFullPath;
 		vector<string> sliceFullNameParse;
-		boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
+		boost::split(sliceFullNameParse, imgFullName, boost::is_any_of("/"));
 		string sliceFileName = sliceFullNameParse.back();
-		const char* sliceFullNameC = sliceFullName.c_str();
+		const char* sliceFullNameC = imgFullName.c_str();
 		Image4DSimple* slicePtr = new Image4DSimple;
 		slicePtr->loadImage(sliceFullNameC);
 		currImgCase.dims[0] = int(slicePtr->getXDim());
@@ -184,11 +237,15 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 		cout << " -- Profiling finished. Img " << caseID << " registered." << endl;
 	}
 }
-// ===================================== END of [I/O and Image Property Profile] ===================================== //
+/* ===================================== END of [I/O and Image Property Profile] ===================================== */
 
-// ======================================= Image - SWC Methods ======================================= //
+
+/* ======================================= Image - SWC Methods ======================================= */
 NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
 {
+	// This method records every image siganl and stores in SWC format. Each SWC node corresponds to image signal coordinates.
+	// The default SWC type is 2. 
+
 	NeuronTree outputTree;
 	int zCoord = 0;
 	int nodeCount = 0;
@@ -218,11 +275,11 @@ NeuronTree ImgManager::imgSignal2SWC(const registeredImg& sourceImg, int type)
 
 	return outputTree;
 }
+/* =================================== END of [Image - SWC Methods] ===================================== */
 
 
-// =================================== END of [Image - SWC Methods] ===================================== //
 
-// ================= Methods for generating binary masks from SWC files ================= //
+/* ================== Methods for generating binary masks from SWC files ================== */
 void ImgManager::detectedNodes2mask_2D(QList<NeuronSWC>* nodeListPtr, long int dims[2], unsigned char*& mask1D)
 {
 	// -- Generate 2D masks based on each detected "SWC signal slice". 
@@ -392,7 +449,16 @@ bool ImgManager::getMarkersBetween(vector<MyMarker>& allmarkers, MyMarker m1, My
 	allmarkers.insert(allmarkers.end(), marker_set.begin(), marker_set.end());
 	return true;
 }
-// ================ END of [Methods for generating binary masks from SWC files] ================ //
+/* ================= END of [Methods for generating binary masks from SWC files] ================= */
+
+
+
+
+
+
+
+
+
 
 void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 {
@@ -428,7 +494,7 @@ void ImgManager::imgSliceDessemble(string imgName, int tileSize)
 			ROIxyz[1] = tileSize;
 			ROIxyz[2] = 1;
 			ROIxyz[3] = dims[2];
-			imgProcPtr->cropImg2D(img1D, ROIPtr, xlb, xhb, ylb, yhb, dims);
+			imgProcPtr->cropImg(img1D, ROIPtr, xlb, xhb, ylb, yhb, 1, 1, dims);
 
 			QString patchPath = QString::fromStdString(imgName) + "_patches";
 			if (!QDir(patchPath).exists()) QDir().mkpath(patchPath);

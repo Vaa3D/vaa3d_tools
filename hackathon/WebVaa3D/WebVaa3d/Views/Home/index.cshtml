@@ -1,5 +1,5 @@
 ﻿<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://unpkg.com/tiff.js"></script>
+<script src="~/statics/tiff.js"></script>
 <script src="https://unpkg.com/vue"></script>
 <script src="/statics/UTIF.js"></script>
 <script src="~/statics/Three.js"></script>
@@ -21,95 +21,88 @@
 <script src="~/js/WebGL.js"></script>
 <script src="~/js/Lut.js"></script>
 <script src="~/js/progressbar.js"></script>
-<script src="~/js/openlocal.js"></script>
 <script src="~/js/VirtualPyramid5.js"></script>
 <script src="~/js/SingleFile5.js"></script>
 <script src="~/js/imagefunction.js"></script>
 <script src="https://unpkg.com/current-device/umd/current-device.min.js"></script>
 <script src="~/js/css3-mediaqueries.js"></script>
-
-
+<script src="~/js/mainstyle.js"></script>
+<link href="~/drawpanel.html"/>
+<script src="~/js/mainstyle.js"></script>
 <meta name="hotcss" content="design-width=640" />
-
-
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, height=device-height">
 <body>
-    <div class="layui-container">
+    <div class="layui-container" id="mobilecontent">
 
 
         <ul id="nave" class=" layui-nav layui-bg-cyan " lay-filter="">
             <li id="File" class="layui-nav-item ">
-                <a href="javascript:;"><i class="fa fa-file"> File</i></a>
+                <a href="javascript:;"><i class="fa fa-file" style="font-size:.7rem"> File</i></a>
                 <dl id="openfile" class="layui-nav-child">
                     <dd id="openfiles">
-                        <a href="javascript:;" onclick="getPictures()"> <i class="fa fa-globe"> open</i></a>
+                        <a href="javascript:;" onclick="getPictures()"> <i class="fa fa-globe" style="font-size:.68rem"> open</i></a>
                     </dd>
 
                     <dd id="save">
-                        <a href="javascript:;"><i class="fa fa-save"> save</i></a>
+                        <a href="javascript:;"><i class="fa fa-save" style="font-size:.68rem"> save</i></a>
                     </dd>
                 </dl>
             </li>
 
             <li id="Edit" class="layui-nav-item ">
-                <a href="javascript:;"><i class="fa  fa-edit"> Edit</i></a>
+                <a href="javascript:;"><i class="fa  fa-edit" style="font-size:.7rem"> Edit</i></a>
                 <dl class="layui-nav-child">
-                    <dd><a href="javascript:;" onclick="draw()"><i class="fa fa-pencil"> draw</i></a></dd>
-                    <dd><a href="javascript:;"><i class="fa fa-trash "> delete</i></a></dd>
-                    <dd><a href="javascript:;"><i class="fa fa-undo"> undo</i></a></dd>
-                    <dd><a href="javascript:;"><i class="fa fa-repeat"> redo</i></a></dd>
-                    <dd><a href="javascript:;"><i class="fa fa-mouse-pointer"> select all</i></a></dd>
+                    <dd id="draw"><a href="javascript:;" onclick="draw()"><i class="fa fa-pencil" style="font-size:.68rem"> draw</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-trash " style="font-size:.68rem"> delete</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-undo" style="font-size:.68rem"> undo</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-repeat" style="font-size:.68rem"> redo</i></a></dd>
+                    <dd><a href="javascript:;"><i class="fa fa-mouse-pointer" style="font-size:.68rem"> select all</i></a></dd>
                 </dl>
             </li>
 
             <li id="Tools" class="layui-nav-item ">
-                <a href="javascript:;"><i class="fa  fa-wrench "> Tools</i></a>
+                <a href="javascript:;"><i class="fa  fa-wrench " style="font-size:.7rem"> Tools</i></a>
                 <dl id="second-nave-tools" class="layui-nav-child">
-                    <dd><a href="#"><i class="fa  fa-camera "> screen shot</i></a></dd>
+                    <dd><a href="#"><i class="fa  fa-camera " style="font-size:.6rem;"> screen shot</i></a></dd>
                 </dl>
             </li>
 
             <li id="help" class="layui-nav-item ">
-                <a href="javascript:;"> <i class="fa fa-hand-stop-o "> Help</i></a>
+                <a href="javascript:;"> <i class="fa fa-hand-stop-o " style="font-size:.7rem"> Help</i></a>
             </li>
 
         </ul>
 
-        <nav class="navbar navbar-inverse">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="#">网站名</a>
-                </div>
-                <div class="collapse navbar-collapse" id="myNavbar">
-                    <ul class="nav navbar-nav">
-                        <li class="active"><a href="#">主页</a></li>
-                        <li><a href="#">页面 2</a></li>
-                        <li><a href="#">页面 3</a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-        <div id="bigneuron">
-            <div id="view">
 
-            </div>
+
+        <div id="view">
+            <i id="fullscreen" class="fa fa-expand" aria-hidden="true" style="width:1rem;float:right;font-size:.8rem;bottom:0;"></i>
         </div>
-
-
 
 
 
     </div>
 
-
-
-
-
-
+    <div class="drawpanel" style="display:none">
+        <div class="contrast">
+            <i>Contrast</i><br />
+            <input class="row" type="range" min="0" max="10" id="contrast" name="point1" style="" /><br />
+        </div>
+        <div class="color">
+            <i>Line color</i><br />
+            <input type="color" id="color" />
+        </div>
+        <br />
+        <div>
+            <i>Line size</i><br />
+            <select id="line-size-select" style="width:80px;height:25px">
+                <option label="1pt" value="1pt" selected>1pt</option>
+                <option label="2pt" value="2pt">2pt</option>
+                <option label="3pt" value="3pt">3pt</option>
+            </select>
+        </div>
+            
+    </div>
 
 </body>
 
@@ -151,33 +144,41 @@
     }
     //显示文件读取进度
     // document.getElementById('vaa3dweb-input-open-local').addEventListener('change', handleFileSelect, false);
-    $('.show').on('click', function () {//单击隐藏或显示下拉菜单
-        var code = $(this).data('content');
-        if ($('#' + code).css('display') == 'none') {
-            $('#' + code).show();
-        }
-        else {
-            $('#' + code).hide();
-        }
 
 
+   
 
-    });
-    $('.show').on('blur', function () {//失去光标隐藏下拉菜单
-        var code = $(this).data('content');
-        $('#' + code).hide();
-    });
 
 
     $('#open-local').on('click', function () {//打开本地文件夹
         $('#vaa3dweb-input-open-local').click();
 
     });
-    $('#fullscreen').on('click', function () {//全屏并隐藏控制面板
-        $('#right-content').hide();
-        full_screen();//全屏
-        $('#left-content').css('width', '99%');
-        renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+    //autodivheight();
+    $('#fullscreen').on('click', function () {
+        if ($('#nave').css('display') == 'none') {//恢复正常页面
+            $('#nave').show(); 
+            $('#view').css('height', '25.5rem');
+            $('#fullscreen').removeClass();
+            $('#fullscreen').addClass('fa fa-expand');
+            document.webkitCancelFullScreen();
+            //console.log($('#fullscreen').hasClass('fa fa-compress') );
+            
+            renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+            
+        }
+        else {//全屏并隐藏控制面板
+            $('#nave').hide();
+            $('#fullscreen').removeClass();
+            $('#fullscreen').addClass('fa fa-compress ');
+            //full_screen();//全屏
+            document.getElementById('view').webkitRequestFullScreen();
+            //$('#view').css('height', 'device-height');
+            //full_screen();
+            renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
+            console.log("full screen");
+        }
+       
         //renderer.render(scene, camera);
         $('#show-panel').show();//显示打开控制面板按钮
     });
@@ -185,65 +186,39 @@
     $('#help').on('click', function () {
         layer.open({
             type: 1,
-            area: ['29%', '360px'],
+            area: ['70%', '50%'],//宽度，高度
             shadeClose: true, //点击遮罩关闭
             content: 'help information',
             title: ['HELP', 'font-size:18px;background-color:rgba(25, 104, 150, 0.91)'],
-            offset: ['5%', '70%'],
+            offset: ['8%', '15%'],//上方，左边
+            closeBtn: 1,//关闭按钮
         });
 
 
     });
-
-    $('#about').on('click', function () {
+    $('#draw').on('click', function () {
         layer.open({
             type: 1,
-            area: ['29%', '360px'],
-            shadeClose: true, //点击遮罩关闭
-            content: 'introduce information',
-            title: false,//不显示标题
-            offset: ['5%', '70%'],
+            closeBtn: 0,
+            shadeClose: true,
+            skin: 'layui-layer-rim',
+            area: ['70%', '50%'],
+            title: ['Draw Panel','font-size:18px;background-color:cornflowerblue'],
+            offset: ['10%', '15%'],
+            closeBtn: 1,//关闭按钮
+            content: $('.drawpanel').html()
         });
-
     });
-
-
-    //        页面加载状态改变时的事件，未实现-------------------
-    // document.onreadystatechange = function () {
-    //     if (document.readyState == 'complete') {   //判断页面加载完成，加载的图标就隐藏  进度条------------------------
-    //        $("#loading").fadeOut();
-    //   }
-    //  }
-
-    function show_panel() {//淡入显示面板-----------待改善
-        $('#right-content').fadeIn("slow");
-        $('#show-panel').hide();
-        $('#left-content').css('width', '70%');
-        if (document.webkitIsFullScreen) {
-        }
-        else {//不是全屏状态时重新render一下，恢复到原来状态
-            renderer.setSize(document.getElementById('view').clientWidth, document.getElementById('view').clientHeight);
-        }
-
-
-    }
+    
+   
 
 
 
 
-    //隐藏面板
-    $('#view').on("click", function () {
-        if (document.webkitIsFullScreen) {//全屏是自动隐藏控制面板  ****************存在全屏时，全屏退出过后如果不提前打开菜单栏会出现菜单栏无法显示
 
 
-            $('#right-content').hide();
-            $('#left-content').css('width', '99%');
-            $('#show-panel').show();//
-        }
-
-    });
-
-
+    
+   
 
     //document.addEventListener("webkitfullscreenchange", show_panel());
 

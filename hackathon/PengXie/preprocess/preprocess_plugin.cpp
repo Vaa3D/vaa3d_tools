@@ -11,6 +11,8 @@
 #include "crop_swc_main.h"
 #include "crop_swc_cuboid_main.h"
 #include "check_connection.h"
+#include "auto_soma_correction.h"
+#include "preprocess_batch_main.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
@@ -18,7 +20,10 @@ Q_EXPORT_PLUGIN2(preprocess, neuron_analysis);
 QStringList neuron_analysis::menulist() const
 {
     return QStringList()
+            <<tr("auto_soma_correction")
+            <<tr("auto_soma_correction_batch")
             <<tr("preprocess")
+            <<tr("preprocess_batch")
             <<tr("help")
             <<tr("about");
 }
@@ -41,6 +46,18 @@ void neuron_analysis::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     if(menu_name == tr("preprocess"))
     {
         pre_processing_domenu(callback, parent);
+    }
+    if(menu_name == tr("preprocess_batch"))
+    {
+        preprocess_batch_domenu(callback, parent);
+    }
+    if(menu_name == tr("auto_soma_correction"))
+    {
+        auto_soma_correction_domenu(callback, parent);
+    }
+    if(menu_name == tr("auto_soma_correction_batch"))
+    {
+        auto_soma_correction_batch_domenu(callback, parent);
     }
     if (menu_name == tr("help"))
     {
@@ -70,7 +87,7 @@ bool neuron_analysis::dofunc(const QString & func_name, const V3DPluginArgList &
 
     if (func_name == tr("preprocess_batch"))
     {
-        return (preprocess_batch_dofunc(input, output));
+        return (preprocess_batch_dofunc(callback, parent));
     }
     if (func_name == tr("preprocess"))
 	{

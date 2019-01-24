@@ -12,7 +12,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>790</width>
+    <width>800</width>
     <height>937</height>
    </rect>
   </property>
@@ -289,8 +289,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>714</width>
-               <height>537</height>
+               <width>724</width>
+               <height>538</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -687,19 +687,6 @@
                         <string>Threshold: mean + </string>
                        </property>
                       </widget>
-                      <widget class="QSpinBox" name="spinBox_3">
-                       <property name="geometry">
-                        <rect>
-                         <x>150</x>
-                         <y>10</y>
-                         <width>46</width>
-                         <height>22</height>
-                        </rect>
-                       </property>
-                       <property name="value">
-                        <number>0</number>
-                       </property>
-                      </widget>
                       <widget class="QLabel" name="label_5">
                        <property name="geometry">
                         <rect>
@@ -802,18 +789,68 @@
                    </layout>
                   </widget>
                  </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_3">
+         <attribute name="title">
+          <string>Object Classification</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_20">
+          <item>
+           <widget class="QScrollArea" name="scrollArea_3">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_5">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>724</width>
+               <height>538</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_23">
+              <item>
+               <widget class="QGroupBox" name="groupBox_13">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>300</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="title">
+                 <string>Object Filter</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_21">
                  <item>
-                  <widget class="QGroupBox" name="groupBox_7">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>60</height>
-                    </size>
-                   </property>
+                  <widget class="QGroupBox" name="groupBox_14">
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>100</height>
+                     <height>200</height>
                     </size>
                    </property>
                    <property name="font">
@@ -823,23 +860,14 @@
                     </font>
                    </property>
                    <property name="title">
-                    <string>Small Particle Removal (2D)</string>
+                    <string>Object Size</string>
                    </property>
                    <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <property name="checked">
                     <bool>false</bool>
                    </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_10">
+                   <layout class="QVBoxLayout" name="verticalLayout_22">
                     <item>
-                     <widget class="QFrame" name="frame_9">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>40</height>
-                       </size>
-                      </property>
+                     <widget class="QFrame" name="frame_20">
                       <property name="maximumSize">
                        <size>
                         <width>16777215</width>
@@ -852,29 +880,84 @@
                       <property name="frameShadow">
                        <enum>QFrame::Raised</enum>
                       </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_5">
+                      <layout class="QHBoxLayout" name="horizontalLayout_16">
                        <item>
-                        <widget class="QLabel" name="label_6">
+                        <widget class="QRadioButton" name="radioButton_4">
                          <property name="text">
-                          <string>Size threshold:</string>
+                          <string>In voxel count:</string>
+                         </property>
+                         <property name="checked">
+                          <bool>true</bool>
                          </property>
                         </widget>
                        </item>
                        <item>
-                        <widget class="QSpinBox" name="spinBox_7">
-                         <property name="value">
-                          <number>1</number>
-                         </property>
-                        </widget>
+                        <widget class="QSpinBox" name="spinBox_14"/>
                        </item>
                        <item>
-                        <spacer name="horizontalSpacer_2">
+                        <spacer name="horizontalSpacer_15">
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>445</width>
+                           <width>419</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
+                      <zorder>radioButton_4</zorder>
+                      <zorder>spinBox_14</zorder>
+                      <zorder>horizontalSpacer_15</zorder>
+                      <zorder>frame_21</zorder>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QFrame" name="frame_21">
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>50</height>
+                       </size>
+                      </property>
+                      <property name="frameShape">
+                       <enum>QFrame::StyledPanel</enum>
+                      </property>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
+                      </property>
+                      <layout class="QHBoxLayout" name="horizontalLayout_17">
+                       <item>
+                        <widget class="QRadioButton" name="radioButton_5">
+                         <property name="text">
+                          <string>In actual volume size: </string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLineEdit" name="lineEdit_6">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_17">
+                         <property name="text">
+                          <string>µm^3</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="horizontalSpacer_16">
+                         <property name="orientation">
+                          <enum>Qt::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>255</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -910,8 +993,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>714</width>
-               <height>537</height>
+               <width>724</width>
+               <height>538</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -937,6 +1020,50 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_12">
                  <item>
+                  <widget class="QFrame" name="frame_11">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>50</height>
+                    </size>
+                   </property>
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_7">
+                    <item>
+                     <widget class="QCheckBox" name="checkBox_10">
+                      <property name="font">
+                       <font>
+                        <weight>50</weight>
+                        <bold>false</bold>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Break branches</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_4">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>505</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QFrame" name="frame_10">
                    <property name="maximumSize">
                     <size>
@@ -960,7 +1087,7 @@
                        </font>
                       </property>
                       <property name="text">
-                       <string>Largest connecting distance:</string>
+                       <string>Minimum number of nodes in one segment: </string>
                       </property>
                      </widget>
                     </item>
@@ -973,7 +1100,7 @@
                        </font>
                       </property>
                       <property name="value">
-                       <number>10</number>
+                       <number>3</number>
                       </property>
                      </widget>
                     </item>
@@ -985,189 +1112,6 @@
                       <property name="sizeHint" stdset="0">
                        <size>
                         <width>376</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QGroupBox" name="groupBox_9">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>150</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>150</height>
-                    </size>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="title">
-                    <string>Tiled MST-based Signal Connection</string>
-                   </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_14">
-                    <item>
-                     <widget class="QFrame" name="frame_12">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_9">
-                       <item>
-                        <widget class="QLabel" name="label_7">
-                         <property name="text">
-                          <string>Tile length: </string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QSpinBox" name="spinBox_4">
-                         <property name="maximum">
-                          <number>1024</number>
-                         </property>
-                         <property name="value">
-                          <number>128</number>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <spacer name="horizontalSpacer_4">
-                         <property name="orientation">
-                          <enum>Qt::Horizontal</enum>
-                         </property>
-                         <property name="sizeHint" stdset="0">
-                          <size>
-                           <width>463</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                        </spacer>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QFrame" name="frame_13">
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_7">
-                       <item>
-                        <widget class="QLabel" name="label_10">
-                         <property name="text">
-                          <string>Number of z sections:</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QSpinBox" name="spinBox_8">
-                         <property name="value">
-                          <number>1</number>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <spacer name="horizontalSpacer_6">
-                         <property name="orientation">
-                          <enum>Qt::Horizontal</enum>
-                         </property>
-                         <property name="sizeHint" stdset="0">
-                          <size>
-                           <width>397</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                        </spacer>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QFrame" name="frame_11">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_8">
-                    <item>
-                     <widget class="QLabel" name="label_9">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>Minimum number of nodes in one segment:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="spinBox_6">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="value">
-                       <number>1</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_5">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>264</width>
                         <height>20</height>
                        </size>
                       </property>
@@ -1364,8 +1308,8 @@
    <slot>saveSettingsClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>600</x>
-     <y>899</y>
+     <x>598</x>
+     <y>900</y>
     </hint>
     <hint type="destinationlabel">
      <x>524</x>
@@ -1380,8 +1324,8 @@
    <slot>traceButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>677</x>
-     <y>899</y>
+     <x>675</x>
+     <y>900</y>
     </hint>
     <hint type="destinationlabel">
      <x>765</x>
@@ -1396,8 +1340,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>754</x>
-     <y>851</y>
+     <x>752</x>
+     <y>854</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1409,11 +1353,11 @@
    <sender>pushButton_3</sender>
    <signal>clicked()</signal>
    <receiver>FragmentedTraceUI</receiver>
-   <slot>close()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>754</x>
-     <y>899</y>
+     <x>752</x>
+     <y>900</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1477,7 +1421,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>689</x>
-     <y>623</y>
+     <y>675</y>
     </hint>
     <hint type="destinationlabel">
      <x>781</x>
@@ -1525,7 +1469,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>119</x>
-     <y>621</y>
+     <y>673</y>
     </hint>
     <hint type="destinationlabel">
      <x>4</x>
@@ -1534,18 +1478,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>groupBox_7</sender>
-   <signal>toggled(bool)</signal>
+   <sender>radioButton_4</sender>
+   <signal>clicked(bool)</signal>
    <receiver>FragmentedTraceUI</receiver>
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>90</x>
-     <y>677</y>
+     <x>151</x>
+     <y>504</y>
     </hint>
     <hint type="destinationlabel">
-     <x>7</x>
-     <y>719</y>
+     <x>1</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_5</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>nestedChecks(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>111</x>
+     <y>577</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>0</x>
+     <y>737</y>
     </hint>
    </hints>
   </connection>

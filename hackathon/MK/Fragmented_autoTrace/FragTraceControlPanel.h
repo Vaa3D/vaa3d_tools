@@ -35,6 +35,8 @@ public slots:
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
+	QDoubleSpinBox* doubleSpinBox;
+
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;
 

@@ -44,6 +44,7 @@ struct registeredImg
 	string imgAlias;
 	QString imgCaseRootQ;
 
+	void createBlankImg(const int imgDims[]);
 	map<string, myImg1DPtr> slicePtrs;
 
 	map<int, size_t> histMap;
@@ -60,20 +61,18 @@ public:
 	/********* Constructors and Basic Data Members *********/
 	ImgManager() {};
 	ImgManager(QString inputPath);
-	ImgManager(string wholeImgName);
 
 	QString inputCaseRootPath;
 	QString inputSWCRootPath;
 	QString outputRootPath;
 	
 	QStringList caseList;
-	string inputSingleCaseSingleSliceFullPath;
-	string inputSingleCaseSingleCubeFullPath;
-	string outputSingleCaseSingleSliceFullPath;
-	multimap<string, string> inputMultiCasesSliceFullPaths;
+	string inputSingleCaseFullPath;
+	string outputSingleCaseFullPath;
+	multimap<string, string> inputMultiCasesFullPaths;
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 
-	enum imgFormat { cube, slices, singleCase_singleSlice };
+	enum imgFormat { multicaseCubes, slices, singleCase};
 	/*******************************************************/
 
 
