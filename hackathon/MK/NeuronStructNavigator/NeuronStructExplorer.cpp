@@ -588,7 +588,99 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 	return outputProfiledTree.tree;
 }
 
-segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt, NeuronSWC* tailNodePtr1, NeuronSWC* tailNodePtr2)
+profiledTree NeuronStructExplorer::simpleSegElongate(const NeuronTree& inputTree, float tileLength, float distThreshold)
+{
+	profiledTree outputProfiledTree(inputTree, tileLength);
+
+	int count = 0;
+	for (map<string, vector<int>>::iterator headIt = outputProfiledTree.segHeadMap.begin(); headIt != outputProfiledTree.segHeadMap.end(); ++headIt)
+	{
+		++count;
+		vector<int> headSegs = headIt->second;
+		vector<int> tailSegs;
+		if (outputProfiledTree.segTailMap.find(headIt->first) != outputProfiledTree.segTailMap.end())
+			tailSegs = outputProfiledTree.segTailMap.at(headIt->first);
+
+		map<string, float> distMap;
+
+		for (vector<int>::iterator it1 = headSegs.begin(); it1 != headSegs.end(); ++it1)
+		{
+			for (vector<int>::iterator it2 = tailSegs.begin(); it2 != tailSegs.end(); ++it2)
+			{
+				for (vector<int>::iterator tailIt = outputProfiledTree.segs.at(*it2).tails.begin(); tailIt != outputProfiledTree.segs.at(*it2).tails.end(); ++tailIt)
+				{
+					NeuronSWC* headPtr = &outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(outputProfiledTree.segs.at(*it1).head)];
+					NeuronSWC* tailPtr = &outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*tailIt)];
+					float dist = sqrtf(float((headPtr->x - tailPtr->x) * (headPtr->x - tailPtr->x)) + float((headPtr->y - tailPtr->y) * (headPtr->y - tailPtr->y)) + float((headPtr->z - tailPtr->z) * (headPtr->z - tailPtr->z)));
+					
+					string label = to_string(*it1) + "_h_" + to_string(*tailIt) + "_t";
+					distMap.insert({ label, dist });
+				}
+			}
+		}
+
+		for (vector<int>::iterator it1 = headSegs.begin(); it1 != headSegs.end() - 1; ++it1)
+		{
+			for (vector<int>::iterator it2 = it1 + 1; it2 != headSegs.end(); ++it2)
+			{
+				NeuronSWC* headPtr1 = &outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(outputProfiledTree.segs.at(*it1).head)];
+				NeuronSWC* headPtr2 = &outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(outputProfiledTree.segs.at(*it2).head)];
+				float dist = sqrtf(float((headPtr1->x - headPtr2->x) * (headPtr1->x - headPtr2->x)) + float((headPtr1->y - headPtr2->y) * (headPtr1->y - headPtr2->y)) + float((headPtr1->z - headPtr2->z) * (headPtr1->z - headPtr2->z)));
+
+				string label = to_string(*it1) + "_h_" + to_string(*it2) + "_h";
+				distMap.insert({ label, dist });
+			}
+		}
+
+		for (vector<int>::iterator it1 = tailSegs.begin(); it1 != tailSegs.end() - 1; ++it1)
+		{
+			for (vector<int>::iterator tailIt1 = outputProfiledTree.segs.at(*it1).tails.begin(); tailIt1 != outputProfiledTree.segs.at(*it1).tails.end(); ++tailIt1)
+			{
+				cout << *tailIt1 << " ";
+				for (vector<int>::iterator it2 = tailSegs.begin() + 1; it2 != tailSegs.end(); ++it2)
+				{
+					for (vector<int>::iterator tailIt2 = outputProfiledTree.segs.at(*it2).tails.begin(); tailIt2 != outputProfiledTree.segs.at(*it2).tails.end(); ++tailIt2)
+					{
+						NeuronSWC* tailPtr1 = &outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*tailIt1)];
+						NeuronSWC* tailPtr2 = &outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*tailIt2)];
+						float dist = sqrt(float((tailPtr1->x - tailPtr2->x) * (tailPtr1->x - tailPtr2->x)) + float((tailPtr1->y - tailPtr2->y) * (tailPtr1->y - tailPtr2->y)) + float((tailPtr1->z - tailPtr2->z) * (tailPtr1->z - tailPtr2->z)));
+
+						string label = to_string(*it1) + "_t_" + to_string(*it2) + "_t";
+						distMap.insert({ label, dist });
+					}
+				}
+			}
+		}
+		cout << endl;
+
+		float minDist = 10000;
+		pair<string, float> nearestPair;
+		for (map<string, float>::iterator it = distMap.begin(); it != distMap.end(); ++it)
+		{
+			if (it->second < minDist)
+			{
+				minDist = it->second;
+				nearestPair.first = it->first;
+				nearestPair.second = minDist;
+			}
+		}
+
+		cout << nearestPair.first << " " << nearestPair.second << endl;
+
+		// ------- debug purpose ------- //
+		/*for (vector<int>::iterator it1 = headSegs.begin(); it1 != headSegs.end(); ++it1)
+			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(outputProfiledTree.segs.at(*it1).head)].type = count % 5;
+		for (vector<int>::iterator it2 = tailSegs.begin(); it2 != tailSegs.end(); ++it2)
+		{
+			for (vector<int>::iterator tailIt = outputProfiledTree.segs.at(*it2).tails.begin(); tailIt != outputProfiledTree.segs.at(*it2).tails.end(); ++tailIt)
+				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*tailIt)].type = count % 5;
+		}*/
+	}
+
+	return outputProfiledTree;
+}
+
+segUnit NeuronStructExplorer::segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt)
 {
 	if (segUnit1.tails.size() > 1 || segUnit2.tails.size() > 1)
 		throw invalid_argument("Currently forked segment connection is not supported. Do nothing and return");	

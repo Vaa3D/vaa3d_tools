@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	/********* specify function *********/
 	//const char* funcNameC = argv[1];
 	//string funcName(funcNameC);
-	string funcName = "treeDownSampleTest";
+	string funcName = "simpleElongateTest";
 	/************************************/
 
 	if (!funcName.compare("swcID"))
@@ -1276,6 +1276,17 @@ int main(int argc, char* argv[])
 		
 		profiledTree downSampledProfiledTree = myExplorer.treeDownSample(inputProfiledTree, 3);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampleTest.swc", downSampledProfiledTree.tree);
+	}
+	else if (!funcName.compare("simpleElongateTest"))
+	{
+		NeuronStructExplorer myExplorer;
+
+		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampledTreeTest.swc";
+		NeuronTree inputTree = readSWC_file(inputTreeFileName);
+		profiledTree inputProfiledTree(inputTree);
+
+		profiledTree simpleElongProfiledTree = myExplorer.simpleSegElongate(inputProfiledTree.tree, 10, 5);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampleTest.swc", simpleElongProfiledTree.tree);
 	}
 
 	return 0;
