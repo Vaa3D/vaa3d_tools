@@ -153,14 +153,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
 	writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
-	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
+	/*profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
 	QString elongatedTreeName = this->finalSaveRootQ + "elongatedTree.swc";
-	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);
+	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);*/
 
-	profiledTree headTailProfiledTree = this->fragTraceTreeManager.simpleSegElongate(downSampledProfiledTree.tree, 10, 5);
+	//profiledTree headTailProfiledTree = this->fragTraceTreeManager.simpleSegElongate(downSampledProfiledTree.tree, 10, 5);
 
-	NeuronTree finalOutputTree = headTailProfiledTree.tree;
+	NeuronTree finalOutputTree = downSampledProfiledTree.tree;
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
