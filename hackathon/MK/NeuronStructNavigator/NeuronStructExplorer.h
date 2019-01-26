@@ -168,6 +168,7 @@ public:
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+	profiledTree segElongate_dist(const profiledTree& inputProfiledTree, float tileLength, float distThreshold);
 	profiledTree simpleSegElongate(const NeuronTree& inputTree, float tileLength, float distThreshold);
 
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);

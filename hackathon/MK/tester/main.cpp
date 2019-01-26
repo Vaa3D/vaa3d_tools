@@ -1281,12 +1281,12 @@ int main(int argc, char* argv[])
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "D:\\Work\\FragTrace\\downSampledTreeTest.swc";
+		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampledTreeTest.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
 		profiledTree simpleElongProfiledTree = myExplorer.simpleSegElongate(inputProfiledTree.tree, 10, 5);
-		writeSWC_file("D:\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
 	}
 
 	return 0;
