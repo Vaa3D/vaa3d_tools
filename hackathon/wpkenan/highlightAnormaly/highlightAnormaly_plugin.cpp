@@ -85,10 +85,11 @@ bool function(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPlug
 	}
 
 	QDir dir;
-
+	cout << "********************************************Debug" << endl;
+	cout << "dir: " << dir.currentPath().toStdString() << endl;
 	//1. get a sorted, single-rooted NeuronTree
 	QString cmd_sortSwc=QString("%1 /x sort_neuron_swc /f sort_swc /i %2 /o %3 /p %4 %5")
-		.arg((dir.currentPath().toStdString()+"//..//..//bin//vaa3d_msvc.exe").c_str())
+		.arg("vaa3d_msvc.exe")
 		.arg(infiles[0])
 		.arg((QString(infiles[0])+"_sortedTmp.swc").toStdString().c_str())
 		.arg(0)
@@ -100,7 +101,7 @@ bool function(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPlug
 	nt=readSWC_file(QString(infiles[0])+"_sortedTmp.swc");
 
 	//2. highlight abnormal angles
-	highlightAnormaly(nt,30,150,outfiles[0],length);
+	highlightAnormaly(nt,min_angle,max_angle,outfiles[0],length);
 
 	//3. replace original VR nt with this nt
 
