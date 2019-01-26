@@ -9,6 +9,7 @@ Thu Jan 24 14:27:50 2019 by wp
 #include<iostream>
 #include <QString>
 #include <QtCore/QFile>
+#include "sort_func.h"
 using namespace std;
 
 Q_EXPORT_PLUGIN2(highlightAnormaly,highlightAnormalyPlugin);
@@ -88,6 +89,7 @@ bool function(V3DPluginCallback2 &callback,const V3DPluginArgList &input,V3DPlug
 	cout << "********************************************Debug" << endl;
 	cout << "dir: " << dir.currentPath().toStdString() << endl;
 	//1. get a sorted, single-rooted NeuronTree
+	//sort_func(input)
 	QString cmd_sortSwc=QString("%1 /x sort_neuron_swc /f sort_swc /i %2 /o %3 /p %4 %5")
 		.arg("vaa3d_msvc.exe")
 		.arg(infiles[0])
@@ -126,6 +128,10 @@ bool highlightAnormaly(NeuronTree &nt,double min_angle,double max_angle,char* ou
 			//nt.listNeuron[i].radius=10;
 			double angle=calculateAngle(nt,i-1,children[i][0]-1,children[i][1]-1);
 			cout << angle << endl;
+			
+			if(angle<min_angle||angle>max_angle){
+				cout << "This is an abnormal angle!" << endl;
+			}
 			cout << "*******" << endl;
 			if(angle<min_angle){
 				int tmpLength=length;
@@ -134,7 +140,7 @@ bool highlightAnormaly(NeuronTree &nt,double min_angle,double max_angle,char* ou
 				//nt.listNeuron[children[i][0]].type=5;
 
 				while(tmpLength--){
-					cout << tmpIndex << endl;
+					//cout << tmpIndex << endl;
 					nt.listNeuron[tmpIndex-1].type=5;
 					if(children[tmpIndex].size()==0) break;
 					tmpIndex=children[tmpIndex][0];
@@ -146,7 +152,7 @@ bool highlightAnormaly(NeuronTree &nt,double min_angle,double max_angle,char* ou
 				tmpIndex=children[i][1];
 
 				while(tmpLength--){
-					cout << tmpIndex << endl;
+					//cout << tmpIndex << endl;
 					nt.listNeuron[tmpIndex-1].type=5;
 					if(children[tmpIndex].size()==0) break;
 					tmpIndex=children[tmpIndex][0];
@@ -163,7 +169,7 @@ bool highlightAnormaly(NeuronTree &nt,double min_angle,double max_angle,char* ou
 				int tmpIndex=children[i][0];
 
 				while(tmpLength--){
-					cout << tmpIndex << endl;
+					//cout << tmpIndex << endl;
 					nt.listNeuron[tmpIndex-1].type=6;
 					if(children[tmpIndex].size()==0) break;
 					tmpIndex=children[tmpIndex][0];
@@ -174,7 +180,7 @@ bool highlightAnormaly(NeuronTree &nt,double min_angle,double max_angle,char* ou
 				tmpIndex=children[i][1];
 
 				while(tmpLength--){
-					cout << tmpIndex << endl;
+					//cout << tmpIndex << endl;
 					nt.listNeuron[tmpIndex-1].type=6;
 					if(children[tmpIndex].size()==0) break;
 					tmpIndex=children[tmpIndex][0];
