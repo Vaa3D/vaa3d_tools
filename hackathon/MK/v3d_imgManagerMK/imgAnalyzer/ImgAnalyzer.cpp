@@ -690,6 +690,7 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 
 
 
+
 void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg)
 {
 	for (QList<NeuronSWC>::iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
