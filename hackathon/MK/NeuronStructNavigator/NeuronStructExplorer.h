@@ -172,10 +172,17 @@ public:
 	profiledTree simpleSegElongate(const NeuronTree& inputTree, float tileLength, float distThreshold);
 
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
+	
+	// Generate a new segment that is connected with 2 input segments. Connecting orientation needs to be specified by connOrt.
+	// This method is a generalized method and is normally the final step of segment connecting process.
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
+	
+	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
+
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
+
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
 	/********************************************************************************/
 
