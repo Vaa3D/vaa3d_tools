@@ -1147,7 +1147,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "D:\\Work\\FragTrace\\test.tif";
+		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\FragTrace\\test.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1256,26 +1256,26 @@ int main(int argc, char* argv[])
 		finalTree = NeuronStructUtil::swcCombine(objTrees);
 
 		profiledTree profiledFinalTree(finalTree);
-		writeSWC_file("D:\\Work\\FragTrace\\mstTree.swc", profiledFinalTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\mstTree.swc", profiledFinalTree.tree);
 		
 		profiledTree noSpikeProfiledFinalTree = NeuronStructExplorer::spikeRemove(profiledFinalTree);
-		writeSWC_file("D:\\Work\\FragTrace\\nonDownSampled.swc", noSpikeProfiledFinalTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\FragTrace\\nonDownSampled.swc", noSpikeProfiledFinalTree.tree);
 
 		profiledTree profiledDownSampledTree = myExplorer.treeDownSample(noSpikeProfiledFinalTree, 3);
 		//NeuronTree noSpikeShiftedTree = NeuronStructUtil::swcShift(smoothedProfiledFinalTree.tree, 1, 1, 1);
 
-		writeSWC_file("D:\\Work\\FragTrace\\testTree.swc", profiledDownSampledTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\FragTrace\\testTree.swc", profiledDownSampledTree.tree);
 	}
 	else if (!funcName.compare("treeDownSampleTest"))
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "D:\\Work\\FragTrace\\branchBreakTree.swc";
+		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\branchBreakTree.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 		
 		profiledTree downSampledProfiledTree = myExplorer.treeDownSample(inputProfiledTree, 3);
-		writeSWC_file("D:\\Work\\FragTrace\\downSampleTest.swc", downSampledProfiledTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\downSampleTest.swc", downSampledProfiledTree.tree);
 	}
 	else if (!funcName.compare("simpleElongateTest"))
 	{
@@ -1285,7 +1285,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
-		profiledTree simpleElongProfiledTree = myExplorer.simpleSegElongate(inputProfiledTree.tree, 10, 5);
+		profiledTree simpleElongProfiledTree = myExplorer.segElongate_dist(inputProfiledTree.tree, 10, 5);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
 	}
 

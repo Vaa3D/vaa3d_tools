@@ -710,8 +710,10 @@ profiledTree NeuronStructExplorer::simpleSegElongate(const NeuronTree& inputTree
 map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold)
 {
 	int maxInputSegID = currProfiledTree.segs.rbegin()->first;
+	cout << maxInputSegID << " ";
 	map<string, float> distMap;
 	map<int, segUnit> newSegs;
+	newSegs.clear();
 
 	if (!currTileHeadSegIDs.empty())
 	{
@@ -742,7 +744,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 				for (vector<int>::const_iterator tailIt2 = tailIt1 + 1; tailIt2 != currTileTailSegIDs.end(); ++tailIt2)
 				{
 					if (currProfiledTree.segs.at(*tailIt2).to_be_deleted) continue;
-					for (vector<int>::const_iterator tailIDit2 = currProfiledTree.segs.at(*tailIt2).tails.begin(); tailIt2 != currProfiledTree.segs.at(*tailIt2).tails.end(); ++tailIDit2)
+					for (vector<int>::const_iterator tailIDit2 = currProfiledTree.segs.at(*tailIt2).tails.begin(); tailIDit2 != currProfiledTree.segs.at(*tailIt2).tails.end(); ++tailIDit2)
 					{
 						NeuronSWC* tailPtr1 = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(*tailIDit1)];
 						NeuronSWC* tailPtr2 = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(*tailIDit2)];
@@ -792,6 +794,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 				nearestPair.second = minDist;
 			}
 		}
+		if (minDist > distThreshold) return newSegs;
 		//cout << nearestPair.first << " " << nearestPair.second << endl;
 
 		++maxInputSegID;
@@ -875,9 +878,15 @@ profiledTree NeuronStructExplorer::segElongate_dist(const profiledTree& inputPro
 		}
 
 		// Forming new segment here
-		/*map<int, segUnit> newSegs = this->segRegionConnector_angle(currTileHeadSegIDs, currTileTailSegIDs, outputProfiledTree, angleThre);
+		map<int, segUnit> newSegs = this->segUnitConnPicker_dist(currTileHeadSegIDs, currTileTailSegIDs, outputProfiledTree, 10);
+		if (newSegs.empty()) continue;
+
 		for (map<int, segUnit>::iterator newSegIt = newSegs.begin(); newSegIt != newSegs.end(); ++newSegIt)
-			allNewSegs.insert(pair<int, segUnit>(newSegIt->first, newSegIt->second));*/
+		{
+			cout << newSegIt->first << ": " << newSegIt->second.nodes.size() << endl;
+			allNewSegs.insert(pair<int, segUnit>(newSegIt->first, newSegIt->second));
+			outputProfiledTree.segs.insert({ newSegIt->first, newSegIt->second });
+		}
 
 		currTileHeadSegIDs.clear();
 		currTileTailSegIDs.clear();
@@ -910,10 +919,10 @@ profiledTree NeuronStructExplorer::segElongate_dist(const profiledTree& inputPro
 	for (vector<size_t>::iterator it = nodeDeleteLocs.begin(); it != nodeDeleteLocs.end(); ++it)
 		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*it));
 
-	//cout << endl << "NEW SEGMENTS ------------- " << endl;
+	cout << endl << "NEW SEGMENTS ------------- " << endl;
 	for (map<int, segUnit>::iterator it = allNewSegs.begin(); it != allNewSegs.end(); ++it)
 	{
-		//cout << it->first << ": " << it->second.nodes.size() << endl;
+		cout << it->first << ": " << it->second.nodes.size() << endl;
 		outputProfiledTree.tree.listNeuron.append(it->second.nodes);
 	}
 
