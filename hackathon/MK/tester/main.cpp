@@ -1285,7 +1285,7 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
-		profiledTree simpleElongProfiledTree = myExplorer.segElongate_dist(inputProfiledTree.tree, 10, 5);
+		profiledTree simpleElongProfiledTree = myExplorer.itered_segElongate_dist(inputProfiledTree, 10, 5);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
 	}
 

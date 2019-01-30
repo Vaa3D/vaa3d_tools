@@ -163,26 +163,28 @@ public:
 	/***************** Auto-tracing Related Neuron Struct Functions *****************/
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
 	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = tileXY_LENGTH, float zDivideNum = 1);
-	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
+	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
+	
 	profiledTree segElongate_dist(const profiledTree& inputProfiledTree, float tileLength, float distThreshold);
-	profiledTree simpleSegElongate(const NeuronTree& inputTree, float tileLength, float distThreshold);
+	profiledTree itered_segElongate_dist(profiledTree& inputProfiledTree, float tileLength, float distThreshold);
+
+	// Like NeuronStructExplorer::segUnitConnect_executer, this method currently only supports simple unilateral segments.
+	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
 
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
 	
 	// Generate a new segment that is connected with 2 input segments. Connecting orientation needs to be specified by connOrt.
 	// This method is a generalized method and is normally the final step of segment connecting process.
+	// NOTE, currently it only supports simple unilateral segment. Forked segment connection will result in throwing error message!!
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
 	
-	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
-
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
-
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
 	/********************************************************************************/
 
@@ -192,6 +194,8 @@ public:
 	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
+	
+	// This method computes the sum of turning angles of from one node to the next node for a segment.
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
 
 	static segUnit segmentStraighten(const segUnit& inputSeg);
