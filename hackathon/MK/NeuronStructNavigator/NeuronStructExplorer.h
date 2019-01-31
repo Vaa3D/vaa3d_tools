@@ -31,6 +31,8 @@
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include <qlist.h>
 #include <qstring.h>
@@ -113,11 +115,14 @@ struct profiledTree
 	map<int, size_t> node2LocMap;
 	map<int, vector<size_t>> node2childLocMap;
 
-	double connAngleThre;
 	map<string, vector<int>> nodeTileMap; // tile label -> node ID
-	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
-	map<string, vector<int>> segTailMap;  // tile label -> seg ID
 	map<int, segUnit> segs; // key = seg ID
+
+	map<string, vector<int>> segHeadMap;   // tile label -> seg ID
+	map<string, vector<int>> segTailMap;   // tile label -> seg ID
+
+	boost::container::flat_map<int, vector<int>> segHeadClusters; // key is ordered cluster number label
+	boost::container::flat_map<int, vector<int>> segTailClusters; // key is ordered cluster number label
 
 	map<int, topoCharacter> topoList;
 	void addTopoUnit(int nodeID);
@@ -137,16 +142,23 @@ public:
 
 	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = tileXY_LENGTH);
-	inline void profiledTreeReInit(profiledTree& inputProfiledTree);
+	void profiledTreeReInit(profiledTree& inputProfiledTree);
 	
 	V_NeuronSWC_list segmentList;
 	void segmentDecompose(NeuronTree* inputTreePtr);
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
+	static void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+
+private:
+	// This method forms segment terminal clusters within each segment head/tail tile. 
+	// NOTE, currently only simple unilateral segments are supported.
+	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 	/********************************************************************************/
 
 
 	/***************** Neuron Struct Processing Functions *****************/
+public:
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
 	profiledTree treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval = 2);
 	

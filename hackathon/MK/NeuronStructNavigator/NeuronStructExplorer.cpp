@@ -21,9 +21,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include <boost/container/flat_map.hpp>
-#include <boost/algorithm/string.hpp>
-
 #include "basic_4dimage.h"
 #include "basic_landmark.h"
 #include "neuron_format_converter.h"
@@ -141,7 +138,7 @@ void NeuronStructExplorer::treeEntry(const NeuronTree& inputTree, string treeNam
 
 void NeuronStructExplorer::profiledTreeReInit(profiledTree& inputProfiledTree)
 {
-	profiledTree tempTree(inputProfiledTree.tree);
+	profiledTree tempTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
 	inputProfiledTree = tempTree;
 }
 
@@ -286,6 +283,101 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 		}
 		return outputSegTileMap;
 	}
+}
+
+void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
+{
+	inputProfiledTree.segHeadClusters.clear(); 
+	inputProfiledTree.segTailClusters.clear(); 
+
+	vector<string> tailSegTiles;
+	for (map<string, vector<int>>::iterator segTailTileIt = inputProfiledTree.segTailMap.begin(); segTailTileIt != inputProfiledTree.segTailMap.end(); ++segTailTileIt)
+		tailSegTiles.push_back(segTailTileIt->first);
+
+	vector<int> newClusters, newTailClusters;
+	newClusters.clear();
+	newTailClusters.clear();
+	vector<int> newClusterHeads, newClusterTails;
+
+	for (map<string, vector<int>>::iterator headSegTileIt = inputProfiledTree.segHeadMap.begin(); headSegTileIt != inputProfiledTree.segHeadMap.end(); ++headSegTileIt)
+	{
+		//cout << headSegTileIt->first << ": ";
+		newClusterHeads.clear();
+		newClusterHeads.push_back(*headSegTileIt->second.begin());
+		inputProfiledTree.segHeadClusters.insert(pair<int, vector<int>>(inputProfiledTree.segHeadClusters.size() + 1, newClusterHeads));
+		newClusters.push_back(inputProfiledTree.segHeadClusters.size());
+		//cout << inputProfiledTree.segHeadClusters.size() << " ";
+		if (headSegTileIt->second.size() == 1)
+		{
+			newClusters.clear();
+			continue;
+		}
+
+		for (vector<int>::iterator headSegIt = headSegTileIt->second.begin() + 1; headSegIt != headSegTileIt->second.end(); ++headSegIt)
+		{
+			for (vector<int>::iterator newClusterIt = newClusters.begin(); newClusterIt != newClusters.end(); ++newClusterIt)
+			{
+				for (vector<int>::iterator clusterHeadIt = inputProfiledTree.segHeadClusters.at(*newClusterIt).begin(); clusterHeadIt != inputProfiledTree.segHeadClusters.at(*newClusterIt).end(); ++clusterHeadIt)
+				{
+					NeuronSWC* node1Ptr = &inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*headSegIt).head)];
+					NeuronSWC* node2Ptr = &inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*clusterHeadIt).head)];
+					float dist = sqrtf((node1Ptr->x - node2Ptr->x) * (node1Ptr->x - node2Ptr->x) + (node1Ptr->y - node2Ptr->y) * (node1Ptr->y - node2Ptr->y) + (node1Ptr->z - node1Ptr->z) * (node1Ptr->z - node1Ptr->z));
+					
+					if (dist <= distThreshold)
+					{
+						inputProfiledTree.segHeadClusters.at(*newClusterIt).push_back(*headSegIt);
+						goto FOUND_CLUSTER;
+					}
+				}
+			}
+			newClusterHeads.clear();
+			newClusterHeads.push_back(*headSegIt);
+			inputProfiledTree.segHeadClusters.insert(pair<int, vector<int>>(inputProfiledTree.segHeadClusters.size() + 1, newClusterHeads));
+			newClusters.push_back(inputProfiledTree.segHeadClusters.size());
+			//cout << inputProfiledTree.segHeadClusters.size() << " ";
+
+		FOUND_CLUSTER:
+			continue;
+		}
+
+		if (find(tailSegTiles.begin(), tailSegTiles.end(), headSegTileIt->first) != tailSegTiles.end())
+		{
+			for (vector<int>::iterator tailSegIt = inputProfiledTree.segTailMap.at(headSegTileIt->first).begin(); tailSegIt != inputProfiledTree.segTailMap.at(headSegTileIt->first).end(); ++tailSegIt)
+			{
+				for (vector<int>::iterator currHeadClusterIt = newClusters.begin(); currHeadClusterIt != newClusters.end(); ++currHeadClusterIt)
+				{
+					for (vector<int>::iterator headSegIt = inputProfiledTree.segHeadClusters.at(*currHeadClusterIt).begin(); headSegIt != inputProfiledTree.segHeadClusters.at(*currHeadClusterIt).end(); ++headSegIt)
+					{
+						NeuronSWC* node1Ptr = &inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*headSegIt).head)];
+						NeuronSWC* node2Ptr = &inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(*inputProfiledTree.segs.at(*headSegIt).tails.begin())];
+						float dist = sqrtf((node1Ptr->x - node2Ptr->x) * (node1Ptr->x - node2Ptr->x) + (node1Ptr->y - node2Ptr->y) * (node1Ptr->y - node2Ptr->y) + (node1Ptr->z - node1Ptr->z) * (node1Ptr->z - node1Ptr->z));
+
+						if (dist <= distThreshold)
+						{
+							if (find(newClusterTails.begin(), newClusterTails.end(), *currHeadClusterIt) != newClusterTails.end())
+							{
+								inputProfiledTree.segTailClusters.at(*currHeadClusterIt).push_back(*tailSegIt);
+								goto FOUND_CLUSTER_TAIL_TO_HEAD;
+							}
+							else
+							{
+
+							}
+						}
+					}
+				}
+
+			FOUND_CLUSTER_TAIL_TO_HEAD:
+				continue;
+			}
+		}
+
+
+
+
+		newClusters.clear();  
+	}
+	cout << "cluster num: " << inputProfiledTree.segHeadClusters.size() << endl;
 }
 
 void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
@@ -609,6 +701,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 				NeuronSWC* headPtr1 = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(currProfiledTree.segs.at(*headIt1).head)];
 				NeuronSWC* headPtr2 = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(currProfiledTree.segs.at(*headIt2).head)];
 				float dist = sqrtf(float((headPtr1->x - headPtr2->x) * (headPtr1->x - headPtr2->x)) + float((headPtr1->y - headPtr2->y) * (headPtr1->y - headPtr2->y)) + float((headPtr1->z - headPtr2->z) * (headPtr1->z - headPtr2->z)));
+				if (dist > distThreshold) continue;
 
 				string label = "hh_" + to_string(*headIt1) + "_" + to_string(*headIt2);
 				distMap.insert({ label, dist });
@@ -631,6 +724,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 						NeuronSWC* tailPtr1 = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(*tailIDit1)];
 						NeuronSWC* tailPtr2 = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(*tailIDit2)];
 						float dist = sqrtf(float((tailPtr1->x - tailPtr2->x) * (tailPtr1->x - tailPtr2->x)) + float((tailPtr1->y - tailPtr2->y) * (tailPtr1->y - tailPtr2->y)) + float((tailPtr1->z - tailPtr2->z) * (tailPtr1->z - tailPtr2->z)));
+						if (dist > distThreshold) continue;
 
 						string label = "tt_" + to_string(*tailIt1) + "_" + to_string(*tailIDit1) + "_" + to_string(*tailIt2) + "_" + to_string(*tailIDit2);
 						distMap.insert({ label, dist });
@@ -655,6 +749,7 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					NeuronSWC* headPtr = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(currProfiledTree.segs.at(*headIt).head)];
 					NeuronSWC* tailPtr = &currProfiledTree.tree.listNeuron[currProfiledTree.node2LocMap.at(*tailIDit)];
 					float dist = sqrtf(float((headPtr->x - tailPtr->x) * (headPtr->x - tailPtr->x)) + float((headPtr->y - tailPtr->y) * (headPtr->y - tailPtr->y)) + float((headPtr->z - tailPtr->z) * (headPtr->z - tailPtr->z)));
+					if (dist > distThreshold) continue;
 
 					string label = "ht_" + to_string(*headIt) + "_" + to_string(*tailIt) + "_" + to_string(*tailIDit);
 					distMap.insert({ label, dist });
@@ -681,15 +776,6 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 					nearestPair.second = minDist;
 				}
 			}
-
-			if (minDist > distThreshold)
-			{
-				distMap.erase(distMap.find(nearestPair.first));
-				//cout << nearestPair.first << " " << nearestPair.second << " ";
-				//cout << "dist too large, move to the next" << " distMap size: " << distMap.size() << endl;
-				continue;
-			}
-			
 
 			++maxInputSegID;
 			vector<string> labelSplits;
