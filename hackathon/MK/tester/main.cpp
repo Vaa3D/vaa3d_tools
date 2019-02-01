@@ -9,6 +9,7 @@
 #include <boost\filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
 
 #include "SWCtester.h"
 #include "ImgManager.h"
@@ -1285,7 +1286,17 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
-		NeuronStructExplorer::getSegHeadTailClusters(inputProfiledTree, 5);
+		myExplorer.getSegHeadTailClusters(inputProfiledTree, 5);
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = inputProfiledTree.segHeadClusters.begin(); headClusterIt != inputProfiledTree.segHeadClusters.end(); ++headClusterIt)
+		{
+			cout << headClusterIt->first << ": ";
+			for (boost::container::flat_set<int>::iterator it = headClusterIt->second.begin(); it != headClusterIt->second.end(); ++it)
+				cout << *it << " ";
+			cout << " | ";
+			for (boost::container::flat_set<int>::iterator it = inputProfiledTree.segTailClusters.at(headClusterIt->first).begin(); it != inputProfiledTree.segTailClusters.at(headClusterIt->first).end(); ++it)
+				cout << *it << " ";
+			cout << endl;
+		}
 
 		profiledTree simpleElongProfiledTree = myExplorer.itered_segElongate_dist(inputProfiledTree, 10, 5);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);

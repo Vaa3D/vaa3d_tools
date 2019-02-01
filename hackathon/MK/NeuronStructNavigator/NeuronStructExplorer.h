@@ -121,8 +121,10 @@ struct profiledTree
 	map<string, vector<int>> segHeadMap;   // tile label -> seg ID
 	map<string, vector<int>> segTailMap;   // tile label -> seg ID
 
-	boost::container::flat_map<int, vector<int>> segHeadClusters; // key is ordered cluster number label
-	boost::container::flat_map<int, vector<int>> segTailClusters; // key is ordered cluster number label
+	boost::container::flat_map<int, boost::container::flat_set<int>> segHeadClusters; // key is ordered cluster number label
+	boost::container::flat_map<int, boost::container::flat_set<int>> segTailClusters; // key is ordered cluster number label
+	boost::container::flat_map<int, int> headSeg2ClusterMap;
+	boost::container::flat_map<int, int> tailSeg2ClusterMap;
 
 	map<int, topoCharacter> topoList;
 	void addTopoUnit(int nodeID);
@@ -148,7 +150,8 @@ public:
 	void segmentDecompose(NeuronTree* inputTreePtr);
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
-	static void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+	
+	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
 private:
 	// This method forms segment terminal clusters within each segment head/tail tile. 
