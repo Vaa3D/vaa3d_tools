@@ -288,44 +288,139 @@ map<string, vector<int>> NeuronStructExplorer::segTileMap(const vector<segUnit>&
 void NeuronStructExplorer::getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold)
 {
 	this->getTileBasedSegClusters(inputProfiledTree, distThreshold);
-	boost::container::flat_map<int, boost::container::flat_set<int>> outputHeadSegClusters = inputProfiledTree.segHeadClusters;
-	boost::container::flat_map<int, boost::container::flat_set<int>> outputTailSegClusters = inputProfiledTree.segTailClusters;
-	boost::container::flat_map<int, int> outputHeadSeg2ClusterMap = inputProfiledTree.headSeg2ClusterMap;
-	boost::container::flat_map<int, int> outputTailSeg2ClusterMap = inputProfiledTree.tailSeg2ClusterMap;
+	this->mergeTileBasedSegClusters(inputProfiledTree, distThreshold);
+}
 
-	bool merge = true;
-	float tileSize = inputProfiledTree.segTileSize;
-	while (tileSize >= distThreshold)
+void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
+{
+	boost::container::flat_set<string> processedHeadTiles;
+	boost::container::flat_set<string> processedTailTiles;
+	boost::container::flat_map<string, boost::container::flat_set<int>> headTile2ClusterMap;
+	boost::container::flat_map<string, boost::container::flat_set<int>> tailTile2ClusterMap;
+
+	for (map<string, vector<int>>::iterator headTileIt = inputProfiledTree.segHeadMap.begin(); headTileIt != inputProfiledTree.segHeadMap.end(); ++headTileIt)
 	{
-		profiledTree newProfiledTree(inputProfiledTree.tree, --tileSize);
-		this->getTileBasedSegClusters(newProfiledTree, distThreshold);
-		
-		set<int> processedHeadClusters;
-		for (boost::container::flat_map<int, int>::iterator headSegIt = newProfiledTree.headSeg2ClusterMap.begin(); headSegIt != newProfiledTree.headSeg2ClusterMap.end(); ++headSegIt)
+		boost::container::flat_set<int> currTileClusters;
+		for (vector<int>::iterator headIt = headTileIt->second.begin(); headIt != headTileIt->second.end(); ++headIt)
+			currTileClusters.insert(inputProfiledTree.headSeg2ClusterMap.at(*headIt));
+		headTile2ClusterMap.insert(pair<string, boost::container::flat_set<int>>(headTileIt->first, currTileClusters));
+	}
+	for (map<string, vector<int>>::iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
+	{
+		boost::container::flat_set<int> currTileClusters;
+		for (vector<int>::iterator tailIt = tailTileIt->second.begin(); tailIt != tailTileIt->second.end(); ++tailIt)
+			currTileClusters.insert(inputProfiledTree.tailSeg2ClusterMap.at(*tailIt));
+		tailTile2ClusterMap.insert(pair<string, boost::container::flat_set<int>>(tailTileIt->first, currTileClusters));
+	}
+
+	for (map<string, vector<int>>::iterator headTileIt = inputProfiledTree.segHeadMap.begin(); headTileIt != inputProfiledTree.segHeadMap.end(); ++headTileIt)
+	{
+		vector<string> tileLabelStrings;
+		vector<int> tileLabels(3);
+		boost::split(tileLabelStrings, headTileIt->first, boost::is_any_of("_"));
+		tileLabels[0] = stoi(tileLabelStrings.at(0));
+		tileLabels[1] = stoi(tileLabelStrings.at(1));
+		tileLabels[2] = stoi(tileLabelStrings.at(2));
+
+		for (vector<int>::iterator headSegIt = headTileIt->second.begin(); headSegIt != headTileIt->second.end(); ++headSegIt)
 		{
-			int outputClusterNum = outputHeadSeg2ClusterMap.at(headSegIt->first);
-			if (processedHeadClusters.find(headSegIt->second) != processedHeadClusters.end());
-			else
+			for (int zi = -1; zi <= 1; ++zi)
 			{
-				outputHeadSegClusters.at(outputClusterNum).insert(newProfiledTree.segHeadClusters.at(headSegIt->second).begin(), newProfiledTree.segHeadClusters.at(headSegIt->second).end());
-				processedHeadClusters.insert(headSegIt->second);
+				for (int yi = -1; yi <= 1; ++yi)
+				{
+					for (int xi = -1; xi <= 1; ++xi)
+					{
+						int checkXlabel = tileLabels[0] + xi;
+						int checkYlabel = tileLabels[1] + yi;
+						int checkZlabel = tileLabels[2] + zi;
+						string checkLabel = to_string(checkXlabel) + "_" + to_string(checkYlabel) + "_" + to_string(checkZlabel);
+						
+						if (inputProfiledTree.segHeadMap.find(checkLabel) != inputProfiledTree.segHeadMap.end())
+						{
+							if (processedHeadTiles.find(checkLabel) != processedHeadTiles.end()) goto HEAD_TILE_PROCESSED;
+
+							boost::container::flat_set<int> currTileClusters = headTile2ClusterMap.at(checkLabel);
+							for (boost::container::flat_set<int>::iterator headClusterIt = currTileClusters.begin(); headClusterIt != currTileClusters.end(); ++headClusterIt)
+							{
+								boost::container::flat_set<int> currClusterSegs = inputProfiledTree.segHeadClusters.at(*headClusterIt);
+								for (boost::container::flat_set<int>::iterator checkHeadSegIt = currClusterSegs.begin(); checkHeadSegIt != currClusterSegs.end(); ++checkHeadSegIt)
+								{
+									NeuronSWC* head1ptr = &(inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*headSegIt).head)]);
+									NeuronSWC* head2ptr = &(inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*checkHeadSegIt).head)]);
+									float dist = sqrtf((head1ptr->x - head2ptr->x) * (head1ptr->x - head2ptr->x) + (head1ptr->y - head2ptr->y) * (head1ptr->y - head2ptr->y) + (head1ptr->z - head2ptr->z) * (head1ptr->z - head2ptr->z));
+
+									if (dist <= distThreshold)
+									{
+										inputProfiledTree.segHeadClusters.at(inputProfiledTree.headSeg2ClusterMap.at(*headSegIt)).insert(currClusterSegs.begin(), currClusterSegs.end());
+										inputProfiledTree.segHeadClusters.at(*headClusterIt).clear();
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
+		processedHeadTiles.insert(headTileIt->first);
 
-		set<int> processedTailClusters;
-		for (boost::container::flat_map<int, int>::iterator tailSegIt = newProfiledTree.tailSeg2ClusterMap.begin(); tailSegIt != newProfiledTree.tailSeg2ClusterMap.end(); ++tailSegIt)
+	HEAD_TILE_PROCESSED:
+		continue;
+	}
+
+	for (map<string, vector<int>>::iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
+	{
+		vector<string> tileLabelStrings;
+		vector<int> tileLabels(3);
+		boost::split(tileLabelStrings, tailTileIt->first, boost::is_any_of("_"));
+		tileLabels[0] = stoi(tileLabelStrings.at(0));
+		tileLabels[1] = stoi(tileLabelStrings.at(1));
+		tileLabels[2] = stoi(tileLabelStrings.at(2));
+
+		for (vector<int>::iterator tailSegIt = tailTileIt->second.begin(); tailSegIt != tailTileIt->second.end(); ++tailSegIt)
 		{
-			int outputClusterNum = outputTailSeg2ClusterMap.at(tailSegIt->first);
-			if (processedTailClusters.find(tailSegIt->second) != processedTailClusters.end());
-			else
+			for (int zi = -1; zi <= 1; ++zi)
 			{
-				outputTailSegClusters.at(outputClusterNum).insert(newProfiledTree.segTailClusters.at(tailSegIt->second).begin(), newProfiledTree.segTailClusters.at(tailSegIt->second).end());
-				processedTailClusters.insert(tailSegIt->second);
+				for (int yi = -1; yi <= 1; ++yi)
+				{
+					for (int xi = -1; xi <= 1; ++xi)
+					{
+						int checkXlabel = tileLabels[0] + xi;
+						int checkYlabel = tileLabels[1] + yi;
+						int checkZlabel = tileLabels[2] + zi;
+						string checkLabel = to_string(checkXlabel) + "_" + to_string(checkYlabel) + "_" + to_string(checkZlabel);
+
+						if (inputProfiledTree.segTailMap.find(checkLabel) != inputProfiledTree.segTailMap.end())
+						{
+							if (processedTailTiles.find(checkLabel) != processedTailTiles.end()) goto TAIL_TILE_PROCESSED;
+
+							boost::container::flat_set<int> currTileClusters = tailTile2ClusterMap.at(checkLabel);
+							for (boost::container::flat_set<int>::iterator tailClusterIt = currTileClusters.begin(); tailClusterIt != currTileClusters.end(); ++tailClusterIt)
+							{
+								boost::container::flat_set<int> currClusterSegs = inputProfiledTree.segTailClusters.at(*tailClusterIt);
+								for (boost::container::flat_set<int>::iterator checkTailSegIt = currClusterSegs.begin(); checkTailSegIt != currClusterSegs.end(); ++checkTailSegIt)
+								{
+									NeuronSWC* tail1ptr = &(inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(*inputProfiledTree.segs.at(*tailSegIt).tails.begin())]);
+									NeuronSWC* tail2ptr = &(inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(*inputProfiledTree.segs.at(*checkTailSegIt).tails.begin())]);
+									float dist = sqrtf((tail1ptr->x - tail2ptr->x) * (tail1ptr->x - tail2ptr->x) + (tail1ptr->y - tail2ptr->y) * (tail1ptr->y - tail2ptr->y) + (tail1ptr->z - tail2ptr->z) * (tail1ptr->z - tail2ptr->z));
+
+									if (dist <= distThreshold)
+									{
+										inputProfiledTree.segTailClusters.at(inputProfiledTree.tailSeg2ClusterMap.at(*tailSegIt)).insert(currClusterSegs.begin(), currClusterSegs.end());
+										inputProfiledTree.segTailClusters.at(*tailClusterIt).clear();
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
+		processedTailTiles.insert(tailTileIt->first);
 
-
-		if (!merge) break;
+	TAIL_TILE_PROCESSED:
+		continue;
 	}
 }
 

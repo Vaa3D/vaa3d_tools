@@ -1282,7 +1282,7 @@ int main(int argc, char* argv[])
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampledTreeTest.swc";
+		QString inputTreeFileName = "D:\\Work\\FragTrace\\downSampledTreeTest.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
@@ -1299,7 +1299,7 @@ int main(int argc, char* argv[])
 		}
 
 		profiledTree simpleElongProfiledTree = myExplorer.itered_segElongate_dist(inputProfiledTree, 10, 5);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
 	}
 
 	return 0;
