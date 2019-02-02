@@ -1271,35 +1271,33 @@ int main(int argc, char* argv[])
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\branchBreakTree.swc";
+		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\branchBreakTree.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 		
 		profiledTree downSampledProfiledTree = myExplorer.treeDownSample(inputProfiledTree, 3);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\downSampleTest.swc", downSampledProfiledTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampleTest.swc", downSampledProfiledTree.tree);
 	}
 	else if (!funcName.compare("simpleElongateTest"))
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "D:\\Work\\FragTrace\\downSampledTreeTest.swc";
+		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampleTest.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
-		myExplorer.getSegHeadTailClusters(inputProfiledTree, 5);
-		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = inputProfiledTree.segHeadClusters.begin(); headClusterIt != inputProfiledTree.segHeadClusters.end(); ++headClusterIt)
-		{
-			cout << headClusterIt->first << ": ";
-			for (boost::container::flat_set<int>::iterator it = headClusterIt->second.begin(); it != headClusterIt->second.end(); ++it)
-				cout << *it << " ";
-			cout << " | ";
-			for (boost::container::flat_set<int>::iterator it = inputProfiledTree.segTailClusters.at(headClusterIt->first).begin(); it != inputProfiledTree.segTailClusters.at(headClusterIt->first).end(); ++it)
-				cout << *it << " ";
-			cout << endl;
-		}
-
 		profiledTree simpleElongProfiledTree = myExplorer.itered_segElongate_dist(inputProfiledTree, 10, 5);
-		writeSWC_file("D:\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
+		
+		myExplorer.getSegHeadTailClusters(simpleElongProfiledTree, 5);
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = simpleElongProfiledTree.segHeadClusters.begin(); headClusterIt != simpleElongProfiledTree.segHeadClusters.end(); ++headClusterIt)
+		{
+			for (boost::container::flat_set<int>::iterator it = headClusterIt->second.begin(); it != headClusterIt->second.end(); ++it)
+				simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(simpleElongProfiledTree.segs.at(*it).head)].type = headClusterIt->first % 20;
+
+			for (boost::container::flat_set<int>::iterator it = simpleElongProfiledTree.segTailClusters.at(headClusterIt->first).begin(); it != simpleElongProfiledTree.segTailClusters.at(headClusterIt->first).end(); ++it)
+				simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(*simpleElongProfiledTree.segs.at(*it).tails.begin())].type = headClusterIt->first % 20;
+		}
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
 	}
 
 	return 0;
