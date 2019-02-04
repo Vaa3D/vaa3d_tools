@@ -1148,7 +1148,7 @@ int main(int argc, char* argv[])
 		QString saveFolderNameQ = QString::fromStdString(saveFolderName);*/
 
 		//ImgManager myManager(inputImgNameQ);
-		QString inputImageNameQ = "C:\\Users\\hsienchik\\Desktop\\FragTrace\\test.tif";
+		QString inputImageNameQ = "D:\\Work\\FragTrace\\test1.tif";
 		ImgManager myManager(inputImageNameQ);
 		myManager.imgEntry("compMask3D", ImgManager::singleCase);
 		ImgAnalyzer myAnalyzer;
@@ -1257,47 +1257,58 @@ int main(int argc, char* argv[])
 		finalTree = NeuronStructUtil::swcCombine(objTrees);
 
 		profiledTree profiledFinalTree(finalTree);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\mstTree.swc", profiledFinalTree.tree);
+		writeSWC_file("D:\\Work\FragTrace\\mstTree.swc", profiledFinalTree.tree);
 		
 		profiledTree noSpikeProfiledFinalTree = NeuronStructExplorer::spikeRemove(profiledFinalTree);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\FragTrace\\nonDownSampled.swc", noSpikeProfiledFinalTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\nonDownSampled.swc", noSpikeProfiledFinalTree.tree);
 
 		profiledTree profiledDownSampledTree = myExplorer.treeDownSample(noSpikeProfiledFinalTree, 3);
 		//NeuronTree noSpikeShiftedTree = NeuronStructUtil::swcShift(smoothedProfiledFinalTree.tree, 1, 1, 1);
 
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\FragTrace\\testTree.swc", profiledDownSampledTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\testTree.swc", profiledDownSampledTree.tree);
+		profiledTree objBranchBreakTree = NeuronStructExplorer::MSTbranchBreak(profiledDownSampledTree);
+		writeSWC_file("D:\\Work\\FragTrace\\branchBreakTree.swc", objBranchBreakTree.tree);
 	}
 	else if (!funcName.compare("treeDownSampleTest"))
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\branchBreakTree.swc";
+		QString inputTreeFileName = "D:\\Work\\FragTrace\\branchBreakTree.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 		
-		profiledTree downSampledProfiledTree = myExplorer.treeDownSample(inputProfiledTree, 3);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampleTest.swc", downSampledProfiledTree.tree);
+		profiledTree downSampledProfiledTree = myExplorer.treeDownSample(inputProfiledTree, 2);
+		writeSWC_file("D:\\Work\\FragTrace\\downSampleTest.swc", downSampledProfiledTree.tree);
 	}
 	else if (!funcName.compare("simpleElongateTest"))
 	{
 		NeuronStructExplorer myExplorer;
 
-		QString inputTreeFileName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\downSampleTest.swc";
+		QString inputTreeFileName = "D:\\Work\\FragTrace\\downSampledTreeTest.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeFileName);
 		profiledTree inputProfiledTree(inputTree);
 
 		profiledTree simpleElongProfiledTree = myExplorer.itered_segElongate_dist(inputProfiledTree, 10, 5);
 		
 		myExplorer.getSegHeadTailClusters(simpleElongProfiledTree, 5);
+		NeuronTree headCheckTree;
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = simpleElongProfiledTree.segHeadClusters.begin(); headClusterIt != simpleElongProfiledTree.segHeadClusters.end(); ++headClusterIt)
 		{
 			for (boost::container::flat_set<int>::iterator it = headClusterIt->second.begin(); it != headClusterIt->second.end(); ++it)
-				simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(simpleElongProfiledTree.segs.at(*it).head)].type = headClusterIt->first % 20;
-
+			{
+				simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(simpleElongProfiledTree.segs.at(*it).head)].type = headClusterIt->first % 10;
+				headCheckTree.listNeuron.push_back(simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(simpleElongProfiledTree.segs.at(*it).head)]);
+			}
 			for (boost::container::flat_set<int>::iterator it = simpleElongProfiledTree.segTailClusters.at(headClusterIt->first).begin(); it != simpleElongProfiledTree.segTailClusters.at(headClusterIt->first).end(); ++it)
-				simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(*simpleElongProfiledTree.segs.at(*it).tails.begin())].type = headClusterIt->first % 20;
+			{
+				simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(*simpleElongProfiledTree.segs.at(*it).tails.begin())].type = headClusterIt->first % 10;
+				headCheckTree.listNeuron.push_back(simpleElongProfiledTree.tree.listNeuron[simpleElongProfiledTree.node2LocMap.at(*simpleElongProfiledTree.segs.at(*it).tails.begin())]);
+			}
 		}
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
+		
+		
+		writeSWC_file("D:\\Work\\FragTrace\\headCheck.swc", headCheckTree);
 	}
 
 	return 0;
