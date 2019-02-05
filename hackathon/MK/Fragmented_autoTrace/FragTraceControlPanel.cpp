@@ -613,8 +613,12 @@ void FragTraceControlPanel::traceButtonClicked()
 		{
 			NeuronStructExplorer myExplorer;
 			profiledTree tracedProfiledTree(this->tracedTree);
-			profiledTree elongatedProfiledTree = myExplorer.itered_segElongate(tracedProfiledTree);
-			this->thisCallback->setSWCTeraFly(elongatedProfiledTree.tree);
+			//profiledTree elongatedProfiledTree = myExplorer.itered_segElongate_dist(tracedProfiledTree, 10, 5);
+			//NeuronTree shortCleanedUpTree;
+			//if (this->traceManagerPtr->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(elongatedProfiledTree, this->traceManagerPtr->minNodeNum);
+			this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
+			this->thisCallback->redrawEditInfo(12);
+			
 			finalTree = this->tracedTree;
 		}
 		else

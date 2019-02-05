@@ -156,7 +156,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(headTailProfiledTree, this->minNodeNum);
 
-	NeuronTree finalOutputTree = shortCleanedUpTree;
+	NeuronTree finalOutputTree = downSampledProfiledTree.tree;
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
