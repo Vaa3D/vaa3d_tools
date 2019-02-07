@@ -375,10 +375,15 @@ inline NeuronTree NeuronStructExplorer::singleDotRemove(const profiledTree& inpu
 	NeuronTree outputTree;
 	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
 	{
-		if (segIt->second.head == *segIt->second.tails.begin()) continue;
-		else if (segIt->second.nodes.size() <= shortSegRemove) continue;
+		cout << "seg ID:" << segIt->first << " ";
+		if (segIt->second.nodes.size() <= shortSegRemove)
+		{
+			cout << "not included" << endl;
+			continue;
+		}
 		else
 		{
+			cout << "included" << endl;
 			for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 				outputTree.listNeuron.push_back(*nodeIt);
 		}

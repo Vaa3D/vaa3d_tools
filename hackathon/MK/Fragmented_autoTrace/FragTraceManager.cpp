@@ -136,7 +136,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
 
 	NeuronTree MSTbranchBreakTree;
-	if (this->branchBreak) MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
+	MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
 	profiledTree objBranchBreakTree(MSTbranchBreakTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 	QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
@@ -151,12 +151,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	QString elongatedTreeName = this->finalSaveRootQ + "elongatedTree.swc";
 	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);*/
 
-	profiledTree headTailProfiledTree = this->fragTraceTreeManager.itered_segElongate_dist(downSampledProfiledTree, 10, 5);
+	profiledTree headTailProfiledTree;
+	if (this->connectFrags) this->fragTraceTreeManager.itered_segElongate_dist(downSampledProfiledTree, 10, 5);
+	//this->fragTraceTreeManager.profiledTreeReInit(headTailProfiledTree);
 
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(headTailProfiledTree, this->minNodeNum);
 
-	NeuronTree finalOutputTree = downSampledProfiledTree.tree;
+	NeuronTree finalOutputTree = shortCleanedUpTree;
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";

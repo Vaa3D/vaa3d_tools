@@ -41,7 +41,7 @@ public:
 	bool MST;
 	string MSTtreeName;
 	int minNodeNum;
-	bool branchBreak;
+	bool connectFrags;
 
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;

@@ -134,9 +134,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		{
 			uiPtr->groupBox_8->setChecked(true);
 			uiPtr->spinBox_5->setValue(callOldSettings.value("minNodeNum").toInt());
-			
-			if (callOldSettings.value("breakBranch") == true) uiPtr->checkBox_10->setChecked(true);
 		}
+		if (callOldSettings.value("connectFrags") == true) uiPtr->checkBox_7->setChecked(true);
+		else uiPtr->checkBox_7->setChecked(false);
 		
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -384,8 +384,8 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("MST", false);
 		settings.setValue("minNodeNum", "");
 	}
-	if (uiPtr->checkBox_10->isChecked()) settings.setValue("breakBranch", true);
-	else settings.setValue("breakBranch", false);
+	if (uiPtr->checkBox_7->isChecked()) settings.setValue("connectFrags", true);
+	else settings.setValue("connectFrags", false);
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 
 
@@ -491,12 +491,14 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->traceManagerPtr->MST = true;
 					this->traceManagerPtr->MSTtreeName = uiPtr->groupBox_8->title().toStdString();
 					this->traceManagerPtr->minNodeNum = uiPtr->spinBox_5->value();
-					this->traceManagerPtr->branchBreak = true;
+
+					if (uiPtr->checkBox_7->isChecked()) this->traceManagerPtr->connectFrags = true;
+					else this->traceManagerPtr->connectFrags = false;
 				}
 				else
 				{
 					this->traceManagerPtr->MST = false;
-					this->traceManagerPtr->branchBreak = false;
+					this->traceManagerPtr->connectFrags = false;
 				}
 			}
 		}
@@ -586,12 +588,14 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->traceManagerPtr->MST = true;
 					this->traceManagerPtr->MSTtreeName = currSettings.value("MSTtreeName").toString().toStdString();
 					this->traceManagerPtr->minNodeNum = currSettings.value("minNodeNum").toInt();
-					this->traceManagerPtr->branchBreak = true;
+					
+					if (currSettings.value("connectFrags") == true) this->traceManagerPtr->connectFrags = true;
+					else this->traceManagerPtr->connectFrags = false;
 				}
 				else
 				{
 					this->traceManagerPtr->MST = false;
-					this->traceManagerPtr->branchBreak = false;
+					this->traceManagerPtr->connectFrags = false;
 				}
 			}
 		}
