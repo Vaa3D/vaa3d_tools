@@ -152,7 +152,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);*/
 
 	profiledTree headTailProfiledTree;
-	if (this->connectFrags) this->fragTraceTreeManager.itered_segElongate_dist(downSampledProfiledTree, 10, 5);
+	if (this->connectFrags) headTailProfiledTree = this->fragTraceTreeManager.itered_segElongate_dist(downSampledProfiledTree, 10, 5);
+	else headTailProfiledTree = downSampledProfiledTree;
 	//this->fragTraceTreeManager.profiledTreeReInit(headTailProfiledTree);
 
 	NeuronTree shortCleanedUpTree;

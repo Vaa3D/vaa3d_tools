@@ -24,9 +24,9 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	//const char* funcNameC = argv[1];
-	//string funcName(funcNameC);
-	string funcName = "simpleElongateTest";
+	const char* funcNameC = argv[1];
+	string funcName(funcNameC);
+	//string funcName = "simpleElongateTest";
 	/************************************/
 
 	if (!funcName.compare("swcID"))
@@ -1309,6 +1309,19 @@ int main(int argc, char* argv[])
 		
 		
 		writeSWC_file("D:\\Work\\FragTrace\\headCheck.swc", headCheckTree);
+	}
+	else if (!funcName.compare("randNodeGen"))
+	{
+		const char* inputPa1C = argv[2];
+		string inputPa1String(inputPa1C);
+		float inputPa1 = stof(inputPa1String);
+
+		const char* inputPa2C = argv[3];
+		string inputPa2String(inputPa2C);
+		float inputPa2 = stof(inputPa2String);
+
+		NeuronTree randNodeTree = NeuronStructUtil::randNodes(inputPa1, inputPa2);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNode.swc", randNodeTree);
 	}
 
 	return 0;

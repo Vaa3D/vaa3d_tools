@@ -135,17 +135,18 @@ public:
 	/*******************************************************************/
 
 
-	/***************** Sampling Methods for Simulated Volumetric Patch Generation *****************/
+	/***************** Miscellaneous *****************/
+	static inline void linkerFileGen_forSWC(string swcFullFileName);
+	static inline NeuronTree randNodes(float cubeLength, float density);
+	/*************************************************/
+
+
+	/* ~~~~~~~~~~~~~~~ Sampling Methods for Simulated Volumetric Patch Generation ~~~~~~~~~~~~~~~ */
 	static void swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static void sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance);
 	static void bkgNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, int dims[], float ratio, float distance);
 	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
-	/**********************************************************************************************/
-
-
-	/***************** Miscellaneous *****************/
-	static inline void linkerFileGen_forSWC(string swcFullFileName);
-	/**************************************************/
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 };
 
 inline vector<int> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
@@ -461,6 +462,31 @@ inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& 
 		}
 	}
 	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
+}
+
+inline NeuronTree NeuronStructUtil::randNodes(float cubeLength, float density)
+{
+	NeuronTree outputTree;
+	int targetNodeCount = int(cubeLength * cubeLength * cubeLength * density);
+	int producedNodeCount = 0;
+	while (producedNodeCount <= targetNodeCount)
+	{
+		int randNumX = rand() % int(cubeLength) + 1;
+		int randNumY = rand() % int(cubeLength) + 1;
+		int randNumZ = rand() % int(cubeLength) + 1;
+
+		NeuronSWC newNode;
+		newNode.x = randNumX;
+		newNode.y = randNumY;
+		newNode.z = randNumZ;
+		newNode.type = 2;
+		newNode.parent = -1;
+		outputTree.listNeuron.push_back(newNode);
+
+		++producedNodeCount;
+	}
+
+	return outputTree;
 }
 
 inline void NeuronStructUtil::linkerFileGen_forSWC(string swcFullFileName)

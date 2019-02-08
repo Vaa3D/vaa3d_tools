@@ -17,9 +17,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		// ------- Adding widgets not provided in Qt Designer -------
 		this->doubleSpinBox = new QDoubleSpinBox(uiPtr->frame_7);
 		this->doubleSpinBox->setObjectName(QString::fromUtf8("doubleSpinBox"));
-		this->doubleSpinBox->setGeometry(QRect(150, 10, 54, 22));
+		this->doubleSpinBox->setGeometry(QRect(150, 10, 57, 22));
 		this->doubleSpinBox->setValue(0);
 		this->doubleSpinBox->setSingleStep(0.1);
+		this->doubleSpinBox->setRange(-5, 5);
 		//-----------------------------------------------------------
 
 
