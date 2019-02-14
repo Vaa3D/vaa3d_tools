@@ -154,7 +154,6 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	profiledTree headTailProfiledTree;
 	if (this->connectFrags) headTailProfiledTree = this->fragTraceTreeManager.itered_segElongate_dist(downSampledProfiledTree, 10, 5);
 	else headTailProfiledTree = downSampledProfiledTree;
-	//this->fragTraceTreeManager.profiledTreeReInit(headTailProfiledTree);
 
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(headTailProfiledTree, this->minNodeNum);

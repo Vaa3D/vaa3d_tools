@@ -153,7 +153,7 @@ public:
 	
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
-private:
+//private:
 	// This method forms segment terminal clusters within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
 	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold = 5);

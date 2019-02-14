@@ -1307,10 +1307,9 @@ int main(int argc, char* argv[])
 		}
 		writeSWC_file("D:\\Work\\FragTrace\\simpleElongate.swc", simpleElongProfiledTree.tree);
 		
-		
 		writeSWC_file("D:\\Work\\FragTrace\\headCheck.swc", headCheckTree);
 	}
-	else if (!funcName.compare("randNodeGen"))
+	else if (!funcName.compare("nodeClusterTest"))
 	{
 		const char* inputPa1C = argv[2];
 		string inputPa1String(inputPa1C);
@@ -1320,8 +1319,11 @@ int main(int argc, char* argv[])
 		string inputPa2String(inputPa2C);
 		float inputPa2 = stof(inputPa2String);
 
+		NeuronStructExplorer myExplorer;
 		NeuronTree randNodeTree = NeuronStructUtil::randNodes(inputPa1, inputPa2);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNode.swc", randNodeTree);
+		profiledTree profiledRandNodeTree(randNodeTree);
+		myExplorer.getTileBasedSegClusters(profiledRandNodeTree, 5);
 	}
 
 	return 0;
