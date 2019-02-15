@@ -32,6 +32,7 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += ../v3d_imgManagerMK
 INCLUDEPATH += ../v3d_imgManagerMK/imgProcessor
 INCLUDEPATH += ../v3d_imgManagerMK/imgAnalyzer
+INCLUDEPATH += ../NeuronStructNavigator
 INCLUDEPATH += ../MK/NeuronStructNavigator
 INCLUDEPATH += $$VAA3DPATH/v3d_main/neuron_editing
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
@@ -68,6 +69,7 @@ win32: {
 HEADERS += ./ImgManager.h
 HEADERS += ./imgAnalyzer/ImgAnalyzer.h
 HEADERS += ./imgProcessor/ImgProcessor.h
+HEADERS += ../NeuronStructNavigator/NeuronStructUtilities.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage.h
 HEADERS += $$V3DTOOLPATH/swc2mask_cylinder/my_surf_objs.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h

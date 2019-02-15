@@ -48,7 +48,7 @@ private:
 public:
 	boost::container::flat_set<deque<float>> getSectionalCentroids(const connectedComponent& inputConnComp);
 private:
-	boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd);
+	boost::container::flat_set<deque<float>> connCompSectionalProc(vector<int>& dim1, vector<int>& dim2, vector<int>& sectionalDim, int secDimStart, int secDimEnd);
 	/**************************************************/
 
 
