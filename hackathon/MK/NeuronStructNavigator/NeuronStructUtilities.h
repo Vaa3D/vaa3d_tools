@@ -476,6 +476,7 @@ inline NeuronTree NeuronStructUtil::randNodes(float cubeLength, float density)
 		int randNumZ = rand() % int(cubeLength) + 1;
 
 		NeuronSWC newNode;
+		newNode.n = producedNodeCount + 1;
 		newNode.x = randNumX;
 		newNode.y = randNumY;
 		newNode.z = randNumZ;

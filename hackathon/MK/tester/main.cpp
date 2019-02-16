@@ -1323,7 +1323,21 @@ int main(int argc, char* argv[])
 		NeuronTree randNodeTree = NeuronStructUtil::randNodes(inputPa1, inputPa2);
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNode.swc", randNodeTree);
 		profiledTree profiledRandNodeTree(randNodeTree);
+		for (map<int, segUnit>::iterator segIt = profiledRandNodeTree.segs.begin(); segIt != profiledRandNodeTree.segs.end(); ++segIt)
+		{
+			cout << segIt->first << " " << segIt->second.head << endl;
+		}
 		myExplorer.getTileBasedSegClusters(profiledRandNodeTree, 5);
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = profiledRandNodeTree.segHeadClusters.begin(); headClusterIt != profiledRandNodeTree.segHeadClusters.end(); ++headClusterIt)
+		{
+			for (boost::container::flat_set<int>::iterator segIDit = headClusterIt->second.begin(); segIDit != headClusterIt->second.end(); ++segIDit)
+			{
+				cout << profiledRandNodeTree.segs.at(*segIDit).head << " ";
+				profiledRandNodeTree.tree.listNeuron[profiledRandNodeTree.node2LocMap.at(profiledRandNodeTree.segs.at(*segIDit).head)].type = headClusterIt->first % 10;
+			}
+		}
+
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNodeTileCluster.swc", profiledRandNodeTree.tree);
 	}
 
 	return 0;
