@@ -58,8 +58,8 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 #define PI 3.1415926
 #endif
 
-#ifndef tileXY_LENGTH
-#define tileXY_LENGTH 30
+#ifndef SEGtileXY_LENGTH
+#define SEGtileXY_LENGTH 30
 #endif
 
 #ifndef radANGLE_THRE
@@ -106,7 +106,7 @@ struct segUnit
 struct profiledTree
 {
 	profiledTree() {};
-	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
+	profiledTree(const NeuronTree& inputTree, float segTileLength = SEGtileXY_LENGTH);
 	float segTileSize;
 	float nodeTileSize;
 	void nodeTileResize(float nodeTileLength);
@@ -143,7 +143,7 @@ public:
 	NeuronTree processedTree;
 
 	map<string, profiledTree> treeDataBase;
-	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = tileXY_LENGTH);
+	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH);
 	void profiledTreeReInit(profiledTree& inputProfiledTree);
 	
 	V_NeuronSWC_list segmentList;
@@ -179,7 +179,7 @@ public:
 
 	/***************** Auto-tracing Related Neuron Struct Functions *****************/
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
-	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = tileXY_LENGTH, float zDivideNum = 1);
+	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
 	

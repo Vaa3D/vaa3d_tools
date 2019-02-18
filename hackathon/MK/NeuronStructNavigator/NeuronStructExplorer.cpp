@@ -510,8 +510,10 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 	newClusterHeads.clear();
 	newClusterTails.clear();
 
+	// for all head seg tiles
 	for (map<string, vector<int>>::iterator headSegTileIt = inputProfiledTree.segHeadMap.begin(); headSegTileIt != inputProfiledTree.segHeadMap.end(); ++headSegTileIt)
 	{
+		//cout << headSegTileIt->first << endl;
 		newClusterHeads.clear();
 		newClusterHeads.insert(*headSegTileIt->second.begin()); // newClusterHeads: a set of head segments in the current new head cluster
 		inputProfiledTree.segHeadClusters.insert(pair<int, boost::container::flat_set<int>>(inputProfiledTree.segHeadClusters.size() + 1, newClusterHeads));	
@@ -1632,9 +1634,9 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 	for (map<int, segUnit>::const_iterator segIt = expandingPart.segs.begin(); segIt != expandingPart.segs.end(); ++segIt)
 	{
 		NeuronSWC headNode = *segIt->second.nodes.begin();
-		string xLabel = to_string(int(headNode.x / tileXY_LENGTH));
-		string yLabel = to_string(int(headNode.y / tileXY_LENGTH));
-		string zLabel = to_string(int(headNode.z / (tileXY_LENGTH / zRATIO)));
+		string xLabel = to_string(int(headNode.x / SEGtileXY_LENGTH));
+		string yLabel = to_string(int(headNode.y / SEGtileXY_LENGTH));
+		string zLabel = to_string(int(headNode.z / (SEGtileXY_LENGTH / zRATIO)));
 		string keyLabel = xLabel + "_" + yLabel + "_" + zLabel;
 		//cout << keyLabel << ": ";
 
