@@ -983,6 +983,30 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 
 
 
+/* =========================================== Miscellaneous =========================================== */
+NeuronTree NeuronStructUtil::nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange)
+{
+	NeuronTree outputTree;
+	for (float x = 0; x <= xRange; x += stepX)
+	{
+		for (float y = 0; y <= yRange; y += stepY)
+		{
+			for (float z = 0; z <= zRange; z += stepZ)
+			{
+				NeuronTree currSphereTree = NeuronStructUtil::sphereRandNodes(sphereRadius, x, y, z, density);
+				size_t existingNodeNum = outputTree.listNeuron.size();
+				for (QList<NeuronSWC>::iterator it = currSphereTree.listNeuron.begin(); it != currSphereTree.listNeuron.end(); ++it) it->n = it->n + existingNodeNum;
+				outputTree.listNeuron.append(currSphereTree.listNeuron);
+			}
+		}
+	}
+
+	return outputTree;
+}
+/* ===================================================================================================== */
+
+
+
 /* =================================== Volumetric SWC sampling methods =================================== */
 void NeuronStructUtil::sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance)
 {

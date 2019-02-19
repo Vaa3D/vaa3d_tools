@@ -36,6 +36,10 @@
 
 using namespace std;
 
+#ifndef PI
+#define PI 3.1415926
+#endif
+
 #ifndef NODE_TILE_LENGTH
 #define NODE_TILE_LENGTH 100
 #endif
@@ -138,6 +142,8 @@ public:
 	/***************** Miscellaneous *****************/
 	static inline void linkerFileGen_forSWC(string swcFullFileName);
 	static inline NeuronTree randNodes(float cubeLength, float density);
+	static inline NeuronTree sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density);
+	static NeuronTree nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange);
 	/*************************************************/
 
 
@@ -487,6 +493,35 @@ inline NeuronTree NeuronStructUtil::randNodes(float cubeLength, float density)
 		++producedNodeCount;
 	}
 
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density)
+{
+	int targetNum = int((4 / 3) * PI * radius * radius * radius * density);
+	int nodeCount = 1;
+	NeuronTree outputTree;
+	while (nodeCount <= targetNum)
+	{
+		float randomX = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerX - radius);
+		float randomY = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerY - radius);
+		float randomZ = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerZ - radius);
+
+		float dist = sqrtf((randomX - centerX) * (randomX - centerX) + (randomY - centerY) * (randomY - centerY) + (randomZ - centerZ) * (randomZ - centerZ));
+		if (dist > radius) continue;
+
+		NeuronSWC newNode;
+		newNode.n = nodeCount;
+		newNode.x = randomX;
+		newNode.y = randomY;
+		newNode.z = randomZ / zRATIO;
+		newNode.type = 2;
+		newNode.parent = -1;
+		outputTree.listNeuron.push_back(newNode);
+
+		++nodeCount;
+	}
+	
 	return outputTree;
 }
 

@@ -54,10 +54,6 @@ typedef boost::property<boost::edge_weight_t, double> weights;
 typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
 
-#ifndef PI
-#define PI 3.1415926
-#endif
-
 #ifndef SEGtileXY_LENGTH
 #define SEGtileXY_LENGTH 30
 #endif

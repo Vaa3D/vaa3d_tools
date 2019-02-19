@@ -513,14 +513,13 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 	// for all head seg tiles
 	for (map<string, vector<int>>::iterator headSegTileIt = inputProfiledTree.segHeadMap.begin(); headSegTileIt != inputProfiledTree.segHeadMap.end(); ++headSegTileIt)
 	{
-		//cout << headSegTileIt->first << endl;
 		newClusterHeads.clear();
 		newClusterHeads.insert(*headSegTileIt->second.begin()); // newClusterHeads: a set of head segments in the current new head cluster
 		inputProfiledTree.segHeadClusters.insert(pair<int, boost::container::flat_set<int>>(inputProfiledTree.segHeadClusters.size() + 1, newClusterHeads));	
 		newHeadClusters.insert(inputProfiledTree.segHeadClusters.size()); // newHeadClusters: a set of new head clusters formed in each tile
 		inputProfiledTree.headSeg2ClusterMap.insert(pair<int, int>(*headSegTileIt->second.begin(), inputProfiledTree.segHeadClusters.size()));
 
-		newClusterTails.clear();
+		newClusterTails.clear(); // matching the head cluster with its tail cluster counterpart
 		inputProfiledTree.segTailClusters.insert(pair<int, boost::container::flat_set<int>>(inputProfiledTree.segTailClusters.size() + 1, newClusterTails));
 		newTailClusters.insert(inputProfiledTree.segTailClusters.size()); // new empty tail cluster to match head clusters
 			
@@ -564,8 +563,11 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 		FOUND_CLUSTER:
 			continue;
 		}
+		//cout << headSegTileIt->second.size() << endl;
+		for (boost::container::flat_set<int>::iterator newHeadClusterIt = newHeadClusters.begin(); newHeadClusterIt != newHeadClusters.end(); ++newHeadClusterIt) cout << *newHeadClusterIt << " ";
+		cout << endl;
 
-		newClusterHeads.clear();
+		/*newClusterHeads.clear();
 		if (find(tailSegTiles.begin(), tailSegTiles.end(), headSegTileIt->first) != tailSegTiles.end()) // check tail tiles that share with the same keys with head tiles first
 		{
 			// for all tails in the current tile
@@ -622,11 +624,13 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 			}
 
 			tailSegTiles.erase(find(tailSegTiles.begin(), tailSegTiles.end(), headSegTileIt->first)); // eliminate tail tiles that are processed
-		}
+		}*/
+
+		newHeadClusters.clear();
 	}
 
 	// For those tail tiles that do not have their head tile counter parts:
-	newClusterHeads.clear();
+	/*newClusterHeads.clear();
 	while (!tailSegTiles.empty())
 	{
 		for (vector<string>::iterator tailTileCheckIt = tailSegTiles.begin(); tailTileCheckIt != tailSegTiles.end(); ++tailTileCheckIt)
@@ -695,7 +699,7 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 			tailSegTiles.erase(find(tailSegTiles.begin(), tailSegTiles.end(), *tailTileCheckIt));
 			break; // This break is needed as tailSegTiles' size is changing.
 		}
-	}
+	}*/
 
 	cout << "cluster num: " << inputProfiledTree.segHeadClusters.size() << endl;
 }
