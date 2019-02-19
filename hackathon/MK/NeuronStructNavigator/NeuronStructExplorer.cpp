@@ -304,7 +304,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	boost::container::flat_set<string> processedTailTiles;
 	boost::container::flat_map<string, boost::container::flat_set<int>> headTile2ClusterMap;
 	boost::container::flat_map<string, boost::container::flat_set<int>> tailTile2ClusterMap;
-
+	
 	// head tile key to head clusters
 	for (map<string, vector<int>>::iterator headTileIt = inputProfiledTree.segHeadMap.begin(); headTileIt != inputProfiledTree.segHeadMap.end(); ++headTileIt)
 	{
@@ -314,16 +314,17 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 		headTile2ClusterMap.insert(pair<string, boost::container::flat_set<int>>(headTileIt->first, currTileClusters));
 	}
 	// tail tile key to tail clusters
-	for (map<string, vector<int>>::iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
+	/*for (map<string, vector<int>>::iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
 	{
 		boost::container::flat_set<int> currTileClusters;
 		for (vector<int>::iterator tailIt = tailTileIt->second.begin(); tailIt != tailTileIt->second.end(); ++tailIt)
 			currTileClusters.insert(inputProfiledTree.tailSeg2ClusterMap.at(*tailIt));
 		tailTile2ClusterMap.insert(pair<string, boost::container::flat_set<int>>(tailTileIt->first, currTileClusters));
-	}
+	}*/
  
 	for (map<string, vector<int>>::iterator headTileIt = inputProfiledTree.segHeadMap.begin(); headTileIt != inputProfiledTree.segHeadMap.end(); ++headTileIt)
 	{
+		cout << headTileIt->first << endl;
 		vector<string> tileLabelStrings;
 		vector<int> tileLabels(3);
 		boost::split(tileLabelStrings, headTileIt->first, boost::is_any_of("_"));
@@ -343,12 +344,13 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 						int checkYlabel = tileLabels[1] + yi;
 						int checkZlabel = tileLabels[2] + zi;
 						string checkLabel = to_string(checkXlabel) + "_" + to_string(checkYlabel) + "_" + to_string(checkZlabel);
-						if (!checkLabel.compare(headTileIt->first)) continue;
-						if (inputProfiledTree.segHeadClusters.at(inputProfiledTree.headSeg2ClusterMap.at(*headSegIt)).empty()) continue;
+						
+						if (!checkLabel.compare(headTileIt->first)) continue; // the current tile, skip
+						if (inputProfiledTree.segHeadClusters.at(inputProfiledTree.headSeg2ClusterMap.at(*headSegIt)).empty()) continue; // if the tile to be examined is empty of head segs, skip
 
 						if (inputProfiledTree.segHeadMap.find(checkLabel) != inputProfiledTree.segHeadMap.end())
 						{
-							if (processedHeadTiles.find(checkLabel) != processedHeadTiles.end()) continue;
+							if (processedHeadTiles.find(checkLabel) != processedHeadTiles.end()) continue; // check if the tile is already processed
 
 							// all head clusters in the current tile:
 							boost::container::flat_set<int> currTileClusters = headTile2ClusterMap.at(checkLabel);
@@ -407,7 +409,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 		}
 	}
 
-	for (map<string, vector<int>>::iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
+	/*for (map<string, vector<int>>::iterator tailTileIt = inputProfiledTree.segTailMap.begin(); tailTileIt != inputProfiledTree.segTailMap.end(); ++tailTileIt)
 	{
 		vector<string> tileLabelStrings;
 		vector<int> tileLabels(3);
@@ -479,7 +481,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 		TAIL_CLUSTER_MERGED:
 			continue;
 		}
-	}
+	}*/
 
 	// delete clusters that are empty of both heads and tails
 	vector<ptrdiff_t> delLocs;

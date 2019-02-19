@@ -1321,7 +1321,7 @@ int main(int argc, char* argv[])
 
 		NeuronStructExplorer myExplorer;
 		NeuronTree randNodeTree = NeuronStructUtil::randNodes(inputPa1, inputPa2);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNode.swc", randNodeTree);
+		writeSWC_file("D:\\Work\\FragTrace\\randNode.swc", randNodeTree);
 		profiledTree profiledRandNodeTree(randNodeTree, 50);
 		int segTileCount = 0;
 		for (map<string, vector<int>>::iterator it = profiledRandNodeTree.segTailMap.begin(); it != profiledRandNodeTree.segTailMap.end(); ++it)
@@ -1331,7 +1331,7 @@ int main(int argc, char* argv[])
 
 			++segTileCount;
 		}
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest.swc", profiledRandNodeTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\segTileTest.swc", profiledRandNodeTree.tree);
 
 		for (map<int, segUnit>::iterator segIt = profiledRandNodeTree.segs.begin(); segIt != profiledRandNodeTree.segs.end(); ++segIt)
 		{
@@ -1348,9 +1348,9 @@ int main(int argc, char* argv[])
 		}
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNodeTileCluster.swc", profiledRandNodeTree.tree);*/
 
-		NeuronTree pre_sphereRandNodes = NeuronStructUtil::nodeSpheresGen(3, 1, 15, 15, 60, 100, 100, 120);
-		NeuronTree sphereRandNodes = NeuronStructUtil::swcShift(pre_sphereRandNodes, 5, 5, 5);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
+		NeuronTree pre_sphereRandNodes = NeuronStructUtil::nodeSpheresGen(3, 1, 7, 7, 60, 30, 30, 120);
+		NeuronTree sphereRandNodes = NeuronStructUtil::swcShift(pre_sphereRandNodes, 8, 5, 5);
+		writeSWC_file("D:\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
 		profiledTree profiledSphereTree(sphereRandNodes, 30);
 
 		myExplorer.getTileBasedSegClusters(profiledSphereTree, 6);
@@ -1364,7 +1364,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
 
 		segTileCount = 1;
 		for (map<string, vector<int>>::iterator it = profiledSphereTree.segHeadMap.begin(); it != profiledSphereTree.segHeadMap.end(); ++it)
@@ -1379,7 +1379,23 @@ int main(int argc, char* argv[])
 			//cout << endl;
 			++segTileCount;
 		}
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
+		writeSWC_file("D:\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
+
+		myExplorer.mergeTileBasedSegClusters(profiledSphereTree, 6);
+		segTileCount = 1;
+		for (map<string, vector<int>>::iterator it = profiledSphereTree.segHeadMap.begin(); it != profiledSphereTree.segHeadMap.end(); ++it)
+		{
+			//cout << it->first << " " << it->second.size() << endl;
+			//cout << " ";
+			for (vector<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				//cout << profiledSphereTree.segs.at(*it2).head << " ";
+				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(profiledSphereTree.segs.at(*it2).head)].type = segTileCount % 20;
+			}
+			//cout << endl;
+			++segTileCount;
+		}
+		writeSWC_file("D:\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
 	}
 
 	return 0;
