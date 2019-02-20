@@ -147,13 +147,16 @@ public:
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
 	
+	// This method is a wrapper that calls NeuronStructExplorer::getTilBasedSegClusters and NeuronStructExplorer::mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
-//private:
-	// This method forms segment terminal clusters within each segment head/tail tile. 
+//private: --> will set to be private later after more tests
+	// This method clusters segment terminals within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
 	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
+	// This method merge segment end clusters with given distance threshold for the whole input profiledTree.
+	// Note, this method is usually called after NeuronStructExplorer::getTileBasedSegClusters together in NeuronStructExplorer::getSegHeadTailClusters.
 	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 	/********************************************************************************/
 
