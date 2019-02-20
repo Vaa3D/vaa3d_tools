@@ -185,6 +185,9 @@ public:
 	profiledTree segElongate_dist(const profiledTree& inputProfiledTree, float tileLength, float distThreshold);
 	profiledTree itered_segElongate_dist(profiledTree& inputProfiledTree, float tileLength, float distThreshold);
 
+	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
+	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree);
+
 	// Like NeuronStructExplorer::segUnitConnect_executer, this method currently only supports simple unilateral segments.
 	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
 
@@ -371,15 +374,15 @@ inline NeuronTree NeuronStructExplorer::singleDotRemove(const profiledTree& inpu
 	NeuronTree outputTree;
 	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
 	{
-		cout << "seg ID:" << segIt->first << " ";
+		//cout << "seg ID:" << segIt->first << " ";
 		if (segIt->second.nodes.size() <= shortSegRemove)
 		{
-			cout << "not included" << endl;
+			//cout << "not included" << endl;
 			continue;
 		}
 		else
 		{
-			cout << "included" << endl;
+			//cout << "included" << endl;
 			for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 				outputTree.listNeuron.push_back(*nodeIt);
 		}

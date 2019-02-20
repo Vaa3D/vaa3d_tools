@@ -1321,7 +1321,7 @@ int main(int argc, char* argv[])
 
 		NeuronStructExplorer myExplorer;
 		NeuronTree randNodeTree = NeuronStructUtil::randNodes(inputPa1, inputPa2);
-		writeSWC_file("D:\\Work\\FragTrace\\randNode.swc", randNodeTree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\randNode.swc", randNodeTree);
 		profiledTree profiledRandNodeTree(randNodeTree, 50);
 		int segTileCount = 0;
 		for (map<string, vector<int>>::iterator it = profiledRandNodeTree.segTailMap.begin(); it != profiledRandNodeTree.segTailMap.end(); ++it)
@@ -1331,12 +1331,8 @@ int main(int argc, char* argv[])
 
 			++segTileCount;
 		}
-		writeSWC_file("D:\\Work\\FragTrace\\segTileTest.swc", profiledRandNodeTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest.swc", profiledRandNodeTree.tree);
 
-		for (map<int, segUnit>::iterator segIt = profiledRandNodeTree.segs.begin(); segIt != profiledRandNodeTree.segs.end(); ++segIt)
-		{
-			//cout << segIt->first << " " << segIt->second.head << endl;
-		}
 		/*myExplorer.getTileBasedSegClusters(profiledRandNodeTree, 5);
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = profiledRandNodeTree.segHeadClusters.begin(); headClusterIt != profiledRandNodeTree.segHeadClusters.end(); ++headClusterIt)
 		{
@@ -1350,40 +1346,50 @@ int main(int argc, char* argv[])
 
 		NeuronTree pre_sphereRandNodes = NeuronStructUtil::nodeSpheresGen(3, 1, 7, 7, 60, 30, 30, 120);
 		NeuronTree sphereRandNodes = NeuronStructUtil::swcShift(pre_sphereRandNodes, 8, 5, 5);
-		writeSWC_file("D:\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
 		profiledTree profiledSphereTree(sphereRandNodes, 30);
 
 		myExplorer.getTileBasedSegClusters(profiledSphereTree, 6);
-		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator headClusterIt = profiledSphereTree.segHeadClusters.begin(); headClusterIt != profiledSphereTree.segHeadClusters.end(); ++headClusterIt)
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator tailClusterIt = profiledSphereTree.segTailClusters.begin(); tailClusterIt != profiledSphereTree.segTailClusters.end(); ++tailClusterIt)
 		{
 			//cout << headClusterIt->first << " ";
-			for (boost::container::flat_set<int>::iterator segIDit = headClusterIt->second.begin(); segIDit != headClusterIt->second.end(); ++segIDit)
+			for (boost::container::flat_set<int>::iterator segIDit = tailClusterIt->second.begin(); segIDit != tailClusterIt->second.end(); ++segIDit)
 			{
 				//cout << profiledRandNodeTree.segs.at(*segIDit).head << " ";
-				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(profiledSphereTree.segs.at(*segIDit).head)].type = headClusterIt->first % 7;
+				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(*profiledSphereTree.segs.at(*segIDit).tails.begin())].type = tailClusterIt->first % 7;
 			}
 		}
 		
-		writeSWC_file("D:\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
 
 		segTileCount = 1;
-		for (map<string, vector<int>>::iterator it = profiledSphereTree.segHeadMap.begin(); it != profiledSphereTree.segHeadMap.end(); ++it)
+		cout << profiledSphereTree.segTailClusters.size() << endl;
+		for (map<string, vector<int>>::iterator it = profiledSphereTree.segTailMap.begin(); it != profiledSphereTree.segTailMap.end(); ++it)
 		{
 			//cout << it->first << " " << it->second.size() << endl;
 			//cout << " ";
 			for (vector<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 			{
 				//cout << profiledSphereTree.segs.at(*it2).head << " ";
-				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(profiledSphereTree.segs.at(*it2).head)].type = segTileCount % 20;
+				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(*profiledSphereTree.segs.at(*it2).tails.begin())].type = segTileCount % 20;
 			}
 			//cout << endl;
 			++segTileCount;
 		}
-		writeSWC_file("D:\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
 
 		myExplorer.mergeTileBasedSegClusters(profiledSphereTree, 6);
-		segTileCount = 1;
-		for (map<string, vector<int>>::iterator it = profiledSphereTree.segHeadMap.begin(); it != profiledSphereTree.segHeadMap.end(); ++it)
+		int clusterCount = 1;
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = profiledSphereTree.segTailClusters.begin(); it != profiledSphereTree.segTailClusters.end(); ++it)
+		{
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				profiledSphereTree.tree.listNeuron[profiledSphereTree.node2LocMap.at(*profiledSphereTree.segs.at(*it2).tails.begin())].type = clusterCount;
+			}
+			++clusterCount;
+		}
+
+		/*for (map<string, vector<int>>::iterator it = profiledSphereTree.segHeadMap.begin(); it != profiledSphereTree.segHeadMap.end(); ++it)
 		{
 			//cout << it->first << " " << it->second.size() << endl;
 			//cout << " ";
@@ -1394,8 +1400,8 @@ int main(int argc, char* argv[])
 			}
 			//cout << endl;
 			++segTileCount;
-		}
-		writeSWC_file("D:\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
+		}*/
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
 	}
 
 	return 0;
