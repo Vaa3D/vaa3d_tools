@@ -82,7 +82,7 @@ namespace integratedDataTypes
 		const segUnit* seg2Ptr;
 		map<connectOrientation, double> connDistMap;
 
-		void getSegDistance(connectOrientation connOrt);
+		void getSegDistance(connectOrientation connOrt = all_ort);
 	};
 
 	struct profiledTree
