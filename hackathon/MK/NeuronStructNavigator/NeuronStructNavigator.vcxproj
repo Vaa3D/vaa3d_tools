@@ -147,12 +147,14 @@
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.cpp" />
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\neuron_format_converter.cpp" />
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\v_neuronswc.cpp" />
+    <ClCompile Include="integratedDataTypes.cpp" />
     <ClCompile Include="NeuronStructExplorer.cpp" />
     <ClCompile Include="NeuronStructUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.h" />
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\neuron_editing\v_neuronswc.h" />
+    <ClInclude Include="integratedDataTypes.h" />
     <ClInclude Include="NeuronStructExplorer.h" />
     <ClInclude Include="NeuronStructUtilities.h" />
   </ItemGroup>

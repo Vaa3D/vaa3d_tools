@@ -33,21 +33,9 @@
 
 #include "basic_surf_objs.h"
 #include "ImgAnalyzer.h"
+#include "integratedDataTypes.h"
 
 using namespace std;
-
-#ifndef PI
-#define PI 3.1415926
-#endif
-
-#ifndef NODE_TILE_LENGTH
-#define NODE_TILE_LENGTH 100
-#endif
-
-#ifndef zRATIO
-#define zRATIO (1 / 0.2) // This is the ratio of z resolution to x and y in fMOST images.
-//#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
-#endif
 
 class NeuronStructUtil
 {
