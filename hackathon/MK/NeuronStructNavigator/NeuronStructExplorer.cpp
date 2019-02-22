@@ -942,17 +942,14 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 
 profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& inputProfiledTree)
 {
-	profiledTree outputProfiledTree = inputProfiledTree;
-	map<string, connectOrientation> connSegsMap;
+	profiledTree outputProfiledTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
 	map<int, segUnit> allNewSegs;
-	int maxSegID = 0;
-	for (map<int, segUnit>::const_iterator segIDit = inputProfiledTree.segs.begin(); segIDit != inputProfiledTree.segs.end(); ++segIDit)
-		if (segIDit->second.segID > maxSegID) maxSegID = segIDit->second.segID;
+	int maxInputSegID = outputProfiledTree.segs.rbegin()->first;
 
 	boost::container::flat_set<int> headSegs;
 	boost::container::flat_set<int> tailSegs;
 	vector<segPairProfile> segPairs;
-	int newSegNum = 0;
+	// Need to exluded selected segments here!!
 	for (boost::container::flat_map<int, boost::container::flat_set<int>>::const_iterator clusterIt = inputProfiledTree.segHeadClusters.begin(); clusterIt != inputProfiledTree.segHeadClusters.end(); ++clusterIt)
 	{
 		headSegs.clear();
@@ -1014,7 +1011,8 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 		outputProfiledTree.segs.at(chosenPair.seg1Ptr->segID).to_be_deleted = true;
 		outputProfiledTree.segs.at(chosenPair.seg2Ptr->segID).to_be_deleted = true;
 		segUnit newSeg = this->segUnitConnect_executer(*chosenPair.seg1Ptr, *chosenPair.seg2Ptr, chosenPair.currConnOrt);
-		allNewSegs.insert({ ++newSegNum, newSeg });
+		allNewSegs.insert({ ++maxInputSegID, newSeg });
+		outputProfiledTree.segs.insert({ maxInputSegID, newSeg });
 	}
 
 	vector<size_t> nodeDeleteLocs;
@@ -1025,7 +1023,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 		{
 			if (it->second.to_be_deleted)
 			{
-				//cout << it->first << ": " << it->second.nodes.size() << endl;
+				cout << it->first << ": " << it->second.nodes.size() << endl;
 				for (QList<NeuronSWC>::iterator nodeIt = it->second.nodes.begin(); nodeIt != it->second.nodes.end(); ++nodeIt)
 					nodeDeleteLocs.push_back(outputProfiledTree.node2LocMap.at(nodeIt->n));
 				outputProfiledTree.segs.erase(it); // Here it avoids the same segment being connected multiple times.
@@ -1043,14 +1041,14 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 	for (vector<size_t>::iterator it = nodeDeleteLocs.begin(); it != nodeDeleteLocs.end(); ++it)
 		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + ptrdiff_t(*it));
 
-	//cout << endl << "NEW SEGMENTS ------------- " << endl;
-	/*for (map<int, segUnit>::iterator it = allNewSegs.begin(); it != allNewSegs.end(); ++it)
+	cout << endl << "NEW SEGMENTS ------------- " << endl;
+	for (map<int, segUnit>::iterator it = allNewSegs.begin(); it != allNewSegs.end(); ++it)
 	{
-		//cout << it->first << ": " << it->second.nodes.size() << endl;
+		cout << it->first << ": " << it->second.nodes.size() << endl;
 		outputProfiledTree.tree.listNeuron.append(it->second.nodes);
 	}
 
-	this->profiledTreeReInit(outputProfiledTree);*/
+	this->profiledTreeReInit(outputProfiledTree);
 	return outputProfiledTree;
 }
 

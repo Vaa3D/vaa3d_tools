@@ -153,15 +153,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="imgTester.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SWCtester.cpp" />
-    <ClCompile Include="testingManager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="imgTester.h" />
     <ClInclude Include="SWCtester.h" />
-    <ClInclude Include="testingManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

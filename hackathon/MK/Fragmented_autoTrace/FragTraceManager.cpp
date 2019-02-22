@@ -148,11 +148,16 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 	this->fragTraceTreeManager.getSegHeadTailClusters(downSampledProfiledTree);
 	profiledTree testTree = this->fragTraceTreeManager.segElongate_cluster(downSampledProfiledTree);
-	
-	/*profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
+	for (map<int, segUnit>::iterator it = testTree.segs.begin(); it != testTree.segs.end(); ++it)
+	{
+		if (it->second.nodes.size() == 1) cout << it->first << endl;
+	}
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newConnect.swc", testTree.tree);
+
+	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
 	QString elongatedTreeName = this->finalSaveRootQ + "elongatedTree.swc";
-	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);*/
+	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);
 
 	profiledTree headTailProfiledTree;
 	headTailProfiledTree = testTree;

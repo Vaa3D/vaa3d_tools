@@ -1416,12 +1416,12 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("segPair"))
 	{
 		NeuronStructExplorer myExplorer;
-		QString inputTreeName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\currBlock.swc";
+		QString inputTreeName = "H:\\fMOST_fragment_tracing\\testCase1\\downSampledTreeTest.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeName);
 		profiledTree inputProfiledTree(inputTree);
 		myExplorer.getSegHeadTailClusters(inputProfiledTree);
 		profiledTree profiledClusterElongatedTree = myExplorer.segElongate_cluster(inputProfiledTree);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\clusterElongated.swc", profiledClusterElongatedTree.tree);
+		writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\clusterElongated.swc", profiledClusterElongatedTree.tree);
 	}
 
 	return 0;
