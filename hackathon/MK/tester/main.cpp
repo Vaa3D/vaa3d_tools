@@ -15,6 +15,7 @@
 #include "ImgManager.h"
 #include "ImgProcessor.h"
 #include "FeatureExtractor.h"
+#include "integratedDataTypes.h"
 
 #include "C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\sort_neuron_swc\sort_swc.h"
 
@@ -24,9 +25,18 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
+	/*const char* funcNameC = argv[1];
 	string funcName(funcNameC);
-	//string funcName = "simpleElongateTest";
+	
+	vector<string> paras;
+	for (int i = 2; i < argc; ++i)
+	{
+		const char* paraC = argv[i];
+		string paraString(paraC);
+		paras.push_back(paraString);
+	}*/
+
+	string funcName = "segPair";
 	/************************************/
 
 	if (!funcName.compare("swcID"))
@@ -1402,6 +1412,16 @@ int main(int argc, char* argv[])
 			++segTileCount;
 		}*/
 		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
+	}
+	else if (!funcName.compare("segPair"))
+	{
+		NeuronStructExplorer myExplorer;
+		QString inputTreeName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\currBlock.swc";
+		NeuronTree inputTree = readSWC_file(inputTreeName);
+		profiledTree inputProfiledTree(inputTree);
+		myExplorer.getSegHeadTailClusters(inputProfiledTree);
+		profiledTree profiledClusterElongatedTree = myExplorer.segElongate_cluster(inputProfiledTree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\clusterElongated.swc", profiledClusterElongatedTree.tree);
 	}
 
 	return 0;

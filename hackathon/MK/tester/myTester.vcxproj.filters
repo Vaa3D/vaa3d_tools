@@ -21,9 +21,21 @@
     <ClCompile Include="SWCtester.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="imgTester.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="testingManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SWCtester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="imgTester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="testingManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

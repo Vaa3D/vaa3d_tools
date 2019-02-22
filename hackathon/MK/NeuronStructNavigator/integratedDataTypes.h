@@ -75,14 +75,20 @@ namespace integratedDataTypes
 
 	struct segPairProfile
 	{
+		// This struct has pointer data members. Need to provide copy control constructors later.
+
 		segPairProfile() {};
-		segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2) : seg1Ptr(&inputSeg1), seg2Ptr(&inputSeg2) {};
+		segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt = all_ort);
+
 
 		const segUnit* seg1Ptr;
 		const segUnit* seg2Ptr;
+		connectOrientation currConnOrt;
+		double turningAngle, distance;
 		map<connectOrientation, double> connDistMap;
 
 		void getSegDistance(connectOrientation connOrt = all_ort);
+		void turning12(connectOrientation connOrt);
 	};
 
 	struct profiledTree

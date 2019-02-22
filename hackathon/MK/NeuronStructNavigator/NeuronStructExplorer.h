@@ -55,7 +55,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boos
 class NeuronStructExplorer
 {
 public:
-	/***************** Constructors and Basic Data/Function Members *****************/
+	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() {};
 	NeuronStructExplorer(QString neuronFileName);
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
@@ -66,30 +66,32 @@ public:
 
 	map<string, profiledTree> treeDataBase;
 	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH);
-	void profiledTreeReInit(profiledTree& inputProfiledTree);
+	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
 	
 	V_NeuronSWC_list segmentList;
 	void segmentDecompose(NeuronTree* inputTreePtr);
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
 	
-	// This method is a wrapper that calls NeuronStructExplorer::getTilBasedSegClusters and NeuronStructExplorer::mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
+	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
 	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
 
 //private: --> will set to be private later after more tests
 	// This method clusters segment terminals within each segment head/tail tile. 
 	// NOTE, currently only simple unilateral segments are supported.
-	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
 
 	// This method merge segment end clusters with given distance threshold for the whole input profiledTree.
-	// Note, this method is usually called after NeuronStructExplorer::getTileBasedSegClusters together in NeuronStructExplorer::getSegHeadTailClusters.
-	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
-	/********************************************************************************/
+	// Note, this method is usually called after this->getTileBasedSegClusters together in this->getSegHeadTailClusters.
+	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	/*****************************************************************************************/
 
 
 	/***************** Neuron Struct Processing Functions *****************/
 public:
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
+	
+	// This method calls this->rc_segDownSample, which is a private function. Therefore, it cannot be static.
 	profiledTree treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval = 2);
 	
 private:
@@ -103,10 +105,12 @@ public:
 
 
 	/***************** Auto-tracing Related Neuron Struct Functions *****************/
+	// ----------------- MST ----------------- //
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
 	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
 	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
+	// -------------------------------------- //
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
@@ -117,7 +121,8 @@ public:
 	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
 	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree);
 
-	// Like NeuronStructExplorer::segUnitConnect_executer, this method currently only supports simple unilateral segments.
+
+	// Like this->segUnitConnect_executer, this method currently only supports simple unilateral segments.
 	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
 
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
@@ -135,7 +140,6 @@ public:
 
 
 	/***************** Geometry *****************/
-public:
 	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
@@ -145,19 +149,17 @@ public:
 
 	static segUnit segmentStraighten(const segUnit& inputSeg);
 
-private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
-	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
+	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	/********************************************/
 
 
 	/***************** Neuron Struct Refining Method *****************/
-public:
 	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
 	/*****************************************************************/
 
 
-	/********* Distance-based SWC analysis *********/
+	/* ~~~~~~~~~~~ Distance-based SWC analysis ~~~~~~~~~~~ */
 	vector<vector<float>> FPsList;
 	vector<vector<float>> FNsList;
 	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
@@ -167,7 +169,7 @@ public:
 	map<int, long int> nodeDistCDF;
 	map<int, long int> nodeDistPDF;
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
-	/***********************************************/
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 };
 
 inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double distThre)

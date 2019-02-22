@@ -148,14 +148,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 	this->fragTraceTreeManager.getSegHeadTailClusters(downSampledProfiledTree);
 	profiledTree testTree = this->fragTraceTreeManager.segElongate_cluster(downSampledProfiledTree);
-
+	
 	/*profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
 	QString elongatedTreeName = this->finalSaveRootQ + "elongatedTree.swc";
 	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);*/
 
 	profiledTree headTailProfiledTree;
-	headTailProfiledTree = downSampledProfiledTree;
+	headTailProfiledTree = testTree;
 
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(headTailProfiledTree, this->minNodeNum);
