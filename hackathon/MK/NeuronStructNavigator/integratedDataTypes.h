@@ -77,7 +77,7 @@ namespace integratedDataTypes
 	{
 		// This struct has pointer data members. Need to provide copy control constructors later.
 
-		segPairProfile() {};
+		segPairProfile() : seg1Ptr(nullptr), seg2Ptr(nullptr) {};
 		segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt = all_ort);
 
 

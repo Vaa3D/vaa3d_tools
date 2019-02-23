@@ -152,15 +152,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	{
 		if (it->second.nodes.size() == 1) cout << it->first << endl;
 	}
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newConnect.swc", testTree.tree);
+	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect.swc", testTree.tree);
 
 	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
 	QString elongatedTreeName = this->finalSaveRootQ + "elongatedTree.swc";
 	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);
 
-	profiledTree headTailProfiledTree;
-	headTailProfiledTree = testTree;
+	profiledTree headTailProfiledTree(testTree.tree);
 
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(headTailProfiledTree, this->minNodeNum);

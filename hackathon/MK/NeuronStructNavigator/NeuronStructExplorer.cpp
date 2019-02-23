@@ -942,22 +942,28 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 
 profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& inputProfiledTree)
 {
-	profiledTree outputProfiledTree(inputProfiledTree.tree, inputProfiledTree.segTileSize);
+	profiledTree outputProfiledTree = inputProfiledTree;
 	map<int, segUnit> allNewSegs;
 	int maxInputSegID = outputProfiledTree.segs.rbegin()->first;
 
 	boost::container::flat_set<int> headSegs;
 	boost::container::flat_set<int> tailSegs;
 	vector<segPairProfile> segPairs;
-	// Need to exluded selected segments here!!
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::const_iterator clusterIt = inputProfiledTree.segHeadClusters.begin(); clusterIt != inputProfiledTree.segHeadClusters.end(); ++clusterIt)
+
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator clusterIt = outputProfiledTree.segHeadClusters.begin(); clusterIt != outputProfiledTree.segHeadClusters.end(); ++clusterIt)
 	{
 		headSegs.clear();
 		tailSegs.clear();
 		segPairs.clear();
 
 		headSegs = clusterIt->second;
-		tailSegs = inputProfiledTree.segTailClusters.at(clusterIt->first);
+		tailSegs = outputProfiledTree.segTailClusters.at(clusterIt->first);
+
+		cout << endl << clusterIt->first << ": ";
+		for (boost::container::flat_set<int>::iterator it1 = headSegs.begin(); it1 != headSegs.end(); ++it1) cout << *it1 << " ";
+		cout << "|| ";
+		for (boost::container::flat_set<int>::iterator it1 = tailSegs.begin(); it1 != tailSegs.end(); ++it1) cout << *it1 << " ";
+		cout << endl;
 
 		for (boost::container::flat_set<int>::iterator headIt = headSegs.begin(); headIt != headSegs.end(); ++headIt)
 		{
@@ -965,7 +971,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 			{
 				if (*tailIt == *headIt) continue;
 
-				segPairProfile newSegPair(inputProfiledTree.segs.at(*headIt), inputProfiledTree.segs.at(*tailIt), head_tail);
+				segPairProfile newSegPair(outputProfiledTree.segs.at(*headIt), outputProfiledTree.segs.at(*tailIt), head_tail);
 				if (newSegPair.turningAngle == -1) continue;
 				segPairs.push_back(newSegPair);
 			}
@@ -976,7 +982,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 			{
 				for (boost::container::flat_set<int>::iterator headIt2 = headSegs.begin() + 1; headIt2 != headSegs.end(); ++headIt2)
 				{
-					segPairProfile newSegPair(inputProfiledTree.segs.at(*headIt1), inputProfiledTree.segs.at(*headIt2), head_head);
+					segPairProfile newSegPair(outputProfiledTree.segs.at(*headIt1), outputProfiledTree.segs.at(*headIt2), head_head);
 					if (newSegPair.turningAngle == -1) continue;
 					segPairs.push_back(newSegPair);
 				}
@@ -988,7 +994,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 			{
 				for (boost::container::flat_set<int>::iterator tailIt2 = tailSegs.begin() + 1; tailIt2 != tailSegs.end(); ++tailIt2)
 				{
-					segPairProfile newSegPair(inputProfiledTree.segs.at(*tailIt1), inputProfiledTree.segs.at(*tailIt2), tail_tail);
+					segPairProfile newSegPair(outputProfiledTree.segs.at(*tailIt1), outputProfiledTree.segs.at(*tailIt2), tail_tail);
 					if (newSegPair.turningAngle == -1) continue;
 					segPairs.push_back(newSegPair);
 				}
@@ -997,22 +1003,94 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 
 		double minTurningAngle = 10000;
 		segPairProfile chosenPair;
-		for (vector<segPairProfile>::iterator pairIt = segPairs.begin(); pairIt != segPairs.end(); ++pairIt)
+		cout << "segPairs num: " << segPairs.size() << endl;
+		if (segPairs.size() > 1)
 		{
-			if (pairIt->turningAngle < minTurningAngle)
+			for (vector<segPairProfile>::iterator pairIt = segPairs.begin(); pairIt != segPairs.end(); ++pairIt)
 			{
-				minTurningAngle = pairIt->turningAngle;
-				chosenPair = *pairIt;
-				//cout << pairIt->seg1Ptr->segID << " " << pairIt->seg2Ptr->segID << endl;
+				cout << pairIt->seg1Ptr->segID << " " << pairIt->seg2Ptr->segID << " ";
+				if (pairIt->turningAngle < minTurningAngle)
+				{
+					minTurningAngle = pairIt->turningAngle;
+					chosenPair = *pairIt;
+					cout << minTurningAngle;
+				}
+				cout << endl;
+			}
+			cout << " ==> " << chosenPair.seg1Ptr->segID << " " << chosenPair.seg2Ptr->segID << " " << minTurningAngle << endl;
+		}
+		else continue;
+
+		if (minTurningAngle > PI * 2) continue;
+		else
+		{
+			outputProfiledTree.segs.at(chosenPair.seg1Ptr->segID).to_be_deleted = true;
+			outputProfiledTree.segs.at(chosenPair.seg2Ptr->segID).to_be_deleted = true;
+			segUnit newSeg = this->segUnitConnect_executer(*chosenPair.seg1Ptr, *chosenPair.seg2Ptr, chosenPair.currConnOrt);
+			allNewSegs.insert({ ++maxInputSegID, newSeg });
+
+			if (chosenPair.currConnOrt == head_head)
+			{
+				int head1TailCluster = outputProfiledTree.tailSeg2ClusterMap.at(chosenPair.seg1Ptr->segID);
+				int head2TailCluster = outputProfiledTree.tailSeg2ClusterMap.at(chosenPair.seg2Ptr->segID);
+				
+				if (chosenPair.seg1Ptr->segID > chosenPair.seg2Ptr->segID)
+				{
+					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
+					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg2Ptr->segID));
+					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
+					if (head2TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head2TailCluster).erase(outputProfiledTree.segTailClusters.at(head2TailCluster).find(chosenPair.seg2Ptr->segID));
+				}
+				else if (chosenPair.seg2Ptr->segID > chosenPair.seg1Ptr->segID)
+				{
+					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg2Ptr->segID));
+					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
+					if (head2TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head2TailCluster).erase(outputProfiledTree.segTailClusters.at(head2TailCluster).find(chosenPair.seg2Ptr->segID));
+					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
+				}
+			}
+			else if (chosenPair.currConnOrt == head_tail)
+			{
+				int head1TailCluster = outputProfiledTree.tailSeg2ClusterMap.at(chosenPair.seg1Ptr->segID);
+				int tail2HeadCluster = outputProfiledTree.headSeg2ClusterMap.at(chosenPair.seg2Ptr->segID);
+
+				if (chosenPair.seg1Ptr->segID > chosenPair.seg2Ptr->segID)
+				{
+					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
+					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
+					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
+					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
+				}
+				else if (chosenPair.seg2Ptr->segID > chosenPair.seg1Ptr->segID)
+				{
+					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
+					clusterIt->second.erase(clusterIt->second.find(chosenPair.seg1Ptr->segID));
+					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
+					if (head1TailCluster != clusterIt->first) outputProfiledTree.segTailClusters.at(head1TailCluster).erase(outputProfiledTree.segTailClusters.at(head1TailCluster).find(chosenPair.seg1Ptr->segID));
+				}
+			}
+			else if (chosenPair.currConnOrt == tail_tail)
+			{
+				int tail1HeadCluster = outputProfiledTree.headSeg2ClusterMap.at(chosenPair.seg1Ptr->segID);
+				int tail2HeadCluster = outputProfiledTree.headSeg2ClusterMap.at(chosenPair.seg2Ptr->segID);
+
+				if (chosenPair.seg1Ptr->segID > chosenPair.seg2Ptr->segID)
+				{
+					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg1Ptr->segID);
+					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
+					if (tail1HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail1HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail1HeadCluster).find(chosenPair.seg1Ptr->segID));
+					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
+				}
+				else if (chosenPair.seg2Ptr->segID > chosenPair.seg1Ptr->segID)
+				{
+					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg2Ptr->segID);
+					outputProfiledTree.segTailClusters.at(clusterIt->first).erase(chosenPair.seg1Ptr->segID);
+					
+					if (tail2HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail2HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail2HeadCluster).find(chosenPair.seg2Ptr->segID));
+					if (tail1HeadCluster != clusterIt->first) outputProfiledTree.segHeadClusters.at(tail1HeadCluster).erase(outputProfiledTree.segHeadClusters.at(tail1HeadCluster).find(chosenPair.seg1Ptr->segID));
+				}
 			}
 		}
-		if (minTurningAngle > PI * 2) continue;
-
-		outputProfiledTree.segs.at(chosenPair.seg1Ptr->segID).to_be_deleted = true;
-		outputProfiledTree.segs.at(chosenPair.seg2Ptr->segID).to_be_deleted = true;
-		segUnit newSeg = this->segUnitConnect_executer(*chosenPair.seg1Ptr, *chosenPair.seg2Ptr, chosenPair.currConnOrt);
-		allNewSegs.insert({ ++maxInputSegID, newSeg });
-		outputProfiledTree.segs.insert({ maxInputSegID, newSeg });
 	}
 
 	vector<size_t> nodeDeleteLocs;
