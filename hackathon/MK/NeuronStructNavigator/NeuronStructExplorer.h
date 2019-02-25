@@ -119,7 +119,7 @@ public:
 	profiledTree itered_segElongate_dist(profiledTree& inputProfiledTree, float tileLength, float distThreshold);
 
 	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
-	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree);
+	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
 
 
 	// Like this->segUnitConnect_executer, this method currently only supports simple unilateral segments.

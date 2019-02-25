@@ -104,7 +104,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		}
 	}
 	
-	cout << endl << "Finishing up.." << endl << " number of objects processed: ";
+	cout << endl << "Finishing up processing objects.." << endl << " number of objects processed: ";
 	vector<NeuronTree> objTrees;
 	NeuronTree objSkeletonTree;
 	for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
@@ -147,12 +147,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
 	this->fragTraceTreeManager.getSegHeadTailClusters(downSampledProfiledTree);
-	profiledTree testTree = this->fragTraceTreeManager.segElongate_cluster(downSampledProfiledTree);
-	for (map<int, segUnit>::iterator it = testTree.segs.begin(); it != testTree.segs.end(); ++it)
-	{
-		if (it->second.nodes.size() == 1) cout << it->first << endl;
-	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect.swc", testTree.tree);
+	profiledTree testTree = this->fragTraceTreeManager.itered_segElongate_cluster(downSampledProfiledTree, 5);
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newConnect.swc", testTree.tree);
 
 	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
