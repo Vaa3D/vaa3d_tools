@@ -117,23 +117,6 @@ int main(int argc, char* argv[])
 		QString outputSWCname = "Z:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
-	else if (!funcName.compare("treeUnion"))
-	{
-		string inputSWCname1 = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\MST2nd_tiled30_branchBreak_noSpike_elong_noDots\\319215569.swc";
-		string inputSWCname2 = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\diffTree_zCleaned_MST_zRatio_branchBreak_noSpike_elong\\319215569.swc";
-		QString inputSWCname1Q = QString::fromStdString(inputSWCname1);
-		QString inputSWCname2Q = QString::fromStdString(inputSWCname2);
-		NeuronTree inputTree1 = readSWC_file(inputSWCname1Q);
-		NeuronTree inputTree2 = readSWC_file(inputSWCname2Q);
-		profiledTree inputProfiledTree1(inputTree1);
-		profiledTree inputProfiledTree2(inputTree2);
-
-		NeuronStructExplorer mySWCExplorer;
-		profiledTree outputProfiledTree = mySWCExplorer.treeUnion_MSTbased(inputProfiledTree1, inputProfiledTree2);
-
-		QString outputSWCname = "H:\\IVSCC_mouse_inhibitory\\testOutput\\test.swc";
-		writeSWC_file(outputSWCname, outputProfiledTree.tree);
-	}
 	else if (!funcName.compare("selfDist"))
 	{
 		ofstream outputTest("Z:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D\\test.txt");
@@ -408,48 +391,6 @@ int main(int argc, char* argv[])
 			string saveFileName = saveFileNameQ.toStdString();
 			const char* saveFileNameC = saveFileName.c_str();
 			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-			delete[] outputImgPtr;
-		}
-	}
-	else if (!funcName.compare("skeletonSlices"))
-	{
-		const char* inputPathNameC = argv[1];
-		string inputPathName(inputPathNameC);
-		const char* outputPathNameC = argv[2];
-		string outputPathName(outputPathNameC);
-		//cout << outputPathName << endl;
-		vector<string> inputFullPathParse;
-		boost::split(inputFullPathParse, inputPathName, boost::is_any_of("/"));
-		string caseNum = *(inputFullPathParse.end() - 1);
-		QString caseNumQ = QString::fromStdString(caseNum);
-		
-		ImgManager myImgManager;
-		for (filesystem::directory_iterator fileIt(inputPathName); fileIt != filesystem::directory_iterator(); ++fileIt)
-		{
-			string fileFullName = fileIt->path().string();
-			myImgManager.inputMultiCasesFullPaths.insert(pair<string, string>(caseNum, fileFullName));
-		}
-		
-		myImgManager.imgEntry(caseNum, ImgManager::slices);
-		int imgDims[3];
-		imgDims[0] = myImgManager.imgDatabase.begin()->second.dims[0];
-		imgDims[1] = myImgManager.imgDatabase.begin()->second.dims[1];
-		imgDims[2] = 1;
-		for (map<string, myImg1DPtr>::iterator it = myImgManager.imgDatabase.begin()->second.slicePtrs.begin(); it != myImgManager.imgDatabase.begin()->second.slicePtrs.end(); ++it)
-		{
-			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-			ImgProcessor::skeleton2D(it->second.get(), outputImgPtr, imgDims);
-
-			V3DLONG Dims[4];
-			Dims[0] = imgDims[0];
-			Dims[1] = imgDims[1];
-			Dims[2] = 1;
-			Dims[3] = 1;
-			string sliceSaveFullName = outputPathName + "\\" + it->first;
-			cout << sliceSaveFullName << endl;
-			const char* sliceSaveFullNameC = sliceSaveFullName.c_str();
-			ImgManager::saveimage_wrapper(sliceSaveFullNameC, outputImgPtr, Dims, 1);
 
 			delete[] outputImgPtr;
 		}
@@ -1324,8 +1265,8 @@ int main(int argc, char* argv[])
 		NeuronStructExplorer myExplorer;
 		NeuronTree pre_sphereRandNodes = NeuronStructUtil::nodeSpheresGen(3, 1, 7, 7, 60, 30, 30, 120);
 		NeuronTree sphereRandNodes = NeuronStructUtil::swcShift(pre_sphereRandNodes, 8, 5, 5);
-		writeSWC_file("D:\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
-		profiledTree profiledSphereTree(sphereRandNodes, 30);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphereRandNode.swc", sphereRandNodes);
+		profiledTree profiledSphereTree(sphereRandNodes, 10);
 
 		myExplorer.getTileBasedSegClusters(profiledSphereTree, 6);
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator tailClusterIt = profiledSphereTree.segTailClusters.begin(); tailClusterIt != profiledSphereTree.segTailClusters.end(); ++tailClusterIt)
@@ -1338,7 +1279,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		
-		writeSWC_file("D:\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\sphere.swc", profiledSphereTree.tree);
 
 		int segTileCount = 1;
 		/*cout << profiledSphereTree.segTailClusters.size() << endl;
@@ -1368,7 +1309,7 @@ int main(int argc, char* argv[])
 			//cout << endl;
 			++segTileCount;
 		}
-		writeSWC_file("D:\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest1.swc", profiledSphereTree.tree);
 
 		myExplorer.mergeTileBasedSegClusters(profiledSphereTree, 6);
 		int clusterCount = 1;
@@ -1382,17 +1323,38 @@ int main(int argc, char* argv[])
 		}
 
 		
-		writeSWC_file("D:\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\segTileTest2.swc", profiledSphereTree.tree);
 	}
 	else if (!funcName.compare("segPair"))
 	{
 		NeuronStructExplorer myExplorer;
-		QString inputTreeName = "H:\\fMOST_fragment_tracing\\testCase1\\downSampledTreeTest.swc";
+		QString inputTreeName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\test.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeName);
 		profiledTree inputProfiledTree(inputTree);
-		myExplorer.getSegHeadTailClusters(inputProfiledTree);
+
+		myExplorer.getSegHeadTailClusters(inputProfiledTree, 30);
+		int clusterCount = 1;
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segTailClusters.begin(); it != inputProfiledTree.segTailClusters.end(); ++it)
+		{
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(*inputProfiledTree.segs.at(*it2).tails.begin())].type = clusterCount;
+			}
+			++clusterCount;
+		}
+		clusterCount = 1;
+		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segHeadClusters.begin(); it != inputProfiledTree.segHeadClusters.end(); ++it)
+		{
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				inputProfiledTree.tree.listNeuron[inputProfiledTree.node2LocMap.at(inputProfiledTree.segs.at(*it2).head)].type = clusterCount;
+			}
+			++clusterCount;
+		}
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCluster.swc", inputProfiledTree.tree);
+
 		profiledTree profiledClusterElongatedTree = myExplorer.segElongate_cluster(inputProfiledTree);
-		writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\clusterElongated.swc", profiledClusterElongatedTree.tree);
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\clusterElongated.swc", profiledClusterElongatedTree.tree);
 	}
 
 	return 0;

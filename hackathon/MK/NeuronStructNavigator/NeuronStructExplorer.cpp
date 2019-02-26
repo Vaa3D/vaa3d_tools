@@ -443,7 +443,15 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 		inputProfiledTree.segTailClusters.erase(inputProfiledTree.segTailClusters.begin() + *delIt);
 	}
 
-	//cout << "Head cluster num: " << inputProfiledTree.segHeadClusters.size() << " -- Tail cluster num: " << inputProfiledTree.segTailClusters.size() << endl;
+	// ------- For debugging purpose -------
+	profiledTree testTree = inputProfiledTree;
+	for (boost::container::flat_map<int, int>::iterator it = testTree.headSeg2ClusterMap.begin(); it != testTree.headSeg2ClusterMap.end(); ++it)
+		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 7;
+	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\headEndTest.swc", testTree.tree);
+	testTree = inputProfiledTree;
+	for (boost::container::flat_map<int, int>::iterator it = testTree.tailSeg2ClusterMap.begin(); it != testTree.tailSeg2ClusterMap.end(); ++it)
+		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].type = it->second % 7;
+	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tailEndTest.swc", testTree.tree);
 }
 
 void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
@@ -656,8 +664,6 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 			break; // This break is needed as tailSegTiles' size is changing.
 		}
 	}
-
-	//cout << "cluster num: " << inputProfiledTree.segHeadClusters.size() << endl;
 }
 
 void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
@@ -978,7 +984,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 		for (boost::container::flat_set<int>::iterator tailSegIt = outputProfiledTree.segTailClusters.at(it->first).begin(); tailSegIt != outputProfiledTree.segTailClusters.at(it->first).end(); ++tailSegIt)
 			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*outputProfiledTree.segs.at(*tailSegIt).tails.begin())].type = it->first % 9;
 	}
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newConnect_cluster.swc", outputProfiledTree.tree);
+	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect_cluster.swc", outputProfiledTree.tree);
 	
 	map<int, segUnit> allNewSegs;
 	int maxInputSegID = outputProfiledTree.segs.rbegin()->first;
@@ -1058,7 +1064,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 		}
 		else continue;
 
-		if (minTurningAngle > PI * 2) continue;
+		if (minTurningAngle > PI * 0.75) continue;
 		else
 		{
 			outputProfiledTree.segs.at(chosenPair.seg1Ptr->segID).to_be_deleted = true;

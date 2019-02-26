@@ -148,7 +148,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 	this->fragTraceTreeManager.getSegHeadTailClusters(downSampledProfiledTree);
 	profiledTree testTree = this->fragTraceTreeManager.itered_segElongate_cluster(downSampledProfiledTree, 5);
-	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newConnect.swc", testTree.tree);
+	QString iteredElongateClusterTreeName = this->finalSaveRootQ + "/newConnect.swc";
+	writeSWC_file(iteredElongateClusterTreeName, testTree.tree);
 
 	profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
