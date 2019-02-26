@@ -76,6 +76,89 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     return;
 }
 
+void get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
+
+    QList<int> to_delete;
+    for (int i=0;i<tip_list.size();i++){
+
+        QList<int> plist;
+        QList<int> alln;
+        int N=treeswc.listNeuron.size();
+        for(int i=0; i<N; i++){
+            plist.append(treeswc.listNeuron.at(i).pn);
+            alln.append(treeswc.listNeuron.at(i).n);
+       }
+        double dis=0;
+        //int step_pn=treeswc.listNeuron.at(tip_list.at(i)).pn;
+        int step_n=treeswc.listNeuron.at(tip_list.at(i)).n;
+        while (dis<10){
+
+            int index_n=alln.indexOf(step_n);
+            int index_step_n=alln.indexOf(treeswc.listNeuron.at(index_n).pn);
+            dis=dist(treeswc.listNeuron.at(index_step_n),treeswc.listNeuron.at(index_n));//distance of tip and candidate tip
+            step_n=treeswc.listNeuron.at(index_step_n).n;
+            to_delete.push_back(index_n);
+
+        }
+    }
+    QList <NeuronSWC> treewithmark;
+    QList <NeuronSWC> newtree;
+    for (int i=0;i<treeswc.listNeuron.size();i++){
+        NeuronSWC s;
+        for(int j=0;j<to_delete.size();j++){
+
+            if(i==to_delete.at(j)){
+
+                s.x=treeswc.listNeuron.at(i).x;
+                s.y=treeswc.listNeuron.at(i).y;
+                s.z=treeswc.listNeuron.at(i).z;
+                s.type=10;
+                s.radius=treeswc.listNeuron.at(i).at(i).radius;
+                s.pn=treeswc.listNeuron.at(i).at(i).pn;
+                s.n=treeswc.listNeuron.at(i).at(i).n;
+            }
+            else {
+
+                s.x=treeswc.listNeuron.at(i).x;
+                s.y=treeswc.listNeuron.at(i).y;
+                s.z=treeswc.listNeuron.at(i).z;
+                s.type=treeswc.listNeuron.at(i).type;
+                s.radius=treeswc.listNeuron.at(i).radius;
+                s.pn=treeswc.listNeuron.at(i).pn;
+                s.n=treeswc.listNeuron.at(i).n;
+            }
+          }
+                treewithmark.append(s);
+        }
+    for (int i=0;i<treewithmark.size();i++){
+
+        NeuronSWC s;
+        if(treewithmark.at(i).type!=10){
+
+            s.x=treewithmark.at(i).x;
+            s.y=treewithmark.at(i).y;
+            s.z=treewithmark.at(i).z;
+            s.type=treewithmark.at(i).type;
+            s.radius=treewithmark.at(i).radius;
+            s.pn=treewithmark.at(i).pn;
+            s.n=treewithmark.at(i).n;
+            newtree.append(s);
+        }
+        else continue;
+    }
+    NeuronTree n_t;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<newtree.size();j++){
+        hash_nt.insert(newtree[j].n, j);
+    }
+    n_t.listNeuron=newtree;
+    n_t.hashNeuron=hash_nt;
+    treeswc=n_t;
+}
+
+
+
 void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char * data1d_crop,V3DPluginCallback2 & callback,QString output_format,int tipnum,XYZ tip)
 {
    V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
