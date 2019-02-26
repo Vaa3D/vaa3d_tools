@@ -68,7 +68,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
         QString inimg_file = infiles[0];
-//        QString output_folder = outfiles[0];
+        QString output_folder = outfiles[0];
         int k=0;
         QString swc_name = paras.empty() ? "" : paras[k]; if(swc_name == "NULL") swc_name = ""; k++;
         NeuronTree nt = readSWC_file(swc_name);
@@ -81,9 +81,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             if (par<0) continue;
             childs[nt.hashNeuron.value(par)].push_back(i);
         }
-        int Wx = 16;
-        int Wy = 16;
-        int Wz = 16;
+        int Wx = 32;
+        int Wy = 32;
+        int Wz = 32;
         QList<NeuronSWC> list = nt.listNeuron;
         double corr = 0;
         int cnt = 0;
@@ -101,8 +101,8 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                 V3DLONG ye = tmpy+Wy;
                 V3DLONG zb = tmpz-Wz;
                 V3DLONG ze = tmpz+Wz;
-//                QString outimg_file;
-//                outimg_file = output_folder + QString("/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+                QString outimg_file;
+                outimg_file = output_folder + QString("/x%1_y%2_z%3.tif").arg(tmpx).arg(tmpy).arg(tmpz);
 
                 unsigned char * data1d = 0;
                 data1d = callback.getSubVolumeTeraFly(inimg_file.toStdString(),xb,xe+1,yb,ye+1,zb,ze+1);
@@ -112,7 +112,67 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                 im_cropped_sz[2] = ze - zb + 1;
                 im_cropped_sz[3] = 1;
 
-//                simple_saveimage_wrapper(callback,outimg_file.toStdString().c_str(),data1d,im_cropped_sz,1);
+                simple_saveimage_wrapper(callback,outimg_file.toStdString().c_str(),data1d,im_cropped_sz,1);
+                V3DLONG stacksz = im_cropped_sz[0] * im_cropped_sz[1] * im_cropped_sz[2];
+
+                vector<pair<V3DLONG,MyMarker> > vp;
+                vp.reserve(stacksz);
+                V3DLONG N = im_cropped_sz[0];
+                V3DLONG M = im_cropped_sz[1];
+                V3DLONG P = im_cropped_sz[2];
+                for(V3DLONG iz = 0; iz < P; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    for(V3DLONG iy = 0; iy < M; iy++)
+                    {
+                        V3DLONG offsetj = iy*N;
+                        for(V3DLONG ix = 0; ix < N; ix++)
+                        {
+                            MyMarker t;
+                            t.x = ix;
+                            t.y = iy;
+                            t.z = iz;
+                            V3DLONG I_t = data1d[offsetk + offsetj + ix];
+                            vp.push_back(make_pair(I_t, t));
+                        }
+                    }
+                }
+                sort(vp.begin(), vp.end());
+                QList<MyMarker> file_inmarkers;
+                file_inmarkers.push_back(vp.back().second);
+                for (size_t i = vp.size()-2 ; i >=0; i--)
+                {
+                    bool flag =false;
+                    for(int j = 0; j < file_inmarkers.size();j++)
+                    {
+                        if(NTDIS(file_inmarkers.at(j),vp[i].second) < N/15)
+                        {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    if(!flag)
+                    {
+                        file_inmarkers.push_back(vp[i].second);
+                    }
+
+                    if(file_inmarkers.size()>20)
+                        break;
+                }
+                vp.clear();
+                QString outmarker_file = output_folder + QString("/x%1_y%2_z%3.marker").arg(tmpx).arg(tmpy).arg(tmpz);
+                QList<ImageMarker> marker_tmp;
+                for(int i=0; i<file_inmarkers.size();i++)
+                {
+                    ImageMarker t;
+                    t.x = file_inmarkers.at(i).x+1;
+                    t.y = file_inmarkers.at(i).y+1;
+                    t.z = file_inmarkers.at(i).z+1;
+                    marker_tmp.push_back(t);
+                }
+
+                writeMarker_file(outmarker_file,marker_tmp);
+
 
                 NeuronTree nt_tps;
                 QList <NeuronSWC> & listNeuron = nt_tps.listNeuron;
@@ -129,11 +189,10 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                     }
                 }
                 nt_tps = SortSWC_pipeline(nt_tps.listNeuron,VOID,0);
-//                QString outimg_swc = output_folder + QString("/x%1_y%2_z%3.swc").arg(tmpx).arg(tmpy).arg(tmpz);
-//                writeSWC_file(outimg_swc,nt_tps);
+                QString outimg_swc = output_folder + QString("/x%1_y%2_z%3.swc").arg(tmpx).arg(tmpy).arg(tmpz);
+                writeSWC_file(outimg_swc,nt_tps);
 
 
-                V3DLONG stacksz = im_cropped_sz[0] * im_cropped_sz[1] * im_cropped_sz[2];
                 unsigned char *data1d_mask = new unsigned char [stacksz];
                 memset(data1d_mask,0,stacksz*sizeof(unsigned char));
                 double margin=0;
@@ -141,13 +200,13 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                 listNeuron.clear();
                 for(V3DLONG i=0; i<stacksz; i++)
                     data1d_mask[i] = data1d_mask[i]==255?data1d[i]:0;
-//                outimg_file = output_folder + QString("/x%1_y%2_z%3_v2.tif").arg(tmpx).arg(tmpy).arg(tmpz);
-//                simple_saveimage_wrapper(callback,outimg_file.toStdString().c_str(),data1d_mask,im_cropped_sz,1);
+                outimg_file = output_folder + QString("/x%1_y%2_z%3_v2.tif").arg(tmpx).arg(tmpy).arg(tmpz);
+                simple_saveimage_wrapper(callback,outimg_file.toStdString().c_str(),data1d_mask,im_cropped_sz,1);
 
                 corr += calCorrelation(data1d,data1d_mask,stacksz)*NTDIS(list.at(0),list.at(i));
                 if(data1d_mask) { delete []data1d_mask; data1d_mask = 0;}
                 if(data1d) { delete []data1d; data1d = 0;}
-//                v3d_msg(QString("%1").arg(corr));
+                v3d_msg(QString("%1").arg(corr));
             }
         }
         double corr_total = corr/cnt;

@@ -219,9 +219,9 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
         {
             CellAPO t;
-            t.x = (nt.listNeuron.at(i).x+1)/25;
-            t.y = (nt.listNeuron.at(i).y+1)/25;
-            t.z = (nt.listNeuron.at(i).z+1)/25;
+            t.x = (nt.listNeuron.at(i).x);
+            t.y = (nt.listNeuron.at(i).y);
+            t.z = (nt.listNeuron.at(i).z);
             t.color.r=0;
             t.color.g=0;
             t.color.b=255;
