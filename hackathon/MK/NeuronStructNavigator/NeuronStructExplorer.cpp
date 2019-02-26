@@ -446,12 +446,18 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	// ------- For debugging purpose -------
 	profiledTree testTree = inputProfiledTree;
 	for (boost::container::flat_map<int, int>::iterator it = testTree.headSeg2ClusterMap.begin(); it != testTree.headSeg2ClusterMap.end(); ++it)
-		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 7;
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\headEndTest.swc", testTree.tree);
+	{
+		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 9;
+		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].radius = it->second;
+	}
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\headEndTest.swc", testTree.tree);
 	testTree = inputProfiledTree;
 	for (boost::container::flat_map<int, int>::iterator it = testTree.tailSeg2ClusterMap.begin(); it != testTree.tailSeg2ClusterMap.end(); ++it)
+	{
 		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].type = it->second % 7;
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tailEndTest.swc", testTree.tree);
+		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].radius = it->second;
+	}
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tailEndTest.swc", testTree.tree);
 }
 
 void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
@@ -976,7 +982,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 	profiledTree outputProfiledTree = inputProfiledTree;
 
 	// -- The following block is for debugging purpose: segment ends clustering correctness
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = outputProfiledTree.segHeadClusters.begin(); it != outputProfiledTree.segHeadClusters.end(); ++it)
+	/*for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = outputProfiledTree.segHeadClusters.begin(); it != outputProfiledTree.segHeadClusters.end(); ++it)
 	{
 		for (boost::container::flat_set<int>::iterator segIt = it->second.begin(); segIt != it->second.end(); ++segIt)
 			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(outputProfiledTree.segs.at(*segIt).head)].type = it->first % 9;
@@ -984,7 +990,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 		for (boost::container::flat_set<int>::iterator tailSegIt = outputProfiledTree.segTailClusters.at(it->first).begin(); tailSegIt != outputProfiledTree.segTailClusters.at(it->first).end(); ++tailSegIt)
 			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*outputProfiledTree.segs.at(*tailSegIt).tails.begin())].type = it->first % 9;
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect_cluster.swc", outputProfiledTree.tree);
+	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect_cluster.swc", outputProfiledTree.tree);*/
 	
 	map<int, segUnit> allNewSegs;
 	int maxInputSegID = outputProfiledTree.segs.rbegin()->first;
