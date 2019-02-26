@@ -41,12 +41,17 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     NeuronTree nt = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";
-    }
-
+    }   
     // Find tips
+    QList<int> ori_tip_list = get_tips(nt, false);
+    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
+    int numtip=ori_tip_list.size();
+
+    //get new tips after deleting nodes
+    get_unfinished_sample(ori_tip_list,nt);
     QList<int> tip_list = get_tips(nt, false);
-    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
-    int numtip=tip_list.size();
+
+
     // Crop tip-centered regions one by one
     block zcenter_block; // This is a block centered at (0,0,0)
     zcenter_block.small = 0-block_size/2;
@@ -113,9 +118,9 @@ void get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
                 s.y=treeswc.listNeuron.at(i).y;
                 s.z=treeswc.listNeuron.at(i).z;
                 s.type=10;
-                s.radius=treeswc.listNeuron.at(i).at(i).radius;
-                s.pn=treeswc.listNeuron.at(i).at(i).pn;
-                s.n=treeswc.listNeuron.at(i).at(i).n;
+                s.radius=treeswc.listNeuron.at(i).radius;
+                s.pn=treeswc.listNeuron.at(i).pn;
+                s.n=treeswc.listNeuron.at(i).n;
             }
             else {
 
