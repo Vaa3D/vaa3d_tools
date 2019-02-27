@@ -38,17 +38,19 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
         output_apo=outfiles.at(1);
     }
     printf("welcome to use get_termial\n");
-    NeuronTree nt = readSWC_file(swc_file);
+    NeuronTree nt1 = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";
     }   
     // Find tips
-    QList<int> ori_tip_list = get_tips(nt, false);
+    QList<int> ori_tip_list = get_tips(nt1, false);
     cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
     int numtip=ori_tip_list.size();
 
+    //printf("===============================================\n");
     //get new tips after deleting nodes
-    get_unfinished_sample(ori_tip_list,nt);
+    NeuronTree nt;
+    nt=get_unfinished_sample(ori_tip_list,nt1);
     QList<int> tip_list = get_tips(nt, false);
 
 
@@ -81,85 +83,57 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     return;
 }
 
-void get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
+NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
 
+    NeuronTree nt;
     QList<int> to_delete;
+    QList<int> plist;
+    QList<int> alln;
+    int N=treeswc.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(treeswc.listNeuron.at(i).pn);
+        alln.append(treeswc.listNeuron.at(i).n);
+      }
     for (int i=0;i<tip_list.size();i++){
 
-        QList<int> plist;
-        QList<int> alln;
-        int N=treeswc.listNeuron.size();
-        for(int i=0; i<N; i++){
-            plist.append(treeswc.listNeuron.at(i).pn);
-            alln.append(treeswc.listNeuron.at(i).n);
-       }
         double dis=0;
         //int step_pn=treeswc.listNeuron.at(tip_list.at(i)).pn;
-        int step_n=treeswc.listNeuron.at(tip_list.at(i)).n;
+        int step_n=alln.at(tip_list.at(i));
+        int index_n=alln.indexOf(step_n);
         while (dis<10){
 
-            int index_n=alln.indexOf(step_n);
-            int index_step_n=alln.indexOf(treeswc.listNeuron.at(index_n).pn);
-            dis=dist(treeswc.listNeuron.at(index_step_n),treeswc.listNeuron.at(index_n));//distance of tip and candidate tip
-            step_n=treeswc.listNeuron.at(index_step_n).n;
-            to_delete.push_back(index_n);
+            //int index_n=alln.indexOf(step_n);
+            double pn=plist.at(index_n);
+            if(pn==-1) break;
+            int index_step_n=alln.indexOf(pn);
+            dis=dist(treeswc.listNeuron.at(index_step_n),treeswc.listNeuron.at(tip_list.at(i)));//distance of tip and candidate tip
 
+            to_delete.push_back(index_n);
+            index_n=index_step_n;
         }
     }
-    QList <NeuronSWC> treewithmark;
-    QList <NeuronSWC> newtree;
+    cout<<"size of to delete:\n"<<to_delete.size()<<endl;
+
+    QList <NeuronSWC> newtree1=treeswc.listNeuron;
+
     for (int i=0;i<treeswc.listNeuron.size();i++){
-        NeuronSWC s;
+
         for(int j=0;j<to_delete.size();j++){
 
             if(i==to_delete.at(j)){
-
-                s.x=treeswc.listNeuron.at(i).x;
-                s.y=treeswc.listNeuron.at(i).y;
-                s.z=treeswc.listNeuron.at(i).z;
-                s.type=10;
-                s.radius=treeswc.listNeuron.at(i).radius;
-                s.pn=treeswc.listNeuron.at(i).pn;
-                s.n=treeswc.listNeuron.at(i).n;
-            }
-            else {
-
-                s.x=treeswc.listNeuron.at(i).x;
-                s.y=treeswc.listNeuron.at(i).y;
-                s.z=treeswc.listNeuron.at(i).z;
-                s.type=treeswc.listNeuron.at(i).type;
-                s.radius=treeswc.listNeuron.at(i).radius;
-                s.pn=treeswc.listNeuron.at(i).pn;
-                s.n=treeswc.listNeuron.at(i).n;
-            }
-          }
-                treewithmark.append(s);
-        }
-    for (int i=0;i<treewithmark.size();i++){
-
-        NeuronSWC s;
-        if(treewithmark.at(i).type!=10){
-
-            s.x=treewithmark.at(i).x;
-            s.y=treewithmark.at(i).y;
-            s.z=treewithmark.at(i).z;
-            s.type=treewithmark.at(i).type;
-            s.radius=treewithmark.at(i).radius;
-            s.pn=treewithmark.at(i).pn;
-            s.n=treewithmark.at(i).n;
-            newtree.append(s);
-        }
-        else continue;
-    }
+               NeuronSWC dele=treeswc.listNeuron.at(i);
+              newtree1.removeOne(dele);
+            }}}
+    cout<<"size of new tree:\n"<<newtree1.size()<<endl;
     NeuronTree n_t;
     QHash <int, int> hash_nt;
 
-    for(V3DLONG j=0; j<newtree.size();j++){
-        hash_nt.insert(newtree[j].n, j);
+    for(V3DLONG j=0; j<newtree1.size();j++){
+        hash_nt.insert(newtree1[j].n, j);
     }
-    n_t.listNeuron=newtree;
+    n_t.listNeuron=newtree1;
     n_t.hashNeuron=hash_nt;
-    treeswc=n_t;
+    return n_t;
 }
 
 
@@ -660,8 +634,6 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
 
 }
 
-
-
 QList<int> get_tips(NeuronTree nt, bool include_root){
     // whether a node is a tip;
     QList<int> tip_list;
@@ -675,9 +647,11 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
             tip_list.append(i);
         }
     }
+    //printf("=================++++++++++++++++++++++++============\n");
     for(int i=0; i<N; i++){
         if(plist.count(nt.listNeuron.at(i).n)==0){tip_list.append(i);}
     } 
+    //printf("=================++++++++++++++++++++++++============\n");
 
     //delete the fake tips(distance between tip and branch node is less than 5)
     QVector<QVector<V3DLONG> > childs;
@@ -689,29 +663,31 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
-    vector<int> delete_index;
-    for (int i=0;i<tip_list.size();i++)
-    {
+    //    vector<int> delete_index;
+    //    printf("=================++++++++++++++++++++++++============\n");
+    //    for (int i=0;i<tip_list.size();i++)
+    //    {
 
-        int step=tip_list.at(i);
-        while (childs[step].size()<2)
-              {
-                 int stepn=nt.listNeuron.at(step).pn;//stepn is the pn but not the i
-                 if (stepn!=-1)
-                     {step=alln.indexOf(stepn);
-                     cout<<"the numer of index:"<<step<<endl;}
-                 else break;
+    //        int step=tip_list.at(i);
+    //        while (childs[step].size()<2)
+    //              {
+    //                 int stepn=nt.listNeuron.at(step).pn;//stepn is the pn but not the i
+    //                 if (stepn!=-1)
+    //                 {step=alln.indexOf(stepn);}
+    //                     //cout<<"the number of index:"<<step<<endl;}
+    //                 else break;
 
-              }
-        double dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(step));
-        if(dis<5) delete_index.push_back(i);
-        else continue;
-    }
-    for(int i=0;i<delete_index.size();i++){
+    //              }
+    //        double dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(step));
+    //        if(dis<5) delete_index.push_back(i);
+    //        else continue;
+    //    }
+    //    printf("=================++++++++++++++++++++++++============\n");
+    //    for(int i=0;i<delete_index.size();i++){
 
-             tip_list.removeOne(delete_index.at(i));
-    }
-   cout<<"----------------------------------------------------------the number of deleting fake tips):"<<delete_index.size()<<endl;
+    //             tip_list.removeOne(delete_index.at(i));
+    //    }
+    //   cout<<"the number of deleting fake tips):"<<delete_index.size()<<endl;
 
 
     return(tip_list);
@@ -767,7 +743,7 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     in_sz[1] = large.y-small.y;
     in_sz[2] = large.z-small.z;
     in_sz[3] = in_zz[3];   // channel information
-
+    printf("=================++++++++++++++++++++++++============\n");
     // 3. Save image
     QString saveName = outputdir_img + output_format + ".nrrd";
     qDebug("--------------------------nrrd name:%s",qPrintable(saveName));
