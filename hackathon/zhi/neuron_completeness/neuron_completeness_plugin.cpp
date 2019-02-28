@@ -123,15 +123,24 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             }
         }
 
-        QString info_tree;
-        int index = 1;
+        QVector<QPair <double, double> > v_tree;
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
         {
             QList<NeuronSWC> cur = it.value();
             double cur_dist = dist.front(); dist.erase(dist.begin());
             double cur_per = 100*(double)cur.size()/(double)sorted_neuron.size();
-            info_tree += QString("neuron-tree %1 : percentage is %2%,  gap is %3<br>").arg(index++).arg(QString::number(cur_per,'f',2)).arg(QString::number(cur_dist,'f',2));
+            v_tree.push_back({cur_dist,cur_per});
         }
+
+        qSort(v_tree.begin(),v_tree.end(),qGreater<QPair<double, double> >());
+        QString info_tree;
+        for (int i=0; i<MIN(v_tree.size(),15);i++)
+        {
+            info_tree += QString("neuron-tree %1 : percentage is %2%,  gap is %3<br>").arg(i+1).arg(QString::number(v_tree[i].second,'f',2)).arg(QString::number(v_tree[i].first,'f',2));
+        }
+        if(v_tree.size()>15)
+            info_tree += ". . .\n";
+
         QMessageBox infoBox;
         infoBox.setText("Neuron completeness:");
         QString info_type;
@@ -197,6 +206,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         NeuronTree nt = readSWC_file(QString(infiles[0]));
         QList<NeuronSWC> sorted_neuron;
         SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
+
+        LandmarkList markerlist;
+
         QHash<int,int> map_type;
         QMultiMap<int, QList<NeuronSWC> > multi_neurons;
         int first = 0;
@@ -218,30 +230,59 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         }
         multi_neurons.insert(sorted_neuron.size()-first,sorted_neuron.mid(first,sorted_neuron.size()-first));
         QList<double> dist;
-        dist.push_back(0);
-        QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1;
-        QList<NeuronSWC> largest_neuron = it.value();
-
-        for (it = multi_neurons.end()-2; it != multi_neurons.begin()-1; --it)
+        QVector<QVector<double> > matrix_dis(multi_neurons.size(),QVector<double>(multi_neurons.size(),MAX_DOUBLE));
+        int row =0;
+        for (QMultiMap<int, QList<NeuronSWC> >::iterator it1 = multi_neurons.end()-1; it1 != multi_neurons.begin()-1; --it1)
         {
-            QList<NeuronSWC> cur = it.value();
-            double minD = minDist(largest_neuron,cur);
+            QList<NeuronSWC> neuron1= it1.value();
+            double minD = MAX_DOUBLE;
+            int col=0;
+            for (QMultiMap<int, QList<NeuronSWC> >::iterator it2 = multi_neurons.end()-1; it2 != multi_neurons.begin()-1; --it2)
+            {
+                if(it1 != it2)
+                {
+                    if(matrix_dis[row][col] != MAX_DOUBLE)
+                        minD = MIN(minD,matrix_dis[row][col]);
+                    else
+                    {
+                        QList<NeuronSWC> neuron2 = it2.value();
+                        double cur_dis = minDist(neuron1,neuron2);
+                        matrix_dis[row][col] = cur_dis;
+                        matrix_dis[col][row] = cur_dis;
+                        minD = MIN(minD,cur_dis);
+                    }
+                }
+                col++;
+            }
+            row++;
             dist.push_back(minD);
+            if(minD>20)
+            {
+                LocationSimple t;
+                t.x = neuron1.at(0).x;
+                t.y = neuron1.at(0).y;
+                t.z = neuron1.at(0).z;
+                t.color.r = 0;t.color.g = 0; t.color.b = 255;
+                markerlist.push_back(t);
+            }
         }
 
         QString info_tree;
         int index = 1;
-        for (it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
+        for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
         {
             QList<NeuronSWC> cur = it.value();
             double cur_dist = dist.front(); dist.erase(dist.begin());
             double cur_per = 100*(double)cur.size()/(double)sorted_neuron.size();
-            info_tree += QString("neuron-tree %1 : percentage is %2%,  distance is %3<br>").arg(index++).arg(QString::number(cur_per,'f',2)).arg(QString::number(cur_dist,'f',2));
+            if(index<10) info_tree += QString("neuron-tree %1 : percentage is %2%,  gap is %3<br>").arg(index++).arg(QString::number(cur_per,'f',2)).arg(QString::number(cur_dist,'f',2));
         }
+        QMessageBox infoBox;
+        infoBox.setText("Neuron completeness:");
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
             info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+
         }
         v3d_msg(QString("\n\nnumber of neuron-trees : %1\n"
                     "%2\n"
@@ -258,7 +299,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             QString imagename = QFileInfo(QString::fromStdString(infiles[0])).baseName();
             ofstream myfile;
             myfile.open (outimg_file,ios::out | ios::app );
-            myfile << imagename.toStdString().c_str()<<"\t"<<multi_neurons.size() << "\t" << map_type.size()<<endl;
+            myfile << imagename.toStdString().c_str()<<"\t"<<multi_neurons.size() << "\t" << map_type.size()<<"\t"<<markerlist.size()<<endl;
             myfile.close();
         }
         return true;
