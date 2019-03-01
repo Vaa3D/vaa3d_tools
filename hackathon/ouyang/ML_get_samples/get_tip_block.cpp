@@ -26,6 +26,7 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     QString output_dir=outfiles.at(0);
     QString output_apo;
 
+    double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
     QStringList list=swc_file.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
     QString flag1=list1.first();
@@ -50,8 +51,11 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     //printf("===============================================\n");
     //get new tips after deleting nodes
     NeuronTree nt;
-    nt=get_unfinished_sample(ori_tip_list,nt1);
+    nt=get_unfinished_sample(ori_tip_list,nt1,maximum);
     QList<int> tip_list = get_tips(nt, false);
+    cout<<"Number_of_tips----------------------------------\t"<<tip_list.size()<<endl;
+    QString output_newswc = output_dir+"___________"+".eswc";
+    export_list2file(nt.listNeuron,output_newswc);
 
 
     // Crop tip-centered regions one by one
@@ -83,12 +87,13 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     return;
 }
 
-NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
+NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum){
 
     NeuronTree nt;
     QList<int> to_delete;
     QList<int> plist;
     QList<int> alln;
+    int randomnum=(rand()%(maximum-10))+10+1;
     int N=treeswc.listNeuron.size();
     for(int i=0; i<N; i++){
         plist.append(treeswc.listNeuron.at(i).pn);
@@ -100,7 +105,7 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
         //int step_pn=treeswc.listNeuron.at(tip_list.at(i)).pn;
         int step_n=alln.at(tip_list.at(i));
         int index_n=alln.indexOf(step_n);
-        while (dis<10){
+        while (dis<randomnum){
 
             //int index_n=alln.indexOf(step_n);
             double pn=plist.at(index_n);
@@ -123,15 +128,39 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc){
             if(i==to_delete.at(j)){
                NeuronSWC dele=treeswc.listNeuron.at(i);
               newtree1.removeOne(dele);
-            }}}
-    cout<<"size of new tree:\n"<<newtree1.size()<<endl;
+            }
+        }
+    }
+
+    QList<int> newalln;
+    QList <NeuronSWC> newtree;
+    int n=newtree1.size();
+    for(int i=0; i<n;i++){
+        newalln.append(newtree1.at(i).n);
+      }
+    for (int i=0;i<newtree1.size();i++){
+
+        NeuronSWC s;
+        s.x=newtree1.at(i).x;
+        s.y=newtree1.at(i).y;
+        s.z=newtree1.at(i).z;
+        s.type=newtree1.at(i).type;
+        s.radius=newtree1.at(i).radius;
+        s.n=newtree1.at(i).n;
+        if((newalln.indexOf(newtree1.at(i).pn))==-1) s.pn=-1;
+        else s.pn=newtree1.at(i).pn;
+        newtree.push_back(s);
+    }
+
+
+    cout<<"size of new tree:\n"<<newtree.size()<<endl;
     NeuronTree n_t;
     QHash <int, int> hash_nt;
 
-    for(V3DLONG j=0; j<newtree1.size();j++){
-        hash_nt.insert(newtree1[j].n, j);
+    for(V3DLONG j=0; j<newtree.size();j++){
+        hash_nt.insert(newtree[j].n, j);
     }
-    n_t.listNeuron=newtree1;
+    n_t.listNeuron=newtree;
     n_t.hashNeuron=hash_nt;
     return n_t;
 }
@@ -663,31 +692,31 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
-    //    vector<int> delete_index;
-    //    printf("=================++++++++++++++++++++++++============\n");
-    //    for (int i=0;i<tip_list.size();i++)
-    //    {
+    vector<int> delete_index;
+        printf("=================++++++++++++++++++++++++============\n");
+        for (int i=0;i<tip_list.size();i++)
+        {
 
-    //        int step=tip_list.at(i);
-    //        while (childs[step].size()<2)
-    //              {
-    //                 int stepn=nt.listNeuron.at(step).pn;//stepn is the pn but not the i
-    //                 if (stepn!=-1)
-    //                 {step=alln.indexOf(stepn);}
-    //                     //cout<<"the number of index:"<<step<<endl;}
-    //                 else break;
+            int step=tip_list.at(i);
+            while (childs[step].size()<2)
+                  {
+                     int stepn=nt.listNeuron.at(step).pn;//stepn is the pn but not the i
+                     if (stepn!=-1)
+                     {step=alln.indexOf(stepn);}
+                         //cout<<"the number of index:"<<step<<endl;}
+                     else break;
 
-    //              }
-    //        double dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(step));
-    //        if(dis<5) delete_index.push_back(i);
-    //        else continue;
-    //    }
-    //    printf("=================++++++++++++++++++++++++============\n");
-    //    for(int i=0;i<delete_index.size();i++){
+                  }
+            double dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(step));
+            if(dis<10) delete_index.push_back(i);
+            else continue;
+        }
+        printf("=================++++++++++++++++++++++++============\n");
+        for(int i=0;i<delete_index.size();i++){
 
-    //             tip_list.removeOne(delete_index.at(i));
-    //    }
-    //   cout<<"the number of deleting fake tips):"<<delete_index.size()<<endl;
+                 tip_list.removeOne(delete_index.at(i));
+        }
+       cout<<"the number of deleting fake tips):"<<delete_index.size()<<endl;
 
 
     return(tip_list);
@@ -827,6 +856,33 @@ bool my_saveANO(QString ano_dir, QString fileNameHeader, QList<QString> suffix)
         fprintf(fp, "\n");
     }
     if(fp){fclose(fp);}
+    return true;
+}
+
+bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    bool eswc_flag=false;
+    if(fileSaveName.section('.',-1).toUpper()=="ESWC")
+        eswc_flag=true;
+    QTextStream myfile(&file);
+    myfile<<"# generated by Vaa3D Plugin neuron_connector"<<endl;
+    if(eswc_flag)
+        myfile<<"##n,type,x,y,z,radius,parent,segment_id,segment_layer,feature_value"<<endl;
+    else
+        myfile<<"##n,type,x,y,z,radius,parent"<<endl;
+    for (V3DLONG i=0;i<lN.size();i++){
+        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn;
+        if(eswc_flag){
+            myfile<<" "<<lN.at(i).seg_id<<" "<<lN.at(i).level;
+            for(int j=0; j<lN.at(i).fea_val.size(); j++)
+                myfile <<" "<< lN.at(i).fea_val.at(j);
+        }
+        myfile << endl;
+    }
+    file.close();
     return true;
 }
 

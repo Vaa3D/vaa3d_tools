@@ -36,6 +36,7 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
 QList<NeuronSWC> change_tip_xyz(QList<NeuronSWC>input_swc,int tip_node,MyMarker center);
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 NeuronTree revise_radius(NeuronTree inputtree,float radius);
-NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc);
+NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum);
+bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 
 #endif // GET_TIP_BLOCK_H
