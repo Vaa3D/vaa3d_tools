@@ -25,7 +25,7 @@ using namespace boost;
 int main(int argc, char* argv[])
 {
 	/********* specify function *********/
-	const char* funcNameC = argv[1];
+	/*const char* funcNameC = argv[1];
 	string funcName(funcNameC);
 	
 	vector<string> paras;
@@ -34,9 +34,9 @@ int main(int argc, char* argv[])
 		const char* paraC = argv[i];
 		string paraString(paraC);
 		paras.push_back(paraString);
-	}
+	}*/
 
-	//string funcName = "segPair";
+	string funcName = "segPair";
 	/************************************/
 
 	if (!funcName.compare("swcID"))
@@ -1328,11 +1328,11 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("segPair"))
 	{
 		NeuronStructExplorer myExplorer;
-		QString inputTreeName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testTree.swc";
+		QString inputTreeName = "H:\\fMOST_fragment_tracing\\testCase1\\testTree.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeName);
 		profiledTree inputProfiledTree(inputTree);
 
-		//myExplorer.getSegHeadTailClusters(inputProfiledTree);
+		//myExplorer.getSegHeadTailClusters(inputProfiledTree);  
 		/*int clusterCount = 1;
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segTailClusters.begin(); it != inputProfiledTree.segTailClusters.end(); ++it)
 		{
@@ -1355,7 +1355,7 @@ int main(int argc, char* argv[])
 
 		profiledTree profiledClusterElongatedTree = myExplorer.itered_segElongate_cluster(inputProfiledTree, 5);
 		myExplorer.getSegHeadTailClusters(profiledClusterElongatedTree);
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\clusterElongated.swc", profiledClusterElongatedTree.tree);
+		writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\clusterElongated.swc", profiledClusterElongatedTree.tree);
 	}
 
 	return 0;
