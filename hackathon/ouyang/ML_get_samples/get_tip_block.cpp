@@ -15,7 +15,7 @@ double marker_dist(MyMarker a, MyMarker b)
 }
 using namespace std;
 
-void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+void get_deleted_tree(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
@@ -45,50 +45,21 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     }   
     // Find tips
     QList<int> ori_tip_list = get_tips(nt1, false);
-    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
+    cout<<"Number_of_tips:\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
     int numtip=ori_tip_list.size();
 
-    //printf("===============================================\n");
     //get new tips after deleting nodes
     NeuronTree nt;
-    nt=get_unfinished_sample(ori_tip_list,nt1,maximum);
+    nt=get_unfinished_sample(ori_tip_list,nt1,maximum);  // this fuction is to delete nodes beginning with tip nodes.NOTE:the deleted distance is adjustable and random by given range:10um to <maximum> um
     QList<int> tip_list = get_tips(nt, false);
-    cout<<"Number_of_tips----------------------------------\t"<<tip_list.size()<<endl;
+    cout<<"Number_of_tips after deleting nodes:\t"<<tip_list.size()<<endl;
     QString output_newswc = output_dir+"deleted"+".eswc";
     export_list2file(nt.listNeuron,output_newswc);
-
-
-    // Crop tip-centered regions one by one
-//    block zcenter_block; // This is a block centered at (0,0,0)
-//    zcenter_block.small = 0-block_size/2;
-//    zcenter_block.large = block_size/2;
-//    QList<QString> output_suffix;
-//    output_suffix.append(QString("tif"));
-//    output_suffix.append(QString("swc"));
-//    printf("welcome to use get_termial\n");
-//    for(int i=0; i<tip_list.size(); i++){
-//        int tipnum=i;
-//        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
-//        qDebug()<<node.n;
-//        if(node.type > 5){continue;}
-//        // create a tip-centered block
-//        block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
-//        crop_block.name = QString::number(i);
-//        XYZ tip=XYZ(node.x, node.y, node.z);
-//        // crop swc
-//        QString num_cnt=QString("%1").arg(i);
-//        QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
-//        crop_swc(swc_file, output_swc, crop_block);
-//        // crop image
-//        QString output_image = flag1+"_"+num_cnt;
-//        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip);
-//        //my_saveANO(output_dir, crop_block.name, output_suffix);
-//    }
     return;
 }
 
 
-void get_unfished_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
@@ -154,7 +125,7 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maxi
     QList<int> to_delete;
     QList<int> plist;
     QList<int> alln;
-    int randomnum=(rand()%(maximum-10))+10+1;
+    int randomnum=(rand()%(maximum-10))+10+1;//make distance adjustable and random
     int N=treeswc.listNeuron.size();
     for(int i=0; i<N; i++){
         plist.append(treeswc.listNeuron.at(i).pn);
@@ -192,7 +163,6 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maxi
             }
         }
     }
-
     QList<int> newalln;
     QList <NeuronSWC> newtree;
     int n=newtree1.size();
@@ -950,34 +920,37 @@ bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName)
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    //1.
-    cout<<"This plugin for cropping block of tips"<<endl;
+    //1.<get_deleted_tree>
+    cout<<"This plugin for getting deleted tree"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_ML_sample\n";
     cout<<"-i<file name>:\t\t input .tif file\n";
+    cout<<"-p<default=30>:\t\t maximum value for adjusting the range of deleting disdance \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_ML_sample -i original image input .swc file -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_deleted_tree -i original image input .swc file -o output image dir.\n";
 
 }
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    //2.
-    cout<<"This plugin for generet 2D images"<<endl;
+    //2.<get_2D_sample>
+    cout<<"This fuction for generet 2D images"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_2D_sample\n";
     cout<<"-i<file name>:\t\t input .swc and .tiff file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_sample -i original swc -p input .image -o output image dir.\n";
-    //3.
-    cout<<"This plugin for removing tip to center of signal(using average signal,and find the maxium one)"<<endl;
+
+    //3.<remove_tip_location>
+    cout<<"This fuction for removing tip to center of signal(using average signal,and find the maxium one)"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_ML_sample\n";
     cout<<"-i<file name>:\t\t input .swc file\n";
     cout<<"-p<file name>:\t\t input image file(tif,nrrd,v3draw)\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i <original swc> <input .image> -p <radius> -o <output swc.file dir>\n";   
+
     //4.prune_tip_APP1
-    cout<<"This plugin for pruning nodes in tip"<<endl;
+    cout<<"This fuction for pruning nodes in tip"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t prune_tip_APP1\n";
     cout<<"-i<file name>:\t\t input .swc and image file\n";
@@ -986,5 +959,13 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-p<30(default 30)>:\t\t your input threshold(default 30) \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input .image> -p <2 or 3> <1 or 0 > <your input threshold(default 30)> -o <output swc.file dir>\n";
+
+    //5.<get_block>
+    cout<<"This fuction for cropping block swc and image based on tip nodes"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t get_block\n";
+    cout<<"-i<file name>:\t\t input .tif file\n";
+    cout<<"-o<file name>:\t\t ouput dir\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_block -i original image input .swc file -o output image dir.\n";
 
 }

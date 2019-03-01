@@ -20,10 +20,10 @@ QStringList ML_sample::menulist() const
 QStringList ML_sample::funclist() const
 {
 	return QStringList()
-        <<tr("get_ML_sample")
-        <<tr("get_unfinished_sample")
+        <<tr("get_deleted_tree")
+        <<tr("get_block")
         <<tr("get_2D_sample")
-        <<tr("get_tip_sample")
+        <<tr("remove_tip_location")
         <<tr("prune_tip_APP1")
         <<tr("help")
         <<tr("help1");
@@ -45,19 +45,19 @@ void ML_sample::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 
-    if (func_name == tr("get_ML_sample"))
+    if (func_name == tr("get_deleted_tree"))
 	{
-        get_terminal(input,output,callback);
+        get_deleted_tree(input,output,callback);
 	}
-    if (func_name == tr("get_unfinished_sample"))
+    if (func_name == tr("get_block"))
     {
-        get_unfished_block(input,output,callback);
+        get_block(input,output,callback);
     }
     else if (func_name == tr("get_2D_sample"))
     {
         get_2d_image(input,output,callback);
     }
-    else if (func_name == tr("get_tip_sample"))
+    else if (func_name == tr("remove_tip_location"))
     {
         get_tip_image(input,output,callback);
     }

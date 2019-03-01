@@ -15,7 +15,7 @@ struct node_and_id{
 
 };
 
-void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void get_deleted_tree(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 QList<int> get_tips(NeuronTree nt, bool include_root);
 block offset_block(block input_block, XYZ offset);
 void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip);
@@ -38,6 +38,6 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 NeuronTree revise_radius(NeuronTree inputtree,float radius);
 NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
-void get_unfished_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 
 #endif // GET_TIP_BLOCK_H
