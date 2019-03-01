@@ -112,7 +112,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             }
             row++;
             dist.push_back(minD);
-            if(minD>20)
+            if(minD>20 && minD!=MAX_DOUBLE)
             {
                 LocationSimple t;
                 t.x = neuron1.at(0).x;
@@ -127,9 +127,9 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
         {
             QList<NeuronSWC> cur = it.value();
-            double cur_dist = dist.front(); dist.erase(dist.begin());
+            double cur_dist = (dist.front() == MAX_DOUBLE)?0:dist.front(); dist.erase(dist.begin());
             double cur_per = 100*(double)cur.size()/(double)sorted_neuron.size();
-            v_tree.push_back({cur_dist,cur_per});
+            v_tree.push_back(QPair <double, double>(cur_dist,cur_per));
         }
 
         qSort(v_tree.begin(),v_tree.end(),qGreater<QPair<double, double> >());
@@ -256,7 +256,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             }
             row++;
             dist.push_back(minD);
-            if(minD>20)
+            if(minD>20 && minD!=MAX_DOUBLE)
             {
                 LocationSimple t;
                 t.x = neuron1.at(0).x;
@@ -272,7 +272,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
         {
             QList<NeuronSWC> cur = it.value();
-            double cur_dist = dist.front(); dist.erase(dist.begin());
+            double cur_dist = (dist.front() == MAX_DOUBLE)?0:dist.front(); dist.erase(dist.begin());
             double cur_per = 100*(double)cur.size()/(double)sorted_neuron.size();
             if(index<10) info_tree += QString("neuron-tree %1 : percentage is %2%,  gap is %3<br>").arg(index++).arg(QString::number(cur_per,'f',2)).arg(QString::number(cur_dist,'f',2));
         }
