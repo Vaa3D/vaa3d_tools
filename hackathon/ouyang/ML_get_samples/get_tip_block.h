@@ -38,5 +38,6 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 NeuronTree revise_radius(NeuronTree inputtree,float radius);
 NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
+void get_unfished_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 
 #endif // GET_TIP_BLOCK_H

@@ -54,9 +54,71 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     nt=get_unfinished_sample(ori_tip_list,nt1,maximum);
     QList<int> tip_list = get_tips(nt, false);
     cout<<"Number_of_tips----------------------------------\t"<<tip_list.size()<<endl;
-    QString output_newswc = output_dir+"___________"+".eswc";
+    QString output_newswc = output_dir+"deleted"+".eswc";
     export_list2file(nt.listNeuron,output_newswc);
 
+
+    // Crop tip-centered regions one by one
+//    block zcenter_block; // This is a block centered at (0,0,0)
+//    zcenter_block.small = 0-block_size/2;
+//    zcenter_block.large = block_size/2;
+//    QList<QString> output_suffix;
+//    output_suffix.append(QString("tif"));
+//    output_suffix.append(QString("swc"));
+//    printf("welcome to use get_termial\n");
+//    for(int i=0; i<tip_list.size(); i++){
+//        int tipnum=i;
+//        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+//        qDebug()<<node.n;
+//        if(node.type > 5){continue;}
+//        // create a tip-centered block
+//        block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+//        crop_block.name = QString::number(i);
+//        XYZ tip=XYZ(node.x, node.y, node.z);
+//        // crop swc
+//        QString num_cnt=QString("%1").arg(i);
+//        QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
+//        crop_swc(swc_file, output_swc, crop_block);
+//        // crop image
+//        QString output_image = flag1+"_"+num_cnt;
+//        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip);
+//        //my_saveANO(output_dir, crop_block.name, output_suffix);
+//    }
+    return;
+}
+
+
+void get_unfished_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString image_file=infiles.at(0);
+    QString swc_file=infiles.at(1);
+    QString output_dir=outfiles.at(0);
+    QString output_apo;
+
+
+    QStringList list=swc_file.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag1=list1.first();
+
+
+    XYZ block_size=XYZ(100,100,20);
+
+    if(outfiles.size()>1)
+    {
+        output_apo=outfiles.at(1);
+    }
+    printf("welcome to use get_termial\n");
+    NeuronTree nt = readSWC_file(swc_file);
+    if(!output_dir.endsWith("/")){
+        output_dir = output_dir+"/";
+    }
+    // Find tips
+    QList<int> tip_list = get_tips(nt, false);
+    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
 
     // Crop tip-centered regions one by one
     block zcenter_block; // This is a block centered at (0,0,0)
@@ -69,7 +131,6 @@ void get_terminal(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     for(int i=0; i<tip_list.size(); i++){
         int tipnum=i;
         NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
-        qDebug()<<node.n;
         if(node.type > 5){continue;}
         // create a tip-centered block
         block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
@@ -711,6 +772,7 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
             if(dis<10) delete_index.push_back(i);
             else continue;
         }
+        sort(delete_index.rbegin(),delete_index.rend());
         printf("=================++++++++++++++++++++++++============\n");
         for(int i=0;i<delete_index.size();i++){
 
@@ -792,7 +854,7 @@ void crop_swc(QString input_swc, QString output_swc, block crop_block)
     printf("welcome to use crop_swc\n");
     QString cmd = "vaa3d -x preprocess -f crop_swc_cuboid -i " + input_swc + " -o " +output_swc  + " -p "
              + "\""
-             + "#a " + QString::number(crop_block.small.x)
+             + " #a " + QString::number(crop_block.small.x)
              + " #b " + QString::number(crop_block.small.y)
              + " #c " + QString::number(crop_block.small.z)
              + " #d " + QString::number(crop_block.large.x)
