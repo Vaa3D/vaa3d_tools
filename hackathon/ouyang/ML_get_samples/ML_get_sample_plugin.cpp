@@ -20,9 +20,9 @@ QStringList ML_sample::menulist() const
 QStringList ML_sample::funclist() const
 {
 	return QStringList()
-        <<tr("get_deleted_tree")
-        <<tr("get_block")
-        <<tr("get_2D_sample")
+        <<tr("get_undertraced_sample")
+        <<tr("get_2D&3D_block")
+        <<tr("get_2D_block")
         <<tr("remove_tip_location")
         <<tr("prune_tip_APP1")
         <<tr("help")
@@ -45,15 +45,15 @@ void ML_sample::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 
-    if (func_name == tr("get_deleted_tree"))
+    if (func_name == tr("get_undertraced_sample"))
 	{
-        get_deleted_tree(input,output,callback);
+        get_undertraced_sample(input,output,callback);
 	}
-    if (func_name == tr("get_block"))
+    if (func_name == tr("get_2D&3D_block"))
     {
         get_block(input,output,callback);
     }
-    else if (func_name == tr("get_2D_sample"))
+    else if (func_name == tr("get_2D_block"))
     {
         get_2d_image(input,output,callback);
     }

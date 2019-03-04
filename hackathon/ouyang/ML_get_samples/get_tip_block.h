@@ -3,6 +3,10 @@
 
 #include <v3d_interface.h>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "prune_short_branch.h"
+//#include "../../PengXie/preprocess/pre_processing_main.h"
+//#include "../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.h"
+
 struct block{
     QString name;
     XYZ small;
@@ -15,11 +19,13 @@ struct node_and_id{
 
 };
 
-void get_deleted_tree(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 QList<int> get_tips(NeuronTree nt, bool include_root);
 block offset_block(block input_block, XYZ offset);
 void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip);
 void crop_swc(QString input_swc, QString output_swc, block crop_block);
+bool crop_swc_cuboid(NeuronTree nt, QString qs_output,block input_block);
+bool in_cuboid(NeuronSWC node, XYZ small, XYZ large);
 bool my_saveANO(QString ano_dir, QString fileNameHeader, QList<QString> suffix);
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output);
