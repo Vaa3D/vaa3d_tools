@@ -115,11 +115,10 @@ public:
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 
-	boost::container::flat_map<int, boost::container::flat_set<segPairProfile>> getSegConnPairs_cluster(profiledTree& inputProfiledTree);
+	boost::container::flat_map<int, vector<segPairProfile>> getSegConnPairs_cluster(const profiledTree& inputProfiledTree);
+	profiledTree connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
 	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
 	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
-
-	profiledTree connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
 
 	// Like this->segUnitConnect_executer, this method currently only supports simple unilateral segments.
 	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);

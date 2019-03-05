@@ -1,7 +1,6 @@
 #ifndef INTEGRATEDDATATYPES_H
 #define INTEGRATEDDATATYPES_H
 
-#include <memory>
 #include <vector>
 #include <deque>
 #include <map>
@@ -81,9 +80,8 @@ namespace integratedDataTypes
 		segPairProfile() : seg1Ptr(nullptr), seg2Ptr(nullptr) {};
 		segPairProfile(const segUnit& inputSeg1, const segUnit& inputSeg2, connectOrientation connOrt = all_ort);
 
-		shared_ptr<segUnit> seg1Ptr, seg2Ptr;
-		//const segUnit* seg1Ptr;
-		//const segUnit* seg2Ptr;
+		const segUnit* seg1Ptr;
+		const segUnit* seg2Ptr;
 		connectOrientation currConnOrt;
 		double turningAngle, distance;
 		map<connectOrientation, double> connDistMap;

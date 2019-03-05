@@ -501,7 +501,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 	}
 
 	// ------- For debugging purpose -------
-	profiledTree testTree = inputProfiledTree;
+	/*profiledTree testTree = inputProfiledTree;
 	for (boost::container::flat_map<int, int>::iterator it = testTree.headSeg2ClusterMap.begin(); it != testTree.headSeg2ClusterMap.end(); ++it)
 	{
 		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 9;
@@ -514,7 +514,7 @@ void NeuronStructExplorer::mergeTileBasedSegClusters(profiledTree& inputProfiled
 		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].type = it->second % 9;
 		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].radius = it->second;
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tailEndTest.swc", testTree.tree);
+	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tailEndTest.swc", testTree.tree);*/
 }
 
 void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold)
@@ -1122,70 +1122,74 @@ NeuronTree NeuronStructExplorer::MSTbranchBreak(const profiledTree& inputProfile
 	return outputProfiledTree.tree;
 }
 
-boost::container::flat_map<int, boost::container::flat_set<segPairProfile>> NeuronStructExplorer::getSegConnPairs_cluster(profiledTree& inputProfiledTree)
+boost::container::flat_map<int, vector<segPairProfile>> NeuronStructExplorer::getSegConnPairs_cluster(const profiledTree& inputProfiledTree)
 {
-	boost::container::flat_map<int, boost::container::flat_set<segPairProfile>> outputSegPairsMap;
+	boost::container::flat_map<int, vector<segPairProfile>> outputSegPairsMap;
 
-	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator clusterIt = inputProfiledTree.segHeadClusters.begin(); clusterIt != inputProfiledTree.segHeadClusters.end(); ++clusterIt)
+	for (boost::container::flat_map<int, boost::container::flat_set<int>>::const_iterator clusterIt = inputProfiledTree.segHeadClusters.begin(); clusterIt != inputProfiledTree.segHeadClusters.end(); ++clusterIt)
 	{
 		boost::container::flat_set<int> segHeads = clusterIt->second;
 		boost::container::flat_set<int> segTails = inputProfiledTree.segTailClusters.at(clusterIt->first);
 
 		if (segHeads.size() + segTails.size() >= 2)
 		{
-			boost::container::flat_set<segPairProfile> segPairs;
+			vector<segPairProfile> segPairs;
 
 			if (segTails.size() == 0)
 			{
-				for (boost::container::flat_set<int>::iterator headSegIt1 = clusterIt->second.begin(); headSegIt1 != clusterIt->second.end() - 1; ++headSegIt1)
+				for (boost::container::flat_set<int>::const_iterator headSegIt1 = clusterIt->second.begin(); headSegIt1 != clusterIt->second.end() - 1; ++headSegIt1)
 				{
-					for (boost::container::flat_set<int>::iterator headSegIt2 = headSegIt1 + 1; headSegIt2 != clusterIt->second.end(); ++headSegIt2)
+					for (boost::container::flat_set<int>::const_iterator headSegIt2 = headSegIt1 + 1; headSegIt2 != clusterIt->second.end(); ++headSegIt2)
 					{
 						segPairProfile newSegPair(inputProfiledTree.segs.at(*headSegIt1), inputProfiledTree.segs.at(*headSegIt2), head_head);
-						segPairs.insert(newSegPair);
+						segPairs.push_back(newSegPair);
 					}
 				}
+				outputSegPairsMap.insert(pair<int, vector<segPairProfile>>(clusterIt->first, segPairs));
 			}
-			/*else if (segHeads.size() == 0)
+			else if (segHeads.size() == 0)
 			{
-				for (boost::container::flat_set<int>::iterator tailSegIt1 = inputProfiledTree.segTailClusters.at(clusterIt->first).begin(); tailSegIt1 != inputProfiledTree.segTailClusters.at(clusterIt->first).end() - 1; ++tailSegIt1)
+				for (boost::container::flat_set<int>::const_iterator tailSegIt1 = inputProfiledTree.segTailClusters.at(clusterIt->first).begin(); tailSegIt1 != inputProfiledTree.segTailClusters.at(clusterIt->first).end() - 1; ++tailSegIt1)
 				{
-					for (boost::container::flat_set<int>::iterator tailSegIt2 = tailSegIt1 + 1; tailSegIt2 != inputProfiledTree.segTailClusters.at(clusterIt->first).end(); ++tailSegIt2)
+					for (boost::container::flat_set<int>::const_iterator tailSegIt2 = tailSegIt1 + 1; tailSegIt2 != inputProfiledTree.segTailClusters.at(clusterIt->first).end(); ++tailSegIt2)
 					{
 						segPairProfile newSegPair(inputProfiledTree.segs.at(*tailSegIt1), inputProfiledTree.segs.at(*tailSegIt2), tail_tail);
-						segPairs.insert(newSegPair);
+						segPairs.push_back(newSegPair);
 					}
 				}
+				outputSegPairsMap.insert(pair<int, vector<segPairProfile>>(clusterIt->first, segPairs));
 			}
 			else
 			{
-				for (boost::container::flat_set<int>::iterator headSegIt1 = clusterIt->second.begin(); headSegIt1 != clusterIt->second.end() - 1; ++headSegIt1)
+				for (boost::container::flat_set<int>::const_iterator headSegIt1 = clusterIt->second.begin(); headSegIt1 != clusterIt->second.end() - 1; ++headSegIt1)
 				{
-					for (boost::container::flat_set<int>::iterator headSegIt2 = headSegIt1 + 1; headSegIt2 != clusterIt->second.end(); ++headSegIt2)
+					for (boost::container::flat_set<int>::const_iterator headSegIt2 = headSegIt1 + 1; headSegIt2 != clusterIt->second.end(); ++headSegIt2)
 					{
 						segPairProfile newSegPair(inputProfiledTree.segs.at(*headSegIt1), inputProfiledTree.segs.at(*headSegIt2), head_head);
-						segPairs.insert(newSegPair);
+						segPairs.push_back(newSegPair);
 					}
 				}
 
-				for (boost::container::flat_set<int>::iterator tailSegIt1 = inputProfiledTree.segTailClusters.at(clusterIt->first).begin(); tailSegIt1 != inputProfiledTree.segTailClusters.at(clusterIt->first).end() - 1; ++tailSegIt1)
+				for (boost::container::flat_set<int>::const_iterator tailSegIt1 = inputProfiledTree.segTailClusters.at(clusterIt->first).begin(); tailSegIt1 != inputProfiledTree.segTailClusters.at(clusterIt->first).end() - 1; ++tailSegIt1)
 				{
-					for (boost::container::flat_set<int>::iterator tailSegIt2 = tailSegIt1 + 1; tailSegIt2 != inputProfiledTree.segTailClusters.at(clusterIt->first).end(); ++tailSegIt2)
+					for (boost::container::flat_set<int>::const_iterator tailSegIt2 = tailSegIt1 + 1; tailSegIt2 != inputProfiledTree.segTailClusters.at(clusterIt->first).end(); ++tailSegIt2)
 					{
 						segPairProfile newSegPair(inputProfiledTree.segs.at(*tailSegIt1), inputProfiledTree.segs.at(*tailSegIt2), tail_tail);
-						segPairs.insert(newSegPair);
+						segPairs.push_back(newSegPair);
 					}
 				}
 
-				for (boost::container::flat_set<int>::iterator headSegIt = clusterIt->second.begin(); headSegIt != clusterIt->second.end(); ++headSegIt)
+				for (boost::container::flat_set<int>::const_iterator headSegIt = clusterIt->second.begin(); headSegIt != clusterIt->second.end(); ++headSegIt)
 				{
-					for (boost::container::flat_set<int>::iterator tailSegIt = inputProfiledTree.segTailClusters.at(clusterIt->first).begin(); tailSegIt != inputProfiledTree.segTailClusters.at(clusterIt->first).end(); ++tailSegIt)
+					for (boost::container::flat_set<int>::const_iterator tailSegIt = inputProfiledTree.segTailClusters.at(clusterIt->first).begin(); tailSegIt != inputProfiledTree.segTailClusters.at(clusterIt->first).end(); ++tailSegIt)
 					{
 						segPairProfile newSegPair(inputProfiledTree.segs.at(*headSegIt), inputProfiledTree.segs.at(*tailSegIt), head_tail);
-						segPairs.insert(newSegPair);
+						segPairs.push_back(newSegPair);
 					}
 				}
-			}*/
+
+				outputSegPairsMap.insert(pair<int, vector<segPairProfile>>(clusterIt->first, segPairs));
+			}
 		}
 	}
 
@@ -1196,14 +1200,38 @@ profiledTree NeuronStructExplorer::connectLongNeurite(profiledTree& inputProfile
 {
 	profiledTree outputProfiledTree;
 	this->getSegHeadTailClusters(inputProfiledTree, distThreshold);
-	boost::container::flat_map<int, boost::container::flat_set<segPairProfile>> segPairsMap = this->getSegConnPairs_cluster(inputProfiledTree);
-	for (boost::container::flat_map<int, boost::container::flat_set<segPairProfile>>::iterator it = segPairsMap.begin(); it != segPairsMap.end(); ++it)
+	boost::container::flat_map<int, vector<segPairProfile>> segPairsMap = this->getSegConnPairs_cluster(inputProfiledTree);
+	
+	for (boost::container::flat_map<int, vector<segPairProfile>>::iterator it = segPairsMap.begin(); it != segPairsMap.end(); ++it)
 	{
-		cout << "cluster" << it->first << ": ";
-		for (boost::container::flat_set<segPairProfile>::iterator pairIt = it->second.begin(); pairIt != it->second.end(); ++pairIt)
-			cout << pairIt->seg1Ptr->segID << " " << pairIt->seg2Ptr->segID << endl;
-		
-		cout << endl;
+		if (it->second.size() == 1)
+		{
+			if (it->second.begin()->currConnOrt == head_head)
+			{
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
+
+				vector<float> vector1 = NeuronStructExplorer::getVector_NeuronSWC(seg1Tail, seg1Head);
+				vector<float> vector2 = NeuronStructExplorer::getVector_NeuronSWC(seg2Head, seg2Tail);
+				//vector<float> vec1Proj2vec2 = NeuronStructExplorer::getProjectedVector()
+			}
+			else if (it->second.begin()->currConnOrt == head_tail)
+			{
+
+			}
+			else if (it->second.begin()->currConnOrt == tail_tail)
+			{
+
+			}
+		}
 	}
 
 	return outputProfiledTree;
@@ -1227,7 +1255,7 @@ profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& input
 		for (boost::container::flat_set<int>::iterator tailSegIt = outputProfiledTree.segTailClusters.at(it->first).begin(); tailSegIt != outputProfiledTree.segTailClusters.at(it->first).end(); ++tailSegIt)
 			outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(*outputProfiledTree.segs.at(*tailSegIt).tails.begin())].type = it->first % 9;
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect_cluster.swc", outputProfiledTree.tree);
+	//writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newConnect_cluster.swc", outputProfiledTree.tree);
 	
 	map<int, segUnit> allNewSegs;
 	int maxInputSegID = outputProfiledTree.segs.rbegin()->first;
