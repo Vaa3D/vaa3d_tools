@@ -23,7 +23,7 @@ QStringList type::menulist() const
 QStringList type::funclist() const
 {
 	return QStringList()
-        <<tr("detect_type_distance")
+        <<tr("detection_type")
 		<<tr("func2")
 		<<tr("help");
 }
@@ -52,9 +52,9 @@ bool type::dofunc(const QString & func_name, const V3DPluginArgList & input, V3D
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("detection_type"))
 	{
-		v3d_msg("To be implemented.");
+        detect_type_func(input,output,callback);
 	}
 	else if (func_name == tr("func2"))
 	{

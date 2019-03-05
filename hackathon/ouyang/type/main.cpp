@@ -13,6 +13,7 @@
 # include <iostream>
 # include <algorithm>
 # include <math.h>
+# include <fstream>
 # include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 using namespace std;
@@ -362,17 +363,41 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
             tworoot,twocorroot,allnotroot1,alldulpnodes,coordulpnodes,
             sametyperoot,samecoornotroot, allduplnodes,totalduplnodes,allnotroot2;
     int cnt=0;
-    int numofwrongplace=0;
-    for (int i=0;i<tree1swc.size();i++)
-     {
-        if(tree1swc.at(i).type != 2 && tree1swc.at(i).type != 3) suspoint.push_back(i);
-        else if(childs[i].size() != 0 && (tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)) {suspoint.push_back(i);numofwrongplace++;}
-    }
+    QList<int> plist;
+    QList<int> alln;
+    int N=ori_tree1swc.size();
+    for(int i=0; i<N; i++){
+        plist.append(ori_tree1swc.at(i).pn);
+        alln.append(ori_tree1swc.at(i).n);
+      }
+
+//find the root of wrong type which is not 1,2 neither 3
+            int numofwrongplace=0;
+            int numofwrongtype=0;
+            for (int i=0;i<ori_tree1swc.size();i++)
+             {
+                if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
+                {
+                    if(ori_tree1swc.at(i).pn == -1) suspoint.push_back(i);
+                    else {
+                           int step_index=i;
+                           while(ori_tree1swc.at(step_index).pn !=-1){
+
+                               int index_of_pn=alln.indexOf(ori_tree1swc.at(step_index).pn);
+                               step_index=index_of_pn;
+                           }
+                           suspoint.push_back(step_index);
+                         }
+                 numofwrongtype++;
+                }
+            }
+
 
 //find the dumplicated nodes which have diffrent types
 
     for (int i=0;i<tree1swc.size();i++)
     {
+        if(childs[i].size() != 0 && (tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)) {suspoint.push_back(i);numofwrongplace++;} //find wrong types based on parent-child connection
         for (int j=0;j<tree1swc.size();j++)
         {
             if (i != j)
@@ -434,7 +459,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 
         }
     }
-    //if (suspoint.size()==0) v3d_msg(QString("You don't need to change the current file's type."));
+//set markers back to terafly
     LandmarkList result1;
     LocationSimple m;
     for(int i=0;i<suspoint.size();i++)
@@ -452,7 +477,139 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                  result1.push_back(Markers.at(i));
               }
      callback.setLandmarkTeraFly(result1);
-     if (suspoint.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] of them are right type but in wrong place,please check!").arg(suspoint.size()).arg(numofwrongplace));
+     if (suspoint.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] nodes are with wrong type(still 1,2 or 3),please check!").arg(suspoint.size()).arg(numofwrongplace));
+     return 1;
+}
+void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+
+    QStringList list=QString(infiles[0]).split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag1=list1.first();
+
+
+    NeuronTree tree1=readSWC_file(QString(infiles[0]));
+    QList<NeuronSWC> ori_tree1swc=tree1.listNeuron;
+//sort swc
+    QList<NeuronSWC> tree1swc;
+    SortSWC(ori_tree1swc, tree1swc ,VOID, 0);
+
+//get the childslist
+         NeuronTree n_t;
+         QHash <int, int> hash_nt ;
+         for(V3DLONG j=0; j<tree1swc.size();j++){
+             hash_nt.insert(tree1swc[j].n, j);
+         }
+         n_t.listNeuron=tree1swc;
+         n_t.hashNeuron=hash_nt;
+         tree1=n_t;
+         tree1swc=tree1.listNeuron;
+         V3DLONG neuronNum = tree1.listNeuron.size();
+         childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+         for (V3DLONG i=0;i<neuronNum;i++)
+         {
+             V3DLONG par = tree1.listNeuron[i].pn;
+             if (par<0) continue;
+             childs[tree1.hashNeuron.value(par)].push_back(i);
+         }
+
+//calculate the kinds of different types
+    vector<int> kinds;
+    for (int i=0;i<tree1swc.size();i++)
+    {
+      kinds.push_back(tree1swc.at(i).type);
+    }
+    int max = *max_element(kinds.begin(),kinds.end());
+    int ct=0;
+    for (int i=0;i<max+1;i++)
+    {
+        for (int j=0;j<kinds.size();j++)
+        {
+            if(kinds.at(j)==i)
+            {
+                ct=ct+1;
+                break;
+            }
+        }
+    }
+    //v3d_msg(QString("The kinds number of neuron type in your file: %1").arg(ct));
+
+    QList<int> plist;
+    QList<int> alln;
+    int N=ori_tree1swc.size();
+    for(int i=0; i<N; i++){
+        plist.append(ori_tree1swc.at(i).pn);
+        alln.append(ori_tree1swc.at(i).n);
+      }
+
+//find the root of wrong type which is not 1,2 neither 3
+        vector<int> suspoint;
+        int numofwrongplace=0;
+        int numofwrongtype=0;
+        for (int i=0;i<ori_tree1swc.size();i++)
+         {
+            if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
+            {
+                if(ori_tree1swc.at(i).pn == -1) suspoint.push_back(i);
+                else {
+                       int step_index=i;
+                       while(ori_tree1swc.at(step_index).pn !=-1){
+
+                           int index_of_pn=alln.indexOf(ori_tree1swc.at(step_index).pn);
+                           step_index=index_of_pn;
+                       }
+                       suspoint.push_back(step_index);
+                     }
+                numofwrongtype++;
+            }
+        }
+
+//find the dumplicated nodes which have diffrent types
+
+    for (int i=0;i<tree1swc.size();i++)
+    {
+        if(childs[i].size() != 0 && (tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)) {suspoint.push_back(i);numofwrongplace++;} //find wrong types based on parent-child connection
+        for (int j=0;j<tree1swc.size();j++)
+        {
+            if (i != j)
+            {
+                int x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
+                x1=tree1swc.at(i).x;
+                x2=tree1swc.at(j).x;
+                y1=tree1swc.at(i).y;
+                y2=tree1swc.at(j).y;
+                z1=tree1swc.at(i).z;
+                z2=tree1swc.at(j).z;
+                type1=tree1swc.at(i).type;
+                type2=tree1swc.at(j).type;
+                pars1=tree1swc.at(i).pn;
+                pars2=tree1swc.at(j).pn;
+                n1=tree1swc.at(i).n;
+                n2=tree1swc.at(j).n;
+                if(x1==x2 && y1==y2 && z1==z2 && type1!=type2) suspoint.push_back(i);//find wrong types based on duplicated nodes
+            }
+       }
+    }
+    printf("You got [%ld] segments to be corrected.[%ld] nodes are with wrong type(still 1,2 or 3),please check!", suspoint.size(),numofwrongplace);
+
+//record result
+
+    FILE * fp=0;
+    QString out_result =QString(outfiles.at(0))+"/"+flag1;
+    fp = fopen((char *)qPrintable(out_result+QString(".txt")), "wt");
+    qDebug("--------------------------------txt output dir:%s",qPrintable(out_result));
+
+    fprintf(fp, "1.Name of swc 2.Total number 3.Number of wrong type 4.Number of wrong type(still 1,2 or 3)\n");
+    fprintf(fp,"%s %d %d %d",flag1.toStdString().c_str(),suspoint.size(),numofwrongtype,numofwrongplace);
+    fclose(fp);
+
+}
+
 //                cout<<"++++++++++++++++++++++++++++++the suspoint number: "<<suspoint.size()<<endl;
 //                cout<<"++++++++++++++++++++++++++++++the suspointroot1 number: "<<suspointroot.size()<<endl;
 //                cout<<"++++++++++++++++++++++++++++++the suspointnotroot number: "<<suspointnotroot.size()<<endl;
@@ -675,8 +832,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 //             }
 //           // v3d_msg("The kinds number of neuron type in your file: "+ct1);
 //            //cout<<"+++++++++++++++++++++++the kinds number of neuron type: "<<ct1<<endl;
-            return 1;
-}
+
 QList<NeuronSWC> change_type_of_seg(QList<NeuronSWC> &neurons,vector<int> &allchilds,int resulttype)
 {
     QList<NeuronSWC> result;
