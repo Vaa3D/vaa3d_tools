@@ -13,6 +13,7 @@
 # include <iostream>
 # include <algorithm>
 # include <math.h>
+# include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 using namespace std;
 
@@ -272,7 +273,10 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 {
     NeuronTree tree1=callback.getSWCTeraFly();
     LandmarkList Markers = callback.getLandmarkTeraFly();
-    QList<NeuronSWC> tree1swc=tree1.listNeuron;
+    QList<NeuronSWC> ori_tree1swc=tree1.listNeuron;
+//sort swc
+    QList<NeuronSWC> tree1swc;
+    SortSWC(ori_tree1swc, tree1swc ,VOID, 0);
 
 //get the childslist
          NeuronTree n_t;
@@ -315,11 +319,11 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
     v3d_msg(QString("The kinds number of neuron type in your file: %1").arg(ct));
     //cout<<"+++++++++++++++++++++++the kinds number of neuron type: "<<ct<<endl;
 
-    vector<int> ids;
-    for(V3DLONG i=0;i<tree1swc.size();i++)
-     {
-        ids.push_back(tree1swc.at(i).n);
-     }
+    //vector<int> ids;
+    //for(V3DLONG i=0;i<tree1swc.size();i++)
+     //{
+      //  ids.push_back(tree1swc.at(i).n);
+     //}
 //find the roots
          /*vector<double> roots;
          for (int i=0;i<tree1swc.size();i++)
@@ -335,36 +339,37 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
          int numroot=roots.size();
          cout<<"++++++++++++++++++++++++++++++the roots number: "<<numroot<<endl;*/
 //find the tips
-                 vector<int> tipslist;
-                 for (int i=0;i<tree1swc.size();i++)
-                 {
-                     int sum=0;
-                     for (int j=0;j<tree1swc.size();j++)
-                     {
-                         if (tree1swc.at(i).n==tree1swc.at(j).pn)
-                         {
-                             sum=sum+1;
-                         }
-                     }
-                     if (sum<1)
-                         {
-                             tipslist.push_back(i);
-                         }
-                  }
+//                 vector<int> tipslist;
+//                 for (int i=0;i<tree1swc.size();i++)
+//                 {
+//                     int sum=0;
+//                     for (int j=0;j<tree1swc.size();j++)
+//                     {
+//                         if (tree1swc.at(i).n==tree1swc.at(j).pn)
+//                         {
+//                             sum=sum+1;
+//                         }
+//                     }
+//                     if (sum<1)
+//                         {
+//                             tipslist.push_back(i);
+//                         }
+//                  }
                  //cout<<"++++++++++++++++++++++++++++++the roots number: "<<tipslist.size()<<endl;
 
-//find the dumplicate nodes which have diffrent types
+//find wrong types based on parent-child connection
     vector<int> suspoint,suspointroot,suspointnotroot,coornotroot,
             tworoot,twocorroot,allnotroot1,alldulpnodes,coordulpnodes,
             sametyperoot,samecoornotroot, allduplnodes,totalduplnodes,allnotroot2;
     int cnt=0;
+    int numofwrongplace=0;
     for (int i=0;i<tree1swc.size();i++)
      {
         if(tree1swc.at(i).type != 2 && tree1swc.at(i).type != 3) suspoint.push_back(i);
-
+        else if(childs[i].size() != 0 && (tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)) {suspoint.push_back(i);numofwrongplace++;}
     }
-    if (suspoint.size()==0) v3d_msg(QString("You don't need to change the current file's type."));
 
+//find the dumplicated nodes which have diffrent types
 
     for (int i=0;i<tree1swc.size();i++)
     {
@@ -429,17 +434,36 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 
         }
     }
-                cout<<"++++++++++++++++++++++++++++++the suspoint number: "<<suspoint.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the suspointroot1 number: "<<suspointroot.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the suspointnotroot number: "<<suspointnotroot.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the coornotroot number: "<<coornotroot.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the tworoot number: "<<tworoot.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the allnotroot number: "<<allnotroot1.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the sametyperoot number: "<<sametyperoot.size()<<endl;
-                cout<<"++++++++++++++++++++++++++++++the samecoornotroot number: "<<samecoornotroot.size()<<endl;
+    //if (suspoint.size()==0) v3d_msg(QString("You don't need to change the current file's type."));
+    LandmarkList result1;
+    LocationSimple m;
+    for(int i=0;i<suspoint.size();i++)
+       {
+           m.x=tree1swc.at(suspoint.at(i)).x;
+           m.y=tree1swc.at(suspoint.at(i)).y;
+           m.z=tree1swc.at(suspoint.at(i)).z;
+           m.color.r = 255;
+           m.color.g = 255;
+           m.color.b = 255;
+           result1.push_back(m);
+       }
+           for (int i=0;i<Markers.size();i++)
+              {
+                 result1.push_back(Markers.at(i));
+              }
+     callback.setLandmarkTeraFly(result1);
+     if (suspoint.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] of them are right type but in wrong place,please check!").arg(suspoint.size()).arg(numofwrongplace));
+//                cout<<"++++++++++++++++++++++++++++++the suspoint number: "<<suspoint.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the suspointroot1 number: "<<suspointroot.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the suspointnotroot number: "<<suspointnotroot.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the coornotroot number: "<<coornotroot.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the tworoot number: "<<tworoot.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the allnotroot number: "<<allnotroot1.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the sametyperoot number: "<<sametyperoot.size()<<endl;
+//                cout<<"++++++++++++++++++++++++++++++the samecoornotroot number: "<<samecoornotroot.size()<<endl;
 
 //calculate if the type of root node is 2 or 3,if not,change all the child types of this root to 2 or 3
-      QList<NeuronTree> alltypetree;
+      //QList<NeuronTree> alltypetree;
 //    for (int i=0;i<allnotroot1.size();i++)
 //    {
 //        if(find(tipslist.begin(), tipslist.end(), allnotroot1.at(i)) == tipslist.end()) suspointroot.push_back(allnotroot1.at(i));
@@ -483,8 +507,8 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 //                            cout<<"++++++++++++++++++++++++++++++pppppppppppppppppppppppp+++++++++++++++++++++++++++"<<endl;
 //          }
 //    }
-    for (int i=0;i<suspointroot.size();i++)
-    {
+    //for (int i=0;i<suspointroot.size();i++)
+    //{
 //case 1:wrong type isn't 2 or 3,but the others
 //        if (tree1swc.at(suspointroot.at(i)).type!=2 && tree1swc.at(suspointroot.at(i)).type!=3)
 //          {
@@ -508,15 +532,15 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 //                            cout<<"++++++++++++++++++++++++++++++pppppppppppppppppppppppp+++++++++++++++++++++++++++"<<endl;
 //          }
 //case 2:wrong type is 2 or 3 and this wrong segment is in the middle of two correct segments,this is a more tricky situation.
-            QList<NeuronSWC> result;
-            vector<int> allchilds;
-            result.clear();
-            allchilds.clear();
-            int rootpoint=suspointroot.at(i);
-            int endpoint;
-            segsinfo seg=getallchildsofseg(rootpoint);
-            endpoint=seg.endnd;
-            allchilds=seg.segpoint;
+            //QList<NeuronSWC> result;
+            //vector<int> allchilds;
+            //result.clear();
+            //allchilds.clear();
+            //int rootpoint=suspointroot.at(i);
+            //int endpoint;
+            //segsinfo seg=getallchildsofseg(rootpoint);
+            //endpoint=seg.endnd;
+            //allchilds=seg.segpoint;
 //            if(find(suspoint.begin(), suspoint.end(), endpoint) != suspoint.end())
 //            {
 //                int roottype=tree1swc.at(rootpoint).type;
@@ -535,47 +559,47 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 //                            cout<<"++++++++++++++++++++++++++++++oooooooooooooooooooo+++++++++++++++++++++++++++"<<endl;
 //            }
 //case 3:wrong type is 2 or 3 and this wrong segment is in the end of one correct segment.
-            double dis_root2tip;
-            dis_root2tip=dist(tree1swc.at(rootpoint),tree1swc.at(endpoint));
-            if(dis_root2tip<20)
+            //double dis_root2tip;
+            //dis_root2tip=dist(tree1swc.at(rootpoint),tree1swc.at(endpoint));
+            //if(dis_root2tip<20)
             //if(find(suspoint.begin(), suspoint.end(), endpoint) == suspoint.end())
-            {
-                int rootcoortype=tree1swc.at(coornotroot.at(i)).type;
-                result=change_type_of_seg(tree1swc,allchilds,rootcoortype);
-                            NeuronTree typetree;
-                            typetree.listNeuron=result;
-                            QHash <int, int> hash1_nt;
-                            for(V3DLONG j=0; j<result.size();j++)
-                            {
-                                hash1_nt.insert(result[j].n, j);
-                            }
-                            typetree.hashNeuron=hash1_nt;
-                            alltypetree.push_back(typetree);
-            }
-   }
-    cout<<"++++++++++++++++++++++++++++++--------------------------------222---------------------------------"<<endl;
+            //{
+                //int rootcoortype=tree1swc.at(coornotroot.at(i)).type;
+                //result=change_type_of_seg(tree1swc,allchilds,rootcoortype);
+                            //NeuronTree typetree;
+                            //typetree.listNeuron=result;
+                            //QHash <int, int> hash1_nt;
+                            //for(V3DLONG j=0; j<result.size();j++)
+                            //{
+                             //   hash1_nt.insert(result[j].n, j);
+                            //}
+                            //typetree.hashNeuron=hash1_nt;
+                            //alltypetree.push_back(typetree);
+            //}
+   //}
+    //cout<<"++++++++++++++++++++++++++++++--------------------------------222---------------------------------"<<endl;
 //cout<<"++++++++++++++++++++++++++++++alltypetree size---------------------------------"<<alltypetree.size()<<endl;
 
 //set swc back to terafly
-            vector<int> worngids;
-            QList <NeuronSWC> listNeuron;
-            for (int i=0;i<alltypetree.size();i++)
-            {
-                for (int j=0;j<alltypetree.at(i).listNeuron.size();j++)
-                   {
-                     listNeuron.append(alltypetree.at(i).listNeuron.at(j));
-                     worngids.push_back(alltypetree.at(i).listNeuron.at(j).n);
-                   }
-            }
+//            vector<int> worngids;
+//            QList <NeuronSWC> listNeuron;
+//            for (int i=0;i<alltypetree.size();i++)
+//            {
+//                for (int j=0;j<alltypetree.at(i).listNeuron.size();j++)
+//                   {
+//                     listNeuron.append(alltypetree.at(i).listNeuron.at(j));
+//                     worngids.push_back(alltypetree.at(i).listNeuron.at(j).n);
+//                   }
+//            }
 
-            for (int i=0;i<tree1swc.size();i++)
-            {
-                if (find(worngids.begin(), worngids.end(), tree1swc.at(i).n) == worngids.end())
-                    {
-                      listNeuron.append(tree1swc.at(i));
-                    }
-            }
-            cout<<"++++++++++++++++++++++++++++++--------------------------------333---------------------------------"<<endl;
+//            for (int i=0;i<tree1swc.size();i++)
+//            {
+//                if (find(worngids.begin(), worngids.end(), tree1swc.at(i).n) == worngids.end())
+//                    {
+//                      listNeuron.append(tree1swc.at(i));
+//                    }
+//            }
+//            cout<<"++++++++++++++++++++++++++++++--------------------------------333---------------------------------"<<endl;
            /* for (int i=0;i<worngids.size();i++)
             {
                 vector<int>::iterator iter=find(ids.begin(), ids.end(), worngids.at(i));
@@ -584,70 +608,52 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                 //tree1swc.append(tree2swc.at(worngids.at(i)));
             }*/
 
-            cout<<"++++++++++++++++++++++++++++++the nodes number of new swc----------------------------------"<<listNeuron.size()<<endl;
-            QHash <int, int>  hashNeuron;
-            for(V3DLONG j=0; j<listNeuron.size();j++)
-            {
-               hashNeuron.insert(listNeuron[j].n, j);
-            }
-            NeuronTree resultTree;
-            resultTree.listNeuron=listNeuron;
-            resultTree.hashNeuron=hashNeuron;
-            cout<<"++++++++++++++++++++++++++++++--------------------------------666---------------------------------"<<endl;
-            callback.setSWCTeraFly(resultTree);
-            cout<<"++++++++++++++++++++++++++++++--------------------------------444--------------------------------"<<endl;
+//            cout<<"++++++++++++++++++++++++++++++the nodes number of new swc----------------------------------"<<listNeuron.size()<<endl;
+//            QHash <int, int>  hashNeuron;
+//            for(V3DLONG j=0; j<listNeuron.size();j++)
+//            {
+//               hashNeuron.insert(listNeuron[j].n, j);
+//            }
+//            NeuronTree resultTree;
+//            resultTree.listNeuron=listNeuron;
+//            resultTree.hashNeuron=hashNeuron;
+//            cout<<"++++++++++++++++++++++++++++++--------------------------------666---------------------------------"<<endl;
+//            callback.setSWCTeraFly(resultTree);
+//            cout<<"++++++++++++++++++++++++++++++--------------------------------444--------------------------------"<<endl;
 //set markers back to terafly
-            vector<int> sus_after;
-            int cc=0;
-            for (int i=0;i<listNeuron.size();i++)
-            {
-                if(listNeuron.at(i).type != 2 && listNeuron.at(i).type != 3) sus_after.push_back(i);
-                for (int j=0;j<listNeuron.size();j++)
-                {
-                    if (i != j)
-                    {
-                        int x11,x12,y11,y12,z11,z12,type11,type12,pars11,pars12,n11,n12;
-                        x11=listNeuron.at(i).x;
-                        x12=listNeuron.at(j).x;
-                        y11=listNeuron.at(i).y;
-                        y12=listNeuron.at(j).y;
-                        z11=listNeuron.at(i).z;
-                        z12=listNeuron.at(j).z;
-                        type11=listNeuron.at(i).type;
-                        type12=listNeuron.at(j).type;
-                        pars11=listNeuron.at(i).pn;
-                        pars12=listNeuron.at(j).pn;
-                        n11=listNeuron.at(i).n;
-                        n12=listNeuron.at(j).n;
+//            vector<int> sus_after;
+//            int cc=0;
+//            for (int i=0;i<listNeuron.size();i++)
+//            {
+//                if(listNeuron.at(i).type != 2 && listNeuron.at(i).type != 3) sus_after.push_back(i);
+//                for (int j=0;j<listNeuron.size();j++)
+//                {
+//                    if (i != j)
+//                    {
+//                        int x11,x12,y11,y12,z11,z12,type11,type12,pars11,pars12,n11,n12;
+//                        x11=listNeuron.at(i).x;
+//                        x12=listNeuron.at(j).x;
+//                        y11=listNeuron.at(i).y;
+//                        y12=listNeuron.at(j).y;
+//                        z11=listNeuron.at(i).z;
+//                        z12=listNeuron.at(j).z;
+//                        type11=listNeuron.at(i).type;
+//                        type12=listNeuron.at(j).type;
+//                        pars11=listNeuron.at(i).pn;
+//                        pars12=listNeuron.at(j).pn;
+//                        n11=listNeuron.at(i).n;
+//                        n12=listNeuron.at(j).n;
 
-                        if(x11==x12 && y11==y12 && z11==z12 && type11!=type12)
-                        {
-                            sus_after.push_back(i);
-                            cc++;
-                        }
-                    }
-                }
-            }
+//                        if(x11==x12 && y11==y12 && z11==z12 && type11!=type12)
+//                        {
+//                            sus_after.push_back(i);
+//                            cc++;
+//                        }
+//                    }
+//                }
+//            }
 
-                                        LandmarkList result1;
-                                        LocationSimple m;
-                                        for(int i=0;i<sus_after.size();i++)
-                                        {
-                                                m.x=listNeuron.at(sus_after.at(i)).x;
-                                                m.y=listNeuron.at(sus_after.at(i)).y;
-                                                m.z=listNeuron.at(sus_after.at(i)).z;
-                                                m.color.r = 255;
-                                                m.color.g = 255;
-                                                m.color.b = 255;
-                                                result1.push_back(m);
-                                              }
-                                        for (int i=0;i<Markers.size();i++)
-                                        {
-                                            result1.push_back(Markers.at(i));
-                                        }
-                                        cout<<"++++++++++++++++++++++++++++++------------------------------555--------------------------------"<<endl;
-                                        callback.setLandmarkTeraFly(result1);
-                                        if (sus_after.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.There are [%2] nodes are wrong in type 2 or 3.").arg(sus_after.size()).arg(cc));
+
 //calculate the kinds of different types
 //            vector<int> kinds1;
 //            for (int i=0;i<listNeuron.size();i++)

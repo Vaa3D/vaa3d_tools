@@ -30,11 +30,11 @@ QStringList type::funclist() const
 
 void type::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("detect_type_distance"))
-	{
-        detect_type_distance(callback,parent);
-	}
-    else if (menu_name == tr("detect_type"))
+    //if (menu_name == tr("detect_type_distance"))
+    //{
+    //    detect_type_distance(callback,parent);
+    //}
+    if (menu_name == tr("detect_type"))
     {
         detect_type(callback,parent);
     }

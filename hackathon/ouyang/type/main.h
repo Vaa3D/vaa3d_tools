@@ -4,7 +4,7 @@
 #include "basic_surf_objs.h"
 #include <QtGlobal>
 using namespace std;
-bool detect_type_distance(V3DPluginCallback2 &callback, QWidget *parent);
+//bool detect_type_distance(V3DPluginCallback2 &callback, QWidget *parent);
 bool detect_type(V3DPluginCallback2 &callback, QWidget *parent);
 struct segsinfo getallchildsofseg(int t);
 struct segsinfo{
