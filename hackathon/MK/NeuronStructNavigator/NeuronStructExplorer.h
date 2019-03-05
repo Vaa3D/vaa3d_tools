@@ -114,13 +114,12 @@ public:
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
-	
-	profiledTree segElongate_dist(const profiledTree& inputProfiledTree, float tileLength, float distThreshold);
-	profiledTree itered_segElongate_dist(profiledTree& inputProfiledTree, float tileLength, float distThreshold);
 
+	boost::container::flat_map<int, boost::container::flat_set<segPairProfile>> getSegConnPairs_cluster(profiledTree& inputProfiledTree);
 	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
 	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
 
+	profiledTree connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
 
 	// Like this->segUnitConnect_executer, this method currently only supports simple unilateral segments.
 	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
@@ -142,7 +141,11 @@ public:
 	/***************** Geometry *****************/
 	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
+	inline static double getVectorCosine(const vector<float>& vector1, const vector<float>& vector2);
+	inline static double getVectorSine(const vector<float>& vector1, const vector<float>& vector2);
+	inline static double getPiAngle(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
+	static vector<float> NeuronStructExplorer::getProjectedVector(const vector<float>& projectedVector, const vector<float>& projectingVector, vector<float> projectingVecStart, double randAngle);
 	
 	// This method computes the sum of turning angles of from one node to the next node for a segment.
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
@@ -229,14 +232,43 @@ inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>
 	return dispUnitVector;
 }
 
+inline double NeuronStructExplorer::getVectorSine(const vector<float>& vector1, const vector<float>& vector2)
+{
+	double thisVectorCos = NeuronStructExplorer::getVectorCosine(vector1, vector2);
+	double thisVectorSin = sqrt(1 - thisVectorCos * thisVectorCos);
+
+	return thisVectorSin;
+}
+
+inline double NeuronStructExplorer::getVectorCosine(const vector<float>& vector1, const vector<float>& vector2)
+{
+	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
+	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
+	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
+	
+	return dot / sqrt(sq1 * sq2);
+}
+
+inline double NeuronStructExplorer::getPiAngle(const vector<float>& vector1, const vector<float>& vector2)
+{
+	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
+	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
+	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
+	double angle = acos(dot / sqrt(sq1 * sq2));
+    
+	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	else return angle / PI;
+}
+
 inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, const vector<float>& vector2)
 {
 	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
 	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
 	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 	double angle = acos(dot / sqrt(sq1 * sq2));
-    if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
-	else return angle / PI;
+	
+	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	else return angle;
 }
 
 inline double NeuronStructExplorer::selfTurningRadAngleSum(const vector<vector<float>>& inputSegment)
