@@ -13,6 +13,7 @@
 # include <iostream>
 # include <algorithm>
 # include <math.h>
+# include <cmath>
 # include <fstream>
 # include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
@@ -46,7 +47,6 @@ double DistanceOfPointToLine(QList<NeuronSWC> neuron,int a,int b,int s)
     return as*sin_A;
 
 }
-
 // find the suspecious wrong type of neuron type
 QVector<QVector<V3DLONG> > childs;
 /*
@@ -403,12 +403,12 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
             if (i != j)
             {
                 int x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
-                x1=tree1swc.at(i).x;
-                x2=tree1swc.at(j).x;
-                y1=tree1swc.at(i).y;
-                y2=tree1swc.at(j).y;
-                z1=tree1swc.at(i).z;
-                z2=tree1swc.at(j).z;
+                x1=(int)(tree1swc.at(i).x+0.5);
+                x2=(int)(tree1swc.at(j).x+0.5);
+                y1=(int)(tree1swc.at(i).y+0.5);
+                y2=(int)(tree1swc.at(j).y+0.5);
+                z1=(int)(tree1swc.at(i).z+0.5);
+                z2=(int)(tree1swc.at(j).z+0.5);
                 type1=tree1swc.at(i).type;
                 type2=tree1swc.at(j).type;
                 pars1=tree1swc.at(i).pn;
@@ -579,12 +579,12 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
             if (i != j)
             {
                 int x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
-                x1=tree1swc.at(i).x;
-                x2=tree1swc.at(j).x;
-                y1=tree1swc.at(i).y;
-                y2=tree1swc.at(j).y;
-                z1=tree1swc.at(i).z;
-                z2=tree1swc.at(j).z;
+                x1=(int)(tree1swc.at(i).x+0.5);
+                x2=(int)(tree1swc.at(j).x+0.5);
+                y1=(int)(tree1swc.at(i).y+0.5);
+                y2=(int)(tree1swc.at(j).y+0.5);
+                z1=(int)(tree1swc.at(i).z+0.5);
+                z2=(int)(tree1swc.at(j).z+0.5);
                 type1=tree1swc.at(i).type;
                 type2=tree1swc.at(j).type;
                 pars1=tree1swc.at(i).pn;
