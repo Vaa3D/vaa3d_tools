@@ -116,7 +116,8 @@ public:
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 
 	boost::container::flat_map<int, vector<segPairProfile>> getSegConnPairs_cluster(const profiledTree& inputProfiledTree);
-	profiledTree connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
+	profiledTree connectLongNeurite(const profiledTree& inputProfiledTree, float distThreshold = 5);
+	profiledTree itered_connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
 	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
 	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
 
@@ -140,11 +141,14 @@ public:
 	/***************** Geometry *****************/
 	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
+	inline static vector<pair<float, float>> getVectorLocPair(const NeuronSWC& startNode, const NeuronSWC& endNode);
+
 	inline static double getVectorCosine(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double getVectorSine(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double getPiAngle(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
-	static vector<float> NeuronStructExplorer::getProjectedVector(const vector<float>& projectedVector, const vector<float>& projectingVector, vector<float> projectingVecStart, double randAngle);
+
+	static vector<pair<float, float>> getProjectedVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector);
 	
 	// This method computes the sum of turning angles of from one node to the next node for a segment.
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
@@ -229,6 +233,18 @@ inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>
 	dispUnitVector.push_back((headVector.at(2) - tailVector.at(2)) / disp);
 
 	return dispUnitVector;
+}
+
+inline vector<pair<float, float>> NeuronStructExplorer::getVectorLocPair(const NeuronSWC& startNode, const NeuronSWC& endNode)
+{
+	vector<float> thisVector = NeuronStructExplorer::getVector_NeuronSWC(startNode, endNode);
+
+	vector<pair<float, float>> outputVectorPairs(3);
+	outputVectorPairs[0] = pair<float, float>(startNode.x, thisVector.at(0));
+	outputVectorPairs[1] = pair<float, float>(startNode.y, thisVector.at(1));
+	outputVectorPairs[2] = pair<float, float>(startNode.z, thisVector.at(2));
+
+	return outputVectorPairs;
 }
 
 inline double NeuronStructExplorer::getVectorSine(const vector<float>& vector1, const vector<float>& vector2)

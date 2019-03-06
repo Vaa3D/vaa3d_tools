@@ -1196,16 +1196,20 @@ boost::container::flat_map<int, vector<segPairProfile>> NeuronStructExplorer::ge
 	return outputSegPairsMap;
 }
 
-profiledTree NeuronStructExplorer::connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold)
+profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputProfiledTree, float distThreshold)
 {
-	profiledTree outputProfiledTree;
-	this->getSegHeadTailClusters(inputProfiledTree, distThreshold);
-	boost::container::flat_map<int, vector<segPairProfile>> segPairsMap = this->getSegConnPairs_cluster(inputProfiledTree);
+	profiledTree outputProfiledTree = inputProfiledTree;
+	this->getSegHeadTailClusters(outputProfiledTree, distThreshold);
+	boost::container::flat_map<int, vector<segPairProfile>> segPairsMap = this->getSegConnPairs_cluster(outputProfiledTree);
 	
+	vector<int> newSegIDs;
+	set<int> connectedSegIDs;
 	for (boost::container::flat_map<int, vector<segPairProfile>>::iterator it = segPairsMap.begin(); it != segPairsMap.end(); ++it)
 	{
 		if (it->second.size() == 1)
 		{
+			if (connectedSegIDs.find(it->second.begin()->seg1Ptr->segID) != connectedSegIDs.end() || connectedSegIDs.find(it->second.begin()->seg2Ptr->segID) != connectedSegIDs.end()) continue;
+
 			if (it->second.begin()->currConnOrt == head_head)
 			{
 				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
@@ -1219,22 +1223,118 @@ profiledTree NeuronStructExplorer::connectLongNeurite(profiledTree& inputProfile
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<float> vector1 = NeuronStructExplorer::getVector_NeuronSWC(seg1Tail, seg1Head);
-				vector<float> vector2 = NeuronStructExplorer::getVector_NeuronSWC(seg2Head, seg2Tail);
-				//vector<float> vec1Proj2vec2 = NeuronStructExplorer::getProjectedVector()
+				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorLocPair(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorLocPair(seg2Head, seg2Tail);
+				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) + 
+									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+				if (overlapCheck < 0) continue;
+
+				segUnit newSeg = this->segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_head);
+				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
+				newSegIDs.push_back(outputProfiledTree.segs.size());
+				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
+				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
+				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
 			}
 			else if (it->second.begin()->currConnOrt == head_tail)
 			{
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
+				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorLocPair(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorLocPair(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
+									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
+				if (overlapCheck < 0) continue;
+
+				segUnit newSeg = this->segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, head_tail);
+				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
+				newSegIDs.push_back(outputProfiledTree.segs.size());
+				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
+				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
+				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
 			}
 			else if (it->second.begin()->currConnOrt == tail_tail)
 			{
+				NeuronSWC seg1Head, seg1Tail, seg2Head, seg2Tail;
+				int seg1HeadID, seg1TailID, seg2HeadID, seg2TailID;
+				seg1HeadID = it->second.begin()->seg1Ptr->head;
+				seg1TailID = *it->second.begin()->seg1Ptr->tails.begin();
+				seg2HeadID = it->second.begin()->seg2Ptr->head;
+				seg2TailID = *it->second.begin()->seg2Ptr->tails.begin();
+				seg1Head = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1HeadID)];
+				seg1Tail = it->second.begin()->seg1Ptr->nodes[it->second.begin()->seg1Ptr->seg_nodeLocMap.at(seg1TailID)];
+				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
+				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
+				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorLocPair(seg1Head, seg1Tail);
+				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorLocPair(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
+				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
+									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
+				if (overlapCheck < 0) continue;
+
+				segUnit newSeg = this->segUnitConnect_executer(*it->second.begin()->seg1Ptr, *it->second.begin()->seg2Ptr, tail_tail);
+				outputProfiledTree.segs.at(it->second.begin()->seg1Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.at(it->second.begin()->seg2Ptr->segID).to_be_deleted = true;
+				outputProfiledTree.segs.insert({ outputProfiledTree.segs.size() + 1, newSeg });
+				newSegIDs.push_back(outputProfiledTree.segs.size());
+				connectedSegIDs.insert(it->second.begin()->seg1Ptr->segID);
+				connectedSegIDs.insert(it->second.begin()->seg2Ptr->segID);
+				//cout << "connecting segs " << it->second.begin()->seg1Ptr->segID << " and " << it->second.begin()->seg2Ptr->segID << endl;
 			}
 		}
 	}
 
+	vector<ptrdiff_t> nodeDelLocs;
+	for (set<int>::iterator connectedIt = connectedSegIDs.begin(); connectedIt != connectedSegIDs.end(); ++connectedIt)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = outputProfiledTree.segs.at(*connectedIt).nodes.begin(); nodeIt != outputProfiledTree.segs.at(*connectedIt).nodes.end(); ++nodeIt)
+			nodeDelLocs.push_back(outputProfiledTree.node2LocMap.at(nodeIt->n));
+		outputProfiledTree.segs.erase(outputProfiledTree.segs.find(*connectedIt));
+	}
+
+	sort(nodeDelLocs.rbegin(), nodeDelLocs.rend());
+	for (vector<ptrdiff_t>::iterator delNodeIt = nodeDelLocs.begin(); delNodeIt != nodeDelLocs.end(); ++delNodeIt)
+		outputProfiledTree.tree.listNeuron.erase(outputProfiledTree.tree.listNeuron.begin() + *delNodeIt);
+
+	for (vector<int>::iterator newSegIt = newSegIDs.begin(); newSegIt != newSegIDs.end(); ++newSegIt)
+		outputProfiledTree.tree.listNeuron.append(outputProfiledTree.segs.at(*newSegIt).nodes);
+
+	this->profiledTreeReInit(outputProfiledTree);
 	return outputProfiledTree;
+}
+
+profiledTree NeuronStructExplorer::itered_connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold)
+{
+	cout << "iteration 1 " << endl;
+	int iterCount = 1;
+	profiledTree elongatedTree = this->connectLongNeurite(inputProfiledTree, distThreshold);
+	while (elongatedTree.segs.size() != inputProfiledTree.segs.size())
+	{
+		inputProfiledTree = elongatedTree;
+
+		++iterCount;
+		cout << "iteration " << iterCount << " " << endl;
+		elongatedTree = this->connectLongNeurite(inputProfiledTree);
+	}
+	cout << endl;
+
+	return elongatedTree;
 }
 
 profiledTree NeuronStructExplorer::segElongate_cluster(const profiledTree& inputProfiledTree)
@@ -2114,18 +2214,47 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 
 /* ================================================== Geometry ================================================= */
-vector<float> NeuronStructExplorer::getProjectedVector(const vector<float>& projectedVector, const vector<float>& projectingVector, vector<float> projectingVecStart, double randAngle)
+vector<pair<float, float>> NeuronStructExplorer::getProjectedVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector)
 {
-	double thisVectorSine = NeuronStructExplorer::getVectorSine(projectedVector, projectingVector);
-	double projectingVecLength = sqrt(projectingVector.at(0) * projectingVector.at(0) + projectingVector.at(1) * projectingVector.at(1) + projectingVector.at(2) * projectingVector.at(2));
-	double projectionVecLength = projectingVecLength * thisVectorSine;
-	double lengthRatio = projectionVecLength / projectingVecLength;
-	vector<float> outputVector(3);
-	outputVector[0] = projectedVector.at(0) * lengthRatio + projectingVecStart.at(0);
-	outputVector[1] = projectedVector.at(1) * lengthRatio + projectingVecStart.at(1);
-	outputVector[2] = projectedVector.at(2) * lengthRatio + projectingVecStart.at(2);
+	vector<pair<float, float>> projectedVector;
 
-	return outputVector;
+	double axialVectorLength = sqrt(axialVector.begin()->second * axialVector.begin()->second + (axialVector.begin() + 1)->second * (axialVector.begin() + 1)->second + (axialVector.begin() + 2)->second * (axialVector.begin() + 2)->second);
+
+	vector<float> projectingStartVec(3);
+	projectingStartVec[0] = projectingVector.begin()->first - axialVector.begin()->first;
+	projectingStartVec[1] = (projectingVector.begin() + 1)->first - (axialVector.begin() + 1)->first;
+	projectingStartVec[2] = (projectingVector.begin() + 2)->first - (axialVector.begin() + 2)->first;
+	vector<float> axialVector_vec(3);
+	axialVector_vec[0] = axialVector.begin()->second;
+	axialVector_vec[1] = (axialVector.begin() + 1)->second;
+	axialVector_vec[2] = (axialVector.begin() + 2)->second;
+	double projectingStartVecSine = NeuronStructExplorer::getVectorSine(axialVector_vec, projectingStartVec);
+	double projectingStartVecLength = sqrt(projectingStartVec.at(0) * projectingStartVec.at(0) + projectingStartVec.at(1) * projectingStartVec.at(1) + projectingStartVec.at(2) * projectingStartVec.at(2));
+	double ProjectedStartLength = projectingStartVecLength * projectingStartVecSine;
+	double projectedStartLengthRatio = ProjectedStartLength / axialVectorLength;
+	vector<float> projectedStart(3);
+	projectedStart[0] = axialVector.begin()->second * projectedStartLengthRatio + axialVector.begin()->first;
+	projectedStart[1] = (axialVector.begin() + 1)->second * projectedStartLengthRatio + (axialVector.begin() + 1)->first;
+	projectedStart[2] = (axialVector.begin() + 2)->second * projectedStartLengthRatio + (axialVector.begin() + 2)->first;
+
+	vector<float> projectingVector_vec(3);
+	projectingVector_vec[0] = projectingVector.begin()->second;
+	projectingVector_vec[1] = (projectingVector.begin() + 1)->second;
+	projectingVector_vec[2] = (projectingVector.begin() + 2)->second;
+	double projectingVecSine = NeuronStructExplorer::getVectorSine(axialVector_vec, projectingVector_vec);
+	double projectingVecLength = sqrt(projectingVector.begin()->second * projectingVector.begin()->second + (projectingVector.begin() + 1)->second * (projectingVector.begin() + 1)->second + (projectingVector.begin()->second + 2) * (projectingVector.begin()->second + 2));
+	double projectedVecLength = projectingVecLength * projectingVecSine;
+	double projectedLengthRatio = projectedVecLength / projectingVecLength;
+	vector<float> projectedVector_vec(3);
+	projectedVector_vec[0] = axialVector.begin()->second * projectedLengthRatio;
+	projectedVector_vec[1] = (axialVector.begin() + 1)->second * projectedLengthRatio;
+	projectedVector_vec[2] = (axialVector.begin() + 2)->second * projectedLengthRatio;
+
+	projectedVector.push_back(pair<float, float>(projectedStart[0], projectedVector_vec[0]));
+	projectedVector.push_back(pair<float, float>(projectedStart[1], projectedVector_vec[1]));
+	projectedVector.push_back(pair<float, float>(projectedStart[2], projectedVector_vec[2]));
+
+	return projectedVector;
 }
 
 double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)

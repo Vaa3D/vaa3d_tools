@@ -1299,13 +1299,14 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("segPair"))
 	{
 		NeuronStructExplorer myExplorer;
-		QString inputTreeName = "H:\\fMOST_fragment_tracing\\testCase1\\testTree.swc";
+		QString inputTreeName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testTree.swc";
 		NeuronTree inputTree = readSWC_file(inputTreeName);
 		profiledTree inputProfiledTree(inputTree);
 
 		profiledTree testTree = myExplorer.connectLongNeurite(inputProfiledTree, 5);
-		//myExplorer.getSegHeadTailClusters(inputProfiledTree);  
-		/*int clusterCount = 1;
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\connect1.swc", testTree.tree);
+		myExplorer.getSegHeadTailClusters(inputProfiledTree);  
+		int clusterCount = 1;
 		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = inputProfiledTree.segTailClusters.begin(); it != inputProfiledTree.segTailClusters.end(); ++it)
 		{
 			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
@@ -1323,7 +1324,7 @@ int main(int argc, char* argv[])
 			}
 			++clusterCount;
 		}
-		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCluster.swc", inputProfiledTree.tree);*/
+		writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCluster.swc", inputProfiledTree.tree);
 		//myExplorer.getSegHeadTailClusters(inputProfiledTree);
 		//profiledTree profiledClusterElongatedTree = myExplorer.segElongate_cluster(inputProfiledTree);
 		
