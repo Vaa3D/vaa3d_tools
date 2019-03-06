@@ -6,8 +6,9 @@ unix:!macx {
 }
 #CONFIG	+= x86_64
 
-VAA3DPATH = C:/Vaa3D_2013_Qt486/v3d_external/v3d_main
+VAA3DPATH = ../../../../v3d_external/v3d_main
 IMGMANAGERPATH = ../v3d_imgManagerMK
+STATSLEARNERPATH = ../StatsLearner
 V3DTOOLPATH = ../../../released_plugins/v3d_plugins
 
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
@@ -20,7 +21,6 @@ INCLUDEPATH += $$VAA3DPATH/neuron_editing
 win32: {
     BOOSTPATH = $$(BOOST_PATH)
     INCLUDEPATH += $$BOOSTPATH
-    INCLUDEPATH += $$BOOSTPATH/lib64-msvc-12.0
     LIBS += -L$$BOOSTPATH/lib64-msvc-12.0
 
     LIBS += -L$$IMGMANAGERPATH -lv3d_imgManagerMK

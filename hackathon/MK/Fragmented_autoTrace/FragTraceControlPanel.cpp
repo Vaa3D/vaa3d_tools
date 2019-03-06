@@ -627,14 +627,17 @@ void FragTraceControlPanel::traceButtonClicked()
 		{
 			vector<NeuronTree> trees;
 			trees.push_back(existingTree);
-			NeuronTree duplicatedPart = NeuronStructUtil::swcIdentityCompare(this->tracedTree, existingTree, 1);
-			writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\duplicatedPart.swc", duplicatedPart);
-			NeuronTree newlyTracedPart = NeuronStructUtil::swcSubtraction(this->tracedTree, duplicatedPart);
-			writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newpart.swc", newlyTracedPart);
+			NeuronTree duplicatedIdentified = NeuronStructUtil::swcIdentityCompare(this->tracedTree, existingTree, 1);
+			map<int, QList<NeuronSWC>> duplicatedSeparated = NeuronStructUtil::swcSplitByType(duplicatedIdentified);
+			//writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\duplicatedPart.swc", duplicatedPart);
+			NeuronTree newlyTracedPart;
+			newlyTracedPart.listNeuron = duplicatedSeparated.at(3);
+			//writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newpart.swc", newlyTracedPart);
 			//trees.push_back(this->tracedTree);
 			trees.push_back(newlyTracedPart);
-			finalTree = NeuronStructUtil::swcCombine(trees);
-			this->thisCallback->setSWCTeraFly(finalTree);
+			profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
+			this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree);
+			this->thisCallback->setSWCTeraFly(combinedProfiledTree.tree);
 		}
 
 		if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);

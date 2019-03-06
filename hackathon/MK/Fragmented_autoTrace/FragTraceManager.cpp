@@ -425,3 +425,14 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 		signalBlobs.erase(signalBlobs.begin() + *delIt);
 }
 
+void FragTraceManager::segConnectAmongTrees(profiledTree& inputProfiledTree)
+{
+	inputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(inputProfiledTree, 5);
+	for (map<int, segUnit>::iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+
+		}
+	}
+}
