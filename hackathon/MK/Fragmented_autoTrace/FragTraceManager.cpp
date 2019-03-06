@@ -425,14 +425,32 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 		signalBlobs.erase(signalBlobs.begin() + *delIt);
 }
 
-void FragTraceManager::segConnectAmongTrees(profiledTree& inputProfiledTree)
+profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree)
 {
-	inputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(inputProfiledTree, 5);
-	for (map<int, segUnit>::iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
+	profiledTree tmpTree = inputProfiledTree; 
+	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, 5);
+	bool typeAssigned = false;
+	int assignedType;
+	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
 	{
 		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 		{
+			if (nodeIt->type != 7)
+			{
+				typeAssigned = true;
+				assignedType = nodeIt->type;
+				break;
+			}
+		}
 
+		if (typeAssigned)
+		{
+			for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+				nodeIt->type = assignedType;
+
+			typeAssigned = false;
 		}
 	}
+
+	return outputProfiledTree;
 }

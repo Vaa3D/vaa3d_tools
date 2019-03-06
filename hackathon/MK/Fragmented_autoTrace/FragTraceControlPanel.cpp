@@ -636,7 +636,7 @@ void FragTraceControlPanel::traceButtonClicked()
 			//trees.push_back(this->tracedTree);
 			trees.push_back(newlyTracedPart);
 			profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
-			this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree);
+			profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree);
 			this->thisCallback->setSWCTeraFly(combinedProfiledTree.tree);
 		}
 
