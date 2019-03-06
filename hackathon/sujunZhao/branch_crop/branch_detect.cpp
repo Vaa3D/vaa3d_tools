@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <iostream>
 #include <v3d_interface.h>
-//#include "../get_terminal.h"
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define PI 3.14159265359
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 using namespace std;
+QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage);
 
 void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
@@ -33,11 +34,8 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
     //image
     Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
 
-    // remove duplicated nodes
-    QList<NeuronSWC> sorted_neuron;
-    SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
     // Find branch points
-    QList<int> branch_list = get_branch_points(sorted_neuron, false, p4DImage);
+    QList<int> branch_list = get_branch_points(nt, false, p4dImage);
 //    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
     //    // Crop tip-centered regions one by one
     //    block zcenter_block; // This is a block centered at (0,0,0)
@@ -75,6 +73,10 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
 }
 
 QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage){
+    // remove duplicated nodes
+//    QList<NeuronSWC> sorted_neuron;
+//    SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
+
     //Get Image
     int nChannel = p4DImage->getCDim();
 
@@ -90,7 +92,6 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
     QList<int> alln;
     int N=nt.listNeuron.size();
     map<int, int> t;
-    int N=nt.listNeuron.size();
     for(int i=0; i<N; i++){
         //qDebug() << nt.listNeuron.at(i).n << nt.listNeuron.at(i).pn;
         plist.append(nt.listNeuron.at(i).pn);
@@ -103,8 +104,10 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
         if((plist.count(plist.at(i))>1)&(t.at(plist.at(i)) == 1)){
             // branch points pruning, remove length < 10um
             // based on distances
-            if(plist.at(i)!=-1){int p_index = alln.indexOf(plist.at(i));}
+            int p_index;
+            if(plist.at(i)!=-1){p_index = alln.indexOf(plist.at(i));}
             else break;
+
             double d = dist(nt.listNeuron.at(alln.at(i)),nt.listNeuron.at(p_index));
             //distance & intensity
             V3DLONG nodex = nt.listNeuron.at(p_index).x;
@@ -124,7 +127,7 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
 
 // find other branch points in the same cropped block
 vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a){
-    Qvector<Qvector<int>> neighbours;
+    vector< vector<int> > neighbours;
     int n=a.size();
     for(int i=0; i<n; i++){
         vector<int> cp;
@@ -275,16 +278,6 @@ void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DP
    //listNeuron.clear();
 }
 
-
-
-// check missing branches
-double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
-{
-       double xx = s1.x-s2.x;
-       double yy = s1.y-s2.y;
-       double zz = s1.z-s2.z;
-       return (xx*xx+yy*yy+zz*zz);
-};
 
 LandmarkList get_missing_branches_menu(V3DPluginCallback2 &callback, QWidget *parent, Image4DSimple * p4DImage)
 {
