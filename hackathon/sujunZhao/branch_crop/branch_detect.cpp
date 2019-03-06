@@ -14,12 +14,12 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
 {
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-    //if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-    //if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-//    QString image_file=infiles.at(0);
+    QString image_file=inparas.at(0);
 //    QString swc_file = infiles.at(1);
-//    QString output_dir=outfiles.at(0);
+    QString output_dir=outfiles.at(0);
 //    XYZ block_size=XYZ(100,100,20);
     QString swc_file = infiles.at(0);
 
@@ -30,11 +30,13 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
 //    }
     QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
     cell_name = cell_name.left(cell_name.indexOf("."));
+    //image
+    Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
 
     // remove duplicated nodes
     SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
     // Find branch points
-    QList<int> branch_list = get_branch_points(sorted_neuron, false);
+    QList<int> branch_list = get_branch_points(sorted_neuron, false, p4DImage);
 //    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
     //    // Crop tip-centered regions one by one
     //    block zcenter_block; // This is a block centered at (0,0,0)
@@ -71,45 +73,53 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
       return;
 }
 
-QList<int> get_branch_points(NeuronTree nt, bool include_root){
+QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage){
+    //Get Image
+    int nChannel = p4DImage->getCDim();
+
+    V3DLONG mysz[4];
+    mysz[0] = p4DImage->getXDim();
+    mysz[1] = p4DImage->getYDim();
+    mysz[2] = p4DImage->getZDim();
+    mysz[3] = nChannel;
+    unsigned char *data1d_crop=p4DImage->getRawDataAtChannel(nChannel);
+
     QList<int> branch_list;
-    QList<int> tip_list;
-    QList<int> alln;
     QList<int> plist;
+    QList<int> alln;
     int N=nt.listNeuron.size();
     map<int, int> t;
-    vector< vector<int> > childlist;
     int N=nt.listNeuron.size();
     for(int i=0; i<N; i++){
         //qDebug() << nt.listNeuron.at(i).n << nt.listNeuron.at(i).pn;
         plist.append(nt.listNeuron.at(i).pn);
         alln.append(nt.listNeuron.at(i).n);
         t.insert(pair<int,int>(plist.at(i),0));
-        if(include_root & nt.listNeuron.at(i).pn == -1){
-            tip_list.append(i);
-        }
     }
     for(int i=0; i<N; i++){
 
         t.at(plist.at(i)) = t.at(plist.at(i))+1;
         if((plist.count(plist.at(i))>1)&(t.at(plist.at(i)) == 1)){
-            branch_list.push_back(i);
+            // branch points pruning, remove length < 10um
+            // based on distances
+            if(plist.at(i)!=-1){int p_index = alln.indexOf(plist.at(i));}
+            else break;
+            double d = dist(nt.listNeuron.at(alln.at(i)),nt.listNeuron.at(p_index));
+            //distance & intensity
+            V3DLONG nodex = nt.listNeuron.at(p_index).x;
+            V3DLONG nodey = nt.listNeuron.at(p_index).y;
+            V3DLONG nodez = nt.listNeuron.at(p_index).z;
+            struct XYZ ploc= XYZ(nodex,nodey,nodez);
+            if(d>10 && data1d_crop[V3DLONG(ploc.z*mysz[0]*mysz[1]+ploc.y*mysz[0]+ploc.x)]>=25){
+                branch_list.push_back(i);
+            }
+            else break;
         }
-    }
-    // tips
-    for(int i=0; i<N; i++){
-        if(plist.count(nt.listNeuron.at(i).n)==0){tip_list.append(i);}
-    }
-
-    // branch points pruning, remove length < 10um
-    // 1. based on distances
-    int n_branch = branch_list.size();
-    for(int i=0;i<n_branch;i++){
-
     }
 
     return branch_list;
 }
+
 
 // find other branch points in the same cropped block
 vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a){
@@ -263,6 +273,8 @@ void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DP
    if(label_mip) {delete [] label_mip; label_mip=0;}
    //listNeuron.clear();
 }
+
+
 
 // check missing branches
 double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
