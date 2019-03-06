@@ -71,11 +71,11 @@ integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, flo
 	this->nodeTileSize = NODE_TILE_LENGTH;
 
 	NeuronStructUtil::nodeTileMapGen(this->tree, this->nodeTileMap, nodeTileSize);
-
 	NeuronStructUtil::node2loc_node2childLocMap(this->tree.listNeuron, this->node2LocMap, this->node2childLocMap);
 
 	this->segs = NeuronStructExplorer::findSegs(this->tree.listNeuron, this->node2childLocMap);
 	//cout << "segs num: " << this->segs.size() << endl;
+	
 	vector<segUnit> allSegs;
 	for (map<int, segUnit>::iterator it = this->segs.begin(); it != this->segs.end(); ++it)
 	{

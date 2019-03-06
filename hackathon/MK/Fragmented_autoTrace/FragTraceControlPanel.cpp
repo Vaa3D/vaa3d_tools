@@ -618,9 +618,6 @@ void FragTraceControlPanel::traceButtonClicked()
 		{
 			NeuronStructExplorer myExplorer;
 			profiledTree tracedProfiledTree(this->tracedTree);
-			//profiledTree elongatedProfiledTree = myExplorer.itered_segElongate_dist(tracedProfiledTree, 10, 5);
-			//NeuronTree shortCleanedUpTree;
-			//if (this->traceManagerPtr->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(elongatedProfiledTree, this->traceManagerPtr->minNodeNum);
 			this->thisCallback->setSWCTeraFly(tracedProfiledTree.tree);
 			this->thisCallback->redrawEditInfo(12);
 			
@@ -630,7 +627,12 @@ void FragTraceControlPanel::traceButtonClicked()
 		{
 			vector<NeuronTree> trees;
 			trees.push_back(existingTree);
-			trees.push_back(this->tracedTree);
+			NeuronTree duplicatedPart = NeuronStructUtil::swcIdentityCompare(this->tracedTree, existingTree, 1);
+			writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\duplicatedPart.swc", duplicatedPart);
+			NeuronTree newlyTracedPart = NeuronStructUtil::swcSubtraction(this->tracedTree, duplicatedPart);
+			writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newpart.swc", newlyTracedPart);
+			//trees.push_back(this->tracedTree);
+			trees.push_back(newlyTracedPart);
 			finalTree = NeuronStructUtil::swcCombine(trees);
 			this->thisCallback->setSWCTeraFly(finalTree);
 		}

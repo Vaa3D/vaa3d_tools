@@ -192,8 +192,20 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 	}
 
 	NeuronTree outputTree;
+	boost::container::flat_set<int> nodeIDs;
 	for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator mapIt = targetNodeTileMap.begin(); mapIt != targetNodeTileMap.end(); ++mapIt)
+	{
 		outputTree.listNeuron.append(mapIt->second);
+		for (QList<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+			nodeIDs.insert(nodeIt->n);
+	}
+
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1) continue;
+		else 
+			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
+	}
 
 	return outputTree;
 }
