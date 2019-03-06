@@ -48,7 +48,6 @@ double DistanceOfPointToLine(QList<NeuronSWC> neuron,int a,int b,int s)
 
 }
 // find the suspecious wrong type of neuron type
-QVector<QVector<V3DLONG> > childs;
 /*
 bool detect_type_distance(V3DPluginCallback2 &callback, QWidget *parent)
   {
@@ -269,7 +268,7 @@ bool detect_type_distance(V3DPluginCallback2 &callback, QWidget *parent)
 
   }*/
 
-
+QVector<QVector<V3DLONG> > childs;
 bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 {
     NeuronTree tree1=callback.getSWCTeraFly();
@@ -278,7 +277,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 //sort swc
     QList<NeuronSWC> tree1swc;
     SortSWC(ori_tree1swc, tree1swc ,VOID, 0);
-
+    //v3d_msg(QString("sorted swc size: %1").arg(tree1swc.size()));
 //get the childslist
          NeuronTree n_t;
          QHash <int, int> hash_nt ;
@@ -287,37 +286,36 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
          }
          n_t.listNeuron=tree1swc;
          n_t.hashNeuron=hash_nt;
-         tree1=n_t;
-         tree1swc=tree1.listNeuron;
-         V3DLONG neuronNum = tree1.listNeuron.size();
+
+         V3DLONG neuronNum = n_t.listNeuron.size();
          childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
          for (V3DLONG i=0;i<neuronNum;i++)
          {
-             V3DLONG par = tree1.listNeuron[i].pn;
+             V3DLONG par = n_t.listNeuron[i].pn;
              if (par<0) continue;
-             childs[tree1.hashNeuron.value(par)].push_back(i);
+             childs[n_t.hashNeuron.value(par)].push_back(i);
          }
-         cout<<"++++++++++++++++++++++++++++++the childs number: "<<childs.size()<<endl;
+         //cout<<"the childs number: "<<childs.size()<<endl;
 //calculate the kinds of different types
-    vector<int> kinds;
-    for (int i=0;i<tree1swc.size();i++)
-    {
-      kinds.push_back(tree1swc.at(i).type);
-    }
-    int max = *max_element(kinds.begin(),kinds.end());
-    int ct=0;
-    for (int i=0;i<max+1;i++)
-    {
-        for (int j=0;j<kinds.size();j++)
-        {
-            if(kinds.at(j)==i)
-            {
-                ct=ct+1;
-                break;
-            }
-        }
-    }
-    v3d_msg(QString("The kinds number of neuron type in your file: %1").arg(ct));
+//    vector<int> kinds;
+//    for (int i=0;i<tree1swc.size();i++)
+//    {
+//      kinds.push_back(tree1swc.at(i).type);
+//    }
+//    int max = *max_element(kinds.begin(),kinds.end());
+//    int ct=0;
+//    for (int i=0;i<max+1;i++)
+//    {
+//        for (int j=0;j<kinds.size();j++)
+//        {
+//            if(kinds.at(j)==i)
+//            {
+//                ct=ct+1;
+//                break;
+//            }
+//        }
+//    }
+//    v3d_msg(QString("The kinds number of neuron type in your file: %1").arg(ct));
     //cout<<"+++++++++++++++++++++++the kinds number of neuron type: "<<ct<<endl;
 
     //vector<int> ids;
@@ -374,6 +372,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 //find the root of wrong type which is not 1,2 neither 3
             int numofwrongplace=0;
             int numofwrongtype=0;
+            int numofduplicated=0;
             for (int i=0;i<ori_tree1swc.size();i++)
              {
                 if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
@@ -397,18 +396,30 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 
     for (int i=0;i<tree1swc.size();i++)
     {
-        if(childs[i].size() != 0 && (tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)) {suspoint.push_back(i);numofwrongplace++;} //find wrong types based on parent-child connection
+        if(childs[i].size() == 1) {
+
+            if(childs[childs[i].at(0)].size() == 2) continue;
+            else if(tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)
+            {suspoint.push_back(childs[i].at(0));
+            numofwrongplace++;}
+        } //find wrong types based on parent-child connection
+        else if(childs[i].size() == 2) {
+
+            if((tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type) || (tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type))
+            {suspoint.push_back(i);
+            numofwrongplace++;}
+        } //find wrong types based on parent-child connection
         for (int j=0;j<tree1swc.size();j++)
         {
             if (i != j)
             {
-                int x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
-                x1=(int)(tree1swc.at(i).x+0.5);
-                x2=(int)(tree1swc.at(j).x+0.5);
-                y1=(int)(tree1swc.at(i).y+0.5);
-                y2=(int)(tree1swc.at(j).y+0.5);
-                z1=(int)(tree1swc.at(i).z+0.5);
-                z2=(int)(tree1swc.at(j).z+0.5);
+                double x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
+                x1=tree1swc.at(i).x;
+                x2=tree1swc.at(j).x;
+                y1=tree1swc.at(i).y;
+                y2=tree1swc.at(j).y;
+                z1=tree1swc.at(i).z;
+                z2=tree1swc.at(j).z;
                 type1=tree1swc.at(i).type;
                 type2=tree1swc.at(j).type;
                 pars1=tree1swc.at(i).pn;
@@ -417,7 +428,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                 n2=tree1swc.at(j).n;
                 if(x1==x2 && y1==y2 && z1==z2 && type1!=type2)
                 {
-                    suspoint.push_back(i);
+                    suspoint.push_back(i);numofduplicated++;
                     if(pars1==-1 && pars2!=-1)
                     {
                         suspointroot.push_back(i);
@@ -460,7 +471,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
 //set markers back to terafly
-    LandmarkList result1;
+    LandmarkList markerlist;
     LocationSimple m;
     for(int i=0;i<suspoint.size();i++)
        {
@@ -470,14 +481,13 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
            m.color.r = 255;
            m.color.g = 255;
            m.color.b = 255;
-           result1.push_back(m);
+           markerlist.push_back(m);
        }
-           for (int i=0;i<Markers.size();i++)
-              {
-                 result1.push_back(Markers.at(i));
-              }
-     callback.setLandmarkTeraFly(result1);
-     if (suspoint.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] nodes are with wrong type(still 1,2 or 3),please check!").arg(suspoint.size()).arg(numofwrongplace));
+     for (int i=0;i<Markers.size();i++) markerlist.push_back(Markers.at(i));
+
+     callback.setLandmarkTeraFly(markerlist);
+     if (suspoint.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] nodes are duplicated nodes,[%3] nodes are with wrong type(still 1,2 or 3),please check!").arg(suspoint.size()).arg(numofduplicated).arg(numofwrongplace));
+     else v3d_msg(QString("There are not any nodes you need to check!"));
      return 1;
 }
 void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
@@ -486,7 +496,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
+    QString output_dir=outfiles.at(0);
 
     QStringList list=QString(infiles[0]).split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
@@ -498,6 +508,8 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
 //sort swc
     QList<NeuronSWC> tree1swc;
     SortSWC(ori_tree1swc, tree1swc ,VOID, 0);
+//    QString output_newswc = output_dir+"sorted"+".eswc";
+//    export_list2file(tree1swc,output_newswc,output_dir);
 
 //get the childslist
          NeuronTree n_t;
@@ -551,6 +563,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         vector<int> suspoint;
         int numofwrongplace=0;
         int numofwrongtype=0;
+        int numofduplicated=0;
         for (int i=0;i<ori_tree1swc.size();i++)
          {
             if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
@@ -573,25 +586,37 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
 
     for (int i=0;i<tree1swc.size();i++)
     {
-        if(childs[i].size() != 0 && (tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)) {suspoint.push_back(i);numofwrongplace++;} //find wrong types based on parent-child connection
+        if(childs[i].size() == 1) {
+
+            if(childs[childs[i].at(0)].size() == 2) continue;
+            else if(tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)
+            {suspoint.push_back(childs[i].at(0));
+            numofwrongplace++;}
+        } //find wrong types based on parent-child connection
+        else if(childs[i].size() == 2) {
+
+            if((tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type) || (tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type))
+            {suspoint.push_back(i);
+            numofwrongplace++;}
+        } //find wrong types based on parent-child connection
         for (int j=0;j<tree1swc.size();j++)
         {
             if (i != j)
             {
-                int x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
-                x1=(int)(tree1swc.at(i).x+0.5);
-                x2=(int)(tree1swc.at(j).x+0.5);
-                y1=(int)(tree1swc.at(i).y+0.5);
-                y2=(int)(tree1swc.at(j).y+0.5);
-                z1=(int)(tree1swc.at(i).z+0.5);
-                z2=(int)(tree1swc.at(j).z+0.5);
+                double x1,x2,y1,y2,z1,z2,type1,type2,pars1,pars2,n1,n2;
+                x1=tree1swc.at(i).x;
+                x2=tree1swc.at(j).x;
+                y1=tree1swc.at(i).y;
+                y2=tree1swc.at(j).y;
+                z1=tree1swc.at(i).z;
+                z2=tree1swc.at(j).z;
                 type1=tree1swc.at(i).type;
                 type2=tree1swc.at(j).type;
                 pars1=tree1swc.at(i).pn;
                 pars2=tree1swc.at(j).pn;
                 n1=tree1swc.at(i).n;
                 n2=tree1swc.at(j).n;
-                if(x1==x2 && y1==y2 && z1==z2 && type1!=type2) suspoint.push_back(i);//find wrong types based on duplicated nodes
+                if(x1==x2 && y1==y2 && z1==z2 && type1!=type2) {suspoint.push_back(i);numofduplicated++;}//find wrong types based on duplicated nodes
             }
        }
     }
@@ -604,8 +629,8 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     fp = fopen((char *)qPrintable(out_result+QString(".txt")), "wt");
     qDebug("--------------------------------txt output dir:%s",qPrintable(out_result));
 
-    fprintf(fp, "1.Name of swc 2.Total number 3.Number of wrong type 4.Number of wrong type(still 1,2 or 3)\n");
-    fprintf(fp,"%s %d %d %d",flag1.toStdString().c_str(),suspoint.size(),numofwrongtype,numofwrongplace);
+    fprintf(fp, "1.Name of swc 2.Total number 3. Number of wrong duplicated 4.Number of wrong type 5.Number of wrong type(still 1,2 or 3)\n");
+    fprintf(fp,"%s %d %d %d %d",flag1.toStdString().c_str(),suspoint.size(),numofduplicated,numofwrongtype,numofwrongplace);
     fclose(fp);
 
 }

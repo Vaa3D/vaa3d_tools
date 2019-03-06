@@ -98,11 +98,9 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     QString output_dir=outfiles.at(0);
     QString output_apo;
 
-
     QStringList list=swc_file.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
     QString flag1=list1.first();
-
 
     XYZ block_size=XYZ(100,100,20);
 
