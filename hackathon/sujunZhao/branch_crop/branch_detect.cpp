@@ -34,6 +34,7 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
     Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
 
     // remove duplicated nodes
+    QList<NeuronSWC> sorted_neuron;
     SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
     // Find branch points
     QList<int> branch_list = get_branch_points(sorted_neuron, false, p4DImage);
@@ -123,7 +124,7 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
 
 // find other branch points in the same cropped block
 vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a){
-    vector< vector<int> > neighbours;
+    Qvector<Qvector<int>> neighbours;
     int n=a.size();
     for(int i=0; i<n; i++){
         vector<int> cp;

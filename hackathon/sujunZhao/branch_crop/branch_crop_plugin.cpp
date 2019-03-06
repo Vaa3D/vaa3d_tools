@@ -13,8 +13,8 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(branch_crop, TestPlugin)
 
-void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
-QList<int> get_branch_points(NeuronTree nt, bool include_root);
+//void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+//QList<int> get_branch_points(NeuronTree nt, bool include_root);
 
 QStringList TestPlugin::menulist() const
 {
@@ -63,3 +63,4 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         v3d_msg("To be implemented.");
     }
 
+}
