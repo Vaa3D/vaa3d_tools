@@ -521,6 +521,22 @@ NeuronTree NeuronStructUtil::swcSamePartExclustion(const NeuronTree& subjectTree
 		}
 	}
 
+	map<string, vector<NeuronSWC>> outputGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
+	boost::container::flat_set<int> nodeIDs;
+	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
+	{
+		for (vector<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+			nodeIDs.insert(nodeIt->n);
+	}
+
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1) continue;
+		else
+			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
+	}
+
 	return outputTree;
 }
 /* ================================== END of [Neuron Struct Profiling Methods] ================================== */

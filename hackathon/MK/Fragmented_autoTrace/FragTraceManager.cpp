@@ -429,6 +429,7 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 {
 	profiledTree tmpTree = inputProfiledTree; 
 	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, distThreshold);
+	
 	bool typeAssigned = false;
 	int assignedType;
 	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
@@ -447,9 +448,12 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 		{
 			cout << "existing segment found" << endl;
 			for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+			{
 				nodeIt->type = assignedType;
-
+				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->n)].type = assignedType;
+			}
 			typeAssigned = false;
+			assignedType = 7;
 		}
 	}
 
