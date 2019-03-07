@@ -489,6 +489,40 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 
 	return outputTree;
 }
+
+NeuronTree NeuronStructUtil::swcSamePartExclustion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
+{
+	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
+	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
+
+	NeuronTree outputTree;
+	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
+	{
+		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
+		{
+			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it) 
+				outputTree.listNeuron.push_back(*it);
+		}
+		else
+		{
+			float minDist = 10000;
+			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
+			{
+				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
+				{
+					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
+					if (dist <= minDist) minDist = dist;
+				}
+
+				if (minDist <= distThreshold) continue;
+				else outputTree.listNeuron.push_back(*it1);
+			}
+		}
+	}
+
+	return outputTree;
+}
 /* ================================== END of [Neuron Struct Profiling Methods] ================================== */
 
 

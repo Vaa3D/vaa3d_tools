@@ -46,7 +46,7 @@ public:
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;
 
-	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree);
+	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
 
 public slots:
 	void imgProcPipe_wholeBlock();

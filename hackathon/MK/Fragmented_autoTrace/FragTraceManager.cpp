@@ -425,10 +425,10 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 		signalBlobs.erase(signalBlobs.begin() + *delIt);
 }
 
-profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree)
+profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
 {
 	profiledTree tmpTree = inputProfiledTree; 
-	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, 5);
+	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, distThreshold);
 	bool typeAssigned = false;
 	int assignedType;
 	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
@@ -445,6 +445,7 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 
 		if (typeAssigned)
 		{
+			cout << "existing segment found" << endl;
 			for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 				nodeIt->type = assignedType;
 

@@ -20,6 +20,7 @@ public:
 
 	NeuronTree tracedTree;
 	void scaleTracedTree();
+	NeuronTree treeScaleBack(const NeuronTree& inputTree);
 
 signals:
 	void switchOnSegPipe();

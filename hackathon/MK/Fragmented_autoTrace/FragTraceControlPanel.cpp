@@ -626,18 +626,19 @@ void FragTraceControlPanel::traceButtonClicked()
 		else
 		{
 			vector<NeuronTree> trees;
-			trees.push_back(existingTree);
-			NeuronTree duplicatedIdentified = NeuronStructUtil::swcIdentityCompare(this->tracedTree, existingTree, 1);
-			map<int, QList<NeuronSWC>> duplicatedSeparated = NeuronStructUtil::swcSplitByType(duplicatedIdentified);
-			//writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\duplicatedPart.swc", duplicatedPart);
-			NeuronTree newlyTracedPart;
-			newlyTracedPart.listNeuron = duplicatedSeparated.at(3);
-			//writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\newpart.swc", newlyTracedPart);
-			//trees.push_back(this->tracedTree);
+			NeuronTree scaledBackExistingTree = this->treeScaleBack(existingTree);
+			trees.push_back(scaledBackExistingTree);
+			NeuronTree scaledBackTracedTree = this->treeScaleBack(this->tracedTree);
+			NeuronTree newlyTracedPart = NeuronStructUtil::swcSamePartExclustion(scaledBackTracedTree, scaledBackExistingTree, 10);
 			trees.push_back(newlyTracedPart);
+			writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\existingTree.swc", scaledBackExistingTree);	
+			writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\newpart.swc", newlyTracedPart);
+			
 			profiledTree combinedProfiledTree(NeuronStructUtil::swcCombine(trees));
-			profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree);
-			this->thisCallback->setSWCTeraFly(combinedProfiledTree.tree);
+			profiledTree finalProfiledTree = this->traceManagerPtr->segConnectAmongTrees(combinedProfiledTree, 10);
+			this->tracedTree = finalProfiledTree.tree;
+			this->scaleTracedTree();
+			this->thisCallback->setSWCTeraFly(this->tracedTree);
 		}
 
 		if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
@@ -677,4 +678,27 @@ void FragTraceControlPanel::scaleTracedTree()
 	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
 	this->tracedTree = scaledShiftedTree;
+}
+
+NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
+{
+	float imgDims[3];
+	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
+	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
+	imgDims[2] = this->thisCallback->getImageTeraFly()->getZDim();
+
+	float imgRes[3];
+	imgRes[0] = this->thisCallback->getImageTeraFly()->getRezX();
+	imgRes[1] = this->thisCallback->getImageTeraFly()->getRezY();
+	imgRes[2] = this->thisCallback->getImageTeraFly()->getRezZ();
+
+	float imgOri[3];
+	imgOri[0] = this->thisCallback->getImageTeraFly()->getOriginX();
+	imgOri[1] = this->thisCallback->getImageTeraFly()->getOriginY();
+	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
+
+	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
+	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]);
+
+	return shiftScaleBackTree;
 }
