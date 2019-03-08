@@ -471,7 +471,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                 }
              }
              int numofdup=floor(numofduplicated/2);
-             v3d_msg(QString("You got [%1] dup in your file,please check!").arg(numofduplicated));
+             //v3d_msg(QString("You got [%1] dup in your file,please check!").arg(numofduplicated));
              printf("You got [%d] white markers in your file.[%d] nodes are not type 1,2 and 3.[%d] duplicated nodes with wrong type.[%d] branch nodes are wrong type.[%d] nodes are with wrong type(still 1,2 or 3),please check!",markerlist.size(),numofwrongtype,numofdup,numoflike_soma_situation,numofwrongplace);
              //if (markerlist.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] nodes are not type 1,2 and 3.[%3] duplicated nodes with wrong type.[%4] branch nodes are wrong type.[%5] nodes are with wrong type(still 1,2 or 3),please check!").arg(markerlist.size()).arg(numofwrongtype).arg(floor(numofduplicated/2)).arg(numoflike_soma_situation).arg(numofwrongplace));
              if (markerlist.size()!=0) v3d_msg(QString("You got [%1] white markers in your file,please check!").arg(markerlist.size()));
@@ -719,8 +719,9 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     fp = fopen((char *)qPrintable(out_result+QString(".txt")), "wt");
     qDebug("--------------------------------txt output dir:%s",qPrintable(out_result));
     int numofdup=floor(numofduplicated/2);
-    fprintf(fp, "1.Name of swc 2.Number of wrong type 3.Number of wrong branch points 4.Number of wrong type based on P-C(still 1,2 or 3) 5.Number of duplicated nodes 6.Total number\n") ;
-    fprintf(fp,"%s %d %d %d %d %d",flag1.toStdString().c_str(),numofwrongtype,numoflike_soma_situation,numofwrongplace,numofdup,markerlist.size());
+    int numofwrongplace_not_branch=numofwrongplace-numoflike_soma_situation;
+    fprintf(fp, "1.Name of swc 2.Number of wrong type 3.Number of wrong branch points 4.Number of wrong type based on P-C(not branch,still 1,2 or 3) 5.Number of duplicated nodes 6.Total number\n") ;
+    fprintf(fp,"%s %d %d %d %d %d",flag1.toStdString().c_str(),numofwrongtype,numoflike_soma_situation,numofwrongplace_not_branch,numofdup,markerlist.size());
     fclose(fp);
 
 }
