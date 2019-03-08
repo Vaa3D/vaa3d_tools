@@ -15,7 +15,6 @@ Q_EXPORT_PLUGIN2(detect_type, type);
 QStringList type::menulist() const
 {
 	return QStringList() 
-        <<tr("detect_type_distance")
         <<tr("detect_type")
 		<<tr("about");
 }

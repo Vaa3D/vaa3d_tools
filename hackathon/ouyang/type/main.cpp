@@ -286,7 +286,9 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 
 //find the root of wrong type which is not 1,2 neither 3
             int numofwrongplace=0;
-            int numofwrongtype=0;;
+            int numofwrongtype=0;
+            int numoflike_soma_situation=0;
+            int numofduplicated=0;
             for (int i=0;i<ori_tree1swc.size();i++)
              {
                 if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
@@ -332,6 +334,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                             {
                                 sametype.insert(i,j);
                                 all_index.push_back(i);
+                                numofduplicated++;
 
                             }
                         }
@@ -352,7 +355,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 
 //                sort(all_duplicated_index.begin(),all_duplicated_index.end());
 //                all_duplicated_index.erase(unique(all_duplicated_index.begin(),all_duplicated_index.end()),all_duplicated_index.end());//delete duplicated index
-
+// delete one of a pair duplicated nodes
                 suspoint_before.insert(suspoint_before.end(),all_index.begin(),all_index.end());
                 LocationSimple temp;
                 for(int i=0;i<suspoint_before.size();i++)
@@ -377,7 +380,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                        before_sort.x=ori_tree1swc.at(suspoint_before.at(i)).x;
                        before_sort.y=ori_tree1swc.at(suspoint_before.at(i)).y;
                        before_sort.z=ori_tree1swc.at(suspoint_before.at(i)).z;
-                       //cout<<"------------222----------------------x:"<<before_sort.x<<endl;//2 wei
+                       cout<<"------------222----------------------x:"<<before_sort.x<<endl;//2 wei
                        before_sort.color.r = 255;
                        before_sort.color.g = 255;
                        before_sort.color.b = 255;
@@ -420,23 +423,28 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
 
                      if((tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type) || (tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type))
                      {suspoint_after.push_back(i);
+                     numoflike_soma_situation++;
                      numofwrongplace++;}
                  }
              }
 //set all markers back to terafly
 
-         LocationSimple temp1;
+         float x1,y1,z1;
          if(suspoint_after.size()!=0){
 
             for(int i=0;i<suspoint_after.size();i++)
             {
                 if(suspoint_after.at(i)!=VOID){
-                temp1.x=tree1swc.at(suspoint_after.at(i)).x;
-                temp1.y=tree1swc.at(suspoint_after.at(i)).y;
-                temp1.z=tree1swc.at(suspoint_after.at(i)).z;
+
+                x1=tree1swc.at(suspoint_after.at(i)).x;
+                y1=tree1swc.at(suspoint_after.at(i)).y;
+                z1=tree1swc.at(suspoint_after.at(i)).z;
+                cout<<"++++++++++++++666++++++++++++++++++++x:"<<x1<<endl;
+                cout<<"++++++++++++++666++++++++++++++++++++y:"<<y1<<endl;
+                cout<<"++++++++++++++666++++++++++++++++++++z:"<<z1<<endl;
                 for(int j=0;j<markerlist.size();j++){
 
-                   if(temp1.x == markerlist.at(j).x && temp1.y == markerlist.at(j).y && temp1.z==markerlist.at(j).z) {suspoint_after.at(i)=VOID;}
+                   if(x1 == markerlist.at(j).x &&  y1 == markerlist.at(j).y && z1==markerlist.at(j).z) {suspoint_after.at(i)=VOID;}
 
                 }
               }
@@ -450,7 +458,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                     m.x=tree1swc.at(suspoint_after.at(i)).x;
                     m.y=tree1swc.at(suspoint_after.at(i)).y;
                     m.z=tree1swc.at(suspoint_after.at(i)).z;
-                    //cout<<"++++++++++++++333++++++++++++++++++++x:"<<m.x<<endl;
+                    cout<<"++++++++++++++333++++++++++++++++++++x:"<<m.x<<endl;
 //                    for(int j=0;j<suspoint_before.size();j++){
 
 //                        if(m.x == ori_tree1swc.at(suspoint_before.at(j)).x && m.y == ori_tree1swc.at(suspoint_before.at(j)).y && m.z==ori_tree1swc.at(suspoint_before.at(j)).z) {i++;goto here;}
@@ -462,7 +470,11 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                     markerlist.push_back(m);
                 }
              }
-             if (markerlist.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] nodes are not type 1,2 and 3.[%3] nodes are with wrong type(still 1,2 or 3),please check!").arg(markerlist.size()).arg(numofwrongtype).arg(numofwrongplace));
+             int numofdup=floor(numofduplicated/2);
+             v3d_msg(QString("You got [%1] dup in your file,please check!").arg(numofduplicated));
+             printf("You got [%d] white markers in your file.[%d] nodes are not type 1,2 and 3.[%d] duplicated nodes with wrong type.[%d] branch nodes are wrong type.[%d] nodes are with wrong type(still 1,2 or 3),please check!",markerlist.size(),numofwrongtype,numofdup,numoflike_soma_situation,numofwrongplace);
+             //if (markerlist.size()!=0) v3d_msg(QString("You got [%1] white markers in your file.[%2] nodes are not type 1,2 and 3.[%3] duplicated nodes with wrong type.[%4] branch nodes are wrong type.[%5] nodes are with wrong type(still 1,2 or 3),please check!").arg(markerlist.size()).arg(numofwrongtype).arg(floor(numofduplicated/2)).arg(numoflike_soma_situation).arg(numofwrongplace));
+             if (markerlist.size()!=0) v3d_msg(QString("You got [%1] white markers in your file,please check!").arg(markerlist.size()));
              else v3d_msg(QString("There are not any nodes you need to check!"));
 
               for (int i=0;i<Markers.size();i++) markerlist.push_back(Markers.at(i));
@@ -517,9 +529,11 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         alln.append(ori_tree1swc.at(i).n);
       }
 
-//find the root of wrong type which is not 1,2 neither 3
+    //find the root of wrong type which is not 1,2 neither 3
                 int numofwrongplace=0;
-                int numofwrongtype=0;;
+                int numofwrongtype=0;
+                int numoflike_soma_situation=0;
+                int numofduplicated=0;
                 for (int i=0;i<ori_tree1swc.size();i++)
                  {
                     if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
@@ -537,10 +551,6 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                      numofwrongtype++;
                     }
                 }
-
-//    QString qs_output= output_dir+flag1+"_"+".eswc";
-//    export_list2file(ori_tree1swc, qs_output,output_dir);
-
     //find the dumplicated nodes which have diffrent types before sorting
                 LandmarkList markerlist;
                 QHash<int,int> sametype;sametype.clear();
@@ -569,6 +579,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                                 {
                                     sametype.insert(i,j);
                                     all_index.push_back(i);
+                                    numofduplicated++;
 
                                 }
                             }
@@ -589,7 +600,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
 
     //                sort(all_duplicated_index.begin(),all_duplicated_index.end());
     //                all_duplicated_index.erase(unique(all_duplicated_index.begin(),all_duplicated_index.end()),all_duplicated_index.end());//delete duplicated index
-
+    // delete one of a pair duplicated nodes
                     suspoint_before.insert(suspoint_before.end(),all_index.begin(),all_index.end());
                     LocationSimple temp;
                     for(int i=0;i<suspoint_before.size();i++)
@@ -614,7 +625,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                            before_sort.x=ori_tree1swc.at(suspoint_before.at(i)).x;
                            before_sort.y=ori_tree1swc.at(suspoint_before.at(i)).y;
                            before_sort.z=ori_tree1swc.at(suspoint_before.at(i)).z;
-                           //cout<<"------------222----------------------x:"<<before_sort.x<<endl;//2 wei
+                           cout<<"------------222----------------------x:"<<before_sort.x<<endl;//2 wei
                            before_sort.color.r = 255;
                            before_sort.color.g = 255;
                            before_sort.color.b = 255;
@@ -657,23 +668,26 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
 
                          if((tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type) || (tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type))
                          {suspoint_after.push_back(i);
+                         numoflike_soma_situation++;
                          numofwrongplace++;}
                      }
                  }
-  //set all markers back to terafly
+    //set all markers back to terafly
 
-             LocationSimple temp1;
+             float x1,y1,z1;
              if(suspoint_after.size()!=0){
 
                 for(int i=0;i<suspoint_after.size();i++)
                 {
                     if(suspoint_after.at(i)!=VOID){
-                    temp1.x=tree1swc.at(suspoint_after.at(i)).x;
-                    temp1.y=tree1swc.at(suspoint_after.at(i)).y;
-                    temp1.z=tree1swc.at(suspoint_after.at(i)).z;
+
+                    x1=tree1swc.at(suspoint_after.at(i)).x;
+                    y1=tree1swc.at(suspoint_after.at(i)).y;
+                    z1=tree1swc.at(suspoint_after.at(i)).z;
+                    cout<<"++++++++++++++666++++++++++++++++++++x:"<<x1<<endl;
                     for(int j=0;j<markerlist.size();j++){
 
-                       if(temp1.x == markerlist.at(j).x && temp1.y == markerlist.at(j).y && temp1.z==markerlist.at(j).z) {suspoint_after.at(i)=VOID;}
+                       if(x1 == markerlist.at(j).x &&  y1 == markerlist.at(j).y && z1==markerlist.at(j).z) {suspoint_after.at(i)=VOID;}
 
                     }
                   }
@@ -687,7 +701,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                         m.x=tree1swc.at(suspoint_after.at(i)).x;
                         m.y=tree1swc.at(suspoint_after.at(i)).y;
                         m.z=tree1swc.at(suspoint_after.at(i)).z;
-                        //cout<<"++++++++++++++333++++++++++++++++++++x:"<<m.x<<endl;
+                        cout<<"++++++++++++++333++++++++++++++++++++x:"<<m.x<<endl;
     //                    for(int j=0;j<suspoint_before.size();j++){
 
     //                        if(m.x == ori_tree1swc.at(suspoint_before.at(j)).x && m.y == ori_tree1swc.at(suspoint_before.at(j)).y && m.z==ori_tree1swc.at(suspoint_before.at(j)).z) {i++;goto here;}
@@ -704,9 +718,9 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     QString out_result =QString(outfiles.at(0))+"/"+flag1;
     fp = fopen((char *)qPrintable(out_result+QString(".txt")), "wt");
     qDebug("--------------------------------txt output dir:%s",qPrintable(out_result));
-
-    fprintf(fp, "1.Name of swc 2.Number of wrong type 3.Number of wrong type(still 1,2 or 3) 4.Total number\n") ;
-    fprintf(fp,"%s %d %d %d",flag1.toStdString().c_str(),numofwrongtype,numofwrongplace,markerlist.size());
+    int numofdup=floor(numofduplicated/2);
+    fprintf(fp, "1.Name of swc 2.Number of wrong type 3.Number of wrong branch points 4.Number of wrong type based on P-C(still 1,2 or 3) 5.Number of duplicated nodes 6.Total number\n") ;
+    fprintf(fp,"%s %d %d %d %d %d",flag1.toStdString().c_str(),numofwrongtype,numoflike_soma_situation,numofwrongplace,numofdup,markerlist.size());
     fclose(fp);
 
 }
