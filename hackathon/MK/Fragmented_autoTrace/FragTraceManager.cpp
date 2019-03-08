@@ -457,5 +457,25 @@ profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputPro
 		}
 	}
 
+	bool duplicatedRemove = true;
+	while (duplicatedRemove)
+	{
+		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
+		{
+			if (it->n == it->parent)
+			{
+				outputProfiledTree.tree.listNeuron.removeAt(int(it - outputProfiledTree.tree.listNeuron.begin()));
+				goto DUPLICATE_REMOVED;
+			}
+		}
+		break;
+
+	DUPLICATE_REMOVED:
+		continue;
+	}
+
+	QString combinedTreeFullName = this->finalSaveRootQ + "/combinedTree.swc";
+	writeSWC_file(combinedTreeFullName, outputProfiledTree.tree);
+
 	return outputProfiledTree;
 }

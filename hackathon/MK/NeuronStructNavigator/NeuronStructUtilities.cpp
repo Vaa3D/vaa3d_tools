@@ -490,7 +490,7 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 	return outputTree;
 }
 
-NeuronTree NeuronStructUtil::swcSamePartExclustion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
+NeuronTree NeuronStructUtil::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
 {
 	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
 	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
