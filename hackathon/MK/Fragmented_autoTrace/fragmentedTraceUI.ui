@@ -290,7 +290,7 @@
                <x>0</x>
                <y>0</y>
                <width>724</width>
-               <height>538</height>
+               <height>537</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -690,7 +690,7 @@
                       <widget class="QLabel" name="label_5">
                        <property name="geometry">
                         <rect>
-                         <x>210</x>
+                         <x>220</x>
                          <y>10</y>
                          <width>131</width>
                          <height>21</height>
@@ -814,7 +814,7 @@
                <x>0</x>
                <y>0</y>
                <width>724</width>
-               <height>538</height>
+               <height>537</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -993,7 +993,7 @@
                <x>0</x>
                <y>0</y>
                <width>724</width>
-               <height>538</height>
+               <height>537</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1089,34 +1089,7 @@
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
                    </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_5">
-                    <item>
-                     <widget class="QCheckBox" name="checkBox_7">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>Connect fragments</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_2">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>479</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
+                   <layout class="QHBoxLayout" name="horizontalLayout_5"/>
                   </widget>
                  </item>
                 </layout>
