@@ -1,5 +1,5 @@
 
-#include "get_tip_block.h"
+#include "tip_main.h"
 #include <stdio.h>
 #include <iostream>
 #include "qlist.h"
@@ -7,6 +7,7 @@
 #include <iterator>
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.cpp"
+#include "../../../../vaa3d_tools/hackathon/LXF/blastneuron_bjut/my_surf_objs.cpp"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define MIN_DIST 2
 #define VOID 1000000000
@@ -222,6 +223,55 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maxi
     return n_t;
 }
 
+void find_fake_tip(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString apo_file=infiles.at(1);
+    QString swc_file=infiles.at(0);
+    QString output_dir=outfiles.at(0);
+
+    QStringList list=swc_file.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag1=list1.first();
+
+    //QList<CellAPO> file_inmarkers=readAPO_file(apo_file);
+    NeuronTree input_tree=readSWC_file(swc_file);
+
+    QList<NeuronSWC> sorted_swc;
+    SortSWC(input_tree.listNeuron, sorted_swc ,VOID, 0);
+    NeuronTree neurontree=neuronlist_2_neurontree(sorted_swc);
+    vector<int> tip_list = get_short_tips(neurontree, false);
+
+    QList<CellAPO> listLandmarks;
+    for(int i = 0; i < tip_list.size(); i++)
+    {
+        CellAPO t;
+        t.x = sorted_swc.at(tip_list.at(i)).x;
+        t.y = sorted_swc.at(tip_list.at(i)).y;
+        t.z = sorted_swc.at(tip_list.at(i)).z;
+        t.color.r = 255;
+        t.color.g = 255;
+        t.color.b = 255;
+        listLandmarks.append(t);
+    }
+
+    //saveMarker_file(apo_file,listLandmarks);
+    //writeAPO_file(output_dir+".faketip.apo", file_inmarkers);
+    ofstream file_apo(apo_file.toStdString().c_str(),ios::app);
+    if(file_apo.fail())
+    {
+        cout<<"open marker file error"<<endl;
+    }
+    //file_apo<<"#x, y, z, radius"<<endl;
+    for(int i = 0; i < listLandmarks.size(); i++)
+    {
+        file_apo<<100<<",,,,"<<listLandmarks[i].z <<","<<listLandmarks[i].x <<","<<listLandmarks[i].y<<",,,,,,,,,"<<255<<","<<255<<","<<255<<endl;
+    }
+    file_apo.close();
+}
 
 
 void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char * data1d_crop,V3DPluginCallback2 & callback,QString output_format,int tipnum,XYZ tip)
@@ -748,7 +798,6 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
     vector<int> delete_index;
-        printf("=================++++++++++++++++++++++++============\n");
         for (int i=0;i<tip_list.size();i++)
         {
 
@@ -775,6 +824,59 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
 
 
     return(tip_list);
+}
+
+vector<int> get_short_tips(NeuronTree nt, bool include_root){
+    // whether a node is a tip;
+    QList<int> tip_list;
+    QList<int> plist;
+    QList<int> alln;
+    int N=nt.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(nt.listNeuron.at(i).pn);
+        alln.append(nt.listNeuron.at(i).n);
+        //if(include_root & nt.listNeuron.at(i).pn == -1){
+          //  tip_list.append(i);
+        //}
+    }
+    for(int i=0; i<N; i++){
+        if(plist.count(nt.listNeuron.at(i).n)==0){
+            tip_list.append(i);
+        }
+    }
+    //find the fake tips(distance between tip and branch node is less than 10)
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+    vector<int> result_tip;
+    int count_num=0;
+    double dis=0;
+        for (int i=0;i<tip_list.size();i++)
+        {
+            int step=tip_list.at(i);
+            while (childs[step].size()<2 && dis<10)
+                  {
+                     if (nt.listNeuron.at(step).pn!=-1)
+                     {
+                        int stepn=alln.indexOf(nt.listNeuron.at(step).pn);//stepn is the pn but not the i
+                        dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(stepn));
+                        step=stepn;
+                        count_num++;
+
+                     }
+                     else break;
+                  }
+            if (dis<10) result_tip.push_back(tip_list.at(i));
+            dis=0;
+        }
+       cout<<"the number of fake tips):"<<result_tip.size()<<endl;
+    return(result_tip);
 }
 
 XYZ offset_XYZ(XYZ input, XYZ offset){
@@ -1024,7 +1126,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-f<func name>:\t\t get_2D_sample\n";
     cout<<"-i<file name>:\t\t input .swc and .tiff file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_block -i original swc -p input .image -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_block -i original swc -p input tiff\nrrd.image -o output image dir.\n";
 
     //4.<remove_tip_location>
     cout<<"This fuction for removing tip to center of signal(using average signal,and find the maxium one)"<<endl;
@@ -1033,7 +1135,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-i<file name>:\t\t input .swc file\n";
     cout<<"-p<file name>:\t\t input image file(tif,nrrd,v3draw)\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i <original swc> <input .image> -p <radius> -o <output swc.file dir>\n";   
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i <original swc> <input tiff\nrrd.image> -p <radius> -o <output swc.file dir>\n";
 
     //5.prune_tip_APP1
     cout<<"This fuction for pruning nodes in tip"<<endl;
@@ -1044,7 +1146,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-p<1 or 0 >:\t\t 1:chose your input threshold to calculate radius,0:use global average signal to calculate radius \n";
     cout<<"-p<30(default 30)>:\t\t your input threshold(default 30) \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input .image> -p <2 or 3> <1 or 0 > <your input threshold(default 30)> -o <output swc.file dir>\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input tiff\nrrd.image> -p <2 or 3> <1 or 0 > <your input threshold(default 30)> -o <output swc.file dir>\n";
 
 
 

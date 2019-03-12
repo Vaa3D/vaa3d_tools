@@ -25,6 +25,7 @@ QStringList ML_sample::funclist() const
         <<tr("get_2D_block")
         <<tr("remove_tip_location")
         <<tr("prune_tip_APP1")
+        <<tr("find_fake_tip")
         <<tr("help")
         <<tr("help1");
 }
@@ -64,6 +65,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     else if (func_name == tr("prune_tip_APP1"))
     {
         pruning_covered_leaf_single_cover(input,output,callback);
+    }
+    else if (func_name == tr("find_fake_tip"))
+    {
+        find_fake_tip(input,output,callback);
     }
 	else if (func_name == tr("help"))
 	{
