@@ -26,51 +26,57 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
 //    XYZ block_size=XYZ(100,100,20);
     QString swc_file = infiles.at(0);
 
+    QStringList list=swc_file.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag1=list1.first();
+    QString output_apo = output_dir+flag1+".apo";
+
     printf("welcome to use get_branch\n");
     NeuronTree nt = readSWC_file(swc_file);
 //    if(!output_dir.endsWith("/")){
 //        output_dir = output_dir+"/";
 //    }
-    QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
-    cell_name = cell_name.left(cell_name.indexOf("."));
+    //QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
+    //cell_name = cell_name.left(cell_name.indexOf("."));
+    //QString output_file=output_dir;
     //image
     Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
 
     // Find branch points
-    QList<int> branch_list = get_branch_points(nt, false, p4dImage,cell_name);
-    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
-        // Crop tip-centered regions one by one4
-        block zcenter_block; // This is a block centered at (0,0,0)
-        zcenter_block.small = 0-block_size/2;
-        zcenter_block.large = block_size/2;
-        QList<QString> output_suffix;
-        output_suffix.append(QString("nrrd"));
-        output_suffix.append(QString("swc"));
+    QList<int> branch_list = get_branch_points(nt, false, p4dImage,output_apo);
+//    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
+    //    // Crop tip-centered regions one by one4
+    //    block zcenter_block; // This is a block centered at (0,0,0)
+    //    zcenter_block.small = 0-block_size/2;
+    //    zcenter_block.large = block_size/2;
+    //    QList<QString> output_suffix;
+    //    output_suffix.append(QString("nrrd"));
+    //    output_suffix.append(QString("swc"));
 
-        for(int i=0; i<tip_list.size(); i++){
-           if(i>0){break;}
-            NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
-            qDebug()<<node.n;
-            if(node.type > 5){continue;}
-            // create a tip-centered block
-            XYZ shift;
-            shift.x = (int)node.x;
-            shift.y = (int)node.y;
-            shift.z = (int)node.z;
+    //    for(int i=0; i<tip_list.size(); i++){
+    //       if(i>0){break;}
+    //        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+    //        qDebug()<<node.n;
+    //        if(node.type > 5){continue;}
+    //        // create a tip-centered block
+    //        XYZ shift;
+    //        shift.x = (int)node.x;
+    //        shift.y = (int)node.y;
+    //        shift.z = (int)node.z;
 
-            block crop_block = offset_block(zcenter_block, shift);
-            crop_block.name = cell_name + "_"+QString::number(i);
-            // crop image
-            qDebug()<<crop_block.name;
-            qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
-            qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
+    //        block crop_block = offset_block(zcenter_block, shift);
+    //        crop_block.name = cell_name + "_"+QString::number(i);
+    //        // crop image
+    //        qDebug()<<crop_block.name;
+    //        qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
+    //        qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
 
-            crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
-            // crop swc
-            QString output_swc = output_dir+crop_block.name+".swc";
-            crop_swc(swc_file, output_swc, crop_block);
-            my_saveANO(output_dir, crop_block.name, output_suffix);
-        }
+    //        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
+    //        // crop swc
+    //        QString output_swc = output_dir+crop_block.name+".swc";
+    //        crop_swc(swc_file, output_swc, crop_block);
+    //        my_saveANO(output_dir, crop_block.name, output_suffix);
+    //    }
       return;
 }
 
@@ -144,8 +150,8 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
         apo.append(m);
     }
 
-    QString apo_name = filename + ".apo";
-    writeAPO_file(apo_name,apo);
+    //QString apo_name = filename + ".apo";
+    writeAPO_file(filename,apo);
 
     return branch_list;
 }
