@@ -409,10 +409,17 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
                  else if(childs[i].size() == 2) {
 
                      if(childs[childs[i].at(0)].size() == 2 || childs[childs[i].at(1)].size() == 2) continue;
-                     if((tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type) || (tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type))
-                     {suspoint_after.push_back(i);
-                     numoflike_soma_situation++;
-                     numofwrongplace++;}
+                     if(tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)
+                        {
+                         suspoint_after.push_back(childs[i].at(0));
+                         numoflike_soma_situation++;
+                         numofwrongplace++;}
+
+                     if(tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type)
+                        {
+                         suspoint_after.push_back(childs[i].at(1));
+                         numoflike_soma_situation++;
+                         numofwrongplace++;}
                  }
              }
 //delete duplicated input markers and set all markers back to terafly
@@ -657,10 +664,17 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                      else if(childs[i].size() == 2) {
 
                          if(childs[childs[i].at(0)].size() == 2 || childs[childs[i].at(1)].size() == 2) continue;
-                         if((tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type) || (tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type))
-                         {suspoint_after.push_back(i);
-                         numoflike_soma_situation++;
-                         numofwrongplace++;}
+                         if(tree1swc.at(i).type != tree1swc.at(childs[i].at(0)).type)
+                            {
+                             suspoint_after.push_back(childs[i].at(0));
+                             numoflike_soma_situation++;
+                             numofwrongplace++;}
+
+                         if(tree1swc.at(i).type != tree1swc.at(childs[i].at(1)).type)
+                            {
+                             suspoint_after.push_back(childs[i].at(1));
+                             numoflike_soma_situation++;
+                             numofwrongplace++;}
                      }
                  }
     //delete duplicated input markers and record all result markers
