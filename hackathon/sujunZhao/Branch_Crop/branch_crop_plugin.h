@@ -7,7 +7,8 @@
 #define __BRANCH_CROP_PLUGIN_H__
 
 #include <QtGui>
-#include <v3d_interface.h>
+//#include <v3d_interface.h>
+#include "v3d_interface.h"
 #include <vector>
 using namespace std;
 
@@ -49,7 +50,9 @@ public slots:
     bool setTree(const QString & file);
 };
 
-QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage);
+
+
+QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage, QString filename);
 void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 XYZ offset_XYZ(XYZ input, XYZ offset);
 vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a);

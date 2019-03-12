@@ -3,11 +3,13 @@
 #include "branch_crop_plugin.h"
 #include <stdio.h>
 #include <iostream>
-#include <v3d_interface.h>
+//#include <v3d_interface.h>
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define PI 3.14159265359
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+#include <cmath>
+#include <algorithm>
 using namespace std;
 QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage);
 
@@ -35,44 +37,44 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
     Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
 
     // Find branch points
-    QList<int> branch_list = get_branch_points(nt, false, p4dImage);
-//    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
-    //    // Crop tip-centered regions one by one
-    //    block zcenter_block; // This is a block centered at (0,0,0)
-    //    zcenter_block.small = 0-block_size/2;
-    //    zcenter_block.large = block_size/2;
-    //    QList<QString> output_suffix;
-    //    output_suffix.append(QString("nrrd"));
-    //    output_suffix.append(QString("swc"));
+    QList<int> branch_list = get_branch_points(nt, false, p4dImage,cell_name);
+    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
+        // Crop tip-centered regions one by one4
+        block zcenter_block; // This is a block centered at (0,0,0)
+        zcenter_block.small = 0-block_size/2;
+        zcenter_block.large = block_size/2;
+        QList<QString> output_suffix;
+        output_suffix.append(QString("nrrd"));
+        output_suffix.append(QString("swc"));
 
-    //    for(int i=0; i<tip_list.size(); i++){
-    ////        if(i>0){break;}
-    //        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
-    //        qDebug()<<node.n;
-    //        if(node.type > 5){continue;}
-    //        // create a tip-centered block
-    //        XYZ shift;
-    //        shift.x = (int)node.x;
-    //        shift.y = (int)node.y;
-    //        shift.z = (int)node.z;
+        for(int i=0; i<tip_list.size(); i++){
+           if(i>0){break;}
+            NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+            qDebug()<<node.n;
+            if(node.type > 5){continue;}
+            // create a tip-centered block
+            XYZ shift;
+            shift.x = (int)node.x;
+            shift.y = (int)node.y;
+            shift.z = (int)node.z;
 
-    //        block crop_block = offset_block(zcenter_block, shift);
-    //        crop_block.name = cell_name + "_"+QString::number(i);
-    //        // crop image
-    //        qDebug()<<crop_block.name;
-    //        qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
-    //        qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
+            block crop_block = offset_block(zcenter_block, shift);
+            crop_block.name = cell_name + "_"+QString::number(i);
+            // crop image
+            qDebug()<<crop_block.name;
+            qDebug()<<crop_block.small.x<<crop_block.small.y<<crop_block.small.z;
+            qDebug()<<crop_block.large.x<<crop_block.large.y<<crop_block.large.z;
 
-    //        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
-    //        // crop swc
-    //        QString output_swc = output_dir+crop_block.name+".swc";
-    //        crop_swc(swc_file, output_swc, crop_block);
-    ////        my_saveANO(output_dir, crop_block.name, output_suffix);
-    //    }
+            crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
+            // crop swc
+            QString output_swc = output_dir+crop_block.name+".swc";
+            crop_swc(swc_file, output_swc, crop_block);
+            my_saveANO(output_dir, crop_block.name, output_suffix);
+        }
       return;
 }
 
-QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage){
+QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage, QString filename){
     // remove duplicated nodes
 //    QList<NeuronSWC> sorted_neuron;
 //    SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
@@ -90,6 +92,7 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
     QList<int> branch_list;
     QList<int> plist;
     QList<int> alln;
+    QList<NeuronSWC> apo_list;
     int N=nt.listNeuron.size();
     map<int, int> t;
     for(int i=0; i<N; i++){
@@ -117,9 +120,32 @@ QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p
             if(d>10 && data1d_crop[V3DLONG(ploc.z*mysz[0]*mysz[1]+ploc.y*mysz[0]+ploc.x)]>=25){
                 branch_list.push_back(i);
             }
-            else break;
+            else{
+                NeuronSWC cur = nt.listNeuron.at(alln.at(i));
+                apo_list.push_back(cur);
+                break;
+            };
         }
     }
+
+    //create .apo
+    unsigned int Vsize=50;
+    QList<CellAPO> apo;
+    for(int i = 0; i <apo_list.size();i++)
+    {
+        CellAPO m;
+        m.x = apo_list.at(i).x;
+        m.y = apo_list.at(i).y;
+        m.z = apo_list.at(i).z;
+        m.color.r=255;
+        m.color.g=0;
+        m.color.b=0;
+        m.volsize = Vsize;
+        apo.append(m);
+    }
+
+    QString apo_name = filename + ".apo";
+    writeAPO_file(apo_name,apo);
 
     return branch_list;
 }
@@ -174,17 +200,17 @@ XYZ offset_XYZ(XYZ input, XYZ offset){
     return input;
 }
 
-void crop_swc(QString input_swc, QString output_swc, block crop_block)
-{
+//void crop_swc(QString input_swc, QString output_swc, block crop_block)
+//{
 
-//        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
-//        // crop swc
-//        QString output_swc = output_dir+crop_block.name+".swc";
-//        crop_swc(swc_file, output_swc, crop_block);
-////        my_saveANO(output_dir, crop_block.name, output_suffix);
-//    }
-    return;
-}
+////        crop_img(image_file, crop_block, output_dir, callback, QString(".nrrd"));
+////        // crop swc
+////        QString output_swc = output_dir+crop_block.name+".swc";
+////        crop_swc(swc_file, output_swc, crop_block);
+//////        my_saveANO(output_dir, crop_block.name, output_suffix);
+////    }
+//    return;
+//}
 
 void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
