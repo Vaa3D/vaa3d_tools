@@ -11,9 +11,8 @@
 #include <cmath>
 #include <algorithm>
 using namespace std;
-QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage);
 
-void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
@@ -40,8 +39,9 @@ void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPlugin
     //cell_name = cell_name.left(cell_name.indexOf("."));
     //QString output_file=output_dir;
     //image
+    cout<<"imageloading"<<endl;
     Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
-
+    cout<<"image loading"<<endl;
     // Find branch points
     QList<int> branch_list = get_branch_points(nt, false, p4dImage,output_apo);
 //    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
