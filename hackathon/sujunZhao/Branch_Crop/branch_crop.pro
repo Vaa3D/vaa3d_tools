@@ -7,7 +7,8 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= branch_crop_plugin.h
 SOURCES	+= branch_crop_plugin.cpp \
-    branch_detect.cpp
+    branch_detect.cpp \
+    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(branch_crop)

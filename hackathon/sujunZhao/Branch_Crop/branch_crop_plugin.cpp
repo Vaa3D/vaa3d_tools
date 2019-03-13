@@ -11,7 +11,7 @@
 #include <v3d_interface.h>
 //#include "../get_terminal.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(branch_crop, TestPlugin)
+Q_EXPORT_PLUGIN2(Branch_Crop, TestPlugin)
 
 //void get_branches(V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 //QList<int> get_branch_points(NeuronTree nt, bool include_root);
