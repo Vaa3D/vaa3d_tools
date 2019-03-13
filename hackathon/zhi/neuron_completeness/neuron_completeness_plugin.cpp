@@ -13,11 +13,41 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_completeness, TestPlugin);
 double minDist(QList<NeuronSWC> & neuron1, QList<NeuronSWC> & neuron2);
+void calComplete(NeuronTree nt, QList<NEURON_METRICS> & scores);
+
+QStringList importSWCFileList(const QString & curFilePath)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
+
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
 
 QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("eval")
+        <<tr("batch_eval")
 		<<tr("about");
 }
 
@@ -188,8 +218,37 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                 callback.setHandleLandmarkList_Any3DViewer(cur_win,markerlist);
         }
 
-	}
-	else
+    }else if (menu_name == tr("batch_eval"))
+    {
+        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc/eswc files "),
+                                                                      QDir::currentPath(),
+                                                                      QFileDialog::ShowDirsOnly);
+
+
+        QStringList SWCList = importSWCFileList(m_InputfolderName);
+        QList<NEURON_METRICS> scores;
+        for(int i=0; i<SWCList.size();i++)
+        {
+            NeuronTree nt = readSWC_file(SWCList[i]);
+            calComplete(nt,scores);
+        }
+
+        QString outputName =  m_InputfolderName + "/eval.csv";
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save CSV File"),
+                outputName,
+                QObject::tr("Supported file (*.csv)"));
+
+        for(int i=0; i<SWCList.size();i++)
+        {
+            ofstream myfile;
+            myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
+            myfile << SWCList[i].toStdString().c_str()<<"\t"<<scores[i].numTrees << "\t" << scores[i].numTypes<<"\t"<<scores[i].numSegs<<endl;
+            myfile.close();
+
+        }
+
+    }
+    else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 			"Developed by Zhi Zhou, 2019-2-25"));
@@ -260,7 +319,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             }
             row++;
             dist.push_back(minD);
-            if(minD>20 && minD!=MAX_DOUBLE)
+            if(minD>2 && minD!=MAX_DOUBLE)
             {
                 LocationSimple t;
                 t.x = neuron1.at(0).x;
@@ -333,4 +392,77 @@ double minDist(QList<NeuronSWC> & neuron1, QList<NeuronSWC> & neuron2)
         }
     }
     return dis;
+}
+
+void calComplete(NeuronTree nt, QList<NEURON_METRICS> & scores)
+{
+    QList<NeuronSWC> sorted_neuron;
+    SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
+
+    LandmarkList markerlist;
+
+    QHash<int,int> map_type;
+    QMultiMap<int, QList<NeuronSWC> > multi_neurons;
+    int first = 0;
+    for(V3DLONG i=0; i<sorted_neuron.size();i++)
+    {
+        if(sorted_neuron.at(i).pn == -1)
+        {
+            if(i!=0)
+            {
+                multi_neurons.insert(i-first,sorted_neuron.mid(first,i-first));
+            }
+            first = i;
+
+        }
+        if(!map_type.count(sorted_neuron.at(i).type))
+        {
+            map_type[sorted_neuron.at(i).type] = 1;
+        }
+    }
+    multi_neurons.insert(sorted_neuron.size()-first,sorted_neuron.mid(first,sorted_neuron.size()-first));
+    QList<double> dist;
+    QVector<QVector<double> > matrix_dis(multi_neurons.size(),QVector<double>(multi_neurons.size(),MAX_DOUBLE));
+    int row =0;
+    for (QMultiMap<int, QList<NeuronSWC> >::iterator it1 = multi_neurons.end()-1; it1 != multi_neurons.begin()-1; --it1)
+    {
+        QList<NeuronSWC> neuron1= it1.value();
+        double minD = MAX_DOUBLE;
+        int col=0;
+        for (QMultiMap<int, QList<NeuronSWC> >::iterator it2 = multi_neurons.end()-1; it2 != multi_neurons.begin()-1; --it2)
+        {
+            if(it1 != it2)
+            {
+                if(matrix_dis[row][col] != MAX_DOUBLE)
+                    minD = MIN(minD,matrix_dis[row][col]);
+                else
+                {
+                    QList<NeuronSWC> neuron2 = it2.value();
+                    double cur_dis = minDist(neuron1,neuron2);
+                    matrix_dis[row][col] = cur_dis;
+                    matrix_dis[col][row] = cur_dis;
+                    minD = MIN(minD,cur_dis);
+                }
+            }
+            col++;
+        }
+        row++;
+        dist.push_back(minD);
+        if(minD>2 && minD!=MAX_DOUBLE)
+        {
+            LocationSimple t;
+            t.x = neuron1.at(0).x;
+            t.y = neuron1.at(0).y;
+            t.z = neuron1.at(0).z;
+            t.color.r = 0;t.color.g = 0; t.color.b = 255;
+            markerlist.push_back(t);
+        }
+    }
+
+    NEURON_METRICS tmp;
+    tmp.numTrees = multi_neurons.size();
+    tmp.numTypes = map_type.size();
+    tmp.numSegs = markerlist.size();
+    scores.push_back(tmp);
+    return;
 }
