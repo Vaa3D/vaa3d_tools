@@ -13,7 +13,7 @@ Q_EXPORT_PLUGIN2(ML_get_sample, ML_sample);
 QStringList ML_sample::menulist() const
 {
 	return QStringList() 
-        <<tr("get_ML_sample")
+        <<tr("suspicious_tips")
 		<<tr("about");
 }
 
@@ -32,9 +32,9 @@ QStringList ML_sample::funclist() const
 
 void ML_sample::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("get_ML_sample"))
+    if (menu_name == tr("suspicious_tips"))
 	{
-        v3d_msg("To be implemented.");
+        find_short_branch_tips_menu(callback,parent);
 	}
 	else
 	{
@@ -68,7 +68,7 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     }
     else if (func_name == tr("find_fake_tip"))
     {
-        find_fake_tip(input,output,callback);
+        find_short_branch_tips_func(input,output,callback);
     }
 	else if (func_name == tr("help"))
 	{

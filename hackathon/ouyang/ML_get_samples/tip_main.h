@@ -45,6 +45,7 @@ NeuronTree revise_radius(NeuronTree inputtree,float radius);
 NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
-void find_fake_tip(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
-
+void find_short_branch_tips_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void find_short_branch_tips_menu(V3DPluginCallback2 &callback, QWidget *parent);
+bool export_file2record(string swc_name,vector<int>input_num,double cur_per, QString fileSaveName);
 #endif // GET_TIP_BLOCK_H
