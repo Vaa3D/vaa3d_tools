@@ -120,7 +120,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             {
                 t.color.r = 0;t.color.g = 0; t.color.b = 255;
                 markerlist.push_back(t);
-            }else
+            }else if (minD>2 && minD!=MAX_DOUBLE)
             {
                 t.color.r = 0;t.color.g = 255; t.color.b = 0;
                 markerlist.push_back(t);
