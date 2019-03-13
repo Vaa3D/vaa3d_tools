@@ -242,7 +242,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             ofstream myfile;
             myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
-            myfile << SWCList[i].toStdString().c_str()<<"\t"<<scores[i].numTrees << "\t" << scores[i].numTypes<<"\t"<<scores[i].numSegs<<endl;
+            myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs<<endl;
             myfile.close();
 
         }
@@ -362,7 +362,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             QString imagename = QFileInfo(QString::fromStdString(infiles[0])).baseName();
             ofstream myfile;
             myfile.open (outimg_file,ios::out | ios::app );
-            myfile << imagename.toStdString().c_str()<<"\t"<<multi_neurons.size() << "\t" << map_type.size()<<"\t"<<markerlist.size()<<endl;
+            myfile << imagename.toStdString().c_str()<<","<<multi_neurons.size() << "," << map_type.size()<<","<<markerlist.size()<<endl;
             myfile.close();
         }
         return true;
