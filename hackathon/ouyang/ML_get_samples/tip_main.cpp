@@ -228,10 +228,10 @@ void find_fake_tip(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    //if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString apo_file=infiles.at(1);
     QString swc_file=infiles.at(0);
-    QString output_dir=outfiles.at(0);
+    //QString output_dir=outfiles.at(0);
 
     QStringList list=swc_file.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
@@ -268,7 +268,7 @@ void find_fake_tip(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     //file_apo<<"#x, y, z, radius"<<endl;
     for(int i = 0; i < listLandmarks.size(); i++)
     {
-        file_apo<<100<<",,,,"<<listLandmarks[i].z <<","<<listLandmarks[i].x <<","<<listLandmarks[i].y<<",,,,,,,,,"<<255<<","<<255<<","<<255<<endl;
+        file_apo<<i<<",,,,"<<listLandmarks[i].z <<","<<listLandmarks[i].x <<","<<listLandmarks[i].y<<",,,,,,,,,"<<255<<","<<255<<","<<255<<endl;
     }
     file_apo.close();
 }
@@ -844,6 +844,7 @@ vector<int> get_short_tips(NeuronTree nt, bool include_root){
             tip_list.append(i);
         }
     }
+    cout<<"tip number:"<<tip_list.size()<<endl;
     //find the fake tips(distance between tip and branch node is less than 10)
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
@@ -875,7 +876,7 @@ vector<int> get_short_tips(NeuronTree nt, bool include_root){
             if (dis<10) result_tip.push_back(tip_list.at(i));
             dis=0;
         }
-       cout<<"the number of fake tips):"<<result_tip.size()<<endl;
+       cout<<"the number of fake tips:"<<result_tip.size()<<endl;
     return(result_tip);
 }
 
@@ -1147,6 +1148,14 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-p<30(default 30)>:\t\t your input threshold(default 30) \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input tiff\nrrd.image> -p <2 or 3> <1 or 0 > <your input threshold(default 30)> -o <output swc.file dir>\n";
+
+    //6.find_fake_tip
+    cout<<"This fuction for finding short branches"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t find_fake_tip\n";
+    cout<<"-i<swc file name>:\t\t input .swc\n";
+    cout<<"-i<apo file name>:\t\t input .apo\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f find_fake_tip -i <.swc file> <.apo file>\n";
 
 
 

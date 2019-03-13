@@ -291,7 +291,7 @@ bool detect_type(V3DPluginCallback2 &callback, QWidget *parent)
     int numofduplicated=0;
     for (int i=0;i<ori_tree1swc.size();i++)
      {
-        if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
+        if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3 && ori_tree1swc.at(i).type != 4)
         {
             if(ori_tree1swc.at(i).pn == -1) continue;//{suspoint_before.push_back(i);numofwrongtype++;}
             else {
@@ -536,7 +536,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                 int numofduplicated=0;
                 for (int i=0;i<ori_tree1swc.size();i++)
                  {
-                    if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3)
+                    if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3 && ori_tree1swc.at(i).type != 4)
                     {
                         if(ori_tree1swc.at(i).pn == -1) continue;//{suspoint_before.push_back(i);numofwrongtype++;}
                         else {
