@@ -112,13 +112,17 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             }
             row++;
             dist.push_back(minD);
+            LocationSimple t;
+            t.x = neuron1.at(0).x;
+            t.y = neuron1.at(0).y;
+            t.z = neuron1.at(0).z;
             if(minD>20 && minD!=MAX_DOUBLE)
             {
-                LocationSimple t;
-                t.x = neuron1.at(0).x;
-                t.y = neuron1.at(0).y;
-                t.z = neuron1.at(0).z;
                 t.color.r = 0;t.color.g = 0; t.color.b = 255;
+                markerlist.push_back(t);
+            }else
+            {
+                t.color.r = 0;t.color.g = 255; t.color.b = 0;
                 markerlist.push_back(t);
             }
         }
