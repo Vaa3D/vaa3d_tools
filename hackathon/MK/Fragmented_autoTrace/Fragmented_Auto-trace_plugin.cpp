@@ -40,8 +40,10 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	else if (menu_name == tr("settings"))
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
-		panelPtr->exec(); // This forces the dialog to stay, then moves to the next line only when 'cancel' or 'x' is hit.
-		panelPtr->~FragTraceControlPanel();
+		panelPtr->exec(); // This forces the dialog to stay.
+		//panelPtr->~FragTraceControlPanel();
+
+		callback.changeFragTraceStatus(false);
 	}
 	else
 	{

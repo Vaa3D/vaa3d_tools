@@ -494,6 +494,8 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->traceManagerPtr->MST = false;
 				}
 			}
+
+			
 		}
 		else if (!this->isVisible())
 		{
