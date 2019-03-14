@@ -402,7 +402,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
 
     // 2.0 Find soma
-    double dist_thres = 5;
+    double dist_thres = connect_soma_dist;
     printf("\tFinding soma from APO\n");
     QList<CellAPO> soma_markers = readAPO_file(infileLabel + QString(".apo"));
     QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
@@ -442,6 +442,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
                 soma_apo_id = i;
                 soma_confirmed = 1;
                 max_dup = n_dup;
+                qDebug()<<node.n<<max_dup;
             }
         }
     }
