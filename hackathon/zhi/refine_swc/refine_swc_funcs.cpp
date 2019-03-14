@@ -1005,9 +1005,9 @@ QList <ImageMarker> break_points_reselect(QList<ImageMarker> & break_points, Neu
                     int midcount=count/2;
                     tmp_list.push_back(list.at(i-midcount));
                     flag[i]=1 ;
-
+                    break;
                 }
-                break;
+
             }
         }
 
