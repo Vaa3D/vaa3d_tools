@@ -180,19 +180,25 @@ int get_soma(NeuronTree nt){
     const int N=nt.listNeuron.size();
     int soma;
     int soma_ct=0;
-    // check whether unique soma
+    QList<int> candidate_list;
+
     for(int i=0; i<N; i++){
-        // soma check
-        if(nt.listNeuron.at(i).type==1){
-            soma=i;
+        if(nt.listNeuron.at(i).pn==(-1)){ // 2019-03-14: Changed for data release
+            candidate_list.append(i);
+        }
+    }
+
+    for(int i=0; i<candidate_list.size(); i++){
+        int cur_candidate = candidate_list.at(i);
+        if(nt.listNeuron.at(cur_candidate).type==1){ // 2019-03-14: Changed for data release
+            soma = cur_candidate;
             soma_ct++;
             break;
-//            if(soma_ct>1){return -1;}
         }
     }
     if(soma_ct==0){
-        qDebug() << "Error: No soma found\n";
-        return -1;
+        qDebug()<<"warning: Use 1st root as soma of swc.";
+        soma = candidate_list.at(0);
     }
     return soma;
 }

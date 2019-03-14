@@ -414,16 +414,21 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
     printf("\tFinding soma from swc\n");
     V3DLONG soma_apo_id = get_soma(nt);
+    bool soma_confirmed = 0;
     if(soma_apo_id != (-1)){ // found soma from swc
         NeuronSWC soma_swc = nt.listNeuron.at(soma_apo_id);
         double dist = computeDist2(soma_apo, soma_swc, XSCALE, YSCALE, ZSCALE);
         if(dist>10){
-            v3d_msg(QString("Soma found in SWC is too far the one from APO.\n"
-                            "Distance: %1.\n").arg(QString::number(dist)));
-            return 0;
+//            v3d_msg(QString("Soma found in SWC is too far the one from APO.\n"
+//                            "Distance: %1.\n").arg(QString::number(dist)));
+//            return 0;
+        }
+        else{
+            soma_confirmed = 1;
         }
     }
-    else{
+
+    if(!soma_confirmed){
         double min_dist = MAX_DOUBLE;
         soma_apo_id = 0;
         for(int i=0; i<nt.listNeuron.size();i++){
@@ -436,14 +441,24 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         }
         if(min_dist<5){
             NeuronSWC node = nt.listNeuron.at(soma_apo_id);
-            qDebug()<<QString("Soma found from apo. %1 %2 %3").arg(QString::number(node.x)).arg(QString::number(node.y)).arg(QString::number(node.z));
+            soma_confirmed = 1;
+            qDebug()<<QString("Soma found from apo. %1 %2 %3 %4").arg(node.n).arg(QString::number(node.x)).arg(QString::number(node.y)).arg(QString::number(node.z));
         }
+
     }
 
+    if(!soma_confirmed){
+        v3d_msg(QString("Cannot confidently find soma node for %1.\n").arg(qs_input));
+        return 0;
+    }
+
+
     // 2.1 Sort/connect/
-    nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, 2));
+    nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, 1));
 
     // 2.2 Prune
+    QList<int> tip_list = get_tips(nt, 0);
+    qDebug()<<QString("%1 Tips before pruning: %2").arg(outfileLabel).arg(tip_list.size());
     printf("\tPruning short branches\n");
     if (!prune_branch(nt, cur_nt, prune_size))
     {
@@ -451,7 +466,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         return 0;
     }
     nt.deepCopy(cur_nt);
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
+    tip_list = get_tips(nt, 0);
+    qDebug()<<QString("%1 Tips after pruning: %2").arg(outfileLabel).arg(tip_list.size());
+//    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
 
     // Export
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
