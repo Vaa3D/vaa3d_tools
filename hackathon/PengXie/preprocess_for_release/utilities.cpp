@@ -560,6 +560,17 @@ QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
     nl1.append(nl2);
     return nl1;
 }
+int count_dup_for_node(NeuronTree nt, int node_id){
+    NeuronSWC node = nt.listNeuron.at(node_id);
+    int ct = 0;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        if(((node.x==nt.listNeuron.at(i).x) && (node.y==nt.listNeuron.at(i).y) && (node.z==nt.listNeuron.at(i).z)))
+        {
+            ct++;
+        }
+    }
+    return ct;
+}
 
 bool check_duplicate(NeuronTree nt){
     printf("welcome to use remove_duplicte\n");
