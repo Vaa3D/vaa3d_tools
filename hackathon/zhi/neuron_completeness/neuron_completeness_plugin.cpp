@@ -118,6 +118,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QList<double> dist;
         QVector<QVector<double> > matrix_dis(multi_neurons.size(),QVector<double>(multi_neurons.size(),MAX_DOUBLE));
         int row =0;
+        QMultiMap<double, LocationSimple> greenSeg_list;
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it1 = multi_neurons.end()-1; it1 != multi_neurons.begin()-1; --it1)
         {
             QList<NeuronSWC> neuron1= it1.value();
@@ -146,16 +147,18 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             t.x = neuron1.at(0).x;
             t.y = neuron1.at(0).y;
             t.z = neuron1.at(0).z;
-            if(minD>20 && minD!=MAX_DOUBLE)
+            if (minD>2 && minD!=MAX_DOUBLE)
             {
-                t.color.r = 0;t.color.g = 0; t.color.b = 255;
-                markerlist.push_back(t);
-            }else if (minD>2 && minD!=MAX_DOUBLE)
-            {
-                t.color.r = 0;t.color.g = 255; t.color.b = 0;
-                markerlist.push_back(t);
+                greenSeg_list.insert(minD,t);
             }
         }
+        for(QMultiMap<double, LocationSimple>::iterator it = greenSeg_list.end()-1; it != greenSeg_list.begin()-1; --it)
+        {
+            LocationSimple t = it.value();
+            t.color.r = 0;t.color.g = 255; t.color.b = 0;
+            markerlist.push_back(t);
+        }
+
 
         QVector<QPair <double, double> > v_tree;
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)

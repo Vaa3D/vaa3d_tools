@@ -495,7 +495,7 @@ void FragTraceControlPanel::traceButtonClicked()
 				}
 			}
 
-			
+			this->thisCallback->getParamsFromFragTraceUI();
 		}
 		else if (!this->isVisible())
 		{

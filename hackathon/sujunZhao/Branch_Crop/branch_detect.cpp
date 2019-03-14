@@ -22,13 +22,13 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     QString image_file=inparas.at(0);
 //    QString swc_file = infiles.at(1);
     QString output_dir=outfiles.at(0);
-//    XYZ block_size=XYZ(100,100,20);
+
     QString swc_file = infiles.at(0);
 
     QStringList list=swc_file.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
     QString flag1=list1.first();
-    QString output_apo = output_dir+flag1+".apo";
+    QString output_apo = output_dir+"/"+flag1+".apo";
 
     printf("welcome to use get_branch\n");
     NeuronTree nt = readSWC_file(swc_file);
@@ -38,12 +38,111 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     //QString cell_name = swc_file.right(swc_file.size()-swc_file.lastIndexOf("/")-1);
     //cell_name = cell_name.left(cell_name.indexOf("."));
     //QString output_file=output_dir;
-    //image
-    cout<<"imageloading"<<endl;
-    Image4DSimple * p4dImage=callback.loadImage((char*)(qPrintable(image_file)));
+
     cout<<"image loading"<<endl;
     // Find branch points
-    QList<int> branch_list = get_branch_points(nt, false, p4dImage,output_apo);
+    V3DLONG *in_zz;
+//    if(!callback.getDimTeraFly(image_file.toStdString(), in_zz))
+//    {
+//        v3d_msg("Cannot load terafly images.",0);
+//        return;
+//    }
+    //cout<<"check1"<<endl;
+    XYZ block_size=XYZ(100,100,20);
+    block zcenter_block; // This is a block centered at (0,0,0)
+    zcenter_block.small = 0-block_size/2;
+    zcenter_block.large = block_size/2;
+
+    QList<int> branch_list;
+    QList<int> plist;
+    QList<int> alln;
+    QList<NeuronSWC> apo_list;
+    int N=nt.listNeuron.size();
+    map<int, int> t;
+
+    for(int i=0; i<N; i++){
+        //qDebug() << nt.listNeuron.at(i).n << nt.listNeuron.at(i).pn;
+        plist.append(nt.listNeuron.at(i).pn);
+        alln.append(nt.listNeuron.at(i).n);
+        t.insert(pair<int,int>(plist.at(i),0));
+    }
+    for(int i=0; i<N; i++){
+
+        t.at(plist.at(i)) = t.at(plist.at(i))+1;
+        if((plist.count(plist.at(i))>1)&(t.at(plist.at(i)) == 1)){
+            //cout<<"pruning"<<endl;
+            // branch points pruning, remove length < 10um
+            // based on distances
+            int p_index;
+            if(plist.at(i)!=-1){
+            p_index = alln.indexOf(plist.at(i));
+            cout<<"index "<<p_index<<endl;
+            double d = dist(nt.listNeuron.at(alln.at(i)),nt.listNeuron.at(p_index));
+            //distance & intensity
+            V3DLONG nodex = nt.listNeuron.at(p_index).x;
+            V3DLONG nodey = nt.listNeuron.at(p_index).y;
+            V3DLONG nodez = nt.listNeuron.at(p_index).z;
+            //cout<<"check2"<<endl;
+            struct XYZ ploc= XYZ(nodex,nodey,nodez);
+            //block
+            block crop_block = offset_block(zcenter_block, XYZ(nodex, nodey, nodez));
+            XYZ small=XYZ(crop_block.small);
+            XYZ large=XYZ(crop_block.large);
+            small.x = floor(small.x);
+            small.y = floor(small.y);
+            small.z = floor(small.z);
+            large.x = ceil(large.x)+1;
+            large.y = ceil(large.y)+1;
+            large.z = ceil(large.z)+1;
+            unsigned char * cropped_image = 0;
+            //cout<<"dim"<<small.x<<small.y<<small.z<<large.x<<large.y<<large.z<<endl;
+            cout<<"dim"<<endl;
+            cropped_image = callback.getSubVolumeTeraFly(image_file.toStdString(),
+                                                         small.x, large.x,
+                                                         small.y, large.y,
+                                                         small.z, large.z);
+            cout<<"image"<<endl;
+            V3DLONG mysz[4];
+            mysz[0] = large.x-small.x;
+            mysz[1] = large.y-small.y;
+            mysz[2] = large.z-small.z;
+            //mysz[3] = in_zz[3];
+            cout<<"check3"<<endl;
+            unsigned char *data1d_crop=cropped_image;
+
+            if(d>15&& data1d_crop[V3DLONG(ploc.z*mysz[0]*mysz[1]+ploc.y*mysz[0]+ploc.x)]>=25){
+                branch_list.push_back(i);
+            }
+            else{
+                NeuronSWC cur = nt.listNeuron.at(alln.at(i));
+                apo_list.push_back(cur);
+            }
+        }}
+    }
+
+    //create .apo
+    unsigned int Vsize=50;
+    QList<CellAPO> apo;
+    for(int i = 0; i <apo_list.size();i++)
+    {
+        CellAPO m;
+        m.x = apo_list.at(i).x;
+        m.y = apo_list.at(i).y;
+        m.z = apo_list.at(i).z;
+        m.color.r=255;
+        m.color.g=0;
+        m.color.b=0;
+        m.volsize = Vsize;
+        apo.push_back(m);
+    }
+
+    //QString apo_name = filename + ".apo";
+    writeAPO_file(output_apo,apo);
+
+    //cout<<"number of branch points "<<branch_list.size()<<endl;
+
+
+    //QList<int> branch_list = get_branch_points(callback, nt, false, image_file,output_apo);
 //    cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
     //    // Crop tip-centered regions one by one4
     //    block zcenter_block; // This is a block centered at (0,0,0)
@@ -80,82 +179,13 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
       return;
 }
 
-QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage, QString filename){
-    // remove duplicated nodes
-//    QList<NeuronSWC> sorted_neuron;
-//    SortSWC(nt.listNeuron, sorted_neuron ,VOID, 0);
 
-    //Get Image
-    int nChannel = p4DImage->getCDim();
-
-    V3DLONG mysz[4];
-    mysz[0] = p4DImage->getXDim();
-    mysz[1] = p4DImage->getYDim();
-    mysz[2] = p4DImage->getZDim();
-    mysz[3] = nChannel;
-    unsigned char *data1d_crop=p4DImage->getRawDataAtChannel(nChannel);
-
-    QList<int> branch_list;
-    QList<int> plist;
-    QList<int> alln;
-    QList<NeuronSWC> apo_list;
-    int N=nt.listNeuron.size();
-    map<int, int> t;
-    for(int i=0; i<N; i++){
-        //qDebug() << nt.listNeuron.at(i).n << nt.listNeuron.at(i).pn;
-        plist.append(nt.listNeuron.at(i).pn);
-        alln.append(nt.listNeuron.at(i).n);
-        t.insert(pair<int,int>(plist.at(i),0));
-    }
-    for(int i=0; i<N; i++){
-
-        t.at(plist.at(i)) = t.at(plist.at(i))+1;
-        if((plist.count(plist.at(i))>1)&(t.at(plist.at(i)) == 1)){
-            // branch points pruning, remove length < 10um
-            // based on distances
-            int p_index;
-            if(plist.at(i)!=-1){p_index = alln.indexOf(plist.at(i));}
-            else break;
-
-            double d = dist(nt.listNeuron.at(alln.at(i)),nt.listNeuron.at(p_index));
-            //distance & intensity
-            V3DLONG nodex = nt.listNeuron.at(p_index).x;
-            V3DLONG nodey = nt.listNeuron.at(p_index).y;
-            V3DLONG nodez = nt.listNeuron.at(p_index).z;
-            struct XYZ ploc= XYZ(nodex,nodey,nodez);
-            if(d>10 && data1d_crop[V3DLONG(ploc.z*mysz[0]*mysz[1]+ploc.y*mysz[0]+ploc.x)]>=25){
-                branch_list.push_back(i);
-            }
-            else{
-                NeuronSWC cur = nt.listNeuron.at(alln.at(i));
-                apo_list.push_back(cur);
-                break;
-            };
-        }
-    }
-
-    //create .apo
-    unsigned int Vsize=50;
-    QList<CellAPO> apo;
-    for(int i = 0; i <apo_list.size();i++)
-    {
-        CellAPO m;
-        m.x = apo_list.at(i).x;
-        m.y = apo_list.at(i).y;
-        m.z = apo_list.at(i).z;
-        m.color.r=255;
-        m.color.g=0;
-        m.color.b=0;
-        m.volsize = Vsize;
-        apo.append(m);
-    }
-
-    //QString apo_name = filename + ".apo";
-    writeAPO_file(filename,apo);
-
-    return branch_list;
+block offset_block(block input_block, XYZ offset)
+{
+    input_block.small = offset_XYZ(input_block.small, offset);
+    input_block.large = offset_XYZ(input_block.large, offset);
+    return input_block;
 }
-
 
 // find other branch points in the same cropped block
 vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a){

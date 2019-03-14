@@ -28,6 +28,7 @@ QStringList refine_swc::funclist() const
 	return QStringList()
 		<<tr("refine")
         <<tr("initial_4ds")
+        <<tr("refine_v2")
 		<<tr("help");
 }
 
@@ -87,6 +88,91 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         NeuronTree nt2_smoothed_sorted = SortSWC_pipeline(nt2_smoothed.listNeuron,VOID, 0);
         writeESWC_file(QString(outfiles[0]),nt2_smoothed_sorted);
 	}
+
+    else if( func_name==tr("refine_v2")) //added by DZC 14Mar2019
+    {
+        if(infiles.size()<2)
+        {
+            fprintf (stderr, "Need input terafly image path and swc. \n");
+            return false;
+        }
+
+        if(outfiles.empty())
+        {
+            fprintf (stderr, "Need output file name. \n");
+            return false;
+        }
+
+        int k=0;
+        int max_length = (paras.size() >= k+1) ? atof(paras[k]) : 200;  k++;
+
+        QList<ImageMarker> break_points;
+        NeuronTree nt = readSWC_file(QString(infiles[1]));
+        NeuronTree nt2 = SortSWC_pipeline(nt.listNeuron,VOID, 0);
+        NeuronTree nt2_broken = breakSWC(nt2,max_length, break_points);
+
+        //output the first break points to apo and marker file.
+        QString markerfile;
+        markerfile=QString(outfiles[0])+"_1st_break_points.marker";
+        QList<CellAPO> break_points_apo;
+        for(int i=0; i< break_points.size();i++)
+        {
+            CellAPO break_node;
+            break_node.x=break_points.at(i).x;
+            break_node.y=break_points.at(i).y;
+            break_node.z=break_points.at(i).z;
+            break_node.volsize=50;
+            break_node.color.r=0;
+            break_node.color.g=255;
+            break_node.color.b=0;
+            break_points_apo.push_back(break_node);
+        }
+        QString apofile;
+        apofile=QString(outfiles[0])+"_1st_break_points.apo";
+        writeAPO_file(apofile,break_points_apo);
+        writeMarker_file(markerfile, break_points);
+
+        V_NeuronSWC_list nt2_decomposed = NeuronTree__2__V_NeuronSWC_list(nt2_broken);
+        NeuronTree nt2_new = V_NeuronSWC_list__2__NeuronTree(nt2_decomposed);
+        NeuronTree nt2_refined = refineSWCTerafly(callback,infiles[0],nt2_new);
+        NeuronTree nt2_sorted = SortSWC_pipeline(nt2_refined.listNeuron,VOID, 0);
+        QString prerefinename= QString(outfiles[0])+"_1st_refine.eswc";
+        writeESWC_file(prerefinename,nt2_sorted);
+
+
+        //run the 2nd refine according to the new break points and save to apo and marker file
+
+        QList<ImageMarker> new_break_points=break_points_reselect(break_points,nt2_sorted);
+        QString new_markerfile;
+        new_markerfile=QString(outfiles[0])+"_2nd_break_points.marker";
+        QList<CellAPO> new_break_points_apo;
+        for(int i=0; i< new_break_points.size();i++)
+        {
+            CellAPO break_node;
+            break_node.x=new_break_points.at(i).x;
+            break_node.y=new_break_points.at(i).y;
+            break_node.z=new_break_points.at(i).z;
+            break_node.volsize=50;
+            break_node.color.r=255;
+            break_node.color.g=255;
+            break_node.color.b=0;
+            new_break_points_apo.push_back(break_node);
+        }
+        QString apofile_new;
+        apofile_new=QString(outfiles[0])+"_2nd_break_points.apo";
+        writeAPO_file(apofile_new,new_break_points_apo);
+        writeMarker_file(new_markerfile, new_break_points);
+
+
+        //break the swc with new break points and run the refine pipeline
+        NeuronTree nt3_broken=breakSWC_with_points(nt2_sorted,new_break_points);
+        V_NeuronSWC_list nt3_decomposed = NeuronTree__2__V_NeuronSWC_list(nt3_broken);
+        NeuronTree nt3_new = V_NeuronSWC_list__2__NeuronTree(nt3_decomposed);
+        NeuronTree nt3_refined = refineSWCTerafly(callback,infiles[0],nt3_new);
+        NeuronTree nt3_sorted = SortSWC_pipeline(nt3_refined.listNeuron,VOID, 0);
+        writeESWC_file(QString(outfiles[0]),nt3_sorted);
+
+   }
     else if (func_name == tr("initial_4ds"))
 	{
         if(infiles.size()<2)

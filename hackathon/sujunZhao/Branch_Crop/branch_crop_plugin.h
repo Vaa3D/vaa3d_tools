@@ -51,8 +51,7 @@ public slots:
 };
 
 
-
-QList<int> get_branch_points(NeuronTree nt, bool include_root, Image4DSimple * p4DImage, QString filename);
+block offset_block(block input_block, XYZ offset);
 void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 XYZ offset_XYZ(XYZ input, XYZ offset);
 vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a);
