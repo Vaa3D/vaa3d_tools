@@ -43,7 +43,7 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 		panelPtr->exec(); // This forces the dialog to stay.
 		//panelPtr->~FragTraceControlPanel();
 
-		callback.changeFragTraceStatus(false);
+		//callback.changeFragTraceStatus(false);
 	}
 	else
 	{

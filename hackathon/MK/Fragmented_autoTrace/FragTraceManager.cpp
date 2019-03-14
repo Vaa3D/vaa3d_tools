@@ -152,6 +152,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 
 	NeuronTree finalOutputTree = shortCleanedUpTree;
+	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)
+		nodeIt->type = 16;
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
