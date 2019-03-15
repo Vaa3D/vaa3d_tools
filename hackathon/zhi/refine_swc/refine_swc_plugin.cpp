@@ -123,8 +123,8 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             break_node.z=break_points.at(i).z;
             break_node.volsize=50;
             break_node.color.r=0;
-            break_node.color.g=255;
-            break_node.color.b=0;
+            break_node.color.g=153;//green
+            break_node.color.b=68;
             break_points_apo.push_back(break_node);
         }
         QString apofile;
@@ -142,6 +142,8 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         //run the 2nd refine according to the new break points and save to apo and marker file
 
+        //QList<ImageMarker> break_points=readMarker_file(QString(infiles[2]));
+        //NeuronTree nt2_sorted= readSWC_file(QString(infiles[1]));
         QList<ImageMarker> new_break_points=break_points_reselect(break_points,nt2_sorted);
         QString new_markerfile;
         new_markerfile=QString(outfiles[0])+"_2nd_break_points.marker";
@@ -153,8 +155,8 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             break_node.y=new_break_points.at(i).y;
             break_node.z=new_break_points.at(i).z;
             break_node.volsize=50;
-            break_node.color.r=255;
-            break_node.color.g=255;
+            break_node.color.r=246;//orange
+            break_node.color.g=171;
             break_node.color.b=0;
             new_break_points_apo.push_back(break_node);
         }

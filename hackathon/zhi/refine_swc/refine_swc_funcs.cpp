@@ -957,7 +957,7 @@ QList <ImageMarker> break_points_reselect(QList<ImageMarker> & break_points, Neu
 
     QList<NeuronSWC> list =nt.listNeuron;
 
-    // find all the breaking points in swc, according to the marker list
+    std::cout<<"find all the breaking points in swc, according to the marker list"<<std::endl;
     QList <NeuronSWC> pre_list;
     for(int i=0; i<break_points.size();i++)
     {
@@ -966,67 +966,110 @@ QList <ImageMarker> break_points_reselect(QList<ImageMarker> & break_points, Neu
             if(NTDIS(break_points.at(i),list.at(j))<1 && list.at(j).level != 180)
             {
                 pre_list.push_back(list.at(j));
+                break;
 
              }
         }
     }
 
 
-    //find all the tip and branch nodes in swc
-    QList <NeuronSWC> tmp_list;
-    for(int i=0; i<neuronNum;i++)
-    {
-        if(childs[i].size()!=1)
-        {
-            tmp_list.push_back(list.at(i));
-        }
+   std::cout<<"for each breaking point, find the nearest parent node and extract the mid node"<<std::endl;
 
-    }
-
-   // for each node in breaking points list, find the nearest parent node and extract the mid node
-    map <int,int> flag;
+   map <int,int> flag;
 
     for(int i=0; i<pre_list.size();i++)
     {
         flag[i]=0;
     }
 
-    for (int i=0; i<pre_list.size();i++)
-    {   if(childs[i].size()>1) continue;
 
+    QList <NeuronSWC> fn_list;
+
+    for (int i=0; i<pre_list.size();i++)
+    {   std::cout<<"i="<<i<<std::endl;
+
+        if(childs[i].size()>1) {
+
+            fn_list.push_back(pre_list.at(i));
+
+            continue;
+
+        }
+
+
+        int index= pre_list.at(i).n;
         for(int count=0;count<400;count++)
-        {         if (flag[i]==1) break;
-            int index=pre_list.at(i-count).n;
-            int tmp_pn=getParent(index,nt);
-            for(int j=0; j<pre_list.size();j++)
+        {   std::cout<<"\n count="<<count<<std::endl;
+            if (flag[i]==1) break;
+
+            index= getParent(index,nt);
+
+            std::cout<<"\n index="<<index<<std::endl;
+
+
+            if( index>0 && index<1000000000)
             {
-                if(pre_list.at(j).n ==tmp_pn)
+                //                int index=index_i;
+                //                int index=pre_list.at(i).n-count;
+                //                int index_begin=getParent(index_begin,nt);
+                for(int j=0; j<pre_list.size();j++)
                 {
-                    int midcount=count/2;
-                    tmp_list.push_back(list.at(i-midcount));
-                    flag[i]=1 ;
-                    break;
+                    //std::cout<<"\n j="<<j<<std::endl;
+                    if(pre_list.at(j).n ==index)
+                    {
+
+                        std::cout<<"nearest parent node found"<<std::endl;
+                        int index_mid= pre_list.at(i).n;
+                        for (int k=0; k<count/2;k++)
+                        {
+                            index_mid=getParent(index_mid,nt);
+
+                        }
+
+                        fn_list.push_back(list.at(index_mid));
+                        flag[i]=1;
+                        break;
+                    }
                 }
+            }
+            else  {
+
+                std::cout<< "the nearest node is the root"<<std::endl;
+
+                int index_mid= pre_list.at(i).n;
+                for (int k=0; k<count/2;k++)
+                {
+
+                    index_mid=getParent(index_mid,nt);
+
+                }
+
+                fn_list.push_back(list.at(index_mid));
+                flag[i]=1;
+                break;
+
 
             }
         }
 
 
-            //extract the mid point to the list with branch and tip
 
-     }
+    }
 
+    std::cout<<"\n pre breaking points size="<<pre_list.size()<<std::endl;
+
+    std::cout<<"\n new breaking points size="<<fn_list.size()<<std::endl;
 
     // new list construction completed, now generate the new marker list
 
     QList <ImageMarker> new_nodes_list;
 
-    for (int i=0;i<tmp_list.size();i++)
+    for (int i=0;i<fn_list.size();i++)
     {
         ImageMarker new_node;
-        new_node.x=tmp_list.at(i).x;
-        new_node.y=tmp_list.at(i).y;
-        new_node.z=tmp_list.at(i).z;
+        new_node.x=fn_list.at(i).x;
+        new_node.y=fn_list.at(i).y;
+        new_node.z=fn_list.at(i).z;
         new_node.color.r=255;
         new_node.color.g=0;
         new_node.color.b=0;
