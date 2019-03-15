@@ -432,20 +432,36 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     bool soma_confirmed = 0;
     // Check all the root nodes nearby soma_apo. If multiple candidates found, choose the one with the most duplicates.
     int max_dup = 0;
+    double min_dist = MAX_DOUBLE;
     for(int i=0; i<nt.listNeuron.size(); i++)
     {
         NeuronSWC node = nt.listNeuron.at(i);
-        if(node.pn==(-1)){
-            double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
+        double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
+        if(dist<dist_thres){
             int n_dup = count_dup_for_node(nt, i);
-            if((dist<dist_thres) && (n_dup>max_dup)){
+            if(((n_dup>max_dup) || (n_dup==max_dup) && (dist<min_dist))){
                 soma_apo_id = i;
                 soma_confirmed = 1;
                 max_dup = n_dup;
-                qDebug()<<node.n<<max_dup;
+                min_dist = dist;
+                qDebug()<<node.n<<max_dup<<min_dist;
             }
         }
     }
+//    for(int i=0; i<nt.listNeuron.size(); i++)
+//    {
+//        NeuronSWC node = nt.listNeuron.at(i);
+//        if(node.pn==(-1)){
+//            double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
+//            int n_dup = count_dup_for_node(nt, i);
+//            if((dist<dist_thres) && (n_dup>max_dup)){
+//                soma_apo_id = i;
+//                soma_confirmed = 1;
+//                max_dup = n_dup;
+//                qDebug()<<node.n<<max_dup;
+//            }
+//        }
+//    }
     if(soma_confirmed){
         NeuronSWC node = nt.listNeuron.at(soma_apo_id);
         qDebug()<<QString("Soma found from apo. %1 %2 %3 %4").arg(node.n).arg(QString::number(node.x)).arg(QString::number(node.y)).arg(QString::number(node.z));
@@ -476,7 +492,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
 
     // 2.1 Sort/connect/
-    nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, 1));
+    nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, thres));
 
     // 2.2 Prune
     QList<int> tip_list = get_tips(nt, 0);
