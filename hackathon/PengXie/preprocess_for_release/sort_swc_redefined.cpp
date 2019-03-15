@@ -231,6 +231,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
         output_newroot_list.append(root);
         while(cur_group>1)
         {
+            qDebug()<<"Remaining components: "<<cur_group;
             double min = VOID;
             double dist2 = 0;
             int mingroup = 1;
@@ -239,9 +240,9 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
             V3DLONG m1,m2;
             for (V3DLONG ii=0;ii<siz;ii++)
             {
-//                qDebug()<<QString("Distance check: %1").arg(ii);
                 if (component_id[ii]==1)
                 {
+//                    qDebug()<<QString("Distance check: %1").arg(ii);
                     for (V3DLONG jj=0;jj<siz;jj++)
                         if (component_id[jj]!=1)
                         {

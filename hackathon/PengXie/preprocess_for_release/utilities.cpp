@@ -180,19 +180,25 @@ int get_soma(NeuronTree nt){
     const int N=nt.listNeuron.size();
     int soma;
     int soma_ct=0;
-    // check whether unique soma
+    QList<int> candidate_list;
+
     for(int i=0; i<N; i++){
-        // soma check
-        if(nt.listNeuron.at(i).type==1){
-            soma=i;
+        if(nt.listNeuron.at(i).pn==(-1)){ // 2019-03-14: Changed for data release
+            candidate_list.append(i);
+        }
+    }
+
+    for(int i=0; i<candidate_list.size(); i++){
+        int cur_candidate = candidate_list.at(i);
+        if(nt.listNeuron.at(cur_candidate).type==1){ // 2019-03-14: Changed for data release
+            soma = cur_candidate;
             soma_ct++;
             break;
-//            if(soma_ct>1){return -1;}
         }
     }
     if(soma_ct==0){
-        qDebug() << "Error: No soma found\n";
-        return -1;
+        qDebug()<<"warning: Use 1st root as soma of swc.";
+        soma = candidate_list.at(0);
     }
     return soma;
 }
@@ -553,6 +559,31 @@ QList<NeuronSWC> neuronlist_cat(QList<NeuronSWC> nl1, QList<NeuronSWC> nl2){
     }
     nl1.append(nl2);
     return nl1;
+}
+int node_degree(NeuronTree nt, int node_id){
+    QList<int> child_list;
+    QList<int> parent_list;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        NeuronSWC node = nt.listNeuron.at(i);
+        if(node.pn != -1){
+            child_list.append(node.n);
+            parent_list.append(node.pn);
+        }
+    }
+    int degree = child_list.count(nt.listNeuron.at(node_id).n) + parent_list.count(nt.listNeuron.at(node_id).n);
+    return degree;
+}
+int count_dup_for_node(NeuronTree nt, int node_id){
+    NeuronSWC node = nt.listNeuron.at(node_id);
+    int ct = 0;
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        if(((node.x==nt.listNeuron.at(i).x) && (node.y==nt.listNeuron.at(i).y) && (node.z==nt.listNeuron.at(i).z)))
+        {
+//            ct++;
+            ct+=node_degree(nt, i);
+        }
+    }
+    return ct;
 }
 
 bool check_duplicate(NeuronTree nt){

@@ -136,6 +136,13 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->groupBox_8->setChecked(true);
 			uiPtr->spinBox_5->setValue(callOldSettings.value("minNodeNum").toInt());
 		}
+
+
+		// ------- Post Elongation -------
+		if (callOldSettings.value("PostElongDistChecked") == true)
+		{
+			uiPtr->lineEdit_4->setText(callOldSettings.value("PostElongDistThreshold").toString());
+		}
 		
 
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
@@ -386,6 +393,13 @@ void FragTraceControlPanel::saveSettingsClicked()
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
 
 
+	// ------- Post Elongation -------
+	if (uiPtr->groupBox_5->isChecked())
+		settings.setValue("PostElongDistThreshold", uiPtr->lineEdit_4->text());
+	else
+		settings.setValue("PostElongDistThreshold", "-1");
+
+
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
 }
 
@@ -493,9 +507,16 @@ void FragTraceControlPanel::traceButtonClicked()
 				{
 					this->traceManagerPtr->MST = false;
 				}
+
+
+				// ------- Post Elongation -------
+				if (uiPtr->groupBox_5->isChecked())
+					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
+				else
+					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
 			}
 
-			this->thisCallback->getParamsFromFragTraceUI();
+			this->fillUpParamsForm();
 		}
 		else if (!this->isVisible())
 		{
@@ -588,6 +609,13 @@ void FragTraceControlPanel::traceButtonClicked()
 				{
 					this->traceManagerPtr->MST = false;
 				}
+
+
+				// ------- Post Elongation -------
+				if (currSettings.value("PostElongDistChecked") == true)
+					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", currSettings.value("PostElongDistThreshold").toFloat()));
+				else
+					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
 			}
 		}
 		
@@ -689,4 +717,11 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]);
 
 	return shiftScaleBackTree;
+}
+
+void FragTraceControlPanel::fillUpParamsForm()
+{
+	this->thisCallback->getParamsFromFragTraceUI("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str()));
+	this->thisCallback->getParamsFromFragTraceUI("xyResRatio", float(this->thisCallback->getImageTeraFly()->getXDim() / this->thisCallback->getImageTeraFly()->getRezX()));
+	this->thisCallback->getParamsFromFragTraceUI("zResRatio", float(this->thisCallback->getImageTeraFly()->getZDim() / this->thisCallback->getImageTeraFly()->getRezZ()));
 }

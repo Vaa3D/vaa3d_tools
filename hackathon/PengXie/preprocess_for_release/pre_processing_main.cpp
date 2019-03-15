@@ -402,6 +402,7 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
 
 
     // 2.0 Find soma
+    double dist_thres = connect_soma_dist;
     printf("\tFinding soma from APO\n");
     QList<CellAPO> soma_markers = readAPO_file(infileLabel + QString(".apo"));
     QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
@@ -413,37 +414,89 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     NeuronSWC soma_apo = S_list.at(0);
 
     printf("\tFinding soma from swc\n");
-    V3DLONG soma_apo_id = get_soma(nt);
-    if(soma_apo_id != (-1)){ // found soma from swc
-        NeuronSWC soma_swc = nt.listNeuron.at(soma_apo_id);
-        double dist = computeDist2(soma_apo, soma_swc, XSCALE, YSCALE, ZSCALE);
-        if(dist>10){
-            v3d_msg(QString("Soma found in SWC is too far the one from APO.\n"
-                            "Distance: %1.\n").arg(QString::number(dist)));
-            return 0;
-        }
-    }
-    else{
-        double min_dist = MAX_DOUBLE;
-        soma_apo_id = 0;
-        for(int i=0; i<nt.listNeuron.size();i++){
-            NeuronSWC node = nt.listNeuron.at(i);
-            double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
-            if(min_dist>dist){
+//    V3DLONG soma_apo_id = get_soma(nt);
+//    bool soma_confirmed = 0;
+//    if(soma_apo_id != (-1)){ // found soma from swc
+//        NeuronSWC soma_swc = nt.listNeuron.at(soma_apo_id);
+//        double dist = computeDist2(soma_apo, soma_swc, XSCALE, YSCALE, ZSCALE);
+//        if(dist>10){
+////            v3d_msg(QString("Soma found in SWC is too far the one from APO.\n"
+////                            "Distance: %1.\n").arg(QString::number(dist)));
+////            return 0;
+//        }
+//        else{
+//            soma_confirmed = 1;
+//        }
+//    }
+    V3DLONG soma_apo_id;
+    bool soma_confirmed = 0;
+    // Check all the root nodes nearby soma_apo. If multiple candidates found, choose the one with the most duplicates.
+    int max_dup = 0;
+    double min_dist = MAX_DOUBLE;
+    for(int i=0; i<nt.listNeuron.size(); i++)
+    {
+        NeuronSWC node = nt.listNeuron.at(i);
+        double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
+        if(dist<dist_thres){
+            int n_dup = count_dup_for_node(nt, i);
+            if(((n_dup>max_dup) || (n_dup==max_dup) && (dist<min_dist))){
                 soma_apo_id = i;
+                soma_confirmed = 1;
+                max_dup = n_dup;
                 min_dist = dist;
+                qDebug()<<node.n<<max_dup<<min_dist;
             }
         }
-        if(min_dist<5){
-            NeuronSWC node = nt.listNeuron.at(soma_apo_id);
-            qDebug()<<QString("Soma found from apo. %1 %2 %3").arg(QString::number(node.x)).arg(QString::number(node.y)).arg(QString::number(node.z));
-        }
+    }
+//    for(int i=0; i<nt.listNeuron.size(); i++)
+//    {
+//        NeuronSWC node = nt.listNeuron.at(i);
+//        if(node.pn==(-1)){
+//            double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
+//            int n_dup = count_dup_for_node(nt, i);
+//            if((dist<dist_thres) && (n_dup>max_dup)){
+//                soma_apo_id = i;
+//                soma_confirmed = 1;
+//                max_dup = n_dup;
+//                qDebug()<<node.n<<max_dup;
+//            }
+//        }
+//    }
+    if(soma_confirmed){
+        NeuronSWC node = nt.listNeuron.at(soma_apo_id);
+        qDebug()<<QString("Soma found from apo. %1 %2 %3 %4").arg(node.n).arg(QString::number(node.x)).arg(QString::number(node.y)).arg(QString::number(node.z));
+    }
+//    else{
+//        double min_dist = MAX_DOUBLE;
+//        soma_apo_id = 0;
+//        for(int i=0; i<nt.listNeuron.size();i++){
+//            NeuronSWC node = nt.listNeuron.at(i);
+//            double dist = computeDist2(node, soma_apo, XSCALE, YSCALE, ZSCALE);
+//            if(min_dist>dist){
+//                soma_apo_id = i;
+//                min_dist = dist;
+//            }
+//        }
+//        if(min_dist<dist_thres){
+//            NeuronSWC node = nt.listNeuron.at(soma_apo_id);
+//            soma_confirmed = 1;
+//            qDebug()<<QString("Soma found from apo. %1 %2 %3 %4").arg(node.n).arg(QString::number(node.x)).arg(QString::number(node.y)).arg(QString::number(node.z));
+//        }
+
+//    }
+
+    if(!soma_confirmed){
+        v3d_msg(QString("Cannot confidently find soma node for %1.\n").arg(qs_input));
+        return 0;
     }
 
+
     // 2.1 Sort/connect/
-    nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, 2));
+    nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, thres));
 
     // 2.2 Prune
+    QList<int> tip_list = get_tips(nt, 0);
+    qDebug()<<QString("%1 Tips before pruning: %2").arg(outfileLabel).arg(tip_list.size());
     printf("\tPruning short branches\n");
     if (!prune_branch(nt, cur_nt, prune_size))
     {
@@ -451,7 +504,9 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         return 0;
     }
     nt.deepCopy(cur_nt);
-    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
+    tip_list = get_tips(nt, 0);
+    qDebug()<<QString("%1 Tips after pruning: %2").arg(outfileLabel).arg(tip_list.size());
+//    export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
 
     // Export
     nt.deepCopy(my_SortSWC(nt, VOID, 0));
