@@ -77,12 +77,13 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             int p_index;
             if(plist.at(i)!=-1){
             p_index = alln.indexOf(plist.at(i));
-            cout<<"index "<<p_index<<endl;
+            cout<<"index "<<N<<"   "<<i<<endl;
             double d = dist(nt.listNeuron.at(alln.at(i)),nt.listNeuron.at(p_index));
             //distance & intensity
             V3DLONG nodex = nt.listNeuron.at(p_index).x;
             V3DLONG nodey = nt.listNeuron.at(p_index).y;
             V3DLONG nodez = nt.listNeuron.at(p_index).z;
+
             //cout<<"check2"<<endl;
             struct XYZ ploc= XYZ(nodex,nodey,nodez);
             //block
@@ -97,7 +98,7 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             large.z = ceil(large.z)+1;
             unsigned char * cropped_image = 0;
             //cout<<"dim"<<small.x<<small.y<<small.z<<large.x<<large.y<<large.z<<endl;
-            cout<<"dim"<<endl;
+            //cout<<"dim"<<endl;
             cropped_image = callback.getSubVolumeTeraFly(image_file.toStdString(),
                                                          small.x, large.x,
                                                          small.y, large.y,
@@ -106,7 +107,7 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 //                                                         10, 20,
 //                                                         10, 20,
 //                                                         10, 20);
-            cout<<"image"<<endl;
+            //cout<<"image"<<endl;
             V3DLONG mysz[4];
             mysz[0] = large.x-small.x;
             mysz[1] = large.y-small.y;
@@ -124,7 +125,7 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             }
         }}
     }
-
+    cout<<"apo"<<endl;
     //create .apo
     unsigned int Vsize=50;
     QList<CellAPO> apo;
