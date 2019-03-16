@@ -1179,7 +1179,7 @@
                        </font>
                       </property>
                       <property name="text">
-                       <string>50</string>
+                       <string>5</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1195,7 +1195,7 @@
                        </font>
                       </property>
                       <property name="text">
-                       <string>µm</string>
+                       <string>voxel count</string>
                       </property>
                      </widget>
                     </item>

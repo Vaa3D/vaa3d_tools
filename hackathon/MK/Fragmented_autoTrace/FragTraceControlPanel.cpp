@@ -141,6 +141,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		// ------- Post Elongation -------
 		if (callOldSettings.value("PostElongDistChecked") == true)
 		{
+			uiPtr->lineEdit_4->setEnabled(true);
 			uiPtr->lineEdit_4->setText(callOldSettings.value("PostElongDistThreshold").toString());
 		}
 		
@@ -395,9 +396,15 @@ void FragTraceControlPanel::saveSettingsClicked()
 
 	// ------- Post Elongation -------
 	if (uiPtr->groupBox_5->isChecked())
+	{
+		settings.setValue("PostElongDistChecked", true);
 		settings.setValue("PostElongDistThreshold", uiPtr->lineEdit_4->text());
+	}
 	else
+	{
+		settings.setValue("PostElongDistChecked", false);
 		settings.setValue("PostElongDistThreshold", "-1");
+	}
 
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
