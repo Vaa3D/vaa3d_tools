@@ -3,13 +3,12 @@
  * 2018-12-19 : by YourName
  */
  
-#include "v3d_message.h"
-#include <vector>
-#include "branch_crop_plugin.h"
+
+#include "branch_detect.h"
 #include <stdio.h>
 #include <iostream>
-#include <v3d_interface.h>
-//#include "../get_terminal.h"
+#include "branch_crop_plugin.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(Branch_Crop, TestPlugin)
 
