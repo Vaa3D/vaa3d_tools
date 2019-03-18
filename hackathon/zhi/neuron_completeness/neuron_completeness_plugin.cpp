@@ -9,6 +9,7 @@
 #include "neuron_completeness_funcs.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
 #include <fstream>
+#include "neuron_format_converter.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_completeness, TestPlugin);
@@ -19,6 +20,7 @@ QStringList TestPlugin::menulist() const
         <<tr("eval")
         <<tr("batch_eval")
         <<tr("eval_terafly")
+        <<tr("loop_detection(test)")
 		<<tr("about");
 }
 
@@ -195,7 +197,17 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         }
 
     }
-    else
+    else if (menu_name == tr("loop_detection(test)"))
+    {
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
+            return;
+        NeuronTree nt = openDlg->nt;
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        v3d_msg(QString("%1").arg(nt_decomposed.seg.size()));
+
+
+    }else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
 			"Developed by Zhi Zhou, 2019-2-25"));
