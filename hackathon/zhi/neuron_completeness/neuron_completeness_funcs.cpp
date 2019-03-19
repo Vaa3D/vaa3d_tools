@@ -4,6 +4,7 @@
  */
  
 #include "v3d_message.h"
+#include <algorithm>
 #include "neuron_completeness_funcs.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
