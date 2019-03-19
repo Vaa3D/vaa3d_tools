@@ -17,7 +17,7 @@ public:
 	/***************** Constructors and Basic Data/Function Members *****************/
 	enum featureType { morphology, texture };
 	/********************************************************************************/
-
+	
 
 	/***************** Object-based Operations *****************/
 	static boost::container::flat_map<string, double> objMorphFeature(const connectedComponent& inputSample);

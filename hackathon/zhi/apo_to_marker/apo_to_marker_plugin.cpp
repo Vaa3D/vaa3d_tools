@@ -15,7 +15,7 @@ QStringList apo_to_marker::menulist() const
         <<tr("save apo to marker format")
         <<tr("save apo to individual markers")
         <<tr("save apo to individual apo files")
-        <<tr("add name in apo file")
+        <<tr("add index name in apo file")
         <<tr("save swc file to apo format")
 		<<tr("about");
 }
@@ -25,7 +25,7 @@ QStringList apo_to_marker::funclist() const
 	return QStringList()
         <<tr("apo_to_individual_markers")
         <<tr("apo_to_swc")
-
+        <<tr("index_name")
 		<<tr("help");
 }
 
@@ -155,7 +155,7 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             writeAPO_file(fileDefaultName,listLandmarks);
             listLandmarks.clear();
         }
-    }else if (menu_name == tr("add name in apo file"))
+    }else if (menu_name == tr("add index name in apo file"))
     {
         QString fileOpenName;
         fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Point Cloud File"),
@@ -167,19 +167,12 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
         QList<CellAPO> file_inmarkers;
         file_inmarkers = readAPO_file(fileOpenName);
-
-
-        double scale;
-        bool ok1;
-        scale = QInputDialog::getDouble(0, "Scale factor ",
-                                      "Enter scale factor:",
-                                      2, 1, INT_MAX, 1, &ok1);
         for(int i = 0; i < file_inmarkers.size(); i++)
         {
             file_inmarkers[i].name = QString("%1").arg(i+1);
-            file_inmarkers[i].x=file_inmarkers[i].x/scale;
-            file_inmarkers[i].y=file_inmarkers[i].y/scale;
-            file_inmarkers[i].z=file_inmarkers[i].z/scale;
+            file_inmarkers[i].x=file_inmarkers[i].x;
+            file_inmarkers[i].y=file_inmarkers[i].y;
+            file_inmarkers[i].z=file_inmarkers[i].z;
         }
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
@@ -219,9 +212,9 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
         {
             CellAPO t;
-            t.x = (nt.listNeuron.at(i).x+1)/25;
-            t.y = (nt.listNeuron.at(i).y+1)/25;
-            t.z = (nt.listNeuron.at(i).z+1)/25;
+            t.x = (nt.listNeuron.at(i).x);
+            t.y = (nt.listNeuron.at(i).y);
+            t.z = (nt.listNeuron.at(i).z);
             t.color.r=0;
             t.color.g=0;
             t.color.b=255;
@@ -311,6 +304,20 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
         QString outfilename = QString(infiles[0]) + ".swc";
         writeSWC_file(outfilename, nt);
+
+    }else if(func_name == tr("index_name"))
+    {
+        QList<CellAPO> file_inmarkers;
+        file_inmarkers= readAPO_file(QString(infiles[0]));
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            file_inmarkers[i].name = QString("%1").arg(i+1);
+            file_inmarkers[i].x=file_inmarkers[i].x;
+            file_inmarkers[i].y=file_inmarkers[i].y;
+            file_inmarkers[i].z=file_inmarkers[i].z;
+        }
+        QString outfilename = outfiles[0];
+        writeAPO_file(outfilename,file_inmarkers);
 
     }
 	else if (func_name == tr("help"))

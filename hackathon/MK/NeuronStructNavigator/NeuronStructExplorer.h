@@ -21,16 +21,15 @@
 #define NEURONSTRUCTEXPLORER_H
 
 #include <vector>
-#include <list>
-#include <deque>
 #include <map>
-#include <unordered_map>
 #include <string>
 
 #include <boost/config.hpp>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include <qlist.h>
 #include <qstring.h>
@@ -41,6 +40,7 @@
 #include "NeuronStructUtilities.h"
 
 using namespace std;
+using namespace integratedDataTypes;
 
 enum edge_lastvoted_t { edge_lastvoted };
 namespace boost 
@@ -52,81 +52,10 @@ typedef boost::property<boost::edge_weight_t, double> weights;
 typedef boost::property<edge_lastvoted_t, int, weights> lastVoted;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, lastVoted> undirectedGraph;
 
-#ifndef PI
-#define PI 3.1415926
-#endif
-
-#ifndef tileXY_LENGTH
-#define tileXY_LENGTH 30
-#endif
-
-#ifndef radANGLE_THRE
-#define radANGLE_THRE 0.25
-#endif
-
-enum connectOrientation { head_head, head_tail, tail_head, tail_tail, head, tail };
-
-struct profiledNode
-{
-	int index;
-	bool front, back;
-	long segID, frontSegID, backSegID, nodeNum, x, y, z;
-
-	double innerProduct;
-	double previousSqr, nextSqr, radAngle, distToMainRoute, turnCost;
-};
-
-struct topoCharacter
-{
-	topoCharacter() {};
-	topoCharacter(NeuronSWC centerNode, int streamLength = 10) : topoCenter(centerNode) {};
-	NeuronSWC topoCenter;
-	deque<NeuronSWC> upstream;
-	map<int, deque<NeuronSWC>> downstreams;
-};
-
-struct segUnit
-{
-	segUnit() : to_be_deleted(false) {};
-	//segUnit(const segUnit& sourceSegUnit) {};
-
-	int segID;
-	int head;
-	vector<int> tails;
-	QList<NeuronSWC> nodes;
-	map<int, size_t> seg_nodeLocMap;
-	map<int, vector<size_t>> seg_childLocMap;
-	vector<topoCharacter> topoCenters;
-
-	bool to_be_deleted;
-};
-
-struct profiledTree
-{
-	profiledTree() {};
-	profiledTree(const NeuronTree& inputTree, float segTileLength = tileXY_LENGTH);
-	float segTileSize;
-	float nodeTileSize;
-	void nodeTileResize(float nodeTileLength);
-
-	NeuronTree tree;
-	map<int, size_t> node2LocMap;
-	map<int, vector<size_t>> node2childLocMap;
-
-	double connAngleThre;
-	map<string, vector<int>> nodeTileMap; // tile label -> node ID
-	map<string, vector<int>> segHeadMap;  // tile label -> seg ID
-	map<string, vector<int>> segTailMap;  // tile label -> seg ID
-	map<int, segUnit> segs; // key = seg ID
-
-	map<int, topoCharacter> topoList;
-	void addTopoUnit(int nodeID);
-};
-
 class NeuronStructExplorer
 {
 public:
-	/***************** Constructors and Basic Data/Function Members *****************/
+	/***************** Constructors and Basic Profiling Data/Function Members *****************/
 	NeuronStructExplorer() {};
 	NeuronStructExplorer(QString neuronFileName);
 	NeuronStructExplorer(const NeuronTree& inputTree) { this->treeEntry(inputTree, "originalTree"); }
@@ -136,18 +65,34 @@ public:
 	NeuronTree processedTree;
 
 	map<string, profiledTree> treeDataBase;
-	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = tileXY_LENGTH);
-	inline void profiledTreeReInit(profiledTree& inputProfiledTree);
+	void treeEntry(const NeuronTree& inputTree, string treeName, float segTileLength = SEGtileXY_LENGTH);
+	void profiledTreeReInit(profiledTree& inputProfiledTree); // Needs to incorporate with this->getSegHeadTailClusters later.
 	
 	V_NeuronSWC_list segmentList;
 	void segmentDecompose(NeuronTree* inputTreePtr);
 	static map<int, segUnit> findSegs(const QList<NeuronSWC>& inputNodeList, const map<int, vector<size_t>>& node2childLocMap);
+	
 	static map<string, vector<int>> segTileMap(const vector<segUnit>& inputSegs, float xyLength, bool head = true);
-	/********************************************************************************/
+	
+	// This method is a wrapper that calls this->getTilBasedSegClusters and this->mergeTileBasedSegClusters to obtain all segment ends' clustering profile. 
+	void getSegHeadTailClusters(profiledTree& inputProfiledTree, float distThreshold = 5);
+
+//private: --> will set to be private later after more tests
+	// This method clusters segment terminals within each segment head/tail tile. 
+	// NOTE, currently only simple unilateral segments are supported.
+	void getTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+
+	// This method merge segment end clusters with given distance threshold for the whole input profiledTree.
+	// Note, this method is usually called after this->getTileBasedSegClusters together in this->getSegHeadTailClusters.
+	void mergeTileBasedSegClusters(profiledTree& inputProfiledTree, float distThreshold);
+	/*****************************************************************************************/
 
 
 	/***************** Neuron Struct Processing Functions *****************/
+public:
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
+	
+	// This method calls this->rc_segDownSample, which is a private function. Therefore, it cannot be static.
 	profiledTree treeDownSample(const profiledTree& inputProfiledTree, int nodeInterval = 2);
 	
 private:
@@ -161,18 +106,35 @@ public:
 
 
 	/***************** Auto-tracing Related Neuron Struct Functions *****************/
+	// ----------------- MST ----------------- //
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
-	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = tileXY_LENGTH, float zDivideNum = 1);
-	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
+	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);
 	static NeuronTree MSTbranchBreak(const profiledTree& inputProfiledTree, double spikeThre = 10, bool spikeRemove = true);
+	static inline NeuronTree MSTtreeCut(NeuronTree& inputTree, double distThre = 10);
+	// -------------------------------------- //
 	
 	profiledTree segElongate(const profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
 	profiledTree itered_segElongate(profiledTree& inputProfiledTree, double angleThre = radANGLE_THRE);
-	profiledTree segElongate_dist(const profiledTree& inputProfiledTree, float tileLength, float distThreshold);
-	profiledTree simpleSegElongate(const NeuronTree& inputTree, float tileLength, float distThreshold);
+
+	boost::container::flat_map<int, vector<segPairProfile>> getSegConnPairs_cluster(const profiledTree& inputProfiledTree);
+	profiledTree connectLongNeurite(const profiledTree& inputProfiledTree, float distThreshold = 5);
+	profiledTree itered_connectLongNeurite(profiledTree& inputProfiledTree, float distThreshold = 5);
+	
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ currently DEPRECATED ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+	profiledTree segElongate_cluster(const profiledTree& inputProfiledTree);
+	profiledTree itered_segElongate_cluster(profiledTree& inputProfiledTree, float distThreshold);
+
+	// Like this->segUnitConnect_executer, this method currently only supports simple unilateral segments.
+	map<int, segUnit> segUnitConnPicker_dist(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, float distThreshold);
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
 	static inline connectOrientation getConnOrientation(connectOrientation orit1, connectOrientation orrit2);
+	
+	// Generate a new segment that is connected with 2 input segments. Connecting orientation needs to be specified by connOrt.
+	// This method is a generalized method and is normally the final step of segment connecting process.
+	// NOTE, currently it only supports simple unilateral segment. Forked segment connection will result in throwing error message!!
 	segUnit segUnitConnect_executer(const segUnit& segUnit1, const segUnit& segUnit2, connectOrientation connOrt);
+	
 	map<int, segUnit> segRegionConnector_angle(const vector<int>& currTileHeadSegIDs, const vector<int>& currTileTailSegIDs, profiledTree& currProfiledTree, double angleThre, bool length = false);
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
@@ -181,27 +143,33 @@ public:
 
 
 	/***************** Geometry *****************/
-public:
 	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
+	inline static vector<pair<float, float>> getVectorLocPair(const NeuronSWC& startNode, const NeuronSWC& endNode);
+
+	inline static double getVectorCosine(const vector<float>& vector1, const vector<float>& vector2);
+	inline static double getVectorSine(const vector<float>& vector1, const vector<float>& vector2);
+	inline static double getPiAngle(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double getRadAngle(const vector<float>& vector1, const vector<float>& vector2);
+
+	static vector<pair<float, float>> getProjectedVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector);
+	
+	// This method computes the sum of turning angles of from one node to the next node for a segment.
 	inline static double selfTurningRadAngleSum(const vector<vector<float>>& inputSegment);
 
 	static segUnit segmentStraighten(const segUnit& inputSeg);
 
-private:
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
-	double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
+	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	/********************************************/
 
 
 	/***************** Neuron Struct Refining Method *****************/
-public:
 	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
 	/*****************************************************************/
 
 
-	/********* Distance-based SWC analysis *********/
+	/* ~~~~~~~~~~~ Distance-based SWC analysis ~~~~~~~~~~~ */
 	vector<vector<float>> FPsList;
 	vector<vector<float>> FNsList;
 	void falsePositiveList(NeuronTree* detectedTreePtr, NeuronTree* manualTreePtr, float distThreshold = 20);
@@ -211,7 +179,7 @@ public:
 	map<int, long int> nodeDistCDF;
 	map<int, long int> nodeDistPDF;
 	void shortestDistCDF(NeuronTree* inputTreePtr1, NeuronTree* inputTreePtr2, int upperBound, int binNum = 500);
-	/***********************************************/
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 };
 
 inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double distThre)
@@ -271,14 +239,55 @@ inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>
 	return dispUnitVector;
 }
 
+inline vector<pair<float, float>> NeuronStructExplorer::getVectorLocPair(const NeuronSWC& startNode, const NeuronSWC& endNode)
+{
+	vector<float> thisVector = NeuronStructExplorer::getVector_NeuronSWC(startNode, endNode);
+
+	vector<pair<float, float>> outputVectorPairs(3);
+	outputVectorPairs[0] = pair<float, float>(startNode.x, thisVector.at(0));
+	outputVectorPairs[1] = pair<float, float>(startNode.y, thisVector.at(1));
+	outputVectorPairs[2] = pair<float, float>(startNode.z, thisVector.at(2));
+
+	return outputVectorPairs;
+}
+
+inline double NeuronStructExplorer::getVectorSine(const vector<float>& vector1, const vector<float>& vector2)
+{
+	double thisVectorCos = NeuronStructExplorer::getVectorCosine(vector1, vector2);
+	double thisVectorSin = sqrt(1 - thisVectorCos * thisVectorCos);
+
+	return thisVectorSin;
+}
+
+inline double NeuronStructExplorer::getVectorCosine(const vector<float>& vector1, const vector<float>& vector2)
+{
+	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
+	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
+	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
+	
+	return dot / sqrt(sq1 * sq2);
+}
+
+inline double NeuronStructExplorer::getPiAngle(const vector<float>& vector1, const vector<float>& vector2)
+{
+	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
+	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
+	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
+	double angle = acos(dot / sqrt(sq1 * sq2));
+    
+	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	else return angle / PI;
+}
+
 inline double NeuronStructExplorer::getRadAngle(const vector<float>& vector1, const vector<float>& vector2)
 {
 	double dot = (vector1.at(0) * vector2.at(0) + vector1.at(1) * vector2.at(1) + vector1.at(2) * vector2.at(2));
 	double sq1 = (vector1.at(0) * vector1.at(0) + vector1.at(1) * vector1.at(1) + vector1.at(2) * vector1.at(2));
 	double sq2 = (vector2.at(0) * vector2.at(0) + vector2.at(1) * vector2.at(1) + vector2.at(2) * vector2.at(2));
 	double angle = acos(dot / sqrt(sq1 * sq2));
-    if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -1;
-	else return angle / PI;
+	
+	if (std::isnan(acos(dot / sqrt(sq1 * sq2)))) return -10;
+	else return angle;
 }
 
 inline double NeuronStructExplorer::selfTurningRadAngleSum(const vector<vector<float>>& inputSegment)
@@ -347,10 +356,15 @@ inline NeuronTree NeuronStructExplorer::singleDotRemove(const profiledTree& inpu
 	NeuronTree outputTree;
 	for (map<int, segUnit>::const_iterator segIt = inputProfiledTree.segs.begin(); segIt != inputProfiledTree.segs.end(); ++segIt)
 	{
-		if (segIt->second.head == *segIt->second.tails.begin()) continue;
-		else if (segIt->second.nodes.size() <= shortSegRemove) continue;
+		//cout << "seg ID:" << segIt->first << " ";
+		if (segIt->second.nodes.size() <= shortSegRemove)
+		{
+			//cout << "not included" << endl;
+			continue;
+		}
 		else
 		{
+			//cout << "included" << endl;
 			for (QList<NeuronSWC>::const_iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
 				outputTree.listNeuron.push_back(*nodeIt);
 		}

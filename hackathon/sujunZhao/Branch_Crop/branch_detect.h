@@ -1,0 +1,55 @@
+#ifndef BRANCH_DETECT_H
+#define BRANCH_DETECT_H
+
+#include "branch_crop_plugin.h"
+#include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+#include <stdio.h>
+#include <iostream>
+//#include "../../../../vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
+//#include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.h"
+#include <cmath>
+#include <algorithm>
+#include "../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include <prune_short_branch.h>
+
+
+class OpenSWCDialog: public QDialog
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * callback;
+    QListWidget * listWidget;
+    QList<NeuronTree> _3DViewerTreeList;
+    NeuronTree  nt;
+    QString file_name;
+
+    OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * callback);
+    void getAllNeuronTreeNames(V3DPluginCallback2 * callback);
+
+public slots:
+    bool run();
+    bool setTree(const QString & file);
+};
+
+struct block{
+    QString name;
+    XYZ small;
+    XYZ large;
+};
+block offset_block(block input_block, XYZ offset);
+bool export_list22file(const QList<NeuronSWC>& lN, QString fileSaveName);
+NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
+NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
+bool in_cuboid(NeuronSWC node, XYZ small, XYZ large);
+bool crop_swc_cuboid(NeuronTree nt, QString qs_output,block input_block);
+double marker_dist(MyMarker a, MyMarker b);
+int find_tip(NeuronTree nt, long sz0, long sz1, long sz2);
+void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+XYZ offset_XYZ(XYZ input, XYZ offset);
+vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a);
+//void crop_swc(QString input_swc, QString output_swc, block crop_block);
+void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2);
+LandmarkList get_missing_branches_menu(V3DPluginCallback2 &callback, QWidget *parent, Image4DSimple * p4DImage);
+#endif // BRANCH_DETECT_H

@@ -41,10 +41,11 @@ public:
 	bool MST;
 	string MSTtreeName;
 	int minNodeNum;
-	bool branchBreak;
 
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;
+
+	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
 
 public slots:
 	void imgProcPipe_wholeBlock();

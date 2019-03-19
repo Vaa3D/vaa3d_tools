@@ -33,17 +33,9 @@
 
 #include "basic_surf_objs.h"
 #include "ImgAnalyzer.h"
+#include "integratedDataTypes.h"
 
 using namespace std;
-
-#ifndef NODE_TILE_LENGTH
-#define NODE_TILE_LENGTH 100
-#endif
-
-#ifndef zRATIO
-#define zRATIO (1 / 0.2) // This is the ratio of z resolution to x and y in fMOST images.
-//#define zRATIO (0.28 / 0.1144) // This is the ratio of z resolution to x and y in IVSCC images.
-#endif
 
 class NeuronStructUtil
 {
@@ -112,6 +104,7 @@ public:
 	/***************** Inter-SWC Comparison/Analysis *****************/
 	// Recognize the same nodes with given distance threshold.
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
+	static NeuronTree swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength = NODE_TILE_LENGTH);
 	/*****************************************************************/
 
 
@@ -135,17 +128,20 @@ public:
 	/*******************************************************************/
 
 
-	/***************** Sampling Methods for Simulated Volumetric Patch Generation *****************/
+	/***************** Miscellaneous *****************/
+	static inline void linkerFileGen_forSWC(string swcFullFileName);
+	static inline NeuronTree randNodes(float cubeLength, float density);
+	static inline NeuronTree sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density);
+	static NeuronTree nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange);
+	/*************************************************/
+
+
+	/* ~~~~~~~~~~~~~~~ Sampling Methods for Simulated Volumetric Patch Generation ~~~~~~~~~~~~~~~ */
 	static void swcSlicer_DL(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 0);
 	static void sigNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, float ratio, float distance);
 	static void bkgNode_Gen(const NeuronTree& inputTree, NeuronTree& outputTree, int dims[], float ratio, float distance);
 	static void bkgNode_Gen_somaArea(const NeuronTree& inputTree, NeuronTree& outputTree, int xLength, int yLength, int zLength, float ratio, float distance);
-	/**********************************************************************************************/
-
-
-	/***************** Miscellaneous *****************/
-	static inline void linkerFileGen_forSWC(string swcFullFileName);
-	/**************************************************/
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 };
 
 inline vector<int> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
@@ -461,6 +457,61 @@ inline void NeuronStructUtil::node2loc_node2childLocMap(const QList<NeuronSWC>& 
 		}
 	}
 	//cout << " node - Child location mapping done. size: " << node2childLocMap.size() << endl;
+}
+
+inline NeuronTree NeuronStructUtil::randNodes(float cubeLength, float density)
+{
+	NeuronTree outputTree;
+	int targetNodeCount = int(cubeLength * cubeLength * cubeLength * density);
+	int producedNodeCount = 0;
+	while (producedNodeCount <= targetNodeCount)
+	{
+		int randNumX = rand() % int(cubeLength) + 1;
+		int randNumY = rand() % int(cubeLength) + 1;
+		int randNumZ = rand() % int(cubeLength) + 1;
+
+		NeuronSWC newNode;
+		newNode.n = producedNodeCount + 1;
+		newNode.x = randNumX;
+		newNode.y = randNumY;
+		newNode.z = randNumZ;
+		newNode.type = 2;
+		newNode.parent = -1;
+		outputTree.listNeuron.push_back(newNode);
+
+		++producedNodeCount;
+	}
+
+	return outputTree;
+}
+
+inline NeuronTree NeuronStructUtil::sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density)
+{
+	int targetNum = int((4 / 3) * PI * radius * radius * radius * density);
+	int nodeCount = 1;
+	NeuronTree outputTree;
+	while (nodeCount <= targetNum)
+	{
+		float randomX = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerX - radius);
+		float randomY = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerY - radius);
+		float randomZ = float(rand()) / float(RAND_MAX) * (2 * radius) + (centerZ - radius);
+
+		float dist = sqrtf((randomX - centerX) * (randomX - centerX) + (randomY - centerY) * (randomY - centerY) + (randomZ - centerZ) * (randomZ - centerZ));
+		if (dist > radius) continue;
+
+		NeuronSWC newNode;
+		newNode.n = nodeCount;
+		newNode.x = randomX;
+		newNode.y = randomY;
+		newNode.z = randomZ / zRATIO;
+		newNode.type = 2;
+		newNode.parent = -1;
+		outputTree.listNeuron.push_back(newNode);
+
+		++nodeCount;
+	}
+	
+	return outputTree;
 }
 
 inline void NeuronStructUtil::linkerFileGen_forSWC(string swcFullFileName)

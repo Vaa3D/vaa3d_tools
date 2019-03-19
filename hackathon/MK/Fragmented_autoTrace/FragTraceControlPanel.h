@@ -20,6 +20,9 @@ public:
 
 	NeuronTree tracedTree;
 	void scaleTracedTree();
+	NeuronTree treeScaleBack(const NeuronTree& inputTree);
+
+	map<string, float> paramsFromUI;
 
 signals:
 	void switchOnSegPipe();
@@ -41,6 +44,8 @@ private:
 	Ui::FragmentedTraceUI* uiPtr;
 
 	FragTraceManager* traceManagerPtr;
+
+	void fillUpParamsForm();
 };
 
 

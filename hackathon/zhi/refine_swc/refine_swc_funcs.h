@@ -33,6 +33,13 @@ void resample_path(Segment * seg, double step);
 NeuronTree resample(NeuronTree input, double step);
 
 
+// added by DZC 14Mar2019
+NeuronTree breakSWC_with_points(NeuronTree input, QList<ImageMarker>& break_points);
+void break_path_with_points(Segment * seg, QList<ImageMarker>& break_points);
+QList <ImageMarker> break_points_reselect(QList<ImageMarker> & break_points, NeuronTree nt);
+NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
+
+
 
 #endif
 

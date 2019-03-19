@@ -15,6 +15,7 @@ using namespace std;
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define DISTPS(a,b) (sqrt(((a)->x-(b).x)*((a)->x-(b).x)+((a)->y-(b).y)*((a)->y-(b).y)+((a)->z-(b).z)*((a)->z-(b).z)))
 
 NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt)
 {
@@ -934,3 +935,311 @@ NeuronTree resample(NeuronTree input, double step)
         result.hashNeuron.insert(result.listNeuron[i].n, i);
     return result;
 }
+
+
+//added by DZC 14Mar2019
+
+QList <ImageMarker> break_points_reselect(QList<ImageMarker> & break_points, NeuronTree nt )
+{
+    std::cout<< "now start to reselect the break points for GD tracing"<<std::endl;
+
+    QVector<QVector<V3DLONG> > childs;
+
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<NeuronSWC> list =nt.listNeuron;
+
+    std::cout<<"find all the breaking points in swc, according to the marker list"<<std::endl;
+    QList <NeuronSWC> pre_list;
+    for(int i=0; i<break_points.size();i++)
+    {
+        for(int j=0;j<neuronNum;j++)
+        {
+            if(NTDIS(break_points.at(i),list.at(j))<1 && list.at(j).level != 180)
+            {
+                pre_list.push_back(list.at(j));
+                break;
+
+             }
+        }
+    }
+
+
+   std::cout<<"for each breaking point, find the nearest parent node and extract the mid node"<<std::endl;
+
+   map <int,int> flag;
+
+    for(int i=0; i<pre_list.size();i++)
+    {
+        flag[i]=0;
+    }
+
+
+    QList <NeuronSWC> fn_list;
+
+    for (int i=0; i<pre_list.size();i++)
+    {   std::cout<<"i="<<i<<std::endl;
+
+        if(childs[i].size()>1) {
+
+            fn_list.push_back(pre_list.at(i));
+
+            continue;
+
+        }
+
+
+        int index= pre_list.at(i).n;
+        for(int count=0;count<400;count++)
+        {   std::cout<<"\n count="<<count<<std::endl;
+            if (flag[i]==1) break;
+
+            index= getParent(index,nt);
+
+            std::cout<<"\n index="<<index<<std::endl;
+
+
+            if( index>0 && index<1000000000)
+            {
+                //                int index=index_i;
+                //                int index=pre_list.at(i).n-count;
+                //                int index_begin=getParent(index_begin,nt);
+                for(int j=0; j<pre_list.size();j++)
+                {
+                    //std::cout<<"\n j="<<j<<std::endl;
+                    if(pre_list.at(j).n ==index)
+                    {
+
+                        std::cout<<"nearest parent node found"<<std::endl;
+                        int index_mid= pre_list.at(i).n;
+                        for (int k=0; k<count/2;k++)
+                        {
+                            index_mid=getParent(index_mid,nt);
+
+                        }
+
+                        fn_list.push_back(list.at(index_mid));
+                        flag[i]=1;
+                        break;
+                    }
+                }
+            }
+            else  {
+
+                std::cout<< "the nearest node is the root"<<std::endl;
+
+                int index_mid= pre_list.at(i).n;
+                for (int k=0; k<count/2;k++)
+                {
+
+                    index_mid=getParent(index_mid,nt);
+
+                }
+
+                fn_list.push_back(list.at(index_mid));
+                flag[i]=1;
+                break;
+
+
+            }
+        }
+
+
+
+    }
+
+    std::cout<<"\n pre breaking points size="<<pre_list.size()<<std::endl;
+
+    std::cout<<"\n new breaking points size="<<fn_list.size()<<std::endl;
+
+    // new list construction completed, now generate the new marker list
+
+    QList <ImageMarker> new_nodes_list;
+
+    for (int i=0;i<fn_list.size();i++)
+    {
+        ImageMarker new_node;
+        new_node.x=fn_list.at(i).x;
+        new_node.y=fn_list.at(i).y;
+        new_node.z=fn_list.at(i).z;
+        new_node.color.r=255;
+        new_node.color.g=0;
+        new_node.color.b=0;
+        new_nodes_list.push_back(new_node);
+    }
+
+    return new_nodes_list;
+}
+
+
+
+void break_path_with_points(Segment * seg, QList<ImageMarker>& break_points)
+{
+
+    V3DLONG n = seg->size();
+    for(int i=1; i<n;i++)
+    {
+
+        for(int j=0;j<break_points.size();j++)
+        {
+            if(DISTPS(seg->at(i),break_points.at(j))<0.1)
+            {
+            Point* pt = new Point;
+            pt->x = seg->at(i)->x;
+            pt->y = seg->at(i)->y;
+            pt->z = seg->at(i)->z;
+            pt->r = seg->at(i)->r;
+            pt->type = seg->at(i)->type;
+            pt->level = seg->at(i)->level;
+            pt->p = NULL;
+            seg->at(i-1)->p = pt;
+            seg->push_back(pt);
+            seg->at(i)->p == NULL;
+        }
+    }
+
+}
+}
+
+NeuronTree breakSWC_with_points(NeuronTree input, QList<ImageMarker>& break_points)
+{
+    NeuronTree result;
+    V3DLONG siz = input.listNeuron.size();
+    Tree tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = input.listNeuron[i];
+        Point* pt = new Point;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->r = s.r;
+        pt ->type = s.type;
+        pt->seg_id = s.seg_id;
+        pt->level = s.level;
+        pt->fea_val = s.fea_val;
+        pt->p = NULL;
+        pt->childNum = 0;
+        tree.push_back(pt);
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (input.listNeuron[i].pn<0) continue;
+        V3DLONG pid = input.hashNeuron.value(input.listNeuron[i].pn);
+        tree[i]->p = tree[pid];
+        tree[pid]->childNum++;
+    }
+//	printf("tree constructed.\n");
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->childNum!=1)//tip or branch point
+        {
+            Segment* seg = new Segment;
+            Point* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->p;
+            }
+            while(cur && cur->childNum==1);
+            seg_list.push_back(seg);
+        }
+    }
+//	printf("segment list constructed.\n");
+    for (V3DLONG i=0;i<seg_list.size();i++)
+    {
+        break_path_with_points(seg_list[i], break_points);
+    }
+
+//	printf("resample done.\n");
+    tree.clear();
+    map<Point*, V3DLONG> index_map;
+    for (V3DLONG i=0;i<seg_list.size();i++)
+        for (V3DLONG j=0;j<seg_list[i]->size();j++)
+        {
+            tree.push_back(seg_list[i]->at(j));
+            index_map.insert(pair<Point*, V3DLONG>(seg_list[i]->at(j), tree.size()-1));
+        }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        NeuronSWC S;
+        Point* p = tree[i];
+        S.n = i+1;
+        if (p->p==NULL) S.pn = -1;
+        else
+            S.pn = index_map[p->p]+1;
+        if (p->p==p) printf("There is loop in the tree!\n");
+        S.x = p->x;
+        S.y = p->y;
+        S.z = p->z;
+        S.r = p->r;
+        S.type = p->type;
+        S.seg_id = p->seg_id;
+        S.level = p->level;
+        S.fea_val = p->fea_val;
+        result.listNeuron.push_back(S);
+    }
+    for (V3DLONG i=0;i<tree.size();i++)
+    {
+        if (tree[i]) {delete tree[i]; tree[i]=NULL;}
+    }
+    for (V3DLONG j=0;j<seg_list.size();j++)
+        if (seg_list[j]) {delete seg_list[j]; seg_list[j] = NULL;}
+    for (V3DLONG i=0;i<result.listNeuron.size();i++)
+        result.hashNeuron.insert(result.listNeuron[i].n, i);
+    return result;
+}
+
+
+NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
+    NeuronTree new_tree;
+    QList<NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+//    qDebug()<<"creating new neuronlist";
+    for (int i = 0; i < neuronlist.size(); i++)
+    {
+        NeuronSWC node=neuronlist.at(i);
+        NeuronSWC S;
+        S.n 	= node.n;
+        S.type 	= node.type;
+        S.x 	= node.x;
+        S.y 	= node.y;
+        S.z 	= node.z;
+        S.r 	= node.r;
+        S.pn 	= node.pn;
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, i);
+    }
+
+    new_tree.listNeuron = listNeuron;
+    new_tree.hashNeuron = hashNeuron;
+    return new_tree;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

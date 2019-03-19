@@ -4,7 +4,7 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "../../../../vaa3d_tools/v3d_main/basic_c_fun/basic_surf_objs.h"
 #include <v3d_interface.h>
-#include "get_tip_block.h"
+#include "tip_main.h"
 
 struct trer_and_num{
 

@@ -192,8 +192,20 @@ NeuronTree NeuronStructUtil::swcSubtraction(const NeuronTree& targetTree, const 
 	}
 
 	NeuronTree outputTree;
+	boost::container::flat_set<int> nodeIDs;
 	for (boost::container::flat_map<string, QList<NeuronSWC>>::iterator mapIt = targetNodeTileMap.begin(); mapIt != targetNodeTileMap.end(); ++mapIt)
+	{
 		outputTree.listNeuron.append(mapIt->second);
+		for (QList<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+			nodeIDs.insert(nodeIt->n);
+	}
+
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1) continue;
+		else 
+			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
+	}
 
 	return outputTree;
 }
@@ -473,6 +485,56 @@ NeuronTree NeuronStructUtil::swcIdentityCompare(const NeuronTree& subjectTree, c
 			}
 		}
 		else refConfinedFilteredTree.listNeuron.push_back(*suIt);
+	}
+
+	return outputTree;
+}
+
+NeuronTree NeuronStructUtil::swcSamePartExclusion(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThreshold, float nodeTileLength)
+{
+	map<string, vector<NeuronSWC>> refGridSWCmap, suGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(refTree, refGridSWCmap, nodeTileLength);
+	NeuronStructUtil::nodeTileMapGen(subjectTree, suGridSWCmap, nodeTileLength);
+
+	NeuronTree outputTree;
+	for (map<string, vector<NeuronSWC>>::iterator suTileIt = suGridSWCmap.begin(); suTileIt != suGridSWCmap.end(); ++suTileIt)
+	{
+		if (refGridSWCmap.find(suTileIt->first) == refGridSWCmap.end())
+		{
+			for (vector<NeuronSWC>::iterator it = suTileIt->second.begin(); it != suTileIt->second.end(); ++it) 
+				outputTree.listNeuron.push_back(*it);
+		}
+		else
+		{
+			float minDist = 10000;
+			for (vector<NeuronSWC>::iterator it1 = suTileIt->second.begin(); it1 != suTileIt->second.end(); ++it1)
+			{
+				for (vector<NeuronSWC>::iterator it2 = refGridSWCmap.at(suTileIt->first).begin(); it2 != refGridSWCmap.at(suTileIt->first).end(); ++it2)
+				{
+					float dist = sqrt((it1->x - it2->x) * (it1->x - it2->x) + (it1->y - it2->y) * (it1->y - it2->y) + (it1->z - it2->z) * (it1->z - it2->z));
+					if (dist <= minDist) minDist = dist;
+				}
+
+				if (minDist <= distThreshold) continue;
+				else outputTree.listNeuron.push_back(*it1);
+			}
+		}
+	}
+
+	map<string, vector<NeuronSWC>> outputGridSWCmap;
+	NeuronStructUtil::nodeTileMapGen(outputTree, outputGridSWCmap, nodeTileLength);
+	boost::container::flat_set<int> nodeIDs;
+	for (map<string, vector<NeuronSWC>>::iterator mapIt = outputGridSWCmap.begin(); mapIt != outputGridSWCmap.end(); ++mapIt)
+	{
+		for (vector<NeuronSWC>::iterator nodeIt = mapIt->second.begin(); nodeIt != mapIt->second.end(); ++nodeIt)
+			nodeIDs.insert(nodeIt->n);
+	}
+
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+	{
+		if (nodeIt->parent == -1) continue;
+		else
+			if (nodeIDs.find(nodeIt->parent) == nodeIDs.end()) nodeIt->parent = -1;
 	}
 
 	return outputTree;
@@ -980,6 +1042,30 @@ vector<connectedComponent> NeuronStructUtil::swc2clusters_distance(const NeuronT
 	return outputConnCompList;
 }
 /* ==================================== END of [Neuron Struct Clustering Methods] ==================================== */
+
+
+
+/* =========================================== Miscellaneous =========================================== */
+NeuronTree NeuronStructUtil::nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange)
+{
+	NeuronTree outputTree;
+	for (float x = 0; x <= xRange; x += stepX)
+	{
+		for (float y = 0; y <= yRange; y += stepY)
+		{
+			for (float z = 0; z <= zRange; z += stepZ)
+			{
+				NeuronTree currSphereTree = NeuronStructUtil::sphereRandNodes(sphereRadius, x, y, z, density);
+				size_t existingNodeNum = outputTree.listNeuron.size();
+				for (QList<NeuronSWC>::iterator it = currSphereTree.listNeuron.begin(); it != currSphereTree.listNeuron.end(); ++it) it->n = it->n + existingNodeNum;
+				outputTree.listNeuron.append(currSphereTree.listNeuron);
+			}
+		}
+	}
+
+	return outputTree;
+}
+/* ===================================================================================================== */
 
 
 

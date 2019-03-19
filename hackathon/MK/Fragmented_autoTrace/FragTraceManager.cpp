@@ -104,7 +104,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		}
 	}
 	
-	cout << endl << "Finishing up.." << endl << " number of objects processed: ";
+	cout << endl << "Finishing up processing objects.." << endl << " number of objects processed: ";
 	vector<NeuronTree> objTrees;
 	NeuronTree objSkeletonTree;
 	for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
@@ -136,37 +136,31 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
 
 	NeuronTree MSTbranchBreakTree;
-	if (this->branchBreak) MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
+	MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
 	profiledTree objBranchBreakTree(MSTbranchBreakTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
 	QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
 	//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
 
-	NeuronTree shortCleanedUpTree;
-	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(objBranchBreakTree, this->minNodeNum);
-
-	profiledTree profiledShortCleanedUpTree(shortCleanedUpTree);
-	QString shortCleanedFileName = this->finalSaveRootQ + "shortSegRemoved.swc";
-	writeSWC_file(shortCleanedFileName, profiledShortCleanedUpTree.tree);
-
-	profiledTree downSampledProfiledTree = this->fragTraceTreeManager.treeDownSample(objBranchBreakTree, 4);
+	profiledTree downSampledProfiledTree = this->fragTraceTreeManager.treeDownSample(objBranchBreakTree, 2);
 	QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
 	writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
 
-	/*profiledTree profiledElongatedTree = this->fragTraceTreeManager.segElongate(downSampledProfiledTree);
-	this->fragTraceTreeManager.treeDataBase.insert({ "elongatedTree", profiledElongatedTree });
-	QString elongatedTreeName = this->finalSaveRootQ + "elongatedTree.swc";
-	writeSWC_file(elongatedTreeName, profiledElongatedTree.tree);*/
+	profiledTree newIteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(downSampledProfiledTree, 5);
 
-	profiledTree headTailProfiledTree = this->fragTraceTreeManager.simpleSegElongate(downSampledProfiledTree.tree, 10, 5);
+	NeuronTree shortCleanedUpTree;
+	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 
-	NeuronTree finalOutputTree = downSampledProfiledTree.tree;
+	NeuronTree finalOutputTree = shortCleanedUpTree;
+	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)
+		nodeIt->type = 16;
+
 	if (this->finalSaveRootQ != "")
 	{
 		QString localSWCFullName = this->finalSaveRootQ + "/currBlock.swc";
 		writeSWC_file(localSWCFullName, finalOutputTree);
 	}
-
+	
 	emit emitTracedTree(finalOutputTree);
 }
 
@@ -434,3 +428,57 @@ void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs,
 		signalBlobs.erase(signalBlobs.begin() + *delIt);
 }
 
+profiledTree FragTraceManager::segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold)
+{
+	profiledTree tmpTree = inputProfiledTree; 
+	profiledTree outputProfiledTree = this->fragTraceTreeManager.itered_connectLongNeurite(tmpTree, distThreshold);
+	
+	bool typeAssigned = false;
+	int assignedType;
+	for (map<int, segUnit>::iterator segIt = outputProfiledTree.segs.begin(); segIt != outputProfiledTree.segs.end(); ++segIt)
+	{
+		for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+		{
+			if (nodeIt->type != 7)
+			{
+				typeAssigned = true;
+				assignedType = nodeIt->type;
+				break;
+			}
+		}
+
+		if (typeAssigned)
+		{
+			cout << "existing segment found" << endl;
+			for (QList<NeuronSWC>::iterator nodeIt = segIt->second.nodes.begin(); nodeIt != segIt->second.nodes.end(); ++nodeIt)
+			{
+				nodeIt->type = assignedType;
+				outputProfiledTree.tree.listNeuron[outputProfiledTree.node2LocMap.at(nodeIt->n)].type = assignedType;
+			}
+			typeAssigned = false;
+			assignedType = 7;
+		}
+	}
+
+	bool duplicatedRemove = true;
+	while (duplicatedRemove)
+	{
+		for (QList<NeuronSWC>::iterator it = outputProfiledTree.tree.listNeuron.begin(); it != outputProfiledTree.tree.listNeuron.end(); ++it)
+		{
+			if (it->n == it->parent)
+			{
+				outputProfiledTree.tree.listNeuron.removeAt(int(it - outputProfiledTree.tree.listNeuron.begin()));
+				goto DUPLICATE_REMOVED;
+			}
+		}
+		break;
+
+	DUPLICATE_REMOVED:
+		continue;
+	}
+
+	QString combinedTreeFullName = this->finalSaveRootQ + "/combinedTree.swc";
+	writeSWC_file(combinedTreeFullName, outputProfiledTree.tree);
+
+	return outputProfiledTree;
+}
