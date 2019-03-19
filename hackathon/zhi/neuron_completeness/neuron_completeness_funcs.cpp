@@ -7,6 +7,18 @@
 #include "neuron_completeness_funcs.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
+#include "neuron_completeness_plugin.h"
+
+
+map<size_t, set<size_t> > seg2SegsMap;
+V_NeuronSWC_list segList;
+set<vector<size_t> > detectedLoops;
+set<set<size_t> > detectedLoopsSet;
+set<set<size_t> > finalizedLoopsSet;
+set<set<size_t> > nonLoopErrors;
+
+
+
 QStringList importSWCFileList(const QString & curFilePath)
 {
     QStringList myList;
@@ -211,4 +223,319 @@ void exportComplete(NeuronTree nt,QList<NeuronSWC>& sorted_neuron, LandmarkList&
     }
     return;
 
+}
+
+vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
+{
+	vector<NeuronSWC> outputErroneousPoints;
+	outputErroneousPoints.clear();
+
+	segList = inputSegList;
+	seg2SegsMap.clear();
+	map<string, set<size_t> > wholeGrid2segIDmap;
+	set<size_t> subtreeSegs;
+	size_t segCount = 0;
+	for (vector<V_NeuronSWC>::iterator segIt = segList.seg.begin(); segIt != segList.seg.end(); ++segIt)
+	{
+		for (vector<V_NeuronSWC_unit>::iterator nodeIt = segIt->row.begin(); nodeIt != segIt->row.end(); ++nodeIt)
+		{
+			int xLabel = nodeIt->x / GRID_LENGTH;
+			int yLabel = nodeIt->y / GRID_LENGTH;
+			int zLabel = nodeIt->z / GRID_LENGTH;
+			QString gridKeyQ = QString::number(xLabel) + "_" + QString::number(yLabel) + "_" + QString::number(zLabel);
+			string gridKey = gridKeyQ.toStdString();
+			wholeGrid2segIDmap[gridKey].insert(size_t(segIt - segList.seg.begin()));
+		}
+		subtreeSegs.insert(segCount);
+		++segCount;
+	}
+
+	for (set<size_t>::iterator it = subtreeSegs.begin(); it != subtreeSegs.end(); ++it)
+	{
+		//cout << *it << ":";
+		set<size_t> connectedSegs;
+		connectedSegs.clear();
+		if (segList.seg[*it].row.size() <= 1)
+		{
+			segList.seg[*it].to_be_deleted = true;
+			continue;
+		}
+		else if (segList.seg[*it].to_be_deleted) continue;
+
+		for (vector<V_NeuronSWC_unit>::iterator nodeIt = segList.seg[*it].row.begin(); nodeIt != segList.seg[*it].row.end(); ++nodeIt)
+		{
+			int xLabel = nodeIt->x / GRID_LENGTH;
+			int yLabel = nodeIt->y / GRID_LENGTH;
+			int zLabel = nodeIt->z / GRID_LENGTH;
+			QString gridKeyQ = QString::number(xLabel) + "_" + QString::number(yLabel) + "_" + QString::number(zLabel);
+			string gridKey = gridKeyQ.toStdString();
+
+			set<size_t> scannedSegs = wholeGrid2segIDmap[gridKey];
+			if (!scannedSegs.empty())
+			{
+				for (set<size_t>::iterator scannedIt = scannedSegs.begin(); scannedIt != scannedSegs.end(); ++scannedIt)
+				{
+					int connectedSegsSize = connectedSegs.size();
+					if (*scannedIt == *it || segList.seg[*scannedIt].to_be_deleted) continue;
+					if (segList.seg[*scannedIt].row.size() == 1) continue;
+
+					if (segList.seg[*scannedIt].row.begin()->x == nodeIt->x && segList.seg[*scannedIt].row.begin()->y == nodeIt->y && segList.seg[*scannedIt].row.begin()->z == nodeIt->z)
+					{
+						connectedSegs.insert(*scannedIt);
+						set<size_t> reversed;
+						reversed.insert(*it);
+						if (!seg2SegsMap.insert(pair<size_t, set<size_t> >(*scannedIt, reversed)).second) seg2SegsMap[*scannedIt].insert(*it);
+					}
+					else if ((segList.seg[*scannedIt].row.end() - 1)->x == nodeIt->x && (segList.seg[*scannedIt].row.end() - 1)->y == nodeIt->y && (segList.seg[*scannedIt].row.end() - 1)->z == nodeIt->z)
+					{
+						connectedSegs.insert(*scannedIt);
+						set<size_t> reversed;
+						reversed.insert(*it);
+						if (!seg2SegsMap.insert(pair<size_t, set<size_t> >(*scannedIt, reversed)).second) seg2SegsMap[*scannedIt].insert(*it);
+					}
+				}
+			}
+		}
+		if (!seg2SegsMap.insert(pair<size_t, set<size_t> >(*it, connectedSegs)).second)
+		{
+			for (set<size_t>::iterator otherSegIt = connectedSegs.begin(); otherSegIt != connectedSegs.end(); ++otherSegIt)
+				seg2SegsMap[*it].insert(*otherSegIt);
+		}
+	}
+
+	/*for (map<size_t, set<size_t> >::iterator seg2SegsIt = seg2SegsMap.begin(); seg2SegsIt != seg2SegsMap.end(); ++seg2SegsIt)
+	{
+	cout << seg2SegsIt->first << ":";
+	for (set<size_t>::iterator it = seg2SegsIt->second.begin(); it != seg2SegsIt->second.end(); ++it)
+	cout << *it << " ";
+
+	cout << endl;
+	}*/
+
+	double segSize = segList.seg.size();
+
+	cout << endl << "Starting loop detection.. " << endl;
+	clock_t begin = clock();
+	detectedLoopsSet.clear();
+	finalizedLoopsSet.clear();
+	nonLoopErrors.clear();
+	for (map<size_t, set<size_t> >::iterator it = seg2SegsMap.begin(); it != seg2SegsMap.end(); ++it)
+	{
+		double progressBarValue = (double(it->first) / segSize) * 100;
+		int progressBarValueInt = floor(progressBarValue);
+
+		if (it->second.empty()) continue;
+		else if (it->second.size() <= 2) continue;
+
+		vector<size_t> loops2ThisSeg;
+		loops2ThisSeg.clear();
+
+		cout << "Starting segment: " << it->first << " ==> ";
+		for (set<size_t>::iterator seg2SegsIt = seg2SegsMap[it->first].begin(); seg2SegsIt != seg2SegsMap[it->first].end(); ++seg2SegsIt)
+			cout << *seg2SegsIt << " ";
+		cout << endl;
+
+		int loopCount = finalizedLoopsSet.size();
+
+		rc_loopPathCheck(it->first, loops2ThisSeg);
+
+		if (finalizedLoopsSet.size() - loopCount == 0) cout << " -- no loops detected with this starting seg." << endl;
+		else cout << finalizedLoopsSet.size() - loopCount << " loops detected with seg " << it->first << endl << endl;
+	}
+
+	clock_t end = clock();
+	float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	cout << "TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
+
+	if (finalizedLoopsSet.empty()) return outputErroneousPoints;
+	else
+	{
+		for (set<set<size_t> >::iterator loopIt = finalizedLoopsSet.begin(); loopIt != finalizedLoopsSet.end(); ++loopIt)
+		{
+			set<size_t> thisLoop = *loopIt;
+			for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
+			{
+				//cout << *it << " ";
+				for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
+				{
+					unitIt->type = 15;
+					NeuronSWC problematicNode;
+					problematicNode.x = unitIt->x;
+					problematicNode.y = unitIt->y;
+					problematicNode.z = unitIt->z;
+					problematicNode.type = 15;
+					problematicNode.parent = unitIt->parent;
+					problematicNode.n = unitIt->n;
+
+					outputErroneousPoints.push_back(problematicNode);
+				}
+			}
+			//cout << endl << endl;
+		}
+		cout << "LOOPS NUMBER (set): " << finalizedLoopsSet.size() << endl << endl;
+
+		if (nonLoopErrors.empty())
+		{
+			for (set<set<size_t> >::iterator loopIt = nonLoopErrors.begin(); loopIt != nonLoopErrors.end(); ++loopIt)
+			{
+				set<size_t> thisLoop = *loopIt;
+				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
+				{
+					//cout << *it << " ";
+					for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
+					{
+						unitIt->type = 20;
+						NeuronSWC problematicNode;
+						problematicNode.x = unitIt->x;
+						problematicNode.y = unitIt->y;
+						problematicNode.z = unitIt->z;
+						problematicNode.type = 20;
+						problematicNode.parent = unitIt->parent;
+						problematicNode.n = unitIt->n;
+
+						outputErroneousPoints.push_back(problematicNode);
+					}
+				}
+				//cout << endl << endl;
+			}
+		}
+		//cout << "non LOOPS ERROR NUMBER (set): " << thisRenderer->nonLoopErrors.size() << endl << endl;
+	}
+
+	return outputErroneousPoints;
+}
+
+void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
+{
+	if (seg2SegsMap[inputSegID].size() < 2) return;
+
+	//cout << "  input seg num: " << inputSegID << " ";
+	curPathWalk.push_back(inputSegID);
+	/*for (vector<size_t>::iterator curPathIt = curPathWalk.begin(); curPathIt != curPathWalk.end(); ++curPathIt)
+	cout << *curPathIt << " ";
+	cout << endl << endl;*/
+
+	for (set<size_t>::iterator it = seg2SegsMap[inputSegID].begin(); it != seg2SegsMap[inputSegID].end(); ++it)
+	{
+		if (curPathWalk.size() >= 2 && *it == *(curPathWalk.end() - 2))
+		{
+			V_NeuronSWC_unit headUnit = *(segList.seg[*it].row.end() - 1);
+			V_NeuronSWC_unit tailUnit = *segList.seg[*it].row.begin();
+
+			bool headCheck = false, tailCheck = false;
+			for (vector<V_NeuronSWC_unit>::iterator it = segList.seg[*(curPathWalk.end() - 1)].row.begin(); it != segList.seg[*(curPathWalk.end() - 1)].row.end(); ++it)
+			{
+				if (it->x == headUnit.x && it->y == headUnit.y && it->z == headUnit.z) headCheck = true;
+				if (it->x == tailUnit.x && it->y == tailUnit.y && it->z == tailUnit.z) tailCheck = true;
+			}
+
+			if (headCheck == true && tailCheck == true)
+			{
+				set<size_t> detectedLoopPathSet;
+				detectedLoopPathSet.clear();
+				for (vector<size_t>::iterator loopIt = find(curPathWalk.begin(), curPathWalk.end(), *it); loopIt != curPathWalk.end(); ++loopIt)
+					detectedLoopPathSet.insert(*loopIt);
+
+				if (detectedLoopsSet.insert(detectedLoopPathSet).second)
+				{
+					nonLoopErrors.insert(detectedLoopPathSet);
+					continue;
+				}
+				else return;
+			}
+			else continue;
+		}
+
+		if (find(curPathWalk.begin(), curPathWalk.end(), *it) == curPathWalk.end())
+		{
+			rc_loopPathCheck(*it, curPathWalk);
+		}
+		else
+		{
+			// a loop is found
+			set<size_t> detectedLoopPathSet;
+			detectedLoopPathSet.clear();
+			for (vector<size_t>::iterator loopIt = find(curPathWalk.begin(), curPathWalk.end(), *it); loopIt != curPathWalk.end(); ++loopIt)
+				detectedLoopPathSet.insert(*loopIt);
+
+			if (detectedLoopsSet.insert(detectedLoopPathSet).second)
+			{
+				// pusedoloop by fork intersection check
+				cout << "pusedoloop check.." << endl;
+
+				if (*(curPathWalk.end() - 3) == *it)
+				{
+					if (seg2SegsMap[*(curPathWalk.end() - 2)].find(*it) != seg2SegsMap[*(curPathWalk.end() - 2)].end())
+					{
+						vector<V_NeuronSWC_unit> forkCheck;
+						forkCheck.push_back(*(segList.seg[*(curPathWalk.end() - 1)].row.end() - 1));
+						forkCheck.push_back(*segList.seg[*(curPathWalk.end() - 1)].row.begin());
+						forkCheck.push_back(*(segList.seg[*(curPathWalk.end() - 2)].row.end() - 1));
+						forkCheck.push_back(*segList.seg[*(curPathWalk.end() - 2)].row.begin());
+
+						int headConnectedCount = 0;
+						for (vector<V_NeuronSWC_unit>::iterator checkIt = forkCheck.begin(); checkIt != forkCheck.end(); ++checkIt)
+						{
+							if (checkIt->x == (segList.seg[*it].row.end() - 1)->x && checkIt->y == (segList.seg[*it].row.end() - 1)->y && checkIt->z == (segList.seg[*it].row.end() - 1)->z)
+								++headConnectedCount;
+						}
+
+						int tailConnectedCount = 0;
+						for (vector<V_NeuronSWC_unit>::iterator checkIt = forkCheck.begin(); checkIt != forkCheck.end(); ++checkIt)
+						{
+							if (checkIt->x == segList.seg[*it].row.begin()->x && checkIt->y == segList.seg[*it].row.begin()->y && checkIt->z == segList.seg[*it].row.begin()->z)
+								++tailConnectedCount;
+						}
+
+						if (!(headConnectedCount == 1 && tailConnectedCount == 1))
+						{
+							cout << "  -> 3 seg intersection detected, exluded from loop candidates. (" << *it << ") ";
+							for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
+								cout << *thisLoopIt << " ";
+							cout << endl;
+							continue;
+						}
+						else
+						{
+							finalizedLoopsSet.insert(detectedLoopPathSet);
+							cout << "  Loop from 3 way detected ----> (" << *it << ") ";
+							for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
+								cout << *thisLoopIt << " ";
+							cout << endl;
+							return;
+						}
+					}
+				}
+				else if (curPathWalk.size() == 4)
+				{
+					if ((*curPathWalk.end() - 4) == *it)
+					{
+						if (seg2SegsMap[*(curPathWalk.end() - 2)].find(*it) != seg2SegsMap[*(curPathWalk.end() - 2)].end() &&
+							seg2SegsMap[*(curPathWalk.end() - 3)].find(*it) != seg2SegsMap[*(curPathWalk.end() - 3)].end())
+						{
+							if (seg2SegsMap[*(curPathWalk.end() - 2)].find(*(curPathWalk.end() - 1)) != seg2SegsMap[*(curPathWalk.end() - 2)].end() &&
+								seg2SegsMap[*(curPathWalk.end() - 3)].find(*(curPathWalk.end() - 2)) != seg2SegsMap[*(curPathWalk.end() - 3)].end() &&
+								seg2SegsMap[*(curPathWalk.end() - 4)].find(*(curPathWalk.end() - 3)) != seg2SegsMap[*(curPathWalk.end() - 4)].end())
+							{
+								cout << "  -> 4 seg intersection detected, exluded from loop candidates. (" << *it << ")" << endl;
+								continue;
+							}
+						}
+					}
+				}
+				else
+				{
+					finalizedLoopsSet.insert(detectedLoopPathSet);
+					cout << "  Loop detected ----> (" << *it << ") ";
+					for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
+						cout << *thisLoopIt << " ";
+					cout << endl;
+				}
+			}
+			else return;
+		}
+	}
+
+	curPathWalk.pop_back();
+	//cout << endl;
 }

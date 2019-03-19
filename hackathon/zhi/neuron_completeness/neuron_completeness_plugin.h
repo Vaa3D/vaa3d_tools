@@ -8,6 +8,10 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "neuron_format_converter.h"
+
+vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList);
+void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk);
 
 class TestPlugin : public QObject, public V3DPluginInterface2_1
 {
