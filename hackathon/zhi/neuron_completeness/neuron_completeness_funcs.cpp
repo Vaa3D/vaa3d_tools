@@ -358,16 +358,19 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 				//cout << *it << " ";
 				for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
 				{
-					unitIt->type = 15;
-					NeuronSWC problematicNode;
-					problematicNode.x = unitIt->x;
-					problematicNode.y = unitIt->y;
-					problematicNode.z = unitIt->z;
-					problematicNode.type = 15;
-					problematicNode.parent = unitIt->parent;
-					problematicNode.n = unitIt->n;
-
-					outputErroneousPoints.push_back(problematicNode);
+					unitIt->type = 15;				
+					
+					if (unitIt->parent == -1)
+					{
+						NeuronSWC problematicNode;
+						problematicNode.x = unitIt->x;
+						problematicNode.y = unitIt->y;
+						problematicNode.z = unitIt->z;
+						problematicNode.type = 15;
+						problematicNode.parent = unitIt->parent;
+						problematicNode.n = unitIt->n;
+						outputErroneousPoints.push_back(problematicNode);
+					}
 				}
 			}
 			//cout << endl << endl;
@@ -385,15 +388,18 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
 					{
 						unitIt->type = 20;
-						NeuronSWC problematicNode;
-						problematicNode.x = unitIt->x;
-						problematicNode.y = unitIt->y;
-						problematicNode.z = unitIt->z;
-						problematicNode.type = 20;
-						problematicNode.parent = unitIt->parent;
-						problematicNode.n = unitIt->n;
 
-						outputErroneousPoints.push_back(problematicNode);
+						if (unitIt->parent == -1)
+						{
+							NeuronSWC problematicNode;
+							problematicNode.x = unitIt->x;
+							problematicNode.y = unitIt->y;
+							problematicNode.z = unitIt->z;
+							problematicNode.type = 20;
+							problematicNode.parent = unitIt->parent;
+							problematicNode.n = unitIt->n;
+							outputErroneousPoints.push_back(problematicNode);
+						}
 					}
 				}
 				//cout << endl << endl;
