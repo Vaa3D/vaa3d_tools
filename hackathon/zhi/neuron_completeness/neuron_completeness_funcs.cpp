@@ -17,7 +17,7 @@ set<vector<size_t> > detectedLoops;
 set<set<size_t> > detectedLoopsSet;
 set<set<size_t> > finalizedLoopsSet;
 set<set<size_t> > nonLoopErrors;
-
+multimap<string, size_t> segEnd2segIDmap;
 
 
 QStringList importSWCFileList(const QString & curFilePath)
@@ -545,4 +545,187 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 
 	curPathWalk.pop_back();
 	//cout << endl;
+}
+
+vector<V_NeuronSWC_list> showConnectedSegs(const V_NeuronSWC_list& inputSegList)
+{
+	V_NeuronSWC_list inputList = inputSegList;
+	vector<V_NeuronSWC_list> outputTreeList;
+	set<size_t> singleTreeSegs;
+	vector<size_t> singleTreeSegsVec;
+
+	while (inputList.seg.size() > 0)
+	{
+		singleTreeSegsVec.clear();
+		singleTreeSegs.clear();
+		singleTreeSegs.insert(0);
+
+		segEnd2segIDmap.clear();
+		for (vector<V_NeuronSWC>::iterator it = inputList.seg.begin(); it != inputList.seg.end(); ++it)
+		{
+			double xLabelTail = it->row.begin()->x;
+			double yLabelTail = it->row.begin()->y;
+			double zLabelTail = it->row.begin()->z;
+			double xLabelHead = (it->row.end() - 1)->x;
+			double yLabelHead = (it->row.end() - 1)->y;
+			double zLabelHead = (it->row.end() - 1)->z;
+			QString key1Q = QString::number(xLabelTail) + "_" + QString::number(yLabelTail) + "_" + QString::number(zLabelTail);
+			string key1 = key1Q.toStdString();
+			QString key2Q = QString::number(xLabelHead) + "_" + QString::number(yLabelHead) + "_" + QString::number(zLabelHead);
+			string key2 = key2Q.toStdString();
+
+			segEnd2segIDmap.insert(pair<string, size_t>(key1, size_t(it - inputList.seg.begin())));
+			segEnd2segIDmap.insert(pair<string, size_t>(key2, size_t(it - inputList.seg.begin())));
+		}
+
+		rc_findConnectedSegs(inputList, singleTreeSegs, 0, segEnd2segIDmap);
+		singleTreeSegsVec.insert(singleTreeSegsVec.begin(), singleTreeSegs.begin(), singleTreeSegs.end());
+		sort(singleTreeSegsVec.rbegin(), singleTreeSegsVec.rend());
+		V_NeuronSWC_list currTreeSegs;
+		for (vector<size_t>::iterator segIt = singleTreeSegsVec.begin(); segIt != singleTreeSegsVec.end(); ++segIt)
+		{
+			vector<V_NeuronSWC_unit> currSegUnits;
+			for (vector<V_NeuronSWC_unit>::iterator unitIt = inputList.seg[*segIt].row.begin(); unitIt != inputList.seg[*segIt].row.end(); ++unitIt)
+				currSegUnits.push_back(*unitIt);
+			V_NeuronSWC currSeg;
+			currSeg.row = currSegUnits;
+			currTreeSegs.seg.push_back(currSeg);
+			inputList.seg.erase(inputList.seg.begin() + *segIt);
+		}
+
+		outputTreeList.push_back(currTreeSegs);
+		cout << "number of segs in this tree: " << currTreeSegs.seg.size() << endl;
+	}
+
+	return outputTreeList;
+}
+
+void rc_findConnectedSegs(V_NeuronSWC_list& inputSegList, set<size_t>& singleTreeSegs, size_t inputSegID, multimap<string, size_t>& segEnd2segIDmap)
+{
+	size_t curSegNum = singleTreeSegs.size();
+
+	/* --------- Find segments that are connected in the middle of input segment --------- */
+	if (inputSegList.seg[inputSegID].row.size() > 2)
+	{
+		for (vector<V_NeuronSWC_unit>::iterator unitIt = inputSegList.seg[inputSegID].row.begin() + 1; unitIt != inputSegList.seg[inputSegID].row.end() - 1; ++unitIt)
+		{
+			double middleX = unitIt->x;
+			double middleY = unitIt->y;
+			double middleZ = unitIt->z;
+			QString middleNodeKeyQ = QString::number(middleX) + "_" + QString::number(middleY) + "_" + QString::number(middleZ);
+			string middleNodeKey = middleNodeKeyQ.toStdString();
+
+			pair<multimap<string, size_t>::iterator, multimap<string, size_t>::iterator> middleRange = segEnd2segIDmap.equal_range(middleNodeKey);
+			for (multimap<string, size_t>::iterator middleIt = middleRange.first; middleIt != middleRange.second; ++middleIt)
+			{
+				if (middleIt->second == inputSegID) continue;
+				else if (singleTreeSegs.find(middleIt->second) != singleTreeSegs.end())
+				{
+					//cout << "  --> already picked, move to the next." << endl;
+					continue;
+				}
+				else if (middleIt->first == middleNodeKey)
+				{
+					//cout << "  Found a segment in the middle of the route, adding it to the recursive searching process:" << middleNodeKey << " " << middleIt->second << endl;
+					if (inputSegList.seg[middleIt->second].to_be_deleted) continue;
+					singleTreeSegs.insert(middleIt->second);
+					rc_findConnectedSegs(inputSegList, singleTreeSegs, middleIt->second, segEnd2segIDmap);
+				}
+			}
+		}
+	}
+	/* ------- END of [Find segments that are connected in the middle of input segment] ------- */
+
+	/* --------- Find segments that are connected to the head or tail of input segment --------- */
+	set<size_t> curSegEndRegionSegs;
+	curSegEndRegionSegs.clear();
+	curSegEndRegionSegs = segEndRegionCheck(inputSegList, inputSegID);
+	//cout << curSegEndRegionSegs.size() << endl;
+	if (!curSegEndRegionSegs.empty())
+	{
+		for (set<size_t>::iterator regionSegIt = curSegEndRegionSegs.begin(); regionSegIt != curSegEndRegionSegs.end(); ++regionSegIt)
+		{
+			if (*regionSegIt == inputSegID) continue;
+			else if (singleTreeSegs.find(*regionSegIt) != singleTreeSegs.end())
+			{
+				//cout << "  --> already picked, move to the next." << endl;
+				continue;
+			}
+			else
+			{
+				//cout << "    ==> segs at the end region added:" << *regionSegIt << endl;
+				if (inputSegList.seg[*regionSegIt].to_be_deleted) continue;
+
+				singleTreeSegs.insert(*regionSegIt);
+				rc_findConnectedSegs(inputSegList, singleTreeSegs, *regionSegIt, segEnd2segIDmap);
+			}
+		}
+	}
+	/* ------- END of [Find segments that are connected to the head or tail of input segment] ------- */
+
+	if (singleTreeSegs.size() == curSegNum) return;
+}
+
+set<size_t> segEndRegionCheck(V_NeuronSWC_list& inputSegList, size_t inputSegID)
+{
+	set<size_t> otherConnectedSegs;
+	otherConnectedSegs.clear();
+
+	map<string, set<size_t> > wholeGrid2segIDmap;
+	set<size_t> subtreeSegs;
+	size_t segCount = 0;
+	for (vector<V_NeuronSWC>::iterator segIt = inputSegList.seg.begin(); segIt != inputSegList.seg.end(); ++segIt)
+	{
+		for (vector<V_NeuronSWC_unit>::iterator nodeIt = segIt->row.begin(); nodeIt != segIt->row.end(); ++nodeIt)
+		{
+			int xLabel = nodeIt->x / GRID_LENGTH;
+			int yLabel = nodeIt->y / GRID_LENGTH;
+			int zLabel = nodeIt->z / GRID_LENGTH;
+			QString gridKeyQ = QString::number(xLabel) + "_" + QString::number(yLabel) + "_" + QString::number(zLabel);
+			string gridKey = gridKeyQ.toStdString();
+			wholeGrid2segIDmap[gridKey].insert(size_t(segIt - inputSegList.seg.begin()));
+		}
+		subtreeSegs.insert(segCount);
+		++segCount;
+	}
+
+	int xHead = (inputSegList.seg[inputSegID].row.end() - 1)->x / GRID_LENGTH;
+	int yHead = (inputSegList.seg[inputSegID].row.end() - 1)->y / GRID_LENGTH;
+	int zHead = (inputSegList.seg[inputSegID].row.end() - 1)->z / GRID_LENGTH;
+	int xTail = inputSegList.seg[inputSegID].row.begin()->x / GRID_LENGTH;
+	int yTail = inputSegList.seg[inputSegID].row.begin()->y / GRID_LENGTH;
+	int zTail = inputSegList.seg[inputSegID].row.begin()->z / GRID_LENGTH;
+	QString gridKeyHeadQ = QString::number(xHead) + "_" + QString::number(yHead) + "_" + QString::number(zHead);
+	string gridKeyHead = gridKeyHeadQ.toStdString();
+	QString gridKeyTailQ = QString::number(xTail) + "_" + QString::number(yTail) + "_" + QString::number(zTail);
+	string gridKeyTail = gridKeyTailQ.toStdString();
+
+	set<size_t> headRegionSegs = wholeGrid2segIDmap[gridKeyHead];
+	set<size_t> tailRegionSegs = wholeGrid2segIDmap[gridKeyTail];
+
+	//cout << " Head region segs:";
+	for (set<size_t>::iterator headIt = headRegionSegs.begin(); headIt != headRegionSegs.end(); ++headIt)
+	{
+		if (*headIt == inputSegID || inputSegList.seg[*headIt].to_be_deleted) continue;
+		//cout << *headIt << " ";
+		for (vector<V_NeuronSWC_unit>::iterator nodeIt = inputSegList.seg[*headIt].row.begin(); nodeIt != inputSegList.seg[*headIt].row.end(); ++nodeIt)
+		{
+			if (nodeIt->x == (inputSegList.seg[inputSegID].row.end() - 1)->x && nodeIt->y == (inputSegList.seg[inputSegID].row.end() - 1)->y && nodeIt->z == (inputSegList.seg[inputSegID].row.end() - 1)->z)
+				otherConnectedSegs.insert(*headIt);
+		}
+	}
+	//cout << endl << " Tail region segs:";
+	for (set<size_t>::iterator tailIt = tailRegionSegs.begin(); tailIt != tailRegionSegs.end(); ++tailIt)
+	{
+		if (*tailIt == inputSegID || inputSegList.seg[*tailIt].to_be_deleted) continue;
+		//cout << *tailIt << " ";
+		for (vector<V_NeuronSWC_unit>::iterator nodeIt = inputSegList.seg[*tailIt].row.begin(); nodeIt != inputSegList.seg[*tailIt].row.end(); ++nodeIt)
+		{
+			if (nodeIt->x == inputSegList.seg[inputSegID].row.begin()->x && nodeIt->y == inputSegList.seg[inputSegID].row.begin()->y && nodeIt->z == inputSegList.seg[inputSegID].row.begin()->z)
+				otherConnectedSegs.insert(*tailIt);
+		}
+	}
+	//cout << endl;
+
+	return otherConnectedSegs;
 }

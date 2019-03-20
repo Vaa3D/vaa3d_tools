@@ -10,6 +10,7 @@
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
 #include <fstream>
 #include "neuron_format_converter.h"
+#include <iostream>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neuron_completeness, TestPlugin);
@@ -208,7 +209,9 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             return;
         NeuronTree nt = openDlg->nt;
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
-		vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+		vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+		std::cout << trees.size() << " trees in this SWC file." << endl;
+		//vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
 		
 
         v3d_msg(QString("%1").arg(nt_decomposed.seg.size()));
