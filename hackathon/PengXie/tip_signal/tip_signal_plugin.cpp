@@ -51,16 +51,23 @@ bool tip_signal_plugin::dofunc(const QString & func_name, const V3DPluginArgList
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    XYZ block_size=XYZ(200,200,40);
+    XYZ block_size=XYZ(100,100,20);
     cout<<"tip_signal input_size\t"<<input.size()<<endl;
 
-    if (func_name == tr("get_terminal"))
+    if (func_name == tr("get_terminal_by_apo"))
 	{
+        QString image=infiles.at(0);
+        QString apo=infiles.at(1);
+        QString output_dir=outfiles.at(0);
+        crop_by_apo(image, apo, output_dir, block_size, callback);
+	}
+    else if (func_name == tr("get_terminal"))
+    {
         QString image=infiles.at(0);
         QString swc=infiles.at(1);
         QString output_dir=outfiles.at(0);
         get_terminal(image, swc, output_dir, block_size, callback);
-	}
+    }
     else if (func_name == tr("get_terminal_signal"))
     {
         QString image=infiles.at(0);

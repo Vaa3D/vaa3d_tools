@@ -85,6 +85,9 @@ NeuronTree return_dendrite(NeuronTree nt, int soma){
 bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
 
     printf("welcome to use neurite_analysis\n");
+    if(!fexists(qs_input)){
+        return 0;
+    }
 
     // 1. Load data
     NeuronTree nt;
@@ -112,6 +115,8 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     if(soma<0){return 0;}
     if(nt.listNeuron.at(soma).pn != (-1)){
         printf("Exit: soma is not root!\n");
+//        nt = my_SortSWC(nt, soma, 0);
+//        writeSWC_file(qs_input+".sorted.swc", nt);
         return 0;
     }
 
@@ -122,6 +127,8 @@ bool neurite_analysis(QString qs_input, QString qs_output, string extract_type){
     }
     if(extract_type == "l"){
         nt = return_long_axon(nt, soma, false);
+        qDebug()<<"Now sort long axon";
+        export_listNeuron_2swc(nt.listNeuron, "test.swc");
     }
     if(extract_type == "d"){nt=return_dendrite(nt, soma);}
     nt = my_SortSWC(nt, 1, 0);

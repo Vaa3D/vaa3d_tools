@@ -69,6 +69,7 @@ bool line_intersect(myline l1, myline l2){
 }
 bool cuboid_intersect(cuboid cb1, cuboid cb2){
     myline l1, l2;
+
     l1.a = cb1.min_corner.x;
     l1.b = cb1.max_corner.x;
     l2.a = cb2.min_corner.x;
