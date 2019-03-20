@@ -5,6 +5,8 @@
  
 #include "v3d_message.h"
 #include <vector>
+#include <algorithm>
+#include <iostream>
 #include "neuron_completeness_plugin.h"
 #include "neuron_completeness_funcs.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/openSWCDialog.h"
@@ -150,12 +152,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         NeuronTree nt = callback.getSWCTeraFly();
         if(nt.listNeuron.size()==0) return;
         QList<NeuronSWC> sorted_neuron;
-        LandmarkList markerlist;
+        LandmarkList markerlist_zhi;
         QHash<int,int> map_type;
         QMultiMap<int, QList<NeuronSWC> > multi_neurons;
         QList<double> dist;
 
-        exportComplete(nt,sorted_neuron,markerlist,multi_neurons,map_type,dist);
+        exportComplete(nt,sorted_neuron,markerlist_zhi,multi_neurons,map_type,dist);
 
         QVector<QPair <double, double> > v_tree;
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
@@ -193,15 +195,57 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     .arg(info_type.toStdString().c_str()));
 
         infoBox.exec();
-        if(markerlist.size() != 0)
-        {
-            LandmarkList markerlist_orginal = callback.getLandmarkTeraFly();
-            for(int i=0; i<markerlist.size(); i++)
-                markerlist_orginal.push_back(markerlist[i]);
-            callback.setLandmarkTeraFly(markerlist_orginal);
-        }
+//*****************************************************OY's part(sorry for changing Zhi's markerlist to markerlist_zhi)*****************************************************
+        QList<NeuronSWC> ori_tree1swc=nt.listNeuron;
+        QVector<QVector<V3DLONG> > childs;
+        NeuronTree n_t;
+        QHash <int, int> hash_nt ;
+        for(V3DLONG j=0; j<sorted_neuron.size();j++){
+            hash_nt.insert(sorted_neuron[j].n, j);
+            }
+            n_t.listNeuron=sorted_neuron;
+            n_t.hashNeuron=hash_nt;
 
-    }
+            V3DLONG neuronNum = n_t.listNeuron.size();
+            childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+            for (V3DLONG i=0;i<neuronNum;i++)
+                {
+                    V3DLONG par = n_t.listNeuron[i].pn;
+                    if (par<0) continue;
+                    childs[n_t.hashNeuron.value(par)].push_back(i);
+                }
+
+         LandmarkList markerlist;int numofwrongtype=0,numofwrongplace=0;
+         markerlist_before_sorting(ori_tree1swc,markerlist,numofwrongtype);
+         markerlist_after_sorting(sorted_neuron,markerlist,childs,numofwrongplace);
+
+         if(markerlist_zhi.size() != 0)
+         {
+               LandmarkList markerlist_orginal = callback.getLandmarkTeraFly();
+               for(int i=0; i<markerlist_zhi.size(); i++)
+                   markerlist_orginal.push_back(markerlist_zhi[i]);
+               callback.setLandmarkTeraFly(markerlist_orginal);
+         }
+
+         if (markerlist.size()!=0)
+         {
+             printf("You have [%d] white markers in your file.[%d] nodes are not type 1,2,3 or 4.[%d] nodes are with wrong type(still 1,2,3 or 4),please check!",markerlist.size(),numofwrongtype,numofwrongplace);
+             QMessageBox change_type;
+             change_type.setWindowTitle("Wrong Type Detection");
+             change_type.setText(QString("You have [%1] places need to be checked,do you want to set white markers in these locations?").arg(markerlist.size()));
+             change_type.setStandardButtons(QMessageBox::Yes);
+             change_type.addButton(QMessageBox::No);
+             change_type.setDefaultButton(QMessageBox::No);
+             if(change_type.exec() == QMessageBox::Yes){
+
+                LandmarkList markerlist_orginal = callback.getLandmarkTeraFly();
+                for(int i=0; i<markerlist.size(); i++) markerlist_orginal.push_back(markerlist[i]);
+                callback.setLandmarkTeraFly(markerlist_orginal);
+               }
+         }
+         else v3d_msg(QString("There are not any wrong type you need to check!"));
+
+  }
     else if (menu_name == tr("loop_detection(test)"))
     {
         OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);

@@ -226,6 +226,174 @@ void exportComplete(NeuronTree nt,QList<NeuronSWC>& sorted_neuron, LandmarkList&
 
 }
 
+void markerlist_before_sorting(QList<NeuronSWC>ori_tree1swc,LandmarkList &markerlist,int & numofwrongtype){
+
+    vector<int> suspoint_before;
+    QList<int> plist;
+    QList<int> alln;
+    int N=ori_tree1swc.size();
+    for(int i=0; i<N; i++){
+        plist.append(ori_tree1swc.at(i).pn);
+        alln.append(ori_tree1swc.at(i).n);
+      }
+//find the root of wrong type which is not 1,2,3 neither 4
+    int numofduplicated=0;
+    for (int i=0;i<ori_tree1swc.size();i++)
+     {
+        if(ori_tree1swc.at(i).type != 1 && ori_tree1swc.at(i).type != 2 && ori_tree1swc.at(i).type != 3 && ori_tree1swc.at(i).type != 4)
+        {
+            if(ori_tree1swc.at(i).pn == -1) continue;//{suspoint_before.push_back(i);numofwrongtype++;}
+            else {
+                   int step_index=i;
+                   while(ori_tree1swc.at(step_index).pn !=-1){
+
+                       int index_of_pn=alln.indexOf(ori_tree1swc.at(step_index).pn);
+                       step_index=index_of_pn;
+                   }
+                   if (find(suspoint_before.begin(),suspoint_before.end(),step_index)==suspoint_before.end()) {suspoint_before.push_back(step_index);numofwrongtype++;}
+                 }
+        }
+    }
+    cout<<"------------------suspoint_before.size:"<<suspoint_before.size()<<endl;
+//find the dumplicated nodes which have diffrent types before sorting
+
+    vector<int> all_index;QList<int>allj;
+        for (int i=0;i<ori_tree1swc.size();i++)
+        {
+            if (i!=ori_tree1swc.size()-1 && allj.count(i) == 0 )
+            {
+              for (int j=i+1;j<ori_tree1swc.size();j++)
+                {
+                    float x1,x2,y1,y2,z1,z2;
+                    int type1,type2,pars1,pars2,n1,n2;
+                    x1=ori_tree1swc.at(i).x;x2=ori_tree1swc.at(j).x;
+                    y1=ori_tree1swc.at(i).y;y2=ori_tree1swc.at(j).y;
+                    z1=ori_tree1swc.at(i).z;z2=ori_tree1swc.at(j).z;
+                    type1=ori_tree1swc.at(i).type;type2=ori_tree1swc.at(j).type;
+                    pars1=ori_tree1swc.at(i).pn;pars2=ori_tree1swc.at(j).pn;
+                    n1=ori_tree1swc.at(i).n;n2=ori_tree1swc.at(j).n;
+                    if(x1==x2 && y1==y2 && z1==z2 && type1 != type2)
+                    {
+                        all_index.push_back(i);
+                        allj.push_back(j);
+                        numofduplicated++;
+                    }}
+            }}
+        suspoint_before.insert(suspoint_before.end(),all_index.begin(),all_index.end());
+// delete duplicated nodes with the same cordinates
+        LocationSimple temp;
+        for(int i=0;i<suspoint_before.size();i++)
+           {
+               if(suspoint_before.at(i)!=VOID && i!=suspoint_before.size()-1){
+               temp.x=ori_tree1swc.at(suspoint_before.at(i)).x;
+               temp.y=ori_tree1swc.at(suspoint_before.at(i)).y;
+               temp.z=ori_tree1swc.at(suspoint_before.at(i)).z;
+               for(int j=i+1;j<suspoint_before.size();j++){
+
+                  if(suspoint_before.at(j)!=VOID && temp.x == ori_tree1swc.at(suspoint_before.at(j)).x &&
+                          temp.y == ori_tree1swc.at(suspoint_before.at(j)).y && temp.z==ori_tree1swc.at(suspoint_before.at(j)).z)
+                          suspoint_before.at(j)=VOID;
+
+               }}}
+
+        LocationSimple before_sort;
+        for(int i=0;i<suspoint_before.size();i++)
+           {
+               if(suspoint_before.at(i)!=VOID){
+               before_sort.x=ori_tree1swc.at(suspoint_before.at(i)).x;
+               before_sort.y=ori_tree1swc.at(suspoint_before.at(i)).y;
+               before_sort.z=ori_tree1swc.at(suspoint_before.at(i)).z;
+               before_sort.color.r = 255;before_sort.color.g = 255;before_sort.color.b = 255;
+               markerlist.push_back(before_sort);
+             }
+           }
+           cout<<"------------------markerlist.size:"<<markerlist.size()<<endl;
+           return;
+}
+
+void markerlist_after_sorting(QList<NeuronSWC>sorted_neuron,LandmarkList &markerlist,QVector<QVector<V3DLONG> > childs,int &numofwrongplace){
+
+//find wrong types based on parent-child connection after sorting
+                 QList<int>suspoint_after;
+                 for (int i=0;i<sorted_neuron.size();i++)
+                     {
+                         if(childs[i].size()!=0)
+                         {
+                            for(int j=0;j<childs[i].size();j++)
+                            {
+                               if(sorted_neuron.at(i).type != sorted_neuron.at(childs[i].at(j)).type) {suspoint_after.push_back(i);numofwrongplace++;break;}
+                            }
+                         }
+                     }
+                 cout<<"----------------suspoint_after.size:"<<suspoint_after.size()<<endl;//2 wei
+//delete duplicated input markers and set all markers back to terafly
+                 QList<int> plist_sorted;
+                 QList<int> alln_sorted;
+                 int N_sorted=sorted_neuron.size();
+                 for(int i=0; i<N_sorted; i++){
+                     plist_sorted.append(sorted_neuron.at(i).pn);
+                     alln_sorted.append(sorted_neuron.at(i).n);
+                   }
+                 float x1,y1,z1,x1_pn,y1_pn,z1_pn;int curr_pn;
+
+                 if(suspoint_after.size()!=0)
+                 {
+
+                    for(int i=0;i<suspoint_after.size();i++)
+                    {
+                        if(suspoint_after.at(i)!=VOID){
+                        int contain=suspoint_after.at(i);
+                        x1=sorted_neuron.at(contain).x;y1=sorted_neuron.at(contain).y;z1=sorted_neuron.at(contain).z;
+                        bool not_root=FALSE;
+
+                        curr_pn=sorted_neuron.at(contain).pn;
+                        if (curr_pn!=-1){
+
+                           x1_pn=sorted_neuron.at(alln_sorted.indexOf(curr_pn)).x;
+                           y1_pn=sorted_neuron.at(alln_sorted.indexOf(curr_pn)).y;
+                           z1_pn=sorted_neuron.at(alln_sorted.indexOf(curr_pn)).z;
+                           not_root=TRUE;
+                           int pn_index=alln_sorted.indexOf(curr_pn);
+                           if(suspoint_after.count(pn_index) != 0) suspoint_after[pn_index]=VOID;
+                        }
+
+                        if(markerlist.size()!=0)
+                        {
+                          for(int j=0;j<markerlist.size();j++){
+
+                               bool check_pn=FALSE;bool check_curr=FALSE;
+                               if(x1 == markerlist.at(j).x && y1 == markerlist.at(j).y && z1==markerlist.at(j).z) check_curr=TRUE;
+                               if(not_root && x1_pn == markerlist.at(j).x && y1_pn == markerlist.at(j).y && z1_pn==markerlist.at(j).z) check_pn=TRUE;
+                               if (check_curr || check_pn) {suspoint_after[i]=VOID;break;}
+                           }
+
+                        if(childs[contain].size()!=0){
+
+                               for(int k=0;k<childs[contain].size();k++){
+
+                                   for(int j=0;j<markerlist.size();j++){
+
+                                       if(sorted_neuron.at(childs[contain].at(k)).x == markerlist.at(j).x  &&  sorted_neuron.at(childs[contain].at(k)).y == markerlist.at(j).y
+                                          && sorted_neuron.at(childs[contain].at(k)).z==markerlist.at(j).z) {suspoint_after[i]=VOID;break;}
+                           }}}
+                        }}}}
+
+                     LocationSimple m;
+                     if(suspoint_after.size()!=0){
+                       for(int i=0;i<suspoint_after.size();i++)
+                        {
+                           if (suspoint_after[i]!=VOID){
+                            m.x=sorted_neuron.at(suspoint_after.at(i)).x;
+                            m.y=sorted_neuron.at(suspoint_after.at(i)).y;
+                            m.z=sorted_neuron.at(suspoint_after.at(i)).z;
+                            m.color.r = 255;m.color.g = 255;m.color.b = 255;
+                            markerlist.push_back(m);
+                         }
+                       }
+                     }
+                     return;
+}
+
 vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 {
 	vector<NeuronSWC> outputErroneousPoints;

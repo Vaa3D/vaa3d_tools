@@ -24,5 +24,8 @@ void calComplete(NeuronTree nt, QList<NEURON_METRICS> & scores);
 QStringList importSWCFileList(const QString & curFilePath);
 void exportComplete(NeuronTree nt,QList<NeuronSWC>& sorted_neuron, LandmarkList& markerlist,
                     QMultiMap<int, QList<NeuronSWC> >& multi_neurons,QHash<int,int>& map_type,QList<double>& dist);
+void markerlist_before_sorting(QList<NeuronSWC>ori_tree1swc,LandmarkList& markerlist,int& wrongtype);
+void markerlist_after_sorting(QList<NeuronSWC>sorted_neuron,LandmarkList& markerlist,QVector<QVector<V3DLONG> > childs,int& wrongplace);
+
 
 #endif
