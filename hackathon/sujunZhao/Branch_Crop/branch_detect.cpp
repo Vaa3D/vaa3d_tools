@@ -28,7 +28,8 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     QStringList list=swc_file.split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
     QString flag1=list1.first();
-    QString output_apo = output_dir+"/"+flag1+".apo";
+    QString output_fake = output_dir+"/"+flag1+"_fake.apo";
+    QString output_branch = output_dir+"/"+flag1+"_branch.apo";
 
     printf("welcome to use get_branch\n");
     NeuronTree nt = readSWC_file(swc_file);
@@ -59,9 +60,13 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     QList<int> alln;
     QList<NeuronSWC> apo_list;
     QList<NeuronSWC> apo_branch;
+    QList<int> parent;
     int N=nt.listNeuron.size();
     map<int, int> t;
     QList<int> branch;
+    map<int,int > child1;
+    map<int,int > child2;
+
 
     for(int i=0; i<N; i++){
         //qDebug() << nt.listNeuron.at(i).n << nt.listNeuron.at(i).pn;
@@ -71,17 +76,32 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     }
 
     for(int i=0; i<N; i++){
-        if(plist.count(plist.at(i))>1)
+        t.at(plist.at(i))=t.at(plist.at(i))+1;
+        if((plist.count(plist.at(i))>1)&(t.at(plist.at(i)) == 1))
         {
-            cout<<"pruning"<<endl;
+            //cout<<"pruning"<<endl;
 
-            int p_index;
-            p_index = alln.indexOf(plist.at(i));
-            if(nt.listNeuron.at(p_index).pn!=-1){
-            branch.push_back(p_index);}
+//            int p_index;
+//            p_index = plist.indexOf(i);
+//            if(nt.listNeuron.at(p_index).pn!=-1){
+//            branch.push_back(p_index);
+            if(nt.listNeuron.at(i).pn!=-1){
+            branch.push_back(i);
+            //parent.push_back(p_index);
+            child1.insert(pair<int,int>(plist.at(i),alln.at(i)));
+            }
          }
+        else if(t.at(plist.at(i)) ==2){
+            child2.insert(pair<int,int>(plist.at(i),alln.at(i)));
         }
-        cout<<"size"<<branch.size()<<endl;
+        }
+
+//    for(map<int,int>::iterator it=child1.begin();it!=child1.end();it++){
+//        cout<<it->first<<":"<<it->second<<endl;}
+//    for(map<int,int>::iterator it=child2.begin();it!=child2.end();it++){
+//        cout<<it->first<<":"<<it->second<<endl;}
+
+        //cout<<"size="<<branch.size()<<endl;
     for(int i=0; i<branch.size(); i++){
 
 //            int p_index;
@@ -90,13 +110,19 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 //            cout<<"index"<<p_index<<endl;
             //double d = dist(nt.listNeuron.at(alln.at(i)),nt.listNeuron.at(p_index));
             //distance & intensity
-            V3DLONG nodex = nt.listNeuron.at(branch[i]).x;
-            V3DLONG nodey = nt.listNeuron.at(branch[i]).y;
-            V3DLONG nodez = nt.listNeuron.at(branch[i]).z;
+        //int bid = alln.indexOf(plist.at(branch[i]));
+        //cout<<plist.at(branch[i])<<" "<<branch[i]<<" "<<bid<<endl;
+//            V3DLONG nodex = nt.listNeuron.at(branch[i]).x;
+//            V3DLONG nodey = nt.listNeuron.at(branch[i]).y;
+//            V3DLONG nodez = nt.listNeuron.at(branch[i]).z;
+        V3DLONG nodex = nt.listNeuron.at(branch[i]).x;
+        V3DLONG nodey = nt.listNeuron.at(branch[i]).y;
+        V3DLONG nodez = nt.listNeuron.at(branch[i]).z;
             cout<<"check2"<<endl;
+
             cout<<"cordinates:"<<nodex<<" ,"<<nodey<<" ,"<<nodez<<endl;
-            struct XYZ ploc= XYZ(nodex,nodey,nodez);
             //block
+            if(branch[i] != 0){
             block crop_block = offset_block(zcenter_block, XYZ(nodex, nodey, nodez));
 
             XYZ small=XYZ(crop_block.small);
@@ -109,7 +135,6 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             large.z = ceil(large.z)+1;
             unsigned char * cropped_image = 0;
             //cout<<"dim"<<small.x<<small.y<<small.z<<large.x<<large.y<<large.z<<endl;
-            cout<<"dim"<<endl;
             cropped_image = callback.getSubVolumeTeraFly(image_file.toStdString(),
                                                          small.x, large.x,
                                                          small.y, large.y,
@@ -131,46 +156,114 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             NeuronTree nt_crop_sorted;
             nt_crop_sorted=readSWC_file(output_swc);
             int branch_point=find_tip(nt_crop_sorted,mysz[0],mysz[1],mysz[2]);
-
+            cout <<"#################"<<branch_point<<endl;
             V3DLONG bx = nt_crop_sorted.listNeuron.at(branch_point).x;
             V3DLONG by = nt_crop_sorted.listNeuron.at(branch_point).y;
             V3DLONG bz = nt_crop_sorted.listNeuron.at(branch_point).z;
 
             cout<<"check3"<<endl;
-            unsigned char *data1d_crop=cropped_image;
 
-            if(data1d_crop[V3DLONG(bz*mysz[0]*mysz[1]+by*mysz[0]+bx)]>=25){
+            unsigned char *data1d_crop=cropped_image;
+            //distance
+            int cchild1 = child1.at(plist.at(branch[i]));
+            int cchild2 = child2.at(plist.at(branch[i]));
+            //intensity
+            //child1
+            V3DLONG cx1 = nt.listNeuron.at(child1.at(branch[i])).x;
+            V3DLONG cy1 = nt.listNeuron.at(child1.at(branch[i])).y;
+            V3DLONG cz1 = nt.listNeuron.at(child1.at(branch[i])).z;
+            block crop_block_c1 = offset_block(zcenter_block, XYZ(cx1,cy1,cz1));
+            QString out_swc1 = output_dir+flag1+"_child1.eswc";
+            crop_swc_cuboid(nt, out_swc1, crop_block_c1);
+            NeuronTree nt_sorted1;
+            nt_sorted1=readSWC_file(out_swc1);
+            int c1_point=find_tip(nt_sorted1,mysz[0],mysz[1],mysz[2]);
+            V3DLONG childx1 = nt_sorted1.listNeuron.at(c1_point).x;
+            V3DLONG childy1 = nt_sorted1.listNeuron.at(c1_point).y;
+            V3DLONG childz1 = nt_sorted1.listNeuron.at(c1_point).z;
+            //child2
+            V3DLONG cx2 = nt.listNeuron.at(child2.at(branch[i])).x;
+            V3DLONG cy2 = nt.listNeuron.at(child2.at(branch[i])).y;
+            V3DLONG cz2 = nt.listNeuron.at(child2.at(branch[i])).z;
+            block crop_block_c2 = offset_block(zcenter_block, XYZ(cx2,cy2,cz2));
+            QString out_swc2 = output_dir+flag1+"_child2.eswc";
+            crop_swc_cuboid(nt, out_swc2, crop_block_c2);
+            NeuronTree nt_sorted2;
+            nt_sorted2=readSWC_file(out_swc2);
+            int c2_point=find_tip(nt_sorted2,mysz[0],mysz[1],mysz[2]);
+            V3DLONG childx2 = nt_sorted2.listNeuron.at(c2_point).x;
+            V3DLONG childy2 = nt_sorted2.listNeuron.at(c2_point).y;
+            V3DLONG childz2 = nt_sorted2.listNeuron.at(c2_point).z;
+            //cout<<bid<<"#############"<<endl;
+            cout<<cchild1<<" "<<cchild2<<".........."<<branch.at(i)<<endl;
+
+            double d1;
+            double d2;
+            //find grandchildren
+            int grandch1 = plist.indexOf(cchild1);
+            int grandch2 = plist.indexOf(cchild2);
+            if(grandch1 <0){
+                d1 = dist(nt.listNeuron.at(child1.at(branch[i])), nt.listNeuron.at(branch[i]));
+            cout<<"cchild1 distance:"<<d1<<endl;
+            }
+            else{d1 = 50;}
+            if(grandch2 <0){
+                d2 = dist(nt.listNeuron.at(child2.at(branch[i])), nt.listNeuron.at(branch[i]));
+            cout<<"cchild2 distance:"<<d2<<endl;
+            }
+            else{d2 = 50;}
+            //cout<<branch.at(i)<<"............."<<endl;
+            if((data1d_crop[V3DLONG(bz*mysz[0]*mysz[1]+by*mysz[0]+bx)]>=15)&(d1>10)&(d2>10)){
+                if((data1d_crop[V3DLONG(childz1*mysz[0]*mysz[1]+childy1*mysz[0]+childx1)]>15)&(data1d_crop[V3DLONG(childz2*mysz[0]*mysz[1]+childy2*mysz[0]+childx2)]>15)){
                 branch_list.push_back(branch[i]);
-                NeuronSWC cur = nt.listNeuron.at(alln.at(branch[i]));
+                NeuronSWC cur = nt.listNeuron.at(branch[i]-1);
                 apo_branch.push_back(cur);
+                }
             }
             else{
-                NeuronSWC cur = nt.listNeuron.at(alln.at(branch[i]));
+                NeuronSWC cur = nt.listNeuron.at(branch[i]-1);
                 apo_list.push_back(cur);
             }
             cout<<"check55"<<endl;
     //}
+            }
     }
     cout<<branch_list.size()<<"............."<<apo_list.size()<<endl;
     //create .apo
     unsigned int Vsize=50;
     QList<CellAPO> apo;
 
-    for(int i = 0; i <apo_branch.size();i++)
+    for(int i = 0; i <apo_list.size();i++)
     {
         CellAPO m;
-        m.x = apo_branch.at(i).x;
-        m.y = apo_branch.at(i).y;
-        m.z = apo_branch.at(i).z;
+        m.x = apo_list.at(i).x;
+        m.y = apo_list.at(i).y;
+        m.z = apo_list.at(i).z;
         m.color.r=255;
         m.color.g=0;
         m.color.b=0;
         m.volsize = Vsize;
         apo.push_back(m);
     }
+    writeAPO_file(output_fake,apo);
+
+    QList<CellAPO> Bran;
+    for(int i = 0; i <apo_branch.size();i++)
+    {
+        CellAPO b;
+        b.x = apo_branch.at(i).x;
+        b.y = apo_branch.at(i).y;
+        b.z = apo_branch.at(i).z;
+        b.color.r=0;
+        b.color.g=255;
+        b.color.b=0;
+        b.volsize = Vsize;
+        Bran.push_back(b);
+    }
 
     //QString apo_name = filename + ".apo";
-    writeAPO_file(output_apo,apo);
+
+    writeAPO_file(output_branch,Bran);
 
     //cout<<"number of branch points "<<branch_list.size()<<endl;
 
