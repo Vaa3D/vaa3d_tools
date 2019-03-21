@@ -152,12 +152,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         NeuronTree nt = callback.getSWCTeraFly();
         if(nt.listNeuron.size()==0) return;
         QList<NeuronSWC> sorted_neuron;
-        LandmarkList markerlist_zhi;
+        LandmarkList markerlist_gap;
         QHash<int,int> map_type;
         QMultiMap<int, QList<NeuronSWC> > multi_neurons;
         QList<double> dist;
 
-        exportComplete(nt,sorted_neuron,markerlist_zhi,multi_neurons,map_type,dist);
+        exportComplete(nt,sorted_neuron,markerlist_gap,multi_neurons,map_type,dist);
 
         QVector<QPair <double, double> > v_tree;
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
@@ -195,7 +195,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     .arg(info_type.toStdString().c_str()));
 
         infoBox.exec();
-//*****************************************************OY's part(sorry for changing Zhi's markerlist to markerlist_zhi)*****************************************************
+
         QList<NeuronSWC> ori_tree1swc=nt.listNeuron;
         QVector<QVector<V3DLONG> > childs;
         NeuronTree n_t;
@@ -219,11 +219,11 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
          markerlist_before_sorting(ori_tree1swc,markerlist,numofwrongtype);
          markerlist_after_sorting(sorted_neuron,markerlist,childs,numofwrongplace);
 
-         if(markerlist_zhi.size() != 0)
+         if(markerlist_gap.size() != 0)
          {
                LandmarkList markerlist_orginal = callback.getLandmarkTeraFly();
-               for(int i=0; i<markerlist_zhi.size(); i++)
-                   markerlist_orginal.push_back(markerlist_zhi[i]);
+               for(int i=0; i<markerlist_gap.size(); i++)
+                   markerlist_orginal.push_back(markerlist_gap[i]);
                callback.setLandmarkTeraFly(markerlist_orginal);
          }
 
