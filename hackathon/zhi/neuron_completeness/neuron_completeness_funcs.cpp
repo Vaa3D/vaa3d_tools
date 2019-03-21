@@ -472,17 +472,6 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 		}
 	}
 
-	/*for (map<size_t, set<size_t> >::iterator seg2SegsIt = seg2SegsMap.begin(); seg2SegsIt != seg2SegsMap.end(); ++seg2SegsIt)
-	{
-	cout << seg2SegsIt->first << ":";
-	for (set<size_t>::iterator it = seg2SegsIt->second.begin(); it != seg2SegsIt->second.end(); ++it)
-	cout << *it << " ";
-
-	cout << endl;
-	}*/
-
-	double segSize = segList.seg.size();
-
 	cout << endl << "Starting loop detection.. " << endl;
 	clock_t begin = clock();
 	detectedLoopsSet.clear();
@@ -490,11 +479,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 	nonLoopErrors.clear();
 	for (map<size_t, set<size_t> >::iterator it = seg2SegsMap.begin(); it != seg2SegsMap.end(); ++it)
 	{
-		double progressBarValue = (double(it->first) / segSize) * 100;
-		int progressBarValueInt = floor(progressBarValue);
-
-		if (it->second.empty()) continue;
-		else if (it->second.size() <= 2) continue;
+		if (it->second.size() <= 2) continue;
 
 		vector<size_t> loops2ThisSeg;
 		loops2ThisSeg.clear();
@@ -546,35 +531,94 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 		}
 		cout << "LOOPS NUMBER (set): " << finalizedLoopsSet.size() << endl << endl;
 
-		if (nonLoopErrors.empty())
+		if (!nonLoopErrors.empty())
 		{
-			for (set<set<size_t> >::iterator loopIt = nonLoopErrors.begin(); loopIt != nonLoopErrors.end(); ++loopIt)
+			while (1)
 			{
-				set<size_t> thisLoop = *loopIt;
-				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
+				for (set<set<size_t> >::iterator setCheckIt1 = nonLoopErrors.begin(); setCheckIt1 != nonLoopErrors.end(); ++setCheckIt1)
 				{
-					//cout << *it << " ";
-					for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
+					for (set<set<size_t> >::iterator setCheckIt2 = nonLoopErrors.begin(); setCheckIt2 != nonLoopErrors.end(); ++setCheckIt2)
 					{
-						unitIt->type = 20;
-
-						if (unitIt->parent == -1)
+						if (setCheckIt1 == setCheckIt2) continue;
+						else
 						{
-							NeuronSWC problematicNode;
-							problematicNode.x = unitIt->x;
-							problematicNode.y = unitIt->y;
-							problematicNode.z = unitIt->z;
-							problematicNode.type = 20;
-							problematicNode.parent = unitIt->parent;
-							problematicNode.n = unitIt->n;
-							outputErroneousPoints.push_back(problematicNode);
+							int segNum = 0;
+							for (set<size_t>::iterator segCheck1 = setCheckIt1->begin(); segCheck1 != setCheckIt1->end(); ++segCheck1)
+								if (setCheckIt2->find(*segCheck1) != setCheckIt2->end()) ++segNum;
+
+							if (segNum == setCheckIt1->size())
+							{
+								nonLoopErrors.erase(setCheckIt1);
+								goto SET_ERASED;
+							}
 						}
 					}
 				}
-				//cout << endl << endl;
+				break;
+
+			SET_ERASED:
+				continue;
+			}
+
+			for (set<set<size_t> >::iterator loopIt = nonLoopErrors.begin(); loopIt != nonLoopErrors.end(); ++loopIt)
+			{
+				map<string, set<size_t> > headCountMap;
+				map<string, set<size_t> > tailCountMap;
+				bool head = true, tail = false;
+
+				set<size_t> thisLoop = *loopIt;
+				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
+				{
+					string headLabel = to_string((segList.seg[*it].row.end() - 1)->x) + " " + to_string((segList.seg[*it].row.end() - 1)->y) + " " + to_string((segList.seg[*it].row.end() - 1)->z);
+					string tailLabel = to_string(segList.seg[*it].row.begin()->x) + " " + to_string(segList.seg[*it].row.begin()->y) + " " + to_string(segList.seg[*it].row.begin()->z);
+					headCountMap[headLabel].insert(*it);
+					tailCountMap[tailLabel].insert(*it);					
+				}
+
+				int overlapCount = 0;
+				size_t segNum;
+				for (map<string, set<size_t> >::iterator countIt = headCountMap.begin(); countIt != headCountMap.end(); ++countIt)
+				{
+					if (countIt->second.size() > overlapCount)
+					{
+						overlapCount = countIt->second.size();
+						segNum = *countIt->second.begin();
+					}
+				}
+				for (map<string, set<size_t> >::iterator countIt = tailCountMap.begin(); countIt != tailCountMap.end(); ++countIt)
+				{
+					if (countIt->second.size() > overlapCount)
+					{
+						overlapCount = countIt->second.size();
+						segNum = *countIt->second.begin();
+						head = false;
+						tail = true;
+					}
+				}
+
+				// Zhi: The following identifies the node that has the most duplication in 3 way fork situ. Please make changes you need here. 
+				if (head) 
+				{
+					NeuronSWC problematicNode;
+					problematicNode.x = (segList.seg[segNum].row.end() - 1)->x;
+					problematicNode.y = (segList.seg[segNum].row.end() - 1)->y;
+					problematicNode.z = (segList.seg[segNum].row.end() - 1)->z;
+					problematicNode.type = 20;
+					outputErroneousPoints.push_back(problematicNode);
+					cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
+				}
+				else if (tail)
+				{
+					NeuronSWC problematicNode;
+					problematicNode.x = segList.seg[segNum].row.begin()->x;
+					problematicNode.y = segList.seg[segNum].row.begin()->y;
+					problematicNode.z = segList.seg[segNum].row.begin()->z;
+					problematicNode.type = 20;
+					outputErroneousPoints.push_back(problematicNode);
+					cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
+				}	
 			}
 		}
-		//cout << "non LOOPS ERROR NUMBER (set): " << thisRenderer->nonLoopErrors.size() << endl << endl;
 	}
 
 	return outputErroneousPoints;
@@ -621,7 +665,7 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 			else continue;
 		}
 
-		if (find(curPathWalk.begin(), curPathWalk.end(), *it) == curPathWalk.end())
+		if (find(curPathWalk.begin(), curPathWalk.end(), *it) == curPathWalk.end()) 
 		{
 			rc_loopPathCheck(*it, curPathWalk);
 		}
@@ -704,7 +748,34 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 					cout << "  Loop detected ----> (" << *it << ") ";
 					for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
 						cout << *thisLoopIt << " ";
-					cout << endl;
+					cout << endl << endl;
+
+					while (1)
+					{
+						for (set<set<size_t> >::iterator setCheckIt1 = finalizedLoopsSet.begin(); setCheckIt1 != finalizedLoopsSet.end(); ++setCheckIt1)
+						{
+							for (set<set<size_t> >::iterator setCheckIt2 = finalizedLoopsSet.begin(); setCheckIt2 != finalizedLoopsSet.end(); ++setCheckIt2)
+							{
+								if (setCheckIt1 == setCheckIt2) continue;
+								else
+								{
+									int segNum = 0;
+									for (set<size_t>::iterator segCheck1 = setCheckIt1->begin(); segCheck1 != setCheckIt1->end(); ++segCheck1)
+										if (setCheckIt2->find(*segCheck1) != setCheckIt2->end()) ++segNum;
+
+									if (segNum == setCheckIt1->size())
+									{
+										finalizedLoopsSet.erase(setCheckIt1);
+										goto SET_ERASED;
+									}
+								}
+							}
+						}
+						break;
+
+					SET_ERASED:
+						continue;
+					}
 				}
 			}
 			else return;

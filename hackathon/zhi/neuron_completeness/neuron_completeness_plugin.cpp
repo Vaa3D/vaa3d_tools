@@ -253,9 +253,9 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             return;
         NeuronTree nt = openDlg->nt;
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
-		vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
-		std::cout << trees.size() << " trees in this SWC file." << endl;
-		//vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+		//vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+		//std::cout << trees.size() << " trees in this SWC file." << endl;
+		vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
 		
 
         v3d_msg(QString("%1").arg(nt_decomposed.seg.size()));
