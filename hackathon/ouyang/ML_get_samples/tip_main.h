@@ -20,6 +20,7 @@ struct node_and_id{
 };
 
 void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 QList<int> get_tips(NeuronTree nt, bool include_root);
 block offset_block(block input_block, XYZ offset);
 void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip);
@@ -42,7 +43,9 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
 QList<NeuronSWC> change_tip_xyz(QList<NeuronSWC>input_swc,int tip_node,MyMarker center);
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 NeuronTree revise_radius(NeuronTree inputtree,float radius);
-NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum);
+NeuronTree get_unfinished_fun(QList<int> tip_list,NeuronTree treeswc,int maximum);
+NeuronTree get_overtraced_fun(QList<int> tip_list,NeuronTree sort_swc,int maximum);
+QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root);
 bool export_list2file(const QList<NeuronSWC>& lN, QString fileSaveName);
 void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void find_short_branch_tips_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);

@@ -5,6 +5,7 @@
 #include "qlist.h"
 #include <algorithm>
 #include <iterator>
+#include <cmath>
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.cpp"
 #include "../../../../vaa3d_tools/hackathon/LXF/blastneuron_bjut/my_surf_objs.cpp"
@@ -15,6 +16,29 @@
 double marker_dist(MyMarker a, MyMarker b)
 {
     return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
+}
+
+MyMarker over_traced_node(QPair< MyMarker,MyMarker> input_xyz,double over_dist){
+
+    MyMarker output_overtraced_node;
+    double dist_input=marker_dist(input_xyz.first,input_xyz.second);
+    double fabs_value_x=fabs(double (input_xyz.first.x-input_xyz.second.x));
+    double fabs_value_y=fabs(double (input_xyz.first.y-input_xyz.second.y));
+    double fabs_value_z=fabs(double (input_xyz.first.z-input_xyz.second.z));
+    double output_add_x1=input_xyz.first.x+(over_dist*fabs_value_x)/dist_input;
+    double output_add_y1=input_xyz.first.y+(over_dist*fabs_value_y)/dist_input;
+    double output_add_z1=input_xyz.first.z+(over_dist*fabs_value_z)/dist_input;
+    double output_minus_x2=input_xyz.first.x-(over_dist*fabs_value_x)/dist_input;
+    double output_minus_y2=input_xyz.first.y-(over_dist*fabs_value_y)/dist_input;
+    double output_minus_z2=input_xyz.first.z-(over_dist*fabs_value_z)/dist_input;
+    MyMarker direc_ori_12=MyMarker(input_xyz.first.x-input_xyz.second.x , input_xyz.first.y-input_xyz.second.y , input_xyz.first.z-input_xyz.second.z);
+    MyMarker direc_after_32_add=MyMarker(output_add_x1-input_xyz.second.x , output_add_y1-input_xyz.second.y , output_add_z1-input_xyz.second.z);
+    MyMarker direc_after_32_minus=MyMarker(output_minus_x2-input_xyz.second.x , output_minus_y2-input_xyz.second.y , output_minus_z2-input_xyz.second.z);
+    double vector_product_add=direc_ori_12.x*direc_after_32_add.x+direc_ori_12.y*direc_after_32_add.y+direc_ori_12.z*direc_after_32_add.z;
+    double vector_product_minus=direc_ori_12.x*direc_after_32_minus.x+direc_ori_12.y*direc_after_32_minus.y+direc_ori_12.z*direc_after_32_minus.z;
+    if (vector_product_add>0) output_overtraced_node=MyMarker(output_add_x1,output_add_y1,output_add_z1);
+    else if (vector_product_minus>0) output_overtraced_node=MyMarker(output_minus_x2,output_minus_y2,output_minus_z2);
+    return output_overtraced_node;
 }
 using namespace std;
 
@@ -31,7 +55,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
 
     double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
     QStringList list=swc_file.split("/");
-    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag=list.last(); QStringList list1=flag.split(".");
     QString flag1=list1.first();
 
 
@@ -53,7 +77,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
 
     //get new tips after deleting nodes
     NeuronTree nt;
-    nt=get_unfinished_sample(ori_tip_list,nt1,maximum);  // this fuction is to delete nodes beginning with tip nodes.NOTE:the deleted distance is adjustable and random by given range:10um to <maximum> um
+    nt=get_unfinished_fun(ori_tip_list,nt1,maximum);  // this fuction is to delete nodes beginning with tip nodes.NOTE:the deleted distance is adjustable and random by given range:10um to <maximum> um
     QList<int> tip_list = get_tips(nt, false);
     cout<<"Number_of_tips after deleting nodes:\t"<<tip_list.size()<<endl;
 
@@ -85,6 +109,86 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
     return;
     //QString output_newswc = output_dir+"deleted"+".eswc";
     //export_list2file(nt.listNeuron,output_newswc);
+}
+
+void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString image_file=infiles.at(0);
+    QString swc_file=infiles.at(1);
+    QString output_dir=outfiles.at(0);
+    QString output_apo;
+
+    if(!output_dir.endsWith("/")){
+        output_dir = output_dir+"/";
+    }
+
+    double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
+    QStringList list=swc_file.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");
+    QString flag1=list1.first();
+
+
+    XYZ block_size=XYZ(100,100,20);
+
+    if(outfiles.size()>1)
+    {
+        output_apo=outfiles.at(1);
+    }
+    printf("welcome to use get_termial\n");
+    NeuronTree nt1 = readSWC_file(swc_file);
+
+    QList<NeuronSWC> sort_swc;
+    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
+    NeuronTree sorted_tree;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<sort_swc.size();j++){
+        hash_nt.insert(sort_swc[j].n, j);
+    }
+    sorted_tree.listNeuron=sort_swc;
+    sorted_tree.hashNeuron=hash_nt;
+
+    // Find tips
+    QList<int> ori_tip_list = get_tips(sorted_tree, false);
+    cout<<"Number_of_tips:\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
+
+    //get new tree
+    NeuronTree nt;
+    nt=get_overtraced_fun(ori_tip_list,sorted_tree,maximum);  // this fuction is to delete nodes beginning with tip nodes.NOTE:the deleted distance is adjustable and random by given range:10um to <maximum> um
+
+    // Find tips
+    QList<int> tip_list = get_tips(nt, false);
+    cout<<"Number_of__new_tips:\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
+
+    // Crop tip-centered regions one by one
+    block zcenter_block; // This is a block centered at (0,0,0)
+    zcenter_block.small = 0-block_size/2;
+    zcenter_block.large = block_size/2;
+    QList<QString> output_suffix;
+    output_suffix.append(QString("tif"));
+    output_suffix.append(QString("swc"));
+    printf("welcome to use get_termial\n");
+    for(int i=0; i<tip_list.size(); i++){
+        int tipnum=i;
+        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+        if(node.type > 5){continue;}
+        // create a tip-centered block
+        block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+        crop_block.name = QString::number(i);
+        XYZ tip=XYZ(node.x, node.y, node.z);
+        // crop swc
+        QString num_cnt=QString("%1").arg(i);
+        QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
+        crop_swc_cuboid(nt, output_swc, crop_block);
+        // crop image
+        QString output_image = flag1+"_"+num_cnt;
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip);
+    }
+    return;
 }
 
 
@@ -146,7 +250,7 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
     return;
 }
 
-NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum){
+NeuronTree get_unfinished_fun(QList<int> tip_list,NeuronTree treeswc,int maximum){
 
     NeuronTree nt;
     QList<int> to_delete;
@@ -219,6 +323,47 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maxi
         hash_nt.insert(newtree[j].n, j);
     }
     n_t.listNeuron=newtree;
+    n_t.hashNeuron=hash_nt;
+    return n_t;
+}
+
+
+NeuronTree get_overtraced_fun(QList<int> tip_list,NeuronTree sort_swc,int maximum){
+
+    QList<int> plist;
+    QList<int> alln;
+    QList<NeuronSWC> sorted_listneuron=sort_swc.listNeuron;
+    int N=sort_swc.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(sort_swc.listNeuron.at(i).pn);
+        alln.append(sort_swc.listNeuron.at(i).n);
+      }
+    for (int i=0;i<tip_list.size();i++){
+
+        int random_dis=(rand()%(maximum-10))+10+1;//make distance adjustable and random
+        MyMarker tip=MyMarker(sorted_listneuron.at(tip_list.at(i)).x,sorted_listneuron.at(tip_list.at(i)).y,sorted_listneuron.at(tip_list.at(i)).z);
+        int index_tip_pn=alln.indexOf(sorted_listneuron.at(tip_list.at(i)).pn);
+        MyMarker tip_pn=MyMarker(sorted_listneuron.at(index_tip_pn).x,sorted_listneuron.at(index_tip_pn).y,sorted_listneuron.at(index_tip_pn).z);
+        QPair<MyMarker,MyMarker> two_marker;two_marker.first=tip;two_marker.second=tip_pn;
+        MyMarker new_tip=over_traced_node(two_marker,random_dis);
+        NeuronSWC new_line;
+        new_line.x=new_tip.x; new_line.y=new_tip.y; new_line.z=new_tip.z;
+        new_line.pn=sorted_listneuron.at(tip_list.at(i)).n;
+        new_line.type=sorted_listneuron.at(tip_list.at(i)).type;
+        new_line.radius=sorted_listneuron.at(tip_list.at(i)).radius;
+        new_line.n=N+i+1;
+        sorted_listneuron.append(new_line);
+        cout<<"================tip"<<tip.x<<"  "<<tip.y<<"  "<<tip.z<<"  "<<endl;
+        cout<<"================tip pn"<<tip_pn.x<<"  "<<tip_pn.y<<"  "<<tip_pn.z<<"  "<<endl;
+    }
+
+    NeuronTree n_t;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<sorted_listneuron.size();j++){
+        hash_nt.insert(sorted_listneuron[j].n, j);
+    }
+    n_t.listNeuron=sorted_listneuron;
     n_t.hashNeuron=hash_nt;
     return n_t;
 }
@@ -978,7 +1123,7 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     {
         v3d_msg("Cannot load terafly images.",0);
         return;
-    }
+    }cout<<"fgf---------------fgggggggggggggggg-------------"<<endl;
     // 1. When cropping, ranges must be integers
     // pixels at large values won't be included, so set large.x/y/z as large.x/y/z + 1
     XYZ small=XYZ(crop_block.small);
@@ -989,7 +1134,7 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     large.x = ceil(large.x)+1;
     large.y = ceil(large.y)+1;
     large.z = ceil(large.z)+1;
-
+cout<<"fgf----------------ffffffffffffffffff-------------"<<endl;
     // 2. Crop image. image is stored as 1d array. 2 parameters needed for cropping:
     // 2.1. 'cropped_image' is a pointer to the beginning of the region of interest
     unsigned char * cropped_image = 0;
@@ -998,6 +1143,7 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
                                                  small.x, large.x,
                                                  small.y, large.y,
                                                  small.z, large.z);
+    cout<<"fgf----------------gio-------------"<<endl;
     // 2.2. 'in_sz' sets the size of the region.
     V3DLONG in_sz[4];
     in_sz[0] = large.x-small.x;
