@@ -107,6 +107,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	cout << endl << "Finishing up processing objects.." << endl << " number of objects processed: ";
 	vector<NeuronTree> objTrees;
 	NeuronTree objSkeletonTree;
+	NeuronTree finalCentroidTree;
 	for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 	{
 		if (it->size < voxelCount) continue;
@@ -124,16 +125,21 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			newNode.parent = -1;
 			centroidTree.listNeuron.push_back(newNode);
 		}
+		finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
 
 		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 		profiledTree profiledMSTtree(MSTtree);
 		profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
 		objTrees.push_back(profiledMSTtree.tree);
 	}
+	QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
+	writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
 	cout << endl;
 	objSkeletonTree = NeuronStructUtil::swcCombine(objTrees);
 	profiledTree objSkeletonProfiledTree(objSkeletonTree);
 	this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
+	QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
+	writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
 
 	NeuronTree MSTbranchBreakTree;
 	MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
