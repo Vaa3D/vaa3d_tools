@@ -496,11 +496,11 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 				Count[vis[i]]++;
 			}
 		
-			for(int i=0;i<channel_sz;i++){
-			   
-				if(Count[vis[i]] <300){
-					m_OutImgData2[i] = 0;
-				}
+				for(int i=0;i<channel_sz;i++){
+
+			if(Count[vis[i]] <300){
+			m_OutImgData2[i] = 0;
+			}
 
 			}
 			cout<<"endl"<<endl;
