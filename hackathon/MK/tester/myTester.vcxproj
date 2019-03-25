@@ -153,10 +153,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="imgTester.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SWCtester.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="imgTester.h" />
     <ClInclude Include="SWCtester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
