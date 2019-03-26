@@ -16,6 +16,7 @@ struct Point
     V3DLONG childNum;
     V3DLONG level,seg_id;
     QList<float> fea_val;
+    V3DLONG curvature;
 };
 
 typedef vector<Point*> Segment;
@@ -38,6 +39,10 @@ NeuronTree breakSWC_with_points(NeuronTree input, QList<ImageMarker>& break_poin
 void break_path_with_points(Segment * seg, QList<ImageMarker>& break_points);
 QList <ImageMarker> break_points_reselect(QList<ImageMarker> & break_points, NeuronTree nt);
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
+
+//added by DZC 24Mar2019
+QList<float> evalute_smooth(NeuronTree nt);
+QList<float> curvature_calculate(Segment *seg, QList<CellAPO> &pin_points);
 
 
 

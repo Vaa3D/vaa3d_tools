@@ -91,21 +91,18 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	}
     else if(func_name==tr("smooth_evaluate"))
     {
-
         if(infiles.size()<1)
         {
-            fprintf(stderr, "Need input refined swc");
+            fprintf(stderr, "Please input a refined swc/eswc file\n");
+            return false;
         }
 
-
-
-
-
+        NeuronTree nt= readSWC_file(QString(infiles[0]));
+        QList<float> curvature=evalute_smooth(nt);
 
 
 
     }
-
 
     else if( func_name==tr("refine_v2")) //added by DZC 14Mar2019
     {

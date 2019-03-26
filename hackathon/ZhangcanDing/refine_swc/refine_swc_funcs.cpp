@@ -10,12 +10,20 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 
+#include "Splines.h"
+
+
+using namespace SplineLib;
+
 using namespace std;
 #define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
 #define NTDIS(a,b) (sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z)))
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define DISTPS(a,b) (sqrt(((a)->x-(b).x)*((a)->x-(b).x)+((a)->y-(b).y)*((a)->y-(b).y)+((a)->z-(b).z)*((a)->z-(b).z)))
+#define ABS(a) (a>0 ? a:(-a))
+#define MAX(a,b) (a>b? a: b)
+
 
 NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, NeuronTree nt)
 {
@@ -1225,6 +1233,239 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
     new_tree.listNeuron = listNeuron;
     new_tree.hashNeuron = hashNeuron;
     return new_tree;
+}
+
+
+
+//added by DZC 25Mar2019
+QList<float> evalute_smooth( NeuronTree nt)
+{
+
+    QList<NeuronSWC> List= nt.listNeuron;
+    QList<float> curv;
+
+    QVector<QVector<V3DLONG> > childs;
+
+    V3DLONG neuronNum = List.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    V3DLONG siz = nt.listNeuron.size();
+    Tree tree;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        NeuronSWC s = nt.listNeuron[i];
+        Point* pt = new Point;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->r = s.r;
+        pt ->type = s.type;
+        pt->seg_id = s.seg_id;
+        pt->level = s.level;
+        pt->fea_val = s.fea_val;
+        pt->p = NULL;
+        pt->childNum = 0;
+        pt->curvature=0;
+        tree.push_back(pt);
+
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (nt.listNeuron[i].pn<0) continue;
+        V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
+        tree[i]->p = tree[pid];
+        tree[pid]->childNum++;
+    }
+//	printf("tree constructed.\n");
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->childNum!=1)//tip or branch point
+        {
+            Segment* seg = new Segment;
+            Point* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->p;
+            }
+            while(cur && cur->childNum==1);
+            seg_list.push_back(seg);
+        }
+    }
+//	printf("segment list constructed.\n");
+
+
+
+    //calculate the curvature difference of each point on a segment
+    QList<CellAPO> pin_points;
+    QList<float> curv_diff;
+    for (V3DLONG i=0;i<seg_list.size();i++)
+    {
+        if(seg_list[i]->size()<5) continue;
+        QList<float> curv_diff=curvature_calculate(seg_list[i],pin_points);
+
+    }
+
+    QString apofilename=QString("/home/penglab/PBserver/tmp/ding/test17302_001.apo");
+    writeAPO_file(apofilename,pin_points);
+
+
+    return curv_diff;
+
+}
+
+
+QList<float> curvature_calculate(Segment *seg, QList<CellAPO> & pin_points)
+{
+
+    int step=4;
+    QList<float> splines_curv;
+    //splines_curv.push_back(0.0f);
+    int cnt=0;
+//    if(seg->size()<step) {
+
+//        //QList<float> empty;
+
+//        //empty.append(0.0);
+//        //return empty;
+
+//        exit(0);
+//    }
+    int cnt_max=seg->size()/step;
+    std::cout<<"seg_size=\n"<<seg->size()<<std::endl;
+    std::cout<<"cnt_max=\n"<<cnt_max<<std::endl;
+
+    for(cnt=0; cnt<cnt_max-1; cnt++)
+    {
+        std::cout<<"cnt"<<cnt<<endl;
+        //Vec3f *points=new Vec3f [5];
+
+        //for(int j=0;j<5;j++)
+
+                int index=cnt*step;
+//                //Vec3f point;
+//                points[j].x=seg->at(index)->x;
+//                points[j].y=seg->at(index)->y;
+//                points[j].z=seg->at(index)->z;
+
+//                //points[j].x=point;
+//                std::cout<<"j="<<j<<std::endl;
+//                std::cout<<"\n points[j].x="<<points[j].x<<std::endl;
+
+            const Vec3f points[] =
+               {
+                    { seg->at(index)->x,seg->at(index)->y,  seg->at(index)->z },
+                    { seg->at(index+1)->x, seg->at(index+1)->y, seg->at(index+1)->z },
+                    { seg->at(index+2)->x, seg->at(index+2)->y, seg->at(index+2)->z },
+                    { seg->at(index+3)->x, seg->at(index+3)->y, seg->at(index+3)->z },
+                    { seg->at(index+4)->x, seg->at(index+4)->y, seg->at(index+4)->z }
+            };
+
+        const int numPoints=5;
+        cSpline3 splines[numPoints + 1];
+
+        int numSplines = SplinesFromPoints(numPoints, points, numPoints + 1, splines);
+        float ts = 0.2f;
+
+        for(int j=0; j<numSplines; j++)
+        {
+            float cs = Curvature(splines[j], ts);
+            splines_curv.push_back(cs);
+            std::cout<<"curvature"<<j<<"=\n"<<cs<<std::endl;
+        }
+
+        //delete[] points;
+
+
+
+    }
+
+//    if(seg->size()%step >1)
+//    {
+//        for(int i=seg->size()-(seg->size()%step)-1;i<seg->size();i++)
+//        {
+//            splines_curv.push_back(0.0f);
+
+//        }
+
+//    }
+
+
+
+    std::cout<<"splines curvature calculation completed\n*****************"<<std::endl;
+
+
+
+    QList<float> curv_diff;
+
+    curv_diff.append(0.0);
+
+    std::cout<<"......................\n"<<std::endl;
+    std::cout<<"splines_curv.size="<<splines_curv.size()<<std::endl;
+
+    for (int i=1; i<splines_curv.size();i++)
+    {
+        std::cout<<"splines_curv"<<i<<"="<<splines_curv[i]<<std::endl;
+        std::cout<<"splines_curv"<<i-1<<"="<<splines_curv[i-1]<<std::endl;
+
+
+
+    }
+
+    for (int i=1; i<splines_curv.size();i++)
+    {
+
+        std::cout<<"splines_curv"<<i<<"="<<splines_curv[i]<<std::endl;
+        std::cout<<"splines_curv"<<i-1<<"="<<splines_curv[i-1]<<std::endl;
+            float node_diff;
+//            if (splines_curv[i]==0.0)
+//            {
+//                node_diff=0.0;
+//                curv_diff.push_back(node_diff);
+//                continue;
+//            } else
+//            {
+            node_diff= ABS(splines_curv[i]-splines_curv[i-1])/MAX(splines_curv[i],splines_curv[i-1]);
+            curv_diff.append(node_diff);
+
+
+    }
+
+    std::cout<<"\n+++++++++++++++++++"<<std::endl;
+
+
+    for(int i=0;i<splines_curv.size();i++)
+    {
+        if(curv_diff[i]>0.9)
+            {
+            CellAPO tmp;
+            tmp.x=seg->at(i)->x;
+            tmp.y=seg->at(i)->y;
+            tmp.z=seg->at(i)->z;
+            tmp.volsize=50;
+            tmp.color.r=255;
+            tmp.color.g=255;
+            tmp.color.b=0;
+            pin_points.push_back(tmp);
+        }
+
+    }
+
+
+
+
+    return curv_diff;
+
+
+
 }
 
 
