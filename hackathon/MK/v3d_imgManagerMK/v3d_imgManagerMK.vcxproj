@@ -125,7 +125,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>TEEM_STATIC;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Vaa3D_2013_Qt486\vaa3d_tools\released_plugins\v3d_plugins\swc2mask_cylinder;C:\Qt\4.8.6\include\QtGui;C:\Qt\4.8.6\include\QtCore;C:\Qt\4.8.6\include;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\io;C:\opencv-3.4.0\VS2013_build\install\include;C:\boostLibs\boost_1_61_0;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\basic_c_fun;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\common_lib\include;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\NeuronStructNavigator;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK\imgProcessor;C:\Vaa3D_2013_Qt486\vaa3d_tools\hackathon\MK\v3d_imgManagerMK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\NeuronStructNavigator;..\..\..\released_plugins\v3d_plugins\swc2mask_cylinder;%QTDIR%\include\QtGui;%QTDIR%\include\QtCore;%QTDIR%\include;..\..\..\..\v3d_external\v3d_main\io;%BOOST_PATH%;..\..\..\..\v3d_external\v3d_main\basic_c_fun;..\..\..\..\v3d_external\v3d_main\common_lib\include;..\v3d_imgManagerMK\imgProcessor;..\v3d_imgManagerMK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -135,8 +135,9 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>C:\opencv-3.4.0\VS2013_build\install\x64\vc12\lib;C:\boostLibs\boost_1_61_0\lib64-msvc-12.0;C:\Vaa3D_2013_Qt486\v3d_external\v3d_main\common_lib\winlib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>teem.lib;libtiff.lib;opencv_imgcodecs340.lib;opencv_highgui340.lib;opencv_core340.lib;opencv_imgproc340.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\NeuronStructNavigator;%BOOST_PATH\lib64-msvc-12.0;..\..\..\..\v3d_external\v3d_main\common_lib\winlib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>NeuronStructNavigator.lib;teem.lib;libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -146,7 +147,9 @@
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\basic_4dimage.h" />
     <ClInclude Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\v3d_message.h" />
     <ClInclude Include="..\..\..\released_plugins\v3d_plugins\swc2mask_cylinder\my_surf_objs.h" />
+    <ClInclude Include="imgAnalyzer\ImgAnalyzer.h" />
     <ClInclude Include="ImgManager.h" />
+    <ClInclude Include="imgProcessor\ImgProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\v3d_external\v3d_main\basic_c_fun\mg_image_lib.cpp" />
@@ -156,6 +159,7 @@
     <ClCompile Include="..\v3dSource\basic_4dimage.cpp" />
     <ClCompile Include="..\v3dSource\mg_utilities.cpp" />
     <ClCompile Include="..\v3dSource\stackutil.cpp" />
+    <ClCompile Include="imgAnalyzer\ImgAnalyzer.cpp" />
     <ClCompile Include="ImgManager.cpp" />
     <ClCompile Include="imgProcessor\ImgProcessor.cpp" />
   </ItemGroup>
