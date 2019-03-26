@@ -139,9 +139,10 @@ NeuronTree refineSWCTerafly(V3DPluginCallback2 &callback,QString fname_img, Neur
         unsigned char* total1dData_mask = 0;
         total1dData_mask = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
         memset(total1dData_mask,0,mysz[0]*mysz[1]*mysz[2]*sizeof(unsigned char));
+        QList<int> empty_markers;
         double margin;
         margin = (seg->at(0)->level == 20)?10:5;
-        ComputemaskImage(seg_nt, total1dData_mask, mysz[0], mysz[1], mysz[2],margin);
+        ComputemaskImage(seg_nt, total1dData_mask, mysz[0], mysz[1], mysz[2],empty_markers, false, margin);
         for(V3DLONG j=0;j<mysz[0]*mysz[1]*mysz[2];++j)
             total1dData[j] = (total1dData_mask[j] ==0)?0:total1dData[j];
 
@@ -1444,7 +1445,7 @@ QList<float> curvature_calculate(Segment *seg, QList<CellAPO> & pin_points)
 
     for(int i=0;i<splines_curv.size();i++)
     {
-        if(curv_diff[i]>0.9)
+        if(curv_diff[i]>0.6 && splines_curv[i]>1.0)
             {
             CellAPO tmp;
             tmp.x=seg->at(i)->x;
