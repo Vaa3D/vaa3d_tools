@@ -13,7 +13,6 @@
 #include <fstream>
 #include "neuron_format_converter.h"
 #include <iostream>
-//#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 
 using namespace std;
@@ -281,7 +280,12 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
     if (func_name == tr("evalu"))
 	{
-        NeuronTree nt = readSWC_file(QString(infiles[0]));
+        vector<QString> file_path;
+        file_path=GetFileList(infiles[0]);
+
+        for(int k=0;k<file_path.size();k++)
+      {
+        NeuronTree nt = readSWC_file(QString(file_path[k]));
         QList<NeuronSWC> sorted_neuron;
         LandmarkList markerlist1;
         QHash<int,int> map_type;
@@ -290,17 +294,17 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         exportComplete(nt,sorted_neuron,markerlist1,multi_neurons,map_type,dist);
 
-        QStringList list=QString(infiles[0]).split("/");
+        QStringList list=QString(file_path[k]).split("/");
         QString flag=list.last(); QStringList list1=flag.split(".");
         QString flag2=list1.first();
         QStringList list2=flag2.split("_");
-        QString flag1=list2.first()+"_"+list2[1];
+        QString flag1=list2.first()+"\\_"+list2[1];//use \\ for adding \
 
         QString info_tree;
         vector<double> dis_all;
         int index = 1,index1=1,count=0;//bigger than 2 um
 
-        QString out_result1 =QString(outfiles.at(0))+"/"+"gap"+QString(".csv");
+        QString out_result1 =QString(outfiles.at(0))+"/"+"gap"+QString(".txt");
 
         QDir tempdir1;
         QFile *tempfile1=new QFile;
@@ -319,7 +323,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                         tempfile1->setFileName(out_result1);
                         if (!tempfile1->open(QIODevice::WriteOnly|QIODevice::Text)) break;
                         QTextStream myfile(tempfile1);
-                        myfile <<"Name"<<"," <<"Gap distance"<<"," <<"Tree"<<endl;
+                        //myfile <<"Name"<<"," <<"Gap distance"<<"," <<"Tree"<<endl;
                         myfile << flag1.toStdString().c_str()<<","<< cur_dist<<","<< tree_name<<endl;
                     }
                     else export_file2record_tree(flag1.toStdString(),cur_dist,out_result1,tree_name);
@@ -344,9 +348,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                     .arg(map_type.size())
                     .arg(info_type.toStdString().c_str()),0);
 
-
-        return true;
-	}
+      }
+      return true;
+    }
     else if (func_name == tr("detection_type"))
     {
         detect_type_func(input,output,callback);

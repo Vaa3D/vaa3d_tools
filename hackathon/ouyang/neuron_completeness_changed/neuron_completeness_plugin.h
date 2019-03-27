@@ -10,6 +10,7 @@
 #include <v3d_interface.h>
 #include "neuron_format_converter.h"
 #include <set>
+#include "neuron_completeness_funcs.h"
 
 vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList);
 void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk);

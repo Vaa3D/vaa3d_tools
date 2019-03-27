@@ -30,6 +30,7 @@ void markerlist_before_sorting(QList<NeuronSWC>ori_tree1swc,LandmarkList& marker
 void markerlist_after_sorting(QList<NeuronSWC>sorted_neuron,LandmarkList& markerlist,QVector<QVector<V3DLONG> > childs,int& wrongplace);
 bool export_file2record(string swc_name,int ct1,double num_wrong_type,QString fileSaveName);
 bool export_file2record_tree(string swc_name,double dis,QString fileSaveName,QString tree);
+vector<QString> GetFileList(QString dir);
 
 
 #endif

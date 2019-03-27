@@ -9,6 +9,7 @@
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
 
 #include "neuron_completeness_plugin.h"
+# include <qdir.h>
 
 
 map<size_t, set<size_t> > seg2SegsMap;
@@ -623,6 +624,25 @@ void markerlist_after_sorting(QList<NeuronSWC>sorted_neuron,LandmarkList &marker
 
 //	return outputErroneousPoints;
 //}
+vector<QString> GetFileList(QString dir)
+{
+    vector<QString> filePath;
+    QDir dirPath(dir);
+    QList<QFileInfo> file(dirPath.entryInfoList());
+    QString name = "";
+    QList<QFileInfo>::iterator it;
+    for (it = file.begin(); it != file.end(); it++)
+    {
+        name = dir + "/" + it->fileName();
+        QFileInfo target=*it;
+        if (target.isFile())
+        {
+            filePath.push_back(name);
+        }
+    }
+    return filePath;
+}
+
 void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
     vector<char*> infiles, inparas, outfiles;
@@ -630,13 +650,19 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    QStringList list=QString(infiles[0]).split("/");
+    vector<QString> file_path;
+    file_path=GetFileList(infiles[0]);
+
+    for(int k=0;k<file_path.size();k++)
+  {
+
+    QStringList list=QString(file_path[k]).split("/");
     QString flag=list.last(); QStringList list1=flag.split(".");
     QString flag2=list1.first();
     QStringList list2=flag2.split("_");
-    QString flag1=list2.first()+"_"+list2[1];
+    QString flag1=list2.first()+"\\_"+list2[1];
 
-    NeuronTree tree1=readSWC_file(QString(infiles[0]));
+    NeuronTree tree1=readSWC_file(QString(file_path[k]));
     QList<NeuronSWC> ori_tree1swc=tree1.listNeuron;
     vector<int> suspoint_before;
     QList<int> suspoint_after;
@@ -835,7 +861,7 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
                                               break;
                                            }
                                      }}
-    QString out_result =QString(outfiles.at(0))+"/"+"type"+QString(".csv");
+    QString out_result =QString(outfiles.at(0))+"/"+"type"+QString(".txt");
 
     QDir tempdir;
     QFile *tempfile=new QFile;
@@ -846,11 +872,11 @@ void detect_type_func(const V3DPluginArgList & input, V3DPluginArgList & output,
         if (!tempfile->open(QIODevice::WriteOnly|QIODevice::Text)) return;
         QTextStream myfile(tempfile);
         myfile <<"Name"<<"," <<"Type number"<<"," <<"Wrong type number"<<endl;
-        myfile << flag1.toStdString().c_str() <<"," << ct1<<"," <<markerlist.size()<<endl;
+        myfile << flag1.toStdString().c_str() <<" " << ct1<<" "<<markerlist.size()<<endl;
     }
     else export_file2record(flag1.toStdString(),ct1,markerlist.size(),out_result);
     tempfile->close();
-
+  }
 }
 bool export_file2record(string swc_name,int ct1,double num_wrong_type,QString fileSaveName)
 {
@@ -859,7 +885,7 @@ bool export_file2record(string swc_name,int ct1,double num_wrong_type,QString fi
         return false;
 
     QTextStream myfile(&file);
-    myfile << swc_name.c_str() <<","<< ct1<<","<< num_wrong_type <<endl;
+    myfile << swc_name.c_str() <<" "<< ct1<<" "<< num_wrong_type <<endl;
 
     file.close();
     return true;
@@ -870,7 +896,7 @@ bool export_file2record_tree(string swc_name,double dis,QString fileSaveName,QSt
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Append))//append!important!!
         return false;
     QTextStream myfile(&file);
-    myfile << swc_name.c_str() <<"," << dis <<","<<tree.toStdString().c_str()<<endl;
+    myfile << swc_name.c_str() <<" " << dis <<" "<<tree.toStdString().c_str()<<endl;
     file.close();
     return true;
 }
