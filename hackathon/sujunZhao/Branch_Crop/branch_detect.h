@@ -5,13 +5,11 @@
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include <stdio.h>
 #include <iostream>
-//#include "../../../../vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
-//#include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.h"
 #include <cmath>
 #include <algorithm>
+#include <set>
 #include "../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include <prune_short_branch.h>
-
 
 class OpenSWCDialog: public QDialog
 {
@@ -37,8 +35,10 @@ struct block{
     XYZ small;
     XYZ large;
 };
+double Angle(XYZ p1,XYZ p2);
 block offset_block(block input_block, XYZ offset);
 bool export_list22file(const QList<NeuronSWC>& lN, QString fileSaveName);
+double signal_between_markers(unsigned char * data1d, NeuronSWC n1, NeuronSWC n2, long sz0, long sz1, long sz2, long sz3, V3DPluginCallback2 & callback);
 NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 bool in_cuboid(NeuronSWC node, XYZ small, XYZ large);
