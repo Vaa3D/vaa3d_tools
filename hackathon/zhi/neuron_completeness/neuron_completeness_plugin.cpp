@@ -205,8 +205,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     "%2<br>"
                     "number of types        : %3<br>"
                     "types:                 : %4<br>"
-                    "Loop(s):               : %5<br>"
-                    "Trifurcation+:         : %6</font></pre>")
+                    "loop(s):               : %5<br>"
+                    "trifurcation+:         : %6</font></pre>")
 
                     .arg(multi_neurons.size())
                     .arg(info_tree.toStdString().c_str())
