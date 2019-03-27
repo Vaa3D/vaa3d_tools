@@ -9,6 +9,7 @@
 
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
+#include <math.h>
 
 #include "Splines.h"
 
@@ -1239,7 +1240,7 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
 
 
 //added by DZC 25Mar2019
-QList<float> evalute_smooth( NeuronTree nt)
+QList<float> evalute_smooth( NeuronTree nt, QList<CellAPO> & pin_points)
 {
 
     QList<NeuronSWC> List= nt.listNeuron;
@@ -1306,17 +1307,21 @@ QList<float> evalute_smooth( NeuronTree nt)
 
 
     //calculate the curvature difference of each point on a segment
-    QList<CellAPO> pin_points;
+    //two different definitions of curvature, one is on splines interpolation and the other on angles
+
+
     QList<float> curv_diff;
     for (V3DLONG i=0;i<seg_list.size();i++)
     {
-        if(seg_list[i]->size()<5) continue;
-        QList<float> curv_diff=curvature_calculate(seg_list[i],pin_points);
+ //       if(seg_list[i]->size()<5) continue;
+ //     QList<float> curv_diff=splines_curvature(seg_list[i],pin_points);
+      if(seg_list[i]->size()<3) continue;
+
+        QList<float> curvat=discrete_curvature(seg_list[i], pin_points);
+
+
 
     }
-
-    QString apofilename=QString("/home/penglab/PBserver/tmp/ding/test17302_001.apo");
-    writeAPO_file(apofilename,pin_points);
 
 
     return curv_diff;
@@ -1324,7 +1329,7 @@ QList<float> evalute_smooth( NeuronTree nt)
 }
 
 
-QList<float> curvature_calculate(Segment *seg, QList<CellAPO> & pin_points)
+QList<float> splines_curvature(Segment *seg, QList<CellAPO> & pin_points)
 {
 
     int step=4;
@@ -1352,12 +1357,13 @@ QList<float> curvature_calculate(Segment *seg, QList<CellAPO> & pin_points)
         //for(int j=0;j<5;j++)
 
                 int index=cnt*step;
-//                //Vec3f point;
+
+//                Vec3f point;
 //                points[j].x=seg->at(index)->x;
 //                points[j].y=seg->at(index)->y;
 //                points[j].z=seg->at(index)->z;
 
-//                //points[j].x=point;
+//                points[j].x=point;
 //                std::cout<<"j="<<j<<std::endl;
 //                std::cout<<"\n points[j].x="<<points[j].x<<std::endl;
 
@@ -1471,6 +1477,64 @@ QList<float> curvature_calculate(Segment *seg, QList<CellAPO> & pin_points)
 
 
 
+
+
+QList<float> discrete_curvature(Segment *seg, QList<CellAPO> & pin_points)
+{
+
+    QList<float> length;
+    for(int i=0; i<seg->size()-1; i++)
+    {
+        length.push_back(DISTP(seg->at(i+1), seg->at(i)));
+    }
+
+    QList<float> angles_list;
+    angles_list.push_back(0.0);
+    QList<float> curv_list;
+    curv_list.push_back(0.0);
+
+    for(int i=1; i<seg->size()-1;i++)
+    {
+        float cos_alpha= ((seg->at(i)->x-seg->at(i-1)->x)*(seg->at(i+1)->x-seg->at(i)->x)+(seg->at(i)->y-seg->at(i-1)->y)*(seg->at(i+1)->y-seg->at(i)->y)\
+                          +(seg->at(i)->z-seg->at(i-1)->z)*(seg->at(i+1)->z-seg->at(i)->z))/length[i]/length[i-1];
+        float alpha=acos(cos_alpha);
+        angles_list.push_back(alpha);
+
+        //curvature calculation
+        float curv=2*alpha/(length[i]+length[i-1]);
+
+        //std::cout<<"curv"<<i<<"="<<curv<<std::endl;
+        curv_list.push_back(curv);
+
+    }
+
+
+    for(int i=1; i<curv_list.size();i++)
+    {
+        float diff= ABS(curv_list[i-1]-curv_list[i])/curv_list[i];
+        if(curv_list[i]>1.2 )
+            {
+            std::cout<<"\npeak points found"<<std::endl;
+            std::cout<<"alpha"<<i<<"="<<angles_list[i]<<std::endl;
+            std::cout<<"curvature"<<i<<"="<<curv_list[i]<<std::endl;
+
+            CellAPO tmp;
+            tmp.x=seg->at(i)->x;
+            tmp.y=seg->at(i)->y;
+            tmp.z=seg->at(i)->z;
+            tmp.volsize=50;
+            tmp.color.r=255;
+            tmp.color.g=255;
+            tmp.color.b=0;
+            pin_points.push_back(tmp);
+        }
+
+    }
+
+
+
+
+}
 
 
 

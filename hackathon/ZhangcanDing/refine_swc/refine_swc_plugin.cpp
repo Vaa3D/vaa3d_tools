@@ -9,7 +9,7 @@
 #include "refine_swc_funcs.h"
 
 #include "neuron_format_converter.h"
-#include "../AllenNeuron_postprocessing/sort_swc_IVSCC.h"
+#include "../../zhi/AllenNeuron_postprocessing/sort_swc_IVSCC.h"
 
 
 using namespace std;
@@ -98,7 +98,14 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         }
 
         NeuronTree nt= readSWC_file(QString(infiles[0]));
-        QList<float> curvature=evalute_smooth(nt);
+
+        QList<CellAPO> pin_points;
+        QList<float> curvature=evalute_smooth(nt,pin_points);
+
+        QString apofilename=QString(outfiles[0]);
+        writeAPO_file(apofilename,pin_points);
+
+
 
 
 
