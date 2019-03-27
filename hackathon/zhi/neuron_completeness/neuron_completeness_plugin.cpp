@@ -184,16 +184,36 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
+
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        bool flag_loop=false,flag_tri=false;
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type = 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type = 20 && !flag_tri) flag_tri = true;
+            }
+
+        }
+
+
         infoBox.setInformativeText(QString("<pre><font size='4'>"
                     "number of neuron-trees : %1<br>"
                     "%2<br>"
                     "number of types        : %3<br>"
-                    "types:                 : %4</font></pre>")
+                    "types:                 : %4<br>"
+                    "Loop(s):               : %5<br>"
+                    "Trifurcation+:         : %6</font></pre>")
+
                     .arg(multi_neurons.size())
                     .arg(info_tree.toStdString().c_str())
                     .arg(map_type.size())
-                    .arg(info_type.toStdString().c_str()));
-
+                    .arg(info_type.toStdString().c_str())
+                    .arg(flag_loop?"YES":"NO")
+                    .arg(flag_tri?"YES":"NO"));
         infoBox.exec();
 
         QList<NeuronSWC> ori_tree1swc=nt.listNeuron;
@@ -253,12 +273,22 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             return;
         NeuronTree nt = openDlg->nt;
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
-		//vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        bool flag_loop=false,flag_tri=false;
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type = 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type = 20 && !flag_tri) flag_tri = true;
+            }
+
+        }
 		//std::cout << trees.size() << " trees in this SWC file." << endl;
-		vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
 		
 
-        v3d_msg(QString("%1").arg(nt_decomposed.seg.size()));
+        v3d_msg(QString("loop is %1, tri is %2").arg(flag_loop).arg(flag_tri));
 
 
     }else
