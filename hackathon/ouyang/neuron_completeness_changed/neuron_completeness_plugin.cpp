@@ -324,7 +324,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                         if (!tempfile1->open(QIODevice::WriteOnly|QIODevice::Text)) break;
                         QTextStream myfile(tempfile1);
                         //myfile <<"Name"<<"," <<"Gap distance"<<"," <<"Tree"<<endl;
-                        myfile << flag1.toStdString().c_str()<<","<< cur_dist<<","<< tree_name<<endl;
+                        myfile << flag1.toStdString().c_str()<<" "<< cur_dist<<" "<< tree_name<<endl;
                     }
                     else export_file2record_tree(flag1.toStdString(),cur_dist,out_result1,tree_name);
                    }
