@@ -38,6 +38,7 @@ int main(int argc, char* argv[])
 	//string funcName = "swc2mask";
 	/************************************/
 
+	ImgTester myImgTester;
 	if (!funcName.compare("swcID"))
 	{
 		string refSWCname = "H:\\IVSCC_mouse_inhibitory_442_swcROIcropped\\319215569.swc";
@@ -49,6 +50,71 @@ int main(int argc, char* argv[])
 		NeuronTree outputTree = NeuronStructUtil::swcIdentityCompare(subjTree, refTree, 50, 20);
 		QString outputSWCname = "H:\\testOutput\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
+	}
+	else if (!funcName.compare("stackSlice"))
+	{
+		myImgTester.inputSingleImgFullName = paras.at(0);
+		myImgTester.outputImgPath = paras.at(1);
+		myImgTester.sliceImgStack();
+	}
+	else if (!funcName.compare("ada"))
+	{
+		myImgTester.inputString = paras.at(0);
+		myImgTester.outputString = paras.at(1);
+		if (paras.at(2).compare("")) myImgTester.cutOff = stoi(paras.at(2));
+		myImgTester.ada();
+	}
+	else if (!funcName.compare("mask2SWC_dendrite"))
+	{
+		myImgTester.inputString = paras.at(0);
+		myImgTester.outputString = paras.at(1);
+		myImgTester.mask2SWC();
+
+		connectedComponent dendriteComponent = *myImgTester.signalBlobs.begin();
+		for (vector<connectedComponent>::iterator compIt = myImgTester.signalBlobs.begin() + 1; compIt != myImgTester.signalBlobs.end(); ++compIt)
+			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
+		vector<connectedComponent> den;
+		den.push_back(dendriteComponent);
+		NeuronTree dendriteTree = NeuronStructUtil::blobs2tree(den, true);
+		QString blobTreeFullNameQ = QString::fromStdString(paras.at(1));
+		writeSWC_file(blobTreeFullNameQ, dendriteTree);
+	}
+	else if (!funcName.compare("getCentroidTree"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
+		NeuronStructUtil myUtil;
+		ImgAnalyzer myAnalyzer;
+		vector<connectedComponent> blobsComps = myUtil.swc2signal3DBlobs(inputBlobTree);
+		NeuronTree finalCentroidTree;
+		for (vector<connectedComponent>::iterator it = blobsComps.begin(); it != blobsComps.end(); ++it)
+		{
+			if (int(it - blobsComps.begin()) % 500 == 0) cout << int(it - blobsComps.begin()) << " ";
+			NeuronTree centroidTree;
+			boost::container::flat_set<deque<float>> sectionalCentroids = myAnalyzer.getSectionalCentroids(*it);
+			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = nodeIt->at(0);
+				newNode.y = nodeIt->at(1);
+				newNode.z = nodeIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				centroidTree.listNeuron.push_back(newNode);
+			}
+			finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
+		}
+		QString finalCentroidTreeNameQ = QString::fromStdString(paras.at(1));
+		writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
+	}
+	else if (!funcName.compare("centroidTree2MST"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		NeuronTree centroidTree = readSWC_file(inputSWCFullNameQ);
+		NeuronStructExplorer myExplorer;
+		NeuronTree MSTtree = myExplorer.SWC2MSTtree(centroidTree);
+		QString saveNameQ = QString::fromStdString(paras.at(1));
+		writeSWC_file(saveNameQ, MSTtree);
 	}
 	else if (!funcName.compare("swc2mask"))
 	{
@@ -79,7 +145,6 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("imgDownSample"))
 	{
 		QString inputNameQ = QString::fromStdString(paras.at(0));
-		//QString inputNameQ = "haha";
 		ImgManager myManager(inputNameQ);
 		myManager.imgEntry("thisImg", ImgManager::singleCase);
 
@@ -101,7 +166,7 @@ int main(int argc, char* argv[])
 		saveDims[1] = imgDims[1] / downFacs[1];
 		saveDims[2] = imgDims[2] / downFacs[2];
 		saveDims[3] = 1;
-		QString saveFileNameQ = "H:\\fMOST_fragment_tracing\\testCase1\\test1Down.tif";
+		QString saveFileNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase3\\test1Down.tif";
 		string saveFileName = saveFileNameQ.toStdString();
 		const char* saveFileNameC = saveFileName.c_str();
 		ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
@@ -992,44 +1057,6 @@ int main(int argc, char* argv[])
 		NeuronStructUtil::swcCrop(targetTree, outputTree, bounds.at(0), bounds.at(1), bounds.at(2), bounds.at(3), bounds.at(4), bounds.at(5));
 
 		writeSWC_file(manualCropNameQ, outputTree);
-	}
-	else if (!funcName.compare("ada"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-		ImgManager myManager(folderNameQ);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesFullPaths.begin(); sliceIt != myManager.inputMultiCasesFullPaths.end(); ++sliceIt)
-		{
-			myManager.inputSingleCaseFullPath = sliceIt->second;
-			myManager.imgEntry(sliceIt->first, ImgManager::singleCase);
-
-			int imgDims[3];
-			imgDims[0] = myManager.imgDatabase.at(sliceIt->first).dims[0];
-			imgDims[1] = myManager.imgDatabase.at(sliceIt->first).dims[1];
-			imgDims[2] = 1;
-			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-			for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
-			ImgProcessor::simpleAdaThre(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, 5, 3);
-
-			V3DLONG saveDims[4];
-			saveDims[0] = imgDims[0];
-			saveDims[1] = imgDims[1];
-			saveDims[2] = 1;
-			saveDims[3] = 1;
-			QString saveFileNameQ = saveFolderNameQ + QString::fromStdString(sliceIt->first) + ".tif";
-			string saveFileName = saveFileNameQ.toStdString();
-			const char* saveFileNameC = saveFileName.c_str();
-			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-			delete[] outputImgPtr;
-			myManager.imgDatabase.clear();
-		}
 	}
 	else if (!funcName.compare("gamma"))
 	{
