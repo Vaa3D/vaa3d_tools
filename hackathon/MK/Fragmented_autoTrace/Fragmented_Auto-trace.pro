@@ -17,6 +17,7 @@ INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
 INCLUDEPATH += ../NeuronStructNavigator
+INCLUDEPATH += ../StatsLearner
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
 INCLUDEPATH += $$VAA3DPATH/neuron_editing
 win32: {
