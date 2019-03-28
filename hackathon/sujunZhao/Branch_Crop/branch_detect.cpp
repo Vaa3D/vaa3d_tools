@@ -362,8 +362,8 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             }
             else{d2 = 50;}
             //cout<<branch.at(i)<<"............."<<endl;
-            if((data1d_crop_1[V3DLONG(childz1*mysz[0]*mysz[1]+childy1*mysz[0]+childx1)]>=10)&(data1d_crop_2[V3DLONG(childz2*mysz[0]*mysz[1]+childy2*mysz[0]+childx2)]>=10)){
-            if((data1d_crop[V3DLONG(bz*mysz[0]*mysz[1]+by*mysz[0]+bx)]>=10)&(d1>10)&(d2>10)){
+            if((data1d_crop_1[V3DLONG(childz1*mysz[0]*mysz[1]+childy1*mysz[0]+childx1)]>10)&(data1d_crop_2[V3DLONG(childz2*mysz[0]*mysz[1]+childy2*mysz[0]+childx2)]>10)&(data1d_crop[V3DLONG(bz*mysz[0]*mysz[1]+by*mysz[0]+bx)]>10)){
+            if((d1>10)&(d2>10)){
                 //if((data1d_crop[V3DLONG(childz1*mysz[0]*mysz[1]+childy1*mysz[0]+childx1)]>signal1)&(data1d_crop[V3DLONG(childz2*mysz[0]*mysz[1]+childy2*mysz[0]+childx2)]>signal2)){
                 //if(signal1>15 & signal2>15){
                 if((ang1>5)&(ang2>5)&(ang3<175)){
