@@ -62,6 +62,8 @@ unix:!macx {
 }
 
 win32: {
+	INCLUDEPATH += $$(BOOST_PATH)
+
 	SOURCES += ../v3dSource/mg_utilities.cpp
 	SOURCES += ../v3dSource/stackutil.cpp
 }
