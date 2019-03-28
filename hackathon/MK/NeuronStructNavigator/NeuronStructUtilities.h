@@ -81,11 +81,6 @@ public:
 	/******************************************************************/
 
 
-	/***************** SWC Refining Methods *****************/
-	static NeuronTree treePrune(const NeuronTree& inputTree);
-	/********************************************************/
-
-
 	/***************** Neuron Struct Profiling Methods *****************/
 	// For an input swc, profile all nodes with their locations, and the locations of their children in the container.
 	static inline void node2loc_node2childLocMap(const QList<NeuronSWC>& inputNodeList, map<int, size_t>& nodeLocMap, map<int, vector<size_t>>& node2childLocMap);
