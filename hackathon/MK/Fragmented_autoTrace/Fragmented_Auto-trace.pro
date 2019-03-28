@@ -17,7 +17,8 @@ INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
 INCLUDEPATH += ../NeuronStructNavigator
-INCLUDEPATH += ../StatsLearner
+INCLUDEPATH += $$STATSLEARNERPATH
+INCLUDEPATH += ./
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
 INCLUDEPATH += $$VAA3DPATH/neuron_editing
 win32: {
@@ -31,6 +32,7 @@ win32: {
 
 FORMS += fragmentedTraceUI.ui
 
+HEADERS += ui_fragmentedTraceUI.h
 HEADERS	+= Fragmented_Auto-trace_plugin.h
 HEADERS += FragTraceControlPanel.h
 HEADERS += FragTraceManager.h
