@@ -3,6 +3,7 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 unix:!macx {
     QMAKE_CXXFLAGS += -std=c++11
+    QMAKE_CXXFLAGS += /MP
 }
 #CONFIG	+= x86_64
 

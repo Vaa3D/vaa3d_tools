@@ -10,6 +10,7 @@ TARGET = v3d_imgManagerMK
 TEMPLATE = lib
 CONFIG	+= qt plugin warn_off
 QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += /MP
 
 DEFINES += V3D_IMGMANAGERMK_LIBRARY
 
