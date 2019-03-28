@@ -36,16 +36,12 @@ INCLUDEPATH += ../NeuronStructNavigator
 INCLUDEPATH += ../MK/NeuronStructNavigator
 INCLUDEPATH += $$VAA3DPATH/v3d_main/neuron_editing
 INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
-INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtGui
-INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtCore
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
 INCLUDEPATH += $$VAA3DPATH/v3d_main/io
 INCLUDEPATH += ../v3dSource
 
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib
 #LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0/lib -lboost_system
-LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtGui
-LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtCore
 
 SOURCES += ./ImgManager.cpp
 SOURCES += ./imgAnalyzer/ImgAnalyzer.cpp
@@ -57,12 +53,21 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/v3d_main/io/v3d_nrrd.cpp
 
 unix:!macx {
+	INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtGui
+	INCLUDEPATH += /usr/local/Trolltech/Qt-4.7.3/include/QtCore
+
+	LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtGui
+	LIBS += -L/usr/local/Trolltech/Qt-4.7.3/include/QtCore
+
     SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
     SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp
 }
 
 win32: {
 	INCLUDEPATH += $$(BOOST_PATH)
+	INCLUDEPATH += $$(QTDIR)/include
+	INCLUDEPATH += $$(QTDIR)/include/QtCore
+	INCLUDEPATH += $$(QTDIR)/include/QtGui
 
 	SOURCES += ../v3dSource/mg_utilities.cpp
 	SOURCES += ../v3dSource/stackutil.cpp
