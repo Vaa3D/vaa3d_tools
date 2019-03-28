@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "swc2mask";
+	//string funcName = "downSampleTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -116,6 +116,18 @@ int main(int argc, char* argv[])
 		QString saveNameQ = QString::fromStdString(paras.at(1));
 		writeSWC_file(saveNameQ, MSTtree);
 	}
+	else if (!funcName.compare("downSampleTest"))
+	{
+		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
+		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase3\\downSampledMST.swc";
+		//NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
+		NeuronStructExplorer myExplorer;
+		profiledTree testTree(inputTree);
+		//profiledTree outputTree = myExplorer.treeDownSample(testTree);
+		profiledTree outputTree = NeuronStructExplorer::spikeRemove(testTree);
+		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree.tree);
+	}
 	else if (!funcName.compare("swc2mask"))
 	{
 		//QString inputSWCNameQ = QString::fromStdString(paras.at(2));
@@ -142,7 +154,7 @@ int main(int argc, char* argv[])
 		const char* saveFileNameC = saveFileName.c_str();
 		ImgManager::saveimage_wrapper(saveFileNameC, mask1Dptr.get(), saveDims, 1);
 	}
-	else if (!funcName.compare("imgDownSample"))
+	/*else if (!funcName.compare("imgDownSample"))
 	{
 		QString inputNameQ = QString::fromStdString(paras.at(0));
 		ImgManager myManager(inputNameQ);
@@ -173,7 +185,7 @@ int main(int argc, char* argv[])
 
 		delete[] outputImgPtr;
 		myManager.imgDatabase.clear();
-	}
+	}*/
 	else if (!funcName.compare("cleanUpZ"))
 	{
 		string inputSWCname = "H:\\IVSCC_mouse_inhibitory\\442_swcROIcropped_centroids2D_diffTree\\319215569.swc";

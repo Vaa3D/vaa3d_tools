@@ -165,7 +165,7 @@ public:
 
 
 	/***************** Neuron Struct Refining Method *****************/
-	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
+	static profiledTree spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 	/*****************************************************************/
 
 
