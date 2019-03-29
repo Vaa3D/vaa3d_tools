@@ -82,16 +82,36 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
+
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        bool flag_loop=false,flag_tri=false;
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
+            }
+
+        }
+
+
         infoBox.setInformativeText(QString("<pre><font size='4'>"
                     "number of neuron-trees : %1<br>"
                     "%2<br>"
                     "number of types        : %3<br>"
-                    "types:                 : %4</font></pre>")
+                    "types:                 : %4<br>"
+                    "loop(s):               : %5<br>"
+                    "trifurcation+:         : %6</font></pre>")
+
                     .arg(multi_neurons.size())
                     .arg(info_tree.toStdString().c_str())
                     .arg(map_type.size())
-                    .arg(info_type.toStdString().c_str()));
-
+                    .arg(info_type.toStdString().c_str())
+                    .arg(flag_loop?"YES":"NO")
+                    .arg(flag_tri?"YES":"NO"));
         infoBox.exec();
         if(markerlist.size() != 0)
         {
@@ -131,6 +151,21 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             NeuronTree nt = readSWC_file(SWCList[i]);
             calComplete(nt,scores);
+            V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+            vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+            QString flag_loop="NO",flag_tri="NO";
+            for(int i=0; i<trees.size(); i++)
+            {
+                vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+                for(int j=0; j<errorPoints.size(); j++)
+                {
+                    if(errorPoints[j].type == 15 && flag_loop=="NO") flag_loop = "YES";
+                    if(errorPoints[j].type == 20 && flag_tri=="NO") flag_tri = "YES";
+                }
+
+            }
+            scores[i].loop = flag_loop;
+            scores[i].trifurcation = flag_tri;
         }
 
         QString outputName =  m_InputfolderName + "/eval.csv";
@@ -138,11 +173,18 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                 outputName,
                 QObject::tr("Supported file (*.csv)"));
 
+        ofstream myfile;
+        myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
+        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"loop"<<","<<"trifurcation+"<<endl;
+        myfile.close();
+
+
         for(int i=0; i<SWCList.size();i++)
         {
             ofstream myfile;
             myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
-            myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs<<endl;
+            myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs
+                   <<","<<scores[i].loop.toStdString().c_str() << "," << scores[i].trifurcation.toStdString().c_str()<<endl;
             myfile.close();
 
         }
@@ -193,8 +235,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
             for(int j=0; j<errorPoints.size(); j++)
             {
-                if(errorPoints[j].type = 15 && !flag_loop) flag_loop = true;
-                if(errorPoints[j].type = 20 && !flag_tri) flag_tri = true;
+                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
             }
 
         }
@@ -280,8 +322,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
             for(int j=0; j<errorPoints.size(); j++)
             {
-                if(errorPoints[j].type = 15 && !flag_loop) flag_loop = true;
-                if(errorPoints[j].type = 20 && !flag_tri) flag_tri = true;
+                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
             }
 
         }
@@ -335,6 +377,21 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
 
         }
+
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        QString flag_loop="NO",flag_tri="NO";
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type == 15 && flag_loop=="NO") flag_loop = "YES";
+                if(errorPoints[j].type == 20 && flag_tri=="NO") flag_tri = "YES";
+            }
+
+        }
+
         v3d_msg(QString("\n\nnumber of neuron-trees : %1\n"
                     "%2\n"
                     "number of types        : %3\n"
@@ -350,7 +407,8 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             QString imagename = QFileInfo(QString::fromStdString(infiles[0])).baseName();
             ofstream myfile;
             myfile.open (outimg_file,ios::out | ios::app );
-            myfile << imagename.toStdString().c_str()<<","<<multi_neurons.size() << "," << map_type.size()<<","<<markerlist.size()<<endl;
+            myfile << imagename.toStdString().c_str()<<","<<multi_neurons.size() << "," << map_type.size()<<","<<markerlist.size()
+                   <<","<<flag_loop.toStdString().c_str()<<","<<flag_tri.toStdString().c_str()<<endl;
             myfile.close();
         }
         return true;
