@@ -217,7 +217,7 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             V3DLONG childx1 = nt_sorted1.listNeuron.at(c1_point).x;
             V3DLONG childy1 = nt_sorted1.listNeuron.at(c1_point).y;
             V3DLONG childz1 = nt_sorted1.listNeuron.at(c1_point).z;
-
+            XYZ diff1 = XYZ((nodex-childx1)/2,(nodey-childy1)/2,(nodez-childz1)/2);
 
 
             //child2
@@ -248,6 +248,13 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             V3DLONG childx2 = nt_sorted2.listNeuron.at(c2_point).x;
             V3DLONG childy2 = nt_sorted2.listNeuron.at(c2_point).y;
             V3DLONG childz2 = nt_sorted2.listNeuron.at(c2_point).z;
+            XYZ diff2 = XYZ((nodex-childx2)/2,(nodey-childy2)/2,(nodez-childz2)/2);
+
+            //intensity
+            double avg1;
+            double avg2;
+//            avg1= average_intensity(data1d_crop_1,nt_sorted1, c1_point, diff1, mysz[0],mysz[1]);
+//            avg2= average_intensity(data1d_crop_2,nt_sorted2, c2_point, diff2, mysz[0],mysz[1]);
 
             //angle: whether overlap or not
             int grandp;
@@ -345,6 +352,7 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             V3DLONG ct2z = nt.listNeuron.at(alln.indexOf(parent2)).z;
 
             double ang3 = Angle(BC1,BC2);
+
 
             double d1;
             double d2;
@@ -492,6 +500,28 @@ double Angle(XYZ p1,XYZ p2){
     }
 
 }
+
+//double average_intensity(unsigned char *data1d_crop,NeuronTree nt, int idx, XYZ diff, long mysz0,long mysz1){
+//    double m = max(abs(diff.x),abs(diff.y),abs(diff.z));
+//    XYZ center = XYZ(nt.listNeuron.at(idx).x+diff.x,nt.listNeuron.at(idx).y+diff.y,nt.listNeuron.at(idx).z+diff.z);
+//    double intensity=0;
+//    int count=0;
+//    for(int i=0;i<nt.listNeuron.size();i++){
+//        if((abs(nt.listNeuron.at(i).x-center.x)<m.x)&(abs(nt.listNeuron.at(i).y-center.y)<m.y)&(abs(nt.listNeuron.at(i).z-center.z)<m.z)){
+//            intensity = intensity+data1d_crop[V3DLONG(nt.listNeuron.at(i).z*mysz0*mysz1+nt.listNeuron.at(i).y*mysz0+nt.listNeuron.at(i).z)];
+//            count++;
+//        }
+//    }
+//    double avg_intensity;
+//    if(count==0){
+//        avg_intensity =0;
+//    }
+//    else{
+//        avg_intensity = intensity/count;
+//    }
+//    return avg_intensity;
+//}
+
 
 
 
@@ -794,46 +824,6 @@ block offset_block(block input_block, XYZ offset)
     return input_block;
 }
 
-// find other branch points in the same cropped block
-vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a){
-    vector< vector<int> > neighbours;
-    int n=a.size();
-    for(int i=0; i<n; i++){
-        vector<int> cp;
-        NeuronSWC node1 = nt.listNeuron.at(a.at(i));
-        int min_x = 50;
-        int min_y = 50;
-        int min_z = 10;
-        for(int j=0; j<n; j++){
-            NeuronSWC node2 = nt.listNeuron.at(a.at(j));
-            if(i != j){
-                if(abs(node1.x-node2.x) < min_x){
-                    min_x = ceil(abs(node1.x-node2.x));
-                }
-                if(abs(node1.y-node2.y) < min_y){
-                    min_y = ceil(abs(node1.y-node2.y));
-                }
-                if(abs(node1.z-node2.z) < min_z){
-                    min_z = ceil(abs(node1.z-node2.z));
-                }
-           }
-        }
-        if(min_x<25){
-            min_x = 25;
-        }
-        if(min_y<25){
-            min_y = 25;
-        }
-        if(min_z<5){
-            min_z = 5;
-        }
-        cp.push_back(min_x);
-        cp.push_back(min_y);
-        cp.push_back(min_z);
-        neighbours.push_back(cp);
-    }
-    return neighbours;
-}
 
 
 XYZ offset_XYZ(XYZ input, XYZ offset){
