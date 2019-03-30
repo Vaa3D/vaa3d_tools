@@ -1,11 +1,13 @@
 #ifndef _FRAGTRACEMANAGER_H_
 #define _FRAGTRACEMANAGER_H_
 
+//#ifndef Q_MOC_RUN
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
+//#endif
 
 enum workMode { wholeBlock_axon, dendriticTree };
 

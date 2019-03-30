@@ -80,12 +80,6 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	dims[2] = 1;
 	dims[3] = 1;
 
-	V3DLONG testDims[4];
-	testDims[0] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[0];
-	testDims[1] = this->fragTraceImgManager.imgDatabase.begin()->second.dims[1];
-	testDims[2] = this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size();
-	testDims[3] = 1;
-
 	int imgDims[3];
 	imgDims[0] = dims[0];
 	imgDims[1] = dims[1];
@@ -184,7 +178,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 	NeuronTree shortCleanedUpTree;
 	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 
-	NeuronTree finalOutputTree = shortCleanedUpTree;
+	NeuronTree denScaleBackTree, finalOutputTree;
+	if (this->mode == dendriticTree)
+	{
+		denScaleBackTree = NeuronStructUtil::swcScale(shortCleanedUpTree, 2, 2, 1);
+		finalOutputTree = denScaleBackTree;
+	}
+	else finalOutputTree = shortCleanedUpTree;
+
 	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)
 		nodeIt->type = 16;
 
