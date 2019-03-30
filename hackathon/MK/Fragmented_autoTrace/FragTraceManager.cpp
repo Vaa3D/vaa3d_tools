@@ -5,8 +5,10 @@
 #include "FragTraceManager.h"
 #include "FeatureExtractor.h"
 
-FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, bool slices)
+FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
+	this->mode = mode;
+
 	int dims[3];
 	dims[0] = inputImg4DSimplePtr->getXDim();
 	dims[1] = inputImg4DSimplePtr->getYDim();
@@ -15,6 +17,23 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, boo
 	int totalbyte = inputImg4DSimplePtr->getTotalBytes();
 	unsigned char* img1Dptr = new unsigned char[dims[0] * dims[1] * dims[2]];
 	memcpy(img1Dptr, inputImg4DSimplePtr->getRawData(), totalbyte);
+		
+	if (mode == dendriticTree)
+	{
+		unsigned char* dendrite1Dptr = new unsigned char[(dims[0] / 2) * (dims[1] / 2) * dims[2]];
+		int downFacs[3];
+		downFacs[0] = 2;
+		downFacs[1] = 2;
+		downFacs[2] = 1;
+		ImgProcessor::imgDownSampleMax(img1Dptr, dendrite1Dptr, dims, downFacs);
+		delete[] img1Dptr;
+		img1Dptr = dendrite1Dptr;
+		dendrite1Dptr = nullptr;
+
+		dims[0] = dims[0] / 2;
+		dims[1] = dims[1] / 2;
+	}
+
 	
 	this->imgSlices.clear();
 	ImgProcessor::imgStackSlicer(img1Dptr, this->imgSlices, dims);
@@ -85,8 +104,16 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		}
 		else 
 		{
-			this->histThreImg3D("ada_cutoff", dims, this->histThreImgName);
-			this->mask2swc(this->histThreImgName, "blobTree");
+			if (this->mode == dendriticTree)
+			{
+
+				this->mask2swc("ada_cutoff", "blobTree");
+			}
+			else
+			{
+				this->histThreImg3D("ada_cutoff", dims, this->histThreImgName);
+				this->mask2swc(this->histThreImgName, "blobTree");
+			}
 		}
 	}
 	else
@@ -365,8 +392,8 @@ void FragTraceManager::histThreImg3D(const string inputRegImgName, V3DLONG dims[
 void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName)
 {
 	int sliceDims[3];
-	sliceDims[0] = this->fragTraceImgManager.imgDatabase.at(*(this->imgThreSeq.end() - 1)).dims[0];
-	sliceDims[1] = this->fragTraceImgManager.imgDatabase.at(*(this->imgThreSeq.end() - 1)).dims[1];
+	sliceDims[0] = this->fragTraceImgManager.imgDatabase.at(inputImgName).dims[0];
+	sliceDims[1] = this->fragTraceImgManager.imgDatabase.at(inputImgName).dims[1];
 	sliceDims[2] = 1;
 
 	vector<unsigned char**> slice2DVector;

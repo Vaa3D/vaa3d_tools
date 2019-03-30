@@ -120,12 +120,10 @@ int main(int argc, char* argv[])
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
-		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase3\\downSampledMST.swc";
-		//NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
 		NeuronStructExplorer myExplorer;
 		profiledTree testTree(inputTree);
-		//profiledTree outputTree = myExplorer.treeDownSample(testTree);
-		profiledTree outputTree = NeuronStructExplorer::spikeRemove(testTree);
+		profiledTree outputTree = myExplorer.treeDownSample(testTree);
+		//profiledTree outputTree = NeuronStructExplorer::spikeRemove(testTree);
 		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree.tree);
 	}
 	else if (!funcName.compare("swc2mask"))

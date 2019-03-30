@@ -7,17 +7,21 @@
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 
+enum workMode { wholeBlock_axon, dendriticTree };
+
 class FragTraceManager: public QObject
 {
 	Q_OBJECT
 
 public:
 	FragTraceManager() {};
-	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, bool slices = true);
+	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
 
 	QString finalSaveRootQ;
 	vector<string> imgEnhanceSeq;
 	vector<string> imgThreSeq;
+
+	workMode mode;
 
 	bool ada;
 	string adaImgName;
@@ -36,7 +40,6 @@ public:
 	bool objFilter;
 	bool voxelSize, actualSize;
 	int voxelCount;
-	float volume;
 
 	bool MST;
 	string MSTtreeName;
