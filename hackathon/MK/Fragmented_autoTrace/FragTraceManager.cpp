@@ -33,7 +33,6 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 		dims[0] = dims[0] / 2;
 		dims[1] = dims[1] / 2;
 	}
-
 	
 	this->imgSlices.clear();
 	ImgProcessor::imgStackSlicer(img1Dptr, this->imgSlices, dims);
@@ -100,7 +99,6 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		{
 			if (this->mode == dendriticTree)
 			{
-
 				this->mask2swc("ada_cutoff", "blobTree");
 			}
 			else
@@ -124,18 +122,72 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			this->mask2swc(this->histThreImgName, "blobTree");
 		}
 	}
-	
-	cout << endl << "Finishing up processing objects.." << endl << " number of objects processed: ";
-	vector<NeuronTree> objTrees;
-	NeuronTree objSkeletonTree;
-	NeuronTree finalCentroidTree;
-	for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
-	{
-		if (it->size < voxelCount) continue;
 
-		if (int(it - this->signalBlobs.begin()) % 500 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
+	NeuronTree denScaleBackTree, finalOutputTree;
+	if (this->mode == wholeBlock_axon)
+	{
+		cout << endl << "Finishing up processing objects.." << endl << " number of objects processed: ";
+		vector<NeuronTree> objTrees;
+		NeuronTree objSkeletonTree;
+		NeuronTree finalCentroidTree;
+		for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
+		{
+			if (it->size < voxelCount) continue;
+
+			if (int(it - this->signalBlobs.begin()) % 500 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
+			NeuronTree centroidTree;
+			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
+			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = nodeIt->at(0);
+				newNode.y = nodeIt->at(1);
+				newNode.z = nodeIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				centroidTree.listNeuron.push_back(newNode);
+			}
+			finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
+
+			NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
+			profiledTree profiledMSTtree(MSTtree);
+			profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
+			objTrees.push_back(profiledMSTtree.tree);
+		}
+		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
+		writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
+		cout << endl;
+
+		objSkeletonTree = NeuronStructUtil::swcCombine(objTrees);
+		profiledTree objSkeletonProfiledTree(objSkeletonTree);
+		this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
+		QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
+		writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
+
+		NeuronTree MSTbranchBreakTree;
+		MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
+		profiledTree objBranchBreakTree(MSTbranchBreakTree);
+		this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
+		QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
+		//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
+
+		profiledTree downSampledProfiledTree = this->fragTraceTreeManager.treeDownSample(objBranchBreakTree, 2);
+		QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
+		writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
+
+		profiledTree newIteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(downSampledProfiledTree, 5);
+
+		if (this->minNodeNum > 0) finalOutputTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
+		else finalOutputTree = newIteredConnectedTree.tree;
+	} 
+	else if (this->mode == dendriticTree)
+	{
+		connectedComponent dendriteComponent = *this->signalBlobs.begin();
+		for (vector<connectedComponent>::iterator compIt = this->signalBlobs.begin() + 1; compIt != this->signalBlobs.end(); ++compIt)
+			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
+
 		NeuronTree centroidTree;
-		boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
+		boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(dendriteComponent);
 		for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
 		{
 			NeuronSWC newNode;
@@ -146,45 +198,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			newNode.parent = -1;
 			centroidTree.listNeuron.push_back(newNode);
 		}
-		finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
-
 		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 		profiledTree profiledMSTtree(MSTtree);
-		profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
-		objTrees.push_back(profiledMSTtree.tree);
-	}
-	QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
-	writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
-	cout << endl;
-	objSkeletonTree = NeuronStructUtil::swcCombine(objTrees);
-	profiledTree objSkeletonProfiledTree(objSkeletonTree);
-	this->fragTraceTreeManager.treeDataBase.insert({ "objSkeleton", objSkeletonProfiledTree });
-	QString skeletonTreeNameQ = this->finalSaveRootQ + "/skeletonTree.swc";
-	writeSWC_file(skeletonTreeNameQ, objSkeletonTree);
+		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 3);
+		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
 
-	NeuronTree MSTbranchBreakTree;
-	MSTbranchBreakTree = NeuronStructExplorer::MSTbranchBreak(objSkeletonProfiledTree);
-	profiledTree objBranchBreakTree(MSTbranchBreakTree);
-	this->fragTraceTreeManager.treeDataBase.insert({ "objBranchBreakTree", objBranchBreakTree });
-	QString branchBreakTreeName = this->finalSaveRootQ + "/branchBreakTree.swc";
-	//writeSWC_file(branchBreakTreeName, objBranchBreakTree.tree);
-
-	profiledTree downSampledProfiledTree = this->fragTraceTreeManager.treeDownSample(objBranchBreakTree, 2);
-	QString downSampledTreeName = this->finalSaveRootQ + "/downSampledTreeTest.swc";
-	writeSWC_file(downSampledTreeName, downSampledProfiledTree.tree);
-
-	profiledTree newIteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(downSampledProfiledTree, 5);
-
-	NeuronTree shortCleanedUpTree;
-	if (this->minNodeNum > 0) shortCleanedUpTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
-
-	NeuronTree denScaleBackTree, finalOutputTree;
-	if (this->mode == dendriticTree)
-	{
-		denScaleBackTree = NeuronStructUtil::swcScale(shortCleanedUpTree, 2, 2, 1);
+		denScaleBackTree = NeuronStructUtil::swcScale(MSTdownSampledNoSpikeTree.tree, 2, 2, 1);
 		finalOutputTree = denScaleBackTree;
 	}
-	else finalOutputTree = shortCleanedUpTree;
 
 	for (QList<NeuronSWC>::iterator nodeIt = finalOutputTree.listNeuron.begin(); nodeIt != finalOutputTree.listNeuron.end(); ++nodeIt)
 		nodeIt->type = 16;
