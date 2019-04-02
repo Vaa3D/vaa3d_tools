@@ -115,6 +115,8 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 //        cout<<it->first<<":"<<it->second<<endl;}
 
         //cout<<"size="<<branch.size()<<endl;
+    double local_angle =0;
+    int count=0;
     for(int i=0; i<branch.size(); i++){
             // p_index: line where branch point is in
             int p_index;
@@ -218,7 +220,8 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             V3DLONG childy1 = nt_sorted1.listNeuron.at(c1_point).y;
             V3DLONG childz1 = nt_sorted1.listNeuron.at(c1_point).z;
             XYZ diff1 = XYZ((nodex-childx1)/2,(nodey-childy1)/2,(nodez-childz1)/2);
-
+            XYZ center1 = XYZ(childx1,childy1,childz1);
+            int nt_sorted1_size = nt_sorted1.listNeuron.size();
 
             //child2
             V3DLONG cx2 = nt.listNeuron.at(alln.indexOf(cchild2)).x;
@@ -249,12 +252,15 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             V3DLONG childy2 = nt_sorted2.listNeuron.at(c2_point).y;
             V3DLONG childz2 = nt_sorted2.listNeuron.at(c2_point).z;
             XYZ diff2 = XYZ((nodex-childx2)/2,(nodey-childy2)/2,(nodez-childz2)/2);
+            XYZ center2 = XYZ(childx2,childy2,childz2);
+            int nt_sorted2_size=nt_sorted2.listNeuron.size();
 
             //intensity
             double avg1;
             double avg2;
-//            avg1= average_intensity(data1d_crop_1,nt_sorted1, c1_point, diff1, mysz[0],mysz[1]);
-//            avg2= average_intensity(data1d_crop_2,nt_sorted2, c2_point, diff2, mysz[0],mysz[1]);
+            avg1= average_intensity(data1d_crop_1,nt_sorted1,center1, nt_sorted1_size, diff1, mysz[0],mysz[1]);
+            avg2= average_intensity(data1d_crop_2,nt_sorted2,center2, nt_sorted2_size, diff2, mysz[0],mysz[1]);
+            cout<<avg1<<"~~~~~~~~~"<<avg2<<endl;
 
             //angle: whether overlap or not
             int grandp;
@@ -353,7 +359,6 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
 
             double ang3 = Angle(BC1,BC2);
 
-
             double d1;
             double d2;
             //find grandchildren
@@ -379,6 +384,12 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                         NeuronSWC cur = nt.listNeuron.at(p_index);
                         apo_branch.push_back(cur);
                         //cout<<ang1<<"++++++++++++"<<ang2<<"+++++++++"<<ang2<<endl;
+                        local_angle +=ang3;
+                        count +=1;
+                        ofstream write;
+                        write.open("/home/penglab/Desktop/bd.txt",ios::app);
+                        write<<cur.n<<" "<<ang3<<endl;
+                        write.close();
                     }
                     else{
                         NeuronSWC cur = nt.listNeuron.at(p_index);
@@ -407,6 +418,15 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
     //}
             }
     }
+    double average_local_angle = local_angle/count;
+
+    cout<<average_local_angle<<endl;
+//    ofstream write;
+//    write.open("/home/penglab/Desktop/avg_angle.txt",ios::app);
+//    write<<average_local_angle<<endl;
+//    write.close();
+
+
     cout<<branch_list.size()<<"............."<<apo_list.size()<<endl;
     //create .apo
     unsigned int Vsize=50;
@@ -501,26 +521,25 @@ double Angle(XYZ p1,XYZ p2){
 
 }
 
-//double average_intensity(unsigned char *data1d_crop,NeuronTree nt, int idx, XYZ diff, long mysz0,long mysz1){
-//    double m = max(abs(diff.x),abs(diff.y),abs(diff.z));
-//    XYZ center = XYZ(nt.listNeuron.at(idx).x+diff.x,nt.listNeuron.at(idx).y+diff.y,nt.listNeuron.at(idx).z+diff.z);
-//    double intensity=0;
-//    int count=0;
-//    for(int i=0;i<nt.listNeuron.size();i++){
-//        if((abs(nt.listNeuron.at(i).x-center.x)<m.x)&(abs(nt.listNeuron.at(i).y-center.y)<m.y)&(abs(nt.listNeuron.at(i).z-center.z)<m.z)){
-//            intensity = intensity+data1d_crop[V3DLONG(nt.listNeuron.at(i).z*mysz0*mysz1+nt.listNeuron.at(i).y*mysz0+nt.listNeuron.at(i).z)];
-//            count++;
-//        }
-//    }
-//    double avg_intensity;
-//    if(count==0){
-//        avg_intensity =0;
-//    }
-//    else{
-//        avg_intensity = intensity/count;
-//    }
-//    return avg_intensity;
-//}
+double average_intensity(unsigned char *data1d_crop,NeuronTree nt, XYZ center, int size, XYZ diff, long mysz0,long mysz1){
+    XYZ m = XYZ(fabs(diff.x),fabs(diff.y),fabs(diff.z));
+    double intensity=0;
+    int count=0;
+    for(int i=0;i<size;i++){
+        if((fabs(nt.listNeuron.at(i).x-center.x)<m.x)&(fabs(nt.listNeuron.at(i).y-center.y)<m.y)&(fabs(nt.listNeuron.at(i).z-center.z)<m.z)){
+            intensity = intensity+data1d_crop[V3DLONG(nt.listNeuron.at(i).z*mysz0*mysz1+nt.listNeuron.at(i).y*mysz0+nt.listNeuron.at(i).z)];
+            count++;
+        }
+    }
+    double avg_intensity;
+    if(count==0){
+        avg_intensity =0;
+    }
+    else{
+        avg_intensity = intensity/count;
+    }
+    return avg_intensity;
+}
 
 
 

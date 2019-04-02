@@ -198,12 +198,19 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			newNode.parent = -1;
 			centroidTree.listNeuron.push_back(newNode);
 		}
+
 		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 		profiledTree profiledMSTtree(MSTtree);
-		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 3);
+		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 4);
 		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
+		profiledTree MSTDnNoSpikeBranchBreak = NeuronStructExplorer::MSTbranchBreak(MSTdownSampledNoSpikeTree);
+		profiledTree iteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(MSTDnNoSpikeBranchBreak, 5);
 
-		denScaleBackTree = NeuronStructUtil::swcScale(MSTdownSampledNoSpikeTree.tree, 2, 2, 1);
+		NeuronTree floatingExcludedTree;
+		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructExplorer::singleDotRemove(iteredConnectedTree, this->minNodeNum);
+		else floatingExcludedTree = iteredConnectedTree.tree;
+
+		denScaleBackTree = NeuronStructUtil::swcScale(floatingExcludedTree, 2, 2, 1);
 		finalOutputTree = denScaleBackTree;
 	}
 

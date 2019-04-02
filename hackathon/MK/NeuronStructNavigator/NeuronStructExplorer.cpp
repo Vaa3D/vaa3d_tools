@@ -2215,6 +2215,11 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 	return outputProfiledTree;
 }
+
+profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const in yRange, const int zRange)
+{
+
+}
 /* ===================================== END of [Auto-tracing Related Neuron Struct Functions] ===================================== */
 
 

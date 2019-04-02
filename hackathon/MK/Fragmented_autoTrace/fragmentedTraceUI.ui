@@ -217,7 +217,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Trace the current image block</string>
+            <string>Trace axonal fragments in the current image block</string>
            </property>
            <property name="checked">
             <bool>true</bool>
