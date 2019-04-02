@@ -17,6 +17,7 @@ struct NEURON_METRICS {
     int numTrees;
     int numTypes;
     int numSegs;
+    int numRoots;
     QString loop;
     QString trifurcation;
 };

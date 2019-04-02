@@ -134,6 +134,7 @@ void calComplete(NeuronTree nt, QList<NEURON_METRICS> & scores)
     tmp.numTrees = multi_neurons.size();
     tmp.numTypes = map_type.size();
     tmp.numSegs = markerlist.size();
+    tmp.numRoots = map_type.count(1)?map_type[1]:0;
     scores.push_back(tmp);
     return;
 }
@@ -155,7 +156,11 @@ void exportComplete(NeuronTree nt,QList<NeuronSWC>& sorted_neuron, LandmarkList&
             first = i;
 
         }
-        if(!map_type.count(sorted_neuron.at(i).type))
+        if(sorted_neuron.at(i).type==1)
+        {
+            map_type[sorted_neuron.at(i).type]++;
+        }
+        else if(!map_type.count(sorted_neuron.at(i).type))
         {
             map_type[sorted_neuron.at(i).type] = 1;
 //            if(sorted_neuron.at(i).type!=1 && sorted_neuron.at(i).type!=2 && sorted_neuron.at(i).type!=3)
