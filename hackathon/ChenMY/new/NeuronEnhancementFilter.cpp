@@ -422,9 +422,12 @@ int NeuronEnhancementFilter::Calculatelness(short *apfVess, short *apfFiltedImg,
 
 
 
-	if (apfDz) {delete []apfDz;	apfDz = NULL;}
-	if (apfDx) {delete []apfDx; apfDx = NULL;}
-	if (apfDy) {delete []apfDy;	apfDy = NULL;}
+	//if (apfDz) {delete []apfDz;	apfDz = NULL;}
+	//if (apfDx) {delete []apfDx; apfDx = NULL;}
+	//if (apfDy) {delete []apfDy;	apfDy = NULL;}
+	delete apfDz;
+	delete apfDx;
+	delete apfDy;
 
 	return 1;
 }
