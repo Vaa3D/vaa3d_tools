@@ -37,6 +37,7 @@ struct block{
 };
 double Angle(XYZ p1,XYZ p2);
 block offset_block(block input_block, XYZ offset);
+double average_intensity(unsigned char *data1d_crop,NeuronTree nt,XYZ center, int size, XYZ diff, long mysz0,long mysz1);
 bool export_list22file(const QList<NeuronSWC>& lN, QString fileSaveName);
 double signal_between_markers(unsigned char * data1d, NeuronSWC n1, NeuronSWC n2, long sz0, long sz1, long sz2, long sz3, V3DPluginCallback2 & callback);
 NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
