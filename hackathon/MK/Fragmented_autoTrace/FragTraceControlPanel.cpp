@@ -93,22 +93,26 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 
 		// ------- Mask Generation Group Box -------
-		if (callOldSettings.value("histThre") == true)
+		if (callOldSettings.value("dendrite") == true) uiPtr->groupBox_6->setChecked(false);
+		else
 		{
-			uiPtr->groupBox_6->setChecked(true);
-			this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
+			if (callOldSettings.value("histThre") == true)
+			{
+				uiPtr->groupBox_6->setChecked(true);
+				this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
 
-			if (callOldSettings.value("histThre_saveCheck") == true)
-			{
-				uiPtr->checkBox_5->setChecked(true);
-				uiPtr->lineEdit_3->setEnabled(true);
-				uiPtr->pushButton_6->setEnabled(true);
-			}
-			else
-			{
-				uiPtr->checkBox_5->setChecked(false);
-				uiPtr->lineEdit_3->setEnabled(false);
-				uiPtr->pushButton_6->setEnabled(false);
+				if (callOldSettings.value("histThre_saveCheck") == true)
+				{
+					uiPtr->checkBox_5->setChecked(true);
+					uiPtr->lineEdit_3->setEnabled(true);
+					uiPtr->pushButton_6->setEnabled(true);
+				}
+				else
+				{
+					uiPtr->checkBox_5->setChecked(false);
+					uiPtr->lineEdit_3->setEnabled(false);
+					uiPtr->pushButton_6->setEnabled(false);
+				}
 			}
 		}
 		uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
