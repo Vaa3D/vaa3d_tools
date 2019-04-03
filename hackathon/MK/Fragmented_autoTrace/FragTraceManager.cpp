@@ -1,4 +1,6 @@
 #include <deque>
+#include <omp.h>
+#include <cstdlib>
 
 #include <boost/container/flat_set.hpp>
 
@@ -7,6 +9,11 @@
 
 FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices)
 {
+	char* numProcsC;
+	numProcsC = getenv("NUMBER_OF_PROCESSORS");
+	string numProcsString(numProcsC);
+	this->numProcs = stoi(numProcsString);
+
 	this->mode = mode;
 
 	int dims[3];
@@ -130,30 +137,34 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		vector<NeuronTree> objTrees;
 		NeuronTree objSkeletonTree;
 		NeuronTree finalCentroidTree;
-		for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
+#pragma omp parallel num_threads(this->numProcs)
 		{
-			if (it->size < voxelCount) continue;
-
-			if (int(it - this->signalBlobs.begin()) % 500 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
-			NeuronTree centroidTree;
-			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
-			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
-				NeuronSWC newNode;
-				newNode.x = nodeIt->at(0);
-				newNode.y = nodeIt->at(1);
-				newNode.z = nodeIt->at(2);
-				newNode.type = 2;
-				newNode.parent = -1;
-				centroidTree.listNeuron.push_back(newNode);
-			}
-			finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
+				if (it->size < voxelCount) continue;
 
-			NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
-			profiledTree profiledMSTtree(MSTtree);
-			profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
-			objTrees.push_back(profiledMSTtree.tree);
+				if (int(it - this->signalBlobs.begin()) % 500 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
+				NeuronTree centroidTree;
+				boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
+				for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+				{
+					NeuronSWC newNode;
+					newNode.x = nodeIt->at(0);
+					newNode.y = nodeIt->at(1);
+					newNode.z = nodeIt->at(2);
+					newNode.type = 2;
+					newNode.parent = -1;
+					centroidTree.listNeuron.push_back(newNode);
+				}
+				finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
+
+				NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
+				profiledTree profiledMSTtree(MSTtree);
+				profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
+				objTrees.push_back(profiledMSTtree.tree);
+			}
 		}
+
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
 		writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
 		cout << endl;

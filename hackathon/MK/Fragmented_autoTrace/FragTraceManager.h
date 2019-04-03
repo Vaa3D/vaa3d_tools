@@ -59,6 +59,8 @@ signals:
 	void emitTracedTree(NeuronTree tracedTree);
 
 private:
+	int numProcs;
+
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;

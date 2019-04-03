@@ -51,6 +51,15 @@ int main(int argc, char* argv[])
 		QString outputSWCname = "H:\\testOutput\\test.swc";
 		writeSWC_file(outputSWCname, outputTree);
 	}
+	else if (!funcName.compare("inputSWCProperties"))
+	{
+		QString inputSWCName = QString::fromStdString(paras.at(0));
+		NeuronTree inputTree = readSWC_file(inputSWCName);
+		profiledTree inputProfiledTree(inputTree);
+
+		cout << inputProfiledTree.segs.size() << endl;
+
+	}
 	else if (!funcName.compare("stackSlice"))
 	{
 		myImgTester.inputSingleImgFullName = paras.at(0);
