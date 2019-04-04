@@ -586,7 +586,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 				}
 			}
 
-			if (jointCount == loopIt->size() * (loopIt->size() - 1)) nonLoopErrors.insert(*loopIt); 
+			if (jointCount == loopIt->size()) nonLoopErrors.insert(*loopIt);
 			else
 			{
 				++loopCount;
@@ -613,7 +613,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 				//cout << endl << endl;
 			}
 		}
-		cout << "LOOPS NUMBER (set): " << finalizedLoopsSet.size() << endl << endl;
+		cout << "LOOPS NUMBER (set): " << loopCount << endl << endl;
 
 		if (!nonLoopErrors.empty())
 		{
@@ -828,8 +828,11 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 								seg2SegsMap[*(curPathWalk.end() - 3)].find(*(curPathWalk.end() - 2)) != seg2SegsMap[*(curPathWalk.end() - 3)].end() &&
 								seg2SegsMap[*(curPathWalk.end() - 4)].find(*(curPathWalk.end() - 3)) != seg2SegsMap[*(curPathWalk.end() - 4)].end())
 							{
-								cout << "  -> 4 seg intersection detected, exluded from loop candidates. (" << *it << ")" << endl;
-								continue;
+								nonLoopErrors.insert(detectedLoopPathSet);
+								cout << "  -> 4 way intersection detected ----> (" << *it << ") ";
+								for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
+									cout << *thisLoopIt << " ";
+								cout << endl << endl;
 							}
 						}
 					}
@@ -837,7 +840,7 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 				else
 				{
 					finalizedLoopsSet.insert(detectedLoopPathSet);
-					cout << "  Loop detected ----> (" << *it << ") ";
+					cout << "  Topological loop identified ----> (" << *it << ") ";
 					for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
 						cout << *thisLoopIt << " ";
 					cout << endl << endl;
