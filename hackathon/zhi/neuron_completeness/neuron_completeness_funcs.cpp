@@ -3,6 +3,8 @@
  * 2019-2-25 : by Zhi Zhou
  */
  
+#include <omp.h>
+
 #include "v3d_message.h"
 #include <algorithm>
 #include "neuron_completeness_funcs.h"
@@ -403,6 +405,13 @@ void markerlist_after_sorting(QList<NeuronSWC>sorted_neuron,LandmarkList &marker
 
 vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 {
+#ifdef Q_OS_WIN32
+	char* numProcsC;
+	numProcsC = getenv("NUMBER_OF_PROCESSORS");
+	string numProcsString(numProcsC);
+	int numProcs = stoi(numProcsString);
+#endif
+
 	vector<NeuronSWC> outputErroneousPoints;
 	outputErroneousPoints.clear();
 
@@ -487,25 +496,32 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 	nonLoopErrors.clear();
 	rcCount = 0;
 	testCount = 0;
-	for (map<size_t, set<size_t> >::iterator it = seg2SegsMap.begin(); it != seg2SegsMap.end(); ++it)
+#ifdef Q_OS_WIN32
+#pragma omp parallel num_threads(this->numProcs)
 	{
-		if (it->second.size() <= 2) continue;
+#endif
+		for (map<size_t, set<size_t> >::iterator it = seg2SegsMap.begin(); it != seg2SegsMap.end(); ++it)
+		{
+			if (it->second.size() <= 2) continue;
 
-		vector<size_t> loops2ThisSeg;
-		loops2ThisSeg.clear();
+			vector<size_t> loops2ThisSeg;
+			loops2ThisSeg.clear();
 
-//		cout << "Starting segment: " << it->first << " ==> ";
-		//for (set<size_t>::iterator seg2SegsIt = seg2SegsMap[it->first].begin(); seg2SegsIt != seg2SegsMap[it->first].end(); ++seg2SegsIt)
-		//	cout << *seg2SegsIt << " ";
-		//cout << endl;
+			//		cout << "Starting segment: " << it->first << " ==> ";
+			//for (set<size_t>::iterator seg2SegsIt = seg2SegsMap[it->first].begin(); seg2SegsIt != seg2SegsMap[it->first].end(); ++seg2SegsIt)
+			//	cout << *seg2SegsIt << " ";
+			//cout << endl;
 
-		int loopCount = finalizedLoopsSet.size();
+			int loopCount = finalizedLoopsSet.size();
 
-		rc_loopPathCheck(it->first, loops2ThisSeg);
+			rc_loopPathCheck(it->first, loops2ThisSeg);
 
-//		if (finalizedLoopsSet.size() - loopCount == 0) cout << " -- no loops detected with this starting seg." << endl;
-//		else cout << finalizedLoopsSet.size() - loopCount << " loops detected with seg " << it->first << endl << endl;
+			//		if (finalizedLoopsSet.size() - loopCount == 0) cout << " -- no loops detected with this starting seg." << endl;
+			//		else cout << finalizedLoopsSet.size() - loopCount << " loops detected with seg " << it->first << endl << endl;
+		}
+#ifdef Q_OS_WIN32
 	}
+#endif
 	//cout << "rc count: " << rcCount << endl;
 	//cout << "test count: " << testCount << endl;
 	clock_t end = clock();
@@ -515,16 +531,36 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 	if (finalizedLoopsSet.empty()) return outputErroneousPoints;
 	else
 	{
+		int loopCount = 0;
 		for (set<set<size_t> >::iterator loopIt = finalizedLoopsSet.begin(); loopIt != finalizedLoopsSet.end(); ++loopIt)
 		{
 			set<size_t> thisLoop = *loopIt;
+			int jointCount = 0;
+			vector<size_t> thisSet;
+			for (set<size_t>::iterator setIt = loopIt->begin(); setIt != loopIt->end(); ++setIt) thisSet.push_back(*setIt);
+
+			V_NeuronSWC_unit jointNode;
+			for (vector<V_NeuronSWC_unit>::iterator seg1It = segList.seg.at(thisSet.at(0)).row.begin(); seg1It != segList.seg.at(thisSet.at(1)).row.end(); ++seg1It)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator seg2It = segList.seg.at(thisSet.at(1)).row.begin(); seg2It != segList.seg.at(thisSet.at(1)).row.end(); ++seg2It)
+				{
+					if (seg1It->x == seg2It->x && seg1It->y == seg2It->y && seg1It->z == seg2It->z)
+					{
+						jointNode = *seg1It;
+						jointCount = 2;
+						goto FOUND_JOINT_NODE;
+					}
+				}
+			}
+
+			++loopCount;
 			for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
 			{
-				//cout << *it << " ";
+				cout << *it << " ";
 				for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
 				{
-					unitIt->type = 15;				
-					
+					unitIt->type = 15;
+
 					if (unitIt->parent == -1)
 					{
 						NeuronSWC problematicNode;
@@ -538,7 +574,44 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					}
 				}
 			}
-			//cout << endl << endl;
+			cout << endl << endl;
+			continue;
+
+		FOUND_JOINT_NODE:
+			for (vector<size_t>::iterator segIt = thisSet.begin() + 2; segIt != thisSet.end(); ++segIt)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator nodeIt = segList.seg.at(*segIt).row.begin(); nodeIt != segList.seg.at(*segIt).row.end(); ++nodeIt)
+				{
+					if (nodeIt->x == jointNode.x && nodeIt->y == jointNode.y && nodeIt->z == jointNode.z) ++jointCount;
+				}
+			}
+
+			if (jointCount == loopIt->size() * (loopIt->size() - 1)) nonLoopErrors.insert(*loopIt); 
+			else
+			{
+				++loopCount;
+				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
+				{
+					//cout << *it << " ";
+					for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
+					{
+						unitIt->type = 15;
+
+						if (unitIt->parent == -1)
+						{
+							NeuronSWC problematicNode;
+							problematicNode.x = unitIt->x;
+							problematicNode.y = unitIt->y;
+							problematicNode.z = unitIt->z;
+							problematicNode.type = 15;
+							problematicNode.parent = unitIt->parent;
+							problematicNode.n = unitIt->n;
+							outputErroneousPoints.push_back(problematicNode);
+						}
+					}
+				}
+				//cout << endl << endl;
+			}
 		}
 		cout << "LOOPS NUMBER (set): " << finalizedLoopsSet.size() << endl << endl;
 
