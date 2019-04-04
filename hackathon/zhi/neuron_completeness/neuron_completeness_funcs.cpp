@@ -507,17 +507,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 			vector<size_t> loops2ThisSeg;
 			loops2ThisSeg.clear();
 
-			//		cout << "Starting segment: " << it->first << " ==> ";
-			//for (set<size_t>::iterator seg2SegsIt = seg2SegsMap[it->first].begin(); seg2SegsIt != seg2SegsMap[it->first].end(); ++seg2SegsIt)
-			//	cout << *seg2SegsIt << " ";
-			//cout << endl;
-
-			int loopCount = finalizedLoopsSet.size();
-
 			rc_loopPathCheck(it->first, loops2ThisSeg);
-
-			//		if (finalizedLoopsSet.size() - loopCount == 0) cout << " -- no loops detected with this starting seg." << endl;
-			//		else cout << finalizedLoopsSet.size() - loopCount << " loops detected with seg " << it->first << endl << endl;
 		}
 #ifdef Q_OS_WIN32
 	}
@@ -689,7 +679,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					problematicNode.z = (segList.seg[segNum].row.end() - 1)->z;
 					problematicNode.type = 20;
 					outputErroneousPoints.push_back(problematicNode);
-//					cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
+					//cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
 				}
 				else if (tail)
 				{
@@ -699,7 +689,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					problematicNode.z = segList.seg[segNum].row.begin()->z;
 					problematicNode.type = 20;
 					outputErroneousPoints.push_back(problematicNode);
-//					cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
+					//cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
 				}	
 			}
 		}
@@ -772,7 +762,7 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 			if (detectedLoopsSet.insert(detectedLoopPathSet).second)
 			{
 				// pusedoloop by fork intersection check
-//				cout << "pusedoloop check.." << endl;
+				//cout << "pusedoloop check.." << endl;
 
 				if (*(curPathWalk.end() - 3) == *it)
 				{
