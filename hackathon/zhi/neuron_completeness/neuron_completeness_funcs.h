@@ -17,6 +17,9 @@ struct NEURON_METRICS {
     int numTrees;
     int numTypes;
     int numSegs;
+    int numRoots;
+    QString loop;
+    QString trifurcation;
 };
 
 double minDist(QList<NeuronSWC> & neuron1, QList<NeuronSWC> & neuron2);

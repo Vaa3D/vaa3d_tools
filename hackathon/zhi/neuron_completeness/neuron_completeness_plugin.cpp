@@ -80,18 +80,41 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+            if(it.key()==1)
+                info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
+            else
+                info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
+
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        bool flag_loop=false,flag_tri=false;
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
+            }
+
+        }
+
+
         infoBox.setInformativeText(QString("<pre><font size='4'>"
                     "number of neuron-trees : %1<br>"
                     "%2<br>"
                     "number of types        : %3<br>"
-                    "types:                 : %4</font></pre>")
+                    "types:                 : %4<br>"
+                    "loop(s):               : %5<br>"
+                    "trifurcation+:         : %6</font></pre>")
+
                     .arg(multi_neurons.size())
                     .arg(info_tree.toStdString().c_str())
                     .arg(map_type.size())
-                    .arg(info_type.toStdString().c_str()));
-
+                    .arg(info_type.toStdString().c_str())
+                    .arg(flag_loop?"YES":"NO")
+                    .arg(flag_tri?"YES":"NO"));
         infoBox.exec();
         if(markerlist.size() != 0)
         {
@@ -131,6 +154,21 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             NeuronTree nt = readSWC_file(SWCList[i]);
             calComplete(nt,scores);
+            V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+            vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+            QString flag_loop="NO",flag_tri="NO";
+            for(int i=0; i<trees.size(); i++)
+            {
+                vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+                for(int j=0; j<errorPoints.size(); j++)
+                {
+                    if(errorPoints[j].type == 15 && flag_loop=="NO") flag_loop = "YES";
+                    if(errorPoints[j].type == 20 && flag_tri=="NO") flag_tri = "YES";
+                }
+
+            }
+            scores[i].loop = flag_loop;
+            scores[i].trifurcation = flag_tri;
         }
 
         QString outputName =  m_InputfolderName + "/eval.csv";
@@ -138,11 +176,18 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                 outputName,
                 QObject::tr("Supported file (*.csv)"));
 
+        ofstream myfile;
+        myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
+        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"# of root nodes"<<","<<"loop"<<","<<"trifurcation+"<<endl;
+        myfile.close();
+
+
         for(int i=0; i<SWCList.size();i++)
         {
             ofstream myfile;
             myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
-            myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs<<endl;
+            myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs
+                   <<","<<scores[i].numRoots<<","<<scores[i].loop.toStdString().c_str() << "," << scores[i].trifurcation.toStdString().c_str()<<endl;
             myfile.close();
 
         }
@@ -152,12 +197,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         NeuronTree nt = callback.getSWCTeraFly();
         if(nt.listNeuron.size()==0) return;
         QList<NeuronSWC> sorted_neuron;
-        LandmarkList markerlist_zhi;
+        LandmarkList markerlist_gap;
         QHash<int,int> map_type;
         QMultiMap<int, QList<NeuronSWC> > multi_neurons;
         QList<double> dist;
 
-        exportComplete(nt,sorted_neuron,markerlist_zhi,multi_neurons,map_type,dist);
+        exportComplete(nt,sorted_neuron,markerlist_gap,multi_neurons,map_type,dist);
 
         QVector<QPair <double, double> > v_tree;
         for (QMultiMap<int, QList<NeuronSWC> >::iterator it = multi_neurons.end()-1; it != multi_neurons.begin()-1; --it)
@@ -182,20 +227,43 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+            if(it.key()==1)
+                info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
+            else
+                info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
+
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        bool flag_loop=false,flag_tri=false;
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
+            }
+
+        }
+
+
         infoBox.setInformativeText(QString("<pre><font size='4'>"
                     "number of neuron-trees : %1<br>"
                     "%2<br>"
                     "number of types        : %3<br>"
-                    "types:                 : %4</font></pre>")
+                    "types:                 : %4<br>"
+                    "loop(s):               : %5<br>"
+                    "trifurcation+:         : %6</font></pre>")
+
                     .arg(multi_neurons.size())
                     .arg(info_tree.toStdString().c_str())
                     .arg(map_type.size())
-                    .arg(info_type.toStdString().c_str()));
-
+                    .arg(info_type.toStdString().c_str())
+                    .arg(flag_loop?"YES":"NO")
+                    .arg(flag_tri?"YES":"NO"));
         infoBox.exec();
-//*****************************************************OY's part(sorry for changing Zhi's markerlist to markerlist_zhi)*****************************************************
+
         QList<NeuronSWC> ori_tree1swc=nt.listNeuron;
         QVector<QVector<V3DLONG> > childs;
         NeuronTree n_t;
@@ -219,11 +287,11 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
          markerlist_before_sorting(ori_tree1swc,markerlist,numofwrongtype);
          markerlist_after_sorting(sorted_neuron,markerlist,childs,numofwrongplace);
 
-         if(markerlist_zhi.size() != 0)
+         if(markerlist_gap.size() != 0)
          {
                LandmarkList markerlist_orginal = callback.getLandmarkTeraFly();
-               for(int i=0; i<markerlist_zhi.size(); i++)
-                   markerlist_orginal.push_back(markerlist_zhi[i]);
+               for(int i=0; i<markerlist_gap.size(); i++)
+                   markerlist_orginal.push_back(markerlist_gap[i]);
                callback.setLandmarkTeraFly(markerlist_orginal);
          }
 
@@ -253,12 +321,22 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             return;
         NeuronTree nt = openDlg->nt;
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
-		vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
-		std::cout << trees.size() << " trees in this SWC file." << endl;
-		//vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        bool flag_loop=false,flag_tri=false;
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
+            }
+
+        }
+		//std::cout << trees.size() << " trees in this SWC file." << endl;
 		
 
-        v3d_msg(QString("%1").arg(nt_decomposed.seg.size()));
+        v3d_msg(QString("loop is %1, tri is %2").arg(flag_loop).arg(flag_tri));
 
 
     }else
@@ -302,9 +380,26 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+            if(it.key()==1)
+                info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
+            else
+                info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+        }
+
+        V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
+        vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
+        QString flag_loop="NO",flag_tri="NO";
+        for(int i=0; i<trees.size(); i++)
+        {
+            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+            for(int j=0; j<errorPoints.size(); j++)
+            {
+                if(errorPoints[j].type == 15 && flag_loop=="NO") flag_loop = "YES";
+                if(errorPoints[j].type == 20 && flag_tri=="NO") flag_tri = "YES";
+            }
 
         }
+
         v3d_msg(QString("\n\nnumber of neuron-trees : %1\n"
                     "%2\n"
                     "number of types        : %3\n"
@@ -314,13 +409,16 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                     .arg(map_type.size())
                     .arg(info_type.toStdString().c_str()),0);
 
+        int cnt_root=0;
+        if(map_type.count(1)) cnt_root = map_type[1];
         if (output.size() == 1)
         {
             char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
             QString imagename = QFileInfo(QString::fromStdString(infiles[0])).baseName();
             ofstream myfile;
             myfile.open (outimg_file,ios::out | ios::app );
-            myfile << imagename.toStdString().c_str()<<","<<multi_neurons.size() << "," << map_type.size()<<","<<markerlist.size()<<endl;
+            myfile << imagename.toStdString().c_str()<<","<<multi_neurons.size() << "," << map_type.size()<<","<<markerlist.size()
+                    <<","<<cnt_root<<","<<flag_loop.toStdString().c_str()<<","<<flag_tri.toStdString().c_str()<<endl;
             myfile.close();
         }
         return true;

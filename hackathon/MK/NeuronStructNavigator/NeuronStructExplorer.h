@@ -139,6 +139,8 @@ public:
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
+
+	profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const int yRange, const int zRange);
 	/********************************************************************************/
 
 
@@ -165,7 +167,7 @@ public:
 
 
 	/***************** Neuron Struct Refining Method *****************/
-	static profiledTree spikeRemove(const profiledTree& inputProfiledTree);
+	static profiledTree spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum = 3);
 	/*****************************************************************/
 
 

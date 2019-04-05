@@ -35,15 +35,14 @@ void FragmentedAutoTracePlugin::domenu(const QString &menu_name, V3DPluginCallba
 	if (menu_name == tr("start_tracing"))
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback, false);
-		panelPtr->~FragTraceControlPanel();
+		//panelPtr->~FragTraceControlPanel();
 	}
 	else if (menu_name == tr("settings"))
 	{
 		FragTraceControlPanel* panelPtr = new FragTraceControlPanel(parent, &callback);
-		panelPtr->exec(); // This forces the dialog to stay.
-		//panelPtr->~FragTraceControlPanel();
+		panelPtr->exec(); // This forces the dialog to stay. Note, it is still the SAME THREAD.
 
-		//callback.changeFragTraceStatus(false);
+		//callback.changeFragTraceStatus(false); -> cannot do this here since 'callback' is already gone after panelPtr->exec().
 	}
 	else
 	{

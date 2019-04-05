@@ -1,11 +1,15 @@
 #ifndef _FRAGTRACEMANAGER_H_
 #define _FRAGTRACEMANAGER_H_
 
+//#ifndef Q_MOC_RUN
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
+//#endif
+
+enum workMode { wholeBlock_axon, dendriticTree };
 
 class FragTraceManager: public QObject
 {
@@ -13,11 +17,13 @@ class FragTraceManager: public QObject
 
 public:
 	FragTraceManager() {};
-	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, bool slices = true);
+	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
 
 	QString finalSaveRootQ;
 	vector<string> imgEnhanceSeq;
 	vector<string> imgThreSeq;
+
+	workMode mode;
 
 	bool ada;
 	string adaImgName;
@@ -36,7 +42,6 @@ public:
 	bool objFilter;
 	bool voxelSize, actualSize;
 	int voxelCount;
-	float volume;
 
 	bool MST;
 	string MSTtreeName;
@@ -54,6 +59,8 @@ signals:
 	void emitTracedTree(NeuronTree tracedTree);
 
 private:
+	int numProcs;
+
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;

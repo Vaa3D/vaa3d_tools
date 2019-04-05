@@ -217,7 +217,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Fragmentedly trace the whole image block</string>
+            <string>Trace axonal fragments in the current image block</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -235,7 +235,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Fragmentedly trace with a seed point</string>
+            <string>Trace the dendritic tree in the current image block</string>
            </property>
           </widget>
          </item>
@@ -248,7 +248,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Bouton segmentation and axon reconstruction</string>
+            <string>Bouton segmentation and axon reconstruction (not available now)</string>
            </property>
           </widget>
          </item>
@@ -913,58 +913,6 @@
                       <zorder>horizontalSpacer_15</zorder>
                      </widget>
                     </item>
-                    <item>
-                     <widget class="QFrame" name="frame_21">
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>50</height>
-                       </size>
-                      </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_17">
-                       <item>
-                        <widget class="QRadioButton" name="radioButton_5">
-                         <property name="text">
-                          <string>In actual volume size: </string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLineEdit" name="lineEdit_6">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QLabel" name="label_17">
-                         <property name="text">
-                          <string>µm^3</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <spacer name="horizontalSpacer_16">
-                         <property name="orientation">
-                          <enum>Qt::Horizontal</enum>
-                         </property>
-                         <property name="sizeHint" stdset="0">
-                          <size>
-                           <width>255</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                        </spacer>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -1435,8 +1383,8 @@
    <slot>browseSavePathClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>752</x>
-     <y>854</y>
+     <x>764</x>
+     <y>853</y>
     </hint>
     <hint type="destinationlabel">
      <x>785</x>
@@ -1579,8 +1527,8 @@
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>151</x>
-     <y>504</y>
+     <x>212</x>
+     <y>551</y>
     </hint>
     <hint type="destinationlabel">
      <x>1</x>
@@ -1589,18 +1537,34 @@
    </hints>
   </connection>
   <connection>
-   <sender>radioButton_5</sender>
+   <sender>radioButton_2</sender>
    <signal>clicked(bool)</signal>
    <receiver>FragmentedTraceUI</receiver>
    <slot>nestedChecks(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>111</x>
-     <y>577</y>
+     <x>119</x>
+     <y>142</y>
     </hint>
     <hint type="destinationlabel">
-     <x>0</x>
-     <y>737</y>
+     <x>8</x>
+     <y>151</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>FragmentedTraceUI</receiver>
+   <slot>nestedChecks(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>60</x>
+     <y>112</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>4</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>

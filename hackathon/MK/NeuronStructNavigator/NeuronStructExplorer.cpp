@@ -911,6 +911,12 @@ profiledTree NeuronStructExplorer::treeDownSample(const profiledTree& inputProfi
 		this->rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
 		outputTree.listNeuron.append(currSegOutputList);
 	}
+
+	vector<size_t> delLocs;
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		if (nodeIt->n == nodeIt->parent) delLocs.push_back(size_t(nodeIt - outputTree.listNeuron.begin()));
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) outputTree.listNeuron.erase(outputTree.listNeuron.begin() + ptrdiff_t(*delIt));
 	profiledTree outputProfiledTree(outputTree);
 	
 	return outputProfiledTree;
@@ -2209,6 +2215,11 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 	return outputProfiledTree;
 }
+
+profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const in yRange, const int zRange)
+{
+
+}
 /* ===================================== END of [Auto-tracing Related Neuron Struct Functions] ===================================== */
 
 
@@ -2566,27 +2577,50 @@ segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
 
 
 /* ====================================== Neuron Struct Refining Method ====================================== */
-profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree)
+profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
-	QList<NeuronSWC> outputList = inputProfiledTree.tree.listNeuron;
-
-	vector<size_t> delLocs;
-	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
+	profiledTree processTree = inputProfiledTree;
+	NeuronStructExplorer myExplorer;
+	for (int currNodeNumThre = 1; currNodeNumThre <= spikeNodeNum; ++currNodeNumThre)
 	{
-		if (inputProfiledTree.node2childLocMap.find(it->n) == inputProfiledTree.node2childLocMap.end()) // tip point
-		{
-			if (inputProfiledTree.node2childLocMap.at(it->parent).size() >= 2) delLocs.push_back(inputProfiledTree.node2LocMap.at(it->n));
+		int currNodeNum = 1;
+		while (currNodeNum <= currNodeNumThre)
+		{		
+			vector<size_t> delLocs;
+			vector<size_t> delLocsCandidates;
+			for (QList<NeuronSWC>::iterator it = processTree.tree.listNeuron.begin(); it != processTree.tree.listNeuron.end(); ++it)
+			{
+				if (processTree.node2childLocMap.find(it->n) == processTree.node2childLocMap.end()) // tip point
+				{
+					int currID = it->n;
+					delLocsCandidates.clear();
+					while (1)
+					{
+						int currPaID = processTree.tree.listNeuron.at(processTree.node2LocMap.at(currID)).parent;
+						if (processTree.node2childLocMap.at(currPaID).size() >= 2 && delLocsCandidates.size() <= currNodeNum)
+						{
+							delLocs.push_back(processTree.node2LocMap.at(currID));
+							delLocs.insert(delLocs.end(), delLocsCandidates.begin(), delLocsCandidates.end());
+							break;
+						}
+						else if (processTree.node2childLocMap.at(currPaID).size() == 1 && delLocsCandidates.size() <= currNodeNum)
+						{
+							delLocsCandidates.push_back(processTree.node2LocMap.at(currID));
+							currID = currPaID;
+						}
+						else if (delLocsCandidates.size() > currNodeNum) break;
+					}
+				}
+			}
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) processTree.tree.listNeuron.erase(processTree.tree.listNeuron.begin() + ptrdiff_t(*it));
+			myExplorer.profiledTreeReInit(processTree);
+			++currNodeNum;
 		}
 	}
 
-	sort(delLocs.rbegin(), delLocs.rend());
-	for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputList.erase(outputList.begin() + ptrdiff_t(*it));
-
-	NeuronTree outputTree;
-	outputTree.listNeuron = outputList;
-	profiledTree outputProfiledTree(outputTree);
-
-	return outputProfiledTree;
+	return processTree;
 }
 /* ================================== END of [Neuron Struct Refining Method] ================================== */
 

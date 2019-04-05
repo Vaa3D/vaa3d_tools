@@ -87,8 +87,14 @@ public:
 	template<class T> // -> to be revised into 3D general form
 	static inline void imgDownSample2D(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
+	template<class T> 
+	static inline void imgDownSample(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[]);
+
 	template<class T> // to be revised into 3D general form
 	static inline void imgDownSample2DMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
+
+	template<class T>
+	static inline void imgDownSampleMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[]);
 
 	template<class T>
 	static inline void maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[]);
@@ -158,6 +164,9 @@ public:
 
 	static void imgClose2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	static void imgOpen2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	
+	static void imgClose3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	static void imgOpen3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	/********************************************/
 
 
@@ -341,6 +350,27 @@ inline void ImgProcessor::imgDownSample2D(const T inputImgPtr[], T outputImgPtr[
 }
 
 template<class T>
+inline void ImgProcessor::imgDownSample(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[])
+{
+	long int outi = 0;
+	int newXDim = imgDims[0] / downSampFactors[0];
+	int newYDim = imgDims[1] / downSampFactors[1];
+	int newZDim = imgDims[2] / downSampFactors[2];
+	cout << "output x Dim: " << newXDim << "  output y Dim: " << newYDim << "  output z Dim: " << newZDim << endl;
+	for (int z = 0; z < newZDim; ++z)
+	{
+		for (int y = 0; y < newYDim; ++y)
+		{
+			for (int x = 0; x < newXDim; ++x)
+			{
+				outputImgPtr[outi] = inputImgPtr[(imgDims[0] * imgDims[1] * downSampFactors[2]) * z + (imgDims[0] * downSampFactors[1]) * y + x * downSampFactors[0]];
+				++outi;
+			}
+		}
+	}
+}
+
+template<class T>
 inline void ImgProcessor::imgDownSample2DMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor)
 {
 	long int outi = 0;
@@ -366,6 +396,43 @@ inline void ImgProcessor::imgDownSample2DMax(const T inputImgPtr[], T outputImgP
 			}
 			outputImgPtr[outi] = maxValue;
 			++outi;
+		}
+	}
+}
+
+template<class T>
+inline void ImgProcessor::imgDownSampleMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[])
+{
+	long int outi = 0;
+	int newXDim = imgDims[0] / downSampFactors[0];
+	int newYDim = imgDims[1] / downSampFactors[1];
+	int newZDim = imgDims[2] / downSampFactors[2];
+	cout << "output x Dim: " << newXDim << "  output y Dim: " << newYDim << "  output z Dim: " << newZDim << endl;
+
+	vector<int> dnSampBlock;
+	T maxValue = 0;
+	for (int z = 0; z < newZDim; ++z)
+	{
+		for (int y = 0; y < newYDim; ++y)
+		{
+			for (int x = 0; x < newXDim; ++x)
+			{
+				dnSampBlock.clear();
+				maxValue = 0;
+				for (int k = 0; k < downSampFactors[2]; ++k)
+				{
+					for (int j = 0; j < downSampFactors[1]; ++j)
+					{
+						for (int i = 0; i < downSampFactors[0]; ++i)
+						{
+							T value = inputImgPtr[(imgDims[0] * imgDims[1] * downSampFactors[2] * z + k) + (imgDims[0] * downSampFactors[1] * y + j) + (x * downSampFactors[0] + i)];
+							if (value > maxValue) maxValue = value;
+						}
+					}
+				}
+				outputImgPtr[outi] = maxValue;
+				++outi;
+			}
 		}
 	}
 }

@@ -5,13 +5,11 @@
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include <stdio.h>
 #include <iostream>
-//#include "../../../../vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h"
-//#include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.h"
 #include <cmath>
 #include <algorithm>
+#include <set>
 #include "../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include <prune_short_branch.h>
-
 
 class OpenSWCDialog: public QDialog
 {
@@ -37,8 +35,11 @@ struct block{
     XYZ small;
     XYZ large;
 };
+double Angle(XYZ p1,XYZ p2);
 block offset_block(block input_block, XYZ offset);
+double average_intensity(unsigned char *data1d_crop,NeuronTree nt,XYZ center, int size, XYZ diff, long mysz0,long mysz1);
 bool export_list22file(const QList<NeuronSWC>& lN, QString fileSaveName);
+double signal_between_markers(unsigned char * data1d, NeuronSWC n1, NeuronSWC n2, long sz0, long sz1, long sz2, long sz3, V3DPluginCallback2 & callback);
 NeuronTree my_SortSWC(NeuronTree nt, V3DLONG newrootid, double thres);
 NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 bool in_cuboid(NeuronSWC node, XYZ small, XYZ large);
@@ -51,5 +52,6 @@ vector< vector<int> > get_close_points(NeuronTree nt,vector<int> a);
 //void crop_swc(QString input_swc, QString output_swc, block crop_block);
 void get2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2);
-LandmarkList get_missing_branches_menu(V3DPluginCallback2 &callback, QWidget *parent, Image4DSimple * p4DImage);
+void missing_branch_detection(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback, QWidget *parent);
+LandmarkList get_missing_branches_menu(V3DPluginCallback2 &callback, QWidget *parent, Image4DSimple * p4DImage, NeuronTree nt);
 #endif // BRANCH_DETECT_H

@@ -5,6 +5,7 @@
 #include "qlist.h"
 #include <algorithm>
 #include <iterator>
+#include <cmath>
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.cpp"
 #include "../../../../vaa3d_tools/hackathon/LXF/blastneuron_bjut/my_surf_objs.cpp"
@@ -15,6 +16,29 @@
 double marker_dist(MyMarker a, MyMarker b)
 {
     return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
+}
+
+MyMarker over_traced_node(QPair< MyMarker,MyMarker> input_xyz,double over_dist){
+
+    MyMarker output_overtraced_node;
+    double dist_input=marker_dist(input_xyz.first,input_xyz.second);
+    double fabs_value_x=fabs(double (input_xyz.first.x-input_xyz.second.x));
+    double fabs_value_y=fabs(double (input_xyz.first.y-input_xyz.second.y));
+    double fabs_value_z=fabs(double (input_xyz.first.z-input_xyz.second.z));
+    double output_add_x1=input_xyz.first.x+(over_dist*fabs_value_x)/dist_input;
+    double output_add_y1=input_xyz.first.y+(over_dist*fabs_value_y)/dist_input;
+    double output_add_z1=input_xyz.first.z+(over_dist*fabs_value_z)/dist_input;
+    double output_minus_x2=input_xyz.first.x-(over_dist*fabs_value_x)/dist_input;
+    double output_minus_y2=input_xyz.first.y-(over_dist*fabs_value_y)/dist_input;
+    double output_minus_z2=input_xyz.first.z-(over_dist*fabs_value_z)/dist_input;
+    MyMarker direc_ori_12=MyMarker(input_xyz.first.x-input_xyz.second.x , input_xyz.first.y-input_xyz.second.y , input_xyz.first.z-input_xyz.second.z);
+    MyMarker direc_after_32_add=MyMarker(output_add_x1-input_xyz.second.x , output_add_y1-input_xyz.second.y , output_add_z1-input_xyz.second.z);
+    MyMarker direc_after_32_minus=MyMarker(output_minus_x2-input_xyz.second.x , output_minus_y2-input_xyz.second.y , output_minus_z2-input_xyz.second.z);
+    double vector_product_add=direc_ori_12.x*direc_after_32_add.x+direc_ori_12.y*direc_after_32_add.y+direc_ori_12.z*direc_after_32_add.z;
+    double vector_product_minus=direc_ori_12.x*direc_after_32_minus.x+direc_ori_12.y*direc_after_32_minus.y+direc_ori_12.z*direc_after_32_minus.z;
+    if (vector_product_add>0) output_overtraced_node=MyMarker(output_add_x1,output_add_y1,output_add_z1);
+    else if (vector_product_minus>0) output_overtraced_node=MyMarker(output_minus_x2,output_minus_y2,output_minus_z2);
+    return output_overtraced_node;
 }
 using namespace std;
 
@@ -31,7 +55,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
 
     double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
     QStringList list=swc_file.split("/");
-    QString flag=list.last(); QStringList list1=flag.split(".");// you don't need to add 1 to find the string you want in input_dir
+    QString flag=list.last(); QStringList list1=flag.split(".");
     QString flag1=list1.first();
 
 
@@ -53,7 +77,7 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
 
     //get new tips after deleting nodes
     NeuronTree nt;
-    nt=get_unfinished_sample(ori_tip_list,nt1,maximum);  // this fuction is to delete nodes beginning with tip nodes.NOTE:the deleted distance is adjustable and random by given range:10um to <maximum> um
+    nt=get_unfinished_fun(ori_tip_list,nt1,maximum);  // this fuction is to delete nodes beginning with tip nodes.NOTE:the deleted distance is adjustable and random by given range:10um to <maximum> um
     QList<int> tip_list = get_tips(nt, false);
     cout<<"Number_of_tips after deleting nodes:\t"<<tip_list.size()<<endl;
 
@@ -79,12 +103,92 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
         crop_swc_cuboid(nt, output_swc, crop_block);
         // crop image
         QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip);
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
         //my_saveANO(output_dir, crop_block.name, output_suffix);
     }
     return;
     //QString output_newswc = output_dir+"deleted"+".eswc";
     //export_list2file(nt.listNeuron,output_newswc);
+}
+
+void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString image_file=infiles.at(0);
+    QString swc_file=infiles.at(1);
+    QString output_dir=outfiles.at(0);
+    QString output_apo;
+
+    if(!output_dir.endsWith("/")){
+        output_dir = output_dir+"/";
+    }
+
+    double maximum = (inparas.size() >=1) ? atoi(inparas[0]) : 30;
+    QStringList list=swc_file.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");
+    QString flag1=list1.first();
+
+
+    XYZ block_size=XYZ(100,100,20);
+
+    if(outfiles.size()>1)
+    {
+        output_apo=outfiles.at(1);
+    }
+    printf("welcome to use get_termial\n");
+    NeuronTree nt1 = readSWC_file(swc_file);
+
+    QList<NeuronSWC> sort_swc;
+    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
+    NeuronTree sorted_tree;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<sort_swc.size();j++){
+        hash_nt.insert(sort_swc[j].n, j);
+    }
+    sorted_tree.listNeuron=sort_swc;
+    sorted_tree.hashNeuron=hash_nt;
+
+    // Find tips
+    QList<int> ori_tip_list = get_tips(sorted_tree, false);
+    cout<<"Number_of_tips:\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
+
+    //get new tree
+    NeuronTree nt;
+    nt=get_overtraced_fun(ori_tip_list,sorted_tree,maximum);  // this fuction is to produce new tip nodes.NOTE:the distance is adjustable and random by given range:10um to <maximum> um
+
+    // Find tips
+    QList<int> tip_list = get_tips(nt, false);
+    cout<<"Number_of__new_tips:\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
+
+    // Crop tip-centered regions one by one
+    block zcenter_block; // This is a block centered at (0,0,0)
+    zcenter_block.small = 0-block_size/2;
+    zcenter_block.large = block_size/2;
+    QList<QString> output_suffix;
+    output_suffix.append(QString("tif"));
+    output_suffix.append(QString("swc"));
+    printf("welcome to use get_termial\n");
+    for(int i=0; i<tip_list.size(); i++){
+        int tipnum=i;
+        NeuronSWC node = nt.listNeuron.at(tip_list.at(i));
+        if(node.type > 5){continue;}
+        // create a tip-centered block
+        block crop_block = offset_block(zcenter_block, XYZ(node.x, node.y, node.z));
+        crop_block.name = QString::number(i);
+        XYZ tip=XYZ(node.x, node.y, node.z);
+        // crop swc
+        QString num_cnt=QString("%1").arg(i);
+        QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
+        crop_swc_cuboid(nt, output_swc, crop_block);
+        // crop image
+        QString output_image = flag1+"_"+num_cnt;
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,true);
+    }
+    return;
 }
 
 
@@ -140,13 +244,13 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         crop_swc(swc_file, output_swc, crop_block);
         // crop image
         QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip);
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
         //my_saveANO(output_dir, crop_block.name, output_suffix);
     }
     return;
 }
 
-NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maximum){
+NeuronTree get_unfinished_fun(QList<int> tip_list,NeuronTree treeswc,int maximum){
 
     NeuronTree nt;
     QList<int> to_delete;
@@ -219,6 +323,47 @@ NeuronTree get_unfinished_sample(QList<int> tip_list,NeuronTree treeswc,int maxi
         hash_nt.insert(newtree[j].n, j);
     }
     n_t.listNeuron=newtree;
+    n_t.hashNeuron=hash_nt;
+    return n_t;
+}
+
+
+NeuronTree get_overtraced_fun(QList<int> tip_list,NeuronTree sort_swc,int maximum){
+
+    QList<int> plist;
+    QList<int> alln;
+    QList<NeuronSWC> sorted_listneuron=sort_swc.listNeuron;
+    int N=sort_swc.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(sort_swc.listNeuron.at(i).pn);
+        alln.append(sort_swc.listNeuron.at(i).n);
+      }
+    for (int i=0;i<tip_list.size();i++){
+
+        int random_dis=(rand()%(maximum-10))+10+1;//make distance adjustable and random
+        MyMarker tip=MyMarker(sorted_listneuron.at(tip_list.at(i)).x,sorted_listneuron.at(tip_list.at(i)).y,sorted_listneuron.at(tip_list.at(i)).z);
+        int index_tip_pn=alln.indexOf(sorted_listneuron.at(tip_list.at(i)).pn);
+        MyMarker tip_pn=MyMarker(sorted_listneuron.at(index_tip_pn).x,sorted_listneuron.at(index_tip_pn).y,sorted_listneuron.at(index_tip_pn).z);
+        QPair<MyMarker,MyMarker> two_marker;two_marker.first=tip;two_marker.second=tip_pn;
+        MyMarker new_tip=over_traced_node(two_marker,random_dis);
+        NeuronSWC new_line;
+        new_line.x=new_tip.x; new_line.y=new_tip.y; new_line.z=new_tip.z;
+        new_line.pn=sorted_listneuron.at(tip_list.at(i)).n;
+        new_line.type=sorted_listneuron.at(tip_list.at(i)).type;
+        new_line.radius=sorted_listneuron.at(tip_list.at(i)).radius;
+        new_line.n=N+i+1;
+        sorted_listneuron.append(new_line);
+        cout<<"================tip"<<tip.x<<"  "<<tip.y<<"  "<<tip.z<<"  "<<endl;
+        cout<<"================tip pn"<<tip_pn.x<<"  "<<tip_pn.y<<"  "<<tip_pn.z<<"  "<<endl;
+    }
+
+    NeuronTree n_t;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<sorted_listneuron.size();j++){
+        hash_nt.insert(sorted_listneuron[j].n, j);
+    }
+    n_t.listNeuron=sorted_listneuron;
     n_t.hashNeuron=hash_nt;
     return n_t;
 }
@@ -346,14 +491,14 @@ void find_short_branch_tips_func(const V3DPluginArgList & input, V3DPluginArgLis
 }
 
 
-void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char * data1d_crop,V3DPluginCallback2 & callback,QString output_format,int tipnum,XYZ tip)
+void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char * data1d_crop,V3DPluginCallback2 & callback,QString output_format,int tipnum,XYZ tip,QList<int>mark_other_nodes,bool mark_other_nodes_or_not)
 {
    V3DLONG pagesz = mysz[0]*mysz[1]*mysz[2];
    unsigned char* data1d_mask = 0;
    data1d_mask = new unsigned char [pagesz];
    memset(data1d_mask,0,pagesz*sizeof(unsigned char));
    double margin=0;//by PHC 20170531
-   ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2], margin);
+   ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2],mark_other_nodes,mark_other_nodes_or_not, margin);
    //QString labelSaveString = pathname + ".v3draw_label.tif";
    //simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
 
@@ -389,7 +534,8 @@ void get2d_label_image(NeuronTree nt_crop_sorted,V3DLONG mysz[4],unsigned char *
    unsigned char* data1d_2D = 0;
    data1d_2D = new unsigned char [3*stacksz];
    for(V3DLONG i=0; i<stacksz; i++)
-       data1d_2D[i] = image_mip[i];
+       data1d_2D[i] = (label_mip[i] ==254) ? 255: image_mip[i];
+       //data1d_2D[i] = image_mip[i];
 
    for(V3DLONG i=0; i<stacksz; i++)
    {
@@ -455,7 +601,8 @@ void get_2d_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
    data1d_mask = new unsigned char [pagesz];
    memset(data1d_mask,0,pagesz*sizeof(unsigned char));
    double margin=0;//by PHC 20170531
-   ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2], margin);
+   QList<int> mark_others;
+   ComputemaskImage(nt_crop_sorted, data1d_mask, mysz[0], mysz[1], mysz[2], mark_others,false,margin);
    //QString labelSaveString = pathname + ".v3draw_label.tif";
    //simple_saveimage_wrapper(callback, labelSaveString.toLatin1().data(),(unsigned char *)data1d_mask, mysz, 1);
 
@@ -652,6 +799,49 @@ int find_tip(NeuronTree nt, long sz0, long sz1, long sz2)
     printf("No tip found!\n");
 }
 
+QList<int> find_tip_and_itspn(NeuronTree nt, long sz0, long sz1, long sz2)//for mark 2D image witg different coulor indifferent part
+{
+    // Return the node at center of the image as tip node
+    QList<int> nodes_to_be_marked;
+    MyMarker center = MyMarker((sz0-1)/2, (sz1-1)/2, (sz2-1)/2);
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<int> plist;
+    QList<int> alln;
+    int N=nt.listNeuron.size();
+    for(int i=0; i<N; i++){
+        plist.append(nt.listNeuron.at(i).pn);
+        alln.append(nt.listNeuron.at(i).n);
+    }
+
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        MyMarker node=MyMarker(nt.listNeuron.at(i).x, nt.listNeuron.at(i).y, nt.listNeuron.at(i).z);
+        if(marker_dist(center, node)<MIN_DIST & childs[i].size()==0) {
+            nodes_to_be_marked.push_back(i);
+        }
+        else if(marker_dist(center, node)<MIN_DIST+1 & childs[i].size()==0) {
+            nodes_to_be_marked.push_back(i);
+        }
+        else if(marker_dist(center, node)<MIN_DIST+2 & childs[i].size()==0) {
+            nodes_to_be_marked.push_back(i);
+        }
+    }
+    if(nodes_to_be_marked.size()==1){
+
+        int index_pn=alln.indexOf(nt.listNeuron.at(nodes_to_be_marked.at(0)).pn);
+        nodes_to_be_marked.push_back(index_pn);
+    }
+    return nodes_to_be_marked;
+}
+
 QList<NeuronSWC> change_tip_xyz(QList<NeuronSWC>input_swc,int tip_node,MyMarker center){
 
     QList<NeuronSWC> output_swc;
@@ -844,7 +1034,7 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
 
 QList<int> get_tips(NeuronTree nt, bool include_root){
     // whether a node is a tip;
-    QList<int> tip_list;
+    QList<int> ori_tip_list;
     QList<int> plist;
     QList<int> alln;
     int N=nt.listNeuron.size();
@@ -852,14 +1042,14 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
         plist.append(nt.listNeuron.at(i).pn);
         alln.append(nt.listNeuron.at(i).n);
         if(include_root & nt.listNeuron.at(i).pn == -1){
-            tip_list.append(i);
+            ori_tip_list.append(i);
         }
     }
     for(int i=0; i<N; i++){
-        if(plist.count(nt.listNeuron.at(i).n)==0){tip_list.append(i);}
+        if(plist.count(nt.listNeuron.at(i).n)==0){ori_tip_list.append(i);}
     } 
 
-    //delete the fake tips(distance between tip and branch node is less than 5)
+    //delete the fake tips(distance between tip and branch node is less than 10)
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
@@ -870,38 +1060,42 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
     vector<int> delete_index;
-        for (int i=0;i<tip_list.size();i++)
+    int count_num=0;
+    double dis=0;
+        for (int i=0;i<ori_tip_list.size();i++)
         {
-
-            int step=tip_list.at(i);
-            while (childs[step].size()<2)
+            int step=ori_tip_list.at(i);
+            while (childs[step].size()<2 && dis<10)
                   {
-                     int stepn=nt.listNeuron.at(step).pn;//stepn is the pn but not the i
-                     if (stepn!=-1)
-                     {step=alln.indexOf(stepn);}
-                         //cout<<"the number of index:"<<step<<endl;}
+                     if (nt.listNeuron.at(step).pn!=-1)
+                     {
+                        int stepn=alln.indexOf(nt.listNeuron.at(step).pn);//stepn is the pn but not the i
+                        dis=dist(nt.listNeuron.at(ori_tip_list.at(i)),nt.listNeuron.at(stepn));
+                        step=stepn;
+                        count_num++;
+
+                     }
                      else break;
-
                   }
-            double dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(step));
-            if(dis<10) delete_index.push_back(i);
-            else continue;
+            if (dis<10) delete_index.push_back(ori_tip_list.at(i));
+            dis=0;
         }
-        sort(delete_index.rbegin(),delete_index.rend());
-        for(int i=0;i<delete_index.size();i++){
+       cout<<"the number of fake tips:"<<delete_index.size()<<endl;
 
-                 tip_list.removeOne(delete_index.at(i));
+       sort(delete_index.rbegin(),delete_index.rend());
+       for(int i=0;i<delete_index.size();i++){
+
+                 ori_tip_list.removeOne(delete_index.at(i));
         }
        cout<<"the number of deleting fake tips):"<<delete_index.size()<<endl;
 
-
-    return(tip_list);
+    return(ori_tip_list);
 }
 
 QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root){
     // whether a node is a tip;
     QPair<vector<int>,int> result;
-    QList<int> tip_list;
+    QList<int> ori_tip_list;
     QList<int> plist;
     QList<int> alln;
     int N=nt.listNeuron.size();
@@ -909,15 +1103,15 @@ QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root){
         plist.append(nt.listNeuron.at(i).pn);
         alln.append(nt.listNeuron.at(i).n);
         //if(include_root & nt.listNeuron.at(i).pn == -1){
-          //  tip_list.append(i);
+          //  ori_tip_list.append(i);
         //}
     }
     for(int i=0; i<N; i++){
         if(plist.count(nt.listNeuron.at(i).n)==0){
-            tip_list.append(i);
+            ori_tip_list.append(i);
         }
     }
-    cout<<"tip number:"<<tip_list.size()<<endl;
+    cout<<"tip number:"<<ori_tip_list.size()<<endl;
     //find the fake tips(distance between tip and branch node is less than 10)
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
@@ -931,26 +1125,26 @@ QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root){
     vector<int> result_tip;
     int count_num=0;
     double dis=0;
-        for (int i=0;i<tip_list.size();i++)
+        for (int i=0;i<ori_tip_list.size();i++)
         {
-            int step=tip_list.at(i);
+            int step=ori_tip_list.at(i);
             while (childs[step].size()<2 && dis<10)
                   {
                      if (nt.listNeuron.at(step).pn!=-1)
                      {
                         int stepn=alln.indexOf(nt.listNeuron.at(step).pn);//stepn is the pn but not the i
-                        dis=dist(nt.listNeuron.at(tip_list.at(i)),nt.listNeuron.at(stepn));
+                        dis=dist(nt.listNeuron.at(ori_tip_list.at(i)),nt.listNeuron.at(stepn));
                         step=stepn;
                         count_num++;
 
                      }
                      else break;
                   }
-            if (dis<10) result_tip.push_back(tip_list.at(i));
+            if (dis<10) result_tip.push_back(ori_tip_list.at(i));
             dis=0;
         }
        cout<<"the number of fake tips:"<<result_tip.size()<<endl;
-       result.first=result_tip;result.second=tip_list.size();
+       result.first=result_tip;result.second=ori_tip_list.size();
     return(result);
 }
 
@@ -968,7 +1162,7 @@ block offset_block(block input_block, XYZ offset)
     return input_block;
 }
 
-void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip)
+void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginCallback2 & callback, QString output_format,QString input_swc,int tipnum,XYZ tip,bool mark_others_or_not)
 {
     printf("welcome to use crop_img\n");
     //if(output_format.size()==0){output_format=QString(".tiff");}
@@ -989,7 +1183,6 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     large.x = ceil(large.x)+1;
     large.y = ceil(large.y)+1;
     large.z = ceil(large.z)+1;
-
     // 2. Crop image. image is stored as 1d array. 2 parameters needed for cropping:
     // 2.1. 'cropped_image' is a pointer to the beginning of the region of interest
     unsigned char * cropped_image = 0;
@@ -1004,7 +1197,6 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     in_sz[1] = large.y-small.y;
     in_sz[2] = large.z-small.z;
     in_sz[3] = in_zz[3];   // channel information
-    printf("=================++++++++++++++++++++++++============\n");
     // 3. Save image
     QString saveName = outputdir_img + output_format + ".nrrd";
     qDebug("--------------------------nrrd name:%s",qPrintable(saveName));
@@ -1013,7 +1205,10 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     QString save2d = outputdir_img + output_format;
     NeuronTree nt_crop_sorted;
     nt_crop_sorted=readSWC_file(input_swc);
-    get2d_label_image(nt_crop_sorted,in_sz,cropped_image,callback,save2d,tipnum,tip);
+    QList<int> mark_others_nodes;
+    if (mark_others_or_not) mark_others_nodes=find_tip_and_itspn(nt_crop_sorted,in_sz[0],in_sz[1],in_sz[2]);
+    else mark_others_nodes.clear();
+    get2d_label_image(nt_crop_sorted,in_sz,cropped_image,callback,save2d,tipnum,tip,mark_others_nodes,mark_others_or_not);
 
     return;
 }
@@ -1192,14 +1387,23 @@ bool export_file2record(string swc_name,vector<int>input_num,double cur_per,QStr
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    //1.<get_undertraced_sample>
-    cout<<"This plugin for getting deleted tree"<<endl;
+    //1.1<get_undertraced_sample>
+    cout<<"This plugin for getting deleted tip"<<endl;
     cout<<"usage:\n";
-    cout<<"-f<func name>:\t\t get_ML_sample\n";
-    cout<<"-i<file name>:\t\t input .tif file\n";
+    cout<<"-f<func name>:\t\t get_undertraced_sample\n";
+    cout<<"-i<file name>:\t\t <raw image file> <input .swc > \n";
     cout<<"-p<default=30>:\t\t maximum value for adjusting the range of deleting disdance \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_undertraced_sample -i original image input .swc file -p <default=30> -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_undertraced_sample --i <raw image> <swc file> -p <default=30> -o <output sample> dir.\n";
+
+    //1.2<get_overtraced_sample>
+    cout<<"This plugin for getting overtraced tip"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t get_overtraced_sample\n";
+    cout<<"-i<file name>:\t\t <raw image file> <input .swc > \n";
+    cout<<"-p<default=30>:\t\t maximum value for adjusting the range of deleting disdance \n";
+    cout<<"-o<file name>:\t\t ouput dir\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_overtraced_sample -i <raw image> <swc file> -p <default=30> -o <output sample> dir.\n";
 
 }
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -1210,7 +1414,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-f<func name>:\t\t get_block\n";
     cout<<"-i<file name>:\t\t input .tif file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D&3D_block -i original image input .swc file -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D&3D_block -i <raw image> <swc file> -o <output image> dir.\n";
 
     //3.<get_2D_block>
     cout<<"This fuction for generet 2D images"<<endl;
@@ -1218,7 +1422,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-f<func name>:\t\t get_2D_sample\n";
     cout<<"-i<file name>:\t\t input .swc and .tiff file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_block -i original swc -p input tiff\nrrd.image -o output image dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_block -i <swc file> -p <tiff\nrrd.image> -o <output image> dir.\n";
 
     //4.<remove_tip_location>
     cout<<"This fuction for removing tip to center of signal(using average signal,and find the maxium one)"<<endl;
@@ -1238,7 +1442,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-p<1 or 0 >:\t\t 1:chose your input threshold to calculate radius,0:use global average signal to calculate radius \n";
     cout<<"-p<30(default 30)>:\t\t your input threshold(default 30) \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input tiff\nrrd.image> -p <2 or 3> <1 or 0 > <your input threshold(default 30)> -o <output swc.file dir>\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input tiff\nrrd.image> -p <2 or 3> <1 or 0 > <input threshold(default 30)> -o <output swc.file dir>\n";
 
     //6.find_fake_tip
     cout<<"This fuction for finding short branches"<<endl;
