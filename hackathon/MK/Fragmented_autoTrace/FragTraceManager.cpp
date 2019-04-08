@@ -137,6 +137,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		vector<NeuronTree> objTrees;
 		NeuronTree objSkeletonTree;
 		NeuronTree finalCentroidTree;
+
+// ------- using omp to speed up skeletonization process ------- //
 #pragma omp parallel num_threads(this->numProcs)
 		{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
@@ -164,6 +166,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 				objTrees.push_back(profiledMSTtree.tree);
 			}
 		}
+// ------------------------------------------------------------- //
 
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
 		writeSWC_file(finalCentroidTreeNameQ, finalCentroidTree);
@@ -198,28 +201,34 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
 
 		NeuronTree centroidTree;
-		boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(dendriteComponent);
-		for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+// ------- using omp to speed up skeletonization process ------- //
+#pragma omp parallel num_threads(this->numProcs)
 		{
-			NeuronSWC newNode;
-			newNode.x = nodeIt->at(0);
-			newNode.y = nodeIt->at(1);
-			newNode.z = nodeIt->at(2);
-			newNode.type = 2;
-			newNode.parent = -1;
-			centroidTree.listNeuron.push_back(newNode);
+			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(dendriteComponent);
+			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
+			{
+				NeuronSWC newNode;
+				newNode.x = nodeIt->at(0);
+				newNode.y = nodeIt->at(1);
+				newNode.z = nodeIt->at(2);
+				newNode.type = 2;
+				newNode.parent = -1;
+				centroidTree.listNeuron.push_back(newNode);
+			}
 		}
+// ------------------------------------------------------------- //
 
 		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 		profiledTree profiledMSTtree(MSTtree);
-		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 4);
+		profiledTree MSTdownSampledTree = this->fragTraceTreeManager.treeDownSample(profiledMSTtree, 10);
 		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
 		profiledTree MSTDnNoSpikeBranchBreak = NeuronStructExplorer::MSTbranchBreak(MSTdownSampledNoSpikeTree);
-		profiledTree iteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(MSTDnNoSpikeBranchBreak, 5);
+		profiledTree somaHollowedTree = NeuronStructExplorer::treeHollow(MSTDnNoSpikeBranchBreak, 64, 64, 128, 5);
+		//profiledTree iteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(somaHollowedTree, 5);
 
 		NeuronTree floatingExcludedTree;
-		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructExplorer::singleDotRemove(iteredConnectedTree, this->minNodeNum);
-		else floatingExcludedTree = iteredConnectedTree.tree;
+		if (this->minNodeNum > 0) floatingExcludedTree = NeuronStructExplorer::singleDotRemove(somaHollowedTree, this->minNodeNum);
+		else floatingExcludedTree = somaHollowedTree.tree;
 
 		denScaleBackTree = NeuronStructUtil::swcScale(floatingExcludedTree, 2, 2, 1);
 		finalOutputTree = denScaleBackTree;

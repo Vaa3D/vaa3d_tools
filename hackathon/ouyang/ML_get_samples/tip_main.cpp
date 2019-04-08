@@ -12,6 +12,7 @@
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define MIN_DIST 2
 #define VOID 1000000000
+using namespace std;
 
 double marker_dist(MyMarker a, MyMarker b)
 {
@@ -40,7 +41,6 @@ MyMarker over_traced_node(QPair< MyMarker,MyMarker> input_xyz,double over_dist){
     else if (vector_product_minus>0) output_overtraced_node=MyMarker(output_minus_x2,output_minus_y2,output_minus_z2);
     return output_overtraced_node;
 }
-using namespace std;
 
 void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
 {
@@ -66,10 +66,22 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
         output_apo=outfiles.at(1);
     }
     printf("welcome to use get_termial\n");
-    NeuronTree nt1 = readSWC_file(swc_file);
+    NeuronTree nt2 = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
-        output_dir = output_dir+"/";
-    }   
+        output_dir = output_dir+"/";       
+    }
+
+    QList<NeuronSWC> sort_swc;
+    SortSWC(nt2.listNeuron, sort_swc ,VOID, 0);
+    NeuronTree nt1;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<sort_swc.size();j++){
+        hash_nt.insert(sort_swc[j].n, j);
+    }
+    nt1.listNeuron=sort_swc;
+    nt1.hashNeuron=hash_nt;
+
     // Find tips
     QList<int> ori_tip_list = get_tips(nt1, false);
     cout<<"Number_of_tips:\t"<<qPrintable(swc_file)<<"\t"<<ori_tip_list.size()<<endl;
@@ -214,14 +226,25 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         output_apo=outfiles.at(1);
     }
     printf("welcome to use get_termial\n");
-    NeuronTree nt = readSWC_file(swc_file);
+    NeuronTree nt1 = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";
     }
+
+    QList<NeuronSWC> sort_swc;
+    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
+    NeuronTree nt;
+    QHash <int, int> hash_nt;
+
+    for(V3DLONG j=0; j<sort_swc.size();j++){
+        hash_nt.insert(sort_swc[j].n, j);
+    }
+    nt.listNeuron=sort_swc;
+    nt.hashNeuron=hash_nt;
+
     // Find tips
     QList<int> tip_list = get_tips(nt, false);
     cout<<"Number_of_tips\t"<<qPrintable(swc_file)<<"\t"<<tip_list.size()<<endl;
-
     // Crop tip-centered regions one by one
     block zcenter_block; // This is a block centered at (0,0,0)
     zcenter_block.small = 0-block_size/2;
@@ -344,7 +367,7 @@ NeuronTree get_overtraced_fun(QList<int> tip_list,NeuronTree sort_swc,int maximu
         MyMarker tip=MyMarker(sorted_listneuron.at(tip_list.at(i)).x,sorted_listneuron.at(tip_list.at(i)).y,sorted_listneuron.at(tip_list.at(i)).z);
         int index_tip_pn=alln.indexOf(sorted_listneuron.at(tip_list.at(i)).pn);
         MyMarker tip_pn=MyMarker(sorted_listneuron.at(index_tip_pn).x,sorted_listneuron.at(index_tip_pn).y,sorted_listneuron.at(index_tip_pn).z);
-        QPair<MyMarker,MyMarker> two_marker;two_marker.first=tip;two_marker.second=tip_pn;
+        QPair<MyMarker,MyMarker> two_marker=QPair<MyMarker,MyMarker>(tip,tip_pn); //two_marker.first=tip;two_marker.second=tip_pn;
         MyMarker new_tip=over_traced_node(two_marker,random_dis);
         NeuronSWC new_line;
         new_line.x=new_tip.x; new_line.y=new_tip.y; new_line.z=new_tip.z;
@@ -1073,7 +1096,6 @@ QList<int> get_tips(NeuronTree nt, bool include_root){
                         dis=dist(nt.listNeuron.at(ori_tip_list.at(i)),nt.listNeuron.at(stepn));
                         step=stepn;
                         count_num++;
-
                      }
                      else break;
                   }
@@ -1136,7 +1158,6 @@ QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root){
                         dis=dist(nt.listNeuron.at(ori_tip_list.at(i)),nt.listNeuron.at(stepn));
                         step=stepn;
                         count_num++;
-
                      }
                      else break;
                   }
@@ -1147,7 +1168,6 @@ QPair<vector<int>,int>  get_short_tips(NeuronTree nt, bool include_root){
        result.first=result_tip;result.second=ori_tip_list.size();
     return(result);
 }
-
 XYZ offset_XYZ(XYZ input, XYZ offset){
     input.x += offset.x;
     input.y += offset.y;
@@ -1180,9 +1200,12 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     small.x = floor(small.x);
     small.y = floor(small.y);
     small.z = floor(small.z);
-    large.x = ceil(large.x)+1;
-    large.y = ceil(large.y)+1;
-    large.z = ceil(large.z)+1;
+    large.x = floor(large.x);
+    large.y = floor(large.y);
+    large.z = floor(large.z);
+//    large.x = ceil(large.x)+1;
+//    large.y = ceil(large.y)+1;
+//    large.z = ceil(large.z)+1;
     // 2. Crop image. image is stored as 1d array. 2 parameters needed for cropping:
     // 2.1. 'cropped_image' is a pointer to the beginning of the region of interest
     unsigned char * cropped_image = 0;
@@ -1394,7 +1417,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-i<file name>:\t\t <raw image file> <input .swc > \n";
     cout<<"-p<default=30>:\t\t maximum value for adjusting the range of deleting disdance \n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_undertraced_sample --i <raw image> <swc file> -p <default=30> -o <output sample> dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_undertraced_sample -i <raw image> <swc file> -p <default=30> -o <output sample> dir.\n";
 
     //1.2<get_overtraced_sample>
     cout<<"This plugin for getting overtraced tip"<<endl;
@@ -1408,13 +1431,13 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 }
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    //2.<get_2D&3D_block>
+    //2.<get_2D3D_block>
     cout<<"This fuction for cropping block swc and image based on tip nodes"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_block\n";
     cout<<"-i<file name>:\t\t input .tif file\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D&3D_block -i <raw image> <swc file> -o <output image> dir.\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D3D_block -i <raw image> <swc file> -o <output image> dir.\n";
 
     //3.<get_2D_block>
     cout<<"This fuction for generet 2D images"<<endl;
@@ -1451,7 +1474,5 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-i<swc file name>:\t\t input .swc\n";
     cout<<"-i<apo file name>:\t\t input .apo\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f find_fake_tip -i <.swc file> <.apo file>\n";
-
-
 
 }

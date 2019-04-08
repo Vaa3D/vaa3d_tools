@@ -2215,11 +2215,6 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 	return outputProfiledTree;
 }
-
-profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const in yRange, const int zRange)
-{
-
-}
 /* ===================================== END of [Auto-tracing Related Neuron Struct Functions] ===================================== */
 
 
@@ -2445,6 +2440,73 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 		double radAngle = NeuronStructExplorer::getPiAngle(elongDispUnitVec, connPointUnitVec);
 		return radAngle;
 	}
+}
+
+profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius)
+{
+	QList<NeuronSWC> outputList;
+	for (map<int, segUnit>::const_iterator inputSegIt = inputProfiledTree.segs.begin(); inputSegIt != inputProfiledTree.segs.end(); ++inputSegIt)
+	{
+		bool out, in;
+		for (QList<NeuronSWC>::const_iterator inputNodeIt = inputSegIt->second.nodes.begin(); inputNodeIt != inputSegIt->second.nodes.end(); ++inputNodeIt)
+		{
+			float dist2center = sqrtf((inputNodeIt->x - hollowCenterX) * (inputNodeIt->x - hollowCenterX) + (inputNodeIt->y - hollowCenterY) * (inputNodeIt->y - hollowCenterY) + (inputNodeIt->z - hollowCenterZ) * (inputNodeIt->z - hollowCenterZ) / 4);
+			if (dist2center >= radius)
+			{
+				if (inputNodeIt == inputSegIt->second.nodes.begin())
+				{
+					out = true;
+					in = false;
+					NeuronSWC newNode;
+					newNode = *inputNodeIt;
+					outputList.push_back(newNode);
+					continue;
+				}
+				else
+				{
+					if (out && !in)
+					{
+						NeuronSWC newNode;
+						newNode = *inputNodeIt;
+						outputList.push_back(newNode);
+						continue;
+					}
+					else if (!out && in)
+					{
+						NeuronSWC newNode;
+						newNode = *inputNodeIt;
+						newNode.parent = -1;
+						outputList.push_back(newNode);
+						out = true;
+						in = false;
+						continue;
+					}
+				}
+			}
+			else
+			{
+				if (inputNodeIt == inputSegIt->second.nodes.begin())
+				{
+					out = false;
+					in = true;				
+				}
+				else
+				{
+					if (out && !in)
+					{
+						out = false;
+						in = true;
+					}
+				}
+			}
+		}
+	}
+
+	NeuronTree outputTree;
+	outputTree.listNeuron = outputList;
+	profiledTree outputProfiledTree(outputTree);
+
+	return outputProfiledTree;
 }
 
 segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
