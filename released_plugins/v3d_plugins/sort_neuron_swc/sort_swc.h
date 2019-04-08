@@ -321,7 +321,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 
     QList<V3DLONG> output_newroot_list;
 //    if((thres != 1000000000) && (thres>0)){  // If distance threshold > 0: make new connections
-    v3d_msg(QString::number(thres));
+//    v3d_msg(QString::number(thres));
     if(thres>=0){  // If distance threshold > 0: make new connections
         qDebug()<<"find the point in non-group 1 that is nearest to group 1";
         //find the point in non-group 1 that is nearest to group 1,
