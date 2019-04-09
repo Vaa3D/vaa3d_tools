@@ -146,9 +146,9 @@ int main(int argc, char* argv[])
 		NeuronTree inputTree = readSWC_file(inputSWCFullNameQ);
 		NeuronStructExplorer myExplorer;
 		profiledTree testTree(inputTree);
-		profiledTree outputTree = myExplorer.treeDownSample(testTree);
-		//profiledTree outputTree = NeuronStructExplorer::spikeRemove(testTree);
-		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree.tree);
+		profiledTree outputTree = myExplorer.treeDownSample(testTree, 10);
+		profiledTree finalTree = NeuronStructExplorer::spikeRemove(outputTree);
+		writeSWC_file(QString::fromStdString(paras.at(1)), finalTree.tree);
 	}
 	else if (!funcName.compare("swc2mask"))
 	{
@@ -175,38 +175,6 @@ int main(int argc, char* argv[])
 		string saveFileName = saveFileNameQ.toStdString();
 		const char* saveFileNameC = saveFileName.c_str();
 		ImgManager::saveimage_wrapper(saveFileNameC, mask1Dptr.get(), saveDims, 1);
-	}
-	else if (!funcName.compare("imgDownSample"))
-	{
-		QString inputNameQ = QString::fromStdString(paras.at(0));
-		ImgManager myManager(inputNameQ);
-		myManager.imgEntry("thisImg", ImgManager::singleCase);
-
-		int downFacs[3];
-		downFacs[0] = stoi(paras.at(1));
-		downFacs[1] = stoi(paras.at(2));
-		downFacs[2] = stoi(paras.at(3));
-		int imgDims[3];
-		imgDims[0] = myManager.imgDatabase.begin()->second.dims[0];
-		imgDims[1] = myManager.imgDatabase.begin()->second.dims[1];
-		imgDims[2] = myManager.imgDatabase.begin()->second.dims[2];
-		unsigned char* outputImgPtr = new unsigned char[(imgDims[0] / downFacs[0]) * (imgDims[1] / downFacs[1]) * (imgDims[2] / downFacs[2])];		
-		//cout << downFacs[0] << " " << downFacs[1] << " " << downFacs[2] << endl;
-		//map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-		ImgProcessor::imgDownSampleMax(myManager.imgDatabase.begin()->second.slicePtrs.begin()->second.get(), outputImgPtr, imgDims, downFacs);
-
-		V3DLONG saveDims[4];
-		saveDims[0] = imgDims[0] / downFacs[0];
-		saveDims[1] = imgDims[1] / downFacs[1];
-		saveDims[2] = imgDims[2] / downFacs[2];
-		saveDims[3] = 1;
-		QString saveFileNameQ = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase3\\test1Down.tif";
-		string saveFileName = saveFileNameQ.toStdString();
-		const char* saveFileNameC = saveFileName.c_str();
-		ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-		delete[] outputImgPtr;
-		myManager.imgDatabase.clear();
 	}
 	else if (!funcName.compare("selfDist"))
 	{

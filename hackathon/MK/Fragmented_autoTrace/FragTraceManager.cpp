@@ -139,8 +139,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree finalCentroidTree;
 
 // ------- using omp to speed up skeletonization process ------- //
-#pragma omp parallel num_threads(this->numProcs)
-		{
+//#pragma omp parallel num_threads(this->numProcs)
+//		{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
 				if (it->size < voxelCount) continue;
@@ -165,7 +165,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 				profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
 				objTrees.push_back(profiledMSTtree.tree);
 			}
-		}
+//		}
 // ------------------------------------------------------------- //
 
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
@@ -194,6 +194,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		if (this->minNodeNum > 0) finalOutputTree = NeuronStructExplorer::singleDotRemove(newIteredConnectedTree.tree, this->minNodeNum);
 		else finalOutputTree = newIteredConnectedTree.tree;
 	} 
+// ===============================================================================================================================================================//
 	else if (this->mode == dendriticTree)
 	{
 		connectedComponent dendriteComponent = *this->signalBlobs.begin();
