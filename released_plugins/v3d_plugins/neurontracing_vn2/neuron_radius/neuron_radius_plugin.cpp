@@ -345,21 +345,20 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		if(outswc_file == "") outswc_file = inswc_file + ".out.swc";
 
         double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : -1;
+        if(bkg_thresh==atof("AUTO")) bkg_thresh= -1;
         bool is_2d = (inparas.size() == 2) ? atoi(inparas[1]) : 0;
         bool ada_thresh=false;
 
 		cout<<"inimg_file = "<<inimg_file<<endl;
 		cout<<"inswc_file = "<<inswc_file<<endl;
 		cout<<"outswc_file = "<<outswc_file<<endl;
+        cout<<"bkg_threshold="<<bkg_thresh<<endl;
         if(bkg_thresh==-1)
         {
             cout<<"will use adaptive threshold"<<endl;
             ada_thresh=true;
         }
 
-        cout<<"bkg_threshold="<<bkg_thresh<<endl;
-
-        
 		cout<<"is2d = "<< (int)is_2d <<endl;
 
 		unsigned char * inimg1d = 0; 
@@ -469,12 +468,13 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         if(outswc_file == "") outswc_file = inswc_file + ".out.swc";
 
         double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : -1;
-        bool is_2d = (inparas.size() == 2) ? atoi(inparas[0]) : 0;
+        if(bkg_thresh==atof("AUTO")) bkg_thresh=-1;
+        bool is_2d = (inparas.size() == 2) ? atoi(inparas[1]) : 0;
         bool ada_thresh=false;
         cout<<"inimg_file = "<<inimg_file<<endl;
         cout<<"inswc_file = "<<inswc_file<<endl;
         cout<<"outswc_file = "<<outswc_file<<endl;
-        if(bkg_thresh==-1)
+        if(bkg_thresh== -1)
         {
         cout<<"will use adaptive threshold"<<endl;
         ada_thresh=true;
@@ -527,7 +527,7 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
                 //double td= (imgstd<10) ? 10:imgstd;
                 bkg_thresh= imgave+0.7*imgstd+30;
                 }
-                cout<<"thresh="<<bkg_thresh<<endl;
+                cout<<"threshold="<<bkg_thresh<<endl;
 
 
 
@@ -586,6 +586,8 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout<<"v3d -x <plugin_dll> -f neuron_radius -i <inimg_file> <inswc_file> -p <threshold> [<is2d>]"
         <<endl
         <<"The output will be appended  .out.swc automatically" 
+        <<endl
+        <<"Using \"AUTO\" as first parameter for auto tresholding"
         <<endl;
 	}
     
