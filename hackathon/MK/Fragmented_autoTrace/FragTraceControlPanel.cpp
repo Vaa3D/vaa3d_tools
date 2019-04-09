@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <qstringlist.h>
 #include <qsettings.h>
 #include <qfileinfo.h>
 #include <qspinbox.h>
@@ -51,12 +52,14 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->radioButton->setChecked(true);
 			uiPtr->radioButton_2->setChecked(false);
 			uiPtr->radioButton_3->setChecked(false);
+			uiPtr->groupBox_6->setEnabled(true);
 		}
 		else if (callOldSettings.value("dendrite") == true)
 		{
 			uiPtr->radioButton->setChecked(false);
 			uiPtr->radioButton_2->setChecked(true);
 			uiPtr->radioButton_3->setChecked(false);
+			uiPtr->groupBox_6->setEnabled(false);
 		}
 		else if (callOldSettings.value("bouton") == true)
 		{
@@ -136,14 +139,15 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 
 
-		// ------- Post Elongation -------
+		// ------- Segment Post-processing -------
 		if (callOldSettings.value("PostElongDistChecked") == true)
 		{
 			uiPtr->lineEdit_4->setEnabled(true);
 			uiPtr->lineEdit_4->setText(callOldSettings.value("PostElongDistThreshold").toString());
 		}
 		
-
+		this->listViewBlankAreas = new QStandardItemModel(this);
+		uiPtr->listView->setModel(listViewBlankAreas);
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
 		this->show();
@@ -196,10 +200,12 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 	{
 		if (checkName == "radioButton_2")
 		{
+			uiPtr->groupBox_6->setEnabled(false);
 			uiPtr->groupBox_6->setChecked(false);
 		}
 		else if (checkName == "radioButton")
 		{
+			uiPtr->groupBox_6->setEnabled(true);
 			uiPtr->groupBox_6->setChecked(true);
 		}
 	}
@@ -222,6 +228,34 @@ void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
 			uiPtr->lineEdit_3->setEnabled(true);
 			uiPtr->pushButton_6->setEnabled(true);
 		}
+	}
+}
+
+void FragTraceControlPanel::blankAreaClicked()
+{
+	QObject* signalSender = sender();
+	QString pushButtonName = signalSender->objectName();
+	
+	if (pushButtonName == "pushButton_7")
+	{
+		if (uiPtr->lineEdit_5->text() == "" || uiPtr->lineEdit_6->text() == "" || uiPtr->lineEdit_7->text() == "" || uiPtr->lineEdit_8->text() == "")
+		{
+			v3d_msg("One or more parameters weren't specified. Please double check.");
+			return;
+		}
+
+		QString blankAreaName;
+		blankAreaName = "(" + uiPtr->lineEdit_5->text() + ", " + uiPtr->lineEdit_6->text() + ", " + uiPtr->lineEdit_7->text() + ") radius = " + uiPtr->lineEdit_8->text();
+		QStandardItem* newItem = new QStandardItem(blankAreaName);
+		listViewBlankAreas->appendRow(newItem);
+	}
+	else if (pushButtonName == "pushButton_8")
+	{
+		QModelIndexList selectedArea = uiPtr->listView->selectionModel()->selectedRows();
+		if (selectedArea.empty()) return;
+
+		int rowNum = selectedArea.begin()->row();
+		listViewBlankAreas->removeRow(rowNum);
 	}
 }
 
@@ -422,6 +456,29 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
+				if (uiPtr->groupBox_7->isChecked())
+				{
+					if (this->listViewBlankAreas->rowCount() != 0)
+					{
+						this->traceManagerPtr->blankArea = true;
+						for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
+						{
+							QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
+							QString thisAreaQString = thisArea->text();
+							QStringList spaceSplits = thisAreaQString.split(" ");
+							this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
+							QStringList rightParanSplits = thisAreaQString.split(")");
+							QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
+							this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
+							rightParanBlankSplits[0].replace("(", "");
+							rightParanBlankSplits[0].replace(",", "");
+							rightParanBlankSplits[1].replace(",", "");
+							this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
+							this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
+						}
+					}
+				}
+
 				// ------- Image Enhancement -------
 				if (uiPtr->groupBox_3->isChecked())
 				{
@@ -515,6 +572,29 @@ void FragTraceControlPanel::traceButtonClicked()
 			{
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), dendriticTree);
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
+
+				if (uiPtr->groupBox_7->isChecked())
+				{
+					if (this->listViewBlankAreas->rowCount() != 0)
+					{
+						this->traceManagerPtr->blankArea = true;
+						for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
+						{
+							QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
+							QString thisAreaQString = thisArea->text();
+							QStringList spaceSplits = thisAreaQString.split(" ");
+							this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
+							QStringList rightParanSplits = thisAreaQString.split(")");
+							QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
+							this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
+							rightParanBlankSplits[0].replace("(", "");
+							rightParanBlankSplits[0].replace(",", "");
+							rightParanBlankSplits[1].replace(",", "");
+							this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
+							this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
+						}
+					}
+				}
 
 				// ------- Image Enhancement -------
 				if (uiPtr->groupBox_3->isChecked())

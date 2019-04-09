@@ -18,6 +18,8 @@ public:
 	QString adaSaveRoot;
 	QString histMaskRoot;
 
+	vector<string> blankAreas;
+
 	NeuronTree tracedTree;
 	void scaleTracedTree();
 	NeuronTree treeScaleBack(const NeuronTree& inputTree);
@@ -34,11 +36,13 @@ public slots:
 	void saveSettingsClicked();
 	void traceButtonClicked();
 	void browseSavePathClicked();
+	void blankAreaClicked();
 
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
 	QDoubleSpinBox* doubleSpinBox;
+	QStandardItemModel* listViewBlankAreas;
 
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;

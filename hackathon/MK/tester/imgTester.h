@@ -25,10 +25,12 @@ public:
 	vector<vector<unsigned char>> imgSlices;
 	int cutOff;
 	vector<connectedComponent> signalBlobs;
+	int gammaCutoff;
 
 
     void sliceImgStack();
 	void ada();
+	void gamma();
 	void mask2SWC();
 
 };

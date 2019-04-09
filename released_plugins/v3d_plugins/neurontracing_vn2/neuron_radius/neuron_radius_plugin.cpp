@@ -8,6 +8,7 @@
 #include "marker_radius.h"
 #include "smooth_curve.h"
 #include "hierarchy_prune.h"
+#include  "volimg_proc.h"
 
 
 using namespace std;
@@ -339,26 +340,47 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		}
 		string inimg_file = infiles[0];
 		string inswc_file = infiles[1];
-		string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
+        string outswc_file=outfiles[0];
+        //string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
 		if(outswc_file == "") outswc_file = inswc_file + ".out.swc";
 
-		double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : 40;
-		bool is_2d = (inparas.size() == 2) ? atoi(inparas[1]) : 0;
+        double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : -1;
+        if(bkg_thresh==atof("AUTO")) bkg_thresh= -1;
+        bool is_2d = (inparas.size() == 2) ? atoi(inparas[1]) : 0;
+        bool ada_thresh=false;
 
 		cout<<"inimg_file = "<<inimg_file<<endl;
 		cout<<"inswc_file = "<<inswc_file<<endl;
 		cout<<"outswc_file = "<<outswc_file<<endl;
-		cout<<"bkg_thresh = "<<bkg_thresh<<endl;
-        
+        cout<<"bkg_threshold="<<bkg_thresh<<endl;
+        if(bkg_thresh==-1)
+        {
+            cout<<"will use adaptive threshold"<<endl;
+            ada_thresh=true;
+        }
+
 		cout<<"is2d = "<< (int)is_2d <<endl;
 
 		unsigned char * inimg1d = 0; 
+
         V3DLONG in_sz[4];
 		int datatype;
         cout << "*********************!!!!!!!!!!!!!!!!"<<endl;
+
+
         if(!simple_loadimage_wrapper(callback,(char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) return false;
 		vector<MyMarker*> inswc = readSWC_file(inswc_file);
 		if(inswc.empty()) return false;
+
+        if(ada_thresh){
+        double imgave,imgstd;
+        V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+        mean_and_std(inimg1d,total_size,imgave,imgstd);
+        double td= (imgstd<10) ? 10:imgstd;
+        bkg_thresh= imgave+0.7*td+30;}
+
+        cout<<"thresh="<<bkg_thresh<<endl;
+
 		for(int i = 0; i < inswc.size(); i++)
 		{
 			MyMarker * marker = inswc[i];
@@ -441,16 +463,26 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
         }
         string inimg_file = infiles[0];
         string inswc_file = infiles[1];
-        string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
+        //string outswc_file = (infiles.size() == 3) ? infiles[2] : "";
+        string outswc_file=outfiles[0];
         if(outswc_file == "") outswc_file = inswc_file + ".out.swc";
 
-        double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : 40;
+        double bkg_thresh = (inparas.size() >= 1) ? atof(inparas[0]) : -1;
+        if(bkg_thresh==atof("AUTO")) bkg_thresh=-1;
         bool is_2d = (inparas.size() == 2) ? atoi(inparas[1]) : 0;
-
+        bool ada_thresh=false;
         cout<<"inimg_file = "<<inimg_file<<endl;
         cout<<"inswc_file = "<<inswc_file<<endl;
         cout<<"outswc_file = "<<outswc_file<<endl;
-        cout<<"bkg_thresh = "<<bkg_thresh<<endl;
+        if(bkg_thresh== -1)
+        {
+        cout<<"will use adaptive threshold"<<endl;
+        ada_thresh=true;
+        }
+
+
+        cout<<"bkg_thresh="<<bkg_thresh<<endl;
+        //cout<<" ada_tresh?="<<(int)is_ada<<endl;
         cout<<"is2d = "<< (int)is_2d <<endl;
 
         V3DLONG *in_zz = 0;
@@ -459,6 +491,8 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
             return false;
         }
 
+//        NeuronTree nt=readSWC_file(inswc_file);
+//        NeuronTree nt_sort=SortSWC_pipelien;
         vector<MyMarker*> inswc = readSWC_file(inswc_file);
         for(int i = 0; i < inswc.size(); i++)
         {
@@ -485,6 +519,18 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
                 unsigned char * inimg1d = 0;
                 inimg1d = callback.getSubVolumeTeraFly(inimg_file,start_x,end_x,
                                                        start_y,end_y,start_z,end_z);
+
+                if(ada_thresh){
+                double imgave,imgstd;
+                V3DLONG total_size=in_sz[0]*in_sz[1]*in_sz[2];
+                mean_and_std(inimg1d,total_size,imgave,imgstd);
+                //double td= (imgstd<10) ? 10:imgstd;
+                bkg_thresh= imgave+0.7*imgstd+30;
+                }
+                cout<<"threshold="<<bkg_thresh<<endl;
+
+
+
                 for(int j = 0; j < inswc.size(); j++)
                 {
                     if(inswc[j]->radius == -1 && inswc[j]->x >= start_x+10 && inswc[j]->x <end_x-10
@@ -495,6 +541,9 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
                         marker.x = inswc[j]->x-start_x;
                         marker.y = inswc[j]->y-start_y;
                         marker.z = inswc[j]->z-start_z;
+
+
+
                         if(is_2d)
                             inswc[j]->radius = markerRadiusXY(inimg1d, in_sz, marker, bkg_thresh);
                         else
@@ -537,6 +586,8 @@ bool SWCRadiusPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 		cout<<"v3d -x <plugin_dll> -f neuron_radius -i <inimg_file> <inswc_file> -p <threshold> [<is2d>]"
         <<endl
         <<"The output will be appended  .out.swc automatically" 
+        <<endl
+        <<"Using \"AUTO\" as first parameter for auto tresholding"
         <<endl;
 	}
     

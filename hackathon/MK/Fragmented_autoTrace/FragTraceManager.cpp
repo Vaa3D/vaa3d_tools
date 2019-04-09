@@ -224,6 +224,12 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		profiledTree MSTdownSampledNoSpikeTree = this->fragTraceTreeManager.spikeRemove(MSTdownSampledTree);
 		profiledTree MSTDnNoSpikeBranchBreak = NeuronStructExplorer::MSTbranchBreak(MSTdownSampledNoSpikeTree);
 		profiledTree somaHollowedTree = NeuronStructExplorer::treeHollow(MSTDnNoSpikeBranchBreak, 64, 64, 128, 5);
+		for (int hollowi = 0; hollowi < this->blankXs.size(); ++hollowi)
+		{
+			cout << this->blankXs[hollowi] << " " << this->blankYs[hollowi] << " " << this->blankZs[hollowi] << " " << this->blankRadius[hollowi] << endl;
+			profiledTree customHollowedTree = NeuronStructExplorer::treeHollow(somaHollowedTree, this->blankXs.at(hollowi), this->blankYs.at(hollowi), this->blankZs.at(hollowi), this->blankRadius.at(hollowi));
+			somaHollowedTree = customHollowedTree;
+		}
 		//profiledTree iteredConnectedTree = this->fragTraceTreeManager.itered_connectLongNeurite(somaHollowedTree, 5);
 
 		NeuronTree floatingExcludedTree;
