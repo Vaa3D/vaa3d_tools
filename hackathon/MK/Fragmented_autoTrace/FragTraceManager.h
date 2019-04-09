@@ -47,6 +47,12 @@ public:
 	string MSTtreeName;
 	int minNodeNum;
 
+	bool blankArea;
+	vector<int> blankXs;
+	vector<int> blankYs;
+	vector<int> blankZs;
+	vector<int> blankRadius;
+
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;
 
