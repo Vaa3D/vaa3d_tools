@@ -296,8 +296,10 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         if(P.method == app1)
             tmpfolder= P.output_folder+("/tmp_APP1");
         else if (P.method == app2)
-//            tmpfolder= P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-              tmpfolder= P.markerfilename+QString("_tmp_APP2");
+        {
+            tmpfolder= P.markerfilename+QString("_tmp_APP2");
+
+        }
         else
             tmpfolder= P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
@@ -311,6 +313,12 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         printf("Can not create a tmp folder!\n");
         return false;
     }
+
+    QString finaloutputswc;
+    if(P.global_name)
+        finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
+    if(QFileInfo(finaloutputswc).exists())
+        system(qPrintable(QString("rm %1").arg(finaloutputswc.toStdString().c_str())));
 
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
@@ -1361,7 +1369,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     if(P.global_name)
-        //finaloutputswc = P.markerfilename + QString("_nc_APP2_GD.swc");
         finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
 
     QString imageSaveString = saveDirString;
