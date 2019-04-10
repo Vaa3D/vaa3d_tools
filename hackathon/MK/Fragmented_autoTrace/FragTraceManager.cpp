@@ -139,8 +139,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree finalCentroidTree;
 
 // ------- using omp to speed up skeletonization process ------- //
-//#pragma omp parallel num_threads(this->numProcs)
-//		{
+#pragma omp parallel num_threads(this->numProcs)
+		{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
 				if (it->size < voxelCount) continue;
@@ -162,10 +162,10 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 				NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 				profiledTree profiledMSTtree(MSTtree);
-				profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
+				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
 				objTrees.push_back(profiledMSTtree.tree);
 			}
-//		}
+		}
 // ------------------------------------------------------------- //
 
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
@@ -250,7 +250,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		writeSWC_file(localSWCFullName, finalOutputTree);
 	}
 	
-	this->tracedTree = finalOutputTree;
+	emit emitTracedTree(finalOutputTree);
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)

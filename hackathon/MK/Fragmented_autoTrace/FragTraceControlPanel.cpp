@@ -438,7 +438,6 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 	
 	cout << "Fragment tracing procedure initiated." << endl;
-	this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
 		
 	if (this->isVisible())
 	{
@@ -451,10 +450,12 @@ void FragTraceControlPanel::traceButtonClicked()
 				QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
 				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
 			}
-			this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 			if (uiPtr->checkBox->isChecked())
 			{
+				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
+				this->traceManagerPtr->finalSaveRootQ = rootQ;
+
 				if (uiPtr->groupBox_7->isChecked())
 				{
 					if (this->listViewBlankAreas->rowCount() != 0)
@@ -555,10 +556,6 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
 				else
 					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
-
-
-				this->traceManagerPtr->imgProcPipe_wholeBlock();
-				this->tracedTree = this->traceManagerPtr->tracedTree;
 			}
 		}
 		else if (!uiPtr->radioButton->isChecked() && uiPtr->radioButton_2->isChecked())
@@ -570,10 +567,12 @@ void FragTraceControlPanel::traceButtonClicked()
 				QStringList saveFullNameParse = uiPtr->lineEdit->text().split("/");
 				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
 			}
-			this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 			if (uiPtr->checkBox->isChecked())
 			{
+				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), dendriticTree);
+				this->traceManagerPtr->finalSaveRootQ = rootQ;
+
 				if (uiPtr->groupBox_7->isChecked())
 				{
 					if (this->listViewBlankAreas->rowCount() != 0)
@@ -656,9 +655,6 @@ void FragTraceControlPanel::traceButtonClicked()
 					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", atof(uiPtr->lineEdit_4->text().toStdString().c_str())));
 				else
 					this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
-
-				this->traceManagerPtr->imgProcPipe_wholeBlock();
-				this->tracedTree = this->traceManagerPtr->tracedTree;
 			}
 		}
 
@@ -678,7 +674,6 @@ void FragTraceControlPanel::traceButtonClicked()
 		{
 			this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
 			this->traceManagerPtr->finalSaveRootQ = rootQ;
-			this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
 			// ------- Image Enhancement -------
 			if (currSettings.value("ada") == true)
@@ -760,6 +755,15 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->paramsFromUI.insert(pair<string, float>("labeledDistThreshold", -1));
 		}
 	}
+	
+	this->connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
+	this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
+
+	emit switchOnSegPipe();
+
+	this->disconnect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
+	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
+
 
 	this->scaleTracedTree();
 	NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
