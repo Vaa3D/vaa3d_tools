@@ -26,6 +26,8 @@ public:
 
 	map<string, float> paramsFromUI;
 
+	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
+
 signals:
 	void switchOnSegPipe();
 
@@ -37,8 +39,6 @@ public slots:
 	void traceButtonClicked();
 	void browseSavePathClicked();
 	void blankAreaClicked();
-
-	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
 	QDoubleSpinBox* doubleSpinBox;

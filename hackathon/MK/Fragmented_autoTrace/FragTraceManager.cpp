@@ -250,7 +250,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		writeSWC_file(localSWCFullName, finalOutputTree);
 	}
 	
-	emit emitTracedTree(finalOutputTree);
+	this->tracedTree = finalOutputTree;
 }
 
 void FragTraceManager::adaThre(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)

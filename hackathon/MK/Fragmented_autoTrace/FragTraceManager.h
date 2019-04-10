@@ -13,8 +13,6 @@ enum workMode { wholeBlock_axon, dendriticTree };
 
 class FragTraceManager: public QObject
 {
-	Q_OBJECT
-
 public:
 	FragTraceManager() {};
 	FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, workMode mode, bool slices = true);
@@ -58,11 +56,8 @@ public:
 
 	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
 
-public slots:
+	NeuronTree tracedTree;
 	void imgProcPipe_wholeBlock();
-
-signals:
-	void emitTracedTree(NeuronTree tracedTree);
 
 private:
 	int numProcs;
