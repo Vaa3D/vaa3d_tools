@@ -1541,7 +1541,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-    if(!ifs_swc && P.soma)
+    if(!ifs_swc && P.soma && total4DImage->getZDim()>=64)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
