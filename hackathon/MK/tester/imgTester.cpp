@@ -42,6 +42,42 @@ void ImgTester::sliceImgStack()
 	}
 }
 
+void ImgTester::thre_stats()
+{
+	ImgManager myManager(QString::fromStdString(this->inputString));
+	if (!QString::fromStdString(this->inputString).contains("."))
+	{
+		this->outputImgPath = this->outputString;
+		for (multimap<string, string>::iterator sliceIt = myManager.inputMultiCasesFullPaths.begin(); sliceIt != myManager.inputMultiCasesFullPaths.end(); ++sliceIt)
+		{
+			myManager.inputSingleCaseFullPath = sliceIt->second;
+			myManager.imgEntry(sliceIt->first, ImgManager::singleCase);
+
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(sliceIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(sliceIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			for (int i = 0; i < imgDims[0] * imgDims[1]; ++i) outputImgPtr[i] = 0;
+			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(sliceIt->first).dims);
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(sliceIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean") + imgStats.at("std"))));
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = QString::fromStdString(this->outputImgPath) + "\\" + QString::fromStdString(sliceIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+			myManager.imgDatabase.clear();
+		}
+	}
+}
+
 void ImgTester::ada()
 {
 	ImgManager myManager(QString::fromStdString(this->inputString));

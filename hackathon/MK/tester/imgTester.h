@@ -31,6 +31,7 @@ public:
     void sliceImgStack();
 	void ada();
 	void gamma();
+	void thre_stats();
 	void mask2SWC();
 
 };

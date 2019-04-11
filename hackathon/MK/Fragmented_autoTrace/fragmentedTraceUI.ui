@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>842</width>
-    <height>916</height>
+    <width>853</width>
+    <height>938</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -289,8 +289,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>745</width>
-               <height>559</height>
+               <width>756</width>
+               <height>589</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -299,13 +299,13 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>250</height>
+                  <height>280</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>300</height>
+                  <height>330</height>
                  </size>
                 </property>
                 <property name="font">
@@ -329,7 +329,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>130</height>
+                     <height>170</height>
                     </size>
                    </property>
                    <property name="font">
@@ -561,7 +561,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>40</height>
+                     <height>60</height>
                     </size>
                    </property>
                    <property name="frameShape">
@@ -614,7 +614,7 @@
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>500</height>
+                  <height>250</height>
                  </size>
                 </property>
                 <property name="font">
@@ -638,7 +638,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>130</height>
+                     <height>150</height>
                     </size>
                    </property>
                    <property name="font">
@@ -813,8 +813,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>754</width>
-               <height>503</height>
+               <width>777</width>
+               <height>526</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -871,7 +871,7 @@
                       <property name="maximumSize">
                        <size>
                         <width>16777215</width>
-                        <height>50</height>
+                        <height>70</height>
                        </size>
                       </property>
                       <property name="frameShape">
@@ -940,8 +940,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>754</width>
-               <height>503</height>
+               <width>777</width>
+               <height>526</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -971,7 +971,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>50</height>
+                     <height>70</height>
                     </size>
                    </property>
                    <property name="frameShape">
@@ -1023,23 +1023,6 @@
                    </layout>
                   </widget>
                  </item>
-                 <item>
-                  <widget class="QFrame" name="frame_9">
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>50</height>
-                    </size>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_5"/>
-                  </widget>
-                 </item>
                 </layout>
                </widget>
               </item>
@@ -1064,8 +1047,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>754</width>
-               <height>503</height>
+               <width>777</width>
+               <height>526</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -1089,7 +1072,7 @@
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>60</height>
+                     <height>70</height>
                     </size>
                    </property>
                    <property name="frameShape">
@@ -1171,7 +1154,7 @@
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>120</height>
+                  <height>150</height>
                  </size>
                 </property>
                 <property name="title">
@@ -1509,8 +1492,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>frame</zorder>
-  <zorder>groupBox</zorder>
  </widget>
  <resources/>
  <connections>

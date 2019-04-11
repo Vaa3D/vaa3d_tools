@@ -162,7 +162,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 
 				NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 				profiledTree profiledMSTtree(MSTtree);
-				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree);
+				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
 				objTrees.push_back(profiledMSTtree.tree);
 			}
 		}
@@ -311,55 +311,28 @@ void FragTraceManager::simpleThre(const string inputRegImgName, V3DLONG dims[], 
 
 void FragTraceManager::gammaCorrect(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName)
 {
-	if (this->fragTraceImgManager.imgDatabase.find(inputRegImgName) == this->fragTraceImgManager.imgDatabase.end())
-	{
-		cerr << "No source image found. Do nothing and return.";
-	}
+	registeredImg gammaSlices;
+	gammaSlices.imgAlias = outputRegImgName;
+	gammaSlices.dims[0] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[0];
+	gammaSlices.dims[1] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[1];
+	gammaSlices.dims[2] = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).dims[2];
 
-	int imgDims[3];
-	imgDims[0] = dims[0];
-	imgDims[1] = dims[1];
-	imgDims[2] = dims[2];
-	registeredImg regGamma;
-	regGamma.imgAlias = outputRegImgName;
-	regGamma.dims[0] = imgDims[0];
-	regGamma.dims[1] = imgDims[1];
-	regGamma.dims[2] = imgDims[2];
-	imgDims[2] = 1;
-	cout << this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.size() << endl;
+	int sliceDims[3];
+	sliceDims[0] = gammaSlices.dims[0];
+	sliceDims[1] = gammaSlices.dims[1];
+	sliceDims[2] = 1;
 	for (map<string, myImg1DPtr>::iterator sliceIt = this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.begin();
 		sliceIt != this->fragTraceImgManager.imgDatabase.at(inputRegImgName).slicePtrs.end(); ++sliceIt)
 	{
-		map<int, size_t> histList = ImgProcessor::histQuickList(sliceIt->second.get(), imgDims);
-		
-		int cutoffIntensity = -1;
-		for (int binI = 1; binI < 254; ++binI)
-		{
-			if (histList[binI] > histList[binI - 1] && histList[binI] < histList[binI + 1])
-			{
-				cutoffIntensity = binI;
-				break;
-			}
-		}
-		
-		myImg1DPtr my1Dslice(new unsigned char[imgDims[0] * imgDims[1]]);
-		if (cutoffIntensity == -1)
-		{
-			for (int pixi = 0; pixi < imgDims[0] * imgDims[1]; ++pixi) my1Dslice.get()[pixi] = 0;
-			regGamma.slicePtrs.insert({ sliceIt->first, my1Dslice });
-		}
-		else
-		{
-			ImgProcessor::stepped_gammaCorrection(sliceIt->second.get(), my1Dslice.get(), imgDims, cutoffIntensity);
-			regGamma.slicePtrs.insert({ sliceIt->first, my1Dslice });
-		}
+		myImg1DPtr my1Dslice(new unsigned char[sliceDims[0] * sliceDims[1]]);
+		ImgProcessor::stepped_gammaCorrection(sliceIt->second.get(), my1Dslice.get(), sliceDims, 5);
+		gammaSlices.slicePtrs.insert({ sliceIt->first, my1Dslice });
 	}
-	this->fragTraceImgManager.imgDatabase.insert({ regGamma.imgAlias, regGamma });
+	this->fragTraceImgManager.imgDatabase.insert({ gammaSlices.imgAlias, gammaSlices });
 
 	if (this->saveAdaResults)
 	{
-		QString saveRootQ = this->finalSaveRootQ + "\\testFolder1\\gamma";
-		if (!QDir(saveRootQ).exists()) QDir().mkpath(saveRootQ);
+		QString saveRootQ = this->simpleAdaSaveDirQ + "\\" + QString::fromStdString(outputRegImgName);
 		this->saveIntermediateResult(outputRegImgName, saveRootQ, dims);
 	}
 }

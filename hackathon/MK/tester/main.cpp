@@ -88,18 +88,57 @@ int main(int argc, char* argv[])
 		if (paras.at(2).compare("")) myImgTester.cutOff = stoi(paras.at(2));
 		myImgTester.ada();
 	}
-	else if (!funcName.compare("mask2SWC_dendrite"))
+	else if (!funcName.compare("threshold_stats"))
+	{
+		myImgTester.inputString = paras.at(0);
+		myImgTester.outputString = paras.at(1);
+		myImgTester.thre_stats();
+	}
+	else if (!funcName.compare("simple_thre"))
+	{
+		const char* folderNameC = argv[2];
+		string folderName(folderNameC);
+		QString folderNameQ = QString::fromStdString(folderName);
+		ImgManager myManager(folderNameQ);
+
+		const char* saveFolderNameC = argv[3];
+		string saveFolderName(saveFolderNameC);
+		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
+
+		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
+		{
+			myManager.inputSingleCaseFullPath = caseIt->second;
+			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
+
+			int imgDims[3];
+			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
+			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
+			imgDims[2] = 1;
+			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
+			//map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
+			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, 10);
+
+			V3DLONG saveDims[4];
+			saveDims[0] = imgDims[0];
+			saveDims[1] = imgDims[1];
+			saveDims[2] = 1;
+			saveDims[3] = 1;
+			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
+			string saveFileName = saveFileNameQ.toStdString();
+			const char* saveFileNameC = saveFileName.c_str();
+			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
+
+			delete[] outputImgPtr;
+			myManager.imgDatabase.clear();
+		}
+	}
+	else if (!funcName.compare("mask2SWC"))
 	{
 		myImgTester.inputString = paras.at(0);
 		myImgTester.outputString = paras.at(1);
 		myImgTester.mask2SWC();
 
-		connectedComponent dendriteComponent = *myImgTester.signalBlobs.begin();
-		for (vector<connectedComponent>::iterator compIt = myImgTester.signalBlobs.begin() + 1; compIt != myImgTester.signalBlobs.end(); ++compIt)
-			if (compIt->size > dendriteComponent.size) dendriteComponent = *compIt;
-		vector<connectedComponent> den;
-		den.push_back(dendriteComponent);
-		NeuronTree dendriteTree = NeuronStructUtil::blobs2tree(den, true);
+		NeuronTree dendriteTree = NeuronStructUtil::blobs2tree(myImgTester.signalBlobs, true);
 		QString blobTreeFullNameQ = QString::fromStdString(paras.at(1));
 		writeSWC_file(blobTreeFullNameQ, dendriteTree);
 	}
@@ -520,85 +559,6 @@ int main(int argc, char* argv[])
 			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
 			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
 			outputFile << imgStats.at("mean") << "\t" << imgStats.at("std") << "\t" << imgStats.at("median") << endl;
-		}
-	}
-	else if (!funcName.compare("threshold_stats"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-		ImgManager myManager(folderNameQ);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		clock_t start = clock();
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
-		{
-			myManager.inputSingleCaseFullPath = caseIt->second;
-			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
-
-			int imgDims[3];
-			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
-			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
-			imgDims[2] = 1;
-			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-			map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, int(floor(imgStats.at("mean") + 2 * imgStats.at("std"))));
-
-			V3DLONG saveDims[4];
-			saveDims[0] = imgDims[0];
-			saveDims[1] = imgDims[1];
-			saveDims[2] = 1;
-			saveDims[3] = 1;
-			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
-			string saveFileName = saveFileNameQ.toStdString();
-			const char* saveFileNameC = saveFileName.c_str();
-			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-			delete[] outputImgPtr;
-			myManager.imgDatabase.clear();
-		}
-		double duration = double(clock() - start) / double(CLOCKS_PER_SEC);
-		cout << "time elapsed: " << duration << endl;
-	}
-	else if (!funcName.compare("simple_thre"))
-	{
-		const char* folderNameC = argv[2];
-		string folderName(folderNameC);
-		QString folderNameQ = QString::fromStdString(folderName);
-		ImgManager myManager(folderNameQ);
-
-		const char* saveFolderNameC = argv[3];
-		string saveFolderName(saveFolderNameC);
-		QString saveFolderNameQ = QString::fromStdString(saveFolderName);
-
-		for (multimap<string, string>::iterator caseIt = myManager.inputMultiCasesFullPaths.begin(); caseIt != myManager.inputMultiCasesFullPaths.end(); ++caseIt)
-		{
-			myManager.inputSingleCaseFullPath = caseIt->second;
-			myManager.imgEntry(caseIt->first, ImgManager::singleCase);
-
-			int imgDims[3];
-			imgDims[0] = myManager.imgDatabase.at(caseIt->first).dims[0];
-			imgDims[1] = myManager.imgDatabase.at(caseIt->first).dims[1];
-			imgDims[2] = 1;
-			unsigned char* outputImgPtr = new unsigned char[imgDims[0] * imgDims[1]];
-			//map<string, float> imgStats = ImgProcessor::getBasicStats_no0(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), myManager.imgDatabase.at(caseIt->first).dims);
-			ImgProcessor::simpleThresh(myManager.imgDatabase.at(caseIt->first).slicePtrs.begin()->second.get(), outputImgPtr, imgDims, 10);
-
-			V3DLONG saveDims[4];
-			saveDims[0] = imgDims[0];
-			saveDims[1] = imgDims[1];
-			saveDims[2] = 1;
-			saveDims[3] = 1;
-			QString saveFileNameQ = saveFolderNameQ + "\\" + QString::fromStdString(caseIt->first) + ".tif";
-			string saveFileName = saveFileNameQ.toStdString();
-			const char* saveFileNameC = saveFileName.c_str();
-			ImgManager::saveimage_wrapper(saveFileNameC, outputImgPtr, saveDims, 1);
-
-			delete[] outputImgPtr;
-			myManager.imgDatabase.clear();
 		}
 	}
 	else if (!funcName.compare("swcSubtract"))
