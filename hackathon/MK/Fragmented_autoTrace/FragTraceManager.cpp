@@ -106,7 +106,11 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		{
 			if (this->mode == dendriticTree)
 			{
+				//clock_t begin = clock();
 				this->mask2swc("ada_cutoff", "blobTree");
+				//clock_t end = clock();
+				//float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+				//cout << "Connected component TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
 			}
 			else
 			{
@@ -159,13 +163,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 					centroidTree.listNeuron.push_back(newNode);
 				}
 				finalCentroidTree.listNeuron.append(centroidTree.listNeuron);
-
+				
 				NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 				profiledTree profiledMSTtree(MSTtree);
 				//profiledTree smoothedTree = NeuronStructExplorer::spikeRemove(profiledMSTtree); -> This can cause error and terminate the program. Need to investigate the implementation.
 				objTrees.push_back(profiledMSTtree.tree);
 			}
 		}
+		
 // ------------------------------------------------------------- //
 
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
@@ -218,6 +223,10 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			}
 		}
 // ------------------------------------------------------------- //
+
+		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
+		writeSWC_file(finalCentroidTreeNameQ, centroidTree);
+		cout << endl;
 
 		NeuronTree MSTtree = this->fragTraceTreeManager.SWC2MSTtree(centroidTree);
 		profiledTree profiledMSTtree(MSTtree);
