@@ -91,6 +91,9 @@ ImgManager::ImgManager(QString inputPath)
 	// -- The specified constructor checks if the input argument is a filename or a path.
 	//    If it's a path, the constructor parses the path and stores image directories into basic data members, eg, ImgManager::inputMultiCasesSliceFullPath, etc.
 
+	this->inputSingleCaseFullPath = "";
+	this->outputSingleCaseFullPath = "";
+
 	if (inputPath.contains(".tif"))
 	{
 		this->inputSingleCaseFullPath = inputPath.toStdString();
@@ -192,6 +195,7 @@ void ImgManager::imgEntry(string caseID, imgFormat format)
 			vector<string> sliceFullNameParse;
 			boost::split(sliceFullNameParse, sliceFullName, boost::is_any_of("/"));
 			string sliceFileName = sliceFullNameParse.back();
+			cout << sliceFileName << endl;
 			const char* sliceFullNameC = sliceFullName.c_str();
 			Image4DSimple* slicePtr = new Image4DSimple;
 			slicePtr->loadImage(sliceFullNameC);

@@ -24,6 +24,7 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
               double xshift, double yshift, double zshift,bool rotation, bool report_single_tree){
 
     printf("welcome to crop_swc\n");
+    qDebug()<<report_single_tree;
     // 1. read input
     NeuronTree nt = readSWC_file(qs_input);
     NeuronSWC soma_node = nt.listNeuron.at(soma);
@@ -65,6 +66,8 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         }
         new_tree.listNeuron.append(node);
     }
+    new_tree = missing_parent(new_tree);
+    export_list2file(new_tree.listNeuron, "crop_test.swc");
 
     // 2.3 return single tree
     if(report_single_tree){

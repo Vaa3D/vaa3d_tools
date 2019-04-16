@@ -13,8 +13,8 @@ QStringList apo_to_marker::menulist() const
 {
 	return QStringList() 
         <<tr("save apo to marker format")
-        <<tr("save apo to individual markers")
-        <<tr("save apo to individual apo files")
+//        <<tr("save apo to individual markers")
+//        <<tr("save apo to individual apo files")
         <<tr("add index name in apo file")
         <<tr("save swc file to apo format")
 		<<tr("about");
@@ -51,6 +51,8 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             t.x = file_inmarkers[i].x;
             t.y = file_inmarkers[i].y;
             t.z = file_inmarkers[i].z;
+            t.name = file_inmarkers[i].name;
+            t.comment = file_inmarkers[i].comment;
             t.color = file_inmarkers[i].color;
             listLandmarks.push_back(t);
         }
@@ -173,6 +175,8 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             file_inmarkers[i].x=file_inmarkers[i].x;
             file_inmarkers[i].y=file_inmarkers[i].y;
             file_inmarkers[i].z=file_inmarkers[i].z;
+            file_inmarkers[i].comment=file_inmarkers[i].comment;
+
         }
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
@@ -212,12 +216,15 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
         {
             CellAPO t;
-            t.x = (nt.listNeuron.at(i).x);
-            t.y = (nt.listNeuron.at(i).y);
-            t.z = (nt.listNeuron.at(i).z);
-            t.color.r=0;
-            t.color.g=0;
-            t.color.b=255;
+            t.x = nt.listNeuron.at(i).x;
+            t.y = nt.listNeuron.at(i).y;
+            t.z = nt.listNeuron.at(i).z;
+            t.color = nt.listNeuron.at(i).color;
+            t.name = nt.listNeuron.at(i).name;
+            t.comment = nt.listNeuron.at(i).comment;
+//            t.color.r=0;
+//            t.color.g=0;
+//            t.color.b=255;
 
             t.volsize = Vsize;
             file_inmarkers.push_back(t);

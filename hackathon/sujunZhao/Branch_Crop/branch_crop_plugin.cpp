@@ -54,9 +54,9 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
         get_branches(input,output,callback);
 	}
-    else if (func_name == tr("branch_point_sample"))
+    else if (func_name == tr("get_missing_branch"))
 	{
-		v3d_msg("To be implemented.");
+        missing_branch_detection(input,output,callback,parent);
 	}
     else if (func_name == tr("help")){
         v3d_msg("To be implemented.");

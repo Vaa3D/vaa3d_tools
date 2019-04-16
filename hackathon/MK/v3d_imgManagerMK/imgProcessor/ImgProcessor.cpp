@@ -582,6 +582,62 @@ void ImgProcessor::imgOpen2D(const unsigned char inputImgPtr[], unsigned char ou
 	memcpy(outputImgPtr, finalOutputImgPtr, imgDims[0] * imgDims[1]);
 }
 
+void ImgProcessor::imgClose3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	vector<vector<unsigned char>> slices;
+	imgStackSlicer(inputImgPtr, slices, imgDims);
+
+	long int outi = 0;
+	for (int k = 0; k < imgDims[2]; ++k)
+	{
+		unsigned char* thisSlicePtr = new unsigned char[slices.at(k).size()];
+		unsigned char* sliceClosedPtr = new unsigned char[slices.at(k).size()];
+		for (vector<unsigned char>::iterator it = slices.at(k).begin(); it != slices.at(k).end(); ++it)
+			thisSlicePtr[size_t(it - slices.at(k).begin())] = *it;
+		ImgProcessor::imgClose2D(thisSlicePtr, sliceClosedPtr, imgDims, structEle);
+
+		for (int j = 0; j < imgDims[1]; ++j)
+		{
+			for (int i = 0; i < imgDims[0]; ++i)
+			{
+				outputImgPtr[outi] = sliceClosedPtr[imgDims[0] * j + i];
+				++outi;
+			}
+		}
+
+		delete[] thisSlicePtr;
+		delete[] sliceClosedPtr;
+	}
+}
+
+void ImgProcessor::imgOpen3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle)
+{
+	vector<vector<unsigned char>> slices;
+	imgStackSlicer(inputImgPtr, slices, imgDims);
+
+	long int outi = 0;
+	for (int k = 0; k < imgDims[2]; ++k)
+	{
+		unsigned char* thisSlicePtr = new unsigned char[slices.at(k).size()];
+		unsigned char* sliceOpenedPtr = new unsigned char[slices.at(k).size()];
+		for (vector<unsigned char>::iterator it = slices.at(k).begin(); it != slices.at(k).end(); ++it)
+			thisSlicePtr[size_t(it - slices.at(k).begin())] = *it;
+		ImgProcessor::imgOpen2D(thisSlicePtr, sliceOpenedPtr, imgDims, structEle);
+
+		for (int j = 0; j < imgDims[1]; ++j)
+		{
+			for (int i = 0; i < imgDims[0]; ++i)
+			{
+				outputImgPtr[outi] = sliceOpenedPtr[imgDims[0] * j + i];
+				++outi;
+			}
+		}
+
+		delete[] thisSlicePtr;
+		delete[] sliceOpenedPtr;
+	}
+}
+
 void ImgProcessor::conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold)
 {
 	unsigned char* roiPtr = new unsigned char[(structEle.radius * 2 + 1) * (structEle.radius * 2 + 1)];
