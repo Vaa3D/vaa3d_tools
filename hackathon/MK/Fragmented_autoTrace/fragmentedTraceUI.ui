@@ -35,7 +35,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>Fragmented auto-tracing</string>
+   <string/>
   </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>
@@ -814,7 +814,7 @@
                <x>0</x>
                <y>0</y>
                <width>777</width>
-               <height>526</height>
+               <height>538</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -941,7 +941,7 @@
                <x>0</x>
                <y>0</y>
                <width>777</width>
-               <height>526</height>
+               <height>538</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1048,7 +1048,7 @@
                <x>0</x>
                <y>0</y>
                <width>777</width>
-               <height>526</height>
+               <height>538</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_16">

@@ -150,6 +150,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->listView->setModel(listViewBlankAreas);
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
+		string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
+		QString windowTitleQ = "Fragment-based Auto-tracing v" + QString::fromStdString(versionString);
+		this->setWindowTitle(windowTitleQ);
 		this->show();
 
 		this->traceManagerPtr = nullptr;
