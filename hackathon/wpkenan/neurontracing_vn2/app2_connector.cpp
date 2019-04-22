@@ -832,6 +832,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
 
 bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
+	cout << "in_app3_line1" << endl;
 	vector<MyMarker> file_inmarkers_tmp; 
 	file_inmarkers_tmp=readMarker_file(string(qPrintable(p.inmarker_file)));
 	
@@ -839,8 +840,8 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 		//cout << file_inmarkers_tmp.size() << endl;
 		//  bool b_menu = true;
 	bool b_dofunc = false;
-	for(int tmpI=0;tmpI<file_inmarkers_tmp.size();tmpI++){
-		p.landmarks.clear();
+	for(int tmpI=0;tmpI<1;tmpI++){
+		//p.landmarks.clear();
 		if (!p.p4dImage || !p.p4dImage->valid())
 		{
 			if (p.inimg_file.isEmpty()) return false;
@@ -882,6 +883,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 			}
 		}
 
+		cout << "p.landmarks.size()" << p.landmarks.size() << endl;
 		if(p.landmarks.size() < 2 && p.b_intensity ==1)
 		{
 			v3d_msg("You have to select at least two markers if using high intensity background option.",p.b_menu);
@@ -1248,6 +1250,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 						//fastmarching_tree(inmarkers[0], target, indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type);
 						cout << "p.bkg_thresh: " << p.bkg_thresh << endl;
 						cout << "p.is_break_accept: " << endl;
+						cout << "app3" << endl;
 						fastmarching_tree_wp(inmarkers,indata1d, indexOfSoma,outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type,p.bkg_thresh,p.is_break_accept);//wp
 						break;
 					case V3D_UINT16:
