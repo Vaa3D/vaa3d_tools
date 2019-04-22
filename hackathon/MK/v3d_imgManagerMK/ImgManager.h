@@ -69,7 +69,7 @@ public:
 	QStringList caseList;
 	string inputSingleCaseFullPath;
 	string outputSingleCaseFullPath;
-	multimap<string, string> inputMultiCasesFullPaths;
+	multimap<string, string> inputMultiCasesFullPaths;       // Single or multiple, all cases and slices are stored in this multimap indexed with its case/slice name.
 	multimap<string, string> outputMultiCasesSliceFullPaths;
 
 	enum imgFormat { multicaseCubes, slices, singleCase};

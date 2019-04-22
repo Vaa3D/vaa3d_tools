@@ -3,6 +3,7 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 unix:!macx {
     QMAKE_CXXFLAGS += -std=c++11
+    QMAKE_CXXFLAGS += /MP
 }
 #CONFIG	+= x86_64
 
@@ -16,6 +17,8 @@ INCLUDEPATH += $$IMGMANAGERPATH
 INCLUDEPATH += $$IMGMANAGERPATH/imgAnalyzer
 INCLUDEPATH += $$IMGMANAGERPATH/imgProcessor
 INCLUDEPATH += ../NeuronStructNavigator
+INCLUDEPATH += $$STATSLEARNERPATH
+INCLUDEPATH += ./
 INCLUDEPATH += $$V3DTOOLPATH/swc2mask_cylinder
 INCLUDEPATH += $$VAA3DPATH/neuron_editing
 win32: {
@@ -29,6 +32,7 @@ win32: {
 
 FORMS += fragmentedTraceUI.ui
 
+HEADERS += ui_fragmentedTraceUI.h
 HEADERS	+= Fragmented_Auto-trace_plugin.h
 HEADERS += FragTraceControlPanel.h
 HEADERS += FragTraceManager.h

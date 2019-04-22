@@ -384,23 +384,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     //2. start processing
     NeuronTree cur_nt;
 
-//    NeuronTree test_nt;
-//    QList<int> test_newroot;
-//    test_newroot << 1 << 1000 << 3000 << 3005 << 10000 << 30000;
-//    for(int i=0; i<test_newroot.size(); i++){
-//        int newroot_name = nt.listNeuron.at(test_newroot.at(i)).n;
-//        qDebug()<<"Trial newroot name:"<<newroot_name;
-//        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
-//        writeSWC_file("C:/Users/pengx/Desktop/test/tmp_"+QString::number(newroot_name)+".swc",test_nt);
-//    }
-//    for(int i=0; i<nt.listNeuron.size(); i++){
-//        int newroot_name = nt.listNeuron.at(i).n;
-//        qDebug()<<"Trial newroot name:"<<newroot_name;
-//        test_nt.deepCopy(my_SortSWC(nt, newroot_name, 0));
-//    }
-//    return 1;
-
-
     // 2.0 Find soma
     double dist_thres = connect_soma_dist;
     printf("\tFinding soma from APO\n");
@@ -414,20 +397,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     NeuronSWC soma_apo = S_list.at(0);
 
     printf("\tFinding soma from swc\n");
-//    V3DLONG soma_apo_id = get_soma(nt);
-//    bool soma_confirmed = 0;
-//    if(soma_apo_id != (-1)){ // found soma from swc
-//        NeuronSWC soma_swc = nt.listNeuron.at(soma_apo_id);
-//        double dist = computeDist2(soma_apo, soma_swc, XSCALE, YSCALE, ZSCALE);
-//        if(dist>10){
-////            v3d_msg(QString("Soma found in SWC is too far the one from APO.\n"
-////                            "Distance: %1.\n").arg(QString::number(dist)));
-////            return 0;
-//        }
-//        else{
-//            soma_confirmed = 1;
-//        }
-//    }
     V3DLONG soma_apo_id;
     bool soma_confirmed = 0;
     // Check all the root nodes nearby soma_apo. If multiple candidates found, choose the one with the most duplicates.
@@ -490,7 +459,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
         return 0;
     }
 
-
     // 2.1 Sort/connect/
     nt.deepCopy(my_SortSWC(nt, nt.listNeuron.at(soma_apo_id).n, thres));
 
@@ -514,149 +482,6 @@ bool pre_processing(QString qs_input, QString qs_output, double prune_size, doub
     if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
         printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
     }
-
-//    //2.0 Remove duplicates
-//    printf("\tRemoving duplicates\n");
-//    nt.deepCopy(my_SortSWC(nt, VOID, 0));
-//    if(return_temp)
-//    {
-//        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".dedup.swc"));
-//    }
-
-//    //2.1 Resample
-//    printf("\tResampling\n");
-//    if (step_size>0){
-//        printf("Resampling along segments\n");
-//        nt.deepCopy(resample(nt, step_size));
-//    }else{
-//        printf("Skip Resampling\n");
-//    }
-//    if(return_temp)
-//    {
-//        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".resample.swc"));
-//    }
-
-//    //2.2 Prune
-//    printf("\tPruning short branches\n");
-//    if (!prune_branch(nt, cur_nt, prune_size))
-//    {
-//        fprintf(stderr,"Error in prune_short_branch.\n");
-//        return 1;
-//    }
-//    nt.deepCopy(cur_nt);
-//    if(return_temp)
-//    {
-//        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".prune.swc"));
-//    }
-
-//    //2.3 Short distance connection
-//    cur_nt.deepCopy(nt);
-//    printf("\tShort distance connection\n");
-
-//    nt.deepCopy(my_connectall(nt, XSCALE, YSCALE, ZSCALE, 60, thres, 0, false, 1));
-//    // Keep track of new_edges
-//    new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".short_connection.apo", 5));
-//    // Keep track of nodes
-//    markers.append(get_new_marker(infileLabel+".short_connection.apo", 255,0,0));
-//    qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".short_connection.apo", 0,0,0).size()/2<<count_root(nt);
-//    if(return_temp)
-//    {
-//        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".short_connection.swc"));
-//    }
-
-//    //2.4 Connect to soma
-//    bool connect_soma_performed = 1;
-//    if ((connect_soma_dist>0) && (fexists(infileLabel + QString(".apo")))){
-//        printf("\tConnecting to soma\n");
-//        QList<CellAPO> soma_markers = readAPO_file(infileLabel + QString(".apo"));
-//        QList<NeuronSWC> S_list = get_soma_from_APO(soma_markers);
-//        if(S_list.isEmpty()){
-//            v3d_msg(QString("APO file is given but don't know which is soma.\n"
-//                            "Soma connection is skiped.\n"
-//                            "Please double check %1").arg(infileLabel + QString(".apo")));
-//            connect_soma_performed = 0;
-//        }
-//        else{
-//            S_list[0].r = 1;
-//            cur_nt.deepCopy(neuronlist_2_neurontree(neuronlist_cat(S_list, nt.listNeuron)));
-//            nt.deepCopy(connect_soma(nt, soma_markers, connect_soma_dist, infileLabel+".soma_connection", 1e6, colorful, false));  // 10-10-2018: return_maintree has been moved to after long_connection
-//            // Keep track of new_edges
-//            new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".soma_connection.apo", 6));
-//            // Keep track of nodes
-//            markers.append(get_new_marker(infileLabel+".soma_connection.apo", 0,255,0));
-//            qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".soma_connection.apo", 0,0,0).size()/2<<count_root(nt);
-//        }
-//    }
-//    else{
-//        // If the input swc is already connected to soma, then the apo file is not required
-//        // and one can skip the soma connecting step.
-//        printf("\tSkip connecting to soma\n");
-//        connect_soma_performed=0;
-//    }
-//    if(return_temp)
-//    {
-//        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".soma_connection.swc"));
-//    }
-
-
-//    // 2.5 Long connection
-//    printf("\tLong distance connection\n");
-//    cur_nt.deepCopy(nt);
-//    nt.deepCopy(my_connectall(nt, XSCALE, YSCALE, ZSCALE, 60, thres_long, 1, false, 1));
-//    // Keep track of new_edges
-//    new_connection = neuronlist_cat(new_connection, get_new_edge(nt, cur_nt, infileLabel+".long_connection.apo", 7));
-//    // Keep track of nodes
-//    markers.append(get_new_marker(infileLabel+".long_connection.apo", 0,0,255));
-//    qDebug()<<count_root(cur_nt)<<get_new_marker(infileLabel+".long_connection.apo", 0,0,0).size()/2<<count_root(nt);
-////    v3d_msg("color lost branch");
-//    if(connect_soma_performed){
-//        nt.deepCopy(color_lost_branch(nt));
-//    }
-////    v3d_msg("lost branch colored");
-
-//    if(return_maintree){
-//        int soma = 0;
-//        nt.deepCopy(single_tree(nt, soma));
-//    }
-//    if(return_temp)
-//    {
-//        export_listNeuron_2swc(nt.listNeuron, qPrintable(outfileLabel+".long_connection.swc"));
-//    }
-
-//    //2.6 Align axis
-//    cur_nt.listNeuron = nt.listNeuron;
-//    if (rotation)
-//    {
-//        printf("\tAligning PCA axis\n");
-//        nt = align_axis(cur_nt);
-//    }
-//    else{
-//        printf("\tSkip PCA alignment\n");
-//    }
-
-//    if (export_listNeuron_2swc(nt.listNeuron,qPrintable(qs_output))){
-//        printf("\t %s has been generated successfully.\n",qPrintable(qs_output));
-//    }
-
-//    for(int i=0;i<markers.size(); i++){
-//        markers[i].volsize=500;
-//    }
-//    writeAPO_file(outfileLabel+".apo", markers);
-//    my_saveANO(outfileLabel, true, true, qs_output);
-
-//    if(return_temp)
-//    {
-//        if (export_listNeuron_2swc(new_connection,qPrintable(outfileLabel+".new_connection.swc"))){
-//            printf("\t %s has been generated successfully.\n",qPrintable(outfileLabel+".new_connection.swc"));
-//        }
-//    }
-
-//    if(!return_temp){
-//        remove(qPrintable(infileLabel+".short_connection.apo"));
-//        remove(qPrintable(infileLabel+".soma_connection.apo"));
-//        remove(qPrintable(infileLabel+".long_connection.apo"));
-//    }
-
 
     return 1;
 }

@@ -794,7 +794,7 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 			testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(*it2).head)].radius = it->first;
 		}
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tiled_headEndTest_clusterIndex.swc", testTree.tree);
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_headEndTest_clusterIndex.swc", testTree.tree);
 	testTree = inputProfiledTree;
 	for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator it = testTree.segTailClusters.begin(); it != testTree.segTailClusters.end(); ++it)
 	{
@@ -804,21 +804,21 @@ void NeuronStructExplorer::getTileBasedSegClusters(profiledTree& inputProfiledTr
 			testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(*it2).tails.begin())].radius = it->first;
 		}
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tiled_tailEndTest_clusterIndex.swc", testTree.tree);
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_tailEndTest_clusterIndex.swc", testTree.tree);
 	testTree = inputProfiledTree;
 	for (boost::container::flat_map<int, int>::iterator it = testTree.headSeg2ClusterMap.begin(); it != testTree.headSeg2ClusterMap.end(); ++it)
 	{
 		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].type = it->second % 9;
 		testTree.tree.listNeuron[testTree.node2LocMap.at(testTree.segs.at(it->first).head)].radius = it->second;
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tiled_headEndTest.swc", testTree.tree);
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_headEndTest.swc", testTree.tree);
 	testTree = inputProfiledTree;
 	for (boost::container::flat_map<int, int>::iterator it = testTree.tailSeg2ClusterMap.begin(); it != testTree.tailSeg2ClusterMap.end(); ++it)
 	{
 		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].type = it->second % 9;
 		testTree.tree.listNeuron[testTree.node2LocMap.at(*testTree.segs.at(it->first).tails.begin())].radius = it->second;
 	}
-	writeSWC_file("C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\tiled_tailEndTest.swc", testTree.tree);*/
+	writeSWC_file("H:\\fMOST_fragment_tracing\\testCase1\\tiled_tailEndTest.swc", testTree.tree);*/
 }
 
 void NeuronStructExplorer::segmentDecompose(NeuronTree* inputTreePtr)
@@ -911,6 +911,12 @@ profiledTree NeuronStructExplorer::treeDownSample(const profiledTree& inputProfi
 		this->rc_segDownSample(it->second, currSegOutputList, it->second.head, nodeInterval);
 		outputTree.listNeuron.append(currSegOutputList);
 	}
+
+	vector<size_t> delLocs;
+	for (QList<NeuronSWC>::iterator nodeIt = outputTree.listNeuron.begin(); nodeIt != outputTree.listNeuron.end(); ++nodeIt)
+		if (nodeIt->n == nodeIt->parent) delLocs.push_back(size_t(nodeIt - outputTree.listNeuron.begin()));
+	sort(delLocs.rbegin(), delLocs.rend());
+	for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt) outputTree.listNeuron.erase(outputTree.listNeuron.begin() + ptrdiff_t(*delIt));
 	profiledTree outputProfiledTree(outputTree);
 	
 	return outputProfiledTree;
@@ -2436,6 +2442,73 @@ double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segU
 	}
 }
 
+profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius)
+{
+	QList<NeuronSWC> outputList;
+	for (map<int, segUnit>::const_iterator inputSegIt = inputProfiledTree.segs.begin(); inputSegIt != inputProfiledTree.segs.end(); ++inputSegIt)
+	{
+		bool out, in;
+		for (QList<NeuronSWC>::const_iterator inputNodeIt = inputSegIt->second.nodes.begin(); inputNodeIt != inputSegIt->second.nodes.end(); ++inputNodeIt)
+		{
+			float dist2center = sqrtf((inputNodeIt->x - hollowCenterX) * (inputNodeIt->x - hollowCenterX) + (inputNodeIt->y - hollowCenterY) * (inputNodeIt->y - hollowCenterY) + (inputNodeIt->z - hollowCenterZ) * (inputNodeIt->z - hollowCenterZ) / 4);
+			if (dist2center >= radius)
+			{
+				if (inputNodeIt == inputSegIt->second.nodes.begin())
+				{
+					out = true;
+					in = false;
+					NeuronSWC newNode;
+					newNode = *inputNodeIt;
+					outputList.push_back(newNode);
+					continue;
+				}
+				else
+				{
+					if (out && !in)
+					{
+						NeuronSWC newNode;
+						newNode = *inputNodeIt;
+						outputList.push_back(newNode);
+						continue;
+					}
+					else if (!out && in)
+					{
+						NeuronSWC newNode;
+						newNode = *inputNodeIt;
+						newNode.parent = -1;
+						outputList.push_back(newNode);
+						out = true;
+						in = false;
+						continue;
+					}
+				}
+			}
+			else
+			{
+				if (inputNodeIt == inputSegIt->second.nodes.begin())
+				{
+					out = false;
+					in = true;				
+				}
+				else
+				{
+					if (out && !in)
+					{
+						out = false;
+						in = true;
+					}
+				}
+			}
+		}
+	}
+
+	NeuronTree outputTree;
+	outputTree.listNeuron = outputList;
+	profiledTree outputProfiledTree(outputTree);
+
+	return outputProfiledTree;
+}
+
 segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
 {
 	segUnit outputSeg = inputSeg;
@@ -2566,27 +2639,50 @@ segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
 
 
 /* ====================================== Neuron Struct Refining Method ====================================== */
-profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree)
+profiledTree NeuronStructExplorer::spikeRemove(const profiledTree& inputProfiledTree, int spikeNodeNum)
 {
-	QList<NeuronSWC> outputList = inputProfiledTree.tree.listNeuron;
-
-	vector<size_t> delLocs;
-	for (QList<NeuronSWC>::const_iterator it = inputProfiledTree.tree.listNeuron.begin(); it != inputProfiledTree.tree.listNeuron.end(); ++it)
+	profiledTree processTree = inputProfiledTree;
+	NeuronStructExplorer myExplorer;
+	for (int currNodeNumThre = 1; currNodeNumThre <= spikeNodeNum; ++currNodeNumThre)
 	{
-		if (inputProfiledTree.node2childLocMap.find(it->n) == inputProfiledTree.node2childLocMap.end()) // tip point
-		{
-			if (inputProfiledTree.node2childLocMap.at(it->parent).size() >= 2) delLocs.push_back(inputProfiledTree.node2LocMap.at(it->n));
+		int currNodeNum = 1;
+		while (currNodeNum <= currNodeNumThre)
+		{		
+			vector<size_t> delLocs;
+			vector<size_t> delLocsCandidates;
+			for (QList<NeuronSWC>::iterator it = processTree.tree.listNeuron.begin(); it != processTree.tree.listNeuron.end(); ++it)
+			{
+				if (processTree.node2childLocMap.find(it->n) == processTree.node2childLocMap.end()) // tip point
+				{
+					int currID = it->n;
+					delLocsCandidates.clear();
+					while (1)
+					{
+						int currPaID = processTree.tree.listNeuron.at(processTree.node2LocMap.at(currID)).parent;
+						if (processTree.node2childLocMap.at(currPaID).size() >= 2 && delLocsCandidates.size() <= currNodeNum)
+						{
+							delLocs.push_back(processTree.node2LocMap.at(currID));
+							delLocs.insert(delLocs.end(), delLocsCandidates.begin(), delLocsCandidates.end());
+							break;
+						}
+						else if (processTree.node2childLocMap.at(currPaID).size() == 1 && delLocsCandidates.size() <= currNodeNum)
+						{
+							delLocsCandidates.push_back(processTree.node2LocMap.at(currID));
+							currID = currPaID;
+						}
+						else if (delLocsCandidates.size() > currNodeNum) break;
+					}
+				}
+			}
+
+			sort(delLocs.rbegin(), delLocs.rend());
+			for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) processTree.tree.listNeuron.erase(processTree.tree.listNeuron.begin() + ptrdiff_t(*it));
+			myExplorer.profiledTreeReInit(processTree);
+			++currNodeNum;
 		}
 	}
 
-	sort(delLocs.rbegin(), delLocs.rend());
-	for (vector<size_t>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputList.erase(outputList.begin() + ptrdiff_t(*it));
-
-	NeuronTree outputTree;
-	outputTree.listNeuron = outputList;
-	profiledTree outputProfiledTree(outputTree);
-
-	return outputProfiledTree;
+	return processTree;
 }
 /* ================================== END of [Neuron Struct Refining Method] ================================== */
 

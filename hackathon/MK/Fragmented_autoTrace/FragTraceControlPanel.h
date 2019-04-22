@@ -6,6 +6,10 @@
 #include "ui_fragmentedTraceUI.h"
 #include "FragTraceManager.h"
 
+#define MAINVERSION_NUM 0
+#define SUBVERSION_NUM 3
+#define PATCHVERSION_NUM 1
+
 class FragTraceControlPanel : public QDialog
 {
 	Q_OBJECT
@@ -17,6 +21,8 @@ public:
 	QString saveSWCFullName;
 	QString adaSaveRoot;
 	QString histMaskRoot;
+
+	vector<string> blankAreas;
 
 	NeuronTree tracedTree;
 	void scaleTracedTree();
@@ -34,11 +40,13 @@ public slots:
 	void saveSettingsClicked();
 	void traceButtonClicked();
 	void browseSavePathClicked();
+	void blankAreaClicked();
 
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
 	QDoubleSpinBox* doubleSpinBox;
+	QStandardItemModel* listViewBlankAreas;
 
 	V3DPluginCallback2* thisCallback;
 	Ui::FragmentedTraceUI* uiPtr;

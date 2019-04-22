@@ -12,6 +12,8 @@ INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/PengXie/preprocess/
 INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/NeuronStructNavigator/
 INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/imgProcessor/
 INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/imgAnalyzer/
+INCLUDEPATH += $$VAA3DTOOLSPATH/hackathon/MK/v3d_imgManagerMK/
+INCLUDEPATH += $$VAA3DTOOLSPATH/released_plugins/v3d_plugins/swc2mask_cylinder/
 INCLUDEPATH	+= $$VAA3DPATH/common_lib/include/
 
 unix:!macx {

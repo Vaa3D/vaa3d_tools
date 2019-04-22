@@ -11,6 +11,7 @@
 #include <v3d_interface.h>
 #include "get_terminal.h"
 #include "get_terminal_signal.h"
+#include "get_image_block_from_apo.h"
 
 
 class tip_signal_plugin : public QObject, public V3DPluginInterface2_1

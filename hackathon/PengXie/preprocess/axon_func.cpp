@@ -127,14 +127,20 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
     QList <int> lpa;
     int cur_id = endpoint;
     lpa.prepend(cur_id);
-    while(nt.listNeuron.at(cur_id).type!=1){
+    // Peng Xie 2019-03-20
+    while(nt.listNeuron.at(cur_id).pn!=(-1)){
         cur_id = name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn); // Move to the parent node
         if(cur_id==name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn)){break;} // check self loop; should not exist;
         lpa.prepend(cur_id);
-        if(nt.listNeuron.at(cur_id).pn<0){  // Reached root
-            break;
-        }
     }
+//    while(nt.listNeuron.at(cur_id).type!=1){
+//        cur_id = name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn); // Move to the parent node
+//        if(cur_id==name_list.lastIndexOf(nt.listNeuron.at(cur_id).pn)){break;} // check self loop; should not exist;
+//        lpa.prepend(cur_id);
+//        if(nt.listNeuron.at(cur_id).pn<0){  // Reached root
+//            break;
+//        }
+//    }
     return lpa;
 }
 QList<double> arbor_distribution(QString whole_axon_swc, QString lpa_swc){
@@ -243,6 +249,9 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     printf("Welcome to use axon_retype\n");
 
     // 0. File check
+    if(!fexists(whole_axon_swc)){
+        return 0;
+    }
     if (!(whole_axon_swc.endsWith(".swc") || whole_axon_swc.endsWith(".SWC")
           || whole_axon_swc.endsWith(".eswc") || whole_axon_swc.endsWith(".ESWC"))){
         printf("Error: Input file is not SWC.\n");
@@ -277,6 +286,10 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
         plist.append(node.pn);
         nlist.append(node.n);
     }
+    crop_swc(whole_axon_swc, proximal_swc, 200, 0, 0, 0, 0,0,0,0,0);
+    return 1;
+
+
     // 1.2 Load lpa
     NeuronTree lpa = readSWC_file(lpa_swc);
     // 1.3 Match axon and lpa
@@ -434,7 +447,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
 //    proximal_axon = missing_parent(proximal_axon);
 //    proximal_axon = my_SortSWC(proximal_axon, proximal_axon.listNeuron.at(0).n, 0);
 //    writeSWC_file(proximal_swc, proximal_axon);
-    crop_swc(whole_axon_swc, proximal_swc, 200, 0, 0, 1);
+//    crop_swc(whole_axon_swc, proximal_swc, 400, 0, 0, 0);
     distal_axon = missing_parent(distal_axon);
     distal_axon = my_SortSWC(distal_axon, distal_axon.listNeuron.at(0).n, 0);
     writeSWC_file(output_swc, axon);

@@ -50,6 +50,19 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist){
     return new_tree;
 }
 
+double node_dist(NeuronSWC a, NeuronSWC b, bool scale)
+{
+    if(scale){
+        a.x = a.x*RX;
+        a.y = a.y*RY;
+        a.z = a.z*RZ;
+        b.x = b.x*RX;
+        b.y = b.y*RY;
+        b.z = b.z*RZ;
+    }
+    return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
+}
+
 XYZ offset_XYZ(XYZ input, XYZ offset){
     input.x += offset.x;
     input.y += offset.y;
@@ -65,6 +78,27 @@ block offset_block(block input_block, XYZ offset)
     return input_block;
 }
 
+int get_soma(NeuronTree nt){
+    printf("Checking soma\n");
+    const int N=nt.listNeuron.size();
+    int soma;
+    int soma_ct=0;
+    // check whether unique soma
+    for(int i=0; i<N; i++){
+        // soma check
+        if(nt.listNeuron.at(i).type==1){
+            soma=i;
+            soma_ct++;
+            break;
+//            if(soma_ct>1){return -1;}
+        }
+    }
+    if(soma_ct==0){
+        qDebug() << "Error: No soma found\n";
+        return -1;
+    }
+    return soma;
+}
 
 QList<int> get_tips(NeuronTree nt, bool include_root){
     // whether a node is a tip;
@@ -115,15 +149,16 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     printf("welcome to use crop_img\n");
     if(output_format.size()==0){output_format=QString(".tiff");}
 
-    QString saveName = outputdir_img + "/" + crop_block.name + output_format;
+    QString save3DName = outputdir_img + "/" + crop_block.name + output_format;
+    QString save2DName = outputdir_img + "/" + crop_block.name + "tif";
 
     // Qstring to const char*
 //    const char* fileName = Qstring_to_char(saveName);
-    QByteArray array = saveName.toLatin1();
+    QByteArray array = save3DName.toLatin1();
     array = array.replace(" ", "");
-    const char* fileName = array.data();
+    const char* file3DName = array.data();
 
-    qDebug()<<"Output image:"<<QString(fileName);
+    qDebug()<<"Output image:"<<QString(file3DName);
 
     V3DLONG *in_zz;
     if(!callback.getDimTeraFly(image.toStdString(), in_zz))
@@ -144,12 +179,12 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
 
     // 2. Crop image. image is stored as 1d array. 2 parameters needed for cropping:
     // 2.1. 'cropped_image' is a pointer to the beginning of the region of interest
-    unsigned char * cropped_image = 0;
+    unsigned char * data1d = 0;
     qDebug()<<small.x<<small.y<<small.z<<large.x<<large.y<<large.z;
-    cropped_image = callback.getSubVolumeTeraFly(image.toStdString(),
-                                                 small.x, large.x,
-                                                 small.y, large.y,
-                                                 small.z, large.z);
+    data1d = callback.getSubVolumeTeraFly(image.toStdString(),
+                                          small.x, large.x,
+                                          small.y, large.y,
+                                          small.z, large.z);
     // 2.2. 'in_sz' sets the size of the region.
     V3DLONG in_sz[4];
     in_sz[0] = large.x-small.x;
@@ -158,15 +193,14 @@ void crop_img(QString image, block crop_block, QString outputdir_img, V3DPluginC
     in_sz[3] = in_zz[3];   // channel information
 
     // 3. Save image
-    if(QString(fileName).endsWith(".nrrd"))
+    if((QString(file3DName).endsWith(".nrrd")) || (QString(file3DName).endsWith(".v3draw")))
     {
-        simple_saveimage_wrapper(callback, fileName, cropped_image, in_sz, 1);
+        simple_saveimage_wrapper(callback, file3DName, data1d, in_sz, 1);
     }
     else{
-        printf("bad output image name:%s\n", fileName);
+        printf("bad output image name:%s\n", file3DName);
 //        qDebug()<<"bad name:"<<QString(fileName);
     }
-
     return;
 }
 
@@ -187,6 +221,109 @@ void crop_swc(QString input_swc, QString output_swc, block crop_block)
     qDebug()<<cmd;
     system(qPrintable(cmd));
     return;
+}
+
+bool generate_2d_img(V3DPluginCallback & cb, QString raw_img, QString swc, V3DLONG in_sz[4], QString output_file)
+{
+    // 1. Load image
+    unsigned char * data1d = 0;
+    const char * raw_img_char;
+    raw_img_char = Qstring_to_char(raw_img);
+    int input_format = 1;
+    simple_loadimage_wrapper(cb, raw_img_char, data1d, in_sz, input_format);
+    qDebug()<<"in_sz"<<in_sz[0]<<in_sz[1]<<in_sz[2]<<in_sz[3];
+    qDebug()<<"input_format"<<input_format;
+
+    // 2. Converte 3D image to 2D
+    V3DLONG stacksz =in_sz[0]*in_sz[1];
+    unsigned char *image_mip=0;
+    image_mip = new unsigned char [stacksz];
+    unsigned char* outputImg1DPtr = new unsigned char[stacksz];
+    for(V3DLONG iy = 0; iy < in_sz[1]; iy++)
+    {
+        V3DLONG offsetj = iy*in_sz[0];
+        for(V3DLONG ix = 0; ix < in_sz[0]; ix++)
+        {
+            int max_mip = 0;
+            for(V3DLONG iz = 0; iz < in_sz[2]; iz++)
+            {
+                V3DLONG offsetk = iz*in_sz[1]*in_sz[0];
+                if(data1d[offsetk + offsetj + ix] >= max_mip)
+                {
+                    image_mip[iy*in_sz[0] + ix] = data1d[offsetk + offsetj + ix];
+                    max_mip = data1d[offsetk + offsetj + ix];
+                }
+            }
+        }
+    }
+    in_sz[2] = 1;
+    in_sz[3] = 3;
+
+//    // Set color channels
+//    unsigned char* data1d_2D = 0;
+//    data1d_2D = new unsigned char [3*stacksz];
+
+//    for(V3DLONG i=0; i<stacksz; i++)
+//    {
+//        data1d_2D[i] = image_mip[i];
+//    }
+//    for(V3DLONG i=0; i<stacksz; i++)
+//    {
+//        data1d_2D[i+stacksz] = image_mip[i];
+//    }
+//    for(V3DLONG i=0; i<stacksz; i++)
+//    {
+//        data1d_2D[i+2*stacksz] = image_mip[i];
+//    }
+
+//    int datatype = 1;
+//    simple_saveimage_wrapper(cb, Qstring_to_char(output_file), data1d_2D, in_sz, datatype);
+//    return true;
+
+//    // Addaptive thresholding
+//    int imgDims[3];
+//    imgDims[0] = in_sz[0];
+//    imgDims[1] = in_sz[1];
+//    imgDims[2] = 1;
+//    ImgProcessor::simpleAdaThre(image_mip, image_mip, imgDims, 5, 3);
+
+    // 3. Load swc and generate 2D mask
+    NeuronTree nt = readSWC_file(swc);
+    unsigned char* data1d_mask = 0;
+    data1d_mask = new unsigned char [stacksz];
+
+    memset(data1d_mask, 0, stacksz*sizeof(unsigned char));
+
+    for(V3DLONG i =0; i < nt.listNeuron.size();i++)
+    {
+        nt.listNeuron[i].z = 0;
+        nt.listNeuron[i].r = 0;
+    }
+
+    double margin=0;//by PHC 20170531
+    ComputemaskImage(nt, data1d_mask, in_sz[0], in_sz[1], 1, margin);
+
+    // 4. Set background / foreground color channels
+    unsigned char* data1d_2D = 0;
+    data1d_2D = new unsigned char [3*stacksz];
+
+    for(V3DLONG i=0; i<stacksz; i++)
+    {
+        data1d_2D[i] = (data1d_mask[i]==255) ? 255:image_mip[i];
+    }
+    for(V3DLONG i=0; i<stacksz; i++)
+    {
+        data1d_2D[i+stacksz] = image_mip[i];
+    }
+    for(V3DLONG i=0; i<stacksz; i++)
+    {
+        data1d_2D[i+2*stacksz] = image_mip[i];
+    }
+
+
+    int datatype = 1;
+    simple_saveimage_wrapper(cb, Qstring_to_char(output_file), data1d_2D, in_sz, datatype);
+    return true;
 }
 
 void run_matlab(QString data_dir, QString block_name)
@@ -270,3 +407,4 @@ const char * Qstring_to_char(QString qs)
 
     return str;
 }
+

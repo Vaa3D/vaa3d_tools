@@ -67,18 +67,6 @@ double marker_dist(MyMarker a, MyMarker b, bool scale)
     }
     return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
 }
-double node_dist(NeuronSWC a, NeuronSWC b, bool scale)
-{
-    if(scale){
-        a.x = a.x*RX;
-        a.y = a.y*RY;
-        a.z = a.z*RZ;
-        b.x = b.x*RX;
-        b.y = b.y*RY;
-        b.z = b.z*RZ;
-    }
-    return sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z));
-}
 
 // Functions for getting signal around swc
 bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2)
@@ -468,7 +456,7 @@ QList<double> get_terminal_signal(QString input_swc, QString input_image, V3DPlu
 
     // result:
     // <0> Type of tip;
-    // <1> Distance to 1st branch;
+    // <1> Distance to 1st branch point;
     // <meta_len : (meta_len + upstream_len - 1)> Upstream signal;
     // <(meta_len + upstream_len - 1) : end> Downstream signal;
     QList<double> result;
@@ -480,7 +468,7 @@ QList<double> get_terminal_signal(QString input_swc, QString input_image, V3DPlu
     V3DLONG img_sz[4];
     int datatype;
     simple_loadimage_wrapper(callback, qPrintable(input_image), data1d, img_sz, datatype);
-    qDebug()<<img_sz[0]<<img_sz[1]<<img_sz[2]<<img_sz[3]<<img_sz[0]*img_sz[1]*img_sz[2]<<data1d[img_sz[0]*img_sz[1]*img_sz[2]-1];
+//    qDebug()<<img_sz[0]<<img_sz[1]<<img_sz[2]<<img_sz[3]<<img_sz[0]*img_sz[1]*img_sz[2]<<data1d[img_sz[0]*img_sz[1]*img_sz[2]-1];
 
     // 2. load swc file
     qDebug()<<"Load swc";
