@@ -22,11 +22,13 @@ QStringList ML_sample::funclist() const
 	return QStringList()
         <<tr("get_undertraced_sample")
         <<tr("get_overtraced_sample")
-        <<tr("get_2D&3D_block")
+        <<tr("get_2D3D_block")
         <<tr("get_2D_block")
         <<tr("remove_tip_location")
         <<tr("prune_tip_APP1")
         <<tr("find_fake_tip")
+        <<tr("rotation")
+        <<tr("mean_shift_center")
         <<tr("help")
         <<tr("help1");
 }
@@ -55,7 +57,7 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     {
         get_overtraced_sample(input,output,callback);
     }
-    else if (func_name == tr("get_2D&3D_block"))
+    else if (func_name == tr("get_2D3D_block"))
     {
         get_block(input,output,callback);
     }
@@ -75,6 +77,14 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     {
         find_short_branch_tips_func(input,output,callback);
     }
+    else if (func_name == tr("rotation"))
+    {
+        rotation(input,output,callback);
+    }
+    //else if (func_name == tr("mean_shift_center"))
+    //{
+     //   tip_shift_center(callback, input,output);
+    //}
 	else if (func_name == tr("help"))
 	{
         printHelp(input,output);
