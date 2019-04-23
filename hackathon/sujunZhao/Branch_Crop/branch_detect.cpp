@@ -278,12 +278,18 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
             unsigned char *mask =0;
             double margin=0;
             QList<int> marker_nodes;
-            cout<<nt_crop_sorted.listNeuron.size()<<endl;
+            //cout<<nt_crop_sorted.listNeuron.size()<<endl;
             marker_nodes=find_tip_and_itspn(nt_crop_sorted,mysz[0],mysz[1],mysz[2]);
-            cout<<"marker_nodes "<<marker_nodes.size()<<endl;
+            //cout<<"marker_nodes "<<marker_nodes.size()<<endl;
+            mask = new unsigned char [mysz[0]*mysz[1]*mysz[2]];
+            memset(mask,0,mysz[0]*mysz[1]*mysz[2]*sizeof(unsigned char));
             Mask_filter(nt_crop_sorted, mask, mysz[0], mysz[1], mysz[2],marker_nodes,margin);
+            V3DLONG stacksz =mysz[0]*mysz[1];
             unsigned char *image_mip=0;
+            image_mip = new unsigned char [stacksz];
             unsigned char *label_mip=0;
+            label_mip = new unsigned char [stacksz];
+            cout<<"filter check"<<endl;
             for(V3DLONG iy = by-10; iy < bx+10; iy++)
             {
                 V3DLONG offsetj = iy*mysz[0];
@@ -291,7 +297,7 @@ void get_branches(const V3DPluginArgList & input, V3DPluginArgList & output, V3D
                 {
                     int max_mip = 0;
                     int max_label = 0;
-                    for(V3DLONG iz = bz-4; iz < bz-4; iz++)
+                    for(V3DLONG iz = bz-4; iz < bz+4; iz++)
                     {
                         V3DLONG offsetk = iz*mysz[1]*mysz[0];
                         if(data1d_crop[offsetk + offsetj + ix] >= max_mip)
@@ -797,13 +803,15 @@ QList<int> find_tip_and_itspn(NeuronTree nt, long sz0, long sz1, long sz2)//for 
     QVector<QVector<V3DLONG> > childs;
     V3DLONG neuronNum = nt.listNeuron.size();
     childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    //cout<<neuronNum<<endl;
     for (V3DLONG i=0;i<neuronNum;i++)
     {
         V3DLONG par = nt.listNeuron[i].pn;
         if (par<0) continue;
         childs[nt.hashNeuron.value(par)].push_back(i);
+
     }
-    cout<<childs.size()<<endl;
+    //cout<<childs.size()<<endl;
     QList<int> plist;
     QList<int> alln;
     int N=nt.listNeuron.size();
@@ -811,26 +819,27 @@ QList<int> find_tip_and_itspn(NeuronTree nt, long sz0, long sz1, long sz2)//for 
         plist.append(nt.listNeuron.at(i).pn);
         alln.append(nt.listNeuron.at(i).n);
     }
-    cout<<"2************"<<endl;
+    //cout<<"2************"<<endl;
     for(int i=0; i<nt.listNeuron.size(); i++){
         MyMarker node=MyMarker(nt.listNeuron.at(i).x, nt.listNeuron.at(i).y, nt.listNeuron.at(i).z);
-        if(marker_dist(center, node , false)<MIN_DIST & childs[i].size()==0) {
+        if(marker_dist(center, node , false)<MIN_DIST & childs[i].size()==2) {
             nodes_to_be_marked.push_back(i);
         }
-        else if(marker_dist(center, node, false)<MIN_DIST+1 & childs[i].size()==0) {
+        else if(marker_dist(center, node, false)<MIN_DIST+1 & childs[i].size()==2) {
             nodes_to_be_marked.push_back(i);
         }
-        else if(marker_dist(center, node, false)<MIN_DIST+2 & childs[i].size()==0) {
+        else if(marker_dist(center, node, false)<MIN_DIST+2 & childs[i].size()==2) {
             nodes_to_be_marked.push_back(i);
         }
     }
 
-    cout<<nodes_to_be_marked.size()<<endl;
+    //cout<<nodes_to_be_marked.size()<<endl;
     if(nodes_to_be_marked.size()==1){
 
         int index_pn=alln.indexOf(nt.listNeuron.at(nodes_to_be_marked.at(0)).pn);
         nodes_to_be_marked.push_back(index_pn);
     }
+
     return nodes_to_be_marked;
 }
 
@@ -849,6 +858,7 @@ void Mask_filter(NeuronTree neurons,unsigned char*Mask, V3DLONG mysz0,V3DLONG my
     //compute mask
     double xs = 0, ys = 0, zs = 0, xe = 0, ye = 0, ze = 0, rs = 0, re = 0;
     V3DLONG pagesz = mysz0*mysz1;
+    //cout<<"1**********"<<endl;
     for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
     {
         V3DLONG i,j,k;
@@ -872,7 +882,7 @@ void Mask_filter(NeuronTree neurons,unsigned char*Mask, V3DLONG mysz0,V3DLONG my
         ballz0 = zs - rs; ballz0 = qBound(double(0), ballz0, double(mysz2-1));
         ballz1 = zs + rs; ballz1 = qBound(double(0), ballz1, double(mysz2-1));
         if (ballz0>ballz1) {tmpf = ballz0; ballz0 = ballz1; ballz1 = tmpf;}
-
+        //cout<<"1**********"<<endl;
         if(ii==marker_node.at(0)){ //in this case only mark the first node(tip node),added by OYQ 2019.3.23.
         for (k = ballz0; k <= ballz1; k++){
             for (j = bally0; j <= bally1; j++){
@@ -885,6 +895,7 @@ void Mask_filter(NeuronTree neurons,unsigned char*Mask, V3DLONG mysz0,V3DLONG my
                 }
             }
           }
+        cout<<"2**********"<<endl;
 
         if (p_cur->pn < 0) continue;//then it is root node already
         //get the parent info
