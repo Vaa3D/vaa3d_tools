@@ -208,17 +208,25 @@ NeuronTree prune_swc_simple(NeuronTree nt, double length, bool& pruned){
         }
 
    }
-    if(listNeuron.size()<list.size()){
-        pruned = 1;
-    }
-    else{
+    if(listNeuron.size()==0){
+        // If after pruning, no branch remains
+        qDebug()<<"Reached the last branch, no pruning will be performed.";
+        nt_prunned.deepCopy(nt);
         pruned = 0;
     }
-   nt_prunned.n = -1;
-   nt_prunned.on = true;
-   nt_prunned.listNeuron = listNeuron;
-   nt_prunned.hashNeuron = hashNeuron;
-
+    else{
+        pruned = (listNeuron.size()<list.size())? 1:0;
+        if(listNeuron.size()<list.size()){
+            pruned = 1;
+        }
+        else{
+            pruned = 0;
+        }
+       nt_prunned.n = -1;
+       nt_prunned.on = true;
+       nt_prunned.listNeuron = listNeuron;
+       nt_prunned.hashNeuron = hashNeuron;
+    }
    return nt_prunned;
 
 }
