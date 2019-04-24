@@ -6,9 +6,15 @@
 #include <algorithm>
 #include <iterator>
 #include <cmath>
+#include "../../../../vaa3d_tools/hackathon/yimin/old vr codes/Vaa3DVR(ver 0.1)/vrminimal/matrix.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include "../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.cpp"
 #include "../../../../vaa3d_tools/hackathon/LXF/blastneuron_bjut/my_surf_objs.cpp"
+#include "../../../../vaa3d_tools/v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
+#include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
+#include "../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/pca1.h"
+#include "tiffio.h"
+//#include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 #define MIN_DIST 2
 #define VOID 1000000000
@@ -66,21 +72,21 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
         output_apo=outfiles.at(1);
     }
     printf("welcome to use get_termial\n");
-    NeuronTree nt2 = readSWC_file(swc_file);
+    NeuronTree nt1 = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";       
     }
 
-    QList<NeuronSWC> sort_swc;
-    SortSWC(nt2.listNeuron, sort_swc ,VOID, 0);
-    NeuronTree nt1;
-    QHash <int, int> hash_nt;
+//    QList<NeuronSWC> sort_swc;
+//    SortSWC(nt2.listNeuron, sort_swc ,VOID, 0);
+//    NeuronTree nt1;
+//    QHash <int, int> hash_nt;
 
-    for(V3DLONG j=0; j<sort_swc.size();j++){
-        hash_nt.insert(sort_swc[j].n, j);
-    }
-    nt1.listNeuron=sort_swc;
-    nt1.hashNeuron=hash_nt;
+//    for(V3DLONG j=0; j<sort_swc.size();j++){
+//        hash_nt.insert(sort_swc[j].n, j);
+//    }
+//    nt1.listNeuron=sort_swc;
+//    nt1.hashNeuron=hash_nt;
 
     // Find tips
     QList<int> ori_tip_list = get_tips(nt1, false);
@@ -112,10 +118,10 @@ void get_undertraced_sample(const V3DPluginArgList & input, V3DPluginArgList & o
         // crop swc
         QString num_cnt=QString("%1").arg(i);
         QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
-        crop_swc_cuboid(nt, output_swc, crop_block);
+        if(crop_swc_cuboid(nt, output_swc, crop_block))
         // crop image
-        QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
+        {QString output_image = flag1+"_"+num_cnt;
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);}
         //my_saveANO(output_dir, crop_block.name, output_suffix);
     }
     return;
@@ -151,18 +157,18 @@ void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & ou
         output_apo=outfiles.at(1);
     }
     printf("welcome to use get_termial\n");
-    NeuronTree nt1 = readSWC_file(swc_file);
+    NeuronTree sorted_tree = readSWC_file(swc_file);
 
-    QList<NeuronSWC> sort_swc;
-    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
-    NeuronTree sorted_tree;
-    QHash <int, int> hash_nt;
+//    QList<NeuronSWC> sort_swc;
+//    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
+//    NeuronTree sorted_tree;
+//    QHash <int, int> hash_nt;
 
-    for(V3DLONG j=0; j<sort_swc.size();j++){
-        hash_nt.insert(sort_swc[j].n, j);
-    }
-    sorted_tree.listNeuron=sort_swc;
-    sorted_tree.hashNeuron=hash_nt;
+//    for(V3DLONG j=0; j<sort_swc.size();j++){
+//        hash_nt.insert(sort_swc[j].n, j);
+//    }
+//    sorted_tree.listNeuron=sort_swc;
+//    sorted_tree.hashNeuron=hash_nt;
 
     // Find tips
     QList<int> ori_tip_list = get_tips(sorted_tree, false);
@@ -195,10 +201,10 @@ void get_overtraced_sample(const V3DPluginArgList & input, V3DPluginArgList & ou
         // crop swc
         QString num_cnt=QString("%1").arg(i);
         QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
-        crop_swc_cuboid(nt, output_swc, crop_block);
+        if(crop_swc_cuboid(nt, output_swc, crop_block))
         // crop image
-        QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,true);
+        {QString output_image = flag1+"_"+num_cnt;
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,true);}
     }
     return;
 }
@@ -226,21 +232,21 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         output_apo=outfiles.at(1);
     }
     printf("welcome to use get_termial\n");
-    NeuronTree nt1 = readSWC_file(swc_file);
+    NeuronTree nt = readSWC_file(swc_file);
     if(!output_dir.endsWith("/")){
         output_dir = output_dir+"/";
     }
 
-    QList<NeuronSWC> sort_swc;
-    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
-    NeuronTree nt;
-    QHash <int, int> hash_nt;
+//    QList<NeuronSWC> sort_swc;
+//    SortSWC(nt1.listNeuron, sort_swc ,VOID, 0);
+//    NeuronTree nt;
+//    QHash <int, int> hash_nt;
 
-    for(V3DLONG j=0; j<sort_swc.size();j++){
-        hash_nt.insert(sort_swc[j].n, j);
-    }
-    nt.listNeuron=sort_swc;
-    nt.hashNeuron=hash_nt;
+//    for(V3DLONG j=0; j<sort_swc.size();j++){
+//        hash_nt.insert(sort_swc[j].n, j);
+//    }
+//    nt.listNeuron=sort_swc;
+//    nt.hashNeuron=hash_nt;
 
     // Find tips
     QList<int> tip_list = get_tips(nt, false);
@@ -264,10 +270,10 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
         // crop swc
         QString num_cnt=QString("%1").arg(i);
         QString output_swc = output_dir+flag1+"_"+num_cnt+".eswc";
-        crop_swc(swc_file, output_swc, crop_block);
+        if(crop_swc_cuboid(nt, output_swc, crop_block))
         // crop image
-        QString output_image = flag1+"_"+num_cnt;
-        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);
+        {QString output_image = flag1+"_"+num_cnt;
+        crop_img(image_file, crop_block, output_dir, callback, output_image, output_swc,tipnum,tip,false);}
         //my_saveANO(output_dir, crop_block.name, output_suffix);
     }
     return;
@@ -688,7 +694,6 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
     QString input_swc=infiles.at(0);
     QString input_image=infiles.at(1);
-    //QString input_radius=inparas.at(0);
     QString output_2d_dir=outfiles.at(0);
     if(!output_2d_dir.endsWith("/")){
         output_2d_dir = output_2d_dir+"/";
@@ -707,12 +712,12 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     }
 
     QStringList list=input_swc.split("/");
-    QString flag1=(list[6].split("."))[0];//the id in list should not be added 1 to the exact string
+    QString flag1=(list.last().split("."))[0];
 //    QString flag=input_swc.right(input_swc.length()-43);
 //    QString flag1=flag.left(flag.length()-4);
     //printf("______________:%s\n",output_2d_dir.data());
     qDebug()<<input_swc;
-    qDebug("name:%s",qPrintable(flag1));
+    qDebug("flag_name:%s",qPrintable(flag1));
     //1.read croped swc.file
     NeuronTree nt_crop_sorted=readSWC_file(input_swc);
     QList<NeuronSWC> nt_crop_swc=nt_crop_sorted.listNeuron;
@@ -749,9 +754,9 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
 //    long total_sz = mysz[0] * mysz[1] * mysz[2];
 //    result = new unsigned char [total_sz];
 //    if (!return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip)) return;
-      node_and_id max_info;
-      max_info=return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip);
-      center=node_to_center(max_info,nt_crop_swc,mysz,data1d_crop);
+      node_and_id front_info;
+      front_info=return_signal_in_circle_nodes(radius,ave_signal,mysz,data1d_crop,tip);
+      center=node_to_center(front_info,nt_crop_swc,mysz,data1d_crop);
       QList<NeuronSWC> output_swc;
       NeuronTree result_tree;
       output_swc=change_tip_xyz(nt_crop_swc,tip_id,center);
@@ -759,6 +764,40 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
       QString swc_name = output_2d_dir+flag1+"."+QString ("tip_reset.swc");
       writeSWC_file(swc_name,result_tree);
       qDebug()<<swc_name;
+
+      //Write data in the file
+      QString qs_output;
+      qs_output = output_2d_dir+flag1+".reset.marker";
+
+      QList <ImageMarker> imagemarks;
+//      for(int i = 0; i < landmarks.size(); i++)
+//      {
+          ImageMarker m;
+          //LocationSimple l = landmarks.at(i);
+          m.x = center.x;
+          m.y = center.y;
+          m.z = center.z;
+          m.color.a = 0;
+          m.color.b = 0;
+          m.color.g = 255;
+          m.color.r = 0;
+          imagemarks.push_back(m);
+      //}
+      //system("rm -f /tmp/mymarks.marker");
+      //system("rm -f /tmp/tmp_out*");
+          ImageMarker ori_center;
+          //LocationSimple l = landmarks.at(i);
+          ori_center.x = tip.x;
+          ori_center.y = tip.y;
+          ori_center.z = tip.z;
+          ori_center.color.a = 0;
+          ori_center.color.b = 0;
+          ori_center.color.g = 0;
+          ori_center.color.r = 255;
+          imagemarks.push_back(ori_center);
+
+      writeMarker_file(qs_output,imagemarks);
+
 //    QString mipoutput = output_2d_dir +flag1+"."+"average.tif";
 //    qDebug("number:%s",qPrintable(mipoutput));
 //    simple_saveimage_wrapper(callback,mipoutput.toStdString().c_str(),data1d_crop,mysz,1);
@@ -946,7 +985,7 @@ node_and_id return_signal_in_circle_nodes(int circle_radius, double ave_signal,l
    //get max node x,y,z,whose indensity is more than average
     node_and_id all_roi_nodes;
     vector<MyMarker> max_list;
-    unsigned char * result=0;
+    //unsigned char * result=0;
     double length=2*circle_radius;
     double cube_bx=center_marker.x-circle_radius;
     double cube_by=center_marker.y-circle_radius;
@@ -954,8 +993,8 @@ node_and_id return_signal_in_circle_nodes(int circle_radius, double ave_signal,l
     long sz01 = mysz[0] * mysz[1];
     long total_sz = mysz[0] * mysz[1] * mysz[2];
     cout<<"input block size:"<<total_sz<<endl;
-    result = new unsigned char [total_sz];
-    int num=0;
+    unsigned char* result = new unsigned char[total_sz];
+    int num_back=0,num_front=0;
     for (int i=0;i<length;i++){
           MyMarker node;
           for(int j=0;j<length;j++){
@@ -969,8 +1008,8 @@ node_and_id return_signal_in_circle_nodes(int circle_radius, double ave_signal,l
                        else{
                             if (id<=total_sz){
                             double min=0;double max=1;
-                            if(data1d[id]<=ave_signal) result[id]=min;
-                            if(data1d[id]>ave_signal) {result[id]=max;num+=1;
+                            if(data1d[id]<=ave_signal) {result[id]=min;num_back+=1;}
+                            if(data1d[id]>ave_signal) {result[id]=max;num_front+=1;
                                 all_roi_nodes.all_nodes.push_back(node);
                                 all_roi_nodes.all_id.push_back(id);
                             }//get the foreground node's id,it is wroten for generating an 0-1 image firstly
@@ -981,7 +1020,9 @@ node_and_id return_signal_in_circle_nodes(int circle_radius, double ave_signal,l
                }
           }
          }
-    cout<<"total max num :"<<num<<endl;
+    cout<<"total front num :"<<num_front<<endl;
+    cout<<"total back num :"<<num_back<<endl;
+    delete []result;
     return all_roi_nodes;
 }
 
@@ -995,19 +1036,19 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
 
 //       cout<<"id:"<<ids.at(i)<<endl;
 //    }
-    sort(nodes.begin(),nodes.end());
+    //sort(nodes.begin(),nodes.end());
     vector<int> id_numofneibs,total_signal;
     for(int i=0;i<nodes.size();i++){
-        vector<int> result;
+        //vector<int> result;
         info=get_26_neib_id(nodes.at(i),mysz,data1d);
         //cout<<"27 pixels' id(size):"<<neibs.size()<<endl;
-        sort(info.all_id.begin(),info.all_id.end());
-        set_intersection(ids.begin(),ids.end(),info.all_id.begin(),info.all_id.end(),back_inserter(result));
-        int num_inters=result.size();
+        //sort(info.all_id.begin(),info.all_id.end());
+        //set_intersection(ids.begin(),ids.end(),info.all_id.begin(),info.all_id.end(),back_inserter(result));
+        //int num_inters=result.size();
         total_signal.push_back(info.total_signal);
         //cout<<"total signal size:"<<info.total_signal<<endl;
-        id_numofneibs.push_back(num_inters);
-        result.clear();
+        //id_numofneibs.push_back(num_inters);
+        //result.clear();
     }
      //method 1. using neibs total num who is in signal to define center location
 //    vector<int>::iterator max=std::max_element(id_numofneibs.begin(),id_numofneibs.end());
@@ -1020,10 +1061,22 @@ MyMarker node_to_center(node_and_id all_max_nodes,QList<NeuronSWC> input_swc,lon
     //sort(total_signal.begin(),total_signal.end());
     vector<int>::iterator max=std::max_element(total_signal.begin(),total_signal.end());
     int pos=distance(total_signal.begin(),max);
-    MyMarker center=nodes.at(pos);
+    MyMarker center1=nodes.at(pos);
+
+    vector<int> total_signal_after=total_signal;
+    sort(total_signal_after.begin(),total_signal_after.end());
+    vector<int>::iterator max2=std::find(total_signal.begin(),total_signal.end(),total_signal_after.at(total_signal_after.size()-2));
+    vector<int>::iterator max3=std::find(total_signal.begin(),total_signal.end(),total_signal_after.at(total_signal_after.size()-3));
+    int pos2=distance(total_signal.begin(),max2);
+    int pos3=distance(total_signal.begin(),max3);
+    MyMarker center2=nodes.at(pos2);
+    MyMarker center3=nodes.at(pos3);
+
+    MyMarker center_result=MyMarker((center1.x+center2.x+center3.x)/3,(center1.y+center2.y+center3.y)/3,(center1.z+center2.z+center3.z)/3);
+
     cout<<"original id position:"<<pos<<endl<<"max total 27 pixel signal of all cube nodes:"<<total_signal.at(pos)<<endl;
-    cout<<"x:"<<center.x<<endl<<"y:"<<center.y<<endl<<"z:"<<center.z<<endl;
-    return center;
+    cout<<"x:"<<center_result.x<<endl<<"y:"<<center_result.y<<endl<<"z:"<<center_result.z<<endl;
+    return center_result;
 }
 
 
@@ -1031,9 +1084,9 @@ node_and_id get_26_neib_id(MyMarker center_marker,long mysz[4],unsigned char * d
 
     node_and_id info_27;
     int length=3;//27 cube's length
-    double cube_bx=center_marker.x-1;
-    double cube_by=center_marker.y-1;
-    double cube_bz=center_marker.z-1;
+    double cube_bx=center_marker.x-length;
+    double cube_by=center_marker.y-length;
+    double cube_bz=center_marker.z-length;
     double signal=0;
     long sz01 = mysz[0] * mysz[1];
     long total_sz=mysz[0] * mysz[1] * mysz[2];
@@ -1278,6 +1331,7 @@ bool crop_swc_cuboid(NeuronTree nt, QString qs_output,block input_block)
         }
         new_tree.listNeuron.append(node);
     }
+    if (new_tree.listNeuron.size()<5) return 0;
     nt.deepCopy(my_SortSWC(new_tree, VOID, 0));
     //4. shift if needed
     if((xshift!=0) || (yshift!=0) || (zshift!=0)){
@@ -1407,6 +1461,315 @@ bool export_file2record(string swc_name,vector<int>input_num,double cur_per,QStr
     return true;
 }
 
+void rotation(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    QString swc_file=infiles[0];
+    QString input_image_file=infiles.at(1);
+    QString output_2d_dir=outfiles.at(0);
+    QString output_image1=outfiles[0];
+    if(!output_2d_dir.endsWith("/")){
+        output_2d_dir = output_2d_dir+"/";
+    }
+    if(!output_image1.endsWith("/")){
+        output_image1 = output_image1+"/";
+    }
+
+    QString output_down_image=output_image1+"downsample5.nrrd";
+    QString output_up_image=output_image1+"upsample5.nrrd";
+    QStringList list=swc_file.split("/");
+    QString flag=list.last(); QStringList list1=flag.split(".");
+    QString flag1=list1.first();
+    QString output_image=output_image1+flag1+".rotated.nrrd";
+
+    NeuronTree nt=readSWC_file(swc_file);
+    if(nt.listNeuron.size()<5) return;
+    double *pc=new double[nt.listNeuron.size()];
+    double *trans=new double[3];
+
+    NeuronTree result=align_axis(nt,pc,trans);//calling PCA
+    QString swc_name = output_2d_dir+flag1+"."+QString ("rotated.swc");
+    writeSWC_file(swc_name,result);//save rotated swc
+    printf("1. Save rotated swc. \n");
+
+    Matrix3x3 *affinematrix1=new Matrix3x3(float(pc[0]),float(pc[1]),float(pc[2]),float(pc[3]),
+            float(pc[4]),float(pc[5]),float(pc[6]),float(pc[7]),float(pc[8]));
+    Matrix3x3 affinematrix2=affinematrix1->inverse();
+
+    Matrix affinematrix(3,3);
+    affinematrix(1,1)=affinematrix2.data[0];affinematrix(1,2)=affinematrix2.data[1];affinematrix(1,3)=affinematrix2.data[2];
+    affinematrix(2,1)=affinematrix2.data[3];affinematrix(2,2)=affinematrix2.data[4];affinematrix(2,3)=affinematrix2.data[5];
+    affinematrix(3,1)=affinematrix2.data[6];affinematrix(3,2)=affinematrix2.data[7];affinematrix(3,3)=affinematrix2.data[8];
+
+    //------------------------------------------------------------------------------------------------------------------------------------
+    printf("2. Read subject image. \n");
+    unsigned char *p_img_sub=0;
+    V3DLONG sz_img_sub[4];
+    int datatype_sub=0;
+    if(!simple_loadimage_wrapper(callback, (char *)qPrintable(input_image_file),p_img_sub,sz_img_sub,datatype_sub))
+    {
+        printf("ERROR: loadImage() return false in loading [%s].\n", qPrintable(input_image_file));
+        return;
+    }
+//****************5 downsample image********************************
+//    V3DLONG sz_down[4];
+//    sz_down[0]=20;
+//    sz_down[1]=20;
+//    sz_down[2]=20;
+//    sz_down[3]=1;
+//    long sz01 = sz_img_sub[0]* sz_img_sub[1];
+//    long total_sz = 20*20*sz_img_sub[2];
+//    unsigned char* downsample=0;
+//    downsample=new unsigned char[total_sz];
+//    int x_c=0,count=0;
+
+//    for(int x=2;x<sz_img_sub[0];x+=5)
+//    {
+//        printf("dowmsample: [%d/%d]\n",sz_img_sub[0],x);
+//        int y_c=0;
+//        for(int y=2;y<sz_img_sub[1];y+=5)
+//        {
+//            int z_c=0;
+//            for(long z=0;z<sz_img_sub[2];z++)
+//            {
+//                double signal=0;int nums=0;
+
+//                for(int k=x-2;k<x+2;k++){
+//                    for(int j=y-2;j<y+2;j++)
+//                       {
+//                          signal += p_img_sub[z*sz01+j*sz_img_sub[0]+k];
+//                          nums += 1;
+//                       }
+//                }
+//                if(nums>0) signal=signal/nums;
+//                downsample[z_c*400+y_c*20+x_c]=signal;
+//                count+=1;z_c+=1;
+//            }
+//            y_c+=1;
+//        }
+//        x_c+=1;
+//    }
+//****************5 times resample image in z axis********************************
+
+    double dfactor[3];
+    dfactor[0] = 1; dfactor[1] = 1;  dfactor[2] = 5;
+
+    long totalsize_out=sz_img_sub[0]*sz_img_sub[1]*sz_img_sub[2]*dfactor[0]*dfactor[1]*dfactor[2];
+    unsigned char * upsample = 0;
+    try {upsample = new unsigned char [totalsize_out];}
+    catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return;}
+
+    V3DLONG sz_up[4];
+    bool option=1;
+    if(option)
+    {
+        sz_up[0] = (V3DLONG)(ceil(dfactor[0]*sz_img_sub[0]));
+        sz_up[1] = (V3DLONG)(ceil(dfactor[1]*sz_img_sub[1]));
+        sz_up[2] = (V3DLONG)(ceil(dfactor[2]*sz_img_sub[2]));
+        sz_up[3] = 1;
+        upsample3dvol((unsigned char *)upsample,(unsigned char *)p_img_sub,sz_up,sz_img_sub,dfactor);
+    }
+//simple_saveimage_wrapper(callback, qPrintable(output_up_image),upsample,sz_up,1);
+//****************5 times resample image in z axis********************************
+    printf("\t>>read image file [%s] complete.\n",qPrintable(input_image_file));
+    printf("\t\timage size: [w=%ld, h=%ld, z=%ld, c=%ld]\n",sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);
+    printf("\t\tdatatype: %d\n",datatype_sub);
+
+    if(datatype_sub!=1)
+    {
+        printf("ERROR: Input image datatype is not UINT8.\n");
+        return;
+    }
+
+    //------------------------------------------------------------------------------------------------------------------------------------
+    printf("3. Affine transform the subject image to target. \n");
+    QStringList qsl_outputinfo;
+    qsl_outputinfo.push_back("Warped results were saved to:");
+
+    unsigned char *p_img_sub2tar=0;
+
+    //do affine warping
+    //if(i_warpmode==0)
+    //{
+        if(!q_imagewarp_affine(
+                upsample, (long * )(sz_up),
+                p_img_sub2tar,affinematrix,trans))
+        {
+            printf("ERROR: q_imagewarp_affine return false!\n");
+            if(upsample) 			{delete []upsample;			upsample=0;}
+            return;
+        }
+
+        //save image
+        simple_saveimage_wrapper(callback, qPrintable(output_image),p_img_sub2tar,sz_up,1);
+        qsl_outputinfo.push_back(QString("[%1]").arg(output_image));
+        if(p_img_sub2tar) 			{delete []p_img_sub2tar;			p_img_sub2tar=0;}
+        delete []pc;
+        delete []trans;
+        delete []affinematrix1;
+        delete []upsample;
+    //}
+}
+
+NeuronTree align_axis(NeuronTree input,double *& PC,double* & trans)
+{
+    NeuronTree result;
+    result.deepCopy(input);
+    V3DLONG siz = input.listNeuron.size();
+    printf("size=%d\n", siz);
+
+    double * coord = new double[siz * 3];
+    for (V3DLONG i=0; i<siz; i++)
+    {
+        coord[i] = input.listNeuron[i].x;
+        coord[siz + i] = input.listNeuron[i].y;
+        coord[2*siz + i] = input.listNeuron[i].z;
+    }
+
+
+    double * coord_pca = new double[siz * 3];
+    double V[3];
+    pca1(coord, 3, siz, coord_pca, PC, V);
+
+    printf("PCA done\n");
+
+    int de[3]={50,50,10};//for getting transform matrix
+    for ( int y = 0; y < 3; y++ ){
+            double temp=0;
+            for (int  k = 0; k < 3; k++ )
+                 temp += de[k]*PC[k*3+y];
+                 trans[y]=temp;
+        }
+    for (V3DLONG i=0;i<siz; i++)
+    {
+        result.listNeuron[i].x = (coord_pca[i]-trans[0]+50);
+        result.listNeuron[i].y = (coord_pca[siz + i]-trans[1]+50);
+        result.listNeuron[i].z = (coord_pca[2*siz + i]-trans[2]+10)*5;
+        result.listNeuron[i].type=input.listNeuron[i].type;
+    }
+
+    delete []coord;
+    delete []coord_pca;
+
+    return result;
+}
+
+
+bool q_imagewarp_affine(const unsigned char *p_img_sub,const long *sz_img_sub,
+        unsigned char *&p_img_affine,Matrix affinematrix,double *trans)
+{
+    //check parameters
+    if(p_img_sub==0 || sz_img_sub==0)
+    {
+        printf("ERROR: p_img_sub or sz_img_sub is invalid.\n");
+        return false;
+    }
+    if(p_img_affine)
+    {
+        printf("WARNNING: output image pointer is not null, original memeroy it point to will lost!\n");
+        p_img_affine=0;
+    }
+
+    //------------------------------------------------------------------------------------------------------------------------------------
+    //assign output/warp image size
+    long sz_img_output[4]={0};
+    if(sz_img_output[0]==0)		sz_img_output[0]=sz_img_sub[0];
+    if(sz_img_output[1]==0)		sz_img_output[1]=sz_img_sub[1];
+    if(sz_img_output[2]==0)		sz_img_output[2]=sz_img_sub[2];
+                                sz_img_output[3]=sz_img_sub[3];
+    //allocate memory
+    p_img_affine=new unsigned char[sz_img_output[0]*sz_img_output[1]*sz_img_output[2]*sz_img_output[3]]();
+    if(!p_img_affine)
+    {
+        printf("ERROR: Fail to allocate memory for p_img_sub2tar.\n");
+        return false;
+    }
+    unsigned char ****p_img_sub_4d=0,****p_img_sub2tar_4d=0;
+    if(!new4dpointer(p_img_sub_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3],p_img_sub) ||
+       !new4dpointer(p_img_sub2tar_4d,sz_img_output[0],sz_img_output[1],sz_img_output[2],sz_img_output[3],p_img_affine))
+    {
+        printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
+        if(p_img_affine) 		{delete []p_img_affine;		p_img_affine=0;}
+        if(p_img_sub_4d) 		{delete4dpointer(p_img_sub_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);}
+        if(p_img_sub2tar_4d) 	{delete4dpointer(p_img_sub2tar_4d,sz_img_output[0],sz_img_output[1],sz_img_output[2],sz_img_output[3]);}
+        return false;
+    }
+    //affine image warping
+    Matrix x_pt_sub2tar_homo(1,3),x_pt_sub_homo(1,3);double aa=0;
+
+    for(long x=0;x<sz_img_output[0];x++)
+    {
+        printf("affine: [%d/%d]\n",sz_img_output[0],x);
+        for(long y=0;y<sz_img_output[1];y++)
+            for(long z=0;z<sz_img_output[2];z++)
+            {
+                //compute the inverse affine projected coordinate in subject image
+                x_pt_sub2tar_homo(1,1)=x-50;
+                x_pt_sub2tar_homo(1,2)=y-50;
+                x_pt_sub2tar_homo(1,3)=z-50;
+                //x_pt_sub2tar_homo(4,1)=1.0;
+                x_pt_sub_homo=x_pt_sub2tar_homo*affinematrix;
+                x_pt_sub_homo(1,1)=x_pt_sub_homo(1,1)+50;
+                x_pt_sub_homo(1,2)=x_pt_sub_homo(1,2)+50;
+                x_pt_sub_homo(1,3)=x_pt_sub_homo(1,3)+50;
+
+                //linear interpolate
+                //coordinate in subject image
+                double cur_pos[3];//x,y,z
+                cur_pos[0]=x_pt_sub_homo(1,1);
+                cur_pos[1]=x_pt_sub_homo(1,2);
+                cur_pos[2]=x_pt_sub_homo(1,3);
+
+                //if interpolate pixel is out of subject image region, set to -inf
+                if(cur_pos[0]<0 || cur_pos[0]>sz_img_sub[0]-1 ||
+                   cur_pos[1]<0 || cur_pos[1]>sz_img_sub[1]-1 ||
+                   cur_pos[2]<0 || cur_pos[2]>sz_img_sub[2]-1)
+                {
+                    p_img_sub2tar_4d[0][z][y][x]=0.0;
+                    continue;
+                }
+
+                //find 8 neighor pixels boundary
+                long x_s,x_b,y_s,y_b,z_s,z_b;
+                x_s=floor(cur_pos[0]);		x_b=ceil(cur_pos[0]);
+                y_s=floor(cur_pos[1]);		y_b=ceil(cur_pos[1]);
+                z_s=floor(cur_pos[2]);		z_b=ceil(cur_pos[2]);
+
+                //compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
+                double l_w,r_w,t_w,b_w;
+                l_w=1.0-(cur_pos[0]-x_s);	r_w=1.0-l_w;
+                t_w=1.0-(cur_pos[1]-y_s);	b_w=1.0-t_w;
+                //compute weight for higer slice and lower slice
+                double u_w,d_w;
+                u_w=1.0-(cur_pos[2]-z_s);	d_w=1.0-u_w;
+
+                //linear interpolate each channel
+                for(long c=0;c<sz_img_output[3];c++)
+                {
+                    //linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+                    double higher_slice;
+                    higher_slice=t_w*(l_w*p_img_sub_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_4d[c][z_s][y_s][x_b])+
+                                 b_w*(l_w*p_img_sub_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_4d[c][z_s][y_b][x_b]);
+                    //linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+                    double lower_slice;
+                    lower_slice =t_w*(l_w*p_img_sub_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_4d[c][z_b][y_s][x_b])+
+                                 b_w*(l_w*p_img_sub_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_4d[c][z_b][y_b][x_b]);
+                    //linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
+                    p_img_sub2tar_4d[c][z][y][x]=u_w*higher_slice+d_w*lower_slice;
+                    aa=u_w*higher_slice+d_w*lower_slice;
+                }
+            }
+    }
+    //------------------------------------------------------------------------------------------------------------------------------------
+    printf("6. free memory. \n");
+    if(p_img_sub_4d) 		{delete4dpointer(p_img_sub_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);}
+    if(p_img_sub2tar_4d) 	{delete4dpointer(p_img_sub2tar_4d,sz_img_output[0],sz_img_output[1],sz_img_output[2],sz_img_output[3]);}
+
+    return true;
+}
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -1454,7 +1817,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-i<file name>:\t\t input .swc file\n";
     cout<<"-p<file name>:\t\t input image file(tif,nrrd,v3draw)\n";
     cout<<"-o<file name>:\t\t ouput dir\n";
-    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_tip_sample -i <original swc> <input tiff\nrrd.image> -p <radius> -o <output swc.file dir>\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f remove_tip_location -i <original swc> <input tiff\nrrd.image> -p <radius> -o <output swc.file dir>\n";
 
     //5.prune_tip_APP1
     cout<<"This fuction for pruning nodes in tip"<<endl;

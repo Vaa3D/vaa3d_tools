@@ -5,8 +5,8 @@
 #include <QString>
 #include <math.h>
 #include "head.h"
-
 #include<fstream>
+#include<string>
 //#include <vnl_vector.h>
 //#include <vnl_sparse_matrix.h>
 //#include <vnl/algo/vnl_sparse_lu.h>
@@ -51,13 +51,20 @@ bool image_segmentation::dofunc(const QString & func_name, const V3DPluginArgLis
 
     {
 		cout<<"000000000000000000000000000000000"<<endl;
+		time_t start,end;
+		start=time(NULL);
         image_IO(input,output, callback,true);
+		end=time(NULL);
+		cout<<"time use"<<end-start<<endl;
 
     }
+	else if (func_name == tr("about"))
+	{
+		cout<<"about"<<endl;
+	}
 	
 	else return false;
 
-	return true;
 }
 
 template <class T1, class T2> bool assign_val(T1 *dst, T2 *src, V3DLONG total_num)
@@ -295,7 +302,6 @@ void ind2sub(int i,long *index, int (&array)[3])//将一维转化为三维
 
 void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 	v3dhandle curwin = callback.currentImageWindow();
-	
 	Image4DSimple* subject = callback.getImage(curwin);
 	QString m_InputFileName = callback.getImageName(curwin);
 	LandmarkList landmarks = callback.getLandmark(curwin);
@@ -313,7 +319,6 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
     V3DLONG in_sz[4]; 
     in_sz[0] = subject->getXDim(); in_sz[1] = subject->getYDim(); in_sz[2] = subject->getZDim(); in_sz[3] = subject->getCDim();
     int datatype = subject->getDatatype();
-	
     V3DLONG channel_sz = in_sz[0]*in_sz[1]*in_sz[2];//总像素
     V3DLONG outsz[4];
 
@@ -323,9 +328,7 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 		vis=new int[channel_sz];
 	}catch(...){
 		cout << __FUNCTION__ << " error malloc" << endl;
-
 	}
-
 	//copy
 	int* vist=0;
 	try{
@@ -334,7 +337,6 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 		cout << __FUNCTION__ << " error malloc" << endl;
 
 	}
-
 	int dx[6] = { 0,0,1,-1,0,0};
 	int dy[6] = { 0,0,0,0,1,-1};
 	int dz[6] = { 1,-1,0,0,0,0};
@@ -457,7 +459,7 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 	for(int i=0;i<channel_sz;i++){
 		if(((int)inimg1d[i]>(int)m_OutImgData3[i])&&((int)inimg1d[i]>150))
 			m_OutImgData3[i] = 255;
-		if((int)inimg1d[i]<100)
+		if((int)inimg1d[i]<80)
 			m_OutImgData2[i] = 0;
 		
 	}
@@ -496,11 +498,11 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 				Count[vis[i]]++;
 			}
 		
-			for(int i=0;i<channel_sz;i++){
-			   
-				if(Count[vis[i]] <300){
-					m_OutImgData2[i] = 0;
-				}
+				for(int i=0;i<channel_sz;i++){
+
+			if(Count[vis[i]] <80){
+			m_OutImgData2[i] = 0;
+			}
 
 			}
 			cout<<"endl"<<endl;
@@ -519,9 +521,21 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 
 						}
 					}
-
 					int *Counts;
 					cout<<"flag:  "<<flags<<endl;
+					if(flags>10){
+						Image4DSimple  p4DImage2;
+						p4DImage2.setData((unsigned char*)m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+						v3dhandle  newwin2;
+						newwin2 = callback.newImageWindow();
+						callback.setImage(newwin2, &p4DImage2);		
+						callback.setImageName(newwin2, QString("Segmentation2"));
+						callback.updateImageWindow(newwin2);
+						ofstream fmarker("F://ouf.marker");
+						fmarker.close();
+						return; 
+					}
+					else{
 					try{
 						Counts = (int*)malloc(sizeof(int) * (flags+1));
 					}catch(...){
@@ -534,12 +548,6 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 						Counts[vist[i]]++;
 					}
 					cout<<"the secend"<<endl;
-					/*	for(int i=0;i<channel_sz;i++){
-					if(vist[i]>0)
-					cout<<vist[i]<<endl;
-
-
-					}*/
 					cout<<"endlllll"<<endl;
 					for(int i=0;i<(flags+1);i++)
 					{
@@ -576,26 +584,7 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 					}
 			
 
-			//新增4
-	/*		char  *flagtest;
-			try{
-				
-				flagtest=(char*)malloc(sizeof(char) *channel_sz);
-			}catch(...){
-				cout << __FUNCTION__ << ": " << "error mallco" << endl; 
-				return ;
-			}
-			for(int s=0;s< channel_sz;s++)
-				flagtest[s]=0;
-			bool soma;
-			cout<<"soma位置"<<endl;
-			for(int i=0;i< channel_sz;i++){
-			soma=SomaJudge(m_OutImgData2,i,in_sz[0],in_sz[1],in_sz[2],4200,flagtest);
-			if(soma==true){
-				if(flagtest[i]==1)
-					cout<<test[0]<<","<<test[1]<<","<<test[2]<<","<<endl;				
-			}
-			}*/
+
 	//vnl_sparse_matrix<double> vnlMatrix(channel_sz,channel_sz);
 	//long size[3] = {in_sz[0],in_sz[1],in_sz[2]};
 	
@@ -732,126 +721,355 @@ void image_IO(V3DPluginCallback2 &callback, QWidget *parent){
 		fmarker<<marker[3*i]<<","<<marker[3*i+1]<<","<<marker[3*i+2]<<","<<3<<","<<0<<","<<0<<","<<0<<","<<125<<","<<0<<","<<0<<endl;
 	fmarker.close();
 		return; 
-}
-
-
-void image_IO(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback &callback,bool b_binarization)
-{
-    if (input.size()<=0 && output.size()<=0)
-        return;
-	char * infile = (*(vector<char*> *)(input.at(0).p)).at(0);
-    
-	cout<<"infile : "<<infile<<endl;
-
-	string str = infile;
-	str = str +"_seg.v3draw";
-	char * outfile = (char *)str.data();
-
-	
-
-
-    unsigned char * inimg1d = 0; V3DLONG in_sz[4]; int datatype;
-    simple_loadimage_wrapper(callback,infile, inimg1d, in_sz, datatype);
-    
-	V3DLONG channel_sz = in_sz[0]*in_sz[1]*in_sz[2];
-    V3DLONG outsz[4];
-    
-    //segmentation
-    
-    int iVesCnt = 1, i;
-    bool res;
-	
-	unsigned char * m_OutImgData = 0;
-	unsigned char * m_OutImgData2 = 0;
-    unsigned char * m_OutImgData3 = 0;
-	try
-	{
-		m_OutImgData = new  unsigned char[channel_sz]; 
-		m_OutImgData2 = new unsigned char[channel_sz];
-		m_OutImgData3 = new unsigned char[channel_sz];
-	}
-	catch (...)
-	{
-		v3d_msg("Fail to allocate memory in Neuron_segment_entry_func().");
-        if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
-        return;    
-	}
-	
-    switch (datatype)
-    {
-        case 1:
-            res = do_seg(inimg1d, m_OutImgData, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
-            break;
-        case 2:
-            res = do_seg((short int *)inimg1d, m_OutImgData, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
-            break;
-        case 4:
-            res = do_seg((float *)inimg1d, m_OutImgData, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
-            break;
-        default:
-            break;
-    }
-    
-    if(!res)
-    {
-        cerr<<"The enhancement/segmentation of foreground fails."<<endl;
-        goto Label_exit_Neuron_segment_entry_func;
-    }	
-	switch (datatype)
-    {
-        case 1:
-            res = do_seg2(inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
-            break;
-        case 2:
-            res = do_seg2((short int *)inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
-            break;
-        case 4:
-            res = do_seg2((float *)inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
-            break;
-        default:
-            break;
-    }
-	if(!res)
-    {
-        cerr<<"The segmentation of foreground fails."<<endl;
-        if (m_OutImgData2) {delete []m_OutImgData; m_OutImgData=0;}
-        return;    
-    }
-
-	long size[3] = {in_sz[0],in_sz[1],in_sz[2]};
-	int location[3]={0,0,0};
-	for(int i=0;i<channel_sz;i++){
-		ind2sub(i,size,location);
-		//m_OutImgData2[i] = (int)m_OutImgData[i]+(int)inimg1d[i];
-		if(5<location[1]&&location[1]<in_sz[1]-5){
-			if(((int)m_OutImgData[i] >= (int)m_OutImgData2[i]))
-				m_OutImgData3[i] = m_OutImgData[i];
-			else
-				m_OutImgData3[i] = m_OutImgData2[i];
 		}
-		else
-			m_OutImgData3[i] = 0;
-	}
-
-
-	for(int i=0;i<channel_sz;i++){
-		if(((int)inimg1d[i]>(int)m_OutImgData3[i])&&((int)inimg1d[i]>150))
-			m_OutImgData3[i] = 255;
-		
-	}
-	
-	
-    //save mask file
-    for (i=0;i<3;i++) outsz[i]=in_sz[i]; outsz[3]=1;	
-    simple_saveimage_wrapper(callback,outfile, m_OutImgData3, outsz, 1);
-    
-    //clear memory
-Label_exit_Neuron_segment_entry_func:
-    if (m_OutImgData3) {delete []m_OutImgData3; m_OutImgData3=0;}
-	if (m_OutImgData2) {delete []m_OutImgData2; m_OutImgData2=0;}
-	if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
-    if (inimg1d) {delete []inimg1d; inimg1d=0;}
 }
+
+
+void image_IO(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback,bool b_binarization){
+	vector<char*> infiles;
+	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+	string s = infiles[0];
+	//V3DLONG* dims;
+	cout<<s<<endl;
+	/*QString m_InputfolderName = infiles.at(0);
+	cout<<m_InputfolderName.toStdString()<<endl;
+	if (!callback.getDimTeraFly(m_InputfolderName.toStdString(), dims))
+	{
+		v3d_msg("Cannot load terafly images.", 0);
+		return ;
+	}*/
+    //cout<<dims[0]<<" "<<dims[1]<<"  "<<dims[2]<<endl;
+	cout<<s<<endl;
+	size_t a=s.find_last_of(')');
+	size_t b=s.find_first_of('(');
+	string rest=s.substr(b+1,a-b-1);
+	cout<<rest<<endl;
+	size_t start=rest.find_first_of('x');
+	size_t end=rest.find_last_of('x');
+	string x=rest.substr(0,start);
+	string y=rest.substr(start+1,end-start-1);
+	string z=rest.substr(end+1,rest.length()-end-1);
+	int xs=stoi(x);
+	int ys=stoi(y);
+	int zs=stoi(z);
+
+	cout<<x<<"  "<<y<<" "<<z<<endl;
+	cout<<xs<<"  "<<ys<<" "<<zs<<endl;
+
+	int Cx=ys/512;
+	int Cy=xs/512;
+	int Cz=zs/512;
+	int px,py,pz;
+	int order=1;
+	for(int i=0;i<Cz;i++)
+		for(int j=0;j<Cy;j++)
+			for(int k=0;k<Cx;k++){
+             px=257+k*512;
+			 py=257+j*512;
+			 pz=257+i*512;
+			
+			 //尝试
+			 string apopath="F://test.apo";
+			 ofstream ad(apopath);
+			 ad<<order<<","<<" "<<","<<"  "<<order<<","<<","<<" "<<pz<<","<<px<<","<<py<<","<<" "<<0<<","<<0<<","<<0<<","<<50<<","<<0<<","<<","<<","<<","<<0<<","<<0<<","<<255<<endl;
+			 order++;
+			 ad.close();
+		     QString cmd_crip=QString("D:/vaa3d_tools/bin/vaa3d_msvc.exe  /x D:/vaa3d_tools/bin/plugins/image_geometry/crop3d_image_series/cropped3DImageSeries.dll /f cropTerafly /i  %1 F:/test.apo F:/v3draw /p 512 512 512").arg(QString::fromStdString(s));
+			 system(qPrintable(cmd_crip));
+			string infile=std::to_string(static_cast<long long>(px))+"_"+std::to_string(static_cast<long long>(py))+"_"+std::to_string(static_cast<long long>(pz))+".v3draw";
+			infile="F://v3draw//"+infile;
+			char * initafile = (char *)infile.data();
+			unsigned char * inimg1d = 0; V3DLONG in_sz[4]; int datatype;
+		    simple_loadimage_wrapper(callback,initafile, inimg1d, in_sz, datatype);
+		    V3DLONG channel_sz = in_sz[0]*in_sz[1]*in_sz[2];
+			int iVesCnt = 1;
+		    bool res;
+			unsigned char * m_OutImgData = 0;
+			unsigned char * m_OutImgData2 = 0;
+			try
+			{
+				m_OutImgData = new  unsigned char[channel_sz]; 
+				m_OutImgData2 = new unsigned char[channel_sz];
+
+			}
+			catch (...)
+			{
+				v3d_msg("Fail to allocate memory in Neuron_segment_entry_func().");
+				if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
+				return;    
+			}
+			switch (datatype)
+				    {
+				        case 1:
+				            res = do_seg2(inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+				            break;
+				        case 2:
+				            res = do_seg2((short int *)inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+				            break;
+				        case 4:
+				            res = do_seg2((float *)inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+				            break;
+				        default:
+				            break;
+				    }
+			if(!res)
+				    {
+				        cerr<<"The segmentation of foreground fails."<<endl;
+				        if (m_OutImgData2) {delete []m_OutImgData; m_OutImgData=0;}
+				        return;    
+				    }
+				for(int i=0;i<channel_sz;i++){
+					if((int)inimg1d[i]<80)
+						m_OutImgData2[i] = 0;
+				}
+				int* vis=0;
+				try{
+					vis=new int[channel_sz];
+				}catch(...){
+					cout << __FUNCTION__ << " error malloc" << endl;
+
+				}
+
+				//copy
+				int* vist=0;
+				try{
+					vist=new int[channel_sz];
+				}catch(...){
+					cout << __FUNCTION__ << " error malloc" << endl;
+
+				}
+				int flag = 0;
+	for (int i = 0; i < in_sz[0]; i++)
+		for (int j = 0; j < in_sz[1]; j++)
+			for (int k = 0; k < in_sz[2]; k++) {
+				if (m_OutImgData2[getNum(i, j, k,in_sz[0],in_sz[1],in_sz[2])] == 255 && !vis[getNum(i,j,k,in_sz[0],in_sz[1],in_sz[2])]) {
+					flag++;
+					bfs(m_OutImgData2,in_sz[0],in_sz[1],in_sz[2], i, j, k ,flag,vis);
+					
+				}
+			}
+
+			int *Count;
+			cout<<"flag:  "<<flag<<endl;
+			try{
+				Count = (int*)malloc(sizeof(int) * (flag+1));
+			}catch(...){
+				cout << __FUNCTION__ << " error malloc" << endl;
+				return ;
+			}
+			for (int m = 0; m <= flag; m++)
+				Count[m] = 0;
+			for(int i=0;i<channel_sz;i++ ){
+				Count[vis[i]]++;
+			}
+		
+				for(int i=0;i<channel_sz;i++){
+
+			if(Count[vis[i]] <80){
+			m_OutImgData2[i] = 0;
+			}
+
+			}
+			delete vis;
+			cout<<"endl"<<endl;
+			for(int i=0;i<(flag+1);i++)
+			{
+				cout<<Count[i]<<endl;
+			}
+			//copy
+			int flags = 0;
+			for (int i = 0; i < in_sz[0]; i++)
+				for (int j = 0; j < in_sz[1]; j++)
+					for (int k = 0; k < in_sz[2]; k++) {
+						if (m_OutImgData2[getNum(i, j, k,in_sz[0],in_sz[1],in_sz[2])] == 255 && !vist[getNum(i,j,k,in_sz[0],in_sz[1],in_sz[2])]) {
+							flags++;
+							bfs(m_OutImgData2,in_sz[0],in_sz[1],in_sz[2], i, j, k ,flags,vist);
+
+						}
+					}
+					if(flags>10){
+						delete vist;
+						delete m_OutImgData;
+						delete m_OutImgData2;
+						remove(initafile);
+					}
+					else{
+						
+					int *Counts;
+					cout<<"flag:  "<<flags<<endl;
+					try{
+						Counts = (int*)malloc(sizeof(int) * (flags+1));
+					}catch(...){
+						cout << __FUNCTION__ << " error malloc" << endl;
+						return ;
+					}
+					for (int m = 0; m <= flags; m++)
+						Counts[m] = 0;
+					for(int i=0;i<channel_sz;i++ ){
+						Counts[vist[i]]++;
+					}
+				
+					for(int i=0;i<(flags+1);i++)
+					{
+						cout<<Counts[i]<<endl;
+					}
+					long ax;
+					long ay;
+					long az;
+					int array[3];
+					int sum=0;
+					ofstream fout("F:/17302four/wholebrain.txt",ios::app);
+					//freopen("F:/log.txt","w",stdout);
+					for(int i=0;i<(flags+1);i++){
+						ax=0;
+						ay=0;
+						az=0;
+						for(int j=0;j<channel_sz;j++){
+						    //cout<<"step1:"<<endl;
+							if(m_OutImgData2[j]==255&&vist[j]==i){
+								getIndex(j,in_sz[0],in_sz[1],in_sz[2],array);
+								ax=ax+array[0];
+								ay=ay+array[1];
+								az=az+array[2];
+								sum=Counts[vist[j]];
+								  //cout<<"step2:"<<endl;
+							}
+						}
+						 if(sum!=0&&ax!=0){
+						ax=ax/sum;
+						ay=ay/sum;
+						az=az/sum;
+                  fout<<ax+px-256<<","<<ay+py-256<<","<<az+pz-256<<endl;	
+						 }
+					}
+					delete vist;
+					delete m_OutImgData;
+					delete m_OutImgData2;
+					remove(initafile);
+
+			}
+					}
+
+}
+
+//origin
+//void image_IO(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback &callback,bool b_binarization)
+//{
+//    if (input.size()<=0 && output.size()<=0)
+//        return;
+//	char * infile = (*(vector<char*> *)(input.at(0).p)).at(0);
+//    
+//	cout<<"infile : "<<infile<<endl;
+//
+//	string str = infile;
+//	str = str +"_seg.v3draw";
+//	char * outfile = (char *)str.data();
+//
+//	
+//
+//
+//    unsigned char * inimg1d = 0; V3DLONG in_sz[4]; int datatype;
+//    simple_loadimage_wrapper(callback,infile, inimg1d, in_sz, datatype);
+//    
+//	V3DLONG channel_sz = in_sz[0]*in_sz[1]*in_sz[2];
+//    V3DLONG outsz[4];
+//           
+//    //segmentation
+//    
+//    int iVesCnt = 1, i;
+//    bool res;
+//	
+//	unsigned char * m_OutImgData = 0;
+//	unsigned char * m_OutImgData2 = 0;
+//    unsigned char * m_OutImgData3 = 0;
+//	try
+//	{
+//		m_OutImgData = new  unsigned char[channel_sz]; 
+//		m_OutImgData2 = new unsigned char[channel_sz];
+//		m_OutImgData3 = new unsigned char[channel_sz];
+//	}
+//	catch (...)
+//	{
+//		v3d_msg("Fail to allocate memory in Neuron_segment_entry_func().");
+//        if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
+//        return;    
+//	}
+//	
+//    switch (datatype)
+//    {
+//        case 1:
+//            res = do_seg(inimg1d, m_OutImgData, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+//            break;
+//        case 2:
+//            res = do_seg((short int *)inimg1d, m_OutImgData, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+//            break;
+//        case 4:
+//            res = do_seg((float *)inimg1d, m_OutImgData, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+//            break;
+//        default:
+//            break;
+//    }
+//    
+//    if(!res)
+//    {
+//        cerr<<"The enhancement/segmentation of foreground fails."<<endl;
+//        goto Label_exit_Neuron_segment_entry_func;
+//    }	
+//	switch (datatype)
+//    {
+//        case 1:
+//            res = do_seg2(inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+//            break;
+//        case 2:
+//            res = do_seg2((short int *)inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+//            break;
+//        case 4:
+//            res = do_seg2((float *)inimg1d, m_OutImgData2, in_sz[0], in_sz[1], in_sz[2], iVesCnt, b_binarization);
+//            break;
+//        default:
+//            break;
+//    }
+//	if(!res)
+//    {
+//        cerr<<"The segmentation of foreground fails."<<endl;
+//        if (m_OutImgData2) {delete []m_OutImgData; m_OutImgData=0;}
+//        return;    
+//    }
+//
+//	long size[3] = {in_sz[0],in_sz[1],in_sz[2]};
+//	int location[3]={0,0,0};
+//	for(int i=0;i<channel_sz;i++){
+//		ind2sub(i,size,location);
+//		//m_OutImgData2[i] = (int)m_OutImgData[i]+(int)inimg1d[i];
+//		if(5<location[1]&&location[1]<in_sz[1]-5){
+//			if(((int)m_OutImgData[i] >= (int)m_OutImgData2[i]))
+//				m_OutImgData3[i] = m_OutImgData[i];
+//			else
+//				m_OutImgData3[i] = m_OutImgData2[i];
+//		}
+//		else
+//			m_OutImgData3[i] = 0;
+//	}
+//
+//
+//	for(int i=0;i<channel_sz;i++){
+//		if(((int)inimg1d[i]>(int)m_OutImgData3[i])&&((int)inimg1d[i]>150))
+//			m_OutImgData3[i] = 255;
+//		
+//	}
+//	
+//	
+//    //save mask file
+//    for (i=0;i<3;i++) outsz[i]=in_sz[i]; outsz[3]=1;	
+//    simple_saveimage_wrapper(callback,outfile, m_OutImgData3, outsz, 1);
+//    
+//    //clear memory
+//Label_exit_Neuron_segment_entry_func:
+//    if (m_OutImgData3) {delete []m_OutImgData3; m_OutImgData3=0;}
+//	if (m_OutImgData2) {delete []m_OutImgData2; m_OutImgData2=0;}
+//	if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
+//    if (inimg1d) {delete []inimg1d; inimg1d=0;}
+//}
 
 
 bool do_seg(short *pData, V3DLONG sx, V3DLONG sy, V3DLONG sz, int & iVesCnt, bool b_binarization=true)

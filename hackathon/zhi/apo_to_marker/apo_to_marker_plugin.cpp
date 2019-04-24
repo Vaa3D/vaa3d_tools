@@ -13,8 +13,8 @@ QStringList apo_to_marker::menulist() const
 {
 	return QStringList() 
         <<tr("save apo to marker format")
-//        <<tr("save apo to individual markers")
-//        <<tr("save apo to individual apo files")
+        <<tr("save apo to individual markers")
+        <<tr("save apo to individual apo files")
         <<tr("add index name in apo file")
         <<tr("save swc file to apo format")
 		<<tr("about");
@@ -269,26 +269,70 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
         int scale;
         scale= atoi(inparas[0]);
 
-        for (int i=0; i< file_inmarkers.size(); i++)
-        {
-            ImageMarker t;
-            t.x = file_inmarkers[i].x/scale;
-            t.y = file_inmarkers[i].y/scale;
-            t.z = file_inmarkers[i].z/scale;
-            t.color = file_inmarkers[i].color;
-            listLandmarks.push_back(t);
-            QString fileDefaultName;
+        bool individual_name=false;
+        if(inparas.size()>1){
 
-            if(i<9)
-                fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
-            else if(i<99)
-                fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
-            else
-                fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+            individual_name=true;
 
-            writeMarker_file(fileDefaultName,listLandmarks);
-            listLandmarks.clear();
+
         }
+
+        if(!individual_name)
+        {
+            for (int i=0; i< file_inmarkers.size(); i++)
+            {
+                ImageMarker t;
+                t.x = file_inmarkers[i].x/scale;
+                t.y = file_inmarkers[i].y/scale;
+                t.z = file_inmarkers[i].z/scale;
+                t.color = file_inmarkers[i].color;
+                listLandmarks.push_back(t);
+                QString fileDefaultName;
+
+                if(i<9)
+                    fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+                else if(i<99)
+                    fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+                else
+                    fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+
+                writeMarker_file(fileDefaultName,listLandmarks);
+                listLandmarks.clear();
+            }
+        }
+        else
+        {
+
+            for (int i=0; i< file_inmarkers.size(); i++)
+            {
+                ImageMarker t;
+                t.x = file_inmarkers[i].x/scale;
+                t.y = file_inmarkers[i].y/scale;
+                t.z = file_inmarkers[i].z/scale;
+                t.color = file_inmarkers[i].color;
+                t.name=file_inmarkers[i].name;
+                listLandmarks.push_back(t);
+                QString fileDefaultName;
+                int indi_name= t.name.toInt();
+
+                if(indi_name<10)
+                    fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(indi_name).arg(t.x).arg(t.y).arg(t.z);
+                else if(indi_name<100)
+                    fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(indi_name).arg(t.x).arg(t.y).arg(t.z);
+                else
+                    fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(indi_name).arg(t.x).arg(t.y).arg(t.z);
+
+                writeMarker_file(fileDefaultName,listLandmarks);
+                listLandmarks.clear();
+
+
+        }
+        }
+
+
+
+
+
 
     }else if(func_name == tr("apo_to_swc"))
     {
@@ -347,8 +391,6 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
 
 
     }
-
-
 
 	else if (func_name == tr("help"))
 	{
