@@ -287,8 +287,6 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
         nlist.append(node.n);
     }
     crop_swc(whole_axon_swc, proximal_swc, 200, 0, 0, 0, 0,0,0,0,0);
-    return 1;
-
 
     // 1.2 Load lpa
     NeuronTree lpa = readSWC_file(lpa_swc);
