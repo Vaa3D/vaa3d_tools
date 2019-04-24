@@ -70,7 +70,8 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
     }
 
     for (V3DLONG i=0;i<lN.size();i++)
-        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
+        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << " "
+               << lN.at(i).seg_id <<" " << lN.at(i).level << " "<< lN.at(i).creatmode <<" "<<lN.at(i).timestamp << " "<< lN.at(i).tfresindex <<"\n";
 
     file.close();
     cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
@@ -96,7 +97,7 @@ QStringList pruning_swc::funclist() const
 void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("pruning"))
-	{
+    {
                 QString fileOpenName;
                 fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
                         "",
@@ -139,7 +140,7 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                 QList<NeuronSWC> list = nt.listNeuron;
                 for (int i=0;i<list.size();i++)
                 {
-                    if (childs[i].size()==0)
+                    if (childs[i].size()==0  && list.at(i).parent >=0)
                     {
                         int parent_tip = getParent(i,nt);
                         MyMarker curr_node, parent_node;
@@ -160,17 +161,18 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                             curr_node.y = list.at(parent_tip).y;
                             curr_node.z = list.at(parent_tip).z;
 
-                            parent_node.x = list.at(getParent(parent_tip,nt)).x;
-                            parent_node.y = list.at(getParent(parent_tip,nt)).y;
-                            parent_node.z = list.at(getParent(parent_tip,nt)).z;
+                            int newParent = getParent(parent_tip,nt);
+                            if(newParent == 1000000000) break;
+
+                            parent_node.x = list.at(newParent).x;
+                            parent_node.y = list.at(newParent).y;
+                            parent_node.z = list.at(newParent).z;
 
                             index_tip += dist(curr_node,parent_node);
 
                             parent_tip = getParent(parent_tip,nt);
 
-                            if(parent_tip == 1000000000)
-                                break;
-
+                            if(parent_tip == 1000000000)    break;
                          }
 
                         int parent_index = parent_tip;
@@ -190,45 +192,67 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                                 if(parent_tip == 1000000000)
                                     break;
                             }
-                            if(segment_length[parent_tip] > index_tip)
+                            if(parent_tip != 1000000000 && segment_length[parent_tip] > index_tip)
                                 segment_length[parent_tip]  = index_tip;
                         }
                     }
                 }
 
-               vector<MyMarker*> before_prunning_swc = readSWC_file(fileOpenName.toStdString());
-               vector<MyMarker*> after_prunning_swc;
-               for (int i=0;i<before_prunning_swc.size();i++)
-               {
-                   if(flag[i] == 1 || (flag[i] != 1 && (segment_length[i] > segment_length[parent_id[i]])))
-                   {
-                       after_prunning_swc.push_back(before_prunning_swc[i]);
-                   }
+                //NeutronTree structure
+                NeuronTree nt_prunned;
+                QList <NeuronSWC> listNeuron;
+                QHash <int, int>  hashNeuron;
+                listNeuron.clear();
+                hashNeuron.clear();
 
-              }
+                //set node
 
-               if(flag) {delete[] flag; flag = 0;}
-               if(segment_length) {delete[] segment_length; segment_length = 0;}
-               if(parent_id) {delete[] parent_id; parent_id = 0;}
+                NeuronSWC S;
+                for (int i=0;i<list.size();i++)
+                {
+                    if(flag[i] == 1 || (flag[i] != 1 && (segment_length[i] > segment_length[parent_id[i]])))
+                    {
+                         NeuronSWC curr = list.at(i);
+                         S.n 	= curr.n;
+                         S.type 	= curr.type;
+                         S.x 	= curr.x;
+                         S.y 	= curr.y;
+                         S.z 	= curr.z;
+                         S.r 	= curr.r;
+                         S.pn 	= curr.pn;
+                         S.seg_id = curr.seg_id;
+                         S.level = curr.level;
+                         S.creatmode = curr.creatmode;
+                         S.timestamp = curr.timestamp;
+                         S.tfresindex = curr.tfresindex;
 
+                         listNeuron.append(S);
+                         hashNeuron.insert(S.n, listNeuron.size()-1);
+                    }
 
-               QString fileDefaultName = fileOpenName+QString("_prunned.swc");
-               //write new SWC to file
-               QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-                       fileDefaultName,
-                       QObject::tr("Supported file (*.swc)"
-                           ";;Neuron structure	(*.swc)"
-                           ));
+               }
+                nt_prunned.n = -1;
+                nt_prunned.on = true;
+                nt_prunned.listNeuron = listNeuron;
+                nt_prunned.hashNeuron = hashNeuron;
 
-               saveSWC_file(fileSaveName.toStdString(), after_prunning_swc);
+                if(flag) {delete[] flag; flag = 0;}
+                if(segment_length) {delete[] segment_length; segment_length = 0;}
+                if(parent_id) {delete[] parent_id; parent_id = 0;}
 
-
-        /*       if (!export_list2file(nt_prunned.listNeuron,fileSaveName,fileOpenName))
-               {
-                   v3d_msg("fail to write the output swc file.");
-                   return;
-               }*/
-	}
+                QString fileDefaultName = fileOpenName+QString("_pruned.eswc");
+                //write new SWC to file
+                QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                        fileDefaultName,
+                        QObject::tr("Supported file (*.eswc)"
+                            ";;Neuron structure	(*.eswc)"
+                            ));
+                if (!export_list2file(nt_prunned.listNeuron,fileSaveName,fileOpenName))
+                {
+                    v3d_msg("fail to write the output swc file.");
+                    return;
+                }
+    }
     else if (menu_name == tr("pruning based on markers"))
     {
         ControlPanel = new controlPanel(callback, parent);

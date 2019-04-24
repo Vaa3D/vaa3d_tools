@@ -4,6 +4,13 @@
 #include <v3d_interface.h>
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 #include "prune_short_branch.h"
+#include "../../../../vaa3d_tools/v3d_main/jba/newmat11/newmatap.h"
+#include "../../../../vaa3d_tools/v3d_main/jba/newmat11/newmatio.h"
+#include "../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/align_axis.h"
+
+//#include "../../../../vaa3d_tools/v3d_main/vrrenderer/Matrices.h"
+//#include "newmatap.h"
+//#include "newmatio.h"
 //#include "../../PengXie/preprocess/pre_processing_main.h"
 //#include "../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.h"
 
@@ -52,4 +59,9 @@ void get_block(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPlu
 void find_short_branch_tips_func(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
 void find_short_branch_tips_menu(V3DPluginCallback2 &callback, QWidget *parent);
 bool export_file2record(string swc_name,vector<int>input_num,double cur_per, QString fileSaveName);
+void rotation(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+vector<MyMarker> align_axis_marker(vector<MyMarker> input);
+bool q_imagewarp_affine(const unsigned char *p_img_sub,const long *sz_img_sub,
+        unsigned char *&p_img_affine,Matrix affinematrix,double* trans);
+NeuronTree align_axis(NeuronTree input,double *& PC,double* & trans);
 #endif // GET_TIP_BLOCK_H

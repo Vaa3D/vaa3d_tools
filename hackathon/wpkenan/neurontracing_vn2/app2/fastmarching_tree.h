@@ -1381,16 +1381,18 @@ template<class T> bool fastmarching_tree_wp(
 	for(int j=0;j<tol_sz;j++){
 		label[j]=-1;
 	}
+
+	cout << "new_new_tree" << endl;
 	//freopen("D:\soamdata\7\test\log.txt","w",stdout);
 	int countTmp[4];
 	countTmp[0]=0;countTmp[1]=0;countTmp[2]=0,countTmp[3]=0;
 	for(int j=0;j<tol_sz;j++){
 		int indexMin=0;
 		for(int i=1;i<roots.size();i++){
-			if(phi[i][j]==phi[indexMin][j]){
-				indexMin=-1;
-				break;
-			}
+			//if(phi[i][j]==phi[indexMin][j]){
+			//	indexMin=-1;
+			//	break;
+			//}
 			if(phi[i][j]<phi[indexMin][j]){
 				indexMin=i;
 			}
@@ -1409,7 +1411,7 @@ template<class T> bool fastmarching_tree_wp(
 
 
 
-	//输出第一个
+	//\CA\E4\B3\F6\B5\DA一\B8\F6
 	for(int j=0;j<tol_sz;j++){
 		phi[0][j] = INF;
 		parent[0][j] = j;  // each pixel point to itself at the         statements beginning

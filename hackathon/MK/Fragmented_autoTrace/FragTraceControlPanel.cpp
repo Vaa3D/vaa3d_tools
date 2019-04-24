@@ -4,6 +4,7 @@
 #include <qsettings.h>
 #include <qfileinfo.h>
 #include <qspinbox.h>
+#include <qtimer.h>
 
 #include "FragTraceControlPanel.h"
 
@@ -150,6 +151,9 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->listView->setModel(listViewBlankAreas);
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
+		string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
+		QString windowTitleQ = "Fragment-based Auto-tracing v" + QString::fromStdString(versionString);
+		this->setWindowTitle(windowTitleQ);
 		this->show();
 
 		this->traceManagerPtr = nullptr;
@@ -759,7 +763,8 @@ void FragTraceControlPanel::traceButtonClicked()
 	this->connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 	this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
-	emit switchOnSegPipe();
+	emit switchOnSegPipe(); // Qt's [emit] is equivalent to normal function call. Therefore no new thread is created due to this keyword.
+	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 
 	this->disconnect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));

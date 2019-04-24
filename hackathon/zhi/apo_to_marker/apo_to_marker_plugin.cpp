@@ -327,6 +327,29 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
         writeAPO_file(outfilename,file_inmarkers);
 
     }
+
+    if (func_name == tr("add_custom_name"))
+    {
+        QList<CellAPO> apofile;
+        apofile=readAPO_file(QString(infiles[0]));
+        QString customname=inparas[0];
+        for(int i=0; i<apofile.size();i++)
+        {
+            apofile[i].name=customname;
+            apofile[i].x=apofile[i].x;
+            apofile[i].y=apofile[i].y;
+            apofile[i].z=apofile[i].z;
+        }
+
+        QString outfilename=outfiles[0];
+        writeAPO_file(outfilename,apofile);
+
+
+
+    }
+
+
+
 	else if (func_name == tr("help"))
 	{
         printf("\nThis is a plugin to convert apo to individual markers\n");
