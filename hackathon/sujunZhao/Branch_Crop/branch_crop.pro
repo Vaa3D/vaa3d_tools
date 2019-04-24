@@ -10,7 +10,7 @@ INCLUDEPATH     += ../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontr
 HEADERS	+= branch_crop_plugin.h \
     branch_detect.h\
 #../../../../vaa3d_tools/released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h \
-../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h\
+../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h
 #../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h
 
 SOURCES	+= branch_crop_plugin.cpp \
@@ -21,6 +21,9 @@ SOURCES	+= branch_crop_plugin.cpp \
 #SOURCES += ../../../../vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES +=../../../../vaa3d_tools/hackathon/PengXie/preprocess/sort_swc_redefined.cpp
+#SOURCES +=../../../../vaa3d_tools/hackathon/ouyang/ML_get_sample/tip_main.cpp
 
 TARGET	= $$qtLibraryTarget(branch_crop)
 DESTDIR	= $$VAA3DPATH/bin/plugins/branch_crop/
+
+DISTFILES +=

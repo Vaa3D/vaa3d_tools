@@ -12,6 +12,8 @@
 #include <prune_short_branch.h>
 #include "v3d_message.h"
 #include  "volimg_proc.h"
+#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
+//#include "../../ouyang/ML_get_samples/tip_main.h"
 //#include "../../PengXie/tip_signal/utilities.h"
 //#include "../../PengXie/neuron_reliability_score/src/my_surf_objs.h"
 
@@ -39,9 +41,13 @@ struct block{
     XYZ small;
     XYZ large;
 };
+
 double Angle(XYZ p1,XYZ p2);
 block offset_block(block input_block, XYZ offset);
+QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
+void Mask_filter(NeuronTree neurons,unsigned char* Mask,V3DLONG mysz0,V3DLONG mysz1,V3DLONG mysz2,QList<int> marker_node,double margin);
 //double average_intensity(unsigned char *data1d_crop,NeuronTree nt,XYZ center, int size, XYZ diff, long mysz0,long mysz1);
+QList<int> find_tip_and_itspn(NeuronTree nt, long sz0, long sz1, long sz2);
 bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2);
 double signal_at_markers(vector<MyMarker> allmarkers, unsigned char * data1d, long sz0, long sz1, long sz2);
 bool export_list22file(const QList<NeuronSWC>& lN, QString fileSaveName);
