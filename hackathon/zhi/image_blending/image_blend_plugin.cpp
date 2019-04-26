@@ -813,7 +813,9 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         unsigned char* data1d_mask = 0;
         data1d_mask = new unsigned char [pagesz_xy];
         memset(data1d_mask,0,pagesz_xy*sizeof(unsigned char));
-        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2]);
+//        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2]);
+        QList<int> empty_list;
+        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2], empty_list, 0);
 
         for(V3DLONG iy = 0; iy < in_sz_xy[1]; iy++)
         {
@@ -856,7 +858,8 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         unsigned char* data1d_mask2 = 0;
         data1d_mask2 = new unsigned char [pagesz_yz];
         memset(data1d_mask2,0,pagesz_yz*sizeof(unsigned char));
-        ComputemaskImage(nt2, data1d_mask2, in_sz_yz[0], in_sz_yz[1], in_sz_yz[2]);
+//        ComputemaskImage(nt2, data1d_mask2, in_sz_yz[0], in_sz_yz[1], in_sz_yz[2]);
+        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2], empty_list, 0);
 
         for(V3DLONG iy = 0; iy < in_sz_xy_yz[1]; iy++)
         {
