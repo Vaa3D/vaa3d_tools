@@ -304,7 +304,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
             tmpfolder= P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
-    if(!tmpfolder.isEmpty())
+    if(!tmpfolder.isEmpty() && !P.resume)
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -317,7 +317,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     QString finaloutputswc;
     if(P.global_name)
         finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
-    if(QFileInfo(finaloutputswc).exists())
+    if(QFileInfo(finaloutputswc).exists() && !P.resume)
         system(qPrintable(QString("rm %1").arg(finaloutputswc.toStdString().c_str())));
 
     LandmarkList newTargetList;
@@ -2027,6 +2027,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
+    int conf_th = 130;
     //assign all sub_trees
     QVector<int> visit(nt.listNeuron.size(),0);
 
@@ -2065,7 +2066,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else{
         for(int i=0; i<nt.listNeuron.size();i++)
         {
-            if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
+            if(nt.listNeuron[i].type>conf_th && nt.listNeuron[i].pn ==-1 && visit[i]==0)  //was 130
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2088,7 +2089,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             }
 
             int diff_radius;
-            if(nt.listNeuron[i].type<=130 && nt.listNeuron[i].radius<2 && visit[i]==0)
+            if(nt.listNeuron[i].type<=conf_th && nt.listNeuron[i].radius<2 && visit[i]==0)
             {
                 int count=0;
                 int pre_sum=0;
@@ -2112,7 +2113,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 }
             }
 
-            if(nt.listNeuron[i].type>130 && visit[i]==0 && childs[i].size()==1)
+            if(nt.listNeuron[i].type>conf_th && visit[i]==0 && childs[i].size()==1)
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2156,7 +2157,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         if (childs[i].size()==0 || P.method != gd)
         {
             NeuronSWC curr = list.at(i);
-            if(curr.type >130) continue;
+            if(curr.type >conf_th) continue;
             LocationSimple newTip;
             bool check_tip = false;
             if( curr.x < overlap_ratio*  total4DImage->getXDim() || curr.x > (1-overlap_ratio) *  total4DImage->getXDim() || curr.y < overlap_ratio * total4DImage->getYDim() || curr.y > (1-overlap_ratio)* total4DImage->getYDim()
