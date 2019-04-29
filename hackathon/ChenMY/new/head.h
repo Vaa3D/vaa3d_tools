@@ -50,3 +50,4 @@ void bfs( unsigned char * array,int row, int col, int height,int x,int y,int z,i
 
 
 
+

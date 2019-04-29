@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <iostream>
 #include "NeuronEnhancementFilter.h"
+#include <time.h>
+#include <fstream>
 
 
 #ifdef _DEBUG
@@ -34,8 +36,10 @@ int NeuronEnhancementFilter::MultiScaleFilter3D(short *apsImage, float *apfFilte
     
 	int iSig;
 	int iSize = 5;
+
 	//cout<<"iSigmaLength = "<<iSigmaLength<<endl;
     short *apfVesselTmp = 0, *apfVess = 0;
+
 	for( int i=0; i<iSigmaLength; i++)
 	{
 		iSig = apiSigma[i] ;		
@@ -74,7 +78,6 @@ int NeuronEnhancementFilter::MultiScaleFilter3DB(short *apsImage, float *apfFilt
 {
 	long iElements = long(iColNmb)*long(iRowNmb)*long(iSliceNmb);
 	long iElementsNew = long(iSliceNmb+2)*long(iColNmb+2)*long(iRowNmb+2);	
-    
 	int iSig;
 	int iSize = 5;
 	//cout<<"iSigmaLength = "<<iSigmaLength<<endl;
@@ -90,17 +93,15 @@ int NeuronEnhancementFilter::MultiScaleFilter3DB(short *apsImage, float *apfFilt
             apfVess = new short[iElementsNew];
         }
         catch(...)
-        {
+        {    
             return -1;
         }
-
+		
 		ConvolThreeDimension(apsImage, apfVesselTmp, apfGausstemplate,iRowNmb, iColNmb, iSliceNmb,iSize);
-        
 		Expand3DBoundary(apfVesselTmp, iSliceNmb, iRowNmb, iColNmb, apfVess);
 		if (apfVesselTmp) {delete []apfVesselTmp; apfVesselTmp = NULL;}
         
 		memset(apsImage, 0, sizeof(short)*iElements);
-		
 		int iRet = CalculateBallness(apfVess, apsImage, iSliceNmb+2, iColNmb+2, iRowNmb+2, fA, fB, fC);
 		if (apfVess) { delete []apfVess; apfVess = NULL;}
 		
@@ -300,9 +301,13 @@ int NeuronEnhancementFilter::Calculatelness(short *apfVess, short *apfFiltedImg,
         apfDy = new short[iElementsNew];
         apfDz = new short[iElementsNew];
     }
-    catch (...) 
+    catch (exception &e) 
     {
         printf("Fail to allocate memory NeuronEnhancementFilter().\n");
+		printf("error %s\n",e.what());
+		if (apfDz) {delete []apfDz;	apfDz = NULL;}
+		if (apfDx) {delete []apfDx; apfDx = NULL;}
+		if (apfDy) {delete []apfDy;	apfDy = NULL;}
         return -1;
     }
 	
@@ -422,12 +427,10 @@ int NeuronEnhancementFilter::Calculatelness(short *apfVess, short *apfFiltedImg,
 
 
 
-	//if (apfDz) {delete []apfDz;	apfDz = NULL;}
-	//if (apfDx) {delete []apfDx; apfDx = NULL;}
-	//if (apfDy) {delete []apfDy;	apfDy = NULL;}
-	delete apfDz;
-	delete apfDx;
-	delete apfDy;
+	if (apfDz) {delete []apfDz;	apfDz = NULL;}
+	if (apfDx) {delete []apfDx; apfDx = NULL;}
+	if (apfDy) {delete []apfDy;	apfDy = NULL;}
+
 
 	return 1;
 }
@@ -477,9 +480,13 @@ int NeuronEnhancementFilter::CalculateBallness(short *apfVess, short *apfFiltedI
         apfDy = new short[iElementsNew];
         apfDz = new short[iElementsNew];
     }
-    catch (...) 
+    catch (exception &e) 
     {
         printf("Fail to allocate memory NeuronEnhancementFilter().\n");
+		printf("error %s\n",e.what());
+		if (apfDz) {delete []apfDz;	apfDz = NULL;}
+		if (apfDx) {delete []apfDx; apfDx = NULL;}
+		if (apfDy) {delete []apfDy;	apfDy = NULL;}
         return -1;
     }
 	
@@ -538,9 +545,9 @@ int NeuronEnhancementFilter::CalculateBallness(short *apfVess, short *apfFiltedI
 		}//for j
 	}// for i
 
-	if (apfDz) {delete []apfDz;	apfDz = NULL;}
-	if (apfDx) {delete []apfDx; apfDx = NULL;}
-	if (apfDy) {delete []apfDy;	apfDy = NULL;}
+	if (apfDz!=NULL) {delete []apfDz;	apfDz = NULL;}
+	if (apfDx!=NULL) {delete []apfDx; apfDx = NULL;}
+	if (apfDy!=NULL) {delete []apfDy;	apfDy = NULL;}
 
 	return 1;
 }
@@ -559,6 +566,7 @@ void  NeuronEnhancementFilter::CalEigenValue( float *Dxx_f, float *Dxy_f, float 
     // Loop variable
     int i;    
     
+
     for(i=0; i<npixels; i++) {
         Ma[0][0]=(float)Dxx_f[i]; Ma[0][1]=(float)Dxy_f[i]; Ma[0][2]=(float)Dxz_f[i];
         Ma[1][0]=(float)Dxy_f[i]; Ma[1][1]=(float)Dyy_f[i]; Ma[1][2]=(float)Dyz_f[i];
