@@ -4,6 +4,8 @@
 
 #include <boost/container/flat_set.hpp>
 
+#include <qprogressdialog.h>
+
 #include "FragTraceManager.h"
 #include "FeatureExtractor.h"
 

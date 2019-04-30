@@ -58,7 +58,6 @@ public:
 
 	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
 
-public slots:
 	void imgProcPipe_wholeBlock();
 
 signals:
