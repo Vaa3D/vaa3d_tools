@@ -30,6 +30,8 @@ class ImgAnalyzer
 {
 	/***************** Image Segmentation *****************/
 public:
+	int blobProcessedPercentage;
+
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);

@@ -4,8 +4,6 @@
 
 #include <boost/container/flat_set.hpp>
 
-#include <qprogressdialog.h>
-
 #include "FragTraceManager.h"
 #include "FeatureExtractor.h"
 
@@ -77,9 +75,16 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	this->histThreImgName.clear();
 	cout << " -- Image slice preparation done." << endl;
 	cout << "Image acquisition done. Start fragment tracing.." << endl;
+
+	this->progressBarDiagPtr = new QProgressDialog(this);
+	this->progressBarDiagPtr->setWindowTitle("Neuron segment generation in progress");
+	this->progressBarDiagPtr->setMinimumWidth(400);
+	this->progressBarDiagPtr->setRange(0, 100);
+	this->progressBarDiagPtr->setModal(true);
+	this->progressBarDiagPtr->setCancelButtonText("Abort");
 }
 
-void FragTraceManager::imgProcPipe_wholeBlock()
+bool FragTraceManager::imgProcPipe_wholeBlock()
 {
 	cout << "number of slices: " << this->fragTraceImgManager.imgDatabase.begin()->second.slicePtrs.size() << endl;
 	V3DLONG dims[4];
@@ -102,14 +107,14 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		{
 			this->gammaCorrect("ada_cutoff", dims, "gammaCorrected");
 			this->histThreImg3D("gammaCorrected", dims, this->histThreImgName);
-			this->mask2swc(this->histThreImgName, "blobTree");
+			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
 		}
 		else 
 		{
 			if (this->mode == dendriticTree)
 			{
 				//clock_t begin = clock();
-				this->mask2swc("ada_cutoff", "blobTree");
+				if (!this->mask2swc("ada_cutoff", "blobTree")) return false;
 				//clock_t end = clock();
 				//float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 				//cout << "Connected component TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
@@ -117,7 +122,7 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			else
 			{
 				this->histThreImg3D("ada_cutoff", dims, this->histThreImgName);
-				this->mask2swc(this->histThreImgName, "blobTree");
+				if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
 			}
 		}
 	}
@@ -127,12 +132,12 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		{
 			this->gammaCorrect(this->adaImgName, dims, "gammaCorrected");
 			this->histThreImg3D("gammaCorrected", dims, this->histThreImgName);
-			this->mask2swc(this->histThreImgName, "blobTree");
+			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
 		}
 		else
 		{
 			this->histThreImg3D(this->adaImgName, dims, this->histThreImgName);
-			this->mask2swc(this->histThreImgName, "blobTree");
+			if (!this->mask2swc(this->histThreImgName, "blobTree")) return false;
 		}
 	}
 
@@ -149,9 +154,24 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
-				if (it->size < voxelCount) continue;
+				if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+				else this->progressBarDiagPtr->setLabelText("Extracting fragments from signals..");
+				qApp->processEvents();
+				if (this->progressBarDiagPtr->wasCanceled())
+				{
+					this->progressBarDiagPtr->setLabelText("Process aborted.");
+					return false;
+				}
 
-				if (int(it - this->signalBlobs.begin()) % 500 == 0) cout << int(it - this->signalBlobs.begin()) << " ";
+				if (it->size < voxelCount) continue;
+				if (int(it - this->signalBlobs.begin()) % 500 == 0)
+				{
+					double progressBarValue = (double(it - this->signalBlobs.begin()) / this->signalBlobs.size()) * 100;
+					int progressBarValueInt = ceil(progressBarValue);
+					this->progressBarDiagPtr->setValue(progressBarValue);
+					cout << int(it - this->signalBlobs.begin()) << " ";
+				}
+
 				NeuronTree centroidTree;
 				boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(*it);
 				for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
@@ -215,6 +235,22 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(dendriteComponent);
 			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
 			{
+				if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+				else this->progressBarDiagPtr->setLabelText("Extracting fragments from signals..");
+				qApp->processEvents();
+				if (this->progressBarDiagPtr->wasCanceled())
+				{
+					this->progressBarDiagPtr->setLabelText("Process aborted.");
+					return false;
+				}
+
+				if (int(nodeIt - sectionalCentroids.begin()) % 500 == 0)
+				{
+					double progressBarValue = (double(nodeIt - sectionalCentroids.begin()) / sectionalCentroids.size()) * 100;
+					int progressBarValueInt = ceil(progressBarValue);
+					this->progressBarDiagPtr->setValue(progressBarValue);
+				}
+
 				NeuronSWC newNode;
 				newNode.x = nodeIt->at(0);
 				newNode.y = nodeIt->at(1);
@@ -261,6 +297,8 @@ void FragTraceManager::imgProcPipe_wholeBlock()
 		writeSWC_file(localSWCFullName, finalOutputTree);
 	}
 	
+	if (this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->close();
+
 	emit emitTracedTree(finalOutputTree);
 }
 
@@ -429,7 +467,7 @@ void FragTraceManager::histThreImg3D(const string inputRegImgName, V3DLONG dims[
 	}
 }
 
-void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName)
+bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName)
 {
 	int sliceDims[3];
 	sliceDims[0] = this->fragTraceImgManager.imgDatabase.at(inputImgName).dims[0];
@@ -453,8 +491,15 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 		slice2DVector.push_back(slice2DPtr);
 	}
 
+	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+	else this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
+	qApp->processEvents();
+	
 	this->signalBlobs.clear();
 	ImgAnalyzer* myImgAnalyzerPtr = new ImgAnalyzer;
+	myImgAnalyzerPtr->blobProcessedPercentage = 0;
+	this->blobProcessMonitor();
+	
 	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
 	if (this->finalSaveRootQ != "")
@@ -480,6 +525,12 @@ void FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	}
 	slice2DVector.clear();
 	// ------- END of [Releasing memory] -------
+}
+
+void FragTraceManager::blobProcessMonitor()
+{
+	cout << endl << "test" << endl;
+	QTimer::singleShot(1000, this, SLOT(blobProcessMonitor()));
 }
 
 void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)

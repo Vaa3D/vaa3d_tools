@@ -83,8 +83,8 @@ namespace integratedDataTypes
 		int head;                                  // segment head node ID
 		vector<int> tails;                         // segment tail(s) node ID(s) (branching segment is currently not supported; only 1 element in tails vector)
 		QList<NeuronSWC> nodes;                    // segment nodes
-		map<int, size_t> seg_nodeLocMap;           // nodeID -> its node location in nodes QList
-		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child node location(s) in nodes Qlist
+		map<int, size_t> seg_nodeLocMap;           // nodeID -> its location in nodes QList
+		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist
 		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
 		bool to_be_deleted;
