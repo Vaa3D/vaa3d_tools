@@ -348,8 +348,8 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 							b3Dcomps.erase(checkIt2);
 							currBaseBlob = checkIt1->first;
 							double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
-							this->blobProcessedPercentage = int(ceil(processedPercentage));
-							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << endl;
+							this->imgAnalyzerProgressMonitor.testPercentage = int(ceil(processedPercentage));
+							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << this->imgAnalyzerProgressMonitor.testPercentage << " %" << endl;
 							goto MERGED;
 						}
 					}

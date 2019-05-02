@@ -14,6 +14,7 @@
 
 #include "ImgManager.h"
 #include "ImgProcessor.h"
+#include "ProgressMonitor.h"
 
 using namespace std;
 
@@ -30,7 +31,7 @@ class ImgAnalyzer
 {
 	/***************** Image Segmentation *****************/
 public:
-	int blobProcessedPercentage;
+	ProgressMonitor imgAnalyzerProgressMonitor;
 
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);

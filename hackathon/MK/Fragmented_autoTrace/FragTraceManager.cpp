@@ -155,7 +155,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
 				if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-				else this->progressBarDiagPtr->setLabelText("Extracting fragments from signals..");
+				this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
 				qApp->processEvents();
 				if (this->progressBarDiagPtr->wasCanceled())
 				{
@@ -236,7 +236,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
 			{
 				if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-				else this->progressBarDiagPtr->setLabelText("Extracting fragments from signals..");
+				this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
 				qApp->processEvents();
 				if (this->progressBarDiagPtr->wasCanceled())
 				{
@@ -490,17 +490,12 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 		}
 		slice2DVector.push_back(slice2DPtr);
 	}
-
-	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-	else this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
-	qApp->processEvents();
 	
 	this->signalBlobs.clear();
-	ImgAnalyzer* myImgAnalyzerPtr = new ImgAnalyzer;
-	myImgAnalyzerPtr->blobProcessedPercentage = 0;
+	this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
 	this->blobProcessMonitor();
 	
-	this->signalBlobs = myImgAnalyzerPtr->findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
+	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
 	if (this->finalSaveRootQ != "")
 	{
@@ -527,10 +522,25 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	// ------- END of [Releasing memory] -------
 }
 
-void FragTraceManager::blobProcessMonitor()
+bool FragTraceManager::blobProcessMonitor()
 {
-	cout << endl << "test" << endl;
-	QTimer::singleShot(1000, this, SLOT(blobProcessMonitor()));
+	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+	this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
+	qApp->processEvents();
+	if (this->progressBarDiagPtr->wasCanceled())
+	{
+		this->progressBarDiagPtr->setLabelText("Process aborted.");
+		return false;
+	}
+	int progressBarValueInt = this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage;
+	this->progressBarDiagPtr->setValue(progressBarValueInt);
+	
+	if (progressBarValueInt < 100)
+	{
+
+		QTimer::singleShot(2000, this, SLOT(blobProcessMonitor()));
+	}
+	else return true;
 }
 
 void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)

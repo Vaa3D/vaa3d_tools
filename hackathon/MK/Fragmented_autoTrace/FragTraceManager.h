@@ -89,7 +89,7 @@ private:
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 
 private slots:
-	void blobProcessMonitor();
+	bool blobProcessMonitor();
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])
