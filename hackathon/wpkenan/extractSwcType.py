@@ -189,3 +189,6 @@ if __name__=="__main__":
     argv=sys.argv;
     print(argv)
     main(argv)
+
+#example
+##C:\Users\Anzhi>python extractSwcType.py D:\vaa3d_tools\bin\vaa3d_msvc.exe C:\Users\Anzhi\group1_c_VR
