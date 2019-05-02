@@ -106,7 +106,7 @@ map<string, float> ImgProcessor::getBasicStats_fromHist(const map<int, size_t>& 
 		count = count + it->second;
 		if (float(count) / float(totalPixNum) >= 0.5)
 		{
-			median = it->first;
+			median = float(it->first);
 			break;
 		}
 	}
@@ -156,7 +156,7 @@ map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_
 		count = count + it->second;
 		if (float(count) / float(totalPixNum) >= 0.5)
 		{
-			median = it->first;
+			median = float(it->first);
 			break;
 		}
 	}
