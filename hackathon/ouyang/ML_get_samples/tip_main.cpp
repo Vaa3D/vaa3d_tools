@@ -13,6 +13,8 @@
 #include "../../../../vaa3d_tools/v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 #include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_upSample3D.h"
 #include "../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/pca1.h"
+#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h"
+#include "../../../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp"
 #include "tiffio.h"
 //#include "../../../released_plugins/v3d_plugins/cellseg_gvf/src/FL_downSample3D.h"
 #define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
@@ -746,6 +748,7 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
     //to be implemented
     //3.2 return average signal back to nodes in cube
     //int radius=5;
+    //4.tip relocation
     all_cube_markers=get_in_circle_nodes(tip,radius);//R=5
     cout<<"cube size(number of pixels):"<<all_cube_markers.size()<<endl;
     ave_signal=get_circle_signal(all_cube_markers,data1d_crop,mysz[0],mysz[1],mysz[2]);
@@ -765,23 +768,42 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
       writeSWC_file(swc_name,result_tree);
       qDebug()<<swc_name;
 
-      //Write data in the file
+      //5.mean_shift tip location
+      LandmarkList marklist_2D;
+      LocationSimple S;
+      S.x = nt_crop_sorted.listNeuron.at(tip_id).x;
+      S.y = nt_crop_sorted.listNeuron.at(tip_id).y;
+      S.z = nt_crop_sorted.listNeuron.at(tip_id).z;
+      marklist_2D.push_back(S);
+      mean_shift_fun fun_obj;
+      vector<V3DLONG> poss_landmark;
+      vector<float> mass_center;
+      double windowradius = 5;
+
+      V3DLONG sz_img[4];
+      sz_img[0] = mysz[0]; sz_img[1] = mysz[1]; sz_img[2] = mysz[2]; sz_img[3] = 1;
+      fun_obj.pushNewData<unsigned char>((unsigned char*)data1d_crop, sz_img);
+      poss_landmark=landMarkList2poss(marklist_2D, sz_img[0], sz_img[0]*sz_img[1]);
+
+      mass_center=fun_obj.mean_shift_center_mass(poss_landmark[0],windowradius);
+
+      //6.Write data in the file
       QString qs_output;
       qs_output = output_2d_dir+flag1+".reset.marker";
 
       QList <ImageMarker> imagemarks;
 //      for(int i = 0; i < landmarks.size(); i++)
 //      {
-          ImageMarker m;
+          ImageMarker rel;
           //LocationSimple l = landmarks.at(i);
-          m.x = center.x;
-          m.y = center.y;
-          m.z = center.z;
-          m.color.a = 0;
-          m.color.b = 0;
-          m.color.g = 255;
-          m.color.r = 0;
-          imagemarks.push_back(m);
+          rel.x = center.x;
+          rel.y = center.y;
+          rel.z = center.z;
+          rel.color.a = 0;
+          rel.color.b = 0;
+          rel.color.g = 255;
+          rel.color.r = 0;
+          imagemarks.push_back(rel);
       //}
       //system("rm -f /tmp/mymarks.marker");
       //system("rm -f /tmp/tmp_out*");
@@ -795,6 +817,18 @@ void get_tip_image(const V3DPluginArgList & input, V3DPluginArgList & output, V3
           ori_center.color.g = 0;
           ori_center.color.r = 255;
           imagemarks.push_back(ori_center);
+
+          ImageMarker mean;
+          //LocationSimple l = landmarks.at(i);
+          mean.x = mass_center[0];
+          mean.y = mass_center[1];
+          mean.z = mass_center[2];
+          mean.color.a = 0;
+          mean.color.b = 255;
+          mean.color.g = 0;
+          mean.color.r = 0;
+          imagemarks.push_back(mean);
+
 
       writeMarker_file(qs_output,imagemarks);
 

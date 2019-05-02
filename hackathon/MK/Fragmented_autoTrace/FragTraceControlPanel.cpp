@@ -152,7 +152,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
 		string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
-		QString windowTitleQ = "Fragment-based Auto-tracing v" + QString::fromStdString(versionString);
+		QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 		this->setWindowTitle(windowTitleQ);
 		this->show();
 
@@ -760,13 +760,12 @@ void FragTraceControlPanel::traceButtonClicked()
 		}
 	}
 	
-	this->connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 	this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
-	emit switchOnSegPipe(); // Qt's [emit] is equivalent to normal function call. Therefore no new thread is created due to this keyword.
-	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
+	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
+	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
+	if (!this->traceManagerPtr->imgProcPipe_wholeBlock()) return;
 
-	this->disconnect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
 

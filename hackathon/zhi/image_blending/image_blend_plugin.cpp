@@ -11,10 +11,10 @@
 #include <boost/lexical_cast.hpp>
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 #include "../plugin_loader/v3d_plugin_loader.h"
-#include "/local1/work/v3d_external/v3d_main/basic_c_fun/stackutil.h"
+#include "../../../v3d_external/v3d_main/basic_c_fun/stackutil.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include "basic_surf_objs.h"
-#include "/local1/work/v3d_external/v3d_main/v3d/colormap.h"
+#include "../../../v3d_external/v3d_main/v3d/colormap.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(image_blend, image_blend);
@@ -75,6 +75,8 @@ QStringList image_blend::funclist() const
         <<tr("image_modulate")
         <<tr("image_align")
         <<tr("xy_yz_combine")
+        <<tr("image_average_batch")
+        <<tr("image_difference")
 		<<tr("help");
 }
 
@@ -89,6 +91,192 @@ void image_blend::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
 bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
+    if (func_name == tr("image_average_batch")){
+        // Take the average of all images under a folder
+        // Peng Xie 2019-03-29
+
+        // Step 1: Find image files under a folder;
+        vector<char*> infiles;
+        if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+        QString qs_dir_img;
+        if(infiles.size()>=1){
+            char * indir = infiles.at(0);
+            qs_dir_img = QString(indir);
+        }
+        else{
+            //choose a directory that contain image files
+            qs_dir_img = QFileDialog::getExistingDirectory(parent,
+                                                           QString(QObject::tr("Choose the directory that contains files to be processed")));
+            qs_dir_img = qs_dir_img+"/";
+        }
+        QDir dir(qs_dir_img);
+        QStringList qsl_filelist, qsl_filters;
+        qsl_filters << "*.v3draw" << "*.raw" << "*.tif";
+
+        foreach(QString file, dir.entryList(qsl_filters, QDir::Files))
+        {
+            qsl_filelist+=file;
+        }
+
+        if(qsl_filelist.size()==0)
+        {
+            v3d_msg("Cannot find image files files in the given directory!\nTry another diretory");
+            return 0;
+        }
+
+        // Step 2: Specify output folder
+        const QString output_dir("Average_image");
+        if(!dir.mkdir(output_dir)){
+            qDebug()<<(QString("Cannot create dir \"%1\" or \"%2\" already exists. Please double check.").arg(output_dir).arg(output_dir));
+        }
+
+        // Step 3: Signal summation through a loop
+        V3DLONG pagesz;
+        V3DLONG in_sz[4];
+        unsigned short int *data_average = 0;
+        V3DLONG file_ct = 0;
+        for(int i=0; i<qsl_filelist.size(); i++){
+//        for(int i=0; i<2; i++){
+
+            QString inimg_file = qsl_filelist.at(i);
+            qDebug()<<"Reading file "<<(i+1)<<" "<<inimg_file;
+
+            unsigned char * image = 0;
+            V3DLONG cur_in_sz[4];
+            int datatype;
+            if(!simple_loadimage_wrapper(callback, inimg_file.toStdString().c_str(), image, cur_in_sz, datatype))
+            {
+                cerr<<"load image "<<inimg_file.toStdString()<<" error!"<<endl;
+                if (image) {delete []image; image=0;}
+                return false;
+            }
+//            qDebug()<<QString("File_size: %1 %2 %3\nChannels: %4\nDatatype: %5").arg(cur_in_sz[0]).arg(cur_in_sz[1]).arg(cur_in_sz[2]).arg(cur_in_sz[3]).arg(datatype);
+
+            if(i==0){
+                in_sz[0] = cur_in_sz[0];
+                in_sz[1] = cur_in_sz[1];
+                in_sz[2] = cur_in_sz[2];
+                in_sz[3] = cur_in_sz[3];
+                pagesz = in_sz[0] * in_sz[1] * in_sz[2];
+                try {data_average = new unsigned short int [pagesz];}
+                catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
+                for(V3DLONG j = 0; j < pagesz; j++)
+                {
+                    data_average[j] = image[j];
+                }
+                file_ct++;
+                qDebug()<<"Added signal from: "<<(i+1)<<" "<<inimg_file;
+            }
+            else{
+                if((in_sz[0]==cur_in_sz[0]) && (in_sz[1]==cur_in_sz[1]) && (in_sz[2]==cur_in_sz[2]) && (in_sz[3]==cur_in_sz[3])){
+                    for(V3DLONG j = 0; j < pagesz; j++)
+                    {
+                        data_average[j] += image[j];
+                    }
+                    file_ct++;
+                    qDebug()<<"Added signal from: "<<(i+1)<<" "<<inimg_file;
+                }
+            }
+        }
+        // Take average
+        if(file_ct==0){
+            qDebug()<<"No file loaded.";
+            return 1;
+        }
+        for(V3DLONG i = 0; i < pagesz; i++)
+        {
+            data_average[i] /= file_ct;
+        }
+
+        // Convert to UNIT_8
+        unsigned char *data1 = 0;
+        try {data1 = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for image_average."); return false;}
+        for(V3DLONG i=0; i<pagesz; i++){
+            data1[i] = data_average[i];
+        }
+
+        simple_saveimage_wrapper(callback, "Average_image/Average.v3draw", (unsigned char *)data1, in_sz, 1);
+        return 1;
+
+    }
+    if (func_name == tr("image_difference")){
+        // Step 1: Find image files under a folder;
+        vector<char*> infiles, outfiles;
+        if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+        if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+        QString img_file_1;
+        QString img_file_2;
+        if(infiles.size()>=2){
+            img_file_1 = QString(infiles[0]);
+            img_file_2 = QString(infiles[1]);
+        }
+        else{
+            qDebug()<<"Error: Two input image files required.";
+            return 1;
+        }
+
+        QString out_img_file;
+        if(outfiles.size()>=1){
+            out_img_file = QString(outfiles[0]);
+        }
+        else{
+            out_img_file = "Difference.v3draw";
+        }
+
+        // Step 2: signal difference
+        V3DLONG pagesz;
+        V3DLONG in_sz[4];
+        unsigned char *data_difference = 0;
+
+        // Image 1
+        unsigned char * image1 = 0;
+        V3DLONG cur_in_sz[4];
+        int datatype;
+        if(!simple_loadimage_wrapper(callback, img_file_1.toStdString().c_str(), image1, cur_in_sz, datatype))
+        {
+            cerr<<"load image "<<img_file_1.toStdString()<<" error!"<<endl;
+            if (image1) {delete []image1; image1=0;}
+            return false;
+        }
+        in_sz[0] = cur_in_sz[0];
+        in_sz[1] = cur_in_sz[1];
+        in_sz[2] = cur_in_sz[2];
+        in_sz[3] = cur_in_sz[3];
+        // Image 2
+        unsigned char * image2 = 0;
+        if(!simple_loadimage_wrapper(callback, img_file_2.toStdString().c_str(), image2, cur_in_sz, datatype))
+        {
+            cerr<<"load image "<<img_file_2.toStdString()<<" error!"<<endl;
+            if (image2) {delete []image2; image2=0;}
+            return false;
+        }
+
+        if((in_sz[0] != cur_in_sz[0]) || (in_sz[1] != cur_in_sz[1]) || (in_sz[2] != cur_in_sz[2]) || (in_sz[3] != cur_in_sz[3]))
+        {
+            qDebug()<<"Error: input image sizes don't match!";
+            return 1;
+        }
+
+        // Output image
+        pagesz = in_sz[0] * in_sz[1] * in_sz[2];
+        try {data_difference = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
+
+        for(V3DLONG i = 0; i < pagesz; i++)
+        {
+            if(image1[i]>image2[i]){
+                data_difference[i] = image1[i] - image2[i];
+            }
+            else{
+                data_difference[i] = 0;
+            }
+        }
+
+       simple_saveimage_wrapper(callback, out_img_file.toStdString().c_str(), (unsigned char *)data_difference, in_sz, 1);
+       return 1;
+
+    }
 	if (func_name == tr("image_blend"))
 	{
         if(input.size()<1 || (input.size()==1 && output.size()<1) ) // no inputs
@@ -625,7 +813,9 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         unsigned char* data1d_mask = 0;
         data1d_mask = new unsigned char [pagesz_xy];
         memset(data1d_mask,0,pagesz_xy*sizeof(unsigned char));
-        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2]);
+//        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2]);
+        QList<int> empty_list;
+        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2], empty_list, 0);
 
         for(V3DLONG iy = 0; iy < in_sz_xy[1]; iy++)
         {
@@ -668,7 +858,8 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         unsigned char* data1d_mask2 = 0;
         data1d_mask2 = new unsigned char [pagesz_yz];
         memset(data1d_mask2,0,pagesz_yz*sizeof(unsigned char));
-        ComputemaskImage(nt2, data1d_mask2, in_sz_yz[0], in_sz_yz[1], in_sz_yz[2]);
+//        ComputemaskImage(nt2, data1d_mask2, in_sz_yz[0], in_sz_yz[1], in_sz_yz[2]);
+        ComputemaskImage(nt, data1d_mask, in_sz_xy[0], in_sz_xy[1], in_sz_xy[2], empty_list, 0);
 
         for(V3DLONG iy = 0; iy < in_sz_xy_yz[1]; iy++)
         {
