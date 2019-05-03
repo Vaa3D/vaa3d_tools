@@ -1,3 +1,21 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2018 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  This library intends to fascilitate Vaa3D image operations in the lowest level.
+*  ImgProcessor class only takes array pointers as the input and as well outputs array pointers.
+*  It does not involve in any image I/O and only operates arrays in the memory.
+*
+*  Most ImgProcessor class methods are implemented as static template functions.
+*  A typical function call would need at least three input arguments:
+*
+*		ImgProcessor::func(unsigned char[] inputImgArray, unsigned char[] outputImgArray, int[] inputImgDimensions, other input arguments);
+*
+********************************************************************************/
+
 #include <iostream>
 
 #include <boost/container/flat_set.hpp>
@@ -170,7 +188,7 @@ map<string, float> ImgProcessor::getBasicStats_no0_fromHist(const map<int, size_
 // ========================================= Image Processing/Filtering ========================================= //
 void ImgProcessor::skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[])
 {
-	// This method performs 2D skeletonization on 2D gray scale image.
+	// This method performs 2D skeletonization on 2D gray scale image with white-pixel address book approach.
 
 	unsigned char** inputImg2Dptr = new unsigned char*[imgDims[1] + 2]; // imputImg2DPtr -> enlarged 2D binaray image. (1 v 0)
 	for (int j = 1; j <= imgDims[1]; ++j)

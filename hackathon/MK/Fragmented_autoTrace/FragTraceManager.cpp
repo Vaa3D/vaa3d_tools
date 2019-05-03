@@ -76,12 +76,16 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	cout << " -- Image slice preparation done." << endl;
 	cout << "Image acquisition done. Start fragment tracing.." << endl;
 
-	this->progressBarDiagPtr = new QProgressDialog(this);
+	// ******* QProgressDialog is automatically in separate thread, otherwise, the dialog can NEVER be updated ******* //
+	// NOTE: The parent widget it FragTraceManager, not FragTraceControlPanel. Thus FragTraceControlPanel is still frozen since FragTraceManager is not finished yet.
+	//       FragTraceControlPanel and FragTraceManager are on the same thread.
+	this->progressBarDiagPtr = new QProgressDialog(this); 
 	this->progressBarDiagPtr->setWindowTitle("Neuron segment generation in progress");
 	this->progressBarDiagPtr->setMinimumWidth(400);
 	this->progressBarDiagPtr->setRange(0, 100);
 	this->progressBarDiagPtr->setModal(true);
 	this->progressBarDiagPtr->setCancelButtonText("Abort");
+	// *************************************************************************************************************** //
 }
 
 bool FragTraceManager::imgProcPipe_wholeBlock()
@@ -492,7 +496,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	}
 	
 	this->signalBlobs.clear();
-	this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
+	//this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
 	this->blobProcessMonitor();
 	
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
@@ -532,8 +536,8 @@ bool FragTraceManager::blobProcessMonitor()
 		this->progressBarDiagPtr->setLabelText("Process aborted.");
 		return false;
 	}
-	int progressBarValueInt = this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage;
-	this->progressBarDiagPtr->setValue(progressBarValueInt);
+	int progressBarValueInt = 0;// this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage;
+	//this->progressBarDiagPtr->setValue(progressBarValueInt);
 	
 	if (progressBarValueInt < 100)
 	{

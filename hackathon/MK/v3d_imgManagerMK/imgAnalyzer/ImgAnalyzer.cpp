@@ -2,6 +2,7 @@
 
 #include "ImgAnalyzer.h"
 #include "NeuronStructUtilities.h"
+#include "progressMonitor.h"
 
 /* ======================================= Image Segmentation ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
