@@ -1,8 +1,8 @@
 #include <ctime>
+#include <thread>
 
 #include "ImgAnalyzer.h"
 #include "NeuronStructUtilities.h"
-#include "progressMonitor.h"
 
 /* ======================================= Image Segmentation ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
@@ -329,6 +329,10 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	// Merge any 3D blobs if any of them share the same 2D blob members.
 	cout << "Now merging 3D blobs.." << endl;
 	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	
+	ProgressMonitor blobMergingMonitor;
+	thread monitorThread(blobMergingMonitor);
+
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
 	while (!mergeFinish)
@@ -350,7 +354,8 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 							currBaseBlob = checkIt1->first;
 							double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
 							//this->imgAnalyzerProgressMonitor.testPercentage = int(ceil(processedPercentage));
-							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(processedPercentage) << " %" << endl;
+							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
+							percentage = int(ceil(processedPercentage));
 							goto MERGED;
 						}
 					}
@@ -362,6 +367,9 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	MERGED:
 		continue;
 	}
+
+	monitorThread.join();
+
 	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 

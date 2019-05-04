@@ -12,6 +12,7 @@
 #include <boost/container/flat_map.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include "progressMonitor.h"
 #include "ImgManager.h"
 #include "ImgProcessor.h"
 

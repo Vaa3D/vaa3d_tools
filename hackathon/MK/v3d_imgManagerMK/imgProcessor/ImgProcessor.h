@@ -120,7 +120,7 @@ public:
 	template<class T> // Gets basic stats (sum, mean, std, var, median) out of the input image with all 0 value pixel/voxel excluded.
 	static inline map<string, float> getBasicStats_no0(const T inputImgPtr[], const int imgDims[]);
 
-	template<class T> // Outputs a map representing the input image with bins as the keys and frequencies as the values.
+	template<class T> // Outputs a map representing the input image histogram with bins as the keys and frequencies as the values.
 	static inline map<int, size_t> histQuickList(const T inputImgPtr[], const int imgDims[]);
 
 	// Gets basic stats (sum, mean, std, var, median) out of the histogram of the input image.
