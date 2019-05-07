@@ -104,10 +104,10 @@ public:
 	static inline void maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[]);
 
 
-	template<class T>
+	template<class T> // Converts 1D vector of a 2D image into 2D array.
 	static inline void slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[]);
 
-	template<class T>
+	template<class T> // Converts 2D image aray into 1D array.
 	static inline void slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[]); // inputImgPtr[x][] cannot be guaranteed a constant here.
 	/**********************************************************/
 
@@ -146,13 +146,13 @@ public:
 	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 
-	template<class T> 
+	template<class T> // Gamma correction with cut off intensity using stepped multiplying factor, i.e., 4 => (4 - cutoff) * 4; 10 => (10 - cutoff) * 10, etc.
 	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
 
-	template<class T>
-	static inline void gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
+	template<class T> // NOT IN USE; MAY BE DEPRECATED LATER.
+	static inline void gammaCorrect_old(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
 
-	template<class T>
+	template<class T> // Reversed gamma correction; will be re-implemented.
 	static inline void reversed_gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 255);
 
 	// Histogram equalization on 8 bit input images.
@@ -617,7 +617,7 @@ inline void ImgProcessor::stepped_gammaCorrection(const T inputImgPtr[], T outpu
 }
 
 template<class T>
-inline void ImgProcessor::gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
+inline void ImgProcessor::gammaCorrect_old(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)
