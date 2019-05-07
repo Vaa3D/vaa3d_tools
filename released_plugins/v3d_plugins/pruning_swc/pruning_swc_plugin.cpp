@@ -485,7 +485,26 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 	}
 }
 
+
+void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+    cout<<"Prune swc branches shorter than the threshold."<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t pruning or pruning_iterative\n";
+    cout<<"-i<file name>:\t\t input .swc file\n";
+    cout<<"-o<file name>:\t\t output .swc file\n";
+    cout<<"-p<pruning threshold>:\t a positive float number (unit: pixel)\n";
+    cout<<"Demo1 (remove tiny branches):\t vaa3d -x pruning_swc_simple -f pruning -i test.swc -o test_pruned.swc -p 10 \n";
+    cout<<"Demo2 (getting long porjection fibirs):\t vaa3d -x pruning_swc_simple -f pruning_iterative -i test.swc -o test_pruned.swc -p 2000 \n";
+}
+
 bool pruning_swc::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent){
+
+    if (func_name == tr("help"))
+    {
+        printHelp(input, output);
+        return 0;
+    }
     // Read input
     cout<<"==========Welcome to pruning_swc_iterative function============="<<endl;
     vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
@@ -513,6 +532,7 @@ bool pruning_swc::dofunc(const QString &func_name, const V3DPluginArgList &input
     if (output.size()==0){
         cout<<"No output file specified.\n";
         hasOutput = false;
+        return 0;
     }
     else {
         hasOutput = true;
