@@ -5,17 +5,18 @@
 
 using namespace std;
 
-int percentage;
-
 class ProgressMonitor
 {
 public:
-	void operator()()
+	int percentage;
+
+	void operator()(int& inputPercentage)
 	{
-		while (1)
-		{
-			if (percentage == 100) break;
-		}
+		//while (1)
+		//{
+			//if (inputPercentage == 100) break;
+			cout << inputPercentage << endl;
+		//}
 	}
 };
 

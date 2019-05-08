@@ -1,6 +1,7 @@
 #include <deque>
-#include <omp.h>
 #include <cstdlib>
+#include <thread>
+#include <omp.h>
 
 #include <boost/container/flat_set.hpp>
 
@@ -497,9 +498,10 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	
 	this->signalBlobs.clear();
 	//this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
-	this->blobProcessMonitor();
+	//this->blobProcessMonitor();
 	
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
+	
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
 	if (this->finalSaveRootQ != "")
 	{
@@ -509,7 +511,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	profiledTree profiledSigTree(blob3Dtree);
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 
-	// ----------- Releasing memory ------------
+	// ----------- Releasing memory ------------ //
 	delete[] mipPtr;
 	mipPtr = nullptr;
 	for (vector<unsigned char**>::iterator slice2DPtrIt = slice2DVector.begin(); slice2DPtrIt != slice2DVector.end(); ++slice2DPtrIt)
@@ -523,7 +525,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 		*slice2DPtrIt = nullptr;
 	}
 	slice2DVector.clear();
-	// ------- END of [Releasing memory] -------
+	// ------- END of [Releasing memory] ------- //
 }
 
 bool FragTraceManager::blobProcessMonitor()
