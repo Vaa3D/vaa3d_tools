@@ -12,7 +12,6 @@
 #include <boost/container/flat_map.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "progressMonitor.h"
 #include "ImgManager.h"
 #include "ImgProcessor.h"
 
@@ -29,8 +28,9 @@ struct connectedComponent
 
 class ImgAnalyzer
 {
-	/***************** Image Segmentation *****************/
+	
 public:
+	/***************** Image Segmentation/Detection *****************/
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);
 	static inline void ChebyshevCenter_connComp(connectedComponent& inputComp);     // The Chebyshev center will be stored in the input connectedComponent::chebyshevCenter.
@@ -42,7 +42,7 @@ public:
 private:
 	// This method is called by ImgAnalyzer::findSignalBlobs because its slice-by-slice approach. 
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
-	/******************************************************/
+	/****************************************************************/
 
 
 	/***************** Image Analysis *****************/

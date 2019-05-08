@@ -3,7 +3,7 @@
 
 #include "ImgAnalyzer.h"
 
-/* ======================================= Image Segmentation ======================================= */
+/* ======================================= Image Segmentation/Detection ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {
 	// -- This method finds connected components from a given 2D or 3D image.
@@ -541,7 +541,7 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 
 	return dendriteSigSet;
 }
-/* ================================== END of [Image Segmentation] ================================== */
+/* ================================== END of [Image Segmentation/Detection] ================================== */
 
 
 
