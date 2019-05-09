@@ -29,7 +29,9 @@ struct connectedComponent
 class ImgAnalyzer
 {	
 public:
-	int progressReading;
+	ImgAnalyzer();
+
+	enum processName { blobMerging };
 
 	/***************** Image Segmentation/Detection *****************/
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
@@ -64,6 +66,11 @@ public:
 	/******************************************************/
 
 	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
+
+	
+	void reportProcess(ImgAnalyzer::processName processName);
+	bool blobMergingReport;
+	int progressReading;
 };
 
 inline void ImgAnalyzer::ChebyshevCenter(set<vector<int>> allCoords, float center[])

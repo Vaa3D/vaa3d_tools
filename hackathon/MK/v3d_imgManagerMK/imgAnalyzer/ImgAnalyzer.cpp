@@ -3,6 +3,11 @@
 
 #include "ImgAnalyzer.h"
 
+ImgAnalyzer::ImgAnalyzer()
+{
+	this->blobMergingReport = false;
+}
+
 /* ======================================= Image Segmentation/Detection ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {
@@ -704,7 +709,10 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 
 
 
-
+void ImgAnalyzer::reportProcess(ImgAnalyzer::processName processName)
+{
+	if (processName == ImgAnalyzer::blobMerging) this->blobMergingReport = true;
+}
 
 
 

@@ -14,6 +14,8 @@ class ImgTester
 public:
 	ImgTester() : cutOff(0) {};
 
+	int progressPercentage;
+
 	string inputString;
 	string outputString;
 	string inputSingleImgFullName;

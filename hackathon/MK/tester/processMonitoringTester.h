@@ -20,6 +20,15 @@ public:
 			else if (clientClass.progressReading == 100) break;
 		}
 	}
+
+	void operator()(ImgTester& clientClass)
+	{
+		while (1)
+		{
+			if (clientClass.progressPercentage < 100) cout << clientClass.progressPercentage << endl;
+			else if (clientClass.progressPercentage == 100) break;
+		}
+	}
 };
 
 

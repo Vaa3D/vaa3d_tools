@@ -138,7 +138,11 @@ int main(int argc, char* argv[])
 	{
 		myImgTester.inputString = paras.at(0);
 		myImgTester.outputString = paras.at(1);
+		myImgTester.progressPercentage = 101;
+		ProcessMonitoringTester myMonitor;
+		thread monitorThread(myMonitor, std::ref(myImgTester));
 		myImgTester.mask2SWC();
+		monitorThread.join();
 		
 		NeuronTree dendriteTree = NeuronStructUtil::blobs2tree(myImgTester.signalBlobs, true);
 		QString blobTreeFullNameQ = QString::fromStdString(paras.at(1));
