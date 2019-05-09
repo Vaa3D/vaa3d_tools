@@ -6,7 +6,6 @@
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
-#include "NeuronStructUtilities.h"
 
 using namespace std;
 

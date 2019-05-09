@@ -27,9 +27,10 @@ struct connectedComponent
 };
 
 class ImgAnalyzer
-{
-	
+{	
 public:
+	int progressReading;
+
 	/***************** Image Segmentation/Detection *****************/
 	// [findSignalBlobs] finds connected components from a image statck using slice-by-slice approach. All components are stored in the form of ImgAnalyzer::connectedComponent.
 	vector<connectedComponent> findSignalBlobs(vector<unsigned char**> inputSlicesVector, int imgDims[], int distThre, unsigned char* maxIP1D = nullptr);

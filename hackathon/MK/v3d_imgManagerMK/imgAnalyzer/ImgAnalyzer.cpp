@@ -329,6 +329,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	cout << "Now merging 3D blobs.." << endl;
 	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
 	
+	this->progressReading = 0;
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
 	while (!mergeFinish)
@@ -350,7 +351,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 							currBaseBlob = checkIt1->first;
 							double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
 							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
-							//int blobMergingPercentage = int(ceil(processedPercentage));
+							this->progressReading = int(ceil(processedPercentage));
 							
 							goto MERGED;
 						}
