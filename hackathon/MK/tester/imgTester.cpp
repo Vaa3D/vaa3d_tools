@@ -1,5 +1,7 @@
 #include <iostream>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "imgTester.h"
 #include "processMonitoringTester.h"
@@ -189,11 +191,12 @@ void ImgTester::mask2SWC()
 
 		this->signalBlobs.clear();
 		ImgAnalyzer myImgAnalyzer;
-		//myImgAnalyzer.progressReading = 101;
-		//ProcessMonitoringTester myMonitor;
-		//thread monitorThread(myMonitor, std::ref(myImgAnalyzer));
+		myImgAnalyzer.reportProcess(ImgAnalyzer::blobMerging);
+		unique_lock<mutex> progressLock(myImgAnalyzer.blobMergingMutex);
+		ProcessMonitoringTester myMonitor;
+		thread monitorThread(myMonitor, std::ref(myImgAnalyzer));
 		this->signalBlobs = myImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
-		//monitorThread.join();
+		monitorThread.join();
 
 		// ----------- Releasing memory ------------
 		delete[] mipPtr;

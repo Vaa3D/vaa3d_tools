@@ -1,5 +1,4 @@
 #include <ctime>
-#include <thread>
 
 #include "ImgAnalyzer.h"
 
@@ -334,41 +333,80 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	cout << "Now merging 3D blobs.." << endl;
 	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
 	
-	this->progressReading = 0;
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
-	while (!mergeFinish)
+	if (!this->blobMergingReport)
 	{
-		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+		while (!mergeFinish)
 		{
-			if (checkIt1->first < currBaseBlob) continue;
-			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
 			{
-				//if (checkIt2 == checkIt1) continue;
-				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+				if (checkIt1->first < currBaseBlob) continue;
+				for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 				{
-					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+					//if (checkIt2 == checkIt1) continue;
+					for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 					{
-						if (*member2 == *member1)
+						for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
 						{
-							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
-							b3Dcomps.erase(checkIt2);
-							currBaseBlob = checkIt1->first;
-							double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
-							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
-							this->progressReading = int(ceil(processedPercentage));
-							
-							goto MERGED;
+							if (*member2 == *member1)
+							{
+								checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+								b3Dcomps.erase(checkIt2);
+								currBaseBlob = checkIt1->first;
+
+								double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
+								cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
+
+								goto MERGED;
+							}
 						}
 					}
 				}
 			}
-		}
-		mergeFinish = true;
+			mergeFinish = true;
 
-	MERGED:
-		continue;
+		MERGED:
+			continue;
+		}
 	}
+	else
+	{
+		while (!mergeFinish)
+		{
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+			{
+				if (checkIt1->first < currBaseBlob) continue;
+				for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+				{
+					//if (checkIt2 == checkIt1) continue;
+					for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+					{
+						for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+						{
+							if (*member2 == *member1)
+							{
+								checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+								b3Dcomps.erase(checkIt2);
+								currBaseBlob = checkIt1->first;
+
+								double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
+								cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
+								this->progressReading = int(ceil(processedPercentage));
+
+								goto MERGED_WITH_PROGRESS_REPORT;
+							}
+						}
+					}
+				}
+			}
+			mergeFinish = true;
+
+		MERGED_WITH_PROGRESS_REPORT:
+			continue;
+		}
+	}
+	
 
 	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
@@ -704,19 +742,6 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 
 	return centroids;
 }
-/* ====================================== END of [Image Analysis] ====================================== */
-
-
-
-
-void ImgAnalyzer::reportProcess(ImgAnalyzer::processName processName)
-{
-	if (processName == ImgAnalyzer::blobMerging) this->blobMergingReport = true;
-}
-
-
-
-
 
 void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg)
 {
@@ -741,3 +766,14 @@ void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const 
 		}
 	}
 }
+/* ====================================== END of [Image Analysis] ====================================== */
+
+
+
+/* ==================================== Process Monitoring ==================================== */
+void ImgAnalyzer::reportProcess(ImgAnalyzer::processName processName)
+{
+	this->progressReading = 0;
+	if (processName == ImgAnalyzer::blobMerging) this->blobMergingReport = true;
+}
+/* ============================================================================================ */

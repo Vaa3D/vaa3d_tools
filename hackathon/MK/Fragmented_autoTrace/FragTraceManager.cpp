@@ -5,6 +5,7 @@
 
 #include <boost/container/flat_set.hpp>
 
+#include "processManager.h"
 #include "FragTraceManager.h"
 #include "FeatureExtractor.h"
 
@@ -155,7 +156,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree finalCentroidTree;
 
 // ------- using omp to speed up skeletonization process ------- //
-#pragma omp parallel num_threads(this->numProcs)
+//#pragma omp parallel num_threads(this->numProcs)
 		{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
@@ -197,7 +198,6 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				objTrees.push_back(profiledMSTtree.tree);
 			}
 		}
-		
 // ------------------------------------------------------------- //
 
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
@@ -499,9 +499,12 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	this->signalBlobs.clear();
 	//this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
 	//this->blobProcessMonitor();
-	
+	ProcessManager myReporter(this->fragTraceImgAnalyzer.progressReading);
+	this->fragTraceImgAnalyzer.reportProcess(ImgAnalyzer::blobMerging);
+	std::thread testThread(myReporter);
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
-	
+	testThread.join();
+
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
 	if (this->finalSaveRootQ != "")
 	{

@@ -2,6 +2,7 @@
 #define IMGTESTER_H
 
 #include <vector>
+#include <thread>
 
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
@@ -15,6 +16,7 @@ public:
 	ImgTester() : cutOff(0) {};
 
 	int progressPercentage;
+	condition_variable cond1;
 
 	string inputString;
 	string outputString;

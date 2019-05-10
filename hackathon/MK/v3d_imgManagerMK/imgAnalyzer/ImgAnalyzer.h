@@ -7,6 +7,9 @@
 #include <map>
 #include <set>
 #include <cmath>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include <boost/container/flat_set.hpp>
 #include <boost/container/flat_map.hpp>
@@ -63,14 +66,19 @@ public:
 	// This method was aimed to capture dendrites on IVSCC images, but proven to be ineffective due to high image noise level.
 	set<vector<int>> somaDendrite_radialDetect2D(unsigned char inputImgPtr[], int xCoord, int yCoord, int imgDims[]);
 
+	// Locate z location for auto-reaced SWC generated based on MIP image.
+	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
 	/******************************************************/
 
-	static void findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg);
-
 	
+	/***************** Process Monitoring *****************/
+	condition_variable monitorSwitch;
+	mutex blobMergingMutex;
+
 	void reportProcess(ImgAnalyzer::processName processName);
 	bool blobMergingReport;
 	int progressReading;
+	/******************************************************/
 };
 
 inline void ImgAnalyzer::ChebyshevCenter(set<vector<int>> allCoords, float center[])

@@ -16,8 +16,11 @@ public:
 	{
 		while (1)
 		{
+			unique_lock<mutex> lk(clientClass.blobMergingMutex);
+			if (clientClass.progressReading == 0) clientClass.monitorSwitch.wait(lk);
 			if (clientClass.progressReading < 100) cout << clientClass.progressReading << endl;
 			else if (clientClass.progressReading == 100) break;
+			lk.unlock();
 		}
 	}
 
