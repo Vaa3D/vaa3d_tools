@@ -1,9 +1,13 @@
 #include <ctime>
 
 #include "ImgAnalyzer.h"
-#include "NeuronStructUtilities.h"
 
-/* ======================================= Image Segmentation ======================================= */
+ImgAnalyzer::ImgAnalyzer()
+{
+	this->blobMergingReport = false;
+}
+
+/* ======================================= Image Segmentation/Detection ======================================= */
 vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> inputSlicesVector, int dims[], int distThre, unsigned char maxIP1D[])
 {
 	// -- This method finds connected components from a given 2D or 3D image.
@@ -174,7 +178,7 @@ vector<connectedComponent> ImgAnalyzer::findSignalBlobs(vector<unsigned char**> 
 			}
 			it->zMax = sliceIt->first;
 
-			compSize = compSize + sliceIt->second.size();
+			compSize = compSize + int(sliceIt->second.size());
 		}
 
 		it->xMax = xmax;
@@ -328,37 +332,82 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 	// Merge any 3D blobs if any of them share the same 2D blob members.
 	cout << "Now merging 3D blobs.." << endl;
 	cout << " -- oroginal 3D blobs number: " << b3Dcomps.size() << endl;
+	
 	bool mergeFinish = false;
 	int currBaseBlob = 1;
-	while (!mergeFinish)
+	if (!this->blobMergingReport)
 	{
-		for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+		while (!mergeFinish)
 		{
-			if (checkIt1->first < currBaseBlob) continue;
-			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
 			{
-				//if (checkIt2 == checkIt1) continue;
-				for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+				if (checkIt1->first < currBaseBlob) continue;
+				for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
 				{
-					for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+					//if (checkIt2 == checkIt1) continue;
+					for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
 					{
-						if (*member2 == *member1)
+						for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
 						{
-							checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
-							b3Dcomps.erase(checkIt2);
-							currBaseBlob = checkIt1->first;
-							cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << endl;
-							goto MERGED;
+							if (*member2 == *member1)
+							{
+								checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+								b3Dcomps.erase(checkIt2);
+								currBaseBlob = checkIt1->first;
+
+								double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
+								cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
+
+								goto MERGED;
+							}
 						}
 					}
 				}
 			}
-		}
-		mergeFinish = true;
+			mergeFinish = true;
 
-	MERGED:
-		continue;
+		MERGED:
+			continue;
+		}
 	}
+	else
+	{
+		while (!mergeFinish)
+		{
+			for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt1 = b3Dcomps.begin(); checkIt1 != b3Dcomps.end(); ++checkIt1)
+			{
+				if (checkIt1->first < currBaseBlob) continue;
+				for (boost::container::flat_map<int, boost::container::flat_set<int>>::iterator checkIt2 = checkIt1 + 1; checkIt2 != b3Dcomps.end(); ++checkIt2)
+				{
+					//if (checkIt2 == checkIt1) continue;
+					for (boost::container::flat_set<int>::iterator member1 = checkIt1->second.begin(); member1 != checkIt1->second.end(); ++member1)
+					{
+						for (boost::container::flat_set<int>::iterator member2 = checkIt2->second.begin(); member2 != checkIt2->second.end(); ++member2)
+						{
+							if (*member2 == *member1)
+							{
+								checkIt1->second.insert(checkIt2->second.begin(), checkIt2->second.end());
+								b3Dcomps.erase(checkIt2);
+								currBaseBlob = checkIt1->first;
+
+								double processedPercentage = (double(checkIt1 - b3Dcomps.begin()) / double(b3Dcomps.size())) * 100;
+								cout << "  merging blob " << checkIt1->first << " and blob " << checkIt2->first << "  -- " << int(ceil(processedPercentage)) << " %" << endl;
+								this->progressReading = int(ceil(processedPercentage));
+
+								goto MERGED_WITH_PROGRESS_REPORT;
+							}
+						}
+					}
+				}
+			}
+			mergeFinish = true;
+
+		MERGED_WITH_PROGRESS_REPORT:
+			continue;
+		}
+	}
+	
+
 	cout << " -- new 3D blobs number: " << b3Dcomps.size() << endl;
 	// --------------------------------------- END of [Merge 3D blobs] --------------------------------------
 
@@ -536,7 +585,7 @@ set<vector<int>> ImgAnalyzer::somaDendrite_radialDetect2D(unsigned char inputImg
 
 	return dendriteSigSet;
 }
-/* ================================== END of [Image Segmentation] ================================== */
+/* ================================== END of [Image Segmentation/Detection] ================================== */
 
 
 
@@ -639,57 +688,60 @@ boost::container::flat_set<deque<float>> ImgAnalyzer::connCompSectionalProc(vect
 {
 	// -- This method finds connected components (2D) on each section and their corresponding centroids on that sectional plane.
 
-	vector<size_t> delLocs;
-	NeuronTree sliceTree;
-	NeuronStructUtil myUtil;
 	boost::container::flat_set<deque<float>> centroids;
 	for (int slicei = secDimStart; slicei <= secDimEnd; ++slicei)
 	{
-		sliceTree.listNeuron.clear();
+		vector<connectedComponent> currSliceConnCompList;
 		for (size_t dotNumi = 0; dotNumi != dim1.size(); ++dotNumi)
 		{
 			if (sectionalDim.at(dotNumi) == slicei) // Collect all nodes in a specified plane.
 			{
-				delLocs.push_back(dotNumi);
-				NeuronSWC pseudoNode;
-				pseudoNode.x = dim1.at(dotNumi);
-				pseudoNode.y = dim2.at(dotNumi);
-				pseudoNode.z = sectionalDim.at(dotNumi);
-				sliceTree.listNeuron.push_back(pseudoNode);
+				for (vector<connectedComponent>::iterator connListIt = currSliceConnCompList.begin(); connListIt != currSliceConnCompList.end(); ++connListIt)
+				{
+					for (set<vector<int>>::iterator coordIt = connListIt->coordSets.begin()->second.begin(); coordIt != connListIt->coordSets.begin()->second.end(); ++coordIt)
+					{
+						if (coordIt->at(0) - 1 <= dim1.at(dotNumi) && coordIt->at(0) + 1 >= dim1.at(dotNumi) &&
+							coordIt->at(1) - 1 <= dim2.at(dotNumi) && coordIt->at(1) + 1 >= dim2.at(dotNumi))
+						{
+							vector<int> newCoord(3);
+							newCoord[0] = dim1.at(dotNumi);
+							newCoord[1] = dim2.at(dotNumi);
+							newCoord[2] = sectionalDim.at(dotNumi);
+							connListIt->coordSets.begin()->second.insert(newCoord);
+
+							goto DOT_JOINED;
+						}
+					}
+				}
+
+				connectedComponent newConnComp;
+				set<vector<int>> newCoordSets;
+				vector<int> newCoord(3);
+				newCoord[0] = dim1.at(dotNumi);
+				newCoord[1] = dim2.at(dotNumi);
+				newCoord[2] = sectionalDim.at(dotNumi);
+				newCoordSets.insert(newCoord);
+				newConnComp.coordSets.insert({ slicei, newCoordSets });
+				currSliceConnCompList.push_back(newConnComp);
 			}
+
+		DOT_JOINED:
+			continue;
 		}
 		
-		vector<connectedComponent> slice2Dcomps = myUtil.swc2signal2DBlobs(sliceTree); // Convert nodes into connected components.
-		for (vector<connectedComponent>::iterator it = slice2Dcomps.begin(); it != slice2Dcomps.end(); ++it)
+		for (vector<connectedComponent>::iterator it = currSliceConnCompList.begin(); it != currSliceConnCompList.end(); ++it)
 		{
+			ImgAnalyzer::ChebyshevCenter_connComp(*it);
 			deque<float> newCentroid;
 			newCentroid.push_back(it->ChebyshevCenter[0]);
 			newCentroid.push_back(it->ChebyshevCenter[1]);
 			newCentroid.push_back(it->ChebyshevCenter[2]);
 			centroids.insert(newCentroid);
 		}
-
-		/*sort(delLocs.rbegin(), delLocs.rend());
-		for (vector<size_t>::iterator delIt = delLocs.begin(); delIt != delLocs.end(); ++delIt)
-		{
-			dim1.erase(dim1.begin() + ptrdiff_t(*delIt));
-			dim2.erase(dim2.begin() + ptrdiff_t(*delIt));
-			sectionalDim.erase(sectionalDim.begin() + ptrdiff_t(*delIt));
-		}*/
 	}
 
 	return centroids;
 }
-/* ====================================== END of [Image Analysis] ====================================== */
-
-
-
-
-
-
-
-
-
 
 void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const registeredImg& inputImg)
 {
@@ -714,3 +766,14 @@ void ImgAnalyzer::findZ4swc_maxIntensity(QList<NeuronSWC>& inputNodeList, const 
 		}
 	}
 }
+/* ====================================== END of [Image Analysis] ====================================== */
+
+
+
+/* ==================================== Process Monitoring ==================================== */
+void ImgAnalyzer::reportProcess(ImgAnalyzer::processName processName)
+{
+	this->progressReading = 0;
+	if (processName == ImgAnalyzer::blobMerging) this->blobMergingReport = true;
+}
+/* ============================================================================================ */

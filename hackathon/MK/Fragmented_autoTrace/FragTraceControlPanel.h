@@ -7,8 +7,8 @@
 #include "FragTraceManager.h"
 
 #define MAINVERSION_NUM 0
-#define SUBVERSION_NUM 3
-#define PATCHVERSION_NUM 1
+#define SUBVERSION_NUM 4
+#define PATCHVERSION_NUM 0
 
 class FragTraceControlPanel : public QDialog
 {

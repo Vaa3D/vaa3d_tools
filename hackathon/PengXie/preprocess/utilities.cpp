@@ -496,18 +496,18 @@ NeuronTree color_components(NeuronTree nt, QList<int> components){
     }
     return nt;
 }
-NeuronTree get_subtree_by_type(NeuronTree nt, int type, bool keep_soma){
+NeuronTree get_subtree_by_type(NeuronTree nt, QList<int> type, bool keep_soma){
     NeuronTree new_tree;
     NeuronSWC node;
     for(int i=0;i<nt.listNeuron.size();i++){
         node = nt.listNeuron.at(i);
         if(keep_soma){
-            if(node.type==type || node.type==1){
+            if(type.indexOf(node.type)!=(-1) || node.type==1){
                 new_tree.listNeuron.append(node);
             }
         }
         else{
-            if(node.type==type){
+            if(type.indexOf(node.type)!=(-1)){
                 new_tree.listNeuron.append(node);
             }
         }
