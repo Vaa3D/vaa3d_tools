@@ -1,9 +1,11 @@
 #include <deque>
-#include <omp.h>
 #include <cstdlib>
+#include <thread>
+#include <omp.h>
 
 #include <boost/container/flat_set.hpp>
 
+#include "processManager.h"
 #include "FragTraceManager.h"
 #include "FeatureExtractor.h"
 
@@ -76,12 +78,16 @@ FragTraceManager::FragTraceManager(const Image4DSimple* inputImg4DSimplePtr, wor
 	cout << " -- Image slice preparation done." << endl;
 	cout << "Image acquisition done. Start fragment tracing.." << endl;
 
-	this->progressBarDiagPtr = new QProgressDialog(this);
+	// ******* QProgressDialog is automatically in separate thread, otherwise, the dialog can NEVER be updated ******* //
+	// NOTE: The parent widget it FragTraceManager, not FragTraceControlPanel. Thus FragTraceControlPanel is still frozen since FragTraceManager is not finished yet.
+	//       FragTraceControlPanel and FragTraceManager are on the same thread.
+	this->progressBarDiagPtr = new QProgressDialog(this); 
 	this->progressBarDiagPtr->setWindowTitle("Neuron segment generation in progress");
 	this->progressBarDiagPtr->setMinimumWidth(400);
 	this->progressBarDiagPtr->setRange(0, 100);
 	this->progressBarDiagPtr->setModal(true);
 	this->progressBarDiagPtr->setCancelButtonText("Abort");
+	// *************************************************************************************************************** //
 }
 
 bool FragTraceManager::imgProcPipe_wholeBlock()
@@ -150,7 +156,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree finalCentroidTree;
 
 // ------- using omp to speed up skeletonization process ------- //
-#pragma omp parallel num_threads(this->numProcs)
+//#pragma omp parallel num_threads(this->numProcs)
 		{
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
 			{
@@ -192,7 +198,6 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				objTrees.push_back(profiledMSTtree.tree);
 			}
 		}
-		
 // ------------------------------------------------------------- //
 
 		QString finalCentroidTreeNameQ = this->finalSaveRootQ + "/finalCentroidTree.swc";
@@ -240,7 +245,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				qApp->processEvents();
 				if (this->progressBarDiagPtr->wasCanceled())
 				{
-					this->progressBarDiagPtr->setLabelText("Process aborted.");
+					this->progressBarDiagPtr->setLabelText("Process aborted.");			
 					return false;
 				}
 
@@ -492,10 +497,14 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	}
 	
 	this->signalBlobs.clear();
-	this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
-	this->blobProcessMonitor();
-	
+	ProcessManager myReporter(this->fragTraceImgAnalyzer.progressReading);
+	this->fragTraceImgAnalyzer.reportProcess(ImgAnalyzer::blobMerging);
+	QTimer::singleShot(100, this, SLOT(blobProcessMonitor(myReporter)));
+	//this->blobProcessMonitor(myReporter);
+	std::thread testThread(myReporter);
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
+	testThread.join();
+
 	NeuronTree blob3Dtree = NeuronStructUtil::blobs2tree(this->signalBlobs, true);
 	if (this->finalSaveRootQ != "")
 	{
@@ -505,7 +514,7 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	profiledTree profiledSigTree(blob3Dtree);
 	this->fragTraceTreeManager.treeDataBase.insert({ outputTreeName, profiledSigTree });
 
-	// ----------- Releasing memory ------------
+	// ----------- Releasing memory ------------ //
 	delete[] mipPtr;
 	mipPtr = nullptr;
 	for (vector<unsigned char**>::iterator slice2DPtrIt = slice2DVector.begin(); slice2DPtrIt != slice2DVector.end(); ++slice2DPtrIt)
@@ -519,28 +528,31 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 		*slice2DPtrIt = nullptr;
 	}
 	slice2DVector.clear();
-	// ------- END of [Releasing memory] -------
+	// ------- END of [Releasing memory] ------- //
 }
 
-bool FragTraceManager::blobProcessMonitor()
+bool FragTraceManager::blobProcessMonitor(ProcessManager& blobMonitor)
 {
+	cout << "test" << endl;
+	system("pause");
 	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
 	this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
 	qApp->processEvents();
-	if (this->progressBarDiagPtr->wasCanceled())
-	{
-		this->progressBarDiagPtr->setLabelText("Process aborted.");
-		return false;
-	}
-	int progressBarValueInt = this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage;
-	this->progressBarDiagPtr->setValue(progressBarValueInt);
 	
-	if (progressBarValueInt < 100)
+	int progressBarValueInt = blobMonitor.readingFromClient;
+	while (progressBarValueInt <= 100)
 	{
+		if (this->progressBarDiagPtr->wasCanceled())
+		{
+			this->progressBarDiagPtr->setLabelText("Process aborted.");
+			v3d_msg("The process has been terminated.");
+			return false;
+		}
 
-		QTimer::singleShot(2000, this, SLOT(blobProcessMonitor()));
+		this->progressBarDiagPtr->setValue(progressBarValueInt);
 	}
-	else return true;
+	
+	return true;
 }
 
 void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)

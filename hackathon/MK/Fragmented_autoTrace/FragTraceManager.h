@@ -9,6 +9,7 @@
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
+#include "processManager.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 #endif
@@ -67,6 +68,9 @@ public:
 signals:
 	void emitTracedTree(NeuronTree tracedTree);
 
+public slots:
+	bool blobProcessMonitor(ProcessManager& blobMonitor);
+
 private:
 	int numProcs;
 	QProgressDialog* progressBarDiagPtr;
@@ -87,9 +91,6 @@ private:
 	bool mask2swc(const string inputImgName, string outputTreeName);
 	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
-
-private slots:
-	bool blobProcessMonitor();
 };
 
 inline void FragTraceManager::saveIntermediateResult(const string imgName, const QString saveRootQ, V3DLONG dims[])

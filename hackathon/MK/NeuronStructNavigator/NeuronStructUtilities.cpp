@@ -233,8 +233,8 @@ void NeuronStructUtil::downstream_subTreeExtract(const QList<NeuronSWC>& inputLi
 			
 			for (vector<size_t>::iterator childLocIt = childLocs.begin(); childLocIt != childLocs.end(); ++childLocIt)
 			{
-				subTreeList.append(inputList.at(*childLocIt));
-				children.push_back(inputList.at(*childLocIt));
+				subTreeList.append(inputList.at(int(*childLocIt)));
+				children.push_back(inputList.at(int(*childLocIt)));
 			}
 		}
 		parents = children;
@@ -255,16 +255,16 @@ void NeuronStructUtil::wholeSingleTree_extract(const QList<NeuronSWC>& inputList
 	else
 	{
 		int parentID = startingNode.parent;
-		int somaNodeID = inputList.at(node2locMap.at(parentID)).n;
+		int somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
 
 		while (1)
 		{
-			parentID = inputList.at(node2locMap.at(parentID)).parent;
-			if (parentID != -1) somaNodeID = inputList.at(node2locMap.at(parentID)).n;
+			parentID = inputList.at(int(node2locMap.at(parentID))).parent;
+			if (parentID != -1) somaNodeID = inputList.at(int(node2locMap.at(parentID))).n;
 			else break;
 		}
 		
-		NeuronSWC rootNode = inputList.at(node2locMap.at(somaNodeID));
+		NeuronSWC rootNode = inputList.at(int(node2locMap.at(somaNodeID)));
 		NeuronStructUtil::downstream_subTreeExtract(inputList, tracedList, rootNode, node2locMap, node2childLocMap);
 	}
 }
