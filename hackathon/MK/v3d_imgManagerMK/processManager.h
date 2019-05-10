@@ -16,8 +16,8 @@ public:
 	{
 		while (1)
 		{
-			if (readingFromClient > 0) cout << readingFromClient << endl;
-			else if (readingFromClient == 100) break;
+			//if (readingFromClient > 0) cout << readingFromClient << endl;
+			if (readingFromClient == 100) break;
 		}
 	}
 

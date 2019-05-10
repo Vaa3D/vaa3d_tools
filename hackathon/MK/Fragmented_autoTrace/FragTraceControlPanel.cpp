@@ -764,7 +764,11 @@ void FragTraceControlPanel::traceButtonClicked()
 
 	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
 	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
-	if (!this->traceManagerPtr->imgProcPipe_wholeBlock()) return;
+	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
+	{
+		v3d_msg(QString("The process has been terminated."));
+		return;
+	}
 
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 

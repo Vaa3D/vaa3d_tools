@@ -245,7 +245,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				qApp->processEvents();
 				if (this->progressBarDiagPtr->wasCanceled())
 				{
-					this->progressBarDiagPtr->setLabelText("Process aborted.");
+					this->progressBarDiagPtr->setLabelText("Process aborted.");			
 					return false;
 				}
 
@@ -497,10 +497,10 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	}
 	
 	this->signalBlobs.clear();
-	//this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage = 0;
-	//this->blobProcessMonitor();
 	ProcessManager myReporter(this->fragTraceImgAnalyzer.progressReading);
 	this->fragTraceImgAnalyzer.reportProcess(ImgAnalyzer::blobMerging);
+	QTimer::singleShot(100, this, SLOT(blobProcessMonitor(myReporter)));
+	//this->blobProcessMonitor(myReporter);
 	std::thread testThread(myReporter);
 	this->signalBlobs = this->fragTraceImgAnalyzer.findSignalBlobs(slice2DVector, sliceDims, 3, mipPtr);
 	testThread.join();
@@ -531,25 +531,28 @@ bool FragTraceManager::mask2swc(const string inputImgName, string outputTreeName
 	// ------- END of [Releasing memory] ------- //
 }
 
-bool FragTraceManager::blobProcessMonitor()
+bool FragTraceManager::blobProcessMonitor(ProcessManager& blobMonitor)
 {
+	cout << "test" << endl;
+	system("pause");
 	if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
 	this->progressBarDiagPtr->setLabelText("Processing each image signal object...");
 	qApp->processEvents();
-	if (this->progressBarDiagPtr->wasCanceled())
-	{
-		this->progressBarDiagPtr->setLabelText("Process aborted.");
-		return false;
-	}
-	int progressBarValueInt = 0;// this->fragTraceImgAnalyzer.imgAnalyzerProgressMonitor.testPercentage;
-	//this->progressBarDiagPtr->setValue(progressBarValueInt);
 	
-	if (progressBarValueInt < 100)
+	int progressBarValueInt = blobMonitor.readingFromClient;
+	while (progressBarValueInt <= 100)
 	{
+		if (this->progressBarDiagPtr->wasCanceled())
+		{
+			this->progressBarDiagPtr->setLabelText("Process aborted.");
+			v3d_msg("The process has been terminated.");
+			return false;
+		}
 
-		QTimer::singleShot(2000, this, SLOT(blobProcessMonitor()));
+		this->progressBarDiagPtr->setValue(progressBarValueInt);
 	}
-	else return true;
+	
+	return true;
 }
 
 void FragTraceManager::smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre)
