@@ -1,15 +1,15 @@
-/* neuron_image_profiling_plugin.h
- * This is a plugin for profiling image qualities for neuron tracing, via SNR and tubuliarty measures.
- * 2015-7-6 : by Xiaoxiao Liu and Zhi Zhou
+/* test2_plugin.h
+ * This is a test plugin, you can use it as a demo.
+ * 2019-4-26 : by YourName
  */
  
-#ifndef __NEURON_IMAGE_PROFILING_PLUGIN_H__
-#define __NEURON_IMAGE_PROFILING_PLUGIN_H__
+#ifndef __TEST2_PLUGIN_H__
+#define __TEST2_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
 
-class image_profiling : public QObject, public V3DPluginInterface2_1
+class TestPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
