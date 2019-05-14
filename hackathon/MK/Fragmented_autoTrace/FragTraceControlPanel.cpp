@@ -457,6 +457,11 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked())
 			{
+				int localCoords[6];
+				int displayingDims[3];
+				thisCallback->getPartialVolumeCoords(localCoords, displayingDims);
+				cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
+
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
