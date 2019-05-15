@@ -218,13 +218,13 @@ int anchorParaSize=0;
     }
 
 //sleep
-void sleep(unsigned int minute)
-{
-    double stopmsec=minute*1000*60;
-    QTime reachTime=QTime::currentTime().addMSecs(stopmsec);
-    while(QTime::currentTime()<reachTime)
-        QCoreApplication::processEvents(QEventLoop::AllEvents,100);
-}
+//void sleep(unsigned int minute)
+//{
+//    double stopmsec=minute*1000*60;
+//    QTime reachTime=QTime::currentTime().addMSecs(stopmsec);
+//    while(QTime::currentTime()<reachTime)
+//        QCoreApplication::processEvents(QEventLoop::AllEvents,100);
+//}
 
 QStringList neuron_tile_display::menulist() const
 {
