@@ -11,10 +11,12 @@ INCLUDEPATH += main
 HEADERS += $$V3DMAINPATH/basic_c_fun/basic_memory.h
 HEADERS += steerablefilter2Dplugin.h
 HEADERS += steerableDetector.h
+HEADERS += convolver.h
 SOURCES  = steerablefilter2Dplugin.cpp
 
 SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += steerableDetector.cpp
+SOURCES += convolver.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 TARGET        = $$qtLibraryTarget(steerablefilter2D)

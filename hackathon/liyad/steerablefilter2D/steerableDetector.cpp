@@ -125,6 +125,9 @@ void computeBaseTemplates(double* input, int nx, int ny, int M, int borderCondit
     double* bKernel = new double[nk];
     double* g = new double[nk];
     double* buffer = new double[nx*ny];
+    cout<<"In computeBaseTemplates, buffer initialized"<<endl;    
+
+
     double d;
     double sigma2 = sigma*sigma;
     double sigma4 = sigma2*sigma2;
@@ -135,10 +138,12 @@ void computeBaseTemplates(double* input, int nx, int ny, int M, int borderCondit
     
     for (int i=0;i<nk;i++) {
         g[i] = exp(-(i*i)/(2.0*sigma2));
+        cout<<"g[i] = "<<g[i]<<endl;    
     }
     
     // set up convolver
     Convolver conv = Convolver(input, nx, ny, borderCondition);
+    cout<<"Convolver set up"<<endl;    
     
     if (M == 1 || M == 3 || M == 5) {
         
@@ -988,55 +993,70 @@ void computeNMS(double* response, double* orientation, double* nms, int nx, int 
 }
 
 
-void steerablefilter2Dcore(unsigned char * input, long* in_sz, int M, double sigma,double* output_response, double* output_orientation, double* output_nms) {
+void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,double* output_response, double* output_orientation, double* output_nms) {
     // Set defaults for options
     int borderCondition = 1;
     int nt = 36;
         
-    long ny = in_sz[0];
-    long nx = in_sz[1];
+    long nx = in_sz[0];
+    long ny = in_sz[1];
     long nz = in_sz[2];
     long pagesz = ny*nx*nz;
 
     cout<<"nx = "<<nx<<endl;
     cout<<"ny = "<<ny<<endl;
     cout<<"nz = "<<nz<<endl;
+    cout<<"pagesz = "<<pagesz<<endl;
     
     int L = 2*(int)(4.0*sigma)+1; // support of the Gaussian kernels
          
+    cout<<"M = "<<M<<endl;
+    cout<<"sigma = "<<sigma<<endl;
+
     // number of partial derivative templates
     int nTemplates = getTemplateN(M);
-    
+    cout<<"nTemplates = "<<nTemplates<<endl;    
 
     double* response = new double[pagesz];
     double* orientation = new double[pagesz];
     double* nms = new double[pagesz];
+    cout<<"Output initialized "<<endl;
 
     // Allocate template memory
     double** templates = new double*[nTemplates];
     for (int i=0;i<nTemplates;++i) {
         templates[i] = new double[pagesz];
     }
+    cout<<"Templates initialized "<<endl;
 
+    
     // Compute the templates used in the steerable filterbank
     computeBaseTemplates((double *)input, nx, ny, M, borderCondition, sigma, templates);
     double* alpha = getWeights(M, sigma);
+
+    cout<<"Templates used in Filterbank ready"<<endl;
+
     
     // apply filter
     switch (M) {
         case 1:
+            cout<<"First order ST starts: "<<endl;
             filterM1(templates, nx, ny, alpha, response, orientation);
             break;
         case 2:
+            cout<<"Second order ST starts: "<<endl;
             filterM2(templates, nx, ny, alpha, response, orientation);
             break;
         case 3:
+            cout<<"Third order ST starts: "<<endl;
             filterM3(templates, nx, ny, alpha, response, orientation);
             break;
         case 4:
+            cout<<"Fourth order ST starts: "<<endl;
             filterM4(templates, nx, ny, alpha, response, orientation);
             break;
         case 5:
+            cout<<"Fifth order ST starts: "<<endl;
             filterM5(templates, nx, ny, alpha, response, orientation);
             break;
     }

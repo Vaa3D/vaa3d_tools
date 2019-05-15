@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
+#include <string> //memcpy
 
 #include "v3d_message.h"
 #include "stackutil.h"
@@ -28,12 +29,7 @@ Q_EXPORT_PLUGIN2(steerablefilter2D, SteerableFilter2DPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
-template <class T> void gaussian_filter(T* data1d,
-                                        V3DLONG *in_sz,
-                                        unsigned int order,
-                                        unsigned int c,
-                                        double sigma,
-                                        float* &outimg);
+
 
 const QString title = QObject::tr("Steerable Filter 2D Plugin");
 QStringList SteerableFilter2DPlugin::menulist() const
@@ -99,8 +95,8 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"Order = "<<order<<endl;
-     cout<<"c = "<<c<<endl;
-     cout<<"sigma = "<<sigma<<endl;
+    cout<<"c = "<<c<<endl;
+    cout<<"sigma = "<<sigma<<endl;
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
@@ -131,16 +127,25 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
      in_sz[2] = inimg->getZDim();
      in_sz[3] = inimg->getCDim();
 
-     switch (inimg->getDatatype())
-     {
-          case V3D_UINT8: steerablefilter2Dcore(inimg->getRawData(), in_sz, order, sigma, response, orientation, nms); break;
+    int nx=in_sz[0];
+    int ny=in_sz[1];
+    
+    double* doubleimage = new double[nx*ny];
+    cout<<"doubleimage initialized"<<endl;
+	
+    memcpy(doubleimage, inimg->getRawData(), nx*ny*sizeof(double));
+
+     //switch (inimg->getDatatype())
+     //{
+        //  case V3D_UINT8: 
+    steerablefilter2Dcore(doubleimage, in_sz, order, sigma, response, orientation, nms); //break;
          // case V3D_UINT16: steerablefilter2Dcore((unsigned short int*)(inimg->getRawData()), in_sz, order, c, sigma, response,orientation,nms); break;
           //case V3D_FLOAT32: steerablefilter2Dcore((float *)(inimg->getRawData()), in_sz, order, c, sigma, response,orientation,nms); break;
-          default:
-               v3d_msg("Invalid datatype in steerable fileter.", 0);
-               if (inimg) {delete inimg; inimg=0;}
-               return false;
-     }
+      //    default:
+    //           v3d_msg("Invalid datatype in steerable fileter.", 0);
+        //       if (inimg) {delete inimg; inimg=0;}
+          //     return false;
+     //}
 
      // save image
      Image4DSimple outimg1;
@@ -175,14 +180,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     //V3DLONG totalpxls = p4DImage->getTotalBytes();
     V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
-     V3DLONG N = p4DImage->getXDim();
-     V3DLONG M = p4DImage->getYDim();
-     V3DLONG P = p4DImage->getZDim();
+     V3DLONG nx = p4DImage->getXDim();
+     V3DLONG ny = p4DImage->getYDim();
+     V3DLONG nz = p4DImage->getZDim();
      V3DLONG sc = p4DImage->getCDim();
 
-    cout<<"N = "<<N<<endl;
-    cout<<"M = "<<M<<endl;
-    cout<<"P = "<<P<<endl;
+    cout<<"nx = "<<nx<<endl;
+    cout<<"ny = "<<ny<<endl;
+    cout<<"nz = "<<nz<<endl;
     cout<<"sc = "<<sc<<endl;
 
      //add input dialog
@@ -211,26 +216,40 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     
     // gaussian_filter
      V3DLONG in_sz[4];
-     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+     in_sz[0] = nx; in_sz[1] = ny; in_sz[2] = nz; in_sz[3] = sc;
 
     double* response = 0;
     double* orientation = 0;
     double* nms = 0;
     
+    double * doubleimage = new double [nx*ny];
+    cout<<"doubleimage initialized"<<endl;
 
-
-
-    switch (p4DImage->getDatatype())
-    {
-        case V3D_UINT8: steerablefilter2Dcore(data1d, in_sz, M, sigma,response,orientation,nms); break;
+    double * extIter = doubleimage;
+    for(V3DLONG index = 0; index< nx*ny; index++){
+        *(extIter++) = data1d[index]+20;           
+    }
+          
+    
+	//switch (p4DImage->getDatatype())
+    //{
+      //  case V3D_UINT8: 
+    steerablefilter2Dcore(doubleimage, in_sz, order, sigma,response,orientation,nms);// break;
        // case V3D_UINT16: steerablefilter2Dcore((unsigned short int *)data1d,in_sz, M, sigma,response,orientation,nms); break;
        // case V3D_FLOAT32: steerablefilter2Dcore((float *)data1d, in_sz, M, sigma,response,orientation,nms);break;
-        default: v3d_msg("Invalid data type. Do nothing."); return;
-    }
+       // default: v3d_msg("Invalid data type. Do nothing."); return;
+    //}
 
+    float * outputimage = new float [nx*ny];
+    cout<<"doubleimage initialized"<<endl;
+
+    float * extIter2 = outputimage;
+    for(V3DLONG index = 0; index< nx*ny; index++){
+        *(extIter2++) = nms[index]+20;           
+    }
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData((unsigned char *)nms, N, M, P, 1, V3D_FLOAT32);
+     new4DImage->setData((unsigned char *)outputimage, nx, ny, nz, 1, V3D_FLOAT32);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, title);
