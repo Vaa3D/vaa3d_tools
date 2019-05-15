@@ -59,9 +59,9 @@ void findPath(/*V3DLONG start, V3DLONG goal/*, unsigned short int * image1d, V3D
 
 
     V3DLONG total_pxls = x_length * y_length * z_length;
-    V3DLONG * path;
-    double * cost_so_far;
-    bool * isVisited;
+    V3DLONG * path = new V3DLONG[total_pxls];
+    double * cost_so_far = new double[total_pxls];
+    bool * isVisited = new bool[total_pxls];
 
     memset(path, -1, total_pxls);
     memset(cost_so_far,9999999,total_pxls);
