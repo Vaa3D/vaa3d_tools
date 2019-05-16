@@ -107,7 +107,7 @@ QList <int> find_long_axon(NeuronTree nt, int soma){
         {
             if((nt.listNeuron.at(*i).pn)==nt.listNeuron.at(pid).n && distance.at(*i)==(-1.0)){
                 pstack.push(*i);
-                distance[*i]=distance.at(pid)+computeDist2(nt.listNeuron.at(pid), nt.listNeuron.at(*i), 0.2,0.2,1);
+                distance[*i]=distance.at(pid)+computeDist2(nt.listNeuron.at(pid), nt.listNeuron.at(*i), XSCALE, YSCALE, ZSCALE);
                 is_push=true;
                 break;
             }
@@ -287,8 +287,6 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
         nlist.append(node.n);
     }
     crop_swc(whole_axon_swc, proximal_swc, 200, 0, 0, 0, 0,0,0,0,0);
-    return 1;
-
 
     // 1.2 Load lpa
     NeuronTree lpa = readSWC_file(lpa_swc);
@@ -300,7 +298,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc, bo
     path_distance.append(0);
     double cur_distance = 0;
     for(int i=1; i<lpa.listNeuron.size(); i++){
-        cur_distance += computeDist2(lpa.listNeuron.at(i-1), lpa.listNeuron.at(i), 0.2,0.2,1);
+        cur_distance += computeDist2(lpa.listNeuron.at(i-1), lpa.listNeuron.at(i), XSCALE, YSCALE, ZSCALE);
         path_distance.append(cur_distance);
     }
     double total_path_distance = cur_distance;

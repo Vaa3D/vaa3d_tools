@@ -32,7 +32,7 @@ bool check_connection(QString in_swc, QString connection_file, QString img_file,
             NeuronSWC center = ntlist_connection.at(i);
             if(center.pn==-1){
                 for(int j=0; j<nt.listNeuron.size();j++){
-                    if(isEqual(computeDist2(nt.listNeuron.at(j), center, 1,1,5), 0.0)){
+                    if(isEqual(computeDist2(nt.listNeuron.at(j), center, XSCALE, YSCALE, ZSCALE), 0.0)){
                         // Crop subvolume of a connection point
                         QString out_swc = out_dir+"/"+infileLabel+"."+QString::number(i)+".swc";
                         crop_swc(in_swc, out_swc, radius, j, 0, -1);

@@ -32,8 +32,12 @@ using namespace std;
 #define getMax(a, b) ((a) >= (b)? (a):(b))
 #define getMin(a, b) ((a) <= (b)? (a):(b))
 
+/***************** Structuering Element for 2D Morphological Operations *****************/
 struct morphStructElement2D
 {
+	// The default constructor sets disk shape with both axes length = 5.
+	// The constructor also takes different lengths for the 2 axes if oval or rectangular structuring element is desired.
+
 	enum shape { disk };
 
 	morphStructElement2D(shape structEleShape = morphStructElement2D::disk, int length = 5);
@@ -46,8 +50,9 @@ struct morphStructElement2D
 	int xLength, yLength, radius;
 
 	unsigned char* structElePtr;
-	inline void printOutStructEle();
+	inline void printOutStructEle(); // Prints out the element row by row.
 };
+/****************************************************************************************/
 
 class ImgProcessor 
 {
@@ -63,101 +68,107 @@ public:
 	template<class T> // Same as above, vector version overload.
 	static inline void imgMax(const vector<T>* inputImgPtr1, const T inputImgPtr2[], T outputImgPtr[], const int imgDims[]);
 
-	template<class T>
+	template<class T> // Subtracts the input image with a constant.
 	static inline void imgSubtraction_const(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int subFactor);
 
 	static inline void imgDotMultiply(const unsigned char inputImgPtr1[], const unsigned char inputImgPtr2[], unsigned char outputImgPtr[], const int imgDims[]);
 	
 
-	template<class T>
+	template<class T> // Cops image with specified ROI coordinates. (xlb = x lower bound; yhb = y higher bound, and so on)
 	static inline void cropImg(const T InputImagePtr[], T OutputImagePtr[], 
 		const int xlb, const int xhb, const int ylb, const int yhb, const int zlb, const int zhb, const int imgDims[]);
 
-	template<class T>
+	template<class T> // Inverts 8-bit images, i.e., dynamic range = [0, 255].
 	static inline void invert8bit(T input1D[], T output1D[]);
 
 	template<class T1, class T2> // -> to be revised into 3D general form
 	static inline void flipY2D(T1 input1D[], T1 output1D[], T2 xLength, T2 yLength);
 
-	template<class T>
+	template<class T> // Slices input image stack into a series of 2D slices.
 	static inline void imgStackSlicer(const T inputImgPtr[], vector<vector<T>>& outputSlices, const int imgDims[]);
 
 
-
-	template<class T> // -> to be revised into 3D general form
+	template<class T> // Ordinary downsampling method for 2D images with given downsampling factor for both x and y dimensions.
 	static inline void imgDownSample2D(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
-	template<class T> 
+	template<class T> // Ordinary downsampling method for 3D images with given downsampling factor set for x, y, and z dimensions.
 	static inline void imgDownSample(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[]);
 
-	template<class T> // to be revised into 3D general form
+	template<class T> // Maximum downsampling method for 2D images with given downsampling factor for both x and y dimensions.
 	static inline void imgDownSample2DMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactor);
 
-	template<class T>
+	template<class T> // Maximum downsampling method for 3D images with given dowmsampling factor set for x, y, and z dimensions.
 	static inline void imgDownSampleMax(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int downSampFactors[]);
 
-	template<class T>
+	template<class T> // Produces MIP image for the input image slice series.
 	static inline void maxIPSeries(const vector<vector<T>> inputSlicePtrs, T outputImgPtr[], const int imgDims[]);
 
-	
 
-	template<class T>
+	template<class T> // Converts 1D vector of a 2D image into 2D array.
 	static inline void slice1Dvector2_2Darray(const vector<T>& inputSliceVec, T* outputSlice2Dptr[], const int imgDims[]);
 
-	template<class T>
+	template<class T> // Converts 2D image aray into 1D array.
 	static inline void slice2Dto1D(T* inputImgPtr[], T outputImgPtr[], const int imgDims[]); // inputImgPtr[x][] cannot be guaranteed a constant here.
 	/**********************************************************/
 
 
+
 	/***************** Image Statistics *****************/
-	template<class T>
+	template<class T> // Gets basic stats (sum, mean, std, var, median) out of the input image.
 	static inline map<string, float> getBasicStats(const T inputImgPtr[], const int imgDims[]);
 
-	template<class T>
+	template<class T> // Gets basic stats (sum, mean, std, var, median) out of the input image with all 0 value pixel/voxel excluded.
 	static inline map<string, float> getBasicStats_no0(const T inputImgPtr[], const int imgDims[]);
 
-	template<class T>
+	template<class T> // Outputs a map representing the input image histogram with bins as the keys and frequencies as the values.
 	static inline map<int, size_t> histQuickList(const T inputImgPtr[], const int imgDims[]);
 
+	// Gets basic stats (sum, mean, std, var, median) out of the histogram of the input image.
 	static map<string, float> getBasicStats_fromHist(const map<int, size_t>& inputHistList);
 
+	// Gets basic stats (sum, mean, std, var, median) out of the histogram of the input image with all 0 value pixel/voxel excluded.
 	static map<string, float> getBasicStats_no0_fromHist(const map<int, size_t>& inputHistList);
 	/****************************************************/
 
 
+
 	/***************** Image Processing/Filtering *****************/
-	template<class T>
+	template<class T> // Thresholds the input image with specified thresholding value.
 	static inline void simpleThresh(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
-	template<class T>
+	template<class T> // Thresholds out all values that are HIGHER than the specified thresholding value.
 	static inline void simpleThresh_reverse(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
-	template<class T>
+	template<class T> // > threshold => 255; <= threshold => 0
 	static inline void imgMasking(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int threshold);
 
-	template<class T>
+	template<class T> // Adaptive thresholding with specified stepsize and samping rate.
 	static inline void simpleAdaThre(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], const int stepSize, const int sampRate);
 	
 
-
-	template<class T>
+	template<class T> // Gamma correction with cut off intensity using stepped multiplying factor, i.e., 4 => (4 - cutoff) * 4; 10 => (10 - cutoff) * 10, etc.
 	static inline void stepped_gammaCorrection(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int cutoffIntensity = 0);
 
-	template<class T>
-	static inline void gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
+	template<class T> // NOT IN USE; MAY BE DEPRECATED LATER.
+	static inline void gammaCorrect_old(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 0);
 
-	template<class T>
+	template<class T> // Reversed gamma correction; will be re-implemented.
 	static inline void reversed_gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity = 255);
 
-	template<class T>
+	// Histogram equalization on 8 bit input images.
+	// nonZero = true => only use non zero values to equalize; nonZero = false => use all values to equalize.
+	template<class T>  
 	static inline void histEqual_unit8(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], bool noZero = true);
 	/**************************************************************/
 
 
+
 	/********* Morphological Operations *********/
+	// Skeletonizes the input 2D image and ouputs its corresponding skeleton image.
 	static void skeleton2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[]);
 
-	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
+	static void erode2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);	
+	// 2D erosion with specified structing element (morphStractElement2D) only for intensity <= threshold.
 	static void conditionalErode2D_imgStats(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle, const int threshold);
 	
 	static void dilate2D(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
@@ -168,6 +179,7 @@ public:
 	static void imgClose3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	static void imgOpen3D_sliceBySlice(const unsigned char inputImgPtr[], unsigned char outputImgPtr[], const int imgDims[], const morphStructElement2D& structEle);
 	/********************************************/
+
 
 
 	/***************** Other utilities *****************/
@@ -605,7 +617,7 @@ inline void ImgProcessor::stepped_gammaCorrection(const T inputImgPtr[], T outpu
 }
 
 template<class T>
-inline void ImgProcessor::gammaCorrect_eqSeriesFactor(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
+inline void ImgProcessor::gammaCorrect_old(const T inputImgPtr[], T outputImgPtr[], const int imgDims[], int starting_intensity)
 {
 	size_t totalPixNum = imgDims[0] * imgDims[1] * imgDims[2];
 	for (size_t i = 0; i < totalPixNum; ++i)

@@ -1,3 +1,17 @@
+//------------------------------------------------------------------------------
+// Copyright (c) 2019 Hsienchi Kuo (Allen Institute, Hanchuan Peng's team)
+// All rights reserved.
+//------------------------------------------------------------------------------
+
+/*******************************************************************************
+*
+*  [integratedDataTypes] is part of the NeuronStructNavigator library. 
+*  The namespace manages all integrated data structures used by all other NeuronStructNavigator classes.
+*  All data structures in this namespace are integrated with standard Vaa3D data types with additional features, aiming to make developing neuron structure operations and algorithms more convenient.
+*  Any new development on the datatypes should be put in this namespace to keep them organized and avoid the confusion of including headers.
+*
+********************************************************************************/
+
 #ifndef INTEGRATEDDATATYPES_H
 #define INTEGRATEDDATATYPES_H
 
@@ -36,6 +50,7 @@ using namespace std;
 
 namespace integratedDataTypes
 {
+	// Specification of segment orientations for any pair-wise segment operations.
 	enum connectOrientation { head_head, head_tail, tail_head, tail_tail, all_ort, head, tail };
 
 	struct profiledNode
@@ -57,21 +72,25 @@ namespace integratedDataTypes
 		map<int, deque<NeuronSWC>> downstreams;
 	};
 
+
+	// ********* Segment Unit Data Structure ********* //
 	struct segUnit
 	{
 		segUnit() : to_be_deleted(false) {};
 		//segUnit(const segUnit& sourceSegUnit) {};
 
 		int segID;
-		int head;
-		vector<int> tails;
-		QList<NeuronSWC> nodes;
-		map<int, size_t> seg_nodeLocMap;
-		map<int, vector<size_t>> seg_childLocMap;
-		vector<topoCharacter> topoCenters;
+		int head;                                  // segment head node ID
+		vector<int> tails;                         // segment tail(s) node ID(s) (branching segment is currently not supported; only 1 element in tails vector)
+		QList<NeuronSWC> nodes;                    // segment nodes
+		map<int, size_t> seg_nodeLocMap;           // nodeID -> its location in nodes QList
+		map<int, vector<size_t>> seg_childLocMap;  // nodeID -> its child location(s) in nodes Qlist
+		vector<topoCharacter> topoCenters;         // nodes that carry information about important topology in the whole tree
 
 		bool to_be_deleted;
 	};
+	// *********************************************** //
+
 
 	struct segPairProfile
 	{

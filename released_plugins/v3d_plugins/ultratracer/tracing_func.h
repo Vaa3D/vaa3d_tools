@@ -28,6 +28,7 @@ struct TRACE_LS_PARA
     int grid_trace;
     int global_name;
     int soma;
+    int resume;
 
     V3DLONG in_sz[3];
 

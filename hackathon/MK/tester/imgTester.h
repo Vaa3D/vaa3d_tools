@@ -2,11 +2,11 @@
 #define IMGTESTER_H
 
 #include <vector>
+#include <thread>
 
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
-#include "NeuronStructUtilities.h"
 
 using namespace std;
 
@@ -14,6 +14,9 @@ class ImgTester
 {
 public:
 	ImgTester() : cutOff(0) {};
+
+	int progressPercentage;
+	condition_variable cond1;
 
 	string inputString;
 	string outputString;

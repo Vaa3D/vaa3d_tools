@@ -196,7 +196,7 @@ inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double
 			double x1 = it->x;
 			double y1 = it->y;
 			double z1 = it->z;
-			size_t paID = it->parent;
+			int paID = it->parent;
 			double x2 = inputTree.listNeuron.at(paID - 1).x;
 			double y2 = inputTree.listNeuron.at(paID - 1).y;
 			double z2 = inputTree.listNeuron.at(paID - 1).z;

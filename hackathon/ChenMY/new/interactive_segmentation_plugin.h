@@ -26,8 +26,8 @@ public:
 
 
 void image_IO(V3DPluginCallback2 &callback, QWidget *parent);
-void image_IO(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback &callback,bool b_binarization);
-
+void image_IO(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback,bool b_binarization);
+//bool cropfile(QString TeraflyPath,QString  apoPath,QString savePath,V3DPluginCallback2 &callback);
 bool do_seg(short *pData, V3DLONG sx, V3DLONG sy, V3DLONG sz, int & iVesCnt, bool b_binarization);
 bool do_seg2(short *pData, V3DLONG sx, V3DLONG sy, V3DLONG sz, int & iVesCnt, bool b_binarization);
 #endif

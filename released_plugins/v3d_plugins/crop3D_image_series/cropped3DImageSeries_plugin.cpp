@@ -552,6 +552,7 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
 		QString inputListFile = infiles.at(1);
 		QString savePath = infiles.at(2);
 		
+		
         V3DLONG *in_zz;
         if(!callback.getDimTeraFly(m_InputfolderName.toStdString(), in_zz))
         {
@@ -595,6 +596,9 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
                                                                (xcenter-cubeSideLength2/2), (xcenter+cubeSideLength2/2),
                                                                (ycenter-cubeSideLength1/2), (ycenter+cubeSideLength1/2),
 															   (zcenter-cubeSideLength3/2), (zcenter+cubeSideLength3/2));
+				if(cropped_image==NULL){
+					continue;
+				}
 				Image4DSimple* new4DImage = new Image4DSimple();
 				new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
 				QString saveName = savePath + "/" + coords[5] + "_" + coords[6] + "_" + coords[4] + ".v3draw";

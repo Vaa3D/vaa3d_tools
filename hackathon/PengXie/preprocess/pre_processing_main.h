@@ -31,10 +31,10 @@ using namespace std;
 #endif
 
 #ifndef XSCALE
-#define XSCALE 0.2
+#define XSCALE 1
 #endif
 #ifndef YSCALE
-#define YSCALE 0.2
+#define YSCALE 1
 #endif
 #ifndef ZSCALE
 #define ZSCALE 1

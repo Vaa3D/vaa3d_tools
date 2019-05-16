@@ -46,7 +46,7 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         NeuronSWC node = nt.listNeuron.at(i);
         if(radius<0){inside_nlist.append(node.n);}
         else{
-            if(computeDist2(node, soma_node, 0.2, 0.2, 1)<radius){
+            if(computeDist2(node, soma_node, XSCALE, YSCALE, ZSCALE)<radius){
                 inside_nlist.append(node.n);
             }
         }
@@ -67,7 +67,6 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         new_tree.listNeuron.append(node);
     }
     new_tree = missing_parent(new_tree);
-    export_list2file(new_tree.listNeuron, "crop_test.swc");
 
     // 2.3 return single tree
     if(report_single_tree){
@@ -86,7 +85,7 @@ bool crop_swc(QString qs_input, QString qs_output, double radius, int soma, bool
         // The resample step will change the order and name of nodes, but the parent node won't change.
         for(int i=0; i<nt.listNeuron.length(); i++){
             NeuronSWC node=nt.listNeuron.at(i);
-            if((node.pn == -1) && (computeDist2(node, soma_node, 0.2, 0.2, 1)<1)){
+            if((node.pn == -1) && (computeDist2(node, soma_node, XSCALE, YSCALE, ZSCALE)<1)){
                 soma_name = node.n;
                 nt.listNeuron[i].type = soma_type;
             }
@@ -351,8 +350,8 @@ bool crop_swc_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
             double min_dist=radius;
             for(int i=0; i<nt.listNeuron.size();i++){
                 NeuronSWC node = nt.listNeuron.at(i);
-                if(computeDist2(node_soma, node, 1,1,5)<min_dist){
-                    min_dist = computeDist2(node_soma, node, 1,1,5);
+                if(computeDist2(node_soma, node, XSCALE, YSCALE, ZSCALE)<min_dist){
+                    min_dist = computeDist2(node_soma, node, XSCALE, YSCALE, ZSCALE);
                     soma = i;
                 }
             }

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
+#include <thread>
 #include <iterator>
 #include <map>
 #include <string>
@@ -13,6 +14,7 @@
 
 #include "SWCtester.h"
 #include "imgTester.h"
+#include "processMonitoringTester.h"
 #include "FeatureExtractor.h"
 #include "integratedDataTypes.h"
 
@@ -136,8 +138,12 @@ int main(int argc, char* argv[])
 	{
 		myImgTester.inputString = paras.at(0);
 		myImgTester.outputString = paras.at(1);
+		myImgTester.progressPercentage = 101;
+		//ProcessMonitoringTester myMonitor;
+		//thread monitorThread(myMonitor, std::ref(myImgTester));
 		myImgTester.mask2SWC();
-
+		//monitorThread.join();
+		
 		NeuronTree dendriteTree = NeuronStructUtil::blobs2tree(myImgTester.signalBlobs, true);
 		QString blobTreeFullNameQ = QString::fromStdString(paras.at(1));
 		writeSWC_file(blobTreeFullNameQ, dendriteTree);
@@ -232,6 +238,7 @@ int main(int argc, char* argv[])
 		}
 		writeSWC_file(saveNameQ, terminalTree);
 	}
+	// ---------------------------------------------------------------------------------------------------------------------------------------- //
 	else if (!funcName.compare("swc2mask"))
 	{
 		//QString inputSWCNameQ = QString::fromStdString(paras.at(2));
