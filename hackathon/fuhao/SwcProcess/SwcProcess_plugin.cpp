@@ -13,6 +13,7 @@
 #include"tipdetector.h"
 #include "my_surf_objs.h"
 #include "neurontreepruneorgraft.h"
+#include "scoreinput.h"
 
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
@@ -26,7 +27,7 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("SWC_Process_3d")
-//        <<tr("SWC_Process_file")
+        <<tr("SWC_Process_file")
         <<tr("tip_detector")
 //        <<tr("tip_checker_marker")
 //        <<tr("try_prun")
@@ -36,7 +37,7 @@ QStringList TestPlugin::menulist() const
 //        <<tr("tip_based_grafting")
 //        <<tr("sort_neuron")
 //        <<tr("reset_radius")
-//        <<tr("NeuronTree_Prune_Graft")
+        <<tr("NeuronTree_Prune_Graft")
         <<tr("TMI_tip_process")
         <<tr("TMI_tip_process_old")
         <<tr("TMI_tip_process_show")
@@ -238,6 +239,7 @@ void processTipPointFromLandmarkList(LandmarkList curlist, V3DPluginCallback2 &c
     }
     v3dhandle curwin = callback.currentImageWindow();
     callback.setLandmark(curwin, realtip_list);
+//    callback.callPluginFunc();
     return;
 }
 void processTipPoint(LandmarkList tip_point,LandmarkList &real_tipPoints,V3DPluginCallback2 &callback)
@@ -422,7 +424,40 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
     if (menu_name == tr("SWC_Process_file"))
 	{
-        getNeuronTreeFromFile(callback,parent);
+        QList <V3dR_MainWindow *> list_3dviewer = callback.getListAll3DViewers();
+        if (list_3dviewer.size() < 1)
+        {
+            v3d_msg("Please open  a SWC file from the main menu first! list_3dviewer");
+            return ;
+        }
+        V3dR_MainWindow *surface_win = list_3dviewer[0];
+        if (!surface_win){
+            v3d_msg("Please open up a SWC file from the main menu first!");
+            return ;
+        }
+    //    cout<<"read SWC from 3d Viewer  "<<endl;
+        QList<NeuronTree> * mTreeList = callback.getHandleNeuronTrees_Any3DViewer(surface_win);
+//        if(mTreeList->size()<=0)
+//        {
+//            return false;
+//        }
+//        mTreeList;
+        QString path=QFileDialog::getOpenFileName(0,"swc select",".","swc File(*.swc)");
+        if(path.isEmpty())
+            return;
+        NeuronTree filetree=readSWC_file(path);
+        cout<<"read SWC from file "<<path.toStdString()<<endl;
+        if(mTreeList->isEmpty())
+        {mTreeList->push_back(filetree);}
+        else
+        {
+//            mTreeList->push_back(filetree);
+            mTreeList->replace(0,filetree);
+//            mTreeList->pop_back();
+        }
+
+
+//        getNeuronTreeFromFile(callback,parent);
 	}
     else if (menu_name == tr("SWC_Process_3d"))
     {
@@ -752,30 +787,32 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     }//
     else if(menu_name == tr("Hackthon_tip_postProcess"))
     {
-        neurontreepruneorgraft ntpg;
+        neurontreepruneorgraft *ntpg;
+        ntpg=new neurontreepruneorgraft;
         v3dhandle curwin = callback.currentImageWindow();
         QString img_name=callback.getImageName(curwin);
 
-        if(!ntpg.getImgData_not_process_tip(callback, parent))
+        if(!ntpg->getImgData_not_process_tip(callback, parent))
         {return ;}
 
-        NeuronTree firstTree=ntpg.return_neurontree();
-        ntpg.setcallback(callback);
+        NeuronTree firstTree=ntpg->return_neurontree();
+        ntpg->setcallback(callback);
 
-        ntpg.InputTreeCheck(ntpg.return_neurontree());
-        NeuronTree result_tree=ntpg.TreeSegment(ntpg.return_neurontree());
-        result_tree=ntpg.sort_neuron(firstTree);
+        ntpg->InputTreeCheck(ntpg->return_neurontree());
+//        NeuronTree
+        NeuronTree result_tree=ntpg->sort_neuron(firstTree);
+        result_tree=ntpg->TreeSegment(ntpg->return_neurontree());
 
-        if(!ntpg.TMI_simple_argu_input())
+        if(!ntpg->TMI_simple_argu_input())
         {return ;}
-        ntpg.tp.getImgData(callback);
-        if(!ntpg.tp.GUI_input_argu())
+        ntpg->tp.getImgData(callback);
+        if(!ntpg->tp.GUI_input_argu())
         {return ;}
 
         if(1)
         {
-            cout<<"begin to Binarization background_threshold:"<<ntpg.binary_threshold<<endl;
-            ntpg.Binarization(ntpg.binary_threshold);
+            cout<<"begin to Binarization background_threshold:"<<ntpg->binary_threshold<<endl;
+            ntpg->Binarization(ntpg->binary_threshold);
         }
         else
         {
@@ -785,20 +822,20 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         if(0)
         {
-            result_tree=ntpg.pruningSwc_back_ground(result_tree);
+            result_tree=ntpg->pruningSwc_back_ground(result_tree);
 
         }
         cout<<"begin whole_img"<<endl;
-        ntpg.tp.whole_img(callback);
+        ntpg->tp.whole_img(callback);
 //        ntpg.tp.save_tp_as_temp(callback);
 //        ntpg.tp.show_tipdetetor_img(callback);
         cout<<"show_tipdetetor_img"<<endl;
-        ntpg.tp.save_tp_as_temp(callback);
+        ntpg->tp.save_tp_as_temp(callback);
 
         cout<<"begin Hackthon_process_tip"<<endl;
-        ntpg.Hackthon_process_tip(result_tree);
+        ntpg->Hackathon_process_tip(result_tree);
 //        ntpg.tp.show_tipdetetor_img(callback);
-        callback.setLandmark(callback.currentImageWindow(),ntpg.need_to_show);
+        callback.setLandmark(callback.currentImageWindow(),ntpg->need_to_show);
 
 
     }
@@ -811,6 +848,30 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 //        v3dhandle curwin = callback.currentImageWindow();
 //        callback.setSWC(curwin,temp_tree);
 //		v3d_msg(tr("This is a test plugin, you can use it as a demo. Developed by fuhao, 2019-1-3"));
+        ScoreInput* s;
+//        cout<<"122"<<endl;
+        s=new ScoreInput;;
+        cout<<"1"<<endl;
+        s->setV3DPluginCallback2(&callback);
+        cout<<1<<endl;
+        s->setWight(1,1,1);
+        cout<<2<<endl;
+        QStringList problem;
+        problem.append("edfdfr");
+        problem.append("edf454r");
+        float sss[1],sss2[1],sss3[1];
+        sss[0]=0.6;
+        sss2[0]=0.5;
+        sss3[0]=0.4;
+        sss[1]=0.2;
+        sss2[1]=0.7;
+        sss3[1]=0.5;
+
+        s->setData(2,problem,sss,sss2,sss3);
+//        s->
+        cout<<"42"<<endl;
+        s->show();
+
 	}
 }
 

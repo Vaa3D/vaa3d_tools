@@ -28,7 +28,8 @@ HEADERS	+= SwcProcess_plugin.h \
     app1/v3dneuron_gd_tracing.h \
     app1/marker_radius.h \
     app1/sort_swc.h \
-    mydialog.h
+    mydialog.h \
+    scoreinput.h
 SOURCES	+= SwcProcess_plugin.cpp \
     tipdetector.cpp \
     ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
@@ -39,7 +40,8 @@ SOURCES	+= SwcProcess_plugin.cpp \
     app1/v3dneuron_gd_tracing.cpp \
     neuron_tools.cpp \
     ray_shooting.cpp \
-    mydialog.cpp
+    mydialog.cpp \
+    scoreinput.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$V3DMAINPATH/worm_straighten_c/bdb_minus.cpp \

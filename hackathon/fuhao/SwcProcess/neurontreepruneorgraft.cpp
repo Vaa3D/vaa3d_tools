@@ -10,46 +10,22 @@
 #define PI 3.1415926
 #include"mydialog.h"
 #include"new_ray-shooting.h"
+//#include"obj
 
-void neurontreepruneorgraft::Hackthon_process_onetip(NeuronTree nt,V3DLONG i)
+
+float neurontreepruneorgraft::cal_tip_score(NeuronTree nt,int neu_i)
 {
-
-}
-
-
-void neurontreepruneorgraft::Hackthon_process_tip(NeuronTree nt)
-{
-    cout<<"Hackthon_process_tip "<<endl;
-    if(nt.listNeuron.isEmpty())
+    int current_type=nt.listNeuron.at(neu_i).type;
+    if(neu_i<0||current_type<0)
     {
-        cout<<"deal_not_match_points:input a wrong  nt"<<endl;
-        v3d_msg("deal_not_match_points:input a wrong  nt");
-        return ;
+        cout<<"deal_not_match_points neu_i :"<<neu_i<<endl;
+        cout<<"deal_not_match_points current_type== "<<current_type<<endl;
+        return 0;//wrong input
     }
-//    tp.getImgData(*cb);
-    this->setSwcImg(nt);
-    //    setSegmentImg or binary
-    QVector<QVector<V3DLONG> > childs;
-    V3DLONG neuronNum = nt.listNeuron.size();
-    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
-    V3DLONG *flag = new V3DLONG[neuronNum];
-//    int trans_count=0;
-    for(V3DLONG i=0;i<neuronNum;i++)
-    {
-        flag[i] = 1;
-        V3DLONG par = nt.listNeuron[i].pn;
-        if (par<0) continue;
-        childs[nt.hashNeuron.value(par)].push_back(i);
-    }
-//        V3DLONG img_size=sz[0]*sz[1]*sz[2];
-    unsigned radius_tip=5;
-    QVector<NeuronSWC > tip_trouble;
-    QVector<V3DLONG > tip_trouble_num;
-    QVector<NeuronSWC > tip_ok;
-    LandmarkList real_tip;
-    cout<<"begin to  creat ray"<<endl;
+    NeuronSWC need_cal=nt.listNeuron.at(neu_i);
+    //neuronTree should do segment to change type before this function
     vector<vector<float> > x_dis(16*32,vector<float>(100)), y_dis(16*32,vector<float>(100)),z_dis(16*32,vector<float>(100));
-    for(int len = 1; len <based_distance; len++)
+    for(int len = 1; len < based_distance; len++)
     {
         int mm = 0;
         for(int n = 1; n <= 16; n++ )
@@ -63,169 +39,619 @@ void neurontreepruneorgraft::Hackthon_process_tip(NeuronTree nt)
             }
         }
     }
-    cout<<"success creat ray"<<endl;
+    float max_score=0;
+    for(int  i =0;i<16*32;i++)
+    {
+        int count_bcak=0;
+//        cout<<"i "<<i<<endl;
+        for(int j=0; j < based_distance; j+=1)
+        {
+            LocationSimple p;
+            p.x=need_cal.x;
+            p.y=need_cal.y;
+            p.z=need_cal.z;
+
+            if(   p.x+x_dis[i][j]<0||p.x+x_dis[i][j]>sz[0]-1
+                ||p.y+y_dis[i][j]<0||p.y+y_dis[i][j]>sz[1]-1
+                ||p.z+z_dis[i][j]<0||p.z+z_dis[i][j]>sz[2]-1)
+            {//out of bound
+               continue;
+            }
+            unsigned char pixe;
+            pixe=p4DImage_bimg->getValueUINT8(p.x+x_dis[i][j],p.y+y_dis[i][j],p.z+z_dis[i][j],0);
+            if(pixe==0)
+            {count_bcak++;}
+            LocationSimple candi;
+            bool is_tip=tp.TipDetect_onePoint_neighbor(p,candi,j/2);
+//                        cout<<" bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
+            if(is_tip)
+            {
+                float score=0;
+                float distToReal=sqrt((p.x-candi.x)*(p.x-candi.x)+(p.y-candi.y)*(p.y-candi.y) + (p.z-candi.z)*(p.z-candi.z));
+                float back_score=(float)count_bcak/j/2;
+                if(distToReal<based_distance)
+                {
+                    score=1-back_score;
+                }
+                else
+                {
+                    score=(-distToReal/based_distance)*2+3-back_score;
+                }
+                if(max_score<score)
+                {
+                    max_score=score;
+                }
+                break;
+            }
+        }
+    }
+    return max_score;
+}
+
+float  neurontreepruneorgraft::cal_online_confidence_score(NeuronTree nt,int neu_i)
+{
+    float score=online_confidece_one_branch(neu_i,nt,this->bimg_datald,sz);
+    return score;
+}
+
+float  neurontreepruneorgraft::cal_swc_score(NeuronTree nt,int neu_i)
+{
+    int current_type=nt.listNeuron.at(neu_i).type;
+    if(neu_i<0||current_type<0)
+    {
+        cout<<"deal_not_match_points neu_i :"<<neu_i<<endl;
+        cout<<"deal_not_match_points current_type== "<<current_type<<endl;
+        return 0;//wrong input
+    }
+    NeuronSWC need_cal=nt.listNeuron.at(neu_i);
+    //neuronTree should do segment to change type before this function
+    vector<vector<float> > x_dis(16*32,vector<float>(100)), y_dis(16*32,vector<float>(100)),z_dis(16*32,vector<float>(100));
+    for(int len = 1; len < based_distance; len++)
+    {
+        int mm = 0;
+        for(int n = 1; n <= 16; n++ )
+        {
+            for(int k = 0; k <=31; k++ )
+            {
+             x_dis[mm][len-1] = len * sin(PI * n/16) * cos(PI * k / 16);
+             y_dis[mm][len-1] = len * sin(PI * n/16) * sin(PI * k / 16);
+             z_dis[mm][len-1] = len * cos(PI * n/16);
+             mm++;
+            }
+        }
+    }
+    vector<float> x_loc; x_loc.clear();
+    vector<float> y_loc; y_loc.clear();
+    vector<float> z_loc; z_loc.clear();
+    vector<float> type_loc; type_loc.clear();//0 for  back;   1  fore;   2  swc;  3 transfer from 2 to 1
+    int type_count_back=0;
+    int type_count_swc=0;
+    for(int  i =0;i<16*32;i++)
+    {
+        int count_bcak=0;
+//        cout<<"i "<<i<<endl;
+        for(int j=0; j < based_distance; j+=1)
+        {
+            if(need_cal.x+x_dis[i][j]<0||need_cal.x+x_dis[i][j]>sz[0]-1
+                ||need_cal.y+y_dis[i][j]<0||need_cal.y+y_dis[i][j]>sz[1]-1
+                ||need_cal.z+z_dis[i][j]<0||need_cal.z+z_dis[i][j]>sz[2]-1)
+            {
+                //out of bound
+               continue;
+            }
+
+            double pixe=p4DImage_bimg->getValueUINT8(need_cal.x+x_dis[i][j],need_cal.y+y_dis[i][j],need_cal.z+z_dis[i][j],0);
+            double swc_type=p4DImage_swc_img->getValueUINT8(need_cal.x+x_dis[i][j],need_cal.y+y_dis[i][j],need_cal.z+z_dis[i][j],0);
+            if(pixe>0)
+            {
+                if(swc_type!=current_type&&swc_type!=1&&swc_type!=0)
+                {//前景且非本身
+                    //stop
+                    x_loc.push_back(need_cal.x+x_dis[i][j]);
+                    y_loc.push_back(need_cal.y+y_dis[i][j]);
+                    z_loc.push_back(need_cal.z+z_dis[i][j]);
+                    type_loc.push_back(2);
+//                    cout<<"swc_type!=current_type find!!! swc_type:"<<swc_type<<" current_type :"<<current_type<<endl;
+                    type_count_swc++;
+                    break;
+                }
+            }
+            else if(pixe==0)//background
+            {
+                count_bcak++;
+                if(count_bcak>background_stop_num/*||j>background_stop_num*/)
+                {
+                    //stop
+                    //back
+                    x_loc.push_back(need_cal.x+x_dis[i][j]);
+                    y_loc.push_back(need_cal.y+y_dis[i][j]);
+                    z_loc.push_back(need_cal.z+z_dis[i][j]);
+                    type_loc.push_back(0);
+                    type_count_back++;
+                    break;
+                }
+                else
+                {
+                    if(swc_type!=current_type&&swc_type!=1&&swc_type!=0)
+                    {//背景且非本身
+                        //stop
+                        x_loc.push_back(need_cal.x+x_dis[i][j]);
+                        y_loc.push_back(need_cal.y+y_dis[i][j]);
+                        z_loc.push_back(need_cal.z+z_dis[i][j]);
+                        type_loc.push_back(2);
+    //                    cout<<"swc_type!=current_type find!!! swc_type:"<<swc_type<<" current_type :"<<current_type<<endl;
+                        type_count_swc++;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if(type_count_swc==0)
+    {
+       return 1.0;
+    }
+    else if(type_count_swc>0)
+    {
+        //need to pruning  maybe
+//        int temp_type_count_swc=type_count_swc;s
+//         cout<<"now to count cal  pruning"<<endl;
+        for(V3DLONG i = 0; i < x_loc.size(); i++)
+        {
+            if(type_loc.at(i)==2)
+            {
+                //与其parent 成钝角  或120°以上？  或许
+                XYZ point,parent;
+                parent.x=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).x-nt.listNeuron.at(neu_i).x;
+                parent.y=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).y-nt.listNeuron.at(neu_i).y;
+                parent.z=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).z-nt.listNeuron.at(neu_i).z;
+                point.x=x_loc.at(i)-need_cal.x;
+                point.y=y_loc.at(i)-need_cal.y;
+                point.z=z_loc.at(i)-need_cal.z;
+                float cos_vector=dot(parent,point)/norm(parent) / (norm(point));
+
+                if(cos_vector<-0.5)//-120°   //typical  -0.5   120°   -0.866   150°
+                {
+                    //钝角
+                    type_loc[i]=3;
+                    type_count_swc--;
+                }
+            }
+        }
+        //calcluate score;
+        float swc_score;
+        cout<<" type_count_swc "<<type_count_swc<<" Max_number_other_swc "<<Max_number_other_swc<<endl;
+
+        if(type_count_swc>Max_number_other_swc){type_count_swc=Max_number_other_swc;}
+        swc_score=1-((float)type_count_swc/Max_number_other_swc);
+        return swc_score;
+    }
+    return 0;
+}
+
+
+void  neurontreepruneorgraft::Init_Hackathon_score(NeuronTree nt)
+{
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for(V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+    int leaf_count=0;
 
     for(V3DLONG neu_i=0;neu_i<neuronNum;neu_i++)
     {
         if (childs[neu_i].size()==0)
         {
-            //tip
-            LocationSimple p;
-            p.x=nt.listNeuron.at(neu_i).x;
-            p.y=nt.listNeuron.at(neu_i).y;
-            p.z=nt.listNeuron.at(neu_i).z;
 
-            LocationSimple true_tip;
-
-            cout<<"begin to get "<<endl;
-            bool find_tip=false;
-            for(int  i =0;i<16*32;i++)
-            {
-//                 cout<<"i  "<<i<<endl;
-                int count_bcak=0;
-                for(int j=0; j < based_distance; j++)
-                {
-//                     cout<<"in ray  "<<endl;
-                    if(p.x+x_dis[i][j]<0||p.x+x_dis[i][j]>=sz[0]
-                     ||p.y+y_dis[i][j]<0||p.y+y_dis[i][j]>=sz[1]
-                     ||p.z+z_dis[i][j]<0||p.z+z_dis[i][j]>=sz[2])
-                    {
-                        //out of bound
-                       continue;
-                    }
-
-                    unsigned char pixe;
-                    pixe=p4DImage_bimg->getValueUINT8(p.x+x_dis[i][j],p.y+y_dis[i][j],p.z+z_dis[i][j],0);
-//                    pixe=255;
-//                    double swc_type=p4DImage_swc_img->getValueUINT8(p.x+x_dis[i][j],p.y+y_dis[i][j],p.z+z_dis[i][j],0);
-                    if(pixe>0)
-                    {
-                        p.x=nt.listNeuron.at(neu_i).x+x_dis[i][j];
-                        p.y=nt.listNeuron.at(neu_i).y+y_dis[i][j];
-                        p.z=nt.listNeuron.at(neu_i).z+z_dis[i][j];
-//                        cout<<"begin bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
-                        bool is_tip=tp.refer_TipDetect_onePoint_(p);
-//                        cout<<" bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
-                        if(is_tip)
-                        {//break
-                            cout<<"is_tip"<<neu_i<<endl;
-                            find_tip=true;
-                            true_tip=p;
-                            real_tip.push_back(true_tip);
-                            break;
-                        }
-                    } else if(pixe==0)//background
-                    {
-//                        count_bcak++;
-//                        if(count_bcak>background_stop_num)
-//                        {
-//                            //stop
-//                            //back
-//                            break;
-//                        }
-
-                        p.x=nt.listNeuron.at(neu_i).x+x_dis[i][j];
-                        p.y=nt.listNeuron.at(neu_i).y+y_dis[i][j];
-                        p.z=nt.listNeuron.at(neu_i).z+z_dis[i][j];
-//                        cout<<"begin bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
-                        bool is_tip=tp.TipDetect_onePoint(p);
-//                        cout<<" bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
-                        if(is_tip)
-                        {//break
-                            cout<<"is_tip"<<neu_i<<endl;
-                            find_tip=true;
-                            true_tip=p;
-                            real_tip.push_back(true_tip);
-                            break;
-                        }
-                    }
-                    if(find_tip)
-                    {
-                        break;
-                    }
-                }
-                if(find_tip)
-                {
-                    break;
-                }
-            }
-            if(!find_tip)
-            {
-                tip_trouble.push_back(nt.listNeuron.at(neu_i));
-                tip_trouble_num.push_back(neu_i);
-            }
-            else
-            {
-                tip_ok.push_back(nt.listNeuron.at(neu_i));
-            }
+            Hash_leaf.insert(leaf_count,neu_i);
+            leaf_count++;
         }
-//         if (childs[neu_i].size()==0)
-//         {
-//             bool isTip;
-//             LocationSimple candi;
-//             LocationSimple leaf_node;
-//             leaf_node.x=nt.listNeuron.at(neu_i).x;
-//             leaf_node.y=nt.listNeuron.at(neu_i).y;
-//             leaf_node.z=nt.listNeuron.at(neu_i).z;
-//             isTip=tp.TipDetect_onePoint_neighbor(leaf_node,candi,based_distance);
-//             if(!isTip)
-//             {
-//                 tip_trouble.push_back(nt.listNeuron.at(neu_i));
-////                 cout<<"not 27neighbor tip "<<i<<"th x"<<curlist.at(i).x<<" y "<<curlist.at(i).y<<" z "<<curlist.at(i).z<<endl;
-//     //                tip_point.at(i).color = blue;
-//             }
-//             else
-//             {
-//                 tip_ok.push_back(nt.listNeuron.at(neu_i));
-//                 real_tip.push_back(candi);
-////                 cout<<"27neighbor tip "<<neu_i<<"th x"<<curlist.at(i).x<<" y "<<curlist.at(i).y<<" z "<<curlist.at(i).z<<endl;
-////                 cout<<"27neighbor tip and near "<<i<<"th x"<<candi.x<<" y "<<candi.y<<" z "<<candi.z<<endl;
-////                 realtip_list<<candi;
-//             }
-
-//         }
     }
-    cout<<"success find unmatch"<<endl;
-    LandmarkList not_match;
+    if(condidence_score){v3d_msg("Init_Hackathon_score Try Init Twice?");}
+    if(online_confidece_score){v3d_msg("Init_Hackathon_score Try Init Twice?");}
+    condidence_score=new float[leaf_count];
+    parent_score=new float[leaf_count];
+    no_other_swc_score=new float[leaf_count];
+    match_score=new float[leaf_count];
+    online_confidece_score=new float[leaf_count];//
+    ultimate_score_all=new float[leaf_count];
+    if(!condidence_score){v3d_msg("condidence_score create error");}
+    if(!parent_score){v3d_msg("condidence_score create error");}
+    if(!no_other_swc_score){v3d_msg("condidence_score create error");}
+    if(!match_score){v3d_msg("condidence_score create error");}
+    if(!online_confidece_score){v3d_msg("condidence_score create error");}
+    if(!ultimate_score_all){v3d_msg("condidence_score create error");}
+    hacka_Tree=nt;
+}
+void neurontreepruneorgraft::cal_weighted_score(void)
+{
+    float sum_weight;
+    sum_weight=weight_confidence_score+weight_match_score+weight_swc_score;
+    if(sum_weight==0){sum_weight=0.001;}
+    for(int i=0;i<Hash_leaf.size();i++)
+    {
+        float ultimate_score=weight_confidence_score*condidence_score[i]+
+                weight_match_score*match_score[i]+
+                weight_swc_score*no_other_swc_score[i]
+                ;
+        ultimate_score_all[i]=ultimate_score/sum_weight;
+    }
+
+}
+
+void neurontreepruneorgraft::Hackathon_process_tip(NeuronTree nt)
+{
+    cout<<"Hackthon_process_tip "<<endl;
+    if(nt.listNeuron.isEmpty())
+    {
+        cout<<"deal_not_match_points:input a wrong  nt"<<endl;
+        v3d_msg("deal_not_match_points:input a wrong  nt");
+        return ;
+    }
+    this->Init_Hackathon_score(nt);
+    this->setSwcImg(nt);
+    //    setSegmentImg or binary
+    QVector<QVector<V3DLONG> > childs;
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    V3DLONG *flag = new V3DLONG[neuronNum];
+    for(V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 1;
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+    QStringList problem;
+    for(V3DLONG neu_i=0;neu_i<neuronNum;neu_i++)
+    {
+        if (childs[neu_i].size()==0)
+        {
+            QString problem_may_exist;
+
+            float swc_score=cal_swc_score(nt,neu_i);
+            cout<<"swc_score "<<swc_score<<endl;
+            float tip_score=cal_tip_score(nt,neu_i);
+            cout<<"tip_score "<<tip_score<<endl;
+            float online_confidence_score=cal_online_confidence_score(nt,neu_i);
+            cout<<"online_confidence_score "<<online_confidence_score<<endl;
+            condidence_score[Hash_leaf.key(neu_i)]=online_confidence_score;
+            no_other_swc_score[Hash_leaf.key(neu_i)]=swc_score;
+            match_score[Hash_leaf.key(neu_i)]=tip_score;
+            if(online_confidence_score<0.5){problem_may_exist.append("low_oc;");}
+            if(swc_score<0.5){problem_may_exist.append("may_exist_other_swc;");}
+            if(tip_score<0.5){problem_may_exist.append("may_not_tip;");}
+            problem.append(problem_may_exist);
+        }
+    }
+    this->cal_weighted_score();
     RGBA8 red,blue,green;
     red.r=255;red.g=0;red.b=0;
     blue.r=0;blue.g=0;blue.b=255;
     green.r=0;green.g=255;green.b=0;
-    for (V3DLONG i=0;i<tip_trouble.size();i++)
+
+
+    s->setV3DPluginCallback2(cb);
+    cout<<1<<endl;
+    s->setWight(weight_confidence_score,weight_match_score,weight_swc_score);
+    cout<<3<<endl;
+    s->setData(Hash_leaf.size(),problem,no_other_swc_score,condidence_score,match_score);
+    cout<<4<<endl;
+    s->show();
+
+
+    for(int i=0;i<Hash_leaf.size();i++)
     {
-        //every node can't find
-        LocationSimple not_match_p;
-        not_match_p.x=tip_trouble.at(i).x;
-        not_match_p.y=tip_trouble.at(i).y;
-        not_match_p.z=tip_trouble.at(i).z;
-        not_match_p.color=red;
-        need_to_show.push_back(not_match_p);
-    }
-    for (V3DLONG i=0;i<tip_ok.size();i++)
-    {
-        //配对上的叶子节点
-        LocationSimple not_match_p;
-        not_match_p.x=tip_ok.at(i).x;
-        not_match_p.y=tip_ok.at(i).y;
-        not_match_p.z=tip_ok.at(i).z;
-        not_match_p.color=blue;
-        need_to_show.push_back(not_match_p);
+        LocationSimple p;
+        p.x=nt.listNeuron.at(Hash_leaf.value(i)).x+1;
+        p.y=nt.listNeuron.at(Hash_leaf.value(i)).y+1;
+        p.z=nt.listNeuron.at(Hash_leaf.value(i)).z+1;
+
+//        if(ultimate_score_all[i]<0.5)
+        {
+            p.color=red;
+            QString commens;
+            commens.append(" the  swc scores is ").append(QString::number(no_other_swc_score[i]));
+            commens.append(" the  tip_score is ").append(QString::number(match_score[i]));
+            commens.append(" the  online_confidence_scores is ").append(QString::number(condidence_score[i]));
+            p.comments=commens.toStdString();
+            need_to_show.append(p);
+        }
     }
 
-    for (V3DLONG i=0;i<real_tip.size();i++)
-    {
-        //配对上的末梢点
-        LocationSimple not_match_p;
-        not_match_p.x=real_tip.at(i).x;
-        not_match_p.y=real_tip.at(i).y;
-        not_match_p.z=real_tip.at(i).z;
-        not_match_p.color=green;
-        need_to_show.push_back(not_match_p);
-    }
+}
 
+void neurontreepruneorgraft::getDateFromGUI()
+{
+    //
+    need_to_show.clear();
+    RGBA8 red,green;
+    red.r=255;red.g=0;red.b=0;
+    green.r=0;green.g=255;green.b=0;
+    float* result=s->return_result();
+    NeuronTree temptree=hacka_Tree;
+    for(int i=0;i<Hash_leaf.size();i++)
+    {
+        LocationSimple p;
+        p.x=hacka_Tree.listNeuron.at(Hash_leaf.value(i)).x+1;
+        p.y=hacka_Tree.listNeuron.at(Hash_leaf.value(i)).y+1;
+        p.z=hacka_Tree.listNeuron.at(Hash_leaf.value(i)).z+1;
+        if(result[i]==1)
+        {
+            //reserve
+            p.color=green;
+            QString commens;
+            commens.append(" the  swc scores is ").append(QString::number(no_other_swc_score[i]));
+            commens.append(" the  tip_score is ").append(QString::number(match_score[i]));
+            commens.append(" the  online_confidence_scores is ").append(QString::number(condidence_score[i]));
+            p.comments=commens.toStdString();
+
+            need_to_show.append(p);
+        }else/* (result[i]==0)*/
+        {
+            //reserve
+            LocationSimple prun;
+            prun.x=hacka_Tree.listNeuron.at(Hash_leaf.value(i)).x;
+            prun.y=hacka_Tree.listNeuron.at(Hash_leaf.value(i)).y;
+            prun.z=hacka_Tree.listNeuron.at(Hash_leaf.value(i)).z;
+            temptree=this->pruingSwc_one_leafnode_stop_before_tip(prun,temptree);
+            p.color=red;
+            QString commens;
+            commens.append(" the  swc scores is ").append(QString::number(no_other_swc_score[i]));
+            commens.append(" the  tip_score is ").append(QString::number(match_score[i]));
+            commens.append(" the  online_confidence_scores is ").append(QString::number(condidence_score[i]));
+            p.comments=commens.toStdString();
+
+            need_to_show.append(p);
+        }
+
+    }
+    QList <V3dR_MainWindow *> list_3dviewer = cb->getListAll3DViewers();
+    if (list_3dviewer.size() < 1)
+    {
+//        v3d_msg("Please open  a SWC file from the main menu first! list_3dviewer");
+        return ;
+    }
+    V3dR_MainWindow *surface_win = list_3dviewer[0];
+    if (!surface_win){
+//        v3d_msg("Please open up a SWC file from the main menu first!");
+        return ;
+    }
+    QList<NeuronTree> *  mTreeList = cb->getHandleNeuronTrees_Any3DViewer(surface_win);
+    if(mTreeList==NULL)
+    {
+        cout<<"neuron tree is empty"<<endl;
+        return ;
+    }
+    temptree.comment="temp_tree";
+    if(mTreeList->size()<=1)
+    {
+        mTreeList->append(temptree);
+    }else if(mTreeList->size()>1)
+    {
+        (*mTreeList)[mTreeList->size()-1]=temptree;
+    }
+    cb->setLandmark(cb->currentImageWindow(),need_to_show);
 
 
 }
+
+
+//void neurontreepruneorgraft::Hackathon_process_tip(NeuronTree nt)
+//{
+//    cout<<"Hackthon_process_tip "<<endl;
+//    if(nt.listNeuron.isEmpty())
+//    {
+//        cout<<"deal_not_match_points:input a wrong  nt"<<endl;
+//        v3d_msg("deal_not_match_points:input a wrong  nt");
+//        return ;
+//    }
+//    this->setSwcImg(nt);
+//    //    setSegmentImg or binary
+//    QVector<QVector<V3DLONG> > childs;
+//    V3DLONG neuronNum = nt.listNeuron.size();
+//    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+//    V3DLONG *flag = new V3DLONG[neuronNum];
+////    int trans_count=0;
+//    for(V3DLONG i=0;i<neuronNum;i++)
+//    {
+//        flag[i] = 1;
+//        V3DLONG par = nt.listNeuron[i].pn;
+//        if (par<0) continue;
+//        childs[nt.hashNeuron.value(par)].push_back(i);
+//    }
+////        V3DLONG img_size=sz[0]*sz[1]*sz[2];
+//    unsigned radius_tip=5;
+//    QVector<NeuronSWC > tip_trouble;
+//    QVector<V3DLONG > tip_trouble_num;
+//    QVector<NeuronSWC > tip_ok;
+//    LandmarkList real_tip;
+//    cout<<"begin to  creat ray"<<endl;
+//    vector<vector<float> > x_dis(16*32,vector<float>(100)), y_dis(16*32,vector<float>(100)),z_dis(16*32,vector<float>(100));
+//    for(int len = 1; len <based_distance; len++)
+//    {
+//        int mm = 0;
+//        for(int n = 1; n <= 16; n++ )
+//        {
+//            for(int k = 0; k <=31; k++ )
+//            {
+//             x_dis[mm][len-1] = len * sin(PI * n/16) * cos(PI * k / 16);
+//             y_dis[mm][len-1] = len * sin(PI * n/16) * sin(PI * k / 16);
+//             z_dis[mm][len-1] = len * cos(PI * n/16);
+//             mm++;
+//            }
+//        }
+//    }
+//    cout<<"success creat ray"<<endl;
+
+
+//    for(V3DLONG neu_i=0;neu_i<neuronNum;neu_i++)
+//    {
+//        if (childs[neu_i].size()==0)
+//        {
+//            //tip
+//            LocationSimple p;
+//            p.x=nt.listNeuron.at(neu_i).x;
+//            p.y=nt.listNeuron.at(neu_i).y;
+//            p.z=nt.listNeuron.at(neu_i).z;
+
+//            LocationSimple true_tip;
+
+//            cout<<"begin to get "<<endl;
+//            bool find_tip=false;
+//            for(int  i =0;i<16*32;i++)
+//            {
+////                 cout<<"i  "<<i<<endl;
+//                int count_bcak=0;
+//                for(int j=0; j < based_distance; j++)
+//                {
+////                     cout<<"in ray  "<<endl;
+//                    if(p.x+x_dis[i][j]<0||p.x+x_dis[i][j]>=sz[0]
+//                     ||p.y+y_dis[i][j]<0||p.y+y_dis[i][j]>=sz[1]
+//                     ||p.z+z_dis[i][j]<0||p.z+z_dis[i][j]>=sz[2])
+//                    {
+//                        //out of bound
+//                       continue;
+//                    }
+
+//                    unsigned char pixe;
+//                    pixe=p4DImage_bimg->getValueUINT8(p.x+x_dis[i][j],p.y+y_dis[i][j],p.z+z_dis[i][j],0);
+////                    pixe=255;
+////                    double swc_type=p4DImage_swc_img->getValueUINT8(p.x+x_dis[i][j],p.y+y_dis[i][j],p.z+z_dis[i][j],0);
+//                    if(pixe>0)
+//                    {
+//                        p.x=nt.listNeuron.at(neu_i).x+x_dis[i][j];
+//                        p.y=nt.listNeuron.at(neu_i).y+y_dis[i][j];
+//                        p.z=nt.listNeuron.at(neu_i).z+z_dis[i][j];
+////                        cout<<"begin bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
+//                        bool is_tip=tp.refer_TipDetect_onePoint_(p);
+////                        cout<<" bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
+//                        if(is_tip)
+//                        {//break
+//                            cout<<"is_tip"<<neu_i<<endl;
+//                            find_tip=true;
+//                            true_tip=p;
+//                            real_tip.push_back(true_tip);
+//                            break;
+//                        }
+//                    } else if(pixe==0)//background
+//                    {
+////                        count_bcak++;
+////                        if(count_bcak>background_stop_num)
+////                        {
+////                            //stop
+////                            //back
+////                            break;
+////                        }
+
+//                        p.x=nt.listNeuron.at(neu_i).x+x_dis[i][j];
+//                        p.y=nt.listNeuron.at(neu_i).y+y_dis[i][j];
+//                        p.z=nt.listNeuron.at(neu_i).z+z_dis[i][j];
+////                        cout<<"begin bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
+//                        bool is_tip=tp.TipDetect_onePoint(p);
+////                        cout<<" bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
+//                        if(is_tip)
+//                        {//break
+//                            cout<<"is_tip"<<neu_i<<endl;
+//                            find_tip=true;
+//                            true_tip=p;
+//                            real_tip.push_back(true_tip);
+//                            break;
+//                        }
+//                    }
+//                    if(find_tip)
+//                    {
+//                        break;
+//                    }
+//                }
+//                if(find_tip)
+//                {
+//                    break;
+//                }
+//            }
+//            if(!find_tip)
+//            {
+//                tip_trouble.push_back(nt.listNeuron.at(neu_i));
+//                tip_trouble_num.push_back(neu_i);
+//            }
+//            else
+//            {
+//                tip_ok.push_back(nt.listNeuron.at(neu_i));
+//            }
+//        }
+////         if (childs[neu_i].size()==0)
+////         {
+////             bool isTip;
+////             LocationSimple candi;
+////             LocationSimple leaf_node;
+////             leaf_node.x=nt.listNeuron.at(neu_i).x;
+////             leaf_node.y=nt.listNeuron.at(neu_i).y;
+////             leaf_node.z=nt.listNeuron.at(neu_i).z;
+////             isTip=tp.TipDetect_onePoint_neighbor(leaf_node,candi,based_distance);
+////             if(!isTip)
+////             {
+////                 tip_trouble.push_back(nt.listNeuron.at(neu_i));
+//////                 cout<<"not 27neighbor tip "<<i<<"th x"<<curlist.at(i).x<<" y "<<curlist.at(i).y<<" z "<<curlist.at(i).z<<endl;
+////     //                tip_point.at(i).color = blue;
+////             }
+////             else
+////             {
+////                 tip_ok.push_back(nt.listNeuron.at(neu_i));
+////                 real_tip.push_back(candi);
+//////                 cout<<"27neighbor tip "<<neu_i<<"th x"<<curlist.at(i).x<<" y "<<curlist.at(i).y<<" z "<<curlist.at(i).z<<endl;
+//////                 cout<<"27neighbor tip and near "<<i<<"th x"<<candi.x<<" y "<<candi.y<<" z "<<candi.z<<endl;
+//////                 realtip_list<<candi;
+////             }
+
+////         }
+//    }
+//    cout<<"success find unmatch"<<endl;
+//    LandmarkList not_match;
+//    RGBA8 red,blue,green;
+//    red.r=255;red.g=0;red.b=0;
+//    blue.r=0;blue.g=0;blue.b=255;
+//    green.r=0;green.g=255;green.b=0;
+//    for (V3DLONG i=0;i<tip_trouble.size();i++)
+//    {
+//        //every node can't find
+//        LocationSimple not_match_p;
+//        not_match_p.x=tip_trouble.at(i).x;
+//        not_match_p.y=tip_trouble.at(i).y;
+//        not_match_p.z=tip_trouble.at(i).z;
+//        not_match_p.color=red;
+//        need_to_show.push_back(not_match_p);
+//    }
+//    for (V3DLONG i=0;i<tip_ok.size();i++)
+//    {
+//        //配对上的叶子节点
+//        LocationSimple not_match_p;
+//        not_match_p.x=tip_ok.at(i).x;
+//        not_match_p.y=tip_ok.at(i).y;
+//        not_match_p.z=tip_ok.at(i).z;
+//        not_match_p.color=blue;
+//        need_to_show.push_back(not_match_p);
+//    }
+
+//    for (V3DLONG i=0;i<real_tip.size();i++)
+//    {
+//        //配对上的末梢点
+//        LocationSimple not_match_p;
+//        not_match_p.x=real_tip.at(i).x;
+//        not_match_p.y=real_tip.at(i).y;
+//        not_match_p.z=real_tip.at(i).z;
+//        not_match_p.color=green;
+//        need_to_show.push_back(not_match_p);
+//    }
+////    return ;
+
+
+
+//}
 
 NeuronTree neurontreepruneorgraft::pruningSwc_back_ground(NeuronTree nt)
 {
@@ -428,7 +854,7 @@ void neurontreepruneorgraft::setSegmentImg(unsigned char * img )
     p4DImage_bimg->setData(img,p4DImage);
 }
 
-neurontreepruneorgraft::neurontreepruneorgraft()
+neurontreepruneorgraft::neurontreepruneorgraft(): QObject()
 {
     dist_traced=5;
     radius_tip_checked=2;
@@ -462,11 +888,56 @@ neurontreepruneorgraft::neurontreepruneorgraft()
     pruning_branch_count=0;
     angle_swc=120;
 
+    //para for Hackathon
+    Hash_leaf.clear();
+    condidence_score=NULL;
+    parent_score=NULL;
+    no_other_swc_score=NULL;
+    match_score=NULL;
+    online_confidece_score=NULL;
+    ultimate_score_all=NULL;
+
+    weight_confidence_score=1.0;
+    weight_match_score=1.0;
+    weight_swc_score=1.0;
+
+
+    x_dis.resize(16*32);y_dis.resize(16*32);z_dis.resize(16*32);
+    for(int i=0;i<x_dis.size();i++)
+    {
+        x_dis.at(i).resize(100);
+        y_dis.at(i).resize(100);
+        z_dis.at(i).resize(100);
+    }
+    for(int len = 1; len < 30; len++)
+    {
+        int mm = 0;
+        for(int n = 1; n <= 16; n++ )
+        {
+            for(int k = 0; k <=31; k++ )
+            {
+             x_dis[mm][len-1] = len * sin(PI * n/16) * cos(PI * k / 16);
+             y_dis[mm][len-1] = len * sin(PI * n/16) * sin(PI * k / 16);
+             z_dis[mm][len-1] = len * cos(PI * n/16);
+             mm++;
+            }
+        }
+    }
+    s=new ScoreInput;
+    connect(s, SIGNAL(signal_compare()), this, SLOT(getDateFromGUI()));
+
+
 }
 neurontreepruneorgraft::~neurontreepruneorgraft()
 {
     if(bimg_datald) {delete []bimg_datald; bimg_datald = 0;}
     if(swcimg_datald) {delete []swcimg_datald; swcimg_datald = 0;}
+
+    if(condidence_score) {delete []condidence_score; condidence_score = 0;}
+    if(parent_score) {delete []parent_score; parent_score = 0;}
+    if(no_other_swc_score) {delete []no_other_swc_score; no_other_swc_score = 0;}
+    if(match_score) {delete []match_score; match_score = 0;}
+    if(online_confidece_score) {delete []online_confidece_score; online_confidece_score = 0;}
 
 }
 
@@ -1160,9 +1631,9 @@ NeuronTree neurontreepruneorgraft::deal_not_match_points(NeuronTree nt,LocationS
 //        cout<<"i "<<i<<endl;
         for(int j=0; j < based_distance; j+=1)
         {
-            if(not_match_p.x+x_dis[i][j]<0||not_match_p.x+x_dis[i][j]>=sz[0]
-                ||not_match_p.y+y_dis[i][j]<0||not_match_p.y+y_dis[i][j]>=sz[1]
-                ||not_match_p.z+z_dis[i][j]<0||not_match_p.z+z_dis[i][j]>=sz[2])
+            if(not_match_p.x+x_dis[i][j]<0||not_match_p.x+x_dis[i][j]>sz[0]-1
+                ||not_match_p.y+y_dis[i][j]<0||not_match_p.y+y_dis[i][j]>sz[1]-1
+                ||not_match_p.z+z_dis[i][j]<0||not_match_p.z+z_dis[i][j]>sz[2]-1)
             {
                 //out of bound
                continue;

@@ -880,7 +880,7 @@ float online_confidece_one_branch(V3DLONG tip_point_num,NeuronTree nt,unsigned c
         p1.y=V3DLONG(current.y+0.5);
         p1.z=V3DLONG(current.z+0.5);
         V3DLONG aaa=sz[0]*sz[1]*p1.z+sz[0]*p1.y+p1.x;
-        if(aaa>img_size) {cout<<"aaa>img_size"; return 0;}
+        if(aaa>img_size||aaa<0) {cout<<"aaa>img_size"; return 0;}
 //        cout<<" point1 x:"<<p1.x<<" y:"<<p1.y<<" z:"<<p1.z<<" bimg:"<<int(bimg_datald[aaa])<<endl;
         if(bimg_datald[aaa]==255)
         {

@@ -5,9 +5,14 @@
 #include"my_surf_objs.h"
 #include"neuron_tools.h"
 #include "v3d_curvetracepara.h"
+#include "scoreinput.h"
 #define using_exist_TMI_data
-class neurontreepruneorgraft
+class neurontreepruneorgraft:public QObject
 {
+    Q_OBJECT
+public slots:
+    void getDateFromGUI();
+
 public:
     neurontreepruneorgraft();
     ~neurontreepruneorgraft();
@@ -76,9 +81,9 @@ public:
     void Binarization(int threshold);
     void setSegmentImg(unsigned char * img );
     int binary_threshold;
-    void Hackthon_process_tip(NeuronTree nt);
+    void Hackathon_process_tip(NeuronTree nt);
     bool setSwcImg(NeuronTree nt);
-    void Hackthon_process_onetip(NeuronTree nt,V3DLONG i);
+//    void Hackthon_process_onetip(NeuronTree nt,V3DLONG i);
     LandmarkList need_to_show;
 
 private:
@@ -143,6 +148,31 @@ private:
 
     int background_stop_num;
     float angle_swc;
+
+    //Hackathon
+    void  Init_Hackathon_score(NeuronTree nt);
+    QHash<int,int> Hash_leaf;
+    float *condidence_score;
+    float *parent_score;
+    float *no_other_swc_score;
+    float *match_score;
+    float *online_confidece_score;
+    float *ultimate_score_all;
+
+    float  cal_swc_score(NeuronTree nt,int neu_i);
+    float  cal_online_confidence_score(NeuronTree nt,int neu_i);//
+    float  cal_tip_score(NeuronTree nt,int neu_i);
+    void   cal_weighted_score(void);
+
+    float weight_confidence_score;
+    float weight_match_score;
+    float weight_swc_score;
+    vector<vector<float> > x_dis, y_dis,z_dis;
+
+    ScoreInput* s;
+    NeuronTree hacka_Tree;
+
+
 
 };
 
