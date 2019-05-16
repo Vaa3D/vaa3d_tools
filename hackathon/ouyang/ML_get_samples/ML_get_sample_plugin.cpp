@@ -81,10 +81,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     {
         rotation(input,output,callback);
     }
-    //else if (func_name == tr("mean_shift_center"))
-    //{
-     //   tip_shift_center(callback, input,output);
-    //}
+//    else if (func_name == tr("prediction_relocation"))
+//    {
+//        prediction(callback, input,output);
+//    }
 	else if (func_name == tr("help"))
 	{
         printHelp(input,output);
