@@ -12,12 +12,14 @@ INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliabil
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/newmat11
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/c+
+INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
 
 
 
 
 HEADERS	+= tera_retrace_plugin.h \
-    tera_retrace_func.h
+    tera_retrace_func.h \
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
 SOURCES	+= tera_retrace_plugin.cpp \
     tera_retrace_func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
@@ -41,6 +43,7 @@ SOURCES += $$VAA3DPATH/v3d_main/graph/dijk.cpp
 
 
 SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+
 
 
 
