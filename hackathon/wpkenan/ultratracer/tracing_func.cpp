@@ -1544,14 +1544,16 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(!ifs_swc && P.soma)
     {
         P.length_thresh = 5;
-        QString imageUnetString = imageSaveString + "unet.v3draw";
+        //QString imageUnetString = imageSaveString + "unet.v3draw";
+	QString imageUnetString = imageSaveString;//change by wp
 
-
+/*change by wp
 #if  defined(Q_OS_LINUX)
     QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
             .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
     system(qPrintable(cmd_predict));
 #endif
+*/
 
 
 //        V3DPluginArgItem arg;
@@ -1708,7 +1710,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
 
                     vector<V3DLONG> poss_landmark;
-                    double windowradius = 10;
+                    double windowradius = 30;
 
                     poss_landmark=landMarkList2poss(marklist_tmp, mysz[0], mysz[0]*mysz[1]);
                     marklist_tmp.clear();
