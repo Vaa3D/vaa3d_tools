@@ -38,9 +38,10 @@ struct TRACE_LS_PARA
     QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd,output_folder;
 };
 
- bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu);
- bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
+ bool crawler_raw_app( V3DPluginCallback2 &callback, QWidget *parent, TRACE_LS_PARA &P, bool bmenu,NeuronTree swc);
+ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,NeuronTree swc);
  QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
  bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
-
+ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData);
+ NeuronTree smartPrune(NeuronTree nt, double length);
 
