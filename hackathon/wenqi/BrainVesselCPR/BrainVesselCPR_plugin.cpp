@@ -11,7 +11,11 @@
 #include <vector>
 #include "BrainVesselCPR_plugin.h"
 #include "basic_surf_objs.h"
-//#include "BrainVesselCPR_func.h"
+#include <stdlib.h>
+
+#include "BrainVesselCPR_gui.h"
+
+
 using namespace std;
 
 struct Node
@@ -43,7 +47,7 @@ double heuristic(V3DLONG next, V3DLONG goal, int x_length, int y_length)
     int goal_y = floor((next % (x_length * y_length)) / x_length);
     int goal_z = floor(next / (x_length * y_length));
 
-    return 0*(abs(next_x - goal_x) + abs(next_y - goal_y) + abs(next_z - goal_z));
+    return 0.2*(abs(next_x - goal_x) + abs(next_y - goal_y) + abs(next_z - goal_z));
 }
 
 NeuronTree construcSwc(V3DLONG * path_point, V3DLONG path_length, int x_length, int y_length, int z_length/*, QString filename*/)
@@ -164,7 +168,32 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
 
 
 
-void testfunc(V3DPluginCallback2 &callback, QWidget *parent){
+void setWLWW(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    SetContrastWidget * setWLWW_widget = new SetContrastWidget(callback, parent);
+    setWLWW_widget->show();
+
+//    v3dhandle curwin = callback.currentImageWindow();
+//    Image4DSimple* p4DImage = callback.getImage(curwin);
+//    if (!p4DImage)
+//    {
+//        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+//        return;
+//    }
+//    unsigned short int * data1d = (unsigned short int *) p4DImage->getRawData();
+//    V3DLONG totalpxls = p4DImage->getTotalBytes();
+//    for(int i=0; i<totalpxls; i++)
+//    {
+
+//    }
+
+}
+
+
+
+
+void testfunc(V3DPluginCallback2 &callback, QWidget *parent)
+{
 
 
         v3dhandle curwin = callback.currentImageWindow();
@@ -239,7 +268,7 @@ QStringList BrainVesselCPRPlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("Start CPR")
-        <<tr("test")
+        <<tr("Set MRI WL/WW")
 		<<tr("about");
 }
 
@@ -258,10 +287,10 @@ void BrainVesselCPRPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &
 	{
 		//v3d_msg("To be implemented.");
 		startCPR(callback,parent);
-	}
-    if(menu_name == tr("test"))
+    }
+    else if(menu_name == tr("Set MRI WL/WW"))
     {
-        testfunc(callback,parent);
+        setWLWW(callback,parent);
     }
 	else
 	{
@@ -334,6 +363,12 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
     cout << "begin find path!" << endl;
     findPath(start, goal, data1d, x_length, y_length, z_length, callback, parent);
     cout << "find path finished!" << endl;
+
+
+
+    //sync 3d view of MRA and MRI
+
+
 
 }
 

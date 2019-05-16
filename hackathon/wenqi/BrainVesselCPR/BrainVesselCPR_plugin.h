@@ -25,6 +25,9 @@ public:
 	{return false;}
 };
 
+
+
+
 void startCPR(V3DPluginCallback2 &callback, QWidget *parent);
 
 

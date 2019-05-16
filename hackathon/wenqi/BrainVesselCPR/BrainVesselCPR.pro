@@ -5,7 +5,9 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
-HEADERS	+= BrainVesselCPR_plugin.h
+HEADERS	+= BrainVesselCPR_plugin.h \
+    BrainVesselCPR_gui.h
+HEADERS += BrainVesselCPR_gui.h
 
 
 SOURCES	+= BrainVesselCPR_plugin.cpp
