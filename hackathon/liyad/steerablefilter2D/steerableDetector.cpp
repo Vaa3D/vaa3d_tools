@@ -776,7 +776,7 @@ void filterM4(double** templates, int nx, int ny, double* alpha, double* respons
             }
         }
 
-        cout<<"i="<<i<<"response[i]: "<<response[i]<<endl;  
+        //cout<<"i="<<i<<"response[i]: "<<response[i]<<endl;  
 
 
         delete[] z;
@@ -990,19 +990,31 @@ void computeNMS(double* response, double* orientation, double* nms, int nx, int 
     for (int i=0;i<nx*ny;++i) {
         divRes = div(i, nx);
         ux = cos(orientation[i]);
-        uy = sin(orientation[i]);        
+        uy = sin(orientation[i]);  
+
+        cout<<"i="<<i<<", ux: "<<ux<<endl;  
+        cout<<"i="<<i<<", uy: "<<ux<<endl;  
+
+
         v1 = interp(response, nx, ny, divRes.rem+ux, divRes.quot+uy);
         v2 = interp(response, nx, ny, divRes.rem-ux, divRes.quot-uy);
+        
+        cout<<"i="<<i<<", v1: "<<v1<<endl;  
+        cout<<"i="<<i<<", v2: "<<v2<<endl;  
+
+
         if (v1 > response[i] || v2 > response[i]) {
             nms[i] = 0.0;
         } else {
             nms[i] = response[i];
-        }        
+        }  
+        //cout<<"i="<<i<<", nms[i]: "<<nms[i]<<endl;  
+      
     }
 }
 
 
-void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,double* output_response, double* output_orientation, double* output_nms) {
+void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,double* &output_response, double* &output_orientation, double* &output_nms) {
     // Set defaults for options
     int borderCondition = 1;
     int nt = 36;
@@ -1071,8 +1083,8 @@ void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,doub
     }
    
 
-    //cout<<"Calculate nms: start "<<endl;
-    //computeNMS(response, orientation, nms, nx, ny);    
+    cout<<"Calculate nms: start "<<endl;
+    computeNMS(response, orientation, nms, nx, ny);    
     
 
     output_response = response;
