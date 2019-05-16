@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = D:/vaa3d_build/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2
@@ -22,6 +22,8 @@ HEADERS	+= tera_retrace_plugin.h \
 HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
 SOURCES	+= tera_retrace_plugin.cpp \
     tera_retrace_func.cpp
+
+
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
@@ -59,8 +61,16 @@ DESTDIR	= $$VAA3DPATH/bin/plugins/tera_retrace/
 #}
 
 
-
 win32 {
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
 }
+
+
+macx{
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+}
+
+
+

@@ -125,7 +125,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         P.soma=0;
         P.channel=1;
         P.bkg_thresh=-1;
-        P.resume =  0;   //add continue tracing option
+        P.resume =  1;   //add continue tracing option
         P.b_256cube = 0;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
@@ -158,12 +158,24 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 //            t.y= markerlist.at(i).y;
 //            t.z= markerlist.at(i).z;
 //            P.listLandmarks.push_back(t);
-            P.markerfilename=markerfn + QString::number(i)+".marker";
+            QString indimarker= markerfn +QString::number(i)+".marker";
+            QList<ImageMarker> indimarkerls;
+            indimarkerls.push_back(markerlist.at(i));
+            writeMarker_file(indimarker,indimarkerls);
+
+            //P.markerfilename=markerfn + QString::number(i)+".marker";
+            P.markerfilename= indimarker;
+            //qDebug()<<"aaaaaaaaaaa";
           crawler_raw_app(callback,parent, P , bmenu, swc);
 
-          QString txtfileName= markerfn+"_tmp_APP2/scanData.txt";
+          QString txtfileName= indimarker+"_tmp_APP2/scanData.txt";
           list<string> infostring;
           processSmartScan_3D(callback,infostring,txtfileName);
+
+
+
+
+
         }
 
 
