@@ -648,6 +648,8 @@ void filterM4(double** templates, int nx, int ny, double* alpha, double* respons
     int nr, deg;
     double delta;
     
+    cout<<"Fourth order ST before start loop "<<endl;
+           
     for (int i=0;i<nx*ny;i++) {
         
         A = (a22-a20)*gxy[i] + (a42-2.0*a40)*gxyyy[i] + (2.0*a44-a42)*gxxxy[i];
@@ -722,7 +724,7 @@ void filterM4(double** templates, int nx, int ny, double* alpha, double* respons
             gsl_poly_complex_solve(a, deg+1, w, z);
             gsl_poly_complex_workspace_free(w);
         }
-            
+        
         // # real roots
         nr = 0;
         for (int k=0;k<deg;++k) {
@@ -761,6 +763,7 @@ void filterM4(double** templates, int nx, int ny, double* alpha, double* respons
         }
         delete[] roots;
               
+    
         response[i] = pointRespM4(i, tRoots[0], alpha, templates);
         orientation[i] = tRoots[0];
        
@@ -772,9 +775,15 @@ void filterM4(double** templates, int nx, int ny, double* alpha, double* respons
                 orientation[i] = tRoots[k];
             }
         }
+
+        cout<<"i="<<i<<"response[i]: "<<response[i]<<endl;  
+
+
         delete[] z;
         delete[] tRoots;
     }
+    cout<<"Fourth order ST loop ended "<<endl;
+        
 }
 
 
@@ -1003,38 +1012,38 @@ void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,doub
     long nz = in_sz[2];
     long pagesz = ny*nx*nz;
 
-    cout<<"nx = "<<nx<<endl;
-    cout<<"ny = "<<ny<<endl;
-    cout<<"nz = "<<nz<<endl;
-    cout<<"pagesz = "<<pagesz<<endl;
+    cout<<"core: nx = "<<nx<<endl;
+    cout<<"core: ny = "<<ny<<endl;
+    cout<<"core: nz = "<<nz<<endl;
+    cout<<"core: pagesz = "<<pagesz<<endl;
     
     int L = 2*(int)(4.0*sigma)+1; // support of the Gaussian kernels
          
-    cout<<"M = "<<M<<endl;
-    cout<<"sigma = "<<sigma<<endl;
+    cout<<"core: M = "<<M<<endl;
+    cout<<"core: sigma = "<<sigma<<endl;
 
     // number of partial derivative templates
     int nTemplates = getTemplateN(M);
-    cout<<"nTemplates = "<<nTemplates<<endl;    
+    cout<<"core: nTemplates = "<<nTemplates<<endl;    
 
     double* response = new double[pagesz];
     double* orientation = new double[pagesz];
     double* nms = new double[pagesz];
-    cout<<"Output initialized "<<endl;
+    cout<<"core: Output initialized "<<endl;
 
     // Allocate template memory
     double** templates = new double*[nTemplates];
     for (int i=0;i<nTemplates;++i) {
         templates[i] = new double[pagesz];
     }
-    cout<<"Templates initialized "<<endl;
+    cout<<"core: Templates initialized "<<endl;
 
     
     // Compute the templates used in the steerable filterbank
     computeBaseTemplates((double *)input, nx, ny, M, borderCondition, sigma, templates);
     double* alpha = getWeights(M, sigma);
 
-    cout<<"Templates used in Filterbank ready"<<endl;
+    cout<<"core: Templates used in Filterbank ready"<<endl;
 
     
     // apply filter
@@ -1061,13 +1070,18 @@ void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,doub
             break;
     }
    
-    computeNMS(response, orientation, nms, nx, ny);    
+
+    //cout<<"Calculate nms: start "<<endl;
+    //computeNMS(response, orientation, nms, nx, ny);    
     
 
     output_response = response;
     output_orientation = orientation;
     output_nms = nms;
-    
+
+    for(int index = 0; index< nx*ny; index++){
+        cout<<"index="<<index<<"output_response[index]: "<<output_response[index]<<endl;         
+    }
     /*
     // Free memory
     for (int i=0;i<nTemplates;++i) {
