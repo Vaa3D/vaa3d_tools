@@ -44,6 +44,7 @@ public:
 
     SetContrastWidget(V3DPluginCallback2 &callback, QWidget * parent) : QWidget(parent)
     {
+        this->windowTitle() = tr("Adjust Contrast");
         this->callback = &callback;
         this->curwin = callback.currentImageWindow();
         Image4DSimple * p4DImage = callback.getImage(curwin);
@@ -152,7 +153,6 @@ public slots:
         int ww = this->WW_line->text().toInt();
 
 
-
         for(int i=0; i<totalpxls; i++)
         {
             if(this->data1d[i] > wl + ww / 2)
@@ -162,11 +162,11 @@ public slots:
             else
                 this->data_container[i] = (unsigned short int)(this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
         }
+        
 
 
-
-        //new4DImage->setData((unsigned char *)data_container, N, M, P, 1, V3D_UINT16);
-        this->new4DImage->setData((unsigned char *)data1d, N, M, P, 1, V3D_UINT16);
+        new4DImage->setData((unsigned char *)data_container, N, M, P, 1, V3D_UINT16);
+        //this->new4DImage->setData((unsigned char *)data1d, N, M, P, 1, V3D_UINT16);
 
 // display in new window
 //        v3dhandle newwin = callback->newImageWindow("new image");
