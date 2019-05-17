@@ -13,6 +13,7 @@
 
 #include <v3d_interface.h>
 #include <basic_surf_objs.h>
+
 using namespace std;
 Q_EXPORT_PLUGIN2(test000, TestPlugin);
  
@@ -22,7 +23,8 @@ QStringList TestPlugin::menulist() const
         <<tr("half_coordinate")
         <<tr("cut_block")
         <<tr("cut_eswc")
-        <<tr("compare_eswc");
+        <<tr("compare_eswc")
+        <<tr("trans_eswc");
 }
 
 QStringList TestPlugin::funclist() const
@@ -139,7 +141,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         //将同一block下的eswc文件分割出来
 
         QStringList eswcfilelist;
-        eswcfilelist=QFileDialog::getOpenFileNames(parent,QString(QObject::tr("Choose the file:")));//getExistingDirectory(parent,QString(QObject::tr("Choose the directory that contains the specified files")));
+        eswcfilelist=QFileDialog::getOpenFileNames(parent,QString(QObject::tr("Choose the file:")));
         int size=eswcfilelist.size();
         cout<<size<<endl;
         for(int i=0;i<size;++i)
@@ -151,28 +153,94 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             int m=1;
             nt=readESWC_file(eswcfilelist[i]);
             int size0=nt.listNeuron.size();
+
+            vector<int> iOfEswc;
+
             vector<V3DLONG> index;
             for(int i=0;i<size0;++i)
             {
                 index.push_back(nt.listNeuron[i].n);
             }
-            nttmp.listNeuron.push_back(nt.listNeuron[0]);
-            for(int i=1;i<size0;++i)
+            //index.push_back(nt.listNeuron[0].n);
+            //nttmp.listNeuron.push_back(nt.listNeuron[0]);
+            for(int i=0;i<size0;++i)
             {
-                if(isin(nt.listNeuron[i].parent,index))
+                if(!isin(nt.listNeuron[i].parent,index))
                 {
-                    nttmp.listNeuron.push_back(nt.listNeuron[i]);
-                }else{
-
-                    const QString s=path0+"_"+QString::number(m,10)+suffix;
-                    writeESWC_file1(s,nttmp);
-                    nttmp.listNeuron.clear();
-                    nttmp.listNeuron.push_back(nt.listNeuron[i]);
-                    m++;
+                    iOfEswc.push_back(i);
                 }
             }
+            for(int i=iOfEswc.size()-1;i>0;--i)
+            {
+                nttmp.listNeuron.clear();
+                index.clear();
+                index.push_back(nt.listNeuron[iOfEswc[i]].n);
+                nttmp.listNeuron.push_back(nt.listNeuron[iOfEswc[i]]);
+                int j=iOfEswc[i];
+                QList<NeuronSWC>::iterator it=nt.listNeuron.begin()+j;
+                nt.listNeuron.erase(it);
+                for(;isin(nt.listNeuron[j].parent,index);)
+                {
+                    nttmp.listNeuron.push_back(nt.listNeuron[j]);
+                    index.push_back(nt.listNeuron[j].n);
+                    QList<NeuronSWC>::iterator it=nt.listNeuron.begin()+j;
+                    nt.listNeuron.erase(it);
+
+                }
+                const QString s=path0+"_"+QString::number(m,10)+suffix;
+                writeESWC_file1(s,nttmp);
+                m++;
+
+            }
             const QString s=path0+"_"+QString::number(m,10)+suffix;
-            writeESWC_file1(s,nttmp);
+            writeESWC_file1(s,nt);
+        }
+    }else if(menu_name == tr("trans_eswc"))
+    {
+        NeuronTree nt0;
+        QList<ImageMarker> marker;
+        QStringList file0,file1;
+        file0=QFileDialog::getOpenFileNames(parent,QString(QObject::tr("Choose the manual file:")));
+        file1=QFileDialog::getOpenFileNames(parent,QString(QObject::tr("Choose the marker file:")));
+        int size_0=file0.size();
+        int size_1=file1.size();
+        for(int i=0;i<size_0;++i)
+        {
+            NeuronTree nttmp;
+            vector<V3DLONG> index;
+            nttmp.listNeuron.clear();
+            index.clear();
+            nt0=readSWC_file(file0[i]);
+            for(int j=0;j<size_1;++j)
+            {
+                if(path(file0[i])==path(file1[j]))
+                {
+                    marker=readMarker_file(file1[j]);
+                }
+            }
+
+            int index0;
+            for(int k=0;k<nt0.listNeuron.size();++k)
+            {
+                if(nt0.listNeuron[k].x==marker[0].x
+                        &&nt0.listNeuron[k].y==marker[0].y
+                        &&nt0.listNeuron[k].z==marker[0].z)
+                {
+                    index0=k;
+                }
+            }
+            index.push_back(nt0.listNeuron[index0].n);
+            nttmp.listNeuron.push_back(nt0.listNeuron[index0]);
+            for(int i=index0;i<nt0.listNeuron.size();++i)
+            {
+                if(isin(nt0.listNeuron[i].parent,index))
+                {
+                    index.push_back(nt0.listNeuron[i].n);
+                    nttmp.listNeuron.push_back(nt0.listNeuron[i]);
+                }
+            }
+            writeESWC_file(file0[i],nttmp);
+
 
         }
     }

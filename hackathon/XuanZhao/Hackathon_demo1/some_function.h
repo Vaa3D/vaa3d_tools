@@ -9,7 +9,11 @@
 #include <v3d_interface.h>
 #include "some_class.h"
 
+inline bool isin(V3DLONG parent,std::vector<V3DLONG> a);
 
+inline int findIndex(const char* s);
+
+inline QString path(const QString& s);
 
 block getBlockOfOPoint(NeuronSWC p,int dx,int dy,int dz);
 

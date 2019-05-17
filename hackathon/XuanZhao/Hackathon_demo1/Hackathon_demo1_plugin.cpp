@@ -39,8 +39,14 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
     if (menu_name == tr("getTif"))
 	{
+        PARA_DEMO1 p;
+        if(!p.DEMO1())
+        {
+            return;
+        }
+
         blockTree bt;
-        const int dx=512,dy=512,dz=128;
+        //const int dx=512,dy=512,dz=128;
         NeuronTree nt;
         QString eswcfile;
         eswcfile=QFileDialog::getOpenFileName(parent,QString(QObject::tr("Choose the file")),".","*.eswc");
@@ -54,7 +60,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString dir0;
         dir0=QFileDialog::getExistingDirectory(parent);
 
-        bt=getBlockTree(nt,dx,dy,dz);
+        bt=getBlockTree(nt,p.dx,p.dy,p.dz);
 
         for(int i=0;i<bt.blocklist.size();++i)
         {
@@ -70,7 +76,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             QString si0=path0+QString::number(bt.blocklist[i].n,10)+"_x_"+QString::number((qlonglong)bt.blocklist[i].o.x,10)+"_y_"+QString::number((qlonglong)bt.blocklist[i].o.y,10)+"_z_"+QString::number((qlonglong)bt.blocklist[i].o.z,10)+suffix1;
             const char* si=si0.toStdString().c_str();
 
-            V3DLONG sz0[4]={dx,dy,dz,1};
+            V3DLONG sz0[4]={p.dx,p.dy,p.dz,1};
             int datatype=1;
             if(!simple_saveimage_wrapper(callback,si,imgblock,sz0,datatype))
             {
