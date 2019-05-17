@@ -8,6 +8,8 @@
 #include <QSlider>
 #include <string>
 #include <QtDebug>
+#include<iostream>
+using namespace std;
 class SetContrastWidget: public QWidget
 {
     Q_OBJECT
@@ -53,9 +55,13 @@ public:
 
         this->data1d = (unsigned short int *)p4DImage->getRawData();
 
+
+
         this->N = p4DImage->getXDim();
         this->M = p4DImage->getYDim();
         this->P = p4DImage->getZDim();
+
+        this->new4DImage->setData((unsigned char *)data1d, N, M, P, 1, V3D_UINT16);
 
         this->data_container = new unsigned short int[N*M*P];
         //this->data_container = data1d;
@@ -151,21 +157,33 @@ public slots:
         //int ww = this->WW_slider->value();
         int wl = this->WL_line->text().toInt();
         int ww = this->WW_line->text().toInt();
+        cout<<"break" << __LINE__ <<endl;
 
-
+        unsigned short int tmp;
         for(int i=0; i<totalpxls; i++)
         {
             if(this->data1d[i] > wl + ww / 2)
-                this->data_container[i] = 4095;
+            {
+                tmp = 4095;
+            }
             else if(this->data1d[i] < wl - ww / 2)
-                this->data_container[i] = 0;
+            {
+                tmp = 0;
+            }
             else
-                this->data_container[i] = (unsigned short int)(this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
+            {
+                //this->new4DImage->getRawData()[i] = (unsigned short int)(this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
+                tmp = (this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
+            }
+            cout<<"break" << __LINE__ <<endl;
+            this->new4DImage->getRawData()[2*i+1] = (unsigned char)(tmp >> 8 & 0x00ff);
+            this->new4DImage->getRawData()[2*i] = (unsigned char)(tmp & 0x00ff);
         }
-        
 
 
-        new4DImage->setData((unsigned char *)data_container, N, M, P, 1, V3D_UINT16);
+
+//new4DImage->setNewRawDataPointer();
+        //new4DImage->setData((unsigned char *)data_container, N, M, P, 1, V3D_UINT16);
         //this->new4DImage->setData((unsigned char *)data1d, N, M, P, 1, V3D_UINT16);
 
 // display in new window
@@ -178,17 +196,28 @@ public slots:
 
         // display in current window
 
-        this->callback->setImage(this->curwin, this->new4DImage);
-        qDebug() << "modified" << endl;
+        v3dhandle newwin;
+        newwin = callback->currentImageWindow();
+        callback->setImage(newwin, new4DImage);
+        cout<<"break" << __LINE__ <<endl;
+        callback->setImageName(newwin, QString("contrast adjusted image"));
+        callback->updateImageWindow(newwin);
 
-        if(!callback->currentImageWindow())
-            this->curwin = this->callback->newImageWindow();
-        else
-            this->curwin = this->callback->currentImageWindow();
+cout<<"break" << __LINE__ <<endl;
 
-        this->callback->setImageName(this->curwin,tr("modified"));
+//        if(!callback->currentImageWindow())
+//            this->curwin = this->callback->newImageWindow();
+//        else
+//            this->curwin = this->callback->currentImageWindow();
 
-        this->callback->updateImageWindow(this->curwin);
+//        this->callback->setImage(this->curwin, this->new4DImage);
+//        qDebug() << "modified" << endl;
+
+
+
+//        this->callback->setImageName(this->curwin,tr("modified"));
+
+//        this->callback->updateImageWindow(this->curwin);
     }
 
 };
