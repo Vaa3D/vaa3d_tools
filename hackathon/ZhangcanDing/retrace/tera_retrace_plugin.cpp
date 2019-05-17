@@ -184,8 +184,8 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
             else
                 indimarker=QString(outfiles[0])+QString("\\%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
 
-            //QString ref_swcfn= indimarker + QString("_nc_APP2_GD.swc");
-            //writeSWC_file(ref_swcfn,ref_swc);
+           QString ref_swcfn= indimarker + QString("_nc_APP2_GD.swc");
+           writeSWC_file(ref_swcfn,ref_swc);
 
             QList<ImageMarker> indimarkerls;
             indimarkerls.clear();
@@ -202,8 +202,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
         }
 
-        //QString fiswcfolder = QString(outfiles[0])+"\\finalswcfolder";
-        //system(qPrintable(QString("mkdir %l\\").arg(fiswcfolder.toStdString().c_str())));
+
         QString fusedswc= fiswcfolder + "_fused.swc";
 
         smartFuse(callback,fiswcfolder, fusedswc);
@@ -232,7 +231,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString txtfilenName = infiles[0];
         TRACE_LS_PARA P;
         list<string> infostring;
-        //processSmartScan_3D(callback,infostring,txtfilenName,P);
+        processSmartScan_3D(callback,infostring,txtfilenName,P);
 	}
 	else if (func_name == tr("help"))
 	{
