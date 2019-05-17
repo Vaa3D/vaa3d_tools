@@ -38,32 +38,46 @@ public:
     QVBoxLayout* vbox4;
 
     unsigned short int * data1d;
-    unsigned short int * data_container;
+
     V3DLONG N, M, P;
 
-    Image4DSimple * new4DImage;
 
 
     SetContrastWidget(V3DPluginCallback2 &callback, QWidget * parent) : QWidget(parent)
     {
+        cout << "break" << __LINE__ << endl;
         this->windowTitle() = tr("Adjust Contrast");
         this->callback = &callback;
         this->curwin = callback.currentImageWindow();
+        cout << "break" << __LINE__ << endl;
         Image4DSimple * p4DImage = callback.getImage(curwin);
 
-        this->new4DImage = new Image4DSimple();
-
-        this->data1d = (unsigned short int *)p4DImage->getRawData();
+        cout << "break" << __LINE__ << endl;
 
 
 
         this->N = p4DImage->getXDim();
         this->M = p4DImage->getYDim();
         this->P = p4DImage->getZDim();
+        cout << "break" << __LINE__ << endl;
+        this->data1d = new unsigned short int[N*M*P];
 
-        this->new4DImage->setData((unsigned char *)data1d, N, M, P, 1, V3D_UINT16);
-
-        this->data_container = new unsigned short int[N*M*P];
+//        if(NULL == (this->data1d = (unsigned short int*)malloc(sizeof(unsigned short int )*(N*M*P+10))))
+//        {
+//            cout << "malloc error!!!!!!" << endl;
+//        }
+//        else
+//        {
+//            cout << "malloc succeed!" << endl;
+//        }
+//
+        memcpy(this->data1d, (unsigned short int *)p4DImage->getRawData(), N*M*P*sizeof(unsigned short int));
+//        for(int i=0;i<N*M*P;i++)
+//        {
+//            this->data1d[i] = ((unsigned short int *)p4DImage->getRawData())[i];
+//        }
+        //this->data1d = (unsigned short int *)p4DImage->getRawData();
+        cout << "break" << __LINE__ << endl;
         //this->data_container = data1d;
         WL = 2048;
         WW = 4096;
@@ -98,17 +112,16 @@ public:
         WW_slider->setSingleStep(1);
 
         ok_button = new QPushButton("OK");
-
+        cout << "break" << __LINE__ << endl;
         connect(WL_spinbox, SIGNAL(valueChanged(int)), WL_slider, SLOT(setValue(int)));
         connect(WL_slider, SIGNAL(valueChanged(int)), WL_spinbox, SLOT(setValue(int)));
         connect(WW_spinbox, SIGNAL(valueChanged(int)), WW_slider, SLOT(setValue(int)));
         connect(WW_slider, SIGNAL(valueChanged(int)), WW_spinbox, SLOT(setValue(int)));
-        //connect(WL_slider, SIGNAL(valueChanged(int)), this, SLOT(updateImage()));
-        //connect(WW_slider, SIGNAL(valueChanged(int)), this, SLOT(updateImage()));
+        connect(WL_slider, SIGNAL(valueChanged(int)), this, SLOT(updateImage()));
+        connect(WW_slider, SIGNAL(valueChanged(int)), this, SLOT(updateImage()));
         connect(ok_button,SIGNAL(clicked()), this, SLOT(updateImage()));
 
-
-
+        cout << "break" << __LINE__ << endl;
         WL_spinbox->setValue(2048);
         WW_spinbox->setValue(4096);
 
@@ -143,7 +156,7 @@ public:
 
 
         setLayout(hbox);
-
+        cout << "break" << __LINE__ << endl;
 
     }
     //~SetContrastWidget(){}
@@ -159,13 +172,17 @@ public slots:
         int ww = this->WW_line->text().toInt();
         cout<<"break" << __LINE__ <<endl;
 
+
         Image4DSimple * p4dImageNew = 0;
-        p4dImageNew = new Image4DSimple;
+        p4dImageNew = new Image4DSimple();
 
         if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT16))
+        {
             return;
+        }
 
         unsigned short int *tmp = (unsigned short int*)p4dImageNew->getRawData();
+
         for(int i=0; i<totalpxls; i++)
         {
             if(this->data1d[i] > wl + ww / 2)
@@ -174,64 +191,126 @@ public slots:
             }
             else if(this->data1d[i] < wl - ww / 2)
             {
-                tmp[i]  = 0;
+                tmp[i] = 0;
             }
             else
             {
                 //this->new4DImage->getRawData()[i] = (unsigned short int)(this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
-                tmp[i]  = (this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
+                tmp[i] = (this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
             }
             //cout<<"break" << __LINE__ <<endl;
-//            this->new4DImage->getRawData()[2*i+1] = (unsigned char)(tmp >> 8 & 0x00ff);
-//            this->new4DImage->getRawData()[2*i] = (unsigned char)(tmp & 0x00ff);
+            //this->new4DImage->getRawData()[2*i+1] = (unsigned char)(tmp >> 8 & 0x00ff);
+            //this->new4DImage->getRawData()[2*i] = (unsigned char)(tmp & 0x00ff);
         }
-
-
-
-//new4DImage->setNewRawDataPointer();
-        //new4DImage->setData((unsigned char *)data_container, N, M, P, 1, V3D_UINT16);
-        //this->new4DImage->setData((unsigned char *)data1d, N, M, P, 1, V3D_UINT16);
-
-// display in new window
-//        v3dhandle newwin = callback->newImageWindow("new image");
-//        callback->setImage(newwin, new4DImage);
-//        qDebug() << "modified" << endl;
-//        callback->setImageName(newwin, QObject::tr("Contrast Adjusted Image"));
-
-//        callback->updateImageWindow(newwin);
 
         // display in current window
 
         v3dhandle newwin;
         newwin = callback->currentImageWindow();
         callback->setImage(newwin, p4dImageNew);
-        //cout<<"break" << __LINE__ <<endl;
         callback->setImageName(newwin, QString("contrast adjusted image"));
         callback->updateImageWindow(newwin);
-
-       // memcpy((unsigned short int*)new4DImage->getRawData(), (unsigned short int*)p4dImageNew->getRawData(), N*M*P);
-
-
-cout<<"break" << __LINE__ <<endl;
-
-//        if(!callback->currentImageWindow())
-//            this->curwin = this->callback->newImageWindow();
-//        else
-//            this->curwin = this->callback->currentImageWindow();
-
-//        this->callback->setImage(this->curwin, this->new4DImage);
-//        qDebug() << "modified" << endl;
-
-
-
-//        this->callback->setImageName(this->curwin,tr("modified"));
-
-//        this->callback->updateImageWindow(this->curwin);
     }
 
 };
 
 
+
+
+
+class lookPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~lookPanel();
+
+public:
+    QComboBox* combo_master;
+    QComboBox* combo_slave;
+    QLabel* label_master;
+    QLabel* label_slave;
+    QCheckBox* check_rotation;
+    QCheckBox* check_shift;
+    QCheckBox* check_zoom;
+    QGridLayout *gridLayout;
+    v3dhandleList win_list;
+    v3dhandleList win_list_past;
+    V3DPluginCallback2 & m_v3d;
+    QTimer *m_pTimer;
+    QPushButton* syncAuto;
+    View3DControl *view_master;
+    View3DControl *view_slave;
+    int xRot_past, yRot_past,zRot_past;
+    int xShift_past,yShift_past,zShift_past;
+    int zoom_past;
+    bool b_autoON;
+
+private:
+    void resetSyncAutoState();
+
+private slots:
+    void _slot_syncAuto();
+    void _slot_sync_onetime();
+    void _slot_timerupdate();
+    void reject();
+};
+
+class MyComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * m_v3d;
+    MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
+
+    void enterEvent(QEvent * event);
+
+public slots:
+    void updateList();
+};
+class controlPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    controlPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~controlPanel();
+
+public:
+    v3dhandle curwin;
+    V3dR_MainWindow *surface_win;
+    View3DControl *view;
+
+    QList <V3dR_MainWindow *> list_3dviewer;
+    v3dhandleList list_triview;
+    QGridLayout *gridLayout;
+    V3DPluginCallback2 & m_v3d;
+
+    MyComboBox* combo_surface;
+    QLabel* label_surface;
+    QCheckBox* check_rotation;
+    QCheckBox* check_shift;
+    QCheckBox* check_zoom;
+    QTimer *m_pTimer;
+    QPushButton* syncAuto;
+    View3DControl *view_master;
+    View3DControl *view_slave;
+    int xRot_past, yRot_past,zRot_past;
+    int xShift_past,yShift_past,zShift_past;
+    int zoom_past;
+    bool b_autoON;
+
+private:
+    void resetSyncAutoState();
+
+private slots:
+     void _slot_syncAuto();
+     void _slot_sync_onetime();
+     void _slot_timerupdate();
+     void reject();
+};
 
 
 #endif // BRAINVESSELCPR_GUI_H
