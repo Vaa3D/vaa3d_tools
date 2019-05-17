@@ -85,7 +85,7 @@ vector<MyMarker *>nt2markers(NeuronTree nt)
 
 }
 
-bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu, NeuronTree swc)
+bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P,bool bmenu)
 {
     qDebug()<<"crawler_raw_app_entry";
     QElapsedTimer timer1;
@@ -129,7 +129,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.x = P.listLandmarks[0].x;
     tileLocation.y = P.listLandmarks[0].y;
     tileLocation.z = P.listLandmarks[0].z;
-    qDebug()<<"tilelocation.x: \n"<<tileLocation.x;
+    //qDebug()<<"tilelocation.x: \n"<<tileLocation.x;
     LandmarkList inputRootList;
     if(P.method != gd )inputRootList.push_back(tileLocation);
 
@@ -160,8 +160,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     //qDebug()<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     if(!tmpfolder.isEmpty() && !P.resume)
-       //system(qPrintable(QString("rd /s /q %1").arg(tmpfolder.toStdString().c_str()))); // win32
-        system(qPrintable(QString("rm -r %l").arg(tmpfolder.toStdString().c_str())));
+       system(qPrintable(QString("rd /s /q %1").arg(tmpfolder.toStdString().c_str()))); // win32
+        //system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -181,7 +181,6 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 //        qDebug()<<"delete existed finaloutputswc";
 //        system(qPrintable(QString("rd /q %1").arg(finaloutputswc.toStdString().c_str())));
 //    }
-
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
     bool flag = true;
@@ -191,7 +190,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         newTipsList.clear();
 
         printf("\n *********************************\n");
-           app_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList,swc);
+           app_tracing_ada_win_3D(callback,P,allTipsList.at(0),allTargetList.at(0),&newTargetList,&newTipsList);
 
 
         allTipsList.removeAt(0);
@@ -224,7 +223,7 @@ return true;
 
 
 
-bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList, NeuronTree swc ) //add a reference swc
+bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList )
 {
     QString saveDirString;
     QString finaloutputswc;
@@ -267,10 +266,10 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     }
 
     QString scanDataFileString = saveDirString;
-    scanDataFileString.append("/").append("scanData.txt");
+    scanDataFileString.append("\\").append("scanData.txt");
     if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
-        //system(qPrintable(QString("rd /q %1").arg(finaloutputswc.toStdString().c_str()))); //win32
-        system(qPrintable(QString("-rm %l").arg(finaloutputswc.toStdString().c_str())));
+        system(qPrintable(QString("rd /q %1").arg(finaloutputswc.toStdString().c_str()))); //win32
+        //system(qPrintable(QString("-rm %1").arg(finaloutputswc.toStdString().c_str())));
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
 
@@ -330,10 +329,10 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     total4DImage->setRezZ(3.0);//set the flg for 3d crawler
 
-    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
+    imageSaveString.append("\\x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
 
     QString swcString = saveDirString;
-    swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
+    swcString.append("\\x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
 
     qDebug()<<scanDataFileString;
     QFile saveTextFile;
@@ -1159,7 +1158,7 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
 
 
 
-void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
+void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData, TRACE_LS_PARA & P)
 {
     qDebug()<<"now start to generate the final result";
 
@@ -1201,7 +1200,7 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
             origin_z = offsetZ;
 
 
-            QString firstImagepath = folderpath + "/" +   QFileInfo(QString::fromStdString(swcfilepath)).baseName().append(".v3draw");
+            QString firstImagepath = folderpath + "\\" +   QFileInfo(QString::fromStdString(swcfilepath)).baseName().append(".v3draw");
             unsigned char * data1d = 0;
             int datatype;
             if(!simple_loadimage_wrapper(callback, firstImagepath.toStdString().c_str(), data1d, in_sz, datatype))
@@ -1304,6 +1303,10 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
     NeuronTree nt_pruned_2nd = smartPrune(nt_pruned,10);
 
     writeSWC_file(fileSaveName,nt_pruned_2nd);
+
+    QString copyname= "\\"+P.markerfilename.split("\\").last().append(".swc") ;
+    system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
+                      .arg(P.fusion_folder.append(copyname).toStdString().c_str())));
 
 
     //write tc file
@@ -1544,3 +1547,6 @@ void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSa
     writeSWC_file(fileSaveName,nt_pruned_2nd);
     return;
 }
+
+
+
