@@ -159,25 +159,31 @@ public slots:
         int ww = this->WW_line->text().toInt();
         cout<<"break" << __LINE__ <<endl;
 
-        unsigned short int tmp;
+        Image4DSimple * p4dImageNew = 0;
+        p4dImageNew = new Image4DSimple;
+
+        if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT16))
+            return;
+
+        unsigned short int *tmp = (unsigned short int*)p4dImageNew->getRawData();
         for(int i=0; i<totalpxls; i++)
         {
             if(this->data1d[i] > wl + ww / 2)
             {
-                tmp = 4095;
+                tmp[i] = 4095;
             }
             else if(this->data1d[i] < wl - ww / 2)
             {
-                tmp = 0;
+                tmp[i]  = 0;
             }
             else
             {
                 //this->new4DImage->getRawData()[i] = (unsigned short int)(this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
-                tmp = (this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
+                tmp[i]  = (this->data1d[i] - (wl - ww / 2)) * (4096 / ww);
             }
-            cout<<"break" << __LINE__ <<endl;
-            this->new4DImage->getRawData()[2*i+1] = (unsigned char)(tmp >> 8 & 0x00ff);
-            this->new4DImage->getRawData()[2*i] = (unsigned char)(tmp & 0x00ff);
+            //cout<<"break" << __LINE__ <<endl;
+//            this->new4DImage->getRawData()[2*i+1] = (unsigned char)(tmp >> 8 & 0x00ff);
+//            this->new4DImage->getRawData()[2*i] = (unsigned char)(tmp & 0x00ff);
         }
 
 
@@ -198,10 +204,13 @@ public slots:
 
         v3dhandle newwin;
         newwin = callback->currentImageWindow();
-        callback->setImage(newwin, new4DImage);
-        cout<<"break" << __LINE__ <<endl;
+        callback->setImage(newwin, p4dImageNew);
+        //cout<<"break" << __LINE__ <<endl;
         callback->setImageName(newwin, QString("contrast adjusted image"));
         callback->updateImageWindow(newwin);
+
+       // memcpy((unsigned short int*)new4DImage->getRawData(), (unsigned short int*)p4dImageNew->getRawData(), N*M*P);
+
 
 cout<<"break" << __LINE__ <<endl;
 
