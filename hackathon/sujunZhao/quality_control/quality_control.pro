@@ -25,6 +25,7 @@ SOURCES += ../preprocess/split_neuron_main.cpp
 SOURCES += ../preprocess/neurite_analysis_main.cpp
 SOURCES += ../preprocess/utilities.cpp
 SOURCES += ../preprocess/axon_func.cpp
+SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.cpp
 
 
 

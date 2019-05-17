@@ -76,17 +76,17 @@ void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlugin
         neuron_unsorted=nt_unsorted.listNeuron;
         V3DLONG rootid = VOID;
         double thres = VOID;
-//        if (!SortSWC(neuron_unsorted, result , rootid, thres))
-//        {
-//            cout<<"Error in sorting swc"<<endl;
-//        }
-//        if (!export_list2file(result, fileSaveName, swc_path))
-//        {
-//            cout<<"Error in writing swc to file"<<endl;
-//        }
+        if (!SortSWC(neuron_unsorted, result , rootid, thres))
+        {
+            cout<<"Error in sorting swc"<<endl;
+        }
+        if (!export_list2file(result, fileSaveName, swc_path))
+        {
+            cout<<"Error in writing swc to file"<<endl;
+        }
 
-//        //split
-//        split_neuron(fileSaveName, indir);
+        //split
+        split_neuron(fileSaveName, indir);
 
         //global_feature & Completeness
         //1. swc
@@ -116,16 +116,13 @@ void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlugin
 
         //analysis
         cout<<"--------------------Analytical Results---------------------------"<<endl;
-        if(local_features[2]>1){
-           printf("%s has more than one axon projections!\n",id.toStdString().data());
-        }
         if(swc_features[4]/swc_features[5]>2.5 | proj_features[18]>1 | den_features[18]>1 | swc_features[18]>1 |clu_features[18]>1|local_features[18]>1){
             printf("%s is abnormal in branch/tip ratio!",id.toStdString().data());
         }
         if(den_features[13]>1100){
             printf("%s has too long dendrite branches! ",id.toStdString().data());
         }
-        if(den_features[20]<90){
+        if(den_features[20]>90){
             printf("%s's average remote angle is too high!",id.toStdString().data());
         }
 
