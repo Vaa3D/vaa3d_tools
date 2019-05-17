@@ -172,7 +172,7 @@ void neuron_match_gmhash::globalmatch()
 
             gmkey.first=x;
             gmkey.second=y;
-            if(gmhash0.contains(gmkey) and gmhash0[gmkey].contains(pairnt0)){
+            if(gmhash0.contains(gmkey) && gmhash0[gmkey].contains(pairnt0)){
                 match1to0.insert(k,gmhash0[gmkey][pairnt0]);
             }
         }

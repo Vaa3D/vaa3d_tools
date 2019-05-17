@@ -156,12 +156,12 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 		NeuronTree finalCentroidTree;
 
 // ------- using omp to speed up skeletonization process ------- //
-//#pragma omp parallel num_threads(this->numProcs)
+#pragma omp parallel num_threads(this->numProcs)
 		{
+			if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+			this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
 			for (vector<connectedComponent>::iterator it = this->signalBlobs.begin(); it != this->signalBlobs.end(); ++it)
-			{
-				if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-				this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
+			{			
 				qApp->processEvents();
 				if (this->progressBarDiagPtr->wasCanceled())
 				{
@@ -174,7 +174,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				{
 					double progressBarValue = (double(it - this->signalBlobs.begin()) / this->signalBlobs.size()) * 100;
 					int progressBarValueInt = ceil(progressBarValue);
-					this->progressBarDiagPtr->setValue(progressBarValue);
+					this->progressBarDiagPtr->setValue(progressBarValueInt);
 					cout << int(it - this->signalBlobs.begin()) << " ";
 				}
 
@@ -237,11 +237,11 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 // ------- using omp to speed up skeletonization process ------- //
 #pragma omp parallel num_threads(this->numProcs)
 		{
+			if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
+			this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
 			boost::container::flat_set<deque<float>> sectionalCentroids = this->fragTraceImgAnalyzer.getSectionalCentroids(dendriteComponent);
 			for (boost::container::flat_set<deque<float>>::iterator nodeIt = sectionalCentroids.begin(); nodeIt != sectionalCentroids.end(); ++nodeIt)
 			{
-				if (!this->progressBarDiagPtr->isVisible()) this->progressBarDiagPtr->show();
-				this->progressBarDiagPtr->setLabelText("Extracting fragments from 3D signal objects..");
 				qApp->processEvents();
 				if (this->progressBarDiagPtr->wasCanceled())
 				{
@@ -253,7 +253,7 @@ bool FragTraceManager::imgProcPipe_wholeBlock()
 				{
 					double progressBarValue = (double(nodeIt - sectionalCentroids.begin()) / sectionalCentroids.size()) * 100;
 					int progressBarValueInt = ceil(progressBarValue);
-					this->progressBarDiagPtr->setValue(progressBarValue);
+					this->progressBarDiagPtr->setValue(progressBarValueInt);
 				}
 
 				NeuronSWC newNode;
