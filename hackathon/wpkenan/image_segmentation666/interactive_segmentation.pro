@@ -18,4 +18,4 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(interactive_segmentation)
-DESTDIR = ../../../../v3d_external/bin/plugins/interactive_segmentation/
+DESTDIR = ../../../../v3d_external/bin/plugins/wpkenanPlugin/interactive_segmentation/
