@@ -22,8 +22,12 @@ QString versionStr = "v2.621";
 QStringList NTApp2Plugin::menulist() const
 {
     return QStringList()
+<<<<<<< HEAD
 
     << tr("NP-Tracer")
+=======
+	<< tr("NP-Tracer") //tr("NeuronPopulation - all path pruning v3")
+>>>>>>> 36a97940ca72adb41009a3fb4830b1636a24d586
     << tr("Vaa3D-Neuron2-APP2") //tr("APP2 - all path pruning v2")
     << tr("Vaa3D-Neuron2-APP1") //tr("APP1 - all path pruning v1")
     << tr("about and help");
@@ -71,6 +75,7 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             if (!proc_app1(callback, p, versionStr))
                 return;
         }
+<<<<<<< HEAD
 	else{
 	
 	    PARA_APP2 p;
@@ -84,6 +89,20 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             if (!proc_app2_wp(callback, p, versionStr))
                 return;
 	}
+=======
+		else{
+			PARA_APP2 p;
+			if(!p.initialize(callback)) //here will initialize the image pointer, bounding box, etc.
+				return;
+
+			// fetch parameters from dialog
+			if (!p.app2_dialog())
+				return;
+
+			if (!proc_app2_wp(callback, p, versionStr))
+				return;
+		}
+>>>>>>> 36a97940ca72adb41009a3fb4830b1636a24d586
     }
     else
     {

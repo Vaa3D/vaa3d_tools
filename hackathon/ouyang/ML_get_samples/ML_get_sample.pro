@@ -8,6 +8,7 @@ INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH     += $$VAA3DPATH/../vaa3d_tools/v3d_main/basic_c_fun/
+INCLUDEPATH     +=/home/braincenter4/vaa3d_tools/hackathon/fl_cellseg/src
 unix {
     LIBS        += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
      }
