@@ -62,6 +62,7 @@ QTableWidget* DBMSDialog::createTableBrainBasic()
 
     QTableWidget* t = new QTableWidget(row,col, this);
     t->setHorizontalHeaderLabels(qsl);
+    t->setEditTriggers(QAbstractItemView::NoEditTriggers);
     return t;
 }
 
