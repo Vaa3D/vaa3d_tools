@@ -1020,7 +1020,8 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
     //find path begins!
     cout << "begin find path!" << endl;
 
-    float * data1d_gausssian;
+    float* data1d_gausssian = 0;
+    //data1d_gausssian = new float[x_length*y_length*z_length];
     V3DLONG *in_sz;
     in_sz = new V3DLONG[4];
     in_sz[0] = x_length;
@@ -1029,6 +1030,7 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[3] = 1;
     gaussian_filter(data1d, in_sz, 7, 7, 7, 1, 100, data1d_gausssian);
     unsigned short int * data1d_gaussian_uint16;
+    data1d_gaussian_uint16 = new unsigned short int[x_length*y_length*z_length];
     for(int i = 0; i < x_length*y_length*z_length; i++)
     {
         data1d_gaussian_uint16[i] = (unsigned short int)data1d_gausssian[i];

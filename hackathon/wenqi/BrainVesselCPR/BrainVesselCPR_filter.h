@@ -5,7 +5,7 @@
 #include <v3d_interface.h>
 #include "v3d_message.h"
 
-template <class T> void gaussian_filter(T* data1d,
+void gaussian_filter(unsigned short int * data1d,
                      V3DLONG *in_sz,
                      unsigned int Wx,
                      unsigned int Wy,

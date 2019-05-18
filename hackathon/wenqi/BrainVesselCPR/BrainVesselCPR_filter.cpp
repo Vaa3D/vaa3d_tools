@@ -1,8 +1,10 @@
 #include "BrainVesselCPR_filter.h"
+#include <iostream>
+using namespace std;
 
 #define INF 1E9
 
-template <class T> void gaussian_filter(T* data1d,
+void gaussian_filter(unsigned short int * data1d,
                      V3DLONG *in_sz,
                      unsigned int Wx,
                      unsigned int Wy,
@@ -13,6 +15,7 @@ template <class T> void gaussian_filter(T* data1d,
 {
     if (!data1d || !in_sz || in_sz[0]<=0 || in_sz[1]<=0 || in_sz[2]<=0 || in_sz[3]<=0 || outimg)
     {
+        cout << (bool)(!data1d) << (bool)(!in_sz) << (bool)(in_sz[0]<=0) << (bool)(in_sz[1]<=0) << (bool)(in_sz[2]<=0) << (bool)(in_sz[3]<=0) << (bool)outimg << endl;
         v3d_msg("Invalid parameters to gaussian_filter().", 0);
         return;
     }
