@@ -17,25 +17,27 @@ class SetContrastWidget: public QWidget
 public:
     V3DPluginCallback2 * callback;
     v3dhandle curwin;
-    int WL;
-    int WW;
+    int wl;
+    int ww;
     QLabel* WL_label;
     QLabel* WW_label;
     QSpinBox* WL_spinbox;
     QSpinBox* WW_spinbox;
+
+
     QSlider* WL_slider;
     QSlider* WW_slider;
-    QPushButton* ok_button;
-    QPushButton* cancel_button;
+    //QPushButton* ok_button;
+    //QPushButton* cancel_button;
 
-    QLineEdit* WL_line;
-    QLineEdit* WW_line;
+    //QLineEdit* WL_line;
+    //QLineEdit* WW_line;
 
     QHBoxLayout* hbox;
     QVBoxLayout* vbox1;
     QVBoxLayout* vbox2;
     QVBoxLayout* vbox3;
-    QVBoxLayout* vbox4;
+    //QVBoxLayout* vbox4;
 
     unsigned short int * data1d;
 
@@ -79,13 +81,13 @@ public:
         //this->data1d = (unsigned short int *)p4DImage->getRawData();
         cout << "break" << __LINE__ << endl;
         //this->data_container = data1d;
-        WL = 2048;
-        WW = 4096;
+        wl = 400;
+        ww = 1000;
 
         int WL_max = 4095;
         int WL_min = 0;
-        int WW_max = 4095*2;
-        int WW_min = 0;
+        int WW_max = 4095;
+        int WW_min = 1;
 
         WL_label = new QLabel(tr("WL:"));
         WW_label = new QLabel(tr("WW:"));
@@ -110,77 +112,99 @@ public:
         WW_slider->setMaximum(WW_max);
         WL_slider->setSingleStep(1);
         WW_slider->setSingleStep(1);
+        WL_slider->setFixedWidth(200);
+        WW_slider->setFixedWidth(200);
 
-        ok_button = new QPushButton("OK");
+        //ok_button = new QPushButton("OK");
         cout << "break" << __LINE__ << endl;
-        connect(WL_spinbox, SIGNAL(valueChanged(int)), WL_slider, SLOT(setValue(int)));
-        connect(WL_slider, SIGNAL(valueChanged(int)), WL_spinbox, SLOT(setValue(int)));
-        connect(WW_spinbox, SIGNAL(valueChanged(int)), WW_slider, SLOT(setValue(int)));
-        connect(WW_slider, SIGNAL(valueChanged(int)), WW_spinbox, SLOT(setValue(int)));
-        connect(WL_slider, SIGNAL(valueChanged(int)), this, SLOT(updateImage()));
-        connect(WW_slider, SIGNAL(valueChanged(int)), this, SLOT(updateImage()));
-        connect(ok_button,SIGNAL(clicked()), this, SLOT(updateImage()));
+
 
         cout << "break" << __LINE__ << endl;
-        WL_spinbox->setValue(2048);
-        WW_spinbox->setValue(4096);
+        WL_spinbox->setValue(400);
+        WW_spinbox->setValue(500);
 
         hbox = new QHBoxLayout();
         vbox1 = new QVBoxLayout();
         vbox2 = new QVBoxLayout();
         vbox3 = new QVBoxLayout();
 
-        vbox4 = new QVBoxLayout();
+        //vbox4 = new QVBoxLayout();
 
-        WW_line = new QLineEdit(tr("315"));
-        WL_line = new QLineEdit(tr("478"));
+        //WW_line = new QLineEdit(tr("200"));
+        //WL_line = new QLineEdit(tr("500"));
 
         vbox1->addWidget(WL_label);
         vbox1->addWidget(WW_label);
         vbox2->addWidget(WL_spinbox);
         vbox2->addWidget(WW_spinbox);
+        //vbox2->addWidget(WL_line);
+        //vbox2->addWidget(WW_line);
         vbox3->addWidget(WL_slider);
         vbox3->addWidget(WW_slider);
 
-        vbox4->addWidget(WL_line);
-        vbox4->addWidget(WW_line);
+        //vbox4->addWidget(WL_line);
+        //vbox4->addWidget(WW_line);
 
 
         hbox->addLayout(vbox1);
         hbox->addLayout(vbox2);
         hbox->addLayout(vbox3);
 
-        hbox->addLayout(vbox4);
+        //hbox->addLayout(vbox4);
 
-        hbox->addWidget(ok_button);
+        //hbox->addWidget(ok_button);
 
 
         setLayout(hbox);
         cout << "break" << __LINE__ << endl;
 
+        connect(WL_spinbox, SIGNAL(valueChanged(int)), WL_slider, SLOT(setValue(int)));
+        connect(WL_slider, SIGNAL(valueChanged(int)), WL_spinbox, SLOT(setValue(int)));
+        connect(WW_spinbox, SIGNAL(valueChanged(int)), WW_slider, SLOT(setValue(int)));
+        connect(WW_slider, SIGNAL(valueChanged(int)), WW_spinbox, SLOT(setValue(int)));
+
+//        connect(WL_line, SIGNAL(valueChanged(int)), WL_slider, SLOT(setValue(int)));
+//        connect(WL_slider, SIGNAL(valueChanged(int)), WL_line, SLOT(setValue(int)));
+//        connect(WW_line, SIGNAL(valueChanged(int)), WW_slider, SLOT(setValue(int)));
+//        connect(WW_slider, SIGNAL(valueChanged(int)), WW_line, SLOT(setValue(int)));
+        connect(WL_slider, SIGNAL(sliderReleased()), this, SLOT(updateImage()));
+        connect(WW_slider, SIGNAL(sliderReleased()), this, SLOT(updateImage()));
+        connect(WL_spinbox, SIGNAL(valueChanged(int)), this, SLOT(WWWL_spinboxValueChanged()));
+        connect(WW_spinbox, SIGNAL(valueChanged(int)), this, SLOT(WWWL_spinboxValueChanged()));
+        //WW_spinbox->va
+
+        //connect(ok_button,SIGNAL(clicked()), this, SLOT(updateImage()));
+
     }
     //~SetContrastWidget(){}
 
 public slots:
+    void WWWLspinboxValueChanged()
+    {
+        wl = this->WL_spinbox->value();
+        ww = this->WW_spinbox->value();
+        updateImage();
+    }
     void updateImage()
     {
 
         V3DLONG totalpxls = this->N * this->M * this->P;
-        //int wl = this->WL_slider->value();
-        //int ww = this->WW_slider->value();
-        int wl = this->WL_line->text().toInt();
-        int ww = this->WW_line->text().toInt();
+
+        //int wl = this->WL_line->text().toInt();
+        //int ww = this->WW_line->text().toInt();
         cout<<"break" << __LINE__ <<endl;
 
 
         Image4DSimple * p4dImageNew = 0;
         p4dImageNew = new Image4DSimple();
 
+        cout<<"break" << __LINE__ <<endl;
+
         if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT16))
         {
             return;
         }
-
+        cout<<"break" << __LINE__ <<endl;
         unsigned short int *tmp = (unsigned short int*)p4dImageNew->getRawData();
 
         for(int i=0; i<totalpxls; i++)
@@ -204,12 +228,15 @@ public slots:
         }
 
         // display in current window
-
+        cout<<"break" << __LINE__ <<endl;
         v3dhandle newwin;
         newwin = callback->currentImageWindow();
+        cout<<"break" << __LINE__ <<endl;
         callback->setImage(newwin, p4dImageNew);
+        cout<<"break" << __LINE__ <<endl;
         callback->setImageName(newwin, QString("contrast adjusted image"));
         callback->updateImageWindow(newwin);
+        cout<<"break" << __LINE__ <<endl;
     }
 
 };
