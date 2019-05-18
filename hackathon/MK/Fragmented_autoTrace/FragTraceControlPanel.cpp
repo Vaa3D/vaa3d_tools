@@ -446,6 +446,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		
 	if (this->isVisible())
 	{
+		int globalCoords[6];
 		int localCoords[6];
 		int displayingDims[3];
 		if (uiPtr->radioButton->isChecked() && !uiPtr->radioButton_2->isChecked())
@@ -460,15 +461,20 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked())
 			{				
-				bool adjusted = thisCallback->getPartialVolumeCoords(localCoords, displayingDims, this->partialVolume);
+				const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
+
+				bool adjusted = thisCallback->getPartialVolumeCoords(globalCoords, localCoords, displayingDims, this->partialVolume);
 				if (adjusted)
 				{
+					
+
 					if (this->partialVolume) cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
-					const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
-					unsigned char* currBlock1Dptr = new unsigned char[displayingDims[0] * displayingDims[1] * displayingDims[2]];
+					
+					cout << "  curr block dimension: " << currBlockImg4DSimplePtr->getXDim() << " " << currBlockImg4DSimplePtr->getYDim() << " " << currBlockImg4DSimplePtr->getZDim() << endl;
+					unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
 					int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
 					memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
-
+					
 					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
 					int croppedDims[3];
 					croppedDims[0] = localCoords[1] - localCoords[0] + 1;
@@ -477,7 +483,16 @@ void FragTraceControlPanel::traceButtonClicked()
 					unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
 					ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, localCoords[0], localCoords[1], localCoords[2], localCoords[3], localCoords[4], localCoords[5], originalDims);
 					Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
+					V3DLONG saveDims[4];
+					saveDims[0] = croppedDims[0];
+					saveDims[1] = croppedDims[1];
+					saveDims[2] = croppedDims[2];
+					saveDims[3] = 1;
 					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, localCoords[1] - localCoords[0], localCoords[3] - localCoords[2], localCoords[5] - localCoords[4], 1, V3D_UINT8);
+					string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
+					const char* saveNameC = saveName.c_str();
+					ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
+					system("pause");
 
 					this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, wholeBlock_axon);
 

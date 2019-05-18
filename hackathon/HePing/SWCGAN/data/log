@@ -1,0 +1,3 @@
+epoch:0, batch:3, After 1 iterations
+discriminator loss: nan
+epoch:0, batch:3, generator loss: nan

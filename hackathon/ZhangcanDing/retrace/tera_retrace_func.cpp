@@ -176,11 +176,11 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     {finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
     qDebug()<<"The first finaloutputswc is "<<finaloutputswc;}
 
-//    if(QFileInfo(finaloutputswc).exists() && !P.resume)
-//    {
-//        qDebug()<<"delete existed finaloutputswc";
-//        system(qPrintable(QString("rd /q %1").arg(finaloutputswc.toStdString().c_str())));
-//    }
+    if(QFileInfo(finaloutputswc).exists() && !P.resume)
+    {
+        qDebug()<<"delete existed finaloutputswc";
+        system(qPrintable(QString("del /q %1").arg(finaloutputswc.toStdString().c_str())));
+    }
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
     bool flag = true;
@@ -268,7 +268,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QString scanDataFileString = saveDirString;
     scanDataFileString.append("\\").append("scanData.txt");
     if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
-        system(qPrintable(QString("rd /q %1").arg(finaloutputswc.toStdString().c_str()))); //win32
+        system(qPrintable(QString("del /q %1").arg(finaloutputswc.toStdString().c_str()))); //win32
         //system(qPrintable(QString("-rm %1").arg(finaloutputswc.toStdString().c_str())));
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
@@ -500,11 +500,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         }
                         else
                             tips_th = p2.p4dImage->getXDim()*100/512;
-                       // p2.bkg_thresh = -1;//P.bkg_thresh;
+                        p2.bkg_thresh = -1;//P.bkg_thresh;
                         double imgAve, imgStd;
                         mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
                         double td= (imgStd<10)? 10: imgStd;
-                        p2.bkg_thresh = imgAve +0.7*td ;
+                        p2.bkg_thresh =-1;
+                       // p2.bkg_thresh = imgAve +0.7*td ; //commented by DZC
 
                         p2.landmarks.push_back(RootNewLocation);
 
@@ -1304,9 +1305,14 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     writeSWC_file(fileSaveName,nt_pruned_2nd);
 
-    QString copyname= "\\"+P.markerfilename.split("\\").last().append(".swc") ;
-    system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
-                      .arg(P.fusion_folder.append(copyname).toStdString().c_str())));
+    QString copyname= "\\"+P.markerfilename.split("\\").last()+".swc" ;
+    qDebug() <<"initial copyname="<<copyname;
+    //system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
+                      //.arg(P.fusion_folder.append(copyname).toStdString().c_str())));
+    qDebug()<< "P.fusion_folder=  "<< P.fusion_folder;
+    copyname= P.fusion_folder+copyname;
+    qDebug()<<"copyname =" <<copyname;
+    writeSWC_file(copyname, nt_pruned_2nd);
 
 
     //write tc file
