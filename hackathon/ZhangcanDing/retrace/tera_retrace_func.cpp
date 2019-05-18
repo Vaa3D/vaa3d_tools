@@ -500,11 +500,12 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         }
                         else
                             tips_th = p2.p4dImage->getXDim()*100/512;
-                       // p2.bkg_thresh = -1;//P.bkg_thresh;
+                        p2.bkg_thresh = -1;//P.bkg_thresh;
                         double imgAve, imgStd;
                         mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
                         double td= (imgStd<10)? 10: imgStd;
-                        p2.bkg_thresh = imgAve +0.7*td ;
+                        p2.bkg_thresh =-1;
+                       // p2.bkg_thresh = imgAve +0.7*td ; //commented by DZC
 
                         p2.landmarks.push_back(RootNewLocation);
 
@@ -1304,7 +1305,7 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     writeSWC_file(fileSaveName,nt_pruned_2nd);
 
-    QString copyname= "\\"+P.markerfilename.split("\\").last().append(".swc") ;
+    QString copyname= "\\"+P.markerfilename.split("\\").last()+".swc" ;
     qDebug() <<"initial copyname="<<copyname;
     //system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
                       //.arg(P.fusion_folder.append(copyname).toStdString().c_str())));

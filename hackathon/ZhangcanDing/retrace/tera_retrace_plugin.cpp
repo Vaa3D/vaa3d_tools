@@ -43,7 +43,7 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         P.channel=1;
         P.bkg_thresh=10;
         P.resume =  1;   //add continue tracing option
-        P.b_256cube = 0;
+        P.b_256cube = 1;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
         P.is_break_accept =  0;
@@ -125,8 +125,8 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         P.soma=0;
         P.channel=1;
         P.bkg_thresh=-1;
-        P.resume =  1;   //add continue tracing option
-        P.b_256cube = 0;
+        P.resume =  0;   //add continue tracing option
+        P.b_256cube = 1;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
         P.is_break_accept =  0;
@@ -184,8 +184,8 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
             else
                 indimarker=QString(outfiles[0])+QString("\\%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
 
-           QString ref_swcfn= indimarker + QString("_nc_APP2_GD.swc");
-           writeSWC_file(ref_swcfn,ref_swc);
+           //QString ref_swcfn= indimarker + QString("_nc_APP2_GD.swc");
+           //writeSWC_file(ref_swcfn,ref_swc);
 
             QList<ImageMarker> indimarkerls;
             indimarkerls.clear();
@@ -203,9 +203,12 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         }
 
 
-        QString fusedswc= fiswcfolder + "_fused.swc";
+        QString ref_swc_wf= QString(fiswcfolder) + "\\ori.swc";
+        writeSWC_file(ref_swc_wf,ref_swc);
+        QString fusedswc= QString(fiswcfolder) + "_fused.swc";
 
         smartFuse(callback,fiswcfolder, fusedswc);
+
 
 
 
