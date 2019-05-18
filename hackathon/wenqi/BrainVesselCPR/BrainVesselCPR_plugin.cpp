@@ -172,95 +172,11 @@ void setWLWW(V3DPluginCallback2 &callback, QWidget *parent)
 {
     SetContrastWidget * setWLWW_widget = new SetContrastWidget(callback, parent);
     setWLWW_widget->show();
-
-//    v3dhandle curwin = callback.currentImageWindow();
-//    Image4DSimple* p4DImage = callback.getImage(curwin);
-//    if (!p4DImage)
-//    {
-//        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-//        return;
-//    }
-//    unsigned short int * data1d = (unsigned short int *) p4DImage->getRawData();
-//    V3DLONG totalpxls = p4DImage->getTotalBytes();
-//    for(int i=0; i<totalpxls; i++)
-//    {
-
-//    }
-
 }
 
 
 
 
-void testfunc(V3DPluginCallback2 &callback, QWidget *parent)
-{
-
-
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        if (!p4DImage)
-        {
-            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-            return;
-        }
-
-
-        unsigned short int * data1d = (unsigned short int *) p4DImage->getRawData();
-        V3DLONG totalpxls = p4DImage->getTotalBytes();
-        V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
-
-        V3DLONG x_length = p4DImage->getXDim();
-        V3DLONG y_length = p4DImage->getYDim();
-        V3DLONG z_length = p4DImage->getZDim();
-        V3DLONG channels = p4DImage->getCDim();
-
-        V3DLONG UnitBytes  = p4DImage->getUnitBytes();
-
-        cout << "total bytes: " << totalpxls << endl << "width: " << x_length << endl \
-             << "height: " << y_length << endl << "slice num: " << z_length \
-             << endl << "channel: " << channels << endl << "unit bytes: " << UnitBytes << endl;
-
-        unsigned short int * map = new unsigned short int[20];
-        memset(map, 0, 20);
-        int tmp[20] = {1,2,3,2,1,  1,4,2,1,0,  3,2,4,2,0,  1,2,2,4,2};
-        for(int i=0;i<20;i++)
-        {
-            map[i] = tmp[i];
-        }
-
-        V3DLONG start;
-        V3DLONG goal;
-
-
-        cout << "begin find path!" << endl;
-
-        //test start (113, 123,138), id: , goal (138, 198, 76), id:
-        start = x_length * y_length * 138 + 123 * x_length + 113;
-        goal = x_length * y_length * 76 + 198 * x_length + 138;
-        findPath(start, goal, data1d, x_length, y_length, z_length, callback, parent);
-        cout << "find path finished!" << endl;
-
-
-        LandmarkList curlist;
-        LocationSimple s;
-        s.x= 113;
-        s.y= 123;
-        s.z= 138;
-        s.name=std::string("point 1");
-        s.radius=3;
-        curlist << s;
-        s.x= 138;
-        s.y= 198;
-        s.z= 76;
-        s.name=std::string("point 2");
-        s.radius=3;
-        curlist << s;
-
-        callback.setLandmark(curwin,curlist);
-        callback.updateImageWindow(curwin);
-        callback.pushObjectIn3DWindow(curwin);
-
-}
 
 
 // sync3d
@@ -943,6 +859,7 @@ void BrainVesselCPRPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &
     {
         SynTwoImage(callback, parent);
     }
+    else
 	{
 		v3d_msg(tr("This is a plugin for Brain Vessel CPR in MRA&MRI image. "
 			"Developed by Wenqi Huang, 2019-5-14"));

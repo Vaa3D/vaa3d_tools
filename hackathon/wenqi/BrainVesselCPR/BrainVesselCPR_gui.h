@@ -169,8 +169,8 @@ public:
 //        connect(WW_slider, SIGNAL(valueChanged(int)), WW_line, SLOT(setValue(int)));
         connect(WL_slider, SIGNAL(sliderReleased()), this, SLOT(updateImage()));
         connect(WW_slider, SIGNAL(sliderReleased()), this, SLOT(updateImage()));
-        connect(WL_spinbox, SIGNAL(valueChanged(int)), this, SLOT(WWWL_spinboxValueChanged()));
-        connect(WW_spinbox, SIGNAL(valueChanged(int)), this, SLOT(WWWL_spinboxValueChanged()));
+        //connect(WL_spinbox, SIGNAL(valueChanged(int)), this, SLOT(WWWL_spinboxValueChanged()));
+        //connect(WW_spinbox, SIGNAL(valueChanged(int)), this, SLOT(WWWL_spinboxValueChanged()));
         //WW_spinbox->va
 
         //connect(ok_button,SIGNAL(clicked()), this, SLOT(updateImage()));
@@ -179,15 +179,16 @@ public:
     //~SetContrastWidget(){}
 
 public slots:
-    void WWWLspinboxValueChanged()
-    {
-        wl = this->WL_spinbox->value();
-        ww = this->WW_spinbox->value();
-        updateImage();
-    }
+//    void WWWLspinboxValueChanged()
+//    {
+//        wl = this->WL_spinbox->value();
+//        ww = this->WW_spinbox->value();
+//        updateImage();
+//    }
     void updateImage()
     {
-
+        wl = this->WL_slider->value();
+        ww = this->WW_slider->value();
         V3DLONG totalpxls = this->N * this->M * this->P;
 
         //int wl = this->WL_line->text().toInt();
