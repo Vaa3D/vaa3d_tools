@@ -159,6 +159,8 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     //qDebug()<<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
+    qDebug()<<"tmpfolder :\n"<<tmpfolder;
+
     if(!tmpfolder.isEmpty() && !P.resume)
        system(qPrintable(QString("rd /s /q %1").arg(tmpfolder.toStdString().c_str()))); // win32
         //system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
@@ -308,14 +310,15 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     V3DLONG pagesz_vim = in_sz[0]*in_sz[1]*in_sz[2];
  //   unsigned char* total1dData_apa = 0;
 
-    if(P.global_name)
-    {
+    //if(P.global_name)
+    //{
         double min,max;
         unsigned char * total1dData_scaled = 0;
         total1dData_scaled = new unsigned char [pagesz_vim];
         rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
-        total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-    }
+        //total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        total4DImage->setData((unsigned char*)total1dData,in_sz[0],in_sz[1],in_sz[2],1, V3D_UINT8);
+    //}
 
     total4DImage->setOriginX(start_x);
     total4DImage->setOriginY(start_y);
@@ -437,6 +440,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     outputMarker.x = RootNewLocation.x;
                     outputMarker.y = RootNewLocation.y;
                     outputMarker.z = RootNewLocation.z;
+                    outputMarker.comment= "previous";
                     seedsToSave.append(outputMarker);
 
                     vector<V3DLONG> poss_landmark;
@@ -452,6 +456,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     outputMarker.x = RootNewLocation.x;
                     outputMarker.y = RootNewLocation.y;
                     outputMarker.z = RootNewLocation.z;
+                    outputMarker.comment= "mean shift";
                     seedsToSave.append(outputMarker);
 
                     QString marker_name = imageSaveString + ".marker";

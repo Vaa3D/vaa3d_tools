@@ -122,7 +122,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
         P.image=0;
         P.block_size=512;
-        P.soma=0;
+        P.soma=1;
         P.channel=1;
         P.bkg_thresh=-1;
         P.resume =  0;   //add continue tracing option
