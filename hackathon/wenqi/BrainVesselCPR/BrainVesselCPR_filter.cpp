@@ -4,14 +4,8 @@ using namespace std;
 
 #define INF 1E9
 
-void gaussian_filter(unsigned short int * data1d,
-                     V3DLONG *in_sz,
-                     unsigned int Wx,
-                     unsigned int Wy,
-                     unsigned int Wz,
-                     unsigned int c,
-                     double sigma,
-                     float* &outimg)
+void gaussian_filter(unsigned short int * data1d, V3DLONG *in_sz, unsigned int Wx, unsigned int Wy,
+                     unsigned int Wz, unsigned int c, double sigma, float* &outimg)
 {
     if (!data1d || !in_sz || in_sz[0]<=0 || in_sz[1]<=0 || in_sz[2]<=0 || in_sz[3]<=0 || outimg)
     {
