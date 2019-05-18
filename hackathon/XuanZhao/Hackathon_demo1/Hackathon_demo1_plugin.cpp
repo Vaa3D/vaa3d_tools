@@ -57,6 +57,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString suffix1=".tif";
         QString suffix2=".marker";
         QString suffix3=".eswc";
+
+
         QString eswcfile;
         eswcfile=QFileDialog::getOpenFileName(parent,QString(QObject::tr("Choose the file")),".");
         nt=readSWC_file(eswcfile);
