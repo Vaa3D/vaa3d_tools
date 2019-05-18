@@ -10,6 +10,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "BrainVesselCPR_plugin.h"
+//#include "../neuron_tracing/neuron_tracing.h"
 #include "basic_surf_objs.h"
 #include <stdlib.h>
 
@@ -25,6 +26,13 @@ struct Node
     Node(V3DLONG id, double p): node_id(id), priority(p)
     {
     }
+};
+
+struct Coor3D
+{
+    double x;
+    double y;
+    double z;
 };
 
 bool operator > (const Node &n1, const Node &n2)
@@ -50,19 +58,35 @@ double heuristic(V3DLONG next, V3DLONG goal, int x_length, int y_length)
     return 0.2*(abs(next_x - goal_x) + abs(next_y - goal_y) + abs(next_z - goal_z));
 }
 
-NeuronTree construcSwc(V3DLONG * path_point, V3DLONG path_length, int x_length, int y_length, int z_length/*, QString filename*/)
+NeuronTree construcSwc(vector<Coor3D> path_point)
 {
     QList<NeuronSWC> pathPointList;
     pathPointList.clear();
     NeuronSWC S;
-    for (int i = 0; i < path_length; i++) {
+//    for (int i = 0; i < path_length; i++) {
+//        S.n = i;
+//        S.type = 0;
+//        S.x = path_point[i] % x_length;
+//        S.y = floor(path_point[i] % (x_length * y_length)) / x_length;
+//        S.z = floor(path_point[i] / (x_length * y_length));
+//        S.r = 1;
+//        S.pn = i-1;
+//        pathPointList.append(S);
+//    }
+    Coor3D tmpCoor3D;
+    int i = 0;
+    while(!path_point.empty())
+    {
+        tmpCoor3D = path_point.back();
+        path_point.pop_back();
         S.n = i;
         S.type = 0;
-        S.x = path_point[i] % x_length;
-        S.y = floor(path_point[i] % (x_length * y_length)) / x_length;
-        S.z = floor(path_point[i] / (x_length * y_length));
+        S.x =tmpCoor3D.x;
+        S.y = tmpCoor3D.y;
+        S.z = tmpCoor3D.z;
         S.r = 1;
         S.pn = i-1;
+        i++;
         pathPointList.append(S);
     }
     NeuronTree tree;
@@ -73,6 +97,59 @@ NeuronTree construcSwc(V3DLONG * path_point, V3DLONG path_length, int x_length, 
 
 }
 
+//smooth curve. just the average of #winsize neighbour coordinates.
+template <class T> //should be a struct included members of (x,y,z), like Coord3D
+bool smooth_curve(std::vector<T> & mCoord, int winsize)
+{
+    //std::cout<<" smooth_curve ";
+    if (winsize<2) return true;
+
+    std::vector<T> mC = mCoord; // a copy
+    V3DLONG N = mCoord.size();
+    int halfwin = winsize/2;
+
+    for (int i=1; i<N-1; i++) // don't move start & end point
+    {
+        std::vector<T> winC;
+        std::vector<double> winW;
+        winC.clear();
+        winW.clear();
+
+        winC.push_back( mC[i] );
+        winW.push_back( 1.+halfwin );
+        for (int j=1; j<=halfwin; j++)
+        {
+            int k1 = i+j;	if(k1<0) k1=0;	if(k1>N-1) k1=N-1;
+            int k2 = i-j;	if(k2<0) k2=0;	if(k2>N-1) k2=N-1;
+            winC.push_back( mC[k1] );
+            winC.push_back( mC[k2] );
+            winW.push_back( 1.+halfwin-j );
+            winW.push_back( 1.+halfwin-j );
+        }
+        //std::cout<<"winC.size = "<<winC.size()<<"\n";
+
+        double s, x,y,z;
+        s = x = y = z = 0;
+                for (int i2=0; i2<winC.size(); i2++)
+        {
+                        x += winW[i2]* winC[i2].x;
+                        y += winW[i2]* winC[i2].y;
+                        z += winW[i2]* winC[i2].z;
+                        s += winW[i2];
+        }
+        if (s)
+        {
+            x /= s;
+            y /= s;
+            z /= s;
+        }
+
+        mCoord[i].x = x; // output
+        mCoord[i].y = y; // output
+        mCoord[i].z = z; // output
+    }
+    return true;
+}
 
 void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -146,23 +223,46 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     V3DLONG tmp = goal;
     V3DLONG * path_point = new V3DLONG[x_length * y_length * int(floor(z_length/10))];
     V3DLONG point_count = 0;
+    vector<Coor3D> smooth_path;
+    Coor3D tmpCoor3D;
     while(tmp != start)
     {
-        cout<< tmp << "->";
+        //cout<< tmp << "->";
         tmp = path[tmp];
-        path_point[point_count] = tmp;
+        //path_point[point_count] = tmp;
+        tmpCoor3D.x = tmp % x_length;
+        tmpCoor3D.y = floor(tmp % (x_length * y_length)) / x_length;
+        tmpCoor3D.z = floor(tmp / (x_length * y_length));
+        smooth_path.push_back(tmpCoor3D);
         point_count++;
+
+        cout << path_point[point_count];
+        cout << "x: " << smooth_path.back().x << "y: " << smooth_path.back().y << "z: " << smooth_path.back().z << endl;
     }
     cout << tmp << endl;
-//    QString filename("/Users/walker/MyProject/test.swc");
+    tmpCoor3D.x = tmp % x_length;
+    tmpCoor3D.y = floor(tmp % (x_length * y_length)) / x_length;
+    tmpCoor3D.z = floor(tmp / (x_length * y_length));
+    smooth_path.push_back(tmpCoor3D);
 
+    cout << "path size: " << smooth_path.size() << endl;
+    smooth_curve(smooth_path, 15);
+//    QString filename("/Users/walker/MyProject/test.swc");
+    cout << "path size (after smooth): " << smooth_path.size() << endl;
     //display trace in 3d
-    NeuronTree tree = construcSwc(path_point, point_count, x_length, y_length, z_length);
+
+
+    NeuronTree tree = construcSwc(smooth_path);
+    //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
+
     v3dhandle curwin = callback.currentImageWindow();
     callback.open3DWindow(curwin);
-    callback.setSWC(curwin, tree);
+    bool test = callback.setSWC(curwin, tree);
+    cout << "set swc: " << test <<endl;
     callback.updateImageWindow(curwin);
     callback.pushObjectIn3DWindow(curwin);
+
+    //writeSWC_file("/Users/walker/MyProject/test.swc", tree);
 
 }
 
