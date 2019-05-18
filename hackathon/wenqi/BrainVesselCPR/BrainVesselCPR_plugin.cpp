@@ -3,19 +3,10 @@
  * 2019-5-14 : by Wenqi Huang
  */
 
-#include <QtGui>
-#include <queue>
-#include <iostream>
-#include <string>
-#include "v3d_message.h"
-#include <vector>
 #include "BrainVesselCPR_plugin.h"
-//#include "../neuron_tracing/neuron_tracing.h"
-#include "basic_surf_objs.h"
-#include <stdlib.h>
+#include "BrainVesselCPR_filter.h"
 
-#include "BrainVesselCPR_gui.h"
-
+#define INF 1E9
 
 using namespace std;
 
@@ -160,7 +151,7 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     bool * isVisited = new bool[total_pxls];
 
     memset(path, -1, total_pxls);
-    memset(cost_so_far,9999999,total_pxls);
+    memset(cost_so_far,INF,total_pxls);
     memset(isVisited, false, total_pxls);
 
     priority_queue<Node, vector<Node>, greater<Node> > frontier;
@@ -206,7 +197,7 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
 
            double new_cost = cost_so_far[current.node_id] + edgeCost(image1d[next], image1d[current.node_id]);
            if(!isVisited[next])
-               cost_so_far[next] = 999999;
+               cost_so_far[next] = INF;
            if(new_cost < cost_so_far[next])
            {
                isVisited[next] = true;
@@ -1028,7 +1019,21 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
 
     //find path begins!
     cout << "begin find path!" << endl;
-    findPath(start, goal, data1d, x_length, y_length, z_length, callback, parent);
+
+    float * data1d_gausssian;
+    V3DLONG *in_sz;
+    in_sz = new V3DLONG[4];
+    in_sz[0] = x_length;
+    in_sz[1] = y_length;
+    in_sz[2] = z_length;
+    in_sz[3] = 1;
+    gaussian_filter(data1d, in_sz, 7, 7, 7, 1, 100, data1d_gausssian);
+    unsigned short int * data1d_gaussian_uint16;
+    for(int i = 0; i < x_length*y_length*z_length; i++)
+    {
+        data1d_gaussian_uint16[i] = (unsigned short int)data1d_gausssian[i];
+    }
+    findPath(start, goal, data1d_gaussian_uint16, x_length, y_length, z_length, callback, parent);
     cout << "find path finished!" << endl;
 
 
