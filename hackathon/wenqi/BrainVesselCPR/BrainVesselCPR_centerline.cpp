@@ -5,17 +5,19 @@
 using namespace std;
 
 
-
+//reconstruct greater function for priority queue
 bool operator > (const Node &n1, const Node &n2)
 {
     return n1.priority > n2.priority;
 }
 
+//cost function for A* search algorithm
 double edgeCost(int a_intensity, int b_intensity)
 {
     return 4095-(a_intensity+b_intensity)/2.0;
 }
 
+//heuristic function for A* algorithm
 double heuristic(V3DLONG next, V3DLONG goal, int x_length, int y_length)
 {
     int next_x = next % x_length;
@@ -29,6 +31,7 @@ double heuristic(V3DLONG next, V3DLONG goal, int x_length, int y_length)
     return 0.2*(abs(next_x - goal_x) + abs(next_y - goal_y) + abs(next_z - goal_z));
 }
 
+//A function to convert vector into swc
 NeuronTree construcSwc(vector<Coor3D> path_point)
 {
     QList<NeuronSWC> pathPointList;
@@ -68,7 +71,7 @@ NeuronTree construcSwc(vector<Coor3D> path_point)
 
 }
 
-//smooth curve. just the average of #winsize neighbour coordinates.
+//smooth curve function. just the average of #winsize neighbour coordinates.
 bool smooth_curve(std::vector<Coor3D> & mCoord, int winsize)
 {
     //std::cout<<" smooth_curve ";
@@ -121,6 +124,84 @@ bool smooth_curve(std::vector<Coor3D> & mCoord, int winsize)
     return true;
 }
 
+
+vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int windowradius)
+{
+    cout << "break: " << __LINE__ << endl;
+    //int half_win = floor(win / 2);
+    double radius2 = windowradius * windowradius;
+    vector<Coor3D> path_meanshift;
+    path_meanshift.clear();
+
+    for(int i=0;i<path.size();i++)
+    {
+        V3DLONG cur_id =  path[i].x + path[i].y * x_len + path[i].z * x_len * y_len;
+        double cur_v = data1d[i];
+        V3DLONG neighbour_id;
+        double neighbour_v;
+
+        double x_sum = 0;
+        double y_sum = 0;
+        double z_sum = 0;
+        double sum_v = 0;
+
+        double center_dis = 1;
+        int iter_count = 0;
+
+        Coor3D center_new;
+
+        cout << "break: " << __LINE__ << endl;
+
+        while(center_dis >= 0.5 && iter_count < 50)
+        {
+            for(V3DLONG dx=MAX(path[i].x+0.5-windowradius,0); dx<=MIN(x_len-1,path[i].x+0.5+windowradius); dx++)
+            {
+                for(V3DLONG dy=MAX(path[i].y+0.5-windowradius,0); dy<=MIN(y_len-1,path[i].y+0.5+windowradius); dy++)
+                {
+                    for(V3DLONG dz=MAX(path[i].z+0.5-windowradius,0); dz<=MIN(z_len-1,path[i].z+0.5+windowradius); dz++)
+                    {
+                        double dis2 = (dx-path[i].x)*(dx-path[i].x) + (dy-path[i].y)*(dy-path[i].y) + (dz-path[i].z)*(dz-path[i].z);
+                        if(dis2>radius2)
+                        {
+                            continue;
+                        }
+                        neighbour_id = dx + dy * x_len + dz * x_len * y_len;
+                        x_sum += (dx*(double)data1d[neighbour_id]);
+                        y_sum += (dy*(double)data1d[neighbour_id]);
+                        z_sum += (dz*(double)data1d[neighbour_id]);
+                        sum_v += (double)data1d[neighbour_id];
+
+                    }
+                }
+
+            }
+            center_new.x = x_sum / sum_v;
+            center_new.y = y_sum / sum_v;
+            center_new.z = z_sum / sum_v;
+
+            center_dis = sqrt((center_new.x - path[i].x)*(center_new.x - path[i].x) +
+                    (center_new.x - path[i].x)*(center_new.x - path[i].x) +
+                    (center_new.x - path[i].x)*(center_new.x - path[i].x));
+
+            if (x_sum<1e-5||y_sum<1e-5||z_sum<1e-5) //a very dark marker.
+            {
+                v3d_msg("Sphere surrounding the marker is zero. Mean-shift cannot happen. Marker location will not move",0);
+                center_new.x=path[i].x;
+                center_new.y=path[i].y;
+                center_new.z=path[i].z;
+                path_meanshift.push_back(center_new);
+                continue;
+            }
+            iter_count++;
+        }
+        cout << "break: " << __LINE__ << endl;
+        path_meanshift.push_back(center_new);
+    }
+    return path_meanshift;
+}
+
+
+// path finding function using modified A* algorithm
 void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent)
 {
 
@@ -215,8 +296,16 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     tmpCoor3D.z = floor(tmp / (x_length * y_length));
     smooth_path.push_back(tmpCoor3D);
 
+    //meanshift
+    cout << "break: " << __LINE__ << endl;
+    int windowradius = 8;
+    smooth_path = meanshift(smooth_path, image1d, x_length, y_length, z_length, windowradius);
+    cout << "break: " << __LINE__ << endl;
+
+
     cout << "path size: " << smooth_path.size() << endl;
     smooth_curve(smooth_path, 15);
+    cout << "break: " << __LINE__ << endl;
 //    QString filename("/Users/walker/MyProject/test.swc");
     cout << "path size (after smooth): " << smooth_path.size() << endl;
     //display trace in 3d
@@ -235,3 +324,5 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     //writeSWC_file("/Users/walker/MyProject/test.swc", tree);
 
 }
+
+
