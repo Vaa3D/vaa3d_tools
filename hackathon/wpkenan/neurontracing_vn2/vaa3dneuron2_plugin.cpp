@@ -22,6 +22,12 @@ QString versionStr = "v2.621";
 QStringList NTApp2Plugin::menulist() const
 {
     return QStringList()
+<<<<<<< HEAD
+
+    << tr("NP-Tracer")
+=======
+	<< tr("NP-Tracer") //tr("NeuronPopulation - all path pruning v3")
+>>>>>>> 36a97940ca72adb41009a3fb4830b1636a24d586
     << tr("Vaa3D-Neuron2-APP2") //tr("APP2 - all path pruning v2")
     << tr("Vaa3D-Neuron2-APP1") //tr("APP1 - all path pruning v1")
     << tr("about and help");
@@ -34,7 +40,7 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         v3d_msg(versionStr.prepend("Vaa3D-Neuron2 ").append(". Developed by Hanchuan Peng Lab. 2012 @ Janelia/Allen\n\n** How to use **\n\nJust open your neuron image, then click the menu items. You can also use the Vaa3D do-func command line interface to script this plugin for batched neuron reconstruction."));
     }
     else if(menu_name == "Vaa3D-Neuron2-APP2" || 
-            menu_name == "Vaa3D-Neuron2-APP1" )
+            menu_name == "Vaa3D-Neuron2-APP1" || menu_name=="NP-Tracer")
     {
         if(callback.getImageWindowList().empty())
         {
@@ -55,7 +61,7 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             if (!proc_app2(callback, p, versionStr))
                 return;
         }
-        else //if (menu_name == "Vaa3D-Neuron2-APP1")
+        else if (menu_name == "Vaa3D-Neuron2-APP1")
         {
             //v3d_msg("Vaa3D-Neuron2-APP1 func to add soon.");
             PARA_APP1 p;
@@ -69,6 +75,34 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             if (!proc_app1(callback, p, versionStr))
                 return;
         }
+<<<<<<< HEAD
+	else{
+	
+	    PARA_APP2 p;
+            if(!p.initialize(callback)) //here will initialize the image pointer, bounding box, etc.
+                return;
+            
+            // fetch parameters from dialog
+            if (!p.app2_dialog())
+                return;
+            
+            if (!proc_app2_wp(callback, p, versionStr))
+                return;
+	}
+=======
+		else{
+			PARA_APP2 p;
+			if(!p.initialize(callback)) //here will initialize the image pointer, bounding box, etc.
+				return;
+
+			// fetch parameters from dialog
+			if (!p.app2_dialog())
+				return;
+
+			if (!proc_app2_wp(callback, p, versionStr))
+				return;
+		}
+>>>>>>> 36a97940ca72adb41009a3fb4830b1636a24d586
     }
     else
     {
@@ -103,7 +137,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         if (!proc_app1(callback, p, versionStr))
             return false;
     }
-	else if(func_name == "app3"){
+	else if(func_name == "NP-Tracer"){
 		PARA_APP2 p;
 
 		if (!p.fetch_para_commandline(input, output, callback, parent))

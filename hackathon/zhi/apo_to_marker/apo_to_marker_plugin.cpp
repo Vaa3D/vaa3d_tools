@@ -51,6 +51,8 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             t.x = file_inmarkers[i].x;
             t.y = file_inmarkers[i].y;
             t.z = file_inmarkers[i].z;
+            t.name = file_inmarkers[i].name;
+            t.comment = file_inmarkers[i].comment;
             t.color = file_inmarkers[i].color;
             listLandmarks.push_back(t);
         }
@@ -173,6 +175,8 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             file_inmarkers[i].x=file_inmarkers[i].x;
             file_inmarkers[i].y=file_inmarkers[i].y;
             file_inmarkers[i].z=file_inmarkers[i].z;
+            file_inmarkers[i].comment=file_inmarkers[i].comment;
+
         }
 
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
@@ -212,12 +216,15 @@ void apo_to_marker::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
         for(V3DLONG i = 0; i <nt.listNeuron.size();i++)
         {
             CellAPO t;
-            t.x = (nt.listNeuron.at(i).x);
-            t.y = (nt.listNeuron.at(i).y);
-            t.z = (nt.listNeuron.at(i).z);
-            t.color.r=0;
-            t.color.g=0;
-            t.color.b=255;
+            t.x = nt.listNeuron.at(i).x;
+            t.y = nt.listNeuron.at(i).y;
+            t.z = nt.listNeuron.at(i).z;
+            t.color = nt.listNeuron.at(i).color;
+            t.name = nt.listNeuron.at(i).name;
+            t.comment = nt.listNeuron.at(i).comment;
+//            t.color.r=0;
+//            t.color.g=0;
+//            t.color.b=255;
 
             t.volsize = Vsize;
             file_inmarkers.push_back(t);
@@ -262,26 +269,70 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
         int scale;
         scale= atoi(inparas[0]);
 
-        for (int i=0; i< file_inmarkers.size(); i++)
-        {
-            ImageMarker t;
-            t.x = file_inmarkers[i].x/scale;
-            t.y = file_inmarkers[i].y/scale;
-            t.z = file_inmarkers[i].z/scale;
-            t.color = file_inmarkers[i].color;
-            listLandmarks.push_back(t);
-            QString fileDefaultName;
+        bool individual_name=false;
+        if(inparas.size()>1){
 
-            if(i<9)
-                fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
-            else if(i<99)
-                fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
-            else
-                fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+            individual_name=true;
 
-            writeMarker_file(fileDefaultName,listLandmarks);
-            listLandmarks.clear();
+
         }
+
+        if(!individual_name)
+        {
+            for (int i=0; i< file_inmarkers.size(); i++)
+            {
+                ImageMarker t;
+                t.x = file_inmarkers[i].x/scale;
+                t.y = file_inmarkers[i].y/scale;
+                t.z = file_inmarkers[i].z/scale;
+                t.color = file_inmarkers[i].color;
+                listLandmarks.push_back(t);
+                QString fileDefaultName;
+
+                if(i<9)
+                    fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+                else if(i<99)
+                    fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+                else
+                    fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+
+                writeMarker_file(fileDefaultName,listLandmarks);
+                listLandmarks.clear();
+            }
+        }
+        else
+        {
+
+            for (int i=0; i< file_inmarkers.size(); i++)
+            {
+                ImageMarker t;
+                t.x = file_inmarkers[i].x/scale;
+                t.y = file_inmarkers[i].y/scale;
+                t.z = file_inmarkers[i].z/scale;
+                t.color = file_inmarkers[i].color;
+                t.name=file_inmarkers[i].name;
+                listLandmarks.push_back(t);
+                QString fileDefaultName;
+                int indi_name= t.name.toInt();
+
+                if(indi_name<10)
+                    fileDefaultName=QString(outfiles[0])+QString("/00%1_x_%2_y_%3_z_%4.marker").arg(indi_name).arg(t.x).arg(t.y).arg(t.z);
+                else if(indi_name<100)
+                    fileDefaultName=QString(outfiles[0])+QString("/0%1_x_%2_y_%3_z_%4.marker").arg(indi_name).arg(t.x).arg(t.y).arg(t.z);
+                else
+                    fileDefaultName=QString(outfiles[0])+QString("/%1_x_%2_y_%3_z_%4.marker").arg(indi_name).arg(t.x).arg(t.y).arg(t.z);
+
+                writeMarker_file(fileDefaultName,listLandmarks);
+                listLandmarks.clear();
+
+
+        }
+        }
+
+
+
+
+
 
     }else if(func_name == tr("apo_to_swc"))
     {
@@ -320,6 +371,27 @@ bool apo_to_marker::dofunc(const QString & func_name, const V3DPluginArgList & i
         writeAPO_file(outfilename,file_inmarkers);
 
     }
+
+    if (func_name == tr("add_custom_name"))
+    {
+        QList<CellAPO> apofile;
+        apofile=readAPO_file(QString(infiles[0]));
+        QString customname=inparas[0];
+        for(int i=0; i<apofile.size();i++)
+        {
+            apofile[i].name=customname;
+            apofile[i].x=apofile[i].x;
+            apofile[i].y=apofile[i].y;
+            apofile[i].z=apofile[i].z;
+        }
+
+        QString outfilename=outfiles[0];
+        writeAPO_file(outfilename,apofile);
+
+
+
+    }
+
 	else if (func_name == tr("help"))
 	{
         printf("\nThis is a plugin to convert apo to individual markers\n");

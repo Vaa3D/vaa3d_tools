@@ -1,8 +1,10 @@
 #include <iostream>
 
+#include <qstringlist.h>
 #include <qsettings.h>
 #include <qfileinfo.h>
 #include <qspinbox.h>
+#include <qtimer.h>
 
 #include "FragTraceControlPanel.h"
 
@@ -51,12 +53,14 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->radioButton->setChecked(true);
 			uiPtr->radioButton_2->setChecked(false);
 			uiPtr->radioButton_3->setChecked(false);
+			uiPtr->groupBox_6->setEnabled(true);
 		}
 		else if (callOldSettings.value("dendrite") == true)
 		{
 			uiPtr->radioButton->setChecked(false);
 			uiPtr->radioButton_2->setChecked(true);
 			uiPtr->radioButton_3->setChecked(false);
+			uiPtr->groupBox_6->setEnabled(false);
 		}
 		else if (callOldSettings.value("bouton") == true)
 		{
@@ -93,22 +97,26 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 
 
 		// ------- Mask Generation Group Box -------
-		if (callOldSettings.value("histThre") == true)
+		if (callOldSettings.value("dendrite") == true) uiPtr->groupBox_6->setChecked(false);
+		else
 		{
-			uiPtr->groupBox_6->setChecked(true);
-			this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
+			if (callOldSettings.value("histThre") == true)
+			{
+				uiPtr->groupBox_6->setChecked(true);
+				this->doubleSpinBox->setValue(callOldSettings.value("histThre_std").toFloat());
 
-			if (callOldSettings.value("histThre_saveCheck") == true)
-			{
-				uiPtr->checkBox_5->setChecked(true);
-				uiPtr->lineEdit_3->setEnabled(true);
-				uiPtr->pushButton_6->setEnabled(true);
-			}
-			else
-			{
-				uiPtr->checkBox_5->setChecked(false);
-				uiPtr->lineEdit_3->setEnabled(false);
-				uiPtr->pushButton_6->setEnabled(false);
+				if (callOldSettings.value("histThre_saveCheck") == true)
+				{
+					uiPtr->checkBox_5->setChecked(true);
+					uiPtr->lineEdit_3->setEnabled(true);
+					uiPtr->pushButton_6->setEnabled(true);
+				}
+				else
+				{
+					uiPtr->checkBox_5->setChecked(false);
+					uiPtr->lineEdit_3->setEnabled(false);
+					uiPtr->pushButton_6->setEnabled(false);
+				}
 			}
 		}
 		uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
@@ -132,19 +140,24 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		}
 
 
-		// ------- Post Elongation -------
+		// ------- Segment Post-processing -------
 		if (callOldSettings.value("PostElongDistChecked") == true)
 		{
 			uiPtr->lineEdit_4->setEnabled(true);
 			uiPtr->lineEdit_4->setText(callOldSettings.value("PostElongDistThreshold").toString());
 		}
 		
-
+		this->listViewBlankAreas = new QStandardItemModel(this);
+		uiPtr->listView->setModel(listViewBlankAreas);
 		uiPtr->lineEdit->setText(callOldSettings.value("savePath").toString());
 
+		string versionString = to_string(MAINVERSION_NUM) + "." + to_string(SUBVERSION_NUM) + "." + to_string(PATCHVERSION_NUM) + " beta";
+		QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
+		this->setWindowTitle(windowTitleQ);
 		this->show();
 
 		this->traceManagerPtr = nullptr;
+		this->partialVolume = false;
 	}
 	else this->traceButtonClicked();
 }
@@ -192,10 +205,12 @@ void FragTraceControlPanel::nestedChecks(bool checked)
 	{
 		if (checkName == "radioButton_2")
 		{
+			uiPtr->groupBox_6->setEnabled(false);
 			uiPtr->groupBox_6->setChecked(false);
 		}
 		else if (checkName == "radioButton")
 		{
+			uiPtr->groupBox_6->setEnabled(true);
 			uiPtr->groupBox_6->setChecked(true);
 		}
 	}
@@ -218,6 +233,34 @@ void FragTraceControlPanel::saveSegStepsResultChecked(bool checked)
 			uiPtr->lineEdit_3->setEnabled(true);
 			uiPtr->pushButton_6->setEnabled(true);
 		}
+	}
+}
+
+void FragTraceControlPanel::blankAreaClicked()
+{
+	QObject* signalSender = sender();
+	QString pushButtonName = signalSender->objectName();
+	
+	if (pushButtonName == "pushButton_7")
+	{
+		if (uiPtr->lineEdit_5->text() == "" || uiPtr->lineEdit_6->text() == "" || uiPtr->lineEdit_7->text() == "" || uiPtr->lineEdit_8->text() == "")
+		{
+			v3d_msg("One or more parameters weren't specified. Please double check.");
+			return;
+		}
+
+		QString blankAreaName;
+		blankAreaName = "(" + uiPtr->lineEdit_5->text() + ", " + uiPtr->lineEdit_6->text() + ", " + uiPtr->lineEdit_7->text() + ") radius = " + uiPtr->lineEdit_8->text();
+		QStandardItem* newItem = new QStandardItem(blankAreaName);
+		listViewBlankAreas->appendRow(newItem);
+	}
+	else if (pushButtonName == "pushButton_8")
+	{
+		QModelIndexList selectedArea = uiPtr->listView->selectionModel()->selectedRows();
+		if (selectedArea.empty()) return;
+
+		int rowNum = selectedArea.begin()->row();
+		listViewBlankAreas->removeRow(rowNum);
 	}
 }
 
@@ -403,6 +446,8 @@ void FragTraceControlPanel::traceButtonClicked()
 		
 	if (this->isVisible())
 	{
+		int localCoords[6];
+		int displayingDims[3];
 		if (uiPtr->radioButton->isChecked() && !uiPtr->radioButton_2->isChecked())
 		{
 			cout << " whole block tracing, acquiring image information.." << endl;
@@ -414,9 +459,56 @@ void FragTraceControlPanel::traceButtonClicked()
 			}
 
 			if (uiPtr->checkBox->isChecked())
-			{
-				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
+			{				
+				bool adjusted = thisCallback->getPartialVolumeCoords(localCoords, displayingDims, this->partialVolume);
+				if (adjusted)
+				{
+					if (this->partialVolume) cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
+					const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
+					unsigned char* currBlock1Dptr = new unsigned char[displayingDims[0] * displayingDims[1] * displayingDims[2]];
+					int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
+					memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
+
+					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
+					int croppedDims[3];
+					croppedDims[0] = localCoords[1] - localCoords[0] + 1;
+					croppedDims[1] = localCoords[3] - localCoords[2] + 1;
+					croppedDims[2] = localCoords[5] - localCoords[4] + 1;
+					unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
+					ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, localCoords[0], localCoords[1], localCoords[2], localCoords[3], localCoords[4], localCoords[5], originalDims);
+					Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
+					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, localCoords[1] - localCoords[0], localCoords[3] - localCoords[2], localCoords[5] - localCoords[4], 1, V3D_UINT8);
+
+					this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, wholeBlock_axon);
+
+					delete[] currBlock1Dptr;
+				}
+				else this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
+				
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
+
+				if (uiPtr->groupBox_7->isChecked())
+				{
+					if (this->listViewBlankAreas->rowCount() != 0)
+					{
+						this->traceManagerPtr->blankArea = true;
+						for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
+						{
+							QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
+							QString thisAreaQString = thisArea->text();
+							QStringList spaceSplits = thisAreaQString.split(" ");
+							this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
+							QStringList rightParanSplits = thisAreaQString.split(")");
+							QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
+							this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
+							rightParanBlankSplits[0].replace("(", "");
+							rightParanBlankSplits[0].replace(",", "");
+							rightParanBlankSplits[1].replace(",", "");
+							this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
+							this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
+						}
+					}
+				}
 
 				// ------- Image Enhancement -------
 				if (uiPtr->groupBox_3->isChecked())
@@ -511,6 +603,29 @@ void FragTraceControlPanel::traceButtonClicked()
 			{
 				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), dendriticTree);
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
+
+				if (uiPtr->groupBox_7->isChecked())
+				{
+					if (this->listViewBlankAreas->rowCount() != 0)
+					{
+						this->traceManagerPtr->blankArea = true;
+						for (int areai = 0; areai < this->listViewBlankAreas->rowCount(); ++areai)
+						{
+							QStandardItem* thisArea = this->listViewBlankAreas->item(areai);
+							QString thisAreaQString = thisArea->text();
+							QStringList spaceSplits = thisAreaQString.split(" ");
+							this->traceManagerPtr->blankRadius.push_back(spaceSplits.back().toInt());
+							QStringList rightParanSplits = thisAreaQString.split(")");
+							QStringList rightParanBlankSplits = rightParanSplits[0].split(" ");
+							this->traceManagerPtr->blankZs.push_back(rightParanBlankSplits.back().toInt());
+							rightParanBlankSplits[0].replace("(", "");
+							rightParanBlankSplits[0].replace(",", "");
+							rightParanBlankSplits[1].replace(",", "");
+							this->traceManagerPtr->blankXs.push_back(rightParanBlankSplits[0].toInt() / 2);
+							this->traceManagerPtr->blankYs.push_back(rightParanBlankSplits[1].toInt() / 2);
+						}
+					}
+				}
 
 				// ------- Image Enhancement -------
 				if (uiPtr->groupBox_3->isChecked())
@@ -672,12 +787,16 @@ void FragTraceControlPanel::traceButtonClicked()
 		}
 	}
 	
-	this->connect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 	this->connect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
-	emit switchOnSegPipe();
+	//emit switchOnSegPipe(); // ==> Qt's [emit] is equivalent to normal function call. Therefore, no new thread is created due to this keyword.
+	//QTimer::singleShot(0, this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock())); // ==> Qt's [singleShot] is still enforced on the thread of event loop.
+	if (!this->traceManagerPtr->imgProcPipe_wholeBlock())
+	{
+		v3d_msg(QString("The process has been terminated."));
+		return;
+	}
 
-	this->disconnect(this, SIGNAL(switchOnSegPipe()), this->traceManagerPtr, SLOT(imgProcPipe_wholeBlock()));
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
 

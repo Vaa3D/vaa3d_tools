@@ -80,7 +80,10 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+            if(it.key()==1)
+                info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
+            else
+                info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
 
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
@@ -175,7 +178,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         ofstream myfile;
         myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
-        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"loop"<<","<<"trifurcation+"<<endl;
+        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"# of root nodes"<<","<<"loop"<<","<<"trifurcation+"<<endl;
         myfile.close();
 
 
@@ -184,7 +187,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             ofstream myfile;
             myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
             myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs
-                   <<","<<scores[i].loop.toStdString().c_str() << "," << scores[i].trifurcation.toStdString().c_str()<<endl;
+                   <<","<<scores[i].numRoots<<","<<scores[i].loop.toStdString().c_str() << "," << scores[i].trifurcation.toStdString().c_str()<<endl;
             myfile.close();
 
         }
@@ -224,7 +227,10 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
+            if(it.key()==1)
+                info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
+            else
+                info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
 
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
@@ -374,8 +380,10 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString info_type;
         for (QHash<int,int>::iterator it = map_type.begin(); it != map_type.end(); ++it)
         {
-            info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
-
+            if(it.key()==1)
+                info_type += info_type.size() ==0? QString("%1(%2)").arg(it.key()).arg(it.value()): QString(",%1(%2)").arg(it.key()).arg(it.value());
+            else
+                info_type += info_type.size() ==0? QString("%1").arg(it.key()): QString(",%1").arg(it.key());
         }
 
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
@@ -401,6 +409,8 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
                     .arg(map_type.size())
                     .arg(info_type.toStdString().c_str()),0);
 
+        int cnt_root=0;
+        if(map_type.count(1)) cnt_root = map_type[1];
         if (output.size() == 1)
         {
             char *outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
@@ -408,7 +418,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             ofstream myfile;
             myfile.open (outimg_file,ios::out | ios::app );
             myfile << imagename.toStdString().c_str()<<","<<multi_neurons.size() << "," << map_type.size()<<","<<markerlist.size()
-                   <<","<<flag_loop.toStdString().c_str()<<","<<flag_tri.toStdString().c_str()<<endl;
+                    <<","<<cnt_root<<","<<flag_loop.toStdString().c_str()<<","<<flag_tri.toStdString().c_str()<<endl;
             myfile.close();
         }
         return true;

@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgTester.h" />
+    <ClInclude Include="processMonitoringTester.h" />
     <ClInclude Include="SWCtester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -146,7 +146,7 @@ double computeDist2(const NeuronSWC & s1, const NeuronSWC & s2)
     double xx = s1.x-s2.x;
     double yy = s1.y-s2.y;
     double zz = s1.z-s2.z;
-    return (xx*xx+yy*yy+zz*zz);
+    return sqrt(xx*xx+yy*yy+zz*zz);
 };
 
 bool combine_linker(vector<QList<NeuronSWC> > & linker, QList<NeuronSWC> & combined)
@@ -321,6 +321,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 
     QList<V3DLONG> output_newroot_list;
 //    if((thres != 1000000000) && (thres>0)){  // If distance threshold > 0: make new connections
+//    v3d_msg(QString::number(thres));
     if(thres>=0){  // If distance threshold > 0: make new connections
         qDebug()<<"find the point in non-group 1 that is nearest to group 1";
         //find the point in non-group 1 that is nearest to group 1,
@@ -364,6 +365,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
                     component_id[i] = 1;
                 }
             }
+            qDebug()<<QString("Min distance: %1").arg(min);
             if (min<=thres)
             {
                 qDebug()<<QString("New connection is made between %1 and %2").arg(m1).arg(m2);

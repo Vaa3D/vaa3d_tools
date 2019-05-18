@@ -20,8 +20,8 @@ QStringList changetype::menulist() const
 QStringList changetype::funclist() const
 {
 	return QStringList()
-		<<tr("swc_type")
-		<<tr("marker_type")
+        <<tr("swc")
+        <<tr("apo")
 		<<tr("help");
 }
 
@@ -49,7 +49,7 @@ bool changetype::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("swc_type"))
+    if (func_name == tr("swc"))
 	{
         /* type number and color:
             2:red 3: blue 4:purple 5:pale blue 6:yellow 7:green 8:orange 9:olive green 10:pink */
@@ -60,6 +60,16 @@ bool changetype::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 //            fprintf(stderr,"Need input -i swc file and -p type number. \n ");
 
 //        }
+
+        QString filename;
+        if(outfiles.size()<1)
+        {
+            filename=QString(infiles[0])+"_typechanged.eswc";
+
+        }
+        filename=QString(outfiles[0]);
+
+
 
 
 
@@ -87,7 +97,7 @@ bool changetype::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             nt_new.hashNeuron.insert(S.n, nt_new.listNeuron.size()-1);
         }
 
-        QString filename=QString(infiles[0])+"_typechanged.eswc";
+
         writeESWC_file(filename, nt_new);
 
 
@@ -97,13 +107,46 @@ bool changetype::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 
 	}
-	else if (func_name == tr("marker_type"))
+    else if (func_name == tr("apo"))
 	{
-		v3d_msg("To be implemented.");
+        QList<CellAPO> list=readAPO_file(QString(infiles[0]));
+        QList<CellAPO> new_list;
+
+        //int newtype=atof(inparas[0]);
+
+        for(int i=0;i<list.size();i++)
+        {
+            CellAPO S;
+            S.x=list.at(i).x;
+            S.y=list.at(i).y;
+            S.z=list.at(i).z;
+
+            S.color.r=0;
+            S.color.g=100;
+            S.color.b=255;
+            S.volsize=50;
+            new_list.append(S);
+
+        }
+
+        QString filename=QString(infiles[0])+"_typechanged.apo";
+
+        writeAPO_file(filename,new_list);
+
+
+
+
+
+
+
+
+
+
+
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        v3d_msg("example: vaa3d -x change_type -f swc -i *.eswc -p 2(type))");
 	}
 	else return false;
 

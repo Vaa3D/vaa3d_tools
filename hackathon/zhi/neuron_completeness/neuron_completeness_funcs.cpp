@@ -3,6 +3,8 @@
  * 2019-2-25 : by Zhi Zhou
  */
  
+#include <omp.h>
+
 #include "v3d_message.h"
 #include <algorithm>
 #include "neuron_completeness_funcs.h"
@@ -18,7 +20,9 @@ set<set<size_t> > detectedLoopsSet;
 set<set<size_t> > finalizedLoopsSet;
 set<set<size_t> > nonLoopErrors;
 multimap<string, size_t> segEnd2segIDmap;
-
+map<size_t, set<size_t> > segTail2segIDmap;
+size_t rcCount;
+size_t testCount;
 
 QStringList importSWCFileList(const QString & curFilePath)
 {
@@ -132,6 +136,7 @@ void calComplete(NeuronTree nt, QList<NEURON_METRICS> & scores)
     tmp.numTrees = multi_neurons.size();
     tmp.numTypes = map_type.size();
     tmp.numSegs = markerlist.size();
+    tmp.numRoots = map_type.count(1)?map_type[1]:0;
     scores.push_back(tmp);
     return;
 }
@@ -153,7 +158,11 @@ void exportComplete(NeuronTree nt,QList<NeuronSWC>& sorted_neuron, LandmarkList&
             first = i;
 
         }
-        if(!map_type.count(sorted_neuron.at(i).type))
+        if(sorted_neuron.at(i).type==1)
+        {
+            map_type[sorted_neuron.at(i).type]++;
+        }
+        else if(!map_type.count(sorted_neuron.at(i).type))
         {
             map_type[sorted_neuron.at(i).type] = 1;
 //            if(sorted_neuron.at(i).type!=1 && sorted_neuron.at(i).type!=2 && sorted_neuron.at(i).type!=3)
@@ -396,11 +405,19 @@ void markerlist_after_sorting(QList<NeuronSWC>sorted_neuron,LandmarkList &marker
 
 vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 {
+#ifdef Q_OS_WIN32
+	char* numProcsC;
+	numProcsC = getenv("NUMBER_OF_PROCESSORS");
+	string numProcsString(numProcsC);
+	int numProcs = stoi(numProcsString);
+#endif
+
 	vector<NeuronSWC> outputErroneousPoints;
 	outputErroneousPoints.clear();
 
 	segList = inputSegList;
 	seg2SegsMap.clear();
+	segTail2segIDmap.clear();
 	map<string, set<size_t> > wholeGrid2segIDmap;
 	set<size_t> subtreeSegs;
 	size_t segCount = 0;
@@ -453,6 +470,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 						set<size_t> reversed;
 						reversed.insert(*it);
 						if (!seg2SegsMap.insert(pair<size_t, set<size_t> >(*scannedIt, reversed)).second) seg2SegsMap[*scannedIt].insert(*it);
+						if (!segTail2segIDmap.insert(pair<size_t, set<size_t> >(*scannedIt, reversed)).second) segTail2segIDmap[*scannedIt].insert(*it);
 					}
 					else if ((segList.seg[*scannedIt].row.end() - 1)->x == nodeIt->x && (segList.seg[*scannedIt].row.end() - 1)->y == nodeIt->y && (segList.seg[*scannedIt].row.end() - 1)->z == nodeIt->z)
 					{
@@ -476,43 +494,63 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 	detectedLoopsSet.clear();
 	finalizedLoopsSet.clear();
 	nonLoopErrors.clear();
-	for (map<size_t, set<size_t> >::iterator it = seg2SegsMap.begin(); it != seg2SegsMap.end(); ++it)
+	rcCount = 0;
+	testCount = 0;
+#ifdef Q_OS_WIN32
+#pragma omp parallel num_threads(this->numProcs)
 	{
-		if (it->second.size() <= 2) continue;
+#endif
+		for (map<size_t, set<size_t> >::iterator it = seg2SegsMap.begin(); it != seg2SegsMap.end(); ++it)
+		{
+			if (it->second.size() <= 2) continue;
 
-		vector<size_t> loops2ThisSeg;
-		loops2ThisSeg.clear();
+			vector<size_t> loops2ThisSeg;
+			loops2ThisSeg.clear();
 
-//		cout << "Starting segment: " << it->first << " ==> ";
-		for (set<size_t>::iterator seg2SegsIt = seg2SegsMap[it->first].begin(); seg2SegsIt != seg2SegsMap[it->first].end(); ++seg2SegsIt)
-			cout << *seg2SegsIt << " ";
-		cout << endl;
-
-		int loopCount = finalizedLoopsSet.size();
-
-		rc_loopPathCheck(it->first, loops2ThisSeg);
-
-//		if (finalizedLoopsSet.size() - loopCount == 0) cout << " -- no loops detected with this starting seg." << endl;
-//		else cout << finalizedLoopsSet.size() - loopCount << " loops detected with seg " << it->first << endl << endl;
+			rc_loopPathCheck(it->first, loops2ThisSeg);
+		}
+#ifdef Q_OS_WIN32
 	}
-
+#endif
+	//cout << "rc count: " << rcCount << endl;
+	//cout << "test count: " << testCount << endl;
 	clock_t end = clock();
 	float elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-//	cout << "TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
+	cout << "TIME ELAPSED: " << elapsed_secs << " SECS" << endl << endl;
 
 	if (finalizedLoopsSet.empty()) return outputErroneousPoints;
 	else
 	{
+		int loopCount = 0;
 		for (set<set<size_t> >::iterator loopIt = finalizedLoopsSet.begin(); loopIt != finalizedLoopsSet.end(); ++loopIt)
 		{
 			set<size_t> thisLoop = *loopIt;
+			int jointCount = 0;
+			vector<size_t> thisSet;
+			for (set<size_t>::iterator setIt = loopIt->begin(); setIt != loopIt->end(); ++setIt) thisSet.push_back(*setIt);
+
+			V_NeuronSWC_unit jointNode;
+			for (vector<V_NeuronSWC_unit>::iterator seg1It = segList.seg.at(thisSet.at(0)).row.begin(); seg1It != segList.seg.at(thisSet.at(1)).row.end(); ++seg1It)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator seg2It = segList.seg.at(thisSet.at(1)).row.begin(); seg2It != segList.seg.at(thisSet.at(1)).row.end(); ++seg2It)
+				{
+					if (seg1It->x == seg2It->x && seg1It->y == seg2It->y && seg1It->z == seg2It->z)
+					{
+						jointNode = *seg1It;
+						jointCount = 2;
+						goto FOUND_JOINT_NODE;
+					}
+				}
+			}
+
+			++loopCount;
 			for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
 			{
-				//cout << *it << " ";
+				cout << *it << " ";
 				for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
 				{
-					unitIt->type = 15;				
-					
+					unitIt->type = 15;
+
 					if (unitIt->parent == -1)
 					{
 						NeuronSWC problematicNode;
@@ -526,9 +564,46 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					}
 				}
 			}
-			//cout << endl << endl;
+			cout << endl << endl;
+			continue;
+
+		FOUND_JOINT_NODE:
+			for (vector<size_t>::iterator segIt = thisSet.begin() + 2; segIt != thisSet.end(); ++segIt)
+			{
+				for (vector<V_NeuronSWC_unit>::iterator nodeIt = segList.seg.at(*segIt).row.begin(); nodeIt != segList.seg.at(*segIt).row.end(); ++nodeIt)
+				{
+					if (nodeIt->x == jointNode.x && nodeIt->y == jointNode.y && nodeIt->z == jointNode.z) ++jointCount;
+				}
+			}
+
+			if (jointCount == loopIt->size()) nonLoopErrors.insert(*loopIt);
+			else
+			{
+				++loopCount;
+				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
+				{
+					//cout << *it << " ";
+					for (vector<V_NeuronSWC_unit>::iterator unitIt = segList.seg[*it].row.begin(); unitIt != segList.seg[*it].row.end(); ++unitIt)
+					{
+						unitIt->type = 15;
+
+						if (unitIt->parent == -1)
+						{
+							NeuronSWC problematicNode;
+							problematicNode.x = unitIt->x;
+							problematicNode.y = unitIt->y;
+							problematicNode.z = unitIt->z;
+							problematicNode.type = 15;
+							problematicNode.parent = unitIt->parent;
+							problematicNode.n = unitIt->n;
+							outputErroneousPoints.push_back(problematicNode);
+						}
+					}
+				}
+				//cout << endl << endl;
+			}
 		}
-		cout << "LOOPS NUMBER (set): " << finalizedLoopsSet.size() << endl << endl;
+		cout << "LOOPS NUMBER (set): " << loopCount << endl << endl;
 
 		if (!nonLoopErrors.empty())
 		{
@@ -604,7 +679,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					problematicNode.z = (segList.seg[segNum].row.end() - 1)->z;
 					problematicNode.type = 20;
 					outputErroneousPoints.push_back(problematicNode);
-//					cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
+					//cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
 				}
 				else if (tail)
 				{
@@ -614,7 +689,7 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 					problematicNode.z = segList.seg[segNum].row.begin()->z;
 					problematicNode.type = 20;
 					outputErroneousPoints.push_back(problematicNode);
-//					cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
+					//cout << problematicNode.x << " " << problematicNode.y << " " << problematicNode.z << endl;
 				}	
 			}
 		}
@@ -625,8 +700,10 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 
 void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 {
-	if (seg2SegsMap[inputSegID].size() < 2) return;
+	//++rcCount;
 
+	if (seg2SegsMap[inputSegID].size() < 2)	return;
+	
 	//cout << "  input seg num: " << inputSegID << " ";
 	curPathWalk.push_back(inputSegID);
 	/*for (vector<size_t>::iterator curPathIt = curPathWalk.begin(); curPathIt != curPathWalk.end(); ++curPathIt)
@@ -635,6 +712,12 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 
 	for (set<size_t>::iterator it = seg2SegsMap[inputSegID].begin(); it != seg2SegsMap[inputSegID].end(); ++it)
 	{
+		if (segTail2segIDmap.find(*it) == segTail2segIDmap.end())
+		{	
+			//++testCount;
+			continue;
+		}
+
 		if (curPathWalk.size() >= 2 && *it == *(curPathWalk.end() - 2))
 		{
 			V_NeuronSWC_unit headUnit = *(segList.seg[*it].row.end() - 1);
@@ -679,7 +762,7 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 			if (detectedLoopsSet.insert(detectedLoopPathSet).second)
 			{
 				// pusedoloop by fork intersection check
-//				cout << "pusedoloop check.." << endl;
+				//cout << "pusedoloop check.." << endl;
 
 				if (*(curPathWalk.end() - 3) == *it)
 				{
@@ -735,8 +818,11 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 								seg2SegsMap[*(curPathWalk.end() - 3)].find(*(curPathWalk.end() - 2)) != seg2SegsMap[*(curPathWalk.end() - 3)].end() &&
 								seg2SegsMap[*(curPathWalk.end() - 4)].find(*(curPathWalk.end() - 3)) != seg2SegsMap[*(curPathWalk.end() - 4)].end())
 							{
-								cout << "  -> 4 seg intersection detected, exluded from loop candidates. (" << *it << ")" << endl;
-								continue;
+								nonLoopErrors.insert(detectedLoopPathSet);
+								cout << "  -> 4 way intersection detected ----> (" << *it << ") ";
+								for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
+									cout << *thisLoopIt << " ";
+								cout << endl << endl;
 							}
 						}
 					}
@@ -744,7 +830,7 @@ void rc_loopPathCheck(size_t inputSegID, vector<size_t> curPathWalk)
 				else
 				{
 					finalizedLoopsSet.insert(detectedLoopPathSet);
-					cout << "  Loop detected ----> (" << *it << ") ";
+					cout << "  Topological loop identified ----> (" << *it << ") ";
 					for (set<size_t>::iterator thisLoopIt = detectedLoopPathSet.begin(); thisLoopIt != detectedLoopPathSet.end(); ++thisLoopIt)
 						cout << *thisLoopIt << " ";
 					cout << endl << endl;

@@ -9,7 +9,7 @@
 #include "swc_convert.h"
 #include "vn_imgpreprocess.h"
 #include "volimg_proc.h"
-
+#include "mean_shift_fun.h"
 //add by wp 20181206
 bool prunThinBranch(vector<MyMarker*> &outmarkers,float thresh);
 template <class T1, class T2> bool otsu(T1 *data, V3DLONG n, T2 & thres){
@@ -832,6 +832,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
 
 bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
+	cout << "in_app3_line1" << endl;
 	vector<MyMarker> file_inmarkers_tmp; 
 	file_inmarkers_tmp=readMarker_file(string(qPrintable(p.inmarker_file)));
 	
@@ -839,8 +840,8 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 		//cout << file_inmarkers_tmp.size() << endl;
 		//  bool b_menu = true;
 	bool b_dofunc = false;
-	for(int tmpI=0;tmpI<file_inmarkers_tmp.size();tmpI++){
-		p.landmarks.clear();
+	for(int tmpI=0;tmpI<1;tmpI++){
+		//p.landmarks.clear();
 		if (!p.p4dImage || !p.p4dImage->valid())
 		{
 			if (p.inimg_file.isEmpty()) return false;
@@ -882,6 +883,7 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 			}
 		}
 
+		cout << "p.landmarks.size()" << p.landmarks.size() << endl;
 		if(p.landmarks.size() < 2 && p.b_intensity ==1)
 		{
 			v3d_msg("You have to select at least two markers if using high intensity background option.",p.b_menu);
@@ -1248,6 +1250,36 @@ bool proc_app2_wp(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & ve
 						//fastmarching_tree(inmarkers[0], target, indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type);
 						cout << "p.bkg_thresh: " << p.bkg_thresh << endl;
 						cout << "p.is_break_accept: " << endl;
+						cout << "app3" << endl;
+
+						cout << "start2019" << endl;
+						for(int i=0;i<inmarkers.size();i++){
+							cout << "wp_debug20190515 root: " << i << endl;
+							cout << inmarkers.at(i).x << " " << inmarkers.at(i).y << " " << inmarkers.at(i).z << endl;
+							
+
+							LocationSimple RootNewLocation;
+							RootNewLocation.x = inmarkers.at(i).x;
+							RootNewLocation.y = inmarkers.at(i).y;
+							RootNewLocation.z = inmarkers.at(i).z;
+
+							LandmarkList marklist_tmp;
+							marklist_tmp.push_back(RootNewLocation);
+
+							mean_shift_fun fun_obj;
+							fun_obj.pushNewData<unsigned char>((unsigned char*)indata1d,in_sz);
+							vector<V3DLONG> poss_landmark;
+							double windowradius = 10;
+							poss_landmark=landMarkList2poss(marklist_tmp, in_sz[0], in_sz[0]*in_sz[1]);
+							marklist_tmp.clear();
+							vector<float> mass_center=fun_obj.mean_shift_center_mass(poss_landmark[0],windowradius);
+							inmarkers.at(i).x = mass_center[0]+1;
+							inmarkers.at(i).y = mass_center[1]+1;
+							inmarkers.at(i).z = mass_center[2]+1;
+							cout << inmarkers.at(i).x << " " << inmarkers.at(i).y << " " << inmarkers.at(i).z << endl;
+							cout << "*********************************************" << endl;
+						}
+
 						fastmarching_tree_wp(inmarkers,indata1d, indexOfSoma,outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type,p.bkg_thresh,p.is_break_accept);//wp
 						break;
 					case V3D_UINT16:

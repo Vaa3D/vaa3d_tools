@@ -166,7 +166,7 @@ void filter_dialog::swc_filter_image()
     pImMask = new unsigned char [stacksz];
     memset(pImMask,0,stacksz*sizeof(unsigned char));
     QList<int> mark_others;
-    ComputemaskImage(neuron, pImMask, sx, sy, sz,mark_others,false, 0);
+    ComputemaskImage(neuron, pImMask, sx, sy, sz,0,mark_others,false);
     unsigned char * image_filter=new unsigned char[nx*ny*nz*sz_img[3]];
     memset(image_filter,0,nx*ny*nz*sz_img[3]*sizeof(unsigned char));
 
@@ -248,7 +248,7 @@ void BoundNeuronCoordinates(NeuronTree & neuron, double & output_xmin,double & o
     return;
 }
 
-void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,QList<int> mark_other_nodes,bool mark_other_nodes_or_not, double margin)//mark other node(s) with different markers,added by OYQ 2019.3.23.
+void ComputemaskImage(NeuronTree neurons,unsigned char* pImMask,V3DLONG sx,V3DLONG sy,V3DLONG sz,double margin, QList<int> mark_other_nodes,bool mark_other_nodes_or_not)//mark other node(s) with different markers,added by OYQ 2019.3.23.
 {
     NeuronSWC *p_cur = 0;
     //create a LUT

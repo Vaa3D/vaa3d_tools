@@ -286,21 +286,25 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
     tileLocation.category = 1;
     allTargetList.push_back(tileLocation);
 
+
+    P.output_folder = QFileInfo(P.markerfilename).path();
     QString tmpfolder;
     if(P.tracing_comb)
-        tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        tmpfolder= P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     else
     {
         if(P.method == app1)
-            tmpfolder= QFileInfo(fileOpenName).path()+("/tmp_APP1");
+            tmpfolder= P.output_folder+("/tmp_APP1");
         else if (P.method == app2)
-//            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-              tmpfolder= QFileInfo(fileOpenName).path()+QString("/tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        {
+            tmpfolder= P.markerfilename+QString("_tmp_APP2");
+
+        }
         else
-            tmpfolder= QFileInfo(fileOpenName).path()+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+            tmpfolder= P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
-    if(!tmpfolder.isEmpty())
+    if(!tmpfolder.isEmpty() && !P.resume)
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -309,6 +313,12 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         printf("Can not create a tmp folder!\n");
         return false;
     }
+
+    QString finaloutputswc;
+    if(P.global_name)
+        finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
+    if(QFileInfo(finaloutputswc).exists() && !P.resume)
+        system(qPrintable(QString("rm %1").arg(finaloutputswc.toStdString().c_str())));
 
     LandmarkList newTargetList;
     QList<LandmarkList> newTipsList;
@@ -421,10 +431,10 @@ bool app_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     QString saveDirString;
     if(P.method == app1)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
+        saveDirString = P.output_folder.append("/tmp_APP1");
     else
-       // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+       // saveDirString = P.output_folder.append("/tmp_COMBINED");
+        saveDirString = P.output_folder+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
 
     QString imageSaveString = saveDirString;
 
@@ -862,14 +872,14 @@ bool app_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(P.method == app1)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
+        saveDirString = P.output_folder.append("/tmp_APP1");
         finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
     }
     else
     {
 
-        //   saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        //   saveDirString = P.output_folder.append("/tmp_COMBINED");
+        saveDirString = P.output_folder+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
         finaloutputswc = P.inimg_file + ("_nc_app2_adp.swc");
     }
 
@@ -1342,25 +1352,24 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     if(P.method == app1)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_APP1");
-        finaloutputswc = P.inimg_file + ("_nc_app1_adp.swc");
+        saveDirString = P.output_folder.append("/tmp_APP1");
+        finaloutputswc = P.markerfilename + ("_nc_app1_adp.swc");
     }
     else if(P.method == app2)
     {
-       // saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-   //     saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-          saveDirString = QFileInfo(P.inimg_file).path()+ QString("/tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+       // saveDirString = P.output_folder.append("/tmp_COMBINED");
+   //     saveDirString = P.output_folder+ QString("/x_%1_y_%2_z_%3_tmp_APP2").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+          saveDirString = P.markerfilename+ QString("_tmp_APP2");
+        finaloutputswc = P.markerfilename + QString("x_%1_y_%2_z_%3_nc_app2_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
     else if(P.method == gd)
     {
-        saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
-        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        saveDirString = P.output_folder+ QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        finaloutputswc = P.markerfilename + QString("x_%1_y_%2_z_%3_nc_GD_Curveline_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     }
 
     if(P.global_name)
-        //finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
-        finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
+        finaloutputswc = P.markerfilename+QString("_nc_APP2_GD.swc");
 
     QString imageSaveString = saveDirString;
 
@@ -1378,10 +1387,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     if(end_y > P.in_sz[1]) end_y = P.in_sz[1];
     if(end_z > P.in_sz[2]) end_z = P.in_sz[2];
 
-/*    v3d_msg(QString("start is (%1,%2,%3").arg(start_x).arg(start_y).arg(start_z));
-    v3d_msg(QString("end is (%1,%2,%3").arg(end_x).arg(end_y).arg(end_z))*/;
-
-
     if(tileLocation.x >= P.in_sz[0] - 1 || tileLocation.y >= P.in_sz[1] - 1 || tileLocation.z >= P.in_sz[2] - 1 || end_x <= 0 || end_y <= 0 || end_z <= 0)
     {
         printf("hit the boundary");
@@ -1392,7 +1397,6 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     scanDataFileString.append("/").append("scanData.txt");
     if(QFileInfo(finaloutputswc).exists() && !QFileInfo(scanDataFileString).exists() && !P.global_name)
         system(qPrintable(QString("rm -rf %1").arg(finaloutputswc.toStdString().c_str())));
-
     unsigned char * total1dData = 0;
     V3DLONG *in_sz = 0;
 
@@ -1537,7 +1541,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-    if(!ifs_swc && P.soma)
+    if(!ifs_swc && P.soma && total4DImage->getZDim()>=64)
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
@@ -2023,6 +2027,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
+    int conf_th = 130;
     //assign all sub_trees
     QVector<int> visit(nt.listNeuron.size(),0);
 
@@ -2061,7 +2066,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     else{
         for(int i=0; i<nt.listNeuron.size();i++)
         {
-            if(nt.listNeuron[i].type>130 && nt.listNeuron[i].pn ==-1 && visit[i]==0)
+            if(nt.listNeuron[i].type>conf_th && nt.listNeuron[i].pn ==-1 && visit[i]==0)  //was 130
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2084,7 +2089,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
             }
 
             int diff_radius;
-            if(nt.listNeuron[i].type<=130 && nt.listNeuron[i].radius<2 && visit[i]==0)
+            if(nt.listNeuron[i].type<=conf_th && nt.listNeuron[i].radius<2 && visit[i]==0)
             {
                 int count=0;
                 int pre_sum=0;
@@ -2108,7 +2113,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                 }
             }
 
-            if(nt.listNeuron[i].type>130 && visit[i]==0 && childs[i].size()==1)
+            if(nt.listNeuron[i].type>conf_th && visit[i]==0 && childs[i].size()==1)
             {
                 QQueue<int> q;
                 visit[i]=1;
@@ -2152,7 +2157,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         if (childs[i].size()==0 || P.method != gd)
         {
             NeuronSWC curr = list.at(i);
-            if(curr.type >130) continue;
+            if(curr.type >conf_th) continue;
             LocationSimple newTip;
             bool check_tip = false;
             if( curr.x < overlap_ratio*  total4DImage->getXDim() || curr.x > (1-overlap_ratio) *  total4DImage->getXDim() || curr.y < overlap_ratio * total4DImage->getYDim() || curr.y > (1-overlap_ratio)* total4DImage->getYDim()
@@ -2936,25 +2941,27 @@ bool crawler_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
 
     allTargetList.push_back(tileLocation);
 
+    P.output_folder = QFileInfo(P.markerfilename).path();
+
     QString tmpfolder;
     if(P.method == neutube)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
+       tmpfolder = P.output_folder+("/tmp_NEUTUBE");
     else if(P.method == snake)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
+       tmpfolder = P.output_folder+("/tmp_SNAKE");
     else if(P.method == most)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
+       tmpfolder = P.output_folder+("/tmp_MOST");
     else if(P.method == neurogpstree)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuroGPSTree");
+       tmpfolder = P.output_folder+("/tmp_NeuroGPSTree");
     else if(P.method == advantra)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Advantra");
+       tmpfolder = P.output_folder+("/tmp_Advantra");
     else if(P.method == tremap)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_TReMAP");
+       tmpfolder = P.output_folder+("/tmp_TReMAP");
     else if(P.method == mst)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MST");
+       tmpfolder = P.output_folder+("/tmp_MST");
     else if(P.method == neuronchaser)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NeuronChaser");
+       tmpfolder = P.output_folder+("/tmp_NeuronChaser");
     else if(P.method == rivulet2)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_Rivulet2");
+       tmpfolder = P.output_folder+("/tmp_Rivulet2");
 
     if(!tmpfolder.isEmpty())
        system(qPrintable(QString("rm -rf %1").arg(tmpfolder.toStdString().c_str())));
@@ -3056,66 +3063,66 @@ bool all_tracing(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inpu
 
     if(P.method == neutube)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-        finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_neutube_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_NEUTUBE");
+        finaloutputswc = P.markerfilename + ("_nc_neutube_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_neutube_adp_left.swc");
     }
     else if (P.method == snake)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
-        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_snake_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_SNAKE");
+        finaloutputswc = P.markerfilename + ("_nc_snake_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_snake_adp_left.swc");
 
     }
     else if (P.method == most)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
-        finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_most_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_MOST");
+        finaloutputswc = P.markerfilename + ("_nc_most_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_most_adp_left.swc");
 
     }
     else if (P.method == app2)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_app2_combined_left.swc");
+        saveDirString = P.output_folder.append("/tmp_COMBINED");
+        finaloutputswc = P.markerfilename + ("_nc_app2_combined.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_app2_combined_left.swc");
 
     }
     else if (P.method == neurogpstree)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuroGPSTree");
-        finaloutputswc = P.inimg_file + ("_nc_NeuroGPSTree_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_NeuroGPSTree_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_NeuroGPSTree");
+        finaloutputswc = P.markerfilename + ("_nc_NeuroGPSTree_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_NeuroGPSTree_adp_left.swc");
     }
     else if (P.method == advantra)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Advantra");
-        finaloutputswc = P.inimg_file + ("_nc_Advantra_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_Advantra_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_Advantra");
+        finaloutputswc = P.markerfilename + ("_nc_Advantra_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_Advantra_adp_left.swc");
     }
     else if (P.method == tremap)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_TReMAP");
-        finaloutputswc = P.inimg_file + ("_nc_TReMAP_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_TReMAP_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_TReMAP");
+        finaloutputswc = P.markerfilename + ("_nc_TReMAP_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_TReMAP_adp_left.swc");
     }
     else if (P.method == mst)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MST");
-        finaloutputswc = P.inimg_file + ("_nc_MST_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_MST_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_MST");
+        finaloutputswc = P.markerfilename + ("_nc_MST_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_MST_adp_left.swc");
     }
     else if (P.method == neuronchaser)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NeuronChaser");
-        finaloutputswc = P.inimg_file + ("_nc_NeuronChaser_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_NeuronChaser_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_NeuronChaser");
+        finaloutputswc = P.markerfilename + ("_nc_NeuronChaser_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_NeuronChaser_adp_left.swc");
     }
     else if (P.method == rivulet2)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_Rivulet2");
-        finaloutputswc = P.inimg_file + ("_nc_Rivulet2_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_Rivulet2_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_Rivulet2");
+        finaloutputswc = P.markerfilename + ("_nc_Rivulet2_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_Rivulet2_adp_left.swc");
     }
     QString imageSaveString = saveDirString;
 
@@ -3692,28 +3699,28 @@ bool all_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkL
 
     if(P.method == neutube)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-        finaloutputswc = P.inimg_file + ("_nc_neutube_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_neutube_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_NEUTUBE");
+        finaloutputswc = P.markerfilename + ("_nc_neutube_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_neutube_adp_left.swc");
     }
     else if (P.method == snake)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
-        finaloutputswc = P.inimg_file + ("_nc_snake_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_snake_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_SNAKE");
+        finaloutputswc = P.markerfilename + ("_nc_snake_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_snake_adp_left.swc");
     }
     else if (P.method == most)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
-        finaloutputswc = P.inimg_file + ("_nc_most_adp.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_most_adp_left.swc");
+        saveDirString = P.output_folder.append("/tmp_MOST");
+        finaloutputswc = P.markerfilename + ("_nc_most_adp.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_most_adp_left.swc");
 
     }
     else if (P.method == app2)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        finaloutputswc = P.inimg_file + ("_nc_app2_combined.swc");
-        finaloutputswc_left = P.inimg_file + ("_nc_app2_combined_left.swc");
+        saveDirString = P.output_folder.append("/tmp_COMBINED");
+        finaloutputswc = P.markerfilename + ("_nc_app2_combined.swc");
+        finaloutputswc_left = P.markerfilename + ("_nc_app2_combined_left.swc");
 
     }
 
@@ -4195,27 +4202,27 @@ bool all_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QString finaloutputswc;
     if(P.method == neutube)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
-        finaloutputswc = P.inimg_file + ("_nc_neutube_adp_3D.swc");
+        saveDirString = P.output_folder.append("/tmp_NEUTUBE");
+        finaloutputswc = P.markerfilename + ("_nc_neutube_adp_3D.swc");
     }
     else if (P.method == snake)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
-        finaloutputswc = P.inimg_file + ("_nc_snake_adp_3D.swc");
+        saveDirString = P.output_folder.append("/tmp_SNAKE");
+        finaloutputswc = P.markerfilename + ("_nc_snake_adp_3D.swc");
     }
     else if (P.method == most)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
-        finaloutputswc = P.inimg_file + ("_nc_most_adp_3D.swc");
+        saveDirString = P.output_folder.append("/tmp_MOST");
+        finaloutputswc = P.markerfilename + ("_nc_most_adp_3D.swc");
     }
     else if (P.method == app2)
     {
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-        finaloutputswc = P.inimg_file + ("_nc_app2_adp_3D.swc");
+        saveDirString = P.output_folder.append("/tmp_COMBINED");
+        finaloutputswc = P.markerfilename + ("_nc_app2_adp_3D.swc");
     }
 
     if(P.global_name)
-        finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
+        finaloutputswc = P.output_folder.append("/nc_APP2_GD.swc");
 
     QString imageSaveString = saveDirString;
     V3DLONG start_x,start_y,start_z,end_x,end_y,end_z;
@@ -4871,8 +4878,8 @@ bool ada_win_finding(LandmarkList tips,LocationSimple tileLocation,LandmarkList 
 bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
-    QString finaloutputswc = P.inimg_file + ("_nc_combo.swc");
+    QString saveDirString = P.output_folder.append("/tmp_COMBINED");
+    QString finaloutputswc = P.markerfilename + ("_nc_combo.swc");
 
     QString imageSaveString = saveDirString;
 
@@ -5353,12 +5360,12 @@ bool combo_tracing_ada_win(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landmar
 bool combo_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList)
 {
 
-    QString saveDirString = QFileInfo(P.inimg_file).path()+ QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+    QString saveDirString = P.output_folder+ QString("/x_%1_y_%2_z_%3_tmp_COMBINED").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
     QString finaloutputswc;
     if(P.global_name)
-        finaloutputswc = P.inimg_file + QString("_nc_APP2_GD.swc");
+        finaloutputswc = P.markerfilename + QString("_nc_APP2_GD.swc");
     else
-        finaloutputswc = P.inimg_file + QString("x_%1_y_%2_z_%3_nc_combo_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+        finaloutputswc = P.markerfilename + QString("x_%1_y_%2_z_%3_nc_combo_adp_3D.swc").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
 
     QString imageSaveString = saveDirString;
 
@@ -6376,13 +6383,15 @@ bool grid_raw_all(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         }
     }
 
+    P.output_folder = QFileInfo(P.markerfilename).path();
+
     QString tmpfolder;
     if(P.method == neutube)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_NEUTUBE");
+       tmpfolder = P.output_folder+("/tmp_NEUTUBE");
     else if(P.method == snake)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_SNAKE");
+       tmpfolder = P.output_folder+("/tmp_SNAKE");
     else if(P.method == most)
-       tmpfolder = QFileInfo(fileOpenName).path()+("/tmp_MOST");
+       tmpfolder = P.output_folder+("/tmp_MOST");
 
 
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -6438,13 +6447,13 @@ bool all_tracing_grid(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,V3DLONG ix, 
 {
     QString saveDirString;
     if(P.method == neutube)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_NEUTUBE");
+        saveDirString = P.output_folder.append("/tmp_NEUTUBE");
     else if (P.method == snake)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_SNAKE");
+        saveDirString = P.output_folder.append("/tmp_SNAKE");
     else if (P.method == most)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_MOST");
+        saveDirString = P.output_folder.append("/tmp_MOST");
     else if (P.method == app2)
-        saveDirString = QFileInfo(P.inimg_file).path().append("/tmp_COMBINED");
+        saveDirString = P.output_folder.append("/tmp_COMBINED");
 
     QString imageSaveString = saveDirString;
 
@@ -6776,7 +6785,8 @@ NeuronTree DL_eliminate_swc(NeuronTree nt,QList <ImageMarker> marklist)
 
 bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P)
 {
-    QString finaloutputswc = QFileInfo(P.inimg_file).path().append("/nc_APP2_GD.swc");
+    P.output_folder = QFileInfo(P.markerfilename).path();
+    QString finaloutputswc = P.output_folder.append("/nc_APP2_GD.swc");
     NeuronTree nt_APP2 = readSWC_file(finaloutputswc);
     QList<NeuronSWC> neuronAPP2_sorted;
     if (!SortSWC(nt_APP2.listNeuron, neuronAPP2_sorted,VOID, 10))
@@ -6796,7 +6806,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
     QList<NeuronSWC> list = nt.listNeuron;
-    QString tips_folder = QFileInfo(P.inimg_file).path()+ QString("/tips");
+    QString tips_folder = P.output_folder+ QString("/tips");
     system(qPrintable(QString("mkdir %1").arg(tips_folder.toStdString().c_str())));
     QList<ImageMarker> tipMarkerList;
 
@@ -6838,7 +6848,7 @@ bool extract_tips(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA &P
             crawler_raw_app(callback,parent,P,0);
 
             //detect branch points and call GD
-            QString GD_folder = QFileInfo(P.inimg_file).path()+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
+            QString GD_folder = P.output_folder+QString("/x_%1_y_%2_z_%3_tmp_GD_Curveline").arg(P.listLandmarks[0].x).arg(P.listLandmarks[0].y).arg(P.listLandmarks[0].z);
             QString GD_result_name = GD_folder + QString("/scanData.txtwofusion.swc");
             QString branches_folder = GD_folder + QString("/branches");
             system(qPrintable(QString("mkdir %1").arg(branches_folder.toStdString().c_str())));
@@ -7260,7 +7270,7 @@ NeuronTree smartPrune(NeuronTree nt, double length)
                 if(parent_tip == 1000000000)
                     break;
             }
-            if(index_tip < length && list.at(childs[parent_tip].at(0)).type != list.at(childs[parent_tip].at(1)).type)
+            if(parent_tip != 1000000000 && index_tip < length && list.at(childs[parent_tip].at(0)).type != list.at(childs[parent_tip].at(1)).type)
             {
                 flag[i] = -1;
 

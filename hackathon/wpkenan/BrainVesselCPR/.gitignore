@@ -1,0 +1,5 @@
+Makefile
+*.user
+*.o
+.vscode
+moc_*

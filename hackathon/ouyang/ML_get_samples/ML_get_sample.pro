@@ -6,7 +6,12 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/
 INCLUDEPATH	+= $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_connector/
-
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
+INCLUDEPATH     += $$VAA3DPATH/../vaa3d_tools/v3d_main/basic_c_fun/
+INCLUDEPATH     +=/home/braincenter4/vaa3d_tools/hackathon/fl_cellseg/src
+unix {
+    LIBS        += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+     }
 HEADERS	+= ML_get_sample_plugin.h \
     ../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h \
     APP1_pruning.h \
@@ -14,7 +19,8 @@ HEADERS	+= ML_get_sample_plugin.h \
 SOURCES	+= ML_get_sample_plugin.cpp \
     APP1_pruning.cpp \
     ../../../../v3d_external/released_plugins_more/v3d_plugins/blastneuron_plugin/pre_processing/prune_short_branch.cpp \
-    tip_main.cpp
+    tip_main.cpp \
+    ../../../released_plugins/v3d_plugins/blastneuron_plugin/pre_processing/pca1.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp

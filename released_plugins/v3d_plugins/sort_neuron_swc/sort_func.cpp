@@ -181,7 +181,7 @@ bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 		fileSaveName = fileOpenName+QString("_sorted.swc");
 	}
 
-	if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
+    if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC") || fileOpenName.endsWith(".eswc") || fileOpenName.endsWith(".ESWC"))
 		neuron = readSWC_file(fileOpenName).listNeuron;
 	else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
 	{

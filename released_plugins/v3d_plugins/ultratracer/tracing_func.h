@@ -28,6 +28,7 @@ struct TRACE_LS_PARA
     int grid_trace;
     int global_name;
     int soma;
+    int resume;
 
     V3DLONG in_sz[3];
 
@@ -40,7 +41,7 @@ struct TRACE_LS_PARA
 
     Image4DSimple* image;
     LandmarkList listLandmarks;
-    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd;
+    QString tcfilename,inimg_file,rawfilename,markerfilename,swcfilename,inimg_file_2nd,output_folder;
 };
 
 

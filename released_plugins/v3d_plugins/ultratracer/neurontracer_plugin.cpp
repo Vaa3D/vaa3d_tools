@@ -637,6 +637,7 @@ bool neurontracer::dofunc(const QString & func_name, const V3DPluginArgList & in
 
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        P.resume = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;  //add continue tracing option
         P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
         P.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;

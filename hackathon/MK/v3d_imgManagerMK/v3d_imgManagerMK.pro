@@ -45,6 +45,7 @@ LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib
 #LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/boost_1_57_0/lib -lboost_system
 
 SOURCES += ./ImgManager.cpp
+SOURCES += ./processManager.cpp
 SOURCES += ./imgAnalyzer/ImgAnalyzer.cpp
 SOURCES += ./imgProcessor/ImgProcessor.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage.cpp
@@ -75,6 +76,7 @@ win32: {
 }
 
 HEADERS += ./ImgManager.h
+HEADERS += ./processManager.h
 HEADERS += ./imgAnalyzer/ImgAnalyzer.h
 HEADERS += ./imgProcessor/ImgProcessor.h
 HEADERS += ../NeuronStructNavigator/NeuronStructUtilities.h

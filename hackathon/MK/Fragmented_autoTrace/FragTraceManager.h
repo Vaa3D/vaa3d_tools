@@ -1,17 +1,22 @@
 #ifndef _FRAGTRACEMANAGER_H_
 #define _FRAGTRACEMANAGER_H_
 
-//#ifndef Q_MOC_RUN
+#include <qprogressbar.h>
+#include <qprogressdialog.h>
+#include <qtimer.h>
+
+#ifndef Q_MOC_RUN
 #include "ImgManager.h"
 #include "ImgAnalyzer.h"
 #include "ImgProcessor.h"
+#include "processManager.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
-//#endif
+#endif
 
 enum workMode { wholeBlock_axon, dendriticTree };
 
-class FragTraceManager: public QObject
+class FragTraceManager: public QWidget
 {
 	Q_OBJECT
 
@@ -47,18 +52,29 @@ public:
 	string MSTtreeName;
 	int minNodeNum;
 
+	bool blankArea;
+	vector<int> blankXs;
+	vector<int> blankYs;
+	vector<int> blankZs;
+	vector<int> blankRadius;
+
 	vector<connectedComponent> signalBlobs;
 	vector<connectedComponent> signalBlobs2D;
 
 	profiledTree segConnectAmongTrees(const profiledTree& inputProfiledTree, float distThreshold);
 
-public slots:
-	void imgProcPipe_wholeBlock();
+	bool imgProcPipe_wholeBlock();
 
 signals:
 	void emitTracedTree(NeuronTree tracedTree);
 
+public slots:
+	bool blobProcessMonitor(ProcessManager& blobMonitor);
+
 private:
+	int numProcs;
+	QProgressDialog* progressBarDiagPtr;
+
 	vector<vector<unsigned char>> imgSlices;
 	ImgManager fragTraceImgManager;
 	ImgAnalyzer fragTraceImgAnalyzer;
@@ -72,7 +88,7 @@ private:
 	void histThreImg(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 	void histThreImg3D(const string inputRegImgName, V3DLONG dims[], const string outputRegImgName);
 
-	void mask2swc(const string inputImgName, string outputTreeName);
+	bool mask2swc(const string inputImgName, string outputTreeName);
 	void smallBlobRemoval(vector<connectedComponent>& signalBlobs, const int sizeThre);
 	inline void get2DcentroidsTree(vector<connectedComponent> signalBlobs);
 };

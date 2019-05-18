@@ -44,6 +44,8 @@ NeuronTree neuronlist_2_neurontree(QList<NeuronSWC> neuronlist);
 QList<float> evalute_smooth(NeuronTree nt,QList<CellAPO> & pin_points);
 QList<float> splines_curvature(Segment *seg, QList<CellAPO> &pin_points);
 QList<float> discrete_curvature(Segment *seg, QList<CellAPO> & pin_points);
+QList<CellAPO> pin_points_detection(Segment *seg,QList<CellAPO> & pin_points);
+
 
 
 

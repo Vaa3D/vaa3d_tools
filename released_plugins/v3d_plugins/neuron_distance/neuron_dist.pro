@@ -21,7 +21,7 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/neuron_editing/neuron_sim_scores.cpp
 SOURCES	+= $$VAA3DPATH/neuron_editing/v_neuronswc.cpp
 SOURCES += $$VAA3DPATH/../../vaa3d_tools/released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.cpp
-
+SOURCES += $$VAA3DPATH/neuron_editing/global_feature_compute.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_dist)
 DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/neuron_distance

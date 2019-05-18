@@ -7,6 +7,8 @@
 #include <vector>
 #include "refine_swc_funcs.h"
 
+#include <algorithm>
+
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../released_plugins/v3d_plugins/swc_to_maskimage/filter_dialog.h"
 #include <math.h>
@@ -22,7 +24,7 @@ using namespace std;
 #define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(NTDIS(a,b)*NTDIS(a,c)))*180.0/3.14159265359)
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 #define DISTPS(a,b) (sqrt(((a)->x-(b).x)*((a)->x-(b).x)+((a)->y-(b).y)*((a)->y-(b).y)+((a)->z-(b).z)*((a)->z-(b).z)))
-#define ABS(a) (a>0 ? a:(-a))
+#define ABS(a) (a>0.0 ? a:(-a))
 #define MAX(a,b) (a>b? a: b)
 
 
@@ -1309,15 +1311,28 @@ QList<float> evalute_smooth( NeuronTree nt, QList<CellAPO> & pin_points)
     //calculate the curvature difference of each point on a segment
     //two different definitions of curvature, one is on splines interpolation and the other on angles
 
-
     QList<float> curv_diff;
     for (V3DLONG i=0;i<seg_list.size();i++)
     {
  //       if(seg_list[i]->size()<5) continue;
  //     QList<float> curv_diff=splines_curvature(seg_list[i],pin_points);
-      if(seg_list[i]->size()<3) continue;
+        if(seg_list[i]->size()<5) continue;
+
+        float dist=0;
+        for(int j=1; j<seg_list.at(i)->size();j++)
+        {
+
+            dist+=DISTP(seg_list.at(i)->at(j),seg_list.at(i)->at(j-1));
+        }
+
+
+        cout<<"seg_length=\n"<<dist<<endl;
+        if(dist<50.0) continue;
+
 
         QList<float> curvat=discrete_curvature(seg_list[i], pin_points);
+
+        //QList<CellAPO> peak_points= pin_points_detection(seg_list[i],pin_points);
 
 
 
@@ -1327,6 +1342,11 @@ QList<float> evalute_smooth( NeuronTree nt, QList<CellAPO> & pin_points)
     return curv_diff;
 
 }
+
+
+
+
+
 
 
 QList<float> splines_curvature(Segment *seg, QList<CellAPO> & pin_points)
@@ -1500,6 +1520,8 @@ QList<float> discrete_curvature(Segment *seg, QList<CellAPO> & pin_points)
         float alpha=acos(cos_alpha);
         angles_list.push_back(alpha);
 
+        //std::cout<<"angle=\n"<<alpha<<std::endl;
+
         //curvature calculation
         float curv=2*alpha/(length[i]+length[i-1]);
 
@@ -1508,15 +1530,193 @@ QList<float> discrete_curvature(Segment *seg, QList<CellAPO> & pin_points)
 
     }
 
+    for(int i=1; i<angles_list.size();i++)
+        {
+            //float diff= ABS(curv_list[i-1]-curv_list[i])/curv_list[i];
+            if(angles_list[i]> 1.57) //pi/2
+                {
+               // std::cout<<"\npeak points found"<<std::endl;
+                //std::cout<<"alpha"<<i<<"="<<angles_list[i]<<std::endl;
+                //std::cout<<"curvature"<<i<<"="<<curv_list[i]<<std::endl;
 
-    for(int i=1; i<curv_list.size();i++)
+                CellAPO tmp;
+                tmp.x=seg->at(i)->x;
+                tmp.y=seg->at(i)->y;
+                tmp.z=seg->at(i)->z;
+                tmp.volsize=50;
+                tmp.color.r=255;
+                tmp.color.g=255;
+                tmp.color.b=0;
+                pin_points.push_back(tmp);
+            }
+    }
+
+
+
+
+
+
+
+//    for(int i=1; i<curv_list.size();i++)
+//    {
+//        float diff= ABS(curv_list[i-1]-curv_list[i])/curv_list[i];
+//        if(curv_list[i]>1.2 )
+//            {
+//            std::cout<<"\npeak points found"<<std::endl;
+//            std::cout<<"alpha"<<i<<"="<<angles_list[i]<<std::endl;
+//            std::cout<<"curvature"<<i<<"="<<curv_list[i]<<std::endl;
+
+//            CellAPO tmp;
+//            tmp.x=seg->at(i)->x;
+//            tmp.y=seg->at(i)->y;
+//            tmp.z=seg->at(i)->z;
+//            tmp.volsize=50;
+//            tmp.color.r=255;
+//            tmp.color.g=255;
+//            tmp.color.b=0;
+//            pin_points.push_back(tmp);
+//        }
+
+//    }
+
+}
+
+
+
+
+
+QList<CellAPO> pin_points_detection(Segment *seg,QList<CellAPO> & pin_points)
+{
+    int step=20;
+    double path_length=0;
+    QList<Point*> sample_points;
+    sample_points.push_back(seg->at(0));
+    int n = seg->size();
+    for(int i=1; i<n; i++)
     {
-        float diff= ABS(curv_list[i-1]-curv_list[i])/curv_list[i];
-        if(curv_list[i]>1.2 )
-            {
-            std::cout<<"\npeak points found"<<std::endl;
-            std::cout<<"alpha"<<i<<"="<<angles_list[i]<<std::endl;
-            std::cout<<"curvature"<<i<<"="<<curv_list[i]<<std::endl;
+
+        path_length+=DISTP(seg->at(i),seg->at(i-1));
+        if(path_length>step)
+        {
+
+            sample_points.push_back(seg->at(i));
+
+        }
+
+    }
+
+    if(!sample_points.contains(seg->at(n-1)))
+    {
+        sample_points.push_back(seg->at(n-1));
+    }
+
+    int m=sample_points.size();
+    Vec3f *points= new Vec3f[m];
+    std::cout<<"sample_points_size="<<m<<std::endl;
+
+    if(m<3) {
+        std::cout<<"too few sample points, skip"<< std::endl;
+        QList<CellAPO> empty;
+        return empty;
+
+    }
+
+    for(int j=0; j<m;j++ )
+    {
+
+        points[j].x=sample_points.at(j)->x;
+        points[j].y=sample_points.at(j)->y;
+        points[j].z=sample_points.at(j)->z;
+
+    }
+
+    const int numPoints=m;
+    cSpline3 splines[numPoints + 1];
+
+    int numSplines = SplinesFromPoints(numPoints, points, numPoints + 1, splines);
+    float ts = 0.2f;
+
+//    for(int j=0; j<numSplines; j++)
+//    {
+//        float cs = Curvature(splines[j], ts);
+
+//        std::cout<<"curvature"<<j<<"=\n"<<cs<<std::endl;
+//    }
+
+
+    Vec3f *queryPoints = new Vec3f[n];
+
+    for(int k=0; k<n;k++)
+    {
+        queryPoints[k].x= seg->at(k)->x;
+        queryPoints[k].y= seg->at(k)->y;
+        queryPoints[k].z= seg->at(k)->z;
+    }
+
+    //for(Vec3f qp: queryPoints)
+    QList<float> distance_list;
+
+
+
+
+
+    for(int i=0; i<n;i++ )
+    {
+        const Vec3f qp= queryPoints[i];
+        int index;
+        float t=FindClosestPoint(qp,numSplines,splines,&index);
+
+        Vec3f cp= Position(splines[index],t);
+
+        float patial_distance= NTDIS(qp,cp);
+
+        distance_list.push_back(patial_distance);
+        std::cout<<"distance_list"<<i<<"=\n"<<patial_distance<<std::endl;
+
+    }
+
+
+
+    sort(distance_list.begin(),distance_list.end());
+
+    float median= distance_list.at(n/2);
+
+
+    QList<float> Med_Median_list;
+    for(int i=0; i<n;i++)
+    {
+    std::cout<<"after sorting"<<i<<"="<<distance_list.at(i)<<std::endl;
+    float med_median;
+    med_median= ABS(distance_list.at(i)-median);
+
+    Med_Median_list.push_back(med_median);
+
+
+    }
+
+    sort(Med_Median_list.begin(),Med_Median_list.end());
+
+    float md_median=Med_Median_list.at(n/2);
+
+    std::cout<<"median=\n"<<median<<std::endl;
+    std::cout<<"med_median=\n"<<md_median<<std::endl;
+
+    float MAD=1.4827*md_median;
+
+    for(int i=0; i<n; i++)
+    {
+
+        std::cout<<"Med_Median_list\n"<<Med_Median_list.at(i)<<endl;
+
+
+
+        float distance_coeff=(distance_list.at(i)-median)/MAD;
+        if(distance_coeff>3)
+        {
+           std::cout<<"a peak point found"<<std::endl;
+           //std::cout<< "close point to qp ("<<qp.x<<qp.y<<qp.z<<") is "<<"\n("<<cp.x<<cp.y<<cp.z<<")";
+           //std::cout<<"\n distance to the splines= "<<patial_distance<<std::endl;
+
 
             CellAPO tmp;
             tmp.x=seg->at(i)->x;
@@ -1527,14 +1727,34 @@ QList<float> discrete_curvature(Segment *seg, QList<CellAPO> & pin_points)
             tmp.color.g=255;
             tmp.color.b=0;
             pin_points.push_back(tmp);
+
+
         }
+
+
+
 
     }
 
 
 
 
+    delete[] points;
+    delete[] queryPoints;
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

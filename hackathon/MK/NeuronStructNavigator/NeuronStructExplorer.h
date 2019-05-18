@@ -139,6 +139,8 @@ public:
 	inline void tileSegConnOrganizer_angle(const map<string, double>& segAngleMap, set<int>& connectedSegs, map<int, int>& elongConnMap);
 	
 	profiledTree treeUnion_MSTbased(const profiledTree& expandingPart, const profiledTree& baseTree);
+
+	profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const int yRange, const int zRange);
 	/********************************************************************************/
 
 
@@ -161,6 +163,8 @@ public:
 
 	double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
+
+	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
 	/********************************************/
 
 
@@ -192,7 +196,7 @@ inline NeuronTree NeuronStructExplorer::MSTtreeCut(NeuronTree& inputTree, double
 			double x1 = it->x;
 			double y1 = it->y;
 			double z1 = it->z;
-			size_t paID = it->parent;
+			int paID = it->parent;
 			double x2 = inputTree.listNeuron.at(paID - 1).x;
 			double y2 = inputTree.listNeuron.at(paID - 1).y;
 			double z2 = inputTree.listNeuron.at(paID - 1).z;

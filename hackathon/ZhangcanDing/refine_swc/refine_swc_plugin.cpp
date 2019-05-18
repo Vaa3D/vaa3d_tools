@@ -105,6 +105,25 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString apofilename=QString(outfiles[0]);
         writeAPO_file(apofilename,pin_points);
 
+//        QList<ImageMarker> sample_points;
+//        QList<CellAPO> pinpoints;
+//        NeuronTree nt_broken= breakSWC(nt,20,sample_points);
+//        V_NeuronSWC_list nt_decomposed=NeuronTree__2__V_NeuronSWC_list(nt_broken);
+//        NeuronTree nt_new=V_NeuronSWC_list__2__NeuronTree(nt_decomposed);
+
+//        QList<float> curvature= evalute_smooth(nt,pin_poibts,sample_points);
+
+
+
+
+
+
+        //QString markerfilename="/home/penglab/PBserver/tmp/ding/smoothness_eval/break_10.marker";
+        //writeMarker_file(markerfilename,sample_points);
+        //QString swcfilename="/home/penglab/PBserver/tmp/ding/smoothness_eval/break_10.eswc";
+        //writeESWC_file(swcfilename,nt_broken);
+
+
 
 
 
@@ -324,7 +343,8 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 //        writeMarker_file(tip2,tips_refined);
     }else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printf("This is a plugin for refinement \n");
+        printf("Usage£º vaa3d -x refine_swc -f refine_v2 -i <terafly image path> <corresponding swc> -o <outputswc> ");
 	}
 	else return false;
 

@@ -39,7 +39,9 @@ void NeuronSeg::Neuron_Segmentation(short *apfImg, int *iSigma,
 	static int nDx[] = {-1,0,1,-1,0,1,-1,0,1};
 	static int nDy[] = {-1,-1,-1,0,0,0,1,1,1};
 	static int nDz[] = {-1,0,1};
-	
+
+
+
 	int x,y,z,index;
 	
 	int imagesize = sy*sx;
@@ -59,8 +61,10 @@ void NeuronSeg::Neuron_Segmentation(short *apfImg, int *iSigma,
 	printf("sy=%ld sx=%ld sz=%ld fa=%lf fb=%lf fc=%lf\n",sy,sx,sz,fA,fB,fC);
 
 	NeuronEnhancementFilter m_VesEnhanFilter;
-	m_VesEnhanFilter.MultiScaleFilter3D(apfImg, NULL, sx, sy, sz, iSigma, iSigmaLen, fA, fB, fC);
 
+	
+	m_VesEnhanFilter.MultiScaleFilter3D(apfImg, NULL, sx, sy, sz, iSigma, iSigmaLen, fA, fB, fC);
+	
 	short fMax = apfImg[0];
 	short fMin = apfImg[0];
 	for(i=1; i<iElements; i++)
@@ -180,7 +184,7 @@ void NeuronSeg::Neuron_Segmentation2(short *apfImg, int *iSigma,
             apfImg[i]  = fMadMi * (apfImg[i]-fMin); //rescale between 0 and 4095/255
         }
     }
-    else
+    else             
     {
         for(i=0; i<iElements; i++)
             apfImg[i] = 0;
@@ -192,13 +196,15 @@ void NeuronSeg::Neuron_Segmentation2(short *apfImg, int *iSigma,
         return;
 
     //binarization
-    
+  
 	if (bBinaryPro) 
 	{
 		short *apsTmpImg = new short[iElements];
 		memset(apsTmpImg, 0, iElements*sizeof(short));
+		
 		BinaryProcess(apfImg, sy, sx, sz, apsTmpImg);
-
+	
+	
 		for( i=0; i<iElements; i++)
 		{
 			apfImg[i] = apsTmpImg[i];
@@ -243,7 +249,7 @@ void NeuronSeg::VoiSelect(short* apsInputData, short*apsImg, int iImageLayer, in
 	vector<int> vy;
 	vector<int> vz;
 
-	int counter = 0;
+	int counter = 0;    
 	int counter1 = 0;
 
 	int a=0, b=0, c=0, e=0, f=0, g=0;	
@@ -352,8 +358,8 @@ void NeuronSeg::VoiSelect(short* apsInputData, short*apsImg, int iImageLayer, in
 	}
     
 	memcpy(apsInputData, apsMask, sizeof(short)*iTotal);
-	delete []apsMask;
-    delete []InputCopy;
+	if(apsMask!=NULL){delete []apsMask;apsMask=NULL;}
+	if(InputCopy!=NULL){delete []InputCopy;InputCopy=NULL;}
 	return;
 }
 
