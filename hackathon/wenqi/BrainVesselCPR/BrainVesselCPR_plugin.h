@@ -8,6 +8,17 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include <queue>
+#include <iostream>
+#include <string>
+#include "v3d_message.h"
+#include <vector>
+#include "basic_surf_objs.h"
+#include <stdlib.h>
+
+#include "BrainVesselCPR_gui.h"
+#include "BrainVesselCPR_filter.h"
+
 
 class BrainVesselCPRPlugin : public QObject, public V3DPluginInterface2_1
 {
