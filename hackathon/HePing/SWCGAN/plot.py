@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-def plot_loss_trace(loss):
+def plot_loss_trace(loss,str):
     """
     Plot trace of loss.
 
@@ -9,12 +9,14 @@ def plot_loss_trace(loss):
     ----------
     loss: list or array of a loss trace
     """
+
     plt.figure(figsize=(3, 2))
     plt.plot(loss)
+    plt.title(str)
     plt.show()
 
 
-def plot_adjacency(X_parent_real, X_parent_gen):
+def plot_adjacency(X_parent_real, X_parent_gen,str):
     """
     Plot a pair of adjacency matrices side by side.
 
@@ -27,6 +29,7 @@ def plot_adjacency(X_parent_real, X_parent_gen):
                    interpolation='none',
                    cmap='Greys')  # 2D mesh
         plt.subplot(1, 2, 2)
+        plt.suptitle(str)
         plt.imshow(X_parent_gen[sample, :, :],
                    interpolation='none',
                    cmap='Greys')

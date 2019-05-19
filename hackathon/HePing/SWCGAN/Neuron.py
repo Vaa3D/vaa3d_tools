@@ -1435,12 +1435,12 @@ class Neuron(object):
 
         self.n_soma = 0
         self.nodes_list = []
-        self.location = np.array([0, 0, 0] ).reshape(3,1)
+        self.location = np.array([0, 0, 0] ).reshape(3,1)  # soam location
         self.type = 1
-        self.parent_index = np.array([0])
+        self.parent_index = np.array([0])  # soam parent
         child_index = lil_matrix((2,1000000))
         f = open(input_file, 'r',encoding='utf-8')
-        print('start read a swc file')
+        # print('start read a swc file')
         B = True
         try:
             for line in f:
