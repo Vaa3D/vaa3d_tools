@@ -72,7 +72,7 @@ NeuronTree construcSwc(vector<Coor3D> path_point)
 }
 
 //smooth curve function. just the average of #winsize neighbour coordinates.
-bool smooth_curve(std::vector<Coor3D> & mCoord, int winsize)
+bool smooth_curve(vector<Coor3D> & mCoord, int winsize)
 {
     //std::cout<<" smooth_curve ";
     if (winsize<2) return true;
@@ -200,6 +200,52 @@ vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLO
     return path_meanshift;
 }
 
+vector<Coor3D> reSampleCurve(vector<Coor3D> path, int step)
+{
+    vector<Coor3D> new_path;
+    new_path.clear();
+    double * len_from_start = new double[path.size()];
+    //double total_len = 0;
+    double gap;
+
+    len_from_start[0] = 0;
+    for(int i=1;i<path.size();i++)
+    {
+        gap = sqrt((path[i].x-path[i-1].x) * (path[i].x-path[i-1].x) +
+                      (path[i].y-path[i-1].y) * (path[i].y-path[i-1].y) +
+                      (path[i].z-path[i-1].z) * (path[i].z-path[i-1].z));
+        len_from_start[i] = len_from_start[i-1] + gap;
+    }
+    int resample_num = ceil(len_from_start[path.size()-1]);
+    Coor3D tmp_coor;
+
+    // first point not changed.
+    tmp_coor.x = path[0].x;
+    tmp_coor.y = path[0].y;
+    tmp_coor.z = path[0].z;
+    new_path.push_back(tmp_coor);
+
+    int search_idx = 0;
+    double resample_len_from_start = 0;
+    double scale_ratio;
+    for (int i=1;i<resample_num;i++)
+    {
+        resample_len_from_start = i * step;
+        while(search_idx<path.size() && len_from_start[search_idx] < resample_len_from_start)
+        {
+            search_idx++;
+        }
+
+        scale_ratio = (resample_len_from_start - len_from_start[search_idx-1]) / (len_from_start[search_idx] - len_from_start[search_idx-1]);
+
+        tmp_coor.x = path[search_idx-1].x + scale_ratio * (path[search_idx].x - path[search_idx-1].x);
+        tmp_coor.y = path[search_idx-1].y + scale_ratio * (path[search_idx].y - path[search_idx-1].y);
+        tmp_coor.z = path[search_idx-1].z + scale_ratio * (path[search_idx].z - path[search_idx-1].z);
+
+        new_path.push_back(tmp_coor);
+    }
+    return new_path;
+}
 
 // path finding function using modified A* algorithm
 void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent)
@@ -294,6 +340,8 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     tmpCoor3D.x = tmp % x_length;
     tmpCoor3D.y = floor(tmp % (x_length * y_length)) / x_length;
     tmpCoor3D.z = floor(tmp / (x_length * y_length));
+
+    //smooth path
     smooth_path.push_back(tmpCoor3D);
 
     //meanshift
@@ -310,8 +358,11 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     cout << "path size (after smooth): " << smooth_path.size() << endl;
     //display trace in 3d
 
+    //resample path
+    vector<Coor3D> resampled_path;
+    resampled_path = reSampleCurve(smooth_path, 1);
 
-    NeuronTree tree = construcSwc(smooth_path);
+    NeuronTree tree = construcSwc(resampled_path);
     //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
 
     v3dhandle curwin = callback.currentImageWindow();
@@ -324,5 +375,6 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     //writeSWC_file("/Users/walker/MyProject/test.swc", tree);
 
 }
+
 
 
