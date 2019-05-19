@@ -1,0 +1,70 @@
+[./vaa3d]
+[-x]
+[libvn3]
+[-f]
+[app3]
+[-i]
+[/home/braincenter12/Desktop/wpkenan/ultertracer/17545/x_10138_y_19183_z_1773.v3drawunet.v3draw]
+[-p]
+[/home/braincenter12/Desktop/wpkenan/ultertracer/17545/x_10138_y_19183_z_1773.v3draw.marker]
+[0]
+[AUTO]
+Current canonical path = [libvn3]
+plugins
+in_app3_line1
+5 markers loaded
+marker size: 5
+The data does not have supported image file suffix, -- now this program assumes it is Vaa3D's RAW format and tries to load it... 
+
+size of [V3DLONG]=[8], [V3DLONG]=[8] [int]=[4], [short int]=[2], [double]=[8], [float]=[4]
+The data endian code is [L]
+The machine endian code is [L]
+machine endian=[L] data endian=[L] b_swap=0
+
+Just read 33554432 units, each unit has the size = 1
+Finish reading 100% 
+No swapping of data. 
+5 markers loaded
+p.landmarks.size()4
+start to preprocessing.
+
+x = 512  y = 512  z = 128  c = 1
+dfactor_xy=2.000
+dfactor_z=1.000
+enter ds code
+imgAve+0.5*td: 4.65798
+4
+xyz255.045 256.985 63.248
+xyz380.002 216.862 3.055
+xyz220.561 71.953 88.185
+xyz234.899 102.753 93.459
+4
+##Vaa3D-Neuron-APP2 v2.621
+#channel = 0
+#bkg_thresh = -1
+#length_thresh = 5
+#SR_ratio = 0.333333
+#is_gsdt = 0
+#is_gap = 0
+#cnn_type = 2
+#b_256cube = 1
+#b_radiusFrom2D = 1
+#b_resample = 1
+#b_intensity = 0
+#b_brightfiled = 0
+#xc0 = 0
+#xc1 = 511
+#yc0 = 0
+#yc1 = 511
+#zc0 = 0
+#zc1 = 127
+#autoset #bkg_thresh = 6
+start neuron tracing for the preprocessed image.
+
+=======================================
+Construct the neuron tree
+p.bkg_thresh: 6
+p.is_break_accept: 
+app3
+wp_debug20190515 root: 0
+127.022 127.992 62.248

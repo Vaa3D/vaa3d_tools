@@ -1545,7 +1545,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     {
         P.length_thresh = 5;
         QString imageUnetString = imageSaveString + "unet.v3draw";
-	//QString imageUnetString = imageSaveString;//change by wp
+//        QString imageUnetString = imageSaveString;//change by wp
 
 ///*change by wp
 #if  defined(Q_OS_LINUX)
@@ -1661,7 +1661,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         else
             qDebug()<<"starting app2";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
-	cout << "wp_rootlist size1" << inputRootList.size() << endl;
+        cout << "wp_rootlist size1" << inputRootList.size() << endl;
 
         if(inputRootList.size() <1)
         {
@@ -1784,7 +1784,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 					wpNewLocation.x=P.listLandmarks[wp_i].x-total4DImage->getOriginX();
 					wpNewLocation.y=P.listLandmarks[wp_i].y-total4DImage->getOriginY();
 					wpNewLocation.z=P.listLandmarks[wp_i].z-total4DImage->getOriginZ();
-					p2.landmarks.push_back(wpNewLocation);
+                    cout << wpNewLocation.x << " " << wpNewLocation.y << " " << wpNewLocation.z << endl;
+                    if(wpNewLocation.x>=0&&wpNewLocation.y>=0&&wpNewLocation.z>=0&&wpNewLocation.x<total4DImage->getOriginX()&&wpNewLocation.y<total4DImage->getOriginY()&&wpNewLocation.z<total4DImage->getOriginZ()){
+                        p2.landmarks.push_back(wpNewLocation);
+                    }
+
 				}
 				
 				//LocationSimple wpNewLocation;

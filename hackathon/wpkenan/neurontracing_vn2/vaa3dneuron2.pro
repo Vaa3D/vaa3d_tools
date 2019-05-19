@@ -55,6 +55,10 @@ SOURCES += $$V3DMAINPATH/worm_straighten_c/bdb_minus.cpp \
     #$$V3DMAINPATH/neuron_editing/apo_xforms.cpp \
     #$$V3DMAINPATH/neuron_editing/neuron_xforms.cpp \
 
+#meanshift
+HEADERS += $$V3DMAINPATH/../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.h
+SOURCES += $$V3DMAINPATH/../released_plugins/v3d_plugins/mean_shift_center/mean_shift_fun.cpp
+
 TARGET	= $$qtLibraryTarget(vn3)
 DESTDIR = $$V3DMAINPATH/../bin/plugins/wpkenanPlugin/Vaa3D_Neuron3
 

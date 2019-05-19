@@ -9,7 +9,7 @@
 #include "swc_convert.h"
 #include "vn_imgpreprocess.h"
 #include "volimg_proc.h"
-#include "mean_shift_fun.h"
+#include "../mean_shift_center/mean_shift_fun.h"
 //add by wp 20181206
 bool prunThinBranch(vector<MyMarker*> &outmarkers,float thresh);
 template <class T1, class T2> bool otsu(T1 *data, V3DLONG n, T2 & thres){
