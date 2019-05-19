@@ -44,6 +44,7 @@ QStringList TestPlugin::menulist() const
 //        <<tr("input_swc_output_img")
         <<tr("Hackthon_tip_postProcess")
         <<tr("about")
+          <<tr("cal_swc_score")
           ;
 }
 
@@ -872,7 +873,43 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         cout<<"42"<<endl;
         s->show();
 
-	}
+    }
+    else if(menu_name == tr("cal_swc_score"))
+    {
+        neurontreepruneorgraft ntpg;
+        ntpg.getImgData_not_process_tip(callback, parent);
+        // read
+        cout<<"init success"<<endl;
+
+        QVector<QVector<V3DLONG> > childs;
+        NeuronTree nt=ntpg.return_neurontree();
+        ntpg.setSwcImg(nt);
+        ntpg.binary_threshold=30;
+        ntpg.Binarization(ntpg.binary_threshold);
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        V3DLONG *flag = new V3DLONG[neuronNum];
+        for(V3DLONG i=0;i<neuronNum;i++)
+        {
+            flag[i] = 1;
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+        for(V3DLONG neu_i=0;neu_i<neuronNum;neu_i++)
+        {
+            if (childs[neu_i].size()==0)
+            {
+                float swc_score=ntpg.cal_swc_score(nt,neu_i);
+                cout<<"neu_i swc_score "<<swc_score<<endl;
+
+            }
+        }
+        callback.setLandmark(callback.currentImageWindow(),ntpg.need_to_show);
+        callback.pushObjectIn3DWindow(callback.currentImageWindow());
+
+
+    }//
 }
 
 bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)

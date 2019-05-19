@@ -161,11 +161,6 @@ vector<NeuronSWC> pointsOfTwoPoint(NeuronSWC point_a,NeuronSWC point_b)
 {
     vector<NeuronSWC> pp;
     pp.push_back(point_a);
-//    if(0)
-//    {//debug
-//        pp.push_back(point_b);
-//        return pp;
-//    }
     if(point_a==point_b)
     {
         return pp;
@@ -190,6 +185,15 @@ vector<NeuronSWC> pointsOfTwoPoint(NeuronSWC point_a,NeuronSWC point_b)
         point_a.x+=direction.x;
         point_a.y+=direction.y;
         point_a.z+=direction.z;
+        if(1)
+        {
+            if(V3DLONG(pp.end()->x+0.5)==V3DLONG(point_a.x+0.5)
+             &&V3DLONG(pp.end()->x+0.5)==V3DLONG(point_a.x+0.5)
+             &&V3DLONG(pp.end()->x+0.5)==V3DLONG(point_a.x+0.5))
+            {
+                continue;
+            }
+        }
         pp.push_back(point_a);
     }
     return pp;
@@ -890,7 +894,7 @@ float online_confidece_one_branch(V3DLONG tip_point_num,NeuronTree nt,unsigned c
         score=(float)(fore_count)/(float)total_count;
         if(score<=0.2)
         {
-            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
+//            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
             return score;
         }
     }
@@ -925,14 +929,15 @@ float online_confidece_one_branch(V3DLONG tip_point_num,NeuronTree nt,unsigned c
         }
     }
 
-    cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
-    cout<<endl;
+//    cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
+//    cout<<endl;
     return score;
 }
 float online_confidece(LocationSimple pointa,LocationSimple pointb,unsigned char * bimg_datald,V3DLONG sz[])
 {
     //输出一个系数   如果该系数曾小于0.2 则输出0.2
     //否则输出该系数
+
     if(pointa==pointb)
     {return 1;}
     V3DLONG img_size=sz[0]*sz[1]*sz[2];
@@ -963,11 +968,11 @@ float online_confidece(LocationSimple pointa,LocationSimple pointb,unsigned char
         score=(float)(fore_count+1.0)/(float)total_count;
         if(score<=0.2)
         {
-            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
+//            cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<endl;
             return score;
         }
     }
-    cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
+//    cout<<"fore_count:"<<fore_count<<" total_count:"<<total_count<<" score:"<<score<<endl;
 //    cout<<endl;
     return score;
 

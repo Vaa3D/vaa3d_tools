@@ -117,6 +117,8 @@ ScoreInput::ScoreInput(QWidget *parent) : QMainWindow(parent)
     connect(score_slider, SIGNAL(valueChanged(int)), this, SLOT(sliderValueChanger(int)));
     connect(changeWeight, SIGNAL(clicked()), this, SLOT(changeWeights()));
 //cout<<6<<endl;
+
+//    this->getNeuronTree();
 }
 void ScoreInput::changeWeights()
 {
@@ -131,6 +133,7 @@ void ScoreInput::sliderValueChanger(int value)
     score_slider_num->setText(QString::number(score_slider->value()/100.0));
 //    cout<<"sliderValueChanger "<<score_slider->value()<<endl;
    this->calFinalScore();
+    emit signal_slider_valueChanged();
 }
 
 void ScoreInput::save()
@@ -178,10 +181,6 @@ void ScoreInput::compare()
     emit signal_compare();
 
 
-
-
-//    callback->
-
 }
 
 void ScoreInput::setV3DPluginCallback2(V3DPluginCallback2 *callback2)
@@ -193,6 +192,7 @@ void ScoreInput::setV3DPluginCallback2(V3DPluginCallback2 *callback2)
     callback=callback2;
     //get neurontree
     cout<<"catch callback success"<<endl;
+//    this->getNeuronTree();
 }
 bool ScoreInput::getNeuronTree()
 {
