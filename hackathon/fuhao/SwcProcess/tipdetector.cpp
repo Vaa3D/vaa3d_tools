@@ -452,6 +452,7 @@ void TipDetector::whole_img(V3DPluginCallback2& callback)
 //            return;
 //        }
     }
+//    if();
 
     cout<<"this is a "<<sz[0]<<"*"<<sz[1]<<"*"<<sz[2]<<" size img"<<endl;
     RGBA8 p_color;
@@ -689,6 +690,8 @@ bool TipDetector::GUI_input_argu()
     intensity_threshold=intensity_threshold_spinbox->value();
     angle_threshold=angle_threshold_spinbox->value();
     angle_threshold=float(angle_threshold*0.01);
+
+
     thres_segment(new_nx*new_ny*new_nz,enlarged_datald,binar_datald,background_threshold);
 
     if (dialog)

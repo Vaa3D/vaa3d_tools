@@ -6,6 +6,7 @@ import numpy.linalg as LA
 import plot
 import pickle
 import h5py
+from datetime import datetime
 def save_swc(X_locations, X_parent,path,epoch,batch):
     """
     save generate swc
@@ -14,18 +15,22 @@ def save_swc(X_locations, X_parent,path,epoch,batch):
     :return:
     """
     locations = np.squeeze(X_locations)  # remove one dimension
+    # print(locations)
     parent = np.squeeze(X_parent).argmax(axis=1) + 1  # argmax:Returns the indices of the maximum values along an axis.
+    #print("parent : ",parent)
     full = np.zeros([parent.shape[0]+1, parent.shape[0]+1])
     full[range(1, parent.shape[0]+1), parent - 1] = 1  # full neighbor matrix ,parent = 1
-    full = LA.inv(np.eye(parent.shape[0]+1) - full)  # inverse of a matrix,all parent
-    locations = np.dot(full, np.append(np.zeros([1,3]), locations, axis=0)) # ?? dot:Dot product of two arrays, full * loactions(loactions add soma location)
-    # print(locations)
+    #print(full)
+    full = LA.pinv(np.eye(parent.shape[0]+1) - full)  # pseudoinverse of a matrix,all parent
+    # print(full)
+    locations = np.dot(full, np.append(np.zeros([1, 3]), locations, axis=0)) # ?? dot:Dot product of two arrays, full * loactions(loactions add soma location)
+    # print("locations: ",locations)
     M = np.zeros([parent.shape[0]+1, 7])
     M[:, 0] = np.arange(1, parent.shape[0]+2)
     M[0, 1] = 1
     M[1:, 1] = 3  # type
-    M[:, 2:5] = locations
-    M[:, 5] = 0.1
+    M[:, 2:5] = locations*100
+    M[:, 5] = 1.0
     M[1:, 6] = parent
     M[0, 6] = -1  # soma
     path = ('%s/epoch%s_batch%s.swc' % (path, epoch, batch))
@@ -33,7 +38,7 @@ def save_swc(X_locations, X_parent,path,epoch,batch):
     # write swc
     f = open(path, 'w')
     for i in range(M.shape[0]):
-        f.write("{0},{1},{2},{3},{4},{5},{6}\n".format(int(M[i][0]), int(M[i][1]), M[i][2], M[i][3], M[i][4], M[i][5], int(M[i][6])))
+        f.write("{0} {1} {2} {3} {4} {5} {6}\n".format(int(M[i][0]), int(M[i][1]), np.float16(M[i][2]), np.float16(M[i][3]), np.float16(M[i][4]), M[i][5], int(M[i][6])))
     f.close()
 
 
@@ -116,8 +121,8 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
     # ###############
     # Optimizers
     # ###############
-    optim_d = Adagrad()  # RMSprop(lr=lr_discriminator)
-    optim_g = Adagrad() # RMSprop(lr=lr_generator)
+    optim_d = Adam()  # RMSprop(lr=lr_discriminator)
+    optim_g = Adam() # RMSprop(lr=lr_generator)
 
     # ##############
     # Train
@@ -141,7 +146,7 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # get this file full path and remove filename
     ROOT_DIR = BASE_DIR
     DATA_PATH = os.path.join(ROOT_DIR, 'data/neuron_data1')
-
+    f = open('./data/log', 'w')
     for e in range(n_epochs):
         g_iters = 0
         if verbose:
@@ -155,10 +160,13 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
         cur_batch_data_morp = np.zeros([batch_size, n_nodes, n_nodes])
         batch_idx = 0
         while TRAIN_DATASET.has_next_batch():
-            batch_data['geometry'], batch_data['morphology'] = TRAIN_DATASET.next_batch(augment=True)
+            print(str(datetime.now()))
+            print("epoch:", e, "  batch:", batch_idx, "\n")
+            f.writelines(str(datetime.now())+"\n")
+            batch_data['geometry'], batch_data['morphology'] = TRAIN_DATASET.next_batch(augment=False)  # ----------------- not augment now----------------
             # bsize = batch_data['geometry'].shape[0]
 
-            cur_batch_data_geo[0:batch_size, :] = batch_data['geometry']
+            cur_batch_data_geo[0:batch_size, :, :] = batch_data['geometry']
             cur_batch_data_morp[0:batch_size, :, :] = batch_data['morphology']
             print(cur_batch_data_geo.shape, cur_batch_data_morp.shape)
             list_d_loss = list()
@@ -176,11 +184,18 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
                     noise_code = np.random.rand(batch_size, 1, input_dim)  # Random values in a given shape
                     print("start predict")
                     X_locations_gen = g_model.predict(noise_code) # (batch_size,n_nodes,3)  then delete soma location,soma(0,0,0)
-                    X_locations_gen[:, 0:1, :] = np.zeros(shape=(batch_size, 1, 3))
+                    #X_locations_gen[:, 0:1, :] = np.zeros(shape=(batch_size, 1, 3))
                     # print(X_locations_gen.shape)
                     # print("===================")
                     X_parent_gen = m_model.predict(noise_code)  # (batch_size,n_nodes,n_nodes)
-                    X_parent_gen[:, 0:1, :] = np.zeros(shape=(batch_size, 1, n_nodes))
+                    # parent = np.squeeze(X_parent_gen).argmax(axis=2)  # batch_size, n_nodes
+                    # print(parent)
+                    # X_parent_gen_proc = np.zeros((batch_size, n_nodes, n_nodes))
+                    # X_parent_gen_proc[:, :, parent[:, :]] = 1
+                    # print("generate parent")
+                    # print(X_parent_gen_proc)
+
+                    #X_parent_gen[:, 0:1, :] = np.zeros(shape=(batch_size, 1, n_nodes))
                     # print(X_parent_gen.shape)
 
                     y_real = np.ones((X_locations_real.shape[0], 1, 1))
@@ -206,23 +221,26 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
                     y_real_second_half = np.append(y_real[cutting:, :, :],
                                                        y_gen[cutting:, :, :],
                                                        axis=0)
-                    # update the discriminator
+
+
                     disc_loss = d_model.train_on_batch([X_locations_real_first_half,X_parent_real_first_half], y_real_first_half)
+                    #disc_loss = d_model.train_on_batch([X_locations_real, X_parent_real], y_real)
                     list_d_loss.append(disc_loss)
                     print(disc_loss)
                     disc_loss = d_model.train_on_batch([X_locations_real_second_half, X_parent_real_second_half], y_real_second_half)
+                    #disc_loss = d_model.train_on_batch([X_locations_gen, X_parent_gen], y_gen)
                     list_d_loss.append(disc_loss)
                     print(disc_loss)
 
             if verbose:
                 print("After{0} iterations".format(d_iters))
                 print("Discriminator loss = {0}".format(disc_loss))
-                f = open('./data/log', 'w')
                 f.writelines('epoch:{0}, batch:{1}, After {2} iterations\n'.format(e,batch_idx,d_iters))
                 f.writelines('discriminator loss: {0}\n'.format(disc_loss))
 
-
+            # -------------------------------
             # step 2: train generators alternately
+            # ---------------------------------
             # Freeze the discriminator
             print("step2 : train generations alternately\n")
 
@@ -239,23 +257,22 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
                 print("")
                 print("    Generator_Loss: {0}".format(gen_loss))
                 f.writelines('epoch:{0}, batch:{1}, generator loss: {2}\n'.format(e,batch_idx,gen_loss))
+                f.flush()
             # Unfreeze the discriminator
             d_model.trainable = True
-
             g_iters += 1
             batch_idx += 1
 
-
             # Save model weights (few times per epoch)
-
-            if batch_idx % 5 == 0:
+            if batch_idx % 1 == 0:
                 if verbose:
                     print("level #{0} Epoch #{1} Batch #{2}".format(1, e, batch_idx))
-                    save_swc(X_locations_gen[0, 1:, :], X_parent_gen[0, 1:, :], path='D:/gen_vir_experiment_code/swcgan_weight', epoch=e, batch=batch_idx)
+                    save_swc(X_locations_gen[0, 1:, :], X_parent_gen[0, 1:, :], path='D:/gen_vir_experiment_code/swcgan_weight/generate_data', epoch=e, batch=batch_idx)
                     print("plot discriminator loss")
-                    plot.plot_loss_trace(list_d_loss)
-                    print("plot generator loss")
-                    plot.plot_loss_trace(list_g_loss)
+                    # plot.plot_loss_trace(list_d_loss, "discriminator loss")
+                    # print("plot generator loss")
+                    # plot.plot_loss_trace(list_g_loss, "generate loss")
+                    #plot.plot_adjacency(X_parent_real[0:1, :, :], X_parent_gen[0:1, :, :], "parent real gen")
                     print("display loss trace\n")
                     save_model_weights(g_model, m_model, d_model, 0, e, batch_idx, list_d_loss, model_path_root= 'D:/gen_vir_experiment_code/swcgan_weight')
 
@@ -264,6 +281,7 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
             morph_model = m_model
             disc_model = d_model
             gan_model = stacked_model
+
     f.close()
     return geom_model, \
         morph_model, \

@@ -9,6 +9,7 @@
 #include <string>
 #include <QtDebug>
 #include<iostream>
+
 using namespace std;
 class SetContrastWidget: public QWidget
 {

@@ -25,6 +25,7 @@ public:
 signals:
     void signal_compare();
     void save_temp_tree();
+    void signal_slider_valueChanged();
 
 public slots:
     bool getNeuronTree();
@@ -46,16 +47,28 @@ private:
     QLabel *score_slider_num;
     QWidget *slider_horizental_layout_widget;
     QHBoxLayout *slider_horizental_layout;
+    QVBoxLayout *vertical_layout;
+    QHBoxLayout *horizental_layout;
+    QWidget *vertical_layout_widget;
+    QWidget *horizental_layout_widget;
+
+    QLabel *weight_confidence_score_label;
+    QLabel *weight_mathch_score_label;
+    QLabel *weight_swc_score_label;
+
+    QSpinBox *weight_confidence_score_edit;
+    QSpinBox *weight_mathch_score_edit;
+    QSpinBox *weight_swc_score_edit;
+    QWidget *weight_horizental_layout_widget;
+    QHBoxLayout *weight_horizental_layout;
+    QPushButton *changeWeight;
+
 
     V3DPluginCallback2 *callback;
     NeuronTree initTree;
     int deal_tree_num;
     NeuronTree dealedTree;
     QList<NeuronTree> * mTreeList;
-    QVBoxLayout *vertical_layout;
-    QHBoxLayout *horizental_layout;
-    QWidget *vertical_layout_widget;
-    QWidget *horizental_layout_widget;
 
     float weight_confidence_score;
     float weight_match_score;
@@ -70,16 +83,7 @@ private:
 
     void calFinalScore();
 
-    QLabel *weight_confidence_score_label;
-    QLabel *weight_mathch_score_label;
-    QLabel *weight_swc_score_label;
 
-    QSpinBox *weight_confidence_score_edit;
-    QSpinBox *weight_mathch_score_edit;
-    QSpinBox *weight_swc_score_edit;
-    QWidget *weight_horizental_layout_widget;
-    QHBoxLayout *weight_horizental_layout;
-    QPushButton *changeWeight;
 
 };
 

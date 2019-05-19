@@ -2,10 +2,12 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = D:/V3D/v3d_external
-V3DMAINPATH = D:/V3D/v3d_external/v3d_main
+VAA3DPATH = ../../../../v3d_external
+V3DMAINPATH = $$VAA3DPATH/v3d_main
+
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/3drenderer
 INCLUDEPATH     += $$V3DMAINPATH/worm_straighten_c
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += app1
