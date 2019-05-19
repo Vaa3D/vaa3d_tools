@@ -7,6 +7,7 @@
 #include "BrainVesselCPR_filter.h"
 #include "BrainVesselCPR_centerline.h"
 #include "BrainVesselCPR_syncview.h"
+#include "BrainVesselCPR_sampleplane.h"
 
 
 void setWLWW(V3DPluginCallback2 &callback, QWidget *parent)
