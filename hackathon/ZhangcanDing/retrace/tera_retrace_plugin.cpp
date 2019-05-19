@@ -11,6 +11,7 @@
 #include "tera_retrace_func.h"
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "my_surf_objs.h"
+#include "vn_app2.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(tera_retrace, retrace);
  
@@ -236,10 +237,50 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         list<string> infostring;
         processSmartScan_3D(callback,infostring,txtfilenName,P);
 	}
-	else if (func_name == tr("help"))
+    else if (func_name == tr("single_image"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        PARA_APP2 p2;
+        p2.is_gsdt = 0;
+        p2.is_coverage_prune = true;
+        p2.is_break_accept = false ;
+        p2.bkg_thresh = -1;//P.bkg_thresh;
+        p2.length_thresh =5 ;
+        p2.cnn_type = 2;
+        p2.channel = 0;
+        p2.SR_ratio = 0.30303;
+        p2.b_256cube = 1;
+        p2.b_RadiusFrom2D = 1;
+        p2.b_resample = 0;
+        p2.b_intensity = 0;
+        p2.b_brightfiled = 0;
+        p2.b_menu = 0; //if set to be "true", v3d_msg window will show up.
+
+        p2.inimg_file=infiles[0];
+        p2.inmarker_file= infiles[1];
+//        p2.xc0 = p2.yc0 = p2.zc0 = 0;
+//        p2.xc1 = p2.p4dImage->getXDim()-1;
+//        p2.yc1 = p2.p4dImage->getYDim()-1;
+//        p2.zc1 = p2.p4dImage->getZDim()-1;
+
+        QString versionstr= "v2.621";
+        proc_app2(callback,p2,versionstr);
+
+
+
+
+
+
+
+
+    }else if (func_name==tr("help"))
+    {
+        printf("vaa3d -x tera_retrace -f retrace -i <TeraflyImage> <Reference Swc> -p <MarkerFile> -o <OutputFolder>.\n");
+
+
+    }
+
+
+
 	else return false;
 
 	return true;

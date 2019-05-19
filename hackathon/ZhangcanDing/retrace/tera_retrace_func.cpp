@@ -366,7 +366,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     p2.length_thresh = P.length_thresh;
     p2.cnn_type = 2;
     p2.channel = 0;
-    p2.SR_ratio = 3.0/9.9;
+    p2.SR_ratio = 1/3;
     p2.b_256cube = P.b_256cube;
     p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
     p2.b_resample = 0;
