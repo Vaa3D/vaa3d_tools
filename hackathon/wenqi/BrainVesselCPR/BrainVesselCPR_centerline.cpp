@@ -216,7 +216,7 @@ vector<Coor3D> reSampleCurve(vector<Coor3D> path, double step)
                       (path[i].z-path[i-1].z) * (path[i].z-path[i-1].z));
         len_from_start[i] = len_from_start[i-1] + gap;
     }
-    int resample_num = ceil(len_from_start[path.size()-1]);
+    int resample_num = ceil(len_from_start[path.size()-1]/step);
     Coor3D tmp_coor;
 
     // first point not changed.
@@ -364,13 +364,16 @@ vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1
 
     //resample path
     vector<Coor3D> resampled_path;
+    cout << "smooth path length: " << smooth_path.size() << endl;
     resampled_path = reSampleCurve(smooth_path, 0.2);
+    cout << "resampled path length: " << resampled_path.size() << endl;
 
     NeuronTree tree = construcSwc(resampled_path);
     //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
 
     v3dhandle curwin = callback.currentImageWindow();
     callback.open3DWindow(curwin);
+    cout << "setswc:" << __LINE__ << endl;
     bool test = callback.setSWC(curwin, tree);
     cout << "set swc: " << test <<endl;
     callback.updateImageWindow(curwin);

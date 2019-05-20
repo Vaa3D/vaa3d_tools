@@ -106,24 +106,49 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
 
 
     // calculate tangent vector at the first center point
+    double len;
     t = centerline[1] - centerline[0];
-    t = normCoor3D(t);
-    tangent[0] = t;
+    len = sqrt(t.x*t.x+t.y*t.y+t.z*t.z);
+    tangent[0] = t / len;
 
 
     // straight line flag
     int straight_count = 1;
 
-    double len;
+
 
     // calculate tangent vector for 2rd to last-1 center point
     for(int i=1;i<centerline.size()-1;i++)
     {
-        t = normCoor3D(centerline[i+1] - centerline[i-1]);
-        tangent[i] = t;
+        //t = normCoor3D(centerline[i+1] - centerline[i-1]);
+        t = centerline[i+1] - centerline[i-1];
+        len = sqrt(t.x*t.x+t.y*t.y+t.z*t.z);
+        tangent[i] = t / len;
         t = (centerline[i+1] + centerline[i-1]) / 2 - centerline[i];
         len = sqrt(t.x * t.x + t.y * t.y + t.z * t.z);
-        if(!len)
+
+        //debug
+        if(i==11)
+        {
+            cout << "tangent[11]: " << tangent[11].x << ", " << tangent[11].y << ", " << tangent[11].z << endl;
+            cout << "center[10]: " << centerline[10].x << ", " << centerline[10].y << ", " << centerline[10].z << endl;
+            cout << "center[11]: " << centerline[11].x << ", " << centerline[11].y << ", " << centerline[11].z << endl;
+            cout << "center[12]: " << centerline[12].x << ", " << centerline[12].y << ", " << centerline[12].z << endl;
+            Coor3D tmp;
+            tmp = (centerline[12] + centerline[10]);
+            cout << "c12 - c10: " << tmp.x << " " << tmp.y << " " << tmp.z << endl;
+            tmp = tmp/2;
+            cout << "(c12 - c10)/2: " << tmp.x << " " << tmp.y << " " << tmp.z << endl;
+            tmp = tmp - centerline[11];
+            cout << "(c12 - c10)/2-c11: " << tmp.x << " " << tmp.y << " " << tmp.z << endl;
+            cout << "recal len: " << sqrt(tmp.x * tmp.x + tmp.y * tmp.y + tmp.z * tmp.z);
+            cout << "t: " << t.x << ", " << t.y << ", " << t.z << endl;
+            cout << "len: " << len << endl;
+
+        }
+        //end debug
+
+        if(len<1e-8)
         {
             straight_count++;
             //t = normal1[i-1];
@@ -140,6 +165,11 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
             }
         }
     }
+    t = centerline[centerline.size()-1] - centerline[centerline.size()-2]; //tangent vector at last point
+    len = sqrt(t.x*t.x+t.y*t.y+t.z*t.z);
+    tangent[centerline.size()-1] = t / len;
+
+
     if(straight_count==center_num)
     {
         qDebug("straight line!!");
@@ -190,11 +220,13 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
     int winlen = radius * 2 + 1;
     V3DLONG cur_id;
     Coor3D bias;
-    for(int iz=0; iz<center_num; iz++)
+
+    //iz: along vessel, ix iy: cross section.
+    for(int ix=0;ix<winlen;ix++)
     {
         for(int iy=0;iy<winlen;iy++)
         {
-            for(int ix=0;ix<winlen;ix++)
+            for(int iz=0; iz<center_num; iz++)
             {
                 cur_id = ix + iy*winlen + iz*winlen*winlen;
                 bias = normal1[iz] * (ix - radius) + normal2[iz] * (iy - radius);
@@ -206,21 +238,32 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
 
     //debug: display the trace of pixels at the same location in each slice.
     vector<Coor3D> test_path;
-    for(int i=0;i<center_num; i++)
+    //for(int i=0;i<center_num; i++)
+    for(int i=0;i<30; i++)
+    {
+        cout << "center- " << i << ": " << centerline[i].x << ", " << centerline[i].y << ", " << centerline[i].z << ", " << endl;
+
+        //test_path.push_back(sample_coor[i*winlen*winlen]);
+        //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
+    }
+    //for(int i=0;i<center_num; i++)
+    for(int i=0;i<30; i++)
     {
         cout << "tangent- " << i << ": " << tangent[i].x << ", " << tangent[i].y << ", " << tangent[i].z << ", " << endl;
 
         //test_path.push_back(sample_coor[i*winlen*winlen]);
         //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
     }
-    for(int i=0;i<center_num; i++)
+    //for(int i=0;i<center_num; i++)
+    for(int i=0;i<30; i++)
     {
         cout << "normal1-" << i << ": " << normal1[i].x << ", " << normal1[i].y << ", " << normal1[i].z << ", " << endl;
 
         //test_path.push_back(sample_coor[i*winlen*winlen]);
         //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
     }
-    for(int i=0;i<center_num; i++)
+    //for(int i=0;i<center_num; i++)
+    for(int i=0;i<30; i++)
     {
         cout << "normal2-" << i << ": " << normal2[i].x << ", " << normal2[i].y << ", " << normal2[i].z << ", " << endl;
 
@@ -228,15 +271,15 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
         //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
     }
 
-    NeuronTree tree = construcSwc(test_path);
-    //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
+//    NeuronTree tree = construcSwc(test_path);
+//    //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
 
-    v3dhandle curwin = callback.currentImageWindow();
-    callback.open3DWindow(curwin);
-    bool test = callback.setSWC(curwin, tree);
-    cout << "set swc: " << test <<endl;
-    callback.updateImageWindow(curwin);
-    callback.pushObjectIn3DWindow(curwin);
+//    v3dhandle curwin = callback.currentImageWindow();
+//    callback.open3DWindow(curwin);
+//    bool test = callback.setSWC(curwin, tree);
+//    cout << "set swc: " << test <<endl;
+//    callback.updateImageWindow(curwin);
+//    callback.pushObjectIn3DWindow(curwin);
 
     //interpolation
     unsigned short int * data1d_sample = new unsigned short int[totalpxl_sample];
