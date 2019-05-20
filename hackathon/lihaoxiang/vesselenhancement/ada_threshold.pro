@@ -7,9 +7,15 @@ INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += main 
 
-LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
-LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+macx{
+    LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+}
 
+win32 {
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    LIBS     += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
+}
 
 HEADERS += ada_threshold.h
 SOURCES  = ada_threshold.cpp

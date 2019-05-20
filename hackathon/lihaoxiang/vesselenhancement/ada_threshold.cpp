@@ -24,6 +24,12 @@ using namespace std;
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(threshold, ThPlugin);
 
+template <class T> T abs_lambda(T num);
+
+template <class T> bool swapthree(T& dummya, T& dummyb, T& dummyc);
+
+template <class T> void gaussian_filter(T* data1d, V3DLONG *in_sz, unsigned int Wx, unsigned int Wy, unsigned int Wz, unsigned int c, double sigma, float* &outimg);
+
 template <class T>
 void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d, string path1, string path2)
 {
@@ -40,15 +46,16 @@ void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iIma
 
 	aspOutput = new T [mNumber];
 
-	size_image[0] = 246;
-	size_image[1] = 320;
-	size_image[2] = 120;
+    size_image[0] = iImageWidth;
+    size_image[1] = iImageHeight;
+    size_image[2] = iImageLayer;
+    size_image[3] = 1;
+
 	unsigned int wx = 1, wy = 1, wz = 1, c = 1;
 	double sigma1 = 1, sigma2 = 2;
-	float * filtered_one;
+    float * filtered_one=0;
 
 	gaussian_filter(apsInput, size_image, wx, wy, wz, c, sigma1, filtered_one);
-	
 
 
 	double fxx, fyy, fzz, fxy, fyz, fzx;
@@ -248,9 +255,9 @@ void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iIma
 								//aspOutput[curpos] = 1321*response;
 								//value_90 += response;
 								filtered = filtered_one[curpos];
-								//sum_filtered += filtered;
+                                sum_filtered += filtered;
 								//response = double(filtered);
-								//aspOutput[curpos] = filtered;
+                                aspOutput[curpos] = filtered;
 							}
 
 			}
@@ -352,11 +359,11 @@ template <class T> void gaussian_filter(T* data1d,
 	double sigma,
 	float* &outimg)
 {
-	if (!data1d || !in_sz || in_sz[0] <= 0 || in_sz[1] <= 0 || in_sz[2] <= 0 || in_sz[3] <= 0 || outimg)
-	{
-		v3d_msg("Invalid parameters to gaussian_filter().", 0);
-		return;
-	}
+    if (!data1d || !in_sz || in_sz[0] <= 0 || in_sz[1] <= 0 || in_sz[2] <= 0 || in_sz[3] <= 0 || outimg)
+    {
+        v3d_msg("Invalid parameters to gaussian_filter().", 0);
+        return;
+    }
 
 	if (outimg)
 	{

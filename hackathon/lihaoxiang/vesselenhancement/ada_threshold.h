@@ -29,15 +29,7 @@ public:
 	template <class T>
 	void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d, string path1, string path2 ){}
 	
-	template <class T>
-	T abs_lambda(T num){}
 
-	template <class T>
-	bool swapthree(T& dummya, T& dummyb, T& dummyc){}
-
-	template <class T> 
-	void gaussian_filter(T* data1d, V3DLONG *in_sz, unsigned int Wx, unsigned int Wy, unsigned int Wz, unsigned int c, double sigma, float* &outimg)
-	{}
 
     float getPluginVersion() const {return 1.1f;}
 };
