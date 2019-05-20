@@ -200,7 +200,7 @@ vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLO
     return path_meanshift;
 }
 
-vector<Coor3D> reSampleCurve(vector<Coor3D> path, int step)
+vector<Coor3D> reSampleCurve(vector<Coor3D> path, double step)
 {
     vector<Coor3D> new_path;
     new_path.clear();
@@ -243,6 +243,10 @@ vector<Coor3D> reSampleCurve(vector<Coor3D> path, int step)
         tmp_coor.z = path[search_idx-1].z + scale_ratio * (path[search_idx].z - path[search_idx-1].z);
 
         new_path.push_back(tmp_coor);
+
+        double dis = (new_path[i].x - new_path[i-1].x)*(new_path[i].x - new_path[i-1].x) + (new_path[i].y - new_path[i-1].y)*(new_path[i].y - new_path[i-1].y) + (new_path[i].z - new_path[i-1].z)*(new_path[i].z - new_path[i-1].z);
+        dis = sqrt(dis);
+        cout << "resampled_path: " << tmp_coor.x << " " << tmp_coor.y << " " << tmp_coor.z << " " << "dis: " << dis << endl;
     }
     return new_path;
 }
@@ -360,7 +364,7 @@ vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1
 
     //resample path
     vector<Coor3D> resampled_path;
-    resampled_path = reSampleCurve(smooth_path, 1);
+    resampled_path = reSampleCurve(smooth_path, 0.2);
 
     NeuronTree tree = construcSwc(resampled_path);
     //cout << "smooth tree size:" << tree.listNeuron.size() << endl;

@@ -95,11 +95,9 @@ unsigned short int interpolation(Coor3D coor, unsigned short int * data1d, V3DLO
 
 }
 
-unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> centerline, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int radius)
+unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> centerline, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int radius, V3DPluginCallback2 &callback, QWidget *parent)
 {
     Coor3D t; // tangent vector
-    Coor3D n1; // normal vector 1
-    Coor3D n2; // normal vector 2
 
     int center_num = centerline.size();
     Coor3D * tangent = new Coor3D[center_num]; //centerline tangent vector
@@ -187,6 +185,7 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
     //compute coordinate for each pixel to be sampled. result saved as an 1d vector.
     V3DLONG totalpxl_sample = (radius * 2 + 1) * (radius * 2 + 1) * center_num;
     Coor3D * sample_coor = new Coor3D[totalpxl_sample];
+
     //each slice is a cross section.
     int winlen = radius * 2 + 1;
     V3DLONG cur_id;
@@ -200,9 +199,44 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
                 cur_id = ix + iy*winlen + iz*winlen*winlen;
                 bias = normal1[iz] * (ix - radius) + normal2[iz] * (iy - radius);
                 sample_coor[cur_id] = centerline[iz] + bias;
+
             }
         }
     }
+
+    //debug: display the trace of pixels at the same location in each slice.
+    vector<Coor3D> test_path;
+    for(int i=0;i<center_num; i++)
+    {
+        cout << "tangent- " << i << ": " << tangent[i].x << ", " << tangent[i].y << ", " << tangent[i].z << ", " << endl;
+
+        //test_path.push_back(sample_coor[i*winlen*winlen]);
+        //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
+    }
+    for(int i=0;i<center_num; i++)
+    {
+        cout << "normal1-" << i << ": " << normal1[i].x << ", " << normal1[i].y << ", " << normal1[i].z << ", " << endl;
+
+        //test_path.push_back(sample_coor[i*winlen*winlen]);
+        //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
+    }
+    for(int i=0;i<center_num; i++)
+    {
+        cout << "normal2-" << i << ": " << normal2[i].x << ", " << normal2[i].y << ", " << normal2[i].z << ", " << endl;
+
+        //test_path.push_back(sample_coor[i*winlen*winlen]);
+        //cout << "point: " << sample_coor[i*winlen*winlen].x << ", " << sample_coor[i*winlen*winlen].y << ", " << sample_coor[i*winlen*winlen].z << ", " << endl;
+    }
+
+    NeuronTree tree = construcSwc(test_path);
+    //cout << "smooth tree size:" << tree.listNeuron.size() << endl;
+
+    v3dhandle curwin = callback.currentImageWindow();
+    callback.open3DWindow(curwin);
+    bool test = callback.setSWC(curwin, tree);
+    cout << "set swc: " << test <<endl;
+    callback.updateImageWindow(curwin);
+    callback.pushObjectIn3DWindow(curwin);
 
     //interpolation
     unsigned short int * data1d_sample = new unsigned short int[totalpxl_sample];

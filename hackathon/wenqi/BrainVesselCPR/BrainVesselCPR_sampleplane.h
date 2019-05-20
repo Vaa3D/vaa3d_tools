@@ -17,7 +17,7 @@ Coor3D normCoor3D(const Coor3D &v);
 
 unsigned short int interpolation(Coor3D coor, unsigned short int * data1d, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len);
 
-unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> centerline, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int radius);
+unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> centerline, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int radius, V3DPluginCallback2 &callback, QWidget *parent);
 
 
 
