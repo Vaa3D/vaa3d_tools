@@ -127,7 +127,7 @@ bool smooth_curve(vector<Coor3D> & mCoord, int winsize)
 
 vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int windowradius)
 {
-    cout << "break: " << __LINE__ << endl;
+    //cout << "break: " << __LINE__ << endl;
     //int half_win = floor(win / 2);
     double radius2 = windowradius * windowradius;
     vector<Coor3D> path_meanshift;
@@ -150,7 +150,7 @@ vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLO
 
         Coor3D center_new;
 
-        cout << "break: " << __LINE__ << endl;
+        //cout << "break: " << __LINE__ << endl;
 
         while(center_dis >= 0.5 && iter_count < 50)
         {
@@ -194,7 +194,7 @@ vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLO
             }
             iter_count++;
         }
-        cout << "break: " << __LINE__ << endl;
+        //cout << "break: " << __LINE__ << endl;
         path_meanshift.push_back(center_new);
     }
     return path_meanshift;
@@ -248,7 +248,7 @@ vector<Coor3D> reSampleCurve(vector<Coor3D> path, int step)
 }
 
 // path finding function using modified A* algorithm
-void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent)
+vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent)
 {
 
     V3DLONG total_pxls = x_length * y_length * z_length;
@@ -333,8 +333,8 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
         smooth_path.push_back(tmpCoor3D);
         point_count++;
 
-        cout << path_point[point_count];
-        cout << "x: " << smooth_path.back().x << "y: " << smooth_path.back().y << "z: " << smooth_path.back().z << endl;
+        //cout << path_point[point_count];
+        //cout << "x: " << smooth_path.back().x << "y: " << smooth_path.back().y << "z: " << smooth_path.back().z << endl;
     }
     cout << tmp << endl;
     tmpCoor3D.x = tmp % x_length;
@@ -345,15 +345,15 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     smooth_path.push_back(tmpCoor3D);
 
     //meanshift
-    cout << "break: " << __LINE__ << endl;
+    //cout << "break: " << __LINE__ << endl;
     int windowradius = 8;
     smooth_path = meanshift(smooth_path, image1d, x_length, y_length, z_length, windowradius);
-    cout << "break: " << __LINE__ << endl;
+    //cout << "break: " << __LINE__ << endl;
 
 
     cout << "path size: " << smooth_path.size() << endl;
     smooth_curve(smooth_path, 15);
-    cout << "break: " << __LINE__ << endl;
+    //cout << "break: " << __LINE__ << endl;
 //    QString filename("/Users/walker/MyProject/test.swc");
     cout << "path size (after smooth): " << smooth_path.size() << endl;
     //display trace in 3d
@@ -373,7 +373,7 @@ void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_l
     callback.pushObjectIn3DWindow(curwin);
 
     //writeSWC_file("/Users/walker/MyProject/test.swc", tree);
-
+    return resampled_path;
 }
 
 

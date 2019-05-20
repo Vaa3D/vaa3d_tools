@@ -140,13 +140,24 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
     {
         data1d_gaussian_uint16[i] = (unsigned short int)data1d_gausssian[i];
     }
-    findPath(start, goal, data1d_gaussian_uint16, x_length, y_length, z_length, callback, parent);
+    vector<Coor3D> centerline = findPath(start, goal, data1d_gaussian_uint16, x_length, y_length, z_length, callback, parent);
     cout << "find path finished!" << endl;
 
+    unsigned short int * cprdata1d = 0;
+    int winlen = 10;
 
+    cout<<"break: "<<__LINE__<<endl;
+
+    cprdata1d = samplePlane(data1d, centerline, x_length, y_length, z_length, winlen);
+    cout<<"break: "<<__LINE__<<endl;
+    Image4DSimple * cprImage = new Image4DSimple();
+    cprImage->setData((unsigned char *)cprdata1d, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+    cout<<"break: "<<__LINE__<<endl;
+    v3dhandle newwin = callback.newImageWindow("CPR Image");
+    callback.setImage(newwin, cprImage);
+    cout<<"break: "<<__LINE__<<endl;
 
     //sync 3d view of MRA and MRI
-
 
 }
 

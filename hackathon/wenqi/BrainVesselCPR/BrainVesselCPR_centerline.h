@@ -33,6 +33,7 @@ struct Coor3D
     double z;
 };
 
+
 bool operator > (const Node &n1, const Node &n2);
 
 double edgeCost(int a_intensity, int b_intensity);
@@ -43,7 +44,7 @@ NeuronTree construcSwc(vector<Coor3D> path_point);
 
 bool smooth_curve(std::vector<Coor3D> & mCoord, int winsize);
 
-void findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent);
+vector<Coor3D> findPath(V3DLONG start, V3DLONG goal, unsigned short int * image1d, int x_length, int y_length, int z_length, V3DPluginCallback2 &callback, QWidget *parent);
 
 vector<Coor3D> meanshift(vector<Coor3D> path, unsigned short int * data1d, V3DLONG x_len, V3DLONG y_len, V3DLONG z_len, int windowradius);
 
