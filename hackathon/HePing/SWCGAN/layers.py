@@ -82,8 +82,7 @@ def feature_extractor(inputs,
     #                                              distance_from_parent=geometry_input,
     #                                              batch_size=batch_size)
     #
-    print("full_adjaceny")
-    print(full_adjacency)
+
     filled_full_adjacency_x = \
         full_adjacency*K.repeat_elements(K.expand_dims(geometry_input[:, :, 0], 2), n_nodes, axis=2)
     filled_full_adjacency_y = \

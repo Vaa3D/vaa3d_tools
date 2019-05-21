@@ -1,4 +1,4 @@
-import modelDCGAN as models
+import modelDCGAN1 as models
 from keras.optimizers import RMSprop, Adagrad, Adam,SGD
 import numpy as np
 from neuron_dataset import *
@@ -29,7 +29,7 @@ def save_swc(X_locations, X_parent,path,epoch,batch):
     M[:, 0] = np.arange(1, parent.shape[0]+2)
     M[0, 1] = 1
     M[1:, 1] = 3  # type
-    M[:, 2:5] = locations*100
+    M[:, 2:5] = locations
     M[:, 5] = 1.0
     M[1:, 6] = parent
     M[0, 6] = -1  # soma
@@ -121,8 +121,8 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
     # ###############
     # Optimizers
     # ###############
-    optim_d = Adam()  # RMSprop(lr=lr_discriminator)
-    optim_g = Adam() # RMSprop(lr=lr_generator)
+    optim_d = Adagrad()  # RMSprop(lr=lr_discriminator)
+    optim_g = Adagrad() # RMSprop(lr=lr_generator)
 
     # ##############
     # Train
@@ -168,7 +168,7 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
 
             cur_batch_data_geo[0:batch_size, :, :] = batch_data['geometry']
             cur_batch_data_morp[0:batch_size, :, :] = batch_data['morphology']
-            print(cur_batch_data_geo.shape, cur_batch_data_morp.shape)
+            # print(cur_batch_data_geo.shape, cur_batch_data_morp.shape)
             list_d_loss = list()
             list_g_loss = list()
             # ----------------------------
@@ -184,9 +184,6 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
                     noise_code = np.random.rand(batch_size, 1, input_dim)  # Random values in a given shape
                     print("start predict")
                     X_locations_gen = g_model.predict(noise_code) # (batch_size,n_nodes,3)  then delete soma location,soma(0,0,0)
-                    #X_locations_gen[:, 0:1, :] = np.zeros(shape=(batch_size, 1, 3))
-                    # print(X_locations_gen.shape)
-                    # print("===================")
                     X_parent_gen = m_model.predict(noise_code)  # (batch_size,n_nodes,n_nodes)
                     # parent = np.squeeze(X_parent_gen).argmax(axis=2)  # batch_size, n_nodes
                     # print(parent)
@@ -252,7 +249,6 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
                         stacked_model.train_on_batch([noise_input],
                                                          y_real)
             list_g_loss.append(gen_loss)
-            print("gen_loss", gen_loss)
             if verbose:
                 print("")
                 print("    Generator_Loss: {0}".format(gen_loss))
@@ -264,7 +260,7 @@ def train_model(input_dim=100, n_nodes=256, batch_size=16, n_epochs=100, d_iters
             batch_idx += 1
 
             # Save model weights (few times per epoch)
-            if batch_idx % 1 == 0:
+            if batch_idx % 5 == 0:
                 if verbose:
                     print("level #{0} Epoch #{1} Batch #{2}".format(1, e, batch_idx))
                     save_swc(X_locations_gen[0, 1:, :], X_parent_gen[0, 1:, :], path='D:/gen_vir_experiment_code/swcgan_weight/generate_data', epoch=e, batch=batch_idx)

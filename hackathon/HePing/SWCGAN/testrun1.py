@@ -4,9 +4,9 @@ import train
 
 if __name__ == '__main__':
     input_dim = 100
-    n_epochs = 50
+    n_epochs = 100
     n_nodes = 256
-    batch_size = 8
+    batch_size = 16
     d_iter = 5
     g_iter = 5
     geom_model, morph_model, disc_model, gan_model = \

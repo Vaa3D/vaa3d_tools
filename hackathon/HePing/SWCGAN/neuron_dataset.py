@@ -53,7 +53,6 @@ class neuron_dataset():
             point_set = neuron.nodes_list  # Node: xyz, r, parent, type, children
             # point_set = np.loadtxt(fn, delimiter=',').astype(np.float32)
             # get geometry and morphology
-            print('-----')
             # move soma to original coordination
             geometry = np.transpose(neuron.location)
             # geometry = np.array([node.getxyz() for node in point_set])  # real location
@@ -67,6 +66,7 @@ class neuron_dataset():
             # print("after plan origin geometry")
             # print(geometry)
             print("geo_diam_morph shape", geometry.shape, diameter.shape, morphology.shape)
+            print("------------------")
             # normalization
             # geometry[:, 0:3] = self.pc_normalize(geometry[:, 0:3])  --------------------not use -------------------
             # print("after normalization geometry")
@@ -105,8 +105,8 @@ class neuron_dataset():
         #                                            morphology_batch], axis=1)
         # print("one hot encode batch morphology:")
         # print(batch_data['morphology'])
-        # print("real normalization batch geometry data:")
-        # print(batch_data['geometry'])
+        print("real normalization batch geometry data:")
+        print(batch_data['geometry'])
 
         if augment:
             batch_data['geometry'] = self._augment_batch_data(batch_data['geometry'])
