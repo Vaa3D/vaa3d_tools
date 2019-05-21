@@ -18,13 +18,19 @@ INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
 
 
 
-HEADERS	+= tera_retrace_plugin.h \
-    tera_retrace_func.h \
+HEADERS	+= tera_retrace_plugin.h
+HEADERS += tera_retrace_func.h
 HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/vn.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/vn_app2.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.h
+
+
 SOURCES	+= tera_retrace_plugin.cpp \
     tera_retrace_func.cpp
-
-
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp

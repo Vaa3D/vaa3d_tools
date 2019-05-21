@@ -39,6 +39,10 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         printf("\n This is a plugin for retrace in terafly  Developed by DZC, 2019-5-14\n");
         TRACE_LS_PARA P;
 
+        // parameters set for ultratracer.
+        //some are not used coz a direct app2 plugin call in crawler_raw_app and app_ada_tracing
+        //if you want to change some of the parameters, pls go to app_tracing_ada_win3d to set
+
         P.image=0;
         P.block_size=512;
         P.soma=0;
@@ -80,9 +84,39 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
          P.inimg_file=res2ndimgpath;
          bool bmenu=false;
-         NeuronTree ref_swc= callback.getSWCTeraFly();
+
+         //get referenced swc from terafly and scaling it to 1/2 to fit the img
+         NeuronTree ref_swc_highres= callback.getSWCTeraFly();
+         NeuronTree ref_swc;
+
+         QList<NeuronSWC> listneuron;listneuron.clear();
+         QHash<int,int> hashneuron;hashneuron.clear();
+
+         for(int i=0; i<ref_swc_highres.listNeuron.size();i++)
+         {
+             NeuronSWC s;
+             s.n=ref_swc_highres.listNeuron.at(i).n;
+             s.x= ref_swc_highres.listNeuron.at(i).x/2;
+             s.y= ref_swc_highres.listNeuron.at(i).y/2;
+             s.z= ref_swc_highres.listNeuron.at(i).z/2;
+             s.radius= ref_swc_highres.listNeuron.at(i).radius/2;
+             s.pn=ref_swc_highres.listNeuron.at(i).pn;
+             s.type=ref_swc_highres.listNeuron.at(i).type;
+             listneuron.append(s);
+             hashneuron.insert(s.n,listneuron.size()-1);
+
+         }
+         ref_swc.n=-1;
+         ref_swc.on=true;
+         ref_swc.listNeuron=listneuron;
+         ref_swc.hashNeuron=hashneuron;
+
+
          QString savefolder= "D:\\retrace_tmp";
          system(qPrintable(QString("mkdir %1").arg(savefolder.toStdString().c_str())));
+         QString ref_swc_highres_fn= savefolder+"\\ref_swc_highres.swc";
+         writeSWC_file(ref_swc_highres_fn,ref_swc_highres);
+
 
          QString fiswcfolder = savefolder+"\\finalswcfolder";
          qDebug()<<"fiswcfoler: \n"<<fiswcfolder;
@@ -118,7 +152,9 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
                 writeMarker_file(indimarkerfn,indimarker);
                 qDebug()<<"markerfilename: \n"<<indimarkerfn;
                 v3d_msg("check marker name.");
-                P.markerfilename=indimarkerfn;
+                QString ref_swcfn= indimarkerfn + QString("_nc_APP2_GD.swc");
+                writeSWC_file(ref_swcfn,ref_swc);
+                P.markerfilename = indimarkerfn ;
 
                 printf("-------------------------------\n");
                 crawler_raw_app(callback,parent,P,bmenu);
@@ -128,7 +164,7 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
                 qDebug()<<"txtfilename:"<<txtfileName;
                 qDebug() <<"txtfileName="<< txtfileName;
                 list<string> infostring;
-                processSmartScan_3D(callback,infostring,txtfileName, P);
+                processSmartScan_3D_wofuison(callback,infostring,txtfileName);
 
 
             }
@@ -138,8 +174,42 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         QString ref_swc_wf= QString(fiswcfolder) + "\\ori.swc";
         writeSWC_file(ref_swc_wf,ref_swc);
         QString fusedswc= QString(fiswcfolder) + "_fused.swc";
-
         smartFuse(callback,fiswcfolder, fusedswc);
+
+
+        //scale the fused swc back to highest size to fit the highest resolution
+        NeuronTree swc_2ndres=readSWC_file(fusedswc);
+        NeuronTree swc_final;
+        listneuron.clear();
+        hashneuron.clear();
+        for(int i=0; i<swc_2ndres.listNeuron.size();i++)
+        {
+            NeuronSWC s;
+            s.n=swc_2ndres.listNeuron.at(i).n;
+            s.x= swc_2ndres.listNeuron.at(i).x * 2;
+            s.y= swc_2ndres.listNeuron.at(i).y * 2;
+            s.z= swc_2ndres.listNeuron.at(i).z * 2;
+            s.radius= swc_2ndres.listNeuron.at(i).radius * 2;
+            s.pn=swc_2ndres.listNeuron.at(i).pn;
+            s.type=swc_2ndres.listNeuron.at(i).type;
+            listneuron.append(s);
+            hashneuron.insert(s.n,listneuron.size()-1);
+
+        }
+        swc_final.n=-1;
+        swc_final.on=true;
+        swc_final.listNeuron=listneuron;
+        swc_final.hashNeuron=hashneuron;
+
+        QString swc_final_fn= QString(fiswcfolder)+"highRES_fused.swc";
+        writeSWC_file(swc_final_fn,swc_final);
+
+        callback.setSWCTeraFly(swc_final);
+
+
+
+
+
 
 	}
 	else
@@ -169,10 +239,10 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
         P.image=0;
         P.block_size=512;
-        P.soma=1;
+        P.soma=0;
         P.channel=1;
         P.bkg_thresh=-1;
-        P.resume =  0;   //add continue tracing option
+        P.resume =  1;   //add continue tracing option
         P.b_256cube = 1;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
@@ -235,36 +305,36 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
         for (int i=0; i<markerlist.size();i++)
         {
-            //            LocationSimple t;
-            //            t.x= markerlist.at(i).x;
-            //            t.y= markerlist.at(i).y;
-            //            t.z= markerlist.at(i).z;
-            //            P.listLandmarks.push_back(t);
-            ImageMarker t= markerlist.at(i);
-            QString indimarker ;
+            if ( markerlist.at(i).color.r==255 && markerlist.at(i).color.g==0 && markerlist.at(i).color.b==0)
 
-            if(i<9)
-                indimarker=QString(outfiles[0])+QString("\\00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
-            else if(i<99)
-                indimarker=QString(outfiles[0])+QString("\\0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
-            else
-                indimarker=QString(outfiles[0])+QString("\\%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+            {
+                ImageMarker t= markerlist.at(i);
+                QString indimarker ;
 
-           //QString ref_swcfn= indimarker + QString("_nc_APP2_GD.swc");
-           //writeSWC_file(ref_swcfn,ref_swc);
+                if(i<9)
+                    indimarker=QString(outfiles[0])+QString("\\00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+                else if(i<99)
+                    indimarker=QString(outfiles[0])+QString("\\0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
+                else
+                    indimarker=QString(outfiles[0])+QString("\\%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(t.x).arg(t.y).arg(t.z);
 
-            QList<ImageMarker> indimarkerls;
-            indimarkerls.clear();
-            indimarkerls.push_back(t);
-            writeMarker_file(indimarker,indimarkerls);
+                QString ref_swcfn= indimarker + QString("_nc_APP2_GD.swc");
+                writeSWC_file(ref_swcfn,ref_swc);
 
-            P.markerfilename= indimarker;
-            crawler_raw_app(callback,parent,P ,bmenu);
+                QList<ImageMarker> indimarkerls;
+                indimarkerls.clear();
+                indimarkerls.push_back(t);
+                writeMarker_file(indimarker,indimarkerls);
 
-            QString txtfileName= indimarker+"_tmp_APP2\\scanData.txt";
-            qDebug() <<"txtfileName="<< txtfileName;
-            list<string> infostring;
-            processSmartScan_3D(callback,infostring,txtfileName, P);
+                P.markerfilename= indimarker;
+                crawler_raw_app(callback,parent,P ,bmenu);
+
+                QString txtfileName= indimarker+"_tmp_APP2\\scanData.txt";
+                qDebug() <<"txtfileName="<< txtfileName;
+                list<string> infostring;
+                //processSmartScan_3D(callback,infostring,txtfileName);
+                 processSmartScan_3D(callback,infostring,txtfileName);
+            }
 
         }
 
@@ -300,7 +370,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString txtfilenName = infiles[0];
         TRACE_LS_PARA P;
         list<string> infostring;
-        processSmartScan_3D(callback,infostring,txtfilenName,P);
+        processSmartScan_3D(callback,infostring,txtfilenName);
 	}
     else if (func_name == tr("single_image"))
 	{
