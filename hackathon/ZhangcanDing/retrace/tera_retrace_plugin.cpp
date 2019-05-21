@@ -265,14 +265,25 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString versionstr= "v2.621";
         proc_app2(callback,p2,versionstr);
 
+//        QString app2pluginname= "vn2";
+//        QString app2funcname="app2";
+//        callback.callPluginFunc(app2pluginname,app2funcname,input,output);
 
 
 
 
 
+    }else if (func_name=="callapp2")
+    {
+        QString app2pluginname= "vn2";
+        QString app2funcname="app2";
+        callback.callPluginFunc(app2pluginname,app2funcname,input,output);
+
+    }
 
 
-    }else if (func_name==tr("help"))
+
+    else if (func_name==tr("help"))
     {
         printf("vaa3d -x tera_retrace -f retrace -i <TeraflyImage> <Reference Swc> -p <MarkerFile> -o <OutputFolder>.\n");
 
