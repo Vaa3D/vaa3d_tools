@@ -100,9 +100,9 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
     Coor3D t; // tangent vector
 
     int center_num = centerline.size();
-    Coor3D * tangent = new Coor3D[center_num]; //centerline tangent vector
-    Coor3D * normal1 = new Coor3D[center_num];
-    Coor3D * normal2 = new Coor3D[center_num];
+    vector<Coor3D>  tangent(center_num); //centerline tangent vector
+    vector<Coor3D>  normal1(center_num);
+    vector<Coor3D> normal2(center_num);
 
 
     // calculate tangent vector at the first center point
@@ -185,6 +185,39 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
     //process last point.
     normal1[center_num-1] = normal1[center_num-2];
 
+
+    //check dot product for normal1 phase inversion.
+
+    for(int i=1;i<center_num;i++)
+    {
+        if(normal1[i].x*normal1[i-1].x+normal1[i].y*normal1[i-1].y+normal1[i].z*normal1[i-1].z<0)
+        {
+            normal1[i].x = -normal1[i].x;
+            normal1[i].y = -normal1[i].y;
+            normal1[i].z = -normal1[i].z;
+        }
+    }
+
+/*
+    //smooth normal1
+    vector<Coor3D> normal1_edgeline(center_num);
+    for(int i=0;i<center_num;i++)
+    {
+        normal1_edgeline[i] = centerline[i] + normal1[i];
+    }
+    smooth_curve(normal1_edgeline, 15);
+    double innerproduct;
+    for(int i=0;i<center_num;i++)
+    {
+        normal1[i] = normal1_edgeline[i] -  centerline[i];
+        innerproduct = normal1[i].x*tangent[i].x + normal1[i].y*tangent[i].y + normal1[i].y*tangent[i].y;
+        normal1[i] = normal1[i] - (tangent[i] * innerproduct);
+        len = normal1[i].x*normal1[i].x + normal1[i].y*normal1[i].y + normal1[i].z*normal1[i].z;
+        normal1[i] = normal1[i] / len;
+    }
+
+*/
+
     //compute normal vector 2. functions came from matlab symbol calculation.
     for(int i=0;i<center_num;i++)
     {
@@ -211,6 +244,20 @@ unsigned short int * samplePlane(unsigned short int * data1d, vector<Coor3D> cen
                   - 2*normal1[i].y*normal1[i].z*tangent[i].y*tangent[i].z + normal1[i].z*normal1[i].z*tangent[i].x*tangent[i].x
                   + normal1[i].z*normal1[i].z*tangent[i].y*tangent[i].y))*(normal1[i].x*tangent[i].y - normal1[i].y*tangent[i].x);
     }
+
+    //check dot product for normal2 phase inversion.
+    for(int i=1;i<center_num;i++)
+    {
+        if(normal2[i].x*normal2[i-1].x+normal2[i].y*normal2[i-1].y+normal2[i].z*normal2[i-1].z<0)
+        {
+            normal2[i].x = -normal2[i].x;
+            normal2[i].y = -normal2[i].y;
+            normal2[i].z = -normal2[i].z;
+        }
+    }
+
+
+
 
     //compute coordinate for each pixel to be sampled. result saved as an 1d vector.
     V3DLONG totalpxl_sample = (radius * 2 + 1) * (radius * 2 + 1) * center_num;
