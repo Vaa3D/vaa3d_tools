@@ -13,6 +13,7 @@ INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/newmat11
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/c+
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
+#INCLUDEPATH     += $$VAA3DPATH/v3d_main/basic_c_fun/terafly/src/control
 
 
 

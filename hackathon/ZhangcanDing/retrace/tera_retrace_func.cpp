@@ -558,7 +558,60 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             count++;
                             soma_tile = false;
                             num_tips = 0;
-                            proc_app2(callback, p2, versionStr);
+
+                            //call app2 directly. since there is bug using the function proc_app2
+
+                            //proc_app2(callback, p2, versionStr);QString app2pluginname= "vn2";
+
+                            // /i input img
+                            QString app2pluginname= "vn2";
+                            QString app2funcname= "app2";
+                            V3DPluginArgItem arg;
+                            V3DPluginArgList input_app2;
+                            V3DPluginArgList output_app2;
+                            arg.type = "random";
+                            std::vector <char *>arg_input_app2;
+                            QString test_img= imageSaveString ;
+                            QByteArray test_img_ba=test_img.toLatin1();
+                            char * test_img_string =test_img_ba.data();
+                            arg_input_app2.push_back(test_img_string);
+                            arg.p = (void *) & arg_input_app2;
+                            input_app2<<arg;
+
+                            arg.type="random";
+                            std::vector <char *> arg_para_app2;
+
+                            // /p parameters set for app2
+                            char *p= "NULL";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p= "AUTO";arg_para_app2.push_back(p);
+                            p ="1";arg_para_app2.push_back(p);
+                            p= "1";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p ="5";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p= "0";arg_para_app2.push_back(p);
+                            arg.p= (void *)& arg_para_app2;
+                            input_app2<<arg;
+
+                            // /o outputswc
+                            arg.type= "random";
+                            std::vector <char *> arg_output_app2;
+                            QString outswc=poutswc_file;
+                            QByteArray outswc_ba= outswc.toLatin1();
+                            char * outswc_string=outswc_ba.data();
+                            arg_output_app2.push_back(outswc_string);
+                            arg.p =(void *) & arg_output_app2;
+                            output_app2<<arg;
+
+                            callback.callPluginFunc(app2pluginname,app2funcname,input_app2,output_app2);
+
+
+
+
+
     //                        if(ifs_swc)
     //                        {
     //                            NeuronTree nt_app2 = readSWC_file(poutswc_file);

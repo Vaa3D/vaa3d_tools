@@ -12,6 +12,7 @@
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "my_surf_objs.h"
 #include "vn_app2.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(tera_retrace, retrace);
  
@@ -58,42 +59,87 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         //neurontracer_app2_raw dialog(callback, parent);
         QString imgpath=callback.getPathTeraFly();
 
-        qDebug()<<"imgpath: \n" <<imgpath;
+        QString zdim=imgpath.section(QRegExp("[(x)]"),-2,-2).trimmed() ;
+        QString ydim=imgpath.section(QRegExp("[(x)]"),-3,-3).trimmed();
+        QString xdim=imgpath.section(QRegExp("[(x)]"),-4,-4).trimmed();
 
-        P.inimg_file=imgpath;
+        QString zdim_2nd= QString::number(zdim.toInt()/2);
+        QString ydim_2nd= QString::number(ydim.toInt()/2);
+        QString xdim_2nd= QString::number(xdim.toInt()/2);
+        QString res2ndimgpath= imgpath.split("RES")[0]+"RES("
+                +xdim_2nd +"x"+ydim_2nd+"x"+zdim_2nd+")";
+
+        qDebug()<< "x ="<<xdim;qDebug()<< "y ="<<ydim;qDebug()<< "z ="<<zdim;
+        qDebug()<< "x_2nd ="<<xdim_2nd;qDebug()<< "y_2nd ="<<ydim_2nd;qDebug()<< "z_2nd ="<<zdim_2nd;
+        qDebug()<< "2ndimgpath"<<res2ndimgpath;
+
+
+
+
+        //v3d_msg()<<"imgpath: \n" <<imgpath;
+
+         P.inimg_file=res2ndimgpath;
          bool bmenu=false;
-         NeuronTree swc;
+         NeuronTree ref_swc= callback.getSWCTeraFly();
+         QString savefolder= "D:\\retrace_tmp";
+         system(qPrintable(QString("mkdir %1").arg(savefolder.toStdString().c_str())));
+
+         QString fiswcfolder = savefolder+"\\finalswcfolder";
+         qDebug()<<"fiswcfoler: \n"<<fiswcfolder;
+         system(qPrintable(QString("mkdir %1").arg(fiswcfolder.toStdString().c_str())));
+         P.fusion_folder=fiswcfolder;
+
+         v3d_msg("check");
 
         for (int i=0; i<locationlist.size();i++)
         {
             if(locationlist.at(i).color.r==255 &&locationlist.at(i).color.g==0 && locationlist.at(i).color.b==0)
             {
                 ImageMarker m;
-                m.x=locationlist.at(i).x;
-                m.y=locationlist.at(i).y;
-                m.z=locationlist.at(i).z;
+                m.x=locationlist.at(i).x/2;
+                m.y=locationlist.at(i).y/2;
+                m.z=locationlist.at(i).z/2;
                 m.color.r=255;
                 m.color.g=0;
                 m.color.b=0;
-                QList<ImageMarker> mark;
-                mark.push_back(m);
-                printf("\n ++++++++++++++++++++\n");
-               QString  markfn=imgpath+"/../"+QString::number(i)+".marker";
-                writeMarker_file(markfn,mark);
-                P.markerfilename=markfn;
-                qDebug()<<"markerfilename: \n"<<markfn;
-                LandmarkList indimark;
+                QList<ImageMarker> indimarker;
+                indimarker.clear();
+                indimarker.push_back(m);
 
-                indimark.clear();
-                indimark.push_back(locationlist.at(i));
-                P.listLandmarks=indimark;
+                QString indimarkerfn;
+                if(i<9)
+                    indimarkerfn=savefolder+QString("\\00%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(m.x).arg(m.y).arg(m.z);
+                else if(i<99)
+                    indimarkerfn=savefolder+QString("\\0%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(m.x).arg(m.y).arg(m.z);
+                else
+                    indimarkerfn=savefolder+QString("\\%1_x_%2_y_%3_z_%4.marker").arg(i+1).arg(m.x).arg(m.y).arg(m.z);
+
+
+                writeMarker_file(indimarkerfn,indimarker);
+                qDebug()<<"markerfilename: \n"<<indimarkerfn;
+                v3d_msg("check marker name.");
+                P.markerfilename=indimarkerfn;
+
                 printf("-------------------------------\n");
                 crawler_raw_app(callback,parent,P,bmenu);
+
+                v3d_msg("check output");
+                QString txtfileName= indimarkerfn+"_tmp_APP2\\scanData.txt";
+                qDebug()<<"txtfilename:"<<txtfileName;
+                qDebug() <<"txtfileName="<< txtfileName;
+                list<string> infostring;
+                processSmartScan_3D(callback,infostring,txtfileName, P);
 
 
             }
         }
 
+        v3d_msg("check whole output without fusion");
+        QString ref_swc_wf= QString(fiswcfolder) + "\\ori.swc";
+        writeSWC_file(ref_swc_wf,ref_swc);
+        QString fusedswc= QString(fiswcfolder) + "_fused.swc";
+
+        smartFuse(callback,fiswcfolder, fusedswc);
 
 	}
 	else
@@ -141,10 +187,29 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         //neurontracer_app2_raw dialog(callback, parent);
         //QString imgpath=callback.getPathTeraFly();
         QString imgpath= infiles[0];
+        qDebug()<<"input imgpath="<<imgpath;
+
+        //        QString zdim=imgpath.section(QRegExp("[(x)]"),-2,-2).trimmed() ;
+        //        QString ydim=imgpath.section(QRegExp("[(x)]"),-3,-3).trimmed();
+        //        QString xdim=imgpath.section(QRegExp("[(x)]"),-4,-4).trimmed();
+
+        //        QString zdim_2nd= QString::number(zdim.toInt()/2);
+        //        QString ydim_2nd= QString::number(ydim.toInt()/2);
+        //        QString xdim_2nd= QString::number(xdim.toInt()/2);
+        //        QString res2ndimgpath= imgpath.split("RES")[0]+"RES("
+        //                +xdim_2nd +"x"+ydim_2nd+"x"+zdim_2nd+")";
+
+        //        qDebug()<< "x ="<<xdim;qDebug()<< "y ="<<ydim;qDebug()<< "z ="<<zdim;
+        //        qDebug()<< "x_2nd ="<<xdim_2nd;qDebug()<< "y_2nd ="<<ydim_2nd;qDebug()<< "z_2nd ="<<zdim_2nd;
+        //        qDebug()<< "2ndimgpath"<<res2ndimgpath;
+
+
         QString swcfn= infiles[1];
         NeuronTree ref_swc= readSWC_file(swcfn);
-        qDebug()<<"imgpath: \n" <<imgpath;
+        //qDebug()<<"imgpath: \n" <<imgpath;
 
+
+        v3d_msg("check");
         P.inimg_file=imgpath;
         bool bmenu=false;
 
@@ -277,7 +342,49 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
     {
         QString app2pluginname= "vn2";
         QString app2funcname="app2";
-        callback.callPluginFunc(app2pluginname,app2funcname,input,output);
+
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input_app2;
+        arg.type = "random";
+        std::vector <char *>arg_input_app2;
+        QString test_img= "C:\\Users\\braincenter\\Desktop\\app2_testing\\x_7262_y_13274_z_1952app2.v3draw";
+        QByteArray test_img_ba=test_img.toLatin1();
+        char * test_img_string =test_img_ba.data();
+        arg_input_app2.push_back(test_img_string);
+        arg.p = (void *) & arg_input_app2;
+        input_app2<<arg;
+
+        arg.type="random";
+        std::vector <char *> arg_para_app2;
+
+        //parameters set for app2
+        char *p= "NULL";arg_para_app2.push_back(p);
+        p ="0";arg_para_app2.push_back(p);
+        p= "AUTO";arg_para_app2.push_back(p);
+        p ="1";arg_para_app2.push_back(p);
+        p= "1";arg_para_app2.push_back(p);
+        p ="0";arg_para_app2.push_back(p);
+        p ="0";arg_para_app2.push_back(p);
+        p ="5";arg_para_app2.push_back(p);
+        p ="0";arg_para_app2.push_back(p);
+        p ="0";arg_para_app2.push_back(p);
+        p= "0";arg_para_app2.push_back(p);
+        arg.p= (void *)& arg_para_app2;
+        input_app2<<arg;
+
+        arg.type= "random";
+        std::vector <char *> arg_output_app2;
+
+
+
+
+
+        callback.callPluginFunc(app2pluginname,app2funcname,input_app2,output);
+
+
+
+        //p NULL 0 AUTO 1 1  0 0 5 0 0 0
 
     }
 
