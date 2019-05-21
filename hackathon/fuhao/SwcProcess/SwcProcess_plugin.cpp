@@ -747,7 +747,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     }
     else if(menu_name == tr("input_swc_output_img"))//
     {
-        cout<<11111<<endl;
+//        cout<<11111<<endl;
         QList <V3dR_MainWindow *> list_3dviewer = callback.getListAll3DViewers();
         if (list_3dviewer.size() < 1)
         {
@@ -837,6 +837,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         ntpg->Hackathon_process_tip(result_tree);
 //        ntpg.tp.show_tipdetetor_img(callback);
         callback.setLandmark(callback.currentImageWindow(),ntpg->need_to_show);
+        callback.pushObjectIn3DWindow(callback.currentImageWindow());
 
 
     }
@@ -852,11 +853,11 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         ScoreInput* s;
 //        cout<<"122"<<endl;
         s=new ScoreInput;;
-        cout<<"1"<<endl;
+//        cout<<"1"<<endl;
         s->setV3DPluginCallback2(&callback);
-        cout<<1<<endl;
+//        cout<<1<<endl;
         s->setWight(1,1,1);
-        cout<<2<<endl;
+//        cout<<2<<endl;
         QStringList problem;
         problem.append("edfdfr");
         problem.append("edf454r");
@@ -870,7 +871,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         s->setData(2,problem,sss,sss2,sss3);
 //        s->
-        cout<<"42"<<endl;
+//        cout<<"42"<<endl;
         s->show();
 
     }
@@ -904,6 +905,12 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                 cout<<"neu_i swc_score "<<swc_score<<endl;
 
             }
+        }
+        for(int i=0;i<ntpg.need_to_show.size();i++)
+        {
+            ntpg.need_to_show[i].x++;
+            ntpg.need_to_show[i].y++;
+            ntpg.need_to_show[i].z++;
         }
         callback.setLandmark(callback.currentImageWindow(),ntpg.need_to_show);
         callback.pushObjectIn3DWindow(callback.currentImageWindow());

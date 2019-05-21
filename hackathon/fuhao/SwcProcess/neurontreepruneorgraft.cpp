@@ -17,13 +17,17 @@
 float neurontreepruneorgraft::cal_tip_score(NeuronTree nt,int neu_i)
 {
     int current_type=nt.listNeuron.at(neu_i).type;
-    if(neu_i<0||current_type<0)
+    if(neu_i<0||current_type<0||neu_i>=nt.listNeuron.size())
     {
         cout<<"deal_not_match_points neu_i :"<<neu_i<<endl;
         cout<<"deal_not_match_points current_type== "<<current_type<<endl;
         return 0;//wrong input
     }
-    NeuronSWC need_cal=nt.listNeuron.at(neu_i);
+//    NeuronSWC need_cal=nt.listNeuron.at(neu_i);
+    LocationSimple p;
+    p.x=nt.listNeuron.at(neu_i).x;
+    p.y=nt.listNeuron.at(neu_i).y;
+    p.z=nt.listNeuron.at(neu_i).z;
     //neuronTree should do segment to change type before this function
 //    vector<vector<float> > x_dis(16*32,vector<float>(100)), y_dis(16*32,vector<float>(100)),z_dis(16*32,vector<float>(100));
 //    for(int len = 1; len < based_distance; len++)
@@ -40,6 +44,7 @@ float neurontreepruneorgraft::cal_tip_score(NeuronTree nt,int neu_i)
 //            }
 //        }
 //    }
+    cout<<endl<<"cal_tip_score neu_i"<<neu_i<<endl;
     float max_score=0;
     for(int  i =0;i<16*32;i++)
     {
@@ -47,29 +52,37 @@ float neurontreepruneorgraft::cal_tip_score(NeuronTree nt,int neu_i)
 //        cout<<"i "<<i<<endl;
         for(int j=0; j < based_distance; j+=1)
         {
-            LocationSimple p;
-            p.x=need_cal.x;
-            p.y=need_cal.y;
-            p.z=need_cal.z;
+//            LocationSimple p;
+//            p.x=need_cal.x;
+//            p.y=need_cal.y;
+//            p.z=need_cal.z;
+            LocationSimple p1;
+            p1.x=p.x+x_dis[i][j];
+            p1.y=p.y+y_dis[i][j];
+            p1.z=p.z+z_dis[i][j];
 
-            if(   p.x+x_dis[i][j]<0||p.x+x_dis[i][j]>sz[0]-1
-                ||p.y+y_dis[i][j]<0||p.y+y_dis[i][j]>sz[1]-1
-                ||p.z+z_dis[i][j]<0||p.z+z_dis[i][j]>sz[2]-1)
+            if(   p1.x<0||p1.x>sz[0]-1
+                ||p1.y<0||p1.y>sz[1]-1
+                ||p1.z<0||p1.z>sz[2]-1)
             {//out of bound
                continue;
             }
             unsigned char pixe;
-            pixe=p4DImage_bimg->getValueUINT8(p.x+x_dis[i][j],p.y+y_dis[i][j],p.z+z_dis[i][j],0);
+            pixe=p4DImage_bimg->getValueUINT8(p1.x,p1.y,p1.z,0);
             if(pixe==0)
             {count_bcak++;}
             LocationSimple candi;
-            bool is_tip=tp.TipDetect_onePoint_neighbor(p,candi,2);
+            bool is_tip=tp.TipDetect_onePoint_neighbor(p1,candi,2);
 //                        cout<<" bool is_tip=tp.TipDetect_onePoint(p);"<<endl;
             if(is_tip)
             {
                 float score=0;
-                float distToReal=sqrt((p.x-candi.x)*(p.x-candi.x)+(p.y-candi.y)*(p.y-candi.y) + (p.z-candi.z)*(p.z-candi.z));
-                float back_score=(float)(count_bcak+1.0)/(j+1.0);
+                float distToReal=sqrt((p.x-candi.x)*(p.x-candi.x)+
+                                      (p.y-candi.y)*(p.y-candi.y) +
+                                      (p.z-candi.z)*(p.z-candi.z));
+                float back_score;
+//                back_score=(float)(count_bcak+1.0)/(float)(j+1.0);
+                back_score=online_confidece(candi,p,this->bimg_datald,sz);
 //                if(distToReal<based_distance)
 //                {
 //                    score=1-back_score;
@@ -78,7 +91,12 @@ float neurontreepruneorgraft::cal_tip_score(NeuronTree nt,int neu_i)
 //                {
 //                    score=(-distToReal/based_distance)*2+3-back_score;
 //                }
-                score=(1-distToReal/based_distance)*back_score;
+//                cout<<"1.0-(float)distToReal/(float)based_distance: "<<1.0-(float)distToReal/(float)based_distance<<endl;
+//                cout<<"back_score :"<<back_score<<endl;
+                score=(1.0-(float)distToReal/(float)based_distance)*back_score;
+//                cout<<"final swc_score :"<<score<<endl;
+                score=score<0?0:score;
+
                 if(max_score<score)
                 {
                     max_score=score;
@@ -87,6 +105,7 @@ float neurontreepruneorgraft::cal_tip_score(NeuronTree nt,int neu_i)
             }
         }
     }
+    cout<<"final max_score:"<<max_score<<" neu_i:"<<neu_i<<endl;
     return max_score;
 }
 
@@ -192,9 +211,9 @@ float  neurontreepruneorgraft::cal_swc_score(NeuronTree nt,int neu_i)
             {
                 //与其parent 成钝角  或120°以上？  或许
                 XYZ point,parent;
-                parent.x=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).x-nt.listNeuron.at(neu_i).x;
-                parent.y=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).y-nt.listNeuron.at(neu_i).y;
-                parent.z=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).z-nt.listNeuron.at(neu_i).z;
+                parent.x=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).x-need_cal.x;
+                parent.y=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).y-need_cal.y;
+                parent.z=nt.listNeuron.at(nt.hashNeuron.value(neu_i)).z-need_cal.z;
                 point.x=x_loc.at(i)-need_cal.x;
                 point.y=y_loc.at(i)-need_cal.y;
                 point.z=z_loc.at(i)-need_cal.z;
@@ -208,10 +227,10 @@ float  neurontreepruneorgraft::cal_swc_score(NeuronTree nt,int neu_i)
                 }
             }
         }
-        if(0)
+        float min_swc_score=1;//find the minimum
+        if(1)
         {
             LandmarkList swc_point;
-            RGBA8 temp_point_color=RGBA8::random_rgb8();
             LocationSimple temp;
             for(int i=0;i<type_loc.size();i++)
             {
@@ -220,12 +239,11 @@ float  neurontreepruneorgraft::cal_swc_score(NeuronTree nt,int neu_i)
                     temp.x=x_loc.at(i);
                     temp.y=y_loc.at(i);
                     temp.z=z_loc.at(i);
-                    temp.color=temp_point_color;
                     swc_point.push_back(temp);
                 }
             }
             ClusterAnalysis cluster;
-            cluster.Read_from_curlist(swc_point,based_distance*0.1690*2,2);
+            cluster.Read_from_curlist(swc_point,based_distance*0.1960*3,2);//sin(pi*5.625/180)*2==0.1960
             int cluster_MaxId=cluster.DoDBSCANRecursive();
             cout<<"cluster_MaxId:"<<cluster_MaxId<<endl;
             swc_point=cluster.return_labeled_curlist(swc_point);
@@ -233,23 +251,77 @@ float  neurontreepruneorgraft::cal_swc_score(NeuronTree nt,int neu_i)
             {
                 need_to_show.append(swc_point);
             }
-            for(int jj=0;jj<swc_point.size();jj++)
-            {
-                for(int ii=0;ii<cluster.MaxDpId_after_cluster;ii++)
-                {
 
+            for(int jj=0;jj<=cluster_MaxId;jj++)
+            {
+                int temp_type=jj;
+                LandmarkList temp_group;
+                for(int temp_i=0;temp_i<swc_point.size();temp_i++)
+                {
+                    if(swc_point.at(temp_i).comments==QString::number(temp_type).toStdString())
+                    {
+                        temp_group.push_back(swc_point.at(temp_i));
+                    }
+                }
+                if(temp_group.size()<2)
+                {
+                    continue;
+                }
+                LocationSimple point_a,point_b;
+                float max_distance=0;
+                int max_dis_j,max_dis_k;
+                for(int temp_j=0;temp_j<temp_group.size();temp_j++)
+                {
+                    point_a=temp_group.at(temp_j);
+                    float temp_distance;
+
+                    for(int temp_k=temp_j+1;temp_k<temp_group.size();temp_k++)
+                    {
+                        point_b=temp_group.at(temp_k);
+                        temp_distance=sqrt((point_a.x - point_b.x)*(point_a.x - point_b.x) +
+                                           (point_a.y - point_b.y)*(point_a.y - point_b.y) +
+                                           (point_a.z - point_b.z)*(point_a.z - point_b.z) );
+                        if(max_distance<temp_distance)
+                        {
+                            max_distance=temp_distance;
+                            max_dis_j=temp_j;
+                            max_dis_k=temp_k;
+                        }
+                    }
+                }
+                if(max_distance<=0)
+                {
+                    v3d_msg("something error");
+                    cout<<"something error"<<__LINE__<<endl;
                 }
 
+                XYZ point_1,point_2;
+                point_1.x=temp_group.at(max_dis_j).x-need_cal.x;
+                point_1.y=temp_group.at(max_dis_j).y-need_cal.y;
+                point_1.z=temp_group.at(max_dis_j).z-need_cal.z;
+                point_2.x=temp_group.at(max_dis_k).x-need_cal.x;
+                point_2.y=temp_group.at(max_dis_k).y-need_cal.y;
+                point_2.z=temp_group.at(max_dis_k).z-need_cal.z;
+                float cos_vector=dot(point_1,point_2)/norm(point_1) / (norm(point_2));
+                if(min_swc_score>cos_vector)
+                {min_swc_score=cos_vector;}
             }
-
         }
-        //calcluate score;
-        float swc_score;
-        cout<<" type_count_swc "<<type_count_swc<<" Max_number_other_swc "<<Max_number_other_swc<<endl;
+        if(0)
+        {
+            //calcluate score;
+            float swc_score;
+            cout<<" type_count_swc "<<type_count_swc<<" Max_number_other_swc "<<Max_number_other_swc<<endl;
 
-        if(type_count_swc>Max_number_other_swc){type_count_swc=Max_number_other_swc;}
-        swc_score=1-((float)type_count_swc/Max_number_other_swc);
-        return swc_score;
+            if(type_count_swc>Max_number_other_swc){type_count_swc=Max_number_other_swc;}
+            swc_score=1-((float)type_count_swc/Max_number_other_swc);
+            return swc_score;
+        }
+        else
+        {
+            min_swc_score=(min_swc_score<0)?0:min_swc_score;
+            return min_swc_score;
+        }
     }
     return 0;
 }
@@ -344,7 +416,7 @@ void neurontreepruneorgraft::Hackathon_process_tip(NeuronTree nt)
             float tip_score=cal_tip_score(nt,neu_i);
 //            cout<<"tip_score "<<tip_score<<endl;
             float online_confidence_score=cal_online_confidence_score(nt,neu_i);
-//            cout<<"online_confidence_score "<<online_confidence_score<<endl;
+//            cout<<" try to save ,online_confidence_score "<<online_confidence_score<<endl;
             condidence_score[Hash_leaf.key(neu_i)]=online_confidence_score;
             no_other_swc_score[Hash_leaf.key(neu_i)]=swc_score;
             match_score[Hash_leaf.key(neu_i)]=tip_score;
@@ -367,6 +439,7 @@ void neurontreepruneorgraft::Hackathon_process_tip(NeuronTree nt)
     cout<<3<<endl;
     s->setData(Hash_leaf.size(),problem,no_other_swc_score,condidence_score,match_score);
     cout<<4<<endl;
+    s->getNeuronTree();
     s->show();
 
 

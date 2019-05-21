@@ -400,7 +400,7 @@ public:
         LocationSimple s;
         LandmarkList new_curlist;
 //        RGBA8 DarkOrange; DarkOrange.r=255; DarkOrange.g=140; DarkOrange.b=0;
-        RGBA8 temp_point_color=RGBA8::random_rgb8();
+        RGBA8 temp_point_color=random_rgba8();
         int MaxDpId;
         MaxDpId=MaxDpId_after_cluster+1;
 
@@ -427,7 +427,7 @@ public:
                 s.z = curlist[i].z;
                 s.radius = 1;
                 s.color = temp_point_color;
-                s.comments=QString::number( dataSets[i].GetDpId_after_cluster()).toStdString();
+                s.comments=QString::number(dataSets[i].GetDpId_after_cluster()).toStdString();
                 s.name=QString::number(i).toStdString();
                 new_curlist<<s;
 
