@@ -409,9 +409,9 @@ bool TipDetector::load_tp_temp(V3DPluginCallback2& callback)
         white.r=255;white.g=255;white.b=255;
         for(int i=0;i<curlist.size();i++)
         {
-            curlist[i].color.r=255;
-            curlist[i].color.g=0;
-            curlist[i].color.b=0;
+            curlist[i].color.r=0;
+            curlist[i].color.g=255;
+            curlist[i].color.b=100;
         }
         //save  tip_img_datald  sz[4]
         QString tip_img_filename=path_tp;
@@ -659,7 +659,7 @@ bool TipDetector::GUI_input_argu()
     layout->addWidget(new QLabel("T1"),7,0);
     layout->addWidget(angle_threshold_spinbox, 7,1,1,5);
 
-    layout->addWidget(new QLabel("Using_temp_CheckBox"),8,0);
+    layout->addWidget(new QLabel("Using_temp"),8,0);
     layout->addWidget(Using_temp_CheckBox, 8,1,1,5);
 
     QHBoxLayout * hbox2 = new QHBoxLayout();
@@ -670,7 +670,7 @@ bool TipDetector::GUI_input_argu()
     hbox2->addWidget(ok);
 
     QPushButton * Clear_temp = new QPushButton("Clear_temp");
-    cout<<"Clear_tempClear_temp"<<endl<<endl<<endl<<endl<<endl;
+//    cout<<"Clear_tempClear_temp"<<endl<<endl<<endl<<endl<<endl;
     layout->addWidget(Clear_temp, 9,0,1,5);
     QObject::connect(Clear_temp, SIGNAL(clicked()), this, SLOT(ClearTempData()));
 
@@ -772,7 +772,9 @@ void TipDetector::ClearTempData()
     }
     if(dir.exists(path_tp))
     {
-        dir.remove(path_tp);
+        cout<<"clear path_tp:"<<path_tp.toUtf8().data()<<endl;
+
+        dir.rmdir(path_tp);
         return;
     }
 

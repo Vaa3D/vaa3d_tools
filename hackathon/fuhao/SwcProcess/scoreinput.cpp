@@ -2,7 +2,7 @@
 #include<iostream>
 using namespace std;
 #include<QFileDialog>
-
+#include"renderer_gl1.h"
 ScoreInput::ScoreInput(QWidget *parent) : QMainWindow(parent)
 {
     this->setWindowTitle("SWC Post Score Control");
@@ -122,6 +122,13 @@ ScoreInput::ScoreInput(QWidget *parent) : QMainWindow(parent)
 
 //    this->getNeuronTree();
     score_slider_num->setFixedWidth(5*10);
+
+
+    no_other_swc_score=NULL;
+    condidence_score=NULL;
+    match_score=NULL;
+    result=NULL;
+    final_score=NULL;
 }
 void ScoreInput::changeWeights()
 {
@@ -136,6 +143,7 @@ void ScoreInput::sliderValueChanger(int value)
     score_slider_num->setText(QString::number(score_slider->value()/100.0));
 //    cout<<"sliderValueChanger "<<score_slider->value()<<endl;
    this->calFinalScore();
+//    callback->
     emit signal_slider_valueChanged();
 }
 
@@ -180,8 +188,12 @@ void ScoreInput::compare()
         (*mTreeList)[deal_tree_num]=dealedTree;
     }
 //    this->hide();
+    cout<<"it is ok22 "<<__LINE__<<endl;
     this->setWindowState(Qt::WindowMinimized);
+    (*mTreeList)[0].on=false;
     emit signal_compare();
+
+
 
 
 }
@@ -206,7 +218,7 @@ bool ScoreInput::getNeuronTree()
         v3d_msg("Please open  a SWC file from the main menu first! list_3dviewer");
         return false;
     }
-    V3dR_MainWindow *surface_win = list_3dviewer[0];
+    /*V3dR_MainWindow *  */surface_win = list_3dviewer[0];
     if (!surface_win){
         v3d_msg("Please open up a SWC file from the main menu first!");
         return false;

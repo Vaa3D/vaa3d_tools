@@ -9,6 +9,8 @@
 #include<QLabel>
 #include<QSlider>
 #include"v3d_interface.h"
+#include"v3dr_mainwindow.h"
+#include"v3dr_glwidget.h"
 //#include<QLayout>
 
 
@@ -69,6 +71,7 @@ private:
     int deal_tree_num;
     NeuronTree dealedTree;
     QList<NeuronTree> * mTreeList;
+    V3dR_MainWindow * surface_win;
 
     float weight_confidence_score;
     float weight_match_score;

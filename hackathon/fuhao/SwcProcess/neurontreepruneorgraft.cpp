@@ -2408,7 +2408,7 @@ NeuronTree neurontreepruneorgraft::sort_neuron( NeuronTree nt)
 //   cout<<"max_size "<<max_size<<endl;
    if(temp_rootid==-1)
    {
-       rootid=VOID;
+       rootid=1000000000;
    }
    else
    {
@@ -3196,7 +3196,7 @@ NeuronTree neurontreepruneorgraft::pruingSwc_one_leafnode_stop_before_tip(Locati
     }
     pruning_branch_count++;
 //    cout<<"after prun nt.listNeuron.size :"<<final_tree.listNeuron.size()<<endl;
-    if(1)
+    if(0)
     {
         QString filename3="../../debug/113423.swc";
         writeSWC_file(filename3,final_tree);

@@ -44,7 +44,7 @@ QStringList TestPlugin::menulist() const
 //        <<tr("input_swc_output_img")
         <<tr("Hackthon_tip_postProcess")
         <<tr("about")
-          <<tr("cal_swc_score")
+//          <<tr("cal_swc_score")
           ;
 }
 
@@ -843,36 +843,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     }
     else if(menu_name == tr("about"))
 	{
-//        QString filename="C:\\Users\\204\\Desktop\\demo\\fruitfly5\\331.swc";
-//        NeuronTree temp_tree;
-//        temp_tree=readSWC_file(filename);
+        v3d_msg("this plugin developed by fuhao");
 
-//        v3dhandle curwin = callback.currentImageWindow();
-//        callback.setSWC(curwin,temp_tree);
-//		v3d_msg(tr("This is a test plugin, you can use it as a demo. Developed by fuhao, 2019-1-3"));
-        ScoreInput* s;
-//        cout<<"122"<<endl;
-        s=new ScoreInput;;
-//        cout<<"1"<<endl;
-        s->setV3DPluginCallback2(&callback);
-//        cout<<1<<endl;
-        s->setWight(1,1,1);
-//        cout<<2<<endl;
-        QStringList problem;
-        problem.append("edfdfr");
-        problem.append("edf454r");
-        float sss[1],sss2[1],sss3[1];
-        sss[0]=0.6;
-        sss2[0]=0.5;
-        sss3[0]=0.4;
-        sss[1]=0.2;
-        sss2[1]=0.7;
-        sss3[1]=0.5;
-
-        s->setData(2,problem,sss,sss2,sss3);
-//        s->
-//        cout<<"42"<<endl;
-        s->show();
 
     }
     else if(menu_name == tr("cal_swc_score"))

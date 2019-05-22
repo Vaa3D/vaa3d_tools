@@ -6,6 +6,7 @@
 
 class TipDetector:public QObject
 {
+    Q_OBJECT
 private:
     Image4DSimple * p4DImage;
     V3DLONG sz[4];
