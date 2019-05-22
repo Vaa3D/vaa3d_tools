@@ -9,13 +9,24 @@
 
 
 #include <cstring>
-#include <gsl/gsl_poly.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
+#include <gsl_include/gsl_poly.h>
+#include <gsl_include/gsl_math.h>
+#include <gsl_include/gsl_eigen.h>
+#include <gsl_include/gsl_cblas.h>
 #include <algorithm>
 #include <vector>
+#include <fstream>
+#include <string>
+#include <math.h>
+#include "stackutil.h"
+#include "../../../v3d_main/jba/newmat11/newmatap.h"
+#include "../../../v3d_main/jba/newmat11/newmatio.h"
 
 #include "convolver3D.h"
+
+
+double zhi_abs(double num);
+bool swapthree(double& dummya, double& dummyb, double& dummyc);
 
 class Filter {
     

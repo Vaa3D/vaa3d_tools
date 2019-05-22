@@ -15,16 +15,19 @@ INCLUDEPATH += gsl_include
 INCLUDEPATH += main 
 
 LIBS += $$GSLLIBPATH/libgsl.a
+LIBS += $$GSLLIBPATH/libgslcblas.a
+LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+
 
 HEADERS += $$V3DMAINPATH/basic_c_fun/basic_memory.h
 HEADERS += SteerableFilter3Dplugin.h
-HEADERS += steerableDetector.h
-HEADERS += convolver.h
+HEADERS += steerableDetector3D.h
+HEADERS += convolver3D.h
 SOURCES  = SteerableFilter3Dplugin.cpp
 
 SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
-SOURCES += steerableDetector.cpp
-SOURCES += convolver.cpp
+SOURCES += steerableDetector3D.cpp
+SOURCES += convolver3D.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 TARGET        = $$qtLibraryTarget(SteerableFilter3D)

@@ -9,13 +9,35 @@
 
 
 #include <cstring>
-#include <gsl/gsl_poly.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
+#include <gsl_include/gsl_poly.h>
+#include <gsl_include/gsl_math.h>
+#include <gsl_include/gsl_eigen.h>
+//#include <gsl_include/gsl_cblas.h>
+
 #include <algorithm>
 #include <vector>
+#include <stdlib.h>
+#include <iostream>
+#include <iomanip>
+
+
+
+#include <fstream>
+#include <string>
+#include <math.h>
+#include "stackutil.h"
+
+#include "../../../v3d_main/jba/newmat11/newmatap.h"
+#include "../../../v3d_main/jba/newmat11/newmatio.h"
+
 
 #include "convolver3D.h"
+#include "steerableDetector3D.h"
+
+#ifdef use_namespace
+using namespace RBD_LIBRARIES;
+#endif
+
 
 #define PI 3.141592653589793
 
@@ -27,6 +49,12 @@ Filter::Filter(const double voxels[], const int nx, const int ny, const int nz, 
     M_ = M;
     sigma_ = sigma;
     sigmaZ_ = sigma;
+    std::cout<<"core: nx = "<<nx_<<std::endl;
+    std::cout<<"core: ny = "<<ny_<<std::endl;
+    std::cout<<"core: nz = "<<nz_<<std::endl;
+    std::cout<<"core: M = "<<M_<<std::endl;
+    std::cout<<"core: sigma = "<<sigma_<<std::endl;
+    std::cout<<"core: sigmaZ = "<<sigmaZ_<<std::endl;
     init();
 }
 
@@ -38,6 +66,12 @@ Filter::Filter(const double voxels[], const int nx, const int ny, const int nz, 
     M_ = M;
     sigma_ = sigma;
     sigmaZ_ = sigma/zxRatio;
+    std::cout<<"core: nx = "<<nx_<<std::endl;
+    std::cout<<"core: ny = "<<ny_<<std::endl;
+    std::cout<<"core: nz = "<<nz_<<std::endl;
+    std::cout<<"core: M = "<<M_<<std::endl;
+    std::cout<<"core: sigma = "<<sigma_<<std::endl;
+    std::cout<<"core: sigmaZ = "<<sigmaZ_<<std::endl;
     init();
 }
 
@@ -52,7 +86,9 @@ void Filter::init() {
         sign_ = 1.0;
         c_ = 8.0*PI*sqrt(6.0)*sigmaZ_;
     }
-    
+    std::cout<<"filter::init, start"<<std::endl;
+   
+
     N_ = nx_*ny_*nz_;
     response_ = new double[N_];
     gxx_ = new double[N_];
@@ -66,21 +102,30 @@ void Filter::init() {
     for (int i=0;i<N_;++i) {
         orientation_[i] = new double[3];
     }
-    
+  
+    std::cout<<"filter::init, output initialization done"<<std::endl;
+   
+
     calculateTemplates();
     run();
     
-    nms_ = new double[N_];
-    memset(nms_, 0, N_*sizeof(double));
+    /*nms_ = new double[N_];
+    double * pointer_nms=nms;
+
+    for(int index = 0; index< N_; index++){
+        *(pointer_nms++) =0;  
+    }
+
     if (M_==1) {
         computeCurveNMS();
     } else if (M_==2) {
         computeSurfaceNMS();
-    }    
+    } */   
 }
 
 
 Filter::~Filter() {
+    /*
     delete[] response_;
     delete[] gxx_;
     delete[] gxy_;
@@ -93,6 +138,7 @@ Filter::~Filter() {
         delete[] orientation_[i];
     }
     delete[] orientation_;
+    */
 }
 
 
@@ -109,7 +155,10 @@ void Filter::calculateTemplates() {
     int kLengthZ = wWidthZ+1;
     double sigmaZ2 = sigmaZ_*sigmaZ_;
     double sigmaZ4= sigmaZ2*sigmaZ2;
-    
+    std::cout<<"filter::calculateTemplates, start"<<std::endl;
+   
+
+
     // Compute Gaussian kernels
     double *kernelG = new double[kLength];
     double *kernelGx = new double[kLength];
@@ -118,7 +167,9 @@ void Filter::calculateTemplates() {
     double *kernelG_z = new double[kLengthZ];
     double *kernelGx_z = new double[kLengthZ];
     double *kernelGxx_z = new double[kLengthZ];
-    
+    std::cout<<"filter::calculateTemplates, gaussian kernels initialization"<<std::endl;
+   
+
     double g;
     for (int i=0;i<=wWidth;++i) {
         g = exp(-(i*i)/(2.0*sigma2)); // normalization by sqrt(2*PI)*sigma_ omitted
@@ -133,14 +184,48 @@ void Filter::calculateTemplates() {
         kernelGx_z[i] = -i/sigmaZ2 * g;
         kernelGxx_z[i] = (i*i-sigmaZ2)/sigmaZ4 * g;
     }
-    
+    std::cout<<"filter::calculateTemplates, gaussian kernels ready"<<std::endl;
+   
+
     // Convolve all along x
     convolveEvenX(voxels_, kernelG, kLength, nx_, ny_, nz_, gyy_);
-    memcpy(gyz_, gyy_, N_*sizeof(double));
-    memcpy(gzz_, gyy_, N_*sizeof(double));
+    std::cout<<"filter::calculateTemplates, convolveEvenX"<<std::endl;
+    std::cout<<"N_="<<N_<<std::endl;
+        
+    double * extIter = gyz_;
+    for(int index = 0; index< N_; index++){
+        *(extIter++) = gyy_[index];   
+        //std::cout<<"copy gyy to gyz, index="<<index<<std::endl;
+             
+    }
+    
+    double * extIter2 = gzz_;
+    for(int index = 0; index< N_; index++){
+        *(extIter2++) = gyy_[index];    
+        //std::cout<<"copy gyy to gzz, index="<<index<<std::endl;
+                 
+    }
+     
+    std::cout<<"filter::calculateTemplates, gyz,gzz initialized"<<std::endl;
+    
+   
     convolveOddX(voxels_, kernelGx, kLength, nx_, ny_, nz_, gxy_);
-    memcpy(gxz_, gxy_, N_*sizeof(double));
+    std::cout<<"filter::calculateTemplates, convolveOddX"<<std::endl;
+    
+    
+    double * extIter3 = gxz_;
+    for(int index = 0; index< N_; index++){
+        *(extIter3++) = gxy_[index];           
+    }
+    
+    //memcpy(gxz_, gxy_, N_*sizeof(double));
+    
+    std::cout<<"filter::calculateTemplates, gxz initialized"<<std::endl;
+    
+    
     convolveEvenX(voxels_, kernelGxx, kLength, nx_, ny_, nz_, gxx_);
+    std::cout<<"filter::calculateTemplates, convolveEvenX"<<std::endl;
+    
     // gxx
     convolveEvenY(gxx_, kernelG, kLength, nx_, ny_, nz_, buffer);
     convolveEvenZ(buffer, kernelG_z, kLengthZ, nx_, ny_, nz_, gxx_);
@@ -159,6 +244,7 @@ void Filter::calculateTemplates() {
     // gzz
     convolveEvenY(gzz_, kernelG, kLength, nx_, ny_, nz_, buffer);
     convolveEvenZ(buffer, kernelGxx_z, kLengthZ, nx_, ny_, nz_, gzz_);
+    std::cout<<"filter::calculateTemplates, convolve many"<<std::endl;
     
     delete[] kernelG;
     delete[] kernelGx;
@@ -173,6 +259,7 @@ void Filter::calculateTemplates() {
 void Filter::run() {
     
     double a, b, c, d, e, f;
+    std::cout<<"filter::run, start"<<std::endl;
     
     for (int i=0;i<N_;++i) {
         
@@ -186,24 +273,90 @@ void Filter::run() {
         double A[] = {a,d,e,
                       d,b,f,
                       e,f,c};
+        //std::cout<<"filter::run, matrix for eigen"<<i<<std::endl;
+    
+        SymmetricMatrix Cov_Matrix(3);
+        Cov_Matrix.Row(1) << a;
+        Cov_Matrix.Row(2) << d << b;
+        Cov_Matrix.Row(3) << e << f <<c;
+
+        DiagonalMatrix eigenvalues_matrix;
+        Matrix eigenvectors_matrix;
+        //std::cout<<"filter::run, Cov_Matrix:"<<std::endl;
+        //std::cout<< std::setw(10) << std::setprecision(7) <<Cov_Matrix<<std::endl;
         
-        gsl_matrix_view m = gsl_matrix_view_array(A, 3, 3);
+        EigenValues(Cov_Matrix,eigenvalues_matrix,eigenvectors_matrix);
+        //std::cout<<"filter::run, eigenvalues_matrix:"<<std::endl;
+        //std::cout<< std::setw(10) << std::setprecision(7) <<eigenvalues_matrix<<std::endl;
+        //std::cout<<"filter::run, eigenvectors_matrix:"<<std::endl;
+        //std::cout<< std::setw(10) << std::setprecision(7) <<eigenvectors_matrix<<std::endl;
         
-        gsl_vector *eval = gsl_vector_alloc(3);
-        gsl_matrix *evec = gsl_matrix_alloc(3,3);
+        double a1 = eigenvalues_matrix(1), a2 = eigenvalues_matrix(2), a3 = eigenvalues_matrix(3);
+        //std::cout<< "a1:"<<a1<<", a2:"<<a2<<", a3:"<<a3<<std::endl;
+        swapthree(a1, a2, a3);
+                
+        response_[i] = a1;
+        //std::cout<< "response_[i]:"<<response_[i]<<std::endl;
         
-        gsl_eigen_symmv_workspace *w = gsl_eigen_symmv_alloc(3);
-        gsl_eigen_symmv (&m.matrix, eval, evec, w);
-        gsl_eigen_symmv_free(w);
-        gsl_eigen_symmv_sort(eval, evec, GSL_EIGEN_SORT_VAL_ASC); // largest eigenvalue
-        
-        response_[i] = gsl_vector_get(eval, 2) / c_;
-        orientation_[i][0] = gsl_matrix_get(evec, 0, 2);
-        orientation_[i][1] = gsl_matrix_get(evec, 1, 2);
-        orientation_[i][2] = gsl_matrix_get(evec, 2, 2);
+        orientation_[i][0] = eigenvectors_matrix(1,3);
+        orientation_[i][1] = eigenvectors_matrix(2,3);
+        orientation_[i][2] = eigenvectors_matrix(3,3);
+        //std::cout<<"filter::run, orientation_[i][0]="<<orientation_[i][0]<<", [i][1]="<<orientation_[i][1]<<", [i][2]="<<orientation_[i][2]<<std::endl;
+    
     }
 }
 
+double zhi_abs(double num)
+{
+    return (num<0) ? -num : num;
+}
+
+
+bool swapthree(double& dummya, double& dummyb, double& dummyc)
+{
+
+    if ( (zhi_abs(dummya) >= zhi_abs(dummyb)) && (zhi_abs(dummyb) >= zhi_abs(dummyc)) )
+    {
+    }
+    else if ( (zhi_abs(dummya) >= zhi_abs(dummyc)) && (zhi_abs(dummyc) >= zhi_abs(dummyb)) )
+    {
+        double temp = dummyb;
+        dummyb = dummyc;
+        dummyc = temp;
+    }
+    else if ( (zhi_abs(dummyb) >= zhi_abs(dummya)) && (zhi_abs(dummya) >= zhi_abs(dummyc)) )
+    {
+        double temp = dummya;
+        dummya = dummyb;
+        dummyb = temp;
+    }
+    else if ( (zhi_abs(dummyb) >= zhi_abs(dummyc)) && (zhi_abs(dummyc) >= zhi_abs(dummya)) )
+    {
+        double temp = dummya;
+        dummya = dummyb;
+        dummyb = dummyc;
+        dummyc = temp;
+    }
+    else if ( (zhi_abs(dummyc) >= zhi_abs(dummya)) && (zhi_abs(dummya) >= zhi_abs(dummyb)) )
+    {
+        double temp = dummya;
+        dummya = dummyc;
+        dummyc = dummyb;
+        dummyb = temp;
+    }
+    else if ( (zhi_abs(dummyc) >= zhi_abs(dummyb)) && (zhi_abs(dummyb) >= zhi_abs(dummya)) )
+    {
+        double temp = dummyc;
+        dummyc = dummya;
+        dummya = temp;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
 
 void Filter::normalize(double v[], const int k) {
     double n = 0.0;

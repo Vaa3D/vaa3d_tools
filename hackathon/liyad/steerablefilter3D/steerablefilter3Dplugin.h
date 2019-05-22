@@ -69,8 +69,10 @@ class SteerableFilter3DDialog : public QDialog
             pRoiList=cb.getROI(cb.currentImageWindow());
             int chn_num = image->getCDim();
 
-            order_editor = new QLineEdit(QString("").setNum(4));            
-            sigma_editor = new QLineEdit(QString("").setNum(3));
+            order_editor = new QLineEdit(QString("").setNum(2));            
+            sigma_editor = new QLineEdit(QString("").setNum(1));
+            zfactor_editor = new QLineEdit(QString("").setNum(3));
+            
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);
 
@@ -79,16 +81,18 @@ class SteerableFilter3DDialog : public QDialog
             gridLayout->addWidget(order_editor, 0,1,1,5);
             gridLayout->addWidget(new QLabel("Sigma value"),1,0);
             gridLayout->addWidget(sigma_editor, 1,1,1,5);
-            gridLayout->addWidget(new QLabel("Channel"),2,0);
-            gridLayout->addWidget(channel_spinbox, 2,1,1,5);
+            gridLayout->addWidget(new QLabel("Z Factor"),2,0);
+            gridLayout->addWidget(zfactor_editor, 2,1,1,5);
+            gridLayout->addWidget(new QLabel("Channel"),3,0);
+            gridLayout->addWidget(channel_spinbox, 3,1,1,5);
 
             ok     = new QPushButton("OK");
             cancel = new QPushButton("Cancel");
-            gridLayout->addWidget(cancel, 3,0);
-            gridLayout->addWidget(ok,     3,1,1,5);;
+            gridLayout->addWidget(cancel, 4,0);
+            gridLayout->addWidget(ok,     4,1,1,5);;
 
             setLayout(gridLayout);
-            setWindowTitle(QString("Steerable Filter 2D"));
+            setWindowTitle(QString("Steerable Filter 3D"));
 
             //slot interface
             connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
@@ -103,12 +107,14 @@ class SteerableFilter3DDialog : public QDialog
         {
             order = atof(order_editor->text().toStdString().c_str());
             sigma = atof(sigma_editor->text().toStdString().c_str());
+            zfactor = atof(zfactor_editor->text().toStdString().c_str());
             ch = channel_spinbox->text().toInt();
         }
 
     public:
         int order,ch;
         double sigma;
+        double zfactor;
         Image4DSimple* image;
         ROIList pRoiList;
         QGridLayout *gridLayout;
@@ -116,6 +122,7 @@ class SteerableFilter3DDialog : public QDialog
         QPushButton* cancel;
         QLineEdit * order_editor;
         QLineEdit * sigma_editor;
+        QLineEdit * zfactor_editor;
         QSpinBox * channel_spinbox;
 
     };

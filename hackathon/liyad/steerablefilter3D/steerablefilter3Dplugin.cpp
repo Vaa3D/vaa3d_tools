@@ -1,4 +1,4 @@
-/* steerablefilter2D.cxx
+/* SteerableFilter3D.cxx
  * 2009-06-03: create this program by Yang Yu
  * 2009-08-14: change into plugin by Yang Yu
  */
@@ -16,8 +16,8 @@
 #include "v3d_message.h"
 #include "stackutil.h"
 
-#include "steerablefilter2Dplugin.h"
-#include "steerableDetector.h"
+#include "steerablefilter3Dplugin.h"
+#include "steerableDetector3D.h"
 
 using namespace std;
 
@@ -25,19 +25,19 @@ using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(steerablefilter2D, SteerableFilter2DPlugin)
+Q_EXPORT_PLUGIN2(SteerableFilter3D, SteerableFilter3DPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
 const QString title = QObject::tr("Steerable Filter 2D Plugin");
-QStringList SteerableFilter2DPlugin::menulist() const
+QStringList SteerableFilter3DPlugin::menulist() const
 {
     return QStringList() << tr("Steerable Filter 2D") << tr("About");
 }
 
-void SteerableFilter2DPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void SteerableFilter3DPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if (menu_name == tr("Steerable Filter 2D"))
 	{
@@ -49,7 +49,7 @@ void SteerableFilter2DPlugin::domenu(const QString &menu_name, V3DPluginCallback
 	}
 }
 
-QStringList SteerableFilter2DPlugin::funclist() const
+QStringList SteerableFilter3DPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("gf")
@@ -57,7 +57,7 @@ QStringList SteerableFilter2DPlugin::funclist() const
 }
 
 
-bool SteerableFilter2DPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
+bool SteerableFilter3DPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
      if (func_name == tr("gf"))
 	{
@@ -75,91 +75,6 @@ bool SteerableFilter2DPlugin::dofunc(const QString &func_name, const V3DPluginAr
 		cout<<endl;
 		return true;
 	}
-}
-
-bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
-{
-	cout<<"Welcome to Steerable filter"<<endl;
-	if (output.size() != 1) return false;
-
-	unsigned int order=2, c=1;
-     float sigma = 1.0;
-     if (input.size()>=2)
-     {
-          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-          if(paras.size() >= 1) order = atoi(paras.at(0));
-          if(paras.size() >= 2) c = atoi(paras.at(1));
-          if(paras.size() >= 3) sigma = atof(paras.at(2));
-	}
-
-	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-	cout<<"bool_processOrder = "<<order<<endl;
-    cout<<"bool_processc = "<<c<<endl;
-    cout<<"bool_processsigma = "<<sigma<<endl;
-	cout<<"bool_processinimg_file = "<<inimg_file<<endl;
-	cout<<"bool_processoutimg_file = "<<outimg_file<<endl;
-
-     double sigma_s2 = 0.5/(sigma*sigma);
-
-    Image4DSimple *inimg = callback.loadImage(inimg_file);
-    unsigned char* data1d = inimg->getRawData();
-    
-    if (!inimg || !inimg->valid())
-    {
-        v3d_msg("Fail to open the image file.", 0);
-        return false;
-    }
-
-     if(c > inimg->getCDim())// check the input channel number range
-     {
-          v3d_msg("The input channel number is out of real channel range.\n", 0 );
-          return false;
-     }
-
-	//input
-    // float* outimg = 0; //no need to delete it later as the Image4DSimple variable "outimg" will do the job
-     double* response = 0;
-     double* orientation = 0;
-     double* nms = 0;
- 
-     V3DLONG in_sz[4];
-     in_sz[0] = inimg->getXDim();
-     in_sz[1] = inimg->getYDim();
-     in_sz[2] = inimg->getZDim();
-     in_sz[3] = inimg->getCDim();
-
-    int nx=in_sz[0];
-    int ny=in_sz[1];
-    
-    double* doubleimage = new double[nx*ny];
-    cout<<"bool_process: doubleimage initialized"<<endl;
-	
-    double * extIter = doubleimage;
-    for(V3DLONG index = 0; index< nx*ny; index++){
-        *(extIter++) = data1d[index]+20;           
-    }
-     //switch (inimg->getDatatype())
-     //{
-        //  case V3D_UINT8: 
-    steerablefilter2Dcore(doubleimage, in_sz, order, sigma, response, orientation, nms); //break;
-         // case V3D_UINT16: steerablefilter2Dcore((unsigned short int*)(inimg->getRawData()), in_sz, order, c, sigma, response,orientation,nms); break;
-          //case V3D_FLOAT32: steerablefilter2Dcore((float *)(inimg->getRawData()), in_sz, order, c, sigma, response,orientation,nms); break;
-      //    default:
-    //           v3d_msg("Invalid datatype in steerable fileter.", 0);
-        //       if (inimg) {delete inimg; inimg=0;}
-          //     return false;
-     //}
-
-     // save image
-     Image4DSimple outimg1;
-     outimg1.setData((unsigned char *)response, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
-
-     callback.saveImage(&outimg1, outimg_file);
-
-     if(inimg) {delete inimg; inimg =0;}
-
-     return true;
 }
 
 
@@ -196,7 +111,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
      //add input dialog
 
-    SteerableFilter2DDialog dialog(callback, parent);
+    SteerableFilter3DDialog dialog(callback, parent);
     if (!dialog.image)
         return;
 
@@ -213,62 +128,74 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     int order = dialog.order;
     int c = dialog.ch;
     double sigma = dialog.sigma;
+    double zfactor = dialog.zfactor;
 
     cout<<"void_process Order = "<<order<<endl;
     cout<<"void_process sigma = "<<sigma<<endl;
+    cout<<"void_process zfactor = "<<zfactor<<endl;
     cout<<"void_process ch = "<<c<<endl;
     
     // gaussian_filter
      V3DLONG in_sz[4];
      in_sz[0] = nx; in_sz[1] = ny; in_sz[2] = nz; in_sz[3] = sc;
 
-    double* response = 0;
-    double* orientation = 0;
-    double* nms = 0;
-    
-    double * doubleimage = new double [nx*ny];
+    double * doubleimage = new double [nx*ny*nz];
     cout<<"void_process: doubleimage initialized"<<endl;
 
     double * extIter = doubleimage;
-    for(V3DLONG index = 0; index< nx*ny; index++){
-        *(extIter++) = data1d[index]+20;           
+    for(V3DLONG index = 0; index< nx*ny*nz; index++){
+        *(extIter++) = data1d[index];           
     }
+    cout<<"void_process: doubleimage copied"<<endl;
           
-    
-	//switch (p4DImage->getDatatype())
-    //{
-      //  case V3D_UINT8: 
-    steerablefilter2Dcore(doubleimage, in_sz, order, sigma,response, orientation, nms);// break;
-       // case V3D_UINT16: steerablefilter2Dcore((unsigned short int *)data1d,in_sz, M, sigma,response,orientation,nms); break;
-       // case V3D_FLOAT32: steerablefilter2Dcore((float *)data1d, in_sz, M, sigma,response,orientation,nms);break;
-       // default: v3d_msg("Invalid data type. Do nothing."); return;
-    //}
-
-    //for(V3DLONG index = 0; index< nx*ny; index++){
-    //    cout<<"index="<<index<<"response[index]: "<<response[index]<<endl;         
-    //}
+    Filter filter = Filter(doubleimage, nx, ny, nz, order, sigma, zfactor);
+    double *res = filter.getResponse();
+    //double **orientation = filter.getOrientation();
+    //double *nms = filter.getNMS();
 
 
     // Steerable filter Response convert from double to float
-    float * outputimageResponse = new float [nx*ny];
+    float * outputimageResponse = new float [nx*ny*nz];
     cout<<"void_process outputimage Response initialized"<<endl;
 
     float * extIter2 = outputimageResponse;
-    for(V3DLONG index = 0; index< nx*ny; index++){
-        *(extIter2++) = response[index];           
+    for(V3DLONG index = 0; index< nx*ny*nz; index++){
+        
+       // if(res[index]<0)
+        //{
+        //    *(extIter2++)=0;
+        //}
+        //else  
+        //{
+        *(extIter2++) = res[index]/100;     
+        //}
+        //cout<<"outputimageResponse["<<index<<"]="<<outputimageResponse[index]<<endl;
+
+
+
     }
     cout<<"void_process outputimage Response copied"<<endl;
 
 
      // Steerable filter Response display
-    const QString titleresponse = QObject::tr("Steerable Filter 2D Response");
+    const QString titleresponse = QObject::tr("Steerable Filter 3D Response");
     Image4DSimple * new4DImageResponse = new Image4DSimple();
     new4DImageResponse->setData((unsigned char *)outputimageResponse, nx, ny, nz, 1, V3D_FLOAT32);
-    v3dhandle newwinResponse = callback.newImageWindow();
-    callback.setImage(newwinResponse, new4DImageResponse);
-    callback.setImageName(newwinResponse, titleresponse);
-    callback.updateImageWindow(newwinResponse);
+    cout<<"void_process outputimage Response set data"<<endl;
 
+    v3dhandle newwinResponse = callback.newImageWindow();
+    cout<<"void_process v3dhandle newwinResponse"<<endl;
+
+    callback.setImage(newwinResponse, new4DImageResponse);
+    cout<<"void_process outputimage Response set image"<<endl;
+    
+    callback.setImageName(newwinResponse, titleresponse);
+    cout<<"void_process outputimage Response set imagename"<<endl;
+    
+    callback.updateImageWindow(newwinResponse);
+    cout<<"void_process outputimage Response update"<<endl;
+
+    /*
     // Steerable filter orientation convert from double to float
     float * outputimageOrientation = new float [nx*ny];
     cout<<"void_process outputimage Response initialized"<<endl;
@@ -280,35 +207,187 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     cout<<"void_process outputimage Orientation copied"<<endl;
 
 
-     // Steerable filter Orientation display
-    const QString titleOrientation = QObject::tr("Steerable Filter 2D Orientation");
+    // Steerable filter Orientation display
+    const QString titleOrientation = QObject::tr("Steerable Filter 3D Orientation");
     Image4DSimple * new4DImageOrientation = new Image4DSimple();
     new4DImageOrientation->setData((unsigned char *)outputimageOrientation, nx, ny, nz, 1, V3D_FLOAT32);
     v3dhandle newwinOrientation = callback.newImageWindow();
     callback.setImage(newwinOrientation, new4DImageOrientation);
     callback.setImageName(newwinOrientation, titleOrientation);
     callback.updateImageWindow(newwinOrientation);
+    */
 
+/*
 
     // Steerable filter NMS convert from double to float 
-    float * outputimageNMS = new float [nx*ny];
+    float * outputimageNMS = new float [nx*ny*nz];
     cout<<"void_process outputimage NMS initialized"<<endl;
 
     float * extIter3 = outputimageNMS;
-    for(V3DLONG index = 0; index< nx*ny; index++){
+    for(V3DLONG index = 0; index< nx*ny*nz; index++){
         *(extIter3++) = nms[index];           
     }
     cout<<"void_process outputimage NMS copied"<<endl;
 
     // Steerable filter NMS display
-    const QString titlenms = QObject::tr("Steerable Filter 2D NMS");
+    const QString titlenms = QObject::tr("Steerable Filter 3D NMS");
     Image4DSimple * new4DImageNMS = new Image4DSimple();
     new4DImageNMS->setData((unsigned char *)outputimageNMS, nx, ny, nz, 1, V3D_FLOAT32);
     v3dhandle newwinNMS = callback.newImageWindow();
     callback.setImage(newwinNMS, new4DImageNMS);
     callback.setImageName(newwinNMS, titlenms);
     callback.updateImageWindow(newwinNMS);
-
+*/
 
 	return;
 }
+
+
+
+/*
+
+void steerablefilter3DCore(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    
+    // check # inputs
+    if (nrhs < 3 || nrhs > 4)
+        mexErrMsgTxt("Required inputs arguments: image, filter order, sigma. Optional: z-anisotropy factor.");
+    if (nlhs > 4)
+        mexErrMsgTxt("Too many output arguments.");
+    
+    // check image
+    if (!mxIsDouble(prhs[0]) || mxGetNumberOfDimensions(prhs[0]) != 3)
+        mexErrMsgTxt("Input must be a 3D array.");
+    const mwSize* dims = mxGetDimensions(prhs[0]);
+    
+    int ny = (int)dims[0]; // reversed: (m,n) -> (y,x)
+    int nx = (int)dims[1];
+    int nz = (int)dims[2];
+    
+    int N = nx*ny*nz;
+    double* input = mxGetPr(prhs[0]);
+    // check for NaNs in input, as these will result in a crash
+    for (int i=0;i<N;++i) {
+        if (mxIsNaN(input[i])) {
+            mexErrMsgTxt("Input image contains NaNs.");
+            break;
+        }
+    }
+    
+    // check order
+    if (!mxIsDouble(prhs[1]) || mxGetNumberOfElements(prhs[1]) != 1 || *mxGetPr(prhs[1])<1 || *mxGetPr(prhs[1])>2)
+        mexErrMsgTxt("The filter type 'M' must be 1 (curve detector) or 2 (surface detector).");
+    int M = (int) *mxGetPr(prhs[1]);
+    
+    // check sigma
+    if (!mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 1 || *mxGetPr(prhs[2]) <= 0.0)
+        mexErrMsgTxt("Sigma must be a strictly positive scalar value.");
+    double sigma = *mxGetPr(prhs[2]);
+    
+    double zfactor = 1.0;
+    if (nrhs==4) {
+        if (!mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != 1 || *mxGetPr(prhs[3]) <= 0.0)
+            mexErrMsgTxt("z-anisotropy factor must be strictly positive.");
+        zfactor = *mxGetPr(prhs[3]);
+    }
+    
+    int L = 2*(int)(3.0*sigma)+1; // support of the Gaussian kernels
+    int Lz = 2*(int)(3.0*sigma/zfactor)+1;
+    
+    if (L>nx || L>ny || Lz>nz) {
+        mexPrintf("Sigma must be smaller than %.2f\n", (min(min(nx,ny), nz)-1.0)/8.0);
+        mexErrMsgTxt("Sigma value results in filter support that is larger than image.");
+    }
+    
+    double* voxels = new double[N];
+    //Convert volume to row-major frames (Matlab uses column-major)
+    int nxy = nx*ny;
+    int z;
+    div_t divRes;
+    for (int i=0;i<N;++i) {
+        divRes = div(i, nxy);
+        z = divRes.quot;
+        divRes = div(divRes.rem, ny);
+        voxels[divRes.quot+divRes.rem*nx + z*nxy] = input[i];
+    }
+    
+    Filter filter = Filter(voxels, nx, ny, nz, M, sigma, zfactor);
+    double *res = filter.getResponse();
+    
+    // Switch outputs back to column-major format
+    if (nlhs > 0) {
+        
+        for (int i=0;i<N;++i) {
+            divRes = div(i, nxy);
+            z = divRes.quot;
+            divRes = div(divRes.rem, nx);
+            voxels[divRes.quot+divRes.rem*ny + z*nxy] = res[i];
+        }
+        plhs[0] =  mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
+        memcpy(mxGetPr(plhs[0]), voxels, N*sizeof(double));
+    }
+    
+    if (nlhs > 1) { // return orientation map: structure theta, fields .x1, .x2, .x3
+        double **orientation = filter.getOrientation();
+        
+        const char *fieldnames[] = {"x1", "x2", "x3"};
+        mwSize sdims[2] = {1, 1};
+        plhs[1] = mxCreateStructArray(2, sdims, 3, fieldnames);
+        // copy each coordinate to its field
+        mxArray *x1 = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
+        mxArray *x2 = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
+        mxArray *x3 = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
+        double* px1 = mxGetPr(x1);
+        double* px2 = mxGetPr(x2);
+        double* px3 = mxGetPr(x3);
+        
+        for (int i=0;i<N;++i) {
+            divRes = div(i, nxy);
+            z = divRes.quot;
+            divRes = div(divRes.rem, nx);
+            px1[divRes.quot+divRes.rem*ny + z*nxy] = orientation[i][0];
+            px2[divRes.quot+divRes.rem*ny + z*nxy] = orientation[i][1];
+            px3[divRes.quot+divRes.rem*ny + z*nxy] = orientation[i][2];
+        }
+        mxSetFieldByNumber(plhs[1], 0, 0, x1);
+        mxSetFieldByNumber(plhs[1], 0, 1, x2);
+        mxSetFieldByNumber(plhs[1], 0, 2, x3);
+    }
+    
+    if (nlhs > 2) { // return NMS
+        double *nms = filter.getNMS();
+        plhs[2] =  mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
+        double *nmsP = mxGetPr(plhs[2]);
+        for (int i=0;i<N;++i) {
+            divRes = div(i, nxy);
+            z = divRes.quot;
+            divRes = div(divRes.rem, nx);
+            nmsP[divRes.quot+divRes.rem*ny + z*nxy] = nms[i];
+        }
+    }
+    
+    // Free memory
+    delete[] voxels;
+}
+
+
+// compiled with:
+// export DYLD_LIBRARY_PATH=/Applications/MATLAB_R2012a.app/bin/maci64 && g++ -Wall -g -DARRAY_ACCESS_INLINING -I. -L/Applications/MATLAB_R2012a.app/bin/maci64 -I../../mex/include/ -I/Applications/MATLAB_R2012a.app/extern/include steerableDetector3D.cpp -lmx -lmex -lgsl
+// tested with:
+// valgrind --tool=memcheck --leak-check=full --show-reachable=yes ./a.out 2>&1 | grep steerable
+
+/*int main(void) {
+    int nx = 200;
+    int ny = 200;
+    int nz = 80;
+    int N = nx*ny*nz;
+    double* voxels = new double[N];
+    for (int i=0;i<N;++i) {
+        voxels[i] = rand();
+    }
+    
+    Filter filter = Filter(voxels, nx, ny, nz, 1, 3.0);
+    
+    delete[] voxels;
+}*/
+
+
