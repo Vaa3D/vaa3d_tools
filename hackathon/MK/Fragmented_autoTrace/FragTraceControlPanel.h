@@ -47,6 +47,8 @@ public slots:
 private:
 	bool volumeAdjusted;
 	int* volumeAdjustedCoords;
+	int* globalCoords;
+	int* displayingDims;
 
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
@@ -57,6 +59,8 @@ private:
 	FragTraceManager* traceManagerPtr;
 
 	void fillUpParamsForm();
+
+	void teraflyTracePrep(workMode mode);
 };
 
 

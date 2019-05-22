@@ -12,23 +12,32 @@ using namespace std;
 
 FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, bool showMenu) : uiPtr(new Ui::FragmentedTraceUI), thisCallback(callback), QDialog(parent)
 {
+	// ------- Initialization ------- //
+	this->traceManagerPtr = nullptr;
+	this->volumeAdjusted = false;
+	this->volumeAdjustedCoords = new int[6];
+	this->globalCoords = new int[6];
+	this->displayingDims = new int[3];
+	// ------------------------------ //
+
+	// ------- Set up user interface ------- //
 	if (showMenu)
 	{
 		uiPtr->setupUi(this);
 
-		// ------- Adding widgets not provided in Qt Designer -------
+		// ------- Adding widgets not provided in Qt Designer ------- //
 		this->doubleSpinBox = new QDoubleSpinBox(uiPtr->frame_7);
 		this->doubleSpinBox->setObjectName(QString::fromUtf8("doubleSpinBox"));
 		this->doubleSpinBox->setGeometry(QRect(150, 10, 57, 22));
 		this->doubleSpinBox->setValue(0);
 		this->doubleSpinBox->setSingleStep(0.1);
 		this->doubleSpinBox->setRange(-5, 5);
-		//-----------------------------------------------------------
+		//----------------------------------------------------------- //
 
 
 		QSettings callOldSettings("SEU-Allen", "Fragment tracing");
 
-		// ------- Image Format and Work Mode -------
+		// ------- Image Format and Work Mode ------- //
 		if (callOldSettings.value("terafly") == true)
 		{
 			uiPtr->checkBox->setChecked(true);
@@ -68,9 +77,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			uiPtr->radioButton_2->setChecked(false);
 			uiPtr->radioButton_3->setChecked(true);
 		}
+		// ------------------------------------------ //
 
 
-		// ------- Image Enhancement Group Box -------
+		// ------- Image Enhancement Group Box ------- //
 		if (callOldSettings.value("ada") == true)
 		{
 			uiPtr->groupBox_3->setChecked(true);
@@ -94,9 +104,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		uiPtr->lineEdit_2->setText(callOldSettings.value("ada_savePath").toString());
 		if (callOldSettings.value("gamma") == true) uiPtr->checkBox_6->setChecked(true);
 		else uiPtr->checkBox_6->setChecked(false);
+		// ------------------------------------------ //
 
 
-		// ------- Mask Generation Group Box -------
+		// ------- Mask Generation Group Box ------- //
 		if (callOldSettings.value("dendrite") == true) uiPtr->groupBox_6->setChecked(false);
 		else
 		{
@@ -120,9 +131,10 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 			}
 		}
 		uiPtr->lineEdit_3->setText(callOldSettings.value("histThre_savePath").toString());
+		// ---------------------------------------- //
 
 
-		// ------- Object Filter Group Box -------
+		// ------- Object Filter Group Box ------- //
 		if (callOldSettings.value("objFilter") == true)
 		{
 			if (callOldSettings.value("voxelCount") == true)
@@ -130,17 +142,19 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 				uiPtr->spinBox_14->setValue(callOldSettings.value("voxelCountThre").toInt());
 			}
 		}
+		// --------------------------------------- //
 
 
-		// ------- Object-based MST -------
+		// ------- Object-based MST ------- //
 		if (callOldSettings.value("MST") == true)
 		{
 			uiPtr->groupBox_8->setChecked(true);
 			uiPtr->spinBox_5->setValue(callOldSettings.value("minNodeNum").toInt());
 		}
+		// ------------------------------- //
 
 
-		// ------- Segment Post-processing -------
+		// ------- Segment Post-processing ------- //
 		if (callOldSettings.value("PostElongDistChecked") == true)
 		{
 			uiPtr->lineEdit_4->setEnabled(true);
@@ -155,10 +169,7 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		QString windowTitleQ = "Neuron Assembler v" + QString::fromStdString(versionString);
 		this->setWindowTitle(windowTitleQ);
 		this->show();
-
-		this->traceManagerPtr = nullptr;
-		this->volumeAdjusted = false;
-		this->volumeAdjustedCoords = new int[6];
+		// --------------------------------------- //
 	}
 	else this->traceButtonClicked();
 }
@@ -304,7 +315,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 {
 	QSettings settings("SEU-Allen", "Fragment tracing");
 	
-	// ------- Image Format and Work Mode -------
+	// ------- Image Format and Work Mode ------- //
 	if (uiPtr->checkBox->isChecked())
 	{
 		settings.setValue("terafly", true);
@@ -342,9 +353,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("dendrite", false);
 		settings.setValue("bouton", true);
 	}
+	// ----------------------------------------- //
 
 
-	// ------- Image Enhancement Group Box -------
+	// ------- Image Enhancement Group Box ------- //
 	if (uiPtr->groupBox_3->isChecked())
 	{
 		settings.setValue("ada", true);
@@ -373,9 +385,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 
 	if (uiPtr->checkBox_6->isChecked()) settings.setValue("gamma", true);
 	else settings.setValue("gamma", false);
+	// ----------------------------------------- //
 
 
-	// ------- Mask Generation Group Box -------
+	// ------- Mask Generation Group Box ------- //
 	if (uiPtr->groupBox_6->isChecked())
 	{
 		settings.setValue("histThre", true);
@@ -392,9 +405,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 		}
 		settings.setValue("histThre_imgName", uiPtr->groupBox_6->title());
 	}
+	// ----------------------------------------- //
 
 
-	// ------- Object Filter Group Box -------
+	// ------- Object Filter Group Box ------- //
 	if (uiPtr->radioButton_4->isChecked())
 	{
 		settings.setValue("voxelCount", true);
@@ -402,9 +416,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 	}
 	if (uiPtr->groupBox_13->isChecked()) settings.setValue("objFilter", true);
 	else settings.setValue("objFilter", false);
+	// --------------------------------------- //
 
 
-	// ------- Object-base MST -------
+	// ------- Object-base MST ------- //
 	if (uiPtr->groupBox_8->isChecked())
 	{
 		settings.setValue("MST", true);
@@ -416,9 +431,10 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("minNodeNum", "");
 	}
 	settings.setValue("MSTtreeName", uiPtr->groupBox_8->title());
+	// ------------------------------- //
 
 
-	// ------- Post Elongation -------
+	// ------- Post Elongation ------- //
 	if (uiPtr->groupBox_5->isChecked())
 	{
 		settings.setValue("PostElongDistChecked", true);
@@ -429,6 +445,7 @@ void FragTraceControlPanel::saveSettingsClicked()
 		settings.setValue("PostElongDistChecked", false);
 		settings.setValue("PostElongDistThreshold", "-1");
 	}
+	// ------------------------------- //
 
 
 	settings.setValue("savaPath", uiPtr->lineEdit->text());
@@ -447,12 +464,9 @@ void FragTraceControlPanel::traceButtonClicked()
 		
 	if (this->isVisible())
 	{
-		int globalCoords[6];
-		int localCoords[6];
-		int displayingDims[3];
 		if (uiPtr->radioButton->isChecked() && !uiPtr->radioButton_2->isChecked())
 		{
-			cout << " whole block tracing, acquiring image information.." << endl;
+			cout << " axon tracing, acquiring image information.." << endl;
 			QString rootQ = "";
 			if (uiPtr->lineEdit->text() != "") // final result save place
 			{
@@ -460,53 +474,10 @@ void FragTraceControlPanel::traceButtonClicked()
 				for (QStringList::iterator parseIt = saveFullNameParse.begin(); parseIt != saveFullNameParse.end() - 1; ++parseIt) rootQ = rootQ + *parseIt + "/";
 			}
 
-			if (uiPtr->checkBox->isChecked())
+			if (uiPtr->checkBox->isChecked()) // terafly format
 			{				
-				const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();  
+				this->teraflyTracePrep(wholeBlock_axon);
 
-				this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, localCoords, displayingDims);
-				this->volumeAdjustedCoords = localCoords;
-				if (this->volumeAdjusted)
-				{
-					//cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
-					//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
-					unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
-					int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
-					memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
-					
-					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] }; 
-					int croppedDims[3];
-					croppedDims[0] = localCoords[1] - localCoords[0] + 1;
-					croppedDims[1] = localCoords[3] - localCoords[2] + 1;
-					croppedDims[2] = localCoords[5] - localCoords[4] + 1;
-					unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
-					ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, localCoords[0], localCoords[1], localCoords[2], localCoords[3], localCoords[4], localCoords[5], originalDims);
-					Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
-					V3DLONG saveDims[4];
-					saveDims[0] = croppedDims[0];
-					saveDims[1] = croppedDims[1];
-					saveDims[2] = croppedDims[2];
-					saveDims[3] = 1;
-					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, saveDims[0], saveDims[1], saveDims[2], 1, V3D_UINT8);
-					unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
-					memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
-					
-					/*string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
-					const char* saveNameC = saveName.c_str();
-					ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
-
-					string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
-					const char* saveNameC2 = saveName2.c_str();
-					ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
-
-					//system("pause");
-
-					this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, wholeBlock_axon);
-
-					delete[] currBlock1Dptr;
-				}
-				else this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, wholeBlock_axon);
-				
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 				if (uiPtr->groupBox_7->isChecked())
@@ -623,50 +594,7 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked())
 			{
-				const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
-
-				this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, localCoords, displayingDims);
-				this->volumeAdjustedCoords = localCoords;
-				if (this->volumeAdjusted)
-				{
-					//cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
-					//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
-					unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
-					int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
-					memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
-
-					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
-					int croppedDims[3];
-					croppedDims[0] = localCoords[1] - localCoords[0] + 1;
-					croppedDims[1] = localCoords[3] - localCoords[2] + 1;
-					croppedDims[2] = localCoords[5] - localCoords[4] + 1;
-					unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
-					ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, localCoords[0], localCoords[1], localCoords[2], localCoords[3], localCoords[4], localCoords[5], originalDims);
-					Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
-					V3DLONG saveDims[4];
-					saveDims[0] = croppedDims[0];
-					saveDims[1] = croppedDims[1];
-					saveDims[2] = croppedDims[2];
-					saveDims[3] = 1;
-					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, saveDims[0], saveDims[1], saveDims[2], 1, V3D_UINT8);
-					unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
-					memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
-
-					/*string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
-					const char* saveNameC = saveName.c_str();
-					ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
-
-					string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
-					const char* saveNameC2 = saveName2.c_str();
-					ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
-
-					//system("pause");
-
-					this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
-
-					delete[] currBlock1Dptr;
-				}
-				else this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
+				this->teraflyTracePrep(dendriticTree);
 
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
@@ -900,6 +828,62 @@ void FragTraceControlPanel::traceButtonClicked()
 	}
 
 	if (uiPtr->lineEdit->text() != "") writeSWC_file(uiPtr->lineEdit->text(), finalTree);
+}
+
+void FragTraceControlPanel::teraflyTracePrep(workMode mode)
+{
+	const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
+	Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
+
+	this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, volumeAdjustedCoords, displayingDims);
+	if (this->volumeAdjusted)
+	{
+		//cout << volumeAdjustedCoords[0] << " " << volumeAdjustedCoords[1] << " " << volumeAdjustedCoords[2] << " " << volumeAdjustedCoords[3] << " " << volumeAdjustedCoords[4] << " " << volumeAdjustedCoords[5] << endl;
+		//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+
+		unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
+		int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
+		memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
+
+		int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
+		int croppedDims[3];
+		croppedDims[0] = volumeAdjustedCoords[1] - volumeAdjustedCoords[0] + 1;
+		croppedDims[1] = volumeAdjustedCoords[3] - volumeAdjustedCoords[2] + 1;
+		croppedDims[2] = volumeAdjustedCoords[5] - volumeAdjustedCoords[4] + 1;
+		unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
+		ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, volumeAdjustedCoords[0], volumeAdjustedCoords[1], volumeAdjustedCoords[2], volumeAdjustedCoords[3], volumeAdjustedCoords[4], volumeAdjustedCoords[5], originalDims);
+		croppedImg4DSimplePtr->setData(croppedBlock1Dptr, croppedDims[0], croppedDims[1], croppedDims[2], 1, V3D_UINT8);
+
+		// ------- For debug purpose ------- //
+		/*unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
+		memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
+
+		V3DLONG saveDims[4];
+		saveDims[0] = croppedDims[0];
+		saveDims[1] = croppedDims[1];
+		saveDims[2] = croppedDims[2];
+		saveDims[3] = 1;
+
+		string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
+		const char* saveNameC = saveName.c_str();
+		ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
+
+		string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
+		const char* saveNameC2 = saveName2.c_str();
+		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
+		// --------------------------------- /
+
+		if (mode == wholeBlock_axon) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, wholeBlock_axon);
+		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
+
+		delete[] currBlock1Dptr;
+		delete[] croppedBlock1Dptr;		
+	}
+	else
+	{
+		if (mode == wholeBlock_axon) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, wholeBlock_axon);
+		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
+	}
 }
 
 void FragTraceControlPanel::scaleTracedTree()
