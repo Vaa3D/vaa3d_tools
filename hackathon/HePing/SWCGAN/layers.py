@@ -24,7 +24,7 @@ def masked_softmax(input_layer,n_nodes, batch_size):
 
 
 def full_matrix(adjaceny, n_nodes):
-    return K.theano.tensor.nlinalg.matrix_inverse(K.eye(n_nodes)-adjaceny)
+    return K.theano.tensor.nlinalg.pinv(K.eye(n_nodes)-adjaceny)
 
 
 def batch_full_matrix(adjacency, n_nodes, batch_size):
@@ -82,6 +82,7 @@ def feature_extractor(inputs,
     #                                              distance_from_parent=geometry_input,
     #                                              batch_size=batch_size)
     #
+
     filled_full_adjacency_x = \
         full_adjacency*K.repeat_elements(K.expand_dims(geometry_input[:, :, 0], 2), n_nodes, axis=2)
     filled_full_adjacency_y = \

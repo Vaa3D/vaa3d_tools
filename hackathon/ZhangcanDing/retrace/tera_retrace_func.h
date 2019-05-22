@@ -45,9 +45,10 @@ struct TRACE_LS_PARA
  bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,LandmarkList inputRootList, LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList);
  QList<LandmarkList> group_tips(LandmarkList tips,int block_size, int direction);
  bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkList *newTargetList,QList<LandmarkList> *newTipsList,Image4DSimple* total4DImage,int block_size,int direction);
- void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData, TRACE_LS_PARA & P);
+ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData);
  NeuronTree smartPrune(NeuronTree nt, double length);
  void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSaveName);
+ void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData);
 
 
 

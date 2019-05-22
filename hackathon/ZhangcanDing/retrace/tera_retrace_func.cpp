@@ -219,6 +219,7 @@ bool crawler_raw_app(V3DPluginCallback2 &callback, QWidget *parent,TRACE_LS_PARA
         }
     }
 
+    v3d_msg("crawler_app2 finishes. now return.");
 return true;
 }
 
@@ -231,6 +232,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     QString finaloutputswc;
 
 
+    v3d_msg("loop entry",0);
     //if(P.method == app2)
     //{
     saveDirString = P.markerfilename+ QString("_tmp_APP2");
@@ -316,9 +318,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         unsigned char * total1dData_scaled = 0;
         total1dData_scaled = new unsigned char [pagesz_vim];
         rescale_to_0_255_and_copy(total1dData,pagesz_vim,min,max,total1dData_scaled);
-        //total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-        total4DImage->setData((unsigned char*)total1dData,in_sz[0],in_sz[1],in_sz[2],1, V3D_UINT8);
+        total4DImage->setData((unsigned char*)total1dData_scaled, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        //total4DImage->setData((unsigned char*)total1dData,in_sz[0],in_sz[1],in_sz[2],1, V3D_UINT8);
     //}
+
+
 
     total4DImage->setOriginX(start_x);
     total4DImage->setOriginY(start_y);
@@ -366,7 +370,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     p2.length_thresh = P.length_thresh;
     p2.cnn_type = 2;
     p2.channel = 0;
-    p2.SR_ratio = 3.0/9.9;
+    p2.SR_ratio = 1/3;
     p2.b_256cube = P.b_256cube;
     p2.b_RadiusFrom2D = P.b_RadiusFrom2D;
     p2.b_resample = 0;
@@ -389,6 +393,8 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
     {
         finalswc = readSWC_file(finaloutputswc.toStdString());
 
+        v3d_msg("read ref success",0);
+
         //finalswc = nt2markers(swc);
     }
     
@@ -407,16 +413,17 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     if( P.method==app2)
     {
-        qDebug()<<"starting app2";
+        v3d_msg("starting app2",0);
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
 
         if(inputRootList.size() <1)
         {
+              v3d_msg("inputrootlistsize=0");
               p2.outswc_file =swcString;
               proc_app2(callback, p2, versionStr);
 
         }
-        else
+        else //inputRootList size !=0
         {
             for(int i = 0; i < inputRootList.size(); i++)
             {
@@ -495,7 +502,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                     }else
                     {
 
-                        v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z),0);
+                        v3d_msg(QString("root is (%1,%2,%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z));
                         V3DLONG num_tips = 100;
                         double tips_th;
                         if(P.global_name)
@@ -509,10 +516,21 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                         double imgAve, imgStd;
                         mean_and_std(p2.p4dImage->getRawDataAtChannel(0), p2.p4dImage->getTotalUnitNumberPerChannel(), imgAve, imgStd);
                         double td= (imgStd<10)? 10: imgStd;
-                        p2.bkg_thresh =-1;
-                       // p2.bkg_thresh = imgAve +0.7*td ; //commented by DZC
+                        //p2.bkg_thresh =-1;
+                        p2.bkg_thresh = imgAve +0.7*td ; //revised by DZC 2019May22
 
-                        p2.landmarks.push_back(RootNewLocation);
+                        //p2.landmarks.push_back(RootNewLocation); //find another way to input the marker
+
+                        QList<ImageMarker>  rootlocation_marker;
+                        ImageMarker m;
+                        m.x=RootNewLocation.x; m.y=RootNewLocation.y;m.z=RootNewLocation.z;
+                        m.color.r=255; m.color.g=255; m.color.b=255;
+                        rootlocation_marker.push_back(m);
+                        QString rootmarkerfn=saveDirString+QString("\\x%1_y%2_z%3").arg(RootNewLocation.x).arg(RootNewLocation.y).arg(RootNewLocation.z)+".marker";
+                        writeMarker_file(rootmarkerfn,rootlocation_marker);
+
+
+
 
                        // if(P.global_name && ifs_swc)
                         if(0)
@@ -556,15 +574,92 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                             }
 
                             count++;
+                            printf("count=%d", count);
                             soma_tile = false;
                             num_tips = 0;
-                            proc_app2(callback, p2, versionStr);
-    //                        if(ifs_swc)
-    //                        {
-    //                            NeuronTree nt_app2 = readSWC_file(poutswc_file);
-    //                            NeuronTree nt_app2_pruned = pruning_cross_swc(nt_app2);
-    //                            writeSWC_file(poutswc_file,nt_app2_pruned);
-    //                        }
+                            int binary_count=0; // added for count for later binary process
+                            QString binary_img_fn;
+                            QString app2pluginimg;
+
+                            //call app2 directly. since there is bug using the function proc_app2
+
+                            //proc_app2(callback, p2, versionStr);
+
+
+
+                            QString app2pluginname= "vn2";
+                            QString app2funcname= "app2";
+
+                            // /i input img
+                            V3DPluginArgItem arg;
+                            V3DPluginArgList input_app2;
+                            V3DPluginArgList output_app2;
+                            arg.type = "random";
+                            std::vector <char *>arg_input_app2;
+
+                            if(binary_count==0)
+                            {
+                                app2pluginimg= imageSaveString;
+                            }
+                            else
+                            {
+                                app2pluginimg=binary_img_fn;
+                            }
+
+                            QByteArray test_img_ba=app2pluginimg.toLatin1();
+                            char * test_img_string =test_img_ba.data();
+                            arg_input_app2.push_back(test_img_string);
+                            arg.p = (void *) & arg_input_app2;
+                            input_app2<<arg;
+
+                            arg.type="random";
+                            std::vector <char *> arg_para_app2;
+
+                            // /p parameters set for app2
+                            QByteArray rootmarkerfn_ba=rootmarkerfn.toLatin1();
+                            char * p= rootmarkerfn_ba.data();
+                            arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            if (binary_count==0)
+                            {
+                                QByteArray bkg_thresh_ba= QString::number(p2.bkg_thresh).toLatin1();
+                                p= bkg_thresh_ba.data();
+                                v3d_msg(QString("binary count  =0. bkg_thresh=%1").arg(QString::number(p2.bkg_thresh)),0);
+                                arg_para_app2.push_back(p);
+                            }
+                            else
+                            {
+                                p= "AUTO"; arg_para_app2.push_back(p);
+                                v3d_msg("binary count >0 AUTO",0);
+                                arg_para_app2.push_back(p);
+
+                            }
+
+
+                            p ="1";arg_para_app2.push_back(p);
+                            p= "1";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p ="5";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p ="0";arg_para_app2.push_back(p);
+                            p= "0";arg_para_app2.push_back(p);
+                            arg.p= (void *)& arg_para_app2;
+                            input_app2<<arg;
+
+                            // /o outputswc
+                            arg.type= "random";
+                            std::vector <char *> arg_output_app2;
+                            QString outswc=poutswc_file;
+                            QByteArray outswc_ba= outswc.toLatin1();
+                            char * outswc_string=outswc_ba.data();
+                            arg_output_app2.push_back(outswc_string);
+                            arg.p =(void *) & arg_output_app2;
+                            output_app2<<arg;
+
+
+                            v3d_msg("call app2 plugin entry",0);
+                            callback.callPluginFunc(app2pluginname,app2funcname,input_app2,output_app2);
 
                             inputswc = readSWC_file(poutswc_file.toStdString());
                             NeuronTree inputswc_nt = readSWC_file(poutswc_file);
@@ -588,34 +683,26 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
                                 }
 
                             }
+
                             if (num_tips>=tips_th  && ifs_swc) //add <=20 and #tips>=100 constraints by PHC 20170801
                             {
+                                v3d_msg("start to binary process",0);
                                 unsigned char* total1dData_apa = 0;
                                 total1dData_apa = new unsigned char [pagesz_vim];
                                 BinaryProcess(total1dData, total1dData_apa,in_sz[0],in_sz[1], in_sz[2], 5, 3);
-                                p2.p4dImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-                                p2.bkg_thresh =-1;
+                                //p2.p4dImage->setData((unsigned char*)total1dData_apa, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+                                //p2.bkg_thresh =-1;
+                                binary_img_fn=imageSaveString+"_binary.v3draw";
+
+                                simple_saveimage_wrapper(callback,binary_img_fn.toStdString().c_str(),total1dData_apa,in_sz,1);
+                                binary_count++;
+
                             }
                             else
                                 break;
                         } while (1);
 
-                        while(0 && inputswc.size()<=0) //by PHC 20170523
-                        {
-                            soma_tile = false;
-                            num_tips = 0;
-                            p2.bkg_thresh -=2;
-                            proc_app2(callback, p2, versionStr);
-                            inputswc = readSWC_file(poutswc_file.toStdString());
-                            for(V3DLONG d = 0; d < inputswc.size(); d++)
-                            {
-                                if(ifs_swc && inputswc[d]->radius >= 20) //was 8
-                                {
-                                    soma_tile = true;
-                                    break;
-                                }
-                            }
-                        }
+
 
                         p2.landmarks.clear();
                     }
@@ -1164,7 +1251,7 @@ bool ada_win_finding_3D(LandmarkList tips,LocationSimple tileLocation,LandmarkLi
 
 
 
-void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData, TRACE_LS_PARA & P)
+void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
 {
     qDebug()<<"now start to generate the final result";
 
@@ -1310,14 +1397,14 @@ void processSmartScan_3D(V3DPluginCallback2 &callback, list<string> & infostring
 
     writeSWC_file(fileSaveName,nt_pruned_2nd);
 
-    QString copyname= "\\"+P.markerfilename.split("\\").last()+".swc" ;
-    qDebug() <<"initial copyname="<<copyname;
-    //system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
-                      //.arg(P.fusion_folder.append(copyname).toStdString().c_str())));
-    qDebug()<< "P.fusion_folder=  "<< P.fusion_folder;
-    copyname= P.fusion_folder+copyname;
-    qDebug()<<"copyname =" <<copyname;
-    writeSWC_file(copyname, nt_pruned_2nd);
+//    QString copyname= "\\"+P.markerfilename.split("\\").last()+".swc" ;
+//    qDebug() <<"initial copyname="<<copyname;
+//    //system(qPrintable(QString("copy %1 %2").arg(fileSaveName.toStdString().c_str())
+//                      //.arg(P.fusion_folder.append(copyname).toStdString().c_str())));
+//    qDebug()<< "P.fusion_folder=  "<< P.fusion_folder;
+//    copyname= P.fusion_folder+copyname;
+//    qDebug()<<"copyname =" <<copyname;
+//    writeSWC_file(copyname, nt_pruned_2nd);
 
 
     //write tc file
@@ -1561,3 +1648,38 @@ void smartFuse(V3DPluginCallback2 &callback, QString inputFolder, QString fileSa
 
 
 
+void processSmartScan_3D_wofuison(V3DPluginCallback2 &callback, list<string> & infostring, QString fileWithData)
+{
+    ifstream ifs(fileWithData.toLatin1());
+    string info_swc;
+    string swcfilepath;
+    vector<MyMarker*> outswc,inputswc;
+
+    QString fileSaveName = fileWithData + "wofusion.swc";
+    int offsetX, offsetY,offsetZ,sizeX, sizeY, sizeZ;
+    while(ifs && getline(ifs, info_swc))
+    {
+        std::istringstream iss(info_swc);
+        iss >> offsetX >> offsetY >> offsetZ >> swcfilepath >> sizeX >> sizeY >> sizeZ;
+
+            inputswc = readSWC_file(swcfilepath);;
+            for(V3DLONG d = 0; d < inputswc.size(); d++)
+            {
+                inputswc[d]->x = inputswc[d]->x + offsetX;
+                inputswc[d]->y = inputswc[d]->y + offsetY;
+                inputswc[d]->z = inputswc[d]->z + offsetZ;
+                outswc.push_back(inputswc[d]);
+            }
+    }
+    ifs.close();
+    saveSWC_file(fileSaveName.toStdString().c_str(), outswc,infostring);
+    NeuronTree nt_final = readSWC_file(fileSaveName);
+    QList<NeuronSWC> neuron_final_sorted;
+
+    if (!SortSWC(nt_final.listNeuron, neuron_final_sorted,VOID, VOID))
+    {
+        v3d_msg("fail to call swc sorting function.",0);
+    }
+
+    export_list2file(neuron_final_sorted, fileSaveName,fileSaveName);
+}

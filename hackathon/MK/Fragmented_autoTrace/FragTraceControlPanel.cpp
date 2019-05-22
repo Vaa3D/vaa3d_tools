@@ -157,7 +157,8 @@ FragTraceControlPanel::FragTraceControlPanel(QWidget* parent, V3DPluginCallback2
 		this->show();
 
 		this->traceManagerPtr = nullptr;
-		this->partialVolume = false;
+		this->volumeAdjusted = false;
+		this->volumeAdjustedCoords = new int[6];
 	}
 	else this->traceButtonClicked();
 }
@@ -461,21 +462,19 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked())
 			{				
-				const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
+				const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();  
 
-				bool adjusted = thisCallback->getPartialVolumeCoords(globalCoords, localCoords, displayingDims, this->partialVolume);
-				if (adjusted)
+				this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, localCoords, displayingDims);
+				this->volumeAdjustedCoords = localCoords;
+				if (this->volumeAdjusted)
 				{
-					
-
-					if (this->partialVolume) cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
-					
-					cout << "  curr block dimension: " << currBlockImg4DSimplePtr->getXDim() << " " << currBlockImg4DSimplePtr->getYDim() << " " << currBlockImg4DSimplePtr->getZDim() << endl;
+					//cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
+					//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
 					unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
 					int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
 					memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
 					
-					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
+					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] }; 
 					int croppedDims[3];
 					croppedDims[0] = localCoords[1] - localCoords[0] + 1;
 					croppedDims[1] = localCoords[3] - localCoords[2] + 1;
@@ -488,17 +487,25 @@ void FragTraceControlPanel::traceButtonClicked()
 					saveDims[1] = croppedDims[1];
 					saveDims[2] = croppedDims[2];
 					saveDims[3] = 1;
-					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, localCoords[1] - localCoords[0], localCoords[3] - localCoords[2], localCoords[5] - localCoords[4], 1, V3D_UINT8);
-					string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
+					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, saveDims[0], saveDims[1], saveDims[2], 1, V3D_UINT8);
+					unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
+					memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
+					
+					/*string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
 					const char* saveNameC = saveName.c_str();
 					ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
-					system("pause");
+
+					string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
+					const char* saveNameC2 = saveName2.c_str();
+					ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
+
+					//system("pause");
 
 					this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, wholeBlock_axon);
 
 					delete[] currBlock1Dptr;
 				}
-				else this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), wholeBlock_axon);
+				else this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, wholeBlock_axon);
 				
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
@@ -616,7 +623,51 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked())
 			{
-				this->traceManagerPtr = new FragTraceManager(thisCallback->getImageTeraFly(), dendriticTree);
+				const Image4DSimple* currBlockImg4DSimplePtr = thisCallback->getImageTeraFly();
+
+				this->volumeAdjusted = thisCallback->getPartialVolumeCoords(globalCoords, localCoords, displayingDims);
+				this->volumeAdjustedCoords = localCoords;
+				if (this->volumeAdjusted)
+				{
+					//cout << localCoords[0] << " " << localCoords[1] << " " << localCoords[2] << " " << localCoords[3] << " " << localCoords[4] << " " << localCoords[5] << endl;
+					//cout << displayingDims[0] << " " << displayingDims[1] << " " << displayingDims[2] << endl;
+					unsigned char* currBlock1Dptr = new unsigned char[currBlockImg4DSimplePtr->getXDim() * currBlockImg4DSimplePtr->getYDim() * currBlockImg4DSimplePtr->getZDim()];
+					int totalbyte = currBlockImg4DSimplePtr->getTotalBytes();
+					memcpy(currBlock1Dptr, currBlockImg4DSimplePtr->getRawData(), totalbyte);
+
+					int originalDims[3] = { displayingDims[0], displayingDims[1], displayingDims[2] };
+					int croppedDims[3];
+					croppedDims[0] = localCoords[1] - localCoords[0] + 1;
+					croppedDims[1] = localCoords[3] - localCoords[2] + 1;
+					croppedDims[2] = localCoords[5] - localCoords[4] + 1;
+					unsigned char* croppedBlock1Dptr = new unsigned char[croppedDims[0] * croppedDims[1] * croppedDims[2]];
+					ImgProcessor::cropImg(currBlock1Dptr, croppedBlock1Dptr, localCoords[0], localCoords[1], localCoords[2], localCoords[3], localCoords[4], localCoords[5], originalDims);
+					Image4DSimple* croppedImg4DSimplePtr = new Image4DSimple;
+					V3DLONG saveDims[4];
+					saveDims[0] = croppedDims[0];
+					saveDims[1] = croppedDims[1];
+					saveDims[2] = croppedDims[2];
+					saveDims[3] = 1;
+					croppedImg4DSimplePtr->setData(croppedBlock1Dptr, saveDims[0], saveDims[1], saveDims[2], 1, V3D_UINT8);
+					unsigned char* croppedBlock1Dptr2 = new unsigned char[croppedImg4DSimplePtr->getXDim() * croppedImg4DSimplePtr->getYDim() * croppedImg4DSimplePtr->getZDim()];
+					memcpy(croppedBlock1Dptr2, croppedImg4DSimplePtr->getRawData(), croppedImg4DSimplePtr->getTotalBytes());
+
+					/*string saveName = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test1.tif";
+					const char* saveNameC = saveName.c_str();
+					ImgManager::saveimage_wrapper(saveNameC, croppedBlock1Dptr, saveDims, 1);
+
+					string saveName2 = "C:\\Users\\hsienchik\\Desktop\\Work\\FragTrace\\testCase4\\test2.tif";
+					const char* saveNameC2 = saveName2.c_str();
+					ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
+
+					//system("pause");
+
+					this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
+
+					delete[] currBlock1Dptr;
+				}
+				else this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
+
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 				if (uiPtr->groupBox_7->isChecked())
@@ -815,6 +866,11 @@ void FragTraceControlPanel::traceButtonClicked()
 	this->disconnect(this->traceManagerPtr, SIGNAL(emitTracedTree(NeuronTree)), this, SLOT(catchTracedTree(NeuronTree)));
 
 
+	if (this->volumeAdjusted) 
+	{
+		cout << this->volumeAdjustedCoords[0] << " " << this->volumeAdjustedCoords[2] << " " << this->volumeAdjustedCoords[4] << endl;
+		this->tracedTree = NeuronStructUtil::swcShift(this->tracedTree, this->volumeAdjustedCoords[0] - 1, this->volumeAdjustedCoords[2] - 1, this->volumeAdjustedCoords[4] - 1);
+	} 
 	this->scaleTracedTree();
 	NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
 	NeuronTree finalTree;
@@ -847,7 +903,7 @@ void FragTraceControlPanel::traceButtonClicked()
 }
 
 void FragTraceControlPanel::scaleTracedTree()
-{
+{	
 	float imgDims[3];
 	imgDims[0] = this->thisCallback->getImageTeraFly()->getXDim();
 	imgDims[1] = this->thisCallback->getImageTeraFly()->getYDim();
@@ -865,6 +921,7 @@ void FragTraceControlPanel::scaleTracedTree()
 
 	NeuronTree scaledTree = NeuronStructUtil::swcScale(this->tracedTree, imgRes[0] / imgDims[0], imgRes[1] / imgDims[1], imgRes[2] / imgDims[2]);
 	NeuronTree scaledShiftedTree = NeuronStructUtil::swcShift(scaledTree, imgOri[0], imgOri[1], imgOri[2]);
+
 	this->tracedTree = scaledShiftedTree;
 }
 
@@ -886,7 +943,7 @@ NeuronTree FragTraceControlPanel::treeScaleBack(const NeuronTree& inputTree)
 	imgOri[2] = this->thisCallback->getImageTeraFly()->getOriginZ();
 
 	NeuronTree shiftBackTree = NeuronStructUtil::swcShift(inputTree, -imgOri[0], -imgOri[1], -imgOri[2]);
-	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]);
+	NeuronTree shiftScaleBackTree = NeuronStructUtil::swcScale(shiftBackTree, imgDims[0] / imgRes[0], imgDims[1] / imgRes[1], imgDims[2] / imgRes[2]); 
 
 	return shiftScaleBackTree;
 }

@@ -1,0 +1,11 @@
+#!/bin/bash
+cd /home/balala/Desktop/sucai
+for i in `ls *tif`;
+do j = ${i%.*}.maker;
+echo i;echo j; done
+for i in `ls *tif`;
+do j = ${i%.*}.maker;
+vaa3d -x Vaa3D_Neuron2 -f app2 -i $i -p $j 1 40;
+done
+
+

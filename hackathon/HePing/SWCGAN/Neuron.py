@@ -132,6 +132,13 @@ class Neuron(object):
             #self.set_loc_diam()
             #self.fit()
 
+        if (file_format=='eswc'):
+            self.read_eswc(input_file)
+            # self.parent_indexs = int(self.parent_indexs)
+            nodes = self.cauclate_child_num(self.nodes_list, self.parent_indexs)
+            print(nodes)
+
+
         if(file_format == 'swc without attributes'):
             self.read_swc(input_file)
             self.set_parent()
@@ -1418,8 +1425,86 @@ class Neuron(object):
     def add_node(self, node):
         self.nodes_list.append(node)
 
-    def read_swc(self, input_file):
+    def read_eswc(self, input_file):
+        """
+        read eswc file and get parent x,y,z
+        :param input_file:
+        :return:
+        """
+        self.nodes_list = []
+        self.location = np.array([0,0,0]).reshape(3,1)
+        self.parent_indexs = []
 
+        f = open(input_file,'r',encoding='utf-8')
+        try:
+            for line in f:
+                if line == '\n':
+                    break
+                if not line.startswith('#'):
+                    split = line.split()
+                    index = int(split[0].rstrip())
+                    swc_type = int(split[1].rstrip())
+                    x = float(split[2].rstrip())
+                    y = float(split[3].rstrip())
+                    z = float(split[4].rstrip())
+                    radius = float(split[5].rstrip())
+                    parent_index = int(split[6].rstrip())
+                    if swc_type == 3:
+                        continue
+                    self.nodes_list.append([index, swc_type, x, y, z, radius, parent_index])
+                    self.parent_indexs.append(parent_index)
+        except:
+            print('unexpected error:', sys.exc_info())
+
+    def cauclate_child_num(self, nodes_list, parent_index):
+        nodes = []
+        self.childe_indexs = np.zeros(shape=(len(nodes_list)), dtype=int)
+        for node in nodes_list:
+            if node[6] == -1:
+                continue
+            if node[6] in parent_index:
+                #print(parent_index.index(node[6]))
+                self.childe_indexs[parent_index.index(node[6])] += 1
+            else:
+                print('this node is error,parent not in this swc', node[6])
+
+        i = 0
+        id = 0
+        for child in self.childe_indexs:
+            if child != 1:
+                #print(child)
+                parent = nodes_list[id][6]
+                #print(parent)
+                while( self.childe_indexs[parent_index.index(parent)] == 1 ):
+                    #print(parent_index.index(parent))
+                    parent = nodes_list[parent_index.index(parent)][6]
+                    #print(parent)
+                #print(parent)
+                nodes_list[i][6] = parent
+                # print(parent)
+                nodes.append(nodes_list[i])
+                i += 1
+            id += 1
+
+        j = 0
+        parent_index = []
+        # id rearrange
+        for item in nodes:
+            parent_index.append(item[0])
+            nodes[j][0] = j+1
+            j += 1
+        print(parent_index)
+        # parent rearrange
+        for item in nodes:
+            if int(item[6]) == -1:
+                continue
+            print(item[6])
+            id = parent_index.index(item[6])
+            print(id)
+            nodes[item[0]][6] = id+1
+        return nodes
+
+    def read_swc(self, input_file):
         """
         Read the swc file and fill the attributes accordingly.
         The assigned attributes are:
@@ -1435,12 +1520,12 @@ class Neuron(object):
 
         self.n_soma = 0
         self.nodes_list = []
-        self.location = np.array([0, 0, 0] ).reshape(3,1)
+        self.location = np.array([0, 0, 0] ).reshape(3,1)  # soam location
         self.type = 1
-        self.parent_index = np.array([0])
+        self.parent_index = np.array([0])  # soam parent
         child_index = lil_matrix((2,1000000))
         f = open(input_file, 'r',encoding='utf-8')
-        print('start read a swc file')
+        # print('start read a swc file')
         B = True
         try:
             for line in f:
@@ -1498,8 +1583,6 @@ class Neuron(object):
         except:
             print('deleted Neuron')
             print('unexpected error:', sys.exc_info())
-
-
 
     def read_swc_matrix(self, input_file):
         """
@@ -1564,7 +1647,7 @@ class Neuron(object):
         print('n_node:', self.n_node)
         a = child_index[:, 0:self.n_node]  # 2*n_node, first child, second child
         a = a.toarray()
-        a[a  == 0] = np.nan
+        a[a == 0] = np.nan
         print("size of soma: ", self.n_soma)
         self.child_index = a
 

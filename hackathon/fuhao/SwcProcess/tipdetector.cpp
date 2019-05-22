@@ -10,9 +10,9 @@
 
 using namespace std;
 
-TipDetector::TipDetector()
+TipDetector::TipDetector(): QObject()
 {
-    isSavingTime=false;
+    isSavingTime=true;
     //init all para
      datald=0;
      tip_img_datald=0;
@@ -61,6 +61,7 @@ void TipDetector::GetNeuronTreeFrom3dview(V3DPluginCallback2 &callback)
     }
 //    cout<<"read SWC from 3d Viewer  "<<endl;
 //    mTreeList = callback.getHandleNeuronTrees_Any3DViewer(surface_win);
+    cb=&callback;
 }
 
 LocationSimple TipDetector::Nearest_tip(LocationSimple point_a)
@@ -446,11 +447,11 @@ void TipDetector::whole_img(V3DPluginCallback2& callback)
 {
     if(isSavingTime)
     {
-//        if(this->load_tp_temp(callback))
-//        {
-//            cout<<"read data from local file ,finish deal"<<endl;
-//            return;
-//        }
+        if(this->load_tp_temp(callback))
+        {
+            cout<<"read data from local file ,finish deal"<<endl;
+            return;
+        }
     }
 
     cout<<"this is a "<<sz[0]<<"*"<<sz[1]<<"*"<<sz[2]<<" size img"<<endl;
@@ -631,6 +632,9 @@ bool TipDetector::GUI_input_argu()
     angle_threshold_spinbox->setRange(0,180);
     angle_threshold_spinbox->setValue(angle_threshold);
 
+    QCheckBox * Using_temp_CheckBox = new QCheckBox();
+    Using_temp_CheckBox->setChecked(isSavingTime);
+
     layout->addWidget(new QLabel("ray numbers"),0,0);
     layout->addWidget(numbers_2d_spinbox, 0,1,1,5);
 
@@ -655,6 +659,9 @@ bool TipDetector::GUI_input_argu()
     layout->addWidget(new QLabel("T1"),7,0);
     layout->addWidget(angle_threshold_spinbox, 7,1,1,5);
 
+    layout->addWidget(new QLabel("Using_temp_CheckBox"),8,0);
+    layout->addWidget(Using_temp_CheckBox, 8,1,1,5);
+
     QHBoxLayout * hbox2 = new QHBoxLayout();
     QPushButton * ok = new QPushButton(" ok ");
     ok->setDefault(true);
@@ -662,7 +669,12 @@ bool TipDetector::GUI_input_argu()
     hbox2->addWidget(cancel);
     hbox2->addWidget(ok);
 
-    layout->addLayout(hbox2,8,0,1,6);
+    QPushButton * Clear_temp = new QPushButton("Clear_temp");
+    cout<<"Clear_tempClear_temp"<<endl<<endl<<endl<<endl<<endl;
+    layout->addWidget(Clear_temp, 9,0,1,5);
+    QObject::connect(Clear_temp, SIGNAL(clicked()), this, SLOT(ClearTempData()));
+
+    layout->addLayout(hbox2,10,0,1,6);
     dialog->setLayout(layout);
     QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
     QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
@@ -689,6 +701,9 @@ bool TipDetector::GUI_input_argu()
     intensity_threshold=intensity_threshold_spinbox->value();
     angle_threshold=angle_threshold_spinbox->value();
     angle_threshold=float(angle_threshold*0.01);
+    isSavingTime=Using_temp_CheckBox->isChecked();
+
+
     thres_segment(new_nx*new_ny*new_nz,enlarged_datald,binar_datald,background_threshold);
 
     if (dialog)
@@ -698,6 +713,70 @@ bool TipDetector::GUI_input_argu()
         cout<<"delete dialog"<<endl;
     }
     return true;
+}
+
+void TipDetector::ClearTempData()
+{
+    cout<<"clear temp data "<<endl;
+    if(!cb){cout<<""<<endl;return;}
+    v3dhandle curwin = cb->currentImageWindow();
+    QString img_name=cb->getImageName(curwin);
+    QFileInfo fileinfo(img_name);
+    QString path_tp=fileinfo.path();
+//    cout<<"path_tp before "<<path_tp.toUtf8().data()<<endl;
+    path_tp.append("//temp_tp_");
+    path_tp.append(fileinfo.baseName());
+
+    QDir dir;
+
+    if(!dir.exists(path_tp))
+    {
+        cout<<"path_tp not exist"<<path_tp.toUtf8().data()<<endl;
+        return;
+    }
+//    cout<<"path_tp after append "<<path_tp.toUtf8().data()<<endl;
+
+    if(1)
+    {
+        //save tip list
+        QString marker_filename=path_tp;
+        marker_filename.append("//");
+        marker_filename.append(fileinfo.baseName());
+        marker_filename.append("_tiplist_temp.marker");
+//        cout<<"marker_filename"<<marker_filename.toUtf8().data()<<endl;
+//        writeMarker_file(marker_filename,LandmarkListQList_ImageMarker(tip_true_list));
+        if(dir.exists(marker_filename))
+        {
+//            delete_file
+            cout<<"delete marker_filename"<<marker_filename.toUtf8().data()<<endl;
+            dir.remove(marker_filename);
+
+        }
+
+
+        //save  tip_img_datald  sz[4]
+        QString tip_img_filename=path_tp;
+        tip_img_filename.append("//");
+        tip_img_filename.append(fileinfo.baseName());
+//        tip_img_filename.append(QString::number(rand()%500));
+        tip_img_filename.append("_tp_img_temp.tif");
+//        cout<<"tip_img_filename"<<tip_img_filename.toUtf8().data()<<endl;
+//        simple_saveimage_wrapper(callback,tip_img_filename.toUtf8().data(),(unsigned char *)tip_img_datald,sz,p4DImage->getDatatype());
+        if(dir.exists(tip_img_filename))
+        {
+            cout<<"delete tip_img_filename"<<tip_img_filename.toUtf8().data()<<endl;
+//            delete_file
+            dir.remove(tip_img_filename);
+
+        }
+    }
+    if(dir.exists(path_tp))
+    {
+        dir.remove(path_tp);
+        return;
+    }
+
+
 }
 void TipDetector::getImgData(V3DPluginCallback2& callback2)
 {
@@ -811,6 +890,7 @@ void TipDetector::getImgData(V3DPluginCallback2& callback2)
         }
 
     }
+    cb=&callback2;
 
 
 }

@@ -682,10 +682,16 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
 	myfile<<"# source file(s): "<<fileOpenName<<endl;
 	myfile<<"# id,type,x,y,z,r,pid"<<endl;
 	for (V3DLONG i=0;i<lN.size();i++)
-		myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << "\n";
-
-	file.close();
-	cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
+    {
+        myfile << lN.at(i).n <<" " << lN.at(i).type << " "<< lN.at(i).x <<" "<<lN.at(i).y << " "<< lN.at(i).z << " "<< lN.at(i).r << " " <<lN.at(i).pn << " ";
+        if(fileSaveName.endsWith(".eswc",Qt::CaseInsensitive))
+        {
+            myfile << lN.at(i).seg_id << " " << lN.at(i).level << " " << lN.at(i).creatmode << " " << lN.at(i).timestamp << " " << (long)lN.at(i).tfresindex;
+        }
+        myfile << "\n";
+    }
+    file.close();
+    cout<<"swc/eswc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<lN.size()<<endl;
 	return true;
 };
 
@@ -878,6 +884,11 @@ void connect_swc(NeuronTree nt,QList<NeuronSWC>& newNeuron, double disThr,double
                 tmpNeuron.z = nt.listNeuron.at(oid).z;
                 tmpNeuron.type = nt.listNeuron.at(oid).type;
                 tmpNeuron.r = nt.listNeuron.at(oid).r;
+                tmpNeuron.seg_id = nt.listNeuron.at(oid).seg_id;
+                tmpNeuron.level = nt.listNeuron.at(oid).level;
+                tmpNeuron.creatmode = nt.listNeuron.at(oid).creatmode;
+                tmpNeuron.timestamp = nt.listNeuron.at(oid).timestamp;
+                tmpNeuron.tfresindex = nt.listNeuron.at(oid).tfresindex;
                 tmpNeuron.fea_val = nt.listNeuron.at(oid).fea_val;
                 tmpNeuron.pn = newpn.at(oid);
                 newNeuron.append(tmpNeuron);
@@ -991,6 +1002,12 @@ NeuronTree pruneswc(NeuronTree nt, double length)
             S.z 	= curr.z;
             S.r 	= curr.r;
             S.pn 	= curr.pn;
+            S.seg_id = curr.seg_id;
+            S.level = curr.level;
+            S.creatmode = curr.creatmode;
+            S.timestamp = curr.timestamp;
+            S.tfresindex = curr.tfresindex;
+            S.fea_val = curr.fea_val;
             listNeuron.append(S);
             hashNeuron.insert(S.n, listNeuron.size()-1);
        }
