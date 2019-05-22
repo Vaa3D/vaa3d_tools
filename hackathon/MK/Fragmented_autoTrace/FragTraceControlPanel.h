@@ -7,8 +7,8 @@
 #include "FragTraceManager.h"
 
 #define MAINVERSION_NUM 0
-#define SUBVERSION_NUM 4
-#define PATCHVERSION_NUM 1
+#define SUBVERSION_NUM 5
+#define PATCHVERSION_NUM 0
 
 class FragTraceControlPanel : public QDialog
 {
@@ -45,7 +45,8 @@ public slots:
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
-	bool partialVolume;
+	bool volumeAdjusted;
+	int* volumeAdjustedCoords;
 
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
