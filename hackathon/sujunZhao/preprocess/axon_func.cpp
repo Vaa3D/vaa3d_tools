@@ -621,7 +621,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
     cout<<path_distance.at(branch_list.at(7))<<endl;
     cout<<"proximal finish"<<endl;
     int s=b_distal.indexOf(1);
-    cout<<s<<"****************"<<endl;
+    cout<<path_distance.at(branch_list.at(s-1))<<"****************"<<path_distance.at(branch_list.at(s-1))/total_path_distance<<endl;
     int db = s;
     for(int i=branch_list.at(s-1); i<lpa2.listNeuron.size();i++){
         NeuronSWC node=lpa2.listNeuron.at(i);
@@ -652,6 +652,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
                 for(int j=0; j<ch_list.size();j++){
                     NeuronSWC d_node =axon.listNeuron.at(ch_list.at(j));
                     distal_axon.listNeuron.append(d_node);
+                    indicator2[ch_list.at(j)]=true;
                 }
             }
         }

@@ -60,7 +60,7 @@ void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlugin
             saveFolder = QString(outfiles.at(0));
             file_den = QString(outfiles.at(0))+"/"+swc_file+"_sorted.dendrite.swc";
             file_local = QString(outfiles.at(0))+"/"+swc_file+"_sorted.axon.proximal_axon.swc";
-            file_proj = QString(outfiles.at(0))+"/"+swc_file+"_sorted.long_axon.swc";
+            file_proj = QString(outfiles.at(0))+"/"+swc_file+"_sorted.axon.long_projection.swc";
             file_clu = QString(outfiles.at(0))+"/"+swc_file+"_sorted.axon.distal_axon.swc";
         }
         else
@@ -69,7 +69,7 @@ void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlugin
             saveFolder = indir;
             file_den = swc_path+"_sorted.dendrite.swc";
             file_local = swc_path+"_sorted.axon.proximal_axon.swc";
-            file_proj = swc_path+"_sorted.long_axon.swc";
+            file_proj = swc_path+"_sorted.axon.long_projection.swc";
             file_clu = swc_path+"_sorted.axon.distal_axon.swc";
         }
         QList<NeuronSWC> neuron_unsorted,result;
