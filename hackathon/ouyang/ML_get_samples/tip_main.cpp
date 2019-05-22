@@ -1104,8 +1104,8 @@ void prediction(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPl
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
     if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
     if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-    QString input_swc=infiles.at(1);
     QString input_image=infiles.at(0);
+    QString input_swc=infiles.at(1);
     QString output_2d_dir=outfiles.at(0);//is a folder,not a file!
     QString output_2d_dir_fake=outfiles.at(0);
 
@@ -2525,7 +2525,7 @@ bool q_imagewarp_affine(const unsigned char *p_img_sub,const long *sz_img_sub,
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    //1.1<get_undertraced_sample>
+    //1.<get_undertraced_sample>
     cout<<"This plugin for getting deleted tip"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_undertraced_sample\n";
@@ -2534,7 +2534,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_undertraced_sample -i <raw image> <swc file> -p <default=30> -o <output sample> dir.\n";
 
-    //1.2<get_overtraced_sample>
+    //2.<get_overtraced_sample>
     cout<<"This plugin for getting overtraced tip"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_overtraced_sample\n";
@@ -2546,7 +2546,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 }
 void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    //2.<get_2D3D_block>
+    //3.<get_2D3D_block>
     cout<<"This fuction for cropping block swc and image based on tip nodes"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_block\n";
@@ -2554,7 +2554,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D3D_block -i <raw image> <swc file> -o <output image> dir.\n";
 
-    //3.<get_2D_block>
+    //4.<get_2D_block>
     cout<<"This fuction for generet 2D images"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_2D_sample\n";
@@ -2562,7 +2562,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f get_2D_block -i <swc file> -p <tiff\nrrd.image> -o <output image> dir.\n";
 
-    //4.<remove_tip_location>
+    //5.<remove_tip_location>
     cout<<"This fuction for removing tip to center of signal(using average signal,and find the maxium one)"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t get_ML_sample\n";
@@ -2571,7 +2571,7 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f remove_tip_location -i <original swc> <input tiff\nrrd.image> -p <radius> -o <output swc.file dir>\n";
 
-    //5.prune_tip_APP1
+    //6.prune_tip_APP1
     cout<<"This fuction for pruning nodes in tip"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t prune_tip_APP1\n";
@@ -2582,12 +2582,30 @@ void printHelp1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"-o<file name>:\t\t ouput dir\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prune_tip_APP1 -i <original swc> <input tiff\nrrd.image> -p <2 or 3> <1 or 0 > <input threshold(default 30)> -o <output swc.file dir>\n";
 
-    //6.find_fake_tip
+    //7.find_fake_tip
     cout<<"This fuction for finding short branches"<<endl;
     cout<<"usage:\n";
     cout<<"-f<func name>:\t\t find_fake_tip\n";
     cout<<"-i<swc file name>:\t\t input .swc\n";
     cout<<"-i<apo file name>:\t\t input .apo\n";
     cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f find_fake_tip -i <.swc file> <.apo file>\n";
+
+    //8.rotation
+    cout<<"This fuction for rotating image"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t rotation\n";
+    cout<<"-i<swc file name>:\t\t input .swc\n";
+    cout<<"-i<image file name>:\t\t input raw image\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f rotation -i <.swc file> <raw image file> -o <directory of output file(folder)>\n";
+
+
+    //9.<prediction_model>
+    cout<<"This fuction using machine learning for fake tip detection"<<endl;
+    cout<<"usage:\n";
+    cout<<"-f<func name>:\t\t prediction_model\n";
+    cout<<"-i<image file name>:\t\t input raw image\n";
+    cout<<"-i<swc file name>:\t\t input .swc\n";
+    cout<<"Demo1:\t ./vaa3d -x ML_get_sample -f prediction_model -i <raw image file> <.swc file> -o <directory of output file(folder)>\n";
+
 
 }
