@@ -26,7 +26,7 @@
 
 
 double zhi_abs(double num);
-bool swapthree(double& dummya, double& dummyb, double& dummyc);
+int swapthree(double& dummya, double& dummyb, double& dummyc);
 
 class Filter {
     

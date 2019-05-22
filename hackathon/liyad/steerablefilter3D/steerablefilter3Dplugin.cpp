@@ -151,7 +151,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     Filter filter = Filter(doubleimage, nx, ny, nz, order, sigma, zfactor);
     double *res = filter.getResponse();
     //double **orientation = filter.getOrientation();
-    //double *nms = filter.getNMS();
+    double *nms = filter.getNMS();
 
 
     // Steerable filter Response convert from double to float
@@ -217,7 +217,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     callback.updateImageWindow(newwinOrientation);
     */
 
-/*
+
 
     // Steerable filter NMS convert from double to float 
     float * outputimageNMS = new float [nx*ny*nz];
@@ -237,7 +237,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     callback.setImage(newwinNMS, new4DImageNMS);
     callback.setImageName(newwinNMS, titlenms);
     callback.updateImageWindow(newwinNMS);
-*/
+
 
 	return;
 }

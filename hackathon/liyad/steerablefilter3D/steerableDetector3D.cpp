@@ -109,8 +109,8 @@ void Filter::init() {
     calculateTemplates();
     run();
     
-    /*nms_ = new double[N_];
-    double * pointer_nms=nms;
+    nms_ = new double[N_];
+    double * pointer_nms=nms_;
 
     for(int index = 0; index< N_; index++){
         *(pointer_nms++) =0;  
@@ -120,7 +120,7 @@ void Filter::init() {
         computeCurveNMS();
     } else if (M_==2) {
         computeSurfaceNMS();
-    } */   
+    }    
 }
 
 
@@ -293,14 +293,15 @@ void Filter::run() {
         
         double a1 = eigenvalues_matrix(1), a2 = eigenvalues_matrix(2), a3 = eigenvalues_matrix(3);
         //std::cout<< "a1:"<<a1<<", a2:"<<a2<<", a3:"<<a3<<std::endl;
-        swapthree(a1, a2, a3);
+        int largest_ind=1;
+        largest_ind = swapthree(a1, a2, a3);
                 
         response_[i] = a1;
         //std::cout<< "response_[i]:"<<response_[i]<<std::endl;
         
-        orientation_[i][0] = eigenvectors_matrix(1,3);
-        orientation_[i][1] = eigenvectors_matrix(2,3);
-        orientation_[i][2] = eigenvectors_matrix(3,3);
+        orientation_[i][0] = eigenvectors_matrix(largest_ind,3);
+        orientation_[i][1] = eigenvectors_matrix(largest_ind,3);
+        orientation_[i][2] = eigenvectors_matrix(largest_ind,3);
         //std::cout<<"filter::run, orientation_[i][0]="<<orientation_[i][0]<<", [i][1]="<<orientation_[i][1]<<", [i][2]="<<orientation_[i][2]<<std::endl;
     
     }
@@ -312,10 +313,11 @@ double zhi_abs(double num)
 }
 
 
-bool swapthree(double& dummya, double& dummyb, double& dummyc)
+int swapthree(double& dummya, double& dummyb, double& dummyc)
 {
-
+    int largest_ind=1;
     if ( (zhi_abs(dummya) >= zhi_abs(dummyb)) && (zhi_abs(dummyb) >= zhi_abs(dummyc)) )
+
     {
     }
     else if ( (zhi_abs(dummya) >= zhi_abs(dummyc)) && (zhi_abs(dummyc) >= zhi_abs(dummyb)) )
@@ -326,12 +328,14 @@ bool swapthree(double& dummya, double& dummyb, double& dummyc)
     }
     else if ( (zhi_abs(dummyb) >= zhi_abs(dummya)) && (zhi_abs(dummya) >= zhi_abs(dummyc)) )
     {
+        largest_ind=2;
         double temp = dummya;
         dummya = dummyb;
         dummyb = temp;
     }
     else if ( (zhi_abs(dummyb) >= zhi_abs(dummyc)) && (zhi_abs(dummyc) >= zhi_abs(dummya)) )
     {
+        largest_ind=2;
         double temp = dummya;
         dummya = dummyb;
         dummyb = dummyc;
@@ -339,6 +343,7 @@ bool swapthree(double& dummya, double& dummyb, double& dummyc)
     }
     else if ( (zhi_abs(dummyc) >= zhi_abs(dummya)) && (zhi_abs(dummya) >= zhi_abs(dummyb)) )
     {
+        largest_ind=3;
         double temp = dummya;
         dummya = dummyc;
         dummyc = dummyb;
@@ -346,16 +351,17 @@ bool swapthree(double& dummya, double& dummyb, double& dummyc)
     }
     else if ( (zhi_abs(dummyc) >= zhi_abs(dummyb)) && (zhi_abs(dummyb) >= zhi_abs(dummya)) )
     {
+        largest_ind=3;
         double temp = dummyc;
         dummyc = dummya;
         dummya = temp;
     }
     else
     {
-        return false;
+        return largest_ind;
     }
 
-    return true;
+    return largest_ind;
 }
 
 void Filter::normalize(double v[], const int k) {
