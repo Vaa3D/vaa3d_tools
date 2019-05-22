@@ -68,4 +68,6 @@ bool q_imagewarp_affine(const unsigned char *p_img_sub,const long *sz_img_sub,
         unsigned char *&p_img_affine,Matrix affinematrix,double* trans);
 NeuronTree align_axis(NeuronTree input,double *& PC,double* & trans);
 void prediction(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback);
+unsigned char * image_enhancement(V3DPluginCallback2 & callback,unsigned char* data1d,QString inimg_file,char * outimg_file2);
+QString getAppPath();
 #endif // GET_TIP_BLOCK_H

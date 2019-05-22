@@ -35,6 +35,7 @@ QStringList ML_sample::funclist() const
         <<tr("find_fake_tip")
         <<tr("rotation")
         <<tr("mean_shift_center")
+        <<tr("prediction_model")
         <<tr("help")
         <<tr("help1");
 }
@@ -91,10 +92,10 @@ bool ML_sample::dofunc(const QString & func_name, const V3DPluginArgList & input
     {
         rotation(input,output,callback);
     }
-//    else if (func_name == tr("prediction_relocation"))
-//    {
-//        prediction(callback, input,output);
-//    }
+    else if (func_name == tr("prediction_model"))
+    {
+        prediction(input,output,callback);
+    }
 	else if (func_name == tr("help"))
 	{
         printHelp(input,output);
