@@ -16,6 +16,7 @@
 #include "swc_convert.h"
 #include "vn_imgpreprocess.h"
 #include "volimg_proc.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(test_call_plugin, TestPlugin);
  
@@ -35,15 +36,19 @@ QStringList TestPlugin::funclist() const
 		<<tr("help");
 }
 
-//bool app2_dialog(PARA_APP2 p2);
+bool app2_dialog0(PARA_APP2 &p2);
 
 void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("call_function"))
-	{
-
+    {
+//        QString name = QFileDialog::getExistingDirectory(parent, QString("234"));
+//        QDir dir(name);
+//        cout<<dir.absolutePath().toStdString()<<endl;
         PARA_APP2 p2;
-        //if(!app2_dialog(p2)) return;
+        cout<<"31"<<endl;
+        if(!app2_dialog0(p2)) return;
+        cout<<"32"<<endl;
         QString versionStr = "v2.621";
         QString imagePath = QFileDialog::getOpenFileName(parent, QString("open image file:"));
         QString markerPath = QFileDialog::getOpenFileName(parent, QString("open marker file:"));
@@ -51,7 +56,20 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         p2.inmarker_file = markerPath;
         QString path_tmp("/home/balala/Desktop/call_plugin/");
         p2.outswc_file = path_tmp+"outswc"+".swc";
+        cout<<"33"<<endl;
+        QString infile = p2.inimg_file;
 
+//        p2.p4dImage = callback.loadImage((char *)(qPrintable(infile) ));
+//        if (!p2.p4dImage || !p2.p4dImage->valid()) return false;
+//        else
+//        {
+//            p2.xc0 = p2.yc0 = p2.zc0 = 0;
+//            p2.xc1 = p2.p4dImage->getXDim()-1;
+//            p2.yc1 = p2.p4dImage->getYDim()-1;
+//            p2.zc1 = p2.p4dImage->getZDim()-1;
+//        }
+
+//        p2.p4dImage=callback.getImage(callback.currentImageWindow());
         proc_app2(callback, p2, versionStr);
 	}
 
@@ -59,8 +77,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	{
         //v3d_msg("To be implemented.");
         //V3DPluginCallback2 v3d;
-        //PARA_APP2 p2;
-        //if(!app2_dialog(p2)) return;
+        PARA_APP2 p2;
+        if(!app2_dialog0(p2)) return;
         V3DPluginArgItem arg;
         V3DPluginArgList input;
         V3DPluginArgList output;
@@ -167,105 +185,105 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	return true;
 }
 
-//bool app2_dialog(PARA_APP2 p2)
-//{
+bool app2_dialog0(PARA_APP2 &p2)
+{
 //    if(!p2.p4dImage || !p2.p4dImage->valid())
 //        return false;
-//    int chn_num = p2.p4dImage->getCDim();
+    int chn_num = 3;
 
-//    QDialog *dialog = new QDialog();
-//    dialog->setWindowTitle("auto_tracing based on APP2");
-//    QGridLayout *layout = new QGridLayout();
+    QDialog *dialog = new QDialog();
+    dialog->setWindowTitle("auto_tracing based on APP2");
+    QGridLayout *layout = new QGridLayout();
 
-//    QSpinBox *channel_spinbox = new QSpinBox();
-//    channel_spinbox->setRange(1, chn_num);
-//    channel_spinbox->setValue(1);
-//    QSpinBox *cnntype_spinbox = new QSpinBox();
-//    cnntype_spinbox->setRange(1, 3);
-//    cnntype_spinbox->setValue(2);
-//    QSpinBox *bkgthresh_spinbox = new QSpinBox();
-//    bkgthresh_spinbox->setRange(-2, 255);
-//    bkgthresh_spinbox->setValue(10);
+    QSpinBox *channel_spinbox = new QSpinBox();
+    channel_spinbox->setRange(1, chn_num);
+    channel_spinbox->setValue(1);
+    QSpinBox *cnntype_spinbox = new QSpinBox();
+    cnntype_spinbox->setRange(1, 3);
+    cnntype_spinbox->setValue(2);
+    QSpinBox *bkgthresh_spinbox = new QSpinBox();
+    bkgthresh_spinbox->setRange(-2, 255);
+    bkgthresh_spinbox->setValue(10);
 
-//    QLineEdit *lenthresh_editor = new QLineEdit(QString("").setNum(p2.length_thresh));
-//    QLineEdit *srratio_editor = new QLineEdit(QString("").setNum(p2.SR_ratio));
+    QLineEdit *lenthresh_editor = new QLineEdit(QString("").setNum(p2.length_thresh));
+    QLineEdit *srratio_editor = new QLineEdit(QString("").setNum(p2.SR_ratio));
 
-//    QCheckBox *isgsdt_checker = new QCheckBox();
-//    isgsdt_checker->setChecked(p2.is_gsdt);
-//    QCheckBox *iswb_checker = new QCheckBox();
-//    iswb_checker->setChecked(p2.is_break_accept);
-//    QCheckBox *b256_checker = new QCheckBox();
-//    b256_checker->setChecked(p2.b_256cube);
-//    QCheckBox *b_radius2Dchecker = new QCheckBox();
-//    b_radius2Dchecker->setChecked(p2.b_RadiusFrom2D);
-//    QCheckBox *bresample_checker = new QCheckBox();
-//    bresample_checker->setChecked(p2.b_resample);
-//    QCheckBox *b_intensity_checker = new QCheckBox();
-//    b_intensity_checker->setChecked(p2.b_intensity);
-//    QCheckBox *b_brightfiled_checker = new QCheckBox();
-//    b_brightfiled_checker->setChecked(p2.b_brightfiled);
+    QCheckBox *isgsdt_checker = new QCheckBox();
+    isgsdt_checker->setChecked(p2.is_gsdt);
+    QCheckBox *iswb_checker = new QCheckBox();
+    iswb_checker->setChecked(p2.is_break_accept);
+    QCheckBox *b256_checker = new QCheckBox();
+    b256_checker->setChecked(p2.b_256cube);
+    QCheckBox *b_radius2Dchecker = new QCheckBox();
+    b_radius2Dchecker->setChecked(p2.b_RadiusFrom2D);
+    QCheckBox *bresample_checker = new QCheckBox();
+    bresample_checker->setChecked(p2.b_resample);
+    QCheckBox *b_intensity_checker = new QCheckBox();
+    b_intensity_checker->setChecked(p2.b_intensity);
+    QCheckBox *b_brightfiled_checker = new QCheckBox();
+    b_brightfiled_checker->setChecked(p2.b_brightfiled);
 
-//    layout->addWidget(new QLabel("color channel"),0,0);
-//    layout->addWidget(channel_spinbox, 0,1,1,5);
-//    layout->addWidget(new QLabel("background_threshold \n(if set as -1, \nthen auto-thresholding)"), 1,0);
-//    layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
+    layout->addWidget(new QLabel("color channel"),0,0);
+    layout->addWidget(channel_spinbox, 0,1,1,5);
+    layout->addWidget(new QLabel("background_threshold \n(if set as -1, \nthen auto-thresholding)"), 1,0);
+    layout->addWidget(bkgthresh_spinbox, 1,1,1,5);
 
-//    QHBoxLayout *hbox1 = new QHBoxLayout();
-//    hbox1->addWidget(new QLabel("auto-downsample"));
-//    hbox1->addWidget(b256_checker);
-//    hbox1->addWidget(new QLabel("use GSDT"));
-//    hbox1->addWidget(isgsdt_checker);
-//    hbox1->addWidget(new QLabel("allow gap"));
-//    hbox1->addWidget(iswb_checker);
-//    hbox1->addWidget(new QLabel("radius from 2D?"));
-//    hbox1->addWidget(b_radius2Dchecker);
+    QHBoxLayout *hbox1 = new QHBoxLayout();
+    hbox1->addWidget(new QLabel("auto-downsample"));
+    hbox1->addWidget(b256_checker);
+    hbox1->addWidget(new QLabel("use GSDT"));
+    hbox1->addWidget(isgsdt_checker);
+    hbox1->addWidget(new QLabel("allow gap"));
+    hbox1->addWidget(iswb_checker);
+    hbox1->addWidget(new QLabel("radius from 2D?"));
+    hbox1->addWidget(b_radius2Dchecker);
 
-//    QHBoxLayout *hbox2 = new QHBoxLayout();
-//    hbox2->addWidget(new QLabel("auto-resample SWC"));
-//    hbox2->addWidget(bresample_checker);
-//    hbox2->addWidget(new QLabel("high intensity background"));
-//    hbox2->addWidget(new QLabel("bright filed"));
-//    hbox2->addWidget(b_brightfiled_checker);
+    QHBoxLayout *hbox2 = new QHBoxLayout();
+    hbox2->addWidget(new QLabel("auto-resample SWC"));
+    hbox2->addWidget(bresample_checker);
+    hbox2->addWidget(new QLabel("high intensity background"));
+    hbox2->addWidget(new QLabel("bright filed"));
+    hbox2->addWidget(b_brightfiled_checker);
 
-//    layout->addLayout(hbox1, 2,0,1,6);
-//    layout->addLayout(hbox2, 3,0,1,6);
+    layout->addLayout(hbox1, 2,0,1,6);
+    layout->addLayout(hbox2, 3,0,1,6);
 
-//    layout->addWidget(new QLabel("cnn_type"), 4,0);
-//    layout->addWidget(cnntype_spinbox, 4,1,1,5);
-//    layout->addWidget(new QLabel("length_thresh"), 5,0);
-//    layout->addWidget(lenthresh_editor, 5,1,1,5);
-//    layout->addWidget(new QLabel("SR_ratio"), 6,0);
-//    layout->addWidget(srratio_editor, 6,1,1,5);
+    layout->addWidget(new QLabel("cnn_type"), 4,0);
+    layout->addWidget(cnntype_spinbox, 4,1,1,5);
+    layout->addWidget(new QLabel("length_thresh"), 5,0);
+    layout->addWidget(lenthresh_editor, 5,1,1,5);
+    layout->addWidget(new QLabel("SR_ratio"), 6,0);
+    layout->addWidget(srratio_editor, 6,1,1,5);
 
-//    QHBoxLayout *hbox3 = new QHBoxLayout();
-//    QPushButton *ok = new QPushButton(" ok ");
-//    ok->setDefault(true);
-//    QPushButton *cancel = new QPushButton("cancel");
-//    hbox3->addWidget(cancel);
-//    hbox3->addWidget(ok);
+    QHBoxLayout *hbox3 = new QHBoxLayout();
+    QPushButton *ok = new QPushButton(" ok ");
+    ok->setDefault(true);
+    QPushButton *cancel = new QPushButton("cancel");
+    hbox3->addWidget(cancel);
+    hbox3->addWidget(ok);
 
-//    layout->addLayout(hbox3, 7,0,1,6);
-//    dialog->setLayout(layout);
-//    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
-//    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(accept()));
+    layout->addLayout(hbox3, 7,0,1,6);
+    dialog->setLayout(layout);
+    QObject::connect(ok, SIGNAL(clicked()), dialog, SLOT(accept()));
+    QObject::connect(cancel, SIGNAL(clicked()), dialog, SLOT(reject()));
 
-//    if(dialog->exec() != QDialog::Accepted)
-//            return false;
+    if(dialog->exec() != QDialog::Accepted)
+            return false;
 
-//    p2.channel = channel_spinbox->value() - 1;
-//    p2.cnn_type = cnntype_spinbox->value();
-//    p2.bkg_thresh = bkgthresh_spinbox->value();
-//    p2.length_thresh = atof(lenthresh_editor->text().toStdString().c_str());
-//    p2.SR_ratio = atof(srratio_editor->text().toStdString().c_str());
-//    p2.is_gsdt = isgsdt_checker->isChecked();
-//    p2.is_break_accept = iswb_checker->isChecked();
-//    p2.b_256cube = b256_checker->isChecked();
-//    p2.b_RadiusFrom2D = b_radius2Dchecker->isChecked();
-//    p2.b_resample = bresample_checker->isChecked();
-//    p2.b_intensity = b_intensity_checker->isChecked();
-//    p2.b_brightfiled = b_brightfiled_checker->isChecked();
+    p2.channel = channel_spinbox->value() - 1;
+    p2.cnn_type = cnntype_spinbox->value();
+    p2.bkg_thresh = bkgthresh_spinbox->value();
+    p2.length_thresh = atof(lenthresh_editor->text().toStdString().c_str());
+    p2.SR_ratio = atof(srratio_editor->text().toStdString().c_str());
+    p2.is_gsdt = isgsdt_checker->isChecked();
+    p2.is_break_accept = iswb_checker->isChecked();
+    p2.b_256cube = b256_checker->isChecked();
+    p2.b_RadiusFrom2D = b_radius2Dchecker->isChecked();
+    p2.b_resample = bresample_checker->isChecked();
+    p2.b_intensity = b_intensity_checker->isChecked();
+    p2.b_brightfiled = b_brightfiled_checker->isChecked();
 
-//    if(dialog){delete dialog; dialog = 0;}
+    if(dialog){delete dialog; dialog = 0;}
 
-//    return true;
-//}
+    return true;
+}
