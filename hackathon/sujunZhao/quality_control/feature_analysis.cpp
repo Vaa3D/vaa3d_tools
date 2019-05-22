@@ -88,43 +88,43 @@ void Process(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlugin
         //split
         split_neuron(fileSaveName, indir);
 
-        //global_feature & Completeness
-        //1. swc
-        NeuronTree nt_sorted = readSWC_file(fileSaveName);
-        double * swc_features = new double[FNUM];
-        computeFeature(nt_sorted,swc_features);
+//        //global_feature & Completeness
+//        //1. swc
+//        NeuronTree nt_sorted = readSWC_file(fileSaveName);
+//        double * swc_features = new double[FNUM];
+//        computeFeature(nt_sorted,swc_features);
 
-        //2.dendrite
-        NeuronTree nt_dendrite = readSWC_file(file_den);
-        double * den_features = new double[FNUM];
-        computeFeature(nt_dendrite,den_features);
+//        //2.dendrite
+//        NeuronTree nt_dendrite = readSWC_file(file_den);
+//        double * den_features = new double[FNUM];
+//        computeFeature(nt_dendrite,den_features);
 
-        //3.local axon
-        NeuronTree nt_local = readSWC_file(file_local);
-        double * local_features = new double[FNUM];
-        computeFeature(nt_local,local_features);
+//        //3.local axon
+//        NeuronTree nt_local = readSWC_file(file_local);
+//        double * local_features = new double[FNUM];
+//        computeFeature(nt_local,local_features);
 
-        //4.long projection
-        NeuronTree nt_proj = readSWC_file(file_proj);
-        double * proj_features = new double[FNUM];
-        computeFeature(nt_proj,proj_features);
+//        //4.long projection
+//        NeuronTree nt_proj = readSWC_file(file_proj);
+//        double * proj_features = new double[FNUM];
+//        computeFeature(nt_proj,proj_features);
 
-        //5.axon cluster
-        NeuronTree nt_clu = readSWC_file(file_clu);
-        double * clu_features = new double[FNUM];
-        computeFeature(nt_clu,clu_features);
+//        //5.axon cluster
+//        NeuronTree nt_clu = readSWC_file(file_clu);
+//        double * clu_features = new double[FNUM];
+//        computeFeature(nt_clu,clu_features);
 
-        //analysis
-        cout<<"--------------------Analytical Results---------------------------"<<endl;
-        if(swc_features[4]/swc_features[5]>2.5 | proj_features[18]>1 | den_features[18]>1 | swc_features[18]>1 |clu_features[18]>1|local_features[18]>1){
-            printf("%s is abnormal in branch/tip ratio!",id.toStdString().data());
-        }
-        if(den_features[13]>1100){
-            printf("%s has too long dendrite branches! ",id.toStdString().data());
-        }
-        if(den_features[20]>90){
-            printf("%s's average remote angle is too high!",id.toStdString().data());
-        }
+//        //analysis
+//        cout<<"--------------------Analytical Results---------------------------"<<endl;
+//        if(swc_features[4]/swc_features[5]>2.5 | proj_features[18]>1 | den_features[18]>1 | swc_features[18]>1 |clu_features[18]>1|local_features[18]>1){
+//            printf("%s is abnormal in branch/tip ratio!",id.toStdString().data());
+//        }
+//        if(den_features[13]>1100){
+//            printf("%s has too long dendrite branches! ",id.toStdString().data());
+//        }
+//        if(den_features[20]>90){
+//            printf("%s's average remote angle is too high!",id.toStdString().data());
+//        }
 
     }
 

@@ -161,45 +161,62 @@ QList<int> match_axon(NeuronTree axon, NeuronTree lpa){
 
     QList<int> lpa_id;
 
-    // 1.1 Load whole axon data
-    QList<int> plist;
-    QList<int> nlist;
-    for(int i=0; i<axon.listNeuron.size();i++){
-        NeuronSWC node=axon.listNeuron.at(i);
-        plist.append(node.pn);
-        nlist.append(node.n);
-    }
+//    // 1.1 Load whole axon data
+//    QList<int> plist;
+//    QList<int> nlist;
+//    for(int i=0; i<axon.listNeuron.size();i++){
+//        NeuronSWC node=axon.listNeuron.at(i);
+//        plist.append(node.pn);
+//        nlist.append(node.n);
+//    }
 
-    // 2 Check whether match
-    bool matched = 1; // Whether the id's of axon and lpa matches
     for(int i=0; i<lpa.listNeuron.size();i++){
-        NeuronSWC node=lpa.listNeuron.at(i);
-        int i_in_axon = nlist.indexOf(node.n);
-        if(i_in_axon == -1){  // lpa id doesn't exsit in axon: break the loop.
-            matched = 0;
-            break;
+        NeuronSWC node_lpa=lpa.listNeuron.at(i);
+        for(int j=0; j<axon.listNeuron.size();j++){
+            NeuronSWC node_axon=axon.listNeuron.at(j);
+            if(node_axon.x==node_lpa.x && node_axon.y==node_lpa.y && node_axon.z==node_lpa.z){
+//            if(round(node_axon.x)==round(node_lpa.x) && round(node_axon.y)==round(node_lpa.y) && round(node_axon.z)==round(node_lpa.z)){
+                lpa_id.push_back(node_axon.n);
+            }
         }
-        NeuronSWC node_axon = axon.listNeuron.at(i_in_axon);  // The matching node in axon
-        if(node.x != node_axon.x || node.y != node_axon.y || node.z != node_axon.z){
-            matched = 0;
-            break;
-        }
-        lpa_id.append(node_axon.n);
     }
+    return lpa_id;
+    //    ofstream cid("/home/penglab/Desktop/test2/c_id.txt");
+    //    for (map<int,int>::iterator iter = child.begin(); iter != child.end() ; iter++){
+    //        cid << iter->first << " "<<iter->second << endl;
+    //    }
+    //    lid.close();
 
-    if(matched){
-        return lpa_id;
-    }
-    else{
-        printf("ID's of axon and lpa do not match!\n");
-        int soma = get_soma(axon);
-        lpa_id.clear();
-        QList<int> lpa = find_long_axon(axon, soma);
-        for(int i=0; i<lpa.size(); i++){
-            lpa_id.append(axon.listNeuron.at(lpa.at(i)).n);
-        }
-        return lpa_id;
-    }
+//    // 2 Check whether match
+//    bool matched = 1; // Whether the id's of axon and lpa matches
+//    for(int i=0; i<lpa.listNeuron.size();i++){
+//        NeuronSWC node=lpa.listNeuron.at(i);
+//        int i_in_axon = nlist.indexOf(node.n);
+//        if(i_in_axon == -1){  // lpa id doesn't exsit in axon: break the loop.
+//            matched = 0;
+//            break;
+//        }
+//        NeuronSWC node_axon = axon.listNeuron.at(i_in_axon);  // The matching node in axon
+//        if(node.x != node_axon.x || node.y != node_axon.y || node.z != node_axon.z){
+//            matched = 0;
+//            break;
+//        }
+//        lpa_id.append(node_axon.n);
+//    }
+
+//    if(matched){
+//        return lpa_id;
+//    }
+//    else{
+//        printf("ID's of axon and lpa do not match!\n");
+//        int soma = get_soma(axon);
+//        lpa_id.clear();
+//        QList<int> lpa = find_long_axon(axon, soma);
+//        for(int i=0; i<lpa.size(); i++){
+//            lpa_id.append(axon.listNeuron.at(lpa.at(i)).n);
+//        }
+//        return lpa_id;
+//    }
 }
 
 
@@ -463,8 +480,8 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
     NeuronTree lpa = readSWC_file(lpa_swc);
     // 1.3 Match axon and lpa
     QList<int> l = match_axon_and_lpa(axon, lpa);
-    QList<int> lpa_id = match_axon(axon,lpa);
     NeuronTree lpa2 = get_subtree_by_name(axon, l);
+    QList<int> lpa_id = match_axon(axon,lpa2);
 //    writeSWC_file("/home/penglab/Desktop/test2/1.swc", lpa2);
 //    ofstream lid("/home/penglab/Desktop/test2/lpa_id.txt");
 //    for (int i=0; i<lpa_id.size();i++){
@@ -517,12 +534,15 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
             int next_id = lpa_plist.indexOf(lpa2.listNeuron.at(i).n);
             int idc1 = plist.indexOf(lpa_id.at(i));
             int idc2 = axon.listNeuron.size()-plist.lastIndexOf(lpa_id.at(i));
+            if(idc1 != idc2){
             if(nlist.at(idc1)==lpa_id.at(next_id)){
                 child.insert(pair<int,int>(next_id,idc2));
             }
             else{
                 child.insert(pair<int,int>(next_id,idc1));
             }
+            }
+            else{cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;}
         }
     }
     ofstream b("/home/penglab/Desktop/test2/b_id.txt");
@@ -563,11 +583,21 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
     int end_bid;
     int start_bid;
     int start_long;
+    bool *indicator = new bool [lpa2.listNeuron.size()];
+    for(int i=0;i<lpa2.listNeuron.size();i++){
+        indicator[i]=false;
+    }
+    bool *indicator2 = new bool [axon.listNeuron.size()];
+    for(int i=0;i<axon.listNeuron.size();i++){
+        indicator2[i]=false;
+    }
     for(int i=0; i<lpa2.listNeuron.size();i++){
         NeuronSWC node=lpa2.listNeuron.at(i);
         //proximal
         if(b_proximal.at(cb)==1 && b_proximal.at(cb+1)==1){
             proximal_axon.listNeuron.append(node);
+            indicator[i]=true;
+            indicator2[lpa_id.at(i)]=true;
             if(i==branch_list.at(cb)){
                 //cout<<"proximal"<<endl;
                 cb=cb+1;
@@ -578,6 +608,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
                 for(int j=0; j<ch_list.size();j++){
                     NeuronSWC b_node =axon.listNeuron.at(ch_list.at(j));
                     proximal_axon.listNeuron.append(b_node);
+                    indicator2[ch_list.at(j)]=true;
                 }
             }
         }
@@ -594,7 +625,7 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
     int db = s;
     for(int i=branch_list.at(s-1); i<lpa2.listNeuron.size();i++){
         NeuronSWC node=lpa2.listNeuron.at(i);
-        cout<<i<<endl;
+       // cout<<i<<endl;
 //        //distal
 //        if(b_distal.at(db)==0 && b_distal.at(db+1)==0){
 //            if(i==branch_list.at(db)){
@@ -610,6 +641,8 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
 //        else if(b_distal.at(db)==1 && b_distal.at(db+1)==1 && db<(b_distal.size()-1)){
         if(db<(b_distal.size()-1)){
             distal_axon.listNeuron.append(node);
+            indicator[i]=true;
+            indicator2[lpa_id.at(i)]=true;
             if(i==branch_list.at(db)){
                 db=db+1;
                 QList<int> ch_list;
@@ -632,6 +665,8 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
     for(int j=0;j<5;j++){
         NeuronSWC node = lpa2.listNeuron.at(end_bid+j);
         proximal_axon.listNeuron.append(node);
+        indicator[end_bid+j]=true;
+        indicator2[lpa_id.at(end_bid+j)]=true;
     }
     cout<<"proximal"<<endl;
 //    for(int j=5;j>0;j--){
@@ -643,24 +678,29 @@ bool axon_retype(QString whole_axon_swc, QString lpa_swc, QString output_swc){
     NeuronTree long_projection;
     int sl=start_long;
 
-
-
-    for(int k=end_bid+5;k<branch_list.at(s-1);k++){
-        NeuronSWC node = lpa2.listNeuron.at(k);
-        long_projection.listNeuron.append(node);
-        if(k==branch_list.at(sl)){
-            sl=sl+1;
-            if(b_distal.at(sl)==1){break;}
-            if(b_proximal.at(sl)==1){break;}
-            QList<int> ch_list;
-            int ch_id= lpa_plist.indexOf(lpa2.listNeuron.at(k).n);
-            cout<<"long projection branch"<<endl;
-            ch_list=get_subtree(axon,child.at(ch_id));
-            cout<<child.at(ch_id)<<endl;
-            for(int j=0; j<ch_list.size();j++){
-                NeuronSWC l_node =axon.listNeuron.at(ch_list.at(j));
-                long_projection.listNeuron.append(l_node);
-            }
+//    for(int k=end_bid+5;k<branch_list.at(s-1);k++){
+//        NeuronSWC node = lpa2.listNeuron.at(k);
+//        if(!indicator[k]){
+//        long_projection.listNeuron.append(node);}
+//        if(k==branch_list.at(sl)){
+//            sl=sl+1;
+//            if(b_distal.at(sl)==1){break;}
+//            if(b_proximal.at(sl)==1){break;}
+//            QList<int> ch_list;
+//            int ch_id= lpa_plist.indexOf(lpa2.listNeuron.at(k).n);
+//            cout<<"long projection branch"<<endl;
+//            ch_list=get_subtree(axon,child.at(ch_id));
+//            cout<<child.at(ch_id)<<endl;
+//            for(int j=0; j<ch_list.size();j++){
+//                NeuronSWC l_node =axon.listNeuron.at(ch_list.at(j));
+//                long_projection.listNeuron.append(l_node);
+//            }
+//        }
+//    }
+    for(int k=0;k<axon.listNeuron.size();k++){
+        if(!indicator2[k]){
+            NeuronSWC l_node =axon.listNeuron.at(k);
+            long_projection.listNeuron.append(l_node);
         }
     }
     cout<<"check4"<<endl;
