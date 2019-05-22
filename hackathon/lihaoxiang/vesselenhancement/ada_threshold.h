@@ -27,9 +27,24 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
 	template <class T>
-	void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h, V3DLONG d, string path1, string path2 ){}
+	void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer,
+		V3DLONG h, V3DLONG d);
 	
+	template <class T>
+	void ModifyResult(T *input, T * output, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer,
+		V3DLONG h, V3DLONG d, V3DPluginCallback2 &callback, QWidget *parent);
 
+	template <class T>
+	void pengzhang1(T * input, T * output, V3DLONG iImageLayer, V3DLONG iImageWidth, V3DLONG iImageHeight);
+
+	template <class T>
+	void fushi1(T * input, T * output, V3DLONG iImageLayer, V3DLONG iImageWidth, V3DLONG iImageHeight);
+
+	template <class T>
+	void pengzhang2(T * input, T * output, V3DLONG iImageLayer, V3DLONG iImageWidth, V3DLONG iImageHeight);
+
+	template <class T>
+	void fushi2(T * input, T * output, V3DLONG iImageLayer, V3DLONG iImageWidth, V3DLONG iImageHeight);
 
     float getPluginVersion() const {return 1.1f;}
 };
