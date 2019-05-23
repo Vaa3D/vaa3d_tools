@@ -144,17 +144,72 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
     cout << "find path finished!" << endl;
 
     unsigned short int * cprdata1d = 0;
-    int radius = 20;
+    int radius = 40;
     int winlen = radius*2+1;
     //cout<<"break: "<<__LINE__<<endl;
 
-    cprdata1d = samplePlane(data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+    //transfer to mri
+    QString fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open MRI File"),
+            "",
+            QObject::tr("Supported file (*.tif)"
+                ));
 
+    if(fileOpenName.isEmpty())
+        return;
     Image4DSimple * cprImage = new Image4DSimple();
-    cprImage->setData((unsigned char *)cprdata1d, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+    Image4DSimple * MRIImage = new Image4DSimple();
+    unsigned char * mri_data1d = 0;
+    int datatype = 0;
+    simple_loadimage_wrapper(callback,fileOpenName.toStdString().c_str(), mri_data1d, in_sz, datatype);
+    //v3dhandle newwin = callback.newImageWindow("cpr");
 
-    v3dhandle newwin = callback.newImageWindow("CPR Image");
+
+
+
+//    SelectMRI* selectmri = new SelectMRI(callback, parent);
+//    cout << "break: " << __LINE__ << endl;
+//    selectmri->show();
+//    cout << "break: " << __LINE__ << endl;
+//    if(selectmri    exec())
+//    while(!selectmri->mrihandle)
+//    {
+//        cout << "wait." <<endl;
+//    }
+//    Image4DSimple* MRIImage = callback.getImage(selectmri->mrihandle);
+
+//    if (!MRIImage)
+//    {
+//        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+//        return;
+//    }
+
+
+    //mri_data1d = (unsigned short int *)MRIImage->getRawData();
+
+    cout << "break: " << __LINE__ << endl;
+    cprdata1d = samplePlane((unsigned short int *)mri_data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+    //cprdata1d = samplePlane((unsigned short int *)data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+
+    cout << "break: " << __LINE__ << endl;
+    //Image4DSimple * cprImage = new Image4DSimple();
+    cprImage->setData((unsigned char *)cprdata1d, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+    cout << "break: " << __LINE__ << endl;
+    v3dhandle newwin = callback.newImageWindow("CPR Image1");
     callback.setImage(newwin, cprImage);
+    cout << "break: " << __LINE__ << endl;
+
+////    cprdata1d = samplePlane(data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+
+//    Image4DSimple * cprImage_mra = new Image4DSimple();
+//    unsigned short int * cprdata1d_mra = samplePlane((unsigned short int *)data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+//    cout << "break: " << __LINE__ << endl;
+//    //Image4DSimple * cprImage = new Image4DSimple();
+//    //cprImage->setData((unsigned char *)cprdata1d, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+//    cprImage->setData((unsigned char *)cprdata1d_mra, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+
+//    v3dhandle newwin2 = callback.newImageWindow("CPR Image2");
+//    callback.setImage(newwin2, cprImage_mra);
+//    //callback.updateImageWindow(newwin2);
 
 
     //sync 3d view of MRA and MRI

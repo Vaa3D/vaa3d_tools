@@ -15,7 +15,7 @@
 #include <vector>
 #include "basic_surf_objs.h"
 #include <stdlib.h>
-
+#include <QFileDialog>
 #include "BrainVesselCPR_gui.h"
 #include "BrainVesselCPR_filter.h"
 
