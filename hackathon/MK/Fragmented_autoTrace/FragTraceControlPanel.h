@@ -15,7 +15,7 @@ class FragTraceControlPanel : public QDialog
 	Q_OBJECT
 
 public:
-	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, bool showMenu = true);
+	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
 	~FragTraceControlPanel();
 
 	QString saveSWCFullName;
@@ -61,6 +61,13 @@ private:
 	void fillUpParamsForm();
 
 	void teraflyTracePrep(workMode mode);
+
+	void blankArea();
+	void imgEnhancement();
+	void maskGeneration();
+	void objFilter();
+	void objBasedMST();
+	void postElongation();
 };
 
 
