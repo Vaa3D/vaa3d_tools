@@ -39,12 +39,22 @@ public:
     explicit DBMSDialog(QWidget *parent = 0);
 
 private:
+
+    /*********************main Item********************************/
     QGridLayout *mainLayout;
 
     QGroupBox *mainItemGroupBox;
     QVBoxLayout *mainItemLayout;
     QLabel *mainItemLable;
     QComboBox *mainItemComboBox;
+
+    /*********************submian Item********************************/
+    QGroupBox *submainItemGroupBox;
+    QVBoxLayout *submainItemLayout;
+    QLabel *submainItemLable;
+    QString submainItemLableName;
+    QComboBox *submainItemComboBox;
+    /*********************main Item********************************/
 
     QTabWidget *tabwidget;
     QGroupBox *firstViewGroupBox;
@@ -61,22 +71,64 @@ private:
     QGroupBox *detailViewGroupBox;
     QHBoxLayout *detailViewLayout;
 
+    /*********************Manipulate functions********************************/
     QGroupBox *manipulateGroupBox;
-    QVBoxLayout *manipulateLayout;
+    QHBoxLayout *manipulateLayout;
+    QPushButton *SelectPushButton;
     QPushButton *NewPushButton;
-    QPushButton *DetelePushButton;
+    QPushButton *DeletePushButton;
+    QPushButton *SearchPushButton;
 
-    QGroupBox *serachGroupBox;
-    QHBoxLayout *serachLayout;
+    /*********************Login Interface********************************/
+    QGroupBox *loginGroupBox;
+    QLabel *userLabel;
+    QLabel *userNameLabel;
+    QLabel *priorityLabel;
+    QLabel *priorityNameLabel;
+    QPushButton *loginOroutButton;
+    QGridLayout *loginLayout;
 
+    /*********************Detail view********************************/
+    QTextEdit *basicViewTextEdit;
+    QVBoxLayout *basicViewLayout;
+    QGroupBox *basicViewGroupBox;
+
+    QDialog *adddialog;
+    QLineEdit *brainNameLineEdit;
+    QComboBox *stateCombox;
+    QComboBox *priorityAddCombox;
+    QLineEdit *commentsLineEdit;
+    QLineEdit *xCooridnateLineEdit;
+    QLineEdit *yCoordinateLineEdit;
+    QLineEdit *zCoordinateLineEdit;
+    QLineEdit *sizeLineEdit;
+    QLineEdit *bitLineEdit;
+
+    void Initnumber();
+
+    void setbasicViewText(const QString &showText);
 
 protected:
     void createTabView();
+    void createMainMenu();
+    void createSubMainMenu();
+    void createTableFunction();
+    void createLoginMenu();
+    void createBasicView();
+
+protected slots:
+    void newButton_slot();
+    void deleteButton_slot();
+    void addbrain_slot();
+    void cancelbrain_slot();
+
 
 signals:
     
 public slots:
     void mainItemComboBox_slot();
+    void submainItemComboBox_slot();
+    void loginButton_slot();
     
 };
 

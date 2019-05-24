@@ -146,6 +146,8 @@ void MorphoHub_MainWindow::NewDB_slot()
             makeDir(thisfolderpath);
         }
         //create a configuration file for recording the basic folder
+//        QString brain_conf=dbpath+"/DBMS/brain.conf";
+//        writeBrainConf(brain_conf);
         QString basic_db_conf=dbpath+"/DBMS/basic_db_folderlist.conf";
         bool okay=isFileExist(basic_db_conf);
         if(!okay)
@@ -175,6 +177,8 @@ void MorphoHub_MainWindow::SetDB_slot()
         qDebug()<<dbpath<<endl;
 
         QString basic_db_conf=dbpath+"/DBMS/basic_db_folderlist.conf";
+//        QString brainconf=dbpath+"/DBMS/brain.conf";
+//        readBrainConf(brainconf);
         bool okay=isFileExist(basic_db_conf);
         if(okay)
         {
