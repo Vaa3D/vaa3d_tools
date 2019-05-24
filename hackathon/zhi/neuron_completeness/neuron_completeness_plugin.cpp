@@ -88,17 +88,20 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
         vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
-        bool flag_loop=false,flag_tri=false;
-        for(int i=0; i<trees.size(); i++)
-        {
-            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
-            for(int j=0; j<errorPoints.size(); j++)
-            {
-                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
-                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
-            }
 
-        }
+        // Peng Xie: for trees that are already sorted, no loop will occur. So skip loop detection step.
+        // For un-sorted files, one may choose not to skip this step.
+//        bool flag_loop=false,flag_tri=false;
+//        for(int i=0; i<trees.size(); i++)
+//        {
+//            vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+//            for(int j=0; j<errorPoints.size(); j++)
+//            {
+//                if(errorPoints[j].type == 15 && !flag_loop) flag_loop = true;
+//                if(errorPoints[j].type == 20 && !flag_tri) flag_tri = true;
+//            }
+
+//        }
 
 
         infoBox.setInformativeText(QString("<pre><font size='4'>"
@@ -106,15 +109,16 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     "%2<br>"
                     "number of types        : %3<br>"
                     "types:                 : %4<br>"
-                    "loop(s):               : %5<br>"
-                    "trifurcation+:         : %6</font></pre>")
+//                    "loop(s):               : %5<br>"
+//                    "trifurcation+:         : %6</font></pre>"
+                                           )
 
                     .arg(multi_neurons.size())
                     .arg(info_tree.toStdString().c_str())
                     .arg(map_type.size())
-                    .arg(info_type.toStdString().c_str())
-                    .arg(flag_loop?"YES":"NO")
-                    .arg(flag_tri?"YES":"NO"));
+                    .arg(info_type.toStdString().c_str()));
+//                    .arg(flag_loop?"YES":"NO")
+//                    .arg(flag_tri?"YES":"NO"));
         infoBox.exec();
         if(markerlist.size() != 0)
         {
@@ -153,20 +157,23 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         for(int i=0; i<SWCList.size();i++)
         {
             NeuronTree nt = readSWC_file(SWCList[i]);
+            qDebug()<<SWCList[i];
             calComplete(nt,scores);
             V_NeuronSWC_list nt_decomposed = NeuronTree__2__V_NeuronSWC_list(nt);
             vector<V_NeuronSWC_list> trees = showConnectedSegs(nt_decomposed);
             QString flag_loop="NO",flag_tri="NO";
-            for(int i=0; i<trees.size(); i++)
-            {
-                vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
-                for(int j=0; j<errorPoints.size(); j++)
-                {
-                    if(errorPoints[j].type == 15 && flag_loop=="NO") flag_loop = "YES";
-                    if(errorPoints[j].type == 20 && flag_tri=="NO") flag_tri = "YES";
-                }
+            // Peng Xie: for trees that are already sorted, no loop will occur. So skip loop detection step.
+            // For un-sorted files, one may choose not to skip this step.
+//            for(int i=0; i<trees.size(); i++)
+//            {
+//                vector<NeuronSWC> errorPoints = loopDetection(nt_decomposed);
+//                for(int j=0; j<errorPoints.size(); j++)
+//                {
+//                    if(errorPoints[j].type == 15 && flag_loop=="NO") flag_loop = "YES";
+//                    if(errorPoints[j].type == 20 && flag_tri=="NO") flag_tri = "YES";
+//                }
 
-            }
+//            }
             scores[i].loop = flag_loop;
             scores[i].trifurcation = flag_tri;
         }
@@ -178,7 +185,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         ofstream myfile;
         myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
-        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"# of root nodes"<<","<<"loop"<<","<<"trifurcation+"<<endl;
+//        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"# of root nodes"<<","<<"loop"<<","<<"trifurcation+"<<endl;
+        myfile << "neuron ID"<<","<< "# of neuron-trees" << "," << "# of types" <<","<<"# of large gap trees"<<","<<"# of root nodes"<<","<<endl;
         myfile.close();
 
 
@@ -186,8 +194,10 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
         {
             ofstream myfile;
             myfile.open (fileSaveName.toStdString().c_str(),ios::out | ios::app );
+//            myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs
+//                   <<","<<scores[i].numRoots<<","<<scores[i].loop.toStdString().c_str() << "," << scores[i].trifurcation.toStdString().c_str()<<endl;
             myfile << SWCList[i].toStdString().c_str()<<","<<scores[i].numTrees << "," << scores[i].numTypes<<","<<scores[i].numSegs
-                   <<","<<scores[i].numRoots<<","<<scores[i].loop.toStdString().c_str() << "," << scores[i].trifurcation.toStdString().c_str()<<endl;
+                   <<","<<scores[i].numRoots<<","<<endl;
             myfile.close();
 
         }

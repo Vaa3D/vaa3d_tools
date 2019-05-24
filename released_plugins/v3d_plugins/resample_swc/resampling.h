@@ -43,28 +43,32 @@ void resample_path(Segment * seg, double step)
 		{
 			path_length -= DISTP(start,start->p);
 			Point* pt = new Point;
-            double rate = (seg_r.size()*step-path_length)/(DISTP(start,start->p));
+                        double rate = (seg_r.size()*step-path_length)/(DISTP(start,start->p));
 			pt->x = start->x + rate*(start->p->x-start->x);
 			pt->y = start->y + rate*(start->p->y-start->y);
 			pt->z = start->z + rate*(start->p->z-start->z);
 			pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
 			pt->p = start->p;
+                        // Peng Xie 20190507
+                        // Node type set as the child's
+                        // This is better for sorted trees.
+                        pt->type = start->type;
 
-            if (rate<0.5)
-            {
-                pt->type = start->type;
-                pt->seg_id = start->seg_id;
-                pt->level = start->level;
-                pt->fea_val = start->fea_val;
-            }
-            else
-            {
-                pt->type = start->p->type;
-                pt->seg_id = start->p->seg_id;
-                pt->level = start->p->level;
-                pt->fea_val = start->p->fea_val;
+                        if (rate<0.5)
+                        {
+//                            pt->type = start->p->type;
+                            pt->seg_id = start->seg_id;
+                            pt->level = start->level;
+                            pt->fea_val = start->fea_val;
+                        }
+                        else
+                        {
+//                            pt->type = start->p->type;
+                            pt->seg_id = start->p->seg_id;
+                            pt->level = start->p->level;
+                            pt->fea_val = start->p->fea_val;
 
-            }
+                        }
 			seg_r.back()->p = pt;
 			seg_r.push_back(pt);
 			path_length += DISTP(start,pt);
