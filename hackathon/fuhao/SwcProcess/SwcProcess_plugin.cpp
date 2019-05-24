@@ -13,6 +13,7 @@
 #include"tipdetector.h"
 #include "my_surf_objs.h"
 #include "neurontreepruneorgraft.h"
+#include "scoreinput.h"
 
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
@@ -26,7 +27,7 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("SWC_Process_3d")
-//        <<tr("SWC_Process_file")
+        <<tr("SWC_Process_file")
         <<tr("tip_detector")
 //        <<tr("tip_checker_marker")
 //        <<tr("try_prun")
@@ -36,13 +37,14 @@ QStringList TestPlugin::menulist() const
 //        <<tr("tip_based_grafting")
 //        <<tr("sort_neuron")
 //        <<tr("reset_radius")
-//        <<tr("NeuronTree_Prune_Graft")
+        <<tr("NeuronTree_Prune_Graft")
         <<tr("TMI_tip_process")
         <<tr("TMI_tip_process_old")
         <<tr("TMI_tip_process_show")
 //        <<tr("input_swc_output_img")
         <<tr("Hackthon_tip_postProcess")
         <<tr("about")
+//          <<tr("cal_swc_score")
           ;
 }
 
@@ -238,6 +240,7 @@ void processTipPointFromLandmarkList(LandmarkList curlist, V3DPluginCallback2 &c
     }
     v3dhandle curwin = callback.currentImageWindow();
     callback.setLandmark(curwin, realtip_list);
+//    callback.callPluginFunc();
     return;
 }
 void processTipPoint(LandmarkList tip_point,LandmarkList &real_tipPoints,V3DPluginCallback2 &callback)
@@ -422,7 +425,40 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
     if (menu_name == tr("SWC_Process_file"))
 	{
-        getNeuronTreeFromFile(callback,parent);
+        QList <V3dR_MainWindow *> list_3dviewer = callback.getListAll3DViewers();
+        if (list_3dviewer.size() < 1)
+        {
+            v3d_msg("Please open  a SWC file from the main menu first! list_3dviewer");
+            return ;
+        }
+        V3dR_MainWindow *surface_win = list_3dviewer[0];
+        if (!surface_win){
+            v3d_msg("Please open up a SWC file from the main menu first!");
+            return ;
+        }
+    //    cout<<"read SWC from 3d Viewer  "<<endl;
+        QList<NeuronTree> * mTreeList = callback.getHandleNeuronTrees_Any3DViewer(surface_win);
+//        if(mTreeList->size()<=0)
+//        {
+//            return false;
+//        }
+//        mTreeList;
+        QString path=QFileDialog::getOpenFileName(0,"swc select",".","swc File(*.swc)");
+        if(path.isEmpty())
+            return;
+        NeuronTree filetree=readSWC_file(path);
+        cout<<"read SWC from file "<<path.toStdString()<<endl;
+        if(mTreeList->isEmpty())
+        {mTreeList->push_back(filetree);}
+        else
+        {
+//            mTreeList->push_back(filetree);
+            mTreeList->replace(0,filetree);
+//            mTreeList->pop_back();
+        }
+
+
+//        getNeuronTreeFromFile(callback,parent);
 	}
     else if (menu_name == tr("SWC_Process_3d"))
     {
@@ -711,7 +747,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     }
     else if(menu_name == tr("input_swc_output_img"))//
     {
-        cout<<11111<<endl;
+//        cout<<11111<<endl;
         QList <V3dR_MainWindow *> list_3dviewer = callback.getListAll3DViewers();
         if (list_3dviewer.size() < 1)
         {
@@ -752,30 +788,32 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     }//
     else if(menu_name == tr("Hackthon_tip_postProcess"))
     {
-        neurontreepruneorgraft ntpg;
+        neurontreepruneorgraft *ntpg;
+        ntpg=new neurontreepruneorgraft;
         v3dhandle curwin = callback.currentImageWindow();
         QString img_name=callback.getImageName(curwin);
 
-        if(!ntpg.getImgData_not_process_tip(callback, parent))
+        if(!ntpg->getImgData_not_process_tip(callback, parent))
         {return ;}
 
-        NeuronTree firstTree=ntpg.return_neurontree();
-        ntpg.setcallback(callback);
+        NeuronTree firstTree=ntpg->return_neurontree();
+        ntpg->setcallback(callback);
 
-        ntpg.InputTreeCheck(ntpg.return_neurontree());
-        NeuronTree result_tree=ntpg.TreeSegment(ntpg.return_neurontree());
-        result_tree=ntpg.sort_neuron(firstTree);
+        ntpg->InputTreeCheck(ntpg->return_neurontree());
+//        NeuronTree
+        NeuronTree result_tree=ntpg->sort_neuron(firstTree);
+        result_tree=ntpg->TreeSegment(ntpg->return_neurontree());
 
-        if(!ntpg.TMI_simple_argu_input())
+        if(!ntpg->TMI_simple_argu_input())
         {return ;}
-        ntpg.tp.getImgData(callback);
-        if(!ntpg.tp.GUI_input_argu())
+        ntpg->tp.getImgData(callback);
+        if(!ntpg->tp.GUI_input_argu())
         {return ;}
 
         if(1)
         {
-            cout<<"begin to Binarization background_threshold:"<<ntpg.binary_threshold<<endl;
-            ntpg.Binarization(ntpg.binary_threshold);
+            cout<<"begin to Binarization background_threshold:"<<ntpg->binary_threshold<<endl;
+            ntpg->Binarization(ntpg->binary_threshold);
         }
         else
         {
@@ -785,33 +823,72 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 
         if(0)
         {
-            result_tree=ntpg.pruningSwc_back_ground(result_tree);
+            result_tree=ntpg->pruningSwc_back_ground(result_tree);
 
         }
         cout<<"begin whole_img"<<endl;
-        ntpg.tp.whole_img(callback);
+        ntpg->tp.whole_img(callback);
 //        ntpg.tp.save_tp_as_temp(callback);
 //        ntpg.tp.show_tipdetetor_img(callback);
         cout<<"show_tipdetetor_img"<<endl;
-        ntpg.tp.save_tp_as_temp(callback);
+        ntpg->tp.save_tp_as_temp(callback);
 
         cout<<"begin Hackthon_process_tip"<<endl;
-        ntpg.Hackthon_process_tip(result_tree);
+        ntpg->Hackathon_process_tip(result_tree);
 //        ntpg.tp.show_tipdetetor_img(callback);
-        callback.setLandmark(callback.currentImageWindow(),ntpg.need_to_show);
+        callback.setLandmark(callback.currentImageWindow(),ntpg->need_to_show);
+        callback.pushObjectIn3DWindow(callback.currentImageWindow());
 
 
     }
     else if(menu_name == tr("about"))
 	{
-//        QString filename="C:\\Users\\204\\Desktop\\demo\\fruitfly5\\331.swc";
-//        NeuronTree temp_tree;
-//        temp_tree=readSWC_file(filename);
+        v3d_msg("this plugin developed by fuhao");
 
-//        v3dhandle curwin = callback.currentImageWindow();
-//        callback.setSWC(curwin,temp_tree);
-//		v3d_msg(tr("This is a test plugin, you can use it as a demo. Developed by fuhao, 2019-1-3"));
-	}
+
+    }
+    else if(menu_name == tr("cal_swc_score"))
+    {
+        neurontreepruneorgraft ntpg;
+        ntpg.getImgData_not_process_tip(callback, parent);
+        // read
+        cout<<"init success"<<endl;
+
+        QVector<QVector<V3DLONG> > childs;
+        NeuronTree nt=ntpg.return_neurontree();
+        ntpg.setSwcImg(nt);
+        ntpg.binary_threshold=30;
+        ntpg.Binarization(ntpg.binary_threshold);
+        V3DLONG neuronNum = nt.listNeuron.size();
+        childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+        V3DLONG *flag = new V3DLONG[neuronNum];
+        for(V3DLONG i=0;i<neuronNum;i++)
+        {
+            flag[i] = 1;
+            V3DLONG par = nt.listNeuron[i].pn;
+            if (par<0) continue;
+            childs[nt.hashNeuron.value(par)].push_back(i);
+        }
+        for(V3DLONG neu_i=0;neu_i<neuronNum;neu_i++)
+        {
+            if (childs[neu_i].size()==0)
+            {
+                float swc_score=ntpg.cal_swc_score(nt,neu_i);
+                cout<<"neu_i swc_score "<<swc_score<<endl;
+
+            }
+        }
+        for(int i=0;i<ntpg.need_to_show.size();i++)
+        {
+            ntpg.need_to_show[i].x++;
+            ntpg.need_to_show[i].y++;
+            ntpg.need_to_show[i].z++;
+        }
+        callback.setLandmark(callback.currentImageWindow(),ntpg.need_to_show);
+        callback.pushObjectIn3DWindow(callback.currentImageWindow());
+
+
+    }//
 }
 
 bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)

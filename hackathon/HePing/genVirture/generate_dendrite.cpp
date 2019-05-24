@@ -12,15 +12,16 @@ wirtten by heping
 using namespace std;
 #define Max_in 500
 priority_queue<edge> que;
-vector<edge> G[Max_in];
+vector<edge> G[Max_in];//ÈÎÒâÁ½µãÖ®¼äµÄ¾àÀë
+vector<float> path_cost;//Ã¿¸öµãµÄÂ·¾¶³¤¶È
+float PATH_LENGTH;
+
 //×îĞ¡Éú³ÉÊ÷Ëã·¨
 void min_tree_prim(QList <NeuronSWC> &new_listNeuron){//ËùÓĞµã×ø±ê,½«ËùÓĞ½øĞĞÅÅĞò°´ÕÕx,y,z×ø±êÒÀ´ÎÉıĞòÅÅÁĞ,·Ö²æÒ»¸ö»¹ÊÇÁ½¸öËæ»ú,Ê²Ã´Ê±ºòÖÕÖ¹
 	//soma¾ÍÊÇlistÖĞµÚÒ»µã
 	V3DLONG size = new_listNeuron.size();
 	cout <<"start distance" << endl;	
 	float min_dist1, min_dist2;
-//	vector <float> dista;	
-//	int flag1,flag2=0;
 	cout << size << endl;
 	//³õÊ¼»¯G
 	for (int i = 0; i < size; i++){
@@ -39,71 +40,13 @@ void min_tree_prim(QList <NeuronSWC> &new_listNeuron){//ËùÓĞµã×ø±ê,½«ËùÓĞ½øĞĞÅÅĞ
 	}
 
 	prim(new_listNeuron);
-
-	//·Ö¿ªÊ÷Í»ºÍÖáÍ»µÄ²¿·Ö£¬ÖáÍ»Ö»ÓĞÒ»¸ùÖ÷¸Éµ½cluster£¬Ëæ»úÑ¡Ôñ×î½üµÄµã×÷ÎªÖáÍ»ÓëÊ÷Í»Á¬½ÓµÄµã
-//	for (V3DLONG i = 0; i < size; i++){//----------
-//		cout << "start distance" << endl;
-//		for (int j = i; j <size; j++){
-//			cout << (2 * size - i + 1)*i / 2 + j - i << "!!";
-//			if (i == j){
-//				dista.push_back(0);//Ö»ÄÜÓÃpush_backÔÚVECTORÄ©Î²Ìí¼ÓÊıÖµ£¬²»ÄÜÖ±½ÓÓÃÃ»ÓĞ·ÖÅä¿Õ¼äµÄµØÖ·ÒıÓÃ[]À´¸³Öµ
-				
-//			}				
-//			else{
-//				dista.push_back(E_distance(new_listNeuron[i], new_listNeuron[j]));				
-//			}				
-//		}
-//	}
-
-
-	
-	//Ñ¡Ôñ×î½üµÄÒ»¸öµã»òÕßÁ½¸öµã£¬Èô¾àÀëÒ»Ö±Ôö¼Ó£¬Ñ­»·100´Î½áÊø
-	
-//	vector<V3DLONG> d;
-//	d.push_back(0);
-//	for (V3DLONG k = 0; k < size-1; k++){
-		
-//		cout << "start recurrent----"<<k << endl;
-//		min_dist1 = dista[(2*size-k+1)*k/2 + 2];//È¡×î½üµÄÁ¬Á½¸öµã³õÊ¼»¯
-//		min_dist2 = dista[(2 * size - k + 1)*k / 2 + 3];
-//		cout << min_dist1 << "--" << min_dist2 << endl;
-//		V3DLONG j;
-//		flag1 = k+1;
-//		//flag2 = k+2;
-//		vis[flag1] = true;
-		//vis[flag2] = true;
-//		count = 0;
-//		for (j = k+1; j < size; j++){
-//			if (count > 50) break;
-// 	 	    if (dista[(2 * size - k + 1)*k / 2 + j - k] < min_dist1&&vis[j]==false){
-//				min_dist1 = dista[(2 * size - k + 1)*k / 2 + j - k];
-//				cout << min_dist1<<"--";
-//				vis[flag1] = false;
-//				flag1 = j;				
-//				vis[j] = true;
-//			}								
-//			else { 
-//				count++;
-//				continue; }
-//		}
-		
-		//srand(k);
-		//float ra=rand() % 100 / double(100);//²úÉú0-1·¶Î§ÄÚµÄËæ»úÊı
-		//if (ra > 0.6){//´óÓÚÒ»¶¨ãĞÖµ·Ö²æ£¬ÏÖÔÚ²»ĞèÒª----Ä¿Ç°Ö»°üº¬·Ö²æµã
-//
-		//}
-//		cout << endl;
-///		cout << flag1 << "#" << endl;
-//		new_listNeuron[flag1].parent = k+1;
-	//	new_listNeuron[flag2].parent = k + 1;
-//	}
-	
 	cout << "end" << endl;
 }
 
 //prim_dendrite
 void prim(QList <NeuronSWC> &new_listNeuron){
 	V3DLONG size = new_listNeuron.size();
+	vector<float> wring_cost=vector<float>(size,0.0);
 	int count;
 	//prim  -------------¿ØÖÆ·Ö²æ¸öÊı-------------
 	float sum_cost;
@@ -111,6 +54,7 @@ void prim(QList <NeuronSWC> &new_listNeuron){
 	vector<int> num = vector<int>(size, 0);
 	//½«¶¥µã1×÷Îª³õÊ¼µã
 	vis[0] = true;
+	wring_cost[0] = 0;//somaµã
 	for (int i = 0; i < G[0].size(); i++){
 		que.push(G[0][i]);
 		cout << G[0][i].cost;
@@ -129,6 +73,8 @@ void prim(QList <NeuronSWC> &new_listNeuron){
 			if (vis[e.to - 1])continue;
 			vis[e.to - 1] = true;
 			new_listNeuron[e.to - 1].parent = e.from;
+			//wring_cost[e.to - 1] = wring_cost[e.from - 1] + e.cost;//Ã¿¸öµãµÄ,´Ó¸ù½Úµãµ½¸ÃµãµÄÂ·¾¶³¤¶È
+			//PATH_LENGTH += wring_cost[e.to - 1];//Ê÷µÄÂ·¾¶³¤¶È
 			cout << e.from << "----" << e.to << endl;
 			sum_cost += e.cost;
 		}
@@ -150,6 +96,8 @@ void prim(QList <NeuronSWC> &new_listNeuron){
 			new_listNeuron[e.to - 1].parent = e.from;
 			sum_cost += e.cost;
 			num[e.from - 1]++;//¸Ã½ÚµãµÄº¢×Ó¸öÊı
+			//wring_cost[e.to - 1] = wring_cost[e.from - 1] + e.cost;
+			//PATH_LENGTH += wring_cost[e.to - 1];
 			cout << e.from << "----" << e.to << endl;
 			cout << e.cost << endl;
 			for (int j = 0; j < G[e.to - 1].size(); j++){
@@ -166,6 +114,24 @@ void prim(QList <NeuronSWC> &new_listNeuron){
 	}
 }
 
+//Ò»¶Ô½ÚµãÖ®¼äµÄµ¥Î»·½ÏòÏòÁ¿
+NodeXYZ direction(NeuronSWC &Node1, NeuronSWC &Node2){
+	NodeXYZ dire;
+	float x1, y1, z1;
+	float x2, y2, z2;
+	float distance= E_distance(Node1, Node2);
+	x1 = Node1.x;
+	y1 = Node1.y;
+	z1 = Node1.z;
+	x2 = Node2.x;
+	y2 = Node2.y;
+	z2 = Node2.y;
+	dire.x = (x2 - x1) / distance;
+	dire.y = (y2 - y1) / distance;
+	dire.z = (z2 - z1) / distance;
+	return dire;
+
+}
 //Ò»¶Ô½ÚµãÖ®¼äµÄÅ·Ê½¾àÀë
 float E_distance(NeuronSWC &Node1, NeuronSWC &Node2){//Á½¸öµãÖ®¼äµÄÅ·Ê½¾àÀë
 	float dist;
@@ -183,11 +149,12 @@ float E_distance(NeuronSWC &Node1, NeuronSWC &Node2){//Á½¸öµãÖ®¼äµÄÅ·Ê½¾àÀë
 
 }
 
-//½«SWCÎÄ¼şÖĞËùÓĞ½ÚµãµÄº¢×Ó½Úµã¸öÊı±£´æÏÂÀ´,²¢½«ÖáÍ»ºÍÊ÷Í»·Ö¿ª
+//½«SWCÎÄ¼şÖĞËùÓĞ½ÚµãµÄº¢×Ó½Úµã¸öÊı±£´æÏÂÀ´
 void calculate_nodes(NeuronTree ntree, vector<V3DLONG> &nodes){
 //	QMap <int, int>  mapDenrite;
 //	QMap <int, int>  mapAxon;	
 	V3DLONG neuron_size = ntree.listNeuron.size();
+	//¶ÔÓ¦Î»ÖÃº¢×ÓµÄ¸öÊı
 	nodes = vector<V3DLONG>(neuron_size, 0);
 	cout << neuron_size;
 	//Í³¼ÆËùÓĞ½ÚµãµÄº¢×Ó½ÚµãÊıÁ¿
@@ -200,32 +167,9 @@ void calculate_nodes(NeuronTree ntree, vector<V3DLONG> &nodes){
 		
 		if (ntree.listNeuron[i].type == 2 || ntree.listNeuron[i].type == 3){//ÖáÍ»£¬¶ÔÓÚ²»Í¬µÄ½á¹¹Éú³ÉËã·¨ÊÇ·ñĞèÒª²»Í¬--------
 			V3DLONG nid = ntree.hashNeuron.value(ntree.listNeuron[i].parent);//½«ÔÚlistÖĞµÄ¸Ã½ÚµãµÄ¸¸½ÚµãÔÚlistÖĞµÄÎ»ÖÃid±£´æÏÂÀ´
-			nodes[nid]++;
-		//	if (mapAxon.value(nid)==0){
-		//		mapAxon.insert(nid, aid);				
-				
-	//		}
-	//		else{
-	//			aid = mapAxon.value(nid);
-	//		}
-			//±£´ænodes_axonÏÂ±êÓëlistNeuron¶ÔÓ¦µÄ½ÚµãÏÂ±ê
-	//		nodes_axon[aid]++;
-	//		cout << "parent:"<<nid <<"aid:"<< aid <<"num:"<< nodes_axon[aid] << endl;
-	//		aid++;			
+			nodes[nid]++;			
 
 		}
-		
-	//		if (mapDenrite.value(nid) == 0){
-	//			mapDenrite.insert(nid, did);
-	//			
-	//		}
-	//		else{
-	//			did = mapDenrite.value(nid);
-	//		}
-			//±£´ænodes_axonÏÂ±êÓëlistNeuron¶ÔÓ¦µÄ½ÚµãÏÂ±ê
-	//		nodes_denr[did]++;
-	//		cout << "parent:"<<nid <<"did:"<< did <<"num:"<< nodes_denr[did] << endl;
-	//		did++;
 		else continue;
 		
 	}
@@ -244,17 +188,30 @@ void save_import_nodes(NeuronTree &ntree, vector<V3DLONG> &nodes, QList <NeuronS
 	for (V3DLONG i = 0; i < size; i++){
 		cout << nodes[i] << "-";
 		if (nodes[i] != 1){//ÖÕ¶Ë½Úµã£¬±£Áô
-			if (ntree.listNeuron.at(i).type == 2){//ÖáÍ»
+			if (ntree.listNeuron.at(i).type == 2){//ÖáÍ»,ÎŞsoma
+				V3DLONG pn = ntree.listNeuron.at(i).parent;
+				while (nodes[pn-1] == 1){
+					pn = ntree.listNeuron.at(pn-1).parent;
+				}
+				
 				new_listNeuron_axon.append(ntree.listNeuron.at(i));
-				new_listNeuron_axon[noa].n = noa + 1;//½ÚµãÖØĞÂ±àºÅ,±àºÅ´Ó1¿ªÊ¼
-				new_listNeuron_axon[noa].parent = -1;//È«²¿³õÊ¼»¯ÎŞ¸¸½Úµã
+				//new_listNeuron_axon[noa].n = noa + 1;//½ÚµãÖØĞÂ±àºÅ,±àºÅ´Ó1¿ªÊ¼	
+				new_listNeuron_axon[noa].parent = pn;
+				
+				//new_listNeuron_axon[noa].parent = -1;//È«²¿³õÊ¼»¯ÎŞ¸¸½Úµã
 				cout << new_listNeuron_axon[noa].n << "---";
 				noa++;
 			}
-			else{//Ê÷Í»
+			else{//Ê÷Í»,°üº¬soma
+				V3DLONG pn = ntree.listNeuron.at(i).parent;
+				while (nodes[pn - 1] == 1){
+					pn = ntree.listNeuron.at(pn - 1).parent;
+					if (pn == 1)break;
+				}
 				new_listNeuron_denr.append(ntree.listNeuron.at(i));
-				new_listNeuron_denr[nod].n = nod + 1;//½ÚµãÖØĞÂ±àºÅ£¬±àºÅ´Ó1¿ªÊ¼
-				new_listNeuron_denr[nod].parent = -1;//È«²¿³õÊ¼»¯ÎŞ¸¸½Úµã
+				//new_listNeuron_denr[nod].n = nod + 1;//½ÚµãÖØĞÂ±àºÅ£¬±àºÅ´Ó1¿ªÊ¼
+				//new_listNeuron_denr[nod].parent = -1;//È«²¿³õÊ¼»¯ÎŞ¸¸½Úµã
+				new_listNeuron_denr[nod].parent = pn;
 				cout << new_listNeuron_denr[nod].n << "---";
 				nod++;
 			}			
@@ -269,8 +226,33 @@ void save_import_nodes(NeuronTree &ntree, vector<V3DLONG> &nodes, QList <NeuronS
 
 }
 
+void save_point_nodes(NeuronTree &ntree, vector<V3DLONG> &nodes, QList <NeuronSWC> &new_listNeuron){
+	V3DLONG size = nodes.size();
+	int no = 0;
+	for (V3DLONG i = 0; i < size; i++){
+		if (nodes[i] != 1){//ÖÕ¶Ë½Úµã£¬±£Áô
+			V3DLONG pn = ntree.listNeuron.at(i).parent;
+			while (nodes[pn - 1] == 1)
+				pn = ntree.listNeuron.at(pn - 1).parent;
+			new_listNeuron.append(ntree.listNeuron.at(i));
+			new_listNeuron[no].parent = pn;
+			no++;
 
-//Â·¾¶³É±¾
-void cost_path(){
+		}
+		else continue;
+	}
+}
 
+NeuronTree ntree1;//ĞÂµÄÊ÷
+//Â·¾¶³É±¾,´Ó¸ù½Úµãµ½¸ÃµãµÄÂ·¾¶³¤¶È
+float cost_path(NeuronSWC Node){
+	NeuronSWC node = Node;
+	V3DLONG pn = node.parent;
+	//Â·¾¶¼ÆËã
+	if (pn = -1)
+		return 0;
+	else{
+		NeuronSWC parent = ntree1.listNeuron.at(pn);
+		return cost_path(parent) + E_distance(parent, node);
+	}
 }

@@ -2,14 +2,31 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = D:/V3D/v3d_external
-V3DMAINPATH = D:/V3D/v3d_external/v3d_main
+VAA3DPATH = ../../../../v3d_external
+V3DMAINPATH = $$VAA3DPATH/v3d_main
+
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/neuron_editing
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/3drenderer
+INCLUDEPATH	+= $$VAA3DPATH/v3d_main/v3d
 INCLUDEPATH     += $$V3DMAINPATH/worm_straighten_c
 INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH     += app1
-
+QT_DIR = $$[QT_INSTALL_PREFIX]
+QT += opengl
+USE_Qt5 {
+  INCLUDEPATH += $$QT_DIR/lib/QtConcurrent.framework/Versions/5/Headers  # for QtConcurrent, by PHC 2015May
+  #SHARED_FOLDER = $$QT_DIR/demos/shared # for arthurwidgets
+  SHARED_FOLDER = ./painting/shared/ # for arthurwidgets
+  include($$SHARED_FOLDER/shared.pri)
+  INCLUDEPATH += $$SHARED_FOLDER
+  LIBS += -L$$SHARED_FOLDER
+} else {
+  SHARED_FOLDER = $$QT_DIR/demos/shared # for arthurwidgets
+  include($$SHARED_FOLDER/shared.pri)
+  INCLUDEPATH += $$SHARED_FOLDER
+  LIBS += -L$$SHARED_FOLDER
+}
 unix {
 LIBS += -L$$V3DMAINPATH/jba/c++
 LIBS += -lv3dnewmat
@@ -28,7 +45,8 @@ HEADERS	+= SwcProcess_plugin.h \
     app1/v3dneuron_gd_tracing.h \
     app1/marker_radius.h \
     app1/sort_swc.h \
-    mydialog.h
+    mydialog.h \
+    scoreinput.h
 SOURCES	+= SwcProcess_plugin.cpp \
     tipdetector.cpp \
     ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
@@ -39,7 +57,8 @@ SOURCES	+= SwcProcess_plugin.cpp \
     app1/v3dneuron_gd_tracing.cpp \
     neuron_tools.cpp \
     ray_shooting.cpp \
-    mydialog.cpp
+    mydialog.cpp \
+    scoreinput.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$V3DMAINPATH/worm_straighten_c/bdb_minus.cpp \

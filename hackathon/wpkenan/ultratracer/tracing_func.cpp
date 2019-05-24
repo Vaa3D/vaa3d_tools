@@ -1520,7 +1520,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     total4DImage->setRezZ(3.0);//set the flg for 3d crawler
 
-    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".v3draw");
+    imageSaveString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".tif");
 
     QString swcString = saveDirString;
     swcString.append("/x_").append(QString::number(start_x)).append("_y_").append(QString::number(start_y)).append("_z_").append(QString::number(start_z)).append(".swc");
@@ -1541,59 +1541,84 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
     ifstream ifs_swc(finaloutputswc.toStdString().c_str());
     // call unet segmentation
-    if(!ifs_swc && P.soma)
-    {
-        P.length_thresh = 5;
-        QString imageUnetString = imageSaveString + "unet.v3draw";
 
-
-#if  defined(Q_OS_LINUX)
-    QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
-            .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
-    system(qPrintable(cmd_predict));
-#endif
-
-
-//        V3DPluginArgItem arg;
-//        V3DPluginArgList input;
-//        V3DPluginArgList output;
-
-//        QString full_plugin_name;
-//        QString func_name;
-
-//        arg.type = "random";std::vector<char*> arg_input;
-//        std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
-//        arg_input.push_back(fileName_string);
-//        arg.p = (void *) & arg_input; input<< arg;
-
+//    if(!ifs_swc && P.soma)
+//    {
+//        P.length_thresh = 5;
 //        QString imageUnetString = imageSaveString + "unet.v3draw";
-//        arg.type = "random";std::vector<char*> arg_output;
-//        std:: string unetName_Qstring(imageUnetString.toStdString());char* char_imageout =  new char[unetName_Qstring.length() + 1];strcpy(char_imageout, unetName_Qstring.c_str());
-//        arg_output.push_back(char_imageout); arg.p = (void *) & arg_output; output<< arg;
+////        QString imageUnetString = imageSaveString;//change by wp
 
-//        std::vector<char*> arg_para;
-//        arg_para.push_back("/local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt");
-//        arg_para.push_back("/local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel");
+/////*change by wp
+//#if  defined(Q_OS_LINUX)
+//    QString cmd_predict = QString("%1/start_vaa3d.sh -x prediction_caffe -f Segmentation_3D_combine -i %2 -o %3 -p %1/unet_files/deploy.prototxt %1/unet_files/one_HVSMR_iter_42000.caffemodel %1/unet_files/two_HVSMR_iter_138000.caffemodel")
+//            .arg(getAppPath().toStdString().c_str()).arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str());
+//    system(qPrintable(cmd_predict));
+//#endif
+////*/
 
-//        full_plugin_name = "prediction_caffe";
-//        func_name =  "Segmentation_3D";
 
-//        arg.p = (void *) & arg_para; input << arg;
-//        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+////        V3DPluginArgItem arg;
+////        V3DPluginArgList input;
+////        V3DPluginArgList output;
+
+////        QString full_plugin_name;
+////        QString func_name;
+
+////        arg.type = "random";std::vector<char*> arg_input;
+////        std:: string fileName_Qstring(imageSaveString.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+////        arg_input.push_back(fileName_string);
+////        arg.p = (void *) & arg_input; input<< arg;
+
+////        QString imageUnetString = imageSaveString + "unet.v3draw";
+////        arg.type = "random";std::vector<char*> arg_output;
+////        std:: string unetName_Qstring(imageUnetString.toStdString());char* char_imageout =  new char[unetName_Qstring.length() + 1];strcpy(char_imageout, unetName_Qstring.c_str());
+////        arg_output.push_back(char_imageout); arg.p = (void *) & arg_output; output<< arg;
+
+////        std::vector<char*> arg_para;
+////        arg_para.push_back("/local1/work/caffe_unet/HeartSeg/3D-DSN/deploy.prototxt");
+////        arg_para.push_back("/local1/work/caffe_unet/HeartSeg/3D-DSN/weighted/snapshot/HVSMR_iter_42000.caffemodel");
+
+////        full_plugin_name = "prediction_caffe";
+////        func_name =  "Segmentation_3D";
+
+////        arg.p = (void *) & arg_para; input << arg;
+////        if(!callback.callPluginFunc(full_plugin_name,func_name,input,output))
+////        {
+////            printf("Can not find unet segmentation plugin!\n");
+////            return false;
+////        }
+
+//        int datatype;
+//        if(!simple_loadimage_wrapper(callback, imageUnetString.toStdString().c_str(), total1dData, in_sz, datatype))
 //        {
-//            printf("Can not find unet segmentation plugin!\n");
+//            cerr<<"load image "<<imageUnetString.toStdString()<<" error!"<<endl;
 //            return false;
 //        }
+//        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+//    }else
+//        P.length_thresh = 5;
 
-        int datatype;
-        if(!simple_loadimage_wrapper(callback, imageUnetString.toStdString().c_str(), total1dData, in_sz, datatype))
+
+//python predict3DUnetPP.py x_12486_y_41608_z_2774.tif result.tif UNetPP.h5 256 256 128
+        if(1)
         {
-            cerr<<"load image "<<imageUnetString.toStdString()<<" error!"<<endl;
-            return false;
-        }
-        total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
-    }else
-        P.length_thresh = 5;
+            P.length_thresh = 5;
+            QString imageUnetString = imageSaveString + "unet.tif";
+
+#if defined(Q_OS_LINUX)
+    QString cmd_predict = QString("/home/braincenter12/anaconda3/envs/py36/bin/python3.6 /home/braincenter12/Desktop/wpkenan/yong/predict3DUnetPP.py %1 %2 /home/braincenter12/Desktop/wpkenan/yong/UNetPP.h5 %3 %4 %5")
+            .arg(imageSaveString.toStdString().c_str()).arg(imageUnetString.toStdString().c_str()).arg(mysz[0]).arg(mysz[1]).arg(mysz[2]);
+    system(qPrintable(cmd_predict));
+#endif
+            int datatype;
+            if(!simple_loadimage_wrapper(callback, imageUnetString.toStdString().c_str(), total1dData, in_sz, datatype))
+            {
+                cerr<<"load image "<<imageUnetString.toStdString()<<" error!"<<endl;
+                return false;
+            }
+            total4DImage->setData((unsigned char*)total1dData, in_sz[0], in_sz[1], in_sz[2], 1, V3D_UINT8);
+        }else
+            P.length_thresh = 5;
 
 
     PARA_APP1 p1;
@@ -1659,7 +1684,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
         else
             qDebug()<<"starting app2";
         qDebug()<<"rootlist size "<<QString::number(inputRootList.size());
-	cout << "wp_rootlist size1" << inputRootList.size() << endl;
+        cout << "wp_rootlist size1" << inputRootList.size() << endl;
 
         if(inputRootList.size() <1)
         {
@@ -1708,7 +1733,7 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 
 
                     vector<V3DLONG> poss_landmark;
-                    double windowradius = 10;
+                    double windowradius = 30;
 
                     poss_landmark=landMarkList2poss(marklist_tmp, mysz[0], mysz[0]*mysz[1]);
                     marklist_tmp.clear();
@@ -1782,7 +1807,11 @@ bool app_tracing_ada_win_3D(V3DPluginCallback2 &callback,TRACE_LS_PARA &P,Landma
 					wpNewLocation.x=P.listLandmarks[wp_i].x-total4DImage->getOriginX();
 					wpNewLocation.y=P.listLandmarks[wp_i].y-total4DImage->getOriginY();
 					wpNewLocation.z=P.listLandmarks[wp_i].z-total4DImage->getOriginZ();
-					p2.landmarks.push_back(wpNewLocation);
+                    cout << wpNewLocation.x << " " << wpNewLocation.y << " " << wpNewLocation.z << endl;
+                    if(wpNewLocation.x>=0&&wpNewLocation.y>=0&&wpNewLocation.z>=0&&wpNewLocation.x<total4DImage->getOriginX()&&wpNewLocation.y<total4DImage->getOriginY()&&wpNewLocation.z<total4DImage->getOriginZ()){
+                        p2.landmarks.push_back(wpNewLocation);
+                    }
+
 				}
 				
 				//LocationSimple wpNewLocation;

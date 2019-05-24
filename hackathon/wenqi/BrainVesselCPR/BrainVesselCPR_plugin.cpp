@@ -3,188 +3,22 @@
  * 2019-5-14 : by Wenqi Huang
  */
 
-#include <QtGui>
-#include <queue>
-#include <iostream>
-#include "v3d_message.h"
-#include <vector>
 #include "BrainVesselCPR_plugin.h"
-//#include "BrainVesselCPR_func.h"
-using namespace std;
+#include "BrainVesselCPR_filter.h"
+#include "BrainVesselCPR_centerline.h"
+#include "BrainVesselCPR_syncview.h"
+#include "BrainVesselCPR_sampleplane.h"
 
 
-struct Node
+void setWLWW(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    V3DLONG node_id;
-    double priority;
-    Node(V3DLONG id, double p): node_id(id), priority(p)
-    {
-    }
-};
-
-bool operator > (const Node &n1, const Node &n2)
-{
-    return n1.priority > n2.priority;
-}
-
-double edgeCost(int a_intensity, int b_intensity)
-{
-    return 4095-(a_intensity+b_intensity)/2.0;
-}
-
-double heuristic(V3DLONG next, V3DLONG goal, int x_length)
-{
-    return 0.5*(floor(labs(next-goal)/x_length)+labs(next%x_length-goal%x_length));
+    SetContrastWidget * setWLWW_widget = new SetContrastWidget(callback, parent);
+    setWLWW_widget->show();
 }
 
 
-void findPath(/*V3DLONG start, V3DLONG goal/*, unsigned short int * image1d, V3DLONG x_length, V3DLONG y_length, V3DLONG z_length,*/ V3DPluginCallback2 &callback, QWidget *parent)
-{
-    V3DLONG start = 3;
-    V3DLONG goal = 19;
-    V3DLONG x_length = 5;
-    V3DLONG y_length = 4;
-    V3DLONG z_length = 1;
-
-    cout << "here!1";
-    unsigned short int * image1d;
-    memset(image1d, 0, 20);
-    int tmp1[20] = {1,2,3,2,1,  1,4,2,1,0,  3,2,4,2,0,  1,2,2,4,2};
-    for(int i=0;i<20;i++)
-    {
-        image1d[i] = tmp1[i];
-    }
 
 
-
-
-    V3DLONG total_pxls = x_length * y_length * z_length;
-    V3DLONG * path = new V3DLONG[total_pxls];
-    double * cost_so_far = new double[total_pxls];
-    bool * isVisited = new bool[total_pxls];
-
-    memset(path, -1, total_pxls);
-    memset(cost_so_far,9999999,total_pxls);
-    memset(isVisited, false, total_pxls);
-
-    cout<< "here2!";
-    priority_queue<Node, vector<Node>, greater<Node> > frontier;
-    frontier.push(Node(start,0));
-    path[start] = -1;
-    cost_so_far[start] = 0;
-    isVisited[start] = true;
-
-    cout << "start!" << endl;
-
-    while(!frontier.empty())
-    {
-       Node current = frontier.top();
-       frontier.pop();
-       if(current.node_id == goal)
-           break;
-
-       V3DLONG neighbour[4]={current.node_id-x_length,current.node_id+x_length,current.node_id-1,current.node_id+1};
-       if(current.node_id<x_length)
-       {
-           neighbour[0] = -2;
-       }
-
-       if(x_length*y_length - current.node_id <= x_length)
-       {
-           neighbour[1] = -2;
-       }
-       if(current.node_id % x_length == 0)
-       {
-           neighbour[2] = -2;
-       }
-       if(current.node_id % x_length == x_length-1)
-       {
-           neighbour[3] = -2;
-       }
-
-       cout<<"curr: "<<current.node_id<<" nei: "<<neighbour[0]<<" "<<neighbour[1]<<" "<<neighbour[2]<<" "<<neighbour[3]<<" \n";
-
-
-       for(int i=0;i<4;i++)
-       {
-           V3DLONG next = neighbour[i];
-           if(next==-2)
-               continue;
-           //cout<<next<<endl;
-           double new_cost = cost_so_far[current.node_id] + edgeCost(image1d[next], image1d[current.node_id]);
-           if(!isVisited[next])
-               cost_so_far[next] = 999999;
-           if(new_cost < cost_so_far[next])
-           {
-               isVisited[next] = true;
-               cost_so_far[next] = new_cost;
-               double priority = new_cost + heuristic(goal,next,x_length);
-               frontier.push(Node(next,priority));
-               path[next] = current.node_id;
-           }
-
-       }
-    }
-
-    for(int i=0;i<20;i++)
-       cout<<path[i]<<endl;
-
-    V3DLONG tmp = goal;
-    while(tmp != start)
-    {
-       cout<< tmp << "->";
-       tmp = path[tmp];
-    }
-}
-
-
-void sayhello(V3DPluginCallback2 &callback, QWidget *parent){
-    cout<<"hello";
-}
-
-
-void testfunc(V3DPluginCallback2 &callback, QWidget *parent){
-
-
-        v3dhandle curwin = callback.currentImageWindow();
-        Image4DSimple* p4DImage = callback.getImage(curwin);
-        if (!p4DImage)
-        {
-            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-            return;
-        }
-
-
-        // TODO： uint16 image data
-        unsigned short int * data1d = (unsigned short int *) p4DImage->getRawData();
-        V3DLONG totalpxls = p4DImage->getTotalBytes();
-        V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
-
-        V3DLONG image_width = p4DImage->getXDim();
-        V3DLONG image_height = p4DImage->getYDim();
-        V3DLONG image_slice_num = p4DImage->getZDim();
-        V3DLONG channels = p4DImage->getCDim();
-
-        V3DLONG UnitBytes  = p4DImage->getUnitBytes();
-
-        cout << "total bytes: " << totalpxls << endl << "width: " << image_width << endl \
-             << "height: " << image_height << endl << "slice num: " << image_slice_num \
-             << endl << "channel: " << channels << endl << "unit bytes: " << UnitBytes << endl;
-
-        unsigned short int * map;
-        memset(map, 0, 20);
-        int tmp[20] = {1,2,3,2,1,  1,4,2,1,0,  3,2,4,2,0,  1,2,2,4,2};
-        for(int i=0;i<20;i++)
-        {
-            map[i] = tmp[i];
-        }
-
-        cout << "begin find path!" << endl;
-        sayhello(callback, parent);
-        findPath(/*start, goal/*,map,x_length, y_length, z_length, */callback, parent);
-        cout << "find path finished!" << endl;
-
-}
 
 Q_EXPORT_PLUGIN2(BrainVesselCPR, BrainVesselCPRPlugin);
  
@@ -192,7 +26,8 @@ QStringList BrainVesselCPRPlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("Start CPR")
-        <<tr("test")
+        <<tr("Set MRI WL/WW")
+        <<tr("synchronize 3D viewers")
 		<<tr("about");
 }
 
@@ -211,12 +46,16 @@ void BrainVesselCPRPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &
 	{
 		//v3d_msg("To be implemented.");
 		startCPR(callback,parent);
-	}
-    if(menu_name == tr("test"))
-    {
-        testfunc(callback,parent);
     }
-	else
+    else if(menu_name == tr("Set MRI WL/WW"))
+    {
+        setWLWW(callback,parent);
+    }
+    else if (menu_name == tr("synchronize 3D viewers"))
+    {
+        SynTwoImage(callback, parent);
+    }
+    else
 	{
 		v3d_msg(tr("This is a plugin for Brain Vessel CPR in MRA&MRI image. "
 			"Developed by Wenqi Huang, 2019-5-14"));
@@ -233,7 +72,7 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
         return;
     }
 
-  //  callback.open3DWindow(curwin);
+    //get 2 landmarks as start and end point
     LandmarkList landmark_list = callback.getLandmark(curwin);
     while(landmark_list.size()!=2)
     {
@@ -249,7 +88,131 @@ void startCPR(V3DPluginCallback2 &callback, QWidget *parent)
         landmark_list[i].z-=1;
     }
     v3d_msg(QObject::tr("Start point: (%1, %2, %3)\nEnd point: (%4, %5, %6)").\
-            arg(landmark_list[0].x).arg(landmark_list[0].y).arg(landmark_list[0].z).arg(landmark_list[1].x).arg(landmark_list[1].y).arg(landmark_list[1].z));
+            arg(landmark_list[0].x).arg(landmark_list[0].y).arg(landmark_list[0].z).\
+            arg(landmark_list[1].x).arg(landmark_list[1].y).arg(landmark_list[1].z));
+
+
+    // get 3d image info & 1d data vector
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+    unsigned short int * data1d = (unsigned short int *) p4DImage->getRawData();
+    V3DLONG totalpxls = p4DImage->getTotalBytes();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+    V3DLONG x_length = p4DImage->getXDim();
+    V3DLONG y_length = p4DImage->getYDim();
+    V3DLONG z_length = p4DImage->getZDim();
+    V3DLONG channels = p4DImage->getCDim();
+    V3DLONG UnitBytes  = p4DImage->getUnitBytes();
+
+    cout << "total bytes: " << totalpxls << endl << "width: " << x_length << endl \
+         << "height: " << y_length << endl << "slice num: " << z_length \
+         << endl << "channel: " << channels << endl << "unit bytes: " << UnitBytes << endl;
+
+    //convert landmark to 1d data index
+    V3DLONG start;
+    V3DLONG goal;
+//    test start (113, 123,138), id: , goal (138, 198, 76), id:
+//    start = x_length * y_length * 138 + 123 * x_length + 113;
+//    goal = x_length * y_length * 76 + 198 * x_length + 138;
+    start = V3DLONG(landmark_list[0].x) + V3DLONG(landmark_list[0].y) * x_length + V3DLONG(landmark_list[0].z) * x_length * y_length;
+    goal = V3DLONG(landmark_list[1].x) + V3DLONG(landmark_list[1].y) * x_length + V3DLONG(landmark_list[1].z) * x_length * y_length;
+
+    //find path begins!
+    cout << "begin find path!" << endl;
+
+    float* data1d_gausssian = 0;
+    //data1d_gausssian = new float[x_length*y_length*z_length];
+    V3DLONG *in_sz;
+    in_sz = new V3DLONG[4];
+    in_sz[0] = x_length;
+    in_sz[1] = y_length;
+    in_sz[2] = z_length;
+    in_sz[3] = 1;
+    gaussian_filter(data1d, in_sz, 7, 7, 7, 1, 100, data1d_gausssian);
+    unsigned short int * data1d_gaussian_uint16;
+    data1d_gaussian_uint16 = new unsigned short int[x_length*y_length*z_length];
+    for(int i = 0; i < x_length*y_length*z_length; i++)
+    {
+        data1d_gaussian_uint16[i] = (unsigned short int)data1d_gausssian[i];
+    }
+    vector<Coor3D> centerline = findPath(start, goal, data1d_gaussian_uint16, x_length, y_length, z_length, callback, parent);
+    cout << "find path finished!" << endl;
+
+    unsigned short int * cprdata1d = 0;
+    int radius = 40;
+    int winlen = radius*2+1;
+    //cout<<"break: "<<__LINE__<<endl;
+
+    //transfer to mri
+    QString fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open MRI File"),
+            "",
+            QObject::tr("Supported file (*.tif)"
+                ));
+
+    if(fileOpenName.isEmpty())
+        return;
+    Image4DSimple * cprImage = new Image4DSimple();
+    Image4DSimple * MRIImage = new Image4DSimple();
+    unsigned char * mri_data1d = 0;
+    int datatype = 0;
+    simple_loadimage_wrapper(callback,fileOpenName.toStdString().c_str(), mri_data1d, in_sz, datatype);
+    //v3dhandle newwin = callback.newImageWindow("cpr");
+
+
+
+
+//    SelectMRI* selectmri = new SelectMRI(callback, parent);
+//    cout << "break: " << __LINE__ << endl;
+//    selectmri->show();
+//    cout << "break: " << __LINE__ << endl;
+//    if(selectmri    exec())
+//    while(!selectmri->mrihandle)
+//    {
+//        cout << "wait." <<endl;
+//    }
+//    Image4DSimple* MRIImage = callback.getImage(selectmri->mrihandle);
+
+//    if (!MRIImage)
+//    {
+//        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+//        return;
+//    }
+
+
+    //mri_data1d = (unsigned short int *)MRIImage->getRawData();
+
+    cout << "break: " << __LINE__ << endl;
+    cprdata1d = samplePlane((unsigned short int *)mri_data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+    //cprdata1d = samplePlane((unsigned short int *)data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+
+    cout << "break: " << __LINE__ << endl;
+    //Image4DSimple * cprImage = new Image4DSimple();
+    cprImage->setData((unsigned char *)cprdata1d, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+    cout << "break: " << __LINE__ << endl;
+    v3dhandle newwin = callback.newImageWindow("CPR Image1");
+    callback.setImage(newwin, cprImage);
+    cout << "break: " << __LINE__ << endl;
+
+////    cprdata1d = samplePlane(data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+
+//    Image4DSimple * cprImage_mra = new Image4DSimple();
+//    unsigned short int * cprdata1d_mra = samplePlane((unsigned short int *)data1d, centerline, x_length, y_length, z_length, radius, callback, parent);
+//    cout << "break: " << __LINE__ << endl;
+//    //Image4DSimple * cprImage = new Image4DSimple();
+//    //cprImage->setData((unsigned char *)cprdata1d, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+//    cprImage->setData((unsigned char *)cprdata1d_mra, winlen, winlen, centerline.size(), 1, V3D_UINT16);
+
+//    v3dhandle newwin2 = callback.newImageWindow("CPR Image2");
+//    callback.setImage(newwin2, cprImage_mra);
+//    //callback.updateImageWindow(newwin2);
+
+
+    //sync 3d view of MRA and MRI
 
 }
 

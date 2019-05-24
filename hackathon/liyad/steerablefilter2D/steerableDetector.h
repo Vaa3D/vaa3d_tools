@@ -1,3 +1,5 @@
+// 2019-05-16 by Liya Ding
+
 #include <string>
 #include <math.h>
 #include <gsl/gsl_poly.h>
@@ -26,4 +28,4 @@ void filterM5(double** templates, int nx, int ny, double* alpha, double* respons
 int mirror(int x, int nx);
 double interp(double* image, int nx, int ny, double x, double y);
 void computeNMS(double* response, double* orientation, double* nms, int nx, int ny); 
-void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,double* response, double* orientation, double* nms);
+void steerablefilter2Dcore(double * input, long* in_sz, int M, double sigma,double* &response, double* &orientation, double* &nms);

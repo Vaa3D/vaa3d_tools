@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = D:/vaa3d_build/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2
 INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2
@@ -12,12 +12,23 @@ INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/neuron_reliabil
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/newmat11
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/jba/c+
+INCLUDEPATH     += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc
+#INCLUDEPATH     += $$VAA3DPATH/v3d_main/basic_c_fun/terafly/src/control
 
 
 
 
-HEADERS	+= tera_retrace_plugin.h \
-    tera_retrace_func.h
+HEADERS	+= tera_retrace_plugin.h
+HEADERS += tera_retrace_func.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/sort_neuron_swc/sort_swc.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/vn.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2/fastmarching_dt.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2/fastmarching_tree.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/app2/hierarchy_prune.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/vn_app2.h
+HEADERS += $$VAA3DPATH/released_plugins_more/v3d_plugins/neurontracing_vn2/vn_imgpreprocess.h
+
+
 SOURCES	+= tera_retrace_plugin.cpp \
     tera_retrace_func.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
@@ -44,6 +55,7 @@ SOURCES += $$VAA3DPATH/released_plugins_more/v3d_plugins/mean_shift_center/mean_
 
 
 
+
 TARGET	= $$qtLibraryTarget(tera_retrace)
 DESTDIR	= $$VAA3DPATH/bin/plugins/tera_retrace/
 
@@ -56,8 +68,16 @@ DESTDIR	= $$VAA3DPATH/bin/plugins/tera_retrace/
 #}
 
 
-
 win32 {
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibtiff
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/winlib64 -llibnewmat
 }
+
+
+macx{
+    LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
+    LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
+}
+
+
+

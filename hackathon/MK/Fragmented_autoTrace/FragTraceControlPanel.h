@@ -7,15 +7,15 @@
 #include "FragTraceManager.h"
 
 #define MAINVERSION_NUM 0
-#define SUBVERSION_NUM 4
-#define PATCHVERSION_NUM 1
+#define SUBVERSION_NUM 5
+#define PATCHVERSION_NUM 0
 
 class FragTraceControlPanel : public QDialog
 {
 	Q_OBJECT
 
 public:
-	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback, bool showMenu = true);
+	FragTraceControlPanel(QWidget* parent, V3DPluginCallback2* callback);
 	~FragTraceControlPanel();
 
 	QString saveSWCFullName;
@@ -45,7 +45,10 @@ public slots:
 	void catchTracedTree(NeuronTree tracedTree) { this->tracedTree = tracedTree; }
 
 private:
-	bool partialVolume;
+	bool volumeAdjusted;
+	int* volumeAdjustedCoords;
+	int* globalCoords;
+	int* displayingDims;
 
 	QDoubleSpinBox* doubleSpinBox;
 	QStandardItemModel* listViewBlankAreas;
@@ -56,6 +59,15 @@ private:
 	FragTraceManager* traceManagerPtr;
 
 	void fillUpParamsForm();
+
+	void teraflyTracePrep(workMode mode);
+
+	void blankArea();
+	void imgEnhancement();
+	void maskGeneration();
+	void objFilter();
+	void objBasedMST();
+	void postElongation();
 };
 
 

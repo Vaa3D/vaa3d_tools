@@ -44,18 +44,32 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	QString fileOpenName = openDlg->file_name;
 	if (SortSWC(neuron, result ,rootid, thres))
 	{
-		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
-		//write new SWC to file
-		QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-				fileDefaultName,
-				QObject::tr("Supported file (*.swc)"
-					";;Neuron structure	(*.swc)"
-					));
+        QString fileDefaultName;
+        QString fileSaveName;
+        if(fileOpenName.endsWith(".eswc",Qt::CaseInsensitive))
+        {
+            fileDefaultName = fileOpenName+QString("_sorted.eswc");
+            fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                        fileDefaultName,
+                                                        QObject::tr("Supported file (*.eswc)"
+                                                                    ";;Neuron structure	(*.eswc)"
+                                                                    ));
+
+        }
+        else
+        {
+            fileDefaultName = fileOpenName+QString("_sorted.swc");
+            fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                        fileDefaultName,
+                                                        QObject::tr("Supported file (*.swc)"
+                                                                    ";;Neuron structure	(*.swc)"
+                                                                    ));
+        }
 		if (fileSaveName.isEmpty())
 			return;
 		if (!export_list2file(result,fileSaveName,fileOpenName))
 		{
-			v3d_msg("fail to write the output swc file.");
+            v3d_msg("fail to write the output swc/eswc file.");
 			return;
 		}
 	}

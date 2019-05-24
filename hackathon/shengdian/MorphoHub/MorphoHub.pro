@@ -7,10 +7,13 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= MorphoHub_plugin.h \
     database/morphohub_database.h \
-    MainWindow/morphohub_mainwindow.h
+    MainWindow/morphohub_mainwindow.h \
+    DBMS/dbms_basic.h \
+    DBMS/dbmsdialog.h
 SOURCES	+= MorphoHub_plugin.cpp \
     database/morphohub_database.cpp \
-    MainWindow/morphohub_mainwindow.cpp
+    MainWindow/morphohub_mainwindow.cpp \
+    DBMS/dbmsdialog.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(MorphoHub)

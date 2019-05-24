@@ -343,7 +343,8 @@ bool refine_swc::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 //        writeMarker_file(tip2,tips_refined);
     }else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+        printf("This is a plugin for refinement \n");
+        printf("Usage£º vaa3d -x refine_swc -f refine_v2 -i <terafly image path> <corresponding swc> -o <outputswc> ");
 	}
 	else return false;
 

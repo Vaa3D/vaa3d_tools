@@ -613,7 +613,7 @@ switch(mode){
        }
 
            index_radius[i]=R;
-           printf("this node's radius is in image block:%d\n",i);
+           //printf("this node's radius is in image block:%d\n",i);
            cout<<"radius:"<<R<<endl;
         here:
            if (R>sz[0] || R>sz[1] || R>sz[2]) cout<<"your node's radius bigger than your image size ,plz check your code!"<<endl;
@@ -764,7 +764,7 @@ double get_aver_signal(vector<MyMarker> allmarkers, unsigned char * data1d,unsig
         }
 
       }
-      //cout<<"total signal:"<<signal<<endl;
+      cout<<"total signal+++++++++++++++++:"<<signal<<endl;
       if(in_block_ct>0)
       {
           signal = signal / in_block_ct;

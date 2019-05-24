@@ -33,8 +33,15 @@ void MorphoHubPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     if (menu_name == tr("MorphoHub"))
 	{
         //v3d_msg("To be implemented.");
-        //MorphoHub_MainWindow mainwindow;
-        //mainwindow.show();
+//        MorphoHub_MainWindow *mainwindow=0;
+//        mainwindow=new MorphoHub_MainWindow(callback,parent);
+        //QApplication test;
+        MorphoHub_MainWindow *mainwindow=new MorphoHub_MainWindow(parent);
+        mainwindow->setWindowState(Qt::WindowNoState);
+        mainwindow->raise();
+        mainwindow->activateWindow();
+        mainwindow->setGeometry(100,400,1280,1080);
+        mainwindow->show();
 	}
 	else if (menu_name == tr("menu2"))
 	{

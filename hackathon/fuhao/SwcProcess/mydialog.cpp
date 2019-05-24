@@ -75,8 +75,8 @@ MyDialog::MyDialog()
     connect(button_down, SIGNAL(clicked()), this, SLOT(on_pushButton_down_clicked()));
     connect(button_ok, SIGNAL(clicked()), this, SLOT(accept()));
     connect(button_cancel, SIGNAL(clicked()), this, SLOT(reject()));
-
 }
+
 void MyDialog::on_pushButton_add_clicked()
 {
     if(vector_label_checked_num_right==-1||vector_label_checked_num_right>=vector_label_right.size())

@@ -124,7 +124,7 @@ template <class T> bool statisticalProcess(T* data1d,V3DLONG *in_sz,V3DLONG c){
 		grayCounts[data1d[i]]++;
 	}
 	QString strTmp=QString("%1 grayLevels in all\nGraylevel   Counts\n").arg(grayCounts.size());
-	map<T,V3DLONG>::iterator iter=grayCounts.begin();
+	typename map<T,V3DLONG>::iterator iter=grayCounts.begin();
 	int count=0;
 	for(iter=grayCounts.begin();iter!=grayCounts.end();iter++){
 		//cout << iter->first << " " << iter->second << endl;
