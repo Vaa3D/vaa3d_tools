@@ -231,7 +231,7 @@ vector<connectedComponent> ImgAnalyzer::merge2DConnComponent(const vector<connec
 			b3Dcomps[sliceBlobCount] = comps;
 		}
 	}
-	// -----------------------------------------------------------
+	// -------------------------------------------------------------
 
 	// ------------------------------------------- Merge 2D blobs from 2 adjacent slices -------------------------------------------
 	vector<connectedComponent> currSliceConnComps;

@@ -472,7 +472,7 @@ void FragTraceControlPanel::traceButtonClicked()
 
 			if (uiPtr->checkBox->isChecked()) // terafly format
 			{				
-				this->teraflyTracePrep(wholeBlock_axon);        // terafly image block preparation
+				this->teraflyTracePrep(axon);        // terafly image block preparation
 				this->traceManagerPtr->finalSaveRootQ = rootQ;
 
 				this->imgEnhancement();                         // image enhancement				
@@ -500,7 +500,7 @@ void FragTraceControlPanel::traceButtonClicked()
 				this->imgEnhancement();                          // image enhancement
 				this->objFilter();                               // object filter
 				this->objBasedMST();                             // object-based MST node connecting 
-				this->postElongation();                         // post elongation set up
+				this->postElongation();                          // post elongation set up
 			}
 		}
 
@@ -526,6 +526,7 @@ void FragTraceControlPanel::traceButtonClicked()
 		this->tracedTree = NeuronStructUtil::swcShift(this->tracedTree, this->volumeAdjustedCoords[0] - 1, this->volumeAdjustedCoords[2] - 1, this->volumeAdjustedCoords[4] - 1);
 	} 
 	this->scaleTracedTree();
+
 	NeuronTree existingTree = this->thisCallback->getSWCTeraFly();
 	NeuronTree finalTree;
 	if (existingTree.listNeuron.isEmpty())
@@ -599,7 +600,7 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 		ImgManager::saveimage_wrapper(saveNameC2, croppedBlock1Dptr2, saveDims, 1);*/
 		// --------------------------------- /
 
-		if (mode == wholeBlock_axon) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, wholeBlock_axon);
+		if (mode == axon) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, axon);
 		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(croppedImg4DSimplePtr, dendriticTree);
 
 		delete[] currBlock1Dptr;
@@ -607,7 +608,7 @@ void FragTraceControlPanel::teraflyTracePrep(workMode mode)
 	}
 	else
 	{
-		if (mode == wholeBlock_axon) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, wholeBlock_axon);
+		if (mode == axon) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, axon);
 		else if (mode == dendriticTree) this->traceManagerPtr = new FragTraceManager(currBlockImg4DSimplePtr, dendriticTree);
 	}
 }
