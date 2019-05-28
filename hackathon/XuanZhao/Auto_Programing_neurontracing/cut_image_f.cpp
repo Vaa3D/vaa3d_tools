@@ -31,7 +31,7 @@ QVector<QVector<V3DLONG>> getChildren(NeuronTree& nt)
         children[nt.hashNeuron.value(par)].push_back(i);
     }
     return children;
-    std::cout<<"children"<<endl;
+    //std::cout<<"children"<<endl;
 }
 
 block getBlockOfOPoint(NeuronSWC& p, int dx, int dy, int dz)
@@ -355,6 +355,11 @@ bool getTif_Eswc_Marker(parameter1& p, V3DPluginCallback2 &callback)
 
             QString si3=path0+eswcfile.baseName()+"_"+QString::number(bt.blocklist[j].n,10)+"_x_"+QString::number((qlonglong)bt.blocklist[j].o.x,10)+"_y_"+QString::number((qlonglong)bt.blocklist[j].o.y,10)+"_z_"+QString::number((qlonglong)bt.blocklist[j].o.z,10)+suffix4;
             const QString si4(si3);
+
+            for(int j=0;j<nttmp.listNeuron.size();++j)
+            {
+                nttmp.hashNeuron.insert(nttmp.n,j);
+            }
 
             if(p.singleTree==true)
             {
