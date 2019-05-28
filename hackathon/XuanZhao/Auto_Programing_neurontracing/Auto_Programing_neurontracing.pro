@@ -9,13 +9,15 @@ HEADERS	+= Auto_Programing_neurontracing_plugin.h \
     mydialog.h \
     cut_image_p.h \
     cut_image_f.h \
-    resampling.h
+    resampling.h \
+    compare_f.h
 SOURCES	+= Auto_Programing_neurontracing_plugin.cpp \
     mydialog.cpp \
     cut_image_p.cpp \
     cut_image_f.cpp \
     resampling.cpp \
-    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp
+    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp \
+    compare_f.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(Auto_Programing_neurontracing)

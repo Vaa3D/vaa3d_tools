@@ -9,6 +9,7 @@
 #include "mydialog.h"
 #include "cut_image_p.h"
 #include "cut_image_f.h"
+#include "compare_f.h"
 #include <iostream>
 
 using namespace std;
@@ -46,7 +47,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 	else if (menu_name == tr("menu2"))
 	{
-		v3d_msg("To be implemented.");
+        const QString dir=QFileDialog::getExistingDirectory(parent);
+        select_cross(dir);
 	}
 	else
 	{
