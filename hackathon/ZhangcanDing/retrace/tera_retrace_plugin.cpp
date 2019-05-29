@@ -12,6 +12,7 @@
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 #include "my_surf_objs.h"
 #include "vn_app2.h"
+#include <stdlib.h>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(tera_retrace, retrace);
@@ -44,15 +45,17 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         //if you want to change some of the parameters, pls go to app_tracing_ada_win3d to set
 
         P.image=0;
-        P.block_size=512;
+        P.block_size=256;
         P.soma=0;
         P.channel=1;
-        P.bkg_thresh=10;
+        P.bkg_thresh= -1;
         P.resume =  1;   //add continue tracing option
         P.b_256cube = 1;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
-        P.is_break_accept =  0;
+        P.is_break_accept =
+
+                0;
         P.length_thresh =  5;
         P.adap_win= 1;
         P.tracing_3D = true;
@@ -123,7 +126,7 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
          system(qPrintable(QString("mkdir %1").arg(fiswcfolder.toStdString().c_str())));
          P.fusion_folder=fiswcfolder;
 
-         v3d_msg("check");
+         v3d_msg("check",0);
 
         for (int i=0; i<locationlist.size();i++)
         {
@@ -151,26 +154,29 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
                 writeMarker_file(indimarkerfn,indimarker);
                 qDebug()<<"markerfilename: \n"<<indimarkerfn;
-                v3d_msg("check marker name.");
+                v3d_msg("check marker name.",0);
                 QString ref_swcfn= indimarkerfn + QString("_nc_APP2_GD.swc");
                 writeSWC_file(ref_swcfn,ref_swc);
                 P.markerfilename = indimarkerfn ;
+                P.block_size=256;
+                v3d_msg("check swc",0);
 
                 printf("-------------------------------\n");
                 crawler_raw_app(callback,parent,P,bmenu);
 
-                v3d_msg("check output");
+                v3d_msg("check output",0);
                 QString txtfileName= indimarkerfn+"_tmp_APP2\\scanData.txt";
                 qDebug()<<"txtfilename:"<<txtfileName;
                 qDebug() <<"txtfileName="<< txtfileName;
                 list<string> infostring;
-                processSmartScan_3D_wofuison(callback,infostring,txtfileName);
+                processSmartScan_3D(callback,infostring,txtfileName,P );
 
 
             }
         }
 
-        v3d_msg("check whole output without fusion");
+
+        v3d_msg("check whole output without fusion",0);
         QString ref_swc_wf= QString(fiswcfolder) + "\\ori.swc";
         writeSWC_file(ref_swc_wf,ref_swc);
         QString fusedswc= QString(fiswcfolder) + "_fused.swc";
@@ -238,7 +244,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         TRACE_LS_PARA P;
 
         P.image=0;
-        P.block_size=512;
+        P.block_size=256;
         P.soma=0;
         P.channel=1;
         P.bkg_thresh=-1;
@@ -303,6 +309,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
 
 
+
         for (int i=0; i<markerlist.size();i++)
         {
             if ( markerlist.at(i).color.r==255 && markerlist.at(i).color.g==0 && markerlist.at(i).color.b==0)
@@ -327,13 +334,14 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
                 writeMarker_file(indimarker,indimarkerls);
 
                 P.markerfilename= indimarker;
+                P.block_size= 256;
                 crawler_raw_app(callback,parent,P ,bmenu);
 
                 QString txtfileName= indimarker+"_tmp_APP2\\scanData.txt";
                 qDebug() <<"txtfileName="<< txtfileName;
                 list<string> infostring;
                 //processSmartScan_3D(callback,infostring,txtfileName);
-                 processSmartScan_3D(callback,infostring,txtfileName);
+                 processSmartScan_3D(callback,infostring,txtfileName,P);
             }
 
         }
@@ -370,7 +378,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString txtfilenName = infiles[0];
         TRACE_LS_PARA P;
         list<string> infostring;
-        processSmartScan_3D(callback,infostring,txtfilenName);
+        processSmartScan_3D(callback,infostring,txtfilenName,P);
 	}
     else if (func_name == tr("single_image"))
 	{
@@ -382,7 +390,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         p2.length_thresh =5 ;
         p2.cnn_type = 2;
         p2.channel = 0;
-        p2.SR_ratio = 0.30303;
+        p2.SR_ratio = 0.333333;
         p2.b_256cube = 1;
         p2.b_RadiusFrom2D = 1;
         p2.b_resample = 0;
@@ -414,6 +422,7 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString app2funcname="app2";
 
 
+        TRACE_LS_PARA p2;
         V3DPluginArgItem arg;
         V3DPluginArgList input_app2;
         arg.type = "random";
@@ -429,17 +438,31 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         std::vector <char *> arg_para_app2;
 
         //parameters set for app2
-        char *p= "NULL";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p= "AUTO";arg_para_app2.push_back(p);
-        p ="1";arg_para_app2.push_back(p);
-        p= "1";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p ="5";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p ="0";arg_para_app2.push_back(p);
-        p= "0";arg_para_app2.push_back(p);
+        arg_para_app2.push_back("NULL");
+        arg_para_app2.push_back("0");
+        if(1)
+        {
+            p2.bkg_thresh=20;
+
+            //QByteArray p_ba =QString::number(p2.bkg_thresh).toLatin1();
+            //p= p_ba.data();
+           // itoa(p2.bkg_thresh,p,10);
+            char * pp= new char [5];
+            sprintf(pp, "%d", p2.bkg_thresh);
+            //printf("\n p=%s \n", p);
+            arg_para_app2.push_back(pp);
+
+        }
+
+        //p= "10";arg_para_app2.push_back(p);
+        arg_para_app2.push_back("1");
+        arg_para_app2.push_back("1");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("5");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("0");
+        arg_para_app2.push_back("0");
         arg.p= (void *)& arg_para_app2;
         input_app2<<arg;
 
@@ -455,6 +478,15 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
 
         //p NULL 0 AUTO 1 1  0 0 5 0 0 0
+
+    }
+    else if (func_name==tr("fusion"))
+    {
+        QString inputdir= infiles[0];
+        QString outswc = inputdir+"\\fused.swc";
+        smartFuse(callback,inputdir,outswc);
+
+
 
     }
 
