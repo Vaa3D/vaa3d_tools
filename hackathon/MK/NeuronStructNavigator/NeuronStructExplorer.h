@@ -147,7 +147,7 @@ public:
 	/***************** Geometry *****************/
 	inline static vector<float> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 	inline static vector<float> getDispUnitVector(const vector<float>& headVector, const vector<float>& tailVector);
-	inline static vector<pair<float, float>> getVectorLocPair(const NeuronSWC& startNode, const NeuronSWC& endNode);
+	inline static vector<pair<float, float>> getVectorWithStartingLoc(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
 	inline static double getVectorCosine(const vector<float>& vector1, const vector<float>& vector2);
 	inline static double getVectorSine(const vector<float>& vector1, const vector<float>& vector2);
@@ -243,7 +243,7 @@ inline vector<float> NeuronStructExplorer::getDispUnitVector(const vector<float>
 	return dispUnitVector;
 }
 
-inline vector<pair<float, float>> NeuronStructExplorer::getVectorLocPair(const NeuronSWC& startNode, const NeuronSWC& endNode)
+inline vector<pair<float, float>> NeuronStructExplorer::getVectorWithStartingLoc(const NeuronSWC& startNode, const NeuronSWC& endNode)
 {
 	vector<float> thisVector = NeuronStructExplorer::getVector_NeuronSWC(startNode, endNode);
 

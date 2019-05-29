@@ -63,6 +63,17 @@ namespace integratedDataTypes
 		double previousSqr, nextSqr, radAngle, distToMainRoute, turnCost;
 	};
 
+	struct NeuronSWCpolar
+	{
+		int ID, type, parent;
+		float CartesianX, CartesianY, CartesianZ;
+
+		double polarOriginX, polarOriginY, polarOriginZ;
+		double radius;
+		double theta; // horizontal angle
+		double phi;   // vertical angle
+	};
+
 	struct topoCharacter
 	{
 		topoCharacter() {};

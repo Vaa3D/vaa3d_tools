@@ -1229,8 +1229,8 @@ profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputP
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorLocPair(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorLocPair(seg2Head, seg2Tail);
+				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg2Head, seg2Tail);
 				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) + 
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
@@ -1258,8 +1258,8 @@ profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputP
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorLocPair(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorLocPair(seg2Tail, seg2Head);
+				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg2Tail, seg2Head);
 				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
@@ -1287,8 +1287,8 @@ profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputP
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorLocPair(seg1Head, seg1Tail);
-				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorLocPair(seg2Tail, seg2Head);
+				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg1Head, seg1Tail);
+				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg2Tail, seg2Head);
 				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
 									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
