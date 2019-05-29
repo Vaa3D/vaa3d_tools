@@ -32,6 +32,23 @@ bool split_neuron(QString qs_input, QString qs_outdir){
     return 1;
 }
 
+bool split_neuron_domenu(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //choose a directory that contain swc files
+    QString qs_input;
+    qs_input=QFileDialog::getOpenFileName(
+                parent,
+                "Please select input file (*.swc)\n",
+                QDir::currentPath(),
+                "All files (*.*)" ";; swc files (*.swc *.eswc)"
+                );
+    QString qs_output_dir("");
+
+    // Split neuron
+    split_neuron(qs_input, qs_output_dir);
+    return 1;
+}
+
 bool split_neuron_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     printf("welcome to use split_neuron\n");
