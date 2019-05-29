@@ -1,7 +1,7 @@
 How to use UltraTracer2 framework to trace fMOST whole mouse brain data on Linux:
 1.Checkout the latest code.
 2.Build 3D Caffe using the instruction under "vaa3d_tools/hackathon/zhi/deep_learning/3D_unet/readme.md".
-3.Build deep learning prediction plugin under "vaa3d_tools/hackathon/zhi/deep_learning/prediction/" 
+3.Build deep learning prediction plugin under "vaa3d_tools/hackathon/zhi/deep_learning/prediction/". Please change all lib paths to be your local paths. 
 4.Build APP2 plugin under "vaa3d_tools/released_plugins/v3d_plugins/neurontracing_vn2/" 
 5.Build UltraTracer plugin under "vaa3d_tools/released_plugins/v3d_plugins/ultratracer/",  
 
