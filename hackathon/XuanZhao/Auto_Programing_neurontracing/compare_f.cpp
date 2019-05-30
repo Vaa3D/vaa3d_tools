@@ -20,7 +20,8 @@ void select_cross(const QString dir)
     {
         QFileInfo eswcfile(eswcfiles[i]);
         NeuronTree e_nt,s_nt;
-        e_nt=readSWC_file(eswcfile.absoluteFilePath());
+        QString eswcfile_0=dir+"/"+eswcfile.baseName()+".eswc";
+        e_nt=readSWC_file(eswcfile_0);
         QString swcfile=dir+"/"+eswcfile.baseName()+".swc";
         s_nt=readSWC_file(swcfile);
 
@@ -125,12 +126,12 @@ void select_cross(const QString dir)
             const QString markerfile=dir+"/"+eswcfile.baseName()+".marker";
             const QString new_tiffile=cross_s+"/"+eswcfile.baseName()+".tif";
             const QString new_markerfile=cross_s+"/"+eswcfile.baseName()+".marker";
-            const QString new_eswcfile=dir+"/"+eswcfile.baseName()+".eswc";
-            const QString new_swcfile=dir+"/"+eswcfile.baseName()+".swc";
+            const QString new_eswcfile=cross_s+"/"+eswcfile.baseName()+".eswc";
+            const QString new_swcfile=cross_s+"/"+eswcfile.baseName()+".swc";
             QFile::copy(tiffile,new_tiffile);
             QFile::copy(markerfile,new_markerfile);
             QFile::copy(swcfile,new_swcfile);
-            QFile::copy(eswcfile.absoluteFilePath(),new_eswcfile);
+            QFile::copy(eswcfile_0,new_eswcfile);
 
 
         ImageMarker marker;

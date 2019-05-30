@@ -19,7 +19,7 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("getTif_Eswc_Marker")
-		<<tr("menu2")
+        <<tr("compare")
 		<<tr("about");
 }
 
@@ -45,7 +45,7 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
             return;
         }
 	}
-	else if (menu_name == tr("menu2"))
+    else if (menu_name == tr("compare"))
 	{
         const QString dir=QFileDialog::getExistingDirectory(parent);
         select_cross(dir);

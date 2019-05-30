@@ -294,6 +294,10 @@ bool getTif_Eswc_Marker(parameter1& p, V3DPluginCallback2 &callback)
 
         QFileInfo eswcfile(p.eswcfiles[i]);
 
+        for(int j=0;j<bt.blocklist.size();++j)
+        {
+            bt.blocklist[j].tips.clear();
+        }
         bt.blocklist.clear();
         bt=getBlockTree(nt,p.dx,p.dy,p.dz);
         std::cout<<"after getBlockTree"<<endl;
@@ -416,6 +420,7 @@ bool getTif_Eswc_Marker(parameter1& p, V3DPluginCallback2 &callback)
         }
 
     }
+
 
     return true;
 
