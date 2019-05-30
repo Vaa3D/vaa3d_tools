@@ -4,6 +4,7 @@
  */
  
 #include <omp.h>
+#include <sstream>
 
 #include "v3d_message.h"
 #include <algorithm>
@@ -643,8 +644,19 @@ vector<NeuronSWC> loopDetection(V_NeuronSWC_list inputSegList)
 				set<size_t> thisLoop = *loopIt;
 				for (set<size_t>::iterator it = thisLoop.begin(); it != thisLoop.end(); ++it)
 				{
-					string headLabel = to_string((segList.seg[*it].row.end() - 1)->x) + " " + to_string((segList.seg[*it].row.end() - 1)->y) + " " + to_string((segList.seg[*it].row.end() - 1)->z);
-					string tailLabel = to_string(segList.seg[*it].row.begin()->x) + " " + to_string(segList.seg[*it].row.begin()->y) + " " + to_string(segList.seg[*it].row.begin()->z);
+					std::ostringstream ssHeadx, ssHeady, ssHeadz;
+					std::ostringstream ssTailx, ssTaily, ssTailz;
+					ssHeadx << (segList.seg[*it].row.end() - 1)->x; string headX(ssHeadx.str());
+					ssHeady << (segList.seg[*it].row.end() - 1)->y; string headY(ssHeady.str());
+					ssHeadz << (segList.seg[*it].row.end() - 1)->z; string headZ(ssHeadz.str());
+					ssTailx << segList.seg[*it].row.begin()->x;     string tailX(ssTailx.str());
+					ssTaily << segList.seg[*it].row.begin()->y;     string tailY(ssTaily.str());
+					ssTailz << segList.seg[*it].row.begin()->z;     string tailZ(ssTailz.str());
+					string headLabel = headX + " " + headY + " " + headZ;
+					string tailLabel = tailX + " " + tailY + " " + tailZ;
+
+					//string headLabel = to_string((segList.seg[*it].row.end() - 1)->x) + " " + to_string((segList.seg[*it].row.end() - 1)->y) + " " + to_string((segList.seg[*it].row.end() - 1)->z);
+					//string tailLabel = to_string(segList.seg[*it].row.begin()->x) + " " + to_string(segList.seg[*it].row.begin()->y) + " " + to_string(segList.seg[*it].row.begin()->z);
 					headCountMap[headLabel].insert(*it);
 					tailCountMap[tailLabel].insert(*it);					
 				}

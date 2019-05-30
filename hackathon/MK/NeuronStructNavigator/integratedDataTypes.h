@@ -63,7 +63,7 @@ namespace integratedDataTypes
 		double previousSqr, nextSqr, radAngle, distToMainRoute, turnCost;
 	};
 
-	struct NeuronSWC_polar
+	struct polarNeuronSWC
 	{
 		int ID, type, parent;
 		float CartesianX, CartesianY, CartesianZ;

@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "downSampleTest";
+	//string funcName = "polarTest";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -237,6 +237,23 @@ int main(int argc, char* argv[])
 			}
 		}
 		writeSWC_file(saveNameQ, terminalTree);
+	}
+	else if (!funcName.compare("polarTest"))
+	{
+		float originX = stof(paras.at(0));
+		float originY = stof(paras.at(1));
+		float originZ = stof(paras.at(2));
+		float radius = stof(paras.at(3));
+		float density = stof(paras.at(4));
+		vector<float> originVec = { originX, originY, originZ };
+
+		NeuronTree sphere = NeuronStructUtil::sphereRandNodes(radius, originX, originY, originZ, density);
+		SWCtester mySWCtester;
+		QList<NeuronSWC> outputList = mySWCtester.polarCoordShellPeeling(sphere.listNeuron, originVec, radius);
+		NeuronTree outputTree;
+		outputTree.listNeuron = outputList;
+
+		writeSWC_file(QString::fromStdString(paras.at(5)), outputTree);
 	}
 	// ---------------------------------------------------------------------------------------------------------------------------------------- //
 	else if (!funcName.compare("swc2mask"))

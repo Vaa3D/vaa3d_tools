@@ -131,6 +131,9 @@ public:
 	/***************************** Miscellaneous ******************************/
 	static inline void linkerFileGen_forSWC(string swcFullFileName);
 	static inline NeuronTree randNodes(float cubeLength, float density);
+
+	// Generates a spherical root node cluster with specified origin, radius, and node density.
+	// The total amount of nodes = (4 / 3) * PI * radius^3 * density.
 	static inline NeuronTree sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density);
 	static NeuronTree nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange);
 	/**************************************************************************/
