@@ -255,6 +255,40 @@ int main(int argc, char* argv[])
 
 		writeSWC_file(QString::fromStdString(paras.at(5)), outputTree);
 	}
+	else if (!funcName.compare("polarTest_angleHor"))
+	{
+		float originX = stof(paras.at(0));
+		float originY = stof(paras.at(1));
+		float originZ = stof(paras.at(2));
+		float radius = stof(paras.at(3));
+		float density = stof(paras.at(4));
+		vector<float> originVec = { originX, originY, originZ };
+
+		NeuronTree sphere = NeuronStructUtil::sphereRandNodes(radius, originX, originY, originZ, density);
+		SWCtester mySWCtester;
+		QList<NeuronSWC> outputList = mySWCtester.polarCoordAngle_horizontal(sphere.listNeuron, originVec, radius);
+		NeuronTree outputTree;
+		outputTree.listNeuron = outputList;
+
+		writeSWC_file(QString::fromStdString(paras.at(5)), outputTree);
+	}
+	else if (!funcName.compare("polarTest_angleVer"))
+	{
+		float originX = stof(paras.at(0));
+		float originY = stof(paras.at(1));
+		float originZ = stof(paras.at(2));
+		float radius = stof(paras.at(3));
+		float density = stof(paras.at(4));
+		vector<float> originVec = { originX, originY, originZ };
+
+		NeuronTree sphere = NeuronStructUtil::sphereRandNodes(radius, originX, originY, originZ, density);
+		SWCtester mySWCtester;
+		QList<NeuronSWC> outputList = mySWCtester.polarCoordAngle_vertical(sphere.listNeuron, originVec, radius);
+		NeuronTree outputTree;
+		outputTree.listNeuron = outputList;
+
+		writeSWC_file(QString::fromStdString(paras.at(5)), outputTree);
+	}
 	// ---------------------------------------------------------------------------------------------------------------------------------------- //
 	else if (!funcName.compare("swc2mask"))
 	{

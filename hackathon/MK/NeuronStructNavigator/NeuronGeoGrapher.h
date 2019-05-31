@@ -15,10 +15,26 @@ class NeuronGeoGrapher
 {
 public:
 	template<class T>
-	inline static vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
+	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
+
+	template<class T>
+	static inline vector<T> getDispUnitVector(const vector<T>& headVector, const vector<T>& tailVector);
+
+	template<class T>
+	static inline vector<pair<T, T>> getVectorWithStartingLoc_btwn2nodes(const NeuronSWC& startNode, const NeuronSWC& endNode);
+
+	template<class T>
+	static inline T getVectorCosine(const vector<T>& vector1, const vector<T>& vector2);
+	
+	template<class T>
+	static inline T getVectorSine(const vector<T>& vector1, const vector<T>& vector2);
+
+	template<class T>
+	static inline T getPiAngle(const vector<T>& vector1, const vector<T>& vector2);
 
 	template<class T>
 	static inline T getRadAngle(const vector<T>& vector1, const vector<T>& vector2);
+
 
 	template<class T>
 	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, const vector<T>& origin);
@@ -35,6 +51,33 @@ inline vector<T> NeuronGeoGrapher::getVector_NeuronSWC(const NeuronSWC& startNod
 	vec[1] = endNode.y - startNode.y;
 	vec[2] = endNode.z - startNode.z;
 	return vec;
+}
+
+template<class T>
+inline vector<T> getDispUnitVector(const vector<T>& headVector, const vector<T>& tailVector)
+{
+	T disp = sqrt((headVector.at(0) - tailVector.at(0)) * (headVector.at(0) - tailVector.at(0)) +
+				  (headVector.at(1) - tailVector.at(1)) * (headVector.at(1) - tailVector.at(1)) +
+				  (headVector.at(2) - tailVector.at(2)) * (headVector.at(2) - tailVector.at(2)));
+	vector<T> dispUnitVector;
+	dispUnitVector.push_back((headVector.at(0) - tailVector.at(0)) / disp);
+	dispUnitVector.push_back((headVector.at(1) - tailVector.at(1)) / disp);
+	dispUnitVector.push_back((headVector.at(2) - tailVector.at(2)) / disp);
+
+	return dispUnitVector;
+}
+
+template<class T>
+inline vector<pair<T, T>> getVectorWithStartingLoc_btwn2nodes(const NeuronSWC& startNode, const NeuronSWC& endNode)
+{
+	vector<T> thisVector = NeuronGeoGrapher::getVector_NeuronSWC(startNode, endNode);
+
+	vector<pair<T, T>> outputVectorPairs(3);
+	outputVectorPairs[0] = pair<T, T>(startNode.x, thisVector.at(0));
+	outputVectorPairs[1] = pair<T, T>(startNode.y, thisVector.at(1));
+	outputVectorPairs[2] = pair<T, T>(startNode.z, thisVector.at(2));
+
+	return outputVectorPairs;
 }
 
 template<class T>

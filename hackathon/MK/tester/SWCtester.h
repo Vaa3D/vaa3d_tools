@@ -23,6 +23,8 @@ public:
 	vector<connectedComponent> connComponent2DmergeTest(QString inputSWCfileName);
 
 	QList<NeuronSWC> polarCoordShellPeeling(const QList<NeuronSWC>& inputNodeList, const vector<float>& origin, const float radius);
+	QList<NeuronSWC> polarCoordAngle_horizontal(const QList<NeuronSWC>& inputNodeList, const vector<float>& origin, const float radius);
+	QList<NeuronSWC> polarCoordAngle_vertical(const QList<NeuronSWC>& inputNodeList, const vector<float>& origin, const float radius);
 
 private:
 	ImgAnalyzer* myImgAnalyzerPtr;
