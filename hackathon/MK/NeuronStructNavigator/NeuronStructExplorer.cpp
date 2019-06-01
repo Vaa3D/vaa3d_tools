@@ -1229,9 +1229,9 @@ profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputP
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg2Head, seg2Tail);
-				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Head, seg2Tail);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectedVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) + 
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
@@ -1258,9 +1258,9 @@ profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputP
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg1Tail, seg1Head);
-				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg2Tail, seg2Head);
-				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Tail, seg1Head);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectedVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Head.x) * (seg1Head.x - seg1Tail.x) +
 									 ((projectingVecPair.begin() + 1)->first - seg1Head.y) * (seg1Head.y - seg1Tail.y) + ((projectingVecPair.begin() + 2)->first - seg1Head.z) * (seg1Head.z - seg1Tail.z);
 				if (overlapCheck < 0) continue;
@@ -1287,9 +1287,9 @@ profiledTree NeuronStructExplorer::connectLongNeurite(const profiledTree& inputP
 				seg2Head = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2HeadID)];
 				seg2Tail = it->second.begin()->seg2Ptr->nodes[it->second.begin()->seg2Ptr->seg_nodeLocMap.at(seg2TailID)];
 
-				vector<pair<float, float>> axialVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg1Head, seg1Tail);
-				vector<pair<float, float>> projectingVecPair = NeuronStructExplorer::getVectorWithStartingLoc(seg2Tail, seg2Head);
-				vector<pair<float, float>> projectedVecPair = NeuronStructExplorer::getProjectedVector(axialVecPair, projectingVecPair);
+				vector<pair<float, float>> axialVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg1Head, seg1Tail);
+				vector<pair<float, float>> projectingVecPair = NeuronGeoGrapher::getVectorWithStartingLoc_btwn2nodes<float>(seg2Tail, seg2Head);
+				vector<pair<float, float>> projectedVecPair = NeuronGeoGrapher::getProjectedVector(axialVecPair, projectingVecPair);
 				float overlapCheck = (projectingVecPair.begin()->first - seg1Tail.x) * (seg1Tail.x - seg1Head.x) +
 									 ((projectingVecPair.begin() + 1)->first - seg1Tail.y) * (seg1Tail.y - seg1Head.y) + ((projectingVecPair.begin() + 2)->first - seg1Tail.z) * (seg1Tail.z - seg1Head.z);
 				if (overlapCheck < 0) continue;
@@ -1690,9 +1690,9 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 			{
 				segUnit segUnit1 = currProfiledTree.segs.at(stoi(labelSplits.at(1)));
 				segUnit segUnit2 = currProfiledTree.segs.at(stoi(labelSplits.at(2)));
-				vector<float> seg1Vector = NeuronStructExplorer::getVector_NeuronSWC(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())));
-				vector<float> seg2Vector = NeuronStructExplorer::getVector_NeuronSWC(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)));
-				double turnAngle = NeuronStructExplorer::getPiAngle(seg1Vector, seg2Vector);
+				vector<float> seg1Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())));
+				vector<float> seg2Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)));
+				double turnAngle = NeuronGeoGrapher::getPiAngle(seg1Vector, seg2Vector);
 				if (turnAngle > PI / 4)
 				{
 					distMap.erase(distMap.find(nearestPair.first));
@@ -1713,9 +1713,9 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 			{
 				segUnit segUnit1 = currProfiledTree.segs.at(stoi(labelSplits.at(1)));
 				segUnit segUnit2 = currProfiledTree.segs.at(stoi(labelSplits.at(2)));
-				vector<float> seg1Vector = NeuronStructExplorer::getVector_NeuronSWC(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())));
-				vector<float> seg2Vector = NeuronStructExplorer::getVector_NeuronSWC(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())));
-				double turnAngle = NeuronStructExplorer::getPiAngle(seg1Vector, seg2Vector);
+				vector<float> seg1Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())));
+				vector<float> seg2Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())));
+				double turnAngle = NeuronGeoGrapher::getPiAngle(seg1Vector, seg2Vector);
 				if (turnAngle > PI / 4)
 				{
 					distMap.erase(distMap.find(nearestPair.first));
@@ -1736,9 +1736,9 @@ map<int, segUnit> NeuronStructExplorer::segUnitConnPicker_dist(const vector<int>
 			{
 				segUnit segUnit1 = currProfiledTree.segs.at(stoi(labelSplits.at(1)));
 				segUnit segUnit2 = currProfiledTree.segs.at(stoi(labelSplits.at(3)));
-				vector<float> seg1Vector = NeuronStructExplorer::getVector_NeuronSWC(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)));
-				vector<float> seg2Vector = NeuronStructExplorer::getVector_NeuronSWC(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())));
-				double turnAngle = NeuronStructExplorer::getPiAngle(seg1Vector, seg2Vector);
+				vector<float> seg1Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(*segUnit1.tails.begin())), segUnit1.nodes.at(segUnit1.seg_nodeLocMap.at(segUnit1.head)));
+				vector<float> seg2Vector = NeuronGeoGrapher::getVector_NeuronSWC<float>(segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(segUnit2.head)), segUnit2.nodes.at(segUnit2.seg_nodeLocMap.at(*segUnit2.tails.begin())));
+				double turnAngle = NeuronGeoGrapher::getPiAngle(seg1Vector, seg2Vector);
 				if (turnAngle > PI / 4)
 				{
 					distMap.erase(distMap.find(nearestPair.first));
@@ -1780,8 +1780,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			{
 				if (currProfiledTree.segs.at(*headIt).to_be_deleted || currProfiledTree.segs.at(*tailIt).to_be_deleted) continue;
 
-				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
-				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
+				double pointingRadAngle = NeuronGeoGrapher::segPointingCompare(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
+				double turningRadAngle = NeuronGeoGrapher::segTurningAngle(currProfiledTree.segs.at(*headIt), currProfiledTree.segs.at(*tailIt), head_tail);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
 				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
@@ -1819,8 +1819,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			{
 				if (currProfiledTree.segs.at(*tailIt).to_be_deleted || currProfiledTree.segs.at(*headIt).to_be_deleted) continue;
 
-				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
-				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
+				double pointingRadAngle = NeuronGeoGrapher::segPointingCompare(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
+				double turningRadAngle = NeuronGeoGrapher::segTurningAngle(currProfiledTree.segs.at(*tailIt), currProfiledTree.segs.at(*headIt), tail_head);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
 				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
@@ -1858,8 +1858,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			{
 				if (currProfiledTree.segs.at(*headIt1).to_be_deleted || currProfiledTree.segs.at(*headIt2).to_be_deleted) continue;
 
-				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
-				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
+				double pointingRadAngle = NeuronGeoGrapher::segPointingCompare(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
+				double turningRadAngle = NeuronGeoGrapher::segTurningAngle(currProfiledTree.segs.at(*headIt1), currProfiledTree.segs.at(*headIt2), head_head);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
 				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
@@ -1897,8 +1897,8 @@ map<int, segUnit> NeuronStructExplorer::segRegionConnector_angle(const vector<in
 			{
 				if (currProfiledTree.segs.at(*tailIt1).to_be_deleted || currProfiledTree.segs.at(*tailIt2).to_be_deleted) continue;
 
-				double pointingRadAngle = this->segPointingCompare(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
-				double turningRadAngle = this->segTurningAngle(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
+				double pointingRadAngle = NeuronGeoGrapher::segPointingCompare(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
+				double turningRadAngle = NeuronGeoGrapher::segTurningAngle(currProfiledTree.segs.at(*tailIt1), currProfiledTree.segs.at(*tailIt2), tail_tail);
 				if (pointingRadAngle == -1 || turningRadAngle == -1) continue;
 
 				if (pointingRadAngle < angleThre && turningRadAngle < angleThre)
@@ -2215,232 +2215,6 @@ profiledTree NeuronStructExplorer::treeUnion_MSTbased(const profiledTree& expand
 
 	return outputProfiledTree;
 }
-/* ===================================== END of [Auto-tracing Related Neuron Struct Functions] ===================================== */
-
-
-
-/* ================================================== Geometry ================================================= */
-vector<pair<float, float>> NeuronStructExplorer::getProjectedVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector)
-{
-	vector<pair<float, float>> projectedVector;
-
-	double axialVectorLength = sqrt(axialVector.begin()->second * axialVector.begin()->second + (axialVector.begin() + 1)->second * (axialVector.begin() + 1)->second + (axialVector.begin() + 2)->second * (axialVector.begin() + 2)->second);
-
-	vector<float> projectingStartVec(3);
-	projectingStartVec[0] = projectingVector.begin()->first - axialVector.begin()->first;
-	projectingStartVec[1] = (projectingVector.begin() + 1)->first - (axialVector.begin() + 1)->first;
-	projectingStartVec[2] = (projectingVector.begin() + 2)->first - (axialVector.begin() + 2)->first;
-	vector<float> axialVector_vec(3);
-	axialVector_vec[0] = axialVector.begin()->second;
-	axialVector_vec[1] = (axialVector.begin() + 1)->second;
-	axialVector_vec[2] = (axialVector.begin() + 2)->second;
-	double projectingStartVecSine = NeuronStructExplorer::getVectorSine(axialVector_vec, projectingStartVec);
-	double projectingStartVecLength = sqrt(projectingStartVec.at(0) * projectingStartVec.at(0) + projectingStartVec.at(1) * projectingStartVec.at(1) + projectingStartVec.at(2) * projectingStartVec.at(2));
-	double ProjectedStartLength = projectingStartVecLength * projectingStartVecSine;
-	double projectedStartLengthRatio = ProjectedStartLength / axialVectorLength;
-	vector<float> projectedStart(3);
-	projectedStart[0] = axialVector.begin()->second * projectedStartLengthRatio + axialVector.begin()->first;
-	projectedStart[1] = (axialVector.begin() + 1)->second * projectedStartLengthRatio + (axialVector.begin() + 1)->first;
-	projectedStart[2] = (axialVector.begin() + 2)->second * projectedStartLengthRatio + (axialVector.begin() + 2)->first;
-
-	vector<float> projectingVector_vec(3);
-	projectingVector_vec[0] = projectingVector.begin()->second;
-	projectingVector_vec[1] = (projectingVector.begin() + 1)->second;
-	projectingVector_vec[2] = (projectingVector.begin() + 2)->second;
-	double projectingVecSine = NeuronStructExplorer::getVectorSine(axialVector_vec, projectingVector_vec);
-	double projectingVecLength = sqrt(projectingVector.begin()->second * projectingVector.begin()->second + (projectingVector.begin() + 1)->second * (projectingVector.begin() + 1)->second + (projectingVector.begin()->second + 2) * (projectingVector.begin()->second + 2));
-	double projectedVecLength = projectingVecLength * projectingVecSine;
-	double projectedLengthRatio = projectedVecLength / projectingVecLength;
-	vector<float> projectedVector_vec(3);
-	projectedVector_vec[0] = axialVector.begin()->second * projectedLengthRatio;
-	projectedVector_vec[1] = (axialVector.begin() + 1)->second * projectedLengthRatio;
-	projectedVector_vec[2] = (axialVector.begin() + 2)->second * projectedLengthRatio;
-
-	projectedVector.push_back(pair<float, float>(projectedStart[0], projectedVector_vec[0]));
-	projectedVector.push_back(pair<float, float>(projectedStart[1], projectedVector_vec[1]));
-	projectedVector.push_back(pair<float, float>(projectedStart[2], projectedVector_vec[2]));
-
-	return projectedVector;
-}
-
-double NeuronStructExplorer::segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
-{
-	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
-	{
-		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
-		return -1;
-	}
-
-	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
-	NeuronSWC elongTailNode;
-	if (elongSeg.tails.size() == 0)
-	{
-		//cerr << "Elongating segment only has head. Do nothinig and return.";
-		return -1;
-	}
-	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
-
-	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
-	NeuronSWC connTailNode;
-	if (connSeg.tails.size() == 0)
-	{
-		if (connOrt == head_tail || connOrt == tail_tail)
-		{
-			//cerr << "Connecting segment only has head. Do nothing and return";
-			return -1;
-		}
-	}
-	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
-
-	vector<float> elongHeadLoc;
-	elongHeadLoc.push_back(elongHeadNode.x);
-	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
-
-	vector<float> elongTailLoc;
-	elongTailLoc.push_back(elongTailNode.x);
-	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z * zRATIO);
-
-	vector<float> connHeadLoc;
-	connHeadLoc.push_back(connHeadNode.x);
-	connHeadLoc.push_back(connHeadNode.y);
-	connHeadLoc.push_back(connHeadNode.z * zRATIO);
-
-	vector<float> connTailLoc;
-	connTailLoc.push_back(connTailNode.x);
-	connTailLoc.push_back(connTailNode.y);
-	connTailLoc.push_back(connTailNode.z * zRATIO);
-
-	vector<float> elongDispUnitVec;
-	vector<float> connDispUnitVec;
-	if (connOrt == head_head)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		connDispUnitVec = this->getDispUnitVector(connTailLoc, connHeadLoc);
-
-		double radAngle = this->getPiAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == head_tail)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
-
-		double radAngle = this->getPiAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_head)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongHeadLoc, elongTailLoc);
-		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
-
-		double radAngle = this->getPiAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_tail)
-	{
-		elongDispUnitVec = this->getDispUnitVector(elongTailLoc, elongHeadLoc);
-		connDispUnitVec = this->getDispUnitVector(connHeadLoc, connTailLoc);
-
-		double radAngle = this->getPiAngle(elongDispUnitVec, connDispUnitVec);
-		return radAngle;
-	}
-}
-
-double NeuronStructExplorer::segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
-{
-	// -- This method calculates the "turning angle" from elongating segment to connected segment. 
-	// -- The turning angle is defined as the angle formed by displacement vector of elongating segment and the displacement vector from elongating point to connecting point.
-
-	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
-	{
-		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
-		return -1;
-	}
-
-	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
-	NeuronSWC elongTailNode;
-	if (elongSeg.tails.size() == 0)
-	{
-		//cerr << "Elongating segment only has head. Do nothinig and return.";
-		return -1;
-	}
-	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
-
-	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
-	NeuronSWC connTailNode;
-	if (connSeg.tails.size() == 0)
-	{
-		if (connOrt == head_tail || connOrt == tail_tail)
-		{
-			//cerr << "Connecting segment only has head. Do nothing and return";
-			return -1;
-		}
-	}
-	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
-
-	vector<float> elongHeadLoc;
-	elongHeadLoc.push_back(elongHeadNode.x);
-	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
-
-	vector<float> elongTailLoc;
-	elongTailLoc.push_back(elongTailNode.x);
-	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z * zRATIO);
-
-	vector<float> elongDispUnitVec;
-	vector<float> connPointUnitVec;
-	if (connOrt == head_head)
-	{
-		elongDispUnitVec = NeuronStructExplorer::getDispUnitVector(elongHeadLoc, elongTailLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connHeadNode.x);
-		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z * zRATIO);
-		connPointUnitVec = NeuronStructExplorer::getDispUnitVector(connPointLoc, elongHeadLoc);
-
-		double radAngle = NeuronStructExplorer::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == head_tail)
-	{
-		elongDispUnitVec = NeuronStructExplorer::getDispUnitVector(elongHeadLoc, elongTailLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connTailNode.x);
-		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z * zRATIO);
-		connPointUnitVec = NeuronStructExplorer::getDispUnitVector(connPointLoc, elongHeadLoc);
-
-		double radAngle = NeuronStructExplorer::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_head)
-	{
-		elongDispUnitVec = NeuronStructExplorer::getDispUnitVector(elongTailLoc, elongHeadLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connHeadNode.x);
-		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z * zRATIO);
-		connPointUnitVec = NeuronStructExplorer::getDispUnitVector(connPointLoc, elongTailLoc);
-
-		double radAngle = NeuronStructExplorer::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_tail)
-	{
-		elongDispUnitVec = NeuronStructExplorer::getDispUnitVector(elongTailLoc, elongHeadLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connTailNode.x);
-		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z * zRATIO);
-		connPointUnitVec = NeuronStructExplorer::getDispUnitVector(connPointLoc, elongTailLoc);
-
-		double radAngle = NeuronStructExplorer::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-}
 
 profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius)
 {
@@ -2508,133 +2282,7 @@ profiledTree NeuronStructExplorer::treeHollow(const profiledTree& inputProfiledT
 
 	return outputProfiledTree;
 }
-
-segUnit NeuronStructExplorer::segmentStraighten(const segUnit& inputSeg)
-{
-	segUnit outputSeg = inputSeg;
-
-	if (inputSeg.nodes.size() <= 3) return outputSeg;
-
-	cout << " seg ID: " << inputSeg.segID << "   number of nodes contained in this segment: " << inputSeg.nodes.size() << endl;
-
-	double segDistSqr = ((inputSeg.nodes.end() - 1)->x - inputSeg.nodes.begin()->x) * ((inputSeg.nodes.end() - 1)->x - inputSeg.nodes.begin()->x) + 
-		((inputSeg.nodes.end() - 1)->y - inputSeg.nodes.begin()->y) * ((inputSeg.nodes.end() - 1)->y - inputSeg.nodes.begin()->y) +
-		((inputSeg.nodes.end() - 1)->z - inputSeg.nodes.begin()->z) * ((inputSeg.nodes.end() - 1)->z - inputSeg.nodes.begin()->z);
-	double segDist = sqrt(segDistSqr);
-	cout << "segment displacement: " << segDist << endl << endl;
-	
-	for (QList<NeuronSWC>::const_iterator check = inputSeg.nodes.begin(); check != inputSeg.nodes.end(); ++check) cout << "[" << check->x << " " << check->y << " " << check->z << "] ";
-	cout << endl;
-
-	vector<profiledNode> pickedNode;
-	double dot, sq1, sq2, dist, turnCost, radAngle, turnCostSum = 0, turnCostMean;
-	double nodeDeviation, nodeHeadDistSqr, nodeHeadRadAngle, nodeToMainDist, nodeToMainDistSum = 0, nodeToMainDistMean;
-	for (QList<NeuronSWC>::const_iterator it = inputSeg.nodes.begin() + 1; it != inputSeg.nodes.end() - 1; ++it)
-	{
-		dot = ((it - 1)->x - it->x) * ((it + 1)->x - it->x) + ((it - 1)->y - it->y) * ((it + 1)->y - it->y) + ((it - 1)->z - it->z) * ((it + 1)->z - it->z);
-		sq1 = ((it - 1)->x - it->x) * ((it - 1)->x - it->x) + ((it - 1)->y - it->y) * ((it - 1)->y - it->y) + ((it - 1)->z - it->z) * ((it - 1)->z - it->z);
-		sq2 = ((it + 1)->x - it->x) * ((it + 1)->x - it->x) + ((it + 1)->y - it->y) * ((it + 1)->y - it->y) + ((it + 1)->z - it->z) * ((it + 1)->z - it->z);
-		if (isnan(acos(dot / sqrt(sq1 * sq2)))) return outputSeg;
-		radAngle = acos(dot / sqrt(sq1 * sq2));
-		
-		nodeDeviation = (it->x - inputSeg.nodes.begin()->x) * ((inputSeg.nodes.end() - 1)->x - inputSeg.nodes.begin()->x) +
-			(it->y - inputSeg.nodes.begin()->y) * ((inputSeg.nodes.end() - 1)->y - inputSeg.nodes.begin()->y) +
-			(it->z - inputSeg.nodes.begin()->z) * ((inputSeg.nodes.end() - 1)->z - inputSeg.nodes.begin()->z);
-		nodeHeadDistSqr = (it->x - inputSeg.nodes.begin()->x) * (it->x - inputSeg.nodes.begin()->x) + 
-			(it->y - inputSeg.nodes.begin()->y) * (it->y - inputSeg.nodes.begin()->y) + 
-			(it->z - inputSeg.nodes.begin()->z) * (it->z - inputSeg.nodes.begin()->z);
-		nodeHeadRadAngle = PI - acos(nodeDeviation / sqrt(segDistSqr * nodeHeadDistSqr));
-		nodeToMainDist = sqrt(nodeHeadDistSqr) * sin(nodeHeadRadAngle);
-		nodeToMainDistSum = nodeToMainDistSum + nodeToMainDist;
-		cout << "       d(node-main):" << nodeToMainDist << " radian/pi:" << (radAngle / PI) << " turning cost:" << (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI) << " " << it->x << " " << it->y << " " << it->z << endl;
-
-		if ((radAngle / PI) < 0.6) // Detecting sharp turns and distance outliers => a) obviously errorneous depth situation
-		{
-			profiledNode sharp;
-			sharp.x = it->x; sharp.y = it->y; sharp.z = it->z;
-			cout << "this node is picked" << endl;
-
-			sharp.segID = inputSeg.segID;
-			sharp.distToMainRoute = nodeToMainDist;
-			sharp.previousSqr = sq1; sharp.nextSqr = sq2; sharp.innerProduct = dot;
-			sharp.radAngle = radAngle;
-			sharp.index = int(it - inputSeg.nodes.begin());
-			sharp.turnCost = (sqrt(sq1) + sqrt(sq2)) / (radAngle / PI);
-
-			pickedNode.push_back(sharp);
-			turnCostSum = turnCostSum + sharp.turnCost;
-		}
-	}
-	if (pickedNode.empty()) return outputSeg;
-
-	nodeToMainDistMean = nodeToMainDistSum / (inputSeg.nodes.size() - 2);
-	turnCostMean = turnCostSum / pickedNode.size();
-
-	cout << endl << endl << "  ==== start deleting nodes... " << endl;
-	int delete_count = 0;
-	vector<int> delLocs;
-	for (vector<profiledNode>::iterator it = pickedNode.begin(); it != pickedNode.end(); ++it)
-	{
-		cout << "  Avg(d(node_main)):" << nodeToMainDistMean << " d(node-main):" << it->distToMainRoute << " Avg(turning cost):" << turnCostMean << " turning cost:" << it->turnCost;
-		cout << " [" << it->x << " " << it->y << " " << it->z << "] " << endl;
-		if (it->distToMainRoute >= nodeToMainDistMean || it->turnCost >= turnCostMean || it->distToMainRoute >= segDist)
-		{
-			outputSeg.nodes[it->index + 1].parent = -1;
-			delLocs.push_back(it->index);
-		}
-	}
-	sort(delLocs.rbegin(), delLocs.rend());
-	for (vector<int>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputSeg.nodes.erase(outputSeg.nodes.begin() + ptrdiff_t(*it));
-	delLocs.clear();
-
-	cout << endl << "  ==== cheking angles... " << endl;
-	int deleteCount2;
-	do
-	{
-		deleteCount2 = 0;
-		for (QList<NeuronSWC>::iterator it = outputSeg.nodes.begin() + 1; it != outputSeg.nodes.end() - 1; ++it)
-		{
-			double dot2 = (it->x - (it - 1)->x) * ((it + 1)->x - it->x) + (it->y - (it - 1)->y) * ((it + 1)->y - it->y) + (it->z - (it - 1)->z) * ((it + 1)->z - it->z);
-			double sq1_2 = ((it - 1)->x - it->x) * ((it - 1)->x - it->x) + ((it - 1)->y - it->y) * ((it - 1)->y - it->y) + ((it - 1)->z - it->z) * ((it - 1)->z - it->z);
-			double sq2_2 = ((it + 1)->x - it->x) * ((it + 1)->x - it->x) + ((it + 1)->y - it->y) * ((it + 1)->y - it->y) + ((it + 1)->z - it->z) * ((it + 1)->z - it->z);
-			if (isnan(acos(dot2 / sqrt(sq1_2 * sq2_2)))) break;
-			double radAngle_2 = acos(dot2 / sqrt(sq1_2 * sq2_2));
-			cout << "2nd rad Angle:" << radAngle_2 << " [" << it->x << " " << it->y << " " << it->z << "]" << endl;
-
-			if ((radAngle_2 / PI) * 180 > 75)
-			{
-				if (sqrt(sq1_2) > (1 / 10) * sqrt(sq2_2))
-				{
-					++deleteCount2;
-					cout << "delete " << " [" << it->x << " " << it->y << " " << it->z << "] " << deleteCount2 << endl;
-					if ((outputSeg.nodes.size() - deleteCount2) <= 2)
-					{
-						--deleteCount2;
-						break;
-					}
-
-					(it + 1)->parent = -1;
-					delLocs.push_back(int(it - outputSeg.nodes.begin()));
-				}
-			}
-		}
-		sort(delLocs.rbegin(), delLocs.rend());
-		for (vector<int>::iterator it = delLocs.begin(); it != delLocs.end(); ++it) outputSeg.nodes.erase(outputSeg.nodes.begin() + ptrdiff_t(*it));
-		delLocs.clear();
-		cout << "deleted nodes: " << deleteCount2 << "\n=================" << endl;
-	} while (deleteCount2 > 0);
-
-	size_t label = 1;
-	cout << "number of nodes after straightening process: " << outputSeg.nodes.size() << " ( segID = " << outputSeg.segID << " )" << endl;
-	//cout << "seg num: " << curImgPtr->tracedNeuron.seg.size() << endl;
-	for (QList<NeuronSWC>::iterator it = outputSeg.nodes.begin() + 1; it != outputSeg.nodes.end() - 1; ++it)
-	{
-		if (it->parent == -1) it->parent = (it - 1)->n;
-	}
-
-	return outputSeg;
-}
-/* ============================================= End of [Geometry] ============================================= */
+/* ===================================== END of [Auto-tracing Related Neuron Struct Functions] ===================================== */
 
 
 

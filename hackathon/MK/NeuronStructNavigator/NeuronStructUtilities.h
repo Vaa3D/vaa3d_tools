@@ -45,27 +45,36 @@ public:
 	/********************************************************************************/
 
 
+
 	/***************** Basic Neuron Struct Files Operations *******************/
 	static void swcSlicer(const NeuronTree& inputTree, vector<NeuronTree>& outputTrees, int thickness = 1);
-	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb);
-	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb);
 
-	static inline NeuronTree swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale); 
-	static inline NeuronTree swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift);
+	template<class T>
+	static inline void swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, T xlb, T xhb, T ylb, T yhb, T zlb, T zhb);
+
+	template<class T>
+	static inline NeuronTree swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale); 
+
+	template<class T>
+	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
 
 	// -- When using SWC root nodes to represent signals, this method can be used to reduce node density.
 	// -- NOTE, this method can only be used when all nodes are roots. 
-	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink);
+	template<class T>
+	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink);
 	
 	// -- Align inputTree with refTree.
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 	
-	static inline vector<int> getSWCboundary(const NeuronTree& inputTree);
+	template<class T>
+	static inline vector<T> getSWCboundary(const NeuronTree& inputTree);
+
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);
 	static map<int, QList<NeuronSWC>> swcSplitByType(const NeuronTree& inputTree);
 	static NeuronTree swcSubtraction(const NeuronTree& targetTree, const NeuronTree& refTree, int type = 0); // Subtract refTree from targetTree.
 	/**************************************************************************/
 	
+
 
 	/******************** SWC Tracing-related Operations **********************/
 	// Extract a subtree that is the upstream of a given starting node from the original tree.
@@ -79,6 +88,7 @@ public:
 	// Extract a complete tree from a given swc with a given starting node. If all nodes are connected in the input swc, the extracted tree will be identical to the input itself.
 	static void wholeSingleTree_extract(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode);
 	/**************************************************************************/
+
 
 
 	/******************* Neuron Struct Profiling Methods **********************/
@@ -101,6 +111,7 @@ public:
 	/**************************************************************************/
 
 
+
 	/********************* Inter-SWC Comparison/Analysis **********************/
 	// Recognize the same nodes with given distance threshold.
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
@@ -108,11 +119,11 @@ public:
 	/**************************************************************************/
 
 
+
 	/***************** SWC to ImgAnalyzer::connectedComponent *****************/
 	// Identify the connectivity of every node in the input swc and generate connected component data from it.
 	vector<connectedComponent> swc2signal2DBlobs(const NeuronTree& inputTree);
 	vector<connectedComponent> swc2signal3DBlobs(const NeuronTree& inputTree);
-
 private:
 	// Merge 2D connected components into 3D ones.
 	vector<connectedComponent> merge2DConnComponent(const vector<connectedComponent>& inputConnCompList);
@@ -123,20 +134,28 @@ public:
 	/**************************************************************************/
 
 
+
 	/******************** Neuron Struct Clustering Method *********************/
 	static vector<connectedComponent> swc2clusters_distance(const NeuronTree& inputTree, float dist = 30);
 	/**************************************************************************/
 
 
+
 	/***************************** Miscellaneous ******************************/
 	static inline void linkerFileGen_forSWC(string swcFullFileName);
+	
+	// Generates a cubical root node cluster with specified cube length.
 	static inline NeuronTree randNodes(float cubeLength, float density);
 
 	// Generates a spherical root node cluster with specified origin, radius, and node density.
 	// The total amount of nodes = (4 / 3) * PI * radius^3 * density.
 	static inline NeuronTree sphereRandNodes(float radius, float centerX, float centerY, float centerZ, float density);
+	
+	// Generates multiple root node clusters with specified origin, radius, and node density.
+	// Each cluster center is separated by stepX, stepY, and stepZ. xRange, yRange, and zRange specify the space range.
 	static NeuronTree nodeSpheresGen(float sphereRadius, float density, float stepX, float stepY, float stepZ, float xRange, float yRange, float zRange);
 	/**************************************************************************/
+
 
 
 	/* ~~~~~~~~~~~~~~~ Sampling Methods for Simulated Volumetric Patch Generation ~~~~~~~~~~~~~~~ */
@@ -147,9 +166,10 @@ public:
 	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 };
 
-inline vector<int> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
+template<class T>
+inline vector<T> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 {
-	int xMin = 10000, xMax = 0, yMin = 10000, yMax = 0, zMin = 10000, zMax = 0;
+	T xMin = 10000, xMax = 0, yMin = 10000, yMax = 0, zMin = 10000, zMax = 0;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
 		if (it->x > xMax) xMax = it->x;
@@ -162,7 +182,7 @@ inline vector<int> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 		else if (it->z < zMin) zMin = it->z;
 	}
 
-	vector<int> boundaries(6);
+	vector<T> boundaries(6);
 	boundaries[0] = xMin;
 	boundaries[1] = xMax;
 	boundaries[2] = yMin;
@@ -173,7 +193,8 @@ inline vector<int> NeuronStructUtil::getSWCboundary(const NeuronTree& inputTree)
 	return boundaries;
 }
 
-inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float xScale, float yScale, float zScale)
+template<class T>
+inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, T xScale, T yScale, T zScale)
 {
 	NeuronTree outputTree;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
@@ -189,7 +210,8 @@ inline NeuronTree NeuronStructUtil::swcScale(const NeuronTree& inputTree, float 
 	return outputTree;
 }
 
-inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, float xShift, float yShift, float zShift)
+template<class T>
+inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift)
 {
 	NeuronTree outputTree;
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
@@ -205,7 +227,8 @@ inline NeuronTree NeuronStructUtil::swcShift(const NeuronTree& inputTree, float 
 	return outputTree;
 }
 
-inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, float xlb, float xhb, float ylb, float yhb, float zlb, float zhb)
+template<class T>
+inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, T xlb, T xhb, T ylb, T yhb, T zlb, T zhb)
 {
 	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
 	{
@@ -214,22 +237,14 @@ inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& o
 	}
 }
 
-inline void NeuronStructUtil::swcCrop(const NeuronTree& inputTree, NeuronTree& outputTree, int xlb, int xhb, int ylb, int yhb, int zlb, int zhb)
-{
-	for (QList<NeuronSWC>::const_iterator it = inputTree.listNeuron.begin(); it != inputTree.listNeuron.end(); ++it)
-	{
-		if (it->x < xlb || it->x > xhb || it->y < ylb || it->y > yhb || it->z < zlb || it->z > zhb) continue;
-		else outputTree.listNeuron.push_back(*it);
-	}
-}
-
-inline void NeuronStructUtil::swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, int factor, bool shrink)
+template<class T>
+inline void NeuronStructUtil::swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink)
 {
 	QList<NeuronSWC> inputList = inputTree.listNeuron;
 	outputTree.listNeuron.clear();
 	for (QList<NeuronSWC>::iterator it = inputList.begin(); it != inputList.end(); ++it)
 	{
-		if (int(it->z) % factor == 0 && int(it->x) % factor == 0 && int(it->y) % factor == 0) 
+		if (T(it->z) % factor == 0 && T(it->x) % factor == 0 && T(it->y) % factor == 0) 
 			outputTree.listNeuron.push_back(*it);
 	}
 

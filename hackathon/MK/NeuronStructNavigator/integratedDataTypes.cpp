@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "integratedDataTypes.h"
+#include "NeuronGeoGrapher.h"
 #include "NeuronStructExplorer.h"
 #include "NeuronStructUtilities.h"
 
@@ -58,10 +59,10 @@ void integratedDataTypes::segPairProfile::getSegDistance(connectOrientation conn
 
 void integratedDataTypes::segPairProfile::turning12(connectOrientation connOrt)
 {
-	if (connOrt == head_head) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
-	else if (connOrt == head_tail) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
-	else if (connOrt == tail_head) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
-	else if (connOrt == tail_tail) this->turningAngle = NeuronStructExplorer::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	if (connOrt == head_head) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	else if (connOrt == head_tail) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	else if (connOrt == tail_head) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
+	else if (connOrt == tail_tail) this->turningAngle = NeuronGeoGrapher::segTurningAngle(*this->seg1Ptr, *this->seg2Ptr, connOrt);
 }
 
 integratedDataTypes::profiledTree::profiledTree(const NeuronTree& inputTree, float segTileLength)
