@@ -13,6 +13,7 @@
 #include "my_surf_objs.h"
 #include "vn_app2.h"
 #include <stdlib.h>
+//#include "sort_swc.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(tera_retrace, retrace);
@@ -53,19 +54,18 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         P.b_256cube = 1;
         P.b_RadiusFrom2D = 1;
         P.is_gsdt = 0;
-        P.is_break_accept =
-
-                0;
+        P.is_break_accept = 0;
         P.length_thresh =  5;
         P.adap_win= 1;
         P.tracing_3D = true;
         P.tracing_comb = false;
         P.global_name = true;
         P.method = app2;
-        LandmarkList locationlist=callback.getLandmarkTeraFly();
-        //neurontracer_app2_raw dialog(callback, parent);
-        QString imgpath=callback.getPathTeraFly();
 
+        // get parameters from terafly window
+
+        LandmarkList locationlist=callback.getLandmarkTeraFly();
+        QString imgpath=callback.getPathTeraFly();
         QString zdim=imgpath.section(QRegExp("[(x)]"),-2,-2).trimmed() ;
         QString ydim=imgpath.section(QRegExp("[(x)]"),-3,-3).trimmed();
         QString xdim=imgpath.section(QRegExp("[(x)]"),-4,-4).trimmed();
@@ -116,9 +116,60 @@ void retrace::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
 
          QString savefolder= "D:\\retrace_tmp";
+
+         if (QDir(savefolder).exists())
+         {
+             qDebug()<< "tmp folder existed. delete";
+             system(qPrintable(QString("rd /s /q %1").arg(savefolder.toStdString().c_str())));
+
+         }
          system(qPrintable(QString("mkdir %1").arg(savefolder.toStdString().c_str())));
+         QString ref_swc_fn= savefolder + "\\ref_swc_2ndres.swc";
+         writeSWC_file(ref_swc_fn,ref_swc);
+
+          // sort swc
+/*
+        "  QList<NeuronSWC> ref_swc_sort;
+         if (!SortSWC(ref_swc.listNeuron,ref_swc_sort,VOID,0))
+         {
+             fprintf(stderr,"error in sorting swc" );
+         }
+
+         QString ref_swc_sort_fn;
+         if (! export_list2file(ref_swc_sort,ref_swc_sort_fn,ref_swc_fn))
+         {
+             fprintf(stderr, "cannot write swc to file");
+         };
+
+         ref_swc= readSWC_file(ref_swc_sort_fn);
+
          QString ref_swc_highres_fn= savefolder+"\\ref_swc_highres.swc";
          writeSWC_file(ref_swc_highres_fn,ref_swc_highres);
+*/
+
+         //sort swc
+         QString plugin_name="sort_neuron_swc" ;
+         QString func_name= "sort_swc";
+         V3DPluginArgItem arg;
+         V3DPluginArgList sort_input;
+         V3DPluginArgList sort_output;
+
+         arg.type="random";std::vector<char*> arg_input_sort;QByteArray swcfn_ba=ref_swc_fn.toLatin1();char * swcfn_char= swcfn_ba.data();
+         arg_input_sort.push_back(swcfn_char);
+         arg.p = (void *) & arg_input_sort;
+         sort_input<<arg;
+
+         arg.type= "random";std::vector <char* > arg_para_sort;
+         arg_para_sort.push_back("0"); // no new link
+         arg.p = (void *) & arg_para_sort;
+         sort_input<<arg;
+
+         callback.callPluginFunc(plugin_name,func_name,sort_input,sort_output);
+
+         QString sortswcfn= ref_swc_fn+"_sorted.swc";
+         ref_swc =readSWC_file(sortswcfn);
+
+
 
 
          QString fiswcfolder = savefolder+"\\finalswcfolder";
@@ -265,23 +316,34 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         QString imgpath= infiles[0];
         qDebug()<<"input imgpath="<<imgpath;
 
-        //        QString zdim=imgpath.section(QRegExp("[(x)]"),-2,-2).trimmed() ;
-        //        QString ydim=imgpath.section(QRegExp("[(x)]"),-3,-3).trimmed();
-        //        QString xdim=imgpath.section(QRegExp("[(x)]"),-4,-4).trimmed();
-
-        //        QString zdim_2nd= QString::number(zdim.toInt()/2);
-        //        QString ydim_2nd= QString::number(ydim.toInt()/2);
-        //        QString xdim_2nd= QString::number(xdim.toInt()/2);
-        //        QString res2ndimgpath= imgpath.split("RES")[0]+"RES("
-        //                +xdim_2nd +"x"+ydim_2nd+"x"+zdim_2nd+")";
-
-        //        qDebug()<< "x ="<<xdim;qDebug()<< "y ="<<ydim;qDebug()<< "z ="<<zdim;
-        //        qDebug()<< "x_2nd ="<<xdim_2nd;qDebug()<< "y_2nd ="<<ydim_2nd;qDebug()<< "z_2nd ="<<zdim_2nd;
-        //        qDebug()<< "2ndimgpath"<<res2ndimgpath;
-
-
         QString swcfn= infiles[1];
-        NeuronTree ref_swc= readSWC_file(swcfn);
+        //NeuronTree ref_swc= readSWC_file(swcfn);
+
+        //sort swc
+
+        QString plugin_name="sort_neuron_swc" ;
+        QString func_name= "sort_swc";
+        V3DPluginArgItem arg;
+        V3DPluginArgList sort_input;
+        V3DPluginArgList sort_output;
+
+        arg.type="random";std::vector<char*> arg_input_sort;QByteArray swcfn_ba=swcfn.toLatin1();char * swcfn_char= swcfn_ba.data();
+        arg_input_sort.push_back(swcfn_char);
+        arg.p = (void *) & arg_input_sort;
+        sort_input<<arg;
+
+        arg.type= "random";std::vector <char* > arg_para_sort;
+        arg_para_sort.push_back("0"); // no new link
+        arg.p = (void *) & arg_para_sort;
+        sort_input<<arg;
+
+        callback.callPluginFunc(plugin_name,func_name,sort_input,sort_output);
+
+        QString sortswcfn= swcfn+"_sorted.swc";
+        NeuronTree ref_swc =readSWC_file(sortswcfn);
+
+
+
         //qDebug()<<"imgpath: \n" <<imgpath;
 
 
@@ -435,6 +497,8 @@ bool retrace::dofunc(const QString & func_name, const V3DPluginArgList & input, 
         input_app2<<arg;
 
         arg.type="random";
+
+
         std::vector <char *> arg_para_app2;
 
         //parameters set for app2
