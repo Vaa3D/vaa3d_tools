@@ -58,15 +58,15 @@ public:
 	template<class T>
 	static inline NeuronTree swcShift(const NeuronTree& inputTree, T xShift, T yShift, T zShift);
 
-	// -- When using SWC root nodes to represent signals, this method can be used to reduce node density.
+	// When using SWC root nodes to represent signals, this method can be used to reduce node density.
 	// -- NOTE, this method can only be used when all nodes are roots. 
 	template<class T>
 	static inline void swcDownSample_allRoots(const NeuronTree& inputTree, NeuronTree& outputTree, T factor, bool shrink);
 	
-	// -- Align inputTree with refTree.
+	// Align inputTree with refTree.
 	static NeuronTree swcRegister(NeuronTree& inputTree, const NeuronTree& refTree); 
 	
-	template<class T>
+	template<class T> // Get the coordinate boundaries of the inputTree. 6 elements stored in the retruned vector: xMin, xMax, yMin, yNax, zMin, zMax.
 	static inline vector<T> getSWCboundary(const NeuronTree& inputTree);
 
 	static inline NeuronTree swcCombine(const vector<NeuronTree>& inputTrees);

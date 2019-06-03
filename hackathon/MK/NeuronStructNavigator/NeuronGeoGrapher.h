@@ -14,31 +14,44 @@ using namespace integratedDataTypes;
 class NeuronGeoGrapher
 {
 public:
-	template<class T>
+	/***************** Constructors and Basic Data/Function Members *****************/
+	// Not needed at the moment. Will implement later if necessary.
+	/********************************************************************************/
+
+
+
+	/*************************** Vector Geometry ***************************/
+	template<class T> // Get the vecotr formed by 2 NeuronSWC nodes.
 	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
-	template<class T>
+	template<class T> // Get the unit displacement vector between 2 vectors.
 	static inline vector<T> getDispUnitVector(const vector<T>& headVector, const vector<T>& tailVector);
 
-	template<class T>
+	// Get the vector between 2 NeuronSWC nodes with the vector's starting location (startNode). 
+	// The starting location in each dimension and its components are stored in pairs separately. 
+	template<class T> 
 	static inline vector<pair<T, T>> getVectorWithStartingLoc_btwn2nodes(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
-	template<class T>
+	template<class T> // Get cosine between 2 given vecotrs.
 	static inline T getVectorCosine(const vector<T>& vector1, const vector<T>& vector2);
 	
-	template<class T>
+	template<class T> // Get sine between 2 given vectors.
 	static inline T getVectorSine(const vector<T>& vector1, const vector<T>& vector2);
 
-	template<class T>
+	template<class T> // Get the included angle of 2 given vectors in pi.
 	static inline T getPiAngle(const vector<T>& vector1, const vector<T>& vector2);
 
-	template<class T>
+	template<class T> // Get the included angle of 2 given vectors in radian.
 	static inline T getRadAngle(const vector<T>& vector1, const vector<T>& vector2);
 
-	static vector<pair<float, float>> getProjectedVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector);
+	// Find out the projection vector onto the given axial vector from the projecting vector.
+	static vector<pair<float, float>> getProjectionVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector);
+	/***********************************************************************/
 
 
-	template<class T>
+
+	/*************************** Segment Geometry **************************/
+	template<class T> // Calculate the sum of turning angles from the segment head to tail.
 	static inline T selfTurningRadAngleSum(const vector<vector<T>>& inputSegment);
 
 	static double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
@@ -46,6 +59,9 @@ public:
 	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 
 	static segUnit segmentStraighten(const segUnit& inputSeg);
+	/***********************************************************************/
+
+
 
 	template<class T>
 	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, const vector<T>& origin);

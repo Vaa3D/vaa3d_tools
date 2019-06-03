@@ -4,9 +4,9 @@
 
 using namespace std;
 
-vector<pair<float, float>> NeuronGeoGrapher::getProjectedVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector)
+vector<pair<float, float>> NeuronGeoGrapher::getProjectionVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector)
 {
-	vector<pair<float, float>> projectedVector;
+	vector<pair<float, float>> projectionVector;
 
 	double axialVectorLength = sqrt(axialVector.begin()->second * axialVector.begin()->second + (axialVector.begin() + 1)->second * (axialVector.begin() + 1)->second + (axialVector.begin() + 2)->second * (axialVector.begin() + 2)->second);
 
@@ -40,11 +40,11 @@ vector<pair<float, float>> NeuronGeoGrapher::getProjectedVector(const vector<pai
 	projectedVector_vec[1] = (axialVector.begin() + 1)->second * projectedLengthRatio;
 	projectedVector_vec[2] = (axialVector.begin() + 2)->second * projectedLengthRatio;
 
-	projectedVector.push_back(pair<float, float>(projectedStart[0], projectedVector_vec[0]));
-	projectedVector.push_back(pair<float, float>(projectedStart[1], projectedVector_vec[1]));
-	projectedVector.push_back(pair<float, float>(projectedStart[2], projectedVector_vec[2]));
+	projectionVector.push_back(pair<float, float>(projectedStart[0], projectedVector_vec[0]));
+	projectionVector.push_back(pair<float, float>(projectedStart[1], projectedVector_vec[1]));
+	projectionVector.push_back(pair<float, float>(projectedStart[2], projectedVector_vec[2]));
 
-	return projectedVector;
+	return projectionVector;
 }
 
 segUnit NeuronGeoGrapher::segmentStraighten(const segUnit& inputSeg)
