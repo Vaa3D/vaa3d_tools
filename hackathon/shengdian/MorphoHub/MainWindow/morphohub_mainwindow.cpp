@@ -7,7 +7,7 @@
 #include <QtCore>
 #include <QDir>
 #include "morphohub_mainwindow.h"
-#include "DBMS/dbms_basic.h"
+//#include "DBMS/dbms_basic.h"
 using namespace std;
 
 MorphoHub_MainWindow::MorphoHub_MainWindow(/*V3DPluginCallback2 *callback, */QWidget *parent)
@@ -142,17 +142,22 @@ void MorphoHub_MainWindow::NewDB_slot()
             QString getlogtext=logtext->toPlainText();
             QString showText=getlogtext+"\n"+thisfolderpath;
             logtext->setText(showText);
-            qDebug()<<thisfolderpath;
-            makeDir(thisfolderpath);
+            //qDebug()<<thisfolderpath;
+            QDir dir(thisfolderpath);
+            if(!dir.exists())
+            {
+                dir.mkdir(thisfolderpath);
+            }
         }
         //create a configuration file for recording the basic folder
+        QStringList qsl;
+        qsl<<"1"<<"12345"<<"1"<<"1"<<""<<"100"<<"200"<<"300"<<"None";
 //        QString brain_conf=dbpath+"/DBMS/brain.conf";
-//        writeBrainConf(brain_conf);
-        QString basic_db_conf=dbpath+"/DBMS/basic_db_folderlist.conf";
-        bool okay=isFileExist(basic_db_conf);
-        if(!okay)
+//        writeBrainConf(brain_conf,qsl);
+        QString basic_db_conf=dbpath+"/DBMS/basic_db_folderlist.conf";        
+        QFile configurationfile(basic_db_conf);
+        if(configurationfile.exists())
         {
-            QFile configurationfile(basic_db_conf);
             if(configurationfile.open(QIODevice::ReadWrite))
             {
                 for(int i=0;i<basic_name.size();i++)
@@ -179,10 +184,10 @@ void MorphoHub_MainWindow::SetDB_slot()
         QString basic_db_conf=dbpath+"/DBMS/basic_db_folderlist.conf";
 //        QString brainconf=dbpath+"/DBMS/brain.conf";
 //        readBrainConf(brainconf);
-        bool okay=isFileExist(basic_db_conf);
-        if(okay)
-        {
-            QFile configurationfile(basic_db_conf);
+        //bool okay=isFileExist(basic_db_conf);
+        QFile configurationfile(basic_db_conf);
+        if(configurationfile.exists())
+        {            
             if(configurationfile.open(QIODevice::ReadWrite))
             {
                 QString tmp=configurationfile.readAll();

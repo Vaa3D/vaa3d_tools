@@ -1,4 +1,5 @@
 #include "dbmsdialog.h"
+#include "dbms_basic.h"
 
 DBMSDialog::DBMSDialog(QWidget *parent) :
     QDialog(parent)
@@ -270,11 +271,12 @@ void DBMSDialog::addbrain_slot()
     qsl<<xCooridnateLineEdit->text();
     qsl<<yCoordinateLineEdit->text()<<zCoordinateLineEdit->text()
          <<sizeLineEdit->text()<<bitLineEdit->text();
+
+
     for(int i=0;i<qsl.size();i++)
     {
         qDebug()<<qsl[i]<<",";
     }
-//    adddialog->clearMask();
     adddialog->close();
 }
 void DBMSDialog::cancelbrain_slot()

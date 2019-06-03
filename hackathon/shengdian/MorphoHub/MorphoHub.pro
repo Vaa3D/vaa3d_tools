@@ -9,7 +9,8 @@ HEADERS	+= MorphoHub_plugin.h \
     database/morphohub_database.h \
     MainWindow/morphohub_mainwindow.h \
     DBMS/dbms_basic.h \
-    DBMS/dbmsdialog.h
+    DBMS/dbmsdialog.h \
+    database/db_basic.h
 SOURCES	+= MorphoHub_plugin.cpp \
     database/morphohub_database.cpp \
     MainWindow/morphohub_mainwindow.cpp \
