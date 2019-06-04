@@ -4,6 +4,7 @@
 
 using namespace std;
 
+/* ======================================= Vector Geometry ======================================= */
 vector<pair<float, float>> NeuronGeoGrapher::getProjectionVector(const vector<pair<float, float>>& axialVector, const vector<pair<float, float>>& projectingVector)
 {
 	vector<pair<float, float>> projectionVector;
@@ -45,6 +46,102 @@ vector<pair<float, float>> NeuronGeoGrapher::getProjectionVector(const vector<pa
 	projectionVector.push_back(pair<float, float>(projectedStart[2], projectedVector_vec[2]));
 
 	return projectionVector;
+}
+/* =================================== END of [Vector Geometry] =================================== */
+
+
+
+
+/* ======================================= Segment Geometry ======================================= */
+double NeuronGeoGrapher::segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
+{
+	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
+	{
+		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
+		return -1;
+	}
+
+	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
+	NeuronSWC elongTailNode;
+	if (elongSeg.tails.size() == 0)
+	{
+		//cerr << "Elongating segment only has head. Do nothinig and return.";
+		return -1;
+	}
+	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
+
+	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
+	NeuronSWC connTailNode;
+	if (connSeg.tails.size() == 0)
+	{
+		if (connOrt == head_tail || connOrt == tail_tail)
+		{
+			//cerr << "Connecting segment only has head. Do nothing and return";
+			return -1;
+		}
+	}
+	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
+
+	vector<float> elongHeadLoc;
+	elongHeadLoc.push_back(elongHeadNode.x);
+	elongHeadLoc.push_back(elongHeadNode.y);
+	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
+
+	vector<float> elongTailLoc;
+	elongTailLoc.push_back(elongTailNode.x);
+	elongTailLoc.push_back(elongTailNode.y);
+	elongTailLoc.push_back(elongTailNode.z * zRATIO);
+
+	vector<float> elongDispUnitVec;
+	vector<float> connPointUnitVec;
+	if (connOrt == head_head)
+	{
+		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongHeadLoc, elongTailLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connHeadNode.x);
+		connPointLoc.push_back(connHeadNode.y);
+		connPointLoc.push_back(connHeadNode.z * zRATIO);
+		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongHeadLoc);
+
+		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == head_tail)
+	{
+		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongHeadLoc, elongTailLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connTailNode.x);
+		connPointLoc.push_back(connTailNode.y);
+		connPointLoc.push_back(connTailNode.z * zRATIO);
+		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongHeadLoc);
+
+		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == tail_head)
+	{
+		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongTailLoc, elongHeadLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connHeadNode.x);
+		connPointLoc.push_back(connHeadNode.y);
+		connPointLoc.push_back(connHeadNode.z * zRATIO);
+		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongTailLoc);
+
+		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
+	else if (connOrt == tail_tail)
+	{
+		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongTailLoc, elongHeadLoc);
+		vector<float> connPointLoc;
+		connPointLoc.push_back(connTailNode.x);
+		connPointLoc.push_back(connTailNode.y);
+		connPointLoc.push_back(connTailNode.z * zRATIO);
+		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongTailLoc);
+
+		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
+		return radAngle;
+	}
 }
 
 segUnit NeuronGeoGrapher::segmentStraighten(const segUnit& inputSeg)
@@ -257,97 +354,26 @@ double NeuronGeoGrapher::segPointingCompare(const segUnit& elongSeg, const segUn
 		return radAngle;
 	}
 }
+/* ================================== END of [Segment Geometry] =================================== */
 
-double NeuronGeoGrapher::segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt)
+
+
+/* ============================== Polar Coordinate System Operations ============================== */
+boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGrapher::getShellByRadius(const vector<polarNeuronSWC>& inputPolarNodeList)
 {
-	// -- This method calculates the "turning angle" from elongating segment to connected segment. 
-	// -- The turning angle is defined as the angle formed by displacement vector of elongating segment and the displacement vector from elongating point to connecting point.
-
-	if (elongSeg.tails.size() > 1 || connSeg.tails.size() > 1)
+	boost::container::flat_map<double, boost::container::flat_set<int>> outputShellMap;
+	
+	for (vector<polarNeuronSWC>::const_iterator it = inputPolarNodeList.begin(); it != inputPolarNodeList.end(); ++it)
 	{
-		cerr << "Invalid input: Currently segment elongation only allows to happen between 2 non-branching segments." << endl;
-		return -1;
-	}
-
-	NeuronSWC elongHeadNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(elongSeg.head)];
-	NeuronSWC elongTailNode;
-	if (elongSeg.tails.size() == 0)
-	{
-		//cerr << "Elongating segment only has head. Do nothinig and return.";
-		return -1;
-	}
-	else elongTailNode = elongSeg.nodes[elongSeg.seg_nodeLocMap.at(*elongSeg.tails.begin())];
-
-	NeuronSWC connHeadNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(connSeg.head)];
-	NeuronSWC connTailNode;
-	if (connSeg.tails.size() == 0)
-	{
-		if (connOrt == head_tail || connOrt == tail_tail)
+		if (outputShellMap.find(it->radius) != outputShellMap.end()) outputShellMap.at(it->radius).insert(it->ID);
+		else
 		{
-			//cerr << "Connecting segment only has head. Do nothing and return";
-			return -1;
+			boost::container::flat_set<int> newSet;
+			newSet.insert(it->ID);
+			outputShellMap.insert(pair<double, boost::container::flat_set<int>>(it->radius, newSet));
 		}
 	}
-	else connTailNode = connSeg.nodes[connSeg.seg_nodeLocMap.at(*connSeg.tails.begin())];
 
-	vector<float> elongHeadLoc;
-	elongHeadLoc.push_back(elongHeadNode.x);
-	elongHeadLoc.push_back(elongHeadNode.y);
-	elongHeadLoc.push_back(elongHeadNode.z * zRATIO);
-
-	vector<float> elongTailLoc;
-	elongTailLoc.push_back(elongTailNode.x);
-	elongTailLoc.push_back(elongTailNode.y);
-	elongTailLoc.push_back(elongTailNode.z * zRATIO);
-
-	vector<float> elongDispUnitVec;
-	vector<float> connPointUnitVec;
-	if (connOrt == head_head)
-	{
-		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongHeadLoc, elongTailLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connHeadNode.x);
-		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z * zRATIO);
-		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongHeadLoc);
-
-		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == head_tail)
-	{
-		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongHeadLoc, elongTailLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connTailNode.x);
-		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z * zRATIO);
-		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongHeadLoc);
-
-		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_head)
-	{
-		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongTailLoc, elongHeadLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connHeadNode.x);
-		connPointLoc.push_back(connHeadNode.y);
-		connPointLoc.push_back(connHeadNode.z * zRATIO);
-		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongTailLoc);
-
-		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
-	else if (connOrt == tail_tail)
-	{
-		elongDispUnitVec = NeuronGeoGrapher::getDispUnitVector(elongTailLoc, elongHeadLoc);
-		vector<float> connPointLoc;
-		connPointLoc.push_back(connTailNode.x);
-		connPointLoc.push_back(connTailNode.y);
-		connPointLoc.push_back(connTailNode.z * zRATIO);
-		connPointUnitVec = NeuronGeoGrapher::getDispUnitVector(connPointLoc, elongTailLoc);
-
-		double radAngle = NeuronGeoGrapher::getPiAngle(elongDispUnitVec, connPointUnitVec);
-		return radAngle;
-	}
+	return outputShellMap;
 }
+/* ======================== END of [Polar Coordinate System Operations] =========================== */

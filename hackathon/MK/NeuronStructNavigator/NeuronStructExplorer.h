@@ -89,7 +89,8 @@ public:
 	/*****************************************************************************************/
 
 
-	/***************** Neuron Struct Processing Functions *****************/
+
+	/************************** Neuron Struct Processing Functions ***************************/
 public:
 	static void treeUpSample(const profiledTree& inputProfiledTree, profiledTree& outputProfiledTree, float intervalLength = 5);
 	
@@ -103,10 +104,11 @@ public:
 	static inline NeuronTree singleDotRemove(const profiledTree& inputProfiledTree, int shortSegRemove = 0);
 	static inline NeuronTree longConnCut(const profiledTree& inputProfiledTree, double distThre = 50);
 	static inline NeuronTree segTerminalize(const profiledTree& inputProfiledTree);
-	/**********************************************************************/
+	/*****************************************************************************************/
 
 
-	/***************** Auto-tracing Related Neuron Struct Functions *****************/
+
+	/********************* Auto-tracing Related Neuron Struct Functions **********************/
 	// ----------------- MST ----------------- //
 	NeuronTree SWC2MSTtree(NeuronTree const& inputTree);
 	NeuronTree SWC2MSTtree_tiled(NeuronTree const& inputTree, float tileLength = SEGtileXY_LENGTH, float zDivideNum = 1);
@@ -144,7 +146,8 @@ public:
 	profiledTree somaAmputatedTree(const profiledTree& inputProfiledTree, const int xRange, const int yRange, const int zRange);
 
 	static profiledTree treeHollow(const profiledTree& inputProfiledTree, const float hollowCenterX, const float hollowCenterY, const float hollowCenterZ, const float radius);
-	/********************************************************************************/
+	/*****************************************************************************************/
+
 
 
 	/***************** Neuron Struct Refining Method *****************/

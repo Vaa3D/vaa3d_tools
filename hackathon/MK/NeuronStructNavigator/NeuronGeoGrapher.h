@@ -24,8 +24,8 @@ public:
 	template<class T> // Get the vecotr formed by 2 NeuronSWC nodes.
 	static inline vector<T> getVector_NeuronSWC(const NeuronSWC& startNode, const NeuronSWC& endNode);
 
-	template<class T> // Get the unit displacement vector between 2 vectors.
-	static inline vector<T> getDispUnitVector(const vector<T>& headVector, const vector<T>& tailVector);
+	template<class T> // Get the unit displacement vector between 2 vectors ==> Needs to redefine starting and ending locations.
+	static inline vector<T> getDispUnitVector(const vector<T>& endingLoc, const vector<T>& startingLoc);
 
 	// Get the vector between 2 NeuronSWC nodes with the vector's starting location (startNode). 
 	// The starting location in each dimension and its components are stored in pairs separately. 
@@ -54,8 +54,11 @@ public:
 	template<class T> // Calculate the sum of turning angles from the segment head to tail.
 	static inline T selfTurningRadAngleSum(const vector<vector<T>>& inputSegment);
 
+	// With specified pointing directions for each segments, returns the included angle between the 2 segments. 
 	static double segPointingCompare(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 
+	// This method calculates the "turning angle" from elongating segment to connected segment. 
+	// The turning angle is defined as the angle formed by displacement vector of elongating segment and the displacement vector from elongating point to connecting point.
 	static double segTurningAngle(const segUnit& elongSeg, const segUnit& connSeg, connectOrientation connOrt);
 
 	static segUnit segmentStraighten(const segUnit& inputSeg);
@@ -63,11 +66,23 @@ public:
 
 
 
-	template<class T>
-	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, const vector<T>& origin);
+	/****************** Polar Coordinate System Operations *****************/
+	template<class T> // Converts NeuronSWC to polarNeuronSWC with specified origin.
+	static inline polarNeuronSWC CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin = { 0, 0, 0 });
 
-	template<class T> // This method computes the sum of turning angles of from one node to the next node for a segment.
-	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, const vector<T>& origin);
+	//
+	static inline NeuronSWC polar2CartesianNode(const polarNeuronSWC& inputPolarNode);
+
+	template<class T> // Converts input NeuronSWC list to polarNeuronSWC list with specified origin.
+	static inline void nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin = { 0, 0, 0 });
+
+	//
+	static inline void polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList);
+
+	static inline boost::container::flat_map<int, int> polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList);
+
+	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius(const vector<polarNeuronSWC>& inputPolarNodeList);
+	/***********************************************************************/
 };
 
 template<class T>
@@ -81,15 +96,15 @@ inline vector<T> NeuronGeoGrapher::getVector_NeuronSWC(const NeuronSWC& startNod
 }
 
 template<class T>
-inline vector<T> NeuronGeoGrapher::getDispUnitVector(const vector<T>& headVector, const vector<T>& tailVector)
+inline vector<T> NeuronGeoGrapher::getDispUnitVector(const vector<T>& endingLoc, const vector<T>& startingLoc)
 {
-	T disp = sqrt((headVector.at(0) - tailVector.at(0)) * (headVector.at(0) - tailVector.at(0)) +
-				  (headVector.at(1) - tailVector.at(1)) * (headVector.at(1) - tailVector.at(1)) +
-				  (headVector.at(2) - tailVector.at(2)) * (headVector.at(2) - tailVector.at(2)));
+	T disp = sqrt((endingLoc.at(0) - startingLoc.at(0)) * (endingLoc.at(0) - startingLoc.at(0)) +
+				  (endingLoc.at(1) - startingLoc.at(1)) * (endingLoc.at(1) - startingLoc.at(1)) +
+				  (endingLoc.at(2) - startingLoc.at(2)) * (endingLoc.at(2) - startingLoc.at(2)));
 	vector<T> dispUnitVector;
-	dispUnitVector.push_back((headVector.at(0) - tailVector.at(0)) / disp);
-	dispUnitVector.push_back((headVector.at(1) - tailVector.at(1)) / disp);
-	dispUnitVector.push_back((headVector.at(2) - tailVector.at(2)) / disp);
+	dispUnitVector.push_back((endingLoc.at(0) - startingLoc.at(0)) / disp);
+	dispUnitVector.push_back((endingLoc.at(1) - startingLoc.at(1)) / disp);
+	dispUnitVector.push_back((endingLoc.at(2) - startingLoc.at(2)) / disp);
 
 	return dispUnitVector;
 }
@@ -151,7 +166,30 @@ inline T NeuronGeoGrapher::getRadAngle(const vector<T>& vector1, const vector<T>
 }
 
 template<class T>
-inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inputNode, const vector<T>& origin)
+inline T NeuronGeoGrapher::selfTurningRadAngleSum(const vector<vector<T>>& inputSegment)
+{
+	T radAngleSum = 0;
+	for (vector<vector<T>>::const_iterator it = inputSegment.begin() + 1; it != inputSegment.end() - 1; ++it)
+	{
+		vector<T> vector1(3), vector2(3);
+		vector1[0] = it->at(0) - (it - 1)->at(0);
+		vector1[1] = it->at(1) - (it - 1)->at(1);
+		vector1[2] = it->at(2) - (it - 1)->at(2);
+		vector2[0] = (it + 1)->at(0) - it->at(0);
+		vector2[1] = (it + 1)->at(1) - it->at(1);
+		vector2[2] = (it + 1)->at(2) - it->at(2);
+		//cout << "(" << vector1[0] << ", " << vector1[1] << ", " << vector1[2] << ") (" << vector2[0] << ", " << vector2[1] << ", " << vector2[2] << ")" << endl;
+		T radAngle = NeuronGeoGrapher::getRadAngle(vector1, vector2);
+
+		if (radAngle == -1) continue;
+		else radAngleSum = radAngleSum + radAngle;
+	}
+
+	return radAngleSum;
+}
+
+template<class T>
+inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inputNode, vector<T> origin)
 {
 	polarNeuronSWC newPolarNode;
 	newPolarNode.ID = inputNode.n;
@@ -186,35 +224,41 @@ inline polarNeuronSWC NeuronGeoGrapher::CartesianNode2Polar(const NeuronSWC& inp
 	return newPolarNode;
 }
 
+inline NeuronSWC NeuronGeoGrapher::polar2CartesianNode(const polarNeuronSWC& inputPolarNode)
+{
+	NeuronSWC newNode;
+	newNode.n = inputPolarNode.ID;
+	newNode.type = inputPolarNode.type;
+	newNode.parent = inputPolarNode.parent;
+	newNode.x = inputPolarNode.CartesianX;
+	newNode.y = inputPolarNode.CartesianY;
+	newNode.z = inputPolarNode.CartesianZ;
+
+	return newNode;
+}
+
+inline void NeuronGeoGrapher::polarNodeList2nodeList(const vector<polarNeuronSWC>& inputPolarNodeList, QList<NeuronSWC>& outputNodeList)
+{
+	outputNodeList.clear();
+	for (vector<polarNeuronSWC>::const_iterator polarNodeIt = inputPolarNodeList.begin(); polarNodeIt != inputPolarNodeList.end(); ++polarNodeIt)
+		outputNodeList.push_back(NeuronGeoGrapher::polar2CartesianNode(*polarNodeIt));
+}
+
 template<class T>
-inline void NeuronGeoGrapher::nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, const vector<T>& origin)
+inline void NeuronGeoGrapher::nodeList2polarNodeList(const QList<NeuronSWC>& inputNodeList, vector<polarNeuronSWC>& outputPolarNodeList, vector<T> origin)
 {
 	outputPolarNodeList.clear();
 	for (QList<NeuronSWC>::const_iterator nodeIt = inputNodeList.begin(); nodeIt != inputNodeList.end(); ++nodeIt)
 		outputPolarNodeList.push_back(NeuronGeoGrapher::CartesianNode2Polar(*nodeIt, origin));
 }
 
-template<class T>
-inline T NeuronGeoGrapher::selfTurningRadAngleSum(const vector<vector<T>>& inputSegment)
+inline boost::container::flat_map<int, int> NeuronGeoGrapher::polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList)
 {
-	T radAngleSum = 0;
-	for (vector<vector<T>>::const_iterator it = inputSegment.begin() + 1; it != inputSegment.end() - 1; ++it)
-	{
-		vector<T> vector1(3), vector2(3);
-		vector1[0] = it->at(0) - (it - 1)->at(0);
-		vector1[1] = it->at(1) - (it - 1)->at(1);
-		vector1[2] = it->at(2) - (it - 1)->at(2);
-		vector2[0] = (it + 1)->at(0) - it->at(0);
-		vector2[1] = (it + 1)->at(1) - it->at(1);
-		vector2[2] = (it + 1)->at(2) - it->at(2);
-		//cout << "(" << vector1[0] << ", " << vector1[1] << ", " << vector1[2] << ") (" << vector2[0] << ", " << vector2[1] << ", " << vector2[2] << ")" << endl;
-		T radAngle = NeuronGeoGrapher::getRadAngle(vector1, vector2);
+	boost::container::flat_map<int, int> outputMap;
+	for (vector<polarNeuronSWC>::const_iterator it = inputPolarNodeList.begin(); it != inputPolarNodeList.end(); ++it)
+		outputMap.insert(pair<int, int>(it->ID, int(it - inputPolarNodeList.begin())));
 
-		if (radAngle == -1) continue;
-		else radAngleSum = radAngleSum + radAngle;
-	}
-
-	return radAngleSum;
+	return outputMap;
 }
 
 #endif
