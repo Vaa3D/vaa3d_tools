@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 		paras.push_back(paraString);
 	}
 
-	//string funcName = "polarTest";
+	//string funcName = "polarRadiusShell";
 	/************************************/
 
 	ImgTester myImgTester;
@@ -192,26 +192,35 @@ int main(int argc, char* argv[])
 	else if (!funcName.compare("polarRadiusShell"))
 	{
 		QString inputSWCFullNameQ = QString::fromStdString(paras.at(0));
+		//QString inputSWCFullNameQ = "C:\\Users\\hsienchik\\Desktop\\blob_dendrite.swc";
 		NeuronTree inputBlobTree = readSWC_file(inputSWCFullNameQ);
 		vector<polarNeuronSWC> polarNodeList;
 		vector<int> origin = { 68, 64, 130 };
 		NeuronGeoGrapher::nodeList2polarNodeList(inputBlobTree.listNeuron, polarNodeList, origin);
-		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius(polarNodeList);
-		cout << shellRadiusMap.size() << endl;
-		boost::container::flat_map<int, int> polarNodeIDlocMap = NeuronGeoGrapher::polarNodeID2locMap(polarNodeList);
+		boost::container::flat_map<double, boost::container::flat_set<int>> shellRadiusMap = NeuronGeoGrapher::getShellByRadius_loc(polarNodeList);
+		/*for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
+		{
+			cout << it->first << ": ";
+			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+				cout << *it2 << " ";
+			cout << endl;
+		}
+		cout << endl;*/
 
 		vector<polarNeuronSWC> tempList;
 		for (boost::container::flat_map<double, boost::container::flat_set<int>>::iterator it = shellRadiusMap.begin(); it != shellRadiusMap.end(); ++it)
 		{
 			for (boost::container::flat_set<int>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 			{
-				polarNeuronSWC newPolarNode = polarNodeList.at(polarNodeIDlocMap.at(*it2));
+				polarNeuronSWC newPolarNode = polarNodeList.at(*it2);
 				newPolarNode.type = int(it->first);
+				tempList.push_back(newPolarNode);
 			}
 		}
 
 		NeuronTree outputTree;
 		NeuronGeoGrapher::polarNodeList2nodeList(tempList, outputTree.listNeuron);
+		cout << outputTree.listNeuron.size() << endl;
 		
 		writeSWC_file(QString::fromStdString(paras.at(1)), outputTree);
 	}

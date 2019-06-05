@@ -359,18 +359,36 @@ double NeuronGeoGrapher::segPointingCompare(const segUnit& elongSeg, const segUn
 
 
 /* ============================== Polar Coordinate System Operations ============================== */
-boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGrapher::getShellByRadius(const vector<polarNeuronSWC>& inputPolarNodeList)
+boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGrapher::getShellByRadius_ID(const vector<polarNeuronSWC>& inputPolarNodeList)
 {
 	boost::container::flat_map<double, boost::container::flat_set<int>> outputShellMap;
 	
 	for (vector<polarNeuronSWC>::const_iterator it = inputPolarNodeList.begin(); it != inputPolarNodeList.end(); ++it)
 	{
-		if (outputShellMap.find(it->radius) != outputShellMap.end()) outputShellMap.at(it->radius).insert(it->ID);
+		if (outputShellMap.find(round(it->radius)) != outputShellMap.end()) outputShellMap.at(round(it->radius)).insert(it->ID);
 		else
 		{
 			boost::container::flat_set<int> newSet;
 			newSet.insert(it->ID);
-			outputShellMap.insert(pair<double, boost::container::flat_set<int>>(it->radius, newSet));
+			outputShellMap.insert(pair<double, boost::container::flat_set<int>>(round(it->radius), newSet));
+		}
+	}
+
+	return outputShellMap;
+}
+
+boost::container::flat_map<double, boost::container::flat_set<int>> NeuronGeoGrapher::getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList)
+{
+	boost::container::flat_map<double, boost::container::flat_set<int>> outputShellMap;
+
+	for (vector<polarNeuronSWC>::const_iterator it = inputPolarNodeList.begin(); it != inputPolarNodeList.end(); ++it)
+	{
+		if (outputShellMap.find(round(it->radius)) != outputShellMap.end()) outputShellMap.at(round(it->radius)).insert(int(it - inputPolarNodeList.begin()));
+		else
+		{
+			boost::container::flat_set<int> newSet;
+			newSet.insert(int(it - inputPolarNodeList.begin()));
+			outputShellMap.insert(pair<double, boost::container::flat_set<int>>(round(it->radius), newSet));
 		}
 	}
 

@@ -81,7 +81,9 @@ public:
 
 	static inline boost::container::flat_map<int, int> polarNodeID2locMap(const vector<polarNeuronSWC>& inputPolarNodeList);
 
-	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius(const vector<polarNeuronSWC>& inputPolarNodeList);
+	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_ID(const vector<polarNeuronSWC>& inputPolarNodeList);
+
+	static boost::container::flat_map<double, boost::container::flat_set<int>> getShellByRadius_loc(const vector<polarNeuronSWC>& inputPolarNodeList);
 	/***********************************************************************/
 };
 
