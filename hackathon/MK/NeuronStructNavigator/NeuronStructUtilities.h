@@ -111,16 +111,16 @@ public:
 	static inline void nodeTileMapGen(const NeuronTree& inputTree, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 	static inline void nodeTileMapGen(const QList<NeuronSWC>& inputNodeList, boost::container::flat_map<string, vector<NeuronSWC>>& nodeTileMap, float nodeTileLength = NODE_TILE_LENGTH);
 
-	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree);
+	static QList<NeuronSWC> removeRednNode(const NeuronTree& inputTree); // ReOrg
 	
-	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10);
+	static NeuronTree swcZclenUP(const NeuronTree& inputTree, float zThre = 10); // ReOrg
 	
-	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList);
+	static map<string, float> selfNodeDist(const QList<NeuronSWC>& inputNodeList); // ReOrg
 	/**************************************************************************/
 
 
 
-	/********************* Inter-SWC Comparison/Analysis **********************/
+	/********************* Inter-SWC Comparison/Analysis **********************/   // ReOrg
 	// Recognize the same nodes with given distance threshold.
 	static NeuronTree swcIdentityCompare(const NeuronTree& subjectTree, const NeuronTree& refTree, float distThre, float nodeTileLength = NODE_TILE_LENGTH);
 	
@@ -144,14 +144,14 @@ public:
 
 
 
-	/******************** Neuron Struct Clustering Method *********************/ 
+	/******************** Neuron Struct Clustering Method *********************/  // ReOrg
 	// Cuurently no one is using this method.
 	static vector<connectedComponent> swc2clusters_distance(const NeuronTree& inputTree, float dist = 30);
 	/**************************************************************************/
 
 
 
-	/***************************** Miscellaneous ******************************/
+	/***************************** Miscellaneous ******************************/  // ReOrg
 	static inline void linkerFileGen_forSWC(string swcFullFileName);
 	
 	// Generates a cubical root node cluster with specified cube length.
