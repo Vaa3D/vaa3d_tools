@@ -1,5 +1,6 @@
 #include "compare_f.h"
 #include "cut_image_f.h"
+#include "resampling.h"
 #include <v3d_interface.h>
 #include <iostream>
 
@@ -212,5 +213,74 @@ void select_cross(const QString dir)
 
     */
 
+    }
+}
+
+void select_weaksignal(const QString dir)
+{
+    QDir path(dir);
+    QStringList filter;
+    filter<<"*eswc";
+    QStringList eswcfiles=path.entryList(filter);
+
+    QDir cross(dir);
+    cross.cdUp();
+    const QString cross_s=cross.absolutePath()+"/"+"weaksignal";
+    QDir cross_0;
+    cross_0.mkdir(cross_s);
+    for(int i=0;i<eswcfiles.size();++i)
+    {
+        QFileInfo eswcfile(eswcfiles[i]);
+        NeuronTree e_nt,s_nt,s_nt_0;
+        QString eswcfile_0=dir+"/"+eswcfile.baseName()+".eswc";
+        e_nt=readSWC_file(eswcfile_0);
+        QString swcfile=dir+"/"+eswcfile.baseName()+".swc";
+
+        s_nt_0=readSWC_file(swcfile);
+        double step=2.0;
+        s_nt=resample(s_nt_0,step);
+
+        const int dx=5,dy=5,dz=5;
+
+        bool flag=false;
+        int count0=0;
+
+        for(int j=0;j<s_nt.listNeuron.size();++j)
+        {
+            for(int k=0;k<e_nt.listNeuron.size();++k)
+            {
+                if(s_nt.listNeuron[j].x>(e_nt.listNeuron[k].x-dx)&&s_nt.listNeuron[j].x<(e_nt.listNeuron[k].x+dx)
+                        &&s_nt.listNeuron[j].y>(e_nt.listNeuron[k].y-dy)&&s_nt.listNeuron[j].y<(e_nt.listNeuron[k].y+dy)
+                        &&s_nt.listNeuron[j].z>(e_nt.listNeuron[k].z-dz)&&s_nt.listNeuron[j].z<(e_nt.listNeuron[k].z+dz))
+                {
+                    flag=true;
+                }
+
+            }
+            if(flag==true)
+            {
+                count0++;
+            }
+            flag=false;
+        }
+
+        double rate=double(count0)/(double)e_nt.listNeuron.size();
+
+
+
+        if(rate<0.7)
+        {
+            const QString tiffile=dir+"/"+eswcfile.baseName()+".tif";
+            const QString markerfile=dir+"/"+eswcfile.baseName()+".marker";
+            const QString new_tiffile=cross_s+"/"+eswcfile.baseName()+".tif";
+            const QString new_markerfile=cross_s+"/"+eswcfile.baseName()+".marker";
+            const QString new_eswcfile=cross_s+"/"+eswcfile.baseName()+".eswc";
+            const QString new_swcfile=cross_s+"/"+eswcfile.baseName()+".swc";
+            QFile::copy(tiffile,new_tiffile);
+            QFile::copy(markerfile,new_markerfile);
+            QFile::copy(swcfile,new_swcfile);
+            QFile::copy(eswcfile_0,new_eswcfile);
+
+        }
     }
 }

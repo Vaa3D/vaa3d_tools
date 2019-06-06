@@ -4,6 +4,7 @@
 #include <QtGui>
 
 void select_cross(const QString dir);
+void select_weaksignal(const QString dir);
 
 
 

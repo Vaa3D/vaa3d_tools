@@ -6,7 +6,8 @@ VAA3DPATH = E:/v3d_2013/v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= Mean_Variance_plugin.h
-SOURCES	+= Mean_Variance_plugin.cpp
+SOURCES	+= Mean_Variance_plugin.cpp \
+    ../../../../v3d_external/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(Mean_Variance)

@@ -8,8 +8,17 @@
 #include "Mean_Variance_plugin.h"
 #include <v3d_interface.h>
 #include <fstream>
+#include <math.h>
 
 using namespace std;
+
+#define VOID 1000000000
+#define PI 3.14159265359
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#define anglez(a,b) (acos(((b).z-(a).z)/dist(a,b))*180.0/PI)
+#define anglex(a,b) (acos(((b).x-(a).x)/sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)))*180.0/PI)
+#define angley(a,b) (acos(((b).y-(a).y)/sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)))*180.0/PI)
+
 
 Q_EXPORT_PLUGIN2(Mean_Variance, TestPlugin);
  
@@ -119,7 +128,99 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 	if (func_name == tr("func1"))
 	{
-		v3d_msg("To be implemented.");
+        if(infiles.size()>=1)
+        {
+            QString eswcfile(infiles[0]);
+            NeuronTree nt=readSWC_file(eswcfile);
+
+            ofstream angle;
+            angle.open("E://sucai//angle.txt");
+
+            vector<vector<V3DLONG>> children;
+            const V3DLONG num=nt.listNeuron.size();
+            children=vector<vector<V3DLONG>>(num,vector<V3DLONG>());
+            for(V3DLONG i=0;i<num;++i)
+            {
+                V3DLONG par=nt.listNeuron[i].parent;
+                if(par<0) continue;
+                children[nt.hashNeuron.value(par)].push_back(i);
+            }
+/*
+            bool bifurcation[num];
+            double distance[num];
+            double angle_x[num];
+            double angle_z[num];*/
+
+            vector<bool> bifurcation;
+            vector<double> distance;
+            vector<double> angle_x;
+            vector<double> angle_z;
+            bifurcation=vector<bool>(num,false);
+            distance=vector<double>(num,0.0);
+            angle_x=vector<double>(num,0.0);
+            angle_z=vector<double>(num,0.0);
+
+
+
+            for(V3DLONG i=0;i<num;++i)
+            {
+                if(children[i].size()>=2){
+                    bifurcation[i]=true;
+                }
+                else{
+                    bifurcation[i]=false;
+                }
+                V3DLONG par=nt.listNeuron[i].parent;
+                if(par<0)
+                {
+                    distance[i]=0.0;
+                    angle_x[i]=0.0;
+                    angle_z[i]=0.0;
+                }else
+                {
+                    double distance_0=dist(nt.listNeuron[nt.hashNeuron.value(par)],nt.listNeuron[i]);
+                    double angle_z_0=anglez(nt.listNeuron[nt.hashNeuron.value(par)],nt.listNeuron[i]);
+                    double angle_x_0=anglex(nt.listNeuron[nt.hashNeuron.value(par)],nt.listNeuron[i]);
+                    distance[i]=distance_0;
+                    angle_x[i]=angle_x_0;
+                    angle_z[i]=angle_z_0;
+                }
+
+            }
+
+            angle<<"n"<<" "<<"parent"<<" "<<"distance"<<" "<<"angle_x"<<" "<<"angle_z"<<" "
+                <<"angle_x_dist"<<" "<<"angle_z_dist"<<" "<<"isbifurcation"<<endl;
+
+            for(V3DLONG i=0;i<num;++i)
+            {
+                double dist_dx,dist_dz;
+                V3DLONG par=nt.listNeuron[i].parent;
+                if(par<0)
+                {
+                    dist_dx=0.0;
+                    dist_dz=0.0;
+                    angle<<nt.listNeuron[i].n<<" "<<nt.listNeuron[i].parent<<" "
+                        <<distance[i]<<" "<<angle_x[i]<<" "<<angle_z[i]
+                       <<" "<<dist_dx<<" "<<dist_dz<<" "<<bifurcation[i]<<endl;
+                }
+                else if(nt.listNeuron[nt.hashNeuron.value(par)].parent<0)
+                {
+                    dist_dx=0.0;
+                    dist_dz=0.0;
+                    angle<<nt.listNeuron[i].n<<" "<<nt.listNeuron[i].parent<<" "
+                        <<distance[i]<<" "<<angle_x[i]<<" "<<angle_z[i]
+                       <<" "<<dist_dx<<" "<<dist_dz<<" "<<bifurcation[i]<<endl;
+                }
+                else
+                {
+                    dist_dx=angle_x[i]-angle_x[nt.hashNeuron.value(par)];
+                    dist_dz=angle_z[i]-angle_z[nt.hashNeuron.value(par)];
+                    angle<<nt.listNeuron[i].n<<" "<<nt.listNeuron[i].parent<<" "
+                        <<distance[i]<<" "<<angle_x[i]<<" "<<angle_z[i]
+                       <<" "<<dist_dx<<" "<<dist_dz<<" "<<bifurcation[i]<<endl;
+                }
+            }
+        }
 	}
 	else if (func_name == tr("func2"))
 	{

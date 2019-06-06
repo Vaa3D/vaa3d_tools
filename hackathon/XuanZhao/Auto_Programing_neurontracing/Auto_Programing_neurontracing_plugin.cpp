@@ -48,7 +48,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
     else if (menu_name == tr("compare"))
 	{
         const QString dir=QFileDialog::getExistingDirectory(parent);
-        select_cross(dir);
+        //select_cross(dir);
+        select_weaksignal(dir);
 	}
 	else
 	{
