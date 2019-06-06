@@ -5,11 +5,14 @@
 
 /*******************************************************************************
 *
-*  This library provides functionalities for neuron struct operations, such as crop, register, sample, data extraction, etc.
-*  NeuronStructUtil class is desinged to take NeuronTree struct as the input and as well output NeuronTree struct for most of the methods.
-*  This class intends to operate on the whole neuron struct level, as 'utility' it is called.
-*
-*  Most NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
+*  Most of NeuronStructUtil class methods intend to operate on the whole neuron struct level. 
+*  As 'utility' it is called, the functionalities provided in this class include:
+*    a. [Basic neuron struct operations]                   -- cropping SWC, scaling SWC, swc registration, etc.
+*    b. [Tree - subtree operations]                        -- extracting upstream or downstream of a given tree.
+*    c. [Neuron struct profiling methods]                  -- node-tile mapping, node-location mapping, etc. 
+*    d. [SWC - ImgAnalyzer::connectedComponent operations] -- Methods of this category convert SWC into vector<ImgAnalyzer::connectedComponent>
+*  
+*  Most of NeuronStructUtil class methods are implemented as static functions. The input NeuronTree is always set to be const so that it will not be modified.
 *  A typical function call would need at least three input arguments:
 *
 *		NeuronStructUtil::func(const NeuronTree& inputTree, NeuronTree& outputTree, other input arguments);
@@ -79,7 +82,7 @@ public:
 	
 
 
-	/******************** SWC Tracing-related Operations **********************/
+	/******************** SWC Tree - Subtree Operations **********************/
 	// Extract a subtree that is the upstream of a given starting node from the original tree.
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& upstreamEnd, const NeuronSWC& downstreamEnd, const map<int, size_t>& node2locMap);
 	static inline void upstreamPath(const QList<NeuronSWC>& inputList, QList<NeuronSWC>& tracedList, const NeuronSWC& startingNode, const map<int, size_t>& node2locMap, int nodeNum = 10);
